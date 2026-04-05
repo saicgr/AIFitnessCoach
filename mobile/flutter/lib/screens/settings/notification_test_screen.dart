@@ -50,17 +50,21 @@ class _NotificationTestScreenState extends ConsumerState<NotificationTestScreen>
 
       await apiClient.post(url);
 
+      if (!mounted) return;
       setState(() {
         _lastResult = '✅ $type sent successfully!';
       });
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         _lastResult = '❌ Failed: ${e.toString()}';
       });
     } finally {
-      setState(() {
-        _sendingType = null;
-      });
+      if (mounted) {
+        setState(() {
+          _sendingType = null;
+        });
+      }
     }
   }
 
@@ -593,15 +597,17 @@ class _NotificationTestScreenState extends ConsumerState<NotificationTestScreen>
     try {
       final notificationService = ref.read(notificationServiceProvider);
       await notificationService.showTestLocalNotification();
+      if (!mounted) return;
       setState(() {
         _lastResult = '✅ Immediate local notification sent! Check your notification shade.';
       });
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         _lastResult = '❌ Failed: ${e.toString()}';
       });
     } finally {
-      setState(() => _sendingType = null);
+      if (mounted) setState(() => _sendingType = null);
     }
   }
 
@@ -614,15 +620,17 @@ class _NotificationTestScreenState extends ConsumerState<NotificationTestScreen>
     try {
       final notificationService = ref.read(notificationServiceProvider);
       await notificationService.scheduleTestNotification(seconds);
+      if (!mounted) return;
       setState(() {
         _lastResult = '✅ Notification scheduled for $seconds seconds from now. Wait for it!';
       });
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         _lastResult = '❌ Failed: ${e.toString()}';
       });
     } finally {
-      setState(() => _sendingType = null);
+      if (mounted) setState(() => _sendingType = null);
     }
   }
 
@@ -634,16 +642,18 @@ class _NotificationTestScreenState extends ConsumerState<NotificationTestScreen>
     try {
       final notificationService = ref.read(notificationServiceProvider);
       final pending = await notificationService.getPendingNotifications();
+      if (!mounted) return;
       setState(() {
         _pendingNotifications = pending;
         _lastResult = '✅ Loaded ${pending.length} pending notifications';
       });
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         _lastResult = '❌ Failed: ${e.toString()}';
       });
     } finally {
-      setState(() => _sendingType = null);
+      if (mounted) setState(() => _sendingType = null);
     }
   }
 
@@ -704,17 +714,17 @@ class _NotificationTestScreenState extends ConsumerState<NotificationTestScreen>
         },
       );
 
+      if (!mounted) return;
       setState(() {
         _lastResult = '✅ AI Coach Message sent! Check your notification shade.';
       });
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         _lastResult = '❌ Failed: ${e.toString()}';
       });
     } finally {
-      setState(() {
-        _sendingType = null;
-      });
+      if (mounted) setState(() => _sendingType = null);
     }
   }
 
@@ -751,15 +761,17 @@ class _NotificationTestScreenState extends ConsumerState<NotificationTestScreen>
         },
       );
 
+      if (!mounted) return;
       setState(() {
         _lastResult = '✅ Basic Test sent successfully!';
       });
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         _lastResult = '❌ Failed: ${e.toString()}';
       });
     } finally {
-      setState(() {
+      if (mounted) setState(() {
         _sendingType = null;
       });
     }

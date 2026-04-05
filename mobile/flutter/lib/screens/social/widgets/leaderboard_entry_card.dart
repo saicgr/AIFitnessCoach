@@ -21,7 +21,7 @@ class LeaderboardEntryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final rank = entry['rank'] as int;
+    final rank = (entry['rank'] as num).toInt();
     final userName = entry['user_name'] as String? ?? 'User';
     final avatarUrl = entry['avatar_url'] as String?;
     final countryCode = entry['country_code'] as String?;

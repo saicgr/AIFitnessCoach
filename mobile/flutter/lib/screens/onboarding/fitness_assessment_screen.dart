@@ -94,7 +94,7 @@ class _FitnessAssessmentScreenState
     if (id == null) return 1;
     for (final option in options) {
       if (option['id'] == id) {
-        return option['score'] as int;
+        return (option['score'] as num).toInt();
       }
     }
     return 1; // Default score if not found

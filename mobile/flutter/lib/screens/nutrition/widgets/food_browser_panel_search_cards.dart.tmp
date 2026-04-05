@@ -1,0 +1,1002 @@
+// ─── Expandable Search Result Card ───────────────────────────────
+
+class _ExpandableSearchCard extends StatefulWidget {
+  final search.FoodSearchResult result;
+  final _LogState? logState;
+  final bool isExpanded;
+  final VoidCallback onTap;
+  final void Function(String description) onLog;
+  final bool isWeightEditable;
+  final double baseWeightG;
+  final bool isDark;
+  final List<_GoalTag> goalTags;
+  final ApiClient? apiClient;
+  final search.FoodSearchService searchService;
+  final bool isSelected;
+  final VoidCallback? onToggleSelect;
+
+  const _ExpandableSearchCard({
+    super.key,
+    required this.result,
+    this.logState,
+    required this.isExpanded,
+    required this.onTap,
+    required this.onLog,
+    this.isWeightEditable = true,
+    this.baseWeightG = 100.0,
+    required this.isDark,
+    this.goalTags = const [],
+    this.apiClient,
+    required this.searchService,
+    this.isSelected = false,
+    this.onToggleSelect,
+  });
+
+  @override
+  State<_ExpandableSearchCard> createState() => _ExpandableSearchCardState();
+}
+
+class _ExpandableSearchCardState extends State<_ExpandableSearchCard> {
+  int _qty = 1;
+  late double _weightG;
+  late TextEditingController _qtyController;
+  late TextEditingController _weightController;
+
+  // Dynamic modifiers from backend
+  List<search.FoodModifier> _modifiers = [];
+  bool _modifiersLoading = false;
+  bool _modifiersFetched = false;
+  final Map<String, _ModifierState> _modifierStates = {};
+
+  @override
+  void initState() {
+    super.initState();
+    _weightG = widget.baseWeightG;
+    _qtyController = TextEditingController(text: '1');
+    _weightController = TextEditingController(text: _weightG.round().toString());
+  }
+
+  @override
+  void didUpdateWidget(_ExpandableSearchCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Fetch modifiers on first expand
+    if (widget.isExpanded && !oldWidget.isExpanded && !_modifiersFetched) {
+      _fetchModifiers();
+    }
+  }
+
+  @override
+  void dispose() {
+    _qtyController.dispose();
+    _weightController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _fetchModifiers() async {
+    setState(() => _modifiersLoading = true);
+    try {
+      final mods = await widget.searchService.getFoodModifiers(widget.result.name);
+      if (!mounted) return;
+      setState(() {
+        _modifiers = mods;
+        _modifiersLoading = false;
+        _modifiersFetched = true;
+        for (final mod in mods) {
+          _initModifierState(mod);
+        }
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _modifiersLoading = false;
+        _modifiersFetched = true;
+      });
+    }
+  }
+
+  void _initModifierState(search.FoodModifier mod) {
+    switch (mod.type) {
+      case search.FoodModifierType.addon:
+        final weight = mod.defaultWeightG;
+        int? count;
+        if (mod.weightPerUnitG != null && weight != null) {
+          count = (weight / mod.weightPerUnitG!).round();
+        }
+        _modifierStates[mod.phrase] = _ModifierState(weightG: weight, count: count, enabled: true);
+        break;
+      case search.FoodModifierType.doneness:
+      case search.FoodModifierType.cookingMethod:
+      case search.FoodModifierType.sizePortion:
+        _modifierStates[mod.phrase] = _ModifierState(selectedPhrase: mod.phrase, enabled: true);
+        break;
+      case search.FoodModifierType.removal:
+        _modifierStates[mod.phrase] = _ModifierState(enabled: true);
+        break;
+      default:
+        _modifierStates[mod.phrase] = _ModifierState(enabled: true);
+    }
+  }
+
+  int get _displayCalories {
+    int base;
+    if (widget.isWeightEditable) {
+      base = (widget.result.calories * _qty * (_weightG / widget.baseWeightG)).round();
+    } else {
+      base = widget.result.calories * _qty;
+    }
+    // Add modifier deltas
+    int modDelta = 0;
+    for (final mod in _modifiers) {
+      final state = _modifierStates[mod.phrase];
+      if (state == null || !state.enabled) continue;
+      if (mod.type == search.FoodModifierType.doneness ||
+          mod.type == search.FoodModifierType.cookingMethod ||
+          mod.type == search.FoodModifierType.sizePortion) {
+        if (mod.groupOptions.isNotEmpty && state.selectedPhrase != null) {
+          final opt = mod.groupOptions.where((o) => o.phrase == state.selectedPhrase).firstOrNull;
+          if (opt != null) modDelta += opt.calDelta;
+        }
+      } else if (mod.type == search.FoodModifierType.addon) {
+        if (mod.perGram != null && state.weightG != null) {
+          modDelta += (mod.perGram!.calories * state.weightG!).round();
+        } else {
+          modDelta += mod.delta['calories']?.round() ?? 0;
+        }
+      } else if (mod.type == search.FoodModifierType.removal) {
+        modDelta += mod.delta['calories']?.round() ?? 0;
+      }
+    }
+    return base + modDelta;
+  }
+
+  String get _description {
+    final modParts = <String>[];
+    for (final mod in _modifiers) {
+      final state = _modifierStates[mod.phrase];
+      if (state == null || !state.enabled) continue;
+      if (mod.type == search.FoodModifierType.doneness ||
+          mod.type == search.FoodModifierType.cookingMethod ||
+          mod.type == search.FoodModifierType.sizePortion) {
+        if (state.selectedPhrase != null && state.selectedPhrase != mod.phrase) {
+          modParts.add(state.selectedPhrase!);
+        }
+      } else if (mod.type == search.FoodModifierType.addon) {
+        final w = state.weightG?.round() ?? mod.defaultWeightG?.round();
+        modParts.add('${w}g ${mod.displayLabel ?? mod.phrase}');
+      } else if (mod.type == search.FoodModifierType.removal) {
+        modParts.add(mod.phrase);
+      }
+    }
+    final modStr = modParts.isNotEmpty ? ' (${modParts.join(", ")})' : '';
+    if (widget.isWeightEditable) {
+      if (_qty > 1) return '$_qty x ${widget.result.name}$modStr, ${_weightG.round()}g';
+      return '${widget.result.name}$modStr, ${_weightG.round()}g';
+    }
+    if (_qty > 1) return '$_qty x ${widget.result.name}$modStr';
+    return '${widget.result.name}$modStr';
+  }
+
+  void _updateQty(int newQty) {
+    if (newQty < 1 || newQty > 99) return;
+    setState(() {
+      _qty = newQty;
+      _qtyController.text = newQty.toString();
+    });
+  }
+
+  void _updateWeight(double newWeight) {
+    if (newWeight < 1 || newWeight > 5000) return;
+    setState(() {
+      _weightG = newWeight;
+      _weightController.text = newWeight.round().toString();
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final elevated = widget.isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final textPrimary = widget.isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textMuted = widget.isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final teal = widget.isDark ? AppColors.teal : AppColorsLight.teal;
+    final cardBorder = widget.isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+    final glassSurface = widget.isDark ? AppColors.glassSurface : AppColorsLight.glassSurface;
+
+    return GestureDetector(
+      onTap: widget.onTap,
+      behavior: HitTestBehavior.opaque,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        curve: Curves.easeInOut,
+        margin: const EdgeInsets.only(bottom: 4),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: elevated,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: widget.isExpanded
+                ? teal.withValues(alpha: 0.3)
+                : cardBorder,
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // ── Collapsed row (always visible) ──
+            Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        widget.result.name,
+                        style: TextStyle(color: textPrimary, fontSize: 14, fontWeight: FontWeight.w500),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      if (widget.result.brand != null || widget.result.servingSize != null)
+                        Text(
+                          widget.result.brand ?? widget.result.servingSize ?? '',
+                          style: TextStyle(color: textMuted, fontSize: 11),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      if (widget.goalTags.isNotEmpty)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 3),
+                          child: Wrap(spacing: 4, runSpacing: 2, children: widget.goalTags),
+                        ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  '$_displayCalories',
+                  style: TextStyle(color: teal, fontSize: 13, fontWeight: FontWeight.w600),
+                ),
+                Text(' kcal', style: TextStyle(color: textMuted, fontSize: 11)),
+                if (widget.apiClient != null) ...[
+                  const SizedBox(width: 4),
+                  _FlagIconButton(
+                    isDark: widget.isDark,
+                    onTap: () => showFoodReportDialog(
+                      context,
+                      apiClient: widget.apiClient!,
+                      food: widget.result,
+                    ),
+                  ),
+                ],
+                const SizedBox(width: 4),
+                // Select button (collapsed mode — toggles selection)
+                if (!widget.isExpanded)
+                  GestureDetector(
+                    onTap: widget.onToggleSelect ?? (widget.logState == null ? () => widget.onLog(_description) : null),
+                    child: SizedBox(
+                      width: 28, height: 28,
+                      child: widget.onToggleSelect != null
+                          ? _buildSelectIcon(teal)
+                          : _buildAddIcon(teal),
+                    ),
+                  ),
+                AnimatedRotation(
+                  turns: widget.isExpanded ? 0.5 : 0.0,
+                  duration: const Duration(milliseconds: 200),
+                  child: Icon(Icons.keyboard_arrow_down, size: 18, color: textMuted.withValues(alpha: 0.6)),
+                ),
+              ],
+            ),
+
+            // ── Expanded section ──
+            if (widget.isExpanded) ...[
+              const SizedBox(height: 10),
+              // Qty + Weight steppers + Log button
+              GestureDetector(
+                onTap: () {}, // absorb tap so card doesn't collapse
+                child: Row(
+                  children: [
+                    _buildStepper(
+                      controller: _qtyController,
+                      label: 'qty',
+                      onDecrease: () => _updateQty(_qty - 1),
+                      onIncrease: () => _updateQty(_qty + 1),
+                      onSubmitted: (v) {
+                        final n = int.tryParse(v);
+                        if (n != null) _updateQty(n);
+                      },
+                      fieldWidth: 36,
+                      glassSurface: glassSurface,
+                      textPrimary: textPrimary,
+                      textMuted: textMuted,
+                    ),
+                    if (widget.isWeightEditable) ...[
+                      const SizedBox(width: 12),
+                      _buildStepper(
+                        controller: _weightController,
+                        label: 'g',
+                        onDecrease: () => _updateWeight(_weightG - 10),
+                        onIncrease: () => _updateWeight(_weightG + 10),
+                        onSubmitted: (v) {
+                          final n = double.tryParse(v);
+                          if (n != null) _updateWeight(n);
+                        },
+                        fieldWidth: 46,
+                        glassSurface: glassSurface,
+                        textPrimary: textPrimary,
+                        textMuted: textMuted,
+                      ),
+                    ],
+                    const Spacer(),
+                    _buildLogButton(teal),
+                  ],
+                ),
+              ),
+
+              // Modifiers from backend
+              if (_modifiersLoading)
+                Padding(
+                  padding: const EdgeInsets.only(top: 8),
+                  child: Row(
+                    children: [
+                      SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 1.5, color: teal)),
+                      const SizedBox(width: 6),
+                      Text('Loading modifiers...', style: TextStyle(fontSize: 11, color: textMuted)),
+                    ],
+                  ),
+                ),
+              if (_modifiers.isNotEmpty)
+                GestureDetector(
+                  onTap: () {}, // absorb tap
+                  child: Padding(
+                    padding: const EdgeInsets.only(top: 8),
+                    child: _buildModifierControls(textPrimary, textMuted, teal, glassSurface),
+                  ),
+                ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildModifierControls(Color textPrimary, Color textMuted, Color teal, Color glassSurface) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('Modifiers', style: TextStyle(fontSize: 11, color: textMuted, fontWeight: FontWeight.w600, letterSpacing: 0.5)),
+        const SizedBox(height: 4),
+        ..._modifiers.map((mod) {
+          final state = _modifierStates[mod.phrase];
+          if (state == null) return const SizedBox.shrink();
+
+          // Doneness / cooking method / size: chip group
+          if ((mod.type == search.FoodModifierType.doneness ||
+               mod.type == search.FoodModifierType.cookingMethod ||
+               mod.type == search.FoodModifierType.sizePortion) &&
+              mod.groupOptions.isNotEmpty) {
+            final label = mod.type == search.FoodModifierType.doneness ? 'Doneness' : 'Cooking';
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 6),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(label, style: TextStyle(fontSize: 10, color: textMuted, fontWeight: FontWeight.w500)),
+                  const SizedBox(height: 3),
+                  Wrap(
+                    spacing: 4,
+                    runSpacing: 4,
+                    children: mod.groupOptions.map((opt) {
+                      final isSelected = state.selectedPhrase == opt.phrase;
+                      return GestureDetector(
+                        onTap: () {
+                          setState(() => state.selectedPhrase = opt.phrase);
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: isSelected ? teal.withValues(alpha: 0.15) : glassSurface,
+                            borderRadius: BorderRadius.circular(6),
+                            border: Border.all(color: isSelected ? teal : Colors.transparent, width: 1),
+                          ),
+                          child: Text(
+                            '${opt.label} (${opt.calDelta >= 0 ? "+" : ""}${opt.calDelta})',
+                            style: TextStyle(
+                              fontSize: 10,
+                              color: isSelected ? teal : textPrimary,
+                              fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                            ),
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                ],
+              ),
+            );
+          }
+
+          // Addon
+          if (mod.type == search.FoodModifierType.addon) {
+            final calDelta = mod.perGram != null && state.weightG != null
+                ? (mod.perGram!.calories * state.weightG!).round()
+                : mod.delta['calories']?.round() ?? 0;
+            final label = mod.displayLabel ?? mod.phrase;
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 4),
+              child: Row(
+                children: [
+                  Expanded(child: Text(label, style: TextStyle(fontSize: 12, color: textPrimary, fontWeight: FontWeight.w500))),
+                  Text('${calDelta >= 0 ? "+" : ""}$calDelta', style: TextStyle(fontSize: 11, color: calDelta >= 0 ? teal : Colors.orange, fontWeight: FontWeight.w600)),
+                  Text(' kcal', style: TextStyle(fontSize: 10, color: textMuted)),
+                ],
+              ),
+            );
+          }
+
+          // Removal
+          if (mod.type == search.FoodModifierType.removal) {
+            final calDelta = state.enabled ? (mod.delta['calories']?.round() ?? 0) : 0;
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 4),
+              child: Row(
+                children: [
+                  SizedBox(
+                    width: 20, height: 20,
+                    child: Checkbox(
+                      value: state.enabled,
+                      onChanged: (v) => setState(() => state.enabled = v ?? false),
+                      activeColor: teal,
+                      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  Expanded(child: Text(mod.displayLabel ?? mod.phrase, style: TextStyle(fontSize: 12, color: textPrimary))),
+                  Text('$calDelta', style: TextStyle(fontSize: 11, color: Colors.orange, fontWeight: FontWeight.w500)),
+                  Text(' kcal', style: TextStyle(fontSize: 10, color: textMuted)),
+                ],
+              ),
+            );
+          }
+
+          // Info tag
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 4),
+            child: Row(
+              children: [
+                Icon(Icons.label_outline, size: 14, color: textMuted.withValues(alpha: 0.5)),
+                const SizedBox(width: 4),
+                Text(mod.displayLabel ?? mod.phrase, style: TextStyle(fontSize: 11, color: textMuted, fontStyle: FontStyle.italic)),
+              ],
+            ),
+          );
+        }),
+      ],
+    );
+  }
+
+  Widget _buildStepper({
+    required TextEditingController controller,
+    required String label,
+    required VoidCallback onDecrease,
+    required VoidCallback onIncrease,
+    required ValueChanged<String> onSubmitted,
+    required double fieldWidth,
+    required Color glassSurface,
+    required Color textPrimary,
+    required Color textMuted,
+  }) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        GestureDetector(
+          onTap: onDecrease,
+          child: Container(
+            padding: const EdgeInsets.all(4),
+            decoration: BoxDecoration(color: glassSurface, borderRadius: BorderRadius.circular(4)),
+            child: Icon(Icons.remove, size: 14, color: textMuted),
+          ),
+        ),
+        const SizedBox(width: 4),
+        SizedBox(
+          width: fieldWidth,
+          child: TextField(
+            controller: controller,
+            keyboardType: TextInputType.number,
+            textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 13, color: textPrimary, fontWeight: FontWeight.w500),
+            decoration: InputDecoration(
+              isDense: true,
+              contentPadding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+              filled: true,
+              fillColor: glassSurface,
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(4), borderSide: BorderSide.none),
+            ),
+            onSubmitted: onSubmitted,
+          ),
+        ),
+        const SizedBox(width: 2),
+        Text(label, style: TextStyle(fontSize: 12, color: textMuted)),
+        const SizedBox(width: 4),
+        GestureDetector(
+          onTap: onIncrease,
+          child: Container(
+            padding: const EdgeInsets.all(4),
+            decoration: BoxDecoration(color: glassSurface, borderRadius: BorderRadius.circular(4)),
+            child: Icon(Icons.add, size: 14, color: textMuted),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildLogButton(Color teal) {
+    if (widget.logState == _LogState.loading) {
+      return SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2, color: teal));
+    }
+    if (widget.logState == _LogState.done) {
+      return Icon(Icons.check_circle, color: teal, size: 26);
+    }
+    return GestureDetector(
+      onTap: () => widget.onLog(_description),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+        decoration: BoxDecoration(color: teal.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(8)),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.add, size: 14, color: teal),
+            const SizedBox(width: 2),
+            Text('Log', style: TextStyle(fontSize: 12, color: teal, fontWeight: FontWeight.w600)),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAddIcon(Color teal) {
+    if (widget.logState == _LogState.loading) {
+      return Center(child: SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: teal)));
+    }
+    if (widget.logState == _LogState.done) {
+      return Icon(Icons.check_circle, color: Colors.green, size: 24);
+    }
+    return Icon(Icons.add_circle, color: teal, size: 24);
+  }
+
+  Widget _buildSelectIcon(Color teal) {
+    if (widget.logState == _LogState.loading) {
+      return Center(child: SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: teal)));
+    }
+    if (widget.logState == _LogState.done) {
+      return Icon(Icons.check_circle, color: Colors.green, size: 24);
+    }
+    if (widget.isSelected) {
+      return Icon(Icons.check_circle, color: Colors.green, size: 24);
+    }
+    return Icon(Icons.add_circle_outline, color: teal, size: 24);
+  }
+}
+
+// ─── Search Results PageView ──────────────────────────────────────
+
+class _SearchResultsPageView extends StatefulWidget {
+  final List<_FoodGroup> groups;
+  final _SearchDisplayMode displayMode;
+  final int currentPage;
+  final String? expandedSearchKey;
+  final Map<String, _LogState> logStates;
+  final List<String> userGoals;
+  final bool isDark;
+  final String? selectedDbSource;
+  final ValueChanged<int> onPageChanged;
+  final void Function(String key) onExpandCard;
+  final void Function(String desc, String key) onLogFood;
+  final ApiClient apiClient;
+  final search.FoodSearchService searchService;
+  final Set<String> selectedKeys;
+  final void Function(String key, search.FoodSearchResult result) onToggleSelect;
+
+  const _SearchResultsPageView({
+    required this.groups,
+    required this.displayMode,
+    required this.currentPage,
+    this.expandedSearchKey,
+    required this.logStates,
+    required this.userGoals,
+    required this.isDark,
+    this.selectedDbSource,
+    required this.onPageChanged,
+    required this.onExpandCard,
+    required this.onLogFood,
+    required this.apiClient,
+    required this.searchService,
+    required this.selectedKeys,
+    required this.onToggleSelect,
+  });
+
+  @override
+  State<_SearchResultsPageView> createState() => _SearchResultsPageViewState();
+}
+
+class _SearchResultsPageViewState extends State<_SearchResultsPageView> {
+  late PageController _pageController;
+
+  @override
+  void initState() {
+    super.initState();
+    _pageController = PageController(initialPage: widget.currentPage);
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  @override
+  void didUpdateWidget(_SearchResultsPageView oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Reset page controller when groups change
+    if (widget.groups.length != oldWidget.groups.length) {
+      _pageController.dispose();
+      _pageController = PageController(initialPage: 0);
+      widget.onPageChanged(0);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (widget.groups.isEmpty) return const SizedBox.shrink();
+
+    return switch (widget.displayMode) {
+      _SearchDisplayMode.pages => _buildPageView(),
+      _SearchDisplayMode.list => _buildListView(),
+      _SearchDisplayMode.carousel => _buildCarouselView(),
+    };
+  }
+
+  Widget _buildPageView() {
+    final isMultiPage = widget.groups.length > 1;
+    return Column(
+      children: [
+        // Dot indicators for multi-page
+        if (isMultiPage) ...[
+          _PageDotIndicator(
+            count: widget.groups.length,
+            current: widget.currentPage,
+            isDark: widget.isDark,
+          ),
+          const SizedBox(height: 4),
+        ],
+        Expanded(
+          child: PageView.builder(
+            controller: _pageController,
+            itemCount: widget.groups.length,
+            onPageChanged: widget.onPageChanged,
+            itemBuilder: (context, pageIndex) {
+              final group = widget.groups[pageIndex];
+              return _buildGroupPage(group, pageIndex);
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildGroupPage(_FoodGroup group, int pageIndex) {
+    return ListView.builder(
+      padding: const EdgeInsets.symmetric(horizontal: 4),
+      itemCount: group.results.length + 1, // +1 for header
+      itemBuilder: (context, index) {
+        if (index == 0) {
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 6),
+            child: _BrowseSectionHeader(
+              icon: Icons.restaurant_outlined,
+              title: group.label.toUpperCase(),
+              count: group.results.length,
+              isDark: widget.isDark,
+            ),
+          );
+        }
+        final result = group.results[index - 1];
+        return _buildResultCard(result);
+      },
+    );
+  }
+
+  Widget _buildListView() {
+    return ListView(
+      padding: const EdgeInsets.symmetric(horizontal: 4),
+      children: [
+        for (int g = 0; g < widget.groups.length; g++) ...[
+          if (g > 0) const SizedBox(height: 12),
+          _BrowseSectionHeader(
+            icon: widget.groups.length > 1 ? Icons.restaurant_outlined : Icons.storage_outlined,
+            title: widget.groups[g].label.toUpperCase(),
+            count: widget.groups[g].results.length,
+            isDark: widget.isDark,
+          ),
+          const SizedBox(height: 6),
+          ...widget.groups[g].results.map((result) => _buildResultCard(result)),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildCarouselView() {
+    return ListView(
+      padding: const EdgeInsets.symmetric(horizontal: 4),
+      children: [
+        for (int g = 0; g < widget.groups.length; g++) ...[
+          if (g > 0) const SizedBox(height: 12),
+          _BrowseSectionHeader(
+            icon: Icons.restaurant_outlined,
+            title: widget.groups[g].label.toUpperCase(),
+            count: widget.groups[g].results.length,
+            isDark: widget.isDark,
+          ),
+          const SizedBox(height: 6),
+          SizedBox(
+            height: 80,
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              itemCount: widget.groups[g].results.length,
+              itemBuilder: (context, index) {
+                final result = widget.groups[g].results[index];
+                return _buildCarouselCard(result);
+              },
+            ),
+          ),
+          // Inline expanded card below carousel row
+          ..._buildCarouselExpandedCard(widget.groups[g].results),
+        ],
+      ],
+    );
+  }
+
+  /// If any card in this group is expanded, show its full editor below the carousel row.
+  List<Widget> _buildCarouselExpandedCard(List<search.FoodSearchResult> results) {
+    if (widget.expandedSearchKey == null) return [];
+    for (final result in results) {
+      final key = 'search_db_${result.id}_${result.name.hashCode}';
+      if (widget.expandedSearchKey == key) {
+        return [
+          const SizedBox(height: 6),
+          _ExpandableSearchCard(
+            key: ValueKey('carousel_expanded_$key'),
+            result: result,
+            logState: widget.logStates[key],
+            isExpanded: true,
+            onTap: () => widget.onExpandCard(key),
+            onLog: (desc) => widget.onLogFood(desc, key),
+            isWeightEditable: true,
+            baseWeightG: result.servingWeightG ?? result.weightPerUnitG ?? 100.0,
+            isDark: widget.isDark,
+            goalTags: _buildGoalTags(
+              goals: widget.userGoals,
+              calories: result.calories,
+              protein: result.protein ?? 0,
+              carbs: result.carbs ?? 0,
+              fat: result.fat ?? 0,
+              isDark: widget.isDark,
+            ),
+            apiClient: widget.apiClient,
+            searchService: widget.searchService,
+            isSelected: widget.selectedKeys.contains(key),
+            onToggleSelect: () => widget.onToggleSelect(key, result),
+          ),
+        ];
+      }
+    }
+    return [];
+  }
+
+  Widget _buildCarouselCard(search.FoodSearchResult result) {
+    final elevated = widget.isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final textPrimary = widget.isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textMuted = widget.isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final teal = widget.isDark ? AppColors.teal : AppColorsLight.teal;
+    final cardBorder = widget.isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+    final key = 'search_db_${result.id}_${result.name.hashCode}';
+    final isSelected = widget.selectedKeys.contains(key);
+
+    return GestureDetector(
+      onTap: () => widget.onExpandCard(key),
+      child: Container(
+        width: 160,
+        margin: const EdgeInsets.only(right: 8),
+        padding: const EdgeInsets.all(10),
+        decoration: BoxDecoration(
+          color: elevated,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: isSelected ? Colors.green.withValues(alpha: 0.5) : cardBorder,
+            width: isSelected ? 1.5 : 1.0,
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Flexible(
+              child: Text(
+                result.name,
+                style: TextStyle(color: textPrimary, fontSize: 12, fontWeight: FontWeight.w500),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Row(
+              children: [
+                Text('${result.calories}', style: TextStyle(color: teal, fontSize: 12, fontWeight: FontWeight.w600)),
+                Text(' kcal', style: TextStyle(color: textMuted, fontSize: 10)),
+                const Spacer(),
+                Icon(Icons.keyboard_arrow_down, size: 16, color: textMuted.withValues(alpha: 0.5)),
+                const SizedBox(width: 4),
+                GestureDetector(
+                  onTap: widget.logStates[key] == null
+                      ? () => widget.onToggleSelect(key, result)
+                      : null,
+                  child: SizedBox(
+                    width: 22, height: 22,
+                    child: _buildSmallSelectIcon(teal, widget.logStates[key], isSelected),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSmallSelectIcon(Color teal, _LogState? logState, bool isSelected) {
+    if (logState == _LogState.loading) {
+      return Center(child: SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 1.5, color: teal)));
+    }
+    if (logState == _LogState.done) {
+      return Icon(Icons.check_circle, color: Colors.green, size: 20);
+    }
+    if (isSelected) {
+      return Icon(Icons.check_circle, color: Colors.green, size: 20);
+    }
+    return Icon(Icons.add_circle_outline, color: teal, size: 20);
+  }
+
+  Widget _buildResultCard(search.FoodSearchResult result) {
+    // Include name hash in key so items with fallback id='0' don't share the same key
+    final key = 'search_db_${result.id}_${result.name.hashCode}';
+    return _ExpandableSearchCard(
+      key: ValueKey(key),
+      result: result,
+      logState: widget.logStates[key],
+      isExpanded: widget.expandedSearchKey == key,
+      onTap: () => widget.onExpandCard(key),
+      onLog: (desc) => widget.onLogFood(desc, key),
+      isWeightEditable: true,
+      baseWeightG: result.servingWeightG ?? result.weightPerUnitG ?? 100.0,
+      isDark: widget.isDark,
+      goalTags: _buildGoalTags(
+        goals: widget.userGoals,
+        calories: result.calories,
+        protein: result.protein ?? 0,
+        carbs: result.carbs ?? 0,
+        fat: result.fat ?? 0,
+        isDark: widget.isDark,
+      ),
+      apiClient: widget.apiClient,
+      searchService: widget.searchService,
+      isSelected: widget.selectedKeys.contains(key),
+      onToggleSelect: () => widget.onToggleSelect(key, result),
+    );
+  }
+}
+
+// ─── Page Dot Indicator ────────────────────────────────────────────
+
+class _PageDotIndicator extends StatelessWidget {
+  final int count;
+  final int current;
+  final bool isDark;
+
+  const _PageDotIndicator({
+    required this.count,
+    required this.current,
+    required this.isDark,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final teal = isDark ? AppColors.teal : AppColorsLight.teal;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: List.generate(count, (i) {
+        final isActive = i == current;
+        return AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          margin: const EdgeInsets.symmetric(horizontal: 3),
+          width: isActive ? 16 : 6,
+          height: 6,
+          decoration: BoxDecoration(
+            color: isActive ? teal : textMuted.withValues(alpha: 0.3),
+            borderRadius: BorderRadius.circular(3),
+          ),
+        );
+      }),
+    );
+  }
+}
+
+// ─── Display Mode Toggle ──────────────────────────────────────────
+
+class _DisplayModeToggle extends StatelessWidget {
+  final _SearchDisplayMode mode;
+  final ValueChanged<_SearchDisplayMode> onChanged;
+  final bool isDark;
+
+  const _DisplayModeToggle({
+    required this.mode,
+    required this.onChanged,
+    required this.isDark,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final teal = isDark ? AppColors.teal : AppColorsLight.teal;
+    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+
+    Widget modeButton(_SearchDisplayMode m, IconData icon, String label) {
+      final isActive = mode == m;
+      return GestureDetector(
+        onTap: () => onChanged(m),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 150),
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+          decoration: BoxDecoration(
+            color: isActive ? teal : Colors.transparent,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, size: 14, color: isActive ? Colors.white : textMuted),
+              const SizedBox(width: 4),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
+                  color: isActive ? Colors.white : textMuted,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
+      padding: const EdgeInsets.all(3),
+      decoration: BoxDecoration(
+        color: elevated,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: cardBorder),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          modeButton(_SearchDisplayMode.pages, Icons.view_carousel_outlined, 'Pages'),
+          modeButton(_SearchDisplayMode.list, Icons.view_list_outlined, 'List'),
+          modeButton(_SearchDisplayMode.carousel, Icons.view_column_outlined, 'Carousel'),
+        ],
+      ),
+    );
+  }
+}

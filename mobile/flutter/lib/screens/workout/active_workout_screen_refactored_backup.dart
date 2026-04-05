@@ -1,0 +1,9647 @@
+/// Refactored Active Workout Screen
+///
+/// This is a modularized version of the active workout screen that composes
+/// smaller, reusable widgets while keeping the business logic in the main state.
+///
+/// Structure:
+/// - Main screen composition (~400 lines)
+/// - Uses extracted widgets from widgets/ folder
+/// - Uses controllers from controllers/ folder
+/// - Uses models from models/ folder
+library;
+
+import 'dart:async';
+import 'dart:convert';
+import 'dart:ui';
+
+import 'package:dio/dio.dart';
+
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_animate/flutter_animate.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:video_player/video_player.dart';
+
+import '../../core/constants/api_constants.dart';
+import '../../core/constants/app_colors.dart';
+import '../../core/services/posthog_service.dart';
+import '../../core/constants/workout_design.dart';
+import '../../core/theme/accent_color_provider.dart';
+import '../../core/services/weight_suggestion_service.dart';
+import '../../data/models/smart_weight_suggestion.dart';
+import '../../data/models/workout.dart';
+import '../../data/models/exercise.dart';
+import '../../data/repositories/workout_repository.dart';
+import '../../data/services/api_client.dart';
+import '../../data/rest_messages.dart';
+import '../../models/equipment_item.dart';
+import 'widgets/edit_workout_equipment_sheet.dart';
+import '../../widgets/glass_sheet.dart';
+import '../../widgets/log_1rm_sheet.dart';
+import '../../widgets/weight_increments_sheet.dart';
+import '../../widgets/app_snackbar.dart';
+import '../ai_settings/ai_settings_screen.dart';
+
+// Import modular components
+import 'controllers/workout_timer_controller.dart';
+import 'models/workout_state.dart';
+import 'widgets/warmup_phase_screen.dart';
+import 'widgets/stretch_phase_screen.dart';
+import 'widgets/rest_timer_overlay.dart';
+import 'widgets/workout_top_overlay.dart';
+import 'widgets/set_tracking_overlay.dart';
+import 'widgets/workout_bottom_bar.dart';
+import 'widgets/number_input_widgets.dart';
+import 'widgets/set_row.dart'; // For RpeRirSelector
+import 'widgets/fatigue_alert_modal.dart';
+import '../../data/providers/xp_provider.dart';
+import 'widgets/workout_plan_drawer.dart';
+import 'widgets/breathing_guide_sheet.dart';
+import 'widgets/hydration_dialog.dart';
+import 'widgets/hydration_quick_actions.dart';
+import '../../data/models/hydration.dart';
+import 'widgets/workout_ai_coach_sheet.dart';
+import 'widgets/exercise_info_sheet.dart';
+import 'widgets/exercise_options_sheet.dart';
+import 'widgets/exercise_analytics_page.dart';
+import 'widgets/quit_workout_dialog.dart';
+import 'widgets/enhanced_notes_sheet.dart';
+import 'widgets/exercise_swap_sheet.dart';
+import 'widgets/exercise_add_sheet.dart';
+import 'widgets/superset_pair_sheet.dart';
+import 'widgets/ai_text_input_bar.dart';
+import 'widgets/parsed_exercises_preview_sheet.dart';
+import 'widgets/ai_input_preview_sheet.dart';
+import '../../data/models/parsed_exercise.dart';
+// MacroFactor-style V2 components
+import 'widgets/workout_top_bar_v2.dart';
+import 'widgets/exercise_thumbnail_strip_v2.dart';
+import 'widgets/action_chips_row.dart';
+import '../../core/utils/default_weights.dart';
+import 'widgets/barbell_plate_indicator.dart';
+import 'widgets/set_tracking_table.dart';
+import 'widgets/inline_rest_row.dart';
+import '../../data/models/rest_suggestion.dart';
+import '../../data/repositories/hydration_repository.dart';
+import '../../core/services/fatigue_service.dart';
+import '../../core/providers/user_provider.dart';
+import '../../core/providers/warmup_duration_provider.dart';
+import '../../data/providers/gym_profile_provider.dart';
+import '../../data/providers/scores_provider.dart';
+import '../../data/repositories/auth_repository.dart';
+import '../../data/repositories/exercise_preferences_repository.dart';
+import '../settings/equipment/environment_list_screen.dart';
+import '../../data/services/haptic_service.dart';
+import '../../data/services/pr_detection_service.dart';
+import '../../widgets/coach_avatar.dart';
+import 'widgets/pr_inline_celebration.dart';
+import '../../core/services/rest_tip_service.dart';
+import '../../core/services/achievement_prompt_service.dart';
+import '../../core/services/exercise_info_service.dart';
+import '../../core/models/set_progression.dart';
+import '../../core/providers/exercise_bar_type_provider.dart';
+import '../../core/providers/exercise_progression_provider.dart';
+import '../../core/providers/weight_increments_provider.dart';
+import '../../core/providers/workout_mini_player_provider.dart';
+import '../../data/services/workout_notification_service.dart';
+import '../../core/providers/favorites_provider.dart';
+import '../../core/providers/ble_heart_rate_provider.dart';
+import '../../data/services/ble_heart_rate_service.dart';
+import '../../widgets/heart_rate_display.dart';
+import '../../core/providers/window_mode_provider.dart';
+import '../../core/providers/sound_preferences_provider.dart';
+import '../../core/providers/tts_provider.dart';
+import '../../screens/onboarding/widgets/foldable_quiz_scaffold.dart';
+import 'foldable/foldable_workout_layout.dart';
+import 'foldable/foldable_warmup_layout.dart';
+import '../../services/intra_workout_autoregulator.dart';
+import '../../widgets/app_tour/app_tour_controller.dart';
+
+/// Active workout screen with modular composition
+class ActiveWorkoutScreen extends ConsumerStatefulWidget {
+  final Workout workout;
+  final String? challengeId;
+  final Map<String, dynamic>? challengeData;
+
+  const ActiveWorkoutScreen({
+    super.key,
+    required this.workout,
+    this.challengeId,
+    this.challengeData,
+  });
+
+  @override
+  ConsumerState<ActiveWorkoutScreen> createState() =>
+      _ActiveWorkoutScreenState();
+}
+
+class _ActiveWorkoutScreenState
+    extends ConsumerState<ActiveWorkoutScreen> {
+  // Phase state
+  WorkoutPhase _currentPhase = WorkoutPhase.warmup;
+
+  // Workout state
+  int _currentExerciseIndex = 0;
+  bool _isResting = false;
+  bool _isRestingBetweenExercises = false;
+  bool _isPaused = false;
+  bool _showInstructions = false;
+  /// Whether to hide the AI Coach FAB for this session (user long-pressed to hide)
+  bool _hideAICoachForSession = false;
+
+  /// Coach tip bubble state
+  bool _showCoachTip = false;
+  String? _coachTipMessage;
+  bool _coachTipSent = false; // Only send once per workout
+
+  // Video state
+  VideoPlayerController? _videoController;
+  bool _isVideoInitialized = false;
+  bool _isVideoPlaying = true;
+  String? _imageUrl;
+  bool _isLoadingMedia = true;
+
+  // Timer controller
+  late WorkoutTimerController _timerController;
+  String _currentRestMessage = '';
+
+  // Set tracking
+  final Map<int, List<SetLog>> _completedSets = {};
+  final int _totalCaloriesBurned = 0;
+
+  // Input controllers
+  late TextEditingController _repsController;
+  late TextEditingController _repsRightController; // For L/R mode
+  late TextEditingController _weightController;
+  bool _useKg = true; // Initialized from user preference
+  bool _unitInitialized = false; // Track if unit has been initialized from user preference
+  double _weightIncrement = 2.5; // Default weight increment (kg)
+
+  // Set tracking overlay
+  final Map<int, List<Map<String, dynamic>>> _previousSets = {};
+  final Map<int, int> _totalSetsPerExercise = {};
+  final Map<int, RepProgressionType> _repProgressionPerExercise = {};
+  int _viewingExerciseIndex = 0;
+
+  // Exercises list
+  late List<WorkoutExercise> _exercises;
+
+  // Tracking state
+  int _totalDrinkIntakeMl = 0;
+  bool _isActiveRowExpanded = true;
+  final List<Map<String, dynamic>> _restIntervals = [];
+  final Map<int, int> _exerciseTimeSeconds = {};
+  DateTime? _currentExerciseStartTime;
+  bool _isDoneButtonPressed = false;
+  int? _justCompletedSetIndex;
+  final Map<String, double> _exerciseMaxWeights = {};
+
+  // Per-exercise progression pattern (persisted across sessions)
+  final Map<int, SetProgressionPattern> _exerciseProgressionPattern = {};
+  /// Stored peak/working weight per exercise (derived when pattern is applied).
+  final Map<int, double> _exerciseWorkingWeight = {};
+  /// Override bar type per exercise (null = auto-detect from equipment field).
+  final Map<int, String> _exerciseBarType = {};
+
+  // RPE/RIR and weight suggestion state
+  int? _lastSetRpe;
+  int? _lastSetRir = 3; // Default RIR 3 (moderate) for quick-select bar
+  WeightSuggestion? _currentWeightSuggestion;
+  bool _isLoadingWeightSuggestion = false; // Loading state for AI suggestion
+  SetLog? _pendingSetLog; // Set waiting for RPE/RIR input
+
+  // Fatigue detection state
+  FatigueAlertData? _fatigueAlertData;
+  bool _showFatigueAlert = false;
+
+  // PR detection service
+  late PRDetectionService _prDetectionService;
+
+  // Rest suggestion state (AI-powered)
+  RestSuggestion? _restSuggestion;
+  bool _isLoadingRestSuggestion = false;
+
+  // Inline rest row state
+  bool _showInlineRest = false;
+  int _inlineRestDuration = 90; // Default rest duration
+  String? _inlineRestAiTip;
+  bool _isLoadingAiTip = false;
+  String? _inlineRestAchievementPrompt;
+  int? _inlineRestCurrentRpe;
+
+  // Warmup/stretch state (fetched from API)
+  List<WarmupExerciseData>? _warmupExercises;
+  List<StretchExerciseData>? _stretchExercises;
+  bool _isWarmupLoading = true;
+  // V2 UI flag - MacroFactor style design
+  final bool _useV2Design = true;
+
+  // L/R mode for unilateral exercises
+  bool _isLeftRightMode = false;
+
+  // Drag-to-action state (Delete/Swap zones at top of screen)
+  bool _isDragActive = false;
+  int? _draggedExerciseIndex;
+
+  // Superset round tracking
+  // Maps superset group ID -> set of exercise indices that have completed a set in this round
+  // Reset when all exercises in the superset complete their set for the round
+  final Map<int, Set<int>> _supersetRoundProgress = {};
+
+  // Pre-computed superset indices cache (groupId -> sorted exercise indices)
+  // Built once in initState and when exercises change, avoids repeated iteration/sorting
+  Map<int, List<int>> _supersetIndicesCache = {};
+
+  @override
+  void initState() {
+    super.initState();
+    _initializeWorkout();
+    _loadWarmupAndStretches();
+    _checkWarmupEnabled();
+    _initBleHrAutoReconnect();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      _triggerWorkoutTour();
+    });
+  }
+
+  void _triggerWorkoutTour() {
+    final steps = [
+      AppTourStep(
+        id: 'workout_step_exercise',
+        targetKey: AppTourKeys.exerciseCardKey,
+        title: 'Current Exercise',
+        description: 'Follow along with the video. Tap Info for full details and instructions.',
+        position: TooltipPosition.below,
+      ),
+      AppTourStep(
+        id: 'workout_step_sets',
+        targetKey: AppTourKeys.setLoggingKey,
+        title: 'Log Your Sets',
+        description: 'Enter weight and reps, then check the box to complete each set. Your history saves automatically.',
+        position: TooltipPosition.below,
+      ),
+      AppTourStep(
+        id: 'workout_step_rir',
+        targetKey: AppTourKeys.rirBarKey,
+        title: 'Rate Your Effort (RIR)',
+        description: 'RIR = Reps In Reserve. How many more reps could you do? 0 means failure, 5+ means easy. This helps the AI adjust your future weights.',
+        position: TooltipPosition.below,
+      ),
+      AppTourStep(
+        id: 'workout_step_swap',
+        targetKey: AppTourKeys.swapExerciseKey,
+        title: "Can't Do This?",
+        description: 'Swap any exercise for a suitable alternative, create a superset, or switch sides with L/R.',
+        position: TooltipPosition.above,
+      ),
+      AppTourStep(
+        id: 'workout_step_rest',
+        targetKey: AppTourKeys.restTimerKey,
+        title: 'Rest Timer',
+        description: 'Starts automatically between sets. Skip it whenever you\'re ready to go again.',
+        position: TooltipPosition.below,
+      ),
+      AppTourStep(
+        id: 'workout_step_ai',
+        targetKey: AppTourKeys.workoutAiKey,
+        title: 'Your AI Coach',
+        description: 'Ask your coach anything mid-workout — form check, exercise alternatives, weight suggestions, or just how many sets you have left.',
+        position: TooltipPosition.above,
+        cornerRadius: 999,
+        highlightColors: const [
+          Color(0xFF9B59B6),
+          Color(0xFF00BCD4),
+          Color(0xFF3B82F6),
+          Color(0xFF9B59B6),
+        ],
+      ),
+    ];
+    ref.read(appTourControllerProvider.notifier).checkAndShow('workout_tour', steps);
+  }
+
+  /// Attempt BLE HR auto-reconnect if enabled.
+  void _initBleHrAutoReconnect() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final bleEnabled = ref.read(bleHrEnabledProvider);
+      if (bleEnabled) {
+        BleHeartRateService.instance.autoReconnect();
+      }
+    });
+  }
+
+  /// Check if warmup is enabled and skip to active phase if not
+  void _checkWarmupEnabled() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final warmupState = ref.read(warmupDurationProvider);
+      if (!warmupState.warmupEnabled) {
+        setState(() {
+          _currentPhase = WorkoutPhase.active;
+        });
+        debugPrint('🏋️ [ActiveWorkout] Warmup disabled, skipping to active phase');
+      }
+    });
+  }
+
+  void _initializeWorkout() {
+    // Initialize exercises list
+    _exercises = List.from(widget.workout.exercises);
+
+    // Pre-compute superset indices cache for O(1) lookups
+    _precomputeSupersetIndices();
+
+    // Guard: If no exercises, we cannot proceed
+    // Note: Router should catch this case, but keep as a safety check
+    if (_exercises.isEmpty) {
+      debugPrint('❌ [ActiveWorkout] No exercises in workout! Cannot start.');
+      // Initialize with defaults to prevent late init errors
+      _repsController = TextEditingController(text: '10');
+      _repsRightController = TextEditingController(text: '10');
+      _weightController = TextEditingController(text: '0');
+      _timerController = WorkoutTimerController();
+      _prDetectionService = ref.read(prDetectionServiceProvider);
+      // Schedule navigation back after build completes
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          context.go('/home');
+        }
+      });
+      return;
+    }
+
+    // Initialize unit preference early (before weight controller setup)
+    _useKg = ref.read(useKgForWorkoutProvider);
+    _unitInitialized = true;
+
+    // Track workout started event
+    ref.read(posthogServiceProvider).capture(
+      eventName: 'workout_started',
+      properties: {
+        'workout_id': widget.workout.id ?? '',
+        'workout_name': widget.workout.name ?? '',
+        'exercise_count': _exercises.length,
+        'challenge_id': widget.challengeId ?? '',
+      },
+    );
+
+    // Check if we're restoring from mini player
+    final miniPlayerState = ref.read(workoutMiniPlayerProvider);
+    final isRestoring = miniPlayerState.workout?.id == widget.workout.id &&
+        miniPlayerState.workoutSeconds > 0;
+
+    if (isRestoring) {
+      debugPrint('🎬 [ActiveWorkout] Restoring from mini player - timer: ${miniPlayerState.workoutSeconds}s, exercise: ${miniPlayerState.currentExerciseIndex}');
+    }
+
+    // Initialize input controllers
+    final initialExerciseIndex = isRestoring ? miniPlayerState.currentExerciseIndex : 0;
+    final initialExercise = _exercises[initialExerciseIndex.clamp(0, _exercises.length - 1)];
+    // Use setTargets for initial values if available, fallback to legacy fields
+    final firstSetTarget = initialExercise.getTargetForSet(1);
+    _repsController = TextEditingController(
+        text: (firstSetTarget?.targetReps ?? initialExercise.reps ?? 10).toString());
+    _repsRightController = TextEditingController(
+        text: (firstSetTarget?.targetReps ?? initialExercise.reps ?? 10).toString()); // Same initial reps for L/R
+    // Weight: historical/reliable → equipment default → bar minimum → 0
+    // Don't trust generic AI weights (e.g., 10 kg for everything)
+    final aiWeight = (firstSetTarget?.targetWeightKg ?? initialExercise.weight ?? 0).toDouble();
+    final useAiWeight = !isGenericWeight(aiWeight, initialExercise.weightSource);
+    final userProfile = ref.read(authStateProvider).user;
+    double initWeightDisplay;
+    if (useAiWeight) {
+      initWeightDisplay = _useKg ? aiWeight : aiWeight * 2.20462;
+    } else {
+      // Get default in user's display unit (already snapped to real increments)
+      initWeightDisplay = getDefaultWeight(
+        initialExercise.equipment,
+        exerciseName: initialExercise.name,
+        fitnessLevel: userProfile?.fitnessLevel,
+        gender: userProfile?.gender,
+        useKg: _useKg,
+      );
+    }
+    _weightController = TextEditingController(
+        text: initWeightDisplay > 0 ? initWeightDisplay.toStringAsFixed(initWeightDisplay % 1 == 0 ? 0 : 1) : '');
+
+    // Restore exercise index if restoring
+    if (isRestoring) {
+      _currentExerciseIndex = miniPlayerState.currentExerciseIndex.clamp(0, _exercises.length - 1);
+      _viewingExerciseIndex = _currentExerciseIndex;
+      _isPaused = miniPlayerState.isPaused;
+      _isResting = miniPlayerState.isResting;
+      // Skip warmup phase when restoring - go directly to active workout
+      _currentPhase = WorkoutPhase.active;
+    }
+
+    // Initialize timer controller
+    _timerController = WorkoutTimerController();
+    _timerController.onWorkoutTick = (_) {
+      setState(() {});
+      _updateWorkoutNotification();
+    };
+    _timerController.onRestTick = (secondsRemaining) {
+      setState(() {});
+      // Play countdown sound + voice at 3, 2, 1
+      if (secondsRemaining <= 3 && secondsRemaining > 0) {
+        ref.read(soundPreferencesProvider.notifier).playCountdown(secondsRemaining);
+        ref.read(voiceAnnouncementsProvider.notifier).announceCountdownIfEnabled(secondsRemaining);
+      }
+    };
+    _timerController.onRestComplete = _handleRestComplete;
+
+    // Initialize PR detection service
+    _prDetectionService = ref.read(prDetectionServiceProvider);
+    _prDetectionService.startNewWorkout();
+    _preloadPRHistory();
+
+    // Preload per-exercise progression patterns from SharedPreferences
+    _preloadProgressionPatterns();
+
+    // Apply progression targets for the first exercise immediately
+    // (don't wait for async preload — use default pattern)
+    _initControllersForExercise(_currentExerciseIndex);
+
+    // Load coach persona for AI Coach button
+    _loadCoachPersona();
+
+    // Start workout timer (restore time if returning from mini player)
+    _timerController.startWorkoutTimer(initialSeconds: isRestoring ? miniPlayerState.workoutSeconds : 0);
+
+    // Initialize and show the persistent workout notification
+    _initWorkoutNotification();
+
+    // Announce workout start (only for fresh workouts, not restores)
+    if (!isRestoring) {
+      ref.read(voiceAnnouncementsProvider.notifier)
+          .announceIfEnabled("Let's go! Starting ${widget.workout.name}");
+    }
+
+    // Restore rest timer if was resting
+    if (isRestoring && miniPlayerState.isResting && miniPlayerState.restSecondsRemaining > 0) {
+      _timerController.startRestTimer(miniPlayerState.restSecondsRemaining);
+    }
+
+    // Initialize tracking data
+    for (int i = 0; i < _exercises.length; i++) {
+      _completedSets[i] = [];
+      final exercise = _exercises[i];
+      // Use setTargets length if available (includes warmup sets), otherwise fall back to exercise.sets
+      _totalSetsPerExercise[i] = exercise.hasSetTargets && exercise.setTargets!.isNotEmpty
+          ? exercise.setTargets!.length
+          : exercise.sets ?? 3;
+      _previousSets[i] = [];
+    }
+
+    // Restore completed sets if restoring from mini player
+    if (isRestoring && miniPlayerState.completedSets.isNotEmpty) {
+      for (final entry in miniPlayerState.completedSets.entries) {
+        final exerciseIndex = entry.key;
+        final setMaps = entry.value;
+        if (exerciseIndex < _exercises.length) {
+          _completedSets[exerciseIndex] = setMaps.map((map) => SetLog(
+            reps: (map['reps'] as num?)?.toInt() ?? 0,
+            weight: (map['weight'] as num?)?.toDouble() ?? 0.0,
+            setType: map['setType'] as String? ?? 'working',
+            rpe: (map['rpe'] as num?)?.toInt(),
+            rir: (map['rir'] as num?)?.toInt(),
+            aiInputSource: map['aiInputSource'] as String?,
+          )).toList();
+        }
+      }
+      debugPrint('🎬 [ActiveWorkout] Restored ${miniPlayerState.completedSets.length} exercise completed sets');
+    }
+
+    // Fetch historical data
+    _fetchExerciseHistory();
+
+    // Fetch smart weight for first exercise based on history
+    if (_exercises.isNotEmpty) {
+      _fetchSmartWeightForExercise(_exercises.first);
+    }
+
+    // Initialize time tracking
+    _currentExerciseStartTime = DateTime.now();
+  }
+
+  /// Load personalized warmup and stretch exercises from API
+  Future<void> _loadWarmupAndStretches() async {
+    final workoutId = widget.workout.id;
+    if (workoutId == null) {
+      if (mounted) setState(() => _isWarmupLoading = false);
+      return;
+    }
+
+    try {
+      final workoutRepo = ref.read(workoutRepositoryProvider);
+      final data = await workoutRepo.generateWarmupAndStretches(workoutId);
+
+      if (!mounted) return;
+
+      final warmupData = data['warmup'] ?? [];
+      final stretchData = data['stretches'] ?? [];
+
+      setState(() {
+        if (warmupData.isNotEmpty) {
+          _warmupExercises = warmupData.map<WarmupExerciseData>((e) => WarmupExerciseData(
+            name: e['name']?.toString() ?? 'Exercise',
+            duration: (e['duration_seconds'] as num?)?.toInt() ?? 30,
+            icon: _getIconForExercise(e['name']?.toString() ?? ''),
+            inclinePercent: (e['incline_percent'] as num?)?.toDouble(),
+            speedMph: (e['speed_mph'] as num?)?.toDouble(),
+            rpm: (e['rpm'] as num?)?.toInt(),
+            resistanceLevel: (e['resistance_level'] as num?)?.toInt(),
+            strokeRateSpm: (e['stroke_rate_spm'] as num?)?.toInt(),
+            equipment: e['equipment']?.toString(),
+            isStaple: e['is_staple'] == true,
+          )).toList();
+        }
+
+        if (stretchData.isNotEmpty) {
+          _stretchExercises = stretchData.map<StretchExerciseData>((e) => StretchExerciseData(
+            name: e['name']?.toString() ?? 'Stretch',
+            duration: (e['duration_seconds'] as num?)?.toInt() ?? 30,
+            icon: _getIconForStretch(e['name']?.toString() ?? ''),
+            inclinePercent: (e['incline_percent'] as num?)?.toDouble(),
+            speedMph: (e['speed_mph'] as num?)?.toDouble(),
+            rpm: (e['rpm'] as num?)?.toInt(),
+            resistanceLevel: (e['resistance_level'] as num?)?.toInt(),
+            strokeRateSpm: (e['stroke_rate_spm'] as num?)?.toInt(),
+            equipment: e['equipment']?.toString(),
+          )).toList();
+        }
+
+        _isWarmupLoading = false;
+      });
+
+      debugPrint('✅ [Warmup] Loaded ${_warmupExercises?.length ?? 0} warmup exercises');
+      debugPrint('✅ [Stretch] Loaded ${_stretchExercises?.length ?? 0} stretch exercises');
+    } catch (e) {
+      debugPrint('❌ [Warmup] Error loading warmup/stretches: $e');
+      if (mounted) {
+        setState(() => _isWarmupLoading = false);
+      }
+    }
+  }
+
+  /// Map exercise name to appropriate icon for warmup
+  IconData _getIconForExercise(String name) {
+    final lower = name.toLowerCase();
+    if (lower.contains('jump') || lower.contains('jack') || lower.contains('cardio') || lower.contains('run')) {
+      return Icons.directions_run;
+    }
+    if (lower.contains('circle') || lower.contains('rotation') || lower.contains('twist')) {
+      return Icons.loop;
+    }
+    if (lower.contains('swing') || lower.contains('lunge') || lower.contains('step')) {
+      return Icons.swap_horiz;
+    }
+    if (lower.contains('squat') || lower.contains('leg')) {
+      return Icons.airline_seat_legroom_extra;
+    }
+    if (lower.contains('arm') || lower.contains('shoulder') || lower.contains('push')) {
+      return Icons.fitness_center;
+    }
+    if (lower.contains('cat') || lower.contains('cow') || lower.contains('spine')) {
+      return Icons.pets;
+    }
+    if (lower.contains('hip') || lower.contains('glute')) {
+      return Icons.sports_gymnastics;
+    }
+    return Icons.whatshot; // Default warmup icon
+  }
+
+  /// Map exercise name to appropriate icon for stretches
+  IconData _getIconForStretch(String name) {
+    final lower = name.toLowerCase();
+    if (lower.contains('quad') || lower.contains('leg') || lower.contains('hamstring')) {
+      return Icons.airline_seat_legroom_extra;
+    }
+    if (lower.contains('chest') || lower.contains('pec')) {
+      return Icons.open_with;
+    }
+    if (lower.contains('back') || lower.contains('lat') || lower.contains('spine')) {
+      return Icons.accessibility_new;
+    }
+    if (lower.contains('shoulder') || lower.contains('arm') || lower.contains('tricep')) {
+      return Icons.fitness_center;
+    }
+    if (lower.contains('hip') || lower.contains('glute') || lower.contains('piriformis')) {
+      return Icons.sports_gymnastics;
+    }
+    if (lower.contains('calf') || lower.contains('ankle')) {
+      return Icons.directions_walk;
+    }
+    return Icons.self_improvement; // Default stretch icon
+  }
+
+  @override
+  void dispose() {
+    _cancelWorkoutNotification();
+    _timerController.dispose();
+    _videoController?.dispose();
+    _repsController.dispose();
+    _repsRightController.dispose();
+    _weightController.dispose();
+    super.dispose();
+  }
+
+  // ========================================================================
+  // PHASE HANDLERS
+  // ========================================================================
+
+  void _handleWarmupComplete() {
+    HapticFeedback.heavyImpact();
+
+    ref.read(posthogServiceProvider).capture(
+      eventName: 'warmup_completed',
+      properties: {
+        'workout_id': widget.workout.id ?? '',
+      },
+    );
+
+    setState(() {
+      _currentPhase = WorkoutPhase.active;
+    });
+    _fetchMediaForExercise(_exercises[0]);
+    _showCoachTipIfNeeded();
+  }
+
+  void _handleSkipWarmup() {
+    ref.read(posthogServiceProvider).capture(
+      eventName: 'warmup_skipped',
+      properties: {
+        'workout_id': widget.workout.id ?? '',
+      },
+    );
+    _handleWarmupComplete();
+  }
+
+  void _handleWarmupIntervalsLogged(Map<String, List<WarmupInterval>> logs) {
+    if (logs.isEmpty) return;
+    debugPrint('🏋️ [ActiveWorkout] Warmup intervals logged: ${logs.length} exercises');
+
+    // Save warmup interval logs to backend
+    final workoutId = widget.workout.id;
+    if (workoutId == null) return;
+
+    final apiClient = ref.read(apiClientProvider);
+    final intervalData = logs.map((exerciseName, intervals) => MapEntry(
+      exerciseName,
+      intervals.map((i) => i.toJson()).toList(),
+    ));
+
+    // Fire-and-forget background save
+    apiClient.post(
+      '${ApiConstants.workouts}/$workoutId/warmup-logs',
+      data: {'intervals': intervalData},
+    ).then((_) {
+      debugPrint('✅ [ActiveWorkout] Warmup intervals saved to backend');
+    }).catchError((e) {
+      debugPrint('⚠️ [ActiveWorkout] Failed to save warmup intervals: $e');
+    });
+  }
+
+  Widget _buildWarmupLoadingScreen() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bg = isDark ? AppColors.pureBlack : AppColorsLight.pureWhite;
+    final textColor = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+
+    return Scaffold(
+      backgroundColor: bg,
+      body: Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const CircularProgressIndicator(color: AppColors.orange),
+            const SizedBox(height: 20),
+            Text(
+              'Preparing warmup...',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: textColor,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Loading your personalized warmup exercises',
+              style: TextStyle(fontSize: 13, color: textMuted),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Go back to warmup phase from active workout
+  void _goBackToWarmup() {
+    HapticFeedback.lightImpact();
+    setState(() {
+      _currentPhase = WorkoutPhase.warmup;
+    });
+  }
+
+  void _handleStretchComplete() {
+    ref.read(posthogServiceProvider).capture(
+      eventName: 'stretch_completed',
+      properties: {
+        'workout_id': widget.workout.id ?? '',
+      },
+    );
+
+    // Stop the workout timer when workout completes
+    _timerController.stopWorkoutTimer();
+    // Cancel the persistent notification — workout is done
+    _cancelWorkoutNotification();
+    // Start completion process - this will save to backend and navigate
+    _finalizeWorkoutCompletion();
+  }
+
+  void _handleSkipStretch() {
+    ref.read(posthogServiceProvider).capture(
+      eventName: 'stretch_skipped',
+      properties: {
+        'workout_id': widget.workout.id ?? '',
+      },
+    );
+    _handleStretchComplete();
+  }
+
+  void _handleRestComplete() {
+    final currentExercise = _exercises[_currentExerciseIndex];
+    final groupId = currentExercise.supersetGroup;
+
+    setState(() {
+      _isResting = false;
+      _isRestingBetweenExercises = false;
+      // Hide inline rest row and clear its state
+      _showInlineRest = false;
+      _inlineRestAiTip = null;
+      _inlineRestAchievementPrompt = null;
+    });
+    HapticFeedback.heavyImpact();
+
+    // Play rest end sound + voice announcement
+    ref.read(soundPreferencesProvider.notifier).playRestTimerEnd();
+    ref.read(voiceAnnouncementsProvider.notifier).announceRestEndIfEnabled();
+
+    // If we're in a superset, navigate to the first exercise in the superset
+    // that still has sets remaining
+    if (groupId != null && currentExercise.isInSuperset) {
+      final supersetIndices = _getSupersetIndices(groupId);
+      for (final idx in supersetIndices) {
+        if (!_isExerciseCompleted(idx)) {
+          // Found the first superset exercise with sets remaining
+          if (idx != _currentExerciseIndex) {
+            _advanceToSupersetExercise(idx);
+          }
+          return;
+        }
+      }
+    }
+  }
+
+  // ========================================================================
+  // WORKOUT LOGIC
+  // ========================================================================
+
+  void _completeSet() {
+    final weight = double.tryParse(_weightController.text) ?? 0;
+    final reps = int.tryParse(_repsController.text) ?? 0;
+    final exercise = _exercises[_currentExerciseIndex];
+    // Get target reps from setTargets based on current set number
+    final currentSetNumber = (_completedSets[_currentExerciseIndex]?.length ?? 0) + 1;
+    final setTarget = exercise.getTargetForSet(currentSetNumber);
+    final targetReps = setTarget?.targetReps ?? exercise.reps ?? 10;
+
+    final setLog = SetLog(
+      reps: reps,
+      weight: _useKg ? weight : weight * 0.453592,
+      targetReps: targetReps,
+    );
+
+    // Store as pending - we'll finalize after RIR input
+    _pendingSetLog = setLog;
+
+    // Track set completed event
+    ref.read(posthogServiceProvider).capture(
+      eventName: 'set_completed',
+      properties: {
+        'exercise_name': exercise.name,
+        'set_number': currentSetNumber,
+        'weight': weight,
+        'reps': reps,
+      },
+    );
+
+    // Use HapticService for satisfying set completion feedback
+    HapticService.setCompletion();
+
+    // Finalize the set
+    _finalizeSetWithRpe();
+  }
+
+  /// Finalize the set log with RPE/RIR and continue
+  void _finalizeSetWithRpe() {
+    if (_pendingSetLog == null) return;
+
+    // Update set log with RPE/RIR
+    final finalSetLog = _pendingSetLog!.copyWith(
+      rpe: _lastSetRpe,
+      rir: _lastSetRir,
+    );
+
+    // Update data outside setState - only trigger rebuild for animation
+    _completedSets[_currentExerciseIndex] ??= [];
+    _completedSets[_currentExerciseIndex]!.add(finalSetLog);
+    setState(() {
+      _justCompletedSetIndex = _completedSets[_currentExerciseIndex]!.length - 1;
+    });
+
+    // Check for PRs
+    final currentExercise = _exercises[_currentExerciseIndex];
+    _checkForPRs(finalSetLog, currentExercise);
+
+    // Clear animation after delay
+    Future.delayed(const Duration(milliseconds: 500), () {
+      if (mounted) {
+        setState(() => _justCompletedSetIndex = null);
+      }
+    });
+
+    // Check if exercise is complete
+    final totalSets = _totalSetsPerExercise[_currentExerciseIndex] ?? 3;
+    final completedCount = _completedSets[_currentExerciseIndex]?.length ?? 0;
+
+    if (completedCount >= totalSets) {
+      // Play exercise completion sound
+      ref.read(soundPreferencesProvider.notifier).playExerciseCompletion();
+
+      // Exercise complete - move to next or finish
+      // If in superset, check if we need to continue the round first
+      final groupId = currentExercise.supersetGroup;
+      if (groupId != null && currentExercise.isInSuperset) {
+        // Mark this exercise done in the round
+        _markSupersetExerciseDoneInRound(_currentExerciseIndex, groupId);
+
+        // Check if there are more exercises in the superset to do
+        final nextSupersetIdx = _getNextSupersetExerciseIndex(_currentExerciseIndex, groupId);
+        if (nextSupersetIdx != null) {
+          // More superset exercises to do - advance without rest
+          _advanceToSupersetExercise(nextSupersetIdx);
+        } else {
+          // Superset round complete - reset and start rest before moving to next exercise
+          _resetSupersetRound(groupId);
+          _moveToNextExercise();
+        }
+      } else {
+        _moveToNextExercise();
+      }
+    } else {
+      // Auto-adjust weight if user underperformed (fewer reps than target)
+      _autoAdjustWeightIfNeeded(finalSetLog, currentExercise);
+
+      // Update weight/reps for next set based on progression pattern
+      _updateControlsForNextSet(currentExercise, completedCount);
+
+      // Get progression pattern to determine rest behavior
+      final pattern = _exerciseProgressionPattern[_currentExerciseIndex]
+          ?? SetProgressionPattern.pyramidUp;
+      final patternRest = pattern.restDuration;
+
+      // Check if exercise is in a superset
+      final groupId = currentExercise.supersetGroup;
+      if (groupId != null && currentExercise.isInSuperset) {
+        // Mark this exercise done in the round
+        _markSupersetExerciseDoneInRound(_currentExerciseIndex, groupId);
+
+        // Check if there are more exercises in the superset to do this round
+        final nextSupersetIdx = _getNextSupersetExerciseIndex(_currentExerciseIndex, groupId);
+        if (nextSupersetIdx != null) {
+          // More superset exercises to do - advance without rest
+          _advanceToSupersetExercise(nextSupersetIdx);
+        } else {
+          // Superset round complete - reset progress and start rest
+          _resetSupersetRound(groupId);
+          _startRest(false);
+
+          // Fetch AI-powered suggestions during rest
+          _fetchAIWeightSuggestion(finalSetLog);
+          _fetchRestSuggestion();
+          _checkFatigue();
+        }
+      } else if (patternRest != null && patternRest.inSeconds <= 15) {
+        // Short rest patterns (drop sets 10s, rest-pause 15s, myo-reps 5s)
+        _startRest(false, overrideDuration: patternRest);
+        // Skip AI suggestion for micro-rest patterns
+      } else {
+        // Not in a superset - normal flow
+        _startRest(false);
+
+        // Fetch AI-powered suggestions during rest
+        _fetchAIWeightSuggestion(finalSetLog);
+        _fetchRestSuggestion();
+        _checkFatigue();
+      }
+    }
+
+    // Reset for next set
+    _pendingSetLog = null;
+    // Don't reset RPE/RIR - keep for context but allow changes
+  }
+
+  /// Initialize weight/reps controllers for a given exercise index.
+  ///
+  /// Used when switching exercises (tap, next exercise, superset advance).
+  /// Handles: warmup weight reduction, bodyweight exercises, priority chain
+  /// (previous session → AI target → equipment default).
+  void _initControllersForExercise(int exerciseIndex) {
+    if (exerciseIndex < 0 || exerciseIndex >= _exercises.length) return;
+
+    final exercise = _exercises[exerciseIndex];
+    final completedLogs = _completedSets[exerciseIndex];
+
+    // If exercise has completed sets, use the last completed set's data
+    if (completedLogs != null && completedLogs.isNotEmpty) {
+      final lastLog = completedLogs.last;
+      final displayWeight = _useKg ? lastLog.weight : lastLog.weight * 2.20462;
+      _weightController.text = displayWeight.toStringAsFixed(1);
+      _repsController.text = lastLog.reps.toString();
+      _repsRightController.text = lastLog.reps.toString();
+      return;
+    }
+
+    // Determine target for the first uncompleted set
+    final completedCount = completedLogs?.length ?? 0;
+    final setTarget = exercise.getTargetForSet(completedCount + 1);
+
+    // Set reps from target
+    _repsController.text = (setTarget?.targetReps ?? exercise.reps ?? 10).toString();
+    _repsRightController.text = _repsController.text;
+
+    // Check if this is a warmup set
+    final isWarmup = setTarget != null &&
+        setTarget.setType.toLowerCase() == 'warmup';
+
+    // Weight priority: previous session → AI target → equipment default
+    final prevSets = _previousSets[exerciseIndex];
+    final prevWeightKg = (prevSets != null && prevSets.isNotEmpty)
+        ? (prevSets.last['weight'] as num?)?.toDouble() ?? 0.0
+        : 0.0;
+
+    double displayWeight;
+    if (prevWeightKg > 0) {
+      displayWeight = _useKg ? prevWeightKg : prevWeightKg * 2.20462;
+    } else {
+      // For warmup sets, use the first WORKING set's target weight (not warmup's own)
+      double aiWt;
+      if (isWarmup) {
+        final workingTarget = exercise.setTargets?.cast<SetTarget?>().firstWhere(
+          (t) => t != null && t.setType.toLowerCase() != 'warmup' && (t.targetWeightKg ?? 0) > 0,
+          orElse: () => null,
+        );
+        aiWt = (workingTarget?.targetWeightKg ?? exercise.weight ?? 0).toDouble();
+      } else {
+        aiWt = (setTarget?.targetWeightKg ?? exercise.weight ?? 0).toDouble();
+      }
+      if (aiWt > 0 && !isGenericWeight(aiWt, exercise.weightSource)) {
+        displayWeight = _useKg ? aiWt : aiWt * 2.20462;
+      } else if (aiWt > 0) {
+        // Even if generic, use it if it's the only weight we have
+        displayWeight = _useKg ? aiWt : aiWt * 2.20462;
+      } else {
+        displayWeight = getDefaultWeight(exercise.equipment,
+            exerciseName: exercise.name,
+            fitnessLevel: ref.read(authStateProvider).user?.fitnessLevel,
+            gender: ref.read(authStateProvider).user?.gender,
+            useKg: _useKg);
+      }
+    }
+
+    // Get owned weights from gym profile for this equipment type
+    final ownedWeights = _getOwnedWeightsForEquipment(exercise.equipment);
+
+    // Warmup: reduce to ~50% and snap to owned weights or standard increments
+    if (isWarmup && displayWeight > 0) {
+      final rawWarmup = displayWeight * 0.5;
+      if (ownedWeights != null && ownedWeights.isNotEmpty) {
+        // Snap to nearest owned weight
+        displayWeight = snapToOwnedWeight(rawWarmup, ownedWeights,
+            equipment: exercise.equipment, exerciseName: exercise.name, useKg: _useKg);
+      } else {
+        // No inventory — snap to standard equipment increments
+        final range = getWeightRange(exercise.equipment, exerciseName: exercise.name);
+        final warmupStep = _useKg ? range.stepKg : range.stepLbs;
+        final minWeight = _useKg ? range.minKg : range.minLbs;
+        if (warmupStep > 0) {
+          final warmupUpperBound = displayWeight > minWeight ? displayWeight : minWeight;
+          displayWeight = ((rawWarmup / warmupStep).round() * warmupStep)
+              .clamp(minWeight, warmupUpperBound);
+        } else {
+          displayWeight = rawWarmup;
+        }
+      }
+    } else if (ownedWeights != null && ownedWeights.isNotEmpty && displayWeight > 0) {
+      // Non-warmup: also snap to owned weights if available
+      displayWeight = snapToOwnedWeight(displayWeight, ownedWeights,
+          equipment: exercise.equipment, exerciseName: exercise.name, useKg: _useKg);
+    }
+
+    // Set weight controller (empty for bodyweight/zero)
+    if (displayWeight <= 0) {
+      _weightController.text = '';
+    } else {
+      _weightController.text = displayWeight.toStringAsFixed(
+          displayWeight % 1 == 0 ? 0 : 1);
+    }
+
+    // Apply progression pattern to update TARGET column (saved or default)
+    final activePattern = _exerciseProgressionPattern[exerciseIndex]
+        ?? SetProgressionPattern.pyramidUp;
+    _applyProgressionTargets(exerciseIndex, activePattern);
+  }
+
+  /// Get the user's owned weights for an equipment type from their gym profile.
+  /// Returns null if no gym profile or no inventory for this equipment.
+  List<double>? _getOwnedWeightsForEquipment(String? equipment) {
+    final profile = ref.read(activeGymProfileProvider);
+    if (profile == null || profile.equipmentDetails == null) return null;
+
+    final eq = (equipment ?? '').toLowerCase();
+    // Map exercise equipment to gym profile equipment names
+    String profileKey;
+    if (eq.contains('dumbbell')) {
+      profileKey = 'dumbbells';
+    } else if (eq.contains('kettlebell')) {
+      profileKey = 'kettlebells';
+    } else if (eq.contains('barbell') || eq.contains('ez') || eq.contains('trap')) {
+      return null; // Barbells use plate math, not fixed weights
+    } else {
+      return null; // Machines/cables use pin stacks, not owned weights
+    }
+
+    for (final detail in profile.equipmentDetails!) {
+      final name = (detail['name'] as String? ?? '').toLowerCase();
+      if (name == profileKey) {
+        final item = EquipmentItem.fromJson(detail);
+        final weights = item.availableWeights;
+        if (weights.isNotEmpty) return weights;
+      }
+    }
+    return null;
+  }
+
+  /// Update weight/reps controllers for the next set based on the active
+  /// progression pattern's calculated targets.
+  ///
+  /// For pyramid/RPT/drop sets, each set has a specific weight and rep target.
+  /// This method pre-fills the input fields with those values.
+  void _updateControlsForNextSet(WorkoutExercise exercise, int completedCount) {
+    final pattern = _exerciseProgressionPattern[_currentExerciseIndex]
+        ?? SetProgressionPattern.pyramidUp;
+
+    // Get increment state for this exercise's equipment
+    final incrementState = ref.read(weightIncrementsProvider);
+
+    final totalSets = _totalSetsPerExercise[_currentExerciseIndex] ?? 3;
+
+    // ALWAYS re-derive working weight from the LAST COMPLETED SET.
+    // The user may have manually changed the weight after selecting a pattern.
+    final completedLogs = _completedSets[_currentExerciseIndex];
+
+    // Find the last NON-WARMUP completed set for baseReps/weight derivation
+    SetLog? lastWorkingLog;
+    if (completedLogs != null) {
+      for (int i = completedLogs.length - 1; i >= 0; i--) {
+        // Check if this was a warmup set
+        final setTargets = exercise.setTargets;
+        final isWarmup = setTargets != null && i < setTargets.length &&
+            setTargets[i].setType.toLowerCase() == 'warmup';
+        if (!isWarmup) {
+          lastWorkingLog = completedLogs[i];
+          break;
+        }
+      }
+    }
+
+    // If only warmup sets completed (no working sets), delegate to
+    // _initControllersForExercise which uses the pre-calculated working set targets.
+    // Don't run progression adaptation with warmup data — it produces wrong results.
+    if (lastWorkingLog == null) {
+      debugPrint('📊 [NextSet] No working sets completed yet — delegating to _initControllersForExercise');
+      _initControllersForExercise(_currentExerciseIndex);
+      return;
+    }
+
+    // Derive working weight from actual performance, accounting for set position.
+    // IMPORTANT: Work in the user's DISPLAY unit (lbs or kg) to avoid kg↔lbs
+    // rounding issues. SetLog stores in kg, so convert to display unit first.
+    final actualWeightKg = lastWorkingLog.weight;
+    final actualWeight = _useKg ? actualWeightKg : actualWeightKg * 2.20462;
+    if (actualWeight <= 0) return; // Guard: bodyweight or no data
+
+    // Use user's configured increment, converted to display unit if needed.
+    // The increment provider stores values in its own unit (kg or lbs).
+    final incrementRaw = incrementState.getIncrement(exercise.equipment);
+    final incrementUnit = incrementState.unit;
+    final double effectiveIncrement;
+    if (_useKg && incrementUnit == 'lbs') {
+      effectiveIncrement = incrementRaw * 0.453592;
+    } else if (!_useKg && incrementUnit == 'kg') {
+      effectiveIncrement = incrementRaw * 2.20462;
+    } else {
+      effectiveIncrement = incrementRaw; // Units match
+    }
+
+    final snapped = effectiveIncrement > 0
+        ? (actualWeight / effectiveIncrement).round() * effectiveIncrement
+        : actualWeight;
+
+    // Determine which set was just completed (0-indexed)
+    final completedIndex = (completedLogs?.length ?? 1) - 1;
+
+    final workingWeight = pattern.deriveWorkingWeight(
+      enteredWeight: snapped,
+      totalSets: totalSets,
+      increment: effectiveIncrement,
+      completedSetIndex: completedIndex,
+    );
+    _exerciseWorkingWeight[_currentExerciseIndex] = workingWeight;
+
+    // Derive base reps from completed reps, reversing the position-specific
+    // rep offset. E.g., Pyramid Up set 1 has baseReps + 4, so we subtract 4.
+    final userGoal = ref.read(authStateProvider).user?.primaryGoal;
+    final goalDefault = TrainingGoalRepRange.forGoal(userGoal).defaultReps;
+    final rawBaseReps = (lastWorkingLog?.reps ?? exercise.reps ?? goalDefault).clamp(1, 30);
+    final baseReps = SetProgressionPatternX.reverseRepOffset(
+      pattern, rawBaseReps, completedIndex, totalSets,
+    );
+
+    // Exercise-type rep ceiling, pattern-aware (endurance allows higher)
+    final _exType = FatigueService.getExerciseType(exercise.muscleGroup, exercise.name);
+    final int _maxReps;
+    if (pattern == SetProgressionPattern.endurance) {
+      _maxReps = _exType == 'compound' ? 15 : _exType == 'bodyweight' ? 30 : 25;
+    } else {
+      _maxReps = _exType == 'compound' ? 12 : _exType == 'bodyweight' ? 20 : 15;
+    }
+
+    var targets = pattern.generateTargets(
+      workingWeight: workingWeight,
+      totalSets: totalSets,
+      baseReps: baseReps,
+      increment: effectiveIncrement,
+      trainingGoal: userGoal,
+      maxReps: _maxReps,
+    );
+
+    // Adaptive progression: adjust remaining targets based on actual performance
+    final completedSetLogs = _completedSets[_currentExerciseIndex];
+    // Save original next-set weight before adaptation (for notification)
+    final nextIdx = completedSetLogs?.length ?? 0;
+    final originalNextWeight = nextIdx < targets.length ? targets[nextIdx].weight : null;
+
+    if (completedSetLogs != null && completedSetLogs.isNotEmpty) {
+      // Convert completed weights to display units, filtering out warmup sets
+      final setTargetsRef = exercise.setTargets;
+      final completedData = <CompletedSetData>[];
+      for (int i = 0; i < completedSetLogs.length; i++) {
+        final log = completedSetLogs[i];
+        // Skip warmup sets from adaptation — warmup performance is not a signal
+        if (setTargetsRef != null && i < setTargetsRef.length &&
+            setTargetsRef[i].setType.toLowerCase() == 'warmup') {
+          continue;
+        }
+        completedData.add(CompletedSetData(
+          weight: _useKg ? log.weight : log.weight * 2.20462,
+          reps: log.reps,
+          rir: log.rir,
+        ));
+      }
+
+      targets = adaptTargets(
+        pattern: pattern,
+        originalTargets: targets,
+        completedSets: completedData,
+        increment: effectiveIncrement,
+        totalSets: totalSets,
+      );
+
+      // Update setTargets display for remaining sets
+      final currentSetTargets = List<SetTarget>.from(exercise.setTargets ?? []);
+      while (currentSetTargets.length < totalSets) {
+        currentSetTargets.add(SetTarget(
+          setNumber: currentSetTargets.length + 1,
+          targetReps: baseReps,
+          targetWeightKg: workingWeight,
+        ));
+      }
+      for (int i = completedCount; i < targets.length && i < currentSetTargets.length; i++) {
+        final pt = targets[i];
+        currentSetTargets[i] = SetTarget(
+          setNumber: i + 1,
+          setType: pt.isAmrap ? 'amrap' : currentSetTargets[i].setType,
+          targetReps: pt.isAmrap ? 0 : pt.reps,
+          targetWeightKg: pt.weight,
+          targetRir: currentSetTargets[i].targetRir,
+        );
+      }
+      setState(() {
+        _exercises[_currentExerciseIndex] = exercise.copyWith(setTargets: currentSetTargets);
+      });
+    }
+
+    // Get the next set's target (completedCount is 0-indexed count of done sets)
+    final nextSetIndex = completedCount; // Already 1 past last completed
+    if (nextSetIndex >= targets.length) return;
+
+    final nextTarget = targets[nextSetIndex];
+
+    // Only update if the auto-adjust didn't already change the weight
+    // (auto-adjust only fires on poor performance, so if it fired, its value takes priority)
+    final currentControllerWeight = double.tryParse(_weightController.text) ?? 0;
+    final previousSetWeightKg = _completedSets[_currentExerciseIndex]?.last.weight ?? 0;
+    // Convert stored weight (always kg) to display unit for comparison
+    final previousSetWeight = _useKg ? previousSetWeightKg : previousSetWeightKg * 2.20462;
+
+    // If auto-adjust changed the weight (different from what user lifted), don't override
+    if ((currentControllerWeight - previousSetWeight).abs() > 0.01) {
+      // Auto-adjust already modified the weight — respect that
+      // But still update reps if the pattern specifies different reps
+      if (!nextTarget.isAmrap) {
+        _repsController.text = nextTarget.reps.toString();
+        _repsRightController.text = nextTarget.reps.toString();
+      }
+      return;
+    }
+
+    // Targets are already in display units (progression math runs in display unit).
+    // Snap to user's configured increment for clean display values.
+    final displayWeight = effectiveIncrement > 0
+        ? (nextTarget.weight / effectiveIncrement).round() * effectiveIncrement
+        : nextTarget.weight;
+    _weightController.text = displayWeight.toStringAsFixed(1);
+
+    // Update reps
+    if (nextTarget.isAmrap) {
+      _repsController.text = '';
+      _repsRightController.text = '';
+    } else {
+      _repsController.text = nextTarget.reps.toString();
+      _repsRightController.text = nextTarget.reps.toString();
+    }
+
+    // Show notification if adaptive progression changed the weight
+    if (originalNextWeight != null && mounted) {
+      final diff = nextTarget.weight - originalNextWeight;
+      if (diff.abs() > 0.01) {
+        final unit = _useKg ? 'kg' : 'lb';
+        final fromDisplay = _useKg ? originalNextWeight : originalNextWeight * 2.20462;
+        final toDisplay = _useKg ? nextTarget.weight : nextTarget.weight * 2.20462;
+        final arrow = diff > 0 ? '↑' : '↓';
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Weight $arrow ${fromDisplay.toStringAsFixed(0)} → ${toDisplay.toStringAsFixed(0)} $unit',
+            ),
+            duration: const Duration(seconds: 3),
+            behavior: SnackBarBehavior.floating,
+            backgroundColor: diff > 0 ? AppColors.success : WorkoutDesign.rir2,
+          ),
+        );
+      }
+    }
+  }
+
+  /// Auto-adjust weight for next set based on RIR-first logic.
+  ///
+  /// Uses RIR (Reps in Reserve) as the PRIMARY signal for weight adjustment,
+  /// falling back to rep ratio only when no intensity data is available.
+  /// Uses discrete increment steps (not percentages) to avoid compounding losses.
+  ///
+  /// Decision tree:
+  /// - RIR >= 2 OR repRatio >= 0.9 → NO adjustment (good performance)
+  /// - RIR == 1 AND repRatio >= 0.7 → NO adjustment (maintain)
+  /// - RIR == 0 OR repRatio < 0.7   → Drop 1 equipment increment
+  /// - repRatio < 0.5 AND RIR == 0  → Drop 2 equipment increments
+  /// - No RIR data → Only adjust if repRatio < 0.7
+  ///
+  /// Skips adjustment entirely for drop sets, rest-pause, and myo-reps
+  /// (those patterns manage their own weight progression).
+  void _autoAdjustWeightIfNeeded(SetLog setLog, WorkoutExercise exercise) {
+    final currentWeightKg = setLog.weight; // Always in KG
+
+    // Skip bodyweight exercises
+    if (currentWeightKg <= 0) {
+      debugPrint('🔧 [AutoAdjust] SKIP — bodyweight (weight=$currentWeightKg)');
+      return;
+    }
+
+    // Skip warmup sets
+    final completedCount = _completedSets[_currentExerciseIndex]?.length ?? 0;
+    final setTargetsList = exercise.setTargets;
+    if (setTargetsList != null && completedCount > 0) {
+      final justCompletedIdx = completedCount - 1;
+      if (justCompletedIdx < setTargetsList.length &&
+          setTargetsList[justCompletedIdx].setType.toLowerCase() == 'warmup') {
+        debugPrint('🔧 [AutoAdjust] SKIP — warmup set');
+        return;
+      }
+    }
+
+    // Skip for progression patterns that manage their own weights
+    final pattern = _exerciseProgressionPattern[_currentExerciseIndex]
+        ?? SetProgressionPattern.pyramidUp;
+    if (pattern == SetProgressionPattern.dropSets ||
+        pattern == SetProgressionPattern.restPause ||
+        pattern == SetProgressionPattern.myoReps) {
+      debugPrint('🔧 [AutoAdjust] SKIP — pattern $pattern manages own weights');
+      return;
+    }
+
+    final targetReps = setLog.targetReps > 0 ? setLog.targetReps : (exercise.reps ?? 10);
+    final actualReps = setLog.reps;
+
+    // Hit all reps — no adjustment needed
+    if (actualReps >= targetReps) {
+      debugPrint('🔧 [AutoAdjust] SKIP — hit target ($actualReps >= $targetReps)');
+      return;
+    }
+
+    final repRatio = actualReps / targetReps;
+
+    // Get effective RIR (prefer setLog.rir, fall back to deriving from RPE)
+    int? effectiveRir = setLog.rir;
+    if (effectiveRir == null && setLog.rpe != null) {
+      effectiveRir = (10 - setLog.rpe!).clamp(0, 5);
+    }
+
+    // Get equipment increment in KG (since currentWeight is in KG)
+    final incState = ref.read(weightIncrementsProvider);
+    final equipmentIncrementKg = incState.getIncrementKg(exercise.equipment);
+
+    debugPrint('🔧 [AutoAdjust] weightKg=$currentWeightKg, reps=$actualReps/$targetReps, '
+        'repRatio=${repRatio.toStringAsFixed(2)}, RIR=$effectiveRir, '
+        'incKg=$equipmentIncrementKg, pattern=$pattern');
+
+    // RIR-first decision tree
+    int incrementsToDrop = 0;
+    String? message;
+
+    if (effectiveRir != null) {
+      // Have intensity data — use RIR as primary signal
+      if (effectiveRir >= 2 || repRatio >= 0.9) {
+        // Good performance: had reps in reserve or nearly hit target
+        debugPrint('🔧 [AutoAdjust] SKIP — good perf (RIR=$effectiveRir, ratio=${repRatio.toStringAsFixed(2)})');
+        return;
+      } else if (effectiveRir == 1 && repRatio >= 0.7) {
+        // Marginal: working hard but acceptable
+        debugPrint('🔧 [AutoAdjust] SKIP — marginal OK (RIR=1, ratio=${repRatio.toStringAsFixed(2)})');
+        return;
+      } else if (repRatio < 0.5 && effectiveRir == 0) {
+        // Severe failure: couldn't do half the reps AND hit failure
+        incrementsToDrop = 2;
+        message = 'Weight too heavy';
+      } else if (effectiveRir == 0 || repRatio < 0.7) {
+        // Poor: hit failure or missed many reps
+        incrementsToDrop = 1;
+        message = 'Adjusting weight';
+      }
+    } else {
+      // No intensity data — conservative fallback using rep ratio only
+      if (repRatio >= 0.7) {
+        debugPrint('🔧 [AutoAdjust] SKIP — no RIR, ratio OK (${repRatio.toStringAsFixed(2)})');
+        return; // Good enough without intensity data
+      }
+      incrementsToDrop = 1;
+      message = 'Adjusting weight';
+    }
+
+    if (incrementsToDrop == 0) return;
+
+    // Minimum weight for barbell = bar weight in KG; otherwise = one increment
+    final minWeightKg = isBarbell(exercise.equipment, exerciseName: exercise.name)
+        ? getBarWeight(exercise.equipment, useKg: true)
+        : equipmentIncrementKg;
+
+    // Drop by exact increments (not percentages) to avoid compounding
+    final adjustedWeightKg = (currentWeightKg - (equipmentIncrementKg * incrementsToDrop))
+        .clamp(minWeightKg, 999.0);
+
+    // Skip if no real change
+    if ((adjustedWeightKg - currentWeightKg).abs() < 0.01) {
+      debugPrint('🔧 [AutoAdjust] SKIP — no real change after clamp');
+      return;
+    }
+
+    // Convert to display unit before setting controller
+    final displayAdjusted = _useKg ? adjustedWeightKg : adjustedWeightKg * 2.20462;
+    final inc = incState.getIncrement(exercise.equipment);
+    // Convert increment to display unit for snapping
+    final incrementUnit = incState.unit;
+    double displayInc = inc;
+    if (_useKg && incrementUnit == 'lbs') {
+      displayInc = inc * 0.453592;
+    } else if (!_useKg && incrementUnit == 'kg') {
+      displayInc = inc * 2.20462;
+    }
+
+    final snappedDisplay = displayInc > 0
+        ? (displayAdjusted / displayInc).round() * displayInc
+        : displayAdjusted;
+
+    debugPrint('🔧 [AutoAdjust] DROP $incrementsToDrop inc(s): '
+        '${currentWeightKg.toStringAsFixed(1)}kg → ${adjustedWeightKg.toStringAsFixed(1)}kg, '
+        'display=${snappedDisplay.toStringAsFixed(1)} ${_useKg ? "kg" : "lb"}');
+
+    // Update weight controller for next set
+    _weightController.text = snappedDisplay.toStringAsFixed(snappedDisplay % 1 == 0 ? 0 : 1);
+
+    // Show feedback with correct unit
+    if (mounted && message != null) {
+      final unit = _useKg ? 'kg' : 'lb';
+      final displayCurrent = _useKg ? currentWeightKg : currentWeightKg * 2.20462;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            '$message: ${displayCurrent.toStringAsFixed(1)} → ${snappedDisplay.toStringAsFixed(1)} $unit',
+          ),
+          duration: const Duration(seconds: 3),
+          behavior: SnackBarBehavior.floating,
+          backgroundColor: WorkoutDesign.rir2,
+        ),
+      );
+    }
+  }
+
+  // ========================================================================
+  // SUPERSET WORKOUT FLOW
+  // ========================================================================
+
+  /// Pre-compute superset indices for all groups.
+  /// Called once in initState and whenever _exercises changes.
+  void _precomputeSupersetIndices() {
+    _supersetIndicesCache = {};
+    for (int i = 0; i < _exercises.length; i++) {
+      final groupId = _exercises[i].supersetGroup;
+      if (groupId != null) {
+        _supersetIndicesCache.putIfAbsent(groupId, () => <int>[]);
+        _supersetIndicesCache[groupId]!.add(i);
+      }
+    }
+    // Sort each group by superset order
+    for (final entry in _supersetIndicesCache.entries) {
+      entry.value.sort((a, b) {
+        final orderA = _exercises[a].supersetOrder ?? 0;
+        final orderB = _exercises[b].supersetOrder ?? 0;
+        return orderA.compareTo(orderB);
+      });
+    }
+  }
+
+  /// Get all exercise indices in a superset group (returns from pre-computed cache)
+  List<int> _getSupersetIndices(int groupId) {
+    return _supersetIndicesCache[groupId] ?? [];
+  }
+
+  /// Get the next exercise index in the superset round
+  /// Returns null if this was the last exercise in the round (all done)
+  int? _getNextSupersetExerciseIndex(int currentIndex, int groupId) {
+    final supersetIndices = _getSupersetIndices(groupId);
+    if (supersetIndices.isEmpty) return null;
+
+    // Get which exercises have been done in this round
+    final doneInRound = _supersetRoundProgress[groupId] ?? <int>{};
+
+    // Find the next exercise in the superset that hasn't been done this round
+    // and still has sets remaining
+    for (final idx in supersetIndices) {
+      if (idx != currentIndex &&
+          !doneInRound.contains(idx) &&
+          !_isExerciseCompleted(idx)) {
+        return idx;
+      }
+    }
+
+    return null; // All superset exercises done for this round
+  }
+
+  /// Mark an exercise as done for the current superset round
+  void _markSupersetExerciseDoneInRound(int exerciseIndex, int groupId) {
+    _supersetRoundProgress[groupId] ??= <int>{};
+    _supersetRoundProgress[groupId]!.add(exerciseIndex);
+    debugPrint('🔗 [Superset] Marked exercise $exerciseIndex done in round for group $groupId. Progress: ${_supersetRoundProgress[groupId]}');
+  }
+
+  /// Reset the superset round progress when all exercises have completed their set
+  void _resetSupersetRound(int groupId) {
+    _supersetRoundProgress[groupId] = <int>{};
+    debugPrint('🔗 [Superset] Reset round progress for group $groupId');
+  }
+
+  /// Navigate to the next exercise in the superset (no rest timer)
+  void _advanceToSupersetExercise(int nextIndex) {
+    debugPrint('🔗 [Superset] Auto-advancing to exercise $nextIndex: ${_exercises[nextIndex].name}');
+
+    // Track time for current exercise
+    if (_currentExerciseStartTime != null) {
+      _exerciseTimeSeconds[_currentExerciseIndex] =
+          DateTime.now().difference(_currentExerciseStartTime!).inSeconds;
+    }
+
+    final nextExercise = _exercises[nextIndex];
+
+    // Haptic feedback for exercise transition (lighter than normal)
+    HapticFeedback.selectionClick();
+
+    setState(() {
+      _currentExerciseIndex = nextIndex;
+      _viewingExerciseIndex = nextIndex;
+      // Don't start rest - we're continuing the superset
+      _isResting = false;
+      _showInlineRest = false;
+    });
+
+    // Update persistent notification with new exercise
+    _updateWorkoutNotification();
+
+    // Initialize weight/reps controllers for the new exercise
+    _initControllersForExercise(nextIndex);
+
+    // Fetch smart weight suggestion based on history (background, non-blocking)
+    _fetchSmartWeightForExercise(nextExercise);
+
+    // Fetch media for new exercise
+    _fetchMediaForExercise(nextExercise);
+
+    _currentExerciseStartTime = DateTime.now();
+
+    // Show brief feedback
+    ScaffoldMessenger.of(context).clearSnackBars();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            const Icon(Icons.link, color: Colors.white, size: 18),
+            const SizedBox(width: 8),
+            Expanded(child: Text('Superset: ${nextExercise.name}')),
+          ],
+        ),
+        duration: const Duration(milliseconds: 1500),
+        behavior: SnackBarBehavior.floating,
+        backgroundColor: Colors.purple,
+      ),
+    );
+  }
+
+  /// Fetch AI-powered weight suggestion from the backend
+  Future<void> _fetchAIWeightSuggestion(SetLog setLog) async {
+    final exercise = _exercises[_currentExerciseIndex];
+    final isLastSet = (_completedSets[_currentExerciseIndex]?.length ?? 0) >=
+        (_totalSetsPerExercise[_currentExerciseIndex] ?? 3);
+    final equipmentIncrement = WeightIncrements.getIncrement(exercise.equipment);
+
+    // Set loading state
+    setState(() => _isLoadingWeightSuggestion = true);
+
+    try {
+      // Get API client and user ID
+      final apiClient = ref.read(apiClientProvider);
+      final userId = await apiClient.getUserId();
+
+      if (userId == null) {
+        // No user - use rule-based fallback
+        _useRuleBasedSuggestion(setLog, exercise, isLastSet, equipmentIncrement);
+        return;
+      }
+
+      // Get AI settings for personalized suggestions
+      final aiSettings = ref.read(aiSettingsProvider);
+
+      // Try AI-powered suggestion with personalized AI settings
+      final aiSuggestion = await WeightSuggestionService.getAISuggestion(
+        dio: apiClient.dio,
+        userId: userId,
+        exerciseName: exercise.name,
+        exerciseId: exercise.id,
+        equipment: exercise.equipment ?? 'dumbbell',
+        muscleGroup: exercise.muscleGroup ?? 'unknown',
+        setNumber: _completedSets[_currentExerciseIndex]?.length ?? 1,
+        totalSets: _totalSetsPerExercise[_currentExerciseIndex] ?? 3,
+        repsCompleted: setLog.reps,
+        targetReps: setLog.targetReps,
+        weightKg: setLog.weight,
+        rpe: _lastSetRpe,
+        rir: _lastSetRir,
+        isLastSet: isLastSet,
+        fitnessLevel: ref.read(scoresProvider).fitnessScore?.level.name ?? 'intermediate',
+        goals: ref.read(activeGymProfileProvider)?.goals ?? [],
+        // Pass AI settings for personalized coaching
+        coachingStyle: aiSettings.coachingStyle,
+        communicationTone: aiSettings.communicationTone,
+        encouragementLevel: aiSettings.encouragementLevel,
+        responseLength: aiSettings.responseLength,
+      );
+
+      if (!mounted) return;
+
+      if (aiSuggestion != null) {
+        setState(() {
+          _currentWeightSuggestion = aiSuggestion;
+          _isLoadingWeightSuggestion = false;
+        });
+        debugPrint('✅ [AI Weight] Got AI suggestion: ${aiSuggestion.type} '
+            'to ${aiSuggestion.suggestedWeight}kg');
+      } else {
+        // AI failed - use rule-based fallback
+        _useRuleBasedSuggestion(setLog, exercise, isLastSet, equipmentIncrement);
+      }
+    } catch (e) {
+      debugPrint('❌ [AI Weight] Error fetching suggestion: $e');
+      if (!mounted) return;
+      _useRuleBasedSuggestion(setLog, exercise, isLastSet, equipmentIncrement);
+    }
+  }
+
+  /// Fallback to rule-based suggestion when AI is unavailable
+  void _useRuleBasedSuggestion(
+    SetLog setLog,
+    WorkoutExercise exercise,
+    bool isLastSet,
+    double equipmentIncrement,
+  ) {
+    setState(() {
+      _currentWeightSuggestion = WeightSuggestionService.generateSuggestion(
+        currentWeight: setLog.weight,
+        targetReps: setLog.targetReps,
+        actualReps: setLog.reps,
+        rpe: _lastSetRpe,
+        rir: _lastSetRir,
+        equipmentIncrement: equipmentIncrement,
+        isLastSet: isLastSet,
+      );
+      _isLoadingWeightSuggestion = false;
+    });
+  }
+
+  /// Handle accepting a weight suggestion
+  void _acceptWeightSuggestion(double newWeight) {
+    setState(() {
+      _weightController.text = newWeight.toStringAsFixed(1);
+      _currentWeightSuggestion = null; // Clear suggestion after accepting
+    });
+    HapticFeedback.mediumImpact();
+  }
+
+  /// Handle dismissing a weight suggestion
+  void _dismissWeightSuggestion() {
+    setState(() {
+      _currentWeightSuggestion = null;
+    });
+  }
+
+  // ========================================================================
+  // FATIGUE DETECTION & REST SUGGESTIONS (AI Features)
+  // ========================================================================
+
+  /// Check for fatigue after completing a set
+  Future<void> _checkFatigue() async {
+    // Check if fatigue alerts are enabled
+    if (!ref.read(fatigueAlertsEnabledProvider)) return;
+
+    final exercise = _exercises[_currentExerciseIndex];
+    final completedSets = _completedSets[_currentExerciseIndex] ?? [];
+
+    // Need at least 2 sets to detect fatigue
+    if (completedSets.length < 2) return;
+
+    // Skip fatigue check if only warmup sets have been completed.
+    // Warmups are preparation — not performance indicators.
+    final setTargetsForCheck = exercise.setTargets;
+    if (setTargetsForCheck != null) {
+      final workingSetsCompleted = completedSets.asMap().entries.where((e) {
+        final idx = e.key;
+        if (idx >= setTargetsForCheck.length) return true; // no target = working set
+        return setTargetsForCheck[idx].setType.toLowerCase() != 'warmup';
+      }).length;
+      if (workingSetsCompleted < 2) return; // Not enough working sets for fatigue check
+    }
+
+    try {
+      final apiClient = ref.read(apiClientProvider);
+      final currentWeight = double.tryParse(_weightController.text) ?? 0;
+
+      // Get progression pattern and per-set targets for pattern-aware fatigue
+      final pattern = _exerciseProgressionPattern[_currentExerciseIndex]
+          ?? SetProgressionPattern.pyramidUp;
+      final setTargets = exercise.setTargets;
+
+      // Build set data with per-set progression targets (exclude warmup sets)
+      final setsData = <FatigueSetData>[];
+      for (int i = 0; i < completedSets.length; i++) {
+        final s = completedSets[i];
+        final target = (setTargets != null && i < setTargets.length) ? setTargets[i] : null;
+        // Skip warmup sets — they're preparation, not performance data
+        if (target != null && target.setType.toLowerCase() == 'warmup') continue;
+        setsData.add(FatigueSetData(
+          reps: s.reps,
+          weight: s.weight,
+          rpe: s.rpe,
+          rir: s.rir,
+          targetReps: target?.targetReps ?? exercise.reps,
+          targetWeight: target?.targetWeightKg,
+          targetRir: target?.targetRir,
+        ));
+      }
+      // Need at least 2 working sets for meaningful fatigue check
+      if (setsData.length < 2) return;
+
+      final exerciseType = FatigueService.getExerciseType(
+        exercise.muscleGroup,
+        exercise.name,
+      );
+
+      final alertData = await FatigueService.checkFatigue(
+        dio: apiClient.dio,
+        setsData: setsData,
+        currentWeight: currentWeight,
+        exerciseType: exerciseType,
+        targetReps: exercise.reps,
+        progressionPattern: pattern.name,
+      );
+
+      if (!mounted) return;
+
+      if (alertData != null && alertData.fatigueDetected) {
+        setState(() {
+          _fatigueAlertData = alertData;
+          _showFatigueAlert = true;
+        });
+        HapticFeedback.heavyImpact();
+      }
+    } catch (e) {
+      debugPrint('❌ [Fatigue] Error checking fatigue: $e');
+    }
+  }
+
+  /// Fetch AI-powered rest suggestion
+  Future<void> _fetchRestSuggestion() async {
+    final exercise = _exercises[_currentExerciseIndex];
+    final completedSets = _completedSets[_currentExerciseIndex] ?? [];
+
+    if (completedSets.isEmpty) return;
+
+    setState(() => _isLoadingRestSuggestion = true);
+
+    try {
+      final apiClient = ref.read(apiClientProvider);
+      final userId = await apiClient.getUserId();
+      if (userId == null) {
+        setState(() => _isLoadingRestSuggestion = false);
+        return;
+      }
+
+      // Determine if exercise is compound (based on muscle group)
+      final muscleGroup = (exercise.muscleGroup ?? exercise.primaryMuscle ?? '').toLowerCase();
+      final isCompound = muscleGroup.contains('chest') ||
+          muscleGroup.contains('back') ||
+          muscleGroup.contains('legs') ||
+          muscleGroup.contains('quads') ||
+          muscleGroup.contains('hamstrings') ||
+          muscleGroup.contains('glutes') ||
+          muscleGroup.contains('shoulders');
+
+      final totalSets = _totalSetsPerExercise[_currentExerciseIndex] ?? 3;
+      final setsRemaining = totalSets - completedSets.length;
+
+      final response = await apiClient.dio.post(
+        '/workouts/rest-suggestion',
+        data: {
+          'rpe': _lastSetRpe ?? 7, // Default to 7 if not tracked
+          'exercise_type': 'strength',
+          'exercise_name': exercise.name,
+          'sets_remaining': setsRemaining > 0 ? setsRemaining : 0,
+          'sets_completed': completedSets.length,
+          'is_compound': isCompound,
+          'muscle_group': exercise.muscleGroup ?? exercise.primaryMuscle,
+        },
+      );
+
+      if (!mounted) return;
+
+      if (response.statusCode == 200 && response.data != null) {
+        final suggestion = RestSuggestion.fromJson(response.data);
+        setState(() {
+          _restSuggestion = suggestion;
+          _isLoadingRestSuggestion = false;
+        });
+        debugPrint('✅ [Rest] Got suggestion: ${suggestion.suggestedSeconds}s - ${suggestion.reasoning}');
+      } else {
+        setState(() => _isLoadingRestSuggestion = false);
+      }
+    } on DioException catch (e) {
+      debugPrint('❌ [Rest] DioException: ${e.message}');
+      debugPrint('❌ [Rest] Response: ${e.response?.statusCode} ${e.response?.data}');
+      if (mounted) {
+        setState(() => _isLoadingRestSuggestion = false);
+      }
+    } catch (e) {
+      debugPrint('❌ [Rest] Error fetching suggestion: $e');
+      if (mounted) {
+        setState(() => _isLoadingRestSuggestion = false);
+      }
+    }
+  }
+
+  /// Handle accepting fatigue suggestion (reduce weight)
+  void _handleAcceptFatigueSuggestion() {
+    if (_fatigueAlertData != null && _fatigueAlertData!.suggestedWeight > 0) {
+      _weightController.text = _fatigueAlertData!.suggestedWeight.toStringAsFixed(1);
+    }
+    setState(() {
+      _showFatigueAlert = false;
+      _fatigueAlertData = null;
+    });
+    HapticFeedback.mediumImpact();
+  }
+
+  /// Handle dismissing fatigue alert (continue as planned)
+  void _handleDismissFatigueAlert() {
+    setState(() {
+      _showFatigueAlert = false;
+      _fatigueAlertData = null;
+    });
+  }
+
+  /// Accept rest suggestion - restart timer with new duration
+  void _acceptRestSuggestion(int seconds) {
+    // Restart rest timer with the suggested duration
+    _timerController.startRestTimer(seconds);
+    setState(() => _restSuggestion = null);
+    HapticFeedback.mediumImpact();
+  }
+
+  /// Dismiss rest suggestion
+  void _dismissRestSuggestion() {
+    setState(() => _restSuggestion = null);
+  }
+
+  void _startRest(bool betweenExercises, {Duration? overrideDuration}) {
+    final exercise = _exercises[_currentExerciseIndex];
+    final restSeconds = overrideDuration?.inSeconds
+        ?? exercise.restSeconds
+        ?? (betweenExercises ? 120 : 90);
+
+    // Track rest started event
+    ref.read(posthogServiceProvider).capture(
+      eventName: 'rest_started',
+      properties: {
+        'rest_duration_seconds': restSeconds,
+        'exercise_index': _currentExerciseIndex,
+      },
+    );
+
+    // Get AI settings for personalized message
+    final aiSettings = ref.read(aiSettingsProvider);
+
+    // Build context from the last completed set for intelligent feedback
+    RestContext? context;
+    final exerciseSets = _completedSets[_currentExerciseIndex];
+    if (exerciseSets != null && exerciseSets.isNotEmpty) {
+      final lastSet = exerciseSets.last;
+      final totalSets = _totalSetsPerExercise[_currentExerciseIndex] ?? 3;
+
+      // Check if this was a PR by comparing to exercise history
+      bool isPR = false;
+      final previousMaxWeight = _exerciseMaxWeights[exercise.name] ?? 0.0;
+      if (lastSet.weight > 0 && lastSet.weight > previousMaxWeight) {
+        isPR = true;
+      }
+
+      // Check if weight increased from previous set in this workout
+      double? previousWeight;
+      if (exerciseSets.length > 1) {
+        previousWeight = exerciseSets[exerciseSets.length - 2].weight;
+      }
+
+      context = RestContext(
+        exerciseName: exercise.name,
+        muscleGroup: exercise.muscleGroup,
+        reps: lastSet.reps,
+        weightLifted: lastSet.weight,
+        previousWeight: previousWeight,
+        isLastSet: exerciseSets.length >= totalSets,
+        isLastExercise: _currentExerciseIndex >= _exercises.length - 1,
+        isPR: isPR,
+        // Check if set was completed unusually fast (possible form issue)
+        wasFast: lastSet.reps > 0 &&
+            DateTime.now().difference(lastSet.completedAt).inSeconds.abs() < 5,
+      );
+    } else {
+      // No sets completed - set was skipped
+      context = RestContext(
+        exerciseName: exercise.name,
+        muscleGroup: exercise.muscleGroup,
+        reps: 0, // Indicates skipped set
+        isLastSet: false,
+        isLastExercise: _currentExerciseIndex >= _exercises.length - 1,
+      );
+    }
+
+    final message = RestMessages.getMessage(
+      aiSettings.coachingStyle,
+      aiSettings.encouragementLevel,
+      context: context,
+    );
+
+    setState(() {
+      _isResting = true;
+      _isRestingBetweenExercises = betweenExercises;
+      _currentRestMessage = message;
+      // Show inline rest row (only between sets, not between exercises)
+      _showInlineRest = !betweenExercises;
+      _inlineRestDuration = restSeconds;
+      _inlineRestCurrentRpe = null; // Reset for new rest period
+    });
+
+    debugPrint('🔴 [StartRest] betweenExercises=$betweenExercises, _showInlineRest=$_showInlineRest, _isResting=$_isResting');
+
+    _timerController.startRestTimer(restSeconds);
+
+    // Fetch AI tip and achievement prompt for inline rest
+    if (!betweenExercises) {
+      debugPrint('🔴 [StartRest] Fetching AI tip and achievement prompt');
+      _fetchInlineRestAiTip(exercise);
+      _fetchInlineRestAchievementPrompt(exercise);
+    }
+
+    // Track rest interval
+    _restIntervals.add({
+      'exercise_id': _exercises[_currentExerciseIndex].id,
+      'exercise_name': _exercises[_currentExerciseIndex].name,
+      'rest_seconds': restSeconds,
+      'rest_type': betweenExercises ? 'between_exercises' : 'between_sets',
+      'recorded_at': DateTime.now().toIso8601String(),
+    });
+  }
+
+  /// Fetch AI tip for inline rest row
+  Future<void> _fetchInlineRestAiTip(WorkoutExercise exercise) async {
+    final exerciseSets = _completedSets[_currentExerciseIndex];
+    if (exerciseSets == null || exerciseSets.isEmpty) return;
+
+    final lastSet = exerciseSets.last;
+    final totalSets = _totalSetsPerExercise[_currentExerciseIndex] ?? 3;
+    final setsRemaining = totalSets - exerciseSets.length;
+
+    setState(() => _isLoadingAiTip = true);
+
+    try {
+      final restTipService = ref.read(restTipServiceProvider);
+      final tip = await restTipService.getRestTip(
+        exerciseName: exercise.name,
+        weightKg: lastSet.weight,
+        reps: lastSet.reps,
+        rpe: lastSet.rpe,
+        setsRemaining: setsRemaining,
+        exerciseInstructions: exercise.instructions,
+      );
+
+      if (mounted) {
+        setState(() {
+          _inlineRestAiTip = tip;
+          _isLoadingAiTip = false;
+        });
+      }
+    } catch (e) {
+      debugPrint('❌ [ActiveWorkout] Error fetching AI tip: $e');
+      if (mounted) {
+        setState(() => _isLoadingAiTip = false);
+      }
+    }
+  }
+
+  /// Fetch achievement prompt for inline rest row
+  Future<void> _fetchInlineRestAchievementPrompt(WorkoutExercise exercise) async {
+    final exerciseSets = _completedSets[_currentExerciseIndex];
+    if (exerciseSets == null || exerciseSets.isEmpty) return;
+
+    final lastSet = exerciseSets.last;
+    final totalSets = _totalSetsPerExercise[_currentExerciseIndex] ?? 3;
+
+    try {
+      final achievementService = ref.read(achievementPromptServiceProvider);
+      final prompt = await achievementService.getPromptForSet(
+        exerciseName: exercise.name,
+        currentWeight: lastSet.weight,
+        currentReps: lastSet.reps,
+        setNumber: exerciseSets.length,
+        totalSets: totalSets,
+      );
+
+      if (mounted) {
+        setState(() {
+          _inlineRestAchievementPrompt = prompt;
+        });
+      }
+    } catch (e) {
+      debugPrint('❌ [ActiveWorkout] Error fetching achievement prompt: $e');
+    }
+  }
+
+  /// Handle inline rest RPE rating
+  void _handleInlineRestRpeRating(int rpe) {
+    setState(() {
+      _inlineRestCurrentRpe = rpe;
+      _lastSetRpe = rpe;
+    });
+
+    // Update the last completed set with the RPE
+    final exerciseSets = _completedSets[_currentExerciseIndex];
+    if (exerciseSets != null && exerciseSets.isNotEmpty) {
+      final lastIndex = exerciseSets.length - 1;
+      exerciseSets[lastIndex] = exerciseSets[lastIndex].copyWith(rpe: rpe);
+
+      // Run autoregulation check after RPE is recorded
+      _evaluateAutoregulation(exerciseSets[lastIndex], lastIndex + 1);
+    }
+
+    HapticFeedback.selectionClick();
+  }
+
+  /// Evaluate autoregulation after RPE is recorded for a set.
+  ///
+  /// Calls [IntraWorkoutAutoregulator.evaluateSet] with the completed set data
+  /// and shows a non-intrusive SnackBar if an adjustment is suggested.
+  void _evaluateAutoregulation(SetLog setLog, int setNumber) {
+    final exercise = _exercises[_currentExerciseIndex];
+    final totalSets = _totalSetsPerExercise[_currentExerciseIndex] ?? 3;
+    final targetReps = setLog.targetReps > 0 ? setLog.targetReps : (exercise.reps ?? 10);
+    final isWarmup = setLog.setType == 'warmup';
+    final reportedRpe = (setLog.rpe ?? 7).toDouble();
+    final workingWeight = setLog.weight;
+
+    final suggestion = IntraWorkoutAutoregulator.evaluateSet(
+      setNumber: setNumber,
+      totalPlannedSets: totalSets,
+      completedReps: setLog.reps,
+      targetReps: targetReps,
+      reportedRpe: reportedRpe,
+      targetRpe: null, // Not tracked separately
+      workingWeight: workingWeight > 0 ? workingWeight : null,
+      isWarmup: isWarmup,
+    );
+
+    if (suggestion != null && mounted) {
+      _showAutoregSuggestion(suggestion);
+    }
+  }
+
+  /// Show a non-intrusive SnackBar with the autoregulation suggestion.
+  void _showAutoregSuggestion(AutoregSuggestion suggestion) {
+    // Dismiss any existing snackbar first
+    ScaffoldMessenger.of(context).hideCurrentSnackBar();
+
+    final Color snackColor;
+    final IconData snackIcon;
+    switch (suggestion.action) {
+      case AutoregAction.reduceWeight:
+        snackColor = suggestion.adjustedWeight != null &&
+                suggestion.adjustedWeight! > (double.tryParse(_weightController.text) ?? 0)
+            ? AppColors.success
+            : AppColors.warning;
+        snackIcon = suggestion.adjustedWeight != null &&
+                suggestion.adjustedWeight! > (double.tryParse(_weightController.text) ?? 0)
+            ? Icons.trending_up
+            : Icons.trending_down;
+      case AutoregAction.reduceSets:
+        snackColor = AppColors.warning;
+        snackIcon = Icons.remove_circle_outline;
+      case AutoregAction.swapExercise:
+        snackColor = AppColors.error;
+        snackIcon = Icons.swap_horiz;
+      case AutoregAction.proceed:
+        return; // No action needed
+    }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            Icon(snackIcon, color: Colors.white, size: 20),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                suggestion.message,
+                style: const TextStyle(fontSize: 13, color: Colors.white),
+                maxLines: 3,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ],
+        ),
+        backgroundColor: snackColor,
+        behavior: SnackBarBehavior.floating,
+        duration: const Duration(seconds: 8),
+        margin: const EdgeInsets.only(bottom: 80, left: 16, right: 16),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        action: suggestion.action != AutoregAction.swapExercise
+            ? SnackBarAction(
+                label: 'Accept',
+                textColor: Colors.white,
+                onPressed: () => _acceptAutoregSuggestion(suggestion),
+              )
+            : null,
+      ),
+    );
+  }
+
+  /// Apply the accepted autoregulation suggestion.
+  void _acceptAutoregSuggestion(AutoregSuggestion suggestion) {
+    switch (suggestion.action) {
+      case AutoregAction.reduceWeight:
+        if (suggestion.adjustedWeight != null) {
+          final displayWeight = _useKg
+              ? suggestion.adjustedWeight!
+              : suggestion.adjustedWeight! * 2.20462;
+          _weightController.text = displayWeight.toStringAsFixed(1);
+        }
+        if (suggestion.adjustedSets != null) {
+          setState(() {
+            _totalSetsPerExercise[_currentExerciseIndex] = suggestion.adjustedSets!;
+          });
+        }
+      case AutoregAction.reduceSets:
+        if (suggestion.adjustedSets != null) {
+          setState(() {
+            _totalSetsPerExercise[_currentExerciseIndex] = suggestion.adjustedSets!;
+          });
+        }
+      case AutoregAction.swapExercise:
+        // User can manually swap via existing UI - no automatic action
+        break;
+      case AutoregAction.proceed:
+        break;
+    }
+
+    HapticFeedback.mediumImpact();
+  }
+
+  /// Handle inline rest note added
+  void _handleInlineRestNote(String note) {
+    // Update the last completed set with the note
+    final exerciseSets = _completedSets[_currentExerciseIndex];
+    if (exerciseSets != null && exerciseSets.isNotEmpty) {
+      final lastIndex = exerciseSets.length - 1;
+      exerciseSets[lastIndex] = exerciseSets[lastIndex].copyWith(notes: note);
+    }
+    HapticFeedback.mediumImpact();
+  }
+
+  /// Handle inline rest skip
+  void _handleInlineRestSkip() {
+    ref.read(posthogServiceProvider).capture(
+      eventName: 'rest_skipped',
+      properties: {
+        'exercise_index': _currentExerciseIndex,
+      },
+    );
+    _timerController.skipRest();
+  }
+
+  /// Handle inline rest complete
+  void _handleInlineRestComplete() {
+    setState(() {
+      _showInlineRest = false;
+      _inlineRestAiTip = null;
+      _inlineRestAchievementPrompt = null;
+    });
+  }
+
+  /// Handle inline rest time adjustment
+  void _handleInlineRestTimeAdjust(int adjustment) {
+    setState(() {
+      _inlineRestDuration = (_inlineRestDuration + adjustment).clamp(0, 600);
+    });
+    _timerController.adjustRestTime(adjustment);
+  }
+
+  /// Build inline rest row for V2 design
+  Widget _buildInlineRestRowV2() {
+    return InlineRestRow(
+      restDurationSeconds: _inlineRestDuration,
+      onRestComplete: _handleInlineRestComplete,
+      onSkipRest: _handleInlineRestSkip,
+      onAdjustTime: _handleInlineRestTimeAdjust,
+      onRateSet: _handleInlineRestRpeRating,
+      onAddNote: _handleInlineRestNote,
+      onShowRpeInfo: _showRpeInfoSheet,
+      achievementPrompt: _inlineRestAchievementPrompt,
+      aiTip: _inlineRestAiTip,
+      isLoadingAiTip: _isLoadingAiTip,
+      currentRpe: _inlineRestCurrentRpe,
+    );
+  }
+
+  /// Show RPE info sheet (for inline rest row)
+  void _showRpeInfoSheet() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    showGlassSheet(
+      context: context,
+      builder: (ctx) => GlassSheet(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Title
+            Text(
+              'What is RPE?',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
+              ),
+            ),
+            const SizedBox(height: 16),
+
+            // Description
+            Text(
+              'Rate of Perceived Exertion measures how hard a set felt:',
+              style: TextStyle(
+                fontSize: 14,
+                color: isDark ? AppColors.textSecondary : AppColorsLight.textSecondary,
+              ),
+            ),
+            const SizedBox(height: 16),
+
+            // RPE scale
+            _buildRpeScaleRowV2('1-4', 'Very easy, lots left in tank', AppColors.success, isDark),
+            _buildRpeScaleRowV2('5-6', 'Moderate effort', AppColors.cyan, isDark),
+            _buildRpeScaleRowV2('7-8', 'Hard, could do 2-3 more reps', AppColors.orange, isDark),
+            _buildRpeScaleRowV2('9', 'Very hard, maybe 1 more rep', AppColors.orange, isDark),
+            _buildRpeScaleRowV2('10', 'Maximum effort, couldn\'t do more', AppColors.error, isDark),
+
+            const SizedBox(height: 24),
+
+            // Got it button
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () => Navigator.pop(ctx),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.electricBlue,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: const Text(
+                  'Got it',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                ),
+              ),
+            ),
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
+      ),
+    );
+  }
+
+  Widget _buildRpeScaleRowV2(String range, String description, Color color, bool isDark) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      child: Row(
+        children: [
+          Container(
+            width: 50,
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(6),
+            ),
+            child: Text(
+              range,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+                color: color,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              description,
+              style: TextStyle(
+                fontSize: 13,
+                color: isDark ? AppColors.textSecondary : AppColorsLight.textSecondary,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _moveToNextExercise() {
+    // Track exercise completed event
+    ref.read(posthogServiceProvider).capture(
+      eventName: 'exercise_completed',
+      properties: {
+        'exercise_name': _exercises[_currentExerciseIndex].name,
+        'exercise_index': _currentExerciseIndex,
+      },
+    );
+
+    // Track time for current exercise
+    if (_currentExerciseStartTime != null) {
+      _exerciseTimeSeconds[_currentExerciseIndex] =
+          DateTime.now().difference(_currentExerciseStartTime!).inSeconds;
+    }
+
+    // Find next INCOMPLETE exercise (circular search starting from current)
+    int? nextIndex;
+    for (int i = 1; i <= _exercises.length; i++) {
+      final candidateIndex = (_currentExerciseIndex + i) % _exercises.length;
+      if (!_isExerciseCompleted(candidateIndex)) {
+        nextIndex = candidateIndex;
+        break;
+      }
+    }
+
+    if (nextIndex != null) {
+      // Found an incomplete exercise - navigate to it
+      // Haptic feedback for exercise transition
+      HapticService.exerciseTransition();
+
+      final nextExercise = _exercises[nextIndex];
+
+      // Voice: "Get ready for [exercise name]"
+      ref.read(voiceAnnouncementsProvider.notifier)
+          .announceNextExerciseIfEnabled(nextExercise.name);
+
+      setState(() {
+        _currentExerciseIndex = nextIndex!;
+        _viewingExerciseIndex = nextIndex;
+      });
+
+      // Update persistent notification with new exercise
+      _updateWorkoutNotification();
+
+      // Initialize weight/reps controllers for the new exercise
+      _initControllersForExercise(nextIndex);
+
+      // Fetch smart weight suggestion based on history (background, non-blocking)
+      _fetchSmartWeightForExercise(nextExercise);
+
+      // Fetch media for new exercise
+      _fetchMediaForExercise(nextExercise);
+
+      // Start rest between exercises
+      _startRest(true);
+
+      _currentExerciseStartTime = DateTime.now();
+    } else {
+      // All exercises complete - move to stretch phase
+      // Celebratory haptic for workout completion
+      HapticService.workoutComplete();
+
+      // Voice: "Congratulations! Workout complete!"
+      ref.read(voiceAnnouncementsProvider.notifier).announceWorkoutCompleteIfEnabled();
+
+      // Check if stretch is enabled
+      final stretchEnabled = ref.read(warmupDurationProvider).stretchEnabled;
+      if (stretchEnabled) {
+        setState(() {
+          _currentPhase = WorkoutPhase.stretch;
+        });
+      } else {
+        // Skip stretch and go directly to completion
+        debugPrint('🏋️ [ActiveWorkout] Stretch disabled, skipping to completion');
+        _handleStretchComplete();
+      }
+    }
+  }
+
+  void _skipExercise() {
+    ref.read(posthogServiceProvider).capture(
+      eventName: 'workout_exercise_skipped',
+      properties: {
+        'exercise_name': _exercises[_currentExerciseIndex].name,
+        'exercise_index': _currentExerciseIndex,
+      },
+    );
+    _moveToNextExercise();
+  }
+
+  void _togglePause() {
+    setState(() {
+      _isPaused = !_isPaused;
+    });
+    _timerController.setPaused(_isPaused);
+    _updateWorkoutNotification();
+  }
+
+  // ---------------------------------------------------------------------------
+  // Persistent workout notification helpers
+  // ---------------------------------------------------------------------------
+
+  /// Wire up callbacks and show the initial notification.
+  Future<void> _initWorkoutNotification() async {
+    final notifService = WorkoutNotificationService.instance;
+    await notifService.initialize();
+
+    // Wire action callbacks
+    notifService.onPauseResumePressed = () {
+      if (mounted) _togglePause();
+    };
+    notifService.onStopPressed = () {
+      if (mounted) {
+        // Close via mini player provider so state is cleaned up consistently
+        ref.read(workoutMiniPlayerProvider.notifier).close();
+        if (mounted) context.pop();
+      }
+    };
+    notifService.onNotificationTapped = () {
+      // App is already open; no special navigation needed since we're on the
+      // active workout screen. Flutter's engine will foreground the app.
+    };
+
+    _updateWorkoutNotification();
+  }
+
+  /// Push the latest workout state to the persistent notification.
+  void _updateWorkoutNotification() {
+    if (_exercises.isEmpty) return;
+
+    final exerciseName = _currentExerciseIndex < _exercises.length
+        ? _exercises[_currentExerciseIndex].name
+        : 'Exercise';
+    final progress =
+        '${_currentExerciseIndex + 1}/${_exercises.length}';
+    final timerText =
+        WorkoutTimerController.formatTime(_timerController.workoutSeconds);
+
+    WorkoutNotificationService.instance.show(
+      workoutName: widget.workout.name ?? 'Workout',
+      currentExerciseName: exerciseName,
+      timerText: timerText,
+      exerciseProgress: progress,
+      isPaused: _isPaused,
+    );
+  }
+
+  /// Cancel the persistent notification and clear callbacks.
+  void _cancelWorkoutNotification() {
+    WorkoutNotificationService.instance.cancel();
+    WorkoutNotificationService.instance.clearCallbacks();
+  }
+
+  /// Toggle favorite status for current exercise
+  Future<void> _toggleFavoriteExercise() async {
+    if (_exercises.isEmpty || _currentExerciseIndex >= _exercises.length) return;
+
+    final exercise = _exercises[_currentExerciseIndex];
+    final exerciseName = exercise.name;
+
+    HapticFeedback.mediumImpact();
+
+    await ref.read(favoritesProvider.notifier).toggleFavorite(
+      exerciseName,
+      exerciseId: exercise.id ?? exercise.libraryId,
+    );
+  }
+
+  /// Minimize workout to mini player (YouTube-style)
+  void _minimizeWorkout() {
+    debugPrint('🎬 [Workout] Minimizing to mini player...');
+
+    // Convert completed sets to serializable format
+    final completedSetsMap = <int, List<Map<String, dynamic>>>{};
+    for (final entry in _completedSets.entries) {
+      completedSetsMap[entry.key] = entry.value.map((set) => {
+        'reps': set.reps,
+        'weight': set.weight,
+        'setType': set.setType,
+        'rpe': set.rpe,
+        'rir': set.rir,
+        'aiInputSource': set.aiInputSource,
+      }).toList();
+    }
+
+    // Get current exercise name and image
+    final currentExercise = _currentExerciseIndex < _exercises.length
+        ? _exercises[_currentExerciseIndex]
+        : null;
+    final currentExerciseName = currentExercise?.name;
+    final currentExerciseImageUrl = currentExercise?.gifUrl;
+
+    // Save state to provider
+    ref.read(workoutMiniPlayerProvider.notifier).minimize(
+      workout: widget.workout,
+      workoutSeconds: _timerController.workoutSeconds,
+      currentExerciseName: currentExerciseName,
+      currentExerciseImageUrl: currentExerciseImageUrl,
+      currentExerciseIndex: _currentExerciseIndex,
+      totalExercises: _exercises.length,
+      completedSets: completedSetsMap,
+      isResting: _isResting,
+      restSecondsRemaining: _timerController.restSecondsRemaining,
+      isPaused: _isPaused,
+    );
+
+    // Stop local timer (provider will handle it)
+    _timerController.dispose();
+
+    // Navigate back
+    if (mounted) {
+      context.pop();
+    }
+  }
+
+  /// Handle tap on background area (no-op since set tracking is full screen)
+  void _handleVideoAreaTap() {
+    // No action needed - set tracking is always visible
+  }
+
+  /// Toggle video play/pause
+  void _toggleVideoPlayPause() {
+    if (_videoController == null || !_isVideoInitialized) return;
+
+    HapticFeedback.lightImpact();
+    setState(() {
+      if (_isVideoPlaying) {
+        _videoController!.pause();
+        _isVideoPlaying = false;
+      } else {
+        _videoController!.play();
+        _isVideoPlaying = true;
+      }
+    });
+  }
+
+  // ========================================================================
+  // DATA FETCHING
+  // ========================================================================
+
+  Future<void> _fetchExerciseHistory() async {
+    final apiClient = ref.read(apiClientProvider);
+    final userId = await apiClient.getUserId();
+    if (userId == null) {
+      return;
+    }
+
+    final repository = ref.read(workoutRepositoryProvider);
+
+    for (int i = 0; i < _exercises.length; i++) {
+      final exercise = _exercises[i];
+      await _fetchSingleExerciseHistory(repository, userId, exercise, i);
+    }
+  }
+
+  Future<void> _fetchSingleExerciseHistory(
+    WorkoutRepository repository,
+    String userId,
+    WorkoutExercise exercise,
+    int exerciseIndex,
+  ) async {
+    try {
+      final lastPerformance = await repository.getExerciseLastPerformance(
+        userId: userId,
+        exerciseName: exercise.name,
+      );
+
+      if (lastPerformance != null && lastPerformance['sets'] != null) {
+        final sets = lastPerformance['sets'] as List;
+        if (mounted) {
+          setState(() {
+            _previousSets[exerciseIndex] = sets
+                .map((s) => {
+                      'set': s['set_number'] ?? 1,
+                      'weight': (s['weight_kg'] as num?)?.toDouble() ?? 0.0,
+                      'reps': s['reps_completed'] ?? 10,
+                      'rir': s['rir'] as int?,
+                      'rpe': s['rpe'] as int?,
+                    })
+                .toList();
+          });
+        }
+
+        for (final set in sets) {
+          final weight = (set['weight_kg'] as num?)?.toDouble() ?? 0.0;
+          final currentMax = _exerciseMaxWeights[exercise.name] ?? 0.0;
+          if (weight > currentMax) {
+            _exerciseMaxWeights[exercise.name] = weight;
+          }
+        }
+
+        // If this is the currently viewed exercise and weight controller is at 0
+        // or below bar minimum, use previous session's weight
+        if (exerciseIndex == _viewingExerciseIndex && mounted) {
+          final currentWeight = double.tryParse(_weightController.text) ?? 0;
+          final minBar = isBarbell(exercise.equipment, exerciseName: exercise.name)
+              ? getBarWeight(exercise.equipment, useKg: _useKg)
+              : 0.0;
+          if (currentWeight <= minBar && sets.isNotEmpty) {
+            final prevWeightKg = (sets.last['weight_kg'] as num?)?.toDouble() ?? 0.0;
+            if (prevWeightKg > 0) {
+              final displayWeight = _useKg ? prevWeightKg : prevWeightKg * 2.20462;
+              _weightController.text = displayWeight.toStringAsFixed(1);
+            }
+          }
+        }
+      }
+    } catch (e) {
+      debugPrint('Failed to load history for ${exercise.name}: $e');
+    }
+  }
+
+  /// Fetch smart weight suggestion for an exercise based on historical data
+  ///
+  /// This method fetches an AI-powered weight suggestion based on:
+  /// - User's 1RM for this exercise (from strength_records)
+  /// - Target reps and training goal
+  /// - Last session performance (RPE-based modifier)
+  /// - Equipment-aware rounding
+  ///
+  /// The weight controller is updated in the background without blocking UI.
+  Future<void> _fetchSmartWeightForExercise(WorkoutExercise exercise) async {
+    // Check if previous session data already provides a better weight
+    final prevSets = _previousSets[_currentExerciseIndex];
+    if (prevSets != null && prevSets.isNotEmpty) {
+      final prevWeight = (prevSets.last['weight'] as num?)?.toDouble() ?? 0.0;
+      if (prevWeight > 0) {
+        final currentWeight = double.tryParse(_weightController.text) ?? 0;
+        final minBar = isBarbell(exercise.equipment, exerciseName: exercise.name)
+            ? getBarWeight(exercise.equipment, useKg: _useKg)
+            : 0.0;
+        if (currentWeight <= minBar && mounted) {
+          final displayWeight = _useKg ? prevWeight : prevWeight * 2.20462;
+          _weightController.text = displayWeight.toStringAsFixed(1);
+        }
+        return; // Previous session data is more reliable than API guess
+      }
+    }
+
+    try {
+      final apiClient = ref.read(apiClientProvider);
+      final userId = await apiClient.getUserId();
+      if (userId == null) return;
+
+      final suggestion = await WeightSuggestionService.getSmartWeight(
+        dio: apiClient.dio,
+        userId: userId,
+        exerciseId: exercise.exerciseId ?? exercise.libraryId ?? '',
+        exerciseName: exercise.name,
+        targetReps: exercise.reps ?? 10,
+        goal: TrainingGoal.fromString(
+          ref.read(activeGymProfileProvider)?.goals.firstOrNull ?? 'hypertrophy',
+        ),
+        equipment: exercise.equipment ?? 'dumbbell',
+      );
+
+      if (mounted && suggestion != null && suggestion.suggestedWeight > 0) {
+        // Enforce bar minimum and convert to display unit
+        var suggestedKg = suggestion.suggestedWeight;
+        final isBarbellExercise = isBarbell(exercise.equipment, exerciseName: exercise.name);
+        final minBarKg = isBarbellExercise
+            ? getBarWeight(exercise.equipment, useKg: true)
+            : 0.0;
+        if (suggestedKg < minBarKg) suggestedKg = minBarKg;
+        final displaySuggested = _useKg ? suggestedKg : suggestedKg * 2.20462;
+        final displayMinBar = _useKg ? minBarKg : minBarKg * 2.20462;
+
+        // Only update if current weight is still at default/low
+        final currentWeight = double.tryParse(_weightController.text) ?? 0;
+        if (suggestion.isHighConfidence || currentWeight <= 0 || currentWeight <= displayMinBar) {
+          setState(() {
+            _weightController.text = displaySuggested.toStringAsFixed(1);
+          });
+          debugPrint('✅ [SmartWeight] ${exercise.name}: ${suggestion.suggestedWeight}kg '
+              '(confidence: ${(suggestion.confidence * 100).toInt()}%, '
+              'source: ${suggestion.reasoning})');
+        }
+      }
+    } catch (e) {
+      debugPrint('⚠️ [SmartWeight] Failed for ${exercise.name}: $e');
+      // Fall back to planned weight - already set in controller
+    }
+  }
+
+  /// Preload PR history for all exercises
+  Future<void> _preloadPRHistory() async {
+    try {
+      await _prDetectionService.preloadExerciseHistory(
+        ref: ref,
+        exercises: _exercises,
+      );
+      debugPrint('✅ [PR] Preloaded exercise history for PR detection');
+    } catch (e) {
+      debugPrint('❌ [PR] Error preloading PR history: $e');
+    }
+  }
+
+  /// Preload per-exercise progression patterns and bar types from SharedPreferences.
+  Future<void> _preloadProgressionPatterns() async {
+    try {
+      final exerciseNames = _exercises.map((e) => e.name).toList();
+      await ref.read(exerciseProgressionProvider.notifier)
+          .preloadPatterns(exerciseNames);
+      await ref.read(exerciseBarTypeProvider.notifier)
+          .preloadBarTypes(exerciseNames);
+
+      // Populate the in-memory maps from the providers
+      final providerState = ref.read(exerciseProgressionProvider);
+      final barTypeState = ref.read(exerciseBarTypeProvider);
+      for (int i = 0; i < _exercises.length; i++) {
+        final key = _exercises[i].name.toLowerCase().trim().replaceAll(RegExp(r'\s+'), '_');
+        if (providerState.containsKey(key)) {
+          _exerciseProgressionPattern[i] = providerState[key]!;
+        }
+        if (barTypeState.containsKey(key)) {
+          _exerciseBarType[i] = barTypeState[key]!;
+        }
+      }
+
+      // Auto-apply patterns to update TARGET column immediately for ALL exercises
+      debugPrint('📋 [Preload] Applying targets for ${_exercises.length} exercises...');
+      for (int i = 0; i < _exercises.length; i++) {
+        try {
+          final pattern = _exerciseProgressionPattern[i] ?? SetProgressionPattern.pyramidUp;
+          debugPrint('📋 [Preload] ex $i: "${_exercises[i].name}" → ${pattern.displayName}');
+          _applyProgressionTargets(i, pattern);
+        } catch (e) {
+          debugPrint('❌ [Preload] Failed for ex $i "${_exercises[i].name}": $e');
+        }
+      }
+    } catch (e) {
+      debugPrint('❌ [Progression] Error preloading patterns: $e');
+    }
+  }
+
+  /// Load coach persona from AI settings
+  void _loadCoachPersona() {
+    // Coach persona is loaded for AI settings context;
+    // the actual persona is referenced via aiSettingsProvider when needed.
+  }
+
+  /// Check for PRs after completing a set
+  void _checkForPRs(SetLog setLog, WorkoutExercise exercise) {
+    // Calculate total volume for the exercise
+    final completedSets = _completedSets[_currentExerciseIndex] ?? [];
+    double totalVolume = 0;
+    for (final set in completedSets) {
+      totalVolume += set.weight * set.reps;
+    }
+
+    final detectedPRs = _prDetectionService.checkForPR(
+      exerciseName: exercise.name,
+      weight: setLog.weight,
+      reps: setLog.reps,
+      totalSets: completedSets.length,
+      totalVolume: totalVolume,
+    );
+
+    if (detectedPRs.isEmpty) return;
+
+    debugPrint('🏆 [PR] Detected ${detectedPRs.length} PR(s)!');
+
+    // Trigger haptics
+    _prDetectionService.triggerHaptics(detectedPRs);
+
+    // Show celebration for the first PR that should be celebrated
+    for (final pr in detectedPRs) {
+      if (_prDetectionService.shouldShowCelebration(pr)) {
+        _prDetectionService.recordCelebration();
+        _prDetectionService.updateCacheAfterPR(pr);
+
+        // Show appropriate celebration
+        if (detectedPRs.length > 1) {
+          _showMultiPRCelebration(detectedPRs);
+        } else {
+          _showSinglePRCelebration(pr);
+        }
+        break; // Only show one celebration
+      }
+    }
+  }
+
+  /// Show single PR inline celebration
+  void _showSinglePRCelebration(DetectedPR pr) {
+    showPRInlineCelebration(
+      context: context,
+      pr: pr,
+      onDismiss: () {
+        debugPrint('✨ [PR] Celebration dismissed');
+      },
+    );
+  }
+
+  /// Show multi-PR celebration
+  void _showMultiPRCelebration(List<DetectedPR> prs) {
+    final overlayState = Overlay.of(context);
+    late OverlayEntry overlayEntry;
+
+    overlayEntry = OverlayEntry(
+      builder: (context) => MultiPRInlineCelebration(
+        prs: prs,
+        onDismiss: () {
+          overlayEntry.remove();
+        },
+      ),
+    );
+
+    overlayState.insert(overlayEntry);
+
+    // Auto-dismiss after 3.5 seconds
+    Future.delayed(const Duration(milliseconds: 3500), () {
+      if (overlayEntry.mounted) {
+        overlayEntry.remove();
+      }
+    });
+  }
+
+  Future<void> _fetchMediaForExercise(WorkoutExercise exercise) async {
+    setState(() => _isLoadingMedia = true);
+
+    // Dispose previous video controller
+    _videoController?.dispose();
+    _videoController = null;
+    _isVideoInitialized = false;
+    _imageUrl = null;
+
+    final apiClient = ref.read(apiClientProvider);
+    final exerciseName = exercise.name;
+
+    // 1. First try to use URLs from exercise model (if populated)
+    // Only use direct URLs (presigned or public), NOT raw S3 paths (s3://...)
+    // which require presigning via the API to avoid 403 errors.
+    final modelVideoUrl = exercise.videoUrl;
+    final modelImageUrl = exercise.gifUrl;
+
+    // 2. If model has URLs, use them directly
+    if (modelImageUrl != null && modelImageUrl.isNotEmpty) {
+      setState(() {
+        _imageUrl = modelImageUrl;
+        _isLoadingMedia = false;
+      });
+    }
+
+    if (modelVideoUrl != null && modelVideoUrl.isNotEmpty) {
+      try {
+        _videoController = VideoPlayerController.networkUrl(Uri.parse(modelVideoUrl));
+        await _videoController!.initialize();
+        _videoController!.setLooping(true);
+        _videoController!.setVolume(0); // Mute audio
+        _videoController!.play();
+
+        if (mounted) {
+          setState(() {
+            _isVideoInitialized = true;
+            _isVideoPlaying = true;
+          });
+        }
+        return; // Success - exit early
+      } catch (e) {
+        debugPrint('❌ [Media] Model video failed: $e');
+      }
+    }
+
+    // 3. Fallback: Fetch from API endpoints (like old screen)
+    // First fetch image (faster)
+    try {
+      final imageResponse = await apiClient.dio.get(
+        '/exercise-images/${Uri.encodeComponent(exerciseName)}',
+      );
+      if (imageResponse.data?['url'] != null && mounted) {
+        setState(() {
+          _imageUrl = imageResponse.data['url'];
+          _isLoadingMedia = false;
+        });
+        debugPrint('✅ [Media] Image loaded from API: $_imageUrl');
+      }
+    } catch (e) {
+      debugPrint('❌ [Media] Image API fetch failed: $e');
+    }
+
+    // Then fetch video (slower, plays over image)
+    try {
+      final videoResponse = await apiClient.dio.get(
+        '/videos/by-exercise/${Uri.encodeComponent(exerciseName)}',
+      );
+      if (videoResponse.data?['url'] != null) {
+        final videoUrl = videoResponse.data['url'];
+        _videoController = VideoPlayerController.networkUrl(Uri.parse(videoUrl));
+        await _videoController!.initialize();
+        _videoController!.setLooping(true);
+        _videoController!.setVolume(0); // Mute audio
+        _videoController!.play();
+
+        if (mounted) {
+          setState(() {
+            _isVideoInitialized = true;
+            _isVideoPlaying = true;
+          });
+        }
+        debugPrint('✅ [Media] Video loaded from API: $videoUrl');
+      }
+    } catch (e) {
+      debugPrint('❌ [Media] Video API fetch failed: $e');
+      // Keep showing image fallback
+    }
+
+    // Final fallback - show placeholder
+    if (mounted && _imageUrl == null && !_isVideoInitialized) {
+      setState(() => _isLoadingMedia = false);
+    }
+  }
+
+  /// Finalize workout: save to backend, get PRs, and navigate to complete screen
+  Future<void> _finalizeWorkoutCompletion() async {
+    setState(() => _currentPhase = WorkoutPhase.complete);
+
+    // Calculate stats for PostHog event
+    final phTotalSets = _completedSets.values.fold<int>(0, (sum, list) => sum + list.length);
+    int phTotalReps = 0;
+    double phTotalVolumeKg = 0.0;
+    for (final sets in _completedSets.values) {
+      for (final setLog in sets) {
+        phTotalReps += setLog.reps;
+        phTotalVolumeKg += setLog.reps * setLog.weight;
+      }
+    }
+
+    ref.read(posthogServiceProvider).capture(
+      eventName: 'workout_completed',
+      properties: {
+        'workout_id': widget.workout.id ?? '',
+        'workout_name': widget.workout.name ?? '',
+        'duration_seconds': _timerController.workoutSeconds,
+        'total_sets': phTotalSets,
+        'total_reps': phTotalReps,
+        'volume_kg': phTotalVolumeKg,
+      },
+    );
+
+    // Variables to pass to workout complete screen
+    String? workoutLogId;
+    int totalCompletedSets = 0;
+    int totalReps = 0;
+    double totalVolumeKg = 0.0;
+    int totalRestSeconds = 0;
+    double avgRestSeconds = 0.0;
+    List<PersonalRecordInfo>? personalRecords;
+    PerformanceComparisonInfo? performanceComparison;
+    WorkoutCompletionResponse? completionResponse;
+
+    try {
+      final workoutRepo = ref.read(workoutRepositoryProvider);
+      final apiClient = ref.read(apiClientProvider);
+      final userId = await apiClient.getUserId();
+
+      // Debug logging to trace workoutLogId issues
+      debugPrint('🔍 [Complete] workout.id: ${widget.workout.id}');
+      debugPrint('🔍 [Complete] userId: $userId');
+
+      if (widget.workout.id != null && userId != null) {
+        // 1. Create workout log with all sets
+        debugPrint('🏋️ Saving workout log to backend...');
+        final setsJson = _buildSetsJson();
+        final metadata = _buildWorkoutMetadata();
+        debugPrint('🔍 [Complete] setsJson length: ${setsJson.length}');
+
+        final workoutLog = await workoutRepo.createWorkoutLog(
+          workoutId: widget.workout.id!,
+          userId: userId,
+          setsJson: setsJson,
+          totalTimeSeconds: _timerController.workoutSeconds,
+          metadata: jsonEncode(metadata),
+        );
+
+        // 2. Log individual set performances
+        if (workoutLog != null) {
+          debugPrint('✅ Workout log created: ${workoutLog['id']}');
+          workoutLogId = workoutLog['id'] as String;
+          await _logAllSetPerformances(workoutLogId, userId);
+        } else {
+          debugPrint('❌ [Complete] createWorkoutLog returned null - workoutLogId will be null');
+        }
+
+        // 3. Log drink intake if any
+        if (_totalDrinkIntakeMl > 0) {
+          await workoutRepo.logDrinkIntake(
+            workoutId: widget.workout.id!,
+            userId: userId,
+            amountMl: _totalDrinkIntakeMl,
+            drinkType: 'water',
+          );
+          debugPrint('💧 Logged drink intake: ${_totalDrinkIntakeMl}ml');
+        }
+
+        // 4. Calculate stats for workout complete screen
+        totalCompletedSets = _completedSets.values.fold<int>(
+          0, (sum, list) => sum + list.length,
+        );
+        final exercisesWithSets = _completedSets.values.where((l) => l.isNotEmpty).length;
+
+        // Calculate total reps and volume
+        for (final sets in _completedSets.values) {
+          for (final setLog in sets) {
+            totalReps += setLog.reps;
+            totalVolumeKg += setLog.reps * setLog.weight;
+          }
+        }
+
+        // Calculate rest time stats
+        if (_restIntervals.isNotEmpty) {
+          for (final interval in _restIntervals) {
+            totalRestSeconds += (interval['rest_seconds'] as int?) ?? 0;
+          }
+          avgRestSeconds = totalRestSeconds / _restIntervals.length;
+        }
+
+        // 5. Log workout exit
+        await workoutRepo.logWorkoutExit(
+          workoutId: widget.workout.id!,
+          userId: userId,
+          exitReason: 'completed',
+          exercisesCompleted: exercisesWithSets,
+          totalExercises: _exercises.length,
+          setsCompleted: totalCompletedSets,
+          timeSpentSeconds: _timerController.workoutSeconds,
+          progressPercentage: _exercises.isNotEmpty
+              ? (exercisesWithSets / _exercises.length * 100)
+              : 100.0,
+        );
+        debugPrint('✅ Workout exit logged as completed');
+
+        // 6. Log superset usage for analytics (if any supersets were used)
+        await _logSupersetUsage(userId);
+
+        // 7. Mark workout as complete and get PRs
+        completionResponse = await workoutRepo.completeWorkout(widget.workout.id!);
+        debugPrint('✅ Workout marked as complete');
+
+        // Award XP for completing workout
+        ref.read(xpProvider.notifier).markWorkoutCompleted(workoutId: widget.workout.id);
+
+        if (completionResponse != null && completionResponse.hasPRs) {
+          personalRecords = completionResponse.personalRecords;
+          debugPrint('🏆 Got ${personalRecords.length} PRs from completion API');
+        }
+
+        if (completionResponse != null && completionResponse.performanceComparison != null) {
+          performanceComparison = completionResponse.performanceComparison;
+          debugPrint('📊 Got performance comparison');
+        }
+      } else {
+        debugPrint('❌ [Complete] Skipping workout log creation: workout.id=${widget.workout.id}, userId=$userId');
+      }
+    } catch (e) {
+      debugPrint('❌ Failed to complete workout: $e');
+    }
+
+    // Build exercises performance data for complete screen
+    final exercisesPerformance = <Map<String, dynamic>>[];
+    for (int i = 0; i < _exercises.length; i++) {
+      final exercise = _exercises[i];
+      final sets = _completedSets[i] ?? [];
+      if (sets.isNotEmpty) {
+        final avgWeight = sets.fold<double>(0, (sum, s) => sum + s.weight) / sets.length;
+        final totalExReps = sets.fold<int>(0, (sum, s) => sum + s.reps);
+        exercisesPerformance.add({
+          'name': exercise.name,
+          'sets': sets.length,
+          'reps': totalExReps,
+          'weight_kg': avgWeight,
+        });
+      }
+    }
+
+    // Use server-calculated calories from completion response, fallback to local MET estimate
+    int completionCalories = 0;
+    if (completionResponse != null) {
+      // Try performance comparison calories first (most accurate — uses all logged data)
+      completionCalories = completionResponse.performanceComparison
+          ?.workoutComparison.currentCalories ?? 0;
+      // Fallback to workout's stored estimate
+      if (completionCalories <= 0) {
+        completionCalories = completionResponse.workout.estimatedCalories;
+      }
+    }
+    // Final fallback: local MET-based estimate from workout model
+    if (completionCalories <= 0) {
+      completionCalories = widget.workout.estimatedCalories;
+    }
+
+    if (mounted) {
+      debugPrint('🏋️ [Complete] Navigating to workout-complete with workoutLogId: $workoutLogId, calories: $completionCalories');
+      context.go('/workout-complete', extra: {
+        'workout': widget.workout,
+        'duration': _timerController.workoutSeconds,
+        'calories': completionCalories,
+        'drinkIntakeMl': _totalDrinkIntakeMl,
+        'restIntervals': _restIntervals.length,
+        'workoutLogId': workoutLogId,
+        'exercisesPerformance': exercisesPerformance,
+        'totalRestSeconds': totalRestSeconds,
+        'avgRestSeconds': avgRestSeconds,
+        'totalSets': totalCompletedSets,
+        'totalReps': totalReps,
+        'totalVolumeKg': totalVolumeKg,
+        'challengeId': widget.challengeId,
+        'challengeData': widget.challengeData,
+        'personalRecords': personalRecords,
+        'performanceComparison': performanceComparison,
+      });
+    }
+  }
+
+  /// Build comprehensive JSON string with all workout data
+  String _buildSetsJson() {
+    final List<Map<String, dynamic>> allSets = [];
+
+    for (int i = 0; i < _exercises.length; i++) {
+      final exercise = _exercises[i];
+      final sets = _completedSets[i] ?? [];
+
+      final pattern = _exerciseProgressionPattern[i] ?? SetProgressionPattern.pyramidUp;
+
+      for (int j = 0; j < sets.length; j++) {
+        final setTarget = exercise.getTargetForSet(j + 1);
+        allSets.add({
+          'exercise_index': i,
+          'exercise_id': exercise.exerciseId ?? exercise.libraryId,
+          'exercise_name': exercise.name,
+          'set_number': j + 1,
+          'reps': sets[j].reps,
+          'weight_kg': sets[j].weight,
+          'completed_at': sets[j].completedAt.toIso8601String(),
+          if (sets[j].rpe != null) 'rpe': sets[j].rpe,
+          if (sets[j].rir != null) 'rir': sets[j].rir,
+          'target_weight_kg': setTarget?.targetWeightKg ?? exercise.weight,
+          'target_reps': setTarget?.targetReps ?? exercise.reps,
+          'progression_model': pattern.storageKey,
+          // Include superset info if exercise is in a superset
+          if (exercise.supersetGroup != null) 'superset_group': exercise.supersetGroup,
+          if (exercise.supersetOrder != null) 'superset_order': exercise.supersetOrder,
+        });
+      }
+    }
+
+    return jsonEncode(allSets);
+  }
+
+  /// Build comprehensive workout metadata JSON
+  Map<String, dynamic> _buildWorkoutMetadata() {
+    final exerciseOrder = _exercises.asMap().entries.map((e) => {
+      'index': e.key,
+      'exercise_id': e.value.exerciseId ?? e.value.libraryId,
+      'exercise_name': e.value.name,
+      'time_spent_seconds': _exerciseTimeSeconds[e.key] ?? 0,
+      // Include superset info
+      if (e.value.supersetGroup != null) 'superset_group': e.value.supersetGroup,
+      if (e.value.supersetOrder != null) 'superset_order': e.value.supersetOrder,
+    }).toList();
+
+    // Build superset summary
+    final supersetGroups = <int, List<Map<String, dynamic>>>{};
+    for (final exercise in _exercises) {
+      if (exercise.supersetGroup != null) {
+        supersetGroups[exercise.supersetGroup!] ??= [];
+        supersetGroups[exercise.supersetGroup!]!.add({
+          'name': exercise.name,
+          'muscle_group': exercise.muscleGroup,
+          'order': exercise.supersetOrder,
+        });
+      }
+    }
+
+    // Build per-exercise progression model map
+    final progressionModels = <String, String>{};
+    for (int i = 0; i < _exercises.length; i++) {
+      final pattern = _exerciseProgressionPattern[i] ?? SetProgressionPattern.pyramidUp;
+      progressionModels[_exercises[i].name] = pattern.storageKey;
+    }
+
+    // Get increment settings
+    final incrementState = ref.read(weightIncrementsProvider);
+
+    return {
+      'exercise_order': exerciseOrder,
+      'rest_intervals': _restIntervals,
+      'drink_intake_ml': _totalDrinkIntakeMl,
+      'progression_models': progressionModels,
+      'increment_settings': {
+        'dumbbell': incrementState.dumbbell,
+        'barbell': incrementState.barbell,
+        'machine': incrementState.machine,
+        'kettlebell': incrementState.kettlebell,
+        'cable': incrementState.cable,
+        'unit': incrementState.unit,
+      },
+      if (supersetGroups.isNotEmpty) 'supersets': supersetGroups.entries.map((e) => {
+        'group_id': e.key,
+        'exercises': e.value,
+      }).toList(),
+    };
+  }
+
+  /// Log all set performances to backend
+  Future<void> _logAllSetPerformances(String workoutLogId, String userId) async {
+    final workoutRepo = ref.read(workoutRepositoryProvider);
+
+    for (int i = 0; i < _exercises.length; i++) {
+      final exercise = _exercises[i];
+      final sets = _completedSets[i] ?? [];
+      final pattern = _exerciseProgressionPattern[i] ?? SetProgressionPattern.pyramidUp;
+
+      // Get target data from set targets if available
+      for (int j = 0; j < sets.length; j++) {
+        final setLog = sets[j];
+        final setTarget = exercise.getTargetForSet(j + 1);
+        try {
+          await workoutRepo.logSetPerformance(
+            workoutLogId: workoutLogId,
+            exerciseId: exercise.exerciseId ?? exercise.libraryId ?? exercise.name,
+            exerciseName: exercise.name,
+            setNumber: j + 1,
+            repsCompleted: setLog.reps,
+            weightKg: setLog.weight,
+            userId: userId,
+            rpe: setLog.rpe?.toDouble(),
+            rir: setLog.rir,
+            notes: setLog.notes,
+            aiInputSource: setLog.aiInputSource,
+            targetWeightKg: setTarget?.targetWeightKg ?? exercise.weight?.toDouble(),
+            targetReps: setTarget?.targetReps ?? exercise.reps,
+            progressionModel: pattern.storageKey,
+          );
+        } catch (e) {
+          debugPrint('⚠️ Failed to log set performance: $e');
+        }
+      }
+    }
+    debugPrint('💪 Logged ${_completedSets.values.fold<int>(0, (s, l) => s + l.length)} set performances');
+  }
+
+  /// Log superset usage to backend for analytics
+  Future<void> _logSupersetUsage(String userId) async {
+    // Find all superset groups
+    final supersetGroups = <int, List<WorkoutExercise>>{};
+    for (final exercise in _exercises) {
+      if (exercise.supersetGroup != null) {
+        supersetGroups[exercise.supersetGroup!] ??= [];
+        supersetGroups[exercise.supersetGroup!]!.add(exercise);
+      }
+    }
+
+    if (supersetGroups.isEmpty) {
+      debugPrint('🔗 No supersets to log');
+      return;
+    }
+
+    final apiClient = ref.read(apiClientProvider);
+
+    for (final entry in supersetGroups.entries) {
+      final groupId = entry.key;
+      final exercises = entry.value;
+
+      if (exercises.length >= 2) {
+        // Sort by superset order
+        exercises.sort((a, b) => (a.supersetOrder ?? 0).compareTo(b.supersetOrder ?? 0));
+
+        // Log the superset pair (first two exercises)
+        try {
+          await apiClient.post(
+            '/supersets/logs',
+            data: {
+              'user_id': userId,
+              'workout_id': widget.workout.id,
+              'exercise_1_name': exercises[0].name,
+              'exercise_2_name': exercises[1].name,
+              'exercise_1_muscle': exercises[0].muscleGroup,
+              'exercise_2_muscle': exercises[1].muscleGroup,
+              'superset_group': groupId,
+            },
+          );
+          debugPrint('🔗 Logged superset group $groupId: ${exercises[0].name} + ${exercises[1].name}');
+
+          // If more than 2 exercises (tri-set, giant set), log additional pairs
+          for (int i = 2; i < exercises.length; i++) {
+            await apiClient.post(
+              '/supersets/logs',
+              data: {
+                'user_id': userId,
+                'workout_id': widget.workout.id,
+                'exercise_1_name': exercises[i - 1].name,
+                'exercise_2_name': exercises[i].name,
+                'exercise_1_muscle': exercises[i - 1].muscleGroup,
+                'exercise_2_muscle': exercises[i].muscleGroup,
+                'superset_group': groupId,
+              },
+            );
+            debugPrint('🔗 Logged superset continuation: ${exercises[i - 1].name} + ${exercises[i].name}');
+          }
+        } catch (e) {
+          // Non-critical - don't fail workout completion for superset logging
+          debugPrint('⚠️ Failed to log superset: $e');
+        }
+      }
+    }
+  }
+
+  // ========================================================================
+  // AI TEXT INPUT HANDLING
+  // ========================================================================
+
+  /// Handle parsed exercises from the AI text input bar
+  Future<void> _handleParsedExercises(List<ParsedExercise> exercises) async {
+    if (exercises.isEmpty) return;
+
+    // Show preview sheet for user to confirm
+    final confirmedExercises = await showParsedExercisesPreview(
+      context,
+      ref,
+      exercises: exercises,
+      useKg: _useKg,
+    );
+
+    if (confirmedExercises == null || confirmedExercises.isEmpty || !mounted) {
+      return;
+    }
+
+    // Add exercises to workout
+    try {
+      final userId = await ref.read(apiClientProvider).getUserId();
+      if (userId == null) return;
+
+      final repo = ref.read(workoutRepositoryProvider);
+      final updatedWorkout = await repo.addExercisesBatch(
+        workoutId: widget.workout.id ?? '',
+        userId: userId,
+        exercises: confirmedExercises,
+        useKg: _useKg,
+      );
+
+      if (updatedWorkout != null && mounted) {
+        final newExercises = updatedWorkout.exercises;
+        final addedCount = confirmedExercises.length;
+        final startIndex = _exercises.length;
+
+        setState(() {
+          // Update exercises list
+          _exercises = List.from(newExercises);
+          _precomputeSupersetIndices();
+
+          // Initialize tracking data for new exercises
+          for (int i = startIndex; i < _exercises.length; i++) {
+            _completedSets[i] = [];
+            final ex = _exercises[i];
+            _totalSetsPerExercise[i] = ex.hasSetTargets && ex.setTargets!.isNotEmpty
+                ? ex.setTargets!.length
+                : ex.sets ?? 3;
+            _previousSets[i] = [];
+          }
+        });
+
+        // Show success feedback
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Added $addedCount exercise${addedCount == 1 ? '' : 's'}'),
+              backgroundColor: AppColors.green,
+              duration: const Duration(seconds: 2),
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+
+        debugPrint('✅ [Workout] Added $addedCount exercises via AI input');
+      }
+    } catch (e) {
+      debugPrint('❌ [Workout] Failed to add exercises: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to add exercises: $e'),
+            backgroundColor: AppColors.red,
+            duration: const Duration(seconds: 3),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
+  }
+
+  /// Handle V2 parsed response (sets to log + exercises to add)
+  Future<void> _handleV2Parsed(ParseWorkoutInputV2Response response) async {
+    if (!response.hasData) return;
+
+    final currentExerciseName = _exercises.isNotEmpty
+        ? _exercises[_viewingExerciseIndex].name
+        : null;
+
+    // Show V2 preview sheet
+    final result = await showAIInputPreview(
+      context,
+      ref,
+      response: response,
+      currentExerciseName: currentExerciseName,
+      useKg: _useKg,
+    );
+
+    if (result == null || !result.hasData || !mounted) {
+      return;
+    }
+
+    // Handle sets to log
+    if (result.setsToLog.isNotEmpty) {
+      await _logSetsFromAI(result.setsToLog);
+    }
+
+    // Handle exercises to add
+    if (result.exercisesToAdd.isNotEmpty) {
+      await _addExercisesFromAI(result.exercisesToAdd);
+    }
+  }
+
+  /// Log multiple sets from AI input to the current exercise
+  Future<void> _logSetsFromAI(List<SetToLog> sets) async {
+    if (sets.isEmpty || _exercises.isEmpty) return;
+
+    final exerciseIndex = _viewingExerciseIndex;
+    final exercise = _exercises[exerciseIndex];
+
+    for (final aiSet in sets) {
+      // Convert weight if necessary
+      double weight = aiSet.weight;
+      if (aiSet.isBodyweight) {
+        weight = 0;
+      } else if (_useKg && aiSet.unit == 'lbs') {
+        weight = aiSet.weight / 2.20462;
+      } else if (!_useKg && aiSet.unit == 'kg') {
+        weight = aiSet.weight * 2.20462;
+      }
+
+      // Create a SetLog with AI input source for tracking
+      final setLog = SetLog(
+        reps: aiSet.reps,
+        weight: weight,
+        setType: aiSet.isWarmup ? 'warmup' : 'working',
+        targetReps: exercise.reps ?? aiSet.reps,
+        notes: aiSet.notes,
+        aiInputSource: aiSet.originalInput.isNotEmpty ? aiSet.originalInput : null,
+      );
+
+      // Add to completed sets
+      _completedSets[exerciseIndex] ??= [];
+      _completedSets[exerciseIndex]!.add(setLog);
+    }
+
+    // Update total sets if more were added than expected
+    final currentTotal = _totalSetsPerExercise[exerciseIndex] ?? 3;
+    final completedCount = _completedSets[exerciseIndex]?.length ?? 0;
+    if (completedCount > currentTotal) {
+      _totalSetsPerExercise[exerciseIndex] = completedCount;
+    }
+
+    setState(() {});
+
+    // Show success feedback
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Logged ${sets.length} set${sets.length == 1 ? '' : 's'} for ${exercise.name}',
+          ),
+          backgroundColor: AppColors.green,
+          duration: const Duration(seconds: 2),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
+
+    debugPrint('✅ [Workout] Logged ${sets.length} sets via AI input');
+  }
+
+  /// Add exercises from AI input
+  Future<void> _addExercisesFromAI(List<ExerciseToAdd> exercises) async {
+    if (exercises.isEmpty) return;
+
+    try {
+      final userId = await ref.read(apiClientProvider).getUserId();
+      if (userId == null) return;
+
+      // Convert ExerciseToAdd to ParsedExercise for the repository
+      final parsedExercises = exercises.map((e) {
+        return ParsedExercise(
+          name: e.name,
+          sets: e.sets,
+          reps: e.reps,
+          weightKg: e.weightKg,
+          weightLbs: e.weightLbs,
+          restSeconds: e.restSeconds,
+          originalText: e.originalText,
+          confidence: e.confidence,
+          notes: e.notes,
+        );
+      }).toList();
+
+      final repo = ref.read(workoutRepositoryProvider);
+      final updatedWorkout = await repo.addExercisesBatch(
+        workoutId: widget.workout.id ?? '',
+        userId: userId,
+        exercises: parsedExercises,
+        useKg: _useKg,
+      );
+
+      if (updatedWorkout != null && mounted) {
+        final newExercises = updatedWorkout.exercises;
+        final addedCount = exercises.length;
+        final startIndex = _exercises.length;
+
+        setState(() {
+          // Update exercises list
+          _exercises = List.from(newExercises);
+          _precomputeSupersetIndices();
+
+          // Initialize tracking data for new exercises
+          for (int i = startIndex; i < _exercises.length; i++) {
+            _completedSets[i] = [];
+            final ex = _exercises[i];
+            _totalSetsPerExercise[i] = ex.hasSetTargets && ex.setTargets!.isNotEmpty
+                ? ex.setTargets!.length
+                : ex.sets ?? 3;
+            _previousSets[i] = [];
+          }
+        });
+
+        // Show success feedback
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Added $addedCount exercise${addedCount == 1 ? '' : 's'}'),
+              backgroundColor: AppColors.green,
+              duration: const Duration(seconds: 2),
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+
+        debugPrint('✅ [Workout] Added $addedCount exercises via AI input');
+      }
+    } catch (e) {
+      debugPrint('❌ [Workout] Failed to add exercises: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to add exercises: $e'),
+            backgroundColor: AppColors.red,
+            duration: const Duration(seconds: 3),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
+  }
+
+  // ========================================================================
+  // DIALOGS
+  // ========================================================================
+
+  void _showQuitDialog() async {
+    // Calculate progress for the dialog
+    final totalSetsExpected = _totalSetsPerExercise.values.fold<int>(0, (sum, sets) => sum + sets);
+    final totalCompletedSets = _completedSets.values.fold<int>(0, (sum, sets) => sum + sets.length);
+    final exercisesWithCompletedSets = _completedSets.values.where((sets) => sets.isNotEmpty).length;
+
+    // Calculate progress percentage
+    final progressPercent = totalSetsExpected > 0
+        ? ((totalCompletedSets / totalSetsExpected) * 100).round()
+        : 0;
+
+    final result = await showQuitWorkoutDialog(
+      context: context,
+      progressPercent: progressPercent,
+      totalCompletedSets: totalCompletedSets,
+      exercisesWithCompletedSets: exercisesWithCompletedSets,
+      timeSpentSeconds: _timerController.workoutSeconds,
+      coachPersona: ref.read(aiSettingsProvider).getCurrentCoach(),
+      workoutName: widget.workout.name,
+    );
+
+    if (result != null && mounted) {
+      // User confirmed quit - navigate away immediately, log in background
+      _cancelWorkoutNotification();
+      _logWorkoutExit(result.reason, result.notes); // Fire-and-forget
+      if (mounted) {
+        context.pop();
+        // Show guidance if user quit due to pain/injury
+        if (result.reason == 'injury') {
+          Future.delayed(const Duration(milliseconds: 300), () {
+            if (mounted) {
+              AppSnackBar.info(context, 'Take it easy! Chat with your AI coach for injury advice.');
+            }
+          });
+        }
+      }
+    }
+    // If result is null, user chose to continue (tapped "Keep Going")
+  }
+
+  /// Log workout exit when user quits early
+  Future<void> _logWorkoutExit(String reason, String? notes) async {
+    try {
+      final workoutRepo = ref.read(workoutRepositoryProvider);
+      final apiClient = ref.read(apiClientProvider);
+      final userId = await apiClient.getUserId();
+
+      if (widget.workout.id != null && userId != null) {
+        final totalCompletedSets = _completedSets.values.fold<int>(0, (sum, sets) => sum + sets.length);
+        final exercisesWithSets = _completedSets.values.where((sets) => sets.isNotEmpty).length;
+        final progressPercentage = _exercises.isNotEmpty
+            ? (exercisesWithSets / _exercises.length * 100)
+            : 0.0;
+
+        await workoutRepo.logWorkoutExit(
+          workoutId: widget.workout.id!,
+          userId: userId,
+          exitReason: reason,
+          exercisesCompleted: exercisesWithSets,
+          totalExercises: _exercises.length,
+          setsCompleted: totalCompletedSets,
+          timeSpentSeconds: _timerController.workoutSeconds,
+          progressPercentage: progressPercentage,
+          exitNotes: notes,
+        );
+        debugPrint('✅ [Quit] Logged workout exit: $reason');
+
+        ref.read(posthogServiceProvider).capture(
+          eventName: 'workout_abandoned',
+          properties: {
+            'workout_id': widget.workout.id ?? '',
+            'exit_reason': reason,
+            'sets_completed': totalCompletedSets,
+            'exercises_completed': exercisesWithSets,
+            'total_exercises': _exercises.length,
+            'progress_percent': progressPercentage,
+            'duration_seconds': _timerController.workoutSeconds,
+          },
+        );
+      }
+    } catch (e) {
+      debugPrint('❌ [Quit] Failed to log workout exit: $e');
+    }
+  }
+
+  void _showNumberInputDialog(
+      TextEditingController controller, bool isDecimal) {
+    final editController = TextEditingController(text: controller.text);
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: AppColors.elevated,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text(
+          isDecimal ? 'Enter Weight (${_useKg ? 'kg' : 'lbs'})' : 'Enter Reps',
+          style: const TextStyle(color: AppColors.textPrimary),
+        ),
+        content: TextField(
+          controller: editController,
+          autofocus: true,
+          keyboardType: isDecimal
+              ? const TextInputType.numberWithOptions(decimal: true)
+              : TextInputType.number,
+          style: TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+            color: ref.watch(accentColorProvider).getColor(Theme.of(context).brightness == Brightness.dark),
+          ),
+          textAlign: TextAlign.center,
+          decoration: InputDecoration(
+            filled: true,
+            fillColor: AppColors.pureBlack,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: ref.watch(accentColorProvider).getColor(Theme.of(context).brightness == Brightness.dark)),
+            ),
+          ),
+          onSubmitted: (value) {
+            if (!isDecimal) {
+              final intVal =
+                  int.tryParse(value.replaceAll(RegExp(r'[^\d]'), '')) ?? 0;
+              controller.text = intVal.toString();
+            } else {
+              controller.text = value;
+            }
+            setState(() {});
+            Navigator.pop(context);
+          },
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child:
+                const Text('Cancel', style: TextStyle(color: AppColors.textMuted)),
+          ),
+          TextButton(
+            onPressed: () {
+              if (!isDecimal) {
+                final intVal = int.tryParse(
+                        editController.text.replaceAll(RegExp(r'[^\d]'), '')) ??
+                    0;
+                controller.text = intVal.toString();
+              } else {
+                controller.text = editController.text;
+              }
+              setState(() {});
+              Navigator.pop(context);
+            },
+            child: Text('OK',
+                style: TextStyle(
+                    color: ref.watch(accentColorProvider).getColor(Theme.of(context).brightness == Brightness.dark), fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showLog1RMSheet(WorkoutExercise exercise) {
+    showGlassSheet(
+      context: context,
+      builder: (context) => GlassSheet(
+        child: Log1RMSheet(
+          exerciseName: exercise.name,
+          exerciseId: exercise.id ?? exercise.libraryId ?? '',
+        ),
+      ),
+    );
+  }
+
+  // ========================================================================
+  // BUILD METHOD
+  // ========================================================================
+
+  @override
+  Widget build(BuildContext context) {
+    // Initialize weight unit from user preference on first build
+    if (!_unitInitialized) {
+      _unitInitialized = true;
+      _useKg = ref.read(useKgForWorkoutProvider);
+    }
+
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final backgroundColor =
+        isDark ? AppColors.pureBlack : AppColorsLight.pureWhite;
+
+    // Foldable detection
+    final windowState = ref.watch(windowModeProvider);
+    final isFoldableOpen = FoldableQuizScaffold.shouldUseFoldableLayout(windowState);
+
+    // Route to appropriate phase screen
+    switch (_currentPhase) {
+      case WorkoutPhase.warmup:
+        // Still loading warmup data from API - show loading
+        if (_isWarmupLoading) {
+          return _buildWarmupLoadingScreen();
+        }
+        // Skip warmup if API returned no exercises
+        if (_warmupExercises == null || _warmupExercises!.isEmpty) {
+          _handleWarmupComplete();
+          return const SizedBox.shrink();
+        }
+        if (isFoldableOpen) {
+          return FoldableWarmupLayout(
+            windowState: windowState,
+            workoutSeconds: _timerController.workoutSeconds,
+            exercises: _warmupExercises!,
+            onSkipWarmup: _handleSkipWarmup,
+            onWarmupComplete: _handleWarmupComplete,
+            onQuitRequested: _showQuitDialog,
+          );
+        }
+        return WarmupPhaseScreen(
+          workoutSeconds: _timerController.workoutSeconds,
+          exercises: _warmupExercises!,
+          onSkipWarmup: _handleSkipWarmup,
+          onWarmupComplete: _handleWarmupComplete,
+          onQuitRequested: _showQuitDialog,
+          onIntervalsLogged: _handleWarmupIntervalsLogged,
+        );
+
+      case WorkoutPhase.stretch:
+        // Skip stretch if API didn't return personalized exercises
+        if (_stretchExercises == null || _stretchExercises!.isEmpty) {
+          _handleStretchComplete();
+          return const SizedBox.shrink();
+        }
+        return StretchPhaseScreen(
+          workoutSeconds: _timerController.workoutSeconds,
+          exercises: _stretchExercises!,
+          onSkipAll: _handleSkipStretch,
+          onStretchComplete: _handleStretchComplete,
+        );
+
+      case WorkoutPhase.complete:
+        return _buildCompletionScreen(isDark, backgroundColor);
+
+      case WorkoutPhase.active:
+        if (isFoldableOpen) {
+          return _buildFoldableActiveWorkout(windowState);
+        }
+        // Use V2 MacroFactor-style design
+        if (_useV2Design) {
+          return _buildActiveWorkoutScreenV2(isDark, backgroundColor);
+        }
+        return _buildActiveWorkoutScreen(isDark, backgroundColor);
+    }
+  }
+
+  /// Build foldable-optimized active workout layout.
+  Widget _buildFoldableActiveWorkout(WindowModeState windowState) {
+    final setRows = _buildSetRowsForExercise(_viewingExerciseIndex);
+    final completedExerciseIndices = _getCompletedExerciseIndices();
+    final currentExercise = _exercises[_currentExerciseIndex];
+
+    return FoldableWorkoutLayout(
+      windowState: windowState,
+      exercises: _exercises,
+      currentExerciseIndex: _currentExerciseIndex,
+      viewingExerciseIndex: _viewingExerciseIndex,
+      completedExerciseIndices: completedExerciseIndices,
+      completedSets: _completedSets,
+      totalSetsPerExercise: _totalSetsPerExercise,
+      videoController: _videoController,
+      isVideoInitialized: _isVideoInitialized,
+      imageUrl: _imageUrl,
+      workoutSeconds: _timerController.workoutSeconds,
+      restSecondsRemaining: _timerController.restSecondsRemaining,
+      initialRestDuration: _timerController.initialRestDuration,
+      isPaused: _isPaused,
+      isResting: _isResting,
+      isRestingBetweenExercises: _isRestingBetweenExercises,
+      currentRestMessage: _currentRestMessage,
+      setRows: setRows,
+      useKg: _useKg,
+      weightController: _weightController,
+      repsController: _repsController,
+      repsRightController: _isLeftRightMode ? _repsRightController : null,
+      isLeftRightMode: _isLeftRightMode,
+      isExerciseCompleted: _isExerciseCompleted(_viewingExerciseIndex),
+      showInlineRest: _showInlineRest,
+      inlineRestRowWidget: _buildInlineRestRowV2(),
+      lastSetRpe: _lastSetRpe,
+      lastSetRir: _lastSetRir,
+      currentWeightSuggestion: _currentWeightSuggestion,
+      isLoadingWeightSuggestion: _isLoadingWeightSuggestion,
+      restSuggestion: _restSuggestion,
+      isLoadingRestSuggestion: _isLoadingRestSuggestion,
+      fatigueAlertData: _fatigueAlertData,
+      showFatigueAlert: _showFatigueAlert,
+      coachPersona: ref.watch(aiSettingsProvider).getCurrentCoach(),
+      workoutId: widget.workout.id ?? '',
+      actionChips: _buildActionChipsForCurrentExercise()
+          .where((chip) => chip.label != 'Video' && chip.label != 'Info')
+          .toList(),
+      hideAICoachForSession: _hideAICoachForSession,
+      onExerciseTap: (index) {
+        HapticFeedback.selectionClick();
+        setState(() {
+          _viewingExerciseIndex = index;
+          _currentExerciseIndex = index;
+        });
+        _initControllersForExercise(index);
+      },
+      onAddExercise: _showExerciseAddSheet,
+      onQuitRequested: _showQuitDialog,
+      onReorder: _onExercisesReordered,
+      onCreateSuperset: _onSupersetFromDrag,
+      onVideoTap: _toggleVideoPlayPause,
+      onInfoTap: () => _showExerciseDetailsSheet(_exercises[_viewingExerciseIndex]),
+      onSetCompleted: _handleSetCompletedV2,
+      onSetUpdated: _updateCompletedSet,
+      onAddSet: () => setState(() {
+        _totalSetsPerExercise[_viewingExerciseIndex] =
+            (_totalSetsPerExercise[_viewingExerciseIndex] ?? 3) + 1;
+      }),
+      onSetDeleted: (index) => _deleteCompletedSet(index),
+      onToggleUnit: _toggleUnit,
+      onRirTapped: (setIndex, currentRir) => _showRirPicker(setIndex, currentRir),
+      onActiveRirChanged: (rir) => setState(() => _lastSetRir = rir),
+      onSelectAllTapped: () {
+        if (_isExerciseCompleted(_viewingExerciseIndex)) {
+          HapticFeedback.lightImpact();
+        }
+      },
+      onChipTapped: _handleChipTapped,
+      onAiChipTapped: () => _showAICoachSheet(currentExercise),
+      onSkipRest: () => _timerController.skipRest(),
+      onLog1RM: () => _showLog1RMSheet(currentExercise),
+      onAcceptWeightSuggestion: _acceptWeightSuggestion,
+      onDismissWeightSuggestion: _dismissWeightSuggestion,
+      onAcceptRestSuggestion: _acceptRestSuggestion,
+      onDismissRestSuggestion: _dismissRestSuggestion,
+      onRpeChanged: (rpe) => setState(() => _lastSetRpe = rpe),
+      onRirChanged: (rir) => setState(() => _lastSetRir = rir),
+      onAcceptFatigueSuggestion: _handleAcceptFatigueSuggestion,
+      onDismissFatigueAlert: _handleDismissFatigueAlert,
+      onStopExercise: _skipExercise,
+      onExercisesParsed: (exercises) => _handleParsedExercises(exercises),
+      onV2Parsed: (response) => _handleV2Parsed(response),
+    );
+  }
+
+  Widget _buildActiveWorkoutScreen(bool isDark, Color backgroundColor) {
+    final currentExercise = _exercises[_currentExerciseIndex];
+    final nextExercise = _currentExerciseIndex < _exercises.length - 1
+        ? _exercises[_currentExerciseIndex + 1]
+        : null;
+
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) {
+          _showQuitDialog();
+        }
+      },
+      child: Scaffold(
+        backgroundColor: backgroundColor,
+        body: Stack(
+          children: [
+            // Background media (tappable - minimizes overlay or toggles video)
+            Positioned.fill(
+              child: GestureDetector(
+                onTap: _handleVideoAreaTap,
+                behavior: HitTestBehavior.opaque,
+                child: _buildMediaBackground(),
+              ),
+            ),
+
+            // Rest overlay with weight suggestion (only for rest between exercises)
+            // Between-sets rest is handled by inline rest row in SetTrackingOverlay
+            // Wrapped in RepaintBoundary to isolate per-second rest timer repaints
+            if (_isResting && _isRestingBetweenExercises)
+              Positioned.fill(
+                child: RepaintBoundary(
+                  child: RestTimerOverlay(
+                    restSecondsRemaining: _timerController.restSecondsRemaining,
+                    initialRestDuration: _timerController.initialRestDuration,
+                    restMessage: _currentRestMessage,
+                    currentExercise: currentExercise,
+                    completedSetsCount:
+                        _completedSets[_currentExerciseIndex]?.length ?? 0,
+                    totalSets: _totalSetsPerExercise[_currentExerciseIndex] ?? 3,
+                    nextExercise: nextExercise,
+                    isRestBetweenExercises: _isRestingBetweenExercises,
+                    onSkipRest: () => _timerController.skipRest(),
+                    onLog1RM: () => _showLog1RMSheet(currentExercise),
+                    // Weight suggestion props
+                    weightSuggestion: _currentWeightSuggestion,
+                    isLoadingWeightSuggestion: _isLoadingWeightSuggestion,
+                    onAcceptWeightSuggestion: _acceptWeightSuggestion,
+                    onDismissWeightSuggestion: _dismissWeightSuggestion,
+                    // Rest suggestion props (AI-powered)
+                    restSuggestion: _restSuggestion,
+                    isLoadingRestSuggestion: _isLoadingRestSuggestion,
+                    onAcceptRestSuggestion: _acceptRestSuggestion,
+                    onDismissRestSuggestion: _dismissRestSuggestion,
+                    // RPE/RIR input during rest
+                    currentRpe: _lastSetRpe,
+                    currentRir: _lastSetRir,
+                    onRpeChanged: (rpe) => setState(() => _lastSetRpe = rpe),
+                    onRirChanged: (rir) => setState(() => _lastSetRir = rir),
+                    // Last set performance data for display
+                    lastSetReps: _completedSets[_currentExerciseIndex]?.isNotEmpty == true
+                        ? _completedSets[_currentExerciseIndex]!.last.reps
+                        : null,
+                    lastSetTargetReps: _completedSets[_currentExerciseIndex]?.isNotEmpty == true
+                        ? _completedSets[_currentExerciseIndex]!.last.targetReps
+                        : null,
+                    lastSetWeight: _completedSets[_currentExerciseIndex]?.isNotEmpty == true
+                        ? _completedSets[_currentExerciseIndex]!.last.weight
+                        : null,
+                    // Ask AI Coach button with coach persona (reactive to changes)
+                    onAskAICoach: () => _showAICoachSheet(currentExercise),
+                    coachPersona: ref.watch(aiSettingsProvider).getCurrentCoach(),
+                  ),
+                ),
+              ),
+
+            // Fatigue alert modal (AI-powered)
+            if (_showFatigueAlert && _fatigueAlertData != null)
+              Positioned.fill(
+                child: FatigueAlertModal(
+                  alertData: _fatigueAlertData!,
+                  currentWeight: double.tryParse(_weightController.text) ?? 0,
+                  exerciseName: currentExercise.name,
+                  onAcceptSuggestion: _handleAcceptFatigueSuggestion,
+                  onContinueAsPlanned: _handleDismissFatigueAlert,
+                  onStopExercise: _skipExercise,
+                ),
+              ),
+
+            // Top overlay (show during active workout OR between-sets rest)
+            // Wrapped in RepaintBoundary to isolate per-second timer repaints
+            if (!_isResting || (_isResting && !_isRestingBetweenExercises))
+              RepaintBoundary(
+                child: WorkoutTopOverlay(
+                  workoutSeconds: _timerController.workoutSeconds,
+                  isPaused: _isPaused,
+                  totalExercises: _exercises.length,
+                  currentExerciseIndex: _currentExerciseIndex,
+                  totalCompletedSets: _completedSets.values
+                      .fold(0, (sum, sets) => sum + sets.length),
+                  onTogglePause: _togglePause,
+                  onShowExerciseList: () {},
+                  onQuit: _showQuitDialog,
+                ),
+              ),
+
+            // Set tracking overlay - full screen (no floating card, no minimize)
+            // Show during active workout OR during between-sets rest (for inline rest row)
+            if (!_isResting || (_isResting && !_isRestingBetweenExercises))
+              Positioned(
+                left: 0,
+                right: 0,
+                top: MediaQuery.of(context).padding.top + 70,
+                bottom: 90, // Leave space for bottom bar
+                child: SetTrackingOverlay(
+                  exercise: _exercises[_viewingExerciseIndex],
+                  viewingExerciseIndex: _viewingExerciseIndex,
+                  currentExerciseIndex: _currentExerciseIndex,
+                  totalExercises: _exercises.length,
+                  totalSets: _totalSetsPerExercise[_viewingExerciseIndex] ?? 3,
+                  completedSets:
+                      _completedSets[_viewingExerciseIndex] ?? [],
+                  previousSets: _previousSets[_viewingExerciseIndex] ?? [],
+                  useKg: _useKg,
+                  weightController: _weightController,
+                  repsController: _repsController,
+                  isActiveRowExpanded: _isActiveRowExpanded,
+                  justCompletedSetIndex: _justCompletedSetIndex,
+                  isDoneButtonPressed: _isDoneButtonPressed,
+                  onToggleRowExpansion: () =>
+                      setState(() => _isActiveRowExpanded = !_isActiveRowExpanded),
+                  onCompleteSet: _completeSet,
+                  onToggleUnit: _toggleUnit,
+                  onClose: () {}, // No close needed for full screen
+                  onPreviousExercise: _viewingExerciseIndex > 0
+                      ? () => setState(() => _viewingExerciseIndex--)
+                      : null,
+                  onNextExercise: _viewingExerciseIndex < _exercises.length - 1
+                      ? () => setState(() => _viewingExerciseIndex++)
+                      : null,
+                  onAddSet: () => setState(() {
+                    _totalSetsPerExercise[_viewingExerciseIndex] =
+                        (_totalSetsPerExercise[_viewingExerciseIndex] ?? 3) + 1;
+                  }),
+                  onBackToCurrentExercise: () =>
+                      setState(() => _viewingExerciseIndex = _currentExerciseIndex),
+                  onEditSet: (index) => _editCompletedSet(index),
+                  onUpdateSet: (index, weight, reps) => _updateCompletedSet(index, weight, reps),
+                  onDeleteSet: (index) => _deleteCompletedSet(index),
+                  onQuickCompleteSet: (index, complete) => _quickCompleteSet(index, complete),
+                  onDoneButtonPressDown: () =>
+                      setState(() => _isDoneButtonPressed = true),
+                  onDoneButtonPressUp: () {
+                    setState(() => _isDoneButtonPressed = false);
+                    HapticFeedback.heavyImpact();
+                    _completeSet();
+                  },
+                  onDoneButtonPressCancel: () =>
+                      setState(() => _isDoneButtonPressed = false),
+                  onShowNumberInputDialog: _showNumberInputDialog,
+                  onSkipExercise: _skipExercise,
+                  onOpenWorkoutPlan: _showWorkoutPlanDrawer,
+                  onOpenExerciseOptions: () => _showExerciseOptionsSheet(_viewingExerciseIndex),
+                  isMinimized: false, // Always expanded
+                  onMinimizedChanged: null, // No minimize needed
+                  lastSessionData: _getLastSessionData(_viewingExerciseIndex),
+                  prData: _getPrData(_viewingExerciseIndex),
+                  currentWeightIncrement: _weightIncrement,
+                  onWeightIncrementChanged: (value) =>
+                      setState(() => _weightIncrement = value),
+                  currentProgressionType: (_repProgressionPerExercise[_viewingExerciseIndex] ?? RepProgressionType.straight).displayName,
+                  onOpenProgressionPicker: () => _showProgressionPicker(_viewingExerciseIndex),
+                  onEditTarget: (setIndex, weight, reps, rir) {
+                    setState(() {
+                      final exercise = _exercises[_viewingExerciseIndex];
+                      final existingTargets = List<SetTarget>.from(exercise.setTargets ?? []);
+
+                      // Find or create target for this set (setIndex is 0-indexed, setNumber is 1-indexed)
+                      final setNumber = setIndex + 1;
+                      final targetIndex = existingTargets.indexWhere((t) => t.setNumber == setNumber);
+                      final newTarget = SetTarget(
+                        setNumber: setNumber,
+                        setType: 'working',
+                        targetReps: reps,
+                        targetWeightKg: weight,
+                        targetRir: rir,
+                      );
+
+                      if (targetIndex >= 0) {
+                        existingTargets[targetIndex] = newTarget;
+                      } else {
+                        existingTargets.add(newTarget);
+                      }
+
+                      _exercises[_viewingExerciseIndex] = exercise.copyWith(setTargets: existingTargets);
+                    });
+                  },
+                  // Inline rest row props
+                  showInlineRest: (() {
+                    final show = _showInlineRest && _viewingExerciseIndex == _currentExerciseIndex;
+                    debugPrint('🟡 [SetTrackingOverlay] showInlineRest=$show (_showInlineRest=$_showInlineRest, viewing=$_viewingExerciseIndex, current=$_currentExerciseIndex, isResting=$_isResting, isBetweenEx=$_isRestingBetweenExercises)');
+                    return show;
+                  })(),
+                  restTimeRemaining: _timerController.restSecondsRemaining,
+                  restDurationTotal: _inlineRestDuration,
+                  onRestComplete: _handleInlineRestComplete,
+                  onSkipRest: _handleInlineRestSkip,
+                  onAdjustTime: _handleInlineRestTimeAdjust,
+                  onRateRpe: _handleInlineRestRpeRating,
+                  onAddSetNote: _handleInlineRestNote,
+                  currentRpe: _inlineRestCurrentRpe,
+                  achievementPrompt: _inlineRestAchievementPrompt,
+                  aiTip: _inlineRestAiTip,
+                  isLoadingAiTip: _isLoadingAiTip,
+                ),
+              ),
+
+            // Bottom bar with action buttons (show during active workout OR between-sets rest)
+            if (!_isResting || (_isResting && !_isRestingBetweenExercises))
+              Positioned(
+                left: 0,
+                right: 0,
+                bottom: 0,
+                child: WorkoutBottomBar(
+                  currentExercise: currentExercise,
+                  nextExercise: nextExercise,
+                  allExercises: _exercises,
+                  currentExerciseIndex: _currentExerciseIndex,
+                  completedSetsPerExercise: _completedSets.map(
+                    (key, value) => MapEntry(key, value.length),
+                  ),
+                  showInstructions: _showInstructions,
+                  isResting: _isResting,
+                  onToggleInstructions: () =>
+                      setState(() => _showInstructions = !_showInstructions),
+                  onSkip: _isResting
+                      ? () => _timerController.skipRest()
+                      : _skipExercise,
+                  onExerciseTap: (index) {
+                    setState(() {
+                      _viewingExerciseIndex = index;
+                      _currentExerciseIndex = index;
+                    });
+                    _initControllersForExercise(index);
+                  },
+                  // New action button callbacks
+                  currentCompletedSets:
+                      _completedSets[_currentExerciseIndex]?.length ?? 0,
+                  onAddSet: () => setState(() {
+                    _totalSetsPerExercise[_currentExerciseIndex] =
+                        (_totalSetsPerExercise[_currentExerciseIndex] ?? 3) + 1;
+                  }),
+                  onDeleteSet: () {
+                    final sets = _completedSets[_currentExerciseIndex];
+                    if (sets != null && sets.isNotEmpty) {
+                      setState(() => sets.removeLast());
+                    }
+                  },
+                  onAddWater: _showHydrationDialog,
+                  onOpenBreathingGuide: () => _showBreathingGuide(currentExercise),
+                  onOpenAICoach: () => _showAICoachSheet(currentExercise),
+                  coachPersona: ref.watch(aiSettingsProvider).getCurrentCoach(),
+                  onShowExerciseInfo: () => showExerciseInfoSheet(
+                    context: context,
+                    exercise: currentExercise,
+                  ),
+                ),
+              ),
+
+            // Floating AI Coach FAB (visible when not resting, not hidden for session, and enabled in settings)
+            if (!_isResting && !_hideAICoachForSession && ref.watch(aiSettingsProvider).showAICoachDuringWorkouts)
+              Positioned(
+                bottom: MediaQuery.of(context).padding.bottom + 90,
+                right: 20,
+                child: _buildFloatingAICoachButton(currentExercise),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMediaBackground() {
+    // Simple solid background - no video/GIF in background to keep UI clean
+    // User can tap "Instructions" button to see exercise video on-demand
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Container(
+      color: isDark ? AppColors.pureBlack : Colors.grey.shade100,
+    );
+  }
+
+  // ========================================================================
+  // V2 MACROFACTOR-STYLE BUILD METHODS
+  // ========================================================================
+
+  /// Build the V2 MacroFactor-style active workout screen
+  Widget _buildActiveWorkoutScreenV2(bool isDark, Color backgroundColor) {
+    final currentExercise = _exercises[_currentExerciseIndex];
+    final nextExercise = _currentExerciseIndex < _exercises.length - 1
+        ? _exercises[_currentExerciseIndex + 1]
+        : null;
+
+    // Get set data for current exercise
+    final setRows = _buildSetRowsForExercise(_viewingExerciseIndex);
+    final completedExerciseIndices = _getCompletedExerciseIndices();
+
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) {
+          _showQuitDialog();
+        }
+      },
+      child: OrientationBuilder(
+        builder: (context, orientation) {
+          final isLandscape = orientation == Orientation.landscape;
+
+          // Use landscape layout when rotated
+          if (isLandscape) {
+            return _buildLandscapeLayoutV2(
+              isDark: isDark,
+              currentExercise: currentExercise,
+              nextExercise: nextExercise,
+              setRows: setRows,
+              completedExerciseIndices: completedExerciseIndices,
+            );
+          }
+
+          // Portrait layout (original)
+          return Builder(
+            builder: (context) {
+              final isDark = Theme.of(context).brightness == Brightness.dark;
+              return Scaffold(
+        backgroundColor: isDark ? WorkoutDesign.background : Colors.grey.shade50,
+        body: Stack(
+          children: [
+            // Main content column
+            Column(
+              children: [
+                // V2 Top bar - wrapped in RepaintBoundary to isolate per-second timer repaints
+                RepaintBoundary(
+                  child: Consumer(
+                    builder: (context, ref, _) {
+                      final warmupEnabled = ref.watch(warmupDurationProvider).warmupEnabled;
+                      final favoritesState = ref.watch(favoritesProvider);
+                      final currentExercise = _exercises.isNotEmpty ? _exercises[_currentExerciseIndex] : null;
+                      final isFavorite = currentExercise != null
+                          ? favoritesState.isFavorite(currentExercise.name)
+                          : false;
+
+                      return WorkoutTopBarV2(
+                        workoutSeconds: _timerController.workoutSeconds,
+                        restSecondsRemaining: _isResting ? _timerController.restSecondsRemaining : null,
+                        totalRestSeconds: _isResting ? _timerController.initialRestDuration : null,
+                        isPaused: _isPaused,
+                        showBackButton: warmupEnabled,
+                        backButtonLabel: warmupEnabled ? 'Warmup' : null,
+                        onMenuTap: _showWorkoutPlanDrawer,
+                        onBackTap: warmupEnabled ? _goBackToWarmup : null,
+                        onCloseTap: _showQuitDialog,
+                        onTimerTap: _togglePause,
+                        onMinimize: _minimizeWorkout,
+                        onFavoriteTap: currentExercise != null ? () => _toggleFavoriteExercise() : null,
+                        isFavorite: isFavorite,
+                      );
+                    },
+                  ),
+                ),
+
+                // Swipeable exercise content area
+                Expanded(
+                  child: GestureDetector(
+                    onHorizontalDragEnd: (details) {
+                      // Swipe left (next exercise) - negative velocity
+                      if (details.primaryVelocity != null && details.primaryVelocity! < -300) {
+                        if (_viewingExerciseIndex < _exercises.length - 1) {
+                          HapticFeedback.selectionClick();
+                          setState(() => _viewingExerciseIndex++);
+                        }
+                      }
+                      // Swipe right (previous exercise) - positive velocity
+                      else if (details.primaryVelocity != null && details.primaryVelocity! > 300) {
+                        if (_viewingExerciseIndex > 0) {
+                          HapticFeedback.selectionClick();
+                          setState(() => _viewingExerciseIndex--);
+                        }
+                      }
+                    },
+                    behavior: HitTestBehavior.translucent,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Exercise title and set counter with info button
+                        Container(
+                          key: AppTourKeys.exerciseCardKey,
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                // Exercise name and set counter (long-press for options)
+                                Expanded(
+                                  child: GestureDetector(
+                                    onLongPress: () => _showExerciseOptionsSheet(_viewingExerciseIndex),
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          _exercises[_viewingExerciseIndex].name,
+                                          style: WorkoutDesign.titleStyle.copyWith(
+                                            fontSize: 26, // Bigger font size
+                                            color: isDark ? WorkoutDesign.textPrimary : Colors.grey.shade900,
+                                          ),
+                                          maxLines: 2,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              const SizedBox(width: 8),
+                              // Live heart rate display (merged WearOS + BLE)
+                              Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  HeartRateDisplay(
+                                    iconSize: 24,
+                                    fontSize: 18,
+                                    showZoneLabel: false,
+                                  ),
+                                  // BLE connection indicator
+                                  Consumer(builder: (context, ref, _) {
+                                    final connAsync = ref.watch(bleHrConnectionStateProvider);
+                                    final connState = connAsync.whenOrNull(data: (s) => s);
+                                    if (connState == null || connState == BleHrConnectionState.disconnected) {
+                                      return const SizedBox.shrink();
+                                    }
+                                    final color = connState == BleHrConnectionState.connected
+                                        ? Colors.green
+                                        : Colors.orange;
+                                    return Padding(
+                                      padding: const EdgeInsets.only(left: 4),
+                                      child: Icon(
+                                        Icons.bluetooth_connected,
+                                        size: 14,
+                                        color: color,
+                                      ),
+                                    );
+                                  }),
+                                ],
+                              ),
+                              const SizedBox(width: 12),
+                              // Info magic pill (styled like Video chip)
+                              GestureDetector(
+                                onTap: () {
+                                  HapticFeedback.lightImpact();
+                                  _showExerciseDetailsSheet(_exercises[_viewingExerciseIndex]);
+                                },
+                                child: Container(
+                                  height: WorkoutDesign.chipHeight,
+                                  padding: const EdgeInsets.symmetric(horizontal: 14),
+                                  decoration: BoxDecoration(
+                                    color: isDark ? WorkoutDesign.surface : Colors.white,
+                                    borderRadius: BorderRadius.circular(WorkoutDesign.radiusRound),
+                                    border: Border.all(
+                                      color: isDark ? WorkoutDesign.border : WorkoutDesign.borderLight,
+                                      width: 1,
+                                    ),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(
+                                        Icons.info_outline_rounded,
+                                        size: 16,
+                                        color: isDark ? WorkoutDesign.textPrimary : Colors.grey.shade800,
+                                      ),
+                                      const SizedBox(width: 6),
+                                      Text(
+                                        'Info',
+                                        style: WorkoutDesign.chipStyle.copyWith(
+                                          color: isDark ? WorkoutDesign.textPrimary : Colors.grey.shade800,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        ),
+
+                        // Set counter row with skip on the right
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
+                          child: Row(
+                            children: [
+                              Text(
+                                'Set ${(_completedSets[_viewingExerciseIndex]?.length ?? 0) + 1} of ${_totalSetsPerExercise[_viewingExerciseIndex] ?? 3}',
+                                style: WorkoutDesign.subtitleStyle.copyWith(
+                                  color: isDark ? WorkoutDesign.textSecondary : Colors.grey.shade600,
+                                ),
+                              ),
+                              const Spacer(),
+                              GestureDetector(
+                                onTap: () {
+                                  HapticFeedback.lightImpact();
+                                  _skipExercise();
+                                },
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.orange.withValues(alpha: 0.12),
+                                    borderRadius: BorderRadius.circular(8),
+                                    border: Border.all(
+                                      color: AppColors.orange.withValues(alpha: 0.4),
+                                      width: 1,
+                                    ),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(
+                                        Icons.skip_next_rounded,
+                                        size: 16,
+                                        color: AppColors.orange,
+                                      ),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        'Skip',
+                                        style: TextStyle(
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.w700,
+                                          color: AppColors.orange,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+
+                        // Action chips row (Superset, Warm Up, etc.) - Video moved to bottom, Info moved to title
+                        Container(
+                          key: AppTourKeys.swapExerciseKey,
+                          child: ActionChipsRow(
+                          chips: _buildActionChipsForCurrentExercise()
+                              .where((chip) => chip.label != 'Video' && chip.label != 'Info')
+                              .toList(),
+                          onChipTapped: _handleChipTapped,
+                          showAiChip: false,
+                          hasAiNotification: _currentWeightSuggestion != null,
+                          onAiChipTapped: () => _showAICoachSheet(currentExercise),
+                        ),
+                        ),
+
+                        const SizedBox(height: 8),
+
+                        // Set tracking table with inline rest row
+                        Expanded(
+                          child: SingleChildScrollView(
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Container(
+                                  key: AppTourKeys.setLoggingKey,
+                                  child: SetTrackingTable(
+                                    key: ValueKey('set_tracking_$_viewingExerciseIndex'),
+                                  exercise: _exercises[_viewingExerciseIndex],
+                                  sets: setRows,
+                                  useKg: _useKg,
+                                  activeSetIndex: _completedSets[_viewingExerciseIndex]?.length ?? 0,
+                                  weightController: _weightController,
+                                  repsController: _repsController,
+                                  repsRightController: _isLeftRightMode ? _repsRightController : null,
+                                  onSetCompleted: _handleSetCompletedV2,
+                                  onSetUpdated: _updateCompletedSet,
+                                  onAddSet: () => setState(() {
+                                    _totalSetsPerExercise[_viewingExerciseIndex] =
+                                        (_totalSetsPerExercise[_viewingExerciseIndex] ?? 3) + 1;
+                                  }),
+                                  isLeftRightMode: _isLeftRightMode,
+                                  allSetsCompleted: _isExerciseCompleted(_viewingExerciseIndex),
+                                  onSelectAllTapped: () {
+                                    // Toggle all sets completed
+                                    if (_isExerciseCompleted(_viewingExerciseIndex)) {
+                                      // Already complete - do nothing or show message
+                                      HapticFeedback.lightImpact();
+                                    }
+                                  },
+                                  onSetDeleted: (index) => _deleteCompletedSet(index),
+                                  onToggleUnit: _toggleUnit,
+                                  onRirTapped: (setIndex, currentRir) => _showRirPicker(setIndex, currentRir),
+                                  activeRir: _lastSetRir,
+                                  onActiveRirChanged: (rir) => setState(() => _lastSetRir = rir),
+                                  // Inline rest row - shows between completed and active sets
+                                  showInlineRest: _showInlineRest &&
+                                      _viewingExerciseIndex == _currentExerciseIndex &&
+                                      !_isRestingBetweenExercises,
+                                    inlineRestRowWidget: _buildInlineRestRowV2(),
+                                  ),
+                                ),
+
+                                // Barbell plate indicator (only for barbell exercises)
+                                if (isBarbell(_exercises[_viewingExerciseIndex].equipment, exerciseName: _exercises[_viewingExerciseIndex].name))
+                                  AnimatedBuilder(
+                                    animation: _weightController,
+                                    builder: (context, _) {
+                                      final weight = double.tryParse(_weightController.text) ?? 0;
+                                      // Use overridden bar type if set, otherwise auto-detect
+                                      final barEquipment = _exerciseBarType[_viewingExerciseIndex]
+                                          ?? _exercises[_viewingExerciseIndex].equipment;
+                                      final barWt = getBarWeight(barEquipment, useKg: _useKg);
+                                      if (weight < barWt) return const SizedBox.shrink();
+                                      return Padding(
+                                        padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+                                        child: GestureDetector(
+                                          onTap: () => _showBarTypeSelector(_exercises[_viewingExerciseIndex]),
+                                          child: BarbellPlateIndicator(
+                                            totalWeight: weight,
+                                            barWeight: barWt,
+                                            useKg: _useKg,
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                  ),
+
+                                // AI Text Input Bar (below set table, within scrollable area)
+                                const SizedBox(height: 16),
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                                  child: AiTextInputBar(
+                                    workoutId: widget.workout.id ?? '',
+                                    useKg: _useKg,
+                                    currentExerciseName: _exercises.isNotEmpty
+                                        ? _exercises[_viewingExerciseIndex].name
+                                        : null,
+                                    currentExerciseIndex: _viewingExerciseIndex,
+                                    lastSetWeight: _completedSets[_viewingExerciseIndex]?.isNotEmpty == true
+                                        ? _completedSets[_viewingExerciseIndex]!.last.weight
+                                        : null,
+                                    lastSetReps: _completedSets[_viewingExerciseIndex]?.isNotEmpty == true
+                                        ? _completedSets[_viewingExerciseIndex]!.last.reps
+                                        : null,
+                                    onExercisesParsed: (exercises) => _handleParsedExercises(exercises),
+                                    onV2Parsed: (response) => _handleV2Parsed(response),
+                                  ),
+                                ),
+                                const SizedBox(height: 16),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+
+                // Video, Hydration, and Note quick actions row
+                HydrationQuickActions(
+                  onTap: () => _showHydrationDialog(),
+                  onNoteTap: () => _showNotesSheet(_exercises[_viewingExerciseIndex]),
+                  onVideoTap: () => _handleChipTapped('video'),
+                ),
+
+                // Exercise thumbnail strip (bottom navigation)
+                Builder(
+                  builder: (context) {
+                    final isDark = Theme.of(context).brightness == Brightness.dark;
+                    return Container(
+                      color: isDark ? WorkoutDesign.surface : Colors.white,
+                      child: SafeArea(
+                        top: false,
+                        child: ExerciseThumbnailStripV2(
+                          key: ValueKey('thumb_strip_${_exercises.map((e) => e.id ?? e.name).join('_')}'),
+                          exercises: _exercises.toList(), // Create new list instance
+                          currentIndex: _viewingExerciseIndex,
+                          completedExercises: completedExerciseIndices,
+                          onExerciseTap: (index) {
+                            HapticFeedback.selectionClick();
+                            setState(() {
+                              _viewingExerciseIndex = index;
+                              _currentExerciseIndex = index;
+                            });
+                            _initControllersForExercise(index);
+                          },
+                          onExerciseLongPress: (index) => _showExerciseOptionsSheet(index),
+                          onAddTap: () => _showExerciseAddSheet(),
+                          showAddButton: true,
+                          onReorder: _onExercisesReordered,
+                          onCreateSuperset: _onSupersetFromDrag,
+                          onDragActiveChanged: (isDragging, index) {
+                            setState(() {
+                              _isDragActive = isDragging;
+                              _draggedExerciseIndex = index;
+                            });
+                          },
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ],
+            ),
+
+            // Drag-to-action zones (Delete + Swap) — appear when dragging a thumbnail
+            if (_isDragActive)
+              _buildDragActionZones(isDark),
+
+            // Rest overlay (shows on top) - only for rest between exercises
+            // Between-sets rest is handled by inline rest row
+            // Wrapped in RepaintBoundary to isolate per-second rest timer repaints
+            if (_isResting && _isRestingBetweenExercises)
+              Positioned.fill(
+                key: AppTourKeys.restTimerKey,
+                child: RepaintBoundary(
+                  child: RestTimerOverlay(
+                    restSecondsRemaining: _timerController.restSecondsRemaining,
+                    initialRestDuration: _timerController.initialRestDuration,
+                    restMessage: _currentRestMessage,
+                    currentExercise: currentExercise,
+                    completedSetsCount: _completedSets[_currentExerciseIndex]?.length ?? 0,
+                    totalSets: _totalSetsPerExercise[_currentExerciseIndex] ?? 3,
+                    nextExercise: nextExercise,
+                    isRestBetweenExercises: _isRestingBetweenExercises,
+                    onSkipRest: () => _timerController.skipRest(),
+                    onLog1RM: () => _showLog1RMSheet(currentExercise),
+                    weightSuggestion: _currentWeightSuggestion,
+                    isLoadingWeightSuggestion: _isLoadingWeightSuggestion,
+                    onAcceptWeightSuggestion: _acceptWeightSuggestion,
+                    onDismissWeightSuggestion: _dismissWeightSuggestion,
+                    restSuggestion: _restSuggestion,
+                    isLoadingRestSuggestion: _isLoadingRestSuggestion,
+                    onAcceptRestSuggestion: _acceptRestSuggestion,
+                    onDismissRestSuggestion: _dismissRestSuggestion,
+                    currentRpe: _lastSetRpe,
+                    currentRir: _lastSetRir,
+                    onRpeChanged: (rpe) => setState(() => _lastSetRpe = rpe),
+                    onRirChanged: (rir) => setState(() => _lastSetRir = rir),
+                    lastSetReps: _completedSets[_currentExerciseIndex]?.isNotEmpty == true
+                        ? _completedSets[_currentExerciseIndex]!.last.reps
+                        : null,
+                    lastSetTargetReps: _completedSets[_currentExerciseIndex]?.isNotEmpty == true
+                        ? _completedSets[_currentExerciseIndex]!.last.targetReps
+                        : null,
+                    lastSetWeight: _completedSets[_currentExerciseIndex]?.isNotEmpty == true
+                        ? _completedSets[_currentExerciseIndex]!.last.weight
+                        : null,
+                    onAskAICoach: () => _showAICoachSheet(currentExercise),
+                    coachPersona: ref.watch(aiSettingsProvider).getCurrentCoach(),
+                  ),
+                ),
+              ),
+
+            // Fatigue alert modal
+            if (_showFatigueAlert && _fatigueAlertData != null)
+              Positioned.fill(
+                child: FatigueAlertModal(
+                  alertData: _fatigueAlertData!,
+                  currentWeight: double.tryParse(_weightController.text) ?? 0,
+                  exerciseName: currentExercise.name,
+                  onAcceptSuggestion: _handleAcceptFatigueSuggestion,
+                  onContinueAsPlanned: _handleDismissFatigueAlert,
+                  onStopExercise: _skipExercise,
+                ),
+              ),
+
+            // Floating AI Coach FAB (positioned above thumbnail strip)
+            if (!_isResting && !_hideAICoachForSession && ref.watch(aiSettingsProvider).showAICoachDuringWorkouts)
+              Positioned(
+                key: AppTourKeys.workoutAiKey,
+                bottom: MediaQuery.of(context).padding.bottom + 100, // Above thumbnail strip (~80px height + padding)
+                right: 20,
+                child: _buildFloatingAICoachButton(currentExercise),
+              ),
+          ],
+        ),
+      );
+            },
+          );
+        },
+      ),
+    );
+  }
+
+  // ========================================================================
+  // LANDSCAPE LAYOUT METHODS
+  // ========================================================================
+
+  /// Build landscape layout with side-by-side video + set table
+  Widget _buildLandscapeLayoutV2({
+    required bool isDark,
+    required dynamic currentExercise,
+    required dynamic nextExercise,
+    required List<SetRowData> setRows,
+    required Set<int> completedExerciseIndices,
+  }) {
+    final backgroundColor = isDark ? WorkoutDesign.background : Colors.grey.shade50;
+    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+    final accentColor = ref.watch(accentColorProvider).getColor(isDark);
+
+    return Scaffold(
+      backgroundColor: backgroundColor,
+      body: SafeArea(
+        child: Stack(
+          children: [
+            Row(
+              children: [
+                // LEFT PANEL (~35%): Video Player + Thumbnail Strip
+                SizedBox(
+                  width: MediaQuery.of(context).size.width * 0.35,
+                  child: Column(
+                    children: [
+                      // Exercise VIDEO player (auto-plays, looped)
+                      Expanded(
+                        child: _buildLandscapeVideoPlayer(isDark),
+                      ),
+                      // Horizontal thumbnail strip at bottom
+                      _buildLandscapeThumbnailStrip(
+                        isDark: isDark,
+                        completedExerciseIndices: completedExerciseIndices,
+                        accentColor: accentColor,
+                      ),
+                    ],
+                  ),
+                ),
+
+                // Vertical divider
+                VerticalDivider(width: 1, color: cardBorder, thickness: 1),
+
+                // RIGHT PANEL (~65%): Top Bar + Set Table + Actions
+                Expanded(
+                  child: Column(
+                    children: [
+                      // Compact top bar: ← | Timer | Title | Set X/Y | ✕
+                      _buildLandscapeTopBar(isDark: isDark, accentColor: accentColor),
+
+                      // Set tracking table (gets most vertical space)
+                      Expanded(
+                        child: SingleChildScrollView(
+                          padding: const EdgeInsets.symmetric(horizontal: 12),
+                          child: SetTrackingTable(
+                            key: ValueKey('set_tracking_landscape_$_viewingExerciseIndex'),
+                            exercise: _exercises[_viewingExerciseIndex],
+                            sets: setRows,
+                            useKg: _useKg,
+                            activeSetIndex: _completedSets[_viewingExerciseIndex]?.length ?? 0,
+                            weightController: _weightController,
+                            repsController: _repsController,
+                            repsRightController: _isLeftRightMode ? _repsRightController : null,
+                            onSetCompleted: _handleSetCompletedV2,
+                            onSetUpdated: _updateCompletedSet,
+                            onAddSet: () => setState(() {
+                              _totalSetsPerExercise[_viewingExerciseIndex] =
+                                  (_totalSetsPerExercise[_viewingExerciseIndex] ?? 3) + 1;
+                            }),
+                            isLeftRightMode: _isLeftRightMode,
+                            allSetsCompleted: _isExerciseCompleted(_viewingExerciseIndex),
+                            onSelectAllTapped: () {
+                              if (_isExerciseCompleted(_viewingExerciseIndex)) {
+                                HapticFeedback.lightImpact();
+                              }
+                            },
+                            onSetDeleted: (index) => _deleteCompletedSet(index),
+                            onToggleUnit: _toggleUnit,
+                            onRirTapped: (setIndex, currentRir) => _showRirPicker(setIndex, currentRir),
+                            activeRir: _lastSetRir,
+                            onActiveRirChanged: (rir) => setState(() => _lastSetRir = rir),
+                            showInlineRest: _showInlineRest &&
+                                _viewingExerciseIndex == _currentExerciseIndex &&
+                                !_isRestingBetweenExercises,
+                            inlineRestRowWidget: _buildInlineRestRowV2(),
+                          ),
+                        ),
+                      ),
+
+                      // Compact action chips row (no Video chip - it's always visible)
+                      _buildLandscapeActions(isDark: isDark, accentColor: accentColor),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+
+            // Rest overlay (shows on top) - for rest between exercises
+            // Wrapped in RepaintBoundary to isolate per-second rest timer repaints
+            if (_isResting && _isRestingBetweenExercises)
+              Positioned.fill(
+                child: RepaintBoundary(
+                  child: RestTimerOverlay(
+                    restSecondsRemaining: _timerController.restSecondsRemaining,
+                    initialRestDuration: _timerController.initialRestDuration,
+                    restMessage: _currentRestMessage,
+                    currentExercise: currentExercise,
+                    completedSetsCount: _completedSets[_currentExerciseIndex]?.length ?? 0,
+                    totalSets: _totalSetsPerExercise[_currentExerciseIndex] ?? 3,
+                    nextExercise: nextExercise,
+                    isRestBetweenExercises: _isRestingBetweenExercises,
+                    onSkipRest: () => _timerController.skipRest(),
+                    onLog1RM: () => _showLog1RMSheet(currentExercise),
+                    weightSuggestion: _currentWeightSuggestion,
+                    isLoadingWeightSuggestion: _isLoadingWeightSuggestion,
+                    onAcceptWeightSuggestion: _acceptWeightSuggestion,
+                    onDismissWeightSuggestion: _dismissWeightSuggestion,
+                    restSuggestion: _restSuggestion,
+                    isLoadingRestSuggestion: _isLoadingRestSuggestion,
+                    onAcceptRestSuggestion: _acceptRestSuggestion,
+                    onDismissRestSuggestion: _dismissRestSuggestion,
+                    currentRpe: _lastSetRpe,
+                    currentRir: _lastSetRir,
+                    onRpeChanged: (rpe) => setState(() => _lastSetRpe = rpe),
+                    onRirChanged: (rir) => setState(() => _lastSetRir = rir),
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Landscape video player - uses already-loaded video from state
+  Widget _buildLandscapeVideoPlayer(bool isDark) {
+    final exercise = _exercises[_viewingExerciseIndex];
+    final backgroundColor = isDark ? AppColors.surface : Colors.grey.shade100;
+
+    return Container(
+      margin: const EdgeInsets.all(8),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(12),
+        color: backgroundColor,
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(12),
+        child: Stack(
+          children: [
+            // Center the media content with proper aspect ratio
+            Positioned.fill(
+              child: Center(
+                child: _buildLandscapeMediaContent(exercise, isDark),
+              ),
+            ),
+
+            // Tap overlay for pausing video / opening full screen
+            if (_isVideoInitialized && _videoController != null)
+              Positioned.fill(
+                child: GestureDetector(
+                  onTap: _toggleVideoPlayPause,
+                  behavior: HitTestBehavior.translucent,
+                  child: AnimatedOpacity(
+                    opacity: !_isVideoPlaying ? 1.0 : 0.0,
+                    duration: const Duration(milliseconds: 200),
+                    child: Container(
+                      color: Colors.black.withValues(alpha: 0.3),
+                      child: const Center(
+                        child: Icon(
+                          Icons.play_arrow,
+                          color: Colors.white,
+                          size: 48,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+
+            // Exercise name overlay at bottom
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: 0,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.bottomCenter,
+                    end: Alignment.topCenter,
+                    colors: [
+                      Colors.black.withValues(alpha: 0.7),
+                      Colors.transparent,
+                    ],
+                  ),
+                ),
+                child: Text(
+                  exercise.name,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Build the media content (video or image) with proper aspect ratio
+  Widget _buildLandscapeMediaContent(dynamic exercise, bool isDark) {
+    // Priority 1: Show video if initialized
+    if (_isVideoInitialized && _videoController != null) {
+      return AspectRatio(
+        aspectRatio: _videoController!.value.aspectRatio,
+        child: VideoPlayer(_videoController!),
+      );
+    }
+
+    // Priority 2: Show loaded image/GIF with natural aspect ratio
+    if (_imageUrl != null && _imageUrl!.isNotEmpty) {
+      return Image.network(
+        _imageUrl!,
+        fit: BoxFit.contain, // Maintain aspect ratio
+        errorBuilder: (_, __, ___) => _buildVideoPlaceholder(exercise, isDark),
+      );
+    }
+
+    // Priority 3: Show loading indicator
+    if (_isLoadingMedia) {
+      return CircularProgressIndicator(
+        color: isDark ? Colors.white70 : Colors.black54,
+        strokeWidth: 2,
+      );
+    }
+
+    // Priority 4: Show placeholder
+    return _buildVideoPlaceholder(exercise, isDark);
+  }
+
+  Widget _buildVideoPlaceholder(dynamic exercise, bool isDark) {
+    return Container(
+      color: isDark ? AppColors.surface : Colors.grey.shade200,
+      child: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.fitness_center,
+              size: 48,
+              color: isDark ? AppColors.textMuted : Colors.grey.shade400,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              exercise.name,
+              style: TextStyle(
+                fontSize: 12,
+                color: isDark ? AppColors.textSecondary : Colors.grey.shade600,
+              ),
+              textAlign: TextAlign.center,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Landscape thumbnail strip - reuses the same component as portrait
+  Widget _buildLandscapeThumbnailStrip({
+    required bool isDark,
+    required Set<int> completedExerciseIndices,
+    required Color accentColor,
+  }) {
+    // Reuse the same ExerciseThumbnailStripV2 component for consistent behavior
+    // This ensures thumbnails load correctly from API/cache
+    return Container(
+      decoration: BoxDecoration(
+        color: isDark ? WorkoutDesign.surface : Colors.white,
+        border: Border(
+          top: BorderSide(
+            color: isDark ? AppColors.cardBorder : Colors.grey.shade200,
+          ),
+        ),
+      ),
+      child: ExerciseThumbnailStripV2(
+        key: ValueKey('thumb_strip_landscape_${_exercises.map((e) => e.id ?? e.name).join('_')}'),
+        exercises: _exercises.toList(), // Create new list instance
+        currentIndex: _viewingExerciseIndex,
+        completedExercises: completedExerciseIndices,
+        onExerciseTap: (index) {
+          HapticFeedback.selectionClick();
+          setState(() {
+            _viewingExerciseIndex = index;
+            _currentExerciseIndex = index;
+          });
+          _initControllersForExercise(index);
+          _fetchMediaForExercise(_exercises[index]);
+        },
+        onAddTap: () => _showExerciseAddSheet(),
+        showAddButton: true,
+        onReorder: _onExercisesReordered,
+        onCreateSuperset: _onSupersetFromDrag,
+      ),
+    );
+  }
+
+  /// Landscape top bar - compact with all info in one row
+  Widget _buildLandscapeTopBar({
+    required bool isDark,
+    required Color accentColor,
+  }) {
+    final exercise = _exercises[_viewingExerciseIndex];
+    final completedSets = _completedSets[_viewingExerciseIndex]?.length ?? 0;
+    final totalSets = _totalSetsPerExercise[_viewingExerciseIndex] ?? 3;
+    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+      decoration: BoxDecoration(
+        color: isDark ? WorkoutDesign.surface : Colors.white,
+        border: Border(bottom: BorderSide(color: cardBorder)),
+      ),
+      child: Row(
+        children: [
+          // Back button
+          IconButton(
+            icon: Icon(Icons.arrow_back, size: 20, color: textPrimary),
+            onPressed: _handleBack,
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+          ),
+
+          // Timer (uses direct getter, UI rebuilds via setState from timer callback)
+          // Wrapped in RepaintBoundary to isolate per-second timer repaints
+          RepaintBoundary(
+            child: Text(
+              _formatDuration(_timerController.workoutSeconds),
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w600,
+                color: textPrimary,
+                fontFeatures: const [FontFeature.tabularFigures()],
+              ),
+            ),
+          ),
+
+          const SizedBox(width: 12),
+
+          // Exercise name (truncated)
+          Expanded(
+            child: Text(
+              exercise.name,
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.bold,
+                color: textPrimary,
+              ),
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+
+          // Set counter badge
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            decoration: BoxDecoration(
+              color: accentColor.withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Text(
+              'Set ${completedSets + 1}/$totalSets',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: accentColor,
+              ),
+            ),
+          ),
+
+          const SizedBox(width: 8),
+
+          // Pause/Play button
+          IconButton(
+            icon: Icon(
+              _isPaused ? Icons.play_arrow : Icons.pause,
+              size: 20,
+              color: textSecondary,
+            ),
+            onPressed: _togglePause,
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+          ),
+
+          // Close button
+          IconButton(
+            icon: Icon(Icons.close, size: 20, color: textSecondary),
+            onPressed: _showQuitDialog,
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Landscape action chips - wrapped layout, no Video chip
+  Widget _buildLandscapeActions({
+    required bool isDark,
+    required Color accentColor,
+  }) {
+    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+    final chipBackground = isDark ? AppColors.surface : Colors.grey.shade100;
+
+    // Filter out Video chip - it's always visible in left panel
+    final landscapeChips = _buildActionChipsForCurrentExercise()
+        .where((chip) => chip.label != 'Video')
+        .toList();
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: isDark ? WorkoutDesign.surface : Colors.white,
+        border: Border(top: BorderSide(color: cardBorder)),
+      ),
+      child: Wrap(
+        spacing: 8,
+        runSpacing: 6,
+        children: [
+          // Action chips
+          ...landscapeChips.map((chip) => _buildLandscapeMiniChip(
+                icon: chip.icon,
+                label: chip.label,
+                onTap: () => _handleChipTapped(chip.id),
+                isDark: isDark,
+                chipBackground: chipBackground,
+                textColor: textSecondary,
+              )),
+          // Quick actions
+          _buildLandscapeMiniChip(
+            icon: Icons.water_drop,
+            label: 'Drink',
+            onTap: _showHydrationDialog,
+            isDark: isDark,
+            chipBackground: chipBackground,
+            textColor: AppColors.quickActionWater,
+            iconColor: AppColors.quickActionWater,
+          ),
+          _buildLandscapeMiniChip(
+            icon: Icons.sticky_note_2_outlined,
+            label: 'Note',
+            onTap: () => _showNotesSheet(_exercises[_viewingExerciseIndex]),
+            isDark: isDark,
+            chipBackground: chipBackground,
+            textColor: const Color(0xFFF59E0B),
+            iconColor: const Color(0xFFF59E0B),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLandscapeMiniChip({
+    IconData? icon,
+    required String label,
+    required VoidCallback onTap,
+    required bool isDark,
+    required Color chipBackground,
+    required Color textColor,
+    Color? iconColor,
+  }) {
+    return GestureDetector(
+      onTap: () {
+        HapticFeedback.selectionClick();
+        onTap();
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        decoration: BoxDecoration(
+          color: chipBackground,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: isDark ? AppColors.cardBorder : Colors.grey.shade300,
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (icon != null) ...[
+              Icon(icon, size: 14, color: iconColor ?? textColor),
+              const SizedBox(width: 4),
+            ],
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+                color: textColor,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _handleBack() {
+    // Check if warmup is enabled and go back to warmup, otherwise show quit dialog
+    final warmupEnabled = ref.read(warmupDurationProvider).warmupEnabled;
+    if (warmupEnabled) {
+      _goBackToWarmup();
+    } else {
+      _showQuitDialog();
+    }
+  }
+
+  String _formatDuration(int seconds) {
+    final minutes = seconds ~/ 60;
+    final secs = seconds % 60;
+    return '${minutes.toString().padLeft(2, '0')}:${secs.toString().padLeft(2, '0')}';
+  }
+
+  /// Calculate RIR algorithmically based on set type and position
+  /// Based on RP Strength methodology: progressive intensity through sets
+  int? _calculateRir(String? setType, int setIndex, int totalWorkingSets) {
+    final type = (setType ?? 'working').toLowerCase();
+
+    // Warmup sets don't have RIR - they're for preparation, not stimulation
+    if (type == 'warmup') return null;
+
+    // Failure/AMRAP sets are always RIR 0 (maximum effort)
+    if (type == 'failure' || type == 'amrap') return 0;
+
+    // Drop sets maintain high intensity (RIR 1)
+    if (type == 'drop') return 1;
+
+    // Working sets: progressive RIR decrease (3 → 2 → 1)
+    if (totalWorkingSets <= 1) return 2;  // Single set = moderate intensity
+    if (totalWorkingSets == 2) {
+      return setIndex == 0 ? 3 : 1;  // First=3, Last=1
+    }
+    // 3+ working sets: distribute RIR across thirds (3→2→1)
+    final position = setIndex / (totalWorkingSets - 1);  // 0.0 to 1.0
+    if (position < 0.33) return 3;      // First third: conservative
+    if (position < 0.67) return 2;      // Middle third: moderate
+    return 1;                            // Last third: approaching failure
+  }
+
+  /// Build set row data for the V2 table
+  List<SetRowData> _buildSetRowsForExercise(int exerciseIndex) {
+    final exercise = _exercises[exerciseIndex];
+    final totalSets = _totalSetsPerExercise[exerciseIndex] ?? exercise.sets ?? 3;
+    final completedSets = _completedSets[exerciseIndex] ?? [];
+    final previousSets = _previousSets[exerciseIndex] ?? [];
+    final setTargets = exercise.setTargets ?? [];
+
+    // Count working sets for RIR calculation
+    final totalWorkingSets = setTargets.isNotEmpty
+        ? setTargets.where((t) => t.setType.toLowerCase() == 'working').length
+        : totalSets;
+
+    final List<SetRowData> rows = [];
+    int workingSetIndex = 0;
+
+    for (int i = 0; i < totalSets; i++) {
+      final isCompleted = i < completedSets.length;
+      final isActive = i == completedSets.length && exerciseIndex == _viewingExerciseIndex;
+
+      // Get target data from AI
+      SetTarget? setTarget;
+      if (i < setTargets.length) {
+        setTarget = setTargets[i];
+      }
+
+      // Track working set index for RIR calculation
+      final isWorkingSet = setTarget?.setType.toLowerCase() == 'working' ||
+          (setTarget == null && i >= 0); // Fallback assumes all are working sets
+      final currentWorkingIndex = isWorkingSet ? workingSetIndex : 0;
+      if (setTarget?.setType.toLowerCase() == 'working') {
+        workingSetIndex++;
+      }
+
+      // Get previous session data
+      double? prevWeight;
+      int? prevReps;
+      int? prevRir;
+      if (i < previousSets.length) {
+        prevWeight = (previousSets[i]['weight'] as num?)?.toDouble();
+        prevReps = previousSets[i]['reps'] as int?;
+        prevRir = previousSets[i]['rir'] as int?;
+      }
+
+      // Get actual values if completed
+      double? actualWeight;
+      int? actualReps;
+      if (isCompleted) {
+        actualWeight = completedSets[i].weight;
+        actualReps = completedSets[i].reps;
+      }
+
+      // Calculate RIR: use AI value if available, otherwise calculate algorithmically
+      final calculatedRir = setTarget?.targetRir ??
+          _calculateRir(setTarget?.setType, currentWorkingIndex, totalWorkingSets);
+
+      // Get actual RIR from completed set log
+      int? actualRir;
+      if (isCompleted) {
+        actualRir = completedSets[i].rir;
+      }
+
+      rows.add(SetRowData(
+        setNumber: i + 1,
+        isWarmup: setTarget?.isWarmup ?? false,
+        isCompleted: isCompleted,
+        isActive: isActive,
+        // TARGET weight: use history → AI (if reliable) → equipment default
+        // targetWeight is in kg internally — display layer converts to user's unit
+        targetWeight: (() {
+          // If a progression pattern wrote this setTarget, trust it directly
+          final hasProgression = _exerciseProgressionPattern.containsKey(exerciseIndex);
+          if (hasProgression && setTarget?.targetWeightKg != null && setTarget!.targetWeightKg! > 0) {
+            return setTarget!.targetWeightKg!;
+          }
+          // Otherwise: historical → previous session → equipment default
+          final aiWt = setTarget?.targetWeightKg ?? exercise.weight?.toDouble();
+          if (aiWt != null && !isGenericWeight(aiWt, exercise.weightSource)) {
+            return aiWt;
+          }
+          if (prevWeight != null && prevWeight > 0) return prevWeight;
+          final userProfile = ref.read(authStateProvider).user;
+          final defaultDisplay = getDefaultWeight(exercise.equipment,
+            exerciseName: exercise.name,
+            fitnessLevel: userProfile?.fitnessLevel,
+            gender: userProfile?.gender,
+            useKg: _useKg);
+          if (defaultDisplay <= 0) return aiWt;
+          return _useKg ? defaultDisplay : defaultDisplay * 0.453592;
+        })(),
+        targetReps: setTarget?.targetReps != null ? setTarget!.targetReps.toString() : '${exercise.reps ?? 8}-${(exercise.reps ?? 8) + 2}',
+        targetRir: calculatedRir,
+        actualWeight: actualWeight,
+        actualReps: actualReps,
+        actualRir: actualRir,
+        previousWeight: prevWeight,
+        previousReps: prevReps,
+        previousRir: prevRir,
+      ));
+    }
+
+    return rows;
+  }
+
+  /// Get completed exercise indices
+  Set<int> _getCompletedExerciseIndices() {
+    final completed = <int>{};
+    for (int i = 0; i < _exercises.length; i++) {
+      if (_isExerciseCompleted(i)) {
+        completed.add(i);
+      }
+    }
+    return completed;
+  }
+
+  /// Check if exercise is completed
+  bool _isExerciseCompleted(int exerciseIndex) {
+    final completedCount = _completedSets[exerciseIndex]?.length ?? 0;
+    final totalSets = _totalSetsPerExercise[exerciseIndex] ?? 3;
+    return completedCount >= totalSets;
+  }
+
+  /// Build action chips for current exercise
+  /// Order: Video (leftmost), Superset, Info, Swap, L/R, More (3-dot)
+  /// Note is moved to bottom bar area
+  /// History and Increments are now in the More menu
+  List<ActionChipData> _buildActionChipsForCurrentExercise() {
+    // Get current progression pattern for this exercise
+    final pattern = _exerciseProgressionPattern[_viewingExerciseIndex]
+        ?? SetProgressionPattern.pyramidUp;
+
+    // Get increment display string in user's unit
+    final exercise = _exercises[_viewingExerciseIndex];
+    final incrementState = ref.read(weightIncrementsProvider);
+    final incrementValue = incrementState.getIncrement(exercise.equipment);
+    final incrementUnit = incrementState.unit;
+    final incrementLabel = '±${incrementValue % 1 == 0 ? incrementValue.toInt() : incrementValue} $incrementUnit';
+
+    return [
+      WorkoutActionChips.progression(label: pattern.chipLabel, icon: pattern.icon),
+      WorkoutActionChips.superset,
+      WorkoutActionChips.leftRight(isActive: _isLeftRightMode),
+      WorkoutActionChips.incrementDisplay(label: incrementLabel),
+      WorkoutActionChips.more,
+    ];
+  }
+
+  /// Handle chip tapped
+  void _handleChipTapped(String chipId) {
+    HapticFeedback.selectionClick();
+    final currentExercise = _exercises[_viewingExerciseIndex];
+
+    switch (chipId) {
+      case 'info':
+        // Show exercise details (muscles, description, etc.)
+        _showExerciseDetailsSheet(currentExercise);
+        break;
+      case 'warmup':
+        // Show warmup info or toggle warmup sets
+        _showWarmupSheet(currentExercise);
+        break;
+      case 'targets':
+        // Show targets info
+        _showTargetsSheet(currentExercise);
+        break;
+      case 'swap':
+        _showSwapSheet(_viewingExerciseIndex);
+        break;
+      case 'note':
+        // Show notes sheet
+        _showNotesSheet(currentExercise);
+        break;
+      case 'superset':
+        // Show superset pairing
+        _showSupersetSheet();
+        break;
+      case 'video':
+        // Show exercise video/instructions
+        showExerciseInfoSheet(
+          context: context,
+          exercise: currentExercise,
+        );
+        break;
+      case 'history':
+        // Show exercise history
+        _showHistorySheet(currentExercise);
+        break;
+      case 'skip':
+        _skipExercise();
+        break;
+      case 'lr':
+        setState(() => _isLeftRightMode = !_isLeftRightMode);
+        break;
+      case 'increments':
+        _showWeightIncrementsSheet();
+        break;
+      case 'increments_display':
+        _showWeightIncrementsSheet();
+        break;
+      case 'equipment':
+        _showEquipmentProfileSheet();
+        break;
+      case 'progression':
+        _showProgressionSheet();
+        break;
+      case 'reorder':
+        _showWorkoutPlanDrawer();
+        break;
+      case 'more':
+        _showMoreMenu(currentExercise);
+        break;
+    }
+  }
+
+  /// Show the 3-dot "More" popup menu with History, Increments options
+  void _showMoreMenu(WorkoutExercise exercise) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    showMenu<String>(
+      context: context,
+      position: RelativeRect.fromLTRB(
+        MediaQuery.of(context).size.width - 200, // Position from right
+        kToolbarHeight + MediaQuery.of(context).padding.top + 100, // Below top bar
+        16,
+        0,
+      ),
+      color: isDark ? WorkoutDesign.surface : Colors.white,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(
+          color: isDark ? WorkoutDesign.border : WorkoutDesign.borderLight,
+        ),
+      ),
+      items: [
+        PopupMenuItem<String>(
+          value: 'swap',
+          child: Row(
+            children: [
+              Icon(
+                Icons.swap_horiz,
+                size: 20,
+                color: isDark ? WorkoutDesign.textSecondary : Colors.grey.shade700,
+              ),
+              const SizedBox(width: 12),
+              Text(
+                'Swap Exercise',
+                style: TextStyle(
+                  color: isDark ? WorkoutDesign.textPrimary : Colors.grey.shade900,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+        ),
+        PopupMenuItem<String>(
+          value: 'equipment',
+          child: Row(
+            children: [
+              Icon(
+                Icons.fitness_center,
+                size: 20,
+                color: isDark ? WorkoutDesign.textSecondary : Colors.grey.shade700,
+              ),
+              const SizedBox(width: 12),
+              Text(
+                'My Gym',
+                style: TextStyle(
+                  color: isDark ? WorkoutDesign.textPrimary : Colors.grey.shade900,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+        ),
+        PopupMenuItem<String>(
+          value: 'history',
+          child: Row(
+            children: [
+              Icon(
+                Icons.history,
+                size: 20,
+                color: isDark ? WorkoutDesign.textSecondary : Colors.grey.shade700,
+              ),
+              const SizedBox(width: 12),
+              Text(
+                'History',
+                style: TextStyle(
+                  color: isDark ? WorkoutDesign.textPrimary : Colors.grey.shade900,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+        ),
+        PopupMenuItem<String>(
+          value: 'bar_type',
+          enabled: isBarbell(exercise.equipment, exerciseName: exercise.name),
+          child: Row(
+            children: [
+              Icon(
+                Icons.fitness_center,
+                size: 20,
+                color: isBarbell(exercise.equipment, exerciseName: exercise.name)
+                    ? (isDark ? WorkoutDesign.textSecondary : Colors.grey.shade700)
+                    : (isDark ? WorkoutDesign.textSecondary.withValues(alpha: 0.3) : Colors.grey.shade400),
+              ),
+              const SizedBox(width: 12),
+              Text(
+                'Bar Type',
+                style: TextStyle(
+                  color: isBarbell(exercise.equipment, exerciseName: exercise.name)
+                      ? (isDark ? WorkoutDesign.textPrimary : Colors.grey.shade900)
+                      : (isDark ? WorkoutDesign.textSecondary.withValues(alpha: 0.3) : Colors.grey.shade400),
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+        ),
+        // Divider before destructive action
+        const PopupMenuDivider(),
+        // End Workout option in red
+        PopupMenuItem<String>(
+          value: 'end_workout',
+          child: Row(
+            children: [
+              Icon(
+                Icons.stop_circle_outlined,
+                size: 20,
+                color: Colors.red.shade600,
+              ),
+              const SizedBox(width: 12),
+              Text(
+                'End Workout',
+                style: TextStyle(
+                  color: Colors.red.shade600,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    ).then((value) {
+      if (value == 'swap') {
+        _showSwapSheet(_viewingExerciseIndex);
+      } else if (value == 'equipment') {
+        _showEquipmentProfileSheet();
+      } else if (value == 'history') {
+        _showHistorySheet(exercise);
+      } else if (value == 'bar_type') {
+        _showBarTypeSelector(exercise);
+      } else if (value == 'end_workout') {
+        _showQuitDialog();
+      }
+    });
+  }
+
+  /// Build the drag-to-action overlay zones (Delete + Swap).
+  /// Shown at the top of the screen when the user long-press-drags a thumbnail.
+  Widget _buildDragActionZones(bool isDark) {
+    return Positioned(
+      top: 0,
+      left: 0,
+      right: 0,
+      child: ClipRect(
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+          child: Container(
+            color: Colors.transparent,
+            padding: EdgeInsets.only(
+              top: MediaQuery.of(context).padding.top + 8,
+              left: 16,
+              right: 16,
+              bottom: 16,
+            ),
+            child: Row(
+              children: [
+                // Delete zone
+                Expanded(
+                  child: _DragActionZone(
+                    icon: Icons.delete_outline_rounded,
+                    label: 'Delete',
+                    color: Colors.red,
+                    isDark: isDark,
+                    onAccept: (draggedIndex) {
+                      setState(() {
+                        _isDragActive = false;
+                        _draggedExerciseIndex = null;
+                      });
+                      _confirmDeleteExercise(draggedIndex);
+                    },
+                  ),
+                ),
+                const SizedBox(width: 12),
+                // Swap zone
+                Expanded(
+                  child: _DragActionZone(
+                    icon: Icons.swap_horiz_rounded,
+                    label: 'Swap',
+                    color: AppColors.orange,
+                    isDark: isDark,
+                    onAccept: (draggedIndex) {
+                      setState(() {
+                        _isDragActive = false;
+                        _draggedExerciseIndex = null;
+                      });
+                      if (draggedIndex < _exercises.length) {
+                        _showSwapSheet(draggedIndex);
+                      }
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Confirm and delete an exercise from the workout
+  void _confirmDeleteExercise(int index) {
+    if (index >= _exercises.length) return;
+    final exercise = _exercises[index];
+
+    // If last exercise, show end workout dialog instead
+    if (_exercises.length <= 1) {
+      _showQuitDialog();
+      return;
+    }
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Remove Exercise'),
+        content: Text('Remove "${exercise.name}" from this workout?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () {
+              Navigator.pop(ctx);
+              HapticFeedback.heavyImpact();
+              setState(() {
+                _exercises.removeAt(index);
+                // Adjust current index if needed
+                if (_viewingExerciseIndex >= _exercises.length) {
+                  _viewingExerciseIndex = _exercises.length - 1;
+                }
+                if (_currentExerciseIndex >= _exercises.length) {
+                  _currentExerciseIndex = _exercises.length - 1;
+                }
+                _initControllersForExercise(_viewingExerciseIndex);
+              });
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('${exercise.name} removed'),
+                  behavior: SnackBarBehavior.floating,
+                  duration: const Duration(seconds: 2),
+                ),
+              );
+            },
+            style: FilledButton.styleFrom(
+              backgroundColor: Colors.red,
+            ),
+            child: const Text('Remove'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Show weight increments sheet
+  void _showWeightIncrementsSheet() {
+    showWeightIncrementsSheet(context);
+  }
+
+  /// Show equipment profile sheet — lets user view/edit their gym equipment
+  void _showEquipmentProfileSheet() {
+    final activeProfile = ref.read(activeGymProfileProvider);
+    if (activeProfile == null) return;
+
+    // Get current equipment details from profile
+    final currentEquipmentDetails = (activeProfile.equipmentDetails ?? [])
+        .map((detail) {
+          if (detail is Map<String, dynamic>) {
+            return EquipmentItem.fromJson(detail);
+          }
+          return null;
+        })
+        .whereType<EquipmentItem>()
+        .toList();
+
+    showGlassSheet(
+      context: context,
+      builder: (context) => GlassSheet(
+        child: EditWorkoutEquipmentSheet(
+          currentEquipment: activeProfile.equipment,
+          equipmentDetails: currentEquipmentDetails,
+          onApply: (selectedEquipment) async {
+            Navigator.pop(context);
+            // Save to gym profile via API
+            try {
+              final apiClient = ref.read(apiClientProvider);
+              await apiClient.put(
+                '/gym-profiles/${activeProfile.id}',
+                data: {'equipment': selectedEquipment},
+              );
+              ref.read(gymProfilesProvider.notifier).refresh();
+              if (mounted) {
+                setState(() {}); // Rebuild to reflect new equipment
+              }
+              debugPrint('✅ [Equipment] Updated gym profile');
+            } catch (e) {
+              debugPrint('⚠️ [Equipment] Failed to save: $e');
+            }
+          },
+        ),
+      ),
+    );
+  }
+
+  /// Show bar type selector bottom sheet
+  void _showBarTypeSelector(WorkoutExercise exercise) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final currentBarType = _exerciseBarType[_viewingExerciseIndex] ?? exercise.equipment ?? 'barbell';
+
+    final barTypes = <String, Map<String, dynamic>>{
+      'barbell': {'label': 'Standard Barbell', 'lbs': 45.0, 'kg': 20.0},
+      'womens_barbell': {'label': "Women's Olympic Bar", 'lbs': 35.0, 'kg': 15.0},
+      'ez_curl_bar': {'label': 'EZ Curl Bar', 'lbs': 25.0, 'kg': 11.0},
+      'trap_bar': {'label': 'Trap / Hex Bar', 'lbs': 55.0, 'kg': 25.0},
+      'smith_machine': {'label': 'Smith Machine', 'lbs': 20.0, 'kg': 9.0},
+    };
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: isDark ? WorkoutDesign.surface : Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Container(
+                    width: 36, height: 4,
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade400,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'Bar Type',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: isDark ? Colors.white : Colors.black87,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Select the type of bar you are using',
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: isDark ? Colors.white54 : Colors.black45,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                ...barTypes.entries.map((entry) {
+                  final key = entry.key;
+                  final info = entry.value;
+                  final isSelected = currentBarType.toLowerCase().contains(key.replaceAll('_', ' ').split(' ').first) ||
+                      (key == 'barbell' && !barTypes.keys.skip(1).any((k) =>
+                          currentBarType.toLowerCase().contains(k.replaceAll('_', ' ').split(' ').first)
+                      ));
+                  final weightStr = _useKg
+                      ? '${(info['kg'] as double).toStringAsFixed((info['kg'] as double) % 1 == 0 ? 0 : 1)} kg'
+                      : '${(info['lbs'] as double).toStringAsFixed(0)} lb';
+
+                  return ListTile(
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 8),
+                    leading: Icon(
+                      Icons.fitness_center,
+                      color: isSelected
+                          ? (isDark ? AppColors.cyan : AppColorsLight.cyan)
+                          : (isDark ? Colors.white38 : Colors.black26),
+                    ),
+                    title: Text(
+                      info['label'] as String,
+                      style: TextStyle(
+                        fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                        color: isDark ? Colors.white : Colors.black87,
+                      ),
+                    ),
+                    trailing: Text(
+                      weightStr,
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: isDark ? Colors.white54 : Colors.black45,
+                      ),
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    selected: isSelected,
+                    selectedTileColor: isDark
+                        ? AppColors.cyan.withValues(alpha: 0.1)
+                        : AppColorsLight.cyan.withValues(alpha: 0.08),
+                    onTap: () {
+                      // Calculate weight adjustment: old bar → new bar
+                      final oldBarType = _exerciseBarType[_viewingExerciseIndex]
+                          ?? exercise.equipment ?? 'barbell';
+                      final oldBarWeight = getBarWeight(oldBarType, useKg: _useKg);
+                      final newBarWeight = getBarWeight(key, useKg: _useKg);
+                      final weightDiff = newBarWeight - oldBarWeight;
+
+                      setState(() {
+                        _exerciseBarType[_viewingExerciseIndex] = key;
+                      });
+
+                      // Adjust weight controller for the bar weight difference
+                      final currentWeight = double.tryParse(_weightController.text) ?? 0;
+                      if (currentWeight > 0 && weightDiff != 0) {
+                        final adjusted = (currentWeight + weightDiff)
+                            .clamp(newBarWeight, 9999.0);
+                        _weightController.text = adjusted.toStringAsFixed(
+                            adjusted % 1 == 0 ? 0 : 1);
+                      }
+
+                      // Persist to SharedPreferences
+                      ref.read(exerciseBarTypeProvider.notifier)
+                          .setBarType(exercise.name, key);
+                      Navigator.pop(context);
+                    },
+                  );
+                }),
+                const SizedBox(height: 8),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  /// Show progression model selector bottom sheet.
+  void _showProgressionSheet() {
+    final exercise = _exercises[_viewingExerciseIndex];
+    final currentPattern = _exerciseProgressionPattern[_viewingExerciseIndex]
+        ?? SetProgressionPattern.pyramidUp;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    // Get working weight and increment for preview strings
+    final incrementState = ref.read(weightIncrementsProvider);
+    final increment = incrementState.getIncrement(exercise.equipment);
+    final unit = incrementState.unit;
+    final workingWeight = exercise.weight?.toDouble() ??
+        (double.tryParse(_weightController.text) ?? 50);
+    final baseReps = exercise.reps ?? 10;
+    final totalSets = _totalSetsPerExercise[_viewingExerciseIndex] ?? 3;
+
+    showModalBottomSheet<SetProgressionPattern>(
+      context: context,
+      backgroundColor: isDark ? WorkoutDesign.surface : Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      isScrollControlled: true,
+      builder: (ctx) => DraggableScrollableSheet(
+        expand: false,
+        initialChildSize: 0.7,
+        minChildSize: 0.4,
+        maxChildSize: 0.9,
+        builder: (ctx, scrollController) {
+          final exTypePreview = FatigueService.getExerciseType(exercise.muscleGroup, exercise.name);
+          final userGoalPreview = ref.read(authStateProvider).user?.primaryGoal;
+          return _ProgressionSelectorSheet(
+            currentPattern: currentPattern,
+            workingWeight: workingWeight,
+            totalSets: totalSets,
+            baseReps: baseReps,
+            increment: increment,
+            unit: unit,
+            isDark: isDark,
+            scrollController: scrollController,
+            trainingGoal: userGoalPreview,
+            exerciseType: exTypePreview,
+            onSelect: (pattern) {
+              Navigator.of(ctx).pop(pattern);
+            },
+          );
+        },
+      ),
+    ).then((selected) {
+      if (selected != null && selected != currentPattern) {
+        _applyProgressionPattern(selected);
+      }
+    });
+  }
+
+  /// Apply a newly selected progression pattern to the current exercise.
+  void _applyProgressionPattern(SetProgressionPattern pattern) {
+    final exerciseIndex = _viewingExerciseIndex;
+
+    // Save to state
+    setState(() {
+      _exerciseProgressionPattern[exerciseIndex] = pattern;
+    });
+
+    // Persist to SharedPreferences
+    ref.read(exerciseProgressionProvider.notifier)
+        .setPattern(_exercises[exerciseIndex].name, pattern);
+
+    // Recalculate and apply targets
+    _applyProgressionTargets(exerciseIndex, pattern);
+
+    HapticFeedback.mediumImpact();
+  }
+
+  /// Recalculate and apply progression targets for an exercise.
+  /// Works in DISPLAY units to avoid kg↔lbs rounding issues.
+  /// Handles warmup sets with 50% weight and 6-12 rep clamping.
+  void _applyProgressionTargets(int exerciseIndex, SetProgressionPattern pattern) {
+    final exercise = _exercises[exerciseIndex];
+    debugPrint('🎯 [ApplyTargets] ENTER: ex=$exerciseIndex "${exercise.name}", pattern=${pattern.displayName}, '
+        'exercise.weight=${exercise.weight}, equipment=${exercise.equipment}, setTargets=${exercise.setTargets?.length ?? 0}');
+
+    // Skip explicitly bodyweight exercises — no weight targets to generate
+    final eq = (exercise.equipment ?? '').toLowerCase();
+    if (eq.contains('bodyweight') || eq.contains('body weight')) {
+      debugPrint('🎯 [ApplyTargets] SKIP — bodyweight exercise (equipment=$eq)');
+      return;
+    }
+
+    // Get display-unit increment (same approach as _updateControlsForNextSet)
+    final incrementState = ref.read(weightIncrementsProvider);
+    final incrementRaw = incrementState.getIncrement(exercise.equipment);
+    final incrementUnit = incrementState.unit;
+    final double effectiveIncrement;
+    if (_useKg && incrementUnit == 'lbs') {
+      effectiveIncrement = incrementRaw * 0.453592;
+    } else if (!_useKg && incrementUnit == 'kg') {
+      effectiveIncrement = incrementRaw * 2.20462;
+    } else {
+      effectiveIncrement = incrementRaw;
+    }
+
+    // Get weight in display unit — robust fallback chain.
+    // IMPORTANT: Only read from the controller if this IS the current exercise.
+    // The controller is shared — it always shows the CURRENT exercise's weight,
+    // not this exercise's weight if called from the preload loop.
+    final controllerWeight = exerciseIndex == _currentExerciseIndex
+        ? (double.tryParse(_weightController.text) ?? 0)
+        : 0.0;
+    double displayWeight;
+    if (controllerWeight > 0) {
+      displayWeight = controllerWeight;
+      debugPrint('⚙️ [ApplyTargets] ex=$exerciseIndex weight from controller: $displayWeight');
+    } else {
+      // Try exercise weight first (stored in KG)
+      final aiWeight = exercise.weight?.toDouble() ?? 0;
+      if (aiWeight > 0) {
+        displayWeight = _useKg ? aiWeight : aiWeight * 2.20462;
+        debugPrint('⚙️ [ApplyTargets] ex=$exerciseIndex weight from exercise.weight: $aiWeight kg → display=$displayWeight');
+      } else {
+        // Try first working set target
+        final workingTarget = exercise.setTargets?.cast<SetTarget?>().firstWhere(
+          (t) => t != null && t.setType.toLowerCase() != 'warmup' && (t.targetWeightKg ?? 0) > 0,
+          orElse: () => exercise.setTargets?.isNotEmpty == true ? exercise.setTargets!.first : null,
+        );
+        final targetWt = workingTarget?.targetWeightKg ?? 0;
+        if (targetWt > 0) {
+          displayWeight = _useKg ? targetWt : targetWt * 2.20462;
+          debugPrint('⚙️ [ApplyTargets] ex=$exerciseIndex weight from setTarget: $targetWt → display=$displayWeight');
+        } else {
+          displayWeight = getDefaultWeight(exercise.equipment,
+              exerciseName: exercise.name,
+              fitnessLevel: ref.read(authStateProvider).user?.fitnessLevel,
+              gender: ref.read(authStateProvider).user?.gender,
+              useKg: _useKg);
+          debugPrint('⚙️ [ApplyTargets] ex=$exerciseIndex weight from getDefaultWeight: $displayWeight');
+        }
+      }
+    }
+
+    if (displayWeight <= 0) {
+      debugPrint('⚙️ [ApplyTargets] ex=$exerciseIndex SKIP — bodyweight (displayWeight=0)');
+      return; // Bodyweight — no targets to generate
+    }
+
+    final enteredWeight = effectiveIncrement > 0
+        ? (displayWeight / effectiveIncrement).round() * effectiveIncrement
+        : displayWeight;
+
+    final baseReps = exercise.reps ?? 10;
+    final totalSets = _totalSetsPerExercise[exerciseIndex] ?? 3;
+
+    final workingWeight = pattern.deriveWorkingWeight(
+      enteredWeight: enteredWeight,
+      totalSets: totalSets,
+      increment: effectiveIncrement,
+    );
+    _exerciseWorkingWeight[exerciseIndex] = workingWeight;
+
+    final userGoal = ref.read(authStateProvider).user?.primaryGoal;
+    // Exercise-type rep ceiling, pattern-aware (endurance allows higher)
+    final exTypeForCap = FatigueService.getExerciseType(exercise.muscleGroup, exercise.name);
+    final int maxRepsForCap;
+    if (pattern == SetProgressionPattern.endurance) {
+      maxRepsForCap = exTypeForCap == 'compound' ? 15 : exTypeForCap == 'bodyweight' ? 30 : 25;
+    } else {
+      maxRepsForCap = exTypeForCap == 'compound' ? 12 : exTypeForCap == 'bodyweight' ? 20 : 15;
+    }
+
+    final targets = pattern.generateTargets(
+      workingWeight: workingWeight,
+      totalSets: totalSets,
+      baseReps: baseReps,
+      increment: effectiveIncrement,
+      trainingGoal: userGoal,
+      maxReps: maxRepsForCap,
+    );
+
+    // Update setTargets for ALL uncompleted sets
+    final currentSetTargets = List<SetTarget>.from(exercise.setTargets ?? []);
+    while (currentSetTargets.length < totalSets) {
+      currentSetTargets.add(SetTarget(
+        setNumber: currentSetTargets.length + 1,
+        targetReps: baseReps,
+        targetWeightKg: workingWeight,
+      ));
+    }
+
+    final completedCount = _completedSets[exerciseIndex]?.length ?? 0;
+
+    for (int i = completedCount; i < targets.length && i < currentSetTargets.length; i++) {
+      final pt = targets[i];
+      final isWarmupSet = currentSetTargets[i].setType.toLowerCase() == 'warmup';
+
+      double targetWeight;
+      int targetReps;
+
+      if (isWarmupSet) {
+        // Warmup: 50% of lightest working set weight, snapped to equipment step
+        targetWeight = targets.first.weight * 0.5;
+        final range = getWeightRange(exercise.equipment, exerciseName: exercise.name);
+        final warmupStep = _useKg ? range.stepKg : range.stepLbs;
+        final minWeight = _useKg ? range.minKg : range.minLbs;
+        if (warmupStep > 0) {
+          final upperBound = targets.first.weight > minWeight ? targets.first.weight : minWeight;
+          targetWeight = ((targetWeight / warmupStep).round() * warmupStep)
+              .clamp(minWeight, upperBound);
+        }
+        // Warmup reps: clamp to 6-12 (sweet spot)
+        targetReps = (pt.reps > 0 ? pt.reps : baseReps).clamp(6, 12);
+      } else {
+        targetWeight = pt.weight;
+        targetReps = pt.isAmrap ? 0 : pt.reps;
+      }
+
+      currentSetTargets[i] = SetTarget(
+        setNumber: i + 1,
+        setType: isWarmupSet ? 'warmup' : (pt.isAmrap ? 'amrap' : currentSetTargets[i].setType),
+        targetReps: targetReps,
+        targetWeightKg: targetWeight, // In display unit (display code uses as-is)
+        targetRir: currentSetTargets[i].targetRir,
+      );
+    }
+
+    setState(() {
+      _exercises[exerciseIndex] = exercise.copyWith(setTargets: currentSetTargets);
+    });
+
+    // Update current set's weight/reps controller if not yet completed
+    if (completedCount < targets.length) {
+      final isWarmup = currentSetTargets.length > completedCount &&
+          currentSetTargets[completedCount].setType.toLowerCase() == 'warmup';
+
+      final double weight;
+      final int reps;
+      if (isWarmup) {
+        final warmupTarget = currentSetTargets[completedCount];
+        weight = warmupTarget.targetWeightKg ?? 0;
+        reps = warmupTarget.targetReps;
+      } else {
+        final pt = targets[completedCount];
+        weight = pt.weight;
+        reps = pt.reps;
+      }
+
+      _weightController.text = weight > 0
+          ? weight.toStringAsFixed(weight % 1 == 0 ? 0 : 1) : '';
+      _repsController.text = reps > 0 ? reps.toString() : '';
+      _repsRightController.text = _repsController.text;
+    }
+  }
+
+  /// Show exercise details sheet (muscles, description, etc.)
+  /// Hybrid approach: shows static data immediately, then loads AI insights
+  void _showExerciseDetailsSheet(WorkoutExercise exercise) {
+    showGlassSheet(
+      context: context,
+      builder: (context) => GlassSheet(
+        child: _ExerciseDetailsSheetContent(
+          exercise: exercise,
+        ),
+      ),
+    );
+  }
+
+  /// Show warmup sheet
+  void _showWarmupSheet(WorkoutExercise exercise) {
+    showGlassSheet(
+      context: context,
+      builder: (context) => GlassSheet(
+        child: _buildInfoSheet(
+          title: 'Warm Up',
+          content: 'Warming up helps prevent injury and improves performance.\n\nRecommended: 1-2 lighter sets before working sets.',
+          icon: Icons.whatshot_outlined,
+        ),
+      ),
+    );
+  }
+
+  /// Show targets sheet
+  void _showTargetsSheet(WorkoutExercise exercise) {
+    final setTargets = exercise.setTargets ?? [];
+    showGlassSheet(
+      context: context,
+      builder: (context) {
+        final isDark = Theme.of(context).brightness == Brightness.dark;
+        return GlassSheet(
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(Icons.track_changes, color: WorkoutDesign.accentBlue),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Set Targets',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: isDark ? Colors.white : Colors.grey.shade800,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              if (setTargets.isEmpty)
+                Text(
+                  'AI targets will be generated based on your history.',
+                  style: TextStyle(
+                    color: isDark ? Colors.grey : Colors.grey.shade600,
+                  ),
+                )
+              else
+                ...setTargets.asMap().entries.map((entry) {
+                  final i = entry.key;
+                  final target = entry.value;
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: Text(
+                      'Set ${i + 1}: ${target.targetWeightKg?.toStringAsFixed(1) ?? '-'} kg × ${target.targetReps} @ ${target.targetRir ?? '-'} RIR',
+                      style: TextStyle(
+                        color: isDark ? Colors.white : Colors.grey.shade800,
+                      ),
+                    ),
+                  );
+                }),
+              const SizedBox(height: 20),
+            ],
+          ),
+        ),
+        );
+      },
+    );
+  }
+
+  /// Show enhanced notes sheet with audio, photo, and voice-to-text
+  void _showNotesSheet(WorkoutExercise exercise) {
+    // Get existing notes for this exercise if any
+    final exerciseIndex = _exercises.indexOf(exercise);
+    String existingNotes = '';
+    if (exerciseIndex >= 0 && _completedSets.containsKey(exerciseIndex)) {
+      final sets = _completedSets[exerciseIndex]!;
+      // Get notes from the most recent set with notes
+      for (final set in sets.reversed) {
+        if (set.notes != null && set.notes!.isNotEmpty) {
+          existingNotes = set.notes!;
+          break;
+        }
+      }
+    }
+
+    showEnhancedNotesSheet(
+      context,
+      initialNotes: existingNotes,
+      onSave: (notes, audioPath, photoPaths) {
+        // Store notes - could be applied to current set or exercise-level
+        debugPrint('📝 Notes saved: $notes');
+        if (audioPath != null) debugPrint('🎤 Audio: $audioPath');
+        if (photoPaths.isNotEmpty) debugPrint('📷 Photos: ${photoPaths.length}');
+
+        // Notes are saved via the callback - can extend to store audio/photos as needed
+      },
+    );
+  }
+
+  /// Show superset sheet
+  void _showSupersetSheet() {
+    final currentExercise = _exercises[_viewingExerciseIndex];
+    final isInSuperset = currentExercise.isInSuperset;
+    final groupId = currentExercise.supersetGroup;
+
+    if (isInSuperset && groupId != null) {
+      // Find all exercises in this superset
+      final supersetExercises = <WorkoutExercise>[];
+      for (final ex in _exercises) {
+        if (ex.supersetGroup == groupId) {
+          supersetExercises.add(ex);
+        }
+      }
+
+      showGlassSheet(
+        context: context,
+        builder: (ctx) {
+          final isDark = Theme.of(ctx).brightness == Brightness.dark;
+          return GlassSheet(
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Title
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: Colors.purple.withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: const Icon(Icons.link, color: Colors.purple, size: 24),
+                      ),
+                      const SizedBox(width: 12),
+                      Text(
+                        'Superset (${supersetExercises.length} exercises)',
+                      style: TextStyle(
+                        color: isDark ? Colors.white : Colors.black,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                // List exercises in superset
+                ...supersetExercises.map((ex) => Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.fitness_center,
+                        size: 16,
+                        color: isDark ? Colors.grey : Colors.grey.shade600,
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          ex.name,
+                          style: TextStyle(
+                            color: isDark ? Colors.white70 : Colors.black87,
+                            fontSize: 14,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                )),
+                const SizedBox(height: 16),
+                // Break superset button
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    onPressed: () {
+                      Navigator.pop(ctx);
+                      _breakSuperset(groupId);
+                      ScaffoldMessenger.of(context).clearSnackBars();
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Superset removed'),
+                          behavior: SnackBarBehavior.floating,
+                          duration: Duration(seconds: 2),
+                        ),
+                      );
+                    },
+                    icon: const Icon(Icons.link_off),
+                    label: const Text('Break Superset'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.red.shade400,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                // Hint text
+                Center(
+                  child: Text(
+                    'Or drag exercises together to add more',
+                    style: TextStyle(
+                      color: isDark ? Colors.grey : Colors.grey.shade600,
+                      fontSize: 12,
+                    ),
+                  ),
+                ),
+                SizedBox(height: MediaQuery.of(ctx).padding.bottom + 8),
+              ],
+            ),
+          ),
+          );
+        },
+      );
+    } else {
+      // Not in a superset - show instructions
+      showGlassSheet(
+        context: context,
+        builder: (ctx) {
+          final isDark = Theme.of(ctx).brightness == Brightness.dark;
+          return GlassSheet(
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Title
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: Colors.purple.withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: const Icon(Icons.link, color: Colors.purple, size: 24),
+                      ),
+                      const SizedBox(width: 12),
+                      Text(
+                        'Create Superset',
+                      style: TextStyle(
+                        color: isDark ? Colors.white : Colors.black,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                // Instructions
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.purple.withValues(alpha: 0.08),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.purple.withValues(alpha: 0.2)),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'How to create a superset:',
+                        style: TextStyle(
+                          color: isDark ? Colors.white : Colors.black,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      _buildInstructionRow(
+                        isDark: isDark,
+                        step: '1',
+                        text: 'Long-press an exercise thumbnail below',
+                      ),
+                      const SizedBox(height: 8),
+                      _buildInstructionRow(
+                        isDark: isDark,
+                        step: '2',
+                        text: 'Drag it onto another exercise',
+                      ),
+                      const SizedBox(height: 8),
+                      _buildInstructionRow(
+                        isDark: isDark,
+                        step: '3',
+                        text: 'Release to create a superset pair',
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  'Supersets help you save time by alternating between exercises with minimal rest.',
+                  style: TextStyle(
+                    color: isDark ? Colors.grey : Colors.grey.shade600,
+                    fontSize: 13,
+                  ),
+                ),
+                  SizedBox(height: MediaQuery.of(ctx).padding.bottom + 8),
+                ],
+              ),
+            ),
+          );
+        },
+      );
+    }
+  }
+
+  Widget _buildInstructionRow({
+    required bool isDark,
+    required String step,
+    required String text,
+  }) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          width: 20,
+          height: 20,
+          decoration: BoxDecoration(
+            color: Colors.purple,
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Center(
+            child: Text(
+              step,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Text(
+            text,
+            style: TextStyle(
+              color: isDark ? Colors.white70 : Colors.black87,
+              fontSize: 14,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// Show history sheet
+  void _showHistorySheet(WorkoutExercise exercise) {
+    final previousSets = _previousSets[_viewingExerciseIndex] ?? [];
+    showGlassSheet(
+      context: context,
+      builder: (context) {
+        final isDark = Theme.of(context).brightness == Brightness.dark;
+        return GlassSheet(
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(Icons.history, color: WorkoutDesign.accentBlue),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Last Session',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: isDark ? Colors.white : Colors.grey.shade800,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              if (previousSets.isEmpty)
+                Text(
+                  'No previous data for this exercise.',
+                  style: TextStyle(
+                    color: isDark ? Colors.grey : Colors.grey.shade600,
+                  ),
+                )
+              else
+                ...previousSets.asMap().entries.map((entry) {
+                  final i = entry.key;
+                  final set = entry.value;
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: Text(
+                      'Set ${i + 1}: ${set['weight']?.toStringAsFixed(1) ?? '-'} kg × ${set['reps'] ?? '-'} reps',
+                      style: TextStyle(
+                        color: isDark ? Colors.white : Colors.grey.shade800,
+                      ),
+                    ),
+                  );
+                }),
+              const SizedBox(height: 20),
+            ],
+          ),
+        ),
+        );
+      },
+    );
+  }
+
+  /// Build a simple info sheet
+  Widget _buildInfoSheet({
+    required String title,
+    required String content,
+    required IconData icon,
+  }) {
+    return Builder(
+      builder: (context) {
+        final isDark = Theme.of(context).brightness == Brightness.dark;
+        return Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: isDark ? WorkoutDesign.surface : Colors.white,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(icon, color: WorkoutDesign.accentBlue),
+                  const SizedBox(width: 8),
+                  Text(
+                    title,
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: isDark ? Colors.white : Colors.grey.shade800,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              Text(
+                content,
+                style: TextStyle(
+                  fontSize: 15,
+                  color: isDark ? Colors.grey.shade300 : Colors.grey.shade700,
+                  height: 1.5,
+                ),
+              ),
+              const SizedBox(height: 20),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  /// Handle set completed from V2 table (checkbox tapped)
+  void _handleSetCompletedV2(int setIndex) {
+    // If this is the active set, complete it
+    final completedCount = _completedSets[_viewingExerciseIndex]?.length ?? 0;
+
+    if (setIndex == completedCount) {
+      // Complete the active set
+      _completeSet();
+    } else if (setIndex < completedCount) {
+      // This is a completed set - allow editing
+      _editCompletedSet(setIndex);
+    }
+  }
+
+  /// Show exercise add sheet during active workout
+  Future<void> _showExerciseAddSheet() async {
+    HapticFeedback.lightImpact();
+    final workoutId = widget.workout.id;
+    if (workoutId == null) return;
+
+    final currentExerciseNames = _exercises.map((e) => e.name).toList();
+    final updatedWorkout = await showExerciseAddSheet(
+      context,
+      ref,
+      workoutId: workoutId,
+      workoutType: widget.workout.type ?? 'strength',
+      currentExerciseNames: currentExerciseNames,
+    );
+
+    if (updatedWorkout != null && mounted) {
+      final oldCount = _exercises.length;
+      setState(() {
+        _exercises.clear();
+        _exercises.addAll(updatedWorkout.exercises);
+        _precomputeSupersetIndices();
+        // Initialize tracking for NEW exercises only — preserve existing tracking
+        for (int i = oldCount; i < _exercises.length; i++) {
+          _completedSets[i] = [];
+          final exercise = _exercises[i];
+          _totalSetsPerExercise[i] = exercise.hasSetTargets &&
+                  exercise.setTargets!.isNotEmpty
+              ? exercise.setTargets!.length
+              : exercise.sets ?? 3;
+          _previousSets[i] = [];
+        }
+      });
+      // Fetch smart weight suggestions for new exercises
+      for (int i = oldCount; i < _exercises.length; i++) {
+        _fetchSmartWeightForExercise(_exercises[i]);
+      }
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('${_exercises.length - oldCount} exercise(s) added'),
+            duration: const Duration(seconds: 2),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
+  }
+
+  Widget _buildCompletionScreen(bool isDark, Color backgroundColor) {
+    // This shows briefly while saving to backend before navigating to WorkoutCompleteScreen
+    return Scaffold(
+      backgroundColor: backgroundColor,
+      body: SafeArea(
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.emoji_events,
+                size: 80,
+                color: ref.watch(accentColorProvider).getColor(isDark),
+              )
+                  .animate()
+                  .scale(begin: const Offset(0, 0), duration: 500.ms)
+                  .then()
+                  .shake(duration: 300.ms),
+              const SizedBox(height: 24),
+              Text(
+                'Saving workout...',
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
+                ),
+              ),
+              const SizedBox(height: 16),
+              SizedBox(
+                width: 40,
+                height: 40,
+                child: CircularProgressIndicator(
+                  strokeWidth: 3,
+                  color: ref.watch(accentColorProvider).getColor(isDark),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _toggleUnit() {
+    setState(() {
+      final currentVal = double.tryParse(_weightController.text) ?? 0;
+      final exercise = _exercises[_viewingExerciseIndex];
+      // Convert and get the equivalent weight in the target unit.
+      // Use getDefaultWeight in the target unit to get the proper gym weight,
+      // since raw conversion (× 2.2 or × 0.45) produces non-standard values.
+      if (_useKg) {
+        // kg → lbs
+        final lbsVal = currentVal * 2.20462;
+        final snapped = snapToRealIncrement(lbsVal, exercise.equipment,
+            exerciseName: exercise.name, useKg: false);
+        _weightController.text = snapped % 1 == 0
+            ? snapped.toInt().toString()
+            : snapped.toStringAsFixed(1);
+      } else {
+        // lbs → kg: round UP to nearest kg increment (maintain training stimulus)
+        final kgVal = currentVal * 0.453592;
+        final eq = (exercise.equipment ?? '').toLowerCase();
+        final name = exercise.name.toLowerCase();
+        double step;
+        if (eq.contains('barbell') || name.contains('barbell') || name.contains('bench press') || name.contains('deadlift')) {
+          step = 2.5; // barbell: 2.5 kg steps (1.25 kg plate per side)
+        } else if (eq.contains('cable') || name.contains('cable') || eq.contains('machine') || name.contains('machine')) {
+          step = 5.0;
+        } else {
+          step = 2.5; // dumbbells: 2.5 kg steps (commercial gym standard)
+        }
+        final snapped = (kgVal / step).ceil() * step;
+        _weightController.text = snapped % 1 == 0
+            ? snapped.toInt().toString()
+            : snapped.toStringAsFixed(1);
+      }
+      _useKg = !_useKg;
+    });
+
+    // Persist the weight unit preference to backend
+    final newUnit = _useKg ? 'kg' : 'lbs';
+    _saveWeightUnitPreference(newUnit);
+
+    // Sync increment unit to match workout unit (user can override in Increments sheet)
+    ref.read(weightIncrementsProvider.notifier).setUnit(newUnit);
+  }
+
+  /// Save workout weight unit preference to backend (non-blocking).
+  /// Uses direct API call to avoid refreshing auth state (which would navigate away from workout).
+  Future<void> _saveWeightUnitPreference(String unit) async {
+    try {
+      final apiClient = ref.read(apiClientProvider);
+      final userId = await apiClient.getUserId();
+      if (userId == null) return;
+      await apiClient.put(
+        '/users/$userId',
+        data: {'workout_weight_unit': unit},
+      );
+      debugPrint('✅ [WorkoutWeightUnit] Saved preference: $unit');
+    } catch (e) {
+      debugPrint('⚠️ [WorkoutWeightUnit] Failed to save preference: $e');
+    }
+  }
+
+  void _editCompletedSet(int setIndex) {
+    // Show edit dialog
+    final set = _completedSets[_viewingExerciseIndex]![setIndex];
+    // Convert from internal kg to display unit
+    final displayWeight = _useKg ? set.weight : set.weight * 2.20462;
+    final editWeightController =
+        TextEditingController(text: displayWeight.toStringAsFixed(1));
+    final editRepsController = TextEditingController(text: set.reps.toString());
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final accent = ref.watch(accentColorProvider).getColor(isDark);
+    final bgColor = isDark ? AppColors.elevated : Colors.white;
+    final titleColor = isDark ? AppColors.textPrimary : Colors.black87;
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: bgColor,
+        title: Text('Edit Set ${setIndex + 1}',
+            style: TextStyle(color: titleColor)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            NumberInputField(
+              controller: editWeightController,
+              icon: Icons.fitness_center,
+              hint: 'Weight (${_useKg ? 'kg' : 'lbs'})',
+              color: accent,
+              isDecimal: true,
+            ),
+            const SizedBox(height: 16),
+            NumberInputField(
+              controller: editRepsController,
+              icon: Icons.repeat,
+              hint: 'Reps',
+              color: accent,
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('Cancel',
+                style: TextStyle(color: isDark ? AppColors.textSecondary : Colors.grey.shade600)),
+          ),
+          TextButton(
+            onPressed: () {
+              final editedWeight =
+                  double.tryParse(editWeightController.text) ?? displayWeight;
+              // Convert back to kg for internal storage
+              final weightKg = _useKg ? editedWeight : editedWeight * 0.453592;
+              setState(() {
+                _completedSets[_viewingExerciseIndex]![setIndex] = SetLog(
+                  reps: int.tryParse(editRepsController.text) ?? set.reps,
+                  weight: weightKg,
+                  completedAt: set.completedAt,
+                  setType: set.setType,
+                );
+              });
+              Navigator.pop(context);
+            },
+            child: Text('Save',
+                style: TextStyle(color: accent)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Update a completed set inline (without dialog)
+  void _updateCompletedSet(int setIndex, double weight, int reps) {
+    if (_completedSets[_viewingExerciseIndex] == null ||
+        setIndex < 0 ||
+        setIndex >= _completedSets[_viewingExerciseIndex]!.length) {
+      return;
+    }
+
+    setState(() {
+      final existingSet = _completedSets[_viewingExerciseIndex]![setIndex];
+      _completedSets[_viewingExerciseIndex]![setIndex] = SetLog(
+        reps: reps,
+        weight: weight,
+        completedAt: existingSet.completedAt,
+        setType: existingSet.setType,
+      );
+    });
+  }
+
+  /// Show RIR picker to edit target RIR for a set
+  void _showRirPicker(int setIndex, int? currentRir) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    int selectedRir = currentRir ?? 2;
+
+    showGlassSheet(
+      context: context,
+      builder: (context) => GlassSheet(
+        child: StatefulBuilder(
+          builder: (context, setModalState) => SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Header
+                  Row(
+                    children: [
+                      GestureDetector(
+                        onTap: () => Navigator.pop(context),
+                        child: Icon(
+                          Icons.close,
+                          size: 24,
+                          color: isDark ? Colors.white : Colors.black,
+                        ),
+                      ),
+                      const Expanded(
+                        child: Center(
+                          child: Text(
+                            'Set Target RIR',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 24),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Center(
+                    child: Text(
+                      'Set ${setIndex + 1}',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+
+                  // RIR options (0-4)
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: List.generate(5, (index) {
+                      final rir = index;
+                      final isSelected = selectedRir == rir;
+                      final color = WorkoutDesign.getRirColor(rir);
+                      return GestureDetector(
+                        onTap: () {
+                          HapticFeedback.selectionClick();
+                          setModalState(() => selectedRir = rir);
+                        },
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 150),
+                          width: 56,
+                          height: 56,
+                          decoration: BoxDecoration(
+                            color: isSelected ? color : color.withValues(alpha: 0.15),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: isSelected ? color : Colors.transparent,
+                              width: 2,
+                            ),
+                          ),
+                          child: Center(
+                            child: Text(
+                              '$rir',
+                              style: TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                                color: isSelected
+                                    ? WorkoutDesign.getRirTextColor(rir)
+                                    : color,
+                              ),
+                            ),
+                          ),
+                        ),
+                      );
+                    }),
+                  ),
+                  const SizedBox(height: 16),
+
+                  // RIR label explanation
+                  Center(
+                    child: Text(
+                      _getRirDescription(selectedRir),
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: isDark ? Colors.grey.shade300 : Colors.grey.shade700,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+
+                  // Save button
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                        _updateSetTargetRir(setIndex, selectedRir);
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: WorkoutDesign.getRirColor(selectedRir),
+                        foregroundColor: WorkoutDesign.getRirTextColor(selectedRir),
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: const Text(
+                        'Save',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  String _getRirDescription(int rir) {
+    switch (rir) {
+      case 0:
+        return 'Failure - No reps left in tank';
+      case 1:
+        return 'Very hard - Maybe 1 more rep';
+      case 2:
+        return 'Hard - Could do 2 more reps';
+      case 3:
+        return 'Moderate - 3 reps in reserve';
+      case 4:
+        return 'Easy - 4+ reps in reserve';
+      default:
+        return '';
+    }
+  }
+
+  void _updateSetTargetRir(int setIndex, int newRir) {
+    // Update the exercise's set targets if available
+    final exercise = _exercises[_viewingExerciseIndex];
+    if (exercise.setTargets != null && setIndex < exercise.setTargets!.length) {
+      setState(() {
+        // Create a new list with the updated RIR
+        final updatedTargets = List<SetTarget>.from(exercise.setTargets!);
+        final oldTarget = updatedTargets[setIndex];
+        updatedTargets[setIndex] = SetTarget(
+          setNumber: oldTarget.setNumber,
+          setType: oldTarget.setType,
+          targetWeightKg: oldTarget.targetWeightKg,
+          targetReps: oldTarget.targetReps,
+          targetRir: newRir,
+        );
+        // Update the exercise with new targets
+        _exercises[_viewingExerciseIndex] = exercise.copyWith(setTargets: updatedTargets);
+      });
+    }
+  }
+
+  void _deleteCompletedSet(int setIndex) {
+    setState(() {
+      if (setIndex == -1) {
+        // Signal to decrease total sets (remove an empty row)
+        final currentTotal = _totalSetsPerExercise[_viewingExerciseIndex] ?? 3;
+        final completedCount = _completedSets[_viewingExerciseIndex]?.length ?? 0;
+        // Only decrease if there's at least 1 set AND more sets than completed
+        if (currentTotal > 1 && currentTotal > completedCount) {
+          _totalSetsPerExercise[_viewingExerciseIndex] = currentTotal - 1;
+        }
+      } else if (_completedSets[_viewingExerciseIndex] != null &&
+          setIndex >= 0 &&
+          setIndex < _completedSets[_viewingExerciseIndex]!.length) {
+        // Remove a specific completed set
+        _completedSets[_viewingExerciseIndex]!.removeAt(setIndex);
+      }
+    });
+  }
+
+  /// Quick complete or uncomplete a set by tapping its number
+  void _quickCompleteSet(int setIndex, bool complete) {
+    if (complete) {
+      // Complete the set - use target/last values or current inputs
+      final exercise = _exercises[_viewingExerciseIndex];
+      final previousSets = _previousSets[_viewingExerciseIndex] ?? [];
+
+      // Get weight: try input fields first, then target, then previous
+      double weight = double.tryParse(_weightController.text) ?? 0;
+      if (weight == 0 && exercise.weight != null) {
+        weight = exercise.weight!;
+      }
+      if (weight == 0 && setIndex < previousSets.length) {
+        weight = (previousSets[setIndex]['weight'] as double?) ?? 0;
+      }
+
+      // Get reps: try input fields first, then target, then previous
+      int reps = int.tryParse(_repsController.text) ?? 0;
+      if (reps == 0 && exercise.reps != null) {
+        reps = exercise.reps!;
+      }
+      if (reps == 0 && setIndex < previousSets.length) {
+        reps = (previousSets[setIndex]['reps'] as int?) ?? 0;
+      }
+
+      // Default fallback values if still zero
+      if (weight == 0) weight = 20;
+      if (reps == 0) reps = 10;
+
+      // Create set log
+      final setLog = SetLog(
+        weight: weight,
+        reps: reps,
+        completedAt: DateTime.now(),
+        setType: 'working',
+        targetReps: exercise.reps ?? reps,
+      );
+
+      // Update data outside setState - insert at correct position
+      _completedSets[_viewingExerciseIndex] ??= [];
+      if (setIndex >= _completedSets[_viewingExerciseIndex]!.length) {
+        // Append at end
+        _completedSets[_viewingExerciseIndex]!.add(setLog);
+      } else {
+        // Insert at position
+        _completedSets[_viewingExerciseIndex]!.insert(setIndex, setLog);
+      }
+
+      // Only call setState for the animation trigger variable
+      setState(() {
+        _justCompletedSetIndex = setIndex;
+      });
+      Future.delayed(const Duration(milliseconds: 600), () {
+        if (mounted) setState(() => _justCompletedSetIndex = null);
+      });
+    } else {
+      // Uncomplete the set - remove it
+      if (_completedSets[_viewingExerciseIndex] != null &&
+          setIndex >= 0 &&
+          setIndex < _completedSets[_viewingExerciseIndex]!.length) {
+        _completedSets[_viewingExerciseIndex]!.removeAt(setIndex);
+      }
+      setState(() {}); // Trigger rebuild for uncomplete
+    }
+  }
+
+  // ========================================================================
+  // BOTTOM BAR ACTION METHODS
+  // ========================================================================
+
+  /// Show hydration dialog and sync with nutrition tab
+  Future<void> _showHydrationDialog([DrinkType initialType = DrinkType.water]) async {
+    final result = await showHydrationDialog(
+      context: context,
+      totalIntakeMl: _totalDrinkIntakeMl,
+      initialDrinkType: initialType,
+    );
+
+    if (result != null && result.amountMl > 0) {
+      // Update local workout state
+      setState(() => _totalDrinkIntakeMl += result.amountMl);
+
+      // Sync with hydration provider (nutrition tab)
+      final userId = ref.read(currentUserIdProvider);
+      if (userId != null) {
+        final success = await ref.read(hydrationProvider.notifier).logHydration(
+          userId: userId,
+          drinkType: result.drinkType.value,
+          amountMl: result.amountMl,
+          workoutId: widget.workout.id,
+          notes: 'Logged during workout',
+        );
+
+        // Show confirmation
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(success
+                  ? '${result.amountMl}ml ${result.drinkType.label} logged'
+                  : '${result.drinkType.label} logged locally (sync failed)'),
+              duration: const Duration(seconds: 2),
+              backgroundColor: success ? AppColors.success : AppColors.orange,
+            ),
+          );
+        }
+      } else {
+        // User not logged in, just show local confirmation
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('${result.amountMl}ml ${result.drinkType.label} logged'),
+              duration: const Duration(seconds: 2),
+            ),
+          );
+        }
+      }
+    }
+  }
+
+  /// Show breathing guide for the current exercise
+  void _showBreathingGuide(WorkoutExercise exercise) {
+    showBreathingGuide(
+      context: context,
+      exercise: exercise,
+    );
+  }
+
+  /// Show AI coach chat sheet
+  void _showAICoachSheet(WorkoutExercise exercise) {
+    final currentWeight = double.tryParse(_weightController.text) ?? exercise.weight ?? 0;
+    final completedSetsCount = _completedSets[_currentExerciseIndex]?.length ?? 0;
+    final totalSetsCount = _totalSetsPerExercise[_currentExerciseIndex] ?? 3;
+    final remainingExercises = _exercises.sublist(_currentExerciseIndex + 1);
+
+    showWorkoutAICoachSheet(
+      context: context,
+      ref: ref,
+      currentExercise: exercise,
+      completedSets: completedSetsCount,
+      totalSets: totalSetsCount,
+      currentWeight: currentWeight,
+      useKg: _useKg,
+      remainingExercises: remainingExercises,
+    );
+  }
+
+  /// Show coach tip bubble — fires once when workout exercises start
+  void _showCoachTipIfNeeded() {
+    if (_coachTipSent || !mounted) return;
+    _coachTipSent = true;
+
+    final userGoal = ref.read(authStateProvider).user?.primaryGoal;
+    final pattern = _exerciseProgressionPattern[_currentExerciseIndex]
+        ?? SetProgressionPattern.pyramidUp;
+    final goalRange = TrainingGoalRepRange.forGoal(userGoal);
+
+    String tip;
+    switch (userGoal) {
+      case 'muscle_strength':
+        tip = 'Strength day — heavy weight, ${goalRange.minReps}-${goalRange.maxReps} reps. Rest 3-5 min between sets.';
+        break;
+      case 'muscle_hypertrophy':
+        tip = 'Hypertrophy — ${goalRange.minReps}-${goalRange.maxReps} reps, controlled tempo. Rest 60-90s.';
+        break;
+      case 'strength_hypertrophy':
+        tip = 'Strength + size — ${goalRange.minReps}-${goalRange.maxReps} reps, moderate-heavy. Rest 2-3 min.';
+        break;
+      default:
+        tip = 'Target ${goalRange.minReps}-${goalRange.maxReps} reps per set. Adjust weight to match.';
+    }
+
+    // Add pattern-specific advice
+    if (pattern.goalTags.first != _goalTagForUserGoal(userGoal)) {
+      tip += '\n💡 ${pattern.displayName} is best for ${pattern.goalTags.join("/")}';
+    }
+
+    setState(() {
+      _coachTipMessage = tip;
+      _showCoachTip = true;
+    });
+
+    // Auto-dismiss after 8 seconds
+    Future.delayed(const Duration(seconds: 8), () {
+      if (mounted) {
+        setState(() => _showCoachTip = false);
+      }
+    });
+  }
+
+  String _goalTagForUserGoal(String? goal) {
+    switch (goal) {
+      case 'muscle_strength': return 'Strength';
+      case 'muscle_hypertrophy': return 'Hypertrophy';
+      case 'strength_hypertrophy': return 'Strength';
+      default: return 'Hypertrophy';
+    }
+  }
+
+  /// Build floating AI Coach FAB - always visible above bottom bar
+  /// Long press to hide for this session
+  Widget _buildFloatingAICoachButton(WorkoutExercise currentExercise) {
+    // Use ref.watch to reactively update when coach changes
+    final aiSettings = ref.watch(aiSettingsProvider);
+    final coach = aiSettings.getCurrentCoach();
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return GestureDetector(
+      onLongPress: () {
+        HapticFeedback.heavyImpact();
+        _showHideCoachDialog();
+      },
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          CoachAvatar(
+            coach: coach,
+            size: 56,
+            showBorder: true,
+            borderWidth: 3,
+            showShadow: true,
+            enableTapToView: false,
+            onTap: () {
+              setState(() => _showCoachTip = false);
+              _showAICoachSheet(currentExercise);
+            },
+          ),
+          // Notification badge
+          if (_showCoachTip)
+            Positioned(
+              top: -2,
+              right: -2,
+              child: Container(
+                width: 20,
+                height: 20,
+                decoration: BoxDecoration(
+                  color: Colors.red,
+                  shape: BoxShape.circle,
+                  border: Border.all(color: isDark ? AppColors.pureBlack : Colors.white, width: 2),
+                ),
+                child: const Center(
+                  child: Text('1', style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
+                ),
+              ),
+            ),
+          // Coach tip bubble (Messenger-style, positioned above avatar)
+          if (_showCoachTip && _coachTipMessage != null)
+            Positioned(
+              bottom: 64, // Above the 56px avatar + 8px gap
+              right: 0,
+              child: GestureDetector(
+                onTap: () => setState(() => _showCoachTip = false),
+                child: Container(
+                  constraints: const BoxConstraints(maxWidth: 220),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: isDark ? AppColors.elevated : Colors.white,
+                    borderRadius: const BorderRadius.only(
+                      topLeft: Radius.circular(14),
+                      topRight: Radius.circular(14),
+                      bottomLeft: Radius.circular(14),
+                      bottomRight: Radius.circular(4),
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.12),
+                        blurRadius: 10,
+                        offset: const Offset(0, 3),
+                      ),
+                    ],
+                  ),
+                  child: Text(
+                    _coachTipMessage!,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: isDark ? Colors.white : Colors.black87,
+                      height: 1.4,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  /// Show dialog to confirm hiding AI Coach for this session
+  void _showHideCoachDialog() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: isDark ? AppColors.elevated : AppColorsLight.elevated,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Row(
+          children: [
+            Icon(
+              Icons.auto_awesome,
+              color: ref.watch(accentColorProvider).getColor(isDark),
+              size: 24,
+            ),
+            const SizedBox(width: 12),
+            Text(
+              'Hide AI Coach?',
+              style: TextStyle(
+                color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
+        ),
+        content: Text(
+          'The AI Coach will be hidden for this workout session. You can still access it from Settings.',
+          style: TextStyle(
+            color: isDark ? AppColors.textSecondary : AppColorsLight.textSecondary,
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text(
+              'Cancel',
+              style: TextStyle(
+                color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
+              ),
+            ),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(ctx);
+              setState(() {
+                _hideAICoachForSession = true;
+              });
+              // Show confirmation snackbar
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: const Text('AI Coach hidden for this session'),
+                  behavior: SnackBarBehavior.floating,
+                  action: SnackBarAction(
+                    label: 'Undo',
+                    onPressed: () {
+                      setState(() {
+                        _hideAICoachForSession = false;
+                      });
+                    },
+                  ),
+                ),
+              );
+            },
+            child: Text(
+              'Hide',
+              style: TextStyle(
+                color: AppColors.orange,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Handle exercise reorder from thumbnail strip drag
+  void _onExercisesReordered(int oldIndex, int newIndex) {
+    // ReorderableListView passes newIndex as the position BEFORE removal
+    // So if moving down (oldIndex < newIndex), we need to subtract 1
+    // because after removing the item, all indices shift down
+    if (oldIndex < newIndex) {
+      newIndex -= 1;
+    }
+
+    // Don't do anything if indices are the same
+    if (oldIndex == newIndex) return;
+
+    debugPrint('🔄 Reordering exercise from $oldIndex to $newIndex');
+    debugPrint('🔄 Before: ${_exercises.map((e) => e.name).toList()}');
+
+    // Check if the dragged exercise is in a superset
+    final draggedExercise = _exercises[oldIndex];
+    final supersetGroupId = draggedExercise.supersetGroup;
+    bool removedFromSuperset = false;
+
+    // Create a new list with the reordered exercises
+    final reorderedList = List<WorkoutExercise>.from(_exercises);
+    var exercise = reorderedList.removeAt(oldIndex);
+    reorderedList.insert(newIndex, exercise);
+
+    // If exercise was in a superset, check if it's still adjacent to its group
+    if (supersetGroupId != null) {
+      // Find where other superset members are after the reorder
+      final otherMemberIndices = <int>[];
+      for (int i = 0; i < reorderedList.length; i++) {
+        if (i != newIndex && reorderedList[i].supersetGroup == supersetGroupId) {
+          otherMemberIndices.add(i);
+        }
+      }
+
+      if (otherMemberIndices.isNotEmpty) {
+        // Check if newIndex is adjacent to any superset member
+        final isAdjacentToGroup = otherMemberIndices.any((i) => (i - newIndex).abs() == 1);
+
+        if (!isAdjacentToGroup) {
+          // Dragged away from superset - remove from group
+          debugPrint('🔗 Removing ${exercise.name} from superset $supersetGroupId (dragged away)');
+          exercise = exercise.copyWith(clearSuperset: true);
+          reorderedList[newIndex] = exercise;
+          removedFromSuperset = true;
+
+          // If only 1 exercise remains in the superset, clear it too
+          if (otherMemberIndices.length == 1) {
+            final lastMemberIndex = otherMemberIndices.first;
+            debugPrint('🔗 Clearing last member of superset: ${reorderedList[lastMemberIndex].name}');
+            reorderedList[lastMemberIndex] = reorderedList[lastMemberIndex].copyWith(clearSuperset: true);
+          }
+        }
+      }
+    }
+
+    debugPrint('🔄 After: ${reorderedList.map((e) => e.name).toList()}');
+
+    // Remap all index-based state maps (create new maps first, then reassign)
+    final newCompletedSets = _remapIndexMap(_completedSets, oldIndex, newIndex);
+    final newTotalSets = _remapIndexMap(_totalSetsPerExercise, oldIndex, newIndex);
+    final newPreviousSets = _remapIndexMap(_previousSets, oldIndex, newIndex);
+    final newRepProgression = _remapIndexMap(_repProgressionPerExercise, oldIndex, newIndex);
+
+    // Calculate new indices before setState
+    final newCurrentIndex = _remapSingleIndex(_currentExerciseIndex, oldIndex, newIndex);
+    final newViewingIndex = _remapSingleIndex(_viewingExerciseIndex, oldIndex, newIndex);
+
+    setState(() {
+      // Replace entire exercises list
+      _exercises = reorderedList;
+      _precomputeSupersetIndices();
+
+      _completedSets
+        ..clear()
+        ..addAll(newCompletedSets);
+      _totalSetsPerExercise
+        ..clear()
+        ..addAll(newTotalSets);
+      _previousSets
+        ..clear()
+        ..addAll(newPreviousSets);
+      _repProgressionPerExercise
+        ..clear()
+        ..addAll(newRepProgression);
+
+      // Update current/viewing indices if they were affected
+      _currentExerciseIndex = newCurrentIndex;
+      _viewingExerciseIndex = newViewingIndex;
+    });
+
+    // Show feedback if removed from superset
+    if (removedFromSuperset) {
+      ScaffoldMessenger.of(context).clearSnackBars();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('${draggedExercise.name} removed from superset'),
+          behavior: SnackBarBehavior.floating,
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    }
+  }
+
+  /// Helper to remap a map's integer keys after reorder
+  Map<int, T> _remapIndexMap<T>(Map<int, T> original, int oldIndex, int newIndex) {
+    final result = <int, T>{};
+    for (final entry in original.entries) {
+      final newKey = _remapSingleIndex(entry.key, oldIndex, newIndex);
+      result[newKey] = entry.value;
+    }
+    return result;
+  }
+
+  /// Helper to remap a single index after reorder
+  int _remapSingleIndex(int index, int oldIndex, int newIndex) {
+    if (index == oldIndex) {
+      return newIndex;
+    } else if (oldIndex < newIndex) {
+      // Moved down: indices between old and new shift up by 1
+      if (index > oldIndex && index <= newIndex) {
+        return index - 1;
+      }
+    } else {
+      // Moved up: indices between new and old shift down by 1
+      if (index >= newIndex && index < oldIndex) {
+        return index + 1;
+      }
+    }
+    return index;
+  }
+
+  /// Handle superset creation from drag-and-drop on thumbnail strip
+  void _onSupersetFromDrag(int draggedIndex, int targetIndex) {
+    HapticFeedback.mediumImpact();
+
+    final draggedExercise = _exercises[draggedIndex];
+    final targetExercise = _exercises[targetIndex];
+
+    // Check if target is already in a superset - add to existing group
+    final existingGroupId = targetExercise.supersetGroup;
+
+    // Check if dragged is already in a superset
+    final draggedGroupId = draggedExercise.supersetGroup;
+
+    int groupId;
+    String snackbarMessage;
+
+    if (existingGroupId != null) {
+      // Add to existing superset group
+      groupId = existingGroupId;
+
+      // Find the max order in this group
+      int maxOrder = 0;
+      for (final ex in _exercises) {
+        if (ex.supersetGroup == groupId && ex.supersetOrder != null) {
+          if (ex.supersetOrder! > maxOrder) {
+            maxOrder = ex.supersetOrder!;
+          }
+        }
+      }
+
+      // Count how many exercises are in this group (for snackbar message)
+      final groupCount = _exercises.where((ex) => ex.supersetGroup == groupId).length + 1;
+      snackbarMessage = 'Added ${draggedExercise.name} to superset ($groupCount exercises)';
+
+      debugPrint('🔗 Adding to superset: ${draggedExercise.name} -> group $groupId (order ${maxOrder + 1})');
+
+      setState(() {
+        // If dragged was in a different superset, remove it from that one first
+        if (draggedGroupId != null && draggedGroupId != groupId) {
+          // Check if its old group has only 1 other exercise - if so, clear that one too
+          final oldGroupMembers = _exercises.where((ex) => ex.supersetGroup == draggedGroupId).toList();
+          if (oldGroupMembers.length == 2) {
+            // Only 2 in old group including dragged, so the other one should be cleared
+            for (int i = 0; i < _exercises.length; i++) {
+              if (_exercises[i].supersetGroup == draggedGroupId && i != draggedIndex) {
+                _exercises[i] = _exercises[i].copyWith(clearSuperset: true);
+              }
+            }
+          }
+        }
+
+        // Update dragged exercise with new group info
+        _exercises[draggedIndex] = _exercises[draggedIndex].copyWith(
+          supersetGroup: groupId,
+          supersetOrder: maxOrder + 1,
+        );
+
+        // Move to be adjacent to the group if not already
+        _moveExerciseToSuperset(draggedIndex, targetIndex);
+      });
+    } else if (draggedGroupId != null) {
+      // Target is not in a superset, but dragged is - add target to dragged's group
+      groupId = draggedGroupId;
+
+      // Find max order in dragged's group
+      int maxOrder = 0;
+      for (final ex in _exercises) {
+        if (ex.supersetGroup == groupId && ex.supersetOrder != null) {
+          if (ex.supersetOrder! > maxOrder) {
+            maxOrder = ex.supersetOrder!;
+          }
+        }
+      }
+
+      final groupCount = _exercises.where((ex) => ex.supersetGroup == groupId).length + 1;
+      snackbarMessage = 'Added ${targetExercise.name} to superset ($groupCount exercises)';
+
+      debugPrint('🔗 Adding target to dragged superset: ${targetExercise.name} -> group $groupId');
+
+      setState(() {
+        _exercises[targetIndex] = _exercises[targetIndex].copyWith(
+          supersetGroup: groupId,
+          supersetOrder: maxOrder + 1,
+        );
+
+        // Move target to be adjacent to the group
+        _moveExerciseToSuperset(targetIndex, draggedIndex);
+      });
+    } else {
+      // Neither is in a superset - create new one
+      int maxGroup = 0;
+      for (final ex in _exercises) {
+        if (ex.supersetGroup != null && ex.supersetGroup! > maxGroup) {
+          maxGroup = ex.supersetGroup!;
+        }
+      }
+      groupId = maxGroup + 1;
+      snackbarMessage = 'Superset: ${draggedExercise.name} + ${targetExercise.name}';
+
+      debugPrint('🔗 Creating new superset: ${draggedExercise.name} + ${targetExercise.name} (group $groupId)');
+
+      setState(() {
+        _exercises[draggedIndex] = _exercises[draggedIndex].copyWith(
+          supersetGroup: groupId,
+          supersetOrder: 1,
+        );
+        _exercises[targetIndex] = _exercises[targetIndex].copyWith(
+          supersetGroup: groupId,
+          supersetOrder: 2,
+        );
+
+        // Move to be adjacent if not already
+        _moveExerciseToSuperset(draggedIndex, targetIndex);
+      });
+    }
+
+    // Show confirmation snackbar - clear any existing first
+    if (mounted) {
+      ScaffoldMessenger.of(context).clearSnackBars();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Row(
+            children: [
+              const Icon(Icons.link, color: Colors.white, size: 18),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(snackbarMessage, overflow: TextOverflow.ellipsis),
+              ),
+            ],
+          ),
+          backgroundColor: Colors.purple,
+          behavior: SnackBarBehavior.floating,
+          duration: const Duration(seconds: 4),
+          dismissDirection: DismissDirection.horizontal,
+          showCloseIcon: true,
+          closeIconColor: Colors.white70,
+          action: SnackBarAction(
+            label: 'Undo',
+            textColor: Colors.white,
+            onPressed: () => _breakSuperset(groupId),
+          ),
+        ),
+      );
+    }
+  }
+
+  /// Helper to move an exercise to be adjacent to a superset group
+  void _moveExerciseToSuperset(int fromIndex, int toIndex) {
+    // If exercises are not adjacent, move fromIndex to be next to toIndex
+    if ((fromIndex - toIndex).abs() > 1) {
+      final exercise = _exercises.removeAt(fromIndex);
+      // Insert after target if from was after, before if from was before
+      final insertAt = fromIndex > toIndex ? toIndex + 1 : toIndex;
+      _exercises.insert(insertAt, exercise);
+      _precomputeSupersetIndices();
+
+      // Remap indices for the move
+      final oldIdx = fromIndex;
+      final newIdx = insertAt;
+      if (oldIdx != newIdx) {
+        final newCompletedSets = _remapIndexMap(_completedSets, oldIdx, newIdx);
+        final newTotalSets = _remapIndexMap(_totalSetsPerExercise, oldIdx, newIdx);
+        final newPreviousSets = _remapIndexMap(_previousSets, oldIdx, newIdx);
+        final newRepProgression = _remapIndexMap(_repProgressionPerExercise, oldIdx, newIdx);
+
+        _completedSets
+          ..clear()
+          ..addAll(newCompletedSets);
+        _totalSetsPerExercise
+          ..clear()
+          ..addAll(newTotalSets);
+        _previousSets
+          ..clear()
+          ..addAll(newPreviousSets);
+        _repProgressionPerExercise
+          ..clear()
+          ..addAll(newRepProgression);
+
+        _currentExerciseIndex = _remapSingleIndex(_currentExerciseIndex, oldIdx, newIdx);
+        _viewingExerciseIndex = _remapSingleIndex(_viewingExerciseIndex, oldIdx, newIdx);
+      }
+    }
+  }
+
+  /// Break a superset by clearing superset info from all exercises in the group
+  void _breakSuperset(int groupId) {
+    setState(() {
+      for (int i = 0; i < _exercises.length; i++) {
+        if (_exercises[i].supersetGroup == groupId) {
+          _exercises[i] = _exercises[i].copyWith(clearSuperset: true);
+        }
+      }
+    });
+    HapticFeedback.mediumImpact();
+  }
+
+  /// Show workout plan drawer with reorderable exercises
+  void _showWorkoutPlanDrawer() {
+    showWorkoutPlanDrawer(
+      context: context,
+      exercises: _exercises,
+      currentExerciseIndex: _currentExerciseIndex,
+      completedSetsPerExercise: _completedSets.map(
+        (key, value) => MapEntry(key, value.length),
+      ),
+      totalSetsPerExercise: _totalSetsPerExercise,
+      onJumpToExercise: (index) {
+        setState(() {
+          _viewingExerciseIndex = index;
+        });
+      },
+      onReorder: (reorderedExercises) {
+        setState(() {
+          // Rebuild the exercise list with new order
+          _exercises.clear();
+          _exercises.addAll(reorderedExercises);
+          _precomputeSupersetIndices();
+        });
+      },
+      onSwapExercise: (index) => _showSwapSheet(index),
+      onDeleteExercise: (index) {
+        setState(() {
+          // Remove exercise and shift data
+          _exercises.removeAt(index);
+          _precomputeSupersetIndices();
+
+          // Clean up the maps for the deleted exercise
+          _completedSets.remove(index);
+          _totalSetsPerExercise.remove(index);
+          _previousSets.remove(index);
+
+          // Shift data for exercises after the deleted one
+          final newCompletedSets = <int, List<SetLog>>{};
+          final newTotalSets = <int, int>{};
+          final newPreviousSets = <int, List<Map<String, dynamic>>>{};
+
+          _completedSets.forEach((key, value) {
+            if (key > index) {
+              newCompletedSets[key - 1] = value;
+            } else {
+              newCompletedSets[key] = value;
+            }
+          });
+
+          _totalSetsPerExercise.forEach((key, value) {
+            if (key > index) {
+              newTotalSets[key - 1] = value;
+            } else {
+              newTotalSets[key] = value;
+            }
+          });
+
+          _previousSets.forEach((key, value) {
+            if (key > index) {
+              newPreviousSets[key - 1] = value;
+            } else {
+              newPreviousSets[key] = value;
+            }
+          });
+
+          _completedSets
+            ..clear()
+            ..addAll(newCompletedSets);
+          _totalSetsPerExercise
+            ..clear()
+            ..addAll(newTotalSets);
+          _previousSets
+            ..clear()
+            ..addAll(newPreviousSets);
+
+          // Adjust current index if needed
+          if (_currentExerciseIndex >= _exercises.length) {
+            _currentExerciseIndex = _exercises.length - 1;
+          }
+          if (_viewingExerciseIndex >= _exercises.length) {
+            _viewingExerciseIndex = _exercises.length - 1;
+          }
+        });
+      },
+      onAddExercise: () => _showExerciseAddSheet(),
+    );
+  }
+
+  /// Get last session data for an exercise (from _previousSets)
+  Map<String, dynamic>? _getLastSessionData(int exerciseIndex) {
+    final previousSets = _previousSets[exerciseIndex];
+    if (previousSets == null || previousSets.isEmpty) {
+      return null;
+    }
+
+    // Get the first set from previous session as "last" data
+    final lastSet = previousSets.first;
+    final weight = lastSet['weight'] as double?;
+    final reps = lastSet['reps'] as int?;
+    final date = lastSet['date'] as String?;
+
+    if (weight != null && reps != null) {
+      return {
+        'weight': weight,
+        'reps': reps,
+        'date': date,
+      };
+    }
+    return null;
+  }
+
+  /// Get PR data for an exercise (from _exerciseMaxWeights)
+  Map<String, dynamic>? _getPrData(int exerciseIndex) {
+    if (exerciseIndex >= _exercises.length) return null;
+
+    final exercise = _exercises[exerciseIndex];
+    final prWeight = _exerciseMaxWeights[exercise.name];
+
+    if (prWeight != null && prWeight > 0) {
+      // We don't store PR reps, so estimate based on typical ranges
+      // In a real implementation, you'd store both weight and reps for PR
+      return {
+        'weight': prWeight,
+        'reps': 1, // Placeholder - ideally store actual PR reps
+      };
+    }
+    return null;
+  }
+
+  /// Show rep progression picker sheet
+  void _showProgressionPicker(int exerciseIndex) {
+    if (exerciseIndex >= _exercises.length) return;
+
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final accentColor = ref.watch(accentColorProvider).getColor(isDark);
+    final currentProgression = _repProgressionPerExercise[exerciseIndex] ?? RepProgressionType.straight;
+
+    HapticFeedback.mediumImpact();
+
+    showGlassSheet(
+      context: context,
+      builder: (ctx) => GlassSheet(
+        maxHeightFraction: 0.7,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Title
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 20, 20, 16),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.trending_up_rounded,
+                    color: accentColor,
+                    size: 24,
+                  ),
+                  const SizedBox(width: 12),
+                  Text(
+                    'Change Reps Progression',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: textPrimary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            // Progression options
+            Flexible(
+              child: ListView(
+                shrinkWrap: true,
+                padding: const EdgeInsets.only(bottom: 24),
+                children: RepProgressionType.values.map((type) {
+                  final isSelected = type == currentProgression;
+                  return Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      onTap: () {
+                        HapticFeedback.mediumImpact();
+                        setState(() {
+                          _repProgressionPerExercise[exerciseIndex] = type;
+                        });
+                        Navigator.pop(ctx);
+                        // Show confirmation
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('Changed to ${type.displayName}'),
+                            duration: const Duration(seconds: 2),
+                            behavior: SnackBarBehavior.floating,
+                          ),
+                        );
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                        decoration: BoxDecoration(
+                          color: isSelected
+                              ? accentColor.withValues(alpha: 0.1)
+                              : Colors.transparent,
+                          border: Border(
+                            bottom: BorderSide(
+                              color: isDark
+                                  ? Colors.white.withValues(alpha: 0.05)
+                                  : Colors.black.withValues(alpha: 0.04),
+                            ),
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            // Icon
+                            Container(
+                              width: 40,
+                              height: 40,
+                              decoration: BoxDecoration(
+                                color: isSelected
+                                    ? accentColor.withValues(alpha: 0.2)
+                                    : (isDark
+                                        ? Colors.white.withValues(alpha: 0.08)
+                                        : Colors.black.withValues(alpha: 0.05)),
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: Icon(
+                                type.icon,
+                                color: isSelected ? accentColor : textMuted,
+                                size: 22,
+                              ),
+                            ),
+                            const SizedBox(width: 14),
+                            // Text
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    type.displayName,
+                                    style: TextStyle(
+                                      fontSize: 15,
+                                      fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                                      color: isSelected ? accentColor : textPrimary,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    type.description,
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: textMuted,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            // Checkmark if selected
+                            if (isSelected)
+                              Icon(
+                                Icons.check_circle_rounded,
+                                color: accentColor,
+                                size: 24,
+                              ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
+            ),
+
+            // Bottom padding
+            SizedBox(height: MediaQuery.of(ctx).padding.bottom + 8),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Show exercise swap sheet for replacing an exercise
+  Future<void> _showSwapSheet(int exerciseIndex) async {
+    if (exerciseIndex >= _exercises.length) return;
+    final workoutId = widget.workout.id;
+    if (workoutId == null) return;
+
+    final exercise = _exercises[exerciseIndex];
+
+    final updatedWorkout = await showExerciseSwapSheet(
+      context,
+      ref,
+      workoutId: workoutId,
+      exercise: exercise,
+    );
+
+    if (updatedWorkout != null && mounted) {
+      // Update local state with the swapped exercise
+      setState(() {
+        _exercises.clear();
+        _exercises.addAll(updatedWorkout.exercises);
+        _precomputeSupersetIndices();
+        // Only reinitialize tracking for the swapped exercise — preserve others
+        final swappedExercise = _exercises[exerciseIndex];
+        _completedSets[exerciseIndex] = [];
+        _totalSetsPerExercise[exerciseIndex] = swappedExercise.hasSetTargets &&
+                swappedExercise.setTargets!.isNotEmpty
+            ? swappedExercise.setTargets!.length
+            : swappedExercise.sets ?? 3;
+        _previousSets[exerciseIndex] = [];
+      });
+
+      // Show success feedback
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Exercise swapped successfully'),
+            duration: Duration(seconds: 2),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
+  }
+
+  /// Show exercise options sheet (3-dot menu)
+  void _showExerciseOptionsSheet(int exerciseIndex) {
+    if (exerciseIndex >= _exercises.length) return;
+
+    final exercise = _exercises[exerciseIndex];
+    final currentProgression = _repProgressionPerExercise[exerciseIndex] ?? RepProgressionType.straight;
+
+    showExerciseOptionsSheet(
+      context: context,
+      exercise: exercise,
+      currentProgression: currentProgression,
+      onProgressionChanged: (newProgression) {
+        setState(() {
+          _repProgressionPerExercise[exerciseIndex] = newProgression;
+        });
+        // Show confirmation
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Changed to ${newProgression.displayName}'),
+            duration: const Duration(seconds: 2),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      },
+      onReplace: () {
+        Navigator.pop(context);
+        _showSwapSheet(exerciseIndex);
+      },
+      onViewHistory: () {
+        // Open analytics page for this exercise
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (context) => ExerciseAnalyticsPage(
+              exercise: exercise,
+              useKg: _useKg,
+              lastSessionData: _getLastSessionData(exerciseIndex),
+              prData: _getPrData(exerciseIndex),
+            ),
+          ),
+        );
+      },
+      onViewInstructions: () {
+        showExerciseInfoSheet(
+          context: context,
+          exercise: exercise,
+        );
+      },
+      onAddNotes: () {
+        // Notes are handled in the set tracking overlay
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Use the notes section below the sets'),
+            duration: Duration(seconds: 2),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      },
+      onRemoveFromWorkout: () {
+        _removeExerciseFromWorkout(exerciseIndex);
+      },
+      onAddToSuperset: () async {
+        HapticFeedback.lightImpact();
+        final result = await showSupersetPairSheet(
+          context, ref,
+          workoutExercises: _exercises,
+          preselectedExercise: exercise,
+        );
+        if (result != null && mounted) {
+          setState(() {
+            _precomputeSupersetIndices();
+          });
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Superset: ${result.exercise1.name} + ${result.exercise2.name}'),
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+      },
+      onRemoveAndDontRecommend: () {
+        _removeExerciseFromWorkout(exerciseIndex);
+        _addToAvoidedExercises(exercise);
+      },
+      onChangeEquipment: (exercise.equipment != null &&
+              exercise.equipment!.isNotEmpty &&
+              !exercise.equipment!.toLowerCase().contains('bodyweight') &&
+              !exercise.equipment!.toLowerCase().contains('body weight') &&
+              exercise.equipment!.toLowerCase() != 'none')
+          ? () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const EnvironmentListScreen(),
+                ),
+              );
+            }
+          : null,
+    );
+  }
+
+  /// Remove exercise from workout
+  void _removeExerciseFromWorkout(int index) {
+    if (_exercises.length <= 1) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Cannot remove the last exercise'),
+          duration: Duration(seconds: 2),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+
+    final removedExercise = _exercises[index];
+
+    setState(() {
+      // Remove exercise and shift data
+      _exercises.removeAt(index);
+      _precomputeSupersetIndices();
+
+      // Clean up the maps for the deleted exercise
+      _completedSets.remove(index);
+      _totalSetsPerExercise.remove(index);
+      _previousSets.remove(index);
+      _repProgressionPerExercise.remove(index);
+
+      // Shift data for exercises after the deleted one
+      final newCompletedSets = <int, List<SetLog>>{};
+      final newTotalSets = <int, int>{};
+      final newPreviousSets = <int, List<Map<String, dynamic>>>{};
+      final newRepProgressions = <int, RepProgressionType>{};
+
+      _completedSets.forEach((key, value) {
+        if (key > index) {
+          newCompletedSets[key - 1] = value;
+        } else {
+          newCompletedSets[key] = value;
+        }
+      });
+
+      _totalSetsPerExercise.forEach((key, value) {
+        if (key > index) {
+          newTotalSets[key - 1] = value;
+        } else {
+          newTotalSets[key] = value;
+        }
+      });
+
+      _previousSets.forEach((key, value) {
+        if (key > index) {
+          newPreviousSets[key - 1] = value;
+        } else {
+          newPreviousSets[key] = value;
+        }
+      });
+
+      _repProgressionPerExercise.forEach((key, value) {
+        if (key > index) {
+          newRepProgressions[key - 1] = value;
+        } else {
+          newRepProgressions[key] = value;
+        }
+      });
+
+      _completedSets
+        ..clear()
+        ..addAll(newCompletedSets);
+      _totalSetsPerExercise
+        ..clear()
+        ..addAll(newTotalSets);
+      _previousSets
+        ..clear()
+        ..addAll(newPreviousSets);
+      _repProgressionPerExercise
+        ..clear()
+        ..addAll(newRepProgressions);
+
+      // Adjust current index if needed
+      if (_currentExerciseIndex >= _exercises.length) {
+        _currentExerciseIndex = _exercises.length - 1;
+      }
+      if (_viewingExerciseIndex >= _exercises.length) {
+        _viewingExerciseIndex = _exercises.length - 1;
+      }
+    });
+
+    // Show undo snackbar
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('${removedExercise.name} removed'),
+        duration: const Duration(seconds: 4),
+        behavior: SnackBarBehavior.floating,
+        action: SnackBarAction(
+          label: 'Undo',
+          onPressed: () {
+            setState(() {
+              // Re-add the exercise at the same index
+              _exercises.insert(index, removedExercise);
+              _precomputeSupersetIndices();
+              // Shift maps back
+              // Note: This is a simplified undo - full undo would restore completed sets too
+            });
+          },
+        ),
+      ),
+    );
+  }
+
+  /// Add exercise to the avoided exercises list
+  Future<void> _addToAvoidedExercises(WorkoutExercise exercise) async {
+    try {
+      final apiClient = ref.read(apiClientProvider);
+      final userId = await apiClient.getUserId();
+      if (userId == null) return;
+
+      final repo = ref.read(exercisePreferencesRepositoryProvider);
+      await repo.addAvoidedExercise(
+        userId,
+        exercise.name,
+        reason: 'Excluded during workout',
+      );
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('${exercise.name} won\'t be recommended again'),
+            duration: const Duration(seconds: 3),
+            behavior: SnackBarBehavior.floating,
+            action: SnackBarAction(
+              label: 'Manage',
+              onPressed: () {
+                context.push('/settings/avoided-exercises');
+              },
+            ),
+          ),
+        );
+      }
+    } catch (e) {
+      debugPrint('❌ [ActiveWorkout] Error adding avoided exercise: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('${exercise.name} removed but could not update preferences'),
+            duration: const Duration(seconds: 2),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
+  }
+}
+
+/// Exercise Details Sheet Content - Hybrid approach
+/// Shows static data immediately, then loads AI insights in the background
+class _ExerciseDetailsSheetContent extends ConsumerStatefulWidget {
+  final WorkoutExercise exercise;
+
+  const _ExerciseDetailsSheetContent({
+    required this.exercise,
+  });
+
+  @override
+  ConsumerState<_ExerciseDetailsSheetContent> createState() =>
+      _ExerciseDetailsSheetContentState();
+}
+
+class _ExerciseDetailsSheetContentState
+    extends ConsumerState<_ExerciseDetailsSheetContent> {
+  ExerciseInsights? _aiInsights;
+  bool _isLoadingInsights = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadAiInsights();
+  }
+
+  Future<void> _loadAiInsights() async {
+    try {
+      final service = ref.read(exerciseInfoServiceProvider);
+      final insights = await service.getExerciseInsights(
+        exerciseName: widget.exercise.name,
+        primaryMuscle: widget.exercise.primaryMuscle ?? widget.exercise.muscleGroup,
+        equipment: widget.exercise.equipment,
+        difficulty: widget.exercise.difficulty,
+      );
+      if (mounted) {
+        setState(() {
+          _aiInsights = insights;
+          _isLoadingInsights = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isLoadingInsights = false);
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    // Use AppColors for consistent theming
+    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final cardBackground = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final exercise = widget.exercise;
+
+    // Get dynamic accent color
+    final accentEnum = AccentColorScope.of(context);
+    final accentColor = accentEnum.getColor(isDark);
+
+    return ClipRRect(
+      borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+        child: Container(
+          constraints: BoxConstraints(
+            maxHeight: MediaQuery.of(context).size.height * 0.85,
+          ),
+          decoration: BoxDecoration(
+            color: isDark
+                ? AppColors.glassSurface.withValues(alpha: 0.95)
+                : AppColorsLight.glassSurface.withValues(alpha: 0.98),
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+            border: Border(
+              top: BorderSide(
+                color: isDark
+                    ? Colors.white.withValues(alpha: 0.1)
+                    : AppColorsLight.cardBorder,
+                width: 0.5,
+              ),
+            ),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Drag handle
+              Container(
+                margin: const EdgeInsets.only(top: 12),
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: textMuted.withValues(alpha: 0.3),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+
+              // Header with title and close button
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Row(
+                  children: [
+                    Icon(Icons.info_outline_rounded, color: accentColor),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        'Exercise Info',
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                              fontWeight: FontWeight.bold,
+                              color: textPrimary,
+                            ),
+                      ),
+                    ),
+                    IconButton(
+                      onPressed: () => Navigator.pop(context),
+                      icon: Icon(Icons.close, color: textMuted),
+                    ),
+                  ],
+                ),
+              ),
+
+              // Content
+              Flexible(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Exercise name with action pills
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            child: Text(
+                              exercise.name,
+                              style: TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                                color: textPrimary,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          // Video pill
+                          _buildActionPill(
+                            context: context,
+                            icon: Icons.play_circle_outline,
+                            label: 'Video',
+                            onTap: () {
+                              Navigator.pop(context);
+                              showExerciseInfoSheet(
+                                context: context,
+                                exercise: exercise,
+                              );
+                            },
+                            accentColor: accentColor,
+                            isDark: isDark,
+                            textMuted: textMuted,
+                          ),
+                          const SizedBox(width: 8),
+                          // Breathing pill
+                          _buildActionPill(
+                            context: context,
+                            icon: Icons.air,
+                            label: 'Breathing',
+                            onTap: () {
+                              Navigator.pop(context);
+                              showBreathingGuide(
+                                context: context,
+                                exercise: exercise,
+                              );
+                            },
+                            accentColor: accentColor,
+                            isDark: isDark,
+                            textMuted: textMuted,
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 20),
+
+                      // === EXERCISE DETAILS ===
+                      _buildSectionHeader('Details', Icons.list_alt_rounded, accentColor, textPrimary),
+                      const SizedBox(height: 12),
+
+                      // Details card
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: cardBackground,
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                            color: isDark ? AppColors.cardBorder : AppColorsLight.cardBorder,
+                            width: 0.5,
+                          ),
+                        ),
+                        child: Column(
+                          children: [
+                            // Primary Muscle
+                            _buildDetailRow(
+                              icon: Icons.fitness_center,
+                              label: 'Primary Muscle',
+                              value: exercise.primaryMuscle ?? exercise.muscleGroup ?? 'Not specified',
+                              color: accentColor,
+                              isDark: isDark,
+                              textPrimary: textPrimary,
+                              textSecondary: textSecondary,
+                            ),
+
+                            // Secondary Muscles (if available)
+                            if (exercise.secondaryMuscles != null)
+                              Builder(
+                                builder: (context) {
+                                  final secondary = exercise.secondaryMuscles;
+                                  String value;
+                                  if (secondary is List) {
+                                    value = secondary.join(', ');
+                                  } else if (secondary is String && secondary.isNotEmpty) {
+                                    value = secondary;
+                                  } else {
+                                    return const SizedBox.shrink();
+                                  }
+                                  return _buildDetailRow(
+                                    icon: Icons.accessibility_new,
+                                    label: 'Secondary Muscles',
+                                    value: value,
+                                    color: accentColor,
+                                    isDark: isDark,
+                                    textPrimary: textPrimary,
+                                    textSecondary: textSecondary,
+                                  );
+                                },
+                              ),
+
+                            // Equipment
+                            _buildDetailRow(
+                              icon: Icons.hardware,
+                              label: 'Equipment',
+                              value: exercise.equipment ?? 'Bodyweight',
+                              color: accentColor,
+                              isDark: isDark,
+                              textPrimary: textPrimary,
+                              textSecondary: textSecondary,
+                            ),
+
+                            // "Don't have this equipment?" link (only for non-bodyweight)
+                            if (exercise.equipment != null &&
+                                exercise.equipment!.isNotEmpty &&
+                                !exercise.equipment!.toLowerCase().contains('bodyweight') &&
+                                !exercise.equipment!.toLowerCase().contains('body weight') &&
+                                exercise.equipment!.toLowerCase() != 'none')
+                              Padding(
+                                padding: const EdgeInsets.only(left: 40, top: 2, bottom: 4),
+                                child: GestureDetector(
+                                  onTap: () {
+                                    Navigator.pop(context);
+                                    Navigator.push(
+                                      this.context,
+                                      MaterialPageRoute(
+                                        builder: (_) => const EnvironmentListScreen(),
+                                      ),
+                                    );
+                                  },
+                                  child: Text(
+                                    "Don't have this equipment?",
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: accentColor,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ),
+                              ),
+
+                            // Difficulty (if available)
+                            if (exercise.difficulty != null)
+                              _buildDetailRow(
+                                icon: Icons.speed,
+                                label: 'Difficulty',
+                                value: exercise.difficulty!,
+                                color: accentColor,
+                                isDark: isDark,
+                                textPrimary: textPrimary,
+                                textSecondary: textSecondary,
+                                isLast: true,
+                              ),
+                          ],
+                        ),
+                      ),
+
+                      // === SETUP & INSTRUCTIONS ===
+                      const SizedBox(height: 24),
+                      _buildSectionHeader('Setup', Icons.checklist_rounded, accentColor, textPrimary),
+                      const SizedBox(height: 12),
+                      _buildSetupInstructionsList(exercise, isDark, textPrimary, accentColor, cardBackground),
+
+                      const SizedBox(height: 24),
+
+                      // === AI COACH TIPS (loaded in background) ===
+                      _buildAiInsightsSection(isDark, textPrimary, textSecondary, accentColor, cardBackground),
+
+                      // Tip about Video button
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: accentColor.withValues(alpha: isDark ? 0.15 : 0.1),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: accentColor.withValues(alpha: 0.2),
+                            width: 0.5,
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.play_circle_outline,
+                              size: 20,
+                              color: accentColor,
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                'Tap "Video" to watch form demonstration',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: textSecondary,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+
+                      SizedBox(height: MediaQuery.of(context).padding.bottom + 16),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Build section header with icon
+  Widget _buildSectionHeader(String title, IconData icon, Color accentColor, Color textPrimary) {
+    return Row(
+      children: [
+        Icon(icon, size: 18, color: accentColor),
+        const SizedBox(width: 8),
+        Text(
+          title,
+          style: TextStyle(
+            fontSize: 15,
+            fontWeight: FontWeight.w600,
+            color: textPrimary,
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// Build a detail row for exercise info
+  Widget _buildDetailRow({
+    required IconData icon,
+    required String label,
+    required String value,
+    required Color color,
+    required bool isDark,
+    required Color textPrimary,
+    required Color textSecondary,
+    bool isLast = false,
+  }) {
+    return Padding(
+      padding: EdgeInsets.only(bottom: isLast ? 0 : 12),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 32,
+            height: 32,
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(icon, size: 18, color: color),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: textSecondary,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  value,
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w500,
+                    color: textPrimary,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAiInsightsSection(bool isDark, Color textPrimary, Color textSecondary, Color accentColor, Color cardBackground) {
+    if (_isLoadingInsights) {
+      return Container(
+        margin: const EdgeInsets.only(bottom: 20),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: cardBackground,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: isDark ? AppColors.cardBorder : AppColorsLight.cardBorder,
+            width: 0.5,
+          ),
+        ),
+        child: Row(
+          children: [
+            SizedBox(
+              width: 18,
+              height: 18,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: accentColor,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Text(
+              'Loading AI coach tips...',
+              style: TextStyle(
+                fontSize: 13,
+                color: textSecondary,
+                fontStyle: FontStyle.italic,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (_aiInsights == null || _aiInsights!.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Section header
+        _buildSectionHeader('AI Coach Tips', Icons.auto_awesome, accentColor, textPrimary),
+        const SizedBox(height: 12),
+
+        // Tips card
+        Container(
+          margin: const EdgeInsets.only(bottom: 20),
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: cardBackground,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: isDark ? AppColors.cardBorder : AppColorsLight.cardBorder,
+              width: 0.5,
+            ),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Form Cues
+              if (_aiInsights!.formCues != null) ...[
+                _buildInsightItem(
+                  icon: Icons.check_circle_outline,
+                  title: 'Form Cues',
+                  content: _aiInsights!.formCues!,
+                  color: const Color(0xFF22C55E), // Green for success
+                  isDark: isDark,
+                  textPrimary: textPrimary,
+                ),
+                const SizedBox(height: 16),
+              ],
+
+              // Common Mistakes
+              if (_aiInsights!.commonMistakes != null) ...[
+                _buildInsightItem(
+                  icon: Icons.warning_amber_outlined,
+                  title: 'Watch Out For',
+                  content: _aiInsights!.commonMistakes!,
+                  color: const Color(0xFFF59E0B), // Amber for warnings
+                  isDark: isDark,
+                  textPrimary: textPrimary,
+                ),
+                const SizedBox(height: 16),
+              ],
+
+              // Pro Tip
+              if (_aiInsights!.proTip != null)
+                _buildInsightItem(
+                  icon: Icons.lightbulb_outline,
+                  title: 'Pro Tip',
+                  content: _aiInsights!.proTip!,
+                  color: accentColor,
+                  isDark: isDark,
+                  textPrimary: textPrimary,
+                ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildInsightItem({
+    required IconData icon,
+    required String title,
+    required String content,
+    required Color color,
+    required bool isDark,
+    required Color textPrimary,
+  }) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(icon, size: 18, color: color),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: color,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                content,
+                style: TextStyle(
+                  fontSize: 13,
+                  color: textPrimary,
+                  height: 1.4,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// Build an action pill button (Video, Breathing, etc.)
+  Widget _buildActionPill({
+    required BuildContext context,
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+    required Color accentColor,
+    required bool isDark,
+    required Color textMuted,
+  }) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () {
+          HapticFeedback.selectionClick();
+          onTap();
+        },
+        borderRadius: BorderRadius.circular(20),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          decoration: BoxDecoration(
+            color: isDark
+                ? Colors.white.withValues(alpha: 0.08)
+                : Colors.black.withValues(alpha: 0.05),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: isDark
+                  ? Colors.white.withValues(alpha: 0.15)
+                  : Colors.black.withValues(alpha: 0.1),
+              width: 0.5,
+            ),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, size: 14, color: accentColor),
+              const SizedBox(width: 4),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                  color: textMuted,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Build setup instructions list with numbered steps
+  Widget _buildSetupInstructionsList(
+    WorkoutExercise exercise,
+    bool isDark,
+    Color textPrimary,
+    Color accentColor,
+    Color cardBackground,
+  ) {
+    final instructions = _getSetupInstructions(exercise.name);
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: cardBackground,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: isDark ? AppColors.cardBorder : AppColorsLight.cardBorder,
+          width: 0.5,
+        ),
+      ),
+      child: Column(
+        children: instructions.asMap().entries.map((entry) {
+          final index = entry.key;
+          final instruction = entry.value;
+          return Padding(
+            padding: EdgeInsets.only(bottom: index < instructions.length - 1 ? 12 : 0),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  width: 24,
+                  height: 24,
+                  decoration: BoxDecoration(
+                    color: accentColor.withValues(alpha: 0.15),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Center(
+                    child: Text(
+                      '${index + 1}',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        color: accentColor,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.only(top: 2),
+                    child: Text(
+                      instruction,
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: textPrimary,
+                        height: 1.4,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          );
+        }).toList(),
+      ),
+    );
+  }
+
+  /// Get setup instructions based on exercise type
+  List<String> _getSetupInstructions(String exerciseName) {
+    final name = exerciseName.toLowerCase();
+
+    if (name.contains('bench') || name.contains('press')) {
+      return [
+        'Set up the bench at the appropriate angle (flat, incline, or decline)',
+        'Grip the bar slightly wider than shoulder-width',
+        'Plant your feet firmly on the ground',
+        'Retract your shoulder blades and maintain a slight arch',
+        'Unrack and position the weight above your chest',
+      ];
+    } else if (name.contains('squat')) {
+      return [
+        'Position the bar on your upper back (not your neck)',
+        'Stand with feet shoulder-width apart, toes slightly out',
+        'Brace your core before descending',
+        'Keep your knees tracking over your toes',
+        'Descend until thighs are parallel to the floor',
+      ];
+    } else if (name.contains('deadlift')) {
+      return [
+        'Stand with feet hip-width apart, bar over mid-foot',
+        'Grip the bar just outside your legs',
+        'Keep your back flat and chest up',
+        'Take the slack out of the bar before pulling',
+        'Drive through your heels and push hips forward',
+      ];
+    } else if (name.contains('row')) {
+      return [
+        'Hinge at the hips with a slight knee bend',
+        'Keep your back flat and core engaged',
+        'Grip the weight with arms extended',
+        'Pull the weight toward your lower chest',
+        'Squeeze your shoulder blades together at the top',
+      ];
+    } else if (name.contains('curl')) {
+      return [
+        'Stand with feet shoulder-width apart',
+        'Grip the weight with palms facing up',
+        'Keep your elbows close to your sides',
+        'Curl the weight toward your shoulders',
+        'Lower with control to full extension',
+      ];
+    } else if (name.contains('pull') && (name.contains('up') || name.contains('down'))) {
+      return [
+        'Grip the bar slightly wider than shoulder-width',
+        'Hang with arms fully extended',
+        'Engage your lats before pulling',
+        'Pull your elbows down and back',
+        'Lower with control to full extension',
+      ];
+    } else if (name.contains('fly') || name.contains('flye')) {
+      return [
+        'Lie on a flat or incline bench',
+        'Hold dumbbells above your chest, palms facing',
+        'Keep a slight bend in your elbows',
+        'Lower the weights in an arc to the sides',
+        'Squeeze your chest to bring weights back up',
+      ];
+    } else if (name.contains('lunge')) {
+      return [
+        'Stand with feet hip-width apart',
+        'Step forward or backward into position',
+        'Lower until your back knee nearly touches the ground',
+        'Keep your front knee over your ankle',
+        'Push through your front heel to return',
+      ];
+    }
+
+    // Default generic instructions
+    return [
+      'Set up your equipment and check form',
+      'Warm up with lighter weight first',
+      'Position yourself in the starting position',
+      'Focus on controlled movements throughout',
+      'Breathe consistently - exhale on exertion',
+    ];
+  }
+}
+
+/// Bottom sheet for selecting a set progression pattern.
+class _ProgressionSelectorSheet extends StatefulWidget {
+  final SetProgressionPattern currentPattern;
+  final double workingWeight;
+  final int totalSets;
+  final int baseReps;
+  final double increment;
+  final String unit;
+  final bool isDark;
+  final ScrollController scrollController;
+  final ValueChanged<SetProgressionPattern> onSelect;
+  final String? trainingGoal;
+  final String exerciseType; // 'compound', 'isolation', or 'bodyweight'
+
+  const _ProgressionSelectorSheet({
+    required this.currentPattern,
+    required this.workingWeight,
+    required this.totalSets,
+    required this.baseReps,
+    required this.increment,
+    required this.unit,
+    required this.isDark,
+    required this.scrollController,
+    required this.onSelect,
+    this.trainingGoal,
+    this.exerciseType = 'isolation',
+  });
+
+  @override
+  State<_ProgressionSelectorSheet> createState() => _ProgressionSelectorSheetState();
+}
+
+class _ProgressionSelectorSheetState extends State<_ProgressionSelectorSheet> {
+  /// Tracks which patterns have their info expanded.
+  final Set<SetProgressionPattern> _expandedInfo = {};
+
+  @override
+  Widget build(BuildContext context) {
+    final textPrimary = widget.isDark ? Colors.white : Colors.grey.shade900;
+    final textSecondary = widget.isDark ? Colors.grey.shade400 : Colors.grey.shade600;
+    final cardBg = widget.isDark ? const Color(0xFF1E1E1E) : Colors.grey.shade50;
+    final selectedBorder = widget.isDark ? Colors.white : Colors.black;
+    final dividerColor = widget.isDark ? Colors.grey.shade800 : Colors.grey.shade300;
+
+    // Standard patterns (non-advanced)
+    final standardPatterns = SetProgressionPattern.values
+        .where((p) => !p.isAdvanced)
+        .toList();
+    final advancedPatterns = SetProgressionPattern.values
+        .where((p) => p.isAdvanced)
+        .toList();
+
+    return SafeArea(
+      child: ListView(
+        controller: widget.scrollController,
+        padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
+        children: [
+          // Handle
+          Center(
+            child: Container(
+              width: 40,
+              height: 4,
+              margin: const EdgeInsets.only(bottom: 16),
+              decoration: BoxDecoration(
+                color: Colors.grey.shade600,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+          ),
+
+          // Title
+          Text(
+            'Set Progression',
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: textPrimary,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Choose how weight changes across sets',
+            style: TextStyle(fontSize: 14, color: textSecondary),
+          ),
+          const SizedBox(height: 20),
+
+          // Standard patterns
+          ...standardPatterns.map((p) => _buildPatternTile(
+                p, textPrimary, textSecondary, cardBg, selectedBorder, dividerColor)),
+
+          // Advanced section
+          const SizedBox(height: 12),
+          Padding(
+            padding: const EdgeInsets.only(left: 4, bottom: 8),
+            child: Text(
+              'ADVANCED',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: textSecondary,
+                letterSpacing: 1.2,
+              ),
+            ),
+          ),
+          ...advancedPatterns.map((p) => _buildPatternTile(
+                p, textPrimary, textSecondary, cardBg, selectedBorder, dividerColor)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPatternTile(
+    SetProgressionPattern pattern,
+    Color textPrimary,
+    Color textSecondary,
+    Color cardBg,
+    Color selectedBorder,
+    Color dividerColor,
+  ) {
+    final isSelected = pattern == widget.currentPattern;
+    final isExpanded = _expandedInfo.contains(pattern);
+    // Compute pattern-aware maxReps (endurance allows higher)
+    final int patternMaxReps;
+    if (pattern == SetProgressionPattern.endurance) {
+      patternMaxReps = widget.exerciseType == 'compound' ? 15 : widget.exerciseType == 'bodyweight' ? 30 : 25;
+    } else {
+      patternMaxReps = widget.exerciseType == 'compound' ? 12 : widget.exerciseType == 'bodyweight' ? 20 : 15;
+    }
+    final preview = pattern.previewString(
+      workingWeight: widget.workingWeight,
+      totalSets: widget.totalSets,
+      baseReps: widget.baseReps,
+      increment: widget.increment,
+      unit: widget.unit,
+      trainingGoal: widget.trainingGoal,
+      maxReps: patternMaxReps,
+    );
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: GestureDetector(
+        onTap: () => widget.onSelect(pattern),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: cardBg,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(
+              color: isSelected ? selectedBorder : dividerColor,
+              width: isSelected ? 2 : 1,
+            ),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  // Radio indicator
+                  Container(
+                    width: 20,
+                    height: 20,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: isSelected ? selectedBorder : textSecondary,
+                        width: 2,
+                      ),
+                    ),
+                    child: isSelected
+                        ? Center(
+                            child: Container(
+                              width: 10,
+                              height: 10,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: selectedBorder,
+                              ),
+                            ),
+                          )
+                        : null,
+                  ),
+                  const SizedBox(width: 12),
+                  // Icon
+                  Icon(pattern.icon, size: 20, color: textPrimary),
+                  const SizedBox(width: 8),
+                  // Name
+                  Expanded(
+                    child: Text(
+                      pattern.displayName,
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: textPrimary,
+                      ),
+                    ),
+                  ),
+                  // Goal tags
+                  ...pattern.goalTags.map((tag) => Container(
+                        margin: const EdgeInsets.only(left: 4),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: tag == 'Strength'
+                              ? Colors.orange.withValues(alpha: 0.15)
+                              : Colors.blue.withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          tag,
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w600,
+                            color: tag == 'Strength'
+                                ? Colors.orange.shade400
+                                : Colors.blue.shade400,
+                          ),
+                        ),
+                      )),
+                  const SizedBox(width: 4),
+                  // Info button
+                  GestureDetector(
+                    onTap: () {
+                      setState(() {
+                        if (isExpanded) {
+                          _expandedInfo.remove(pattern);
+                        } else {
+                          _expandedInfo.add(pattern);
+                        }
+                      });
+                    },
+                    child: Icon(
+                      isExpanded ? Icons.info : Icons.info_outline,
+                      size: 20,
+                      color: textSecondary,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 6),
+              // Description
+              Padding(
+                padding: const EdgeInsets.only(left: 32),
+                child: Text(
+                  pattern.description,
+                  style: TextStyle(fontSize: 13, color: textSecondary),
+                ),
+              ),
+              // Preview string
+              Padding(
+                padding: const EdgeInsets.only(left: 32, top: 4),
+                child: Text(
+                  preview,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: textSecondary.withValues(alpha: 0.8),
+                    fontFamily: 'monospace',
+                  ),
+                ),
+              ),
+              // Rest hint
+              Padding(
+                padding: const EdgeInsets.only(left: 32, top: 2),
+                child: Row(
+                  children: [
+                    Icon(Icons.timer_outlined, size: 12, color: textSecondary),
+                    const SizedBox(width: 4),
+                    Text(
+                      pattern.restDisplayHint,
+                      style: TextStyle(fontSize: 11, color: textSecondary),
+                    ),
+                  ],
+                ),
+              ),
+              // Expandable info panel
+              if (isExpanded) ...[
+                const SizedBox(height: 10),
+                Container(
+                  margin: const EdgeInsets.only(left: 32),
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: widget.isDark
+                        ? Colors.grey.shade900
+                        : Colors.grey.shade100,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        pattern.infoExplanation,
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: textPrimary.withValues(alpha: 0.85),
+                          height: 1.5,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      // When to use
+                      Text(
+                        'When to use',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          color: textPrimary.withValues(alpha: 0.7),
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        pattern.whenToUse,
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: textPrimary.withValues(alpha: 0.7),
+                          height: 1.4,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      // Auto-adjust behavior
+                      Row(
+                        children: [
+                          Icon(Icons.auto_fix_high, size: 14,
+                            color: textPrimary.withValues(alpha: 0.5)),
+                          const SizedBox(width: 4),
+                          Text(
+                            'Auto-adjusts',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                              color: textPrimary.withValues(alpha: 0.7),
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        pattern.adaptiveDescription,
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: textPrimary.withValues(alpha: 0.7),
+                          height: 1.4,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      // Research source
+                      Text(
+                        pattern.researchSource,
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontStyle: FontStyle.italic,
+                          color: textPrimary.withValues(alpha: 0.45),
+                          height: 1.4,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// A drag target zone that appears at the top of the screen during thumbnail drag.
+/// Accepts [int] data (exercise index) from [LongPressDraggable].
+class _DragActionZone extends StatefulWidget {
+  final IconData icon;
+  final String label;
+  final Color color;
+  final bool isDark;
+  final void Function(int exerciseIndex) onAccept;
+
+  const _DragActionZone({
+    required this.icon,
+    required this.label,
+    required this.color,
+    required this.isDark,
+    required this.onAccept,
+  });
+
+  @override
+  State<_DragActionZone> createState() => _DragActionZoneState();
+}
+
+class _DragActionZoneState extends State<_DragActionZone> {
+  bool _isHovering = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return DragTarget<int>(
+      onWillAcceptWithDetails: (details) {
+        if (!_isHovering) {
+          setState(() => _isHovering = true);
+          HapticFeedback.selectionClick();
+        }
+        return true;
+      },
+      onLeave: (_) {
+        setState(() => _isHovering = false);
+      },
+      onAcceptWithDetails: (details) {
+        setState(() => _isHovering = false);
+        HapticFeedback.heavyImpact();
+        widget.onAccept(details.data);
+      },
+      builder: (context, candidateData, rejectedData) {
+        final isActive = _isHovering && candidateData.isNotEmpty;
+
+        return AnimatedContainer(
+          duration: const Duration(milliseconds: 150),
+          height: 56,
+          decoration: BoxDecoration(
+            color: isActive
+                ? widget.color.withValues(alpha: 0.35)
+                : widget.color.withValues(alpha: 0.15),
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(
+              color: isActive
+                  ? widget.color
+                  : widget.color.withValues(alpha: 0.5),
+              width: isActive ? 2.5 : 1.5,
+            ),
+            boxShadow: isActive
+                ? [
+                    BoxShadow(
+                      color: widget.color.withValues(alpha: 0.4),
+                      blurRadius: 20,
+                      spreadRadius: 2,
+                    ),
+                  ]
+                : [],
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              AnimatedScale(
+                scale: isActive ? 1.3 : 1.0,
+                duration: const Duration(milliseconds: 150),
+                child: Icon(
+                  widget.icon,
+                  size: 22,
+                  color: isActive ? Colors.white : widget.color,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                widget.label,
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
+                  color: isActive ? Colors.white : widget.color,
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}

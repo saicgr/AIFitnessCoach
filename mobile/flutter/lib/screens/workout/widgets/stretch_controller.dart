@@ -30,7 +30,7 @@ class StretchController {
   bool get isLastExercise => _currentIndex >= exercises.length - 1;
 
   void startTimer() {
-    final duration = exercises[_currentIndex]['duration'] as int;
+    final duration = (exercises[_currentIndex]['duration'] as num).toInt();
     _secondsRemaining = duration;
     _isRunning = true;
     onStateChanged();

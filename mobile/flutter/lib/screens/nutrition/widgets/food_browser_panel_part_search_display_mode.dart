@@ -1,0 +1,614 @@
+part of 'food_browser_panel.dart';
+
+
+/// Display mode for search results
+enum _SearchDisplayMode { pages, list, carousel }
+
+
+/// A group of search results sharing the same matchedQuery
+class _FoodGroup {
+  final String label;
+  final List<search.FoodSearchResult> results;
+
+  const _FoodGroup({required this.label, required this.results});
+}
+
+
+// ─── Log State ─────────────────────────────────────────────────
+
+enum _LogState { loading, done }
+
+
+// ─── Browse Filter Tabs ────────────────────────────────────────
+
+class _BrowseFilterTabs extends StatelessWidget {
+  final FoodBrowserFilter selected;
+  final ValueChanged<FoodBrowserFilter> onChanged;
+  final bool isDark;
+
+  const _BrowseFilterTabs({
+    required this.selected,
+    required this.onChanged,
+    required this.isDark,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final teal = isDark ? AppColors.teal : AppColorsLight.teal;
+    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+
+    Widget tab(FoodBrowserFilter filter, String label, IconData icon) {
+      final isActive = selected == filter;
+      return GestureDetector(
+        onTap: () => onChanged(filter),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 150),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          decoration: BoxDecoration(
+            color: isActive ? teal : elevated,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: isActive ? teal : cardBorder),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, size: 14, color: isActive ? Colors.white : textMuted),
+              const SizedBox(width: 4),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: isActive ? FontWeight.w600 : FontWeight.w500,
+                  color: isActive ? Colors.white : textMuted,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 4),
+      child: Row(
+        children: [
+          tab(FoodBrowserFilter.recent, 'Recent', Icons.schedule),
+          const SizedBox(width: 8),
+          tab(FoodBrowserFilter.saved, 'Saved', Icons.bookmark_outline),
+          const SizedBox(width: 8),
+          tab(FoodBrowserFilter.foodDb, 'Food DB', Icons.storage_outlined),
+        ],
+      ),
+    );
+  }
+}
+
+
+// ─── Source Dropdown Pill ──────────────────────────────────────
+
+class _SourceDropdownPill extends StatelessWidget {
+  final String? selected;
+  final ValueChanged<String?> onChanged;
+  final bool isDark;
+
+  const _SourceDropdownPill({
+    required this.selected,
+    required this.onChanged,
+    required this.isDark,
+  });
+
+  static const _sources = <(String?, String)>[
+    (null, 'All Sources'),
+    ('usda', 'USDA'),
+    ('usda_branded', 'Branded'),
+    ('cnf', 'Canadian'),
+    ('indb', 'Indian'),
+    ('openfoodfacts', 'Open Food Facts'),
+  ];
+
+  String get _selectedLabel =>
+      _sources.firstWhere((s) => s.$1 == selected, orElse: () => _sources.first).$2;
+
+  @override
+  Widget build(BuildContext context) {
+    final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
+    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+    final isFiltered = selected != null;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 4),
+      child: PopupMenuButton<String?>(
+        onSelected: onChanged,
+        color: isDark ? AppColors.elevated : AppColorsLight.elevated,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        position: PopupMenuPosition.under,
+        itemBuilder: (_) => _sources.map((s) {
+          final (value, label) = s;
+          final isActive = selected == value;
+          return PopupMenuItem<String?>(
+            value: value,
+            height: 40,
+            child: Row(
+              children: [
+                SizedBox(
+                  width: 20,
+                  child: isActive
+                      ? Icon(Icons.check, size: 16, color: cyan)
+                      : null,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
+                    color: isActive ? cyan : (isDark ? AppColors.textPrimary : AppColorsLight.textPrimary),
+                  ),
+                ),
+              ],
+            ),
+          );
+        }).toList(),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          decoration: BoxDecoration(
+            color: isFiltered ? cyan : elevated,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: isFiltered ? cyan : cardBorder),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.filter_list, size: 14, color: isFiltered ? Colors.white : textMuted),
+              const SizedBox(width: 4),
+              Text(
+                _selectedLabel,
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: isFiltered ? Colors.white : textMuted,
+                ),
+              ),
+              const SizedBox(width: 2),
+              Icon(Icons.arrow_drop_down, size: 16, color: isFiltered ? Colors.white : textMuted),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+
+// ─── Country Search Pill ────────────────────────────────────────
+
+class _CountrySearchPill extends StatelessWidget {
+  final String? selected;
+  final ValueChanged<String?> onChanged;
+  final bool isDark;
+
+  const _CountrySearchPill({
+    required this.selected,
+    required this.onChanged,
+    required this.isDark,
+  });
+
+  String get _selectedLabel {
+    if (selected == null) return 'Country';
+    return kCountryCodes
+        .firstWhere((c) => c.code == selected,
+            orElse: () => const CountryCode(code: '', name: 'Country', flag: ''))
+        .name;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
+    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+    final isFiltered = selected != null;
+
+    return GestureDetector(
+      onTap: () => _openPicker(context),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: isFiltered ? cyan : elevated,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: isFiltered ? cyan : cardBorder),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.public, size: 14, color: isFiltered ? Colors.white : textMuted),
+            const SizedBox(width: 4),
+            Text(
+              _selectedLabel,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: isFiltered ? Colors.white : textMuted,
+              ),
+            ),
+            const SizedBox(width: 2),
+            Icon(Icons.arrow_drop_down,
+                size: 16, color: isFiltered ? Colors.white : textMuted),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _openPicker(BuildContext context) async {
+    final isDarkLocal = isDark;
+    final defaultCountry = await search.FoodSearchService.getDefaultCountry();
+    if (!context.mounted) return;
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => _CountryPickerSheet(
+        selected: selected,
+        defaultCountry: defaultCountry,
+        onChanged: (code) {
+          onChanged(code);
+          Navigator.of(context).pop();
+        },
+        onSetDefault: (code) {
+          search.FoodSearchService.setDefaultCountry(code);
+        },
+        isDark: isDarkLocal,
+      ),
+    );
+  }
+}
+
+
+class _CountryPickerSheet extends StatefulWidget {
+  final String? selected;
+  final String? defaultCountry;
+  final ValueChanged<String?> onChanged;
+  final ValueChanged<String?> onSetDefault;
+  final bool isDark;
+
+  const _CountryPickerSheet({
+    required this.selected,
+    this.defaultCountry,
+    required this.onChanged,
+    required this.onSetDefault,
+    required this.isDark,
+  });
+
+  @override
+  State<_CountryPickerSheet> createState() => _CountryPickerSheetState();
+}
+
+
+class _CountryPickerSheetState extends State<_CountryPickerSheet> {
+  final _searchCtrl = TextEditingController();
+  List<CountryCode> _filtered = kCountryCodes;
+  String? _currentDefault;
+
+  @override
+  void initState() {
+    super.initState();
+    _searchCtrl.addListener(_onSearch);
+    _currentDefault = widget.defaultCountry;
+  }
+
+  @override
+  void dispose() {
+    _searchCtrl.removeListener(_onSearch);
+    _searchCtrl.dispose();
+    super.dispose();
+  }
+
+  void _onSearch() {
+    final q = _searchCtrl.text.trim().toLowerCase();
+    setState(() {
+      _filtered = q.isEmpty
+          ? kCountryCodes
+          : kCountryCodes
+              .where((c) => c.name.toLowerCase().contains(q))
+              .toList();
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = widget.isDark;
+    final bg = isDark ? const Color(0xFF1C1C1E) : Colors.white;
+    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+    final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
+    final inputBg = isDark ? AppColors.elevated : AppColorsLight.elevated;
+
+    return DraggableScrollableSheet(
+      initialChildSize: 0.7,
+      minChildSize: 0.4,
+      maxChildSize: 0.92,
+      expand: false,
+      builder: (_, scrollCtrl) => ClipRRect(
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        child: Container(
+          color: bg,
+          child: Column(
+            children: [
+              // Handle
+              Padding(
+                padding: const EdgeInsets.only(top: 10, bottom: 4),
+                child: Container(
+                  width: 36,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: cardBorder,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              // Title
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
+                child: Text(
+                  'Filter by Country',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    color: textPrimary,
+                  ),
+                ),
+              ),
+              // Search field
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: inputBg,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: cardBorder),
+                  ),
+                  child: TextField(
+                    controller: _searchCtrl,
+                    autofocus: true,
+                    style: TextStyle(fontSize: 14, color: textPrimary),
+                    decoration: InputDecoration(
+                      hintText: 'Search countries…',
+                      hintStyle: TextStyle(color: textMuted, fontSize: 14),
+                      prefixIcon: Icon(Icons.search, size: 18, color: textMuted),
+                      border: InputBorder.none,
+                      contentPadding: const EdgeInsets.symmetric(vertical: 10),
+                    ),
+                  ),
+                ),
+              ),
+              // List
+              Expanded(
+                child: ListView.builder(
+                  controller: scrollCtrl,
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  itemCount: _filtered.length + 1, // +1 for "All Countries"
+                  itemBuilder: (_, i) {
+                    if (i == 0) {
+                      // "All Countries" row
+                      final isActive = widget.selected == null;
+                      final isDefault = _currentDefault == null;
+                      return ListTile(
+                        dense: true,
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 8),
+                        leading: Text('🌐', style: const TextStyle(fontSize: 20)),
+                        title: Row(
+                          children: [
+                            Text(
+                              'All Countries',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: isActive ? FontWeight.w700 : FontWeight.w400,
+                                color: isActive ? cyan : textPrimary,
+                              ),
+                            ),
+                            if (isDefault) ...[
+                              const SizedBox(width: 6),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                                decoration: BoxDecoration(
+                                  color: cyan.withValues(alpha: 0.15),
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                                child: Text('Default', style: TextStyle(fontSize: 9, fontWeight: FontWeight.w600, color: cyan)),
+                              ),
+                            ],
+                          ],
+                        ),
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            if (!isDefault)
+                              GestureDetector(
+                                onTap: () {
+                                  setState(() => _currentDefault = null);
+                                  widget.onSetDefault(null);
+                                },
+                                child: Padding(
+                                  padding: const EdgeInsets.all(4),
+                                  child: Text('Set Default', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: cyan)),
+                                ),
+                              ),
+                            if (isActive) Icon(Icons.check, size: 18, color: cyan),
+                          ],
+                        ),
+                        onTap: () => widget.onChanged(null),
+                      );
+                    }
+                    final country = _filtered[i - 1];
+                    final isActive = widget.selected == country.code;
+                    final isDefault = _currentDefault == country.code;
+                    return ListTile(
+                      dense: true,
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 8),
+                      leading: Text(country.flag, style: const TextStyle(fontSize: 20)),
+                      title: Row(
+                        children: [
+                          Flexible(
+                            child: Text(
+                              country.name,
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: isActive ? FontWeight.w700 : FontWeight.w400,
+                                color: isActive ? cyan : textPrimary,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          if (isDefault) ...[
+                            const SizedBox(width: 6),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                              decoration: BoxDecoration(
+                                color: cyan.withValues(alpha: 0.15),
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: Text('Default', style: TextStyle(fontSize: 9, fontWeight: FontWeight.w600, color: cyan)),
+                            ),
+                          ],
+                        ],
+                      ),
+                      trailing: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          if (!isDefault)
+                            GestureDetector(
+                              onTap: () {
+                                setState(() => _currentDefault = country.code);
+                                widget.onSetDefault(country.code);
+                              },
+                              child: Padding(
+                                padding: const EdgeInsets.all(4),
+                                child: Text('Set Default', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: cyan)),
+                              ),
+                            ),
+                          if (isActive) Icon(Icons.check, size: 18, color: cyan),
+                        ],
+                      ),
+                      onTap: () => widget.onChanged(country.code),
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+
+// ─── Section Header ────────────────────────────────────────────
+
+class _BrowseSectionHeader extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final int? count;
+  final VoidCallback? onSeeAll;
+  final bool isDark;
+
+  const _BrowseSectionHeader({
+    required this.icon,
+    required this.title,
+    this.count,
+    this.onSeeAll,
+    required this.isDark,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final teal = isDark ? AppColors.teal : AppColorsLight.teal;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 2),
+      child: Row(
+        children: [
+          Icon(icon, size: 14, color: textMuted),
+          const SizedBox(width: 6),
+          Text(
+            title,
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+              color: textMuted,
+              letterSpacing: 0.8,
+            ),
+          ),
+          const Spacer(),
+          if (onSeeAll != null)
+            GestureDetector(
+              onTap: onSeeAll,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    'See all',
+                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: teal),
+                  ),
+                  Icon(Icons.chevron_right, size: 16, color: teal),
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+
+// ─── NL Item Section (Stateful Accordion with Inline Picker) ──
+
+class _NLItemSection extends StatefulWidget {
+  final search.NLFoodItem item;
+  final bool isExpanded;
+  final _LogState? logState;
+  final VoidCallback onTap;
+  final void Function(String description) onLog;
+  final VoidCallback onStateChanged;
+  final bool isDark;
+  final bool showHint;
+  final search.FoodSearchService searchService;
+  final String userId;
+  final ApiClient apiClient;
+
+  const _NLItemSection({
+    super.key,
+    required this.item,
+    required this.isExpanded,
+    this.logState,
+    required this.onTap,
+    required this.onLog,
+    required this.onStateChanged,
+    required this.isDark,
+    this.showHint = false,
+    required this.searchService,
+    required this.userId,
+    required this.apiClient,
+  });
+
+  @override
+  State<_NLItemSection> createState() => _NLItemSectionState();
+}
+
+
+class _ModifierState {
+  double? weightG;
+  int? count;
+  bool enabled;
+  String? selectedPhrase;
+
+  _ModifierState({this.weightG, this.count, this.enabled = true, this.selectedPhrase});
+}
+

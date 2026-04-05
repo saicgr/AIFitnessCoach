@@ -11,7 +11,7 @@ class FilterOption {
   factory FilterOption.fromJson(Map<String, dynamic> json) {
     return FilterOption(
       name: json['name'] as String,
-      count: json['count'] as int,
+      count: (json['count'] as num).toInt(),
     );
   }
 

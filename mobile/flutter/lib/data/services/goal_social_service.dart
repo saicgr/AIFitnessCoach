@@ -209,7 +209,7 @@ class GoalSocialService {
 
       if (response.statusCode == 200) {
         final data = response.data as Map<String, dynamic>;
-        return data['pending_count'] as int;
+        return (data['pending_count'] as num).toInt();
       } else {
         throw Exception('Failed to get pending count: ${response.statusCode}');
       }
@@ -269,8 +269,8 @@ class FriendGoalProgress {
       oderId: json['user_id'] as String,
       name: json['name'] as String,
       avatarUrl: json['avatar_url'] as String?,
-      currentValue: json['current_value'] as int,
-      targetValue: json['target_value'] as int,
+      currentValue: (json['current_value'] as num).toInt(),
+      targetValue: (json['target_value'] as num).toInt(),
       progressPercentage: (json['progress_percentage'] as num).toDouble(),
       isPrBeaten: json['is_pr_beaten'] as bool? ?? false,
       rank: json['rank'] as int? ?? 0,
@@ -309,7 +309,7 @@ class GoalFriendsResponse {
       friendEntries: (json['friend_entries'] as List<dynamic>)
           .map((e) => FriendGoalProgress.fromJson(e as Map<String, dynamic>))
           .toList(),
-      totalFriendsCount: json['total_friends_count'] as int,
+      totalFriendsCount: (json['total_friends_count'] as num).toInt(),
       userRank: json['user_rank'] as int? ?? 0,
       userProgressPercentage: (json['user_progress_percentage'] as num?)?.toDouble() ?? 0,
     );
@@ -409,7 +409,7 @@ class GoalInviteWithDetails extends GoalInvite {
       expiresAt: DateTime.parse(json['expires_at'] as String),
       goalExerciseName: json['goal_exercise_name'] as String,
       goalGoalType: PersonalGoalType.fromString(json['goal_type'] as String),
-      goalTargetValue: json['goal_target_value'] as int,
+      goalTargetValue: (json['goal_target_value'] as num).toInt(),
       inviterName: json['inviter_name'] as String,
       inviterAvatarUrl: json['inviter_avatar_url'] as String?,
       inviterCurrentValue: json['inviter_current_value'] as int? ?? 0,

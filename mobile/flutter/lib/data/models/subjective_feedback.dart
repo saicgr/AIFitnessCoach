@@ -188,8 +188,8 @@ class SubjectiveTrendsResponse {
     final weeklyList = json['weekly_data'] as List<dynamic>? ?? [];
     return SubjectiveTrendsResponse(
       userId: json['user_id'] as String,
-      periodDays: json['period_days'] as int,
-      totalWorkouts: json['total_workouts'] as int,
+      periodDays: (json['period_days'] as num).toInt(),
+      totalWorkouts: (json['total_workouts'] as num).toInt(),
       avgMoodBefore: (json['avg_mood_before'] as num).toDouble(),
       avgMoodAfter: (json['avg_mood_after'] as num).toDouble(),
       avgMoodChange: (json['avg_mood_change'] as num).toDouble(),
@@ -227,9 +227,9 @@ class WeeklySubjectiveData {
 
   factory WeeklySubjectiveData.fromJson(Map<String, dynamic> json) {
     return WeeklySubjectiveData(
-      week: json['week'] as int,
+      week: (json['week'] as num).toInt(),
       weekStart: json['week_start'] as String,
-      workoutCount: json['workout_count'] as int,
+      workoutCount: (json['workout_count'] as num).toInt(),
       avgMood: (json['avg_mood'] as num).toDouble(),
       avgEnergy: (json['avg_energy'] as num).toDouble(),
     );
@@ -273,7 +273,7 @@ class FeelResultsSummary {
   factory FeelResultsSummary.fromJson(Map<String, dynamic> json) {
     return FeelResultsSummary(
       userId: json['user_id'] as String,
-      totalWorkoutsTracked: json['total_workouts_tracked'] as int,
+      totalWorkoutsTracked: (json['total_workouts_tracked'] as num).toInt(),
       moodImprovementPercent: (json['mood_improvement_percent'] as num).toDouble(),
       avgPostWorkoutMood: (json['avg_post_workout_mood'] as num).toDouble(),
       avgPostWorkoutEnergy: (json['avg_post_workout_energy'] as num).toDouble(),
@@ -308,7 +308,7 @@ class SubjectiveQuickStats {
   factory SubjectiveQuickStats.fromJson(Map<String, dynamic> json) {
     return SubjectiveQuickStats(
       hasData: json['has_data'] as bool,
-      totalCheckins: json['total_checkins'] as int,
+      totalCheckins: (json['total_checkins'] as num).toInt(),
       avgMoodAfter: json['avg_mood_after'] != null
           ? (json['avg_mood_after'] as num).toDouble()
           : null,

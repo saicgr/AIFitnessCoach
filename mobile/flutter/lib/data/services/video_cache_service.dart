@@ -45,7 +45,7 @@ class CachedVideoInfo {
         exerciseName: json['exerciseName'] as String,
         exerciseId: json['exerciseId'] as String,
         localPath: json['localPath'] as String,
-        fileSizeBytes: json['fileSizeBytes'] as int,
+        fileSizeBytes: (json['fileSizeBytes'] as num).toInt(),
         downloadedAt: DateTime.parse(json['downloadedAt'] as String),
         sourceUrl: json['sourceUrl'] as String?,
       );

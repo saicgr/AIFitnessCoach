@@ -93,8 +93,8 @@ class MesocyclePlan {
     return MesocyclePlan(
       id: json['id'] as String,
       primaryGoal: json['primaryGoal'] as String,
-      totalWeeks: json['totalWeeks'] as int,
-      currentWeek: json['currentWeek'] as int,
+      totalWeeks: (json['totalWeeks'] as num).toInt(),
+      currentWeek: (json['currentWeek'] as num).toInt(),
       startDate: DateTime.parse(json['startDate'] as String),
       endDate: json['endDate'] != null
           ? DateTime.parse(json['endDate'] as String)

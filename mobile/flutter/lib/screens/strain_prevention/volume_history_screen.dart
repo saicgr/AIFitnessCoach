@@ -63,7 +63,7 @@ class VolumeHistoryNotifier extends StateNotifier<VolumeHistoryState> {
         }
         final week = weekMap[weekStart]!;
         final sets = (e['total_sets'] as num?)?.toInt() ?? 0;
-        week['totalSets'] = (week['totalSets'] as int) + sets;
+        week['totalSets'] = (week['totalSets'] as num).toInt() + sets;
         final muscle = e['muscle_group'] as String? ?? 'Unknown';
         final muscleDisplay = muscle.replaceAll('_', ' ').split(' ').map((w) => w.isNotEmpty ? '${w[0].toUpperCase()}${w.substring(1)}' : '').join(' ');
         (week['muscleVolumes'] as Map<String, int>)[muscleDisplay] = sets;
@@ -71,7 +71,7 @@ class VolumeHistoryNotifier extends StateNotifier<VolumeHistoryState> {
 
       // Convert to list and sort by date descending
       final history = weekMap.values.map((w) {
-        final totalSets = w['totalSets'] as int;
+        final totalSets = (w['totalSets'] as num).toInt();
         return WeeklyVolume(
           weekStart: w['weekStart'] as DateTime,
           totalSets: totalSets,

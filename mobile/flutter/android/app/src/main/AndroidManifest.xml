@@ -138,6 +138,12 @@
             android:theme="@android:style/Theme.Black.NoTitleBar.Fullscreen"
             android:screenOrientation="portrait" />
 
+        <!-- UCrop Activity for image_cropper plugin -->
+        <activity
+            android:name="com.yalantis.ucrop.UCropActivity"
+            android:screenOrientation="portrait"
+            android:theme="@style/Theme.AppCompat.Light.NoActionBar" />
+
         <!-- Handles permission request from Health Connect -->
         <activity-alias
             android:name="ViewPermissionUsageActivity"

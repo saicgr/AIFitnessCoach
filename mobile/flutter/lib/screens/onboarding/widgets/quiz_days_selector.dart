@@ -113,8 +113,8 @@ class QuizDaysSelector extends StatelessWidget {
           children: _durationOptions.asMap().entries.map((entry) {
             final index = entry.key;
             final option = entry.value;
-            final minDuration = option['min'] as int;
-            final maxDuration = option['max'] as int;
+            final minDuration = (option['min'] as num).toInt();
+            final maxDuration = (option['max'] as num).toInt();
             // Match selection by max value (the upper bound of the range)
             final isSelected = workoutDurationMax == maxDuration;
             // 45-60min is the recommended range
@@ -385,7 +385,7 @@ class QuizDaysSelector extends StatelessWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: _dayInfo.map((day) {
-            final index = day['index'] as int;
+            final index = (day['index'] as num).toInt();
             final isSelected = selectedWorkoutDays.contains(index);
             final isDisabled = !isSelected && selectedCount >= requiredDays;
 

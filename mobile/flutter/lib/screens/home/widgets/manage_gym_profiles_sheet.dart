@@ -147,6 +147,7 @@ class _ManageGymProfilesSheetState
 
     try {
       await ref.read(gymProfilesProvider.notifier).deleteProfile(profile.id);
+      if (!mounted) return;
       setState(() {
         _profiles.removeWhere((p) => p.id == profile.id);
       });

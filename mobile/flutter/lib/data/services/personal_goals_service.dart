@@ -592,8 +592,8 @@ class SyncedGoalUpdate {
       exerciseName: json['exercise_name'] as String,
       goalType: PersonalGoalType.fromString(json['goal_type'] as String),
       volumeAdded: json['volume_added'] as int? ?? 0,
-      newCurrentValue: json['new_current_value'] as int,
-      targetValue: json['target_value'] as int,
+      newCurrentValue: (json['new_current_value'] as num).toInt(),
+      targetValue: (json['target_value'] as num).toInt(),
       isNowCompleted: json['is_now_completed'] as bool? ?? false,
       isNewPr: json['is_new_pr'] as bool? ?? false,
       progressPercentage: (json['progress_percentage'] as num?)?.toDouble() ?? 0.0,
@@ -785,7 +785,7 @@ class GoalSuggestionsResponse {
           .toList(),
       generatedAt: DateTime.parse(json['generated_at'] as String),
       expiresAt: DateTime.parse(json['expires_at'] as String),
-      totalSuggestions: json['total_suggestions'] as int,
+      totalSuggestions: (json['total_suggestions'] as num).toInt(),
     );
   }
 
@@ -812,8 +812,8 @@ class GoalSuggestionsSummary {
 
   factory GoalSuggestionsSummary.fromJson(Map<String, dynamic> json) {
     return GoalSuggestionsSummary(
-      totalSuggestions: json['total_suggestions'] as int,
-      categoriesWithSuggestions: json['categories_with_suggestions'] as int,
+      totalSuggestions: (json['total_suggestions'] as num).toInt(),
+      categoriesWithSuggestions: (json['categories_with_suggestions'] as num).toInt(),
       hasFriendSuggestions: json['has_friend_suggestions'] as bool,
       suggestionsExpireAt: json['suggestions_expire_at'] != null
           ? DateTime.parse(json['suggestions_expire_at'] as String)

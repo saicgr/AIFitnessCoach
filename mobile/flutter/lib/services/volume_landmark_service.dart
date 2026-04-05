@@ -69,9 +69,9 @@ class VolumeLandmarkService {
       for (final levelEntry in levelMap.entries) {
         final vals = levelEntry.value as Map<String, dynamic>;
         levels[levelEntry.key] = VolumeLandmarks(
-          mev: vals['mev'] as int,
-          mav: vals['mav'] as int,
-          mrv: vals['mrv'] as int,
+          mev: (vals['mev'] as num).toInt(),
+          mav: (vals['mav'] as num).toInt(),
+          mrv: (vals['mrv'] as num).toInt(),
         );
       }
       result[muscleEntry.key] = levels;

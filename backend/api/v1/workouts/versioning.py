@@ -886,3 +886,37 @@ async def revert_workout(request: RevertWorkoutRequest,
     except Exception as e:
         logger.error(f"Failed to revert workout: {e}")
         raise safe_internal_error(e, "versioning")
+
+
+class UnsupersedeRequest(BaseModel):
+    workout_id: str
+
+
+@router.post("/unsupersede")
+async def unsupersede_workout(
+    request: UnsupersedeRequest,
+    current_user: dict = Depends(get_current_user),
+):
+    """
+    Restore a superseded workout so it becomes current again.
+
+    Used when user regenerates a workout but chooses "Add Workout" instead of
+    "Replace" — both the old and new workout should appear for the same date.
+    """
+    logger.info(f"Un-superseding workout {request.workout_id}")
+
+    try:
+        db = get_supabase_db()
+
+        db.client.table("workouts").update({
+            "is_current": True,
+            "valid_to": None,
+            "superseded_by": None,
+        }).eq("id", request.workout_id).execute()
+
+        logger.info(f"Workout {request.workout_id} un-superseded successfully")
+        return {"status": "ok", "workout_id": request.workout_id}
+
+    except Exception as e:
+        logger.error(f"Failed to un-supersede workout: {e}")
+        raise safe_internal_error(e, "versioning")

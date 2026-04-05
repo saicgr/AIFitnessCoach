@@ -113,8 +113,8 @@ class _SuggestFeatureSheetState extends ConsumerState<SuggestFeatureSheet> {
                 // Remaining submissions info
                 remainingAsync.when(
                   data: (data) {
-                    final remaining = data['remaining'] as int;
-                    final used = data['used'] as int;
+                    final remaining = (data['remaining'] as num).toInt();
+                    final used = (data['used'] as num).toInt();
 
                     if (remaining == 0) {
                       return Container(

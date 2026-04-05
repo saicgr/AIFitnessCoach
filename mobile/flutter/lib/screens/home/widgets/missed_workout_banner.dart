@@ -373,19 +373,26 @@ class _MissedWorkoutBannerState extends ConsumerState<MissedWorkoutBanner>
               ),
 
               // Show count of other missed workouts if more than 1
-              if (ref.read(missedWorkoutsProvider).valueOrNull?.length != null &&
-                  ref.read(missedWorkoutsProvider).valueOrNull!.length > 1) ...[
-                const SizedBox(height: 12),
-                Center(
-                  child: Text(
-                    '+${ref.read(missedWorkoutsProvider).valueOrNull!.length - 1} more missed workouts',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: textSecondary,
+              Builder(builder: (context) {
+                final missedList = ref.read(missedWorkoutsProvider).valueOrNull;
+                if (missedList == null || missedList.length <= 1) {
+                  return const SizedBox.shrink();
+                }
+                return Column(
+                  children: [
+                    const SizedBox(height: 12),
+                    Center(
+                      child: Text(
+                        '+${missedList.length - 1} more missed workouts',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: textSecondary,
+                        ),
+                      ),
                     ),
-                  ),
-                ),
-              ],
+                  ],
+                );
+              }),
             ],
           ),
         ),

@@ -173,9 +173,9 @@ class WorkoutGalleryImageList {
       images: (json['images'] as List<dynamic>)
           .map((e) => WorkoutGalleryImage.fromJson(e as Map<String, dynamic>))
           .toList(),
-      total: json['total'] as int,
-      page: json['page'] as int,
-      pageSize: json['page_size'] as int,
+      total: (json['total'] as num).toInt(),
+      page: (json['page'] as num).toInt(),
+      pageSize: (json['page_size'] as num).toInt(),
       hasMore: json['has_more'] as bool,
     );
   }
@@ -380,7 +380,7 @@ class WorkoutGalleryService {
       if (response.statusCode == 200) {
         final data = response.data as Map<String, dynamic>;
         debugPrint('✅ [Gallery] External share tracked');
-        return data['external_shares_count'] as int;
+        return (data['external_shares_count'] as num).toInt();
       } else {
         throw Exception('Failed to track share: ${response.statusCode}');
       }

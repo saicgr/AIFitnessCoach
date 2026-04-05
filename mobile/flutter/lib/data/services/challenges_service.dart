@@ -392,7 +392,7 @@ class ChallengesService {
         status: ChallengeStatus.pending,
         pageSize: 1,
       );
-      return result['total'] as int;
+      return (result['total'] as num).toInt();
     } catch (e) {
       debugPrint('❌ [Challenges] Error getting pending count: $e');
       return 0;

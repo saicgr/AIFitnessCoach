@@ -1,0 +1,428 @@
+part of 'regenerate_workout_sheet.dart';
+
+/// Methods extracted from _RegenerateWorkoutSheetState
+extension __RegenerateWorkoutSheetStateExt on _RegenerateWorkoutSheetState {
+
+  Future<void> _regenerate() async {
+    ref.read(posthogServiceProvider).capture(
+      eventName: 'workout_regeneration_started',
+      properties: {
+        'difficulty': _selectedDifficulty,
+      },
+    );
+
+    _startElapsedTimer();
+    setState(() {
+      _isRegenerating = true;
+      _currentStep = 0;
+      _progressMessage = 'Starting...';
+      _progressDetail = null;
+    });
+
+    final authState = ref.read(authStateProvider);
+    final userId = authState.user?.id;
+
+    if (userId == null) {
+      setState(() => _isRegenerating = false);
+      return;
+    }
+
+    try {
+      final allFocusAreas = _selectedFocusAreas.toList();
+      if (_customFocusArea.isNotEmpty) {
+        allFocusAreas.add(_customFocusArea);
+      }
+
+      final allInjuries = _selectedInjuries.toList();
+      if (_customInjury.isNotEmpty) {
+        allInjuries.add(_customInjury);
+      }
+
+      final allEquipment = _selectedEquipment.toList();
+      if (_customEquipment.isNotEmpty) {
+        allEquipment.add(_customEquipment);
+      }
+
+      final workoutType = _customWorkoutType.isNotEmpty
+          ? _customWorkoutType
+          : _selectedWorkoutType;
+
+      final repo = ref.read(workoutRepositoryProvider);
+
+      // Use streaming for real-time progress updates
+      await for (final progress in repo.regenerateWorkoutStreaming(
+        workoutId: widget.workout.id!,
+        userId: userId,
+        difficulty: _selectedDifficulty,
+        durationMinutesMin: _selectedDurationMin.round(),
+        durationMinutesMax: _selectedDurationMax.round(),
+        focusAreas: allFocusAreas,
+        injuries: allInjuries,
+        equipment: allEquipment.isNotEmpty ? allEquipment : null,
+        workoutType: workoutType,
+        dumbbellCount:
+            _selectedEquipment.contains('Dumbbells') ? _dumbbellCount : null,
+        kettlebellCount:
+            _selectedEquipment.contains('Kettlebell') ? _kettlebellCount : null,
+      )) {
+        if (!mounted) return;
+
+        if (progress.hasError) {
+          _stopElapsedTimer();
+          setState(() => _isRegenerating = false);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Failed to regenerate: ${progress.message}'),
+              backgroundColor: AppColors.error,
+            ),
+          );
+          return;
+        }
+
+        if (progress.isCompleted && progress.workout != null) {
+          _stopElapsedTimer();
+          // Update progress to show we're loading the review
+          setState(() {
+            _progressMessage = 'Loading review...';
+            _progressDetail = 'Preparing your workout';
+          });
+
+          // Show review sheet for user to approve
+          final approvedWorkout = await showWorkoutReviewSheet(
+            context,
+            ref,
+            progress.workout!,
+          );
+
+          if (approvedWorkout != null && mounted) {
+            // Ask user: replace existing or keep both?
+            final shouldReplace = await _showReplaceOrAddDialog();
+            if (!mounted) return;
+
+            if (shouldReplace == null) {
+              setState(() => _isRegenerating = false);
+              return;
+            }
+
+            if (shouldReplace) {
+              WorkoutsNotifier.replaceInCache(widget.workout.id!, approvedWorkout);
+            } else {
+              // Un-supersede old workout so both appear in carousel
+              try {
+                final repo = ref.read(workoutRepositoryProvider);
+                await repo.unsupersedeWorkout(workoutId: widget.workout.id!);
+              } catch (e) {
+                debugPrint('⚠️ Failed to un-supersede old workout: $e');
+              }
+            }
+
+            TodayWorkoutNotifier.clearCache();
+            ref.invalidate(todayWorkoutProvider);
+            ref.invalidate(workoutsProvider);
+            Navigator.pop(context, approvedWorkout);
+          } else if (mounted) {
+            // User pressed Back - return to customize with form preserved
+            setState(() => _isRegenerating = false);
+          }
+          return;
+        }
+
+        // Update progress UI
+        setState(() {
+          _currentStep = progress.step;
+          _totalSteps = progress.totalSteps;
+          _progressMessage = progress.message;
+          _progressDetail = progress.detail;
+        });
+      }
+    } catch (e) {
+      _stopElapsedTimer();
+      if (mounted) {
+        setState(() => _isRegenerating = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to regenerate: $e'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    }
+  }
+
+
+  Future<void> _applyAISuggestion() async {
+    if (_selectedSuggestionIndex == null ||
+        _selectedSuggestionIndex! >= _aiSuggestions.length) {
+      return;
+    }
+
+    _startElapsedTimer();
+    setState(() {
+      _isRegenerating = true;
+      _currentStep = 0;
+      _progressMessage = 'Applying suggestion...';
+      _progressDetail = null;
+    });
+
+    final authState = ref.read(authStateProvider);
+    final userId = authState.user?.id;
+
+    if (userId == null) {
+      _stopElapsedTimer();
+      setState(() => _isRegenerating = false);
+      return;
+    }
+
+    try {
+      final suggestion = _aiSuggestions[_selectedSuggestionIndex!];
+      final repo = ref.read(workoutRepositoryProvider);
+
+      // Use streaming for real-time progress updates
+      await for (final progress in repo.regenerateWorkoutStreaming(
+        workoutId: widget.workout.id!,
+        userId: userId,
+        difficulty: suggestion['difficulty'] ?? _selectedDifficulty,
+        durationMinutesMin:
+            suggestion['duration_minutes'] ?? _selectedDurationMin.round(),
+        durationMinutesMax:
+            suggestion['duration_minutes'] ?? _selectedDurationMax.round(),
+        focusAreas:
+            (suggestion['focus_areas'] as List?)?.cast<String>() ?? [],
+        workoutType: suggestion['type'],
+        aiPrompt: _aiPromptController.text.trim().isEmpty
+            ? null
+            : _aiPromptController.text.trim(),
+        workoutName: suggestion['name'] as String?,
+      )) {
+        if (!mounted) return;
+
+        if (progress.hasError) {
+          _stopElapsedTimer();
+          setState(() => _isRegenerating = false);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Failed to apply suggestion: ${progress.message}'),
+              backgroundColor: AppColors.error,
+            ),
+          );
+          return;
+        }
+
+        if (progress.isCompleted && progress.workout != null) {
+          _stopElapsedTimer();
+          // Update progress to show we're loading the review
+          setState(() {
+            _progressMessage = 'Loading review...';
+            _progressDetail = 'Preparing your workout';
+          });
+
+          // Show review sheet for user to approve
+          final approvedWorkout = await showWorkoutReviewSheet(
+            context,
+            ref,
+            progress.workout!,
+          );
+
+          if (approvedWorkout != null && mounted) {
+            // Ask user: replace existing or keep both?
+            final shouldReplace = await _showReplaceOrAddDialog();
+            if (!mounted) return;
+
+            if (shouldReplace == null) {
+              setState(() => _isRegenerating = false);
+              return;
+            }
+
+            if (shouldReplace) {
+              WorkoutsNotifier.replaceInCache(widget.workout.id!, approvedWorkout);
+            } else {
+              // Un-supersede old workout so both appear in carousel
+              try {
+                final repo = ref.read(workoutRepositoryProvider);
+                await repo.unsupersedeWorkout(workoutId: widget.workout.id!);
+              } catch (e) {
+                debugPrint('⚠️ Failed to un-supersede old workout: $e');
+              }
+            }
+
+            TodayWorkoutNotifier.clearCache();
+            ref.invalidate(todayWorkoutProvider);
+            ref.invalidate(workoutsProvider);
+            Navigator.pop(context, approvedWorkout);
+          } else if (mounted) {
+            // User pressed Back - return to customize with form preserved
+            setState(() => _isRegenerating = false);
+          }
+          return;
+        }
+
+        // Update progress UI
+        setState(() {
+          _currentStep = progress.step;
+          _totalSteps = progress.totalSteps;
+          _progressMessage = progress.message;
+          _progressDetail = progress.detail;
+        });
+      }
+    } catch (e) {
+      _stopElapsedTimer();
+      if (mounted) {
+        setState(() => _isRegenerating = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to apply suggestion: $e'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    }
+  }
+
+
+  Widget _buildProgressSection(SheetColors colors, Color accentColor) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: accentColor.withOpacity(0.06),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: accentColor.withOpacity(0.15)),
+      ),
+      child: Column(
+        children: [
+          // Step indicators row
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: List.generate(_totalSteps, (i) {
+              final stepNum = i + 1;
+              final isActive = stepNum == _currentStep;
+              final isDone = stepNum < _currentStep;
+              return Row(
+                children: [
+                  if (i > 0)
+                    Container(
+                      width: 24,
+                      height: 2,
+                      color: isDone
+                          ? accentColor
+                          : accentColor.withOpacity(0.2),
+                    ),
+                  AnimatedContainer(
+                    duration: const Duration(milliseconds: 300),
+                    width: isActive ? 32 : 28,
+                    height: isActive ? 32 : 28,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: isDone
+                          ? accentColor
+                          : isActive
+                              ? accentColor.withOpacity(0.15)
+                              : colors.glassSurface,
+                      border: Border.all(
+                        color: isDone || isActive
+                            ? accentColor
+                            : accentColor.withOpacity(0.3),
+                        width: isActive ? 2 : 1,
+                      ),
+                    ),
+                    child: Center(
+                      child: isDone
+                          ? const Icon(Icons.check, size: 16, color: Colors.white)
+                          : Text(
+                              '$stepNum',
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w700,
+                                color: isActive
+                                    ? accentColor
+                                    : colors.textMuted,
+                              ),
+                            ),
+                    ),
+                  ),
+                ],
+              );
+            }),
+          ),
+          const SizedBox(height: 14),
+          // Message + elapsed time
+          Text(
+            _progressMessage,
+            style: TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w600,
+              color: colors.textPrimary,
+            ),
+          ),
+          if (_progressDetail != null) ...[
+            const SizedBox(height: 4),
+            Text(
+              _progressDetail!,
+              style: TextStyle(fontSize: 13, color: colors.textMuted),
+            ),
+          ],
+          const SizedBox(height: 10),
+          // Elapsed time + step count row
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.timer_outlined, size: 14, color: colors.textMuted),
+              const SizedBox(width: 4),
+              Text(
+                _formatElapsed(_elapsed),
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: colors.textSecondary,
+                  fontFeatures: const [FontFeature.tabularFigures()],
+                ),
+              ),
+              Container(
+                margin: const EdgeInsets.symmetric(horizontal: 10),
+                width: 1,
+                height: 14,
+                color: colors.textMuted.withOpacity(0.3),
+              ),
+              Text(
+                'Step $_currentStep of $_totalSteps',
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                  color: colors.textSecondary,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          // Progress bar
+          ClipRRect(
+            borderRadius: BorderRadius.circular(4),
+            child: LinearProgressIndicator(
+              value: _totalSteps > 0 ? _currentStep / _totalSteps : null,
+              backgroundColor: accentColor.withOpacity(0.15),
+              valueColor: AlwaysStoppedAnimation<Color>(accentColor),
+              minHeight: 4,
+            ),
+          ),
+          const SizedBox(height: 10),
+          // "Takes time" hint
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.info_outline, size: 13, color: colors.textMuted),
+              const SizedBox(width: 4),
+              Text(
+                'AI generation typically takes 15-30s',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: colors.textMuted,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+}

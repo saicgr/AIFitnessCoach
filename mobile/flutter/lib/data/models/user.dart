@@ -251,7 +251,7 @@ class User extends Equatable {
     try {
       final decoded = jsonDecode(preferences!);
       if (decoded is Map && decoded['workouts_per_week'] != null) {
-        return decoded['workouts_per_week'] as int;
+        return (decoded['workouts_per_week'] as num).toInt();
       }
       // Fall back to workout_days length if available
       if (decoded is Map && decoded['workout_days'] != null) {
@@ -270,7 +270,7 @@ class User extends Equatable {
     try {
       final decoded = jsonDecode(preferences!);
       if (decoded is Map && decoded['workout_duration'] != null) {
-        return decoded['workout_duration'] as int;
+        return (decoded['workout_duration'] as num).toInt();
       }
       return null;
     } catch (_) {

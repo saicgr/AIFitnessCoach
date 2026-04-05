@@ -12,6 +12,11 @@ import '../../../data/services/api_client.dart';
 import '../../../data/services/haptic_service.dart';
 import '../../../widgets/segmented_tab_bar.dart';
 
+part 'create_exercise_sheet_part_dashed_border_painter.dart';
+
+part 'create_exercise_sheet_ui.dart';
+
+
 /// Bottom sheet for creating a new custom exercise
 class CreateExerciseSheet extends ConsumerStatefulWidget {
   /// Optional initial name to pre-fill the exercise name field
@@ -758,159 +763,6 @@ class _CreateExerciseSheetState extends ConsumerState<CreateExerciseSheet>
     }
   }
 
-  Widget _buildLabel(String text, bool isDark) {
-    return Text(
-      text,
-      style: TextStyle(
-        fontWeight: FontWeight.w600,
-        fontSize: 14,
-        color: isDark ? AppColors.textSecondary : AppColorsLight.textSecondary,
-      ),
-    );
-  }
-
-  Widget _buildTextField({
-    required TextEditingController controller,
-    required String hint,
-    required bool isDark,
-    int maxLines = 1,
-    String? Function(String?)? validator,
-  }) {
-    return TextFormField(
-      controller: controller,
-      maxLines: maxLines,
-      validator: validator,
-      style: TextStyle(color: isDark ? Colors.white : Colors.black),
-      decoration: InputDecoration(
-        hintText: hint,
-        hintStyle: TextStyle(
-          color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
-        ),
-        filled: true,
-        fillColor: isDark ? AppColors.surface : AppColorsLight.surface,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide.none,
-        ),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      ),
-    );
-  }
-
-  Widget _buildDropdown({
-    required String value,
-    required List<String> items,
-    required void Function(String?) onChanged,
-    required bool isDark,
-  }) {
-    return Container(
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.surface : AppColorsLight.surface,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: DropdownButtonHideUnderline(
-        child: DropdownButton<String>(
-          value: value,
-          isExpanded: true,
-          dropdownColor: isDark ? AppColors.elevated : AppColorsLight.elevated,
-          items: items.map((item) {
-            return DropdownMenuItem(
-              value: item,
-              child: Text(
-                item[0].toUpperCase() + item.substring(1),
-                style: TextStyle(
-                  color: isDark ? Colors.white : Colors.black,
-                ),
-              ),
-            );
-          }).toList(),
-          onChanged: onChanged,
-        ),
-      ),
-    );
-  }
-
-  Widget _buildNumberStepper({
-    required int value,
-    required int min,
-    required int max,
-    required void Function(int) onChanged,
-    required bool isDark,
-  }) {
-    final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
-
-    return Container(
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.surface : AppColorsLight.surface,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Row(
-        children: [
-          IconButton(
-            onPressed: value > min
-                ? () {
-                    HapticService.light();
-                    onChanged(value - 1);
-                  }
-                : null,
-            icon: const Icon(Icons.remove),
-            color: isDark ? Colors.white70 : Colors.black54,
-          ),
-          Expanded(
-            child: Text(
-              '$value',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-                color: isDark ? Colors.white : Colors.black,
-              ),
-            ),
-          ),
-          IconButton(
-            onPressed: value < max
-                ? () {
-                    HapticService.light();
-                    onChanged(value + 1);
-                  }
-                : null,
-            icon: const Icon(Icons.add),
-            color: cyan,
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildToggleTile(
-    String title,
-    String subtitle,
-    bool value,
-    void Function(bool) onChanged,
-    bool isDark,
-  ) {
-    return Container(
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.surface : AppColorsLight.surface,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: SwitchListTile(
-        title: Text(title),
-        subtitle: Text(
-          subtitle,
-          style: TextStyle(
-            color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
-            fontSize: 12,
-          ),
-        ),
-        value: value,
-        onChanged: onChanged,
-        activeThumbColor: isDark ? AppColors.cyan : AppColorsLight.cyan,
-      ),
-    );
-  }
-
   Widget _buildComboTypeSelector(bool isDark) {
     final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
 
@@ -1134,51 +986,4 @@ class _CreateExerciseSheetState extends ConsumerState<CreateExerciseSheet>
       Navigator.pop(context);
     }
   }
-}
-
-/// Custom painter for a dashed border effect on the photo placeholder.
-class _DashedBorderPainter extends CustomPainter {
-  final Color color;
-  final double borderRadius;
-  final double dashWidth;
-  final double dashGap;
-  final double strokeWidth;
-
-  _DashedBorderPainter({
-    required this.color,
-    this.borderRadius = 12,
-    this.dashWidth = 6,
-    this.dashGap = 4,
-    this.strokeWidth = 1.5,
-  });
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = color
-      ..strokeWidth = strokeWidth
-      ..style = PaintingStyle.stroke;
-
-    final path = Path()
-      ..addRRect(RRect.fromRectAndRadius(
-        Rect.fromLTWH(0, 0, size.width, size.height),
-        Radius.circular(borderRadius),
-      ));
-
-    final dashPath = Path();
-    for (final metric in path.computeMetrics()) {
-      double distance = 0;
-      while (distance < metric.length) {
-        final end = (distance + dashWidth).clamp(0, metric.length).toDouble();
-        dashPath.addPath(metric.extractPath(distance, end), Offset.zero);
-        distance += dashWidth + dashGap;
-      }
-    }
-
-    canvas.drawPath(dashPath, paint);
-  }
-
-  @override
-  bool shouldRepaint(covariant _DashedBorderPainter oldDelegate) =>
-      color != oldDelegate.color || borderRadius != oldDelegate.borderRadius;
 }

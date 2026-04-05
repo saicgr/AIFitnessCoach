@@ -146,7 +146,7 @@ class MoodWorkoutConfig {
       mood: json['mood'] as String,
       moodEmoji: json['mood_emoji'] as String,
       moodColor: json['mood_color'] as String,
-      durationMinutes: json['duration_minutes'] as int,
+      durationMinutes: (json['duration_minutes'] as num).toInt(),
       intensityPreference: json['intensity_preference'] as String,
       workoutTypePreference: json['workout_type_preference'] as String,
     );

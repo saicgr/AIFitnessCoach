@@ -1,0 +1,32 @@
+-- Migration 1893: Fix indexes and keys (Supabase linter warnings)
+-- Fixes: unindexed_foreign_keys, no_primary_key, duplicate_index, unused_index
+-- Generated: 2026-04-04
+-- Applied: 2026-04-04
+--
+-- This migration was executed programmatically via run_migration_1893.py.
+-- The SQL below documents what was done; re-running the script is safe (idempotent).
+--
+-- Summary of changes:
+--   1. Created 223 indexes on unindexed foreign key columns (CONCURRENTLY)
+--   2. Added PRIMARY KEY constraints to 2 backup/copy tables:
+--      - food_nutrition_overrides_backup (PK on integer 'id')
+--      - program_variant_weeks_copy (PK on uuid 'id')
+--   3. Dropped 71 redundant non-unique indexes (unique index on same columns exists)
+--   4. Dropped 847 unused indexes (idx_scan=0, non-PK, non-unique)
+--   5. Re-created 223 FK indexes after step 4 exposed newly unindexed foreign keys
+--   6. Dropped 70 more duplicate indexes created by step 5
+--
+-- Final state:
+--   Unindexed foreign keys: 0
+--   Tables without PK: 0
+--   Duplicate index pairs: 5 (all false positives - different index types or WHERE clauses)
+--   Unused indexes: 236 (235 are newly-created FK indexes with 0 scans, will accumulate naturally)
+--
+-- The 5 remaining "duplicate" pairs are intentionally kept:
+--   - btree vs gin (trigram) indexes on same column serve different query types
+--   - Same columns with different WHERE clauses are partial indexes for different use cases
+--   - Same columns with different sort directions serve different ORDER BY queries
+
+-- THIS MIGRATION HAS BEEN APPLIED. DO NOT RE-RUN MANUALLY.
+-- Use: SUPABASE_DB_PASSWORD=xxx python3 backend/scripts/run_migration_1893.py
+-- The script is idempotent and will skip if already applied.

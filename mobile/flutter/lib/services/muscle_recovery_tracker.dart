@@ -23,7 +23,7 @@ class MuscleRecoveryEntry {
 
   factory MuscleRecoveryEntry.fromJson(Map<String, dynamic> json) {
     return MuscleRecoveryEntry(
-      sets: json['sets'] as int,
+      sets: (json['sets'] as num).toInt(),
       intensity: (json['intensity'] as num).toDouble(),
       timestamp: DateTime.parse(json['timestamp'] as String),
     );

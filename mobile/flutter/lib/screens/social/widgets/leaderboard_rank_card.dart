@@ -17,8 +17,8 @@ class LeaderboardRankCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final rank = userRank['rank'] as int;
-    final totalUsers = userRank['total_users'] as int;
+    final rank = (userRank['rank'] as num).toInt();
+    final totalUsers = (userRank['total_users'] as num).toInt();
     final percentile = userRank['percentile'] as num;
     final userStats = userRank['user_stats'] as Map<String, dynamic>?;
 

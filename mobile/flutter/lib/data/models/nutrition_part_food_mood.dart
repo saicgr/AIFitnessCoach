@@ -1,0 +1,915 @@
+part of 'nutrition.dart';
+
+
+/// Mood options for food-mood tracking
+enum FoodMood {
+  great('great', 'Great', '😊'),
+  good('good', 'Good', '🙂'),
+  neutral('neutral', 'Neutral', '😐'),
+  tired('tired', 'Tired', '😴'),
+  stressed('stressed', 'Stressed', '😰'),
+  hungry('hungry', 'Hungry', '🍽️'),
+  satisfied('satisfied', 'Satisfied', '😌'),
+  bloated('bloated', 'Bloated', '🫃');
+
+  final String value;
+  final String displayName;
+  final String emoji;
+
+  const FoodMood(this.value, this.displayName, this.emoji);
+
+  /// Convenience getter for UI
+  String get label => displayName;
+
+  static FoodMood? fromString(String? value) {
+    if (value == null) return null;
+    return FoodMood.values.firstWhere(
+      (m) => m.value == value,
+      orElse: () => FoodMood.neutral,
+    );
+  }
+}
+
+class FoodLog {
+  final String id;
+  @JsonKey(name: 'user_id')
+  final String userId;
+  @JsonKey(name: 'meal_type')
+  final String mealType;
+  @JsonKey(name: 'logged_at')
+  final DateTime loggedAt;
+  @JsonKey(name: 'food_items')
+  final List<FoodItem> foodItems;
+  @JsonKey(name: 'total_calories')
+  final int totalCalories;
+  @JsonKey(name: 'protein_g')
+  final double proteinG;
+  @JsonKey(name: 'carbs_g')
+  final double carbsG;
+  @JsonKey(name: 'fat_g')
+  final double fatG;
+  @JsonKey(name: 'fiber_g')
+  final double? fiberG;
+  @JsonKey(name: 'health_score')
+  final int? healthScore;
+  @JsonKey(name: 'ai_feedback')
+  final String? aiFeedback;
+  @JsonKey(name: 'mood_before')
+  final String? moodBefore;
+  @JsonKey(name: 'mood_after')
+  final String? moodAfter;
+  @JsonKey(name: 'energy_level')
+  final int? energyLevel;
+  @JsonKey(name: 'created_at', fromJson: _parseDateTimeOrNow)
+  final DateTime createdAt;
+
+  const FoodLog({
+    required this.id,
+    required this.userId,
+    required this.mealType,
+    required this.loggedAt,
+    this.foodItems = const [],
+    this.totalCalories = 0,
+    this.proteinG = 0,
+    this.carbsG = 0,
+    this.fatG = 0,
+    this.fiberG,
+    this.healthScore,
+    this.aiFeedback,
+    this.moodBefore,
+    this.moodAfter,
+    this.energyLevel,
+    required this.createdAt,
+  });
+
+  /// Get mood before as enum
+  FoodMood? get moodBeforeEnum => FoodMood.fromString(moodBefore);
+
+  /// Get mood after as enum
+  FoodMood? get moodAfterEnum => FoodMood.fromString(moodAfter);
+
+  factory FoodLog.fromJson(Map<String, dynamic> json) =>
+      _$FoodLogFromJson(json);
+  Map<String, dynamic> toJson() => _$FoodLogToJson(this);
+}
+
+class DailyNutritionSummary {
+  final String date;
+  @JsonKey(name: 'total_calories')
+  final int totalCalories;
+  @JsonKey(name: 'total_protein_g')
+  final double totalProteinG;
+  @JsonKey(name: 'total_carbs_g')
+  final double totalCarbsG;
+  @JsonKey(name: 'total_fat_g')
+  final double totalFatG;
+  @JsonKey(name: 'total_fiber_g')
+  final double totalFiberG;
+  @JsonKey(name: 'meal_count')
+  final int mealCount;
+  @JsonKey(name: 'avg_health_score')
+  final double? avgHealthScore;
+  final List<FoodLog> meals;
+
+  const DailyNutritionSummary({
+    required this.date,
+    this.totalCalories = 0,
+    this.totalProteinG = 0,
+    this.totalCarbsG = 0,
+    this.totalFatG = 0,
+    this.totalFiberG = 0,
+    this.mealCount = 0,
+    this.avgHealthScore,
+    this.meals = const [],
+  });
+
+  factory DailyNutritionSummary.fromJson(Map<String, dynamic> json) =>
+      _$DailyNutritionSummaryFromJson(json);
+  Map<String, dynamic> toJson() => _$DailyNutritionSummaryToJson(this);
+}
+
+class NutritionTargets {
+  @JsonKey(name: 'user_id')
+  final String userId;
+  @JsonKey(name: 'daily_calorie_target')
+  final int? dailyCalorieTarget;
+  @JsonKey(name: 'daily_protein_target_g')
+  final double? dailyProteinTargetG;
+  @JsonKey(name: 'daily_carbs_target_g')
+  final double? dailyCarbsTargetG;
+  @JsonKey(name: 'daily_fat_target_g')
+  final double? dailyFatTargetG;
+
+  const NutritionTargets({
+    required this.userId,
+    this.dailyCalorieTarget,
+    this.dailyProteinTargetG,
+    this.dailyCarbsTargetG,
+    this.dailyFatTargetG,
+  });
+
+  factory NutritionTargets.fromJson(Map<String, dynamic> json) =>
+      _$NutritionTargetsFromJson(json);
+  Map<String, dynamic> toJson() => _$NutritionTargetsToJson(this);
+}
+
+
+/// Meal type enum
+enum MealType {
+  breakfast('breakfast', 'Breakfast', '🌅'),
+  lunch('lunch', 'Lunch', '☀️'),
+  dinner('dinner', 'Dinner', '🌙'),
+  snack('snack', 'Snack', '🍎');
+
+  final String value;
+  final String label;
+  final String emoji;
+
+  const MealType(this.value, this.label, this.emoji);
+
+  static MealType fromValue(String value) {
+    return MealType.values.firstWhere(
+      (e) => e.value == value,
+      orElse: () => MealType.snack,
+    );
+  }
+}
+
+class ProductNutrients {
+  @JsonKey(name: 'calories_per_100g')
+  final double caloriesPer100g;
+  @JsonKey(name: 'protein_per_100g')
+  final double proteinPer100g;
+  @JsonKey(name: 'carbs_per_100g')
+  final double carbsPer100g;
+  @JsonKey(name: 'fat_per_100g')
+  final double fatPer100g;
+  @JsonKey(name: 'fiber_per_100g')
+  final double fiberPer100g;
+  @JsonKey(name: 'sugar_per_100g')
+  final double? sugarPer100g;
+  @JsonKey(name: 'sodium_per_100g')
+  final double? sodiumPer100g;
+  @JsonKey(name: 'serving_size_g')
+  final double? servingSizeG;
+
+  const ProductNutrients({
+    this.caloriesPer100g = 0,
+    this.proteinPer100g = 0,
+    this.carbsPer100g = 0,
+    this.fatPer100g = 0,
+    this.fiberPer100g = 0,
+    this.sugarPer100g,
+    this.sodiumPer100g,
+    this.servingSizeG,
+  });
+
+  factory ProductNutrients.fromJson(Map<String, dynamic> json) =>
+      _$ProductNutrientsFromJson(json);
+  Map<String, dynamic> toJson() => _$ProductNutrientsToJson(this);
+}
+
+class BarcodeProduct {
+  final String barcode;
+  @JsonKey(name: 'product_name')
+  final String productName;
+  final String? brand;
+  final String? categories;
+  @JsonKey(name: 'image_url')
+  final String? imageUrl;
+  @JsonKey(name: 'image_thumb_url')
+  final String? imageThumbUrl;
+  final Map<String, dynamic> nutrients;
+  @JsonKey(name: 'nutriscore_grade')
+  final String? nutriscoreGrade;
+  @JsonKey(name: 'nova_group')
+  final int? novaGroup;
+  @JsonKey(name: 'ingredients_text')
+  final String? ingredientsText;
+  final String? allergens;
+
+  const BarcodeProduct({
+    required this.barcode,
+    required this.productName,
+    this.brand,
+    this.categories,
+    this.imageUrl,
+    this.imageThumbUrl,
+    this.nutrients = const {},
+    this.nutriscoreGrade,
+    this.novaGroup,
+    this.ingredientsText,
+    this.allergens,
+  });
+
+  factory BarcodeProduct.fromJson(Map<String, dynamic> json) =>
+      _$BarcodeProductFromJson(json);
+  Map<String, dynamic> toJson() => _$BarcodeProductToJson(this);
+
+  /// Get calories per 100g from nutrients map
+  double get caloriesPer100g =>
+      (nutrients['calories_per_100g'] as num?)?.toDouble() ?? 0;
+
+  /// Get protein per 100g from nutrients map
+  double get proteinPer100g =>
+      (nutrients['protein_per_100g'] as num?)?.toDouble() ?? 0;
+
+  /// Get carbs per 100g from nutrients map
+  double get carbsPer100g =>
+      (nutrients['carbs_per_100g'] as num?)?.toDouble() ?? 0;
+
+  /// Get fat per 100g from nutrients map
+  double get fatPer100g =>
+      (nutrients['fat_per_100g'] as num?)?.toDouble() ?? 0;
+
+  /// Get fiber per 100g from nutrients map
+  double get fiberPer100g =>
+      (nutrients['fiber_per_100g'] as num?)?.toDouble() ?? 0;
+
+  /// Get sugar per 100g from nutrients map
+  double get sugarPer100g =>
+      (nutrients['sugar_per_100g'] as num?)?.toDouble() ?? 0;
+
+  /// Get serving size in grams
+  double? get servingSizeG =>
+      (nutrients['serving_size_g'] as num?)?.toDouble();
+
+  /// Get serving size description
+  String? get servingSize => nutrients['serving_size'] as String?;
+}
+
+class LogBarcodeResponse {
+  final bool success;
+  @JsonKey(name: 'food_log_id')
+  final String foodLogId;
+  @JsonKey(name: 'product_name')
+  final String productName;
+  @JsonKey(name: 'total_calories')
+  final int totalCalories;
+  @JsonKey(name: 'protein_g')
+  final double proteinG;
+  @JsonKey(name: 'carbs_g')
+  final double carbsG;
+  @JsonKey(name: 'fat_g')
+  final double fatG;
+
+  const LogBarcodeResponse({
+    required this.success,
+    required this.foodLogId,
+    required this.productName,
+    required this.totalCalories,
+    required this.proteinG,
+    required this.carbsG,
+    required this.fatG,
+  });
+
+  factory LogBarcodeResponse.fromJson(Map<String, dynamic> json) =>
+      _$LogBarcodeResponseFromJson(json);
+  Map<String, dynamic> toJson() => _$LogBarcodeResponseToJson(this);
+}
+
+class USDANutrientData {
+  @JsonKey(name: 'fdc_id')
+  final int? fdcId;
+  @JsonKey(name: 'calories_per_100g')
+  final double caloriesPer100g;
+  @JsonKey(name: 'protein_per_100g')
+  final double proteinPer100g;
+  @JsonKey(name: 'carbs_per_100g')
+  final double carbsPer100g;
+  @JsonKey(name: 'fat_per_100g')
+  final double fatPer100g;
+  @JsonKey(name: 'fiber_per_100g')
+  final double fiberPer100g;
+
+  const USDANutrientData({
+    this.fdcId,
+    this.caloriesPer100g = 0,
+    this.proteinPer100g = 0,
+    this.carbsPer100g = 0,
+    this.fatPer100g = 0,
+    this.fiberPer100g = 0,
+  });
+
+  factory USDANutrientData.fromJson(Map<String, dynamic> json) =>
+      _$USDANutrientDataFromJson(json);
+  Map<String, dynamic> toJson() => _$USDANutrientDataToJson(this);
+
+  /// Calculate nutrition for a given weight in grams
+  Map<String, double> getForWeight(double weightG) {
+    final multiplier = weightG / 100.0;
+    return {
+      'calories': caloriesPer100g * multiplier,
+      'protein_g': proteinPer100g * multiplier,
+      'carbs_g': carbsPer100g * multiplier,
+      'fat_g': fatPer100g * multiplier,
+      'fiber_g': fiberPer100g * multiplier,
+    };
+  }
+}
+
+class AiPerGramData {
+  final double calories;
+  final double protein;
+  final double carbs;
+  final double fat;
+  final double fiber;
+
+  const AiPerGramData({
+    this.calories = 0,
+    this.protein = 0,
+    this.carbs = 0,
+    this.fat = 0,
+    this.fiber = 0,
+  });
+
+  factory AiPerGramData.fromJson(Map<String, dynamic> json) =>
+      _$AiPerGramDataFromJson(json);
+  Map<String, dynamic> toJson() => _$AiPerGramDataToJson(this);
+
+  /// Calculate nutrition for a given weight in grams
+  Map<String, double> getForWeight(double weightG) {
+    return {
+      'calories': calories * weightG,
+      'protein_g': protein * weightG,
+      'carbs_g': carbs * weightG,
+      'fat_g': fat * weightG,
+      'fiber_g': fiber * weightG,
+    };
+  }
+}
+
+class FoodItemRanking {
+  final String name;
+  final String? amount;
+  final int? calories;
+  @JsonKey(name: 'protein_g')
+  final double? proteinG;
+  @JsonKey(name: 'carbs_g')
+  final double? carbsG;
+  @JsonKey(name: 'fat_g')
+  final double? fatG;
+  @JsonKey(name: 'fiber_g')
+  final double? fiberG;
+  // Goal-based ranking fields
+  @JsonKey(name: 'goal_score')
+  final int? goalScore;  // 1-10 based on user goals
+  @JsonKey(name: 'goal_alignment')
+  final String? goalAlignment;  // "excellent", "good", "neutral", "poor"
+  final String? reason;  // Brief explanation
+
+  // Portion scaling fields
+  @JsonKey(name: 'weight_g')
+  final double? weightG;  // Parsed weight in grams
+  @JsonKey(name: 'weight_source')
+  final String? weightSource;  // 'exact' or 'estimated'
+  @JsonKey(name: 'usda_data')
+  final USDANutrientData? usdaData;  // USDA per-100g data for scaling
+  @JsonKey(name: 'ai_per_gram')
+  final AiPerGramData? aiPerGram;  // AI fallback if no USDA match
+
+  // Count-based scaling fields (for countable items like tater tots, cookies)
+  final int? count;  // Number of pieces
+  @JsonKey(name: 'weight_per_unit_g')
+  final double? weightPerUnitG;  // Weight of 1 piece in grams
+
+  // Measurement unit (g, ml, oz, cups, tsp, tbsp)
+  final String? unit;  // Default is 'g' for grams
+
+  const FoodItemRanking({
+    required this.name,
+    this.amount,
+    this.calories,
+    this.proteinG,
+    this.carbsG,
+    this.fatG,
+    this.fiberG,
+    this.goalScore,
+    this.goalAlignment,
+    this.reason,
+    this.weightG,
+    this.weightSource,
+    this.usdaData,
+    this.aiPerGram,
+    this.count,
+    this.weightPerUnitG,
+    this.unit,
+  });
+
+  factory FoodItemRanking.fromJson(Map<String, dynamic> json) =>
+      _$FoodItemRankingFromJson(json);
+  Map<String, dynamic> toJson() => _$FoodItemRankingToJson(this);
+
+  /// Get color for goal score
+  String get scoreColor {
+    if (goalScore == null) return 'neutral';
+    if (goalScore! >= 8) return 'green';
+    if (goalScore! >= 5) return 'yellow';
+    return 'red';
+  }
+
+  /// Check if this item supports portion scaling
+  bool get canScale => usdaData != null || aiPerGram != null;
+
+  /// Check if weight was estimated (not exact)
+  bool get isWeightEstimated => weightSource == 'estimated';
+
+  /// Check if this item supports count-based scaling
+  bool get canScaleByCount => count != null && weightPerUnitG != null && canScale;
+
+  /// Get the display unit (defaults to 'g')
+  String get displayUnit => unit ?? 'g';
+
+  /// Check if this is a liquid (ml, oz, cups)
+  bool get isLiquid => ['ml', 'oz', 'cups'].contains(displayUnit);
+
+  /// Calculate nutrition for a new weight
+  /// Returns a new FoodItemRanking with updated values
+  FoodItemRanking withWeight(double newWeightG, {int? newCount}) {
+    if (!canScale) return this;
+
+    int newCalories;
+    double newProtein, newCarbs, newFat, newFiber;
+
+    if (usdaData != null) {
+      // Use USDA per-100g data
+      final nutrition = usdaData!.getForWeight(newWeightG);
+      newCalories = nutrition['calories']!.round();
+      newProtein = nutrition['protein_g']!;
+      newCarbs = nutrition['carbs_g']!;
+      newFat = nutrition['fat_g']!;
+      newFiber = nutrition['fiber_g']!;
+    } else if (aiPerGram != null) {
+      // Use AI per-gram estimate
+      final nutrition = aiPerGram!.getForWeight(newWeightG);
+      newCalories = nutrition['calories']!.round();
+      newProtein = nutrition['protein_g']!;
+      newCarbs = nutrition['carbs_g']!;
+      newFat = nutrition['fat_g']!;
+      newFiber = nutrition['fiber_g']!;
+    } else {
+      return this;
+    }
+
+    // Format amount string based on whether we have count and unit
+    final effectiveUnit = unit ?? 'g';
+    String amountStr;
+    if (newCount != null && weightPerUnitG != null) {
+      amountStr = '$newCount pieces (${newWeightG.round()}$effectiveUnit)';
+    } else {
+      amountStr = '${newWeightG.round()} $effectiveUnit';
+    }
+
+    return FoodItemRanking(
+      name: name,
+      amount: amountStr,
+      calories: newCalories,
+      proteinG: double.parse(newProtein.toStringAsFixed(1)),
+      carbsG: double.parse(newCarbs.toStringAsFixed(1)),
+      fatG: double.parse(newFat.toStringAsFixed(1)),
+      fiberG: double.parse(newFiber.toStringAsFixed(1)),
+      goalScore: goalScore,
+      goalAlignment: goalAlignment,
+      reason: reason,
+      weightG: newWeightG,
+      weightSource: 'exact',  // User-specified is now exact
+      usdaData: usdaData,
+      aiPerGram: aiPerGram,
+      count: newCount ?? count,
+      weightPerUnitG: weightPerUnitG,
+      unit: effectiveUnit,
+    );
+  }
+
+  /// Calculate nutrition for a new count (for countable items)
+  /// Returns a new FoodItemRanking with updated values
+  FoodItemRanking withCount(int newCount) {
+    if (!canScaleByCount) return this;
+    final newWeightG = newCount * weightPerUnitG!;
+    return withWeight(newWeightG, newCount: newCount);
+  }
+}
+
+class LogFoodResponse {
+  final bool success;
+  @JsonKey(name: 'food_log_id')
+  final String? foodLogId;  // Nullable for analyze-only responses (not yet saved)
+  @JsonKey(name: 'food_items')
+  final List<Map<String, dynamic>> foodItems;
+  @JsonKey(name: 'total_calories')
+  final int totalCalories;
+  @JsonKey(name: 'protein_g')
+  final double proteinG;
+  @JsonKey(name: 'carbs_g')
+  final double carbsG;
+  @JsonKey(name: 'fat_g')
+  final double fatG;
+  @JsonKey(name: 'fiber_g')
+  final double? fiberG;
+  // Enhanced goal-based analysis fields
+  @JsonKey(name: 'overall_meal_score')
+  final int? overallMealScore;  // 1-10 weighted average
+  @JsonKey(name: 'health_score')
+  final int? healthScore;  // 1-10 general health score
+  @JsonKey(name: 'goal_alignment_percentage')
+  final int? goalAlignmentPercentage;  // 0-100%
+  @JsonKey(name: 'ai_suggestion')
+  final String? aiSuggestion;  // Personalized AI feedback
+  final List<String>? encouragements;  // Positive aspects
+  final List<String>? warnings;  // Concerns (high sodium, etc.)
+  @JsonKey(name: 'recommended_swap')
+  final String? recommendedSwap;  // Healthier alternative
+  // AI confidence for estimates
+  @JsonKey(name: 'confidence_score')
+  final double? confidenceScore;  // 0.0-1.0 confidence in analysis
+  @JsonKey(name: 'confidence_level')
+  final String? confidenceLevel;  // 'low', 'medium', 'high'
+  @JsonKey(name: 'source_type')
+  final String? sourceType;  // 'image', 'text', 'barcode', 'restaurant'
+  // Spelling correction
+  @JsonKey(name: 'corrected_query')
+  final String? correctedQuery;  // Corrected food description if user had typos
+
+  // Micronutrients (vitamins & minerals)
+  @JsonKey(name: 'sodium_mg')
+  final double? sodiumMg;
+  @JsonKey(name: 'sugar_g')
+  final double? sugarG;
+  @JsonKey(name: 'saturated_fat_g')
+  final double? saturatedFatG;
+  @JsonKey(name: 'cholesterol_mg')
+  final double? cholesterolMg;
+  @JsonKey(name: 'potassium_mg')
+  final double? potassiumMg;
+  @JsonKey(name: 'vitamin_a_iu')
+  final double? vitaminAIu;
+  @JsonKey(name: 'vitamin_c_mg')
+  final double? vitaminCMg;
+  @JsonKey(name: 'vitamin_d_iu')
+  final double? vitaminDIu;
+  @JsonKey(name: 'calcium_mg')
+  final double? calciumMg;
+  @JsonKey(name: 'iron_mg')
+  final double? ironMg;
+
+  // Contextual meal reference source label (e.g., "From dinner · Mar 30")
+  @JsonKey(name: 'source_label')
+  final String? sourceLabel;
+
+  const LogFoodResponse({
+    required this.success,
+    this.foodLogId,  // Optional for analyze-only responses
+    this.foodItems = const [],
+    required this.totalCalories,
+    required this.proteinG,
+    required this.carbsG,
+    required this.fatG,
+    this.fiberG,
+    this.overallMealScore,
+    this.healthScore,
+    this.goalAlignmentPercentage,
+    this.aiSuggestion,
+    this.encouragements,
+    this.warnings,
+    this.recommendedSwap,
+    this.confidenceScore,
+    this.confidenceLevel,
+    this.sourceType,
+    this.correctedQuery,
+    this.sodiumMg,
+    this.sugarG,
+    this.saturatedFatG,
+    this.cholesterolMg,
+    this.potassiumMg,
+    this.vitaminAIu,
+    this.vitaminCMg,
+    this.vitaminDIu,
+    this.calciumMg,
+    this.ironMg,
+    this.sourceLabel,
+  });
+
+  factory LogFoodResponse.fromJson(Map<String, dynamic> json) =>
+      _$LogFoodResponseFromJson(json);
+  Map<String, dynamic> toJson() => _$LogFoodResponseToJson(this);
+
+  /// Get typed food items with rankings
+  List<FoodItemRanking> get foodItemsRanked {
+    return foodItems.map((item) => FoodItemRanking.fromJson(item)).toList();
+  }
+
+  /// Get color for overall meal score
+  String get mealScoreColor {
+    if (overallMealScore == null) return 'neutral';
+    if (overallMealScore! >= 8) return 'green';
+    if (overallMealScore! >= 5) return 'yellow';
+    return 'red';
+  }
+
+  /// Get confidence display info
+  String get confidenceDisplay {
+    if (confidenceLevel == null) return 'Unknown';
+    switch (confidenceLevel) {
+      case 'high':
+        return 'High confidence';
+      case 'medium':
+        return 'Medium confidence';
+      case 'low':
+        return 'Estimate - please verify';
+      default:
+        return confidenceLevel!;
+    }
+  }
+
+  /// Get confidence color
+  String get confidenceColor {
+    if (confidenceScore == null) return 'neutral';
+    if (confidenceScore! >= 0.75) return 'green';
+    if (confidenceScore! >= 0.5) return 'orange';
+    return 'red';
+  }
+
+  /// Create a copy with all nutritional values multiplied by a factor
+  /// Used for portion size adjustments
+  LogFoodResponse copyWithMultiplier(double multiplier) {
+    // Scale food items if they have calorie/macro data
+    final scaledFoodItems = foodItems.map((item) {
+      final scaledItem = Map<String, dynamic>.from(item);
+      if (scaledItem.containsKey('calories')) {
+        scaledItem['calories'] = ((scaledItem['calories'] as num) * multiplier).round();
+      }
+      if (scaledItem.containsKey('protein_g')) {
+        scaledItem['protein_g'] = (scaledItem['protein_g'] as num) * multiplier;
+      }
+      if (scaledItem.containsKey('carbs_g')) {
+        scaledItem['carbs_g'] = (scaledItem['carbs_g'] as num) * multiplier;
+      }
+      if (scaledItem.containsKey('fat_g')) {
+        scaledItem['fat_g'] = (scaledItem['fat_g'] as num) * multiplier;
+      }
+      if (scaledItem.containsKey('fiber_g') && scaledItem['fiber_g'] != null) {
+        scaledItem['fiber_g'] = (scaledItem['fiber_g'] as num) * multiplier;
+      }
+      return scaledItem;
+    }).toList();
+
+    return LogFoodResponse(
+      success: success,
+      foodLogId: foodLogId,
+      foodItems: scaledFoodItems,
+      totalCalories: (totalCalories * multiplier).round(),
+      proteinG: proteinG * multiplier,
+      carbsG: carbsG * multiplier,
+      fatG: fatG * multiplier,
+      fiberG: fiberG != null ? fiberG! * multiplier : null,
+      overallMealScore: overallMealScore,
+      healthScore: healthScore,
+      goalAlignmentPercentage: goalAlignmentPercentage,
+      aiSuggestion: aiSuggestion,
+      encouragements: encouragements,
+      warnings: warnings,
+      recommendedSwap: recommendedSwap,
+      confidenceScore: confidenceScore,
+      confidenceLevel: confidenceLevel,
+      sourceType: sourceType,
+      // Scale micronutrients
+      sodiumMg: sodiumMg != null ? sodiumMg! * multiplier : null,
+      sugarG: sugarG != null ? sugarG! * multiplier : null,
+      saturatedFatG: saturatedFatG != null ? saturatedFatG! * multiplier : null,
+      cholesterolMg: cholesterolMg != null ? cholesterolMg! * multiplier : null,
+      potassiumMg: potassiumMg != null ? potassiumMg! * multiplier : null,
+      vitaminAIu: vitaminAIu != null ? vitaminAIu! * multiplier : null,
+      vitaminCMg: vitaminCMg != null ? vitaminCMg! * multiplier : null,
+      vitaminDIu: vitaminDIu != null ? vitaminDIu! * multiplier : null,
+      calciumMg: calciumMg != null ? calciumMg! * multiplier : null,
+      ironMg: ironMg != null ? ironMg! * multiplier : null,
+    );
+  }
+}
+
+
+/// Source type for saved foods
+enum FoodSourceType {
+  text('text'),
+  barcode('barcode'),
+  image('image');
+
+  final String value;
+  const FoodSourceType(this.value);
+
+  static FoodSourceType fromValue(String value) {
+    return FoodSourceType.values.firstWhere(
+      (e) => e.value == value,
+      orElse: () => FoodSourceType.text,
+    );
+  }
+}
+
+class SavedFoodItem {
+  final String name;
+  final String? amount;
+  final int? calories;
+  @JsonKey(name: 'protein_g')
+  final double? proteinG;
+  @JsonKey(name: 'carbs_g')
+  final double? carbsG;
+  @JsonKey(name: 'fat_g')
+  final double? fatG;
+  @JsonKey(name: 'fiber_g')
+  final double? fiberG;
+  @JsonKey(name: 'goal_score')
+  final int? goalScore;
+  @JsonKey(name: 'goal_alignment')
+  final String? goalAlignment;
+
+  // Portion scaling fields (for weight adjustment when re-logging)
+  @JsonKey(name: 'weight_g')
+  final double? weightG;
+  @JsonKey(name: 'usda_data')
+  final USDANutrientData? usdaData;
+  @JsonKey(name: 'ai_per_gram')
+  final AiPerGramData? aiPerGram;
+
+  // Count-based scaling fields
+  final int? count;
+  @JsonKey(name: 'weight_per_unit_g')
+  final double? weightPerUnitG;
+
+  const SavedFoodItem({
+    required this.name,
+    this.amount,
+    this.calories,
+    this.proteinG,
+    this.carbsG,
+    this.fatG,
+    this.fiberG,
+    this.goalScore,
+    this.goalAlignment,
+    this.weightG,
+    this.usdaData,
+    this.aiPerGram,
+    this.count,
+    this.weightPerUnitG,
+  });
+
+  factory SavedFoodItem.fromJson(Map<String, dynamic> json) =>
+      _$SavedFoodItemFromJson(json);
+  Map<String, dynamic> toJson() => _$SavedFoodItemToJson(this);
+
+  /// Check if this item supports portion scaling
+  bool get canScale => usdaData != null || aiPerGram != null;
+
+  /// Check if this item supports count-based scaling
+  bool get canScaleByCount => count != null && weightPerUnitG != null && canScale;
+}
+
+class SavedFood {
+  final String id;
+  @JsonKey(name: 'user_id')
+  final String userId;
+  final String name;
+  final String? description;
+  @JsonKey(name: 'source_type')
+  final String sourceType;
+  final String? barcode;
+  @JsonKey(name: 'image_url')
+  final String? imageUrl;
+  @JsonKey(name: 'total_calories')
+  final int? totalCalories;
+  @JsonKey(name: 'total_protein_g')
+  final double? totalProteinG;
+  @JsonKey(name: 'total_carbs_g')
+  final double? totalCarbsG;
+  @JsonKey(name: 'total_fat_g')
+  final double? totalFatG;
+  @JsonKey(name: 'total_fiber_g')
+  final double? totalFiberG;
+  @JsonKey(name: 'food_items')
+  final List<Map<String, dynamic>> foodItems;
+  @JsonKey(name: 'overall_meal_score')
+  final int? overallMealScore;
+  @JsonKey(name: 'goal_alignment_percentage')
+  final int? goalAlignmentPercentage;
+  final List<String>? tags;
+  final String? notes;
+  @JsonKey(name: 'times_logged')
+  final int timesLogged;
+  @JsonKey(name: 'last_logged_at')
+  final DateTime? lastLoggedAt;
+  @JsonKey(name: 'created_at')
+  final DateTime createdAt;
+  @JsonKey(name: 'updated_at')
+  final DateTime updatedAt;
+
+  const SavedFood({
+    required this.id,
+    required this.userId,
+    required this.name,
+    this.description,
+    this.sourceType = 'text',
+    this.barcode,
+    this.imageUrl,
+    this.totalCalories,
+    this.totalProteinG,
+    this.totalCarbsG,
+    this.totalFatG,
+    this.totalFiberG,
+    this.foodItems = const [],
+    this.overallMealScore,
+    this.goalAlignmentPercentage,
+    this.tags,
+    this.notes,
+    this.timesLogged = 0,
+    this.lastLoggedAt,
+    required this.createdAt,
+    required this.updatedAt,
+  });
+
+  factory SavedFood.fromJson(Map<String, dynamic> json) =>
+      _$SavedFoodFromJson(json);
+  Map<String, dynamic> toJson() => _$SavedFoodToJson(this);
+
+  /// Get typed food items with rankings
+  List<SavedFoodItem> get foodItemsTyped {
+    return foodItems.map((item) => SavedFoodItem.fromJson(item)).toList();
+  }
+
+  /// Get source type as enum
+  FoodSourceType get sourceTypeEnum => FoodSourceType.fromValue(sourceType);
+
+  /// Get icon for source type
+  String get sourceIcon {
+    switch (sourceTypeEnum) {
+      case FoodSourceType.text:
+        return '📝';
+      case FoodSourceType.barcode:
+        return '📷';
+      case FoodSourceType.image:
+        return '🖼️';
+    }
+  }
+
+  /// Get color for meal score
+  String get scoreColor {
+    if (overallMealScore == null) return 'neutral';
+    if (overallMealScore! >= 8) return 'green';
+    if (overallMealScore! >= 5) return 'yellow';
+    return 'red';
+  }
+}
+
+class SavedFoodsResponse {
+  final List<SavedFood> items;
+  @JsonKey(name: 'total_count')
+  final int totalCount;
+
+  const SavedFoodsResponse({
+    this.items = const [],
+    this.totalCount = 0,
+  });
+
+  factory SavedFoodsResponse.fromJson(Map<String, dynamic> json) =>
+      _$SavedFoodsResponseFromJson(json);
+  Map<String, dynamic> toJson() => _$SavedFoodsResponseToJson(this);
+}
+
