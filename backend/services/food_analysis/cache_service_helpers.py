@@ -1028,5 +1028,14 @@ class FoodAnalysisCacheService:
         return "general"
 
 
-# Re-export from part2 for backward compatibility
-from services.food_analysis.cache_service_helpers_part2 import get_food_analysis_cache_service  # noqa: F401
+
+# Singleton instance
+_cache_service_instance: Optional[FoodAnalysisCacheService] = None
+
+
+def get_food_analysis_cache_service() -> FoodAnalysisCacheService:
+    """Get or create the singleton cache service instance."""
+    global _cache_service_instance
+    if _cache_service_instance is None:
+        _cache_service_instance = FoodAnalysisCacheService()
+    return _cache_service_instance

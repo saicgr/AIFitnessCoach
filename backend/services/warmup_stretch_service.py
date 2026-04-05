@@ -1,13 +1,12 @@
 """Service for generating warm-up and cool-down exercises with SCD2 versioning.
 
-
+Updated to use dictionary-based algorithm instead of Gemini for instant generation.
+Performance improvement: 3-5s -> <10ms
+"""
 from .warmup_stretch_service_helpers import (  # noqa: F401
     WarmupStretchService,
     get_warmup_stretch_service,
 )
-Updated to use dictionary-based algorithm instead of Gemini for instant generation.
-Performance improvement: 3-5s -> <10ms
-"""
 
 import json
 import random

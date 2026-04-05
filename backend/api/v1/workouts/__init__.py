@@ -20,6 +20,7 @@ from the following submodules:
 - batch_generation: Batch upcoming workout retrieval for offline pre-caching
 - screen_summary: Lightweight summary data for the Workouts screen
 """
+from typing import Set
 from fastapi import APIRouter
 
 from .crud import router as crud_router

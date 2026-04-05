@@ -1,3 +1,4 @@
+from typing import Set
 #!/usr/bin/env python3
 """
 Export the full exercise library from Supabase to a JSON asset for Flutter.

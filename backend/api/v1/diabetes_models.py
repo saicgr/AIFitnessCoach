@@ -1,6 +1,6 @@
 """Pydantic models for diabetes."""
 from datetime import datetime, date
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, validator
 from typing import List, Optional, Dict, Any
 
 

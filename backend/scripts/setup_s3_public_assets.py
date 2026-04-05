@@ -9,6 +9,7 @@ Idempotent — safe to run multiple times.
 Usage:
     cd backend && python scripts/setup_s3_public_assets.py
 """
+from typing import Set
 import json
 import os
 import sys

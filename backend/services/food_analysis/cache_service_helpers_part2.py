@@ -9,8 +9,8 @@ from core.supabase_client import get_supabase
 from services.food_analysis.parser import ParsedFoodItem
 from services.food_analysis.constants import (
     _WEIGHT_REGEX, _WEIGHT_AFTER_REGEX, _VOLUME_REGEX, _VOLUME_AFTER_REGEX,
-    _weight_unit_to_grams, _volume_unit_to_ml,
 )
+from services.food_analysis.parser import _weight_unit_to_grams, _volume_unit_to_ml
 
 logger = logging.getLogger(__name__)
 

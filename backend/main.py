@@ -7,6 +7,7 @@ Local development:
 AWS Lambda deployment:
     Deployed via Terraform with Mangum adapter (see lambda_handler.py)
 """
+from typing import Optional
 from contextlib import asynccontextmanager
 from datetime import datetime
 from fastapi import FastAPI, Request

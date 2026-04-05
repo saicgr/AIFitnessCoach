@@ -12,6 +12,7 @@ Tests:
 
 Run with: pytest backend/tests/test_library.py -v
 """
+from typing import List
 import pytest
 from unittest.mock import MagicMock, patch, AsyncMock
 from fastapi.testclient import TestClient

@@ -1,11 +1,23 @@
 """Second part of personal_goals_endpoints.py (auto-split for size)."""
+from typing import List
 from datetime import datetime, timedelta, date
-from fastapi import Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 import logging
 logger = logging.getLogger(__name__)
 from core.auth import get_current_user
 from core.db import get_supabase_db
 from core.exceptions import safe_internal_error
+from models.goal_suggestions import (
+    GoalSuggestionsResponse, GoalSuggestionItem, SuggestionCategoryGroup,
+    SuggestionType, SuggestionCategory, GoalVisibility,
+    AcceptSuggestionRequest, DismissSuggestionRequest,
+    GoalSuggestionsSummary, FriendPreview,
+)
+from models.weekly_personal_goals import (
+    WorkoutSyncRequest, WorkoutSyncResponse, SyncedGoalUpdate,
+)
+
+router = APIRouter()
 
 async def get_suggestions_summary(user_id: str,
     current_user: dict = Depends(get_current_user),

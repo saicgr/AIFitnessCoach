@@ -36,6 +36,10 @@ from .set_adjustments_models import (
     FatigueHistoryItem,
     FatigueHistoryResponse,
 )
+from models.schemas import (
+    UserSetAdjustmentPatternsResponse,
+    ExerciseAdjustmentPattern,
+)
 
 router = APIRouter()
 

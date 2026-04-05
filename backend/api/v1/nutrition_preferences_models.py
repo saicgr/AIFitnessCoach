@@ -135,6 +135,29 @@ class MealTemplateUpdate(BaseModel):
     tags: Optional[List[str]] = Field(default=None, max_length=10)
 
 
+class MealTemplateCreate(MealTemplateBase):
+    """Request to create a meal template."""
+    pass
+
+
+class MealTemplate(MealTemplateBase):
+    """Meal template from database."""
+    id: str
+    user_id: Optional[str] = None
+    total_calories: int
+    total_protein_g: float
+    total_carbs_g: float
+    total_fat_g: float
+    total_fiber_g: Optional[float] = None
+    times_used: int = 0
+    last_used_at: Optional[datetime] = None
+    created_at: datetime
+    updated_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
 class MealTemplatesResponse(BaseModel):
     """Response with list of meal templates."""
     templates: List[MealTemplate]

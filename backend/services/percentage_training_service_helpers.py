@@ -10,9 +10,14 @@ Allows users to:
 
 
 """
-from typing import Dict, List, Optional, Tuple
+from __future__ import annotations
+from typing import Dict, List, Optional, Tuple, TYPE_CHECKING
 from datetime import datetime, timedelta
 import logging
+
+if TYPE_CHECKING:
+    from .percentage_training_service import UserExercise1RM
+
 logger = logging.getLogger(__name__)
 class PercentageTrainingService:
     """

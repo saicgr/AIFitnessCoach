@@ -59,6 +59,8 @@ class AICoachFeedbackResponse(BaseModel):
     workout_log_id: str
 
 # Singleton services (lazy initialization)
+from services.gemini_service import GeminiService
+from services.workout_feedback_rag_service import WorkoutFeedbackRAGService
 _gemini_service: Optional[GeminiService] = None
 _feedback_rag_service: Optional[WorkoutFeedbackRAGService] = None
 

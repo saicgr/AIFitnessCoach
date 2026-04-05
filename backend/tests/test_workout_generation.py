@@ -14,6 +14,7 @@ NOTE: Tests that use ExerciseRAGService are mocked to avoid connecting to
 real Chroma Cloud during CI/CD. For integration tests with real Chroma,
 use a separate integration test suite.
 """
+from typing import Set
 import pytest
 import asyncio
 import json

@@ -818,3 +818,15 @@ class NotificationService:
 
         return (success, message_body)
 
+
+
+# Singleton instance
+_notificationservice_instance: Optional[NotificationService] = None
+
+
+def get_notification_service() -> NotificationService:
+    """Get or create the singleton NotificationService instance."""
+    global _notificationservice_instance
+    if _notificationservice_instance is None:
+        _notificationservice_instance = NotificationService()
+    return _notificationservice_instance

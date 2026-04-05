@@ -28,9 +28,15 @@ Usage:
     )
     recommendation = service.get_set_recommendation(analysis)
 """
-from typing import Any, Dict, List, Optional
+from __future__ import annotations
+from typing import Any, Dict, List, Optional, Literal, TYPE_CHECKING
+from dataclasses import dataclass
 from datetime import datetime
 import logging
+
+if TYPE_CHECKING:
+    from .fatigue_detection_service import FatigueAnalysis, FatigueDetectionService
+
 logger = logging.getLogger(__name__)
 
 
@@ -104,9 +110,10 @@ _fatigue_detection_service_instance: Optional[FatigueDetectionService] = None
 
 def get_fatigue_detection_service() -> FatigueDetectionService:
     """Get or create the FatigueDetectionService singleton."""
+    from .fatigue_detection_service import FatigueDetectionService as _FDS
     global _fatigue_detection_service_instance
     if _fatigue_detection_service_instance is None:
-        _fatigue_detection_service_instance = FatigueDetectionService()
+        _fatigue_detection_service_instance = _FDS()
     return _fatigue_detection_service_instance
 
 

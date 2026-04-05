@@ -4,6 +4,7 @@ Training Split Descriptions - Research-Backed Scientific Data
 Based on research from Built With Science, Hevy, StrengthLog, Legion Athletics.
 Hypertrophy scores based on: frequency, volume, recovery, proven effectiveness.
 """
+from typing import List
 
 # =============================================================================
 # COMPREHENSIVE SPLIT DESCRIPTIONS (Research-Backed)

@@ -14,11 +14,22 @@ Large endpoint groups are split into focused sub-modules:
 """
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request
 import logging
-logger = logging.getLogger(__name__)
+from typing import List, Dict, Any, Optional
+from datetime import datetime, timedelta
 from core.auth import get_current_user
 from core.db import get_supabase_db
 from core.timezone_utils import resolve_timezone, get_user_today
 from core.exceptions import safe_internal_error
+from core.config import get_settings
+from core.rate_limiter import user_limiter
+from models.schemas import (
+    Workout, GenerateWorkoutRequest, SwapWorkoutsRequest, SwapExerciseRequest,
+    AddExerciseRequest, ExtendWorkoutRequest,
+)
+from services.gemini_service import GeminiService, validate_set_targets_strict
+from services.exercise_library_service import get_exercise_library_service
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 @router.post("/generate", response_model=Workout)

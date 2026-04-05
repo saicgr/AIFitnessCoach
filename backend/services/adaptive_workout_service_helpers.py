@@ -16,7 +16,7 @@ Key factors considered:
 
 
 """
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 from datetime import datetime, timedelta
 import logging
 logger = logging.getLogger(__name__)
@@ -597,3 +597,22 @@ class AdaptiveWorkoutService:
             logger.error(f"Error fetching exercise history: {e}")
             return []
 
+
+
+# Singleton instance
+_adaptiveworkoutservice_instance: Optional[AdaptiveWorkoutService] = None
+
+
+def get_adaptive_workout_service() -> AdaptiveWorkoutService:
+    """Get or create the singleton AdaptiveWorkoutService instance."""
+    global _adaptiveworkoutservice_instance
+    if _adaptiveworkoutservice_instance is None:
+        _adaptiveworkoutservice_instance = AdaptiveWorkoutService()
+    return _adaptiveworkoutservice_instance
+
+
+# Re-export from part2
+from .adaptive_workout_service_helpers_part2 import (  # noqa: F401, E402
+    get_user_set_type_preferences,
+    build_set_type_context,
+)

@@ -6,6 +6,7 @@ This module handles hashtag operations:
 - GET /search - Search hashtags by prefix
 - GET /{name}/posts - Get paginated public posts with a specific hashtag
 """
+from typing import List
 from fastapi import APIRouter, Depends, HTTPException, Query
 from core.auth import get_current_user
 from core.exceptions import safe_internal_error

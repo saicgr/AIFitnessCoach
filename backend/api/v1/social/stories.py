@@ -8,6 +8,7 @@ This module handles story operations:
 - GET /{story_id}/views - Get viewer list for own story
 - DELETE /{story_id} - Soft delete story
 """
+from typing import List, Optional
 import uuid
 from datetime import datetime, timezone, timedelta
 

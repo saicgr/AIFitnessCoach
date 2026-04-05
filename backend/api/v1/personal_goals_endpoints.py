@@ -7,6 +7,16 @@ logger = logging.getLogger(__name__)
 from core.auth import get_current_user
 from core.db import get_supabase_db
 from core.exceptions import safe_internal_error
+from models.weekly_personal_goals import (
+    PersonalRecordsResponse, GoalSummary, WeeklyPersonalGoal,
+    WorkoutSyncRequest, WorkoutSyncResponse, SyncedGoalUpdate,
+)
+from models.goal_suggestions import (
+    GoalSuggestionsResponse, GoalSuggestionItem, SuggestionCategoryGroup,
+    SuggestionType, SuggestionCategory, GoalVisibility,
+    AcceptSuggestionRequest, DismissSuggestionRequest,
+    GoalSuggestionsSummary, FriendPreview,
+)
 
 from .personal_goals_endpoints_part2 import (  # noqa: F401
     get_suggestions_summary,

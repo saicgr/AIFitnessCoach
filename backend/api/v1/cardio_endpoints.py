@@ -34,6 +34,17 @@ from .cardio_models import (
     CardioMetricsHistoryEntry,
     CardioMetricsHistoryResponse,
 )
+from models.cardio_session import (
+    CardioSessionsListResponse,
+    CardioSessionStatsResponse,
+    CardioSession,
+    CardioSessionCreate,
+    CardioSessionUpdate,
+    CardioSessionSummary,
+    CardioType,
+    CardioTypeStats,
+    CardioLocation,
+)
 
 router = APIRouter()
 

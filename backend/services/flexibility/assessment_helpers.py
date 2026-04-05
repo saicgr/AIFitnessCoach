@@ -5,8 +5,13 @@ Handles flexibility testing, evaluation, progress tracking, and personalized rec
 
 
 """
-from typing import Any, Dict, List, Optional
+from __future__ import annotations
+from typing import Any, Dict, List, Optional, TYPE_CHECKING
 import logging
+
+if TYPE_CHECKING:
+    from .assessment import TestNorms, FlexibilityRating
+
 logger = logging.getLogger(__name__)
 def _get_age_group(age: int) -> str:
     """Get the age group string for norm lookup."""

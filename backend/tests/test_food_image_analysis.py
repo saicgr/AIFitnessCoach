@@ -11,6 +11,7 @@ Run with:
 Or run directly:
     cd backend && python tests/test_food_image_analysis.py
 """
+from typing import Optional
 
 import asyncio
 import base64

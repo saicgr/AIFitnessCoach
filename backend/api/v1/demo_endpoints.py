@@ -15,8 +15,10 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from pydantic import BaseModel
 import logging
 logger = logging.getLogger(__name__)
+from core.auth import get_admin_user
 from core.db import get_supabase_db
 from core.exceptions import safe_internal_error
+from core.rate_limiter import limiter
 
 from .demo_models import (
     PreviewPlanRequest,

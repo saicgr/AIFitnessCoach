@@ -1,7 +1,71 @@
 """Pydantic models for exercise_progressions."""
 from datetime import datetime, date
+from enum import Enum
 from pydantic import BaseModel, Field
 from typing import List, Optional, Dict, Any
+
+
+class ProgressionType(str, Enum):
+    """Types of exercise progressions."""
+    LEVERAGE = "leverage"
+    LOAD = "load"
+    STABILITY = "stability"
+    RANGE = "range"
+    TEMPO = "tempo"
+
+
+class ChainType(str, Enum):
+    """Types of progression chains."""
+    LEVERAGE = "leverage"
+    LOAD = "load"
+    STABILITY = "stability"
+    RANGE = "range"
+    TEMPO = "tempo"
+
+
+class MuscleGroup(str, Enum):
+    """Primary muscle groups for filtering chains."""
+    CHEST = "chest"
+    BACK = "back"
+    SHOULDERS = "shoulders"
+    BICEPS = "biceps"
+    TRICEPS = "triceps"
+    CORE = "core"
+    QUADRICEPS = "quadriceps"
+    HAMSTRINGS = "hamstrings"
+    GLUTES = "glutes"
+    CALVES = "calves"
+    FULL_BODY = "full_body"
+
+
+class DifficultyFeedback(str, Enum):
+    """User feedback on exercise difficulty."""
+    TOO_EASY = "too_easy"
+    JUST_RIGHT = "just_right"
+    TOO_HARD = "too_hard"
+
+
+class MasteryStatus(str, Enum):
+    """Mastery status for an exercise."""
+    LEARNING = "learning"
+    PROFICIENT = "proficient"
+    MASTERED = "mastered"
+    PROGRESSED = "progressed"
+
+
+class ProgressionStyle(str, Enum):
+    """User's preferred progression style."""
+    CONSERVATIVE = "conservative"
+    MODERATE = "moderate"
+    AGGRESSIVE = "aggressive"
+
+
+class TrainingFocus(str, Enum):
+    """User's training focus affecting rep ranges."""
+    STRENGTH = "strength"
+    HYPERTROPHY = "hypertrophy"
+    ENDURANCE = "endurance"
+    MIXED = "mixed"
 
 
 class ProgressionVariant(BaseModel):

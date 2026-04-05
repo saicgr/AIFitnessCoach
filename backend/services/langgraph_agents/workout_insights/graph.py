@@ -1,6 +1,7 @@
 """
 LangGraph graph assembly for the Workout Insights agent.
 """
+from typing import List
 from langgraph.graph import StateGraph, START, END
 
 from .state import WorkoutInsightsState

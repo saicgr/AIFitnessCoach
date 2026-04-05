@@ -6,6 +6,7 @@ This module handles user blocking operations:
 - DELETE /{blocked_id} - Unblock a user
 - GET / - Get list of blocked users
 """
+from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, Query
 from core.auth import get_current_user
 from core.exceptions import safe_internal_error

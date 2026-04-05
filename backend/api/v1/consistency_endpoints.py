@@ -19,6 +19,7 @@ from core.auth import get_current_user
 from core.db import get_supabase_db
 from core.timezone_utils import resolve_timezone, get_user_today
 from core.exceptions import safe_internal_error
+from models.consistency import StreakRecoveryRequest, StreakRecoveryResponse
 
 router = APIRouter()
 @router.get("/search-exercise", tags=["Consistency"])

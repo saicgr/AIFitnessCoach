@@ -780,3 +780,15 @@ class NEATService:
             logger.error(f"Error updating streak: {e}")
             return 0
 
+
+
+# Singleton instance
+_neatservice_instance: Optional[NEATService] = None
+
+
+def get_neat_service() -> NEATService:
+    """Get or create the singleton NEATService instance."""
+    global _neatservice_instance
+    if _neatservice_instance is None:
+        _neatservice_instance = NEATService()
+    return _neatservice_instance

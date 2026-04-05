@@ -48,6 +48,8 @@ from .nutrition_preferences_models import (
     QuickSuggestionsResponse,
     MealTemplateFoodItem,
     MealTemplateBase,
+    MealTemplateCreate,
+    MealTemplate,
     MealTemplateUpdate,
     MealTemplatesResponse,
     LogTemplateRequest,

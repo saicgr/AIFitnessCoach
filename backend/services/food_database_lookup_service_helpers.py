@@ -728,3 +728,15 @@ class FoodDatabaseLookupService:
         5: 0.55,  # Variant substring/word match
     }
 
+
+
+# Singleton instance
+_fooddatabaselookupservice_instance: Optional[FoodDatabaseLookupService] = None
+
+
+def get_food_db_lookup_service() -> FoodDatabaseLookupService:
+    """Get or create the singleton FoodDatabaseLookupService instance."""
+    global _fooddatabaselookupservice_instance
+    if _fooddatabaselookupservice_instance is None:
+        _fooddatabaselookupservice_instance = FoodDatabaseLookupService()
+    return _fooddatabaselookupservice_instance

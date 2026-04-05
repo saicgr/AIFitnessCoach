@@ -19,6 +19,13 @@ logger = logging.getLogger(__name__)
 from core.auth import get_current_user
 from core.db import get_supabase_db
 from core.exceptions import safe_internal_error
+from models.live_chat import (
+    LiveChatTypingRequest, LiveChatTypingResponse,
+    LiveChatReadRequest, LiveChatReadResponse,
+    LiveChatEndRequest, LiveChatEndResponse,
+    LiveChatMessage, AvailabilityResponse,
+    LiveChatStatus, MessageSenderRole,
+)
 
 router = APIRouter()
 @router.post("/{ticket_id}/typing", response_model=LiveChatTypingResponse)

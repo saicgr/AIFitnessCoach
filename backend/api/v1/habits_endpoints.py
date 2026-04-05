@@ -27,7 +27,7 @@ Endpoints:
 - GET /{user_id}/insights - Get AI-generated insights
 """
 from typing import List, Optional
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 import logging
 logger = logging.getLogger(__name__)
@@ -35,6 +35,15 @@ from core.auth import get_current_user, verify_user_ownership
 from core.db import get_supabase_db
 from core.timezone_utils import resolve_timezone, get_user_today
 from core.exceptions import safe_internal_error
+from models.habits import (
+    HabitCreate, HabitUpdate, Habit, HabitWithStatus,
+    HabitLogCreate, HabitLogUpdate, HabitLog,
+    HabitStreak, HabitTemplate,
+    TodayHabitsResponse, HabitsSummary, HabitWeeklySummary, HabitInsights,
+    HabitSuggestionRequest, HabitSuggestionResponse,
+    BulkHabitLogCreate, BulkHabitLogResponse,
+    HabitCalendarData, HabitCalendarResponse,
+)
 
 router = APIRouter()
 @router.post("/{user_id}/batch-log", response_model=BulkHabitLogResponse)

@@ -3,6 +3,7 @@ Gemini Service Prompts - Cache content builders for form analysis and nutrition.
 
 
 """
+from typing import Set
 class PromptsMixin:
     """Mixin providing prompt builder methods for GeminiService."""
 

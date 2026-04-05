@@ -17,6 +17,56 @@ import logging
 logger = logging.getLogger(__name__)
 from core.db import get_supabase_db
 from core.exceptions import safe_internal_error
+from fastapi import Header
+from models.admin import (
+    AdminProfile,
+    CloseChatRequest, CloseChatResponse,
+    SupportTicketAdminSummary, SupportTicketListResponse,
+    ChatReportAdminSummary, ChatReportListResponse,
+    DashboardStats, AgentStatus,
+    PresenceUpdateRequest, PresenceUpdateResponse,
+)
+from models.live_chat import LiveChatMessage, LiveChatStatus, MessageSenderRole
+from models.admin import AdminRole
+from core.supabase_client import get_supabase
+
+
+async def verify_admin_token(authorization: str = Header(...)) -> AdminProfile:
+    """Verify admin token - thin re-implementation to avoid circular import."""
+    try:
+        if not authorization.startswith("Bearer "):
+            raise HTTPException(status_code=401, detail="Invalid authorization header format")
+        token = authorization.replace("Bearer ", "")
+        supabase = get_supabase().client
+        user_response = supabase.auth.get_user(token)
+        if not user_response or not user_response.user:
+            raise HTTPException(status_code=401, detail="Invalid or expired token")
+        user_id = user_response.user.id
+        db = get_supabase_db()
+        result = db.client.table("users").select("id, email, name, role, avatar_url, created_at").eq("id", user_id).execute()
+        if not result.data:
+            raise HTTPException(status_code=401, detail="User not found")
+        user_data = result.data[0]
+        role = user_data.get("role", "user")
+        if role not in ["admin", "super_admin", "support"]:
+            raise HTTPException(status_code=403, detail="Insufficient permissions. Admin role required.")
+        active_chats_result = db.client.table("support_tickets").select(
+            "id", count="exact"
+        ).eq("assigned_to", user_id).in_("status", ["open", "in_progress"]).execute()
+        active_chats_count = active_chats_result.count or 0
+        return AdminProfile(
+            id=user_id,
+            email=user_data.get("email", ""),
+            name=user_data.get("name", user_data.get("display_name", "Admin")),
+            role=AdminRole(role) if role in [r.value for r in AdminRole] else AdminRole.SUPPORT,
+            is_online=True,
+            active_chats=active_chats_count,
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Admin auth error: {e}")
+        raise HTTPException(status_code=401, detail="Authentication failed")
 
 router = APIRouter()
 @router.post("/live-chats/{ticket_id}/close", response_model=CloseChatResponse)

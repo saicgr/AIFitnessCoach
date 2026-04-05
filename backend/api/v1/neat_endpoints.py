@@ -23,6 +23,23 @@ logger = logging.getLogger(__name__)
 from core.auth import get_current_user
 from core.db import get_supabase_db
 from core.exceptions import safe_internal_error
+from models.neat import (
+    NEATGoal, NEATGoalProgress, ProgressiveGoalRequest, ProgressiveGoalResponse,
+    UpdateGoalRequest, GoalAdjustmentStrategy,
+    HourlyActivityInput, HourlyActivityRecord, HourlyBreakdown,
+    BatchHourlyActivityInput, BatchHourlyActivityResponse,
+    NEATScore, NEATScoreComponents, NEATScoreHistory, CalculateScoreRequest,
+    NEATStreak, StreaksResponse, StreakSummary, StreakType,
+    NEATAchievementDefinition, UserNEATAchievement, AchievementProgress,
+    AchievementsResponse, AvailableAchievementsResponse, AchievementCheckResult,
+    NEATAchievementCategory, AchievementTier,
+    ReminderPreferences, UpdateReminderPreferencesRequest, ShouldRemindResponse,
+    ReminderFrequency, DayOfWeek,
+    NEATDashboard,
+    SendRemindersRequest, SendRemindersResponse,
+    CalculateDailyScoresRequest, CalculateDailyScoresResponse,
+    AdjustWeeklyGoalsRequest, AdjustWeeklyGoalsResponse,
+)
 
 router = APIRouter()
 @router.get("/streaks/{user_id}/summary", response_model=StreakSummary, tags=["NEAT Streaks"])
