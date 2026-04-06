@@ -13,6 +13,7 @@ import '../../../widgets/glass_sheet.dart';
 
 part 'set_adjustment_sheet_part_set_adjustment_reason.dart';
 part 'set_adjustment_sheet_part_in_workout_set_editing_sheet_state.dart';
+part 'set_adjustment_sheet_part_quick_action_button.dart';
 
 
 /// Bottom sheet for choosing adjustment reason

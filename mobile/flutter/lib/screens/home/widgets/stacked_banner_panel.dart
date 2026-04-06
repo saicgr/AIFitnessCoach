@@ -33,7 +33,7 @@ class StackedBannerPanel extends ConsumerStatefulWidget {
 }
 
 class _StackedBannerPanelState extends ConsumerState<StackedBannerPanel>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
   static const double _cardHeight = CompactBannerCard.cardHeight;
   static const double _peekOffset = 8.0;
   static const int _maxVisiblePeeks = 2;
@@ -43,6 +43,11 @@ class _StackedBannerPanelState extends ConsumerState<StackedBannerPanel>
   double _dragOffset = 0;
   bool _isDragging = false;
   bool _isAnimatingDismiss = false;
+
+  // Dismiss-all X badge → pill animation
+  late AnimationController _dismissAllController;
+  late Animation<double> _dismissAllAnimation;
+  bool _isDismissAllExpanded = false;
 
   // Contextual banner dismiss state (loaded from SharedPreferences)
   Set<String> _contextualDismissedKeys = {};
@@ -59,6 +64,17 @@ class _StackedBannerPanelState extends ConsumerState<StackedBannerPanel>
       duration: const Duration(milliseconds: 250),
     );
     _dismissController.addListener(_onDismissAnimationTick);
+
+    _dismissAllController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 300),
+    );
+    _dismissAllAnimation = CurvedAnimation(
+      parent: _dismissAllController,
+      curve: Curves.easeOutCubic,
+      reverseCurve: Curves.easeInCubic,
+    );
+
     _loadDismissState();
   }
 
@@ -66,6 +82,7 @@ class _StackedBannerPanelState extends ConsumerState<StackedBannerPanel>
   void dispose() {
     _dismissController.removeListener(_onDismissAnimationTick);
     _dismissController.dispose();
+    _dismissAllController.dispose();
     super.dispose();
   }
 
@@ -499,11 +516,99 @@ class _StackedBannerPanelState extends ConsumerState<StackedBannerPanel>
     }
   }
 
+  void _onDismissAllTap(List<BannerCardData> banners) {
+    if (banners.isEmpty) return;
+
+    HapticService.light();
+
+    if (!_isDismissAllExpanded) {
+      // First tap: expand X into "Dismiss All" pill
+      setState(() => _isDismissAllExpanded = true);
+      _dismissAllController.forward();
+
+      // Auto-collapse after 3 seconds if not tapped again
+      Future.delayed(const Duration(seconds: 3), () {
+        if (mounted && _isDismissAllExpanded) {
+          setState(() => _isDismissAllExpanded = false);
+          _dismissAllController.reverse();
+        }
+      });
+    } else {
+      // Second tap: dismiss all banners
+      HapticService.medium();
+      final ids = banners.map((b) => b.id).toList();
+      ref.read(stackedBannerControllerProvider.notifier).dismissAll(ids);
+
+      setState(() => _isDismissAllExpanded = false);
+      _dismissAllController.reverse();
+    }
+  }
+
+  Widget _buildDismissAllBadge(List<BannerCardData> banners) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return GestureDetector(
+      onTap: () => _onDismissAllTap(banners),
+      child: AnimatedBuilder(
+        animation: _dismissAllAnimation,
+        builder: (context, child) {
+          return Container(
+            padding: EdgeInsets.symmetric(
+              horizontal: _isDismissAllExpanded ? 8 : 6,
+              vertical: 2,
+            ),
+            decoration: BoxDecoration(
+              color: isDark ? AppColors.glassSurface : AppColorsLight.glassSurface,
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(
+                color: _isDismissAllExpanded
+                    ? AppColors.orange.withOpacity(0.5)
+                    : (isDark ? AppColors.cardBorder : AppColorsLight.cardBorder),
+                width: 0.5,
+              ),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.close_rounded,
+                  size: 12,
+                  color: _isDismissAllExpanded
+                      ? AppColors.orange
+                      : (isDark ? AppColors.textSecondary : AppColorsLight.textSecondary),
+                ),
+                // Animated "Dismiss All" label
+                SizeTransition(
+                  sizeFactor: _dismissAllAnimation,
+                  axis: Axis.horizontal,
+                  child: FadeTransition(
+                    opacity: _dismissAllAnimation,
+                    child: Padding(
+                      padding: const EdgeInsets.only(left: 4),
+                      child: Text(
+                        'Dismiss All',
+                        style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.orange,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final banners = _collectBanners();
 
-    // Report active banner IDs so the header dismiss-all button can use them
+    // Report active banner IDs so other widgets can read them
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         final ids = banners.map((b) => b.id).toList();
@@ -515,6 +620,11 @@ class _StackedBannerPanelState extends ConsumerState<StackedBannerPanel>
     });
 
     if (banners.isEmpty) {
+      // Reset dismiss-all state when all banners gone
+      if (_isDismissAllExpanded) {
+        _isDismissAllExpanded = false;
+        _dismissAllController.reset();
+      }
       return const SizedBox.shrink();
     }
 
@@ -534,6 +644,13 @@ class _StackedBannerPanelState extends ConsumerState<StackedBannerPanel>
               // Render cards from back to front (bottom of stack first)
               for (int i = (visibleCount - 1).clamp(0, banners.length - 1); i >= 0; i--)
                 _buildStackedCard(banners, i, visibleCount),
+
+              // Dismiss-all X badge (left of count badge)
+              Positioned(
+                right: banners.length > 1 ? 36 : 8,
+                bottom: 0,
+                child: _buildDismissAllBadge(banners),
+              ),
 
               // Card count indicator
               if (banners.length > 1)

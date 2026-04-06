@@ -16,9 +16,6 @@ const Set<TileType> deprecatedTiles = {
   TileType.heroSection,
 };
 
-/// A single tile configuration
-@JsonSerializable()
-
 /// A saved layout configuration
 @JsonSerializable()
 class HomeLayout {

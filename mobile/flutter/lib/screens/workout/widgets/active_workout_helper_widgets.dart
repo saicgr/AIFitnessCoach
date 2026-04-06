@@ -12,6 +12,7 @@ import '../../data/models/exercise.dart';
 
 part 'active_workout_helper_widgets_part_exercise_details_sheet_content_state.dart';
 part 'active_workout_helper_widgets_part_progression_selector_sheet_state.dart';
+part 'active_workout_helper_widgets_part_drag_action_zone.dart';
 
 
 /// Exercise Details Sheet Content - Hybrid approach

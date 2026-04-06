@@ -56,8 +56,7 @@ logger = get_logger(__name__)
 router.include_router(completion_router)
 
 
-@router.post("", response_model=Workout)
-@router.post("/", response_model=Workout, include_in_schema=False)
+@router.post("/", response_model=Workout)
 async def create_workout(workout: WorkoutCreate,
     current_user: dict = Depends(get_current_user),
 ):
@@ -105,8 +104,7 @@ async def create_workout(workout: WorkoutCreate,
         raise safe_internal_error(e, "crud")
 
 
-@router.get("", response_model=List[Workout])
-@router.get("/", response_model=List[Workout], include_in_schema=False)
+@router.get("/", response_model=List[Workout])
 async def list_workouts(
     user_id: str = Query(..., description="User ID"),
     is_completed: Optional[bool] = None,

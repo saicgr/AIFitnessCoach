@@ -9,6 +9,7 @@ import '../../../data/services/haptic_service.dart';
 
 part 'neat_gamification_widgets_part_neat_level.dart';
 part 'neat_gamification_widgets_part_neat_milestone_popup_state.dart';
+part 'neat_gamification_widgets_part_leaderboard_row.dart';
 
 
 /// NEAT Level Badge widget - displays user's current NEAT level with visual flair.

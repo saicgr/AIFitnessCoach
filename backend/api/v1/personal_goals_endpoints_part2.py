@@ -1,6 +1,6 @@
 """Second part of personal_goals_endpoints.py (auto-split for size)."""
 from typing import List
-from datetime import datetime, timedelta, date
+from datetime import datetime, timedelta, date, timezone
 from fastapi import APIRouter, Depends, HTTPException
 import logging
 logger = logging.getLogger(__name__)
@@ -16,6 +16,7 @@ from models.goal_suggestions import (
 from models.weekly_personal_goals import (
     WorkoutSyncRequest, WorkoutSyncResponse, SyncedGoalUpdate,
 )
+from api.v1.goal_social import get_iso_week_boundaries
 
 router = APIRouter()
 

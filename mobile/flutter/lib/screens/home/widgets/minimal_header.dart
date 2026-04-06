@@ -2,13 +2,11 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../../../core/constants/app_colors.dart';
 import '../../../core/theme/accent_color_provider.dart';
 import '../../../data/providers/xp_provider.dart';
 import '../../../data/services/haptic_service.dart';
 import 'components/components.dart';
 import 'gym_profile_switcher.dart';
-import 'stacked_banner_controller.dart';
 import '../../../widgets/app_tour/app_tour_controller.dart';
 
 /// Clean, minimal header for the "Minimalist" home screen preset.
@@ -105,168 +103,10 @@ class MinimalHeader extends ConsumerWidget {
 
           const SizedBox(width: 4),
 
-          // Dismiss All Banners button (only visible when banners exist)
-          _DismissAllBannersButton(isDark: isDark),
-
           // Notification Bell
           NotificationBellButton(isDark: isDark),
         ],
       ),
-    );
-  }
-}
-
-/// Animated X icon that expands into a "Dismiss All" pill button.
-///
-/// Only visible when there are active banners in the stacked banner panel.
-/// Tap once → expands to show "Dismiss All" label.
-/// Tap again (while expanded) → dismisses all banners and collapses.
-/// Also auto-collapses after 3 seconds if not tapped.
-class _DismissAllBannersButton extends ConsumerStatefulWidget {
-  final bool isDark;
-
-  const _DismissAllBannersButton({required this.isDark});
-
-  @override
-  ConsumerState<_DismissAllBannersButton> createState() =>
-      _DismissAllBannersButtonState();
-}
-
-class _DismissAllBannersButtonState
-    extends ConsumerState<_DismissAllBannersButton>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _expandController;
-  late Animation<double> _expandAnimation;
-  bool _isExpanded = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _expandController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 300),
-    );
-    _expandAnimation = CurvedAnimation(
-      parent: _expandController,
-      curve: Curves.easeOutCubic,
-      reverseCurve: Curves.easeInCubic,
-    );
-  }
-
-  @override
-  void dispose() {
-    _expandController.dispose();
-    super.dispose();
-  }
-
-  void _handleTap() {
-    final bannerIds = ref.read(activeBannerIdsProvider);
-    if (bannerIds.isEmpty) return;
-
-    HapticService.light();
-
-    if (!_isExpanded) {
-      // First tap: expand to show "Dismiss All"
-      setState(() => _isExpanded = true);
-      _expandController.forward();
-
-      // Auto-collapse after 3 seconds
-      Future.delayed(const Duration(seconds: 3), () {
-        if (mounted && _isExpanded) {
-          setState(() => _isExpanded = false);
-          _expandController.reverse();
-        }
-      });
-    } else {
-      // Second tap: dismiss all banners
-      HapticService.medium();
-      ref
-          .read(stackedBannerControllerProvider.notifier)
-          .dismissAll(bannerIds);
-
-      // Collapse
-      setState(() => _isExpanded = false);
-      _expandController.reverse();
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final bannerIds = ref.watch(activeBannerIdsProvider);
-
-    // Don't render when no banners
-    if (bannerIds.isEmpty) {
-      // If was expanded, reset
-      if (_isExpanded) {
-        _isExpanded = false;
-        _expandController.reset();
-      }
-      return const SizedBox.shrink();
-    }
-
-    final textMuted =
-        widget.isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-
-    return AnimatedBuilder(
-      animation: _expandAnimation,
-      builder: (context, child) {
-        return GestureDetector(
-          onTap: _handleTap,
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 300),
-            curve: Curves.easeOutCubic,
-            padding: EdgeInsets.symmetric(
-              horizontal: _isExpanded ? 10 : 6,
-              vertical: 6,
-            ),
-            decoration: BoxDecoration(
-              color: _isExpanded
-                  ? (widget.isDark
-                      ? AppColors.elevated
-                      : AppColorsLight.elevated)
-                  : Colors.transparent,
-              borderRadius: BorderRadius.circular(20),
-              border: _isExpanded
-                  ? Border.all(
-                      color: widget.isDark
-                          ? AppColors.cardBorder
-                          : AppColorsLight.cardBorder,
-                      width: 0.5,
-                    )
-                  : null,
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  Icons.close_rounded,
-                  size: 18,
-                  color: _isExpanded ? AppColors.orange : textMuted,
-                ),
-                // Animated label
-                SizeTransition(
-                  sizeFactor: _expandAnimation,
-                  axis: Axis.horizontal,
-                  child: FadeTransition(
-                    opacity: _expandAnimation,
-                    child: Padding(
-                      padding: const EdgeInsets.only(left: 4),
-                      child: Text(
-                        'Dismiss All',
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.orange,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
     );
   }
 }

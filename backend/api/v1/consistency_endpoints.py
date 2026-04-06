@@ -11,6 +11,7 @@ Endpoints:
 - POST /consistency/streak-recovery - Initiate streak recovery
 """
 from typing import Optional
+from collections import defaultdict
 from datetime import datetime, timedelta, date
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, Request
 import logging
