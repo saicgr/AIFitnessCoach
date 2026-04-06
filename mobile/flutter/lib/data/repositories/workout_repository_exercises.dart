@@ -86,8 +86,9 @@ extension WorkoutRepositoryExercises on WorkoutRepository {
         };
       }
       return {'warmup': [], 'stretches': []};
-    } catch (e) {
+    } catch (e, stackTrace) {
       debugPrint('❌ [Workout] Error generating warmup/stretches: $e');
+      debugPrint('❌ [Workout] Warmup stackTrace: $stackTrace');
       return {'warmup': [], 'stretches': []};
     }
   }

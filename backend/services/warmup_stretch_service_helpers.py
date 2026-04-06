@@ -6,6 +6,7 @@ logger = logging.getLogger(__name__)
 
 from core.config import get_settings
 from core.supabase_client import get_supabase
+from services.warmup_stretch_algorithm import get_warmup_stretch_algorithm
 
 settings = get_settings()
 
@@ -387,6 +388,7 @@ class WarmupStretchService:
             all_warmups = await self._enrich_with_library_data(all_warmups, "warmup")
 
         # Order warmups: static first, then dynamic
+        from services.warmup_stretch_service import order_warmup_exercises
         all_warmups = order_warmup_exercises(all_warmups)
 
         logger.info(f"✅ [Algorithm] Generated {len(all_warmups)} warmup exercises in <10ms")

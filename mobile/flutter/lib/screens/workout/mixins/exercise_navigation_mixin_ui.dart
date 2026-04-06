@@ -173,7 +173,7 @@ extension ExerciseNavigationMixinUI on ExerciseNavigationMixin {
           child: Row(
             children: [
               Icon(
-                Icons.straighten_rounded,
+                Icons.fitness_center_rounded,
                 size: 20,
                 color: isBarbell(exercise.equipment, exerciseName: exercise.name)
                     ? Colors.teal.shade500

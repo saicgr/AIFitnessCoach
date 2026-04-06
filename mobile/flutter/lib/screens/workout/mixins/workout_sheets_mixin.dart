@@ -378,15 +378,16 @@ mixin WorkoutSheetsMixin<T extends StatefulWidget> on State<T> {
 
   /// Load personalized warmup and stretch exercises from API
   Future<void> loadWarmupAndStretches() async {
-    final workoutId = (workoutWidget as dynamic).workout.id;
-    debugPrint('🔥 [Warmup] loadWarmupAndStretches called, workoutId=$workoutId');
-    if (workoutId == null) {
-      debugPrint('🔥 [Warmup] workoutId is null — skipping warmup load');
-      if (mounted) setState(() => isWarmupLoading = false);
-      return;
-    }
-
+    debugPrint('🔥 [Warmup] loadWarmupAndStretches ENTERED');
     try {
+      final workoutId = (workoutWidget as dynamic).workout.id;
+      debugPrint('🔥 [Warmup] loadWarmupAndStretches called, workoutId=$workoutId');
+      if (workoutId == null) {
+        debugPrint('🔥 [Warmup] workoutId is null — skipping warmup load');
+        if (mounted) setState(() => isWarmupLoading = false);
+        return;
+      }
+
       final workoutRepo = ref.read(workoutRepositoryProvider);
       debugPrint('🔥 [Warmup] Calling generateWarmupAndStretches API...');
       final data = await workoutRepo.generateWarmupAndStretches(workoutId);
@@ -433,8 +434,9 @@ mixin WorkoutSheetsMixin<T extends StatefulWidget> on State<T> {
 
       debugPrint('✅ [Warmup] Loaded ${warmupExercises?.length ?? 0} warmup exercises');
       debugPrint('✅ [Stretch] Loaded ${stretchExercises?.length ?? 0} stretch exercises');
-    } catch (e) {
+    } catch (e, stackTrace) {
       debugPrint('❌ [Warmup] Error loading warmup/stretches: $e');
+      debugPrint('❌ [Warmup] StackTrace: $stackTrace');
       if (mounted) {
         setState(() => isWarmupLoading = false);
       }

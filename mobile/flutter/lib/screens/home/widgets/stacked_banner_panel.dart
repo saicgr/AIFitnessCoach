@@ -507,7 +507,9 @@ class _StackedBannerPanelState extends ConsumerState<StackedBannerPanel>
         _persistBannerDismissal(b);
       }
     } else if (result == 'dismiss') {
-      _executeDismissAll(banners);
+      // Re-collect banners to catch any that loaded async while dialog was open
+      final currentBanners = _collectBanners();
+      _executeDismissAll(currentBanners.isNotEmpty ? currentBanners : banners);
     }
   }
 
