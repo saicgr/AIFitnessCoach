@@ -492,7 +492,7 @@ extension SetProgressionPatternX on SetProgressionPattern {
         if (t.isAmrap || t.reps <= ceiling) return t;
         return ProgressionSetTarget(
           setNumber: t.setNumber, weight: t.weight,
-          reps: ceiling, isAmrap: false,
+          reps: ceiling, isAmrap: false, rir: t.rir,
         );
       }).toList();
     }
@@ -506,7 +506,7 @@ extension SetProgressionPatternX on SetProgressionPattern {
           final clamped = goalRange.clampReps(t.reps);
           if (clamped == t.reps) return t;
           return ProgressionSetTarget(
-            setNumber: t.setNumber, weight: t.weight, reps: clamped, isAmrap: false,
+            setNumber: t.setNumber, weight: t.weight, reps: clamped, isAmrap: false, rir: t.rir,
           );
         }).toList();
       }
@@ -537,6 +537,7 @@ extension SetProgressionPatternX on SetProgressionPattern {
           weight: snappedWeight,
           reps: target.reps,
           isAmrap: true,
+          rir: target.rir,
         ));
         continue;
       }
@@ -558,6 +559,7 @@ extension SetProgressionPatternX on SetProgressionPattern {
         weight: snappedWeight,
         reps: adjustedReps,
         isAmrap: false,
+        rir: target.rir,
       ));
     }
 
@@ -573,6 +575,7 @@ extension SetProgressionPatternX on SetProgressionPattern {
           weight: t.weight,
           reps: clamped,
           isAmrap: false,
+          rir: t.rir,
         );
       }).toList();
     }

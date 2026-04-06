@@ -152,6 +152,10 @@ extension SetLoggingMixinUI on SetLoggingMixin {
         targetReps = pt.isAmrap ? 0 : pt.reps;
       }
 
+      // Snap to valid equipment weight (e.g., barbell 5 lb steps from 45)
+      targetWeight = snapToRealIncrement(targetWeight, exercise.equipment,
+          exerciseName: exercise.name, useKg: useKg);
+
       // Convert display-unit weight back to kg for storage — display layer
       // converts kg→display, so storing lbs would cause double-conversion
       currentSetTargets[i] = SetTarget(
@@ -179,7 +183,8 @@ extension SetLoggingMixinUI on SetLoggingMixin {
         reps = warmupTarget.targetReps;
       } else {
         final pt = targets[completedCount];
-        weight = pt.weight;
+        weight = snapToRealIncrement(pt.weight, exercise.equipment,
+            exerciseName: exercise.name, useKg: useKg);
         reps = pt.reps;
       }
 
@@ -316,11 +321,13 @@ extension SetLoggingMixinUI on SetLoggingMixin {
       }
       for (int i = completedCount; i < targets.length && i < currentSetTargets.length; i++) {
         final pt = targets[i];
+        final snappedWeight = snapToRealIncrement(pt.weight, exercise.equipment,
+            exerciseName: exercise.name, useKg: useKg);
         currentSetTargets[i] = SetTarget(
           setNumber: i + 1,
           setType: pt.isAmrap ? 'amrap' : currentSetTargets[i].setType,
           targetReps: pt.isAmrap ? 0 : pt.reps,
-          targetWeightKg: _displayToKg(pt.weight),
+          targetWeightKg: _displayToKg(snappedWeight),
           targetRir: currentSetTargets[i].targetRir,
         );
       }
@@ -349,9 +356,14 @@ extension SetLoggingMixinUI on SetLoggingMixin {
       return;
     }
 
-    final displayWeightVal = effectiveIncrement > 0
-        ? (nextTarget.weight / effectiveIncrement).round() * effectiveIncrement
-        : nextTarget.weight;
+    final displayWeightVal = snapToRealIncrement(
+      effectiveIncrement > 0
+          ? (nextTarget.weight / effectiveIncrement).round() * effectiveIncrement
+          : nextTarget.weight,
+      exercise.equipment,
+      exerciseName: exercise.name,
+      useKg: useKg,
+    );
     weightController.text = displayWeightVal.toStringAsFixed(1);
 
     if (nextTarget.isAmrap) {
