@@ -87,14 +87,15 @@ class _AutoTargetCell extends StatelessWidget {
       context: context,
       builder: (context) => GlassSheet(
         child: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Header with close button
-                Row(
+          child: SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Header with close button
+                  Row(
                   children: [
                     GestureDetector(
                       onTap: () => Navigator.pop(context),
@@ -222,11 +223,141 @@ class _AutoTargetCell extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 20),
+
+                // ── How your target RIR is calculated ──
+                Divider(
+                  color: isDarkTheme ? Colors.grey.shade800 : Colors.grey.shade200,
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'How your target RIR is calculated',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: isDarkTheme ? Colors.white : Colors.black87,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  'Your RIR target is personalized using three factors:',
+                  style: TextStyle(
+                    fontSize: 14,
+                    height: 1.5,
+                    color: isDarkTheme ? Colors.grey.shade300 : Colors.grey.shade700,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                _buildRirFactorRow(
+                  icon: Icons.track_changes,
+                  color: AppColors.orange,
+                  title: 'Training Goal + Exercise Type',
+                  description: 'Compound lifts (squats, presses) stay more conservative than isolation moves (curls, raises). Hypertrophy pushes closer to failure than strength.',
+                  isDark: isDarkTheme,
+                ),
+                const SizedBox(height: 10),
+                _buildRirFactorRow(
+                  icon: Icons.fitness_center,
+                  color: AppColors.cyan,
+                  title: 'Equipment Safety',
+                  description: 'Machines & cables are safer to push hard on. Barbells & kettlebells need more reserve due to injury risk.',
+                  isDark: isDarkTheme,
+                ),
+                const SizedBox(height: 10),
+                _buildRirFactorRow(
+                  icon: Icons.trending_up,
+                  color: AppColors.green,
+                  title: 'Your Fitness Level',
+                  description: 'Beginners get extra buffer for form learning. Advanced lifters can push closer to failure safely.',
+                  isDark: isDarkTheme,
+                ),
+                const SizedBox(height: 16),
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: isDarkTheme
+                        ? AppColors.orange.withOpacity(0.1)
+                        : AppColors.orange.withOpacity(0.06),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(
+                      color: AppColors.orange.withOpacity(0.2),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.lightbulb_outline,
+                        size: 16,
+                        color: AppColors.orange,
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          'RIR decreases across sets — the last set pushes hardest while earlier sets build up.',
+                          style: TextStyle(
+                            fontSize: 13,
+                            height: 1.4,
+                            color: isDarkTheme ? Colors.grey.shade300 : Colors.grey.shade700,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 20),
               ],
             ),
           ),
+          ),
         ),
       ),
+    );
+  }
+
+  static Widget _buildRirFactorRow({
+    required IconData icon,
+    required Color color,
+    required String title,
+    required String description,
+    required bool isDark,
+  }) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          width: 28,
+          height: 28,
+          decoration: BoxDecoration(
+            color: color.withOpacity(0.15),
+            borderRadius: BorderRadius.circular(7),
+          ),
+          child: Icon(icon, size: 16, color: color),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: isDark ? Colors.white : Colors.black87,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                description,
+                style: TextStyle(
+                  fontSize: 12,
+                  height: 1.4,
+                  color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 
@@ -455,56 +586,139 @@ class _PreviousCellWithRir extends StatelessWidget {
       context: context,
       builder: (context) => GlassSheet(
         child: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    GestureDetector(
-                      onTap: () => Navigator.pop(context),
-                      child: Icon(
-                        Icons.close,
-                        size: 24,
-                        color: isDarkTheme ? Colors.white : Colors.black,
+          child: SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      GestureDetector(
+                        onTap: () => Navigator.pop(context),
+                        child: Icon(
+                          Icons.close,
+                          size: 24,
+                          color: isDarkTheme ? Colors.white : Colors.black,
+                        ),
                       ),
-                    ),
-                    const Expanded(
-                      child: Center(
-                        child: Text(
-                          'What is RIR?',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w600,
+                      const Expanded(
+                        child: Center(
+                          child: Text(
+                            'What is RIR?',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
                         ),
                       ),
+                      const SizedBox(width: 24),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+                  Text(
+                    'RIR stands for Reps in Reserve—a simple way to describe how challenging a set felt.',
+                    style: TextStyle(
+                      fontSize: 14,
+                      height: 1.5,
+                      color: isDarkTheme ? Colors.grey.shade300 : Colors.grey.shade700,
                     ),
-                    const SizedBox(width: 24),
-                  ],
-                ),
-                const SizedBox(height: 24),
-                Text(
-                  'RIR stands for Reps in Reserve—a simple way to describe how challenging a set felt.',
-                  style: TextStyle(
-                    fontSize: 14,
-                    height: 1.5,
-                    color: isDarkTheme ? Colors.grey.shade300 : Colors.grey.shade700,
                   ),
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  'A lower RIR (0–1) means you pushed close to your limit. A higher RIR (like 3–4) means you had more reps in the tank.',
-                  style: TextStyle(
-                    fontSize: 14,
-                    height: 1.5,
-                    color: isDarkTheme ? Colors.grey.shade300 : Colors.grey.shade700,
+                  const SizedBox(height: 16),
+                  Text(
+                    'A lower RIR (0–1) means you pushed close to your limit. A higher RIR (like 3–4) means you had more reps in the tank.',
+                    style: TextStyle(
+                      fontSize: 14,
+                      height: 1.5,
+                      color: isDarkTheme ? Colors.grey.shade300 : Colors.grey.shade700,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 20),
-              ],
+                  const SizedBox(height: 20),
+
+                  // ── How your target RIR is calculated ──
+                  Divider(
+                    color: isDarkTheme ? Colors.grey.shade800 : Colors.grey.shade200,
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'How your target RIR is calculated',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: isDarkTheme ? Colors.white : Colors.black87,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    'Your RIR target is personalized using three factors:',
+                    style: TextStyle(
+                      fontSize: 14,
+                      height: 1.5,
+                      color: isDarkTheme ? Colors.grey.shade300 : Colors.grey.shade700,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  _AutoTargetCell._buildRirFactorRow(
+                    icon: Icons.track_changes,
+                    color: AppColors.orange,
+                    title: 'Training Goal + Exercise Type',
+                    description: 'Compound lifts (squats, presses) stay more conservative than isolation moves (curls, raises). Hypertrophy pushes closer to failure than strength.',
+                    isDark: isDarkTheme,
+                  ),
+                  const SizedBox(height: 10),
+                  _AutoTargetCell._buildRirFactorRow(
+                    icon: Icons.fitness_center,
+                    color: AppColors.cyan,
+                    title: 'Equipment Safety',
+                    description: 'Machines & cables are safer to push hard on. Barbells & kettlebells need more reserve due to injury risk.',
+                    isDark: isDarkTheme,
+                  ),
+                  const SizedBox(height: 10),
+                  _AutoTargetCell._buildRirFactorRow(
+                    icon: Icons.trending_up,
+                    color: AppColors.green,
+                    title: 'Your Fitness Level',
+                    description: 'Beginners get extra buffer for form learning. Advanced lifters can push closer to failure safely.',
+                    isDark: isDarkTheme,
+                  ),
+                  const SizedBox(height: 16),
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: isDarkTheme
+                          ? AppColors.orange.withOpacity(0.1)
+                          : AppColors.orange.withOpacity(0.06),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(
+                        color: AppColors.orange.withOpacity(0.2),
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.lightbulb_outline,
+                          size: 16,
+                          color: AppColors.orange,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            'RIR decreases across sets — the last set pushes hardest while earlier sets build up.',
+                            style: TextStyle(
+                              fontSize: 13,
+                              height: 1.4,
+                              color: isDarkTheme ? Colors.grey.shade300 : Colors.grey.shade700,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                ],
+              ),
             ),
           ),
         ),

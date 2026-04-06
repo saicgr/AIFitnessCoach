@@ -30,6 +30,8 @@ from .xp_models import (
     DailyCratesResponse,
     ClaimDailyCrateRequest,
     ClaimDailyCrateResponse,
+    UnclaimedCrateItem,
+    UnclaimedCratesResponse,
 )
 
 router = APIRouter()
@@ -287,6 +289,46 @@ async def get_daily_crates(
         raise safe_internal_error(e, "xp")
 
 
+@router.get("/unclaimed-crates", response_model=UnclaimedCratesResponse)
+async def get_unclaimed_crates(
+    current_user=Depends(get_current_user)
+):
+    """
+    Get all unclaimed daily crates (up to 9 most recent).
+
+    Returns accumulated unclaimed crate records so users can open
+    multiple crates at once if they missed previous days.
+    """
+    try:
+        db = get_supabase_db()
+        user_id = current_user["id"]
+
+        result = db.client.rpc(
+            "get_unclaimed_crates",
+            {"p_user_id": user_id}
+        ).execute()
+
+        unclaimed_list = result.data or []
+        items = [
+            UnclaimedCrateItem(
+                crate_date=str(item["crate_date"]),
+                daily_crate_available=item.get("daily_crate_available", True),
+                streak_crate_available=item.get("streak_crate_available", False),
+                activity_crate_available=item.get("activity_crate_available", False),
+            )
+            for item in unclaimed_list
+        ]
+
+        return UnclaimedCratesResponse(
+            unclaimed=items,
+            count=len(items),
+        )
+
+    except Exception as e:
+        logger.error(f"[XP] Error getting unclaimed crates: {e}")
+        raise safe_internal_error(e, "xp")
+
+
 @router.post("/claim-daily-crate", response_model=ClaimDailyCrateResponse)
 async def claim_daily_crate(
     request: ClaimDailyCrateRequest,
@@ -304,15 +346,21 @@ async def claim_daily_crate(
         user_id = current_user["id"]
         crate_type = request.crate_type
 
-        logger.info(f"[XP] Claim daily crate: user_id={user_id}, crate_type={crate_type}")
+        crate_date = request.crate_date  # Optional ISO date string
+
+        logger.info(f"[XP] Claim daily crate: user_id={user_id}, crate_type={crate_type}, crate_date={crate_date}")
 
         valid_types = ["daily", "streak", "activity"]
         if crate_type not in valid_types:
             raise HTTPException(status_code=400, detail=f"Invalid crate type: {crate_type}")
 
+        rpc_params = {"p_user_id": user_id, "p_crate_type": crate_type}
+        if crate_date:
+            rpc_params["p_crate_date"] = crate_date
+
         result = db.client.rpc(
             "claim_daily_crate",
-            {"p_user_id": user_id, "p_crate_type": crate_type}
+            rpc_params,
         ).execute()
 
         if result.data:

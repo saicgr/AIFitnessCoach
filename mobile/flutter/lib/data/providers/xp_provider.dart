@@ -369,6 +369,17 @@ final activityCrateAvailableProvider = Provider<bool>((ref) {
   return ref.watch(dailyCratesProvider)?.activityCrateAvailable ?? false;
 });
 
+/// Accumulated unclaimed crates (up to 9 most recent days).
+final unclaimedCratesProvider = FutureProvider.autoDispose<List<UnclaimedCrate>>((ref) async {
+  final repository = ref.watch(xpRepositoryProvider);
+  return repository.getUnclaimedCrates();
+});
+
+/// Total number of unclaimed crate days (how many crates user can open).
+final unclaimedCratesCountProvider = Provider<int>((ref) {
+  return ref.watch(unclaimedCratesProvider).valueOrNull?.length ?? 0;
+});
+
 // ============================================
 // Extended Weekly Progress Providers
 // ============================================

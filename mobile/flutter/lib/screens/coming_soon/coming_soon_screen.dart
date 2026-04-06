@@ -165,6 +165,7 @@ class _RoadmapTabState extends State<_RoadmapTab> {
           features: [
             _Feature(Icons.add_circle_outline, AppColors.coral, 'Custom Exercises', 'Create your own exercises with custom tracking', eta: 'Q2 2026'),
             _Feature(Icons.show_chart_outlined, AppColors.green, 'Inline Progress Charts', 'Exercise progress graphs inside workout view', eta: 'Q2 2026'),
+            _Feature(Icons.tune_outlined, AppColors.purple, 'Per-Exercise RIR Ranges', 'Customize RIR targets for individual exercises — override the default goal/equipment-based calculation', eta: 'Q2 2026'),
           ],
         ),
 

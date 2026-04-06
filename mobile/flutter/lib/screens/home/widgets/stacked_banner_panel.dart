@@ -10,12 +10,16 @@ import '../../../data/providers/week1_tips_provider.dart';
 import '../../../data/providers/weekly_plan_provider.dart';
 import '../../../data/providers/wrapped_provider.dart';
 import '../../../data/providers/xp_provider.dart'
-    show activeDoubleXPEventProvider, showDailyCrateBannerProvider, dailyCratesProvider;
+    show activeDoubleXPEventProvider, dailyCratesProvider, showDailyCrateBannerProvider,
+         unclaimedCratesProvider, unclaimedCratesCountProvider;
+import '../../../data/repositories/xp_repository.dart' show UnclaimedCrate;
 import '../../../data/models/weekly_plan.dart';
 import '../../../data/repositories/auth_repository.dart';
 import '../../../data/repositories/scheduling_repository.dart' show MissedWorkout;
 import '../../../data/services/haptic_service.dart';
+import '../../../widgets/glass_sheet.dart';
 import '../../workout/widgets/reschedule_sheet.dart';
+import 'open_all_crates_sheet.dart';
 import 'banner_card_data.dart';
 import 'compact_banner_card.dart';
 import 'stacked_banner_controller.dart';
@@ -37,6 +41,7 @@ class _StackedBannerPanelState extends ConsumerState<StackedBannerPanel>
   static const double _cardHeight = CompactBannerCard.cardHeight;
   static const double _peekOffset = 8.0;
   static const int _maxVisiblePeeks = 2;
+  static const int _maxMissedWorkoutBanners = 3;
 
   late AnimationController _dismissController;
   Animation<double>? _dismissAnimation;
@@ -55,6 +60,12 @@ class _StackedBannerPanelState extends ConsumerState<StackedBannerPanel>
 
   // Wrapped banner dismiss state
   Map<String, bool> _wrappedDismissedMap = {};
+
+  // Missed workout persistent dismiss state
+  Set<String> _dismissedMissedWorkoutIds = {};
+
+  // Week 1 tip same-day dismiss state
+  bool _week1TipDismissedToday = false;
 
   @override
   void initState() {
@@ -120,11 +131,23 @@ class _StackedBannerPanelState extends ConsumerState<StackedBannerPanel>
       }
     }
 
+    // Load persistently dismissed missed workout IDs
+    final missedIds = prefs.getStringList('dismissed_missed_workout_ids') ?? [];
+    // Prune to max 20 entries
+    final prunedMissedIds = missedIds.length > 20
+        ? missedIds.sublist(missedIds.length - 20)
+        : missedIds;
+
+    // Check if week1 tip was dismissed today
+    final week1Dismissed = prefs.getString('week1_tip_dismissed_$todayKey');
+
     if (mounted) {
       setState(() {
         _contextualDismissedKeys = contextualKeys;
         _contextualPrefsLoaded = true;
         _wrappedDismissedMap = wrappedMap;
+        _dismissedMissedWorkoutIds = prunedMissedIds.toSet();
+        _week1TipDismissedToday = week1Dismissed != null;
       });
     }
   }
@@ -159,9 +182,11 @@ class _StackedBannerPanelState extends ConsumerState<StackedBannerPanel>
       ));
     }
 
-    // 2. Missed workouts
+    // 2. Missed workouts (filter dismissed, cap at 3)
     final missedAsync = ref.watch(missedWorkoutsProvider);
-    final missedWorkouts = missedAsync.valueOrNull ?? [];
+    final missedWorkouts = (missedAsync.valueOrNull ?? [])
+        .where((w) => !_dismissedMissedWorkoutIds.contains('missed_${w.id}'))
+        .take(_maxMissedWorkoutBanners);
     for (final workout in missedWorkouts) {
       banners.add(BannerCardData(
         type: BannerType.missedWorkout,
@@ -177,26 +202,27 @@ class _StackedBannerPanelState extends ConsumerState<StackedBannerPanel>
       ));
     }
 
-    // 3. Daily crate
+    // 3. Daily crate (includes accumulated unclaimed crates)
     final showCrate = ref.watch(showDailyCrateBannerProvider);
-    if (showCrate) {
-      final cratesState = ref.watch(dailyCratesProvider);
-      final availableCount = cratesState?.availableCount ?? 0;
+    final unclaimedCount = ref.watch(unclaimedCratesCountProvider);
+    // Show banner if today's crate is available OR there are past unclaimed crates
+    if (showCrate || unclaimedCount > 0) {
+      final displayCount = unclaimedCount > 0 ? unclaimedCount : 1;
       banners.add(BannerCardData(
         type: BannerType.dailyCrate,
         id: 'daily_crate',
         emoji: '🎁',
-        title: 'Daily Crates Available!',
-        subtitle: availableCount > 1
-            ? '$availableCount crates ready to open'
+        title: displayCount > 1
+            ? '$displayCount Crates Available!'
+            : 'Daily Crate Available!',
+        subtitle: displayCount > 1
+            ? '$displayCount crates ready to open'
             : 'Tap to pick your reward',
         accentColor: const Color(0xFFFFB300),
-        actionLabel: 'Open',
+        actionLabel: displayCount > 1 ? 'Open All' : 'Open',
         onTap: () {
           HapticService.medium();
-          // Navigate to crate opening - the existing DailyCrateBanner taps
-          // open a sheet; we reuse that pattern by pushing to the XP/crates route
-          context.push('/xp/crates');
+          _showOpenAllCratesSheet();
         },
       ));
     }
@@ -222,9 +248,9 @@ class _StackedBannerPanelState extends ConsumerState<StackedBannerPanel>
       ));
     }
 
-    // 5. Week 1 tip
+    // 5. Week 1 tip (skip if dismissed today)
     final week1Tip = ref.watch(week1TipProvider);
-    if (week1Tip != null) {
+    if (week1Tip != null && !_week1TipDismissedToday) {
       banners.add(BannerCardData(
         type: BannerType.week1Tip,
         id: 'week1_${week1Tip.featureKey}',
@@ -388,42 +414,136 @@ class _StackedBannerPanelState extends ConsumerState<StackedBannerPanel>
   Future<void> _handleSwipeDismiss(BannerCardData banner) async {
     HapticService.light();
     ref.read(stackedBannerControllerProvider.notifier).dismiss(banner.id);
+    await _persistBannerDismissal(banner);
+  }
 
-    // Also persist dismissal for banner types that need it
-    if (banner.type == BannerType.renewal) {
-      final authState = ref.read(authStateProvider);
-      final userId = authState.user?.id;
-      if (userId != null) {
-        ref.read(dismissRenewalBannerProvider(userId));
-        ref.invalidate(upcomingRenewalProvider);
+  Future<void> _showCrateDismissConfirmation(List<BannerCardData> banners) async {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    // Collapse the pill immediately
+    setState(() => _isDismissAllExpanded = false);
+    _dismissAllController.reverse();
+
+    final result = await showDialog<String>(
+      context: context,
+      barrierColor: Colors.black54,
+      builder: (dialogContext) => Dialog(
+        backgroundColor: isDark ? AppColors.elevated : Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text('🎁', style: TextStyle(fontSize: 48)),
+              const SizedBox(height: 12),
+              Text(
+                'You have unopened crates!',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: isDark ? AppColors.textPrimary : Colors.black87,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Open them before dismissing?',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 14,
+                  color: isDark ? AppColors.textSecondary : Colors.black54,
+                ),
+              ),
+              const SizedBox(height: 24),
+              // Open All button
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () => Navigator.pop(dialogContext, 'open'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFFFFB300),
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: const Text(
+                    'Open All',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 8),
+              // Dismiss Anyway
+              TextButton(
+                onPressed: () => Navigator.pop(dialogContext, 'dismiss'),
+                child: Text(
+                  'Dismiss Anyway',
+                  style: TextStyle(
+                    color: isDark ? AppColors.textSecondary : Colors.black54,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    if (!mounted) return;
+
+    if (result == 'open') {
+      HapticService.medium();
+      // Open the crate selection grid
+      _showOpenAllCratesSheet();
+      // Dismiss all non-crate banners
+      final nonCrateIds = banners
+          .where((b) => b.type != BannerType.dailyCrate)
+          .map((b) => b.id)
+          .toList();
+      ref.read(stackedBannerControllerProvider.notifier).dismissAll(nonCrateIds);
+      for (final b in banners.where((b) => b.type != BannerType.dailyCrate)) {
+        _persistBannerDismissal(b);
       }
-    } else if (banner.type == BannerType.wrapped) {
-      final period = banner.id.replaceFirst('wrapped_', '');
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setBool('wrapped_dismissed_$period', true);
-      if (mounted) {
-        setState(() => _wrappedDismissedMap[period] = true);
-      }
-    } else if (banner.type == BannerType.contextual) {
-      final prefs = await SharedPreferences.getInstance();
-      final today = DateTime.now();
-      if (banner.id.contains('weekly_')) {
-        final monday = today.subtract(Duration(days: today.weekday - 1));
-        final weekKey = '${monday.year}-${monday.month}-${monday.day}';
-        await prefs.setString('contextual_banner_weekly_dismissed', weekKey);
-      } else if (banner.id.contains('pr_')) {
-        final todayKey = '${today.year}-${today.month}-${today.day}';
-        await prefs.setString('contextual_banner_pr_dismissed', todayKey);
-      }
-    } else if (banner.type == BannerType.week1Tip) {
-      final prefs = await SharedPreferences.getInstance();
-      final today = DateTime.now();
-      final todayKey = '${today.year}-${today.month}-${today.day}';
-      await prefs.setString('week1_tip_dismissed_$todayKey', banner.id);
-    } else if (banner.type == BannerType.missedWorkout) {
-      // Swiping a missed workout just hides it for the session.
-      // The user can still act on it from the workout schedule.
+    } else if (result == 'dismiss') {
+      _executeDismissAll(banners);
     }
+  }
+
+  void _showOpenAllCratesSheet() {
+    var unclaimed = ref.read(unclaimedCratesProvider).valueOrNull ?? [];
+
+    // If no accumulated unclaimed crates, build from today's daily crate state
+    if (unclaimed.isEmpty) {
+      final dailyCrates = ref.read(dailyCratesProvider);
+      if (dailyCrates != null && dailyCrates.hasAvailableCrate) {
+        unclaimed = [
+          UnclaimedCrate(
+            crateDate: dailyCrates.crateDate,
+            dailyCrateAvailable: dailyCrates.dailyCrateAvailable,
+            streakCrateAvailable: dailyCrates.streakCrateAvailable,
+            activityCrateAvailable: dailyCrates.activityCrateAvailable,
+          ),
+        ];
+      }
+    }
+
+    if (unclaimed.isEmpty) return;
+
+    showGlassSheet(
+      context: context,
+      builder: (ctx) => GlassSheet(
+        child: OpenAllCratesSheet(
+          unclaimedCrates: unclaimed,
+          onAllCollected: () {
+            // Dismiss the crate banner after all crates collected
+            ref.read(stackedBannerControllerProvider.notifier).dismiss('daily_crate');
+            ref.invalidate(unclaimedCratesProvider);
+          },
+        ),
+      ),
+    );
   }
 
   static String _formatWorkoutType(String type) {
@@ -516,6 +636,62 @@ class _StackedBannerPanelState extends ConsumerState<StackedBannerPanel>
     }
   }
 
+  /// Persist dismissal for a single banner (reused by swipe + dismiss-all).
+  Future<void> _persistBannerDismissal(BannerCardData banner) async {
+    if (banner.type == BannerType.renewal) {
+      final authState = ref.read(authStateProvider);
+      final userId = authState.user?.id;
+      if (userId != null) {
+        ref.read(dismissRenewalBannerProvider(userId));
+        ref.invalidate(upcomingRenewalProvider);
+      }
+    } else if (banner.type == BannerType.wrapped) {
+      final period = banner.id.replaceFirst('wrapped_', '');
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('wrapped_dismissed_$period', true);
+      if (mounted) setState(() => _wrappedDismissedMap[period] = true);
+    } else if (banner.type == BannerType.contextual) {
+      final prefs = await SharedPreferences.getInstance();
+      final today = DateTime.now();
+      if (banner.id.contains('weekly_')) {
+        final monday = today.subtract(Duration(days: today.weekday - 1));
+        final weekKey = '${monday.year}-${monday.month}-${monday.day}';
+        await prefs.setString('contextual_banner_weekly_dismissed', weekKey);
+      } else if (banner.id.contains('pr_')) {
+        final todayKey = '${today.year}-${today.month}-${today.day}';
+        await prefs.setString('contextual_banner_pr_dismissed', todayKey);
+      }
+    } else if (banner.type == BannerType.week1Tip) {
+      final prefs = await SharedPreferences.getInstance();
+      final today = DateTime.now();
+      final todayKey = '${today.year}-${today.month}-${today.day}';
+      await prefs.setString('week1_tip_dismissed_$todayKey', banner.id);
+      if (mounted) setState(() => _week1TipDismissedToday = true);
+    } else if (banner.type == BannerType.missedWorkout) {
+      final prefs = await SharedPreferences.getInstance();
+      _dismissedMissedWorkoutIds.add(banner.id);
+      await prefs.setStringList(
+        'dismissed_missed_workout_ids',
+        _dismissedMissedWorkoutIds.toList(),
+      );
+    }
+  }
+
+  /// Execute dismiss-all: session dismiss + persist each banner type.
+  void _executeDismissAll(List<BannerCardData> banners) {
+    HapticService.medium();
+    final ids = banners.map((b) => b.id).toList();
+    ref.read(stackedBannerControllerProvider.notifier).dismissAll(ids);
+
+    // Persist dismissals for all banner types
+    for (final banner in banners) {
+      _persistBannerDismissal(banner);
+    }
+
+    setState(() => _isDismissAllExpanded = false);
+    _dismissAllController.reverse();
+  }
+
   void _onDismissAllTap(List<BannerCardData> banners) {
     if (banners.isEmpty) return;
 
@@ -534,13 +710,13 @@ class _StackedBannerPanelState extends ConsumerState<StackedBannerPanel>
         }
       });
     } else {
-      // Second tap: dismiss all banners
-      HapticService.medium();
-      final ids = banners.map((b) => b.id).toList();
-      ref.read(stackedBannerControllerProvider.notifier).dismissAll(ids);
-
-      setState(() => _isDismissAllExpanded = false);
-      _dismissAllController.reverse();
+      // Second tap: check for crate banners before dismissing
+      final hasCrate = banners.any((b) => b.type == BannerType.dailyCrate);
+      if (hasCrate) {
+        _showCrateDismissConfirmation(banners);
+      } else {
+        _executeDismissAll(banners);
+      }
     }
   }
 

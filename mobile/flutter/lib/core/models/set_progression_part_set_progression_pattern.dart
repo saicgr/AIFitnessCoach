@@ -463,26 +463,41 @@ extension SetProgressionPatternX on SetProgressionPattern {
     List<double>? ownedWeights,
     String? trainingGoal,
     int? maxReps,
+    String? exerciseType,
+    String? fitnessLevel,
+    String? equipment,
   }) {
     // 1. Generate raw targets using pattern-specific logic
     List<ProgressionSetTarget> raw;
     switch (this) {
       case SetProgressionPattern.pyramidUp:
-        raw = _generatePyramidUp(workingWeight, totalSets, baseReps, increment);
+        raw = _generatePyramidUp(workingWeight, totalSets, baseReps, increment,
+            exerciseType: exerciseType, trainingGoal: trainingGoal,
+            fitnessLevel: fitnessLevel, equipment: equipment);
       case SetProgressionPattern.straightSets:
-        raw = _generateStraight(workingWeight, totalSets, baseReps, increment);
+        raw = _generateStraight(workingWeight, totalSets, baseReps, increment,
+            exerciseType: exerciseType, trainingGoal: trainingGoal,
+            fitnessLevel: fitnessLevel, equipment: equipment);
       case SetProgressionPattern.reversePyramid:
-        raw = _generateReversePyramid(workingWeight, totalSets, baseReps, increment);
+        raw = _generateReversePyramid(workingWeight, totalSets, baseReps, increment,
+            exerciseType: exerciseType, trainingGoal: trainingGoal,
+            fitnessLevel: fitnessLevel, equipment: equipment);
       case SetProgressionPattern.dropSets:
         raw = _generateDropSets(workingWeight, totalSets, increment);
       case SetProgressionPattern.topSetBackOff:
-        raw = _generateTopSetBackOff(workingWeight, totalSets, baseReps, increment);
+        raw = _generateTopSetBackOff(workingWeight, totalSets, baseReps, increment,
+            exerciseType: exerciseType, trainingGoal: trainingGoal,
+            fitnessLevel: fitnessLevel, equipment: equipment);
       case SetProgressionPattern.restPause:
         raw = _generateRestPause(workingWeight, totalSets);
       case SetProgressionPattern.myoReps:
-        raw = _generateMyoReps(workingWeight, totalSets, baseReps, increment);
+        raw = _generateMyoReps(workingWeight, totalSets, baseReps, increment,
+            exerciseType: exerciseType, trainingGoal: trainingGoal,
+            fitnessLevel: fitnessLevel, equipment: equipment);
       case SetProgressionPattern.endurance:
-        raw = _generateEndurance(workingWeight, totalSets, baseReps, increment);
+        raw = _generateEndurance(workingWeight, totalSets, baseReps, increment,
+            exerciseType: exerciseType, trainingGoal: trainingGoal,
+            fitnessLevel: fitnessLevel, equipment: equipment);
     }
 
     // 1b. Apply exercise-type ceiling (compound=12, isolation=15, bodyweight=20)
@@ -602,8 +617,10 @@ extension SetProgressionPatternX on SetProgressionPattern {
   /// Dynamic rep step: ±1 for strength (≤5 baseReps), ±2 for hypertrophy (6+).
   /// Minimum 6 reps per set (non-failure training safety floor).
   List<ProgressionSetTarget> _generatePyramidUp(
-    double w, int sets, int reps, double inc,
-  ) {
+    double w, int sets, int reps, double inc, {
+    String? exerciseType, String? trainingGoal,
+    String? fitnessLevel, String? equipment,
+  }) {
     debugPrint('⚙️ [Progression] pyramidUp: working=$w, sets=$sets, baseReps=$reps, inc=$inc, step=${_pyramidRepStep(reps)}');
     final step = _pyramidRepStep(reps);
     final targets = <ProgressionSetTarget>[];
@@ -611,13 +628,16 @@ extension SetProgressionPatternX on SetProgressionPattern {
       final stepsFromTop = sets - 1 - i;
       final weight = _snap(w - (stepsFromTop * inc), inc);
       final setReps = reps + (stepsFromTop * step);
-      // Pyramid Up RIR: decreases as weight increases (lighter = more reserve)
-      final rir = sets <= 2 ? (i == 0 ? 2 : 1)
-          : (3 - (i * 3 ~/ (sets - 1))).clamp(1, 3); // 3→2→1 spread
+      final rir = computeSetRir(
+        setIndex: i, totalSets: sets,
+        exerciseType: exerciseType ?? 'compound',
+        trainingGoal: trainingGoal, fitnessLevel: fitnessLevel,
+        equipment: equipment,
+      );
       targets.add(ProgressionSetTarget(
         setNumber: i + 1,
         weight: weight.clamp(inc, 9999),
-        reps: setReps.clamp(6, 30), // Min 6 for non-failure
+        reps: setReps.clamp(6, 30),
         isAmrap: false,
         rir: rir,
       ));
@@ -632,14 +652,25 @@ extension SetProgressionPatternX on SetProgressionPattern {
   /// RIR-based weight: lower RIR (closer to failure) → +1 increment.
   /// Single set stays at base weight (no progression context).
   List<ProgressionSetTarget> _generateStraight(
-    double w, int sets, int reps, double inc,
-  ) {
+    double w, int sets, int reps, double inc, {
+    String? exerciseType, String? trainingGoal,
+    String? fitnessLevel, String? equipment,
+  }) {
     return List.generate(sets, (i) {
-      // Straight Sets RIR: uniform start, slight fatigue toward end
-      // Single set: fixed at RIR 2 (no progression needed)
-      final rir = sets <= 1 ? 2 : (i < sets ~/ 2 ? 2 : 1);
-      // RIR 1 sets get +1 increment to reflect higher intensity
-      final setWeight = (rir <= 1 && inc > 0) ? _snap(w + inc, inc) : w;
+      final rir = computeSetRir(
+        setIndex: i, totalSets: sets,
+        exerciseType: exerciseType ?? 'compound',
+        trainingGoal: trainingGoal, fitnessLevel: fitnessLevel,
+        equipment: equipment,
+      );
+      // Lower RIR sets get +1 increment to reflect higher intensity
+      final baseRir = computeSetRir(
+        setIndex: 0, totalSets: sets,
+        exerciseType: exerciseType ?? 'compound',
+        trainingGoal: trainingGoal, fitnessLevel: fitnessLevel,
+        equipment: equipment,
+      );
+      final setWeight = (rir < baseRir && inc > 0) ? _snap(w + inc, inc) : w;
       return ProgressionSetTarget(
         setNumber: i + 1,
         weight: setWeight,
@@ -653,16 +684,23 @@ extension SetProgressionPatternX on SetProgressionPattern {
   /// Reverse Pyramid: heaviest first, then ~12% and ~10% drops.
   /// Set 1: W × R-4, Set 2: W×0.875 × R-2, Set 3: W×0.79 × R
   List<ProgressionSetTarget> _generateReversePyramid(
-    double w, int sets, int reps, double inc,
-  ) {
+    double w, int sets, int reps, double inc, {
+    String? exerciseType, String? trainingGoal,
+    String? fitnessLevel, String? equipment,
+  }) {
     final percentages = [1.0, 0.875, 0.79, 0.72, 0.65];
     final repOffsets = [-4, -2, 0, 2, 4]; // Reps increase as weight drops
     final targets = <ProgressionSetTarget>[];
     for (int i = 0; i < sets; i++) {
       final pct = i < percentages.length ? percentages[i] : percentages.last;
       final repOffset = i < repOffsets.length ? repOffsets[i] : repOffsets.last;
-      // Reverse Pyramid RIR: heaviest first = lowest RIR, increases as weight drops
-      final rir = i == 0 ? 1 : (1 + (i * 2 ~/ (sets - 1))).clamp(1, 3);
+      // Reversed: heaviest first (i=0) gets floor RIR, lightest gets start RIR
+      final rir = computeSetRir(
+        setIndex: sets - 1 - i, totalSets: sets,
+        exerciseType: exerciseType ?? 'compound',
+        trainingGoal: trainingGoal, fitnessLevel: fitnessLevel,
+        equipment: equipment,
+      );
       targets.add(ProgressionSetTarget(
         setNumber: i + 1,
         weight: _snap(w * pct, inc),
@@ -695,25 +733,41 @@ extension SetProgressionPatternX on SetProgressionPattern {
 
   /// Top Set + Back-Off: 1 heavy set, then ~83% back-offs.
   List<ProgressionSetTarget> _generateTopSetBackOff(
-    double w, int sets, int reps, double inc,
-  ) {
+    double w, int sets, int reps, double inc, {
+    String? exerciseType, String? trainingGoal,
+    String? fitnessLevel, String? equipment,
+  }) {
+    // Top set: floor RIR (most intense)
+    final topRir = computeSetRir(
+      setIndex: sets - 1, totalSets: sets,
+      exerciseType: exerciseType ?? 'compound',
+      trainingGoal: trainingGoal, fitnessLevel: fitnessLevel,
+      equipment: equipment,
+    );
     final targets = <ProgressionSetTarget>[
       ProgressionSetTarget(
         setNumber: 1,
         weight: w,
-        reps: (reps - 4).clamp(1, 30), // Fewer reps on heavy top set
+        reps: (reps - 4).clamp(1, 30),
         isAmrap: false,
-        rir: 1, // Top set: near-max
+        rir: topRir,
       ),
     ];
     final backOffWeight = _snap(w * 0.83, inc);
+    // Back-offs: start RIR (more reserve)
+    final backOffRir = computeSetRir(
+      setIndex: 0, totalSets: sets,
+      exerciseType: exerciseType ?? 'compound',
+      trainingGoal: trainingGoal, fitnessLevel: fitnessLevel,
+      equipment: equipment,
+    );
     for (int i = 1; i < sets; i++) {
       targets.add(ProgressionSetTarget(
         setNumber: i + 1,
         weight: backOffWeight,
         reps: (reps - 2).clamp(1, 30),
         isAmrap: false,
-        rir: i == 1 ? 2 : 3, // Back-offs: more in reserve
+        rir: backOffRir,
       ));
     }
     return targets;
@@ -732,16 +786,25 @@ extension SetProgressionPatternX on SetProgressionPattern {
 
   /// Myo-Reps: activation at ~80%, then mini-sets of 5.
   List<ProgressionSetTarget> _generateMyoReps(
-    double w, int sets, int reps, double inc,
-  ) {
+    double w, int sets, int reps, double inc, {
+    String? exerciseType, String? trainingGoal,
+    String? fitnessLevel, String? equipment,
+  }) {
     final myoWeight = _snap(w * 0.8, inc);
+    // Activation set: dynamic RIR based on context
+    final activationRir = computeSetRir(
+      setIndex: 0, totalSets: sets,
+      exerciseType: exerciseType ?? 'isolation',
+      trainingGoal: trainingGoal, fitnessLevel: fitnessLevel,
+      equipment: equipment,
+    );
     final targets = <ProgressionSetTarget>[
       ProgressionSetTarget(
         setNumber: 1,
         weight: myoWeight,
-        reps: reps + 5, // Activation set: higher reps
+        reps: reps + 5,
         isAmrap: false,
-        rir: 1, // Activation: near failure
+        rir: activationRir,
       ),
     ];
     for (int i = 1; i < sets; i++) {
@@ -760,20 +823,31 @@ extension SetProgressionPatternX on SetProgressionPattern {
   /// RIR-based weight: lower RIR (closer to failure) → +1 increment.
   /// Single set stays at base weight (no progression context).
   List<ProgressionSetTarget> _generateEndurance(
-    double w, int sets, int reps, double inc,
-  ) {
+    double w, int sets, int reps, double inc, {
+    String? exerciseType, String? trainingGoal,
+    String? fitnessLevel, String? equipment,
+  }) {
     final baseReps = reps < 15 ? 15 : reps; // Minimum 15 for endurance
     final targets = <ProgressionSetTarget>[];
+    final startRir = computeSetRir(
+      setIndex: 0, totalSets: sets,
+      exerciseType: exerciseType ?? 'compound',
+      trainingGoal: trainingGoal ?? 'endurance',
+      fitnessLevel: fitnessLevel, equipment: equipment,
+    );
     for (int i = 0; i < sets; i++) {
-      // Endurance RIR: gradual fatigue
-      // Single set: fixed at RIR 2 (no progression needed)
-      final rir = sets <= 1 ? 2 : (i < sets ~/ 2 ? 3 : (i == sets - 1 ? 1 : 2));
-      // RIR 1 sets get +1 increment to reflect higher intensity
-      final setWeight = (rir <= 1 && inc > 0) ? _snap(w + inc, inc) : w;
+      final rir = computeSetRir(
+        setIndex: i, totalSets: sets,
+        exerciseType: exerciseType ?? 'compound',
+        trainingGoal: trainingGoal ?? 'endurance',
+        fitnessLevel: fitnessLevel, equipment: equipment,
+      );
+      // Lower RIR sets get +1 increment to reflect higher intensity
+      final setWeight = (rir < startRir && inc > 0) ? _snap(w + inc, inc) : w;
       targets.add(ProgressionSetTarget(
         setNumber: i + 1,
         weight: setWeight,
-        reps: (baseReps + i * 2).clamp(15, 30), // +2 reps per set, capped at 30
+        reps: (baseReps + i * 2).clamp(15, 30),
         isAmrap: false,
         rir: rir,
       ));
@@ -796,6 +870,9 @@ extension SetProgressionPatternX on SetProgressionPattern {
     required String unit,
     String? trainingGoal,
     int? maxReps,
+    String? exerciseType,
+    String? fitnessLevel,
+    String? equipment,
   }) {
     final targets = generateTargets(
       workingWeight: workingWeight,
@@ -804,6 +881,9 @@ extension SetProgressionPatternX on SetProgressionPattern {
       increment: increment,
       trainingGoal: trainingGoal,
       maxReps: maxReps,
+      exerciseType: exerciseType,
+      fitnessLevel: fitnessLevel,
+      equipment: equipment,
     );
     return targets.map((t) {
       final w = t.weight % 1 == 0 ? t.weight.toInt().toString() : t.weight.toStringAsFixed(1);

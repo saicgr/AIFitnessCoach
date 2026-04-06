@@ -106,10 +106,11 @@ extension XPNotifierExt on XPNotifier {
   }
 
 
-  /// Claim a daily crate (pick 1 of 3)
-  Future<CrateRewardResult> claimDailyCrate(String crateType) async {
+  /// Claim a daily crate (pick 1 of 3).
+  /// [crateDate] is optional — pass an ISO date string to claim a past crate.
+  Future<CrateRewardResult> claimDailyCrate(String crateType, {String? crateDate}) async {
     try {
-      final result = await _repository.claimDailyCrate(crateType);
+      final result = await _repository.claimDailyCrate(crateType, crateDate: crateDate);
 
       if (result.success) {
         // Optimistically mark as claimed so banner hides immediately,

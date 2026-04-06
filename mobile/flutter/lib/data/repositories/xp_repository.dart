@@ -455,12 +455,14 @@ class XPRepository {
     }
   }
 
-  /// Claim a daily crate (pick 1 of 3 available)
-  Future<CrateRewardResult> claimDailyCrate(String crateType) async {
+  /// Claim a daily crate (pick 1 of 3 available).
+  /// [crateDate] is optional — pass an ISO date string (e.g. '2026-04-05')
+  /// to claim a past unclaimed crate.
+  Future<CrateRewardResult> claimDailyCrate(String crateType, {String? crateDate}) async {
     try {
-      final response = await _client.post('/xp/claim-daily-crate', data: {
-        'crate_type': crateType,
-      });
+      final data = <String, dynamic>{'crate_type': crateType};
+      if (crateDate != null) data['crate_date'] = crateDate;
+      final response = await _client.post('/xp/claim-daily-crate', data: data);
       return CrateRewardResult.fromJson(response.data);
     } catch (e) {
       debugPrint('Error claiming daily crate: $e');
@@ -469,6 +471,20 @@ class XPRepository {
         crateType: crateType,
         message: 'Error claiming crate',
       );
+    }
+  }
+
+  /// Get all unclaimed daily crates (up to 9 most recent).
+  Future<List<UnclaimedCrate>> getUnclaimedCrates() async {
+    try {
+      final response = await _client.get('/xp/unclaimed-crates');
+      final list = response.data['unclaimed'] as List<dynamic>? ?? [];
+      return list
+          .map((e) => UnclaimedCrate.fromJson(e as Map<String, dynamic>))
+          .toList();
+    } catch (e) {
+      debugPrint('Error getting unclaimed crates: $e');
+      return [];
     }
   }
 

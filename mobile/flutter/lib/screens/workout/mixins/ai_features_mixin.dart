@@ -412,7 +412,7 @@ mixin AIFeaturesMixin<T extends StatefulWidget> on State<T> {
       });
     }
 
-    if (modelVideoUrl != null && modelVideoUrl.isNotEmpty) {
+    if (modelVideoUrl != null && modelVideoUrl.isNotEmpty && !modelVideoUrl.startsWith('s3://')) {
       try {
         videoController = VideoPlayerController.networkUrl(Uri.parse(modelVideoUrl));
         await videoController!.initialize();

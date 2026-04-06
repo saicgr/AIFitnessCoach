@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'rir_reference.dart';
+
 part 'set_progression_part_set_progression_pattern.dart';
 
 

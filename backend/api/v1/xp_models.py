@@ -131,12 +131,26 @@ class DailyCratesResponse(BaseModel):
 
 class ClaimDailyCrateRequest(BaseModel):
     crate_type: str  # 'daily', 'streak', or 'activity'
+    crate_date: Optional[str] = None  # ISO date e.g. '2026-04-05'; defaults to today
 
 
 class ClaimDailyCrateResponse(BaseModel):
     success: bool
     crate_type: Optional[str] = None
+    crate_date: Optional[str] = None
     reward: Optional[dict] = None
     message: str
+
+
+class UnclaimedCrateItem(BaseModel):
+    crate_date: str
+    daily_crate_available: bool = True
+    streak_crate_available: bool = False
+    activity_crate_available: bool = False
+
+
+class UnclaimedCratesResponse(BaseModel):
+    unclaimed: List[UnclaimedCrateItem] = []
+    count: int = 0
 
 

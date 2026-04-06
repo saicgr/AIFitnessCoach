@@ -230,6 +230,8 @@ def enrich_exercises_with_video_urls(exercises: List[Dict], db=None) -> List[Dic
             logger.debug("No exercises found in library for media enrichment")
             return exercises
 
+        from api.v1.library.utils import presign_s3_path, resolve_image_url
+
         enriched_count = 0
         for ex in exercises:
             ex_name = (ex.get("name") or "").lower().strip()
@@ -239,10 +241,11 @@ def enrich_exercises_with_video_urls(exercises: List[Dict], db=None) -> List[Dic
                     ex["gif_url"] = urls["gif_url"]
                     enriched_count += 1
                 if not ex.get("video_url") and urls.get("video_url"):
-                    ex["video_url"] = urls["video_url"]
+                    # Presign S3 paths so clients get HTTPS URLs, not s3:// URIs
+                    ex["video_url"] = presign_s3_path(urls["video_url"])
                     enriched_count += 1
                 if not ex.get("image_s3_path") and urls.get("image_s3_path"):
-                    ex["image_s3_path"] = urls["image_s3_path"]
+                    ex["image_s3_path"] = resolve_image_url(urls["image_s3_path"])
                     enriched_count += 1
 
         if enriched_count > 0:

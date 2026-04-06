@@ -73,7 +73,7 @@ extension SetLoggingMixinUI on SetLoggingMixin {
         } else {
           displayWeight = getDefaultWeight(exercise.equipment,
               exerciseName: exercise.name,
-              fitnessLevel: ref.read(authStateProvider).user?.fitnessLevel,
+              fitnessLevel: ref.read(authStateProvider).user?.effectiveFitnessLevel,
               gender: ref.read(authStateProvider).user?.gender,
               useKg: useKg);
           debugPrint('⚙️ [ApplyTargets] ex=$exerciseIndex weight from getDefaultWeight: $displayWeight');
@@ -116,6 +116,9 @@ extension SetLoggingMixinUI on SetLoggingMixin {
       increment: effectiveIncrement,
       trainingGoal: userGoal,
       maxReps: maxRepsForCap,
+      exerciseType: exTypeForCap,
+      fitnessLevel: ref.read(authStateProvider).user?.effectiveFitnessLevel,
+      equipment: exercise.equipment,
     );
 
     final currentSetTargets = List<SetTarget>.from(exercise.setTargets ?? []);
@@ -278,6 +281,9 @@ extension SetLoggingMixinUI on SetLoggingMixin {
       increment: effectiveIncrement,
       trainingGoal: userGoal,
       maxReps: maxReps,
+      exerciseType: exType,
+      fitnessLevel: ref.read(authStateProvider).user?.effectiveFitnessLevel,
+      equipment: exercise.equipment,
     );
 
     final completedSetLogs = completedSets[currentExerciseIndex];

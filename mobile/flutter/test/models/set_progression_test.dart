@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fitwiz/core/models/set_progression.dart';
+import 'package:fitwiz/core/models/rir_reference.dart';
 
 void main() {
   group('deriveWorkingWeight', () {
@@ -156,21 +157,20 @@ void main() {
       expect(targets[0].reps, lessThan(targets[2].reps));
     });
 
-    test('Straight Sets: RIR 2 sets at base, RIR 1 sets at +1 increment', () {
+    test('Straight Sets: lower RIR sets get +1 increment (hypertrophy, dumbbell)', () {
       final targets = SetProgressionPattern.straightSets.generateTargets(
         workingWeight: 50, totalSets: 3, baseReps: 10, increment: 2.5,
+        exerciseType: 'compound', trainingGoal: 'hypertrophy',
+        fitnessLevel: 'intermediate', equipment: 'dumbbell',
       );
       expect(targets.length, 3);
-      // Set 1 (RIR 2): base weight
-      expect(targets[0].weight, 50.0);
-      expect(targets[0].reps, 10);
-      expect(targets[0].rir, 2);
-      // Sets 2-3 (RIR 1): +1 increment
-      expect(targets[1].weight, 52.5);
-      expect(targets[1].reps, 10);
-      expect(targets[1].rir, 1);
-      expect(targets[2].weight, 52.5);
+      // Hypertrophy + compound + dumbbell + intermediate: RirRange(3,1), eq=0, lvl=0 → 3→2→1
+      expect(targets[0].rir, 3);
+      expect(targets[0].weight, 50.0); // Start RIR = base weight
+      expect(targets[1].rir, 2);
+      expect(targets[1].weight, 52.5); // Lower than start → +1 increment
       expect(targets[2].rir, 1);
+      expect(targets[2].weight, 52.5);
     });
 
     test('Straight Sets: single set stays at base weight', () {
@@ -179,17 +179,19 @@ void main() {
       );
       expect(targets.length, 1);
       expect(targets[0].weight, 50.0);
-      expect(targets[0].rir, 2);
     });
 
-    test('Straight Sets: 4 sets — 50/50 split', () {
+    test('Straight Sets: 4 sets (hypertrophy, dumbbell)', () {
       final targets = SetProgressionPattern.straightSets.generateTargets(
         workingWeight: 50, totalSets: 4, baseReps: 10, increment: 2.5,
+        exerciseType: 'compound', trainingGoal: 'hypertrophy',
+        fitnessLevel: 'intermediate', equipment: 'dumbbell',
       );
-      expect(targets[0].weight, 50.0); // RIR 2
-      expect(targets[1].weight, 50.0); // RIR 2
-      expect(targets[2].weight, 52.5); // RIR 1
-      expect(targets[3].weight, 52.5); // RIR 1
+      // RirRange(3,1) → 3, 2, 2, 1 across 4 sets
+      expect(targets[0].weight, 50.0);  // RIR 3: base
+      expect(targets[1].weight, 52.5);  // RIR 2: lower than start → +inc
+      expect(targets[2].weight, 52.5);  // RIR 2
+      expect(targets[3].weight, 52.5);  // RIR 1
     });
 
     test('Drop Sets: descending weight, all AMRAP', () {
@@ -234,20 +236,20 @@ void main() {
       }
     });
 
-    test('Endurance: last set gets +1 increment (RIR 1)', () {
+    test('Endurance: lower RIR sets get +1 increment (dumbbell)', () {
       final targets = SetProgressionPattern.endurance.generateTargets(
         workingWeight: 50, totalSets: 3, baseReps: 15, increment: 2.5,
+        exerciseType: 'compound', equipment: 'dumbbell',
       );
       expect(targets.length, 3);
-      // Set 1 (RIR 3): base weight
-      expect(targets[0].weight, 50.0);
+      // Endurance + compound + dumbbell + intermediate: RirRange(3,2), eq=0 → 3→3→2
+      // (lerp midpoint 2.5 rounds to 3)
       expect(targets[0].rir, 3);
-      // Set 2 (RIR 2): base weight
-      expect(targets[1].weight, 50.0);
-      expect(targets[1].rir, 2);
-      // Set 3 (RIR 1): +1 increment
-      expect(targets[2].weight, 52.5);
-      expect(targets[2].rir, 1);
+      expect(targets[0].weight, 50.0);
+      expect(targets[1].rir, 3);
+      expect(targets[1].weight, 50.0); // Same RIR as start → base weight
+      expect(targets[2].rir, 2);
+      expect(targets[2].weight, 52.5); // Lower than start → +inc
       // Reps increase
       expect(targets[0].reps, lessThan(targets[2].reps));
     });
@@ -258,40 +260,48 @@ void main() {
       );
       expect(targets.length, 1);
       expect(targets[0].weight, 50.0);
-      expect(targets[0].rir, 2);
     });
 
-    test('Pyramid Up: RIR decreases 3→2→1 across 3 sets', () {
+    test('Pyramid Up: RIR decreases (hypertrophy, dumbbell, intermediate)', () {
       final peak = SetProgressionPattern.pyramidUp.deriveWorkingWeight(
         enteredWeight: 20, totalSets: 3, increment: 2.5,
       );
       final targets = SetProgressionPattern.pyramidUp.generateTargets(
         workingWeight: peak, totalSets: 3, baseReps: 8, increment: 2.5,
+        exerciseType: 'compound', trainingGoal: 'hypertrophy',
+        fitnessLevel: 'intermediate', equipment: 'dumbbell',
       );
+      // Hypertrophy + compound + dumbbell: RirRange(3,1), eq=0 → 3→2→1
       expect(targets[0].rir, 3);
       expect(targets[1].rir, 2);
       expect(targets[2].rir, 1);
     });
 
-    test('Reverse Pyramid: RIR increases 1→2→3', () {
+    test('Reverse Pyramid: RIR reversed (heaviest first gets floor RIR)', () {
       final targets = SetProgressionPattern.reversePyramid.generateTargets(
         workingWeight: 50, totalSets: 3, baseReps: 10, increment: 2.5,
+        exerciseType: 'compound', trainingGoal: 'hypertrophy',
+        fitnessLevel: 'intermediate', equipment: 'dumbbell',
       );
-      expect(targets[0].rir, 1); // Heaviest = lowest RIR
+      // Reversed: i=0 gets computeSetRir(2,...) = floor, i=2 gets computeSetRir(0,...) = start
+      expect(targets[0].rir, 1); // Heaviest = floor RIR
       expect(targets[1].rir, 2);
-      expect(targets[2].rir, 3); // Lightest = highest RIR
+      expect(targets[2].rir, 3); // Lightest = start RIR
     });
 
-    test('Top Set + Back-Off: RIR 1→2→3', () {
+    test('Top Set + Back-Off: top set gets floor RIR, back-offs get start RIR', () {
       final targets = SetProgressionPattern.topSetBackOff.generateTargets(
         workingWeight: 50, totalSets: 3, baseReps: 10, increment: 2.5,
+        exerciseType: 'compound', trainingGoal: 'hypertrophy',
+        fitnessLevel: 'intermediate', equipment: 'dumbbell',
       );
-      expect(targets[0].rir, 1); // Top set
-      expect(targets[1].rir, 2); // Back-off 1
-      expect(targets[2].rir, 3); // Back-off 2
+      // Top set = floor RIR, back-offs = start RIR
+      expect(targets[0].rir, 1); // Top set = floor
+      expect(targets[1].rir, 3); // Back-off = start
+      expect(targets[2].rir, 3); // Back-off = start
     });
 
-    test('Drop Sets: RIR 1 then 0 for drops', () {
+    test('Drop Sets: RIR 1 then 0 (inherent failure, ignores context)', () {
       final targets = SetProgressionPattern.dropSets.generateTargets(
         workingWeight: 50, totalSets: 3, baseReps: 10, increment: 2.5,
       );
@@ -300,26 +310,89 @@ void main() {
       expect(targets[2].rir, 0);
     });
 
-    test('Myo-Reps: activation RIR 1, mini-sets RIR 0', () {
+    test('Myo-Reps: activation uses dynamic RIR, mini-sets RIR 0', () {
       final peak = SetProgressionPattern.myoReps.deriveWorkingWeight(
         enteredWeight: 40, totalSets: 4, increment: 2.5,
       );
       final targets = SetProgressionPattern.myoReps.generateTargets(
         workingWeight: peak, totalSets: 4, baseReps: 10, increment: 2.5,
+        exerciseType: 'isolation', trainingGoal: 'hypertrophy',
+        equipment: 'cable',
       );
-      expect(targets[0].rir, 1); // Activation
-      expect(targets[1].rir, 0); // Mini-set
+      // Activation RIR from computeSetRir: isolation+hypertrophy+cable → RirRange(2,0), eq=-1 → start=2
+      expect(targets[0].rir, 2); // Activation = start RIR
+      expect(targets[1].rir, 0); // Mini-set = failure
       expect(targets[2].rir, 0);
       expect(targets[3].rir, 0);
     });
 
-    test('Rest-Pause: all RIR 0', () {
+    test('Rest-Pause: all RIR 0 (inherent failure)', () {
       final targets = SetProgressionPattern.restPause.generateTargets(
         workingWeight: 50, totalSets: 3, baseReps: 10, increment: 2.5,
       );
       for (final t in targets) {
         expect(t.rir, 0);
       }
+    });
+
+    // ── Dynamic RIR tests ──
+
+    test('computeSetRir: barbell compound hypertrophy intermediate → 3,3,2', () {
+      final r0 = computeSetRir(setIndex: 0, totalSets: 3, exerciseType: 'compound',
+          trainingGoal: 'hypertrophy', fitnessLevel: 'intermediate', equipment: 'barbell');
+      final r1 = computeSetRir(setIndex: 1, totalSets: 3, exerciseType: 'compound',
+          trainingGoal: 'hypertrophy', fitnessLevel: 'intermediate', equipment: 'barbell');
+      final r2 = computeSetRir(setIndex: 2, totalSets: 3, exerciseType: 'compound',
+          trainingGoal: 'hypertrophy', fitnessLevel: 'intermediate', equipment: 'barbell');
+      // RirRange(3,1) + barbell(+1 floor) → start=3, floor=2 → 3, 2.5→3, 2
+      expect(r0, 3); expect(r1, 3); expect(r2, 2);
+    });
+
+    test('computeSetRir: machine compound hypertrophy intermediate → 3,2,0', () {
+      final r0 = computeSetRir(setIndex: 0, totalSets: 3, exerciseType: 'compound',
+          trainingGoal: 'hypertrophy', fitnessLevel: 'intermediate', equipment: 'machine');
+      final r2 = computeSetRir(setIndex: 2, totalSets: 3, exerciseType: 'compound',
+          trainingGoal: 'hypertrophy', fitnessLevel: 'intermediate', equipment: 'machine');
+      expect(r0, 3); expect(r2, 0); // Machine floor = 1-1 = 0
+    });
+
+    test('computeSetRir: cable isolation hypertrophy advanced → 2,1,0', () {
+      final r0 = computeSetRir(setIndex: 0, totalSets: 3, exerciseType: 'isolation',
+          trainingGoal: 'hypertrophy', fitnessLevel: 'advanced', equipment: 'cable');
+      final r2 = computeSetRir(setIndex: 2, totalSets: 3, exerciseType: 'isolation',
+          trainingGoal: 'hypertrophy', fitnessLevel: 'advanced', equipment: 'cable');
+      expect(r0, 2); expect(r2, 0); // isolation(2,0) + cable(-1) + advanced(-1) → floor clamped to 0
+    });
+
+    test('computeSetRir: barbell compound strength beginner → 4,4,4', () {
+      final r0 = computeSetRir(setIndex: 0, totalSets: 3, exerciseType: 'compound',
+          trainingGoal: 'strength', fitnessLevel: 'beginner', equipment: 'barbell');
+      final r2 = computeSetRir(setIndex: 2, totalSets: 3, exerciseType: 'compound',
+          trainingGoal: 'strength', fitnessLevel: 'beginner', equipment: 'barbell');
+      // strength compound(3,2) + barbell(+1) + beginner(+1,+1) → start=4, floor=4
+      expect(r0, 4); expect(r2, 4);
+    });
+
+    test('computeSetRir: kettlebell compound power intermediate → 4,4,4', () {
+      final r0 = computeSetRir(setIndex: 0, totalSets: 3, exerciseType: 'compound',
+          trainingGoal: 'power', fitnessLevel: 'intermediate', equipment: 'kettlebell');
+      final r2 = computeSetRir(setIndex: 2, totalSets: 3, exerciseType: 'compound',
+          trainingGoal: 'power', fitnessLevel: 'intermediate', equipment: 'kettlebell');
+      // power compound(4,3) + kettlebell(+1) → start=4, floor=4
+      expect(r0, 4); expect(r2, 4);
+    });
+
+    test('computeSetRir: barbell compound hypertrophy early_intermediate → 4,3,2', () {
+      // early_intermediate: startDelta=1, floorDelta=0
+      // base hypertrophy compound: (3,1) + barbell +1 floor → (3,2)
+      // + early_intermediate: start=4, floor=2
+      final r0 = computeSetRir(setIndex: 0, totalSets: 3, exerciseType: 'compound',
+          trainingGoal: 'hypertrophy', fitnessLevel: 'early_intermediate', equipment: 'barbell');
+      final r1 = computeSetRir(setIndex: 1, totalSets: 3, exerciseType: 'compound',
+          trainingGoal: 'hypertrophy', fitnessLevel: 'early_intermediate', equipment: 'barbell');
+      final r2 = computeSetRir(setIndex: 2, totalSets: 3, exerciseType: 'compound',
+          trainingGoal: 'hypertrophy', fitnessLevel: 'early_intermediate', equipment: 'barbell');
+      expect(r0, 4); expect(r1, 3); expect(r2, 2);
     });
   });
 

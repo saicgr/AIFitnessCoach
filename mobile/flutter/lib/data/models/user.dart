@@ -392,6 +392,28 @@ class User extends Equatable {
     }
   }
 
+  /// Effective fitness level for RIR computation.
+  ///
+  /// Combines [fitnessLevel] with [trainingExperience] to produce a more
+  /// nuanced level. A "beginner" who has some lifting experience (< 6 months)
+  /// is promoted to "early_intermediate" — they know basic form but still
+  /// need a conservative start RIR.
+  String? get effectiveFitnessLevel {
+    final level = fitnessLevel;
+    if (level == null) return null;
+    if (level == 'beginner') {
+      final exp = trainingExperience;
+      // Returning users with some experience: knows the basics
+      if (exp == 'less_than_6_months' ||
+          exp == '6_months_to_2_years' ||
+          exp == '2_to_5_years' ||
+          exp == '5_plus_years') {
+        return 'early_intermediate';
+      }
+    }
+    return level;
+  }
+
   /// Get training experience as display text
   String get trainingExperienceDisplay {
     final exp = trainingExperience;

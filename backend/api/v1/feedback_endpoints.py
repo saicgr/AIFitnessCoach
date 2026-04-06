@@ -14,6 +14,11 @@ logger = logging.getLogger(__name__)
 from core.auth import get_current_user
 from core.db import get_supabase_db
 from core.exceptions import safe_internal_error
+from core.activity_logger import log_user_activity, log_user_error
+from services.feedback_analysis_service import (
+    get_exercises_ready_for_progression,
+    record_progression_response,
+)
 
 from .feedback_models import (
     SetDetail,
@@ -33,7 +38,7 @@ router = APIRouter()
 def _get_rag_service():
     """Lazy import to avoid circular dependency with feedback.py."""
     from .feedback import get_feedback_rag_service
-    return _get_rag_service()
+    return get_feedback_rag_service()
 
 
 @router.get("/ai-coach/exercise-progress/{user_id}/{exercise_name}")
@@ -180,22 +185,6 @@ async def get_user_achievements(
 # Progression Suggestion Endpoints
 # ============================================
 
-class ProgressionSuggestionResponse(BaseModel):
-    """Response model for progression suggestions."""
-    exercise_name: str
-    suggested_next_variant: str
-    consecutive_easy_sessions: int
-    difficulty_increase: Optional[float] = None
-    chain_id: Optional[str] = None
-
-class ProgressionResponseRequest(BaseModel):
-    """Request body for responding to a progression suggestion."""
-    user_id: str
-    exercise_name: str
-    new_exercise_name: str
-    accepted: bool
-    decline_reason: Optional[str] = None
-
 @router.get("/progression-suggestions/{user_id}", response_model=List[ProgressionSuggestionResponse])
 async def get_progression_suggestions(
     user_id: str,
@@ -328,23 +317,6 @@ async def respond_to_progression(
 # ============================================
 # Challenge Exercise Feedback Endpoints
 # ============================================
-
-class ChallengeExerciseFeedbackRequest(BaseModel):
-    """Request body for challenge exercise feedback."""
-    user_id: str
-    exercise_name: str
-    difficulty_felt: str  # "too_easy", "just_right", "too_hard"
-    completed: bool
-    workout_id: Optional[str] = None
-    performance_data: Optional[dict] = None  # {sets_completed, total_reps, avg_weight}
-
-class ChallengeExerciseFeedbackResponse(BaseModel):
-    """Response from challenge exercise feedback submission."""
-    success: bool
-    exercise_name: str
-    consecutive_successes: int
-    ready_for_main_workout: bool
-    message: str
 
 @router.post("/challenge-exercise", response_model=ChallengeExerciseFeedbackResponse)
 async def submit_challenge_exercise_feedback(

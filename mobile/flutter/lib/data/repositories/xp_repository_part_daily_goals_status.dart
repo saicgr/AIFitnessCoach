@@ -393,6 +393,42 @@ class DailyCratesState {
 }
 
 
+/// A single unclaimed crate from a past day.
+class UnclaimedCrate {
+  final DateTime crateDate;
+  final bool dailyCrateAvailable;
+  final bool streakCrateAvailable;
+  final bool activityCrateAvailable;
+
+  const UnclaimedCrate({
+    required this.crateDate,
+    this.dailyCrateAvailable = true,
+    this.streakCrateAvailable = false,
+    this.activityCrateAvailable = false,
+  });
+
+  factory UnclaimedCrate.fromJson(Map<String, dynamic> json) {
+    return UnclaimedCrate(
+      crateDate: DateTime.tryParse(json['crate_date'] as String? ?? '') ?? DateTime.now(),
+      dailyCrateAvailable: json['daily_crate_available'] as bool? ?? true,
+      streakCrateAvailable: json['streak_crate_available'] as bool? ?? false,
+      activityCrateAvailable: json['activity_crate_available'] as bool? ?? false,
+    );
+  }
+
+  /// All available crate type options for this day.
+  List<String> get availableTypes {
+    final types = <String>[];
+    if (activityCrateAvailable) types.add('activity');
+    if (streakCrateAvailable) types.add('streak');
+    if (dailyCrateAvailable) types.add('daily');
+    return types;
+  }
+
+  int get availableCount => availableTypes.length;
+}
+
+
 // =========================================================================
 // Extended Weekly Progress (10 checkpoints)
 // =========================================================================
