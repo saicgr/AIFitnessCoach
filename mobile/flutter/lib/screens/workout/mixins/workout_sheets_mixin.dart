@@ -330,7 +330,7 @@ mixin WorkoutSheetsMixin<T extends StatefulWidget> on State<T> {
           final minBar = isBarbell(exercise.equipment, exerciseName: exercise.name)
               ? getBarWeight(exercise.equipment, useKg: useKg)
               : 0.0;
-          if (currentWeight <= minBar && sets.isNotEmpty) {
+          if (currentWeight < minBar && sets.isNotEmpty) {
             final prevWeightKg = (sets.last['weight_kg'] as num?)?.toDouble() ?? 0.0;
             if (prevWeightKg > 0) {
               final displayWeight = useKg
@@ -379,19 +379,24 @@ mixin WorkoutSheetsMixin<T extends StatefulWidget> on State<T> {
   /// Load personalized warmup and stretch exercises from API
   Future<void> loadWarmupAndStretches() async {
     final workoutId = (workoutWidget as dynamic).workout.id;
+    debugPrint('🔥 [Warmup] loadWarmupAndStretches called, workoutId=$workoutId');
     if (workoutId == null) {
+      debugPrint('🔥 [Warmup] workoutId is null — skipping warmup load');
       if (mounted) setState(() => isWarmupLoading = false);
       return;
     }
 
     try {
       final workoutRepo = ref.read(workoutRepositoryProvider);
+      debugPrint('🔥 [Warmup] Calling generateWarmupAndStretches API...');
       final data = await workoutRepo.generateWarmupAndStretches(workoutId);
+      debugPrint('🔥 [Warmup] API returned: warmup=${data['warmup']?.length ?? 'null'}, stretches=${data['stretches']?.length ?? 'null'}');
 
       if (!mounted) return;
 
       final warmupData = data['warmup'] ?? [];
       final stretchData = data['stretches'] ?? [];
+      debugPrint('🔥 [Warmup] warmupData.length=${warmupData.length}, stretchData.length=${stretchData.length}');
 
       setState(() {
         if (warmupData.isNotEmpty) {
@@ -498,7 +503,7 @@ mixin WorkoutSheetsMixin<T extends StatefulWidget> on State<T> {
         final minBar = isBarbell(exercise.equipment, exerciseName: exercise.name)
             ? getBarWeight(exercise.equipment, useKg: useKg)
             : 0.0;
-        if (currentWeight <= minBar && mounted) {
+        if (currentWeight < minBar && mounted) {
           final displayWeight = useKg
               ? prevWeight
               : kgToDisplayLbs(prevWeight, exercise.equipment,
@@ -543,9 +548,10 @@ mixin WorkoutSheetsMixin<T extends StatefulWidget> on State<T> {
             : kgToDisplayLbs(minBarKg, exercise.equipment,
                 exerciseName: exercise.name,);
 
-        // Only update if current weight is still at default/low
+        // Only update if current weight is truly unset or below bar minimum
+        // Do NOT override a valid planned weight (e.g., 45 lbs == bar weight)
         final currentWeight = double.tryParse(weightController.text) ?? 0;
-        if (suggestion.isHighConfidence || currentWeight <= 0 || currentWeight <= displayMinBar) {
+        if (currentWeight <= 0 || currentWeight < displayMinBar) {
           setState(() {
             weightController.text = displaySuggested.toStringAsFixed(1);
           });

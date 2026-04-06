@@ -98,25 +98,25 @@ class _WorkoutAICoachSheetState extends ConsumerState<WorkoutAICoachSheet> {
 
   List<QuickPrompt> get _quickPrompts => [
     QuickPrompt(
-      label: 'Form tips',
+      label: 'Form',
       prompt: 'What are the key form tips for ${widget.currentExercise.name}?',
       icon: Icons.sports_gymnastics,
       color: AppColors.cyan,
     ),
     QuickPrompt(
-      label: 'Alternatives',
+      label: 'Swaps',
       prompt: 'What are some alternative exercises I can do instead of ${widget.currentExercise.name}?',
       icon: Icons.swap_horiz,
       color: AppColors.purple,
     ),
     QuickPrompt(
-      label: 'Rest time?',
+      label: 'Rest',
       prompt: 'How long should I rest between sets of ${widget.currentExercise.name}?',
       icon: Icons.timer_outlined,
       color: AppColors.orange,
     ),
     QuickPrompt(
-      label: 'How many sets?',
+      label: 'Sets',
       prompt: 'How many sets should I do of ${widget.currentExercise.name} for best results?',
       icon: Icons.format_list_numbered,
       color: AppColors.electricBlue,
@@ -379,64 +379,44 @@ User question: $message
   }
 
   Widget _buildQuickPrompts(bool isDark) {
-    final screenWidth = MediaQuery.of(context).size.width;
-    final isCompact = screenWidth < 360;
-
-    return Padding(
-      padding: EdgeInsets.symmetric(
-        horizontal: isCompact ? 12 : 16,
-        vertical: isCompact ? 6 : 8,
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Quick Questions',
-            style: TextStyle(
-              fontSize: isCompact ? 11 : 12,
-              fontWeight: FontWeight.w500,
-              color: isDark ? AppColors.textMuted : Colors.black54,
-            ),
-          ),
-          SizedBox(height: isCompact ? 6 : 8),
-          Wrap(
-            spacing: isCompact ? 6 : 8,
-            runSpacing: isCompact ? 6 : 8,
-            children: _quickPrompts.map((prompt) {
-              return GestureDetector(
-                onTap: () => _sendQuickPrompt(prompt),
-                child: Container(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: isCompact ? 8 : 12,
-                    vertical: isCompact ? 6 : 8,
-                  ),
-                  decoration: BoxDecoration(
-                    color: prompt.color.withOpacity(0.12),
-                    borderRadius: BorderRadius.circular(isCompact ? 16 : 20),
-                    border: Border.all(
-                      color: prompt.color.withOpacity(0.3),
+    return SizedBox(
+      height: 44,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+        itemCount: _quickPrompts.length,
+        separatorBuilder: (_, __) => const SizedBox(width: 8),
+        itemBuilder: (context, index) {
+          final prompt = _quickPrompts[index];
+          return GestureDetector(
+            onTap: () => _sendQuickPrompt(prompt),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: prompt.color.withOpacity(0.12),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: prompt.color.withOpacity(0.3),
+                ),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(prompt.icon, size: 14, color: prompt.color),
+                  const SizedBox(width: 5),
+                  Text(
+                    prompt.label,
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
+                      color: prompt.color,
                     ),
                   ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(prompt.icon, size: isCompact ? 14 : 16, color: prompt.color),
-                      SizedBox(width: isCompact ? 4 : 6),
-                      Text(
-                        prompt.label,
-                        style: TextStyle(
-                          fontSize: isCompact ? 11 : 13,
-                          fontWeight: FontWeight.w500,
-                          color: prompt.color,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              );
-            }).toList(),
-          ),
-        ],
+                ],
+              ),
+            ),
+          );
+        },
       ),
     );
   }
@@ -628,147 +608,146 @@ User question: $message
 
   Widget _buildInputField(bool isDark) {
     final canSend = _isTyping || _selectedMedia.isNotEmpty;
+    final bottomPadding = MediaQuery.of(context).padding.bottom;
 
-    return SafeArea(
-      top: false,
-      child: Container(
-        decoration: BoxDecoration(
-          color: isDark ? AppColors.elevated : Colors.grey.shade50,
-          border: Border(
-            top: BorderSide(
-              color: isDark
-                  ? Colors.white.withOpacity(0.1)
-                  : Colors.black.withOpacity(0.05),
-            ),
+    return Container(
+      padding: EdgeInsets.fromLTRB(16, 0, 16, bottomPadding + 12),
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.nearBlack : Colors.white,
+        border: Border(
+          top: BorderSide(
+            color: isDark
+                ? Colors.white.withOpacity(0.1)
+                : Colors.black.withOpacity(0.08),
           ),
         ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Media preview strip
-            if (_selectedMedia.isNotEmpty)
-              MediaPreviewStrip(
-                mediaList: _selectedMedia,
-                onRemoveAt: (index) => setState(() => _selectedMedia.removeAt(index)),
-                onInsertAt: (index, media) => setState(() => _selectedMedia.insert(index, media)),
-                onAddMore: _pickMedia,
-              ),
-
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: Row(
-                children: [
-                  // Camera button
-                  GestureDetector(
-                    onTap: _pickImageFromCamera,
-                    child: Container(
-                      width: 36,
-                      height: 36,
-                      decoration: BoxDecoration(
-                        color: isDark
-                            ? Colors.white.withOpacity(0.08)
-                            : Colors.black.withOpacity(0.05),
-                        shape: BoxShape.circle,
-                      ),
-                      child: Icon(
-                        Icons.camera_alt_outlined,
-                        size: 16,
-                        color: isDark ? AppColors.textMuted : Colors.black38,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 6),
-
-                  // Attach button
-                  GestureDetector(
-                    onTap: _pickMedia,
-                    child: Container(
-                      width: 36,
-                      height: 36,
-                      decoration: BoxDecoration(
-                        color: isDark
-                            ? Colors.white.withOpacity(0.08)
-                            : Colors.black.withOpacity(0.05),
-                        shape: BoxShape.circle,
-                      ),
-                      child: Icon(
-                        Icons.attach_file_outlined,
-                        size: 16,
-                        color: isDark ? AppColors.textMuted : Colors.black38,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-
-                  Expanded(
-                    child: TextField(
-                      controller: _messageController,
-                      focusNode: _focusNode,
-                      textCapitalization: TextCapitalization.sentences,
-                      style: TextStyle(
-                        color: isDark ? Colors.white : Colors.black,
-                        fontSize: 15,
-                      ),
-                      decoration: InputDecoration(
-                        hintText: _selectedMedia.isNotEmpty
-                            ? 'Add a message (optional)...'
-                            : 'Ask about your workout...',
-                        hintStyle: TextStyle(
-                          color: isDark ? AppColors.textMuted : Colors.black38,
-                        ),
-                        filled: true,
-                        fillColor: isDark
-                            ? Colors.white.withOpacity(0.08)
-                            : Colors.white,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(24),
-                          borderSide: BorderSide.none,
-                        ),
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 20,
-                          vertical: 12,
-                        ),
-                      ),
-                      onChanged: (value) {
-                        setState(() => _isTyping = value.isNotEmpty);
-                      },
-                      onSubmitted: (_) => _handleSend(),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  GestureDetector(
-                    onTap: canSend ? _handleSend : null,
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 200),
-                      width: 48,
-                      height: 48,
-                      decoration: BoxDecoration(
-                        gradient: canSend
-                            ? const LinearGradient(
-                                colors: [AppColors.cyan, AppColors.electricBlue],
-                              )
-                            : null,
-                        color: canSend
-                            ? null
-                            : (isDark
-                                ? Colors.white.withOpacity(0.1)
-                                : Colors.black.withOpacity(0.05)),
-                        shape: BoxShape.circle,
-                      ),
-                      child: Icon(
-                        Icons.send_rounded,
-                        color: canSend
-                            ? Colors.white
-                            : (isDark ? AppColors.textMuted : Colors.black26),
-                        size: 22,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Media preview strip
+          if (_selectedMedia.isNotEmpty)
+            MediaPreviewStrip(
+              mediaList: _selectedMedia,
+              onRemoveAt: (index) => setState(() => _selectedMedia.removeAt(index)),
+              onInsertAt: (index, media) => setState(() => _selectedMedia.insert(index, media)),
+              onAddMore: _pickMedia,
             ),
-          ],
-        ),
+
+          Padding(
+            padding: const EdgeInsets.only(top: 12),
+            child: Row(
+              children: [
+                // Camera button
+                GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTap: _pickImageFromCamera,
+                  child: Container(
+                    width: 36,
+                    height: 36,
+                    decoration: BoxDecoration(
+                      color: isDark
+                          ? Colors.white.withOpacity(0.08)
+                          : Colors.black.withOpacity(0.05),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      Icons.camera_alt_outlined,
+                      size: 18,
+                      color: isDark ? AppColors.textSecondary : Colors.black45,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 6),
+
+                // Attach button
+                GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTap: _pickMedia,
+                  child: Container(
+                    width: 36,
+                    height: 36,
+                    decoration: BoxDecoration(
+                      color: isDark
+                          ? Colors.white.withOpacity(0.08)
+                          : Colors.black.withOpacity(0.05),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      Icons.attach_file_outlined,
+                      size: 18,
+                      color: isDark ? AppColors.textSecondary : Colors.black45,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+
+                Expanded(
+                  child: TextField(
+                    controller: _messageController,
+                    focusNode: _focusNode,
+                    textCapitalization: TextCapitalization.sentences,
+                    maxLines: 4,
+                    minLines: 1,
+                    style: TextStyle(
+                      color: isDark ? Colors.white : Colors.black,
+                      fontSize: 15,
+                    ),
+                    decoration: InputDecoration(
+                      hintText: _selectedMedia.isNotEmpty
+                          ? 'Add a message (optional)...'
+                          : 'Ask about your workout...',
+                      hintStyle: TextStyle(
+                        color: isDark ? AppColors.textMuted : Colors.black38,
+                      ),
+                      filled: true,
+                      fillColor: isDark
+                          ? Colors.white.withOpacity(0.08)
+                          : Colors.black.withOpacity(0.04),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(24),
+                        borderSide: BorderSide.none,
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 12,
+                      ),
+                    ),
+                    onChanged: (value) {
+                      setState(() => _isTyping = value.isNotEmpty);
+                    },
+                    onSubmitted: (_) => _handleSend(),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Container(
+                  decoration: BoxDecoration(
+                    gradient: canSend
+                        ? const LinearGradient(
+                            colors: [AppColors.cyan, AppColors.purple],
+                          )
+                        : null,
+                    color: canSend
+                        ? null
+                        : (isDark
+                            ? Colors.white.withOpacity(0.1)
+                            : Colors.black.withOpacity(0.05)),
+                    shape: BoxShape.circle,
+                  ),
+                  child: IconButton(
+                    onPressed: canSend ? _handleSend : null,
+                    icon: Icon(
+                      Icons.send_rounded,
+                      color: canSend
+                          ? Colors.white
+                          : (isDark ? AppColors.textMuted : Colors.black26),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

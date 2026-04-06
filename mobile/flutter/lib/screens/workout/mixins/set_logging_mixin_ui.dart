@@ -182,7 +182,8 @@ extension SetLoggingMixinUI on SetLoggingMixin {
       final int reps;
       if (isWarmup) {
         final warmupTarget = currentSetTargets[completedCount];
-        weight = warmupTarget.targetWeightKg ?? 0;
+        final rawKg = warmupTarget.targetWeightKg ?? 0;
+        weight = useKg ? rawKg : kgToDisplayLbs(rawKg, exercise.equipment, exerciseName: exercise.name);
         reps = warmupTarget.targetReps;
       } else {
         final pt = targets[completedCount];

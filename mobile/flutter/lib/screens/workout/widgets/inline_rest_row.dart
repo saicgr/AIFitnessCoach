@@ -137,10 +137,10 @@ class _InlineRestRowState extends State<InlineRestRow>
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
 
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
         color: backgroundColor,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(14),
         border: Border.all(color: borderColor),
       ),
       child: Column(
@@ -162,7 +162,7 @@ class _InlineRestRowState extends State<InlineRestRow>
           // Note input (expandable)
           if (_showNoteInput) _buildNoteInput(isDark, textPrimary, textMuted),
 
-          const SizedBox(height: 12),
+          const SizedBox(height: 8),
         ],
       ),
     );
@@ -170,7 +170,7 @@ class _InlineRestRowState extends State<InlineRestRow>
 
   Widget _buildTimerRow(bool isDark, Color textPrimary, Color textMuted) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+      padding: const EdgeInsets.fromLTRB(14, 12, 14, 6),
       child: Row(
         children: [
           // Timer display
@@ -184,16 +184,16 @@ class _InlineRestRowState extends State<InlineRestRow>
                   children: [
                     Icon(
                       Icons.timer_outlined,
-                      size: 24,
+                      size: 20,
                       color: _remainingSeconds <= 10
                           ? AppColors.orange
                           : AppColors.electricBlue,
                     ),
-                    const SizedBox(width: 8),
+                    const SizedBox(width: 6),
                     Text(
                       _formatTime(_remainingSeconds),
                       style: TextStyle(
-                        fontSize: 28,
+                        fontSize: 24,
                         fontWeight: FontWeight.bold,
                         fontFamily: 'monospace',
                         color: _remainingSeconds <= 10
@@ -216,7 +216,7 @@ class _InlineRestRowState extends State<InlineRestRow>
             isDark: isDark,
             textMuted: textMuted,
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: 6),
 
           // +15s button
           _buildTimeAdjustButton(
@@ -225,7 +225,7 @@ class _InlineRestRowState extends State<InlineRestRow>
             isDark: isDark,
             textMuted: textMuted,
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 8),
 
           // Skip button
           GestureDetector(
@@ -234,10 +234,10 @@ class _InlineRestRowState extends State<InlineRestRow>
               widget.onSkipRest();
             },
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
                 color: (isDark ? AppColors.orange : AppColorsLight.orange).withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(20),
+                borderRadius: BorderRadius.circular(16),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
@@ -245,15 +245,15 @@ class _InlineRestRowState extends State<InlineRestRow>
                   Text(
                     'Skip',
                     style: TextStyle(
-                      fontSize: 14,
+                      fontSize: 13,
                       fontWeight: FontWeight.w600,
                       color: isDark ? AppColors.orange : AppColorsLight.orange,
                     ),
                   ),
-                  const SizedBox(width: 4),
+                  const SizedBox(width: 3),
                   Icon(
                     Icons.arrow_forward_rounded,
-                    size: 16,
+                    size: 14,
                     color: isDark ? AppColors.orange : AppColorsLight.orange,
                   ),
                 ],
@@ -295,12 +295,12 @@ class _InlineRestRowState extends State<InlineRestRow>
 
   Widget _buildProgressBar(bool isDark) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.symmetric(horizontal: 14),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(4),
+        borderRadius: BorderRadius.circular(3),
         child: LinearProgressIndicator(
           value: _progress,
-          minHeight: 6,
+          minHeight: 4,
           backgroundColor: isDark
               ? Colors.white.withValues(alpha: 0.1)
               : Colors.black.withValues(alpha: 0.08),
@@ -315,22 +315,22 @@ class _InlineRestRowState extends State<InlineRestRow>
   Widget _buildAchievementPrompt(bool isDark, Color textPrimary) {
     final goldColor = Colors.amber.shade600;
     return Container(
-      margin: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      margin: const EdgeInsets.fromLTRB(14, 8, 14, 0),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
       decoration: BoxDecoration(
         color: goldColor.withValues(alpha: 0.15),
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(8),
         border: Border.all(color: goldColor.withValues(alpha: 0.3)),
       ),
       child: Row(
         children: [
-          const Text('🏆', style: TextStyle(fontSize: 18)),
-          const SizedBox(width: 10),
+          const Text('🏆', style: TextStyle(fontSize: 15)),
+          const SizedBox(width: 8),
           Expanded(
             child: Text(
               widget.achievementPrompt!,
               style: TextStyle(
-                fontSize: 14,
+                fontSize: 13,
                 fontWeight: FontWeight.w600,
                 color: isDark ? goldColor : Colors.amber.shade800,
               ),
@@ -344,7 +344,7 @@ class _InlineRestRowState extends State<InlineRestRow>
   Widget _buildRpeRating(
       bool isDark, Color textPrimary, Color textSecondary, Color textMuted) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+      padding: const EdgeInsets.fromLTRB(14, 10, 14, 0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -354,25 +354,25 @@ class _InlineRestRowState extends State<InlineRestRow>
               Text(
                 'How did that feel?',
                 style: TextStyle(
-                  fontSize: 14,
+                  fontSize: 13,
                   fontWeight: FontWeight.w500,
                   color: textPrimary,
                 ),
               ),
-              const SizedBox(width: 6),
+              const SizedBox(width: 4),
               Text(
                 '(RPE)',
                 style: TextStyle(
-                  fontSize: 12,
+                  fontSize: 11,
                   color: textMuted,
                 ),
               ),
-              const SizedBox(width: 4),
+              const SizedBox(width: 3),
               GestureDetector(
                 onTap: widget.onShowRpeInfo,
                 child: Icon(
                   Icons.info_outline,
-                  size: 16,
+                  size: 14,
                   color: textMuted,
                 ),
               ),
@@ -385,26 +385,26 @@ class _InlineRestRowState extends State<InlineRestRow>
                 },
                 child: Container(
                   padding:
-                      const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
                     color: isDark
                         ? Colors.white.withValues(alpha: 0.08)
                         : Colors.black.withValues(alpha: 0.05),
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: BorderRadius.circular(6),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Icon(
                         _showNoteInput ? Icons.close : Icons.add,
-                        size: 14,
+                        size: 12,
                         color: textMuted,
                       ),
-                      const SizedBox(width: 4),
+                      const SizedBox(width: 3),
                       Text(
                         'Note',
                         style: TextStyle(
-                          fontSize: 12,
+                          fontSize: 11,
                           color: textMuted,
                         ),
                       ),
@@ -414,17 +414,15 @@ class _InlineRestRowState extends State<InlineRestRow>
               ),
             ],
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 6),
 
-          // Star rating row with emoji anchors - use Expanded to prevent overflow
+          // Star rating row with emoji anchors
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // Easy emoji
-              const Text('😌', style: TextStyle(fontSize: 18)),
-              const SizedBox(width: 4),
+              const Text('😌', style: TextStyle(fontSize: 15)),
+              const SizedBox(width: 2),
 
-              // 10 stars - wrapped in Flexible to prevent overflow
               Flexible(
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -437,21 +435,19 @@ class _InlineRestRowState extends State<InlineRestRow>
                     return GestureDetector(
                       onTap: () {
                         HapticFeedback.selectionClick();
-                        // If tapping the same star, deselect (set to 0)
-                        // Otherwise, select this rating
                         if (isExactSelection) {
-                          widget.onRateSet(0); // Deselect
+                          widget.onRateSet(0);
                         } else {
                           widget.onRateSet(rpeValue);
                         }
                       },
                       child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 1),
+                        padding: const EdgeInsets.symmetric(horizontal: 0.5),
                         child: Icon(
                           isSelected ? Icons.star_rounded : Icons.star_outline_rounded,
-                          size: 22,
+                          size: 20,
                           color: isSelected
-                              ? Colors.amber.shade600 // Golden yellow for selected
+                              ? Colors.amber.shade600
                               : textMuted.withValues(alpha: 0.5),
                         ),
                       ),
@@ -460,9 +456,8 @@ class _InlineRestRowState extends State<InlineRestRow>
                 ),
               ),
 
-              const SizedBox(width: 4),
-              // Hard emoji
-              const Text('😤', style: TextStyle(fontSize: 18)),
+              const SizedBox(width: 2),
+              const Text('😤', style: TextStyle(fontSize: 15)),
             ],
           ),
         ],
@@ -473,7 +468,7 @@ class _InlineRestRowState extends State<InlineRestRow>
 
   Widget _buildNoteInput(bool isDark, Color textPrimary, Color textMuted) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+      padding: const EdgeInsets.fromLTRB(14, 8, 14, 0),
       child: Row(
         children: [
           Expanded(

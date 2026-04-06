@@ -40,9 +40,13 @@ class _ProgressionSelectorSheetState extends State<_ProgressionSelectorSheet> {
   Widget build(BuildContext context) {
     final textPrimary = widget.isDark ? Colors.white : Colors.grey.shade900;
     final textSecondary = widget.isDark ? Colors.grey.shade400 : Colors.grey.shade600;
-    final cardBg = widget.isDark ? const Color(0xFF1E1E1E) : Colors.grey.shade50;
+    final cardBg = widget.isDark
+        ? Colors.white.withValues(alpha: 0.08)
+        : Colors.black.withValues(alpha: 0.04);
     final selectedBorder = widget.isDark ? Colors.white : Colors.black;
-    final dividerColor = widget.isDark ? Colors.grey.shade800 : Colors.grey.shade300;
+    final dividerColor = widget.isDark
+        ? Colors.white.withValues(alpha: 0.12)
+        : Colors.black.withValues(alpha: 0.1);
 
     // Standard patterns (non-advanced)
     final standardPatterns = SetProgressionPattern.values
@@ -55,21 +59,11 @@ class _ProgressionSelectorSheetState extends State<_ProgressionSelectorSheet> {
     return SafeArea(
       child: ListView(
         controller: widget.scrollController,
-        padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
+        padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
         children: [
           // Handle
-          Center(
-            child: Container(
-              width: 40,
-              height: 4,
-              margin: const EdgeInsets.only(bottom: 16),
-              decoration: BoxDecoration(
-                color: Colors.grey.shade600,
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-          ),
-
+          GlassSheetHandle(isDark: widget.isDark),
+          const SizedBox(height: 8),
           // Title
           Text(
             'Set Progression',

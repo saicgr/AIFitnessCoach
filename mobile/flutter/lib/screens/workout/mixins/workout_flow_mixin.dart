@@ -121,6 +121,9 @@ mixin WorkoutFlowMixin<T extends StatefulWidget> on State<T> {
 
   /// Finalize workout: save to backend, get PRs, and navigate to complete screen
   Future<void> finalizeWorkoutCompletion() async {
+    // Clear mini player state so reopening this workout starts fresh
+    ref.read(workoutMiniPlayerProvider.notifier).close();
+
     setState(() => currentPhase = WorkoutPhase.complete);
 
     final workout = (workoutWidget as dynamic).workout as Workout;
@@ -480,6 +483,7 @@ mixin WorkoutFlowMixin<T extends StatefulWidget> on State<T> {
 
     if (result != null && mounted) {
       cancelWorkoutNotification();
+      ref.read(workoutMiniPlayerProvider.notifier).close();
       logWorkoutExit(result.reason, result.notes);
       if (mounted) {
         context.pop();

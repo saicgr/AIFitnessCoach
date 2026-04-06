@@ -156,6 +156,27 @@ class _OpenAllCratesSheetState extends ConsumerState<OpenAllCratesSheet>
 
   int get _requiredSelections => widget.unclaimedCrates.length;
 
+  void _selectAll() {
+    if (_isCollecting || _showRewards) return;
+
+    setState(() {
+      // Group options by date, pick highest priority (lowest sortPriority) for each date
+      final byDate = <String, _CrateOption>{};
+      for (final option in _allOptions) {
+        final dateKey = _dateKey(option.crateDate);
+        if (!byDate.containsKey(dateKey) ||
+            option.sortPriority < byDate[dateKey]!.sortPriority) {
+          byDate[dateKey] = option;
+        }
+      }
+      _selectedByDate
+        ..clear()
+        ..addAll(byDate);
+    });
+
+    HapticService.light();
+  }
+
   void _toggleSelection(_CrateOption option) {
     if (_isCollecting || _showRewards) return;
 
@@ -201,6 +222,23 @@ class _OpenAllCratesSheetState extends ConsumerState<OpenAllCratesSheet>
 
     if (!mounted) return;
 
+    final anySuccess = results.any((r) => r.success);
+
+    if (!anySuccess) {
+      // All failed — show error, don't show rewards screen
+      setState(() => _isCollecting = false);
+      HapticService.error();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Failed to open crates. Please try again.'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+      return;
+    }
+
     setState(() {
       _results = results;
       _showRewards = true;
@@ -245,10 +283,29 @@ class _OpenAllCratesSheetState extends ConsumerState<OpenAllCratesSheet>
                     ),
                     const SizedBox(height: 6),
                     if (!_showRewards)
-                      Text(
-                        'Select $_requiredSelections crate${_requiredSelections > 1 ? 's' : ''}'
-                        ' \u2022 ${_selectedByDate.length}/$_requiredSelections selected',
-                        style: TextStyle(fontSize: 14, color: textSecondary),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            'Select $_requiredSelections crate${_requiredSelections > 1 ? 's' : ''}'
+                            ' \u2022 ${_selectedByDate.length}/$_requiredSelections selected',
+                            style: TextStyle(fontSize: 14, color: textSecondary),
+                          ),
+                          if (_selectedByDate.length < _requiredSelections && !_isCollecting) ...[
+                            const SizedBox(width: 8),
+                            GestureDetector(
+                              onTap: _selectAll,
+                              child: Text(
+                                'Select All',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                  color: const Color(0xFFFFB300),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ],
                       ),
                   ],
                 ),

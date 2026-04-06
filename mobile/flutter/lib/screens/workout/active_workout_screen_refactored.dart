@@ -469,6 +469,7 @@ class _ActiveWorkoutScreenState
     final miniPlayerState = ref.read(workoutMiniPlayerProvider);
     final isRestoring = miniPlayerState.workout?.id == widget.workout.id &&
         miniPlayerState.workoutSeconds > 0;
+    debugPrint('🔥 [Init] miniPlayer: workoutId=${miniPlayerState.workout?.id}, widgetId=${widget.workout.id}, timer=${miniPlayerState.workoutSeconds}, isRestoring=$isRestoring');
 
     if (isRestoring) {
       debugPrint('🎬 [ActiveWorkout] Restoring from mini player - timer: ${miniPlayerState.workoutSeconds}s, exercise: ${miniPlayerState.currentExerciseIndex}');
@@ -710,7 +711,7 @@ class _ActiveWorkoutScreenState
         final minBar = isBarbell(exercise.equipment, exerciseName: exercise.name)
             ? getBarWeight(exercise.equipment, useKg: _useKg)
             : 0.0;
-        if (currentWeight <= minBar && mounted) {
+        if (currentWeight < minBar && mounted) {
           final displayWeight = _useKg
               ? prevWeight
               : kgToDisplayLbs(prevWeight, exercise.equipment,
@@ -755,9 +756,10 @@ class _ActiveWorkoutScreenState
             : kgToDisplayLbs(minBarKg, exercise.equipment,
                 exerciseName: exercise.name,);
 
-        // Only update if current weight is still at default/low
+        // Only update if current weight is truly unset or below bar minimum
+        // Do NOT override a valid planned weight (e.g., 45 lbs == bar weight)
         final currentWeight = double.tryParse(_weightController.text) ?? 0;
-        if (suggestion.isHighConfidence || currentWeight <= 0 || currentWeight <= displayMinBar) {
+        if (currentWeight <= 0 || currentWeight < displayMinBar) {
           setState(() {
             _weightController.text = displaySuggested.toStringAsFixed(1);
           });
@@ -881,6 +883,7 @@ class _ActiveWorkoutScreenState
     final isFoldableOpen = FoldableQuizScaffold.shouldUseFoldableLayout(windowState);
 
     // Route to appropriate phase screen
+    debugPrint('🔥 [Build] _currentPhase=$_currentPhase, _isWarmupLoading=$_isWarmupLoading, _warmupExercises=${_warmupExercises?.length ?? 'null'}');
     switch (_currentPhase) {
       case WorkoutPhase.warmup:
         // Still loading warmup data from API - show loading
@@ -889,8 +892,12 @@ class _ActiveWorkoutScreenState
         }
         // Skip warmup if API returned no exercises
         if (_warmupExercises == null || _warmupExercises!.isEmpty) {
-          handleWarmupComplete();
-          return const SizedBox.shrink();
+          debugPrint('🔥 [Build] Warmup exercises null/empty — auto-skipping to active');
+          // Schedule for next frame to avoid setState during build
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) handleWarmupComplete();
+          });
+          return buildWarmupLoadingScreen();
         }
         if (isFoldableOpen) {
           return FoldableWarmupLayout(
@@ -914,7 +921,9 @@ class _ActiveWorkoutScreenState
       case WorkoutPhase.stretch:
         // Skip stretch if API didn't return personalized exercises
         if (_stretchExercises == null || _stretchExercises!.isEmpty) {
-          handleStretchComplete();
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) handleStretchComplete();
+          });
           return const SizedBox.shrink();
         }
         return StretchPhaseScreen(
@@ -1108,37 +1117,53 @@ class _ActiveWorkoutScreenState
     final baseReps = exercise.reps ?? 10;
     final totalSets = _totalSetsPerExercise[_viewingExerciseIndex] ?? 3;
 
-    showModalBottomSheet<SetProgressionPattern>(
+    showGlassSheet<SetProgressionPattern>(
       context: context,
-      backgroundColor: isDark ? WorkoutDesign.surface : Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      isScrollControlled: true,
-      builder: (ctx) => DraggableScrollableSheet(
-        expand: false,
-        initialChildSize: 0.7,
-        minChildSize: 0.4,
-        maxChildSize: 0.9,
-        builder: (ctx, scrollController) {
-          final exTypePreview = FatigueService.getExerciseType(exercise.muscleGroup, exercise.name);
-          final userGoalPreview = ref.read(authStateProvider).user?.primaryGoal;
-          return _ProgressionSelectorSheet(
-            currentPattern: currentPattern,
-            workingWeight: workingWeight,
-            totalSets: totalSets,
-            baseReps: baseReps,
-            increment: increment,
-            unit: unit,
-            isDark: isDark,
-            scrollController: scrollController,
-            trainingGoal: userGoalPreview,
-            exerciseType: exTypePreview,
-            onSelect: (pattern) {
-              Navigator.of(ctx).pop(pattern);
-            },
-          );
-        },
+      builder: (ctx) => ClipRRect(
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(GlassSheetStyle.borderRadius)),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(
+            sigmaX: GlassSheetStyle.blurSigma,
+            sigmaY: GlassSheetStyle.blurSigma,
+          ),
+          child: Container(
+            decoration: BoxDecoration(
+              color: GlassSheetStyle.backgroundColor(isDark),
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(GlassSheetStyle.borderRadius)),
+              border: Border(
+                top: BorderSide(
+                  color: GlassSheetStyle.borderColor(isDark),
+                  width: 0.5,
+                ),
+              ),
+            ),
+            child: DraggableScrollableSheet(
+              expand: false,
+              initialChildSize: 0.7,
+              minChildSize: 0.4,
+              maxChildSize: 0.9,
+              builder: (ctx, scrollController) {
+                final exTypePreview = FatigueService.getExerciseType(exercise.muscleGroup, exercise.name);
+                final userGoalPreview = ref.read(authStateProvider).user?.primaryGoal;
+                return _ProgressionSelectorSheet(
+                  currentPattern: currentPattern,
+                  workingWeight: workingWeight,
+                  totalSets: totalSets,
+                  baseReps: baseReps,
+                  increment: increment,
+                  unit: unit,
+                  isDark: isDark,
+                  scrollController: scrollController,
+                  trainingGoal: userGoalPreview,
+                  exerciseType: exTypePreview,
+                  onSelect: (pattern) {
+                    Navigator.of(ctx).pop(pattern);
+                  },
+                );
+              },
+            ),
+          ),
+        ),
       ),
     ).then((selected) {
       if (selected != null && selected != currentPattern) {

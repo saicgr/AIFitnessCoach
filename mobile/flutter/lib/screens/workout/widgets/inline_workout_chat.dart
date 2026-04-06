@@ -77,28 +77,28 @@ class _InlineWorkoutChatState extends ConsumerState<InlineWorkoutChat> {
 
   List<_QuickPrompt> get _quickPrompts => [
         _QuickPrompt(
-          label: 'Form tips',
+          label: 'Form',
           prompt:
               'What are the key form tips for ${widget.currentExercise.name}?',
           icon: Icons.sports_gymnastics,
           color: AppColors.cyan,
         ),
         _QuickPrompt(
-          label: 'Alternatives',
+          label: 'Swaps',
           prompt:
               'What are some alternative exercises I can do instead of ${widget.currentExercise.name}?',
           icon: Icons.swap_horiz,
           color: AppColors.purple,
         ),
         _QuickPrompt(
-          label: 'Rest time?',
+          label: 'Rest',
           prompt:
               'How long should I rest between sets of ${widget.currentExercise.name}?',
           icon: Icons.timer_outlined,
           color: AppColors.orange,
         ),
         _QuickPrompt(
-          label: 'How many sets?',
+          label: 'Sets',
           prompt:
               'How many sets should I do of ${widget.currentExercise.name} for best results?',
           icon: Icons.format_list_numbered,
@@ -374,60 +374,44 @@ User question: $message
   }
 
   Widget _buildQuickPrompts(bool isDark) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Quick Questions',
-            style: TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w500,
-              color: isDark ? AppColors.textMuted : Colors.black54,
-            ),
-          ),
-          const SizedBox(height: 6),
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(
-              children: _quickPrompts.map((prompt) {
-                return Padding(
-                  padding: const EdgeInsets.only(right: 6),
-                  child: GestureDetector(
-                    onTap: () => _sendQuickPrompt(prompt),
-                    child: Container(
-                      padding:
-                          const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                      decoration: BoxDecoration(
-                        color: prompt.color.withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(
-                          color: prompt.color.withValues(alpha: 0.3),
-                        ),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(prompt.icon, size: 14, color: prompt.color),
-                          const SizedBox(width: 4),
-                          Text(
-                            prompt.label,
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w500,
-                              color: prompt.color,
-                            ),
-                          ),
-                        ],
-                      ),
+    return SizedBox(
+      height: 40,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        itemCount: _quickPrompts.length,
+        separatorBuilder: (_, __) => const SizedBox(width: 6),
+        itemBuilder: (context, index) {
+          final prompt = _quickPrompts[index];
+          return GestureDetector(
+            onTap: () => _sendQuickPrompt(prompt),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              decoration: BoxDecoration(
+                color: prompt.color.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: prompt.color.withValues(alpha: 0.3),
+                ),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(prompt.icon, size: 14, color: prompt.color),
+                  const SizedBox(width: 4),
+                  Text(
+                    prompt.label,
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                      color: prompt.color,
                     ),
                   ),
-                );
-              }).toList(),
+                ],
+              ),
             ),
-          ),
-        ],
+          );
+        },
       ),
     );
   }

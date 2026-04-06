@@ -359,57 +359,117 @@ mixin SetLoggingMixin<T extends StatefulWidget> on State<T> {
     final accent = ref.watch(accentColorProvider).getColor(isDark);
     final bgColor = isDark ? AppColors.elevated : Colors.white;
     final titleColor = isDark ? AppColors.textPrimary : Colors.black87;
+    int? editRir = set.rir;
 
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: bgColor,
-        title: Text('Edit Set ${setIndex + 1}',
-            style: TextStyle(color: titleColor)),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            NumberInputField(
-              controller: editWeightController,
-              icon: Icons.fitness_center,
-              hint: 'Weight (${useKg ? 'kg' : 'lbs'})',
-              color: accent,
-              isDecimal: true,
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (dialogContext, setDialogState) => AlertDialog(
+          backgroundColor: bgColor,
+          title: Text('Edit Set ${setIndex + 1}',
+              style: TextStyle(color: titleColor)),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              NumberInputField(
+                controller: editWeightController,
+                icon: Icons.fitness_center,
+                hint: 'Weight (${useKg ? 'kg' : 'lbs'})',
+                color: accent,
+                isDecimal: true,
+              ),
+              const SizedBox(height: 16),
+              NumberInputField(
+                controller: editRepsController,
+                icon: Icons.repeat,
+                hint: 'Reps',
+                color: accent,
+              ),
+              const SizedBox(height: 16),
+              // RIR selection
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  'RIR (Reps in Reserve)',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: isDark ? AppColors.textSecondary : Colors.grey.shade600,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 8),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: List.generate(6, (i) {
+                  final rir = i;
+                  final isSelected = editRir == rir;
+                  final color = WorkoutDesign.getRirColor(rir);
+                  return GestureDetector(
+                    onTap: () {
+                      HapticFeedback.selectionClick();
+                      setDialogState(() {
+                        editRir = isSelected ? null : rir;
+                      });
+                    },
+                    child: Container(
+                      width: 38,
+                      height: 32,
+                      decoration: BoxDecoration(
+                        color: isSelected ? color : color.withValues(alpha: isDark ? 0.15 : 0.1),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: isSelected ? color : color.withValues(alpha: 0.3),
+                          width: isSelected ? 2 : 1,
+                        ),
+                      ),
+                      child: Center(
+                        child: Text(
+                          rir == 5 ? '5+' : '$rir',
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w700,
+                            color: isSelected
+                                ? WorkoutDesign.getRirTextColor(rir)
+                                : color,
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
+                }),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: Text('Cancel',
+                  style: TextStyle(color: isDark ? AppColors.textSecondary : Colors.grey.shade600)),
             ),
-            const SizedBox(height: 16),
-            NumberInputField(
-              controller: editRepsController,
-              icon: Icons.repeat,
-              hint: 'Reps',
-              color: accent,
+            TextButton(
+              onPressed: () {
+                final editedWeight =
+                    double.tryParse(editWeightController.text) ?? displayWeight;
+                final weightKg = useKg ? editedWeight : editedWeight * 0.453592;
+                setState(() {
+                  completedSets[viewingExerciseIndex]![setIndex] = SetLog(
+                    reps: int.tryParse(editRepsController.text) ?? set.reps,
+                    weight: weightKg,
+                    completedAt: set.completedAt,
+                    setType: set.setType,
+                    rir: editRir,
+                    rpe: set.rpe,
+                    targetReps: set.targetReps,
+                    notes: set.notes,
+                  );
+                });
+                Navigator.pop(dialogContext);
+              },
+              child: Text('Save',
+                  style: TextStyle(color: accent)),
             ),
           ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text('Cancel',
-                style: TextStyle(color: isDark ? AppColors.textSecondary : Colors.grey.shade600)),
-          ),
-          TextButton(
-            onPressed: () {
-              final editedWeight =
-                  double.tryParse(editWeightController.text) ?? displayWeight;
-              final weightKg = useKg ? editedWeight : editedWeight * 0.453592;
-              setState(() {
-                completedSets[viewingExerciseIndex]![setIndex] = SetLog(
-                  reps: int.tryParse(editRepsController.text) ?? set.reps,
-                  weight: weightKg,
-                  completedAt: set.completedAt,
-                  setType: set.setType,
-                );
-              });
-              Navigator.pop(context);
-            },
-            child: Text('Save',
-                style: TextStyle(color: accent)),
-          ),
-        ],
       ),
     );
   }
