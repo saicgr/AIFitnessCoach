@@ -13,11 +13,12 @@ from typing import Any, Dict, List, Optional
 from datetime import datetime, timedelta
 import logging
 from core.db.base import BaseDB
+from core.db.nutrition_db_helpers_part2 import NutritionDBPart2
 
 logger = logging.getLogger(__name__)
 
 
-class NutritionDB(BaseDB):
+class NutritionDB(NutritionDBPart2, BaseDB):
     """
     Database operations for nutrition tracking.
 

@@ -82,6 +82,18 @@ def get_genai_client() -> genai.Client:
     return genai.Client(api_key=settings.gemini_api_key)
 
 
+def get_genai_files_client() -> genai.Client:
+    """Return a Developer API client for file uploads.
+
+    Vertex AI does not support the Files API (files.upload/get/delete).
+    This always returns a Developer API-key client for those operations.
+    """
+    settings = get_settings()
+    if not settings.gemini_api_key:
+        raise ValueError("GEMINI_API_KEY is required for Gemini Files API uploads")
+    return genai.Client(api_key=settings.gemini_api_key)
+
+
 def get_langchain_llm(
     temperature: float = 0.7,
     timeout: Optional[int] = None,

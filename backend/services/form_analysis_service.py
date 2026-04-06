@@ -28,7 +28,7 @@ import boto3
 from google.genai import types as genai_types
 
 from core.config import get_settings
-from core.gemini_client import get_genai_client
+from core.gemini_client import get_genai_client, get_genai_files_client
 from core.logger import get_logger
 
 logger = get_logger(__name__)
@@ -492,13 +492,14 @@ class FormAnalysisService:
         user_context: Optional[str] = None,
     ) -> Dict[str, Any]:
         """Use an already-uploaded Gemini file for analysis. Skips S3 download entirely."""
+        files_client = get_genai_files_client()
         client = get_genai_client()
         settings = get_settings()
 
         logger.info(f"Using pre-uploaded Gemini file: {gemini_file_name}")
 
         # Get file and wait for ACTIVE state if still processing
-        gemini_file = await asyncio.to_thread(client.files.get, name=gemini_file_name)
+        gemini_file = await asyncio.to_thread(files_client.files.get, name=gemini_file_name)
         logger.info(f"Gemini file state: {gemini_file.state}")
 
         if media_type == "video":
@@ -510,7 +511,7 @@ class FormAnalysisService:
                     raise TimeoutError(f"Gemini file processing timed out after {timeout}s")
                 logger.debug(f"Gemini file still processing ({elapsed:.0f}s)...")
                 await asyncio.sleep(2)
-                gemini_file = await asyncio.to_thread(client.files.get, name=gemini_file_name)
+                gemini_file = await asyncio.to_thread(files_client.files.get, name=gemini_file_name)
 
             if gemini_file.state.name == "FAILED":
                 raise RuntimeError(f"Gemini file processing failed: {gemini_file.state}")
@@ -589,6 +590,7 @@ class FormAnalysisService:
             # Step 1: Download from S3
             tmp_path = await self._download_s3_to_temp(s3_key, mime_type)
 
+            files_client = get_genai_files_client()
             client = get_genai_client()
             settings = get_settings()
 
@@ -596,7 +598,7 @@ class FormAnalysisService:
 
             # Files API path: upload to Gemini, wait for ACTIVE, then analyze
             gemini_file = await asyncio.to_thread(
-                client.files.upload,
+                files_client.files.upload,
                 file=tmp_path,
                 config=genai_types.UploadFileConfig(
                     mime_type=mime_type,
@@ -614,7 +616,7 @@ class FormAnalysisService:
                         raise TimeoutError(f"Gemini file processing timed out after {timeout}s")
                     logger.debug(f"Gemini file still processing ({elapsed:.0f}s)...")
                     await asyncio.sleep(2)
-                    gemini_file = await asyncio.to_thread(client.files.get, name=gemini_file.name)
+                    gemini_file = await asyncio.to_thread(files_client.files.get, name=gemini_file.name)
 
                 if gemini_file.state.name == "FAILED":
                     raise RuntimeError(f"Gemini file processing failed: {gemini_file.state}")
@@ -714,8 +716,8 @@ class FormAnalysisService:
             # Clean up Gemini file (best effort)
             if gemini_file and hasattr(gemini_file, "name"):
                 try:
-                    client = get_genai_client()
-                    await asyncio.to_thread(client.files.delete, name=gemini_file.name)
+                    files_client = get_genai_files_client()
+                    await asyncio.to_thread(files_client.files.delete, name=gemini_file.name)
                     logger.debug(f"Cleaned up Gemini file: {gemini_file.name}")
                 except Exception as e:
                     logger.warning(f"Failed to clean up Gemini file: {e}")
@@ -748,6 +750,7 @@ class FormAnalysisService:
         """Internal comparison implementation with keyframe + cache support."""
         tmp_paths = []
         gemini_files = []
+        files_client = get_genai_files_client()
         client = get_genai_client()
         settings = get_settings()
         use_keyframes = True
@@ -793,7 +796,7 @@ class FormAnalysisService:
                 logger.info(f"Using Gemini Files API for {len(s3_keys)}-video comparison")
                 for i, (tmp_path, mime_type, label) in enumerate(zip(tmp_paths, mime_types, labels)):
                     gemini_file = await asyncio.to_thread(
-                        client.files.upload,
+                        files_client.files.upload,
                         file=tmp_path,
                         config=genai_types.UploadFileConfig(
                             mime_type=mime_type,
@@ -813,7 +816,7 @@ class FormAnalysisService:
                             raise TimeoutError(f"Gemini file processing timed out after {timeout}s")
                         logger.debug(f"Video {i+1} still processing ({elapsed:.0f}s)...")
                         await asyncio.sleep(2)
-                        gf = await asyncio.to_thread(client.files.get, name=gf.name)
+                        gf = await asyncio.to_thread(files_client.files.get, name=gf.name)
                         gemini_files[i] = gf
 
                     if gf.state.name == "FAILED":
@@ -899,7 +902,7 @@ class FormAnalysisService:
             for gf in gemini_files:
                 if gf and hasattr(gf, "name"):
                     try:
-                        await asyncio.to_thread(client.files.delete, name=gf.name)
+                        await asyncio.to_thread(files_client.files.delete, name=gf.name)
                         logger.debug(f"Cleaned up Gemini file: {gf.name}")
                     except Exception as e:
                         logger.warning(f"Failed to clean up Gemini file: {e}")

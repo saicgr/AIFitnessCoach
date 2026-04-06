@@ -31,11 +31,13 @@ from core.db.facade import get_supabase_db
 from core.db.nutrition_db import NutritionDB
 from core.supabase_client import get_supabase
 from services.gemini_service import GeminiService
+from services.food_database_lookup_service import get_food_db_lookup_service
+from services.food_analysis.cache_service_helpers_part2 import FoodAnalysisCacheServicePart2
 
 logger = logging.getLogger(__name__)
 
 
-class FoodAnalysisCacheService:
+class FoodAnalysisCacheService(FoodAnalysisCacheServicePart2):
     """
     Caching layer for food analysis to speed up repeated queries.
 

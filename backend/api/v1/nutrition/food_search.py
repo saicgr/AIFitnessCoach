@@ -1,4 +1,5 @@
 """Food search/lookup endpoints (USDA, branded, whole foods)."""
+import time
 from core.db import get_supabase_db
 from datetime import datetime
 from typing import List, Optional

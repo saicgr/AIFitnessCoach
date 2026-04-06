@@ -311,7 +311,7 @@ async def upload_media_for_analysis(
     import os
     import boto3
     from google.genai import types as genai_types
-    from core.gemini_client import get_genai_client
+    from core.gemini_client import get_genai_files_client
 
     user_id = str(current_user["id"])
     set_log_context(user_id=f"...{user_id[-4:]}" if len(user_id) > 4 else user_id)
@@ -370,7 +370,7 @@ async def upload_media_for_analysis(
             logger.info(f"S3 upload complete: {s3_key}")
 
         async def upload_to_gemini():
-            client = get_genai_client()
+            client = get_genai_files_client()
             gemini_file = await asyncio.to_thread(
                 client.files.upload,
                 file=tmp_path,

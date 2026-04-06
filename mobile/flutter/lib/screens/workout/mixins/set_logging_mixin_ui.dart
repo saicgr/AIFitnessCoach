@@ -4,7 +4,6 @@ part of 'set_logging_mixin.dart';
 extension SetLoggingMixinUI on SetLoggingMixin {
 
   // ── Helpers to access State<T> members through the mixin ──
-  BuildContext get _ctx => (this as dynamic).context as BuildContext;
   bool get _mounted => (this as dynamic).mounted as bool;
   void _setState(VoidCallback fn) => (this as dynamic).setState(fn);
 
@@ -288,8 +287,6 @@ extension SetLoggingMixinUI on SetLoggingMixin {
     );
 
     final completedSetLogs = completedSets[currentExerciseIndex];
-    final nextIdx = completedSetLogs?.length ?? 0;
-    final originalNextWeight = nextIdx < targets.length ? targets[nextIdx].weight : null;
 
     if (completedSetLogs != null && completedSetLogs.isNotEmpty) {
       final setTargetsRef = exercise.setTargets;
@@ -310,13 +307,21 @@ extension SetLoggingMixinUI on SetLoggingMixin {
         ));
       }
 
-      targets = adaptTargets(
+      final adaptResult = adaptTargetsWithFeedback(
         pattern: pattern,
         originalTargets: targets,
         completedSets: completedData,
         increment: effectiveIncrement,
         totalSets: totalSets,
       );
+      targets = adaptResult.targets;
+
+      // Store adaptation feedback for inline rest row display
+      if (_mounted) {
+        _setState(() {
+          (this as dynamic).inlineRestAdaptationFeedback = adaptResult.feedback;
+        });
+      }
 
       final currentSetTargets = List<SetTarget>.from(exercise.setTargets ?? []);
       while (currentSetTargets.length < totalSets) {
@@ -381,31 +386,8 @@ extension SetLoggingMixinUI on SetLoggingMixin {
       repsRightController.text = nextTarget.reps.toString();
     }
 
-    if (originalNextWeight != null && _mounted) {
-      final diff = nextTarget.weight - originalNextWeight;
-      if (diff.abs() > 0.01) {
-        final unit = useKg ? 'kg' : 'lb';
-        final fromDisplay = useKg
-            ? originalNextWeight
-            : kgToDisplayLbs(originalNextWeight, exercise.equipment,
-                exerciseName: exercise.name,);
-        final toDisplay = useKg
-            ? nextTarget.weight
-            : kgToDisplayLbs(nextTarget.weight, exercise.equipment,
-                exerciseName: exercise.name,);
-        final arrow = diff > 0 ? '↑' : '↓';
-        ScaffoldMessenger.of(_ctx).showSnackBar(
-          SnackBar(
-            content: Text(
-              'Weight $arrow ${fromDisplay.toStringAsFixed(0)} → ${toDisplay.toStringAsFixed(0)} $unit',
-            ),
-            duration: const Duration(seconds: 3),
-            behavior: SnackBarBehavior.floating,
-            backgroundColor: diff > 0 ? AppColors.success : WorkoutDesign.rir2,
-          ),
-        );
-      }
-    }
+    // Weight change feedback now shown via inline adaptation chip (InlineRestRow)
+    // instead of SnackBar — always visible in rest row, positioned in context.
   }
 
 }

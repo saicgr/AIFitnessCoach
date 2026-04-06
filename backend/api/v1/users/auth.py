@@ -111,22 +111,6 @@ async def google_auth(request: Request, body: GoogleAuthRequest,
         created = db.create_user(new_user_data)
         logger.info(f"New user created via Google OAuth: id={created['id']}, email={email}, role={created.get('role', 'user')}")
 
-        # Auto-add support user as friend to new users (if support user exists)
-        support_friend_added = False
-        if not is_support:
-            try:
-                support_friend_added = await admin_service.add_support_friend_to_user(created['id'])
-                if support_friend_added:
-                    logger.info(f"Auto-added FitWiz Support as friend for new user {created['id']}")
-                    # Send welcome message from support user
-                    try:
-                        await admin_service.send_welcome_message_to_user(created['id'])
-                        logger.info(f"Sent welcome message to new user {created['id']}")
-                    except Exception as msg_error:
-                        logger.warning(f"Failed to send welcome message: {msg_error}")
-            except Exception as friend_error:
-                logger.warning(f"Failed to auto-add support friend: {friend_error}")
-
         # Send welcome email in background (non-blocking)
         if email:
             background_tasks.add_task(
@@ -222,22 +206,6 @@ async def email_auth(request: Request, body: EmailAuthRequest,
         created = db.create_user(new_user_data)
         logger.info(f"New user created via email auth: id={created['id']}, email={email}, role={created.get('role', 'user')}")
 
-        # Auto-add support user as friend to new users
-        support_friend_added = False
-        if not is_support:
-            try:
-                support_friend_added = await admin_service.add_support_friend_to_user(created['id'])
-                if support_friend_added:
-                    logger.info(f"Auto-added FitWiz Support as friend for new user {created['id']}")
-                    # Send welcome message from support user
-                    try:
-                        await admin_service.send_welcome_message_to_user(created['id'])
-                        logger.info(f"Sent welcome message to new user {created['id']}")
-                    except Exception as msg_error:
-                        logger.warning(f"Failed to send welcome message: {msg_error}")
-            except Exception as friend_error:
-                logger.warning(f"Failed to auto-add support friend: {friend_error}")
-
         # Send welcome email in background (non-blocking)
         if email:
             background_tasks.add_task(
@@ -330,22 +298,6 @@ async def email_signup(request: Request, body: EmailSignupRequest,
 
         created = db.create_user(new_user_data)
         logger.info(f"New user created via email signup: id={created['id']}, email={email}, role={created.get('role', 'user')}")
-
-        # Auto-add support user as friend to new users
-        support_friend_added = False
-        if not is_support:
-            try:
-                support_friend_added = await admin_service.add_support_friend_to_user(created['id'])
-                if support_friend_added:
-                    logger.info(f"Auto-added FitWiz Support as friend for new user {created['id']}")
-                    # Send welcome message from support user
-                    try:
-                        await admin_service.send_welcome_message_to_user(created['id'])
-                        logger.info(f"Sent welcome message to new user {created['id']}")
-                    except Exception as msg_error:
-                        logger.warning(f"Failed to send welcome message: {msg_error}")
-            except Exception as friend_error:
-                logger.warning(f"Failed to auto-add support friend: {friend_error}")
 
         # Send welcome email in background (non-blocking)
         if email:

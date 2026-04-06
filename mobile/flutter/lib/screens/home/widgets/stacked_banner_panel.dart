@@ -67,6 +67,10 @@ class _StackedBannerPanelState extends ConsumerState<StackedBannerPanel>
   // Week 1 tip same-day dismiss state
   bool _week1TipDismissedToday = false;
 
+  // Session flag: when dismiss-all is used, suppress ALL banners until
+  // the widget is remounted (e.g. user navigates away and back).
+  bool _allBannersDismissed = false;
+
   @override
   void initState() {
     super.initState();
@@ -507,9 +511,7 @@ class _StackedBannerPanelState extends ConsumerState<StackedBannerPanel>
         _persistBannerDismissal(b);
       }
     } else if (result == 'dismiss') {
-      // Re-collect banners to catch any that loaded async while dialog was open
-      final currentBanners = _collectBanners();
-      _executeDismissAll(currentBanners.isNotEmpty ? currentBanners : banners);
+      _executeDismissAll(banners);
     }
   }
 
@@ -682,6 +684,11 @@ class _StackedBannerPanelState extends ConsumerState<StackedBannerPanel>
   /// Execute dismiss-all: session dismiss + persist each banner type.
   void _executeDismissAll(List<BannerCardData> banners) {
     HapticService.medium();
+
+    // Set session flag so build() returns empty immediately —
+    // prevents any banner from surviving due to async provider timing.
+    _allBannersDismissed = true;
+
     final ids = banners.map((b) => b.id).toList();
     ref.read(stackedBannerControllerProvider.notifier).dismissAll(ids);
 
@@ -784,6 +791,19 @@ class _StackedBannerPanelState extends ConsumerState<StackedBannerPanel>
 
   @override
   Widget build(BuildContext context) {
+    // After dismiss-all, suppress everything until widget remounts
+    if (_allBannersDismissed) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          final current = ref.read(activeBannerIdsProvider);
+          if (current.isNotEmpty) {
+            ref.read(activeBannerIdsProvider.notifier).state = [];
+          }
+        }
+      });
+      return const SizedBox.shrink();
+    }
+
     final banners = _collectBanners();
 
     // Report active banner IDs so other widgets can read them

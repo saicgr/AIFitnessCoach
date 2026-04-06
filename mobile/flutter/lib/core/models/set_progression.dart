@@ -50,6 +50,23 @@ class TrainingGoalRepRange {
 //   RPT: Berkhan / Leangains (10% drops, +2 reps per set)
 // ============================================================================
 
+/// Describes the type of intra-workout weight adaptation that occurred.
+enum AdaptationFeedbackType {
+  none,
+  weightIncreased,
+  weightTooLight,
+  fatigueDetected,
+  weightDecreased,
+}
+
+/// Feedback about the adaptation decision for UI display.
+class AdaptationFeedback {
+  final AdaptationFeedbackType type;
+  final double weightDelta; // display units, positive = increase
+  const AdaptationFeedback({required this.type, this.weightDelta = 0});
+  static const none = AdaptationFeedback(type: AdaptationFeedbackType.none);
+}
+
 /// Adaptive progression: recalculates remaining set targets based on actual
 /// performance in completed sets.
 List<ProgressionSetTarget> adaptTargets({
@@ -59,27 +76,45 @@ List<ProgressionSetTarget> adaptTargets({
   required double increment,
   required int totalSets,
 }) {
+  return adaptTargetsWithFeedback(
+    pattern: pattern,
+    originalTargets: originalTargets,
+    completedSets: completedSets,
+    increment: increment,
+    totalSets: totalSets,
+  ).targets;
+}
+
+/// Adaptive progression with feedback about what decision was made.
+({List<ProgressionSetTarget> targets, AdaptationFeedback feedback}) adaptTargetsWithFeedback({
+  required SetProgressionPattern pattern,
+  required List<ProgressionSetTarget> originalTargets,
+  required List<CompletedSetData> completedSets,
+  required double increment,
+  required int totalSets,
+}) {
   if (completedSets.isEmpty || completedSets.length >= totalSets) {
-    return originalTargets;
+    return (targets: originalTargets, feedback: AdaptationFeedback.none);
   }
 
+  // Drop/myo/rest-pause: protocol-expected weight changes — no feedback chip
   switch (pattern) {
     case SetProgressionPattern.dropSets:
-      return _adaptDropSets(originalTargets, completedSets, increment);
+      return (targets: _adaptDropSets(originalTargets, completedSets, increment), feedback: AdaptationFeedback.none);
     case SetProgressionPattern.myoReps:
-      return _adaptMyoReps(originalTargets, completedSets, increment);
+      return (targets: _adaptMyoReps(originalTargets, completedSets, increment), feedback: AdaptationFeedback.none);
     case SetProgressionPattern.restPause:
-      return _adaptRestPause(originalTargets, completedSets, increment);
+      return (targets: _adaptRestPause(originalTargets, completedSets, increment), feedback: AdaptationFeedback.none);
     default:
-      return _adaptWeightRepPattern(
+      return _adaptWeightRepPatternWithFeedback(
         originalTargets, completedSets, increment,
       );
   }
 }
 
-/// Adapt weight/rep patterns: Pyramid Up, Reverse Pyramid, Top Set + Back-Off,
-/// Straight Sets. Uses 3-signal decision model.
-List<ProgressionSetTarget> _adaptWeightRepPattern(
+/// Adapt weight/rep patterns with feedback: Pyramid Up, Reverse Pyramid,
+/// Top Set + Back-Off, Straight Sets. Uses 3-signal decision model.
+({List<ProgressionSetTarget> targets, AdaptationFeedback feedback}) _adaptWeightRepPatternWithFeedback(
   List<ProgressionSetTarget> originalTargets,
   List<CompletedSetData> completedSets,
   double increment,
@@ -90,30 +125,46 @@ List<ProgressionSetTarget> _adaptWeightRepPattern(
       ? originalTargets[completedCount - 1]
       : null;
 
-  if (lastTarget == null || lastTarget.isAmrap) return originalTargets;
+  if (lastTarget == null || lastTarget.isAmrap) {
+    return (targets: originalTargets, feedback: AdaptationFeedback.none);
+  }
 
   final targetReps = lastTarget.reps;
-  if (targetReps <= 0) return originalTargets;
+  if (targetReps <= 0) {
+    return (targets: originalTargets, feedback: AdaptationFeedback.none);
+  }
 
   final rir = lastCompleted.rir;
   final repRatio = lastCompleted.reps / targetReps;
 
   // --- Step 1: Rep ratio catches extreme over/under (regardless of RIR) ---
-  // This ensures cases like "RIR 3 but only 2/8 reps" always trigger a reduction.
+  // Graduated upper tiers so 20 reps vs 30 reps produce different jumps.
   int incrementAdjust = 0;
   if (repRatio < 0.40) {
     incrementAdjust = -2; // Catastrophic miss (<40% of target)
   } else if (repRatio < 0.65) {
     incrementAdjust = -1; // Significant miss (<65% of target)
+  } else if (repRatio >= 3.0) {
+    incrementAdjust = 6; // Tripled the target
+  } else if (repRatio >= 2.50) {
+    incrementAdjust = 5; // 2.5x target
+  } else if (repRatio >= 2.0) {
+    incrementAdjust = 4; // Doubled the target
+  } else if (repRatio >= 1.80) {
+    incrementAdjust = 3; // Drastically over (>180%)
   } else if (repRatio > 1.30) {
     incrementAdjust = 2; // Way over target (>130%)
   }
   // --- Step 2: RIR fine-tunes within normal range (0.65-1.30 rep ratio) ---
   else if (rir != null) {
-    if (rir >= 4 && repRatio >= 1.0) {
+    if (rir >= 4 && repRatio > 1.0) {
+      incrementAdjust = 3; // Way too easy + exceeded reps
+    } else if (rir >= 4 && repRatio >= 1.0) {
       incrementAdjust = 2; // Way too easy — lots in tank + hit target
+    } else if (rir >= 3 && repRatio > 1.10) {
+      incrementAdjust = 2; // Too easy + notably exceeded (>10% over)
     } else if (rir >= 3 && repRatio >= 1.0) {
-      incrementAdjust = 1; // Too easy — 3+ reps in reserve at target
+      incrementAdjust = 1; // Met target with 3+ in reserve
     } else if (rir == 0) {
       incrementAdjust = -1; // Had to go to failure — weight is too heavy
     } else if (rir <= 1 && repRatio < 0.85) {
@@ -122,13 +173,25 @@ List<ProgressionSetTarget> _adaptWeightRepPattern(
   }
   // --- Step 3: No RIR data — rep ratio only (conservative) ---
   else {
-    if (repRatio >= 1.20) {
+    if (repRatio >= 1.50) {
+      incrementAdjust = 2; // Far exceeded (50%+)
+    } else if (repRatio >= 1.20) {
       incrementAdjust = 1; // Exceeded by 20%+
     }
-    // repRatio < 0.65 already caught in Step 1
+  }
+
+  // --- Safety cap: don't jump more than 25% in a single intra-workout adaptation ---
+  // Protects light isolation exercises (curls, laterals) from absurd jumps
+  if (incrementAdjust > 0 && increment > 0 && lastCompleted.weight > 0) {
+    final maxJump = lastCompleted.weight * 0.25;
+    final proposedJump = incrementAdjust * increment;
+    if (proposedJump > maxJump && maxJump >= increment) {
+      incrementAdjust = (maxJump / increment).floor().clamp(1, incrementAdjust);
+    }
   }
 
   // --- Signal 3: Cumulative fatigue override (Pareja-Blanco 2017) ---
+  bool fatigueOverrode = false;
   if (completedSets.length >= 2) {
     final set1Score = completedSets.first.performanceScore;
     final lastScore = lastCompleted.performanceScore;
@@ -136,13 +199,28 @@ List<ProgressionSetTarget> _adaptWeightRepPattern(
       final fatiguePct = (set1Score - lastScore) / set1Score;
       if (fatiguePct > 0.25 && incrementAdjust >= 0) {
         incrementAdjust = -1; // >25% performance drop overrides
+        fatigueOverrode = true;
       }
     }
   }
 
-  debugPrint('⚙️ [Adapt] repRatio=${repRatio.toStringAsFixed(2)}, RIR=$rir → incrementAdjust=$incrementAdjust');
+  debugPrint('⚙️ [Adapt] repRatio=${repRatio.toStringAsFixed(2)}, RIR=$rir → incrementAdjust=$incrementAdjust${fatigueOverrode ? ' (fatigue override)' : ''}');
 
-  if (incrementAdjust == 0) return originalTargets;
+  if (incrementAdjust == 0) {
+    return (targets: originalTargets, feedback: AdaptationFeedback.none);
+  }
+
+  // Determine feedback type
+  final AdaptationFeedbackType feedbackType;
+  if (fatigueOverrode) {
+    feedbackType = AdaptationFeedbackType.fatigueDetected;
+  } else if (incrementAdjust >= 4) {
+    feedbackType = AdaptationFeedbackType.weightTooLight;
+  } else if (incrementAdjust > 0) {
+    feedbackType = AdaptationFeedbackType.weightIncreased;
+  } else {
+    feedbackType = AdaptationFeedbackType.weightDecreased;
+  }
 
   // Apply adjustment to remaining sets
   final adjusted = List<ProgressionSetTarget>.from(originalTargets);
@@ -165,7 +243,17 @@ List<ProgressionSetTarget> _adaptWeightRepPattern(
       isAmrap: false,
     );
   }
-  return adjusted;
+
+  // Compute weight delta for next set
+  final nextIdx = completedCount;
+  final weightDelta = nextIdx < adjusted.length && nextIdx < originalTargets.length
+      ? adjusted[nextIdx].weight - originalTargets[nextIdx].weight
+      : incrementAdjust * increment;
+
+  return (
+    targets: adjusted,
+    feedback: AdaptationFeedback(type: feedbackType, weightDelta: weightDelta),
+  );
 }
 
 /// Adapt Drop Sets (Fink et al. 2018).

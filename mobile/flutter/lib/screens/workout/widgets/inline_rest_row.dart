@@ -9,6 +9,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../../core/constants/app_colors.dart';
+import '../../../core/models/set_progression.dart';
 
 /// Inline rest row that appears between sets during rest period
 class InlineRestRow extends StatefulWidget {
@@ -45,6 +46,12 @@ class InlineRestRow extends StatefulWidget {
   /// Current RPE value (null if not rated yet)
   final int? currentRpe;
 
+  /// Adaptation feedback to display (null if no adaptation occurred)
+  final AdaptationFeedback? adaptationFeedback;
+
+  /// Weight unit for display ('lb' or 'kg')
+  final String weightUnit;
+
   const InlineRestRow({
     super.key,
     required this.restDurationSeconds,
@@ -58,6 +65,8 @@ class InlineRestRow extends StatefulWidget {
     this.aiTip,
     this.isLoadingAiTip = false,
     this.currentRpe,
+    this.adaptationFeedback,
+    this.weightUnit = 'lb',
   });
 
   @override
@@ -155,6 +164,11 @@ class _InlineRestRowState extends State<InlineRestRow>
           // Achievement prompt (if any)
           if (widget.achievementPrompt != null)
             _buildAchievementPrompt(isDark, textPrimary),
+
+          // Adaptation feedback chip (if any)
+          if (widget.adaptationFeedback != null &&
+              widget.adaptationFeedback!.type != AdaptationFeedbackType.none)
+            _buildAdaptationChip(isDark),
 
           // RPE Rating
           _buildRpeRating(isDark, textPrimary, textSecondary, textMuted),
@@ -333,6 +347,67 @@ class _InlineRestRowState extends State<InlineRestRow>
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
                 color: isDark ? goldColor : Colors.amber.shade800,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAdaptationChip(bool isDark) {
+    final feedback = widget.adaptationFeedback!;
+    final Color chipColor;
+    final String icon;
+    final String message;
+    final unit = widget.weightUnit;
+    final absDelta = feedback.weightDelta.abs();
+    final deltaStr = absDelta % 1 == 0
+        ? absDelta.toStringAsFixed(0)
+        : absDelta.toStringAsFixed(1);
+
+    switch (feedback.type) {
+      case AdaptationFeedbackType.weightTooLight:
+        chipColor = isDark ? AppColors.orange : Colors.orange.shade700;
+        icon = '\u26A1'; // lightning
+        message = 'Weight too light \u2014 next set +$deltaStr $unit';
+      case AdaptationFeedbackType.weightIncreased:
+        chipColor = AppColors.electricBlue;
+        icon = '\u2197'; // arrow upper-right
+        message = 'Increasing weight +$deltaStr $unit';
+      case AdaptationFeedbackType.fatigueDetected:
+        chipColor = isDark ? AppColors.coral : Colors.red.shade600;
+        icon = '\u26A0\uFE0F'; // warning
+        message = absDelta > 0
+            ? 'Fatigue detected \u2014 reducing $deltaStr $unit'
+            : 'Fatigue detected \u2014 reducing weight';
+      case AdaptationFeedbackType.weightDecreased:
+        chipColor = isDark ? AppColors.coral : Colors.red.shade600;
+        icon = '\u2198'; // arrow lower-right
+        message = 'Reducing weight \u2212$deltaStr $unit';
+      case AdaptationFeedbackType.none:
+        return const SizedBox.shrink();
+    }
+
+    return Container(
+      margin: const EdgeInsets.fromLTRB(14, 8, 14, 0),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+      decoration: BoxDecoration(
+        color: chipColor.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: chipColor.withValues(alpha: 0.35)),
+      ),
+      child: Row(
+        children: [
+          Text(icon, style: const TextStyle(fontSize: 14)),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              message,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: chipColor,
               ),
             ),
           ),

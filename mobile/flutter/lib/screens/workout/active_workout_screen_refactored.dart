@@ -272,6 +272,7 @@ class _ActiveWorkoutScreenState
   bool _isLoadingAiTip = false;
   String? _inlineRestAchievementPrompt;
   int? _inlineRestCurrentRpe;
+  AdaptationFeedback? _inlineRestAdaptationFeedback;
 
   // Warmup/stretch state (fetched from API)
   List<WarmupExerciseData>? _warmupExercises;
@@ -325,6 +326,8 @@ class _ActiveWorkoutScreenState
   @override set inlineRestAchievementPrompt(String? value) => _inlineRestAchievementPrompt = value;
   @override int? get inlineRestCurrentRpe => _inlineRestCurrentRpe;
   @override set inlineRestCurrentRpe(int? value) => _inlineRestCurrentRpe = value;
+  @override AdaptationFeedback? get inlineRestAdaptationFeedback => _inlineRestAdaptationFeedback;
+  @override set inlineRestAdaptationFeedback(AdaptationFeedback? value) => _inlineRestAdaptationFeedback = value;
   @override RestSuggestion? get restSuggestion => _restSuggestion;
   @override set restSuggestion(RestSuggestion? value) => _restSuggestion = value;
   @override bool get isLoadingRestSuggestion => _isLoadingRestSuggestion;

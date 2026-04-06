@@ -13,7 +13,7 @@ from pydantic import BaseModel
 
 from core.timezone_utils import resolve_timezone, local_date_to_utc_range, get_user_today, get_user_now_iso, target_date_to_utc_iso
 from core.rate_limiter import limiter
-from core.auth import get_current_user
+from core.auth import get_current_user, verify_user_ownership
 from core.exceptions import safe_internal_error
 from core.supabase_db import get_supabase_db
 from core.logger import get_logger

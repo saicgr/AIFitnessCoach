@@ -214,6 +214,8 @@ async def get_exercise_history(
                     continue
 
             # sets_json structure: {exercise_name: [{reps, weight, rpe, rir, ...}]}
+            if not isinstance(sets_json, dict):
+                continue
             if exercise_name.lower() in [k.lower() for k in sets_json.keys()]:
                 matching_key = next(
                     k for k in sets_json.keys()

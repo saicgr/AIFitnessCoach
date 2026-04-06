@@ -13,6 +13,7 @@ Large endpoint groups are split into focused sub-modules:
 - generation_helpers.py: Shared helper functions (MET estimation, normalization)
 """
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request
+import asyncio
 import logging
 from typing import List, Dict, Any, Optional
 from datetime import datetime, timedelta

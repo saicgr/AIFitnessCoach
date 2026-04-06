@@ -11,6 +11,7 @@ from services.food_analysis.constants import (
     _WEIGHT_REGEX, _WEIGHT_AFTER_REGEX, _VOLUME_REGEX, _VOLUME_AFTER_REGEX,
 )
 from services.food_analysis.parser import _weight_unit_to_grams, _volume_unit_to_ml
+from services.food_database_lookup_service import get_food_db_lookup_service
 
 logger = logging.getLogger(__name__)
 
@@ -1043,15 +1044,3 @@ class FoodAnalysisCacheServicePart2:
             "recommended_swap": "",
             "health_score": pre_score,
         }
-
-
-# Singleton instance
-_cache_service_instance: Optional[FoodAnalysisCacheService] = None
-
-
-def get_food_analysis_cache_service() -> FoodAnalysisCacheService:
-    """Get or create the singleton cache service instance."""
-    global _cache_service_instance
-    if _cache_service_instance is None:
-        _cache_service_instance = FoodAnalysisCacheService()
-    return _cache_service_instance

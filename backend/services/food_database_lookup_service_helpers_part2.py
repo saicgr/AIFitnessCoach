@@ -1,6 +1,7 @@
 """Second part of food_database_lookup_service_helpers.py (auto-split for size)."""
 from typing import Dict, List, Optional
 import logging
+import re
 logger = logging.getLogger(__name__)
 
 
@@ -700,16 +701,3 @@ class FoodDatabaseLookupServicePart2:
         override_hits = len(food_names) - len(still_unmatched)
         logger.info(f"[FoodDB] Batch: {override_hits} override hits (exact+variant+fuzzy), {len(still_unmatched)} misses")
         return results
-
-
-# ── Singleton ──────────────────────────────────────────────────────
-
-_food_db_lookup_service: Optional[FoodDatabaseLookupService] = None
-
-
-def get_food_db_lookup_service() -> FoodDatabaseLookupService:
-    """Get singleton FoodDatabaseLookupService instance."""
-    global _food_db_lookup_service
-    if _food_db_lookup_service is None:
-        _food_db_lookup_service = FoodDatabaseLookupService()
-    return _food_db_lookup_service

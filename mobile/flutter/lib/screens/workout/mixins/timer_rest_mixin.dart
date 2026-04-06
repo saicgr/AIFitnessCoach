@@ -16,6 +16,7 @@ import '../../../data/services/api_client.dart';
 import '../../../widgets/glass_sheet.dart';
 import '../controllers/workout_timer_controller.dart';
 import '../models/workout_state.dart';
+import '../../../core/models/set_progression.dart';
 import '../widgets/inline_rest_row.dart';
 import '../../ai_settings/ai_settings_screen.dart';
 import '../../../services/intra_workout_autoregulator.dart';
@@ -52,6 +53,8 @@ mixin TimerRestMixin<T extends StatefulWidget> on State<T> {
   set inlineRestAchievementPrompt(String? value);
   int? get inlineRestCurrentRpe;
   set inlineRestCurrentRpe(int? value);
+  AdaptationFeedback? get inlineRestAdaptationFeedback;
+  set inlineRestAdaptationFeedback(AdaptationFeedback? value);
   RestSuggestion? get restSuggestion;
   set restSuggestion(RestSuggestion? value);
   bool get isLoadingRestSuggestion;
@@ -82,6 +85,7 @@ mixin TimerRestMixin<T extends StatefulWidget> on State<T> {
       showInlineRest = false;
       inlineRestAiTip = null;
       inlineRestAchievementPrompt = null;
+      inlineRestAdaptationFeedback = null;
     });
     HapticFeedback.heavyImpact();
 
@@ -415,6 +419,7 @@ mixin TimerRestMixin<T extends StatefulWidget> on State<T> {
       showInlineRest = false;
       inlineRestAiTip = null;
       inlineRestAchievementPrompt = null;
+      inlineRestAdaptationFeedback = null;
     });
   }
 
@@ -440,6 +445,8 @@ mixin TimerRestMixin<T extends StatefulWidget> on State<T> {
       aiTip: inlineRestAiTip,
       isLoadingAiTip: isLoadingAiTip,
       currentRpe: inlineRestCurrentRpe,
+      adaptationFeedback: inlineRestAdaptationFeedback,
+      weightUnit: useKg ? 'kg' : 'lb',
     );
   }
 
