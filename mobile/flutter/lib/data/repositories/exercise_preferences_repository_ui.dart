@@ -1,15 +1,7 @@
 part of 'exercise_preferences_repository.dart';
 
 /// Methods extracted from FavoriteExercise
-extension _FavoriteExerciseExt on FavoriteExercise {
-
-  const FavoriteExercise({
-    required this.id,
-    required this.exerciseName,
-    this.exerciseId,
-    required this.addedAt,
-  });
-
+extension FavoriteExerciseJsonExt on FavoriteExercise {
 
   Map<String, dynamic> toJson() => {
     'id': id,

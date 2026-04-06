@@ -17,6 +17,7 @@ import '../home/widgets/habit_card.dart';
 
 
 part 'habits_screen_part_unified_habit_item.dart';
+part 'habits_screen_part_add_habit_sheet_content.dart';
 
 part 'habits_screen_ui.dart';
 

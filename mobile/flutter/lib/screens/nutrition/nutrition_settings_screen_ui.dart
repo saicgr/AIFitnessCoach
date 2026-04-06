@@ -24,7 +24,7 @@ extension __NutritionSettingsScreenStateExt on _NutritionSettingsScreenState {
         child: StatefulBuilder(
           builder: (context, setSheetState) {
             final label = _biasLabel(currentBias);
-            final multiplier = _biasMultipliers[currentBias] ?? 1.0;
+            final multiplier = _NutritionSettingsScreenState._biasMultipliers[currentBias] ?? 1.0;
             final exampleCal = (600 * multiplier).round();
 
             return Padding(

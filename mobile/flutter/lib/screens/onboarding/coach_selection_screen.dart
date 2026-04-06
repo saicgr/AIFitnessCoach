@@ -630,7 +630,7 @@ class _CoachSelectionScreenState extends ConsumerState<CoachSelectionScreen> {
         await prefs.setBool('onboarding_completed', true);
 
         // Cache coach ID for personalized notifications
-        await NotificationService.cacheCoachId(
+        await NotificationServiceScheduled.cacheCoachId(
           _isCustomMode ? 'custom' : _selectedCoach?.id,
           coachingStyle: _isCustomMode ? _customStyle : _selectedCoach?.coachingStyle,
         );

@@ -16,6 +16,7 @@ import '../../home/widgets/manage_gym_profiles_sheet.dart';
 
 part 'editable_fitness_card_part_editable_fitness_card_state.dart';
 part 'editable_fitness_card_part_editable_fitness_card_state_ext.dart';
+part 'editable_fitness_card_part_fitness_tile.dart';
 
 
 /// Editable fitness card with inline editing for goal, level, days, and injuries.

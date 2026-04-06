@@ -1,5 +1,6 @@
 part of 'scores.dart';
 
+@JsonSerializable()
 class FitnessScoreData {
   final String? id;
   @JsonKey(name: 'user_id')
@@ -141,6 +142,7 @@ class FitnessScoreData {
   }
 }
 
+@JsonSerializable()
 class FitnessScoreBreakdown {
   @JsonKey(name: 'fitness_score')
   final FitnessScoreData fitnessScore;

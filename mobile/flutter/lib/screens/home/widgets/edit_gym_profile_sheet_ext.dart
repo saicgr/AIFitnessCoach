@@ -2,58 +2,6 @@ part of 'edit_gym_profile_sheet.dart';
 
 /// Methods extracted from _EditGymProfileSheetState
 extension __EditGymProfileSheetStateExt on _EditGymProfileSheetState {
-  late List<String> _selectedEquipment;
-  late List<Map<String, dynamic>> _equipmentDetails;
-  // Location state
-  GymLocation? _selectedLocation;
-  bool _autoSwitchEnabled = true;
-  int _locationRadiusMeters = 100;
-  // Time preference state
-  String? _selectedTimeSlot;
-  bool _timeAutoSwitchEnabled = true;
-  // Training preferences state
-  String? _selectedTrainingSplit;
-  late List<int> _selectedWorkoutDays;
-  late int _selectedDuration;
-  // User-level training preferences
-  String? _selectedExperience;
-  List<String> _selectedFocusAreas = [];
-  int _selectedVarietyPct = 50; // 25 = Low, 50 = Medium, 75 = High
-  bool _isLoading = false;
-  bool _hasChanges = false;
-
-  // Training split options
-  static const List<Map<String, dynamic>> _trainingSplitOptions = [
-    {'id': 'nothing_structured', 'label': 'Let AI Decide', 'icon': Icons.auto_awesome_rounded, 'desc': 'Flexible'},
-
-
-  // Day names for workout days picker
-  static const List<String> _dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-
-  // Predefined environment presets
-  static const Map<String, Map<String, dynamic>> _environmentPresets = {
-    'commercial_gym': {
-      'name': 'Commercial Gym',
-      'icon': Icons.business_rounded,
-    },
-    'home_gym': {
-      'name': 'Home Gym',
-      'icon': Icons.home_work_rounded,
-    },
-    'home': {
-      'name': 'Home (Minimal)',
-      'icon': Icons.home_rounded,
-    },
-    'hotel': {
-      'name': 'Hotel / Travel',
-      'icon': Icons.hotel_rounded,
-    },
-    'outdoors': {
-      'name': 'Outdoors',
-      'icon': Icons.park_rounded,
-    },
-  };
-
 
   void _openEquipmentSheet() {
     // Convert equipment details to EquipmentItem list
@@ -200,7 +148,7 @@ extension __EditGymProfileSheetStateExt on _EditGymProfileSheetState {
 
   IconData _getIconData(String iconId) {
     final iconMap = {
-      for (final option in _iconOptions) option['id'] as String: option['icon'] as IconData
+      for (final option in _EditGymProfileSheetState._iconOptions) option['id'] as String: option['icon'] as IconData
     };
     return iconMap[iconId] ?? Icons.fitness_center_rounded;
   }
@@ -233,7 +181,7 @@ extension __EditGymProfileSheetStateExt on _EditGymProfileSheetState {
             Wrap(
               spacing: 12,
               runSpacing: 12,
-              children: _iconOptions.map((iconOption) {
+              children: _EditGymProfileSheetState._iconOptions.map((iconOption) {
                 final isSelected = _selectedIcon == iconOption['id'];
                 return GestureDetector(
                   onTap: () {
@@ -494,7 +442,7 @@ extension __EditGymProfileSheetStateExt on _EditGymProfileSheetState {
     return Wrap(
       spacing: 8,
       runSpacing: 8,
-      children: _trainingSplitOptions.map((split) {
+      children: _EditGymProfileSheetState._trainingSplitOptions.map((split) {
         final isSelected = _selectedTrainingSplit == split['id'];
         return GestureDetector(
           onTap: () {
@@ -608,7 +556,7 @@ extension __EditGymProfileSheetStateExt on _EditGymProfileSheetState {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Text(
-                  _dayNames[index],
+                  _EditGymProfileSheetState._dayNames[index],
                   style: TextStyle(
                     fontSize: 11,
                     fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
@@ -739,7 +687,7 @@ extension __EditGymProfileSheetStateExt on _EditGymProfileSheetState {
     return Wrap(
       spacing: 8,
       runSpacing: 8,
-      children: _experienceOptions.map((opt) {
+      children: _EditGymProfileSheetState._experienceOptions.map((opt) {
         final id = opt['id'] as String;
         final label = opt['label'] as String;
         final isSelected = _selectedExperience == id;
@@ -792,7 +740,7 @@ extension __EditGymProfileSheetStateExt on _EditGymProfileSheetState {
     return Wrap(
       spacing: 8,
       runSpacing: 8,
-      children: _focusAreaOptions.map((opt) {
+      children: _EditGymProfileSheetState._focusAreaOptions.map((opt) {
         final id = opt['id'] as String;
         final label = opt['label'] as String;
         final isSelected = _selectedFocusAreas.contains(id);

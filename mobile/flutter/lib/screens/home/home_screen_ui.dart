@@ -2,40 +2,8 @@ part of 'home_screen.dart';
 
 /// Methods extracted from _HomeScreenState
 extension __HomeScreenStateExt on _HomeScreenState {
-  final Completer<void> _initCompleter = Completer<void>();
-  String? _generationStartDate;
-  int _generationWeeks = 0;
-  int _totalExpected = 0;
-  int _totalGenerated = 0;
-  String _generationMessage = '';
-  String? _generationDetail;
 
-  // Week calendar strip state
-  late PageController _carouselPageController;
-  int _selectedWeekDay = DateTime.now().weekday - 1; // 0=Mon
-  List<CarouselItem> _carouselItems = [];
-
-  // Auto-refresh tracking
-  DateTime? _lastRefreshTime;
-
-  // Deprecated: Edit mode state (no longer used but kept for backwards compatibility with dead code)
-  @Deprecated('Edit mode has been removed')
-  bool _isEditMode = false;
-  @Deprecated('Edit mode has been removed')
-  List<dynamic> _editingTiles = [];
-  @Deprecated('Edit mode has been removed')
-  static const String _editModeTooltipKey = 'has_shown_edit_mode_tooltip';
-  @Deprecated('Edit mode has been removed')
-  late final _wiggleController = _DummyAnimationController();
-  // M13: Increased from 30 seconds to 5 minutes to reduce unnecessary refreshes
-  static const Duration _minRefreshInterval = Duration(minutes: 5);
-
-  /// Ensures the Health Connect popup auto-shows at most once per app session.
-  static bool _healthPopupShownThisSession = false;
-
-  @override
-  void initState() {
-    super.initState();
+  void _extInitState() {
     _carouselPageController = PageController(viewportFraction: 0.88);
     // Register for app lifecycle events
     WidgetsBinding.instance.addObserver(this);

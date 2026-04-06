@@ -605,4 +605,27 @@ extension WorkoutRepositoryModifications on WorkoutRepository {
       rethrow;
     }
   }
+
+  /// Un-supersede a workout so it becomes current again.
+  ///
+  /// Used when user regenerates a workout but chooses "Add Workout" instead of
+  /// "Replace" -- both the old and new workout should appear for the same date.
+  Future<void> unsupersedeWorkout({required String workoutId}) async {
+    try {
+      debugPrint('🔍 [Workout] Un-superseding workout $workoutId');
+      final response = await apiClient.post(
+        '${ApiConstants.workouts}/unsupersede',
+        data: {'workout_id': workoutId},
+      );
+
+      if (response.statusCode == 200) {
+        debugPrint('✅ [Workout] Workout un-superseded: $workoutId');
+      } else {
+        throw Exception('Failed to un-supersede workout: ${response.statusCode}');
+      }
+    } catch (e) {
+      debugPrint('❌ [Workout] Error un-superseding workout: $e');
+      rethrow;
+    }
+  }
 }

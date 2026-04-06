@@ -9,6 +9,7 @@ import 'api_client.dart';
 
 
 part 'food_search_service_part_food_modifier_type.dart';
+part 'food_search_service_part_cache_entry.dart';
 
 
 /// Search state for UI

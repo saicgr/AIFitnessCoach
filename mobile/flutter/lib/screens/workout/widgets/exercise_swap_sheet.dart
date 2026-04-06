@@ -19,6 +19,7 @@ import '../../../data/services/image_url_cache.dart';
 
 part 'exercise_swap_sheet_part_exercise_swap_sheet_state.dart';
 part 'exercise_swap_sheet_part_exercise_swap_sheet_state_ext.dart';
+part 'exercise_swap_sheet_part_exercise_option_card.dart';
 
 
 /// Shows exercise swap sheet with fast DB suggestions and optional AI picks

@@ -21,6 +21,7 @@ import '../../../core/services/posthog_service.dart';
 
 
 part 'hero_workout_card_part_completed_workout_hero_card.dart';
+part 'hero_workout_card_part_stat_chip.dart';
 
 part 'hero_workout_card_ui.dart';
 

@@ -88,6 +88,35 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   bool _isCheckingWorkouts = false;
   bool _isStreamingGeneration = false;
 
+  final Completer<void> _initCompleter = Completer<void>();
+  String? _generationStartDate;
+  int _generationWeeks = 0;
+  int _totalExpected = 0;
+  int _totalGenerated = 0;
+  String _generationMessage = '';
+  String? _generationDetail;
+
+  // Week calendar strip state
+  late PageController _carouselPageController;
+  int _selectedWeekDay = DateTime.now().weekday - 1; // 0=Mon
+  List<CarouselItem> _carouselItems = [];
+
+  // Auto-refresh tracking
+  DateTime? _lastRefreshTime;
+
+  @Deprecated('Edit mode has been removed')
+  bool _isEditMode = false;
+  @Deprecated('Edit mode has been removed')
+  List<dynamic> _editingTiles = [];
+  @Deprecated('Edit mode has been removed')
+  static const String _editModeTooltipKey = 'has_shown_edit_mode_tooltip';
+  @Deprecated('Edit mode has been removed')
+  late final _wiggleController = _DummyAnimationController();
+  static const Duration _minRefreshInterval = Duration(minutes: 5);
+
+  /// Ensures the Health Connect popup auto-shows at most once per app session.
+  static bool _healthPopupShownThisSession = false;
+
   void _triggerNavTour() {
     final steps = [
       AppTourStep(
@@ -134,6 +163,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       ),
     ];
     ref.read(appTourControllerProvider.notifier).checkAndShow('nav_tour', steps);
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _extInitState();
   }
 
   @override

@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 
 
 part 'muscle_analytics_part_muscle_intensity.dart';
+part 'muscle_analytics.g.dart';
 
 
 // ============================================================================
@@ -83,51 +84,3 @@ class MuscleHeatmapData {
   bool get hasData => muscleIntensities.isNotEmpty;
 }
 
-/// Single muscle intensity data
-@JsonSerializable()
-
-// ============================================================================
-// Muscle Training Frequency
-// ============================================================================
-
-/// Frequency statistics per muscle group
-@JsonSerializable()
-
-/// Frequency data for a single muscle group
-@JsonSerializable()
-
-// ============================================================================
-// Muscle Balance Data
-// ============================================================================
-
-/// Push/pull and other balance ratios
-@JsonSerializable()
-
-/// Specific muscle imbalance data
-@JsonSerializable()
-
-// ============================================================================
-// Muscle Exercise Data
-// ============================================================================
-
-/// Exercises performed for a specific muscle group
-@JsonSerializable()
-
-/// Stats for a single exercise targeting a muscle
-@JsonSerializable()
-
-// ============================================================================
-// Muscle History Data
-// ============================================================================
-
-/// Workout history for a specific muscle group
-@JsonSerializable()
-
-/// Single workout entry for muscle history
-@JsonSerializable()
-
-/// Summary for muscle history
-@JsonSerializable()
-
-/// Chart data point for muscle analytics
-@JsonSerializable()

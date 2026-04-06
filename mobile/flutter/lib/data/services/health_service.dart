@@ -93,8 +93,8 @@ class HealthService {
       await _ensureConfigured();
 
       // Get available types for this platform
-      final availableReadTypes = _getAvailableTypes(_readTypes);
-      final availableWriteTypes = _getAvailableTypes(_writeTypes);
+      final availableReadTypes = _getAvailableTypes(HealthServiceExt._readTypes);
+      final availableWriteTypes = _getAvailableTypes(HealthServiceExt._writeTypes);
 
       // Combine all types we need
       final allTypes = <HealthDataType>{...availableReadTypes, ...availableWriteTypes}.toList();

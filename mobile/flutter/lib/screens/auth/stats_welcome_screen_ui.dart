@@ -75,7 +75,7 @@ extension _StatsWelcomeScreenStateUI on _StatsWelcomeScreenState {
 
   Widget _buildStatDescription(bool isDark) {
     final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
-    final longDesc = _stats[_currentStatIndex]['longDescription'] as String;
+    final longDesc = _StatsWelcomeScreenState._stats[_currentStatIndex]['longDescription'] as String;
 
     return AnimatedSwitcher(
       duration: const Duration(milliseconds: 300),

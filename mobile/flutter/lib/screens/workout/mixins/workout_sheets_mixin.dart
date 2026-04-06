@@ -42,6 +42,41 @@ mixin WorkoutSheetsMixin<T extends StatefulWidget> on State<T> {
 
   WidgetRef get ref;
   List<WorkoutExercise> get exercises;
+  set exercises(List<WorkoutExercise> value);
+  int get currentExerciseIndex;
+  int get viewingExerciseIndex;
+  Map<int, List<SetLog>> get completedSets;
+  Map<int, int> get totalSetsPerExercise;
+  Map<int, List<Map<String, dynamic>>> get previousSets;
+  Map<int, RepProgressionType> get repProgressionPerExercise;
+  Map<int, SetProgressionPattern> get exerciseProgressionPattern;
+  Map<int, double> get exerciseWorkingWeight;
+  Map<int, String> get exerciseBarType;
+  Map<String, double> get exerciseMaxWeights;
+  TextEditingController get weightController;
+  TextEditingController get repsController;
+  TextEditingController get repsRightController;
+  bool get useKg;
+  set useKg(bool value);
+  double get weightIncrement;
+  List<WarmupExerciseData>? get warmupExercises;
+  set warmupExercises(List<WarmupExerciseData>? value);
+  List<StretchExerciseData>? get stretchExercises;
+  set stretchExercises(List<StretchExerciseData>? value);
+  bool get isWarmupLoading;
+  set isWarmupLoading(bool value);
+  VideoPlayerController? get videoController;
+  bool get isVideoInitialized;
+  set isVideoInitialized(bool value);
+  bool get isVideoPlaying;
+  set isVideoPlaying(bool value);
+  int get totalDrinkIntakeMl;
+  set totalDrinkIntakeMl(int value);
+  bool get hideAICoachForSession;
+  set hideAICoachForSession(bool value);
+  dynamic get workoutWidget;
+  void breakSuperset(int groupId);
+  void applyProgressionTargets(int exerciseIndex, SetProgressionPattern pattern);
 
   /// Show the 1RM logging sheet
   void showLog1RMSheet(WorkoutExercise exercise) {

@@ -46,6 +46,12 @@ class _QuickWorkoutSheetState extends ConsumerState<_QuickWorkoutSheet> {
   ];
 
   @override
+  void initState() {
+    super.initState();
+    _extInitState();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final state = ref.watch(quickWorkoutProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -309,7 +315,7 @@ class _QuickWorkoutSheetState extends ConsumerState<_QuickWorkoutSheet> {
                         onTap: () {
                           HapticService.light();
                           setState(() {
-                            final isFullGym = _fullGymEquipment.every(
+                            final isFullGym = __QuickWorkoutSheetStateExt1._fullGymEquipment.every(
                               (e) => _selectedEquipment.contains(e),
                             );
                             if (isFullGym) {
@@ -317,21 +323,21 @@ class _QuickWorkoutSheetState extends ConsumerState<_QuickWorkoutSheet> {
                               _equipmentDetails.clear();
                               _expandedEquipment = null;
                             } else {
-                              _selectedEquipment = Set.from(_fullGymEquipment);
+                              _selectedEquipment = Set.from(__QuickWorkoutSheetStateExt1._fullGymEquipment);
                             }
                           });
                         },
                         child: Container(
                           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                           decoration: BoxDecoration(
-                            color: _fullGymEquipment.every(
+                            color: __QuickWorkoutSheetStateExt1._fullGymEquipment.every(
                               (e) => _selectedEquipment.contains(e),
                             )
                                 ? accentColor.withValues(alpha: 0.15)
                                 : cardBackground,
                             borderRadius: BorderRadius.circular(8),
                             border: Border.all(
-                              color: _fullGymEquipment.every(
+                              color: __QuickWorkoutSheetStateExt1._fullGymEquipment.every(
                                 (e) => _selectedEquipment.contains(e),
                               )
                                   ? accentColor
@@ -344,7 +350,7 @@ class _QuickWorkoutSheetState extends ConsumerState<_QuickWorkoutSheet> {
                               Icon(
                                 Icons.fitness_center,
                                 size: 14,
-                                color: _fullGymEquipment.every(
+                                color: __QuickWorkoutSheetStateExt1._fullGymEquipment.every(
                                   (e) => _selectedEquipment.contains(e),
                                 )
                                     ? accentColor
@@ -356,7 +362,7 @@ class _QuickWorkoutSheetState extends ConsumerState<_QuickWorkoutSheet> {
                                 style: TextStyle(
                                   fontSize: 12,
                                   fontWeight: FontWeight.w600,
-                                  color: _fullGymEquipment.every(
+                                  color: __QuickWorkoutSheetStateExt1._fullGymEquipment.every(
                                     (e) => _selectedEquipment.contains(e),
                                   )
                                       ? accentColor
@@ -374,7 +380,7 @@ class _QuickWorkoutSheetState extends ConsumerState<_QuickWorkoutSheet> {
                     spacing: 8,
                     runSpacing: 8,
                     children: [
-                      ..._primaryEquipment.map((equip) {
+                      ...__QuickWorkoutSheetStateExt1._primaryEquipment.map((equip) {
                         final isSelected = _selectedEquipment.contains(equip);
                         final hasDetails = _equipmentDetails.containsKey(equip);
                         final supportsDetail = _supportsWeightDetail(equip);
@@ -413,9 +419,9 @@ class _QuickWorkoutSheetState extends ConsumerState<_QuickWorkoutSheet> {
                           textMuted: textMuted,
                         );
                       }),
-                      if (!_fullGymEquipment.every((e) => _selectedEquipment.contains(e)))
+                      if (!__QuickWorkoutSheetStateExt1._fullGymEquipment.every((e) => _selectedEquipment.contains(e)))
                       ..._selectedEquipment
-                          .where((e) => !_primaryEquipment.contains(e))
+                          .where((e) => !__QuickWorkoutSheetStateExt1._primaryEquipment.contains(e))
                           .map((equip) {
                         final hasDetails = _equipmentDetails.containsKey(equip);
                         final supportsDetail = _supportsWeightDetail(equip);
@@ -501,7 +507,7 @@ class _QuickWorkoutSheetState extends ConsumerState<_QuickWorkoutSheet> {
                   Wrap(
                     spacing: 8,
                     runSpacing: 8,
-                    children: _injuryOptions.map((injury) {
+                    children: __QuickWorkoutSheetStateExt1._injuryOptions.map((injury) {
                       final isSelected = _selectedInjuries.contains(injury);
                       return _ToggleChip(
                         label: injury,

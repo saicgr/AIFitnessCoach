@@ -4,6 +4,7 @@ import 'package:json_annotation/json_annotation.dart';
 part 'nutrition_preferences_part_nutrition_goal.dart';
 part 'nutrition_preferences_part_meal_template.dart';
 part 'nutrition_preferences_part_weekly_nutrition_data.dart';
+part 'nutrition_preferences.g.dart';
 
 
 /// Nutrition preferences for a user
@@ -340,39 +341,3 @@ class NutritionPreferences {
   }
 }
 
-/// Weight log entry for tracking
-@JsonSerializable()
-
-/// Nutrition streak for consistency tracking
-@JsonSerializable()
-
-// ============================================
-// Nutrition UI Preferences
-// ============================================
-
-/// UI preferences for nutrition tracking experience
-@JsonSerializable()
-
-// ============================================
-// Meal Templates
-// ============================================
-
-/// A food item within a meal template
-@JsonSerializable()
-
-/// A saved meal template for quick logging
-@JsonSerializable()
-
-// ============================================
-// Quick Suggestions
-// ============================================
-
-/// A quick food suggestion based on user history and time of day
-@JsonSerializable()
-
-// ============================================
-// Food Search Result
-// ============================================
-
-/// Food search result for the search functionality
-@JsonSerializable()

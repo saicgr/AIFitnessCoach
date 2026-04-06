@@ -1,5 +1,6 @@
 part of 'nutrition_preferences.dart';
 
+@JsonSerializable()
 class MealTemplate {
   final String? id;
   @JsonKey(name: 'user_id')
@@ -137,6 +138,7 @@ class MealTemplate {
   }
 }
 
+@JsonSerializable()
 class QuickSuggestion {
   @JsonKey(name: 'food_name')
   final String foodName;
@@ -248,6 +250,7 @@ class QuickSuggestion {
   bool get isFromSavedFood => savedFoodId != null;
 }
 
+@JsonSerializable()
 class FoodSearchResult {
   final String id;
   final String name;

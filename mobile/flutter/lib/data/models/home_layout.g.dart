@@ -6,6 +6,31 @@ part of 'home_layout.dart';
 // JsonSerializableGenerator
 // **************************************************************************
 
+HomeLayout _$HomeLayoutFromJson(Map<String, dynamic> json) => HomeLayout(
+  id: json['id'] as String,
+  userId: json['user_id'] as String,
+  name: json['name'] as String,
+  tiles: (json['tiles'] as List<dynamic>)
+      .map((e) => HomeTile.fromJson(e as Map<String, dynamic>))
+      .toList(),
+  isActive: json['is_active'] as bool? ?? false,
+  templateId: json['template_id'] as String?,
+  createdAt: DateTime.parse(json['created_at'] as String),
+  updatedAt: DateTime.parse(json['updated_at'] as String),
+);
+
+Map<String, dynamic> _$HomeLayoutToJson(HomeLayout instance) =>
+    <String, dynamic>{
+      'id': instance.id,
+      'user_id': instance.userId,
+      'name': instance.name,
+      'tiles': instance.tiles,
+      'is_active': instance.isActive,
+      'template_id': instance.templateId,
+      'created_at': instance.createdAt.toIso8601String(),
+      'updated_at': instance.updatedAt.toIso8601String(),
+    };
+
 HomeTile _$HomeTileFromJson(Map<String, dynamic> json) => HomeTile(
   id: json['id'] as String,
   type: $enumDecode(_$TileTypeEnumMap, json['type']),
@@ -70,31 +95,6 @@ const _$TileSizeEnumMap = {
   TileSize.half: 'half',
   TileSize.compact: 'compact',
 };
-
-HomeLayout _$HomeLayoutFromJson(Map<String, dynamic> json) => HomeLayout(
-  id: json['id'] as String,
-  userId: json['user_id'] as String,
-  name: json['name'] as String,
-  tiles: (json['tiles'] as List<dynamic>)
-      .map((e) => HomeTile.fromJson(e as Map<String, dynamic>))
-      .toList(),
-  isActive: json['is_active'] as bool? ?? false,
-  templateId: json['template_id'] as String?,
-  createdAt: DateTime.parse(json['created_at'] as String),
-  updatedAt: DateTime.parse(json['updated_at'] as String),
-);
-
-Map<String, dynamic> _$HomeLayoutToJson(HomeLayout instance) =>
-    <String, dynamic>{
-      'id': instance.id,
-      'user_id': instance.userId,
-      'name': instance.name,
-      'tiles': instance.tiles,
-      'is_active': instance.isActive,
-      'template_id': instance.templateId,
-      'created_at': instance.createdAt.toIso8601String(),
-      'updated_at': instance.updatedAt.toIso8601String(),
-    };
 
 HomeLayoutTemplate _$HomeLayoutTemplateFromJson(Map<String, dynamic> json) =>
     HomeLayoutTemplate(

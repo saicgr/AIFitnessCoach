@@ -3,12 +3,7 @@ part of 'workout_complete_screen.dart';
 /// Methods extracted from _WorkoutCompleteScreenState
 extension __WorkoutCompleteScreenStateExt1 on _WorkoutCompleteScreenState {
 
-  // Milestone thresholds
-  static const List<int> _milestoneThresholds = [5, 10, 25, 50, 100, 150, 200, 250, 500, 1000];
-
-  @override
-  void initState() {
-    super.initState();
+  void _extInitState() {
     debugPrint('🏁 [Complete] Workout complete screen loaded: ${widget.workout.id}');
     _confettiController = ConfettiController(duration: const Duration(seconds: 3));
 

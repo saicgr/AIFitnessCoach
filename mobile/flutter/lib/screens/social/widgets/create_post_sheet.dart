@@ -17,6 +17,7 @@ import '../../../widgets/app_snackbar.dart';
 
 
 part 'create_post_sheet_part_post_visibility_option.dart';
+part 'create_post_sheet_part_stat_pill_data.dart';
 
 part 'create_post_sheet_ui.dart';
 

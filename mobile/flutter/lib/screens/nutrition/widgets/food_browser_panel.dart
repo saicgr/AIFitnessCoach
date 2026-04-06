@@ -14,6 +14,11 @@ import 'food_report_dialog.dart';
 
 
 part 'food_browser_panel_part_food_browser_filter.dart';
+part 'food_browser_panel_part_search_display_mode.dart';
+part 'food_browser_panel_part_food_browser_item.dart';
+part 'food_browser_panel_part_expandable_search_card_state.dart';
+part 'food_browser_panel_part_display_mode_toggle.dart';
+part 'food_browser_panel_part_n_l_item_section_state.dart';
 
 part 'food_browser_panel_ui.dart';
 part 'food_browser_panel_part_n_l_item_section_state_ext.dart';

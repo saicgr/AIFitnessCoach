@@ -1,7 +1,7 @@
 part of 'chat_repository.dart';
 
 /// Methods extracted from ChatMessagesNotifier
-extension _ChatMessagesNotifierExt on ChatMessagesNotifier {
+extension ChatMessagesNotifierExt on ChatMessagesNotifier {
 
   /// Send a message
   Future<void> sendMessage(String message) async {
@@ -82,7 +82,7 @@ extension _ChatMessagesNotifierExt on ChatMessagesNotifier {
 
     // Check if this looks like a quick workout request
     final messageLower = message.toLowerCase();
-    final isQuickWorkoutRequest = _quickWorkoutKeywords.any((kw) => messageLower.contains(kw));
+    final isQuickWorkoutRequest = ChatMessagesNotifier._quickWorkoutKeywords.any((kw) => messageLower.contains(kw));
     if (isQuickWorkoutRequest) {
       _setAIGenerating(true);
       debugPrint('🏋️ [Chat] Quick workout request detected - setting loading state');

@@ -1,7 +1,7 @@
 part of 'exercise_preferences_repository.dart';
 
-/// Methods extracted from FavoriteExercise
-extension _FavoriteExerciseExt on FavoriteExercise {
+/// Methods extracted from ExercisePreferencesRepository for staple exercises
+extension ExercisePreferencesRepositoryStaplesExt on ExercisePreferencesRepository {
 
   /// Add an exercise to staples
   Future<StapleExercise> addStapleExercise(

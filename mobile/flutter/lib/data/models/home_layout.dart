@@ -3,6 +3,7 @@ import 'package:json_annotation/json_annotation.dart';
 
 
 part 'home_layout_part_tile_type.dart';
+part 'home_layout.g.dart';
 
 
 /// Tiles that are deprecated and should be hidden from the layout editor
@@ -84,15 +85,6 @@ class HomeLayout {
       ..sort((a, b) => a.order.compareTo(b.order));
   }
 }
-
-/// A system-provided layout template
-@JsonSerializable()
-
-/// Request to create a new layout
-@JsonSerializable()
-
-/// Request to update an existing layout
-@JsonSerializable()
 
 /// Default tile order for new users
 const List<TileType> defaultVisibleTiles = [

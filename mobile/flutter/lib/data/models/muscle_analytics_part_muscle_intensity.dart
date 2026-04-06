@@ -1,5 +1,6 @@
 part of 'muscle_analytics.dart';
 
+@JsonSerializable()
 class MuscleIntensity {
   @JsonKey(name: 'muscle_id')
   final String muscleId;
@@ -83,6 +84,7 @@ class MuscleIntensity {
   }
 }
 
+@JsonSerializable()
 class MuscleTrainingFrequency {
   @JsonKey(name: 'user_id')
   final String userId;
@@ -144,6 +146,7 @@ class MuscleTrainingFrequency {
   bool get hasData => frequencies.isNotEmpty;
 }
 
+@JsonSerializable()
 class MuscleFrequencyData {
   @JsonKey(name: 'muscle_group')
   final String muscleGroup;
@@ -262,6 +265,7 @@ class MuscleFrequencyData {
   }
 }
 
+@JsonSerializable()
 class MuscleBalanceData {
   @JsonKey(name: 'user_id')
   final String userId;
@@ -399,6 +403,7 @@ class MuscleBalanceData {
   bool get hasImbalances => imbalances != null && imbalances!.isNotEmpty;
 }
 
+@JsonSerializable()
 class MuscleImbalance {
   @JsonKey(name: 'muscle_pair')
   final String musclePair;
@@ -442,6 +447,7 @@ class MuscleImbalance {
   bool get isSignificant => severity == 'moderate' || severity == 'severe';
 }
 
+@JsonSerializable()
 class MuscleExerciseData {
   @JsonKey(name: 'muscle_group')
   final String muscleGroup;
@@ -517,6 +523,7 @@ class MuscleExerciseData {
   bool get hasData => exercises.isNotEmpty;
 }
 
+@JsonSerializable()
 class MuscleExerciseStats {
   @JsonKey(name: 'exercise_id')
   final String? exerciseId;
@@ -614,6 +621,7 @@ class MuscleExerciseStats {
   }
 }
 
+@JsonSerializable()
 class MuscleHistoryData {
   @JsonKey(name: 'user_id')
   final String userId;
@@ -680,6 +688,7 @@ class MuscleHistoryData {
   bool get hasData => history.isNotEmpty;
 }
 
+@JsonSerializable()
 class MuscleWorkoutEntry {
   @JsonKey(name: 'workout_id')
   final String workoutId;
@@ -777,6 +786,7 @@ class MuscleWorkoutEntry {
   }
 }
 
+@JsonSerializable()
 class MuscleHistorySummary {
   @JsonKey(name: 'total_workouts')
   final int totalWorkouts;
@@ -874,6 +884,7 @@ class MuscleHistorySummary {
   bool get isDecreasing => volumeTrend == 'decreasing';
 }
 
+@JsonSerializable()
 class MuscleChartDataPoint {
   final String date;
 

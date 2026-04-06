@@ -30,6 +30,7 @@ enum FoodMood {
   }
 }
 
+@JsonSerializable()
 class FoodLog {
   final String id;
   @JsonKey(name: 'user_id')
@@ -93,6 +94,7 @@ class FoodLog {
   Map<String, dynamic> toJson() => _$FoodLogToJson(this);
 }
 
+@JsonSerializable()
 class DailyNutritionSummary {
   final String date;
   @JsonKey(name: 'total_calories')
@@ -128,6 +130,7 @@ class DailyNutritionSummary {
   Map<String, dynamic> toJson() => _$DailyNutritionSummaryToJson(this);
 }
 
+@JsonSerializable()
 class NutritionTargets {
   @JsonKey(name: 'user_id')
   final String userId;
@@ -175,6 +178,7 @@ enum MealType {
   }
 }
 
+@JsonSerializable()
 class ProductNutrients {
   @JsonKey(name: 'calories_per_100g')
   final double caloriesPer100g;
@@ -209,6 +213,7 @@ class ProductNutrients {
   Map<String, dynamic> toJson() => _$ProductNutrientsToJson(this);
 }
 
+@JsonSerializable()
 class BarcodeProduct {
   final String barcode;
   @JsonKey(name: 'product_name')
@@ -278,6 +283,7 @@ class BarcodeProduct {
   String? get servingSize => nutrients['serving_size'] as String?;
 }
 
+@JsonSerializable()
 class LogBarcodeResponse {
   final bool success;
   @JsonKey(name: 'food_log_id')
@@ -308,6 +314,7 @@ class LogBarcodeResponse {
   Map<String, dynamic> toJson() => _$LogBarcodeResponseToJson(this);
 }
 
+@JsonSerializable()
 class USDANutrientData {
   @JsonKey(name: 'fdc_id')
   final int? fdcId;
@@ -348,6 +355,7 @@ class USDANutrientData {
   }
 }
 
+@JsonSerializable()
 class AiPerGramData {
   final double calories;
   final double protein;
@@ -379,6 +387,7 @@ class AiPerGramData {
   }
 }
 
+@JsonSerializable()
 class FoodItemRanking {
   final String name;
   final String? amount;
@@ -530,6 +539,7 @@ class FoodItemRanking {
   }
 }
 
+@JsonSerializable()
 class LogFoodResponse {
   final bool success;
   @JsonKey(name: 'food_log_id')
@@ -745,6 +755,7 @@ enum FoodSourceType {
   }
 }
 
+@JsonSerializable()
 class SavedFoodItem {
   final String name;
   final String? amount;
@@ -803,6 +814,7 @@ class SavedFoodItem {
   bool get canScaleByCount => count != null && weightPerUnitG != null && canScale;
 }
 
+@JsonSerializable()
 class SavedFood {
   final String id;
   @JsonKey(name: 'user_id')
@@ -898,6 +910,7 @@ class SavedFood {
   }
 }
 
+@JsonSerializable()
 class SavedFoodsResponse {
   final List<SavedFood> items;
   @JsonKey(name: 'total_count')

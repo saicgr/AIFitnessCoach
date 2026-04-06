@@ -11,6 +11,7 @@ import 'edit_targets_sheet.dart';
 import 'nutrition_goals_card.dart';
 import 'pinned_nutrients_card.dart';
 import 'logged_meals_section.dart';
+import 'goal_row.dart';
 
 class DailyTab extends ConsumerStatefulWidget {
   final String userId;

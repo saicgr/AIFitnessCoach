@@ -2,6 +2,7 @@ import 'package:json_annotation/json_annotation.dart';
 
 
 part 'habit_part_habit_category.dart';
+part 'habit.g.dart';
 
 
 /// Main habit model
@@ -138,38 +139,3 @@ class Habit {
   }
 }
 
-/// Habit completion log entry
-@JsonSerializable()
-
-/// Daily habits summary
-@JsonSerializable()
-
-/// Weekly habit statistics
-@JsonSerializable()
-
-/// Habit template for quick creation
-@JsonSerializable()
-
-/// AI-generated habit insights
-@JsonSerializable()
-
-/// Habit with today's status for provider state
-@JsonSerializable()
-
-/// Today's habits response from API
-@JsonSerializable()
-
-/// Habits summary for dashboard
-@JsonSerializable()
-
-/// Weekly summary for a habit
-@JsonSerializable()
-
-/// Habit streak data
-@JsonSerializable()
-
-/// Habit suggestion response from AI
-@JsonSerializable()
-
-/// Calendar data for visualization
-@JsonSerializable()

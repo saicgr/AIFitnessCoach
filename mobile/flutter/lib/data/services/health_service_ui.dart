@@ -1,7 +1,7 @@
 part of 'health_service.dart';
 
 /// Methods extracted from HealthService
-extension _HealthServiceExt on HealthService {
+extension HealthServiceExt on HealthService {
 
   // Data types we want to read from Health Connect
   static final List<HealthDataType> _readTypes = [

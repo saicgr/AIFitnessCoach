@@ -5,6 +5,7 @@ import '../../workout/widgets/share_templates/app_watermark.dart';
 
 
 part 'activity_share_card_part_share_aspect_ratio.dart';
+part 'activity_share_card_part_activity_type_config.dart';
 
 part 'activity_share_card_ui.dart';
 

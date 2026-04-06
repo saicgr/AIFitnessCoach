@@ -70,6 +70,7 @@ enum HabitFrequency {
   }
 }
 
+@JsonSerializable()
 class HabitLog {
   final String id;
   @JsonKey(name: 'habit_id')
@@ -102,6 +103,7 @@ class HabitLog {
   Map<String, dynamic> toJson() => _$HabitLogToJson(this);
 }
 
+@JsonSerializable()
 class DailyHabitSummary {
   final String date;
   @JsonKey(name: 'total_habits')
@@ -128,6 +130,7 @@ class DailyHabitSummary {
   Map<String, dynamic> toJson() => _$DailyHabitSummaryToJson(this);
 }
 
+@JsonSerializable()
 class WeeklyHabitStats {
   @JsonKey(name: 'week_start')
   final String weekStart;
@@ -162,6 +165,7 @@ class WeeklyHabitStats {
   Map<String, dynamic> toJson() => _$WeeklyHabitStatsToJson(this);
 }
 
+@JsonSerializable()
 class HabitTemplate {
   final String id;
   final String name;
@@ -490,6 +494,7 @@ class HabitTemplate {
   }
 }
 
+@JsonSerializable()
 class HabitInsights {
   final String summary;
   @JsonKey(name: 'best_performing')
@@ -513,6 +518,7 @@ class HabitInsights {
   Map<String, dynamic> toJson() => _$HabitInsightsToJson(this);
 }
 
+@JsonSerializable()
 class HabitWithStatus {
   final String id;
   @JsonKey(name: 'user_id')
@@ -630,6 +636,7 @@ class HabitWithStatus {
   }
 }
 
+@JsonSerializable()
 class TodayHabitsResponse {
   final List<HabitWithStatus> habits;
   @JsonKey(name: 'total_habits')
@@ -651,6 +658,7 @@ class TodayHabitsResponse {
   Map<String, dynamic> toJson() => _$TodayHabitsResponseToJson(this);
 }
 
+@JsonSerializable()
 class HabitsSummary {
   @JsonKey(name: 'total_active_habits')
   final int totalActiveHabits;
@@ -682,6 +690,7 @@ class HabitsSummary {
   Map<String, dynamic> toJson() => _$HabitsSummaryToJson(this);
 }
 
+@JsonSerializable()
 class HabitWeeklySummary {
   @JsonKey(name: 'habit_id')
   final String habitId;
@@ -713,6 +722,7 @@ class HabitWeeklySummary {
   Map<String, dynamic> toJson() => _$HabitWeeklySummaryToJson(this);
 }
 
+@JsonSerializable()
 class HabitStreak {
   final String id;
   @JsonKey(name: 'habit_id')
@@ -746,6 +756,7 @@ class HabitStreak {
   Map<String, dynamic> toJson() => _$HabitStreakToJson(this);
 }
 
+@JsonSerializable()
 class HabitSuggestionResponse {
   @JsonKey(name: 'suggested_habits')
   final List<HabitTemplate> suggestedHabits;
@@ -761,6 +772,7 @@ class HabitSuggestionResponse {
   Map<String, dynamic> toJson() => _$HabitSuggestionResponseToJson(this);
 }
 
+@JsonSerializable()
 class HabitCalendarData {
   final DateTime date;
   final String status; // completed, missed, skipped, not_scheduled, future

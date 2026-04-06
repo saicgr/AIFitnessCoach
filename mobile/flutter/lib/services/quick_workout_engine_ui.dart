@@ -1,7 +1,7 @@
 part of 'quick_workout_engine.dart';
 
 /// Methods extracted from QuickWorkoutEngine
-extension _QuickWorkoutEngineExt on QuickWorkoutEngine {
+extension QuickWorkoutEngineExt on QuickWorkoutEngine {
   /// Generate a complete quick workout.
   ///
   /// Returns a [Workout] object fully compatible with the server format,
@@ -589,7 +589,7 @@ extension _QuickWorkoutEngineExt on QuickWorkoutEngine {
           if (rpeSummary.decision == RpeDecision.deload) {
             workingWeight = workingWeight * 0.85;
           } else if (rpeSummary.decision == RpeDecision.progress) {
-            final increment = _getEquipmentIncrement(ex.equipment);
+            final increment = QuickWorkoutEngine._getEquipmentIncrement(ex.equipment);
             workingWeight = workingWeight + increment;
           }
         }
@@ -646,7 +646,7 @@ extension _QuickWorkoutEngineExt on QuickWorkoutEngine {
                   setNumber: sn++,
                   setType: 'warmup',
                   targetReps: st.targetReps,
-                  targetWeightKg: _roundWeight(workingWeight * 0.5),
+                  targetWeightKg: QuickWorkoutEngine._roundWeight(workingWeight * 0.5),
                   targetRpe: 4,
                   targetRir: 6,
                 ));

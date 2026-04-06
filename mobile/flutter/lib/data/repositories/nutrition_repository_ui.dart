@@ -1,7 +1,7 @@
 part of 'nutrition_repository.dart';
 
 /// Methods extracted from NutritionRepository
-extension _NutritionRepositoryExt on NutritionRepository {
+extension NutritionRepositoryExt on NutritionRepository {
 
   /// Get food logs for a user
   Future<List<FoodLog>> getFoodLogs(

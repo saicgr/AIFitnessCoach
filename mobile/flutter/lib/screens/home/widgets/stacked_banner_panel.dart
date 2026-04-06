@@ -503,6 +503,17 @@ class _StackedBannerPanelState extends ConsumerState<StackedBannerPanel>
   Widget build(BuildContext context) {
     final banners = _collectBanners();
 
+    // Report active banner IDs so the header dismiss-all button can use them
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        final ids = banners.map((b) => b.id).toList();
+        final current = ref.read(activeBannerIdsProvider);
+        if (ids.length != current.length || !ids.every(current.contains)) {
+          ref.read(activeBannerIdsProvider.notifier).state = ids;
+        }
+      }
+    });
+
     if (banners.isEmpty) {
       return const SizedBox.shrink();
     }

@@ -385,7 +385,7 @@ class AISettingsNotifier extends StateNotifier<AISettings> {
     // Mark as loaded to prevent API from overwriting local selection during onboarding
     _isLoaded = true;
     _saveSettings();
-    NotificationService.cacheCoachId(coach.id, coachingStyle: coach.coachingStyle);
+    NotificationServiceScheduled.cacheCoachId(coach.id, coachingStyle: coach.coachingStyle);
   }
 
   /// Set a custom coach with user-defined settings
@@ -406,7 +406,7 @@ class AISettingsNotifier extends StateNotifier<AISettings> {
     // Mark as loaded to prevent API from overwriting local selection during onboarding
     _isLoaded = true;
     _saveSettings();
-    NotificationService.cacheCoachId('custom', coachingStyle: coachingStyle);
+    NotificationServiceScheduled.cacheCoachId('custom', coachingStyle: coachingStyle);
   }
 
   /// Get the current coach persona (reconstructs from settings)

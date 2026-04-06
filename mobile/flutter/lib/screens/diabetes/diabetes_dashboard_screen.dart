@@ -8,6 +8,8 @@ import '../../widgets/glass_sheet.dart';
 
 
 part 'diabetes_dashboard_screen_part_glucose_status.dart';
+part 'diabetes_dashboard_screen_part_a1_c_card.dart';
+part 'diabetes_dashboard_screen_part_current_glucose_card.dart';
 
 
 /// Diabetes Provider - wired to real API

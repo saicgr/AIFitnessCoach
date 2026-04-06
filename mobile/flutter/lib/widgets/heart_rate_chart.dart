@@ -5,6 +5,7 @@ import '../core/providers/heart_rate_provider.dart';
 
 
 part 'heart_rate_chart_part_heart_rate_summary_card.dart';
+part 'heart_rate_chart_part_zone_legend_item.dart';
 
 
 /// Line chart displaying heart rate over workout duration.

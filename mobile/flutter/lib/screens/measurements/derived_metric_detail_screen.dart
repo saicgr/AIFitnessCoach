@@ -11,6 +11,7 @@ import '../../widgets/glass_back_button.dart';
 
 
 part 'derived_metric_detail_screen_part_derived_metric_type.dart';
+part 'derived_metric_detail_screen_part_stat_item.dart';
 
 part 'derived_metric_detail_screen_ui.dart';
 

@@ -17,6 +17,7 @@ import 'package:timeago/timeago.dart' as timeago;
 
 
 part 'activity_card_part_reaction_type.dart';
+part 'activity_card_part_challenge_leaderboard.dart';
 
 part 'activity_card_ui.dart';
 

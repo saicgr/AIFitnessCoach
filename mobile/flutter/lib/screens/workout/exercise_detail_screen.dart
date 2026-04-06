@@ -20,6 +20,7 @@ import '../../data/services/api_client.dart';
 
 
 part 'exercise_detail_screen_part_previous_set_data.dart';
+part 'exercise_detail_screen_part_cue_item.dart';
 
 part 'exercise_detail_screen_ui.dart';
 

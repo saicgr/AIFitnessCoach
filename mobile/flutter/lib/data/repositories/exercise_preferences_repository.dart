@@ -21,6 +21,13 @@ class FavoriteExercise {
   final String? exerciseId;
   final DateTime addedAt;
 
+  FavoriteExercise({
+    required this.id,
+    required this.exerciseName,
+    this.exerciseId,
+    required this.addedAt,
+  });
+
   factory FavoriteExercise.fromJson(Map<String, dynamic> json) {
     return FavoriteExercise(
       id: json['id'] as String,

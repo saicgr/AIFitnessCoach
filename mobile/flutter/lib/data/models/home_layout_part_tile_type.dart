@@ -611,6 +611,7 @@ extension TileSizeExtension on TileSize {
   }
 }
 
+@JsonSerializable()
 class HomeTile {
   final String id;
   final TileType type;
@@ -648,6 +649,7 @@ class HomeTile {
   }
 }
 
+@JsonSerializable()
 class HomeLayoutTemplate {
   final String id;
   final String name;
@@ -673,6 +675,7 @@ class HomeLayoutTemplate {
   Map<String, dynamic> toJson() => _$HomeLayoutTemplateToJson(this);
 }
 
+@JsonSerializable()
 class CreateLayoutRequest {
   final String name;
   final List<HomeTile> tiles;
@@ -690,6 +693,7 @@ class CreateLayoutRequest {
   Map<String, dynamic> toJson() => _$CreateLayoutRequestToJson(this);
 }
 
+@JsonSerializable()
 class UpdateLayoutRequest {
   final String? name;
   final List<HomeTile>? tiles;

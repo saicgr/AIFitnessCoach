@@ -30,6 +30,7 @@ import '../../../data/services/image_url_cache.dart';
 
 part 'exercise_add_sheet_part_exercise_add_sheet_state.dart';
 part 'exercise_add_sheet_part_exercise_add_sheet_state_ext.dart';
+part 'exercise_add_sheet_part_exercise_option_card.dart';
 
 
 /// Top-level function for converting cached exercises in an isolate via compute().

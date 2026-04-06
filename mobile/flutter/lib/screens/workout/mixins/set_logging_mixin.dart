@@ -67,6 +67,17 @@ mixin SetLoggingMixin<T extends StatefulWidget> on State<T> {
   void moveToNextExercise();
   void startRest(bool betweenExercises, {Duration? overrideDuration});
 
+  // Abstract methods implemented in ui part
+  Future<void> fetchAIWeightSuggestion(SetLog setLog);
+  Future<void> fetchRestSuggestion();
+  Future<void> checkFatigue();
+  void autoAdjustWeightIfNeeded(SetLog setLog, WorkoutExercise exercise);
+  void markSupersetExerciseDoneInRound(int exerciseIndex, int groupId);
+  int? getNextSupersetExerciseIndex(int currentIndex, int groupId);
+  void resetSupersetRound(int groupId);
+  void advanceToSupersetExercise(int nextIndex);
+  void saveWeightUnitPreference(String unit);
+
   // ── Set Logging Methods ──
 
   /// Complete a set with current weight/reps values

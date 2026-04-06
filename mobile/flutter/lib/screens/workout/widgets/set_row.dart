@@ -9,6 +9,7 @@ import '../../../widgets/number_stepper.dart';
 
 part 'set_row_part_weight_increments.dart';
 part 'set_row_part_rpe_rir_selector_state.dart';
+part 'set_row_part_increment_button.dart';
 
 
 /// A row widget for tracking individual sets during workout

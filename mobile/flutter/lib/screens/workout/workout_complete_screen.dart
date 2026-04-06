@@ -153,6 +153,15 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
   // Total workout count for milestone detection
   int _totalWorkoutCount = 0;
 
+  // Milestone thresholds
+  static const List<int> _milestoneThresholds = [5, 10, 25, 50, 100, 150, 200, 250, 500, 1000];
+
+  @override
+  void initState() {
+    super.initState();
+    _extInitState();
+  }
+
   // Sauna logging state
   int? _saunaMinutes;
   int? _saunaCalories;

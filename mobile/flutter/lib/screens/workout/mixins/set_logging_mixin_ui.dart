@@ -1,14 +1,12 @@
 part of 'set_logging_mixin.dart';
 
-  Future<void> fetchAIWeightSuggestion(SetLog setLog);
-  Future<void> fetchRestSuggestion();
-  Future<void> checkFatigue();
-  void autoAdjustWeightIfNeeded(SetLog setLog, WorkoutExercise exercise);
-  void markSupersetExerciseDoneInRound(int exerciseIndex, int groupId);
-  int? getNextSupersetExerciseIndex(int currentIndex, int groupId);
-  void resetSupersetRound(int groupId);
-  void advanceToSupersetExercise(int nextIndex);
-  void saveWeightUnitPreference(String unit);
+/// Extension providing additional set logging UI methods
+extension SetLoggingMixinUI on SetLoggingMixin {
+
+  // ── Helpers to access State<T> members through the mixin ──
+  BuildContext get _ctx => (this as dynamic).context as BuildContext;
+  bool get _mounted => (this as dynamic).mounted as bool;
+  void _setState(VoidCallback fn) => (this as dynamic).setState(fn);
 
   /// Recalculate and apply progression targets for an exercise.
   /// Works in DISPLAY units to avoid kg/lbs rounding issues.
@@ -148,7 +146,7 @@ part of 'set_logging_mixin.dart';
       );
     }
 
-    setState(() {
+    _setState(() {
       exercises[exerciseIndex] = exercise.copyWith(setTargets: currentSetTargets);
     });
 
@@ -303,7 +301,7 @@ part of 'set_logging_mixin.dart';
           targetRir: currentSetTargets[i].targetRir,
         );
       }
-      setState(() {
+      _setState(() {
         exercises[currentExerciseIndex] = exercise.copyWith(setTargets: currentSetTargets);
       });
     }
@@ -338,14 +336,14 @@ part of 'set_logging_mixin.dart';
       repsRightController.text = nextTarget.reps.toString();
     }
 
-    if (originalNextWeight != null && mounted) {
+    if (originalNextWeight != null && _mounted) {
       final diff = nextTarget.weight - originalNextWeight;
       if (diff.abs() > 0.01) {
         final unit = useKg ? 'kg' : 'lb';
         final fromDisplay = useKg ? originalNextWeight : originalNextWeight * 2.20462;
         final toDisplay = useKg ? nextTarget.weight : nextTarget.weight * 2.20462;
         final arrow = diff > 0 ? '↑' : '↓';
-        ScaffoldMessenger.of(context).showSnackBar(
+        ScaffoldMessenger.of(_ctx).showSnackBar(
           SnackBar(
             content: Text(
               'Weight $arrow ${fromDisplay.toStringAsFixed(0)} → ${toDisplay.toStringAsFixed(0)} $unit',
@@ -359,3 +357,4 @@ part of 'set_logging_mixin.dart';
     }
   }
 
+}

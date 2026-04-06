@@ -1,7 +1,7 @@
 part of 'context_logging_service.dart';
 
 /// Methods extracted from ContextLoggingService
-extension _ContextLoggingServiceExt2 on ContextLoggingService {
+extension ContextLoggingServiceExt2 on ContextLoggingService {
 
   /// Log when user views muscle analytics (heatmap, distribution, balance)
   Future<void> logMuscleAnalyticsView({

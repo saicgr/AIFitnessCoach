@@ -1,7 +1,7 @@
 part of 'notification_service.dart';
 
 /// Scheduled notification methods extracted from NotificationService
-extension _NotificationServiceScheduled on NotificationService {
+extension NotificationServiceScheduled on NotificationService {
   // ─────────────────────────────────────────────────────────────────
   // Local Scheduled Notifications
   // ─────────────────────────────────────────────────────────────────
@@ -249,7 +249,7 @@ extension _NotificationServiceScheduled on NotificationService {
 
     final scheduledDate = _nextInstanceOfTime(hour, minute);
 
-    final channelConfig = _channelConfigs['workout_reminder']!;
+    final channelConfig = NotificationService._channelConfigs['workout_reminder']!;
     final androidDetails = AndroidNotificationDetails(
       channelConfig.id,
       channelConfig.name,
@@ -294,7 +294,7 @@ extension _NotificationServiceScheduled on NotificationService {
     String lunchTime,
     String dinnerTime,
   ) async {
-    final channelConfig = _channelConfigs['nutrition_reminder']!;
+    final channelConfig = NotificationService._channelConfigs['nutrition_reminder']!;
     final androidDetails = AndroidNotificationDetails(
       channelConfig.id,
       channelConfig.name,
@@ -362,7 +362,7 @@ extension _NotificationServiceScheduled on NotificationService {
     String endTime,
     int intervalMinutes,
   ) async {
-    final channelConfig = _channelConfigs['hydration_reminder']!;
+    final channelConfig = NotificationService._channelConfigs['hydration_reminder']!;
     final androidDetails = AndroidNotificationDetails(
       channelConfig.id,
       channelConfig.name,
@@ -414,7 +414,7 @@ extension _NotificationServiceScheduled on NotificationService {
     final (hour, minute) = _parseTime(time);
     final scheduledDate = _nextInstanceOfTime(hour, minute);
 
-    final channelConfig = _channelConfigs['streak_alert']!;
+    final channelConfig = NotificationService._channelConfigs['streak_alert']!;
     final androidDetails = AndroidNotificationDetails(
       channelConfig.id,
       channelConfig.name,
@@ -460,7 +460,7 @@ extension _NotificationServiceScheduled on NotificationService {
     final weekday = day == 0 ? DateTime.sunday : day;
     final scheduledDate = _nextInstanceOfDayAndTime(weekday, hour, minute);
 
-    final channelConfig = _channelConfigs['weekly_summary']!;
+    final channelConfig = NotificationService._channelConfigs['weekly_summary']!;
     final androidDetails = AndroidNotificationDetails(
       channelConfig.id,
       channelConfig.name,
@@ -512,7 +512,7 @@ extension _NotificationServiceScheduled on NotificationService {
     final (startHour, startMinute) = _parseTime(prefs.movementReminderStartTime);
     final (endHour, endMinute) = _parseTime(prefs.movementReminderEndTime);
 
-    final channelConfig = _channelConfigs['movement_reminder']!;
+    final channelConfig = NotificationService._channelConfigs['movement_reminder']!;
     final androidDetails = AndroidNotificationDetails(
       channelConfig.id,
       channelConfig.name,
@@ -651,7 +651,7 @@ extension _NotificationServiceScheduled on NotificationService {
 
     final scheduledDate = tz.TZDateTime.from(reminderTime, tz.local);
 
-    final channelConfig = _channelConfigs['schedule_reminder']!;
+    final channelConfig = NotificationService._channelConfigs['schedule_reminder']!;
     final androidDetails = AndroidNotificationDetails(
       channelConfig.id,
       channelConfig.name,
@@ -731,7 +731,7 @@ extension _NotificationServiceScheduled on NotificationService {
   Future<void> scheduleTestNotification(int secondsFromNow) async {
     final scheduledDate = tz.TZDateTime.now(tz.local).add(Duration(seconds: secondsFromNow));
 
-    final channelConfig = _channelConfigs['test']!;
+    final channelConfig = NotificationService._channelConfigs['test']!;
     final androidDetails = AndroidNotificationDetails(
       channelConfig.id,
       channelConfig.name,
@@ -844,5 +844,4 @@ extension _NotificationServiceScheduled on NotificationService {
   static bool isLiveChatEndedNotification(String? notificationType) {
     return notificationType == 'live_chat_ended';
   }
-}
 }

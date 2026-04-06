@@ -60,6 +60,9 @@ import 'mixins/exercise_navigation_mixin.dart';
 import 'mixins/workout_flow_mixin.dart';
 import 'mixins/workout_sheets_mixin.dart';
 import 'mixins/workout_ui_builders_mixin.dart';
+import 'widgets/exercise_info_sheet.dart';
+import 'widgets/breathing_guide_sheet.dart';
+import '../../core/services/exercise_info_service.dart';
 
 part 'exercise_details_sheet_content.dart';
 part 'progression_selector_sheet.dart';
@@ -85,6 +88,100 @@ class ActiveWorkoutScreen extends ConsumerStatefulWidget {
 class _ActiveWorkoutScreenState
     extends ConsumerState<ActiveWorkoutScreen>
     with PRManagerMixin, TimerRestMixin, AIFeaturesMixin, SetLoggingMixin, ExerciseNavigationMixin, WorkoutFlowMixin, WorkoutSheetsMixin, WorkoutUIBuildersMixin {
+  // ── Concrete overrides for abstract declarations in mixins ──
+  // These delegate to extension methods that provide the actual logic.
+
+  @override
+  void showSupersetSheet() => WorkoutSheetsMixinUI(this).showSupersetSheet();
+
+  @override
+  void applyProgressionTargets(int exerciseIndex, SetProgressionPattern pattern) =>
+      SetLoggingMixinUI(this).applyProgressionTargets(exerciseIndex, pattern);
+
+  @override
+  void showBarTypeSelectorImpl(WorkoutExercise exercise) =>
+      WorkoutSheetsMixinUI(this).showBarTypeSelectorImpl(exercise);
+
+  @override
+  void showNumberInputDialogImpl(TextEditingController controller, bool isDecimal) =>
+      WorkoutSheetsMixinUI(this).showNumberInputDialogImpl(controller, isDecimal);
+
+  @override
+  void showProgressionPicker(int exerciseIndex) =>
+      WorkoutSheetsMixinUI(this).showProgressionPicker(exerciseIndex);
+
+  @override
+  void onSupersetFromDrag(int sourceIndex, int targetIndex) {
+    // Implementation from ExerciseNavigationMixin part file
+    // Handled via ExerciseNavigationMixin's part file methods
+    HapticFeedback.mediumImpact();
+    final draggedExercise = exercises[sourceIndex];
+    final targetExercise = exercises[targetIndex];
+    final existingGroupId = targetExercise.supersetGroup;
+    final draggedGroupId = draggedExercise.supersetGroup;
+    int groupId;
+    String snackbarMessage;
+
+    if (existingGroupId != null) {
+      groupId = existingGroupId;
+      int maxOrder = 0;
+      for (final ex in exercises) {
+        if (ex.supersetGroup == groupId && ex.supersetOrder != null) {
+          if (ex.supersetOrder! > maxOrder) maxOrder = ex.supersetOrder!;
+        }
+      }
+      final updatedList = List<WorkoutExercise>.from(exercises);
+      updatedList[sourceIndex] = draggedExercise.copyWith(
+        supersetGroup: groupId,
+        supersetOrder: maxOrder + 1,
+      );
+      setState(() => exercises = updatedList);
+      snackbarMessage = '${draggedExercise.name} added to superset';
+    } else if (draggedGroupId != null) {
+      groupId = draggedGroupId;
+      final updatedList = List<WorkoutExercise>.from(exercises);
+      int maxOrder = 0;
+      for (final ex in exercises) {
+        if (ex.supersetGroup == groupId && ex.supersetOrder != null) {
+          if (ex.supersetOrder! > maxOrder) maxOrder = ex.supersetOrder!;
+        }
+      }
+      updatedList[targetIndex] = targetExercise.copyWith(
+        supersetGroup: groupId,
+        supersetOrder: maxOrder + 1,
+      );
+      setState(() => exercises = updatedList);
+      snackbarMessage = '${targetExercise.name} added to superset';
+    } else {
+      groupId = DateTime.now().millisecondsSinceEpoch;
+      final updatedList = List<WorkoutExercise>.from(exercises);
+      updatedList[sourceIndex] = draggedExercise.copyWith(
+        supersetGroup: groupId,
+        supersetOrder: 0,
+      );
+      updatedList[targetIndex] = targetExercise.copyWith(
+        supersetGroup: groupId,
+        supersetOrder: 1,
+      );
+      setState(() => exercises = updatedList);
+      snackbarMessage = 'Superset created: ${draggedExercise.name} + ${targetExercise.name}';
+    }
+
+    precomputeSupersetIndicesImpl();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(children: [
+          const Icon(Icons.link, color: Colors.white, size: 18),
+          const SizedBox(width: 8),
+          Expanded(child: Text(snackbarMessage)),
+        ]),
+        duration: const Duration(milliseconds: 1500),
+        behavior: SnackBarBehavior.floating,
+        backgroundColor: Colors.purple,
+      ),
+    );
+  }
+
   // Phase state
   WorkoutPhase _currentPhase = WorkoutPhase.warmup;
 

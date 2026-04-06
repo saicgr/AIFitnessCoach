@@ -1,7 +1,7 @@
 part of 'context_logging_service.dart';
 
 /// Methods extracted from ContextLoggingService
-extension _ContextLoggingServiceExt1 on ContextLoggingService {
+extension ContextLoggingServiceExt1 on ContextLoggingService {
 
   // ============================================
   // Mood Events

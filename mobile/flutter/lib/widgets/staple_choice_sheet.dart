@@ -9,6 +9,7 @@ import 'glass_sheet.dart';
 
 
 part 'staple_choice_sheet_part_staple_choice_result.dart';
+part 'staple_choice_sheet_part_day_target_mode.dart';
 
 part 'staple_choice_sheet_ui.dart';
 

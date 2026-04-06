@@ -12,6 +12,7 @@ import 'components/components.dart';
 
 part 'edit_program_sheet_part_edit_program_sheet_state.dart';
 part 'edit_program_sheet_part_edit_program_sheet_state_ext.dart';
+part 'edit_program_sheet_part_custom_program_input_sheet.dart';
 
 
 // import 'program_history_screen.dart';

@@ -398,7 +398,7 @@ extension _QuizFastingStateUI on _QuizFastingState {
         eatingHours = int.tryParse(parts[2]) ?? 8;
       }
     } else {
-      final protocolData = allFastingProtocols.firstWhere(
+      final protocolData = _QuizFastingState.allFastingProtocols.firstWhere(
         (p) => p['id'] == protocol,
         orElse: () => {'fastingHours': 16, 'eatingHours': 8},
       );

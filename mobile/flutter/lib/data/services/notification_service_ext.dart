@@ -1,7 +1,7 @@
 part of 'notification_service.dart';
 
 /// Core notification methods extracted from NotificationService
-extension _NotificationServiceCore on NotificationService {
+extension NotificationServiceCore on NotificationService {
   /// Initialize local notifications plugin
   Future<void> _initializeLocalNotifications() async {
     // Android settings
@@ -60,16 +60,16 @@ extension _NotificationServiceCore on NotificationService {
       // Create default channel
       await androidPlugin.createNotificationChannel(
         AndroidNotificationChannel(
-          _defaultChannel.id,
-          _defaultChannel.name,
-          description: _defaultChannel.description,
+          NotificationService._defaultChannel.id,
+          NotificationService._defaultChannel.name,
+          description: NotificationService._defaultChannel.description,
           importance: Importance.high,
           playSound: true,
         ),
       );
 
       // Create channels for each notification type
-      for (final config in _channelConfigs.values) {
+      for (final config in NotificationService._channelConfigs.values) {
         await androidPlugin.createNotificationChannel(
           AndroidNotificationChannel(
             config.id,
@@ -82,7 +82,7 @@ extension _NotificationServiceCore on NotificationService {
       }
     }
 
-    debugPrint('🔔 [Local] Local notifications initialized with ${_channelConfigs.length + 1} channels');
+    debugPrint('🔔 [Local] Local notifications initialized with ${NotificationService._channelConfigs.length + 1} channels');
   }
 
   /// Request notification permission
@@ -195,8 +195,8 @@ extension _NotificationServiceCore on NotificationService {
 
   /// Get channel config for a notification type
   _ChannelConfig _getChannelConfig(String? notificationType) {
-    if (notificationType == null) return _defaultChannel;
-    return _channelConfigs[notificationType] ?? _defaultChannel;
+    if (notificationType == null) return NotificationService._defaultChannel;
+    return NotificationService._channelConfigs[notificationType] ?? NotificationService._defaultChannel;
   }
 
   /// Show a local notification

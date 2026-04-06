@@ -292,9 +292,9 @@ extension __AddGymProfileSheetStateExt on _AddGymProfileSheetState {
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Icon(
-                  _iconOptions.firstWhere(
+                  _AddGymProfileSheetState._iconOptions.firstWhere(
                     (o) => o['id'] == _selectedIcon,
-                    orElse: () => _iconOptions.first,
+                    orElse: () => _AddGymProfileSheetState._iconOptions.first,
                   )['icon'] as IconData,
                   color: selectedColorObj,
                   size: 22,
@@ -334,7 +334,7 @@ extension __AddGymProfileSheetStateExt on _AddGymProfileSheetState {
         Wrap(
           spacing: 10,
           runSpacing: 10,
-          children: _iconOptions.map((iconOption) {
+          children: _AddGymProfileSheetState._iconOptions.map((iconOption) {
             final isSelected = _selectedIcon == iconOption['id'];
             return GestureDetector(
               onTap: () {

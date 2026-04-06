@@ -28,9 +28,7 @@ extension __QuickWorkoutSheetStateExt1 on _QuickWorkoutSheetState {
     'Shoulder', 'Lower Back', 'Knee', 'Ankle', 'Hip', 'Neck', 'Elbow', 'Wrist',
   ];
 
-  @override
-  void initState() {
-    super.initState();
+  void _extInitState() {
     _initFromUserProfile();
     _loadDupSuggestion();
     _loadMesocycleStatus();

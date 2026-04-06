@@ -101,6 +101,7 @@ extension NutritionLevelExtension on NutritionLevel {
   }
 }
 
+@JsonSerializable()
 class ReadinessCheckInRequest {
   @JsonKey(name: 'user_id')
   final String userId;
@@ -140,6 +141,7 @@ class ReadinessCheckInRequest {
   Map<String, dynamic> toJson() => _$ReadinessCheckInRequestToJson(this);
 }
 
+@JsonSerializable()
 class ReadinessScore {
   final String id;
   @JsonKey(name: 'user_id')
@@ -243,6 +245,7 @@ class ReadinessScore {
   }
 }
 
+@JsonSerializable()
 class ReadinessHistory {
   @JsonKey(name: 'readiness_scores')
   final List<ReadinessScore> readinessScores;
@@ -278,6 +281,7 @@ class ReadinessHistory {
   }
 }
 
+@JsonSerializable()
 class StrengthScoreData {
   final String? id;
   @JsonKey(name: 'user_id')
@@ -402,6 +406,7 @@ class StrengthScoreData {
   }
 }
 
+@JsonSerializable()
 class AllStrengthScores {
   @JsonKey(name: 'user_id')
   final String userId;
@@ -458,6 +463,7 @@ class AllStrengthScores {
       sortedMuscleScores.reversed.take(3).toList();
 }
 
+@JsonSerializable()
 class StrengthDetail {
   @JsonKey(name: 'muscle_group')
   final String muscleGroup;
@@ -493,6 +499,7 @@ class StrengthDetail {
   Map<String, dynamic> toJson() => _$StrengthDetailToJson(this);
 }
 
+@JsonSerializable()
 class PersonalRecordScore {
   final String id;
   @JsonKey(name: 'user_id')
@@ -571,6 +578,7 @@ class PersonalRecordScore {
   String get liftDescription => '${weightKg.toStringAsFixed(1)}kg x $reps';
 }
 
+@JsonSerializable()
 class PRStats {
   @JsonKey(name: 'total_prs')
   final int totalPrs;
@@ -605,6 +613,7 @@ class PRStats {
   Map<String, dynamic> toJson() => _$PRStatsToJson(this);
 }
 
+@JsonSerializable()
 class DotsLiftDetail {
   @JsonKey(name: 'exercise_name')
   final String exerciseName;
@@ -621,6 +630,7 @@ class DotsLiftDetail {
   Map<String, dynamic> toJson() => _$DotsLiftDetailToJson(this);
 }
 
+@JsonSerializable()
 class DotsScore {
   @JsonKey(name: 'dots_score')
   final double dotsScore;
@@ -647,6 +657,7 @@ class DotsScore {
   Map<String, dynamic> toJson() => _$DotsScoreToJson(this);
 }
 
+@JsonSerializable()
 class ScoresOverview {
   @JsonKey(name: 'user_id')
   final String userId;
@@ -746,6 +757,7 @@ class ScoresOverview {
   }
 }
 
+@JsonSerializable()
 class NutritionScoreData {
   final String? id;
   @JsonKey(name: 'user_id')

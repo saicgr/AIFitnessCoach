@@ -19,6 +19,7 @@ logger = logging.getLogger(__name__)
 from core.auth import get_current_user
 from core.db import get_supabase_db
 from core.exceptions import safe_internal_error
+from core.supabase_client import get_supabase
 
 from .notifications_models import (
     TestNotificationRequest,

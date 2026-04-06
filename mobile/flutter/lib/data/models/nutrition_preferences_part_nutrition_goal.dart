@@ -296,6 +296,7 @@ enum CuisineType {
   }
 }
 
+@JsonSerializable()
 class WeightLog {
   final String? id;
   @JsonKey(name: 'user_id')
@@ -327,6 +328,7 @@ class WeightLog {
   Map<String, dynamic> toJson() => _$WeightLogToJson(this);
 }
 
+@JsonSerializable()
 class NutritionStreak {
   final String? id;
   @JsonKey(name: 'user_id')
@@ -772,6 +774,7 @@ class WeeklyRecommendation {
   };
 }
 
+@JsonSerializable()
 class NutritionUIPreferences {
   final String? id;
   @JsonKey(name: 'user_id')
@@ -872,6 +875,7 @@ class NutritionUIPreferences {
   }
 }
 
+@JsonSerializable()
 class TemplateFoodItem {
   final String name;
   final int calories;

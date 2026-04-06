@@ -1,7 +1,7 @@
 part of 'xp_provider.dart';
 
 /// Methods extracted from XPNotifier
-extension _XPNotifierExt on XPNotifier {
+extension XPNotifierExt on XPNotifier {
 
   // =========================================================================
   // XP Events (Daily Login, Double XP, Checkpoints)

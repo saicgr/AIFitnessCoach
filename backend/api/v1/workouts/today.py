@@ -406,7 +406,7 @@ async def auto_generate_workout(user_id: str, target_date: date, gym_profile_id:
                 logger.warning(f"[BG-GEN] Could not determine focus for {target_date}: {e}")
 
         # Import the generation function (local import to avoid circular dependency)
-        from .generation import generate_workout
+        from .generation_endpoints import generate_workout
         from models.schemas import GenerateWorkoutRequest
 
         request = GenerateWorkoutRequest(

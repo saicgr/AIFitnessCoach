@@ -34,7 +34,7 @@ extension __PreAuthQuizScreenStateExt on _PreAuthQuizScreenState {
         break;
 
       case 3: // Workout Days [CONDITIONAL - only if feature flag enabled]
-        if (_featureFlagWorkoutDays && _selectedWorkoutDays.isNotEmpty) {
+        if (_PreAuthQuizScreenState._featureFlagWorkoutDays && _selectedWorkoutDays.isNotEmpty) {
           await ref.read(preAuthQuizProvider.notifier).setWorkoutDays(_selectedWorkoutDays.toList()..sort());
         }
         break;
@@ -424,7 +424,7 @@ extension __PreAuthQuizScreenStateExt on _PreAuthQuizScreenState {
         return _buildDaysSelector(showHeader: showHeader);
 
       case 3: // Workout Days [CONDITIONAL - only if feature flag enabled]
-        if (_featureFlagWorkoutDays) {
+        if (_PreAuthQuizScreenState._featureFlagWorkoutDays) {
           return _buildWorkoutDaysSelector(showHeader: showHeader);
         }
         return const SizedBox.shrink();

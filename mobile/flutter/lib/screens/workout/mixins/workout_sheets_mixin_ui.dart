@@ -1,54 +1,13 @@
 part of 'workout_sheets_mixin.dart';
 
-  set exercises(List<WorkoutExercise> value);
-  int get currentExerciseIndex;
-  int get viewingExerciseIndex;
-  Map<int, List<SetLog>> get completedSets;
-  Map<int, int> get totalSetsPerExercise;
-  Map<int, List<Map<String, dynamic>>> get previousSets;
-  Map<int, RepProgressionType> get repProgressionPerExercise;
-  Map<int, SetProgressionPattern> get exerciseProgressionPattern;
-  Map<int, double> get exerciseWorkingWeight;
-  Map<int, String> get exerciseBarType;
-  Map<String, double> get exerciseMaxWeights;
-  TextEditingController get weightController;
-  TextEditingController get repsController;
-  TextEditingController get repsRightController;
-  bool get useKg;
-  set useKg(bool value);
-  double get weightIncrement;
+/// Extension providing sheet/dialog/picker UI methods
+extension WorkoutSheetsMixinUI on WorkoutSheetsMixin {
 
-  // Warmup / stretch state
-  List<WarmupExerciseData>? get warmupExercises;
-  set warmupExercises(List<WarmupExerciseData>? value);
-  List<StretchExerciseData>? get stretchExercises;
-  set stretchExercises(List<StretchExerciseData>? value);
-  bool get isWarmupLoading;
-  set isWarmupLoading(bool value);
+  // ── Helpers to access State<T> members through the mixin ──
+  BuildContext get _ctx => (this as dynamic).context as BuildContext;
+  void _setState(VoidCallback fn) => (this as dynamic).setState(fn);
 
-  // Video state
-  VideoPlayerController? get videoController;
-  bool get isVideoInitialized;
-  set isVideoInitialized(bool value);
-  bool get isVideoPlaying;
-  set isVideoPlaying(bool value);
-
-  // Drink intake
-  int get totalDrinkIntakeMl;
-  set totalDrinkIntakeMl(int value);
-
-  // AI Coach session hide flag
-  bool get hideAICoachForSession;
-  set hideAICoachForSession(bool value);
-
-  // Widget access
-  dynamic get workoutWidget;
-
-  // Cross-mixin method access
-  void breakSuperset(int groupId);
-  void applyProgressionTargets(int exerciseIndex, SetProgressionPattern pattern);
-
-  // ── Sheet / Dialog / Picker Methods ──
+// ── Sheet / Dialog / Picker Methods ──
 
   /// Show number input dialog for weight or reps
   void showNumberInputDialogImpl(
@@ -56,8 +15,8 @@ part of 'workout_sheets_mixin.dart';
     final editController = TextEditingController(text: controller.text);
 
     showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
+      context: _ctx,
+      builder: (dialogContext) => AlertDialog(
         backgroundColor: AppColors.elevated,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: Text(
@@ -73,7 +32,7 @@ part of 'workout_sheets_mixin.dart';
           style: TextStyle(
             fontSize: 24,
             fontWeight: FontWeight.bold,
-            color: ref.watch(accentColorProvider).getColor(Theme.of(context).brightness == Brightness.dark),
+            color: ref.watch(accentColorProvider).getColor(Theme.of(dialogContext).brightness == Brightness.dark),
           ),
           textAlign: TextAlign.center,
           decoration: InputDecoration(
@@ -81,7 +40,7 @@ part of 'workout_sheets_mixin.dart';
             fillColor: AppColors.pureBlack,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: ref.watch(accentColorProvider).getColor(Theme.of(context).brightness == Brightness.dark)),
+              borderSide: BorderSide(color: ref.watch(accentColorProvider).getColor(Theme.of(dialogContext).brightness == Brightness.dark)),
             ),
           ),
           onSubmitted: (value) {
@@ -92,13 +51,13 @@ part of 'workout_sheets_mixin.dart';
             } else {
               controller.text = value;
             }
-            setState(() {});
-            Navigator.pop(context);
+            _setState(() {});
+            Navigator.pop(dialogContext);
           },
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () => Navigator.pop(dialogContext),
             child:
                 const Text('Cancel', style: TextStyle(color: AppColors.textMuted)),
           ),
@@ -112,12 +71,12 @@ part of 'workout_sheets_mixin.dart';
               } else {
                 controller.text = editController.text;
               }
-              setState(() {});
-              Navigator.pop(context);
+              _setState(() {});
+              Navigator.pop(dialogContext);
             },
             child: Text('OK',
                 style: TextStyle(
-                    color: ref.watch(accentColorProvider).getColor(Theme.of(context).brightness == Brightness.dark), fontWeight: FontWeight.bold)),
+                    color: ref.watch(accentColorProvider).getColor(Theme.of(dialogContext).brightness == Brightness.dark), fontWeight: FontWeight.bold)),
           ),
         ],
       ),
@@ -129,7 +88,7 @@ part of 'workout_sheets_mixin.dart';
   void showProgressionPicker(int exerciseIndex) {
     if (exerciseIndex >= exercises.length) return;
 
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final isDark = Theme.of(_ctx).brightness == Brightness.dark;
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final accentColor = ref.watch(accentColorProvider).getColor(isDark);
@@ -138,7 +97,7 @@ part of 'workout_sheets_mixin.dart';
     HapticFeedback.mediumImpact();
 
     showGlassSheet(
-      context: context,
+      context: _ctx,
       builder: (ctx) => GlassSheet(
         maxHeightFraction: 0.7,
         child: Column(
@@ -179,12 +138,12 @@ part of 'workout_sheets_mixin.dart';
                     child: InkWell(
                       onTap: () {
                         HapticFeedback.mediumImpact();
-                        setState(() {
+                        _setState(() {
                           repProgressionPerExercise[exerciseIndex] = type;
                         });
                         Navigator.pop(ctx);
                         // Show confirmation
-                        ScaffoldMessenger.of(context).showSnackBar(
+                        ScaffoldMessenger.of(_ctx).showSnackBar(
                           SnackBar(
                             content: Text('Changed to ${type.displayName}'),
                             duration: const Duration(seconds: 2),
@@ -278,7 +237,7 @@ part of 'workout_sheets_mixin.dart';
 
   /// Show bar type selector bottom sheet
   void showBarTypeSelectorImpl(WorkoutExercise exercise) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final isDark = Theme.of(_ctx).brightness == Brightness.dark;
     final currentBarType = exerciseBarType[viewingExerciseIndex] ?? exercise.equipment ?? 'barbell';
 
     final barTypes = <String, Map<String, dynamic>>{
@@ -290,12 +249,12 @@ part of 'workout_sheets_mixin.dart';
     };
 
     showModalBottomSheet(
-      context: context,
+      context: _ctx,
       backgroundColor: isDark ? WorkoutDesign.surface : Colors.white,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder: (context) {
+      builder: (sheetContext) {
         return SafeArea(
           child: Padding(
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
@@ -379,7 +338,7 @@ part of 'workout_sheets_mixin.dart';
                       final newBarWeight = getBarWeight(key, useKg: useKg);
                       final weightDiff = newBarWeight - oldBarWeight;
 
-                      setState(() {
+                      _setState(() {
                         exerciseBarType[viewingExerciseIndex] = key;
                       });
 
@@ -395,7 +354,7 @@ part of 'workout_sheets_mixin.dart';
                       // Persist to SharedPreferences
                       ref.read(exerciseBarTypeProvider.notifier)
                           .setBarType(exercise.name, key);
-                      Navigator.pop(context);
+                      Navigator.pop(sheetContext);
                     },
                   );
                 }),
@@ -425,7 +384,7 @@ part of 'workout_sheets_mixin.dart';
       }
 
       showGlassSheet(
-        context: context,
+        context: _ctx,
         builder: (ctx) {
           final isDark = Theme.of(ctx).brightness == Brightness.dark;
           return GlassSheet(
@@ -490,8 +449,8 @@ part of 'workout_sheets_mixin.dart';
                     onPressed: () {
                       Navigator.pop(ctx);
                       breakSuperset(groupId);
-                      ScaffoldMessenger.of(context).clearSnackBars();
-                      ScaffoldMessenger.of(context).showSnackBar(
+                      ScaffoldMessenger.of(_ctx).clearSnackBars();
+                      ScaffoldMessenger.of(_ctx).showSnackBar(
                         const SnackBar(
                           content: Text('Superset removed'),
                           behavior: SnackBarBehavior.floating,
@@ -532,7 +491,7 @@ part of 'workout_sheets_mixin.dart';
     } else {
       // Not in a superset - show instructions
       showGlassSheet(
-        context: context,
+        context: _ctx,
         builder: (ctx) {
           final isDark = Theme.of(ctx).brightness == Brightness.dark;
           return GlassSheet(
@@ -622,3 +581,4 @@ part of 'workout_sheets_mixin.dart';
     }
   }
 
+}

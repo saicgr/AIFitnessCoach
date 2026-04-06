@@ -1,5 +1,11 @@
 part of 'workout_ui_builders_mixin.dart';
 
+/// Extension providing UI builder methods
+extension WorkoutUIBuildersMixinUI2 on WorkoutUIBuildersMixin {
+
+  // ── Helpers to access State<T> members through the mixin ──
+  BuildContext get _ctx => (this as dynamic).context as BuildContext;
+  void _setState(VoidCallback fn) => (this as dynamic).setState(fn);
 
   /// Build the V2 MacroFactor-style active workout screen.
   Widget buildActiveWorkoutScreenV2(bool isDark, Color backgroundColor) {
@@ -83,14 +89,14 @@ part of 'workout_ui_builders_mixin.dart';
                       if (details.primaryVelocity != null && details.primaryVelocity! < -300) {
                         if (viewingExerciseIndex < exercises.length - 1) {
                           HapticFeedback.selectionClick();
-                          setState(() => viewingExerciseIndex++);
+                          _setState(() => viewingExerciseIndex++);
                         }
                       }
                       // Swipe right (previous exercise) - positive velocity
                       else if (details.primaryVelocity != null && details.primaryVelocity! > 300) {
                         if (viewingExerciseIndex > 0) {
                           HapticFeedback.selectionClick();
-                          setState(() => viewingExerciseIndex--);
+                          _setState(() => viewingExerciseIndex--);
                         }
                       }
                     },
@@ -286,7 +292,7 @@ part of 'workout_ui_builders_mixin.dart';
                                   repsRightController: isLeftRightMode ? repsRightController : null,
                                   onSetCompleted: handleSetCompletedV2,
                                   onSetUpdated: updateCompletedSet,
-                                  onAddSet: () => setState(() {
+                                  onAddSet: () => _setState(() {
                                     totalSetsPerExercise[viewingExerciseIndex] =
                                         (totalSetsPerExercise[viewingExerciseIndex] ?? 3) + 1;
                                   }),
@@ -303,7 +309,7 @@ part of 'workout_ui_builders_mixin.dart';
                                   onToggleUnit: toggleUnit,
                                   onRirTapped: (setIndex, currentRir) => showRirPicker(setIndex, currentRir),
                                   activeRir: lastSetRir,
-                                  onActiveRirChanged: (rir) => setState(() => lastSetRir = rir),
+                                  onActiveRirChanged: (rir) => _setState(() => lastSetRir = rir),
                                   // Inline rest row - shows between completed and active sets
                                   showInlineRest: showInlineRest &&
                                       viewingExerciseIndex == currentExerciseIndex &&
@@ -390,7 +396,7 @@ part of 'workout_ui_builders_mixin.dart';
                           completedExercises: completedExerciseIndices,
                           onExerciseTap: (index) {
                             HapticFeedback.selectionClick();
-                            setState(() {
+                            _setState(() {
                               viewingExerciseIndex = index;
                               currentExerciseIndex = index;
                             });
@@ -402,7 +408,7 @@ part of 'workout_ui_builders_mixin.dart';
                           onReorder: onExercisesReordered,
                           onCreateSuperset: onSupersetFromDrag,
                           onDragActiveChanged: (isDragging, index) {
-                            setState(() {
+                            _setState(() {
                               isDragActive = isDragging;
                               draggedExerciseIndex = index;
                             });
@@ -447,8 +453,8 @@ part of 'workout_ui_builders_mixin.dart';
                     onDismissRestSuggestion: dismissRestSuggestion,
                     currentRpe: lastSetRpe,
                     currentRir: lastSetRir,
-                    onRpeChanged: (rpe) => setState(() => lastSetRpe = rpe),
-                    onRirChanged: (rir) => setState(() => lastSetRir = rir),
+                    onRpeChanged: (rpe) => _setState(() => lastSetRpe = rpe),
+                    onRirChanged: (rir) => _setState(() => lastSetRir = rir),
                     lastSetReps: completedSets[currentExerciseIndex]?.isNotEmpty == true
                         ? completedSets[currentExerciseIndex]!.last.reps
                         : null,
@@ -517,7 +523,7 @@ part of 'workout_ui_builders_mixin.dart';
               children: [
                 // LEFT PANEL (~35%): Video Player + Thumbnail Strip
                 SizedBox(
-                  width: MediaQuery.of(context).size.width * 0.35,
+                  width: MediaQuery.of(_ctx).size.width * 0.35,
                   child: Column(
                     children: [
                       // Exercise VIDEO player (auto-plays, looped)
@@ -559,7 +565,7 @@ part of 'workout_ui_builders_mixin.dart';
                             repsRightController: isLeftRightMode ? repsRightController : null,
                             onSetCompleted: handleSetCompletedV2,
                             onSetUpdated: updateCompletedSet,
-                            onAddSet: () => setState(() {
+                            onAddSet: () => _setState(() {
                               totalSetsPerExercise[viewingExerciseIndex] =
                                   (totalSetsPerExercise[viewingExerciseIndex] ?? 3) + 1;
                             }),
@@ -574,7 +580,7 @@ part of 'workout_ui_builders_mixin.dart';
                             onToggleUnit: toggleUnit,
                             onRirTapped: (setIndex, currentRir) => showRirPicker(setIndex, currentRir),
                             activeRir: lastSetRir,
-                            onActiveRirChanged: (rir) => setState(() => lastSetRir = rir),
+                            onActiveRirChanged: (rir) => _setState(() => lastSetRir = rir),
                             showInlineRest: showInlineRest &&
                                 viewingExerciseIndex == currentExerciseIndex &&
                                 !isRestingBetweenExercises,
@@ -617,8 +623,8 @@ part of 'workout_ui_builders_mixin.dart';
                     onDismissRestSuggestion: dismissRestSuggestion,
                     currentRpe: lastSetRpe,
                     currentRir: lastSetRir,
-                    onRpeChanged: (rpe) => setState(() => lastSetRpe = rpe),
-                    onRirChanged: (rir) => setState(() => lastSetRir = rir),
+                    onRpeChanged: (rpe) => _setState(() => lastSetRpe = rpe),
+                    onRirChanged: (rir) => _setState(() => lastSetRir = rir),
                   ),
                 ),
               ),
@@ -628,3 +634,4 @@ part of 'workout_ui_builders_mixin.dart';
     );
   }
 
+}

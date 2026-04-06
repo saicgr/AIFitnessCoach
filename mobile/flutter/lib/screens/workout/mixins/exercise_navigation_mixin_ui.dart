@@ -1,10 +1,17 @@
 part of 'exercise_navigation_mixin.dart';
 
+/// Extension providing UI methods for exercise navigation mixin
+extension ExerciseNavigationMixinUI on ExerciseNavigationMixin {
+
+  // ── Helpers to access State<T> members through the mixin ──
+  BuildContext get _ctx => (this as dynamic).context as BuildContext;
+  bool get _mounted => (this as dynamic).mounted as bool;
+  void _setState(VoidCallback fn) => (this as dynamic).setState(fn);
 
   /// Remove exercise from workout
   void removeExerciseFromWorkout(int index) {
     if (exercises.length <= 1) {
-      ScaffoldMessenger.of(context).showSnackBar(
+      ScaffoldMessenger.of(_ctx).showSnackBar(
         const SnackBar(
           content: Text('Cannot remove the last exercise'),
           duration: Duration(seconds: 2),
@@ -16,7 +23,7 @@ part of 'exercise_navigation_mixin.dart';
 
     final removedExercise = exercises[index];
 
-    setState(() {
+    _setState(() {
       exercises.removeAt(index);
       precomputeSupersetIndicesImpl();
 
@@ -83,7 +90,7 @@ part of 'exercise_navigation_mixin.dart';
       }
     });
 
-    ScaffoldMessenger.of(context).showSnackBar(
+    ScaffoldMessenger.of(_ctx).showSnackBar(
       SnackBar(
         content: Text('${removedExercise.name} removed'),
         duration: const Duration(seconds: 4),
@@ -91,7 +98,7 @@ part of 'exercise_navigation_mixin.dart';
         action: SnackBarAction(
           label: 'Undo',
           onPressed: () {
-            setState(() {
+            _setState(() {
               exercises.insert(index, removedExercise);
               precomputeSupersetIndicesImpl();
             });
@@ -104,12 +111,12 @@ part of 'exercise_navigation_mixin.dart';
 
   /// Show the 3-dot "More" popup menu
   void showMoreMenu(WorkoutExercise exercise) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final isDark = Theme.of(_ctx).brightness == Brightness.dark;
     showMenu<String>(
-      context: context,
+      context: _ctx,
       position: RelativeRect.fromLTRB(
-        MediaQuery.of(context).size.width - 200,
-        kToolbarHeight + MediaQuery.of(context).padding.top + 100,
+        MediaQuery.of(_ctx).size.width - 200,
+        kToolbarHeight + MediaQuery.of(_ctx).padding.top + 100,
         16,
         0,
       ),
@@ -241,7 +248,7 @@ part of 'exercise_navigation_mixin.dart';
       final groupCount = exercises.where((ex) => ex.supersetGroup == groupId).length + 1;
       snackbarMessage = 'Added ${draggedExercise.name} to superset ($groupCount exercises)';
 
-      setState(() {
+      _setState(() {
         if (draggedGroupId != null && draggedGroupId != groupId) {
           final oldGroupMembers = exercises.where((ex) => ex.supersetGroup == draggedGroupId).toList();
           if (oldGroupMembers.length == 2) {
@@ -275,7 +282,7 @@ part of 'exercise_navigation_mixin.dart';
       final groupCount = exercises.where((ex) => ex.supersetGroup == groupId).length + 1;
       snackbarMessage = 'Added ${targetExercise.name} to superset ($groupCount exercises)';
 
-      setState(() {
+      _setState(() {
         exercises[targetIndex] = exercises[targetIndex].copyWith(
           supersetGroup: groupId,
           supersetOrder: maxOrder + 1,
@@ -293,7 +300,7 @@ part of 'exercise_navigation_mixin.dart';
       groupId = maxGroup + 1;
       snackbarMessage = 'Superset: ${draggedExercise.name} + ${targetExercise.name}';
 
-      setState(() {
+      _setState(() {
         exercises[draggedIndex] = exercises[draggedIndex].copyWith(
           supersetGroup: groupId,
           supersetOrder: 1,
@@ -307,9 +314,9 @@ part of 'exercise_navigation_mixin.dart';
       });
     }
 
-    if (mounted) {
-      ScaffoldMessenger.of(context).clearSnackBars();
-      ScaffoldMessenger.of(context).showSnackBar(
+    if (_mounted) {
+      ScaffoldMessenger.of(_ctx).clearSnackBars();
+      ScaffoldMessenger.of(_ctx).showSnackBar(
         SnackBar(
           content: Row(
             children: [
@@ -336,3 +343,4 @@ part of 'exercise_navigation_mixin.dart';
     }
   }
 
+}

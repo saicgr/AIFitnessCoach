@@ -593,12 +593,17 @@ class _PhotosTabState extends ConsumerState<PhotosTab>
                 ),
               ),
               const SizedBox(height: 16),
-              ...PhotoViewType.values.map((type) => ListTile(
-                    leading: Icon(_getViewTypeIcon(type)),
-                    title: Text(type.displayName),
-                    subtitle: Text(_getViewTypeDescription(type)),
-                    onTap: () => Navigator.pop(context, type),
-                  )),
+              Flexible(
+                child: ListView(
+                  shrinkWrap: true,
+                  children: PhotoViewType.values.map((type) => ListTile(
+                        leading: Icon(_getViewTypeIcon(type)),
+                        title: Text(type.displayName),
+                        subtitle: Text(_getViewTypeDescription(type)),
+                        onTap: () => Navigator.pop(context, type),
+                      )).toList(),
+                ),
+              ),
             ],
           ),
         ),

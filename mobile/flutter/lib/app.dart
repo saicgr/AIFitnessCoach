@@ -203,7 +203,7 @@ class _FitWizAppState extends ConsumerState<FitWizApp> {
     // Cache coach ID for personalized notifications
     final aiSettings = ref.read(aiSettingsProvider);
     if (aiSettings.coachPersonaId != null) {
-      NotificationService.cacheCoachId(
+      NotificationServiceScheduled.cacheCoachId(
         aiSettings.coachPersonaId,
         coachingStyle: aiSettings.coachingStyle,
       );

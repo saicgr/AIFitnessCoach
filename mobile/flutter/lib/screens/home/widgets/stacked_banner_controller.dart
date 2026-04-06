@@ -17,5 +17,13 @@ class StackedBannerController extends StateNotifier<Set<String>> {
     state = {...state, bannerId};
   }
 
+  void dismissAll(List<String> bannerIds) {
+    state = {...state, ...bannerIds};
+  }
+
   bool isDismissed(String bannerId) => state.contains(bannerId);
 }
+
+/// Tracks the list of currently active (visible) banner IDs.
+/// Updated by StackedBannerPanel each build so the header can read it.
+final activeBannerIdsProvider = StateProvider<List<String>>((ref) => []);

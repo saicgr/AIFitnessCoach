@@ -17,6 +17,7 @@ import 'widgets/trophy_filter_sheet.dart';
 
 
 part 'trophy_room_screen_part_trophy_status_filter.dart';
+part 'trophy_room_screen_part_trophy_card.dart';
 
 part 'trophy_room_screen_ui.dart';
 

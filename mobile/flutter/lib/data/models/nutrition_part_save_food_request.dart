@@ -1,5 +1,6 @@
 part of 'nutrition.dart';
 
+@JsonSerializable()
 class SaveFoodRequest {
   final String name;
   final String? description;
@@ -106,6 +107,7 @@ class SaveFoodRequest {
   }
 }
 
+@JsonSerializable()
 class RelogSavedFoodRequest {
   @JsonKey(name: 'meal_type')
   final String mealType;

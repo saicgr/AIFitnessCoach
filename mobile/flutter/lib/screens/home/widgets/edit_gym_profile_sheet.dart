@@ -46,12 +46,62 @@ class _EditGymProfileSheetState extends ConsumerState<EditGymProfileSheet> {
   late String _selectedIcon;
   late String _selectedColor;
   late String _selectedEnvironment;
+  late List<String> _selectedEquipment;
+  late List<Map<String, dynamic>> _equipmentDetails;
+  // Location state
+  GymLocation? _selectedLocation;
+  bool _autoSwitchEnabled = true;
+  int _locationRadiusMeters = 100;
+  // Time preference state
+  String? _selectedTimeSlot;
+  bool _timeAutoSwitchEnabled = true;
+  // Training preferences state
+  String? _selectedTrainingSplit;
+  late List<int> _selectedWorkoutDays;
+  late int _selectedDuration;
+  // User-level training preferences
+  String? _selectedExperience;
+  List<String> _selectedFocusAreas = [];
+  int _selectedVarietyPct = 50; // 25 = Low, 50 = Medium, 75 = High
+  bool _isLoading = false;
+  bool _hasChanges = false;
+
+  // Training split options
+  static const List<Map<String, dynamic>> _trainingSplitOptions = [
+    {'id': 'nothing_structured', 'label': 'Let AI Decide', 'icon': Icons.auto_awesome_rounded, 'desc': 'Flexible'},
     {'id': 'push_pull_legs', 'label': 'Push/Pull/Legs', 'icon': Icons.splitscreen_rounded, 'desc': '6 days'},
     {'id': 'full_body', 'label': 'Full Body', 'icon': Icons.accessibility_new_rounded, 'desc': '3 days'},
     {'id': 'upper_lower', 'label': 'Upper/Lower', 'icon': Icons.swap_vert_rounded, 'desc': '4 days'},
     {'id': 'phul', 'label': 'PHUL', 'icon': Icons.flash_on_rounded, 'desc': '4 days'},
     {'id': 'body_part', 'label': 'Body Part', 'icon': Icons.view_week_rounded, 'desc': '5-6 days'},
   ];
+
+  // Day names for workout days picker
+  static const List<String> _dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+
+  // Predefined environment presets
+  static const Map<String, Map<String, dynamic>> _environmentPresets = {
+    'commercial_gym': {
+      'name': 'Commercial Gym',
+      'icon': Icons.business_rounded,
+    },
+    'home_gym': {
+      'name': 'Home Gym',
+      'icon': Icons.home_work_rounded,
+    },
+    'home': {
+      'name': 'Home (Minimal)',
+      'icon': Icons.home_rounded,
+    },
+    'hotel': {
+      'name': 'Hotel / Travel',
+      'icon': Icons.hotel_rounded,
+    },
+    'outdoors': {
+      'name': 'Outdoors',
+      'icon': Icons.park_rounded,
+    },
+  };
 
   // Available icons
   static const List<Map<String, dynamic>> _iconOptions = [

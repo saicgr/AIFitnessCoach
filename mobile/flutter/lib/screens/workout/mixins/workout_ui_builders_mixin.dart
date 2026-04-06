@@ -60,6 +60,152 @@ mixin WorkoutUIBuildersMixin<T extends StatefulWidget> on State<T> {
   WorkoutTimerController get timerController;
   List<WorkoutExercise> get exercises;
 
+  set exercises(List<WorkoutExercise> value);
+  int get currentExerciseIndex;
+  set currentExerciseIndex(int value);
+  int get viewingExerciseIndex;
+  set viewingExerciseIndex(int value);
+  Map<int, List<SetLog>> get completedSets;
+  Map<int, int> get totalSetsPerExercise;
+  Map<int, List<Map<String, dynamic>>> get previousSets;
+  Map<int, RepProgressionType> get repProgressionPerExercise;
+  Map<int, SetProgressionPattern> get exerciseProgressionPattern;
+  Map<int, String> get exerciseBarType;
+  Map<String, double> get exerciseMaxWeights;
+  List<Map<String, dynamic>> get restIntervals;
+  TextEditingController get weightController;
+  TextEditingController get repsController;
+  TextEditingController get repsRightController;
+
+  bool get useKg;
+  double get weightIncrement;
+  set weightIncrement(double value);
+  bool get isResting;
+  set isResting(bool value);
+  bool get isRestingBetweenExercises;
+  set isRestingBetweenExercises(bool value);
+  String get currentRestMessage;
+  bool get isPaused;
+  bool get showInlineRest;
+  int get inlineRestDuration;
+  String? get inlineRestAiTip;
+  bool get isLoadingAiTip;
+  String? get inlineRestAchievementPrompt;
+  int? get inlineRestCurrentRpe;
+  int? get lastSetRpe;
+  set lastSetRpe(int? value);
+  int? get lastSetRir;
+  set lastSetRir(int? value);
+  WeightSuggestion? get currentWeightSuggestion;
+  bool get isLoadingWeightSuggestion;
+  RestSuggestion? get restSuggestion;
+  bool get isLoadingRestSuggestion;
+  FatigueAlertData? get fatigueAlertData;
+  bool get showFatigueAlert;
+  bool get showCoachTip;
+  set showCoachTip(bool value);
+  String? get coachTipMessage;
+
+  VideoPlayerController? get videoController;
+  bool get isVideoInitialized;
+  bool get isVideoPlaying;
+  String? get imageUrl;
+  bool get isLoadingMedia;
+
+  bool get isLeftRightMode;
+  bool get isDoneButtonPressed;
+  set isDoneButtonPressed(bool value);
+  int? get justCompletedSetIndex;
+
+  // State specific to UI builders (not in other mixins)
+  bool get showInstructions;
+  set showInstructions(bool value);
+  bool get hideAICoachForSession;
+  set hideAICoachForSession(bool value);
+  bool get isWarmupLoading;
+  List<WarmupExerciseData>? get warmupExercises;
+  List<StretchExerciseData>? get stretchExercises;
+  bool get useV2Design;
+  bool get isActiveRowExpanded;
+  set isActiveRowExpanded(bool value);
+  bool get isDragActive;
+  set isDragActive(bool value);
+  int? get draggedExerciseIndex;
+  set draggedExerciseIndex(int? value);
+
+  dynamic get workoutWidget;
+
+  // Cross-mixin method access
+  void showQuitDialog();
+  void togglePause();
+  void skipExercise();
+  void handleWarmupComplete();
+  void handleSkipWarmup();
+  void handleStretchComplete();
+  void handleSkipStretch();
+  void goBackToWarmup();
+  void minimizeWorkout();
+  void initControllersForExercise(int exerciseIndex);
+  bool isExerciseCompleted(int exerciseIndex);
+  void completeSet();
+  void handleSetCompletedV2(int setIndex);
+  void updateCompletedSet(int setIndex, double weight, int reps);
+  void deleteCompletedSet(int setIndex);
+  void quickCompleteSet(int setIndex, bool complete);
+  void editCompletedSet(int setIndex);
+  void toggleUnit();
+  void showRirPicker(int setIndex, int? currentRir);
+  void handleChipTapped(String chipId);
+  void showExerciseDetailsSheet(WorkoutExercise exercise);
+  void showExerciseOptionsSheet(int exerciseIndex);
+  void showExerciseAddSheetImpl();
+  Future<void> showSwapSheetForIndex(int index);
+  void showWorkoutPlanDrawer();
+  void showNotesSheet(WorkoutExercise exercise);
+  // showExerciseInfoSheet is a top-level function from exercise_info_sheet.dart
+  void showBarTypeSelectorImpl(WorkoutExercise exercise);
+  void showProgressionSheetImpl();
+  void confirmDeleteExercise(int index);
+  void onExercisesReordered(int oldIndex, int newIndex);
+  void onSupersetFromDrag(int sourceIndex, int targetIndex);
+  void acceptWeightSuggestion(double newWeight);
+  void dismissWeightSuggestion();
+  void acceptRestSuggestion(int seconds);
+  void dismissRestSuggestion();
+  void handleAcceptFatigueSuggestion();
+  void handleDismissFatigueAlert();
+  Future<void> handleParsedExercises(List<ParsedExercise> exercises);
+  Widget buildInlineRestRowV2();
+  void handleInlineRestComplete();
+  void handleInlineRestSkip();
+  void handleInlineRestTimeAdjust(int adjustment);
+  void handleInlineRestRpeRating(int rpe);
+  void handleInlineRestNote(String note);
+  Future<void> fetchMediaForExercise(WorkoutExercise exercise);
+  Future<void> saveWeightUnitPreference(String unit);
+  void precomputeSupersetIndices();
+  Map<String, dynamic>? getLastSessionData(int exerciseIndex);
+  Map<String, dynamic>? getPrData(int exerciseIndex);
+
+  // Private helpers that remain in the main class (declared abstract here)
+  void handleVideoAreaTap();
+  void toggleVideoPlayPause();
+  void showAICoachSheet(WorkoutExercise exercise);
+  void showLog1RMSheet(WorkoutExercise exercise);
+  Future<void> showHydrationDialogImpl([DrinkType initialType = DrinkType.water]);
+  void showBreathingGuideImpl(WorkoutExercise exercise);
+  void showNumberInputDialogImpl(TextEditingController controller, bool isDecimal);
+  void showProgressionPicker(int exerciseIndex);
+  void handleWarmupIntervalsLogged(Map<String, List<WarmupInterval>> logs);
+  void handleV2Parsed(ParseWorkoutInputV2Response response);
+  Future<void> toggleFavoriteExercise();
+  void showHideCoachDialog();
+  String formatDuration(int seconds);
+  List<SetRowData> buildSetRowsForExercise(int exerciseIndex);
+  Set<int> getCompletedExerciseIndices();
+  List<ActionChipData> buildActionChipsForCurrentExercise();
+
+
   /// Build foldable-optimized active workout layout.
   Widget buildFoldableActiveWorkout(WindowModeState windowState) {
     final setRows = buildSetRowsForExercise(viewingExerciseIndex);

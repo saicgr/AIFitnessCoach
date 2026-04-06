@@ -16,6 +16,8 @@ import '../models/coach_notification_templates.dart';
 
 part 'notification_service_ext.dart';
 part 'notification_service_ext_ext.dart';
+part 'notification_service_part_channel_config.dart';
+part 'notification_service_part_notification_preferences.dart';
 
 
 /// Background message handler - must be top-level function
@@ -360,6 +362,7 @@ class NotificationService {
       debugPrint('⚠️ [FCM] Error requesting permission: $e');
     }
   }
+}
 
 /// Callback type for syncing preferences to backend
 typedef PreferencesSyncCallback = Future<void> Function(NotificationPreferences prefs);

@@ -217,7 +217,7 @@ extension _CreatePostSheetStateUI on _CreatePostSheetState {
             height: 100,
             child: ListView.builder(
               scrollDirection: Axis.horizontal,
-              itemCount: _selectedImages.length + (_selectedImages.length < _maxImages ? 1 : 0),
+              itemCount: _selectedImages.length + (_selectedImages.length < _CreatePostSheetState._maxImages ? 1 : 0),
               itemBuilder: (context, index) {
                 // "Add more" button at end
                 if (index == _selectedImages.length) {

@@ -11,6 +11,7 @@ from models.weekly_personal_goals import (
     PersonalRecordsResponse, GoalSummary, WeeklyPersonalGoal,
     WorkoutSyncRequest, WorkoutSyncResponse, SyncedGoalUpdate,
 )
+from api.v1.personal_goals import get_iso_week_boundaries
 from models.goal_suggestions import (
     GoalSuggestionsResponse, GoalSuggestionItem, SuggestionCategoryGroup,
     SuggestionType, SuggestionCategory, GoalVisibility,
