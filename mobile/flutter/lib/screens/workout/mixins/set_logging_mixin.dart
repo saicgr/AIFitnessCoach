@@ -206,7 +206,10 @@ mixin SetLoggingMixin<T extends StatefulWidget> on State<T> {
 
       if (!lastWasWarmup) {
         final lastLog = completedLogs.last;
-        final displayWeight = useKg ? lastLog.weight : lastLog.weight * 2.20462;
+        final displayWeight = useKg
+            ? lastLog.weight
+            : kgToDisplayLbs(lastLog.weight, exercise.equipment,
+                exerciseName: exercise.name,);
         weightController.text = displayWeight.toStringAsFixed(
             displayWeight % 1 == 0 ? 0 : 1);
         repsController.text = lastLog.reps.toString();
@@ -231,7 +234,10 @@ mixin SetLoggingMixin<T extends StatefulWidget> on State<T> {
 
     double displayWeight;
     if (prevWeightKg > 0) {
-      displayWeight = useKg ? prevWeightKg : prevWeightKg * 2.20462;
+      displayWeight = useKg
+          ? prevWeightKg
+          : kgToDisplayLbs(prevWeightKg, exercise.equipment,
+                exerciseName: exercise.name,);
     } else {
       double aiWt;
       if (isWarmup) {
@@ -244,9 +250,15 @@ mixin SetLoggingMixin<T extends StatefulWidget> on State<T> {
         aiWt = (setTarget?.targetWeightKg ?? exercise.weight ?? 0).toDouble();
       }
       if (aiWt > 0 && !isGenericWeight(aiWt, exercise.weightSource)) {
-        displayWeight = useKg ? aiWt : aiWt * 2.20462;
+        displayWeight = useKg
+            ? aiWt
+            : kgToDisplayLbs(aiWt, exercise.equipment,
+                exerciseName: exercise.name,);
       } else if (aiWt > 0) {
-        displayWeight = useKg ? aiWt : aiWt * 2.20462;
+        displayWeight = useKg
+            ? aiWt
+            : kgToDisplayLbs(aiWt, exercise.equipment,
+                exerciseName: exercise.name,);
       } else {
         displayWeight = getDefaultWeight(exercise.equipment,
             exerciseName: exercise.name,
@@ -334,7 +346,11 @@ mixin SetLoggingMixin<T extends StatefulWidget> on State<T> {
   /// Edit a completed set
   void editCompletedSet(int setIndex) {
     final set = completedSets[viewingExerciseIndex]![setIndex];
-    final displayWeight = useKg ? set.weight : set.weight * 2.20462;
+    final exercise = exercises[viewingExerciseIndex];
+    final displayWeight = useKg
+        ? set.weight
+        : kgToDisplayLbs(set.weight, exercise.equipment,
+                exerciseName: exercise.name,);
     final editWeightController =
         TextEditingController(text: displayWeight.toStringAsFixed(1));
     final editRepsController = TextEditingController(text: set.reps.toString());

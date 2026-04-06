@@ -32,7 +32,8 @@ extension _SetTrackingOverlayStateUI2 on _SetTrackingOverlayState {
       if (lastWeight != null && lastReps != null) {
         final displayWeight = widget.useKg
             ? lastWeight
-            : lastWeight * 2.20462;
+            : kgToDisplayLbs(lastWeight, widget.exercise.equipment,
+                exerciseName: widget.exercise.name,);
         lastDisplay = '${displayWeight.toStringAsFixed(0)} × $lastReps';
       }
     }
@@ -57,7 +58,8 @@ extension _SetTrackingOverlayStateUI2 on _SetTrackingOverlayState {
       } else if (targetWeight != null && targetWeight > 0) {
         final displayTargetWeight = widget.useKg
             ? targetWeight
-            : targetWeight * 2.20462;
+            : kgToDisplayLbs(targetWeight, widget.exercise.equipment,
+                exerciseName: widget.exercise.name,);
         // Show AMRAP for failure/amrap sets
         if (setTarget.isFailure) {
           targetDisplay = '${displayTargetWeight.toStringAsFixed(0)} $unit × AMRAP';
@@ -97,7 +99,8 @@ extension _SetTrackingOverlayStateUI2 on _SetTrackingOverlayState {
       } else if (targetWeight != null && targetWeight > 0 && targetReps != null) {
         final displayTargetWeight = widget.useKg
             ? targetWeight
-            : targetWeight * 2.20462;
+            : kgToDisplayLbs(targetWeight, widget.exercise.equipment,
+                exerciseName: widget.exercise.name,);
         // For failure set, show AMRAP on last set
         if (isLastSet && widget.exercise.isFailureSet == true) {
           targetDisplay = '${displayTargetWeight.toStringAsFixed(0)} $unit × AMRAP';
@@ -351,7 +354,8 @@ extension _SetTrackingOverlayStateUI2 on _SetTrackingOverlayState {
                       HapticFeedback.selectionClick();
                       final displayWeight = widget.useKg
                           ? lastWeight!
-                          : lastWeight! * 2.20462;
+                          : kgToDisplayLbs(lastWeight!, widget.exercise.equipment,
+                exerciseName: widget.exercise.name,);
                       widget.weightController.text = displayWeight.toStringAsFixed(0);
                       widget.repsController.text = lastReps.toString();
                     }
@@ -440,7 +444,8 @@ extension _SetTrackingOverlayStateUI2 on _SetTrackingOverlayState {
                         isCompleted
                             ? (widget.useKg
                                 ? completedSetData!.weight.toStringAsFixed(0)
-                                : (completedSetData!.weight * 2.20462)
+                                : kgToDisplayLbs(completedSetData!.weight, widget.exercise.equipment,
+                exerciseName: widget.exercise.name,)
                                     .toStringAsFixed(0))
                             : '—',
                         style: TextStyle(

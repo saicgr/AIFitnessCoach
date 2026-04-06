@@ -177,7 +177,10 @@ extension _ExpandedExerciseCardStateUI2 on _ExpandedExerciseCardState {
     // All weights are stored in kg internally
     double? displayWeight;
     if (weightKg != null && weightKg > 0) {
-      displayWeight = useKg ? weightKg : weightKg * 2.20462;
+      displayWeight = useKg
+          ? weightKg
+          : kgToDisplayLbs(weightKg, widget.exercise.equipment,
+                exerciseName: widget.exercise.name,);
     }
 
     // Build target display string: weight unit × reps (matching active workout screen)

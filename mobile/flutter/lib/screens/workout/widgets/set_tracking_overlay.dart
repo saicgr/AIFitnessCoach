@@ -13,6 +13,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
 import '../../../core/constants/app_colors.dart';
+import '../../../core/utils/default_weights.dart';
 import '../../../data/models/exercise.dart';
 import '../../../widgets/glass_sheet.dart';
 import '../models/workout_state.dart';
@@ -310,7 +311,8 @@ class _SetTrackingOverlayState extends State<SetTrackingOverlay> {
     final setData = widget.completedSets[index];
     final displayWeight = widget.useKg
         ? setData.weight
-        : setData.weight * 2.20462;
+        : kgToDisplayLbs(setData.weight, widget.exercise.equipment,
+                exerciseName: widget.exercise.name,);
 
     setState(() {
       _editingSetIndex = index;

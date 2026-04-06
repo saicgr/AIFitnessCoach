@@ -7,6 +7,7 @@ This module handles AI-powered parsing of natural language workout input:
 - POST /add-exercises-batch - Add multiple parsed exercises to a workout
 """
 from core.db import get_supabase_db
+from core.weight_utils import kg_to_lbs_gym, lbs_to_kg_gym
 import json
 from typing import List, Optional
 
@@ -278,9 +279,9 @@ async def parse_workout_input_v2(request: Request, body: ParseWorkoutInputV2Requ
             weight_lbs = ex.get("weight_lbs")
 
             if weight_kg is None and weight_lbs is not None:
-                weight_kg = round(weight_lbs / 2.20462, 1)
+                weight_kg = round(weight_lbs / 2.20462, 2)  # Precise for storage
             elif weight_lbs is None and weight_kg is not None:
-                weight_lbs = round(weight_kg * 2.20462, 1)
+                weight_lbs = kg_to_lbs_gym(weight_kg)
 
             exercises_to_add.append(ExerciseToAddResponse(
                 name=ex.get("name", "Unknown Exercise"),
@@ -365,7 +366,7 @@ async def add_exercises_batch(request: Request, body: BatchAddExercisesRequest,
             # Determine weight in kg for storage
             weight_kg = parsed.weight_kg
             if weight_kg is None and parsed.weight_lbs is not None:
-                weight_kg = round(parsed.weight_lbs / 2.20462, 1)
+                weight_kg = round(parsed.weight_lbs / 2.20462, 2)  # Precise for storage
 
             if lib_results:
                 lib_ex = lib_results[0]

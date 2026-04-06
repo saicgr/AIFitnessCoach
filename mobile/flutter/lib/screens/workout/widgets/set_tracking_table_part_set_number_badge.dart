@@ -258,17 +258,19 @@ class _AutoTargetCell extends StatelessWidget {
     // Build target string
     String targetString = '';
 
-    if (isWarmup) {
-      targetString = targetReps ?? '4-6 reps';
-    } else if (targetWeight != null && targetReps != null) {
-      final displayWeight = useKg ? targetWeight! : targetWeight! * 2.20462;
+    if (targetWeight != null && targetReps != null) {
+      final displayWeight = useKg ? targetWeight! : WeightUtils.fromKgSnapped(targetWeight!, displayInLbs: true);
       targetString = '${displayWeight.toStringAsFixed(0)} ${useKg ? 'kg' : 'lb'} x $targetReps';
     } else if (previousWeight != null && previousReps != null) {
-      // Fall back to previous session
-      final displayWeight = useKg ? previousWeight! : previousWeight! * 2.20462;
+      final displayWeight = useKg ? previousWeight! : WeightUtils.fromKgSnapped(previousWeight!, displayInLbs: true);
       targetString = '${displayWeight.toStringAsFixed(0)} ${useKg ? 'kg' : 'lb'} x $previousReps';
     } else {
-      targetString = targetReps ?? '—';
+      throw StateError(
+        'No weight data available for set target. '
+        'targetWeight: $targetWeight, targetReps: $targetReps, '
+        'previousWeight: $previousWeight, previousReps: $previousReps, '
+        'isWarmup: $isWarmup',
+      );
     }
 
     return ClipRect(
@@ -369,7 +371,7 @@ class _PreviousCell extends StatelessWidget {
     // Build previous string
     String previousString = '';
     if (previousWeight != null && previousReps != null) {
-      final displayWeight = useKg ? previousWeight! : previousWeight! * 2.20462;
+      final displayWeight = useKg ? previousWeight! : WeightUtils.fromKgSnapped(previousWeight!, displayInLbs: true);
       previousString = '${displayWeight.toStringAsFixed(0)} x $previousReps';
     } else if (previousReps != null) {
       previousString = '$previousReps reps';
@@ -515,12 +517,12 @@ class _PreviousCellWithRir extends StatelessWidget {
     // Build previous string
     String previousString = '—';
     if (previousWeight != null && previousReps != null) {
-      final displayWeight = useKg ? previousWeight! : previousWeight! * 2.20462;
+      final displayWeight = useKg ? previousWeight! : WeightUtils.fromKgSnapped(previousWeight!, displayInLbs: true);
       previousString = '${displayWeight.toStringAsFixed(0)} ${useKg ? 'kg' : 'lb'} x $previousReps';
     } else if (previousReps != null) {
       previousString = '$previousReps reps';
     } else if (previousWeight != null) {
-      final displayWeight = useKg ? previousWeight! : previousWeight! * 2.20462;
+      final displayWeight = useKg ? previousWeight! : WeightUtils.fromKgSnapped(previousWeight!, displayInLbs: true);
       previousString = '${displayWeight.toStringAsFixed(0)} ${useKg ? 'kg' : 'lb'}';
     }
 

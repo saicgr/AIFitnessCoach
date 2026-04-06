@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/utils/default_weights.dart';
 import '../../../data/models/exercise.dart';
 
 /// Represents a single set's data (current session)
@@ -378,7 +379,10 @@ class _ExerciseSetTrackerState extends State<ExerciseSetTracker> {
 
     final unit = widget.useKg ? 'kg' : 'lb';
     final weightKg = target.targetWeightKg ?? 0;
-    final weight = widget.useKg ? weightKg : weightKg * 2.20462;
+    final weight = widget.useKg
+        ? weightKg
+        : kgToDisplayLbs(weightKg, widget.exercise.equipment,
+                exerciseName: widget.exercise.name,);
     final weightStr = weight > 0 ? '${weight.toStringAsFixed(weight.truncateToDouble() == weight ? 0 : 1)} $unit' : '';
     final reps = target.targetReps;
 

@@ -490,7 +490,10 @@ class _ActiveWorkoutScreenState
     final userProfile = ref.read(authStateProvider).user;
     double initWeightDisplay;
     if (useAiWeight) {
-      initWeightDisplay = _useKg ? aiWeight : aiWeight * 2.20462;
+      initWeightDisplay = _useKg
+          ? aiWeight
+          : kgToDisplayLbs(aiWeight, initialExercise.equipment,
+                exerciseName: initialExercise.name,);
     } else {
       // Get default in user's display unit (already snapped to real increments)
       initWeightDisplay = getDefaultWeight(
@@ -708,7 +711,10 @@ class _ActiveWorkoutScreenState
             ? getBarWeight(exercise.equipment, useKg: _useKg)
             : 0.0;
         if (currentWeight <= minBar && mounted) {
-          final displayWeight = _useKg ? prevWeight : prevWeight * 2.20462;
+          final displayWeight = _useKg
+              ? prevWeight
+              : kgToDisplayLbs(prevWeight, exercise.equipment,
+                exerciseName: exercise.name,);
           _weightController.text = displayWeight.toStringAsFixed(1);
         }
         return; // Previous session data is more reliable than API guess
@@ -740,8 +746,14 @@ class _ActiveWorkoutScreenState
             ? getBarWeight(exercise.equipment, useKg: true)
             : 0.0;
         if (suggestedKg < minBarKg) suggestedKg = minBarKg;
-        final displaySuggested = _useKg ? suggestedKg : suggestedKg * 2.20462;
-        final displayMinBar = _useKg ? minBarKg : minBarKg * 2.20462;
+        final displaySuggested = _useKg
+            ? suggestedKg
+            : kgToDisplayLbs(suggestedKg, exercise.equipment,
+                exerciseName: exercise.name,);
+        final displayMinBar = _useKg
+            ? minBarKg
+            : kgToDisplayLbs(minBarKg, exercise.equipment,
+                exerciseName: exercise.name,);
 
         // Only update if current weight is still at default/low
         final currentWeight = double.tryParse(_weightController.text) ?? 0;
@@ -807,7 +819,8 @@ class _ActiveWorkoutScreenState
       } else if (_useKg && aiSet.unit == 'lbs') {
         weight = aiSet.weight / 2.20462;
       } else if (!_useKg && aiSet.unit == 'kg') {
-        weight = aiSet.weight * 2.20462;
+        weight = kgToDisplayLbs(aiSet.weight, exercise.equipment,
+                exerciseName: exercise.name,);
       }
 
       // Create a SetLog with AI input source for tracking

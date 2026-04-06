@@ -29,6 +29,13 @@ from .feedback_models import (
 
 router = APIRouter()
 
+
+def _get_rag_service():
+    """Lazy import to avoid circular dependency with feedback.py."""
+    from .feedback import get_feedback_rag_service
+    return _get_rag_service()
+
+
 @router.get("/ai-coach/exercise-progress/{user_id}/{exercise_name}")
 async def get_exercise_progress(
     user_id: str,
@@ -47,7 +54,7 @@ async def get_exercise_progress(
     logger.info(f"Getting exercise progress for user {user_id}, exercise {exercise_name}")
 
     try:
-        rag_service = get_feedback_rag_service()
+        rag_service = _get_rag_service()
 
         history = await rag_service.get_exercise_weight_history(
             user_id=user_id,
@@ -70,7 +77,7 @@ async def get_exercise_progress(
 async def get_ai_coach_rag_stats(current_user: dict = Depends(get_current_user)):
     """Get statistics for the AI Coach RAG system."""
     try:
-        rag_service = get_feedback_rag_service()
+        rag_service = _get_rag_service()
         return rag_service.get_stats()
     except Exception as e:
         logger.error(f"Failed to get AI Coach stats: {e}")
@@ -95,7 +102,7 @@ async def get_user_achievements(
     logger.info(f"Getting achievements for user {user_id}")
 
     try:
-        rag_service = get_feedback_rag_service()
+        rag_service = _get_rag_service()
 
         # Get all workout history for user
         sessions = await rag_service.get_user_workout_history(

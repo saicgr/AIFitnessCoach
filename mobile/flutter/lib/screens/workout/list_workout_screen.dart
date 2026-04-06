@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/utils/weight_utils.dart';
 import '../../core/providers/user_provider.dart';
 import '../../core/services/posthog_service.dart';
 import '../../widgets/app_dialog.dart';
@@ -196,11 +197,11 @@ class _ListWorkoutScreenState extends ConsumerState<ListWorkoutScreen> {
       for (final exerciseSets in _exerciseSets.values) {
         for (final set in exerciseSets) {
           if (_useKg) {
-            // Convert from lbs to kg
-            set.weight = set.weight * 0.453592;
+            // Convert from lbs to kg (snap to 2.5 kg increments)
+            set.weight = WeightUtils.smartRound(set.weight * WeightUtils.lbsToKgFactor, useKg: true);
           } else {
             // Convert from kg to lbs
-            set.weight = set.weight * 2.20462;
+            set.weight = WeightUtils.fromKgSnapped(set.weight, displayInLbs: true);
           }
         }
       }

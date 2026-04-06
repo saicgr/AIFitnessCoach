@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/utils/default_weights.dart';
 import '../../../core/constants/workout_design.dart';
 import '../../../core/theme/theme_colors.dart';
 import '../../../core/providers/user_provider.dart';

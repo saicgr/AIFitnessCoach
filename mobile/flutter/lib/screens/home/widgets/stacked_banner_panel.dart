@@ -645,10 +645,10 @@ class _StackedBannerPanelState extends ConsumerState<StackedBannerPanel>
               for (int i = (visibleCount - 1).clamp(0, banners.length - 1); i >= 0; i--)
                 _buildStackedCard(banners, i, visibleCount),
 
-              // Dismiss-all X badge (left of count badge)
+              // Dismiss-all X badge (top right of banner stack)
               Positioned(
-                right: banners.length > 1 ? 36 : 8,
-                bottom: 0,
+                right: 0,
+                top: -8,
                 child: _buildDismissAllBadge(banners),
               ),
 

@@ -29,7 +29,7 @@ extension SetLoggingMixinUI on SetLoggingMixin {
     if (useKg && incrementUnit == 'lbs') {
       effectiveIncrement = incrementRaw * 0.453592;
     } else if (!useKg && incrementUnit == 'kg') {
-      effectiveIncrement = incrementRaw * 2.20462;
+      effectiveIncrement = (incrementRaw * 2.20462).roundToDouble();
     } else {
       effectiveIncrement = incrementRaw;
     }
@@ -44,7 +44,10 @@ extension SetLoggingMixinUI on SetLoggingMixin {
     } else {
       final aiWeight = exercise.weight?.toDouble() ?? 0;
       if (aiWeight > 0) {
-        displayWeight = useKg ? aiWeight : aiWeight * 2.20462;
+        displayWeight = useKg
+            ? aiWeight
+            : kgToDisplayLbs(aiWeight, exercise.equipment,
+                exerciseName: exercise.name,);
         debugPrint('⚙️ [ApplyTargets] ex=$exerciseIndex weight from exercise.weight: $aiWeight kg → display=$displayWeight');
       } else {
         final workingTarget = exercise.setTargets?.cast<SetTarget?>().firstWhere(
@@ -53,7 +56,10 @@ extension SetLoggingMixinUI on SetLoggingMixin {
         );
         final targetWt = workingTarget?.targetWeightKg ?? 0;
         if (targetWt > 0) {
-          displayWeight = useKg ? targetWt : targetWt * 2.20462;
+          displayWeight = useKg
+              ? targetWt
+              : kgToDisplayLbs(targetWt, exercise.equipment,
+                exerciseName: exercise.name,);
           debugPrint('⚙️ [ApplyTargets] ex=$exerciseIndex weight from setTarget: $targetWt → display=$displayWeight');
         } else {
           displayWeight = getDefaultWeight(exercise.equipment,
@@ -142,7 +148,7 @@ extension SetLoggingMixinUI on SetLoggingMixin {
         setType: isWarmupSet ? 'warmup' : (pt.isAmrap ? 'amrap' : currentSetTargets[i].setType),
         targetReps: targetReps,
         targetWeightKg: targetWeight,
-        targetRir: currentSetTargets[i].targetRir,
+        targetRir: pt.rir ?? currentSetTargets[i].targetRir,
       );
     }
 
@@ -204,7 +210,10 @@ extension SetLoggingMixinUI on SetLoggingMixin {
     }
 
     final actualWeightKg = lastWorkingLog.weight;
-    final actualWeight = useKg ? actualWeightKg : actualWeightKg * 2.20462;
+    final actualWeight = useKg
+        ? actualWeightKg
+        : kgToDisplayLbs(actualWeightKg, exercise.equipment,
+                exerciseName: exercise.name,);
     if (actualWeight <= 0) return;
 
     final incrementRaw = incrementState.getIncrement(exercise.equipment);
@@ -213,7 +222,7 @@ extension SetLoggingMixinUI on SetLoggingMixin {
     if (useKg && incrementUnit == 'lbs') {
       effectiveIncrement = incrementRaw * 0.453592;
     } else if (!useKg && incrementUnit == 'kg') {
-      effectiveIncrement = incrementRaw * 2.20462;
+      effectiveIncrement = (incrementRaw * 2.20462).roundToDouble();
     } else {
       effectiveIncrement = incrementRaw;
     }
@@ -269,7 +278,10 @@ extension SetLoggingMixinUI on SetLoggingMixin {
           continue;
         }
         completedData.add(CompletedSetData(
-          weight: useKg ? log.weight : log.weight * 2.20462,
+          weight: useKg
+              ? log.weight
+              : kgToDisplayLbs(log.weight, exercise.equipment,
+                exerciseName: exercise.name,),
           reps: log.reps,
           rir: log.rir,
         ));
@@ -313,7 +325,10 @@ extension SetLoggingMixinUI on SetLoggingMixin {
 
     final currentControllerWeight = double.tryParse(weightController.text) ?? 0;
     final previousSetWeightKg = completedSets[currentExerciseIndex]?.last.weight ?? 0;
-    final previousSetWeight = useKg ? previousSetWeightKg : previousSetWeightKg * 2.20462;
+    final previousSetWeight = useKg
+        ? previousSetWeightKg
+        : kgToDisplayLbs(previousSetWeightKg, exercise.equipment,
+                exerciseName: exercise.name,);
 
     if ((currentControllerWeight - previousSetWeight).abs() > 0.01) {
       if (!nextTarget.isAmrap) {
@@ -340,8 +355,14 @@ extension SetLoggingMixinUI on SetLoggingMixin {
       final diff = nextTarget.weight - originalNextWeight;
       if (diff.abs() > 0.01) {
         final unit = useKg ? 'kg' : 'lb';
-        final fromDisplay = useKg ? originalNextWeight : originalNextWeight * 2.20462;
-        final toDisplay = useKg ? nextTarget.weight : nextTarget.weight * 2.20462;
+        final fromDisplay = useKg
+            ? originalNextWeight
+            : kgToDisplayLbs(originalNextWeight, exercise.equipment,
+                exerciseName: exercise.name,);
+        final toDisplay = useKg
+            ? nextTarget.weight
+            : kgToDisplayLbs(nextTarget.weight, exercise.equipment,
+                exerciseName: exercise.name,);
         final arrow = diff > 0 ? '↑' : '↓';
         ScaffoldMessenger.of(_ctx).showSnackBar(
           SnackBar(

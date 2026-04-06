@@ -470,7 +470,7 @@ extension SetProgressionPatternX on SetProgressionPattern {
       case SetProgressionPattern.pyramidUp:
         raw = _generatePyramidUp(workingWeight, totalSets, baseReps, increment);
       case SetProgressionPattern.straightSets:
-        raw = _generateStraight(workingWeight, totalSets, baseReps);
+        raw = _generateStraight(workingWeight, totalSets, baseReps, increment);
       case SetProgressionPattern.reversePyramid:
         raw = _generateReversePyramid(workingWeight, totalSets, baseReps, increment);
       case SetProgressionPattern.dropSets:
@@ -482,7 +482,7 @@ extension SetProgressionPatternX on SetProgressionPattern {
       case SetProgressionPattern.myoReps:
         raw = _generateMyoReps(workingWeight, totalSets, baseReps, increment);
       case SetProgressionPattern.endurance:
-        raw = _generateEndurance(workingWeight, totalSets, baseReps);
+        raw = _generateEndurance(workingWeight, totalSets, baseReps, increment);
     }
 
     // 1b. Apply exercise-type ceiling (compound=12, isolation=15, bodyweight=20)
@@ -626,15 +626,20 @@ extension SetProgressionPatternX on SetProgressionPattern {
   static int _pyramidRepStep(int baseReps) => baseReps <= 5 ? 1 : 2;
 
   /// Straight Sets: same weight and reps every set.
+  /// RIR-based weight: lower RIR (closer to failure) → +1 increment.
+  /// Single set stays at base weight (no progression context).
   List<ProgressionSetTarget> _generateStraight(
-    double w, int sets, int reps,
+    double w, int sets, int reps, double inc,
   ) {
     return List.generate(sets, (i) {
       // Straight Sets RIR: uniform start, slight fatigue toward end
-      final rir = i < sets ~/ 2 ? 2 : 1;
+      // Single set: fixed at RIR 2 (no progression needed)
+      final rir = sets <= 1 ? 2 : (i < sets ~/ 2 ? 2 : 1);
+      // RIR 1 sets get +1 increment to reflect higher intensity
+      final setWeight = (rir <= 1 && inc > 0) ? _snap(w + inc, inc) : w;
       return ProgressionSetTarget(
         setNumber: i + 1,
-        weight: w,
+        weight: setWeight,
         reps: reps,
         isAmrap: false,
         rir: rir,
@@ -749,17 +754,22 @@ extension SetProgressionPatternX on SetProgressionPattern {
   }
 
   /// Endurance: Same weight, high reps (15-30), each set increases reps by 2-3.
+  /// RIR-based weight: lower RIR (closer to failure) → +1 increment.
+  /// Single set stays at base weight (no progression context).
   List<ProgressionSetTarget> _generateEndurance(
-    double w, int sets, int reps,
+    double w, int sets, int reps, double inc,
   ) {
     final baseReps = reps < 15 ? 15 : reps; // Minimum 15 for endurance
     final targets = <ProgressionSetTarget>[];
     for (int i = 0; i < sets; i++) {
       // Endurance RIR: gradual fatigue
-      final rir = i < sets ~/ 2 ? 3 : (i == sets - 1 ? 1 : 2);
+      // Single set: fixed at RIR 2 (no progression needed)
+      final rir = sets <= 1 ? 2 : (i < sets ~/ 2 ? 3 : (i == sets - 1 ? 1 : 2));
+      // RIR 1 sets get +1 increment to reflect higher intensity
+      final setWeight = (rir <= 1 && inc > 0) ? _snap(w + inc, inc) : w;
       targets.add(ProgressionSetTarget(
         setNumber: i + 1,
-        weight: w,
+        weight: setWeight,
         reps: (baseReps + i * 2).clamp(15, 30), // +2 reps per set, capped at 30
         isAmrap: false,
         rir: rir,

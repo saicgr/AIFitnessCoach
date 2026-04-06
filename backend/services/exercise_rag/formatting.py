@@ -211,7 +211,11 @@ def _build_set_targets(
             return 1 if is_compound_ex else 0
 
     def _get_weight_for_rir(base_weight: float, target_rir: int, eq_type: str) -> float:
-        """Calculate weight based on RIR target."""
+        """Calculate weight based on RIR target.
+
+        Lower RIR (closer to failure) → higher weight via multiplier.
+        Guarantees at least +1 equipment increment when multiplier > 1.0.
+        """
         if base_weight <= 0:
             return 0
         rir_multipliers = {2: 1.00, 1: 1.05, 0: 1.10}
@@ -219,12 +223,18 @@ def _build_set_targets(
         raw_weight = base_weight * multiplier
 
         increment = {
-            "dumbbell": 2.5, "dumbbells": 2.5, "barbell": 2.5,
+            "dumbbell": 2.0, "dumbbells": 2.0, "barbell": 2.5,
             "machine": 5.0, "cable": 2.5, "kettlebell": 4.0,
             "smith_machine": 2.5, "ez_bar": 2.5,
         }.get(eq_type.lower() if eq_type else "barbell", 2.5)
 
-        return round(raw_weight / increment) * increment
+        rounded = round(raw_weight / increment) * increment
+        base_rounded = round(base_weight / increment) * increment
+        # Minimum increment guarantee: if multiplier intended a weight increase
+        # but rounding erased the difference, force at least +1 increment
+        if multiplier > 1.0 and rounded <= base_rounded:
+            rounded = base_rounded + increment
+        return rounded
 
     for set_num in range(1, sets + 1):
         # WARMUP SET: First set for compound exercises with weights

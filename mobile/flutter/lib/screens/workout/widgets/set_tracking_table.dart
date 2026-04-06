@@ -13,6 +13,8 @@ import 'package:flutter/services.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/workout_design.dart';
+import '../../../core/utils/default_weights.dart';
+import '../../../core/utils/weight_utils.dart';
 import '../../../widgets/app_tour/app_tour_controller.dart';
 import '../../../core/theme/accent_color_provider.dart';
 import '../../../data/models/exercise.dart';
@@ -177,7 +179,8 @@ class _SetTrackingTableState extends State<SetTrackingTable> {
 
       final displayWeight = widget.useKg
           ? (set.actualWeight ?? 0)
-          : ((set.actualWeight ?? 0) * 2.20462);
+          : kgToDisplayLbs(set.actualWeight ?? 0, widget.exercise.equipment,
+              exerciseName: widget.exercise.name);
 
       _editWeightController = TextEditingController(
         text: displayWeight.toStringAsFixed(0),
@@ -563,7 +566,8 @@ class _SetTrackingTableState extends State<SetTrackingTable> {
                           value: set.actualWeight != null
                               ? (widget.useKg
                                       ? set.actualWeight!
-                                      : set.actualWeight! * 2.20462)
+                                      : kgToDisplayLbs(set.actualWeight!, widget.exercise.equipment,
+                exerciseName: widget.exercise.name,))
                                   .toStringAsFixed(0)
                               : '',
                           isCompleted: set.isCompleted,

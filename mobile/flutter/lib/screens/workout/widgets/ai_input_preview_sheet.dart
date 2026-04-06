@@ -6,6 +6,7 @@ library;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import '../../../core/utils/weight_utils.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/app_colors.dart';
@@ -661,7 +662,8 @@ class _SetPreviewTile extends StatelessWidget {
     if (useKg && set.unit == 'lbs') {
       return '${(weight / 2.20462).toStringAsFixed(1)} kg';
     } else if (!useKg && set.unit == 'kg') {
-      return '${(weight * 2.20462).toStringAsFixed(1)} lbs';
+      final snapped = WeightUtils.fromKgSnapped(weight, displayInLbs: true);
+      return '${snapped % 1 == 0 ? snapped.toInt() : snapped.toStringAsFixed(1)} lbs';
     }
 
     return '${weight % 1 == 0 ? weight.toInt() : weight.toStringAsFixed(1)} ${set.unit}';

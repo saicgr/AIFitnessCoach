@@ -4,6 +4,11 @@ from datetime import datetime, timedelta
 import logging
 logger = logging.getLogger(__name__)
 
+from core.config import get_settings
+from core.supabase_client import get_supabase
+
+settings = get_settings()
+
 
 
 class WarmupStretchService:

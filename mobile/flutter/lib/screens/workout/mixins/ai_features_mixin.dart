@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:video_player/video_player.dart';
 
 import '../../../core/constants/workout_design.dart';
+import '../../../core/utils/default_weights.dart';
 import '../../../core/models/set_progression.dart';
 import '../../../core/services/fatigue_service.dart';
 import '../../../core/services/weight_suggestion_service.dart';
@@ -255,14 +256,17 @@ mixin AIFeaturesMixin<T extends StatefulWidget> on State<T> {
       return;
     }
 
-    final displayAdjusted = useKg ? adjustedWeightKg : adjustedWeightKg * 2.20462;
+    final displayAdjusted = useKg
+        ? adjustedWeightKg
+        : kgToDisplayLbs(adjustedWeightKg, exercise.equipment,
+                exerciseName: exercise.name,);
     final inc = incState.getIncrement(exercise.equipment);
     final incrementUnit = incState.unit;
     double displayInc = inc;
     if (useKg && incrementUnit == 'lbs') {
       displayInc = inc * 0.453592;
     } else if (!useKg && incrementUnit == 'kg') {
-      displayInc = inc * 2.20462;
+      displayInc = (inc * 2.20462).roundToDouble();
     }
 
     final snappedDisplay = displayInc > 0
@@ -277,7 +281,10 @@ mixin AIFeaturesMixin<T extends StatefulWidget> on State<T> {
 
     if (mounted && message != null) {
       final unit = useKg ? 'kg' : 'lb';
-      final displayCurrent = useKg ? currentWeightKg : currentWeightKg * 2.20462;
+      final displayCurrent = useKg
+          ? currentWeightKg
+          : kgToDisplayLbs(currentWeightKg, exercise.equipment,
+                exerciseName: exercise.name,);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(

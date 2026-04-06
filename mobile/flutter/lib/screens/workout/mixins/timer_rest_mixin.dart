@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/app_colors.dart';
+import '../../../core/utils/default_weights.dart';
 import '../../../core/services/rest_tip_service.dart';
 import '../../../core/services/achievement_prompt_service.dart';
 import '../../../data/models/exercise.dart';
@@ -360,9 +361,11 @@ mixin TimerRestMixin<T extends StatefulWidget> on State<T> {
     switch (suggestion.action) {
       case AutoregAction.reduceWeight:
         if (suggestion.adjustedWeight != null) {
+          final exercise = exercises[currentExerciseIndex];
           final displayWeight = useKg
               ? suggestion.adjustedWeight!
-              : suggestion.adjustedWeight! * 2.20462;
+              : kgToDisplayLbs(suggestion.adjustedWeight!, exercise.equipment,
+                exerciseName: exercise.name,);
           weightController.text = displayWeight.toStringAsFixed(1);
         }
         if (suggestion.adjustedSets != null) {

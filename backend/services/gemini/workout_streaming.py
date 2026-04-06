@@ -13,6 +13,7 @@ from datetime import datetime
 from google.genai import types
 from core.config import get_settings
 from core.anonymize import age_to_bracket
+from core.weight_utils import kg_to_lbs_gym
 from models.gemini_schemas import GeneratedWorkoutResponse
 from services.split_descriptions import SPLIT_DESCRIPTIONS, get_split_context
 from services.gemini.constants import (
@@ -681,10 +682,10 @@ If user has gym equipment (full_gym, barbell, dumbbells, cable_machine, machines
                 weight_kg = data.get("weight_kg") or data.get("max_weight")
                 reps = data.get("reps") or data.get("max_reps")
                 if weight_kg:
-                    display_weight = round(weight_kg * 2.20462) if use_lbs else weight_kg
-                    lines.append(f"- {exercise_name}: {display_weight}{unit} × {reps or '?'} reps")
+                    display_weight = kg_to_lbs_gym(weight_kg) if use_lbs else weight_kg
+                    lines.append(f"- {exercise_name}: {display_weight:.0f}{unit} × {reps or '?'} reps")
             elif isinstance(data, (int, float)):
-                display_weight = round(data * 2.20462) if use_lbs else data
+                display_weight = kg_to_lbs_gym(data) if use_lbs else data
                 lines.append(f"- {exercise_name}: {display_weight}{unit}")
 
         if lines:

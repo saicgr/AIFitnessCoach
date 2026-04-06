@@ -6,6 +6,7 @@ library;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/utils/weight_utils.dart';
 import '../../../data/models/exercise.dart';
 import '../../../widgets/glass_sheet.dart';
 import 'exercise_analytics_page.dart';
@@ -30,7 +31,7 @@ void showExerciseHistorySheet({
     final reps = lastSessionData['reps'] as int?;
     final date = lastSessionData['date'] as String?;
     if (weight != null && reps != null) {
-      final displayWeight = useKg ? weight : weight * 2.20462;
+      final displayWeight = useKg ? weight : WeightUtils.fromKgSnapped(weight, displayInLbs: true);
       lastDisplay = '${displayWeight.toStringAsFixed(0)} $unit \u00d7 $reps reps';
       if (date != null) lastDate = date;
     }
@@ -42,7 +43,7 @@ void showExerciseHistorySheet({
     final weight = prData['weight'] as double?;
     final reps = prData['reps'] as int?;
     if (weight != null && reps != null) {
-      final displayWeight = useKg ? weight : weight * 2.20462;
+      final displayWeight = useKg ? weight : WeightUtils.fromKgSnapped(weight, displayInLbs: true);
       prDisplay = '${displayWeight.toStringAsFixed(0)} $unit \u00d7 $reps reps';
     }
   }

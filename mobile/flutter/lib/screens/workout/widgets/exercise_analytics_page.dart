@@ -13,6 +13,7 @@ import 'package:flutter/services.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../../../core/constants/app_colors.dart';
+import '../../../core/utils/default_weights.dart';
 import '../../../data/models/exercise.dart';
 import '../../../widgets/pill_app_bar.dart';
 import '../../../widgets/segmented_tab_bar.dart';
@@ -211,7 +212,8 @@ class _ExerciseAnalyticsPageState extends State<ExerciseAnalyticsPage>
       final reps = widget.prData!['reps'] as int?;
       final date = widget.prData!['date'] as String?;
       if (weight != null && reps != null) {
-        final displayWeight = widget.useKg ? weight : weight * 2.20462;
+        final displayWeight = widget.useKg ? weight : kgToDisplayLbs(weight, widget.exercise.equipment,
+                exerciseName: widget.exercise.name,);
         prDisplay = '${displayWeight.toStringAsFixed(0)} $_unit x $reps reps';
         if (date != null) {
           prSubtitle = 'Set on $date';
@@ -297,7 +299,8 @@ class _ExerciseAnalyticsPageState extends State<ExerciseAnalyticsPage>
       final reps = widget.lastSessionData!['reps'] as int?;
       final date = widget.lastSessionData!['date'] as String?;
       if (weight != null && reps != null) {
-        final displayWeight = widget.useKg ? weight : weight * 2.20462;
+        final displayWeight = widget.useKg ? weight : kgToDisplayLbs(weight, widget.exercise.equipment,
+                exerciseName: widget.exercise.name,);
         lastDisplay = '${displayWeight.toStringAsFixed(0)} $_unit x $reps reps';
         if (date != null) {
           lastSubtitle = date;

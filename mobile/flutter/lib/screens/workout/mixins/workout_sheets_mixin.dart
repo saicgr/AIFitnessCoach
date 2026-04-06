@@ -5,6 +5,7 @@ import 'package:video_player/video_player.dart';
 
 import '../../../core/constants/api_constants.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/utils/default_weights.dart';
 import '../../../core/constants/workout_design.dart';
 import '../../../core/models/set_progression.dart';
 import '../../../core/providers/exercise_bar_type_provider.dart';
@@ -332,7 +333,10 @@ mixin WorkoutSheetsMixin<T extends StatefulWidget> on State<T> {
           if (currentWeight <= minBar && sets.isNotEmpty) {
             final prevWeightKg = (sets.last['weight_kg'] as num?)?.toDouble() ?? 0.0;
             if (prevWeightKg > 0) {
-              final displayWeight = useKg ? prevWeightKg : prevWeightKg * 2.20462;
+              final displayWeight = useKg
+                  ? prevWeightKg
+                  : kgToDisplayLbs(prevWeightKg, exercise.equipment,
+                exerciseName: exercise.name,);
               weightController.text = displayWeight.toStringAsFixed(1);
             }
           }
@@ -495,7 +499,10 @@ mixin WorkoutSheetsMixin<T extends StatefulWidget> on State<T> {
             ? getBarWeight(exercise.equipment, useKg: useKg)
             : 0.0;
         if (currentWeight <= minBar && mounted) {
-          final displayWeight = useKg ? prevWeight : prevWeight * 2.20462;
+          final displayWeight = useKg
+              ? prevWeight
+              : kgToDisplayLbs(prevWeight, exercise.equipment,
+                exerciseName: exercise.name,);
           weightController.text = displayWeight.toStringAsFixed(1);
         }
         return; // Previous session data is more reliable than API guess
@@ -527,8 +534,14 @@ mixin WorkoutSheetsMixin<T extends StatefulWidget> on State<T> {
             ? getBarWeight(exercise.equipment, useKg: true)
             : 0.0;
         if (suggestedKg < minBarKg) suggestedKg = minBarKg;
-        final displaySuggested = useKg ? suggestedKg : suggestedKg * 2.20462;
-        final displayMinBar = useKg ? minBarKg : minBarKg * 2.20462;
+        final displaySuggested = useKg
+            ? suggestedKg
+            : kgToDisplayLbs(suggestedKg, exercise.equipment,
+                exerciseName: exercise.name,);
+        final displayMinBar = useKg
+            ? minBarKg
+            : kgToDisplayLbs(minBarKg, exercise.equipment,
+                exerciseName: exercise.name,);
 
         // Only update if current weight is still at default/low
         final currentWeight = double.tryParse(weightController.text) ?? 0;
@@ -574,6 +587,8 @@ mixin WorkoutSheetsMixin<T extends StatefulWidget> on State<T> {
       for (int i = 0; i < exercises.length; i++) {
         try {
           final pattern = exerciseProgressionPattern[i] ?? SetProgressionPattern.pyramidUp;
+          // Always populate map so hasProgression is true in buildSetRowsForExercise
+          exerciseProgressionPattern[i] = pattern;
           debugPrint('📋 [Preload] ex $i: "${exercises[i].name}" → ${pattern.displayName}');
           applyProgressionTargets(i, pattern);
         } catch (e) {

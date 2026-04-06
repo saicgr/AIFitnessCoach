@@ -1,3 +1,5 @@
+import 'weight_utils.dart';
+
 /// Equipment-based default starting weights.
 ///
 /// All values are in the user's preferred unit system (lb or kg).
@@ -356,6 +358,24 @@ double snapToRealIncrement(double weight, String? equipment, {String? exerciseNa
   // Dumbbells, cable, machine: simple step rounding + clamp
   final snapped = (weight / step).round() * step;
   return snapped.clamp(min, max);
+}
+
+/// Convert a kg value to display lbs, preserving user-entered values.
+///
+/// AI-generated clean kg values (multiples of 2.5) get snapped to real gym
+/// increments via [snapToRealIncrement]. User-entered round-tripped values
+/// (e.g., 62.14 kg from 137 lbs) are just rounded to nearest 0.5 lbs to
+/// preserve what the user originally typed.
+double kgToDisplayLbs(double weightKg, String? equipment, {String? exerciseName}) {
+  if (weightKg <= 0) return 0;
+  final rawLbs = weightKg * 2.20462;
+  // Clean kg = AI-generated (25.0, 60.0, etc.) → snap to real gym increments
+  // Non-clean kg = user round-trip (62.14 from 137 lbs) → preserve original
+  if (WeightUtils.isCleanKg(weightKg)) {
+    return snapToRealIncrement(rawLbs, equipment, exerciseName: exerciseName, useKg: false);
+  }
+  // Round to nearest 0.5 to preserve user-entered values like 137.5
+  return (rawLbs * 2).round() / 2;
 }
 
 /// Snap to the nearest weight the user actually owns.

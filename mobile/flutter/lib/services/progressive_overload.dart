@@ -152,6 +152,10 @@ List<SetTarget> generateSetTargets({
     ));
   }
 
+  // RIR-based weight multipliers: lower RIR → higher weight
+  // Matches backend logic in formatting.py _get_weight_for_rir()
+  const rirMultipliers = {3: 1.00, 2: 1.00, 1: 1.05, 0: 1.10};
+
   // Working sets with progressive RPE/RIR
   for (int i = 0; i < workingSets; i++) {
     // RPE increases across sets: 7 -> 8 -> 9
@@ -164,11 +168,27 @@ List<SetTarget> generateSetTargets({
         ? (maxReps - i).clamp(minReps, maxReps)
         : ((minReps + maxReps) ~/ 2); // Middle of range for hypertrophy
 
+    // Apply RIR-based weight adjustment
+    double? setWeight = workingWeight;
+    if (workingWeight != null && workingWeight > 0 && equipType != 'bodyweight') {
+      final multiplier = rirMultipliers[rir] ?? 1.0;
+      if (multiplier > 1.0) {
+        final rawWeight = workingWeight * multiplier;
+        var roundedWeight = _roundWeight(rawWeight, equipType);
+        // Minimum increment guarantee
+        final inc = _weightIncrements[equipType] ?? 2.5;
+        if (roundedWeight <= workingWeight) {
+          roundedWeight = workingWeight + inc;
+        }
+        setWeight = roundedWeight;
+      }
+    }
+
     targets.add(SetTarget(
       setNumber: setNumber++,
       setType: 'working',
       targetReps: reps,
-      targetWeightKg: workingWeight,
+      targetWeightKg: setWeight,
       targetRpe: rpe,
       targetRir: rir,
     ));

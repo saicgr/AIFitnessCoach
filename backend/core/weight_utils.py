@@ -18,6 +18,8 @@ from typing import List, Optional
 
 from core.exercise_data import (
     EQUIPMENT_INCREMENTS,
+    KG_TO_LBS_GYM,
+    LBS_TO_KG_GYM,
     STANDARD_DUMBBELL_WEIGHTS,
     STANDARD_KETTLEBELL_WEIGHTS,
 )
@@ -410,6 +412,67 @@ def get_starting_weight(
 
     # Snap to valid weight for the equipment
     return snap_to_available_weights(final_weight, equipment_type)
+
+
+def kg_to_lbs_gym(weight_kg: float) -> float:
+    """
+    Convert kg to gym-standard lbs using a researched lookup dictionary.
+
+    Unlike raw math (kg × 2.205), this returns the lbs value a gym-goer
+    would recognize: 60 kg → 135 lbs (not 132.3), 100 kg → 225 lbs (not 220.5).
+
+    For weights not in the lookup, finds the nearest entry and interpolates.
+    """
+    if weight_kg <= 0:
+        return 0
+    # Round to nearest 0.5 kg for lookup
+    key = round(weight_kg * 2) / 2
+    if key in KG_TO_LBS_GYM:
+        return KG_TO_LBS_GYM[key]
+    # Find nearest keys and use the closest match
+    keys = sorted(KG_TO_LBS_GYM.keys())
+    if key <= keys[0]:
+        return KG_TO_LBS_GYM[keys[0]]
+    if key >= keys[-1]:
+        # Beyond the table — fall back to round-to-5
+        return round(weight_kg * 2.20462 / 5) * 5
+    # Binary search for nearest key
+    import bisect
+    idx = bisect.bisect_left(keys, key)
+    lo, hi = keys[idx - 1], keys[idx]
+    # Pick the closer one
+    if abs(key - lo) <= abs(key - hi):
+        return KG_TO_LBS_GYM[lo]
+    return KG_TO_LBS_GYM[hi]
+
+
+def lbs_to_kg_gym(weight_lbs: float) -> float:
+    """
+    Convert lbs to gym-standard kg using a researched lookup dictionary.
+
+    Unlike raw math (lbs / 2.205), this returns the kg value that matches
+    real gym equipment: 135 lbs → 60 kg, 225 lbs → 100 kg.
+
+    For weights not in the lookup, finds the nearest entry.
+    """
+    if weight_lbs <= 0:
+        return 0
+    # Round to nearest integer for lookup
+    key = round(weight_lbs)
+    if key in LBS_TO_KG_GYM:
+        return LBS_TO_KG_GYM[key]
+    # Find nearest
+    keys = sorted(LBS_TO_KG_GYM.keys())
+    if key <= keys[0]:
+        return LBS_TO_KG_GYM[keys[0]]
+    if key >= keys[-1]:
+        return round(weight_lbs / 2.20462 / 2.5) * 2.5
+    import bisect
+    idx = bisect.bisect_left(keys, key)
+    lo, hi = keys[idx - 1], keys[idx]
+    if abs(key - lo) <= abs(key - hi):
+        return LBS_TO_KG_GYM[lo]
+    return LBS_TO_KG_GYM[hi]
 
 
 def validate_weight_recommendation(
