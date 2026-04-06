@@ -8,6 +8,15 @@ extension SetLoggingMixinUI on SetLoggingMixin {
   bool get _mounted => (this as dynamic).mounted as bool;
   void _setState(VoidCallback fn) => (this as dynamic).setState(fn);
 
+  /// Convert a display-unit weight back to kg for storage in [SetTarget.targetWeightKg].
+  /// Pattern math runs in display units (lbs or kg) for correct snapping, but
+  /// [SetTarget.targetWeightKg] must always be in kg so the display layer can
+  /// convert once (kg→display). Without this, each re-application would
+  /// compound the kg→lbs conversion.
+  double _displayToKg(double displayWeight) {
+    return useKg ? displayWeight : displayWeight * WeightUtils.lbsToKgFactor;
+  }
+
   /// Recalculate and apply progression targets for an exercise.
   /// Works in DISPLAY units to avoid kg/lbs rounding issues.
   /// Handles warmup sets with 50% weight and 6-12 rep clamping.
@@ -114,7 +123,7 @@ extension SetLoggingMixinUI on SetLoggingMixin {
       currentSetTargets.add(SetTarget(
         setNumber: currentSetTargets.length + 1,
         targetReps: baseReps,
-        targetWeightKg: workingWeight,
+        targetWeightKg: _displayToKg(workingWeight),
       ));
     }
 
@@ -143,11 +152,13 @@ extension SetLoggingMixinUI on SetLoggingMixin {
         targetReps = pt.isAmrap ? 0 : pt.reps;
       }
 
+      // Convert display-unit weight back to kg for storage — display layer
+      // converts kg→display, so storing lbs would cause double-conversion
       currentSetTargets[i] = SetTarget(
         setNumber: i + 1,
         setType: isWarmupSet ? 'warmup' : (pt.isAmrap ? 'amrap' : currentSetTargets[i].setType),
         targetReps: targetReps,
-        targetWeightKg: targetWeight,
+        targetWeightKg: _displayToKg(targetWeight),
         targetRir: pt.rir ?? currentSetTargets[i].targetRir,
       );
     }
@@ -300,7 +311,7 @@ extension SetLoggingMixinUI on SetLoggingMixin {
         currentSetTargets.add(SetTarget(
           setNumber: currentSetTargets.length + 1,
           targetReps: baseReps,
-          targetWeightKg: workingWeight,
+          targetWeightKg: _displayToKg(workingWeight),
         ));
       }
       for (int i = completedCount; i < targets.length && i < currentSetTargets.length; i++) {
@@ -309,7 +320,7 @@ extension SetLoggingMixinUI on SetLoggingMixin {
           setNumber: i + 1,
           setType: pt.isAmrap ? 'amrap' : currentSetTargets[i].setType,
           targetReps: pt.isAmrap ? 0 : pt.reps,
-          targetWeightKg: pt.weight,
+          targetWeightKg: _displayToKg(pt.weight),
           targetRir: currentSetTargets[i].targetRir,
         );
       }

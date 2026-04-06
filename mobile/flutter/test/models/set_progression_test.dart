@@ -156,14 +156,40 @@ void main() {
       expect(targets[0].reps, lessThan(targets[2].reps));
     });
 
-    test('Straight Sets: all same weight and reps', () {
+    test('Straight Sets: RIR 2 sets at base, RIR 1 sets at +1 increment', () {
       final targets = SetProgressionPattern.straightSets.generateTargets(
         workingWeight: 50, totalSets: 3, baseReps: 10, increment: 2.5,
       );
-      for (final t in targets) {
-        expect(t.weight, 50.0);
-        expect(t.reps, 10);
-      }
+      expect(targets.length, 3);
+      // Set 1 (RIR 2): base weight
+      expect(targets[0].weight, 50.0);
+      expect(targets[0].reps, 10);
+      expect(targets[0].rir, 2);
+      // Sets 2-3 (RIR 1): +1 increment
+      expect(targets[1].weight, 52.5);
+      expect(targets[1].reps, 10);
+      expect(targets[1].rir, 1);
+      expect(targets[2].weight, 52.5);
+      expect(targets[2].rir, 1);
+    });
+
+    test('Straight Sets: single set stays at base weight', () {
+      final targets = SetProgressionPattern.straightSets.generateTargets(
+        workingWeight: 50, totalSets: 1, baseReps: 10, increment: 2.5,
+      );
+      expect(targets.length, 1);
+      expect(targets[0].weight, 50.0);
+      expect(targets[0].rir, 2);
+    });
+
+    test('Straight Sets: 4 sets — 50/50 split', () {
+      final targets = SetProgressionPattern.straightSets.generateTargets(
+        workingWeight: 50, totalSets: 4, baseReps: 10, increment: 2.5,
+      );
+      expect(targets[0].weight, 50.0); // RIR 2
+      expect(targets[1].weight, 50.0); // RIR 2
+      expect(targets[2].weight, 52.5); // RIR 1
+      expect(targets[3].weight, 52.5); // RIR 1
     });
 
     test('Drop Sets: descending weight, all AMRAP', () {
@@ -205,6 +231,94 @@ void main() {
       for (final t in targets) {
         expect(t.weight, 50.0);
         expect(t.isAmrap, true);
+      }
+    });
+
+    test('Endurance: last set gets +1 increment (RIR 1)', () {
+      final targets = SetProgressionPattern.endurance.generateTargets(
+        workingWeight: 50, totalSets: 3, baseReps: 15, increment: 2.5,
+      );
+      expect(targets.length, 3);
+      // Set 1 (RIR 3): base weight
+      expect(targets[0].weight, 50.0);
+      expect(targets[0].rir, 3);
+      // Set 2 (RIR 2): base weight
+      expect(targets[1].weight, 50.0);
+      expect(targets[1].rir, 2);
+      // Set 3 (RIR 1): +1 increment
+      expect(targets[2].weight, 52.5);
+      expect(targets[2].rir, 1);
+      // Reps increase
+      expect(targets[0].reps, lessThan(targets[2].reps));
+    });
+
+    test('Endurance: single set stays at base weight', () {
+      final targets = SetProgressionPattern.endurance.generateTargets(
+        workingWeight: 50, totalSets: 1, baseReps: 15, increment: 2.5,
+      );
+      expect(targets.length, 1);
+      expect(targets[0].weight, 50.0);
+      expect(targets[0].rir, 2);
+    });
+
+    test('Pyramid Up: RIR decreases 3→2→1 across 3 sets', () {
+      final peak = SetProgressionPattern.pyramidUp.deriveWorkingWeight(
+        enteredWeight: 20, totalSets: 3, increment: 2.5,
+      );
+      final targets = SetProgressionPattern.pyramidUp.generateTargets(
+        workingWeight: peak, totalSets: 3, baseReps: 8, increment: 2.5,
+      );
+      expect(targets[0].rir, 3);
+      expect(targets[1].rir, 2);
+      expect(targets[2].rir, 1);
+    });
+
+    test('Reverse Pyramid: RIR increases 1→2→3', () {
+      final targets = SetProgressionPattern.reversePyramid.generateTargets(
+        workingWeight: 50, totalSets: 3, baseReps: 10, increment: 2.5,
+      );
+      expect(targets[0].rir, 1); // Heaviest = lowest RIR
+      expect(targets[1].rir, 2);
+      expect(targets[2].rir, 3); // Lightest = highest RIR
+    });
+
+    test('Top Set + Back-Off: RIR 1→2→3', () {
+      final targets = SetProgressionPattern.topSetBackOff.generateTargets(
+        workingWeight: 50, totalSets: 3, baseReps: 10, increment: 2.5,
+      );
+      expect(targets[0].rir, 1); // Top set
+      expect(targets[1].rir, 2); // Back-off 1
+      expect(targets[2].rir, 3); // Back-off 2
+    });
+
+    test('Drop Sets: RIR 1 then 0 for drops', () {
+      final targets = SetProgressionPattern.dropSets.generateTargets(
+        workingWeight: 50, totalSets: 3, baseReps: 10, increment: 2.5,
+      );
+      expect(targets[0].rir, 1);
+      expect(targets[1].rir, 0);
+      expect(targets[2].rir, 0);
+    });
+
+    test('Myo-Reps: activation RIR 1, mini-sets RIR 0', () {
+      final peak = SetProgressionPattern.myoReps.deriveWorkingWeight(
+        enteredWeight: 40, totalSets: 4, increment: 2.5,
+      );
+      final targets = SetProgressionPattern.myoReps.generateTargets(
+        workingWeight: peak, totalSets: 4, baseReps: 10, increment: 2.5,
+      );
+      expect(targets[0].rir, 1); // Activation
+      expect(targets[1].rir, 0); // Mini-set
+      expect(targets[2].rir, 0);
+      expect(targets[3].rir, 0);
+    });
+
+    test('Rest-Pause: all RIR 0', () {
+      final targets = SetProgressionPattern.restPause.generateTargets(
+        workingWeight: 50, totalSets: 3, baseReps: 10, increment: 2.5,
+      );
+      for (final t in targets) {
+        expect(t.rir, 0);
       }
     });
   });

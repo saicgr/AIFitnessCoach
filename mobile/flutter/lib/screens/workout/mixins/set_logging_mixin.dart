@@ -11,6 +11,7 @@ import '../../../core/providers/weight_increments_provider.dart';
 import '../../../core/services/fatigue_service.dart';
 import '../../../core/theme/accent_color_provider.dart';
 import '../../../core/utils/default_weights.dart';
+import '../../../core/utils/weight_utils.dart';
 import '../../../data/models/exercise.dart';
 import '../../../data/providers/gym_profile_provider.dart';
 import '../../../data/repositories/auth_repository.dart';
