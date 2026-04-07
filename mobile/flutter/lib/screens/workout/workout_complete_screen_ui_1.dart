@@ -189,6 +189,7 @@ extension _WorkoutCompleteScreenStateUI1 on _WorkoutCompleteScreenState {
   /// Build the trophies section showing PRs and achievements earned
   Widget _buildTrophiesSection(Color elevated) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
 
     // Calculate trophy count
@@ -353,7 +354,7 @@ extension _WorkoutCompleteScreenStateUI1 on _WorkoutCompleteScreenState {
                           style: TextStyle(
                             fontSize: 15,
                             fontWeight: FontWeight.w600,
-                            color: AppColors.textPrimary,
+                            color: textPrimary,
                           ),
                         ),
                       const Spacer(),

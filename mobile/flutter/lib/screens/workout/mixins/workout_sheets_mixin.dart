@@ -325,14 +325,11 @@ mixin WorkoutSheetsMixin<T extends StatefulWidget> on State<T> {
           }
         }
 
-        // If this is the currently viewed exercise and weight controller is at 0
-        // or below bar minimum, use previous session's weight
+        // Only override weight if it's completely unset (0 or empty).
+        // Never override a valid target weight — the target is the source of truth.
         if (exerciseIndex == viewingExerciseIndex && mounted) {
           final currentWeight = double.tryParse(weightController.text) ?? 0;
-          final minBar = isBarbell(exercise.equipment, exerciseName: exercise.name)
-              ? getBarWeight(exercise.equipment, useKg: useKg)
-              : 0.0;
-          if (currentWeight < minBar && sets.isNotEmpty) {
+          if (currentWeight <= 0 && sets.isNotEmpty) {
             final prevWeightKg = (sets.last['weight_kg'] as num?)?.toDouble() ?? 0.0;
             if (prevWeightKg > 0) {
               final displayWeight = useKg
@@ -400,6 +397,10 @@ mixin WorkoutSheetsMixin<T extends StatefulWidget> on State<T> {
       final warmupData = data['warmup'] ?? [];
       final stretchData = data['stretches'] ?? [];
       debugPrint('🔥 [Warmup] warmupData.length=${warmupData.length}, stretchData.length=${stretchData.length}');
+
+      if (warmupData.isEmpty) {
+        debugPrint('⚠️ [Warmup] API returned EMPTY warmup data — warmup will be skipped');
+      }
 
       setState(() {
         if (warmupData.isNotEmpty) {
@@ -498,23 +499,20 @@ mixin WorkoutSheetsMixin<T extends StatefulWidget> on State<T> {
 
   /// Fetch smart weight suggestion for an exercise based on historical data
   Future<void> fetchSmartWeightForExercise(WorkoutExercise exercise) async {
-    // Check if previous session data already provides a better weight
+    // If previous session data exists, only override if weight is completely unset
     final prevSets = previousSets[currentExerciseIndex];
     if (prevSets != null && prevSets.isNotEmpty) {
       final prevWeight = (prevSets.last['weight'] as num?)?.toDouble() ?? 0.0;
       if (prevWeight > 0) {
         final currentWeight = double.tryParse(weightController.text) ?? 0;
-        final minBar = isBarbell(exercise.equipment, exerciseName: exercise.name)
-            ? getBarWeight(exercise.equipment, useKg: useKg)
-            : 0.0;
-        if (currentWeight < minBar && mounted) {
+        if (currentWeight <= 0 && mounted) {
           final displayWeight = useKg
               ? prevWeight
               : kgToDisplayLbs(prevWeight, exercise.equipment,
                 exerciseName: exercise.name,);
           weightController.text = displayWeight.toStringAsFixed(1);
         }
-        return; // Previous session data is more reliable than API guess
+        return; // Previous session data exists — skip API call
       }
     }
 

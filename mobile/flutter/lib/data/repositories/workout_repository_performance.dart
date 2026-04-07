@@ -68,15 +68,19 @@ extension WorkoutRepositoryPerformance on WorkoutRepository {
   }) async {
     try {
       debugPrint('🔍 [Workout] Creating workout log for workout: $workoutId');
-      final data = {
+      final data = <String, dynamic>{
         'workout_id': workoutId,
         'user_id': userId,
         'sets_json': setsJson,
         'total_time_seconds': totalTimeSeconds,
       };
-      // Add metadata if provided
+      // Add metadata as a Map (backend expects dict, not JSON string)
       if (metadata != null) {
-        data['metadata'] = metadata;
+        try {
+          data['metadata'] = jsonDecode(metadata);
+        } catch (_) {
+          data['metadata'] = metadata;
+        }
       }
       final response = await apiClient.post(
         '/performance/workout-logs',

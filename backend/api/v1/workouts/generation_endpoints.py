@@ -30,6 +30,7 @@ from models.schemas import (
 from services.gemini_service import GeminiService, validate_set_targets_strict
 from services.exercise_library_service import get_exercise_library_service
 from api.v1.workouts.utils import parse_json_field, row_to_workout, normalize_goals_list, get_intensity_from_fitness_level
+from api.v1.workouts.user_preference_utils import get_user_avoided_exercises
 
 logger = logging.getLogger(__name__)
 

@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
+import 'package:http_parser/http_parser.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/progress_photos.dart';
 import '../services/api_client.dart';
@@ -34,13 +35,22 @@ class ProgressPhotosRepository {
     try {
       debugPrint('📸 [ProgressPhotos] Uploading ${viewType.displayName} photo for $userId');
 
+      // Detect actual file type from extension (edited photos are saved as .png)
+      final ext = imageFile.path.split('.').last.toLowerCase();
+      final isPng = ext == 'png';
+      final filename = '${viewType.value}_${DateTime.now().millisecondsSinceEpoch}.${isPng ? 'png' : 'jpg'}';
+      final contentType = isPng
+          ? MediaType('image', 'png')
+          : MediaType('image', 'jpeg');
+
       final formData = FormData.fromMap({
         'user_id': userId,
         'view_type': viewType.value,
         'visibility': visibility.value,
         'file': await MultipartFile.fromFile(
           imageFile.path,
-          filename: '${viewType.value}_${DateTime.now().millisecondsSinceEpoch}.jpg',
+          filename: filename,
+          contentType: contentType,
         ),
         if (takenAt != null) 'taken_at': takenAt.toIso8601String(),
         if (bodyWeightKg != null) 'body_weight_kg': bodyWeightKg.toString(),

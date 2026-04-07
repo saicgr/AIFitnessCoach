@@ -282,7 +282,7 @@ async def complete_workout(
                 "total_sets": total_sets, "total_reps": total_reps,
                 "total_volume_kg": total_volume, "duration_seconds": duration_seconds,
                 "calories": calories_burned, "new_prs_count": len(detected_prs),
-                "completed_at": datetime.now(),
+                "completed_at": datetime.now().isoformat(),
             }
 
             if workout_log_id:

@@ -142,7 +142,9 @@ class AiCoachReportCard extends StatelessWidget {
   }
 
   static String _normalizeMuscle(String name) {
-    final lower = name.trim().toLowerCase();
+    // Strip parenthetical suffixes like "Triceps (triceps brachii)" → "Triceps"
+    final stripped = name.trim().replaceAll(RegExp(r'\s*\(.*\)\s*$'), '');
+    final lower = stripped.toLowerCase();
     const aliases = {
       'upper back': 'Back',
       'lats': 'Back',
@@ -175,7 +177,7 @@ class AiCoachReportCard extends StatelessWidget {
       'legs': 'Legs',
       'quadriceps': 'Quadriceps',
     };
-    return aliases[lower] ?? _titleCase(name.trim());
+    return aliases[lower] ?? _titleCase(stripped);
   }
 
   static String _titleCase(String s) {
@@ -375,12 +377,12 @@ class _MuscleChip extends StatelessWidget {
         ),
         const SizedBox(height: 2),
         SizedBox(
-          width: 44,
+          width: 52,
           child: Text(
             muscle.name,
-            style: TextStyle(fontSize: 8, color: textMuted),
+            style: TextStyle(fontSize: 9, color: textMuted),
             textAlign: TextAlign.center,
-            maxLines: 1,
+            maxLines: 2,
             overflow: TextOverflow.ellipsis,
           ),
         ),

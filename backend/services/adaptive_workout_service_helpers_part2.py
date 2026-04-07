@@ -574,14 +574,3 @@ def build_set_type_context(set_type_prefs: Dict[str, Any]) -> str:
     return context
 
 
-# Singleton instance for easy import
-_adaptive_service_instance = None
-
-
-def get_adaptive_workout_service(supabase_client=None) -> "AdaptiveWorkoutService":
-    """Get or create the AdaptiveWorkoutService singleton."""
-    from .adaptive_workout_service_helpers import AdaptiveWorkoutService
-    global _adaptive_service_instance
-    if _adaptive_service_instance is None:
-        _adaptive_service_instance = AdaptiveWorkoutService(supabase_client)
-    return _adaptive_service_instance

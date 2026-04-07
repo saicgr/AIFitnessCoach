@@ -2,6 +2,7 @@
 from typing import Dict, List, Optional
 import logging
 import re
+from core.supabase_client import get_supabase
 logger = logging.getLogger(__name__)
 
 

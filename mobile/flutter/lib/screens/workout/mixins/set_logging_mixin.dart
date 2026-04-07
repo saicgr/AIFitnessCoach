@@ -250,39 +250,41 @@ mixin SetLoggingMixin<T extends StatefulWidget> on State<T> {
     final isWarmup = setTarget != null &&
         setTarget.setType.toLowerCase() == 'warmup';
 
-    final prevSets = previousSets[exerciseIndex];
-    final prevWeightKg = (prevSets != null && prevSets.isNotEmpty)
-        ? (prevSets.last['weight'] as num?)?.toDouble() ?? 0.0
-        : 0.0;
-
+    // Priority: target weight > previous session > equipment default
+    // Target weight is the most reliable — it's what the AI planned for today.
+    // Previous session data should only fill in when no target exists.
     double displayWeight;
-    if (prevWeightKg > 0) {
+
+    // 1. Try AI/set target weight first (always preferred)
+    double aiWt;
+    if (isWarmup) {
+      final workingTarget = exercise.setTargets?.cast<SetTarget?>().firstWhere(
+        (t) => t != null && t.setType.toLowerCase() != 'warmup' && (t.targetWeightKg ?? 0) > 0,
+        orElse: () => null,
+      );
+      aiWt = (workingTarget?.targetWeightKg ?? exercise.weight ?? 0).toDouble();
+    } else {
+      aiWt = (setTarget?.targetWeightKg ?? exercise.weight ?? 0).toDouble();
+    }
+
+    if (aiWt > 0) {
       displayWeight = useKg
-          ? prevWeightKg
-          : kgToDisplayLbs(prevWeightKg, exercise.equipment,
+          ? aiWt
+          : kgToDisplayLbs(aiWt, exercise.equipment,
                 exerciseName: exercise.name,);
     } else {
-      double aiWt;
-      if (isWarmup) {
-        final workingTarget = exercise.setTargets?.cast<SetTarget?>().firstWhere(
-          (t) => t != null && t.setType.toLowerCase() != 'warmup' && (t.targetWeightKg ?? 0) > 0,
-          orElse: () => null,
-        );
-        aiWt = (workingTarget?.targetWeightKg ?? exercise.weight ?? 0).toDouble();
-      } else {
-        aiWt = (setTarget?.targetWeightKg ?? exercise.weight ?? 0).toDouble();
-      }
-      if (aiWt > 0 && !isGenericWeight(aiWt, exercise.weightSource)) {
+      // 2. Fall back to previous session data (only when no target)
+      final prevSets = previousSets[exerciseIndex];
+      final prevWeightKg = (prevSets != null && prevSets.isNotEmpty)
+          ? (prevSets.last['weight'] as num?)?.toDouble() ?? 0.0
+          : 0.0;
+      if (prevWeightKg > 0) {
         displayWeight = useKg
-            ? aiWt
-            : kgToDisplayLbs(aiWt, exercise.equipment,
-                exerciseName: exercise.name,);
-      } else if (aiWt > 0) {
-        displayWeight = useKg
-            ? aiWt
-            : kgToDisplayLbs(aiWt, exercise.equipment,
-                exerciseName: exercise.name,);
+            ? prevWeightKg
+            : kgToDisplayLbs(prevWeightKg, exercise.equipment,
+                  exerciseName: exercise.name,);
       } else {
+        // 3. Equipment default
         displayWeight = getDefaultWeight(exercise.equipment,
             exerciseName: exercise.name,
             fitnessLevel: ref.read(authStateProvider).user?.fitnessLevel,
@@ -383,6 +385,25 @@ mixin SetLoggingMixin<T extends StatefulWidget> on State<T> {
     final titleColor = isDark ? AppColors.textPrimary : Colors.black87;
     int? editRir = set.rir;
 
+    // Build timing info string
+    String? timingInfo;
+    if (set.durationSeconds != null) {
+      final dur = set.durationSeconds!;
+      final durStr = dur >= 60
+          ? '${dur ~/ 60}:${(dur % 60).toString().padLeft(2, '0')}'
+          : '${dur}s';
+      timingInfo = 'Time: $durStr';
+
+      final rests = actualRestDurations[viewingExerciseIndex];
+      if (rests != null && setIndex < rests.length) {
+        final rest = rests[setIndex];
+        final restStr = rest >= 60
+            ? '${rest ~/ 60}:${(rest % 60).toString().padLeft(2, '0')}'
+            : '${rest}s';
+        timingInfo = 'Time: $durStr  ·  Rest: $restStr';
+      }
+    }
+
     showDialog(
       context: context,
       builder: (dialogContext) => StatefulBuilder(
@@ -393,6 +414,35 @@ mixin SetLoggingMixin<T extends StatefulWidget> on State<T> {
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
+              // Timing info (read-only)
+              if (timingInfo != null) ...[
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: isDark
+                        ? Colors.white.withValues(alpha: 0.05)
+                        : Colors.grey.shade100,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.timer_outlined, size: 14,
+                          color: isDark ? AppColors.textSecondary : Colors.grey.shade600),
+                      const SizedBox(width: 6),
+                      Text(
+                        timingInfo!,
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: isDark ? AppColors.textSecondary : Colors.grey.shade600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+              ],
               NumberInputField(
                 controller: editWeightController,
                 icon: Icons.fitness_center,

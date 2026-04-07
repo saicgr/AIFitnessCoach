@@ -1,8 +1,12 @@
 """Second part of notification_service_helpers.py (auto-split for size)."""
+import random
 from typing import Any, Dict, List, Optional
 from datetime import datetime
 import logging
 logger = logging.getLogger(__name__)
+
+# Constant mirrored from NotificationService to avoid circular import
+TYPE_AI_COACH = "ai_coach"
 
 
 class NotificationServicePart2:
@@ -70,7 +74,6 @@ class NotificationServicePart2:
                 template_pool = self.ACCOUNTABILITY_TEMPLATES.get(template_key, [])
 
             if template_pool:
-                import random
                 template = random.choice(template_pool)
                 safe_context = {
                     "coach_name": coach_name or "Your Coach",
@@ -752,13 +755,3 @@ class NotificationServicePart2:
             return False
 
 
-# Singleton instance
-_notification_service: Optional[NotificationService] = None
-
-
-def get_notification_service() -> NotificationService:
-    """Get or create the notification service singleton"""
-    global _notification_service
-    if _notification_service is None:
-        _notification_service = NotificationService()
-    return _notification_service

@@ -4,7 +4,8 @@ Gemini Service Prompts - Cache content builders for form analysis and nutrition.
 
 """
 from typing import Set
-class PromptsMixin:
+from services.gemini.prompts_helpers_part2 import PromptsMixinPart2
+class PromptsMixin(PromptsMixinPart2):
     """Mixin providing prompt builder methods for GeminiService."""
 
     def _build_form_analysis_cache_system_instruction(self) -> str:

@@ -37,6 +37,17 @@ extension WorkoutUIBuildersMixinUI1 on WorkoutUIBuildersMixin {
               'Loading your personalized warmup exercises',
               style: TextStyle(fontSize: 13, color: textMuted),
             ),
+            const SizedBox(height: 24),
+            TextButton(
+              onPressed: handleSkipWarmup,
+              child: Text(
+                'Skip warmup',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: isDark ? AppColors.textSecondary : Colors.grey.shade600,
+                ),
+              ),
+            ),
           ],
         ),
       ),

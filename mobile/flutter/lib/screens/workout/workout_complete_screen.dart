@@ -739,7 +739,7 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
                           size: 16,
                         ),
                         label: Text(
-                          _showDetailedFeedback ? 'Less' : 'Detailed feedback',
+                          _showDetailedFeedback ? 'Less' : 'Give Detailed Feedback',
                           style: const TextStyle(fontSize: 13),
                         ),
                         style: TextButton.styleFrom(

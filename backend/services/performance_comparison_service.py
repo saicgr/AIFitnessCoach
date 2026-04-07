@@ -380,7 +380,7 @@ class PerformanceComparisonService:
             'avg_rir': workout_stats.get('avg_rir'),
             'estimated_calories': workout_stats.get('calories', 0),
             'new_prs_count': workout_stats.get('new_prs_count', 0),
-            'performed_at': workout_stats.get('completed_at', datetime.now()),
+            'performed_at': workout_stats.get('completed_at', datetime.now().isoformat()),
         }
 
         # Build exercise summaries
@@ -438,7 +438,7 @@ class PerformanceComparisonService:
                 'avg_time_seconds': round(avg_time, 2) if avg_time else None,
                 'avg_rpe': round(sum(rpes) / len(rpes), 1) if rpes else None,
                 'avg_rir': round(sum(rirs) / len(rirs), 1) if rirs else None,
-                'performed_at': workout_stats.get('completed_at', datetime.now()),
+                'performed_at': workout_stats.get('completed_at', datetime.now().isoformat()),
             })
 
         return workout_summary, exercise_summaries

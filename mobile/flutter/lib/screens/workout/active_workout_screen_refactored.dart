@@ -442,10 +442,14 @@ class _ActiveWorkoutScreenState
   /// If warmup loading takes too long, skip the loading screen
   /// so the user isn't stuck waiting. The warmup will either load
   /// in time or auto-skip to the active phase.
+  /// Note: Render cold starts can take 10-30s, so we use a generous timeout
+  /// but show a "skip" option after 3s in the loading screen.
   void _startWarmupLoadingTimeout() {
-    Future.delayed(const Duration(seconds: 3), () {
+    // Show skip hint after 3s (handled by loading screen UI)
+    // Actually abandon after 15s to handle Render cold starts
+    Future.delayed(const Duration(seconds: 15), () {
       if (!mounted || !_isWarmupLoading) return;
-      debugPrint('⚠️ [Warmup] Loading timeout — skipping loading screen');
+      debugPrint('⚠️ [Warmup] Loading timeout (15s) — skipping loading screen');
       setState(() => _isWarmupLoading = false);
     });
   }
@@ -729,23 +733,20 @@ class _ActiveWorkoutScreenState
   /// The weight controller is updated in the background without blocking UI.
   @override
   Future<void> fetchSmartWeightForExercise(WorkoutExercise exercise) async {
-    // Check if previous session data already provides a better weight
+    // If previous session data exists, only override if weight is completely unset
     final prevSets = _previousSets[_currentExerciseIndex];
     if (prevSets != null && prevSets.isNotEmpty) {
       final prevWeight = (prevSets.last['weight'] as num?)?.toDouble() ?? 0.0;
       if (prevWeight > 0) {
         final currentWeight = double.tryParse(_weightController.text) ?? 0;
-        final minBar = isBarbell(exercise.equipment, exerciseName: exercise.name)
-            ? getBarWeight(exercise.equipment, useKg: _useKg)
-            : 0.0;
-        if (currentWeight < minBar && mounted) {
+        if (currentWeight <= 0 && mounted) {
           final displayWeight = _useKg
               ? prevWeight
               : kgToDisplayLbs(prevWeight, exercise.equipment,
                 exerciseName: exercise.name,);
           _weightController.text = displayWeight.toStringAsFixed(1);
         }
-        return; // Previous session data is more reliable than API guess
+        return; // Previous session data exists — skip API call
       }
     }
 
@@ -1100,7 +1101,13 @@ class _ActiveWorkoutScreenState
         previousReps: prevReps,
         previousRir: prevRir,
         durationSeconds: isCompleted ? completedSets[i].durationSeconds : null,
-        restDurationSeconds: isCompleted ? completedSets[i].restDurationSeconds : null,
+        // Show rest taken AFTER this set (from actualRestDurations), not rest before
+        restDurationSeconds: isCompleted
+            ? (() {
+                final rests = _actualRestDurations[exerciseIndex];
+                return (rests != null && i < rests.length) ? rests[i] : null;
+              })()
+            : null,
       ));
     }
 

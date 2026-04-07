@@ -70,11 +70,15 @@ def row_to_performance_log(row: dict) -> PerformanceLog:
 
 def row_to_workout_log(row: dict) -> WorkoutLog:
     """Convert a Supabase row dict to WorkoutLog model."""
+    # Supabase returns JSONB as parsed list/dict; Pydantic expects a string
+    sets_val = row.get("sets_json")
+    if not isinstance(sets_val, str):
+        sets_val = json.dumps(sets_val) if sets_val is not None else "[]"
     return WorkoutLog(
         id=row.get("id"),
         workout_id=row.get("workout_id"),
         user_id=row.get("user_id"),
-        sets_json=row.get("sets_json"),
+        sets_json=sets_val,
         completed_at=row.get("completed_at"),
         total_time_seconds=row.get("total_time_seconds"),
     )

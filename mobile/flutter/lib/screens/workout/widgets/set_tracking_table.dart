@@ -513,30 +513,32 @@ class _SetTrackingTableState extends State<SetTrackingTable> {
     final borderColor = isDark ? Colors.white.withValues(alpha: 0.06) : Colors.black.withValues(alpha: 0.06);
 
     final duration = _formatDuration(set.durationSeconds!);
-    String label = duration;
+    final setLabel = 'set ${set.setNumber}';
+    String label = '$setLabel: $duration';
 
     if (set.restDurationSeconds != null) {
       if (set.restDurationSeconds! < 3) {
-        label = '$duration · skipped rest';
+        label = '$setLabel: $duration · skipped rest';
       } else {
-        label = '$duration · ${_formatDuration(set.restDurationSeconds!)} rest';
+        label = '$setLabel: $duration · rested ${_formatDuration(set.restDurationSeconds!)}';
       }
     }
 
-    return Column(
-      children: [
-        Padding(
-          padding: const EdgeInsets.only(left: 48, top: 2, bottom: 2),
-          child: Align(
-            alignment: Alignment.centerLeft,
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+      child: Row(
+        children: [
+          Expanded(child: Divider(height: 1, thickness: 0.5, color: borderColor)),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 10),
             child: Text(
               label,
               style: TextStyle(fontSize: 11, color: textMuted, fontStyle: FontStyle.italic),
             ),
           ),
-        ),
-        Divider(height: 1, thickness: 0.5, color: borderColor),
-      ],
+          Expanded(child: Divider(height: 1, thickness: 0.5, color: borderColor)),
+        ],
+      ),
     );
   }
 

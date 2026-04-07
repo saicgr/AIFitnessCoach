@@ -82,8 +82,8 @@ mixin TimerRestMixin<T extends StatefulWidget> on State<T> {
     final currentExercise = exercises[currentExerciseIndex];
     final groupId = currentExercise.supersetGroup;
 
-    // Track actual rest taken (prescribed - remaining)
-    final actualRest = timerController.initialRestDuration - timerController.restSecondsRemaining;
+    // Track actual rest taken (captured before timer zeroed remaining)
+    final actualRest = timerController.actualRestElapsed;
     actualRestDurations[currentExerciseIndex] ??= [];
     actualRestDurations[currentExerciseIndex]!.add(actualRest);
 

@@ -1,14 +1,23 @@
 """Second part of neat_service_helpers.py (auto-split for size)."""
+from __future__ import annotations
 from typing import Any, Dict, List, Optional
 from datetime import datetime, timedelta, date
 import logging
+from core.db import get_supabase_db
+
 logger = logging.getLogger(__name__)
+
+
+def _get_neat_types():
+    """Lazy import to avoid circular dependency with neat_service.py."""
+    from services.neat_service import Achievement, AchievementCategory, UserStreaks, StreakType, ACHIEVEMENT_DEFINITIONS
+    return Achievement, AchievementCategory, UserStreaks, StreakType, ACHIEVEMENT_DEFINITIONS
 
 
 class NEATServicePart2:
     """Second half of NEATService methods. Use as mixin."""
 
-    async def get_user_streaks(self, user_id: str) -> UserStreaks:
+    async def get_user_streaks(self, user_id: str):
         """
         Get all streak data for a user.
 
@@ -18,6 +27,7 @@ class NEATServicePart2:
         Returns:
             UserStreaks with all streak types
         """
+        Achievement, AchievementCategory, UserStreaks, StreakType, ACHIEVEMENT_DEFINITIONS = _get_neat_types()
         try:
             db = get_supabase_db()
 
@@ -112,6 +122,7 @@ class NEATServicePart2:
         Returns:
             List of newly awarded achievements
         """
+        Achievement, AchievementCategory, _, _, ACHIEVEMENT_DEFINITIONS = _get_neat_types()
         try:
             new_achievements = []
 
@@ -198,6 +209,7 @@ class NEATServicePart2:
         Returns:
             List of earned achievements
         """
+        Achievement, AchievementCategory, _, _, ACHIEVEMENT_DEFINITIONS = _get_neat_types()
         try:
             db = get_supabase_db()
 
@@ -242,6 +254,7 @@ class NEATServicePart2:
         Returns:
             List of unearned achievements with current progress
         """
+        Achievement, AchievementCategory, _, _, ACHIEVEMENT_DEFINITIONS = _get_neat_types()
         try:
             # Get earned achievement IDs
             earned = await self.get_user_achievements(user_id)
@@ -338,6 +351,7 @@ class NEATServicePart2:
 
     def _get_achievement(self, achievement_id: str, achieved: bool = False) -> Achievement:
         """Get an achievement by ID."""
+        Achievement, AchievementCategory, _, _, ACHIEVEMENT_DEFINITIONS = _get_neat_types()
         ach_def = ACHIEVEMENT_DEFINITIONS.get(achievement_id, {})
         return Achievement(
             id=achievement_id,
@@ -353,6 +367,7 @@ class NEATServicePart2:
 
     async def _check_weekly_achievements(self, user_id: str) -> List[Achievement]:
         """Check and award weekly achievements."""
+        Achievement, _, _, _, _ = _get_neat_types()
         try:
             days_met = await self._get_week_days_met(user_id)
             new_achievements = []

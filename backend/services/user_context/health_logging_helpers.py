@@ -10,11 +10,12 @@ from typing import Any, Dict, List, Optional
 from datetime import datetime
 import logging
 from services.user_context.models import EventType
+from services.user_context.health_logging_helpers_part2 import HealthLoggingMixinPart2
 
 logger = logging.getLogger(__name__)
 
 
-class HealthLoggingMixin:
+class HealthLoggingMixin(HealthLoggingMixinPart2):
     """Mixin for health-related event logging and analytics."""
 
     # ==========================================================================

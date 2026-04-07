@@ -19,8 +19,9 @@ Key factors considered:
 from typing import Any, Dict, List, Optional
 from datetime import datetime, timedelta
 import logging
+from services.adaptive_workout_service_helpers_part2 import AdaptiveWorkoutServicePart2
 logger = logging.getLogger(__name__)
-class AdaptiveWorkoutService:
+class AdaptiveWorkoutService(AdaptiveWorkoutServicePart2):
     """Calculates adaptive workout parameters based on performance history."""
 
     # Workout structure templates based on training focus

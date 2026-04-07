@@ -192,16 +192,6 @@ mixin WorkoutFlowMixin<T extends StatefulWidget> on State<T> {
           debugPrint('❌ [Complete] createWorkoutLog returned null - workoutLogId will be null');
         }
 
-        if (totalDrinkIntakeMl > 0) {
-          await workoutRepo.logDrinkIntake(
-            workoutId: workout.id!,
-            userId: userId,
-            amountMl: totalDrinkIntakeMl,
-            drinkType: 'water',
-          );
-          debugPrint('💧 Logged drink intake: ${totalDrinkIntakeMl}ml');
-        }
-
         totalCompletedSets = completedSets.values.fold<int>(
           0, (sum, list) => sum + list.length,
         );
@@ -221,7 +211,19 @@ mixin WorkoutFlowMixin<T extends StatefulWidget> on State<T> {
           avgRestSeconds = totalRestSeconds / restIntervals.length;
         }
 
-        await workoutRepo.logWorkoutExit(
+        // Run independent API calls in parallel for faster navigation
+        final futures = <Future>[];
+
+        if (totalDrinkIntakeMl > 0) {
+          futures.add(workoutRepo.logDrinkIntake(
+            workoutId: workout.id!,
+            userId: userId,
+            amountMl: totalDrinkIntakeMl,
+            drinkType: 'water',
+          ).then((_) => debugPrint('💧 Logged drink intake: ${totalDrinkIntakeMl}ml')));
+        }
+
+        futures.add(workoutRepo.logWorkoutExit(
           workoutId: workout.id!,
           userId: userId,
           exitReason: 'completed',
@@ -232,12 +234,17 @@ mixin WorkoutFlowMixin<T extends StatefulWidget> on State<T> {
           progressPercentage: exercises.isNotEmpty
               ? (exercisesWithSets / exercises.length * 100)
               : 100.0,
-        );
-        debugPrint('✅ Workout exit logged as completed');
+        ).then((_) => debugPrint('✅ Workout exit logged as completed')));
 
-        await logSupersetUsage(userId);
+        futures.add(logSupersetUsage(userId));
 
-        completionResponse = await workoutRepo.completeWorkout(workout.id!);
+        // completeWorkout returns PRs/comparison data - run in parallel but capture result
+        final completionFuture = workoutRepo.completeWorkout(workout.id!);
+        futures.add(completionFuture);
+
+        await Future.wait(futures);
+        // Future already resolved by Future.wait, so this returns immediately
+        completionResponse = await completionFuture;
         debugPrint('✅ Workout marked as complete');
 
         ref.read(xpProvider.notifier).markWorkoutCompleted(workoutId: workout.id);

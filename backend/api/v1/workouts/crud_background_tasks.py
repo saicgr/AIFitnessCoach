@@ -459,9 +459,10 @@ async def populate_performance_logs(
             # Get AI-recommended set type info from exercise definition
             ai_recommended_drop_set = exercise.get("is_drop_set", False)
             ai_recommended_failure_set = exercise.get("is_failure_set", False)
-            total_sets_count = len(exercise.get("sets", []))
+            raw_sets = exercise.get("sets", [])
+            total_sets_count = raw_sets if isinstance(raw_sets, int) else len(raw_sets)
 
-            sets = exercise.get("sets", [])
+            sets = raw_sets if isinstance(raw_sets, list) else []
 
             for set_data in sets:
                 # Only log completed sets

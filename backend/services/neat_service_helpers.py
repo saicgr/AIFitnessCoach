@@ -24,17 +24,19 @@ Research-backed approach:
 
 
 """
+from __future__ import annotations
 from typing import Any, Dict, List, Optional
 from datetime import datetime, timedelta, date
 import logging
 import time
 from core.db import get_supabase_db
 from models.neat import NEATGoal
+from services.neat_service_helpers_part2 import NEATServicePart2
 
 logger = logging.getLogger(__name__)
 
 
-class NEATService:
+class NEATService(NEATServicePart2):
     """
     Comprehensive NEAT (Non-Exercise Activity Thermogenesis) Service.
 
@@ -308,6 +310,7 @@ class NEATService:
                 logger.warning(f"Invalid hour {hour} for user {user_id}")
                 return False
 
+            from services.neat_service import SEDENTARY_THRESHOLD_STEPS  # lazy
             db = get_supabase_db()
             act_date = activity_date or date.today().isoformat()
             is_active = steps >= SEDENTARY_THRESHOLD_STEPS
@@ -348,6 +351,7 @@ class NEATService:
             List of HourlyActivity for each hour with data
         """
         try:
+            from services.neat_service import HourlyActivity, SEDENTARY_THRESHOLD_STEPS  # lazy
             db = get_supabase_db()
 
             result = db.client.table("hourly_neat_activity").select("*").eq(
@@ -387,6 +391,7 @@ class NEATService:
             List of hour numbers (0-23) that were sedentary
         """
         try:
+            from services.neat_service import SEDENTARY_THRESHOLD_STEPS  # lazy
             db = get_supabase_db()
 
             result = db.client.table("hourly_neat_activity").select(

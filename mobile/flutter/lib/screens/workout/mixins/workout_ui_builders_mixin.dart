@@ -30,6 +30,7 @@ import '../widgets/ai_text_input_bar.dart';
 import '../widgets/barbell_plate_indicator.dart';
 import '../widgets/exercise_options_sheet.dart' show RepProgressionType, RepProgressionTypeExtension;
 import '../widgets/exercise_thumbnail_strip_v2.dart';
+import '../widgets/breathing_guide_sheet.dart';
 import '../widgets/exercise_info_sheet.dart';
 import '../widgets/fatigue_alert_modal.dart';
 import '../widgets/hydration_quick_actions.dart';

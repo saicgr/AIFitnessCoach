@@ -84,8 +84,14 @@ class WorkoutTimerController {
     HapticService.medium();
   }
 
+  /// Actual rest elapsed before the timer ended (for skip tracking)
+  int _actualRestElapsed = 0;
+  int get actualRestElapsed => _actualRestElapsed;
+
   void _endRest() {
     _restTimer?.cancel();
+    // Capture actual rest taken before zeroing (for skip vs complete tracking)
+    _actualRestElapsed = _initialRestDuration - _restSecondsRemaining;
     _restSecondsRemaining = 0;
 
     // Use HapticService for rest complete feedback

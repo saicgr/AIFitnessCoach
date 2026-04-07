@@ -227,6 +227,48 @@ extension WorkoutUIBuildersMixinUI2 on WorkoutUIBuildersMixin {
                                 ),
                               ),
                               const Spacer(),
+                              // Breathing guide button
+                              GestureDetector(
+                                onTap: () {
+                                  HapticFeedback.lightImpact();
+                                  showBreathingGuide(
+                                    context: context,
+                                    exercise: exercises[viewingExerciseIndex],
+                                  );
+                                },
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                  decoration: BoxDecoration(
+                                    color: isDark ? WorkoutDesign.surface : Colors.white,
+                                    borderRadius: BorderRadius.circular(8),
+                                    border: Border.all(
+                                      color: isDark ? WorkoutDesign.border : WorkoutDesign.borderLight,
+                                      width: 1,
+                                    ),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(
+                                        Icons.air_rounded,
+                                        size: 16,
+                                        color: isDark ? WorkoutDesign.textPrimary : Colors.grey.shade700,
+                                      ),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        'Breathing',
+                                        style: TextStyle(
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.w600,
+                                          color: isDark ? WorkoutDesign.textPrimary : Colors.grey.shade700,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              // Skip button
                               GestureDetector(
                                 onTap: () {
                                   HapticFeedback.lightImpact();

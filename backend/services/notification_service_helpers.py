@@ -7,8 +7,9 @@ Sends push notifications to users via Firebase Cloud Messaging (FCM)
 from typing import Any, Dict, Optional, Tuple
 from datetime import datetime
 import logging
+from services.notification_service_helpers_part2 import NotificationServicePart2
 logger = logging.getLogger(__name__)
-class NotificationService:
+class NotificationService(NotificationServicePart2):
     """Service for sending push notifications via FCM"""
 
     # Notification types
@@ -532,6 +533,7 @@ class NotificationService:
 
     def __init__(self):
         """Initialize the notification service"""
+        from services.notification_service import initialize_firebase
         initialize_firebase()
 
     def _get_channel_id(self, notification_type: str) -> str:
