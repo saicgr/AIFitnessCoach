@@ -1,9 +1,10 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../../core/constants/app_colors.dart';
 
-/// Combined fitness level, training experience, and activity level question widget.
+/// Glassmorphic combined fitness level, training experience, and activity level widget.
 class QuizFitnessLevel extends StatelessWidget {
   final String? selectedLevel;
   final String? selectedExperience;
@@ -65,11 +66,6 @@ class QuizFitnessLevel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    // Use stronger, more visible colors with proper contrast
-    final textPrimary = isDark ? Colors.white : const Color(0xFF0A0A0A);
-    final textSecondary = isDark ? const Color(0xFFD4D4D8) : const Color(0xFF52525B);
-
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24),
       child: SingleChildScrollView(
@@ -77,19 +73,33 @@ class QuizFitnessLevel extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             if (showHeader) ...[
-              _buildTitle(textPrimary),
+              const Text(
+                "What's your current fitness level?",
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                  height: 1.3,
+                ),
+              ).animate().fadeIn(delay: 100.ms).slideX(begin: -0.05),
               const SizedBox(height: 6),
-              _buildSubtitle(textSecondary),
+              Text(
+                "Be honest - we'll adjust as you progress",
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.white.withValues(alpha: 0.7),
+                ),
+              ).animate().fadeIn(delay: 200.ms),
               const SizedBox(height: 16),
             ],
-            ..._buildLevelCards(isDark, textPrimary, textSecondary),
+            ..._buildLevelCards(),
             if (selectedLevel != null) ...[
               const SizedBox(height: 20),
-              _buildExperienceSection(isDark, textPrimary, textSecondary),
+              _buildExperienceSection(),
             ],
             if (selectedExperience != null && onActivityLevelChanged != null) ...[
               const SizedBox(height: 20),
-              _buildActivityLevelSection(isDark, textPrimary, textSecondary),
+              _buildActivityLevelSection(),
             ],
             const SizedBox(height: 16),
           ],
@@ -98,34 +108,11 @@ class QuizFitnessLevel extends StatelessWidget {
     );
   }
 
-  Widget _buildTitle(Color textPrimary) {
-    return Text(
-      "What's your current fitness level?",
-      style: TextStyle(
-        fontSize: 24,
-        fontWeight: FontWeight.bold,
-        color: textPrimary,
-        height: 1.3,
-      ),
-    ).animate().fadeIn(delay: 100.ms).slideX(begin: -0.05);
-  }
-
-  Widget _buildSubtitle(Color textSecondary) {
-    return Text(
-      "Be honest - we'll adjust as you progress",
-      style: TextStyle(
-        fontSize: 14,
-        color: textSecondary,
-      ),
-    ).animate().fadeIn(delay: 200.ms);
-  }
-
-  List<Widget> _buildLevelCards(bool isDark, Color textPrimary, Color textSecondary) {
+  List<Widget> _buildLevelCards() {
     return _levels.asMap().entries.map((entry) {
       final index = entry.key;
       final level = entry.value;
       final isSelected = selectedLevel == level['id'];
-      final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
 
       return Padding(
         padding: const EdgeInsets.only(bottom: 8),
@@ -134,81 +121,86 @@ class QuizFitnessLevel extends StatelessWidget {
             HapticFeedback.selectionClick();
             onLevelChanged(level['id'] as String);
           },
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 200),
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-            decoration: BoxDecoration(
-              gradient: isSelected
-                  ? LinearGradient(
-                      colors: [AppColors.orange, AppColors.orange.withOpacity(0.8)],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    )
-                  : null,
-              color: isSelected
-                  ? null
-                  : (isDark ? AppColors.glassSurface : AppColorsLight.glassSurface),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: isSelected ? AppColors.orange : cardBorder,
-                width: isSelected ? 2 : 1,
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(12),
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                decoration: BoxDecoration(
+                  gradient: isSelected
+                      ? LinearGradient(
+                          colors: [
+                            Colors.white.withValues(alpha: 0.28),
+                            Colors.white.withValues(alpha: 0.16),
+                          ],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        )
+                      : LinearGradient(
+                          colors: [
+                            Colors.white.withValues(alpha: 0.10),
+                            Colors.white.withValues(alpha: 0.06),
+                          ],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: isSelected
+                        ? Colors.white.withValues(alpha: 0.5)
+                        : Colors.white.withValues(alpha: 0.15),
+                    width: isSelected ? 1.5 : 1,
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      level['icon'] as IconData,
+                      color: isSelected ? Colors.white : (level['color'] as Color),
+                      size: 22,
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            level['label'] as String,
+                            style: const TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.white,
+                            ),
+                          ),
+                          Text(
+                            level['description'] as String,
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: Colors.white.withValues(alpha: 0.6),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Container(
+                      width: 22,
+                      height: 22,
+                      decoration: BoxDecoration(
+                        color: isSelected ? Colors.white.withValues(alpha: 0.3) : Colors.transparent,
+                        shape: BoxShape.circle,
+                        border: isSelected
+                            ? null
+                            : Border.all(color: Colors.white.withValues(alpha: 0.3), width: 2),
+                      ),
+                      child: isSelected
+                          ? const Icon(Icons.check, color: Colors.white, size: 14)
+                          : null,
+                    ),
+                  ],
+                ),
               ),
-              boxShadow: isSelected
-                  ? [
-                      BoxShadow(
-                        color: AppColors.orange.withOpacity(0.4),
-                        blurRadius: 12,
-                        spreadRadius: 0,
-                        offset: const Offset(0, 4),
-                      ),
-                    ]
-                  : null,
-            ),
-            child: Row(
-              children: [
-                Icon(
-                  level['icon'] as IconData,
-                  color: isSelected ? Colors.white : (level['color'] as Color),
-                  size: 22,
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        level['label'] as String,
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: isSelected ? Colors.white : textPrimary,
-                        ),
-                      ),
-                      Text(
-                        level['description'] as String,
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: isSelected ? Colors.white70 : textSecondary,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Container(
-                  width: 22,
-                  height: 22,
-                  decoration: BoxDecoration(
-                    color: isSelected ? Colors.white.withValues(alpha: 0.2) : Colors.transparent,
-                    shape: BoxShape.circle,
-                    border: isSelected
-                        ? null
-                        : Border.all(color: cardBorder, width: 2),
-                  ),
-                  child: isSelected
-                      ? const Icon(Icons.check, color: Colors.white, size: 14)
-                      : null,
-                ),
-              ],
             ),
           ),
         ).animate(delay: (100 + index * 50).ms).fadeIn().slideX(begin: 0.05),
@@ -216,27 +208,18 @@ class QuizFitnessLevel extends StatelessWidget {
     }).toList();
   }
 
-  Widget _buildExperienceSection(bool isDark, Color textPrimary, Color textSecondary) {
-    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
-
+  Widget _buildExperienceSection() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
+        const Text(
           'How long have you been lifting weights?',
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-            color: textPrimary,
-          ),
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.white),
         ).animate().fadeIn(delay: 100.ms),
         const SizedBox(height: 4),
         Text(
           'This helps us pick the right exercises',
-          style: TextStyle(
-            fontSize: 12,
-            color: textSecondary,
-          ),
+          style: TextStyle(fontSize: 12, color: Colors.white.withValues(alpha: 0.6)),
         ).animate().fadeIn(delay: 150.ms),
         const SizedBox(height: 12),
         Wrap(
@@ -252,32 +235,39 @@ class QuizFitnessLevel extends StatelessWidget {
                 HapticFeedback.selectionClick();
                 onExperienceChanged(option['id'] as String);
               },
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                decoration: BoxDecoration(
-                  gradient: isSelected
-                      ? LinearGradient(
-                          colors: [AppColors.orange, AppColors.orange.withOpacity(0.8)],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                        )
-                      : null,
-                  color: isSelected
-                      ? null
-                      : (isDark ? AppColors.glassSurface : AppColorsLight.glassSurface),
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(
-                    color: isSelected ? AppColors.orange : cardBorder,
-                    width: isSelected ? 2 : 1,
-                  ),
-                ),
-                child: Text(
-                  option['label'] as String,
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                    color: isSelected ? Colors.white : textPrimary,
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(20),
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 6, sigmaY: 6),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    decoration: BoxDecoration(
+                      gradient: isSelected
+                          ? LinearGradient(
+                              colors: [
+                                Colors.white.withValues(alpha: 0.28),
+                                Colors.white.withValues(alpha: 0.16),
+                              ],
+                            )
+                          : null,
+                      color: isSelected ? null : Colors.white.withValues(alpha: 0.08),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: isSelected
+                            ? Colors.white.withValues(alpha: 0.5)
+                            : Colors.white.withValues(alpha: 0.15),
+                        width: isSelected ? 1.5 : 1,
+                      ),
+                    ),
+                    child: Text(
+                      option['label'] as String,
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                        color: Colors.white,
+                      ),
+                    ),
                   ),
                 ),
               ),
@@ -288,27 +278,18 @@ class QuizFitnessLevel extends StatelessWidget {
     );
   }
 
-  Widget _buildActivityLevelSection(bool isDark, Color textPrimary, Color textSecondary) {
-    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
-
+  Widget _buildActivityLevelSection() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
+        const Text(
           'Daily activity level (outside gym)?',
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-            color: textPrimary,
-          ),
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.white),
         ).animate().fadeIn(delay: 100.ms),
         const SizedBox(height: 4),
         Text(
           'Helps calculate your calorie needs',
-          style: TextStyle(
-            fontSize: 12,
-            color: textSecondary,
-          ),
+          style: TextStyle(fontSize: 12, color: Colors.white.withValues(alpha: 0.6)),
         ).animate().fadeIn(delay: 150.ms),
         const SizedBox(height: 12),
         Wrap(
@@ -324,43 +305,47 @@ class QuizFitnessLevel extends StatelessWidget {
                 HapticFeedback.selectionClick();
                 onActivityLevelChanged?.call(option['id'] as String);
               },
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                decoration: BoxDecoration(
-                  gradient: isSelected
-                      ? LinearGradient(
-                          colors: [AppColors.orange, AppColors.orange.withOpacity(0.8)],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                        )
-                      : null,
-                  color: isSelected
-                      ? null
-                      : (isDark ? AppColors.glassSurface : AppColorsLight.glassSurface),
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(
-                    color: isSelected ? AppColors.orange : cardBorder,
-                    width: isSelected ? 2 : 1,
-                  ),
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      option['emoji'] as String,
-                      style: const TextStyle(fontSize: 20),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      option['label'] as String,
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                        color: isSelected ? Colors.white : textPrimary,
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(14),
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 6, sigmaY: 6),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                    decoration: BoxDecoration(
+                      gradient: isSelected
+                          ? LinearGradient(
+                              colors: [
+                                Colors.white.withValues(alpha: 0.28),
+                                Colors.white.withValues(alpha: 0.16),
+                              ],
+                            )
+                          : null,
+                      color: isSelected ? null : Colors.white.withValues(alpha: 0.08),
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(
+                        color: isSelected
+                            ? Colors.white.withValues(alpha: 0.5)
+                            : Colors.white.withValues(alpha: 0.15),
+                        width: isSelected ? 1.5 : 1,
                       ),
                     ),
-                  ],
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(option['emoji'] as String, style: const TextStyle(fontSize: 20)),
+                        const SizedBox(height: 4),
+                        Text(
+                          option['label'] as String,
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
               ),
             ).animate(delay: (200 + index * 40).ms).fadeIn().scale(begin: const Offset(0.9, 0.9));

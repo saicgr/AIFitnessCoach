@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -151,6 +152,18 @@ class QuizEquipment extends StatefulWidget {
 class _QuizEquipmentState extends State<QuizEquipment> {
   final _shownFollowUps = <String>{};
 
+  // Glassmorphic color constants
+  static const _textPrimary = Colors.white;
+  static final _textSecondary = Colors.white.withValues(alpha: 0.7);
+  static final _chipBgUnselected = Colors.white.withValues(alpha: 0.08);
+  static final _chipBorderUnselected = Colors.white.withValues(alpha: 0.15);
+  static final _chipBorderSelected = Colors.white.withValues(alpha: 0.5);
+  static const _selectedGradient = LinearGradient(
+    colors: [Color.fromRGBO(255, 255, 255, 0.28), Color.fromRGBO(255, 255, 255, 0.16)],
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+  );
+
   bool get _hasFullGym =>
       widget.selectedEquipment.contains('full_gym') ||
       QuizEquipment._allEquipmentIds.every((id) => widget.selectedEquipment.contains(id));
@@ -189,28 +202,24 @@ class _QuizEquipmentState extends State<QuizEquipment> {
   }
 
   void _showFollowUpDialog(BuildContext context, _FollowUp followUp) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final textPrimary = isDark ? Colors.white : const Color(0xFF0A0A0A);
-    final textSecondary = isDark ? const Color(0xFFD4D4D8) : const Color(0xFF52525B);
-
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: isDark ? AppColors.elevated : AppColorsLight.elevated,
+        backgroundColor: Colors.white.withValues(alpha: 0.12),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: Text(
           followUp.title,
-          style: TextStyle(
+          style: const TextStyle(
             fontWeight: FontWeight.bold,
             fontSize: 17,
-            color: textPrimary,
+            color: _textPrimary,
           ),
         ),
         content: Text(
           followUp.subtitle,
           style: TextStyle(
             fontSize: 14,
-            color: textSecondary,
+            color: _textSecondary,
           ),
         ),
         actions: [
@@ -218,7 +227,7 @@ class _QuizEquipmentState extends State<QuizEquipment> {
             onPressed: () => Navigator.of(ctx).pop(),
             child: Text(
               'Skip',
-              style: TextStyle(color: textSecondary),
+              style: TextStyle(color: _textSecondary),
             ),
           ),
           ElevatedButton(
@@ -227,7 +236,7 @@ class _QuizEquipmentState extends State<QuizEquipment> {
               Navigator.of(ctx).pop();
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.orange,
+              backgroundColor: Colors.white.withValues(alpha: 0.25),
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
             ),
@@ -240,25 +249,20 @@ class _QuizEquipmentState extends State<QuizEquipment> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    // Use stronger, more visible colors with proper contrast
-    final textPrimary = isDark ? Colors.white : const Color(0xFF0A0A0A);
-    final textSecondary = isDark ? const Color(0xFFD4D4D8) : const Color(0xFF52525B);
-
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (widget.showHeader) ...[
-            _buildTitle(textPrimary),
+            _buildTitle(),
             const SizedBox(height: 6),
-            _buildSubtitle(textSecondary),
+            _buildSubtitle(),
             const SizedBox(height: 12),
           ],
           // Environment quick selection chips
           if (widget.onEnvironmentChanged != null) ...[
-            _buildEnvironmentSection(context, isDark, textPrimary, textSecondary),
+            _buildEnvironmentSection(context),
             const SizedBox(height: 12),
           ],
           Expanded(
@@ -267,7 +271,7 @@ class _QuizEquipmentState extends State<QuizEquipment> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildTwoColumnGrid(context, isDark, textPrimary, textSecondary),
+                  _buildTwoColumnGrid(context),
                   // Quantity selectors shown below the grid when applicable
                   if (widget.selectedEquipment.contains('dumbbells') && !_hasFullGym) ...[
                     const SizedBox(height: 12),
@@ -276,8 +280,7 @@ class _QuizEquipmentState extends State<QuizEquipment> {
                       isSingle: widget.dumbbellCount == 1,
                       onSingle: () => widget.onDumbbellCountChanged(1),
                       onMultiple: () => widget.onDumbbellCountChanged(2),
-                      onInfo: () => widget.onInfoTap(context, 'dumbbells', isDark),
-                      isDark: isDark,
+                      onInfo: () => widget.onInfoTap(context, 'dumbbells', true),
                       icon: Icons.fitness_center,
                     ),
                   ],
@@ -288,8 +291,7 @@ class _QuizEquipmentState extends State<QuizEquipment> {
                       isSingle: widget.kettlebellCount == 1,
                       onSingle: () => widget.onKettlebellCountChanged(1),
                       onMultiple: () => widget.onKettlebellCountChanged(2),
-                      onInfo: () => widget.onInfoTap(context, 'kettlebell', isDark),
-                      isDark: isDark,
+                      onInfo: () => widget.onInfoTap(context, 'kettlebell', true),
                       icon: Icons.sports_handball,
                     ),
                   ],
@@ -302,12 +304,7 @@ class _QuizEquipmentState extends State<QuizEquipment> {
     );
   }
 
-  Widget _buildEnvironmentSection(
-    BuildContext context,
-    bool isDark,
-    Color textPrimary,
-    Color textSecondary,
-  ) {
+  Widget _buildEnvironmentSection(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -318,16 +315,16 @@ class _QuizEquipmentState extends State<QuizEquipment> {
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
-                color: textSecondary,
+                color: _textSecondary,
               ),
             ),
             const SizedBox(width: 6),
             GestureDetector(
-              onTap: () => _showEnvironmentInfo(context, isDark),
+              onTap: () => _showEnvironmentInfo(context),
               child: Icon(
                 Icons.info_outline,
                 size: 18,
-                color: AppColors.accent,
+                color: Colors.white.withValues(alpha: 0.6),
               ),
             ),
           ],
@@ -345,45 +342,41 @@ class _QuizEquipmentState extends State<QuizEquipment> {
                     HapticFeedback.selectionClick();
                     widget.onEnvironmentChanged?.call(env.id);
                   },
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 200),
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                    decoration: BoxDecoration(
-                      gradient: isSelected
-                  ? LinearGradient(
-                      colors: [AppColors.orange, AppColors.orange.withOpacity(0.8)],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    )
-                  : null,
-                      color: isSelected
-                          ? null
-                          : (isDark ? AppColors.glassSurface : AppColorsLight.glassSurface),
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(
-                        color: isSelected
-                            ? AppColors.accent
-                            : (isDark ? AppColors.cardBorder : AppColorsLight.cardBorder),
-                        width: isSelected ? 2 : 1,
-                      ),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          env.emoji,
-                          style: const TextStyle(fontSize: 13),
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          env.label,
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                            color: isSelected ? Colors.white : textPrimary,
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(16),
+                    child: BackdropFilter(
+                      filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 200),
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                        decoration: BoxDecoration(
+                          gradient: isSelected ? _selectedGradient : null,
+                          color: isSelected ? null : _chipBgUnselected,
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                            color: isSelected ? _chipBorderSelected : _chipBorderUnselected,
+                            width: isSelected ? 2 : 1,
                           ),
                         ),
-                      ],
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              env.emoji,
+                              style: const TextStyle(fontSize: 13),
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              env.label,
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                                color: isSelected ? Colors.white : _textPrimary,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
                   ),
                 ),
@@ -397,7 +390,7 @@ class _QuizEquipmentState extends State<QuizEquipment> {
             QuizEquipment._environments.firstWhere((e) => e.id == widget.selectedEnvironment).description,
             style: TextStyle(
               fontSize: 12,
-              color: textSecondary,
+              color: _textSecondary,
               fontStyle: FontStyle.italic,
             ),
           ).animate().fadeIn(),
@@ -406,7 +399,7 @@ class _QuizEquipmentState extends State<QuizEquipment> {
     );
   }
 
-  void _showEnvironmentInfo(BuildContext context, bool isDark) {
+  void _showEnvironmentInfo(BuildContext context) {
     showGlassSheet(
       context: context,
       builder: (context) => GlassSheet(
@@ -417,12 +410,12 @@ class _QuizEquipmentState extends State<QuizEquipment> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-              Text(
+              const Text(
                 'Workout Environment',
                 style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
-                  color: isDark ? Colors.white : AppColorsLight.textPrimary,
+                  color: _textPrimary,
                 ),
               ),
               const SizedBox(height: 12),
@@ -430,7 +423,7 @@ class _QuizEquipmentState extends State<QuizEquipment> {
                 'Selecting your workout environment helps us recommend the right exercises and equipment for your setup.',
                 style: TextStyle(
                   fontSize: 14,
-                  color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
+                  color: _textSecondary,
                 ),
               ),
               const SizedBox(height: 20),
@@ -447,10 +440,10 @@ class _QuizEquipmentState extends State<QuizEquipment> {
                         children: [
                           Text(
                             env.label,
-                            style: TextStyle(
+                            style: const TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.w600,
-                              color: isDark ? Colors.white : AppColorsLight.textPrimary,
+                              color: _textPrimary,
                             ),
                           ),
                           const SizedBox(height: 2),
@@ -458,7 +451,7 @@ class _QuizEquipmentState extends State<QuizEquipment> {
                             env.description,
                             style: TextStyle(
                               fontSize: 13,
-                              color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
+                              color: _textSecondary,
                             ),
                           ),
                         ],
@@ -472,7 +465,7 @@ class _QuizEquipmentState extends State<QuizEquipment> {
                 'You can customize equipment after selecting an environment, or skip this and select equipment manually.',
                 style: TextStyle(
                   fontSize: 12,
-                  color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
+                  color: _textSecondary,
                   fontStyle: FontStyle.italic,
                 ),
               ),
@@ -484,34 +477,34 @@ class _QuizEquipmentState extends State<QuizEquipment> {
     );
   }
 
-  Widget _buildTitle(Color textPrimary) {
-    return Text(
+  Widget _buildTitle() {
+    return const Text(
       'What equipment do you have access to?',
       style: TextStyle(
         fontSize: 22,
         fontWeight: FontWeight.bold,
-        color: textPrimary,
+        color: _textPrimary,
         height: 1.2,
       ),
     ).animate().fadeIn(delay: 100.ms).slideX(begin: -0.05);
   }
 
-  Widget _buildSubtitle(Color textSecondary) {
+  Widget _buildSubtitle() {
     return Text(
       "Select all that apply - we'll design workouts around what you have",
       style: TextStyle(
         fontSize: 13,
-        color: textSecondary,
+        color: _textSecondary,
       ),
     ).animate().fadeIn(delay: 200.ms);
   }
 
-  Widget _buildTwoColumnGrid(BuildContext context, bool isDark, Color textPrimary, Color textSecondary) {
+  Widget _buildTwoColumnGrid(BuildContext context) {
     final chips = [
       ...QuizEquipment._equipment.map((item) =>
-        _buildEquipmentChip(context, item, isDark, textPrimary, textSecondary),
+        _buildEquipmentChip(context, item),
       ),
-      _buildOtherChip(context, isDark, textPrimary, textSecondary),
+      _buildOtherChip(context),
     ];
 
     final rows = <Widget>[];
@@ -538,14 +531,10 @@ class _QuizEquipmentState extends State<QuizEquipment> {
   Widget _buildEquipmentChip(
     BuildContext context,
     Map<String, dynamic> item,
-    bool isDark,
-    Color textPrimary,
-    Color textSecondary,
   ) {
     final id = item['id'] as String;
     final isFullGymOption = id == 'full_gym';
     final isSelected = isFullGymOption ? _hasFullGym : widget.selectedEquipment.contains(id);
-    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
     final subtitle = item['subtitle'] as String?;
     final recommended = _isRecommended(id);
 
@@ -554,84 +543,82 @@ class _QuizEquipmentState extends State<QuizEquipment> {
         child: Stack(
           clipBehavior: Clip.none,
           children: [
-            AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-              decoration: BoxDecoration(
-                gradient: isSelected
-                    ? LinearGradient(
-                        colors: [AppColors.orange, AppColors.orange.withOpacity(0.8)],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      )
-                    : null,
-                color: isSelected
-                    ? null
-                    : (isDark ? AppColors.glassSurface : AppColorsLight.glassSurface),
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(
-                  color: isSelected
-                      ? AppColors.orange
-                      : recommended
-                          ? AppColors.orange.withOpacity(0.5)
-                          : cardBorder,
-                  width: isSelected ? 2 : 1,
-                ),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.max,
-                children: [
-                  Icon(
-                    item['icon'] as IconData,
-                    color: isSelected ? Colors.white : textSecondary,
-                    size: 18,
+            ClipRRect(
+              borderRadius: BorderRadius.circular(10),
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                  decoration: BoxDecoration(
+                    gradient: isSelected ? _selectedGradient : null,
+                    color: isSelected ? null : _chipBgUnselected,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(
+                      color: isSelected
+                          ? _chipBorderSelected
+                          : recommended
+                              ? Colors.white.withValues(alpha: 0.35)
+                              : _chipBorderUnselected,
+                      width: isSelected ? 2 : 1,
+                    ),
                   ),
-                  const SizedBox(width: 8),
-                  Flexible(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          item['label'] as String,
-                          style: TextStyle(
-                            fontSize: 13,
-                            fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                            color: isSelected ? Colors.white : textPrimary,
-                          ),
-                          overflow: TextOverflow.ellipsis,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.max,
+                    children: [
+                      Icon(
+                        item['icon'] as IconData,
+                        color: isSelected ? Colors.white : _textSecondary,
+                        size: 18,
+                      ),
+                      const SizedBox(width: 8),
+                      Flexible(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              item['label'] as String,
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                                color: isSelected ? Colors.white : _textPrimary,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            if (subtitle != null) ...[
+                              const SizedBox(height: 1),
+                              Text(
+                                subtitle,
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  color: isSelected ? Colors.white70 : _textSecondary,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
+                          ],
                         ),
-                        if (subtitle != null) ...[
-                          const SizedBox(height: 1),
-                          Text(
-                            subtitle,
-                            style: TextStyle(
-                              fontSize: 11,
-                              color: isSelected ? Colors.white70 : textSecondary,
-                            ),
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ],
-                      ],
-                    ),
+                      ),
+                      const SizedBox(width: 6),
+                      Container(
+                        width: 20,
+                        height: 20,
+                        decoration: BoxDecoration(
+                          color: isSelected ? Colors.white.withValues(alpha: 0.2) : Colors.transparent,
+                          shape: BoxShape.circle,
+                          border: isSelected
+                              ? null
+                              : Border.all(
+                                  color: _chipBorderUnselected,
+                                  width: 1.5,
+                                ),
+                        ),
+                        child: isSelected ? const Icon(Icons.check, color: Colors.white, size: 13) : null,
+                      ),
+                    ],
                   ),
-                  const SizedBox(width: 6),
-                  Container(
-                    width: 20,
-                    height: 20,
-                    decoration: BoxDecoration(
-                      color: isSelected ? Colors.white.withOpacity(0.2) : Colors.transparent,
-                      shape: BoxShape.circle,
-                      border: isSelected
-                          ? null
-                          : Border.all(
-                              color: isDark ? AppColors.cardBorder : AppColorsLight.cardBorder,
-                              width: 1.5,
-                            ),
-                    ),
-                    child: isSelected ? const Icon(Icons.check, color: Colors.white, size: 13) : null,
-                  ),
-                ],
+                ),
               ),
             ),
             // "Recommended" badge
@@ -642,8 +629,12 @@ class _QuizEquipmentState extends State<QuizEquipment> {
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                   decoration: BoxDecoration(
-                    color: AppColors.orange,
+                    color: Colors.white.withValues(alpha: 0.25),
                     borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: Colors.white.withValues(alpha: 0.4),
+                      width: 1,
+                    ),
                   ),
                   child: const Text(
                     'Recommended',
@@ -660,69 +651,61 @@ class _QuizEquipmentState extends State<QuizEquipment> {
     );
   }
 
-  Widget _buildOtherChip(
-    BuildContext context,
-    bool isDark,
-    Color textPrimary,
-    Color textSecondary,
-  ) {
+  Widget _buildOtherChip(BuildContext context) {
     final hasOtherSelected = widget.otherSelectedEquipment.isNotEmpty;
-    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
 
     return GestureDetector(
       onTap: () {
         HapticFeedback.selectionClick();
         widget.onOtherTap?.call();
       },
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-        decoration: BoxDecoration(
-          gradient: hasOtherSelected
-              ? LinearGradient(
-                  colors: [AppColors.orange, AppColors.orange.withOpacity(0.8)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                )
-              : null,
-          color: hasOtherSelected
-              ? null
-              : (isDark ? AppColors.glassSurface : AppColorsLight.glassSurface),
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(
-            color: hasOtherSelected ? AppColors.orange : cardBorder,
-            width: hasOtherSelected ? 2 : 1,
-          ),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.max,
-          children: [
-            Icon(
-              Icons.more_horiz,
-              color: hasOtherSelected ? Colors.white : textSecondary,
-              size: 18,
-            ),
-            const SizedBox(width: 8),
-            Flexible(
-              child: Text(
-                hasOtherSelected
-                    ? 'Other (${widget.otherSelectedEquipment.length})'
-                    : 'Other Equipment',
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: hasOtherSelected ? FontWeight.w600 : FontWeight.w500,
-                  color: hasOtherSelected ? Colors.white : textPrimary,
-                ),
-                overflow: TextOverflow.ellipsis,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(10),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            decoration: BoxDecoration(
+              gradient: hasOtherSelected ? _selectedGradient : null,
+              color: hasOtherSelected ? null : _chipBgUnselected,
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(
+                color: hasOtherSelected ? _chipBorderSelected : _chipBorderUnselected,
+                width: hasOtherSelected ? 2 : 1,
               ),
             ),
-            const SizedBox(width: 6),
-            Icon(
-              Icons.search,
-              color: hasOtherSelected ? Colors.white70 : textSecondary,
-              size: 16,
+            child: Row(
+              mainAxisSize: MainAxisSize.max,
+              children: [
+                Icon(
+                  Icons.more_horiz,
+                  color: hasOtherSelected ? Colors.white : _textSecondary,
+                  size: 18,
+                ),
+                const SizedBox(width: 8),
+                Flexible(
+                  child: Text(
+                    hasOtherSelected
+                        ? 'Other (${widget.otherSelectedEquipment.length})'
+                        : 'Other Equipment',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: hasOtherSelected ? FontWeight.w600 : FontWeight.w500,
+                      color: hasOtherSelected ? Colors.white : _textPrimary,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                const SizedBox(width: 6),
+                Icon(
+                  Icons.search,
+                  color: hasOtherSelected ? Colors.white70 : _textSecondary,
+                  size: 16,
+                ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );
@@ -736,7 +719,6 @@ class _QuantityRow extends StatelessWidget {
   final VoidCallback onSingle;
   final VoidCallback onMultiple;
   final VoidCallback onInfo;
-  final bool isDark;
   final IconData icon;
 
   const _QuantityRow({
@@ -745,14 +727,13 @@ class _QuantityRow extends StatelessWidget {
     required this.onSingle,
     required this.onMultiple,
     required this.onInfo,
-    required this.isDark,
     this.icon = Icons.fitness_center,
   });
 
   @override
   Widget build(BuildContext context) {
-    final textColor = isDark ? Colors.white : const Color(0xFF0A0A0A);
-    final mutedColor = isDark ? const Color(0xFFD4D4D8) : const Color(0xFF52525B);
+    const textColor = Colors.white;
+    final mutedColor = Colors.white.withValues(alpha: 0.7);
 
     return Row(
       children: [
@@ -760,73 +741,79 @@ class _QuantityRow extends StatelessWidget {
         const SizedBox(width: 8),
         Text(
           '$label:',
-          style: TextStyle(
+          style: const TextStyle(
             fontSize: 13,
             fontWeight: FontWeight.w500,
             color: textColor,
           ),
         ),
         const SizedBox(width: 10),
-        Container(
-          decoration: BoxDecoration(
-            color: isDark ? AppColors.glassSurface : AppColorsLight.glassSurface,
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(
-              color: AppColors.orange.withOpacity(0.5),
-              width: 1,
+        ClipRRect(
+          borderRadius: BorderRadius.circular(8),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(
+                  color: Colors.white.withValues(alpha: 0.25),
+                  width: 1,
+                ),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  GestureDetector(
+                    onTap: () {
+                      HapticFeedback.selectionClick();
+                      onSingle();
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: isSingle ? Colors.white.withValues(alpha: 0.25) : Colors.transparent,
+                        borderRadius: const BorderRadius.horizontal(left: Radius.circular(7)),
+                      ),
+                      child: Text(
+                        '1',
+                        style: TextStyle(
+                          color: isSingle ? Colors.white : mutedColor,
+                          fontSize: 13,
+                          fontWeight: isSingle ? FontWeight.w700 : FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                  ),
+                  Container(
+                    width: 1,
+                    height: 18,
+                    color: Colors.white.withValues(alpha: 0.2),
+                  ),
+                  GestureDetector(
+                    onTap: () {
+                      HapticFeedback.selectionClick();
+                      onMultiple();
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: !isSingle ? Colors.white.withValues(alpha: 0.25) : Colors.transparent,
+                        borderRadius: const BorderRadius.horizontal(right: Radius.circular(7)),
+                      ),
+                      child: Text(
+                        '1+',
+                        style: TextStyle(
+                          color: !isSingle ? Colors.white : mutedColor,
+                          fontSize: 13,
+                          fontWeight: !isSingle ? FontWeight.w700 : FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              GestureDetector(
-                onTap: () {
-                  HapticFeedback.selectionClick();
-                  onSingle();
-                },
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: isSingle ? AppColors.orange : Colors.transparent,
-                    borderRadius: const BorderRadius.horizontal(left: Radius.circular(7)),
-                  ),
-                  child: Text(
-                    '1',
-                    style: TextStyle(
-                      color: isSingle ? Colors.white : mutedColor,
-                      fontSize: 13,
-                      fontWeight: isSingle ? FontWeight.w700 : FontWeight.w500,
-                    ),
-                  ),
-                ),
-              ),
-              Container(
-                width: 1,
-                height: 18,
-                color: AppColors.orange.withOpacity(0.3),
-              ),
-              GestureDetector(
-                onTap: () {
-                  HapticFeedback.selectionClick();
-                  onMultiple();
-                },
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: !isSingle ? AppColors.orange : Colors.transparent,
-                    borderRadius: const BorderRadius.horizontal(right: Radius.circular(7)),
-                  ),
-                  child: Text(
-                    '1+',
-                    style: TextStyle(
-                      color: !isSingle ? Colors.white : mutedColor,
-                      fontSize: 13,
-                      fontWeight: !isSingle ? FontWeight.w700 : FontWeight.w500,
-                    ),
-                  ),
-                ),
-              ),
-            ],
           ),
         ),
         const SizedBox(width: 8),
@@ -835,7 +822,7 @@ class _QuantityRow extends StatelessWidget {
           child: Icon(
             Icons.info_outline,
             size: 18,
-            color: AppColors.accent,
+            color: Colors.white.withValues(alpha: 0.6),
           ),
         ),
       ],

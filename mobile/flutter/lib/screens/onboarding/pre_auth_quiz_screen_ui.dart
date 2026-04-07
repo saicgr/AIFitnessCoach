@@ -3,10 +3,8 @@ part of 'pre_auth_quiz_screen.dart';
 /// UI builder methods extracted from _PreAuthQuizScreenState
 extension _PreAuthQuizScreenStateUI on _PreAuthQuizScreenState {
 
-  /// Build the action button for the current question step.
+  /// Build the action button for the current question step — glassmorphic.
   Widget? _buildActionButton(bool isDark) {
-    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
-
     // Case 6 gets special "Generate" button with optional skip
     if (_currentQuestion == 6) {
       return Padding(
@@ -14,39 +12,57 @@ extension _PreAuthQuizScreenStateUI on _PreAuthQuizScreenState {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            SizedBox(
-              width: double.infinity,
-              height: 56,
-              child: ElevatedButton(
-                onPressed: _canProceed ? _generateAndShowPreview : null,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: _canProceed
-                      ? AppColors.orange
-                      : (isDark ? AppColors.glassSurface : AppColorsLight.glassSurface),
-                  foregroundColor: _canProceed
-                      ? Colors.white
-                      : (isDark ? AppColors.textMuted : AppColorsLight.textMuted),
-                  elevation: _canProceed ? 4 : 0,
-                  shadowColor: _canProceed ? AppColors.orange.withValues(alpha: 0.4) : Colors.transparent,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Text(
-                      'Generate My First Workout',
-                      style: TextStyle(
-                        fontSize: 17,
-                        fontWeight: FontWeight.w600,
+            GestureDetector(
+              onTap: _canProceed ? _generateAndShowPreview : null,
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(28),
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    width: double.infinity,
+                    height: 56,
+                    decoration: BoxDecoration(
+                      gradient: _canProceed
+                          ? LinearGradient(
+                              colors: [
+                                Colors.white.withValues(alpha: 0.25),
+                                Colors.white.withValues(alpha: 0.15),
+                              ],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            )
+                          : null,
+                      color: _canProceed
+                          ? null
+                          : Colors.white.withValues(alpha: 0.08),
+                      borderRadius: BorderRadius.circular(28),
+                      border: Border.all(
+                        color: _canProceed
+                            ? Colors.white.withValues(alpha: 0.4)
+                            : Colors.white.withValues(alpha: 0.12),
                       ),
                     ),
-                    if (_canProceed) ...[
-                      const SizedBox(width: 8),
-                      const Icon(Icons.auto_awesome_rounded, size: 20),
-                    ],
-                  ],
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          'Generate My First Workout',
+                          style: TextStyle(
+                            fontSize: 17,
+                            fontWeight: FontWeight.w600,
+                            color: _canProceed
+                                ? Colors.white
+                                : Colors.white.withValues(alpha: 0.35),
+                          ),
+                        ),
+                        if (_canProceed) ...[
+                          const SizedBox(width: 8),
+                          Icon(Icons.auto_awesome_rounded, size: 20, color: Colors.white.withValues(alpha: 0.9)),
+                        ],
+                      ],
+                    ),
+                  ),
                 ),
               ),
             ),
@@ -61,7 +77,7 @@ extension _PreAuthQuizScreenStateUI on _PreAuthQuizScreenState {
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w500,
-                      color: textSecondary,
+                      color: Colors.white.withValues(alpha: 0.5),
                     ),
                   ),
                 ),
@@ -92,15 +108,12 @@ extension _PreAuthQuizScreenStateUI on _PreAuthQuizScreenState {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (showHeader) ...[
-            // Title
-            Text(
+            const Text(
               'Which days work best?',
               style: TextStyle(
                 fontSize: 28,
                 fontWeight: FontWeight.bold,
-                color: Theme.of(context).brightness == Brightness.dark
-                    ? Colors.white
-                    : const Color(0xFF0A0A0A),
+                color: Colors.white,
               ),
             ).animate().fadeIn(delay: 100.ms),
             const SizedBox(height: 6),
@@ -108,9 +121,7 @@ extension _PreAuthQuizScreenStateUI on _PreAuthQuizScreenState {
               'Select ${_selectedDays ?? 0} days for your workouts',
               style: TextStyle(
                 fontSize: 15,
-                color: Theme.of(context).brightness == Brightness.dark
-                    ? const Color(0xFFD4D4D8)
-                    : const Color(0xFF52525B),
+                color: Colors.white.withValues(alpha: 0.7),
               ),
             ).animate().fadeIn(delay: 200.ms),
             const SizedBox(height: 24),

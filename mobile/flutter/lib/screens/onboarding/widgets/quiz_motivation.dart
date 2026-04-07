@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -29,10 +30,8 @@ class QuizMotivation extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    // Use stronger, more visible colors with proper contrast
-    final textPrimary = isDark ? Colors.white : const Color(0xFF0A0A0A);
-    final textSecondary = isDark ? const Color(0xFFD4D4D8) : const Color(0xFF52525B);
+    const textPrimary = Colors.white;
+    final textSecondary = Colors.white.withValues(alpha: 0.7);
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -59,7 +58,6 @@ class QuizMotivation extends StatelessWidget {
                     onToggle(motivation['id'] as String);
                   },
                   index: index,
-                  isDark: isDark,
                   textPrimary: textPrimary,
                 );
               },
@@ -98,7 +96,6 @@ class _MotivationCard extends StatelessWidget {
   final bool isSelected;
   final VoidCallback onTap;
   final int index;
-  final bool isDark;
   final Color textPrimary;
 
   const _MotivationCard({
@@ -106,91 +103,89 @@ class _MotivationCard extends StatelessWidget {
     required this.isSelected,
     required this.onTap,
     required this.index,
-    required this.isDark,
     required this.textPrimary,
   });
 
   @override
   Widget build(BuildContext context) {
-    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
-    final color = motivation['color'] as Color;
-
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: GestureDetector(
         onTap: onTap,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-          decoration: BoxDecoration(
-            gradient: isSelected
-                ? LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [color.withOpacity(0.8), color],
-                  )
-                : null,
-            color: isSelected
-                ? null
-                : (isDark ? AppColors.glassSurface : AppColorsLight.glassSurface),
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(
-              color: isSelected ? color : cardBorder,
-              width: isSelected ? 2 : 1,
-            ),
-            boxShadow: isSelected
-                ? [
-                    BoxShadow(
-                      color: color.withOpacity(0.3),
-                      blurRadius: 10,
-                      spreadRadius: 0,
-                    ),
-                  ]
-                : null,
-          ),
-          child: Row(
-            children: [
-              Container(
-                width: 36,
-                height: 36,
-                decoration: BoxDecoration(
-                  color: isSelected
-                      ? Colors.white.withOpacity(0.2)
-                      : color.withOpacity(0.15),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Icon(
-                  motivation['icon'] as IconData,
-                  color: isSelected ? Colors.white : color,
-                  size: 20,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  motivation['label'] as String,
-                  style: TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                    color: isSelected ? Colors.white : textPrimary,
-                  ),
-                ),
-              ),
-              Container(
-                width: 22,
-                height: 22,
-                decoration: BoxDecoration(
-                  color: isSelected ? Colors.white.withOpacity(0.2) : Colors.transparent,
-                  shape: BoxShape.circle,
-                  border: isSelected
-                      ? null
-                      : Border.all(color: cardBorder, width: 2),
-                ),
-                child: isSelected
-                    ? const Icon(Icons.check, color: Colors.white, size: 14)
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(14),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              decoration: BoxDecoration(
+                gradient: isSelected
+                    ? LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [
+                          Colors.white.withValues(alpha: 0.28),
+                          Colors.white.withValues(alpha: 0.16),
+                        ],
+                      )
                     : null,
+                color: isSelected ? null : Colors.white.withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(
+                  color: isSelected
+                      ? Colors.white.withValues(alpha: 0.5)
+                      : Colors.white.withValues(alpha: 0.15),
+                  width: isSelected ? 2 : 1,
+                ),
               ),
-            ],
+              child: Row(
+                children: [
+                  Container(
+                    width: 36,
+                    height: 36,
+                    decoration: BoxDecoration(
+                      color: isSelected
+                          ? Colors.white.withValues(alpha: 0.2)
+                          : Colors.white.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Icon(
+                      motivation['icon'] as IconData,
+                      color: Colors.white,
+                      size: 20,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      motivation['label'] as String,
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                        color: isSelected ? Colors.white : Colors.white.withValues(alpha: 0.9),
+                      ),
+                    ),
+                  ),
+                  Container(
+                    width: 22,
+                    height: 22,
+                    decoration: BoxDecoration(
+                      color: isSelected
+                          ? Colors.white.withValues(alpha: 0.3)
+                          : Colors.transparent,
+                      shape: BoxShape.circle,
+                      border: isSelected
+                          ? null
+                          : Border.all(color: Colors.white.withValues(alpha: 0.3), width: 2),
+                    ),
+                    child: isSelected
+                        ? const Icon(Icons.check, color: Colors.white, size: 14)
+                        : null,
+                  ),
+                ],
+              ),
+            ),
           ),
         ),
       ).animate(delay: (100 + index * 60).ms).fadeIn().slideX(begin: 0.05),

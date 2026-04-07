@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:ui';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -15,8 +16,7 @@ import '../../data/services/api_client.dart';
 import '../onboarding/pre_auth_quiz_screen.dart';
 import '../onboarding/widgets/foldable_quiz_scaffold.dart';
 
-/// Dedicated sign-in screen shown after quiz and preview
-/// Shows progress indicator and value reinforcement
+/// Glassmorphic sign-in screen shown after quiz and preview
 class SignInScreen extends ConsumerStatefulWidget {
   const SignInScreen({super.key});
 
@@ -53,7 +53,6 @@ class _SignInScreenState extends ConsumerState<SignInScreen>
   }
 
   Future<void> _signInWithGoogle() async {
-    // Quiz data is already preserved in SharedPreferences via PreAuthQuizNotifier
     setState(() {
       _isLoading = true;
       _loadingMessage = _loadingMessages[0];
@@ -72,18 +71,12 @@ class _SignInScreenState extends ConsumerState<SignInScreen>
     try {
       await ref.read(authStateProvider.notifier).signInWithGoogle();
 
-      // After successful sign-in, check if we should show welcome message
       final user = ref.read(authStateProvider).user;
       if (user != null && user.isFirstLogin && user.hasSupportFriend && mounted) {
         _showSupportFriendWelcome();
       }
 
-      // Fire-and-forget: submit quiz preferences and trigger workout generation
-      // so workouts start generating while the user completes remaining onboarding screens
       _triggerEarlyGeneration();
-
-      // After successful sign-in, navigation happens automatically via router redirect
-      // The pre-auth data is still in SharedPreferences and will be loaded in onboarding
     } finally {
       messageTimer.cancel();
       if (mounted) {
@@ -95,8 +88,6 @@ class _SignInScreenState extends ConsumerState<SignInScreen>
     }
   }
 
-  /// Fire-and-forget: submit quiz preferences early and trigger workout generation
-  /// so workouts are ready by the time the user reaches the loading screen.
   void _triggerEarlyGeneration() {
     Future<void>(() async {
       try {
@@ -105,29 +96,23 @@ class _SignInScreenState extends ConsumerState<SignInScreen>
         if (userId == null) return;
 
         final quizData = ref.read(preAuthQuizProvider);
-
-        // Build workout-relevant preferences from quiz data
         final payload = AIProfilePayloadBuilder.buildPayload(quizData);
 
-        // Add personal info needed for generation
         if (quizData.gender != null) payload['gender'] = quizData.gender;
         if (quizData.age != null) payload['age'] = quizData.age;
         if (quizData.heightCm != null) payload['height_cm'] = quizData.heightCm;
         if (quizData.weightKg != null) payload['weight_kg'] = quizData.weightKg;
         if (quizData.workoutDays != null) payload['workout_days'] = quizData.workoutDays;
 
-        // Submit preferences so backend has workout config for generation
         await apiClient.post(
           '${ApiConstants.users}/$userId/preferences',
           data: payload,
         );
         debugPrint('✅ [EarlyGen] Preferences submitted');
 
-        // Trigger /today which auto-generates workouts for upcoming dates
         await apiClient.get('${ApiConstants.workouts}/today?user_id=$userId');
         debugPrint('✅ [EarlyGen] Generation triggered');
       } catch (e) {
-        // Non-critical — generation will happen normally via loading screen
         debugPrint('⚠️ [EarlyGen] Early generation failed (non-critical): $e');
       }
     });
@@ -145,22 +130,9 @@ class _SignInScreenState extends ConsumerState<SignInScreen>
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text(
-                    'Welcome to FitWiz!',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                      fontSize: 14,
-                    ),
-                  ),
+                  Text('Welcome to FitWiz!', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white, fontSize: 14)),
                   const SizedBox(height: 2),
-                  Text(
-                    'FitWiz Support is now your friend. Reach out anytime for help!',
-                    style: TextStyle(
-                      color: Colors.white.withOpacity(0.9),
-                      fontSize: 12,
-                    ),
-                  ),
+                  Text('FitWiz Support is now your friend. Reach out anytime for help!', style: TextStyle(color: Colors.white.withOpacity(0.9), fontSize: 12)),
                 ],
               ),
             ),
@@ -179,10 +151,19 @@ class _SignInScreenState extends ConsumerState<SignInScreen>
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final authState = ref.watch(authStateProvider);
-    final windowState = ref.watch(windowModeProvider);
-    final useFoldable = FoldableQuizScaffold.shouldUseFoldableLayout(windowState);
-    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+
+    // Glassmorphic gradient background
+    final gradient = isDark
+        ? const LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [Color(0xFF0A1628), Color(0xFF0D2137), Color(0xFF061220)],
+          )
+        : const LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [Color(0xFF1A6B5A), Color(0xFF2D9E8A), Color(0xFF1A6B5A)],
+          );
 
     Widget errorWidget = const SizedBox.shrink();
     if (authState.status == AuthStatus.error && authState.errorMessage != null) {
@@ -190,9 +171,9 @@ class _SignInScreenState extends ConsumerState<SignInScreen>
         margin: const EdgeInsets.only(top: 12),
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: AppColors.error.withOpacity(0.1),
+          color: AppColors.error.withOpacity(0.2),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: AppColors.error.withOpacity(0.3)),
+          border: Border.all(color: AppColors.error.withOpacity(0.4)),
         ),
         child: Row(
           children: [
@@ -201,9 +182,7 @@ class _SignInScreenState extends ConsumerState<SignInScreen>
             Expanded(
               child: Text(
                 authState.errorMessage!,
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: AppColors.error,
-                    ),
+                style: const TextStyle(color: AppColors.error, fontSize: 13),
               ),
             ),
           ],
@@ -213,206 +192,135 @@ class _SignInScreenState extends ConsumerState<SignInScreen>
 
     return Scaffold(
       body: Container(
-        decoration: BoxDecoration(
-          gradient: isDark
-              ? const LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [Color(0xFF0A1628), AppColors.pureBlack],
-                )
-              : const LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [Color(0xFFE3F2FD), Color(0xFFF5F5F5), Colors.white],
-                ),
-        ),
+        decoration: BoxDecoration(gradient: gradient),
         child: SafeArea(
-          child: useFoldable
-              ? _buildFoldableLayout(
-                  context, windowState, isDark, textPrimary, textSecondary, errorWidget)
-              : _buildPhoneLayout(isDark, textPrimary, textSecondary, errorWidget),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildPhoneLayout(
-    bool isDark,
-    Color textPrimary,
-    Color textSecondary,
-    Widget errorWidget,
-  ) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24),
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          return SingleChildScrollView(
-            child: ConstrainedBox(
-              constraints: BoxConstraints(minHeight: constraints.maxHeight),
-              child: IntrinsicHeight(
-                child: Column(
-                  children: [
-                    _buildHeader(isDark, textSecondary),
-                    const Spacer(),
-                    _buildMainContent(isDark, textPrimary, textSecondary),
-                    const Spacer(),
-                    _buildSignInButtons(isDark),
-                    errorWidget,
-                    const SizedBox(height: 24),
-                    _buildTermsText(textSecondary),
-                    const SizedBox(height: 24),
-                  ],
-                ),
-              ),
-            ),
-          );
-        },
-      ),
-    );
-  }
-
-  Widget _buildFoldableLayout(
-    BuildContext context,
-    WindowModeState windowState,
-    bool isDark,
-    Color textPrimary,
-    Color textSecondary,
-    Widget errorWidget,
-  ) {
-    final hingeBounds = windowState.hingeBounds;
-    final safeLeft = MediaQuery.of(context).padding.left;
-    final rawHingeLeft = hingeBounds?.left ?? MediaQuery.of(context).size.width / 2;
-    final hingeLeft = (rawHingeLeft - safeLeft).clamp(100.0, double.infinity);
-    final hingeWidth = hingeBounds?.width ?? 0;
-
-    return Column(
-      children: [
-        // Header spans full width
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24),
-          child: _buildHeader(isDark, textSecondary),
-        ),
-        Expanded(
-          child: Row(
-            children: [
-              // Left pane: branding + value proposition
-              SizedBox(
-                width: hingeLeft,
-                child: Center(
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-                    child: _buildMainContent(isDark, textPrimary, textSecondary),
-                  ),
-                ),
-              ),
-              // Hinge gap
-              SizedBox(width: hingeWidth),
-              // Right pane: sign-in buttons
-              Expanded(
-                child: Center(
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        _buildSignInButtons(isDark),
-                        errorWidget,
-                        const SizedBox(height: 24),
-                        _buildTermsText(textSecondary),
-                        const SizedBox(height: 16),
-                      ],
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                return SingleChildScrollView(
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                    child: IntrinsicHeight(
+                      child: Column(
+                        children: [
+                          _buildHeader(),
+                          const Spacer(),
+                          _buildMainContent(),
+                          const Spacer(),
+                          _buildSignInButtons(),
+                          errorWidget,
+                          const SizedBox(height: 24),
+                          _buildTermsText(),
+                          const SizedBox(height: 24),
+                        ],
+                      ),
                     ),
                   ),
-                ),
-              ),
-            ],
+                );
+              },
+            ),
           ),
         ),
-      ],
+      ),
     );
   }
 
-  Widget _buildHeader(bool isDark, Color textSecondary) {
+  Widget _buildHeader() {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 12),
       child: Row(
         children: [
-          IconButton(
-            onPressed: () => context.go('/pre-auth-quiz'),
-            icon: Icon(
-              Icons.arrow_back_ios_rounded,
-              color: textSecondary,
-              size: 20,
+          // Glassmorphic back button
+          GestureDetector(
+            onTap: () => context.go('/pre-auth-quiz'),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(22),
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+                child: Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(22),
+                    border: Border.all(color: Colors.white.withValues(alpha: 0.25)),
+                  ),
+                  child: const Icon(Icons.arrow_back_ios_rounded, color: Colors.white, size: 18),
+                ),
+              ),
             ),
           ),
           const Spacer(),
-          // Progress indicator
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-            decoration: BoxDecoration(
-              color: (isDark ? AppColors.orange : AppColorsLight.orange).withOpacity(0.1),
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(
-                  color: (isDark ? AppColors.orange : AppColorsLight.orange).withOpacity(0.3)),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                SizedBox(
-                  width: 60,
-                  height: 6,
-                  child: Stack(
-                    children: [
-                      Container(
-                        decoration: BoxDecoration(
-                          color: isDark ? AppColors.glassSurface : AppColorsLight.glassSurface,
-                          borderRadius: BorderRadius.circular(3),
-                        ),
-                      ),
-                      FractionallySizedBox(
-                        widthFactor: 0.9, // 90% complete
-                        child: Container(
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              colors: isDark
-                                  ? [AppColors.orange, AppColors.orangeLight]
-                                  : [AppColorsLight.orange, AppColorsLight.orangeLight],
+          // Glassmorphic progress pill
+          ClipRRect(
+            borderRadius: BorderRadius.circular(20),
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: Colors.white.withValues(alpha: 0.25)),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    SizedBox(
+                      width: 60,
+                      height: 6,
+                      child: Stack(
+                        children: [
+                          Container(
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.12),
+                              borderRadius: BorderRadius.circular(3),
                             ),
-                            borderRadius: BorderRadius.circular(3),
                           ),
-                        ),
+                          FractionallySizedBox(
+                            widthFactor: 0.9,
+                            child: Container(
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  colors: [
+                                    Colors.white.withValues(alpha: 0.9),
+                                    Colors.white.withValues(alpha: 0.6),
+                                  ],
+                                ),
+                                borderRadius: BorderRadius.circular(3),
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      '90%',
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.9),
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
                 ),
-                const SizedBox(width: 8),
-                Text(
-                  '90%',
-                  style: TextStyle(
-                    color: isDark ? AppColors.orange : AppColorsLight.orange,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ],
+              ),
             ),
           ),
           const Spacer(),
-          const SizedBox(width: 48),
+          const SizedBox(width: 44),
         ],
       ),
     ).animate().fadeIn(duration: 300.ms);
   }
 
-  Widget _buildMainContent(
-    bool isDark,
-    Color textPrimary,
-    Color textSecondary,
-  ) {
+  Widget _buildMainContent() {
     final quizData = ref.watch(preAuthQuizProvider);
     return Column(
       children: [
-        // Animated AI icon
+        // Pulsing app icon
         AnimatedBuilder(
           animation: _pulseController,
           builder: (context, child) {
@@ -422,11 +330,10 @@ class _SignInScreenState extends ConsumerState<SignInScreen>
                 width: 100,
                 height: 100,
                 decoration: BoxDecoration(
-                  color: AppColors.teal,
                   borderRadius: BorderRadius.circular(28),
                   boxShadow: [
                     BoxShadow(
-                      color: AppColors.teal.withOpacity(0.3 + _pulseController.value * 0.1),
+                      color: Colors.white.withOpacity(0.15 + _pulseController.value * 0.1),
                       blurRadius: 24,
                       spreadRadius: 2,
                     ),
@@ -434,13 +341,26 @@ class _SignInScreenState extends ConsumerState<SignInScreen>
                 ),
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(28),
-                  child: Image.asset(
-                    'assets/images/app_icon.png',
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) => const Icon(
-                      Icons.fitness_center,
-                      color: Colors.white,
-                      size: 48,
+                  child: BackdropFilter(
+                    filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(28),
+                        border: Border.all(color: Colors.white.withValues(alpha: 0.3)),
+                      ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(28),
+                        child: Image.asset(
+                          'assets/images/app_icon.png',
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) => const Icon(
+                            Icons.fitness_center,
+                            color: Colors.white,
+                            size: 48,
+                          ),
+                        ),
+                      ),
                     ),
                   ),
                 ),
@@ -452,12 +372,12 @@ class _SignInScreenState extends ConsumerState<SignInScreen>
         const SizedBox(height: 32),
 
         // Title
-        Text(
+        const Text(
           'Almost There!',
           style: TextStyle(
             fontSize: 32,
             fontWeight: FontWeight.bold,
-            color: textPrimary,
+            color: Colors.white,
           ),
           textAlign: TextAlign.center,
         ).animate().fadeIn(delay: 300.ms),
@@ -469,7 +389,7 @@ class _SignInScreenState extends ConsumerState<SignInScreen>
           'Sign in to save your personalized plan and start your fitness journey',
           style: TextStyle(
             fontSize: 16,
-            color: textSecondary,
+            color: Colors.white.withValues(alpha: 0.7),
             height: 1.4,
           ),
           textAlign: TextAlign.center,
@@ -477,8 +397,8 @@ class _SignInScreenState extends ConsumerState<SignInScreen>
 
         const SizedBox(height: 32),
 
-        // Value reminder card
-        _buildValueReminderCard(isDark, quizData, textPrimary, textSecondary)
+        // Value reminder card — glassmorphic
+        _buildValueReminderCard(quizData)
             .animate()
             .fadeIn(delay: 500.ms)
             .slideY(begin: 0.1),
@@ -486,162 +406,178 @@ class _SignInScreenState extends ConsumerState<SignInScreen>
     );
   }
 
-  Widget _buildValueReminderCard(
-    bool isDark,
-    PreAuthQuizData quizData,
-    Color textPrimary,
-    Color textSecondary,
-  ) {
-    final cardColor = isDark ? AppColors.elevated : Colors.white;
-    final borderColor = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
-
+  Widget _buildValueReminderCard(PreAuthQuizData quizData) {
     String goalDisplay = _formatGoal(quizData.goal ?? 'build_muscle');
 
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: cardColor,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: borderColor),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 48,
-            height: 48,
-            decoration: BoxDecoration(
-              color: AppColors.orange.withOpacity(0.15),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: const Icon(
-              Icons.check_circle_outline,
-              color: AppColors.orange,
-              size: 24,
-            ),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Your $goalDisplay Plan',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: textPrimary,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  '${quizData.daysPerWeek ?? 3} days/week • Personalized for you',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: textSecondary,
-                  ),
-                ),
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(16),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                Colors.white.withValues(alpha: 0.12),
+                Colors.white.withValues(alpha: 0.06),
               ],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
             ),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
           ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            decoration: BoxDecoration(
-              color: AppColors.success.withOpacity(0.15),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: const Text(
-              'Ready',
-              style: TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w600,
-                color: AppColors.success,
+          child: Row(
+            children: [
+              Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(
+                  Icons.check_circle_outline,
+                  color: Colors.white.withValues(alpha: 0.9),
+                  size: 24,
+                ),
               ),
-            ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Your $goalDisplay Plan',
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      '${quizData.daysPerWeek ?? 3} days/week • Personalized for you',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.white.withValues(alpha: 0.6),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 6, sigmaY: 6),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: AppColors.success.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: AppColors.success.withOpacity(0.4)),
+                    ),
+                    child: const Text(
+                      'Ready',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.success,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
 
-  Widget _buildSignInButtons(bool isDark) {
+  Widget _buildSignInButtons() {
     return Column(
       children: [
-        // Google Sign In button (primary)
-        SizedBox(
-          width: double.infinity,
-          height: 54,
-          child: ElevatedButton(
-            onPressed: _isLoading ? null : _signInWithGoogle,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.white,
-              foregroundColor: Colors.black87,
-              elevation: isDark ? 0 : 2,
-              disabledBackgroundColor: Colors.white.withOpacity(0.6),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(27),
+        // Google Sign In button — glassmorphic
+        GestureDetector(
+          onTap: _isLoading ? null : _signInWithGoogle,
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(27),
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+              child: Container(
+                width: double.infinity,
+                height: 54,
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(27),
+                  border: Border.all(color: Colors.white.withValues(alpha: 0.35)),
+                ),
+                child: _isLoading
+                    ? Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Text(
+                            _loadingMessage ?? 'Signing in...',
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w500,
+                              color: Colors.white.withValues(alpha: 0.8),
+                            ),
+                          ),
+                        ],
+                      )
+                    : Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Image.network(
+                            'https://www.google.com/favicon.ico',
+                            width: 20,
+                            height: 20,
+                            errorBuilder: (_, __, ___) => const Icon(
+                              Icons.g_mobiledata,
+                              size: 24,
+                              color: Colors.white,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          const Text(
+                            'Continue with Google',
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ],
+                      ),
               ),
             ),
-            child: _isLoading
-                ? Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          valueColor: AlwaysStoppedAnimation<Color>(Colors.black54),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Text(
-                        _loadingMessage ?? 'Signing in...',
-                        style: const TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w500,
-                          color: Colors.black54,
-                        ),
-                      ),
-                    ],
-                  )
-                : Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Image.network(
-                        'https://www.google.com/favicon.ico',
-                        width: 20,
-                        height: 20,
-                        errorBuilder: (_, __, ___) => const Icon(
-                          Icons.g_mobiledata,
-                          size: 24,
-                          color: Colors.black87,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      const Text(
-                        'Continue with Google',
-                        style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.black87,
-                        ),
-                      ),
-                    ],
-                  ),
           ),
         ).animate().fadeIn(delay: 600.ms).slideY(begin: 0.1),
 
         const SizedBox(height: 16),
 
         // Email Sign In link
-        TextButton(
-          onPressed: _isLoading ? null : () => context.push('/email-sign-in'),
+        GestureDetector(
+          onTap: _isLoading ? null : () => context.push('/email-sign-in'),
           child: Text(
             'Continue with Email',
             style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w500,
-              color: isDark ? AppColors.textSecondary : AppColorsLight.textSecondary,
+              color: Colors.white.withValues(alpha: 0.6),
+              decoration: TextDecoration.underline,
+              decorationColor: Colors.white.withValues(alpha: 0.3),
             ),
           ),
         ).animate().fadeIn(delay: 800.ms),
@@ -649,27 +585,31 @@ class _SignInScreenState extends ConsumerState<SignInScreen>
     );
   }
 
-  Widget _buildTermsText(Color textSecondary) {
-    final linkColor = Theme.of(context).brightness == Brightness.dark
-        ? AppColors.cyan
-        : AppColorsLight.cyan;
-
+  Widget _buildTermsText() {
     return RichText(
       textAlign: TextAlign.center,
       text: TextSpan(
-        style: TextStyle(fontSize: 12, color: textSecondary, height: 1.4),
+        style: TextStyle(fontSize: 12, color: Colors.white.withValues(alpha: 0.5), height: 1.4),
         children: [
           const TextSpan(text: 'By continuing, you agree to our '),
           TextSpan(
             text: 'Terms of Service',
-            style: TextStyle(color: linkColor, decoration: TextDecoration.underline, decorationColor: linkColor),
+            style: TextStyle(
+              color: Colors.white.withValues(alpha: 0.8),
+              decoration: TextDecoration.underline,
+              decorationColor: Colors.white.withValues(alpha: 0.4),
+            ),
             recognizer: TapGestureRecognizer()
               ..onTap = () => launchUrl(Uri.parse('${AppLinks.termsOfService}'), mode: LaunchMode.externalApplication),
           ),
           const TextSpan(text: ' and '),
           TextSpan(
             text: 'Privacy Policy',
-            style: TextStyle(color: linkColor, decoration: TextDecoration.underline, decorationColor: linkColor),
+            style: TextStyle(
+              color: Colors.white.withValues(alpha: 0.8),
+              decoration: TextDecoration.underline,
+              decorationColor: Colors.white.withValues(alpha: 0.4),
+            ),
             recognizer: TapGestureRecognizer()
               ..onTap = () => launchUrl(Uri.parse('${AppLinks.privacyPolicy}'), mode: LaunchMode.externalApplication),
           ),

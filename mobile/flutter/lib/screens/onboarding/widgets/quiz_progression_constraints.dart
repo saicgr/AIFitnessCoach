@@ -1,7 +1,7 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import '../../../core/constants/app_colors.dart';
 
 /// Progression pace selection widget (Phase 2 personalization).
 ///
@@ -30,9 +30,8 @@ class QuizProgressionConstraints extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final textPrimary = isDark ? Colors.white : const Color(0xFF0A0A0A);
-    final textSecondary = isDark ? const Color(0xFFD4D4D8) : const Color(0xFF52525B);
+    const textPrimary = Colors.white;
+    final textSecondary = Colors.white.withValues(alpha: 0.7);
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -40,7 +39,7 @@ class QuizProgressionConstraints extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (showHeader) ...[
-            Text(
+            const Text(
               'Progression Pace',
               style: TextStyle(
                 fontSize: 28,
@@ -71,7 +70,6 @@ class QuizProgressionConstraints extends StatelessWidget {
                   icon: Icons.trending_flat,
                   recommended: _recommendedPace == 'slow',
                   badgeLabel: _recommendedPace == 'slow' ? 'FOR YOU' : null,
-                  isDark: isDark,
                   delay: 300.ms,
                 ),
                 const SizedBox(height: 12),
@@ -81,9 +79,8 @@ class QuizProgressionConstraints extends StatelessWidget {
                   title: 'Balanced',
                   description: 'Steady progress with manageable challenge',
                   icon: Icons.trending_up,
-                  recommended: true, // Medium is always recommended
+                  recommended: true,
                   badgeLabel: 'Recommended',
-                  isDark: isDark,
                   delay: 400.ms,
                 ),
                 const SizedBox(height: 12),
@@ -95,7 +92,6 @@ class QuizProgressionConstraints extends StatelessWidget {
                   icon: Icons.rocket_launch,
                   recommended: _recommendedPace == 'fast',
                   badgeLabel: _recommendedPace == 'fast' ? 'FOR YOU' : null,
-                  isDark: isDark,
                   delay: 500.ms,
                 ),
 
@@ -116,129 +112,124 @@ class QuizProgressionConstraints extends StatelessWidget {
     required IconData icon,
     bool recommended = false,
     String? badgeLabel,
-    required bool isDark,
     required Duration delay,
   }) {
     final isSelected = selectedPace == id;
-    final textPrimary = isDark ? Colors.white : const Color(0xFF0A0A0A);
-    final textSecondary = isDark ? const Color(0xFFD4D4D8) : const Color(0xFF52525B);
+    final textSecondary = Colors.white.withValues(alpha: 0.7);
 
     return GestureDetector(
       onTap: () {
         HapticFeedback.selectionClick();
         onPaceChanged(id);
       },
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          gradient: isSelected
-              ? const LinearGradient(
-                  colors: [Color(0xFFFF6B35), Color(0xFFE85A24)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                )
-              : null,
-          color: isSelected
-              ? null
-              : (isDark ? AppColors.glassSurface : AppColorsLight.glassSurface),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: isSelected
-                ? AppColors.orange
-                : (isDark ? AppColors.glassBorder : AppColorsLight.cardBorder),
-            width: isSelected ? 2.5 : 1,
-          ),
-          boxShadow: isSelected
-              ? [
-                  BoxShadow(
-                    color: AppColors.orange.withValues(alpha: 0.4),
-                    blurRadius: 12,
-                    spreadRadius: 1,
-                    offset: const Offset(0, 4),
-                  ),
-                ]
-              : null,
-        ),
-        child: Row(
-          children: [
-            // Icon
-            Container(
-              width: 48,
-              height: 48,
-              decoration: BoxDecoration(
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(16),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              gradient: isSelected
+                  ? LinearGradient(
+                      colors: [
+                        Colors.white.withValues(alpha: 0.28),
+                        Colors.white.withValues(alpha: 0.16),
+                      ],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    )
+                  : null,
+              color: isSelected ? null : Colors.white.withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
                 color: isSelected
-                    ? AppColors.orange.withValues(alpha: 0.2)
-                    : (isDark ? AppColors.glassSurface : AppColorsLight.glassSurface),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Icon(
-                icon,
-                color: isSelected ? Colors.white : textSecondary,
-                size: 24,
+                    ? Colors.white.withValues(alpha: 0.5)
+                    : Colors.white.withValues(alpha: 0.15),
+                width: isSelected ? 2.5 : 1,
               ),
             ),
-            const SizedBox(width: 16),
-            // Text content
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
+            child: Row(
+              children: [
+                // Icon
+                Container(
+                  width: 48,
+                  height: 48,
+                  decoration: BoxDecoration(
+                    color: isSelected
+                        ? Colors.white.withValues(alpha: 0.2)
+                        : Colors.white.withValues(alpha: 0.08),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(
+                    icon,
+                    color: isSelected ? Colors.white : textSecondary,
+                    size: 24,
+                  ),
+                ),
+                const SizedBox(width: 16),
+                // Text content
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        title,
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          color: isSelected ? Colors.white : textPrimary,
-                        ),
-                      ),
-                      if (recommended && badgeLabel != null) ...[
-                        const SizedBox(width: 8),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: isSelected
-                                ? Colors.white.withValues(alpha: 0.25)
-                                : AppColors.orange.withValues(alpha: 0.15),
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: Text(
-                            badgeLabel,
+                      Row(
+                        children: [
+                          Text(
+                            title,
                             style: TextStyle(
-                              fontSize: 10,
-                              fontWeight: FontWeight.w700,
-                              color: isSelected ? Colors.white : AppColors.orange,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                              color: isSelected ? Colors.white : Colors.white.withValues(alpha: 0.9),
                             ),
                           ),
+                          if (recommended && badgeLabel != null) ...[
+                            const SizedBox(width: 8),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withValues(alpha: 0.2),
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: Text(
+                                badgeLabel,
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w700,
+                                  color: Colors.white.withValues(alpha: 0.9),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        description,
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: isSelected
+                              ? Colors.white.withValues(alpha: 0.9)
+                              : textSecondary,
                         ),
-                      ],
+                      ),
                     ],
                   ),
-                  const SizedBox(height: 4),
-                  Text(
-                    description,
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: isSelected ? Colors.white.withOpacity(0.9) : textSecondary,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            // Checkmark
-            if (isSelected)
-              Container(
-                width: 28,
-                height: 28,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: Colors.white,
                 ),
-                child: Icon(Icons.check, size: 20, color: AppColors.orange, weight: 700),
-              ),
-          ],
+                // Checkmark
+                if (isSelected)
+                  Container(
+                    width: 28,
+                    height: 28,
+                    decoration: const BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Colors.white,
+                    ),
+                    child: const Icon(Icons.check, size: 20, color: Color(0xFF0D9488), weight: 700),
+                  ),
+              ],
+            ),
+          ),
         ),
       ),
     ).animate().fadeIn(delay: delay).slideX(begin: -0.05);

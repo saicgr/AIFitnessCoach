@@ -39,24 +39,25 @@ class PlanPreviewScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final textPrimary = isDark ? Colors.white : const Color(0xFF0A0A0A);
-    final textSecondary = isDark ? const Color(0xFFD4D4D8) : const Color(0xFF52525B);
+    final textPrimary = Colors.white;
+    final textSecondary = Colors.white.withValues(alpha: 0.7);
+
+    // Glassmorphic gradient matching the quiz flow
+    final gradient = isDark
+        ? const LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [Color(0xFF0A1628), Color(0xFF0D2137), Color(0xFF061220)],
+          )
+        : const LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [Color(0xFF1A6B5A), Color(0xFF2D9E8A), Color(0xFF1A6B5A)],
+          );
 
     return Scaffold(
       body: Container(
-        decoration: BoxDecoration(
-          gradient: isDark
-              ? const LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [Color(0xFF0A1628), AppColors.pureBlack],
-                )
-              : const LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [Colors.white, Color(0xFFF8F9FA)],
-                ),
-        ),
+        decoration: BoxDecoration(gradient: gradient),
         child: SafeArea(
           child: FoldableQuizScaffold(
             headerTitle: 'Your Personalized Plan',
@@ -278,10 +279,10 @@ class PlanPreviewScreen extends ConsumerWidget {
     return Container(
       padding: const EdgeInsets.all(16),  // ← REDUCED from 20 to 16
       decoration: BoxDecoration(
-        color: isDark ? AppColors.glassSurface : AppColorsLight.glassSurface,
+        color: Colors.white.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: isDark ? AppColors.glassBorder : AppColorsLight.cardBorder,
+          color: Colors.white.withValues(alpha: 0.15),
           width: 1,
         ),
       ),
@@ -395,10 +396,10 @@ class PlanPreviewScreen extends ConsumerWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: isDark ? AppColors.glassSurface : AppColorsLight.glassSurface,
+        color: Colors.white.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: isDark ? AppColors.glassBorder : AppColorsLight.cardBorder,
+          color: Colors.white.withValues(alpha: 0.15),
           width: 1,
         ),
       ),

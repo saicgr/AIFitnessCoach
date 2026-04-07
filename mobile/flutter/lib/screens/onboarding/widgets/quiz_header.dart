@@ -4,13 +4,12 @@ import 'dart:ui';
 import '../../../widgets/glass_back_button.dart';
 
 /// Floating header for quiz screens with glassmorphic back button and question counter.
-/// Positioned absolutely over content with blur effect for modern look.
+/// Always uses white/glass styling for gradient backgrounds.
 class QuizHeader extends StatelessWidget {
   final int currentQuestion;
   final int totalQuestions;
   final bool canGoBack;
   final VoidCallback onBack;
-  /// Optional callback for first question to go back to welcome screen
   final VoidCallback? onBackToWelcome;
 
   const QuizHeader({
@@ -22,34 +21,24 @@ class QuizHeader extends StatelessWidget {
     this.onBackToWelcome,
   });
 
-  /// Calculate phase-aware progress text based on current question
   String _getProgressText() {
-    // Phase 1: Show normal step count (Screens 0-5)
     if (currentQuestion <= 5) {
-      return 'Step ${currentQuestion + 1} of 6';  // Always show "of 6" for Phase 1
+      return 'Step ${currentQuestion + 1} of 6';
+    } else if (currentQuestion >= 6 && currentQuestion <= 9) {
+      return 'Personalize your plan';
+    } else if (currentQuestion >= 10) {
+      return 'Nutrition setup';
     }
-    // Phase 2: Optional personalization (Screens 6-9)
-    else if (currentQuestion >= 6 && currentQuestion <= 9) {
-      return 'Personalize your plan';  // User-selected: Action-oriented, positive
-    }
-    // Phase 3: Nutrition (Screens 10-11)
-    else if (currentQuestion >= 10) {
-      return 'Nutrition setup';  // Simple, descriptive
-    }
-    // Fallback (shouldn't happen)
     return 'Step ${currentQuestion + 1} of $totalQuestions';
   }
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
     return Padding(
       padding: const EdgeInsets.all(16),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          // Floating back button
           if (canGoBack || onBackToWelcome != null)
             GlassBackButton(
               onTap: () {
@@ -60,57 +49,34 @@ class QuizHeader extends StatelessWidget {
           else
             const SizedBox(width: 44),
 
-          // Floating question counter with phase-aware text
-          _FloatingCounter(
-            isDark: isDark,
-            text: _getProgressText(),
+          // Glassmorphic counter pill — always white-on-glass
+          ClipRRect(
+            borderRadius: BorderRadius.circular(17),
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(17),
+                  border: Border.all(
+                    color: Colors.white.withValues(alpha: 0.25),
+                    width: 0.5,
+                  ),
+                ),
+                child: Text(
+                  _getProgressText(),
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: 0.3,
+                  ),
+                ),
+              ),
+            ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-/// Glassmorphic floating counter pill
-class _FloatingCounter extends StatelessWidget {
-  final bool isDark;
-  final String text;
-
-  const _FloatingCounter({
-    required this.isDark,
-    required this.text,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(17),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-          decoration: BoxDecoration(
-            color: isDark
-                ? Colors.white.withValues(alpha: 0.12)
-                : Colors.black.withValues(alpha: 0.06),
-            borderRadius: BorderRadius.circular(17),
-            border: Border.all(
-              color: isDark
-                  ? Colors.white.withValues(alpha: 0.15)
-                  : Colors.black.withValues(alpha: 0.08),
-              width: 0.5,
-            ),
-          ),
-          child: Text(
-            text,
-            style: TextStyle(
-              color: isDark ? Colors.white : Colors.black87,
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-              letterSpacing: 0.3,
-            ),
-          ),
-        ),
       ),
     );
   }

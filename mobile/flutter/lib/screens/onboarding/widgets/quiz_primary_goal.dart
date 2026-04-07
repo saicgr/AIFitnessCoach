@@ -1,10 +1,10 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../widgets/glass_sheet.dart';
 
-/// Primary goal selection widget for quiz screens.
-/// Single-select card-based UI with descriptions visible.
+/// Glassmorphic primary goal selection widget for quiz screens.
 class QuizPrimaryGoal extends StatelessWidget {
   final String question;
   final String subtitle;
@@ -23,147 +23,83 @@ class QuizPrimaryGoal extends StatelessWidget {
     this.showHeader = true,
   });
 
-  /// Builds the info button widget that opens the training focus info sheet.
-  /// Static so parent layouts (e.g. foldable scaffold) can place it near the title.
   static Widget buildInfoButton(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final textPrimary = isDark ? Colors.white : const Color(0xFF0A0A0A);
-    final textSecondary = isDark ? const Color(0xFFD4D4D8) : const Color(0xFF52525B);
     return GestureDetector(
       onTap: () {
         HapticFeedback.lightImpact();
-        _showInfoSheet(context, isDark, textPrimary, textSecondary);
+        _showInfoSheet(context);
       },
       child: Container(
         padding: const EdgeInsets.all(6),
         decoration: BoxDecoration(
-          color: AppColors.orange.withValues(alpha: 0.1),
+          color: Colors.white.withValues(alpha: 0.15),
           shape: BoxShape.circle,
         ),
-        child: Icon(
+        child: const Icon(
           Icons.info_outline,
           size: 20,
-          color: AppColors.orange,
+          color: Colors.white,
         ),
       ),
     );
   }
 
-  static void _showInfoSheet(BuildContext context, bool isDark, Color textPrimary, Color textSecondary) {
-    final cardBg = isDark ? AppColors.elevated : Colors.white;
-
+  static void _showInfoSheet(BuildContext context) {
     showGlassSheet(
       context: context,
       builder: (context) => GlassSheet(
         child: Padding(
           padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Header
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: AppColors.orange.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Icon(
-                    Icons.auto_awesome,
-                    color: AppColors.orange,
-                    size: 24,
-                  ),
-                ),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: Text(
-                    'How AI Uses This',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: textPrimary,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: AppColors.orange.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(12),
                     ),
+                    child: Icon(Icons.auto_awesome, color: AppColors.orange, size: 24),
                   ),
-                ),
-                GestureDetector(
-                  onTap: () => Navigator.pop(context),
-                  child: Icon(
-                    Icons.close,
-                    color: textSecondary,
-                    size: 24,
+                  const SizedBox(width: 14),
+                  const Expanded(
+                    child: Text('How AI Uses This', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white)),
                   ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 20),
-
-            // Explanation sections
-            _buildInfoSection(
-              icon: Icons.fitness_center,
-              title: 'Rep Ranges',
-              description: 'Sets the number of reps per exercise. Hypertrophy uses 8-12 reps, Strength uses 3-6, Endurance uses 12+.',
-              textPrimary: textPrimary,
-              textSecondary: textSecondary,
-              isDark: isDark,
-            ),
-            const SizedBox(height: 16),
-            _buildInfoSection(
-              icon: Icons.speed,
-              title: 'Workout Intensity',
-              description: 'Adjusts rest periods, exercise difficulty, and overall workout volume based on your focus.',
-              textPrimary: textPrimary,
-              textSecondary: textSecondary,
-              isDark: isDark,
-            ),
-            const SizedBox(height: 16),
-            _buildInfoSection(
-              icon: Icons.list_alt,
-              title: 'Exercise Selection',
-              description: 'AI picks exercises that best match your goal—compound lifts for strength, isolation moves for hypertrophy.',
-              textPrimary: textPrimary,
-              textSecondary: textSecondary,
-              isDark: isDark,
-            ),
-            const SizedBox(height: 16),
-            _buildInfoSection(
-              icon: Icons.refresh,
-              title: 'Can Change Anytime',
-              description: 'You can update your training focus in Settings whenever your goals evolve.',
-              textPrimary: textPrimary,
-              textSecondary: textSecondary,
-              isDark: isDark,
-            ),
-
-            const SizedBox(height: 24),
-
-            // Got it button
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: () => Navigator.pop(context),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.orange,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+                  GestureDetector(
+                    onTap: () => Navigator.pop(context),
+                    child: Icon(Icons.close, color: Colors.white.withValues(alpha: 0.6), size: 24),
                   ),
-                  elevation: 0,
-                ),
-                child: const Text(
-                  'Got it',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
+                ],
+              ),
+              const SizedBox(height: 20),
+              _buildInfoSection(icon: Icons.fitness_center, title: 'Rep Ranges', description: 'Sets the number of reps per exercise. Hypertrophy uses 8-12 reps, Strength uses 3-6, Endurance uses 12+.'),
+              const SizedBox(height: 16),
+              _buildInfoSection(icon: Icons.speed, title: 'Workout Intensity', description: 'Adjusts rest periods, exercise difficulty, and overall workout volume based on your focus.'),
+              const SizedBox(height: 16),
+              _buildInfoSection(icon: Icons.list_alt, title: 'Exercise Selection', description: 'AI picks exercises that best match your goal—compound lifts for strength, isolation moves for hypertrophy.'),
+              const SizedBox(height: 16),
+              _buildInfoSection(icon: Icons.refresh, title: 'Can Change Anytime', description: 'You can update your training focus in Settings whenever your goals evolve.'),
+              const SizedBox(height: 24),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () => Navigator.pop(context),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.orange,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    elevation: 0,
                   ),
+                  child: const Text('Got it', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
-      ),
       ),
     );
   }
@@ -172,9 +108,6 @@ class QuizPrimaryGoal extends StatelessWidget {
     required IconData icon,
     required String title,
     required String description,
-    required Color textPrimary,
-    required Color textSecondary,
-    required bool isDark,
   }) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -182,39 +115,19 @@ class QuizPrimaryGoal extends StatelessWidget {
         Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: isDark
-                ? Colors.white.withValues(alpha: 0.1)
-                : Colors.grey.withValues(alpha: 0.1),
+            color: Colors.white.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(8),
           ),
-          child: Icon(
-            icon,
-            size: 18,
-            color: textSecondary,
-          ),
+          child: Icon(icon, size: 18, color: Colors.white.withValues(alpha: 0.7)),
         ),
         const SizedBox(width: 12),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                title,
-                style: TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w600,
-                  color: textPrimary,
-                ),
-              ),
+              Text(title, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: Colors.white)),
               const SizedBox(height: 4),
-              Text(
-                description,
-                style: TextStyle(
-                  fontSize: 13,
-                  color: textSecondary,
-                  height: 1.4,
-                ),
-              ),
+              Text(description, style: TextStyle(fontSize: 13, color: Colors.white.withValues(alpha: 0.6), height: 1.4)),
             ],
           ),
         ),
@@ -224,11 +137,6 @@ class QuizPrimaryGoal extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    // Use stronger, more visible colors with proper contrast
-    final textPrimary = isDark ? Colors.white : const Color(0xFF0A0A0A);
-    final textSecondary = isDark ? const Color(0xFFD4D4D8) : const Color(0xFF52525B);
-
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24),
       child: Column(
@@ -241,10 +149,10 @@ class QuizPrimaryGoal extends StatelessWidget {
                 Expanded(
                   child: Text(
                     question,
-                    style: TextStyle(
+                    style: const TextStyle(
                       fontSize: 26,
                       fontWeight: FontWeight.w700,
-                      color: textPrimary,
+                      color: Colors.white,
                       height: 1.3,
                       letterSpacing: -0.5,
                     ),
@@ -259,7 +167,7 @@ class QuizPrimaryGoal extends StatelessWidget {
               subtitle,
               style: TextStyle(
                 fontSize: 15,
-                color: textSecondary,
+                color: Colors.white.withValues(alpha: 0.7),
                 fontWeight: FontWeight.w500,
               ),
             ),
@@ -274,7 +182,7 @@ class QuizPrimaryGoal extends StatelessWidget {
                 final id = option['id'] as String;
                 final isSelected = selectedValue == id;
 
-                return _PrimaryGoalCard(
+                return _GlassPrimaryGoalCard(
                   option: option,
                   isSelected: isSelected,
                   onTap: () {
@@ -282,9 +190,6 @@ class QuizPrimaryGoal extends StatelessWidget {
                     onSelect(id);
                   },
                   index: index,
-                  isDark: isDark,
-                  textPrimary: textPrimary,
-                  textSecondary: textSecondary,
                 );
               },
             ),
@@ -295,154 +200,155 @@ class QuizPrimaryGoal extends StatelessWidget {
   }
 }
 
-class _PrimaryGoalCard extends StatelessWidget {
+class _GlassPrimaryGoalCard extends StatelessWidget {
   final Map<String, dynamic> option;
   final bool isSelected;
   final VoidCallback onTap;
   final int index;
-  final bool isDark;
-  final Color textPrimary;
-  final Color textSecondary;
 
-  const _PrimaryGoalCard({
+  const _GlassPrimaryGoalCard({
     required this.option,
     required this.isSelected,
     required this.onTap,
     required this.index,
-    required this.isDark,
-    required this.textPrimary,
-    required this.textSecondary,
   });
 
   @override
   Widget build(BuildContext context) {
-    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
-    final color = option['color'] as Color? ?? AppColors.orange; // Use orange accent
-    final accentColor = AppColors.orange; // Primary accent color
+    final color = option['color'] as Color? ?? AppColors.orange;
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: GestureDetector(
         onTap: onTap,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          padding: const EdgeInsets.all(18),
-          decoration: BoxDecoration(
-            gradient: isSelected
-                ? LinearGradient(
-                    colors: [accentColor, accentColor.withOpacity(0.8)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  )
-                : null,
-            color: isSelected
-                ? null
-                : (isDark ? AppColors.glassSurface : AppColorsLight.glassSurface),
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: isSelected ? accentColor : cardBorder,
-              width: isSelected ? 3.0 : 1,  // ← INCREASED from 2.5 to 3.0 for more obvious selection
-            ),
-            boxShadow: isSelected
-                ? [
-                    BoxShadow(
-                      color: accentColor.withOpacity(0.5),  // ← INCREASED from 0.4 to 0.5
-                      blurRadius: 16,  // ← INCREASED from 12 to 16
-                      spreadRadius: 2,  // ← ADDED spreadRadius for more presence
-                      offset: const Offset(0, 4),  // ← Subtle lift
-                    ),
-                  ]
-                : null,
-          ),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                width: 52,
-                height: 52,
-                decoration: BoxDecoration(
-                  gradient: isSelected
-                      ? LinearGradient(
-                          colors: [
-                            Colors.white.withValues(alpha: 0.25),
-                            Colors.white.withValues(alpha: 0.15),
-                          ],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                        )
-                      : LinearGradient(
-                          colors: [
-                            color.withValues(alpha: 0.25),
-                            color.withValues(alpha: 0.15),
-                          ],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                        ),
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(
-                    color: isSelected
-                        ? Colors.white.withValues(alpha: 0.3)
-                        : color.withValues(alpha: 0.3),
-                    width: 1.5,
-                  ),
-                ),
-                child: Icon(
-                  option['icon'] as IconData,
-                  color: isSelected ? Colors.white : color,
-                  size: 28,
-                ),
-              ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      option['label'] as String,
-                      style: TextStyle(
-                        fontSize: 17,
-                        fontWeight: FontWeight.w600,
-                        color: isSelected ? Colors.white : (isDark ? Colors.white : const Color(0xFF0A0A0A)),
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      option['description'] as String,
-                      style: TextStyle(
-                        fontSize: 13,  // ← REDUCED from 14 for tighter spacing
-                        fontWeight: FontWeight.w500,  // ← INCREASED from w400 for clarity
-                        color: isSelected
-                            ? Colors.white.withOpacity(0.9)
-                            : (isDark ? const Color(0xFFD4D4D8) : const Color(0xFF52525B)),
-                        height: 1.4,
-                        letterSpacing: 0.2,  // ← ADDED for readability
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 8),
-              Container(
-                width: 28,  // ← INCREASED from 24 for more prominent checkmark
-                height: 28,  // ← INCREASED from 24
-                margin: const EdgeInsets.only(top: 2),
-                decoration: BoxDecoration(
-                  color: isSelected ? Colors.white : Colors.transparent,  // ← Solid white when selected
-                  shape: BoxShape.circle,
-                  border: isSelected
-                      ? null
-                      : Border.all(color: cardBorder, width: 2),
-                ),
-                child: isSelected
-                    ? Icon(
-                        Icons.check,
-                        color: accentColor,  // ← Orange checkmark on white background
-                        size: 20,  // ← INCREASED from 16
-                        weight: 700,  // ← ADDED bold weight
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(16),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              padding: const EdgeInsets.all(18),
+              decoration: BoxDecoration(
+                gradient: isSelected
+                    ? LinearGradient(
+                        colors: [
+                          Colors.white.withValues(alpha: 0.30),
+                          Colors.white.withValues(alpha: 0.18),
+                        ],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
                       )
+                    : LinearGradient(
+                        colors: [
+                          Colors.white.withValues(alpha: 0.10),
+                          Colors.white.withValues(alpha: 0.06),
+                        ],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: isSelected
+                      ? Colors.white.withValues(alpha: 0.5)
+                      : Colors.white.withValues(alpha: 0.15),
+                  width: isSelected ? 2.0 : 1,
+                ),
+                boxShadow: isSelected
+                    ? [
+                        BoxShadow(
+                          color: Colors.white.withValues(alpha: 0.1),
+                          blurRadius: 16,
+                          spreadRadius: 2,
+                          offset: const Offset(0, 4),
+                        ),
+                      ]
                     : null,
               ),
-            ],
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    width: 52,
+                    height: 52,
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: isSelected
+                            ? [
+                                Colors.white.withValues(alpha: 0.3),
+                                Colors.white.withValues(alpha: 0.15),
+                              ]
+                            : [
+                                color.withValues(alpha: 0.3),
+                                color.withValues(alpha: 0.15),
+                              ],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(
+                        color: isSelected
+                            ? Colors.white.withValues(alpha: 0.4)
+                            : color.withValues(alpha: 0.4),
+                        width: 1.5,
+                      ),
+                    ),
+                    child: Icon(
+                      option['icon'] as IconData,
+                      color: isSelected ? Colors.white : color,
+                      size: 28,
+                    ),
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          option['label'] as String,
+                          style: const TextStyle(
+                            fontSize: 17,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white,
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          option['description'] as String,
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w500,
+                            color: Colors.white.withValues(alpha: 0.7),
+                            height: 1.4,
+                            letterSpacing: 0.2,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Container(
+                    width: 28,
+                    height: 28,
+                    margin: const EdgeInsets.only(top: 2),
+                    decoration: BoxDecoration(
+                      color: isSelected
+                          ? Colors.white.withValues(alpha: 0.3)
+                          : Colors.transparent,
+                      shape: BoxShape.circle,
+                      border: isSelected
+                          ? null
+                          : Border.all(
+                              color: Colors.white.withValues(alpha: 0.3),
+                              width: 2,
+                            ),
+                    ),
+                    child: isSelected
+                        ? const Icon(Icons.check, color: Colors.white, size: 20, weight: 700)
+                        : null,
+                  ),
+                ],
+              ),
+            ),
           ),
         ),
       ),

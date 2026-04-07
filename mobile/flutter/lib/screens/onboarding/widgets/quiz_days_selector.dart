@@ -1,7 +1,8 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import '../../../core/constants/app_colors.dart';
 
 /// Callback for duration range selection (min, max)
 typedef DurationRangeCallback = void Function(int min, int max);
@@ -49,10 +50,8 @@ class QuizDaysSelector extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    // Use stronger, more visible colors with proper contrast
-    final textPrimary = isDark ? Colors.white : const Color(0xFF0A0A0A);
-    final textSecondary = isDark ? const Color(0xFFD4D4D8) : const Color(0xFF52525B);
+    const textPrimary = Colors.white;
+    final textSecondary = Colors.white.withValues(alpha: 0.7);
 
     final requiredDays = selectedDays ?? 0;
     final selectedCount = selectedWorkoutDays.length;
@@ -69,16 +68,16 @@ class QuizDaysSelector extends StatelessWidget {
               _buildSubtitle(textSecondary),
               const SizedBox(height: 16),
             ],
-            _buildDaysPerWeekSelector(isDark, textPrimary, textSecondary),
+            _buildDaysPerWeekSelector(textPrimary, textSecondary),
             const SizedBox(height: 20),
             if (selectedDays != null) ...[
-              _buildWhichDaysSection(isDark, textPrimary, textSecondary, requiredDays, selectedCount),
+              _buildWhichDaysSection(textPrimary, textSecondary, requiredDays, selectedCount),
             ],
 
             // Workout Duration Section (only show if callback is provided)
             if (onDurationChanged != null) ...[
               const SizedBox(height: 20),
-              _buildDurationSection(isDark, textPrimary, textSecondary),
+              _buildDurationSection(textPrimary, textSecondary),
             ],
           ],
         ),
@@ -86,9 +85,7 @@ class QuizDaysSelector extends StatelessWidget {
     );
   }
 
-  Widget _buildDurationSection(bool isDark, Color textPrimary, Color textSecondary) {
-    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
-
+  Widget _buildDurationSection(Color textPrimary, Color textSecondary) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -131,57 +128,66 @@ class QuizDaysSelector extends StatelessWidget {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      AnimatedContainer(
-                        duration: const Duration(milliseconds: 200),
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        decoration: BoxDecoration(
-                          gradient: isSelected
-                      ? LinearGradient(
-                          colors: [AppColors.orange, AppColors.orange.withOpacity(0.8)],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                        )
-                      : null,
-                          color: isSelected
-                              ? null
-                              : (isDark ? AppColors.glassSurface : AppColorsLight.glassSurface),
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(
-                            color: isSelected
-                                ? AppColors.orange
-                                : isRecommended
-                                    ? AppColors.orange.withValues(alpha: 0.4)
-                                    : cardBorder,
-                            width: isSelected ? 2 : 1,
-                          ),
-                          boxShadow: isSelected
-                              ? [
-                                  BoxShadow(
-                                    color: AppColors.accent.withValues(alpha: 0.3),
-                                    blurRadius: 6,
-                                    spreadRadius: 0,
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(12),
+                        child: BackdropFilter(
+                          filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 200),
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            decoration: BoxDecoration(
+                              gradient: isSelected
+                                  ? LinearGradient(
+                                      colors: [
+                                        Colors.white.withValues(alpha: 0.28),
+                                        Colors.white.withValues(alpha: 0.16),
+                                      ],
+                                      begin: Alignment.topLeft,
+                                      end: Alignment.bottomRight,
+                                    )
+                                  : null,
+                              color: isSelected
+                                  ? null
+                                  : Colors.white.withValues(alpha: 0.08),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: isSelected
+                                    ? Colors.white.withValues(alpha: 0.5)
+                                    : isRecommended
+                                        ? Colors.white.withValues(alpha: 0.3)
+                                        : Colors.white.withValues(alpha: 0.15),
+                                width: isSelected ? 2 : 1,
+                              ),
+                              boxShadow: isSelected
+                                  ? [
+                                      BoxShadow(
+                                        color: Colors.white.withValues(alpha: 0.15),
+                                        blurRadius: 6,
+                                        spreadRadius: 0,
+                                      ),
+                                    ]
+                                  : null,
+                            ),
+                            child: Column(
+                              children: [
+                                Text(
+                                  option['label'] as String,
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                    color: isSelected ? Colors.white : textPrimary,
                                   ),
-                                ]
-                              : null,
-                        ),
-                        child: Column(
-                          children: [
-                            Text(
-                              option['label'] as String,
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                                color: isSelected ? Colors.white : textPrimary,
-                              ),
+                                ),
+                                Text(
+                                  'min',
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    color: isSelected ? Colors.white70 : textSecondary,
+                                  ),
+                                ),
+                              ],
                             ),
-                            Text(
-                              'min',
-                              style: TextStyle(
-                                fontSize: 10,
-                                color: isSelected ? Colors.white70 : textSecondary,
-                              ),
-                            ),
-                          ],
+                          ),
                         ),
                       ),
                       if (isRecommended) ...[
@@ -189,7 +195,7 @@ class QuizDaysSelector extends StatelessWidget {
                         Icon(
                           Icons.star_rounded,
                           size: 14,
-                          color: AppColors.orange.withValues(alpha: 0.8),
+                          color: Colors.white.withValues(alpha: 0.7),
                         ),
                       ],
                     ],
@@ -203,27 +209,33 @@ class QuizDaysSelector extends StatelessWidget {
         // Duration hint
         if (workoutDurationMax != null)
           Center(
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-              decoration: BoxDecoration(
-                color: AppColors.accent.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: AppColors.accent.withValues(alpha: 0.3)),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.timer_outlined, size: 16, color: AppColors.accent),
-                  const SizedBox(width: 6),
-                  Text(
-                    _getDurationHint(workoutDurationMax!),
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: textPrimary,
-                      fontWeight: FontWeight.w500,
-                    ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(16),
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: Colors.white.withValues(alpha: 0.25)),
                   ),
-                ],
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.timer_outlined, size: 16, color: Colors.white.withValues(alpha: 0.9)),
+                      const SizedBox(width: 6),
+                      Text(
+                        _getDurationHint(workoutDurationMax!),
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: textPrimary,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ),
             ),
           ).animate().fadeIn(delay: 400.ms),
@@ -267,9 +279,7 @@ class QuizDaysSelector extends StatelessWidget {
     ).animate().fadeIn(delay: 200.ms);
   }
 
-  Widget _buildDaysPerWeekSelector(bool isDark, Color textPrimary, Color textSecondary) {
-    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
-
+  Widget _buildDaysPerWeekSelector(Color textPrimary, Color textSecondary) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: List.generate(7, (index) {
@@ -285,55 +295,66 @@ class QuizDaysSelector extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                width: 44,
-                height: 64,
-                decoration: BoxDecoration(
-                  gradient: isSelected
-                      ? LinearGradient(
-                          colors: [AppColors.orange, AppColors.orange.withOpacity(0.8)],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                        )
-                      : null,
-                  color: isSelected
-                      ? null
-                      : (isDark ? AppColors.glassSurface : AppColorsLight.glassSurface),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: isSelected ? AppColors.orange : cardBorder,
-                    width: isSelected ? 2 : 1,
-                  ),
-                  boxShadow: isSelected
-                      ? [
-                          BoxShadow(
-                            color: AppColors.accent.withOpacity(0.3),
-                            blurRadius: 8,
-                            spreadRadius: 0,
+              ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    width: 44,
+                    height: 64,
+                    decoration: BoxDecoration(
+                      gradient: isSelected
+                          ? LinearGradient(
+                              colors: [
+                                Colors.white.withValues(alpha: 0.28),
+                                Colors.white.withValues(alpha: 0.16),
+                              ],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            )
+                          : null,
+                      color: isSelected
+                          ? null
+                          : Colors.white.withValues(alpha: 0.08),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: isSelected
+                            ? Colors.white.withValues(alpha: 0.5)
+                            : Colors.white.withValues(alpha: 0.15),
+                        width: isSelected ? 2 : 1,
+                      ),
+                      boxShadow: isSelected
+                          ? [
+                              BoxShadow(
+                                color: Colors.white.withValues(alpha: 0.15),
+                                blurRadius: 8,
+                                spreadRadius: 0,
+                              ),
+                            ]
+                          : null,
+                    ),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          '$day',
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            color: isSelected ? Colors.white : textPrimary,
                           ),
-                        ]
-                      : null,
-                ),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      '$day',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: isSelected ? Colors.white : textPrimary,
-                      ),
+                        ),
+                        Text(
+                          day == 1 ? 'day' : 'days',
+                          style: TextStyle(
+                            fontSize: 10,
+                            color: isSelected ? Colors.white70 : textSecondary,
+                          ),
+                        ),
+                      ],
                     ),
-                    Text(
-                      day == 1 ? 'day' : 'days',
-                      style: TextStyle(
-                        fontSize: 10,
-                        color: isSelected ? Colors.white70 : textSecondary,
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
               ),
               if (isRecommended) ...[
@@ -341,7 +362,7 @@ class QuizDaysSelector extends StatelessWidget {
                 Icon(
                   Icons.star_rounded,
                   size: 12,
-                  color: AppColors.orange.withValues(alpha: 0.7),
+                  color: Colors.white.withValues(alpha: 0.7),
                 ),
               ] else ...[
                 const SizedBox(height: 16),
@@ -354,14 +375,11 @@ class QuizDaysSelector extends StatelessWidget {
   }
 
   Widget _buildWhichDaysSection(
-    bool isDark,
     Color textPrimary,
     Color textSecondary,
     int requiredDays,
     int selectedCount,
   ) {
-    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -396,141 +414,154 @@ class QuizDaysSelector extends StatelessWidget {
                       HapticFeedback.selectionClick();
                       onWorkoutDayToggled(index);
                     },
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                width: 42,
-                height: 58,
-                decoration: BoxDecoration(
-                  gradient: isSelected
-                  ? LinearGradient(
-                      colors: [AppColors.orange, AppColors.orange.withOpacity(0.8)],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    )
-                  : null,
-                  color: isSelected
-                      ? null
-                      : isDisabled
-                          ? (isDark
-                              ? Colors.white.withValues(alpha: 0.05)
-                              : Colors.black.withValues(alpha: 0.05))
-                          : (isDark ? AppColors.glassSurface : AppColorsLight.glassSurface),
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(
-                    color: isSelected
-                        ? AppColors.accent
-                        : isDisabled
-                            ? Colors.transparent
-                            : cardBorder,
-                    width: isSelected ? 2 : 1,
-                  ),
-                  boxShadow: isSelected
-                      ? [
-                          BoxShadow(
-                            color: AppColors.accent.withValues(alpha: 0.3),
-                            blurRadius: 6,
-                            spreadRadius: 0,
-                          ),
-                        ]
-                      : null,
-                ),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      day['short'] as String,
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(10),
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    width: 42,
+                    height: 58,
+                    decoration: BoxDecoration(
+                      gradient: isSelected
+                          ? LinearGradient(
+                              colors: [
+                                Colors.white.withValues(alpha: 0.28),
+                                Colors.white.withValues(alpha: 0.16),
+                              ],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            )
+                          : null,
+                      color: isSelected
+                          ? null
+                          : isDisabled
+                              ? Colors.white.withValues(alpha: 0.03)
+                              : Colors.white.withValues(alpha: 0.08),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(
                         color: isSelected
-                            ? Colors.white
+                            ? Colors.white.withValues(alpha: 0.5)
                             : isDisabled
-                                ? textSecondary.withValues(alpha: 0.5)
-                                : textPrimary,
+                                ? Colors.transparent
+                                : Colors.white.withValues(alpha: 0.15),
+                        width: isSelected ? 2 : 1,
                       ),
+                      boxShadow: isSelected
+                          ? [
+                              BoxShadow(
+                                color: Colors.white.withValues(alpha: 0.15),
+                                blurRadius: 6,
+                                spreadRadius: 0,
+                              ),
+                            ]
+                          : null,
                     ),
-                    if (isSelected) ...[
-                      const SizedBox(height: 3),
-                      Container(
-                        width: 5,
-                        height: 5,
-                        decoration: const BoxDecoration(
-                          color: Colors.white,
-                          shape: BoxShape.circle,
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          day['short'] as String,
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                            color: isSelected
+                                ? Colors.white
+                                : isDisabled
+                                    ? Colors.white.withValues(alpha: 0.3)
+                                    : textPrimary,
+                          ),
                         ),
-                      ),
-                    ],
-                  ],
+                        if (isSelected) ...[
+                          const SizedBox(height: 3),
+                          Container(
+                            width: 5,
+                            height: 5,
+                            decoration: const BoxDecoration(
+                              color: Colors.white,
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
                 ),
               ),
             ).animate(delay: (200 + (index * 40)).ms).fadeIn().scale(begin: const Offset(0.9, 0.9));
           }).toList(),
         ),
         const SizedBox(height: 12),
-        _buildSelectionCounter(isDark, textPrimary, requiredDays, selectedCount),
+        _buildSelectionCounter(textPrimary, requiredDays, selectedCount),
       ],
     );
   }
 
-  Widget _buildSelectionCounter(bool isDark, Color textPrimary, int requiredDays, int selectedCount) {
+  Widget _buildSelectionCounter(Color textPrimary, int requiredDays, int selectedCount) {
     final isComplete = selectedCount >= requiredDays;
 
     return Center(
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        decoration: BoxDecoration(
-          gradient: isComplete
-              ? LinearGradient(
-                  colors: [
-                    AppColors.success,
-                    AppColors.success.withValues(alpha: 0.8),
-                  ],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                )
-              : LinearGradient(
-                  colors: [
-                    (isDark ? AppColors.orange : AppColorsLight.orange).withValues(alpha: 0.15),
-                    (isDark ? AppColors.orange : AppColorsLight.orange).withValues(alpha: 0.08),
-                  ],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: isComplete
-                ? AppColors.success
-                : (isDark ? AppColors.orange : AppColorsLight.orange).withValues(alpha: 0.3),
-            width: isComplete ? 2 : 1.5,
-          ),
-          boxShadow: isComplete
-              ? [
-                  BoxShadow(
-                    color: AppColors.success.withValues(alpha: 0.3),
-                    blurRadius: 8,
-                    spreadRadius: 0,
-                  ),
-                ]
-              : null,
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              isComplete ? Icons.check_circle_rounded : Icons.calendar_today_rounded,
-              size: 18,
-              color: isComplete ? Colors.white : (isDark ? AppColors.orange : AppColorsLight.orange),
-            ),
-            const SizedBox(width: 8),
-            Text(
-              '$selectedCount / $requiredDays days selected',
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.bold,
-                color: isComplete ? Colors.white : (isDark ? AppColors.orange : AppColorsLight.orange),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(20),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            decoration: BoxDecoration(
+              gradient: isComplete
+                  ? LinearGradient(
+                      colors: [
+                        Colors.white.withValues(alpha: 0.3),
+                        Colors.white.withValues(alpha: 0.18),
+                      ],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    )
+                  : LinearGradient(
+                      colors: [
+                        Colors.white.withValues(alpha: 0.15),
+                        Colors.white.withValues(alpha: 0.08),
+                      ],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                color: isComplete
+                    ? Colors.white.withValues(alpha: 0.6)
+                    : Colors.white.withValues(alpha: 0.25),
+                width: isComplete ? 2 : 1.5,
               ),
+              boxShadow: isComplete
+                  ? [
+                      BoxShadow(
+                        color: Colors.white.withValues(alpha: 0.15),
+                        blurRadius: 8,
+                        spreadRadius: 0,
+                      ),
+                    ]
+                  : null,
             ),
-          ],
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  isComplete ? Icons.check_circle_rounded : Icons.calendar_today_rounded,
+                  size: 18,
+                  color: Colors.white,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  '$selectedCount / $requiredDays days selected',
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     ).animate().fadeIn(delay: 350.ms).scale(begin: const Offset(0.95, 0.95));
@@ -554,17 +585,17 @@ class QuizDaysSelector extends StatelessWidget {
     return Center(
       child: Text(
         summary,
-        style: TextStyle(
+        style: const TextStyle(
           fontSize: 14,
           fontWeight: FontWeight.w600,
-          color: AppColors.orange,
+          color: Colors.white,
         ),
         textAlign: TextAlign.center,
       ),
     ).animate().fadeIn(delay: 300.ms);
   }
 
-  Widget _buildRecommendation(bool isDark, Color textPrimary) {
+  Widget _buildRecommendation(Color textPrimary) {
     String recommendation;
     if (selectedDays! <= 2) {
       recommendation = "Perfect for maintaining fitness. We'll make each session count!";
@@ -576,50 +607,56 @@ class QuizDaysSelector extends StatelessWidget {
 
     return Padding(
       padding: const EdgeInsets.only(top: 20),
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [
-              AppColors.orange.withValues(alpha: 0.15),
-              AppColors.orange.withValues(alpha: 0.08),
-            ],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: AppColors.orange.withValues(alpha: 0.3),
-            width: 1.5,
-          ),
-        ),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: AppColors.orange.withValues(alpha: 0.2),
-                shape: BoxShape.circle,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(16),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+          child: Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  Colors.white.withValues(alpha: 0.15),
+                  Colors.white.withValues(alpha: 0.08),
+                ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
               ),
-              child: const Icon(
-                Icons.lightbulb_rounded,
-                color: AppColors.orange,
-                size: 20,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: Colors.white.withValues(alpha: 0.25),
+                width: 1.5,
               ),
             ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text(
-                recommendation,
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w500,
-                  color: textPrimary,
-                  height: 1.4,
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.15),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.lightbulb_rounded,
+                    color: Colors.white.withValues(alpha: 0.9),
+                    size: 20,
+                  ),
                 ),
-              ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    recommendation,
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
+                      color: textPrimary,
+                      height: 1.4,
+                    ),
+                  ),
+                ),
+              ],
             ),
-          ],
+          ),
         ),
       ).animate().fadeIn(delay: 100.ms).slideY(begin: 0.1),
     );

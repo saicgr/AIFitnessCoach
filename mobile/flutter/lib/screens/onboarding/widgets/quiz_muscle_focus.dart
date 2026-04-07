@@ -1,7 +1,7 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import '../../../core/constants/app_colors.dart';
 
 /// Muscle focus points allocation widget for quiz screens.
 /// Users can allocate up to 5 focus points to prioritize specific muscle groups.
@@ -28,10 +28,8 @@ class QuizMuscleFocus extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    // Use stronger, more visible colors with proper contrast
-    final textPrimary = isDark ? Colors.white : const Color(0xFF0A0A0A);
-    final textSecondary = isDark ? const Color(0xFFD4D4D8) : const Color(0xFF52525B);
+    const textPrimary = Colors.white;
+    final textSecondary = Colors.white.withValues(alpha: 0.7);
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -41,7 +39,7 @@ class QuizMuscleFocus extends StatelessWidget {
           if (showHeader) ...[
             Text(
               question,
-              style: TextStyle(
+              style: const TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
                 color: textPrimary,
@@ -61,7 +59,6 @@ class QuizMuscleFocus extends StatelessWidget {
           // Focus points indicator
           _FocusPointsIndicator(
             usedPoints: totalPointsUsed,
-            isDark: isDark,
             textPrimary: textPrimary,
             textSecondary: textSecondary,
           ).animate().fadeIn(delay: 300.ms),
@@ -76,7 +73,6 @@ class QuizMuscleFocus extends StatelessWidget {
                   focusPoints: focusPoints,
                   availablePoints: availablePoints,
                   onPointsChanged: onPointsChanged,
-                  isDark: isDark,
                   textPrimary: textPrimary,
                   textSecondary: textSecondary,
                 ),
@@ -87,7 +83,6 @@ class QuizMuscleFocus extends StatelessWidget {
                   focusPoints: focusPoints,
                   availablePoints: availablePoints,
                   onPointsChanged: onPointsChanged,
-                  isDark: isDark,
                   textPrimary: textPrimary,
                   textSecondary: textSecondary,
                 ),
@@ -98,7 +93,6 @@ class QuizMuscleFocus extends StatelessWidget {
                   focusPoints: focusPoints,
                   availablePoints: availablePoints,
                   onPointsChanged: onPointsChanged,
-                  isDark: isDark,
                   textPrimary: textPrimary,
                   textSecondary: textSecondary,
                 ),
@@ -111,118 +105,126 @@ class QuizMuscleFocus extends StatelessWidget {
   }
 
   static const List<Map<String, dynamic>> _upperMuscles = [
-    {'id': 'chest', 'label': 'Chest', 'icon': Icons.favorite_border},  // Heart outline for chest
-    {'id': 'shoulders', 'label': 'Shoulders', 'icon': Icons.airline_seat_individual_suite},  // Wide shoulders
-    {'id': 'triceps', 'label': 'Triceps', 'icon': Icons.straighten},  // Extending arm
-    {'id': 'biceps', 'label': 'Biceps', 'icon': Icons.accessibility},  // Flexing person
-    {'id': 'lats', 'label': 'Lats', 'icon': Icons.unfold_more},  // Wide/expanding
-    {'id': 'upper_back', 'label': 'Upper Back', 'icon': Icons.view_column},  // Columns for back
-    {'id': 'upper_traps', 'label': 'Upper Traps', 'icon': Icons.keyboard_double_arrow_up},  // Up arrows for traps
-    {'id': 'forearms', 'label': 'Forearms', 'icon': Icons.back_hand},  // Hand/forearm
-    {'id': 'neck', 'label': 'Neck', 'icon': Icons.account_circle},  // Head/neck area
+    {'id': 'chest', 'label': 'Chest', 'icon': Icons.favorite_border},
+    {'id': 'shoulders', 'label': 'Shoulders', 'icon': Icons.airline_seat_individual_suite},
+    {'id': 'triceps', 'label': 'Triceps', 'icon': Icons.straighten},
+    {'id': 'biceps', 'label': 'Biceps', 'icon': Icons.accessibility},
+    {'id': 'lats', 'label': 'Lats', 'icon': Icons.unfold_more},
+    {'id': 'upper_back', 'label': 'Upper Back', 'icon': Icons.view_column},
+    {'id': 'upper_traps', 'label': 'Upper Traps', 'icon': Icons.keyboard_double_arrow_up},
+    {'id': 'forearms', 'label': 'Forearms', 'icon': Icons.back_hand},
+    {'id': 'neck', 'label': 'Neck', 'icon': Icons.account_circle},
   ];
 
   static const List<Map<String, dynamic>> _coreMuscles = [
-    {'id': 'abs', 'label': 'Abs', 'icon': Icons.grid_3x3},  // Grid for abs
-    {'id': 'obliques', 'label': 'Obliques', 'icon': Icons.compare_arrows},  // Side-to-side for obliques
-    {'id': 'lower_back', 'label': 'Lower Back', 'icon': Icons.horizontal_rule},  // Lower back line
+    {'id': 'abs', 'label': 'Abs', 'icon': Icons.grid_3x3},
+    {'id': 'obliques', 'label': 'Obliques', 'icon': Icons.compare_arrows},
+    {'id': 'lower_back', 'label': 'Lower Back', 'icon': Icons.horizontal_rule},
   ];
 
   static const List<Map<String, dynamic>> _lowerMuscles = [
-    {'id': 'quadriceps', 'label': 'Quadriceps', 'icon': Icons.vertical_distribute},  // Front thigh
-    {'id': 'hamstrings', 'label': 'Hamstrings', 'icon': Icons.do_not_step},  // Back of leg
-    {'id': 'glutes', 'label': 'Glutes', 'icon': Icons.event_seat},  // Seat/glutes
-    {'id': 'calves', 'label': 'Calves', 'icon': Icons.height},  // Height/standing on toes
-    {'id': 'hip_flexors', 'label': 'Hip Flexors', 'icon': Icons.sports_martial_arts},  // Keep this - good for hip movement
-    {'id': 'adductors', 'label': 'Adductors', 'icon': Icons.compress},  // Squeezing inward
+    {'id': 'quadriceps', 'label': 'Quadriceps', 'icon': Icons.vertical_distribute},
+    {'id': 'hamstrings', 'label': 'Hamstrings', 'icon': Icons.do_not_step},
+    {'id': 'glutes', 'label': 'Glutes', 'icon': Icons.event_seat},
+    {'id': 'calves', 'label': 'Calves', 'icon': Icons.height},
+    {'id': 'hip_flexors', 'label': 'Hip Flexors', 'icon': Icons.sports_martial_arts},
+    {'id': 'adductors', 'label': 'Adductors', 'icon': Icons.compress},
   ];
 }
 
 class _FocusPointsIndicator extends StatelessWidget {
   final int usedPoints;
-  final bool isDark;
   final Color textPrimary;
   final Color textSecondary;
 
   const _FocusPointsIndicator({
     required this.usedPoints,
-    required this.isDark,
     required this.textPrimary,
     required this.textSecondary,
   });
 
   @override
   Widget build(BuildContext context) {
-    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
     final availablePoints = QuizMuscleFocus.maxTotalPoints - usedPoints;
 
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.glassSurface : AppColorsLight.glassSurface,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: cardBorder),
-      ),
-      child: Row(
-        children: [
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(12),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.08),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.15)),
+          ),
+          child: Row(
             children: [
-              Text(
-                'Focus Points',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: textPrimary,
-                ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Focus Points',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: textPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    '$availablePoints/${QuizMuscleFocus.maxTotalPoints} available',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: textSecondary,
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(height: 2),
-              Text(
-                '$availablePoints/${QuizMuscleFocus.maxTotalPoints} available',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: textSecondary,
-                ),
+              const Spacer(),
+              Row(
+                children: List.generate(QuizMuscleFocus.maxTotalPoints, (index) {
+                  final isFilled = index < usedPoints;
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 3),
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 200),
+                      width: 20,
+                      height: 20,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        gradient: isFilled
+                            ? LinearGradient(
+                                colors: [
+                                  Colors.white.withValues(alpha: 0.9),
+                                  Colors.white.withValues(alpha: 0.7),
+                                ],
+                              )
+                            : null,
+                        color: isFilled ? null : Colors.white.withValues(alpha: 0.08),
+                        border: Border.all(
+                          color: isFilled
+                              ? Colors.white
+                              : Colors.white.withValues(alpha: 0.3),
+                          width: 2,
+                        ),
+                        boxShadow: isFilled
+                            ? [
+                                BoxShadow(
+                                  color: Colors.white.withOpacity(0.3),
+                                  blurRadius: 6,
+                                  spreadRadius: 0,
+                                ),
+                              ]
+                            : null,
+                      ),
+                    ),
+                  );
+                }),
               ),
             ],
           ),
-          const Spacer(),
-          Row(
-            children: List.generate(QuizMuscleFocus.maxTotalPoints, (index) {
-              final isFilled = index < usedPoints;
-              return Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 3),
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 200),
-                  width: 20,
-                  height: 20,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    gradient: isFilled ? AppColors.accentGradient : null,
-                    color: isFilled
-                        ? null
-                        : (isDark
-                            ? AppColors.glassSurface
-                            : AppColorsLight.glassSurface),
-                    border: Border.all(
-                      color: isFilled ? AppColors.orange : AppColors.orange.withValues(alpha: 0.3),
-                      width: isFilled ? 2 : 2,
-                    ),
-                    boxShadow: isFilled
-                        ? [
-                            BoxShadow(
-                              color: AppColors.accent.withOpacity(0.4),
-                              blurRadius: 6,
-                              spreadRadius: 0,
-                            ),
-                          ]
-                        : null,
-                  ),
-                ),
-              );
-            }),
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -234,7 +236,6 @@ class _MuscleGroupSection extends StatelessWidget {
   final Map<String, int> focusPoints;
   final int availablePoints;
   final ValueChanged<Map<String, int>> onPointsChanged;
-  final bool isDark;
   final Color textPrimary;
   final Color textSecondary;
 
@@ -244,74 +245,76 @@ class _MuscleGroupSection extends StatelessWidget {
     required this.focusPoints,
     required this.availablePoints,
     required this.onPointsChanged,
-    required this.isDark,
     required this.textPrimary,
     required this.textSecondary,
   });
 
   @override
   Widget build(BuildContext context) {
-    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
-
-    return Container(
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.glassSurface : AppColorsLight.glassSurface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: cardBorder),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
-            child: Text(
-              title,
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-                color: textSecondary,
-                letterSpacing: 0.5,
-              ),
-            ),
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(16),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+        child: Container(
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.08),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.15)),
           ),
-          ...muscles.asMap().entries.map((entry) {
-            final index = entry.key;
-            final muscle = entry.value;
-            final id = muscle['id'] as String;
-            final currentPoints = focusPoints[id] ?? 0;
-            final isLast = index == muscles.length - 1;
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+                child: Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: textSecondary,
+                    letterSpacing: 0.5,
+                  ),
+                ),
+              ),
+              ...muscles.asMap().entries.map((entry) {
+                final index = entry.key;
+                final muscle = entry.value;
+                final id = muscle['id'] as String;
+                final currentPoints = focusPoints[id] ?? 0;
+                final isLast = index == muscles.length - 1;
 
-            return _MuscleRow(
-              muscle: muscle,
-              points: currentPoints,
-              canIncrement: availablePoints > 0,
-              onIncrement: () {
-                if (availablePoints > 0) {
-                  HapticFeedback.selectionClick();
-                  final newPoints = Map<String, int>.from(focusPoints);
-                  newPoints[id] = currentPoints + 1;
-                  onPointsChanged(newPoints);
-                }
-              },
-              onDecrement: () {
-                if (currentPoints > 0) {
-                  HapticFeedback.selectionClick();
-                  final newPoints = Map<String, int>.from(focusPoints);
-                  if (currentPoints == 1) {
-                    newPoints.remove(id);
-                  } else {
-                    newPoints[id] = currentPoints - 1;
-                  }
-                  onPointsChanged(newPoints);
-                }
-              },
-              isDark: isDark,
-              textPrimary: textPrimary,
-              textSecondary: textSecondary,
-              showDivider: !isLast,
-            );
-          }),
-        ],
+                return _MuscleRow(
+                  muscle: muscle,
+                  points: currentPoints,
+                  canIncrement: availablePoints > 0,
+                  onIncrement: () {
+                    if (availablePoints > 0) {
+                      HapticFeedback.selectionClick();
+                      final newPoints = Map<String, int>.from(focusPoints);
+                      newPoints[id] = currentPoints + 1;
+                      onPointsChanged(newPoints);
+                    }
+                  },
+                  onDecrement: () {
+                    if (currentPoints > 0) {
+                      HapticFeedback.selectionClick();
+                      final newPoints = Map<String, int>.from(focusPoints);
+                      if (currentPoints == 1) {
+                        newPoints.remove(id);
+                      } else {
+                        newPoints[id] = currentPoints - 1;
+                      }
+                      onPointsChanged(newPoints);
+                    }
+                  },
+                  textPrimary: textPrimary,
+                  textSecondary: textSecondary,
+                  showDivider: !isLast,
+                );
+              }),
+            ],
+          ),
+        ),
       ),
     ).animate().fadeIn(delay: 400.ms).slideY(begin: 0.03);
   }
@@ -323,7 +326,6 @@ class _MuscleRow extends StatelessWidget {
   final bool canIncrement;
   final VoidCallback onIncrement;
   final VoidCallback onDecrement;
-  final bool isDark;
   final Color textPrimary;
   final Color textSecondary;
   final bool showDivider;
@@ -334,7 +336,6 @@ class _MuscleRow extends StatelessWidget {
     required this.canIncrement,
     required this.onIncrement,
     required this.onDecrement,
-    required this.isDark,
     required this.textPrimary,
     required this.textSecondary,
     required this.showDivider,
@@ -342,7 +343,6 @@ class _MuscleRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
     final hasPoints = points > 0;
 
     return Column(
@@ -356,13 +356,13 @@ class _MuscleRow extends StatelessWidget {
                 height: 32,
                 decoration: BoxDecoration(
                   color: hasPoints
-                      ? AppColors.accent.withOpacity(0.15)
-                      : (isDark ? Colors.white.withOpacity(0.05) : Colors.black.withOpacity(0.05)),
+                      ? Colors.white.withValues(alpha: 0.2)
+                      : Colors.white.withValues(alpha: 0.05),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Icon(
                   muscle['icon'] as IconData,
-                  color: hasPoints ? AppColors.accent : textSecondary,
+                  color: hasPoints ? Colors.white : textSecondary,
                   size: 18,
                 ),
               ),
@@ -381,7 +381,6 @@ class _MuscleRow extends StatelessWidget {
               _PointButton(
                 icon: Icons.remove,
                 onTap: points > 0 ? onDecrement : null,
-                isDark: isDark,
               ),
               // Points display
               AnimatedContainer(
@@ -396,7 +395,7 @@ class _MuscleRow extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
-                      color: hasPoints ? AppColors.orange : textSecondary,
+                      color: hasPoints ? Colors.white : textSecondary,
                     ),
                   ),
                 ),
@@ -405,7 +404,6 @@ class _MuscleRow extends StatelessWidget {
               _PointButton(
                 icon: Icons.add,
                 onTap: canIncrement ? onIncrement : null,
-                isDark: isDark,
               ),
             ],
           ),
@@ -414,7 +412,7 @@ class _MuscleRow extends StatelessWidget {
           Divider(
             height: 1,
             indent: 56,
-            color: cardBorder.withOpacity(0.5),
+            color: Colors.white.withValues(alpha: 0.08),
           ),
       ],
     );
@@ -424,12 +422,10 @@ class _MuscleRow extends StatelessWidget {
 class _PointButton extends StatelessWidget {
   final IconData icon;
   final VoidCallback? onTap;
-  final bool isDark;
 
   const _PointButton({
     required this.icon,
     required this.onTap,
-    required this.isDark,
   });
 
   @override
@@ -444,11 +440,13 @@ class _PointButton extends StatelessWidget {
         height: 32,
         decoration: BoxDecoration(
           color: isEnabled
-              ? AppColors.orange.withValues(alpha: 0.12)
-              : (isDark ? Colors.white.withOpacity(0.05) : Colors.black.withOpacity(0.05)),
+              ? Colors.white.withValues(alpha: 0.15)
+              : Colors.white.withValues(alpha: 0.05),
           borderRadius: BorderRadius.circular(8),
           border: Border.all(
-            color: isEnabled ? AppColors.orange : (isDark ? AppColors.cardBorder : AppColorsLight.cardBorder),
+            color: isEnabled
+                ? Colors.white.withValues(alpha: 0.4)
+                : Colors.white.withValues(alpha: 0.15),
             width: 1.5,
           ),
         ),
@@ -456,8 +454,8 @@ class _PointButton extends StatelessWidget {
           icon,
           size: 18,
           color: isEnabled
-              ? AppColors.orange
-              : (isDark ? Colors.white38 : Colors.black26),
+              ? Colors.white
+              : Colors.white.withValues(alpha: 0.3),
         ),
       ),
     );

@@ -219,8 +219,7 @@ extension __PreAuthQuizScreenStateExt on _PreAuthQuizScreenState {
   /// Extra widget shown in the scaffold's left pane (foldable only).
   /// Used for info buttons that belong near the question title.
   Widget? _getStepHeaderExtra(BuildContext context, int step) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+    final textSecondary = Colors.white.withValues(alpha: 0.7);
 
     Widget buildTip({
       required IconData icon,
@@ -338,7 +337,7 @@ extension __PreAuthQuizScreenStateExt on _PreAuthQuizScreenState {
       case 4:
         return buildTip(
           icon: Icons.home_rounded,
-          color: isDark ? AppColors.cyan : AppColorsLight.cyan,
+          color: AppColors.cyan,
           title: 'Matched to your setup',
           body: 'Every exercise will be chosen based on what equipment you actually have. No substitutions needed.',
           bullets: [
@@ -510,10 +509,8 @@ extension __PreAuthQuizScreenStateExt on _PreAuthQuizScreenState {
 
 
   Widget _buildDayCheckbox(int day, String label, Duration delay) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     final isSelected = _selectedWorkoutDays.contains(day);
     final canSelect = _selectedWorkoutDays.length < (_selectedDays ?? 7);
-    final textPrimary = isDark ? Colors.white : const Color(0xFF0A0A0A);
 
     return GestureDetector(
       onTap: () {
@@ -526,50 +523,66 @@ extension __PreAuthQuizScreenStateExt on _PreAuthQuizScreenState {
           }
         });
       },
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: isSelected
-              ? AppColors.orange.withValues(alpha: 0.15)
-              : (isDark ? AppColors.glassSurface : AppColorsLight.glassSurface),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: isSelected
-                ? AppColors.orange
-                : (isDark ? AppColors.glassBorder : AppColorsLight.cardBorder),
-            width: isSelected ? 2 : 1,
-          ),
-        ),
-        child: Row(
-          children: [
-            // Checkbox indicator
-            Container(
-              width: 24,
-              height: 24,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: isSelected ? AppColors.orange : textPrimary.withValues(alpha: 0.5),
-                  width: 2,
-                ),
-                color: isSelected ? AppColors.orange : Colors.transparent,
-              ),
-              child: isSelected
-                  ? const Icon(Icons.check, size: 16, color: Colors.white)
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(16),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              gradient: isSelected
+                  ? LinearGradient(
+                      colors: [
+                        Colors.white.withValues(alpha: 0.28),
+                        Colors.white.withValues(alpha: 0.16),
+                      ],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    )
                   : null,
-            ),
-            const SizedBox(width: 16),
-            // Day label
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-                color: isSelected ? AppColors.orange : textPrimary,
+              color: isSelected ? null : Colors.white.withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: isSelected
+                    ? Colors.white.withValues(alpha: 0.5)
+                    : Colors.white.withValues(alpha: 0.15),
+                width: isSelected ? 1.5 : 1,
               ),
             ),
-          ],
+            child: Row(
+              children: [
+                Container(
+                  width: 24,
+                  height: 24,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: isSelected
+                          ? Colors.white
+                          : Colors.white.withValues(alpha: 0.4),
+                      width: 2,
+                    ),
+                    color: isSelected
+                        ? Colors.white.withValues(alpha: 0.3)
+                        : Colors.transparent,
+                  ),
+                  child: isSelected
+                      ? const Icon(Icons.check, size: 16, color: Colors.white)
+                      : null,
+                ),
+                const SizedBox(width: 16),
+                Text(
+                  label,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.white,
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     ).animate().fadeIn(delay: delay).slideX(begin: -0.05);

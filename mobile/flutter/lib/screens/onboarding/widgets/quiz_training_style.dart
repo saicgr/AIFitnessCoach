@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -18,7 +19,7 @@ class QuizTrainingStyle extends StatefulWidget {
   final ValueChanged<String> onSplitChanged;
   final ValueChanged<String> onWorkoutTypeChanged;
   final ValueChanged<String>? onWorkoutVarietyChanged;
-  final ValueChanged<int>? onDaysPerWeekChanged;  // ← ADDED: Allow adjusting days/week
+  final ValueChanged<int>? onDaysPerWeekChanged;
   final bool showHeader;
   final bool showSplitSection;
 
@@ -31,7 +32,7 @@ class QuizTrainingStyle extends StatefulWidget {
     required this.onSplitChanged,
     required this.onWorkoutTypeChanged,
     this.onWorkoutVarietyChanged,
-    this.onDaysPerWeekChanged,  // ← ADDED: Optional callback
+    this.onDaysPerWeekChanged,
     this.showHeader = true,
     this.showSplitSection = true,
   });
@@ -49,10 +50,8 @@ class _QuizTrainingStyleState extends State<QuizTrainingStyle> {
     super.initState();
     _scrollController.addListener(_scrollListener);
 
-    // Auto-hide indicator after a delay to show it's scrollable
     Future.delayed(const Duration(seconds: 3), () {
       if (mounted && _scrollController.hasClients) {
-        // Check if content is actually scrollable
         if (_scrollController.position.maxScrollExtent > 0) {
           // Keep showing indicator
         } else {
@@ -70,51 +69,45 @@ class _QuizTrainingStyleState extends State<QuizTrainingStyle> {
   }
 
   void _scrollListener() {
-    // Hide indicator once user scrolls
     if (_scrollController.offset > 20 && _showScrollIndicator) {
       setState(() => _showScrollIndicator = false);
-    }
-    // Show indicator if user scrolls back to top
-    else if (_scrollController.offset <= 10 && !_showScrollIndicator) {
+    } else if (_scrollController.offset <= 10 && !_showScrollIndicator) {
       if (_scrollController.position.maxScrollExtent > 50) {
         setState(() => _showScrollIndicator = true);
       }
     }
   }
 
-  /// Get recommended split based on days per week
   String _getRecommendedSplit() {
     if (widget.daysPerWeek <= 2) return 'full_body';
     if (widget.daysPerWeek == 3) return 'full_body';
     if (widget.daysPerWeek == 4) return 'upper_lower';
-    return 'push_pull_legs'; // 5-6 days
+    return 'push_pull_legs';
   }
 
-  /// Get recommended days per week for selected split
   int? _getRecommendedDaysForSplit(String? split) {
     if (split == null || split == 'ai_decide') return null;
 
     switch (split) {
       case 'full_body':
-        return 3;  // Optimal for full body
+        return 3;
       case 'upper_lower':
-        return 4;  // Optimal for upper/lower
+        return 4;
       case 'phul':
-        return 4;  // PHUL is 4 days
+        return 4;
       case 'push_pull_legs':
-        return 6;  // Optimal PPL is 6 days (2 cycles)
+        return 6;
       case 'phat':
       case 'pplul':
-        return 5;  // Both require exactly 5 days
+        return 5;
       case 'body_part':
       case 'arnold_split':
-        return 6;  // Optimal for body part splits
+        return 6;
       default:
         return null;
     }
   }
 
-  /// Check if selected split is compatible with days per week
   bool get _isCompatible {
     if (widget.selectedSplit == null || widget.selectedSplit == 'ai_decide') return true;
 
@@ -137,7 +130,6 @@ class _QuizTrainingStyleState extends State<QuizTrainingStyle> {
     }
   }
 
-  /// Get friendly name for split ID
   String _getSplitName(String splitId) {
     switch (splitId) {
       case 'ai_decide':
@@ -165,9 +157,8 @@ class _QuizTrainingStyleState extends State<QuizTrainingStyle> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final textPrimary = isDark ? Colors.white : const Color(0xFF0A0A0A);
-    final textSecondary = isDark ? const Color(0xFFD4D4D8) : const Color(0xFF52525B);
+    const textPrimary = Colors.white;
+    final textSecondary = Colors.white.withValues(alpha: 0.7);
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -177,8 +168,7 @@ class _QuizTrainingStyleState extends State<QuizTrainingStyle> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               if (widget.showHeader) ...[
-                // Title
-                Text(
+                const Text(
                   'Training Style',
                   style: TextStyle(
                     fontSize: 28,
@@ -197,14 +187,13 @@ class _QuizTrainingStyleState extends State<QuizTrainingStyle> {
                 const SizedBox(height: 24),
               ],
 
-              // Section A: Training Split
               Expanded(
                 child: ListView(
                   controller: _scrollController,
                   padding: EdgeInsets.zero,
                   children: [
                 if (widget.showSplitSection) ...[
-                Text(
+                const Text(
                   'Training Split',
                   style: TextStyle(
                     fontSize: 16,
@@ -214,13 +203,11 @@ class _QuizTrainingStyleState extends State<QuizTrainingStyle> {
                 ),
                 const SizedBox(height: 12),
 
-                // Split options
                 _buildSplitOption(
                   id: 'ai_decide',
                   title: 'Let AI Decide',
                   description: 'Automatically optimized for your schedule (Recommended)',
                   recommended: true,
-                  isDark: isDark,
                   delay: 300.ms,
                 ),
                 const SizedBox(height: 12),
@@ -228,7 +215,6 @@ class _QuizTrainingStyleState extends State<QuizTrainingStyle> {
                   id: 'push_pull_legs',
                   title: 'Push / Pull / Legs (PPL)',
                   description: 'Best for 5-6 days/week',
-                  isDark: isDark,
                   delay: 350.ms,
                 ),
                 const SizedBox(height: 12),
@@ -236,7 +222,6 @@ class _QuizTrainingStyleState extends State<QuizTrainingStyle> {
                   id: 'full_body',
                   title: 'Full Body',
                   description: 'Train all muscles each workout (2-4 days)',
-                  isDark: isDark,
                   delay: 400.ms,
                 ),
                 const SizedBox(height: 12),
@@ -244,7 +229,6 @@ class _QuizTrainingStyleState extends State<QuizTrainingStyle> {
                   id: 'upper_lower',
                   title: 'Upper / Lower',
                   description: 'Split between upper and lower body (4 days)',
-                  isDark: isDark,
                   delay: 450.ms,
                 ),
                 const SizedBox(height: 12),
@@ -252,7 +236,6 @@ class _QuizTrainingStyleState extends State<QuizTrainingStyle> {
                   id: 'phul',
                   title: 'PHUL',
                   description: 'Power + Hypertrophy, Upper + Lower (4 days)',
-                  isDark: isDark,
                   delay: 500.ms,
                 ),
                 const SizedBox(height: 12),
@@ -260,7 +243,6 @@ class _QuizTrainingStyleState extends State<QuizTrainingStyle> {
                   id: 'phat',
                   title: 'PHAT',
                   description: 'Power Hypertrophy Adaptive Training (5 days)',
-                  isDark: isDark,
                   delay: 550.ms,
                 ),
                 const SizedBox(height: 12),
@@ -268,7 +250,6 @@ class _QuizTrainingStyleState extends State<QuizTrainingStyle> {
                   id: 'pplul',
                   title: 'PPLUL',
                   description: 'Push/Pull/Legs/Upper/Lower (5 days)',
-                  isDark: isDark,
                   delay: 600.ms,
                 ),
                 const SizedBox(height: 12),
@@ -276,7 +257,6 @@ class _QuizTrainingStyleState extends State<QuizTrainingStyle> {
                   id: 'body_part',
                   title: 'Body Part Split',
                   description: 'One muscle group per day (5+ days)',
-                  isDark: isDark,
                   delay: 650.ms,
                 ),
                 const SizedBox(height: 12),
@@ -284,95 +264,118 @@ class _QuizTrainingStyleState extends State<QuizTrainingStyle> {
                   id: 'arnold_split',
                   title: 'Arnold Split',
                   description: 'Chest/Back, Shoulders/Arms, Legs (6 days)',
-                  isDark: isDark,
                   delay: 700.ms,
                 ),
 
                 // Compatibility warning with fix button
                 if (!_isCompatible) ...[
                   const SizedBox(height: 16),
-                  Container(
-                    padding: const EdgeInsets.all(14),
-                    decoration: BoxDecoration(
-                      color: Colors.orange.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(
-                        color: Colors.orange.withValues(alpha: 0.4),
-                        width: 1.5,
-                      ),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            const Icon(
-                              Icons.warning_amber_rounded,
-                              color: Colors.orange,
-                              size: 22,
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Text(
-                                'Schedule conflict',
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w700,
-                                  color: Colors.orange,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          _getSplitName(widget.selectedSplit!) +
-                          ' requires ${_getRecommendedDaysForSplit(widget.selectedSplit)} days/week, but you selected ${widget.daysPerWeek} days/week.',
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: isDark ? const Color(0xFFD4D4D8) : const Color(0xFF52525B),
-                            height: 1.4,
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(14),
+                    child: BackdropFilter(
+                      filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+                      child: Container(
+                        padding: const EdgeInsets.all(14),
+                        decoration: BoxDecoration(
+                          color: Colors.orange.withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(
+                            color: Colors.orange.withValues(alpha: 0.4),
+                            width: 1.5,
                           ),
                         ),
-                        const SizedBox(height: 12),
-                        // Action button to fix
-                        if (widget.onDaysPerWeekChanged != null)
-                          SizedBox(
-                            width: double.infinity,
-                            child: ElevatedButton(
-                              onPressed: () {
-                                HapticFeedback.mediumImpact();
-                                final recommended = _getRecommendedDaysForSplit(widget.selectedSplit);
-                                if (recommended != null) {
-                                  widget.onDaysPerWeekChanged!(recommended);
-                                }
-                              },
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: AppColors.orange,
-                                foregroundColor: Colors.white,
-                                elevation: 0,
-                                padding: const EdgeInsets.symmetric(vertical: 12),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(10),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                const Icon(
+                                  Icons.warning_amber_rounded,
+                                  color: Colors.orange,
+                                  size: 22,
                                 ),
-                              ),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  const Icon(Icons.auto_fix_high_rounded, size: 18),
-                                  const SizedBox(width: 8),
-                                  Text(
-                                    'Update to ${_getRecommendedDaysForSplit(widget.selectedSplit)} days/week',
-                                    style: const TextStyle(
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Text(
+                                    'Schedule conflict',
+                                    style: TextStyle(
                                       fontSize: 14,
-                                      fontWeight: FontWeight.w600,
+                                      fontWeight: FontWeight.w700,
+                                      color: Colors.orange,
                                     ),
                                   ),
-                                ],
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              _getSplitName(widget.selectedSplit!) +
+                              ' requires ${_getRecommendedDaysForSplit(widget.selectedSplit)} days/week, but you selected ${widget.daysPerWeek} days/week.',
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: Colors.white.withValues(alpha: 0.7),
+                                height: 1.4,
                               ),
                             ),
-                          ),
-                      ],
+                            const SizedBox(height: 12),
+                            if (widget.onDaysPerWeekChanged != null)
+                              SizedBox(
+                                width: double.infinity,
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(10),
+                                  child: BackdropFilter(
+                                    filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+                                    child: Material(
+                                      color: Colors.transparent,
+                                      child: InkWell(
+                                        onTap: () {
+                                          HapticFeedback.mediumImpact();
+                                          final recommended = _getRecommendedDaysForSplit(widget.selectedSplit);
+                                          if (recommended != null) {
+                                            widget.onDaysPerWeekChanged!(recommended);
+                                          }
+                                        },
+                                        borderRadius: BorderRadius.circular(10),
+                                        child: Container(
+                                          padding: const EdgeInsets.symmetric(vertical: 12),
+                                          decoration: BoxDecoration(
+                                            gradient: LinearGradient(
+                                              colors: [
+                                                Colors.white.withValues(alpha: 0.22),
+                                                Colors.white.withValues(alpha: 0.12),
+                                              ],
+                                              begin: Alignment.topLeft,
+                                              end: Alignment.bottomRight,
+                                            ),
+                                            borderRadius: BorderRadius.circular(10),
+                                            border: Border.all(
+                                              color: Colors.white.withValues(alpha: 0.3),
+                                            ),
+                                          ),
+                                          child: Row(
+                                            mainAxisAlignment: MainAxisAlignment.center,
+                                            children: [
+                                              const Icon(Icons.auto_fix_high_rounded, size: 18, color: Colors.white),
+                                              const SizedBox(width: 8),
+                                              Text(
+                                                'Update to ${_getRecommendedDaysForSplit(widget.selectedSplit)} days/week',
+                                                style: const TextStyle(
+                                                  fontSize: 14,
+                                                  fontWeight: FontWeight.w600,
+                                                  color: Colors.white,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
                     ),
                   ).animate().shake(delay: 600.ms),
                 ],
@@ -381,7 +384,7 @@ class _QuizTrainingStyleState extends State<QuizTrainingStyle> {
                 ],
 
                 // Section B: Workout Type
-                Text(
+                const Text(
                   'Workout Type',
                   style: TextStyle(
                     fontSize: 16,
@@ -391,21 +394,20 @@ class _QuizTrainingStyleState extends State<QuizTrainingStyle> {
                 ),
                 const SizedBox(height: 12),
 
-                // Workout type chips
                 Wrap(
                   spacing: 12,
                   runSpacing: 12,
                   children: [
-                    _buildTypeChip('strength', 'Strength', isDark, 650.ms),
-                    _buildTypeChip('cardio', 'Cardio', isDark, 700.ms),
-                    _buildTypeChip('mixed', 'Mixed', isDark, 750.ms),
+                    _buildTypeChip('strength', 'Strength', 650.ms),
+                    _buildTypeChip('cardio', 'Cardio', 700.ms),
+                    _buildTypeChip('mixed', 'Mixed', 750.ms),
                   ],
                 ),
 
                 // Section C: Exercise Variety
                 if (widget.onWorkoutVarietyChanged != null) ...[
                   const SizedBox(height: 28),
-                  Text(
+                  const Text(
                     'Exercise Variety',
                     style: TextStyle(
                       fontSize: 16,
@@ -423,28 +425,27 @@ class _QuizTrainingStyleState extends State<QuizTrainingStyle> {
                   ),
                   const SizedBox(height: 12),
 
-                  // Exercise variety options
                   Wrap(
                     spacing: 12,
                     runSpacing: 12,
                     children: [
-                      _buildVarietyChip('consistent', 'Consistent', 'Same exercises for progress tracking', Icons.repeat, isDark, 800.ms),
-                      _buildVarietyChip('varied', 'Varied', 'Different exercises to keep it fresh', Icons.shuffle, isDark, 850.ms),
+                      _buildVarietyChip('consistent', 'Consistent', 'Same exercises for progress tracking', Icons.repeat, 800.ms),
+                      _buildVarietyChip('varied', 'Varied', 'Different exercises to keep it fresh', Icons.shuffle, 850.ms),
                     ],
                   ),
                 ],
 
-                const SizedBox(height: 100),  // Space for Continue button + scroll indicator
+                const SizedBox(height: 100),
               ],
             ),
           ),
         ],
       ),
 
-          // Simple floating scroll indicator - just a down arrow
+          // Simple floating scroll indicator
           if (_showScrollIndicator)
             Positioned(
-              bottom: 90,  // Just above Continue button
+              bottom: 90,
               left: 0,
               right: 0,
               child: Center(
@@ -454,18 +455,12 @@ class _QuizTrainingStyleState extends State<QuizTrainingStyle> {
                     height: 40,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: AppColors.orange,
-                      boxShadow: [
-                        BoxShadow(
-                          color: AppColors.orange.withValues(alpha: 0.4),
-                          blurRadius: 8,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
+                      color: Colors.white.withValues(alpha: 0.25),
+                      border: Border.all(color: Colors.white.withValues(alpha: 0.4)),
                     ),
-                    child: const Icon(
+                    child: Icon(
                       Icons.keyboard_arrow_down_rounded,
-                      color: Colors.white,
+                      color: Colors.white.withValues(alpha: 0.9),
                       size: 24,
                     ),
                   )
@@ -488,204 +483,244 @@ class _QuizTrainingStyleState extends State<QuizTrainingStyle> {
     required String title,
     required String description,
     bool recommended = false,
-    required bool isDark,
     required Duration delay,
   }) {
     final isSelected = widget.selectedSplit == id;
-    final textPrimary = isDark ? Colors.white : const Color(0xFF0A0A0A);
-    final textSecondary = isDark ? const Color(0xFFD4D4D8) : const Color(0xFF52525B);
+    final textSecondary = Colors.white.withValues(alpha: 0.7);
 
     return GestureDetector(
       onTap: () {
         HapticFeedback.selectionClick();
         widget.onSplitChanged(id);
       },
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: isSelected
-              ? AppColors.orange.withValues(alpha: 0.15)
-              : (isDark ? AppColors.glassSurface : AppColorsLight.glassSurface),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: isSelected
-                ? AppColors.orange
-                : (isDark ? AppColors.glassBorder : AppColorsLight.cardBorder),
-            width: isSelected ? 2 : 1,
-          ),
-        ),
-        child: Row(
-          children: [
-            // Radio indicator
-            Container(
-              width: 24,
-              height: 24,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: isSelected ? AppColors.orange : textSecondary,
-                  width: 2,
-                ),
-                color: isSelected ? AppColors.orange : Colors.transparent,
-              ),
-              child: isSelected
-                  ? const Icon(Icons.check, size: 16, color: Colors.white)
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(16),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              gradient: isSelected
+                  ? LinearGradient(
+                      colors: [
+                        Colors.white.withValues(alpha: 0.28),
+                        Colors.white.withValues(alpha: 0.16),
+                      ],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    )
                   : null,
+              color: isSelected ? null : Colors.white.withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: isSelected
+                    ? Colors.white.withValues(alpha: 0.5)
+                    : Colors.white.withValues(alpha: 0.15),
+                width: isSelected ? 2 : 1,
+              ),
             ),
-            const SizedBox(width: 16),
-            // Text content
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
+            child: Row(
+              children: [
+                // Radio indicator
+                Container(
+                  width: 24,
+                  height: 24,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: isSelected
+                          ? Colors.white
+                          : Colors.white.withValues(alpha: 0.4),
+                      width: 2,
+                    ),
+                    color: isSelected ? Colors.white : Colors.transparent,
+                  ),
+                  child: isSelected
+                      ? const Icon(Icons.check, size: 16, color: Color(0xFF0D9488))
+                      : null,
+                ),
+                const SizedBox(width: 16),
+                // Text content
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        title,
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          color: isSelected ? AppColors.orange : textPrimary,
-                        ),
-                      ),
-                      if (recommended) ...[
-                        const SizedBox(width: 8),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: AppColors.orange.withValues(alpha: 0.2),
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                          child: const Text(
-                            'BEST',
+                      Row(
+                        children: [
+                          Text(
+                            title,
                             style: TextStyle(
-                              fontSize: 10,
-                              fontWeight: FontWeight.bold,
-                              color: AppColors.orange,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                              color: isSelected ? Colors.white : Colors.white.withValues(alpha: 0.9),
                             ),
                           ),
+                          if (recommended) ...[
+                            const SizedBox(width: 8),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withValues(alpha: 0.2),
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: Text(
+                                'BEST',
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white.withValues(alpha: 0.9),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        description,
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: textSecondary,
                         ),
-                      ],
+                      ),
                     ],
                   ),
-                  const SizedBox(height: 4),
-                  Text(
-                    description,
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: textSecondary,
-                    ),
-                  ),
-                ],
-              ),
+                ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     ).animate().fadeIn(delay: delay).slideX(begin: -0.05);
   }
 
-  Widget _buildTypeChip(String id, String label, bool isDark, Duration delay) {
+  Widget _buildTypeChip(String id, String label, Duration delay) {
     final isSelected = widget.selectedWorkoutType == id;
-    final textPrimary = isDark ? Colors.white : const Color(0xFF0A0A0A);
 
     return GestureDetector(
       onTap: () {
         HapticFeedback.selectionClick();
         widget.onWorkoutTypeChanged(id);
       },
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-        decoration: BoxDecoration(
-          color: isSelected
-              ? AppColors.orange
-              : (isDark ? AppColors.glassSurface : AppColorsLight.glassSurface),
-          borderRadius: BorderRadius.circular(24),
-          border: Border.all(
-            color: isSelected
-                ? AppColors.orange
-                : (isDark ? AppColors.glassBorder : AppColorsLight.cardBorder),
-            width: isSelected ? 2 : 1,
-          ),
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            fontSize: 15,
-            fontWeight: FontWeight.w600,
-            color: isSelected ? Colors.white : textPrimary,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(24),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+            decoration: BoxDecoration(
+              gradient: isSelected
+                  ? LinearGradient(
+                      colors: [
+                        Colors.white.withValues(alpha: 0.28),
+                        Colors.white.withValues(alpha: 0.16),
+                      ],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    )
+                  : null,
+              color: isSelected ? null : Colors.white.withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(
+                color: isSelected
+                    ? Colors.white.withValues(alpha: 0.5)
+                    : Colors.white.withValues(alpha: 0.15),
+                width: isSelected ? 2 : 1,
+              ),
+            ),
+            child: Text(
+              label,
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w600,
+                color: isSelected ? Colors.white : Colors.white.withValues(alpha: 0.9),
+              ),
+            ),
           ),
         ),
       ),
     ).animate().fadeIn(delay: delay).scale(begin: const Offset(0.9, 0.9));
   }
 
-  Widget _buildVarietyChip(String id, String label, String description, IconData icon, bool isDark, Duration delay) {
+  Widget _buildVarietyChip(String id, String label, String description, IconData icon, Duration delay) {
     final isSelected = widget.selectedWorkoutVariety == id;
-    final textPrimary = isDark ? Colors.white : const Color(0xFF0A0A0A);
-    final textSecondary = isDark ? const Color(0xFFA1A1AA) : const Color(0xFF71717A);
+    final textSecondary = Colors.white.withValues(alpha: 0.6);
 
     return GestureDetector(
       onTap: () {
         HapticFeedback.selectionClick();
         widget.onWorkoutVarietyChanged?.call(id);
       },
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        decoration: BoxDecoration(
-          color: isSelected
-              ? AppColors.orange.withValues(alpha: 0.15)
-              : (isDark ? AppColors.glassSurface : AppColorsLight.glassSurface),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: isSelected
-                ? AppColors.orange
-                : (isDark ? AppColors.glassBorder : AppColorsLight.cardBorder),
-            width: isSelected ? 2 : 1,
-          ),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              icon,
-              size: 20,
-              color: isSelected ? AppColors.orange : textSecondary,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(16),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: BoxDecoration(
+              gradient: isSelected
+                  ? LinearGradient(
+                      colors: [
+                        Colors.white.withValues(alpha: 0.28),
+                        Colors.white.withValues(alpha: 0.16),
+                      ],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    )
+                  : null,
+              color: isSelected ? null : Colors.white.withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: isSelected
+                    ? Colors.white.withValues(alpha: 0.5)
+                    : Colors.white.withValues(alpha: 0.15),
+                width: isSelected ? 2 : 1,
+              ),
             ),
-            const SizedBox(width: 10),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text(
-                  label,
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: isSelected ? AppColors.orange : textPrimary,
-                  ),
+                Icon(
+                  icon,
+                  size: 20,
+                  color: isSelected ? Colors.white : textSecondary,
                 ),
-                Text(
-                  description,
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: textSecondary,
-                  ),
+                const SizedBox(width: 10),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      label,
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: isSelected ? Colors.white : Colors.white.withValues(alpha: 0.9),
+                      ),
+                    ),
+                    Text(
+                      description,
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: textSecondary,
+                      ),
+                    ),
+                  ],
                 ),
+                if (isSelected) ...[
+                  const SizedBox(width: 8),
+                  Icon(
+                    Icons.check_circle,
+                    size: 18,
+                    color: Colors.white.withValues(alpha: 0.9),
+                  ),
+                ],
               ],
             ),
-            if (isSelected) ...[
-              const SizedBox(width: 8),
-              Icon(
-                Icons.check_circle,
-                size: 18,
-                color: AppColors.orange,
-              ),
-            ],
-          ],
+          ),
         ),
       ),
     ).animate().fadeIn(delay: delay).scale(begin: const Offset(0.9, 0.9));

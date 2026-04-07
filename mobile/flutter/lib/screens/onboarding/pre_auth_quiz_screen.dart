@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -551,22 +552,34 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
     final windowState = ref.watch(windowModeProvider);
     final isFoldableOpen = FoldableQuizScaffold.shouldUseFoldableLayout(windowState);
 
+    // Onboarding always uses a rich gradient regardless of system theme
+    // to maintain the glassmorphic aesthetic from the intro screen.
+    final onboardingGradient = isDark
+        ? const LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [Color(0xFF0A1628), Color(0xFF0D2137), Color(0xFF061220)],
+          )
+        : const LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [Color(0xFF1A6B5A), Color(0xFF2D9E8A), Color(0xFF1A6B5A)],
+          );
+
     return Scaffold(
       body: Container(
-        decoration: BoxDecoration(
-          gradient: isDark
-              ? const LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [Color(0xFF0A1628), AppColors.pureBlack],
-                )
-              : const LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [Color(0xFFE3F2FD), Color(0xFFF5F5F5), Colors.white],
-                ),
-        ),
-        child: SafeArea(
+        decoration: BoxDecoration(gradient: onboardingGradient),
+        child: Theme(
+          // Force dark theme inside quiz so all widgets render white text
+          // on the gradient background (glassmorphic aesthetic).
+          data: Theme.of(context).copyWith(
+            brightness: Brightness.dark,
+            scaffoldBackgroundColor: Colors.transparent,
+            colorScheme: Theme.of(context).colorScheme.copyWith(
+              brightness: Brightness.dark,
+            ),
+          ),
+          child: SafeArea(
           child: FoldableQuizScaffold(
             headerTitle: _getStepTitle(_currentQuestion),
             headerSubtitle: _getStepSubtitle(_currentQuestion),
@@ -614,6 +627,7 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
             ),
             button: _buildActionButton(isDark),
           ),
+        ),
         ),
       ),
     );

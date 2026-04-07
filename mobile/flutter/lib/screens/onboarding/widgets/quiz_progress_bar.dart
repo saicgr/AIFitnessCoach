@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
 
-/// Animated progress bar for quiz screens.
+/// Glassmorphic animated progress bar for quiz screens.
 class QuizProgressBar extends StatelessWidget {
   final double progress;
   final Duration duration;
@@ -14,10 +14,6 @@ class QuizProgressBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final accentColor = isDark ? AppColors.orange : AppColorsLight.orange;
-    final accentColorLight = isDark ? AppColors.orangeLight : AppColorsLight.orangeLight;
-
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24),
       child: TweenAnimationBuilder<double>(
@@ -28,7 +24,7 @@ class QuizProgressBar extends StatelessWidget {
           return Container(
             height: 6,
             decoration: BoxDecoration(
-              color: isDark ? AppColors.glassSurface : AppColorsLight.glassSurface,
+              color: Colors.white.withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(3),
             ),
             child: FractionallySizedBox(
@@ -38,8 +34,8 @@ class QuizProgressBar extends StatelessWidget {
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     colors: [
-                      accentColor,
-                      accentColorLight,
+                      Colors.white.withValues(alpha: 0.9),
+                      Colors.white.withValues(alpha: 0.6),
                     ],
                     begin: Alignment.centerLeft,
                     end: Alignment.centerRight,
@@ -47,7 +43,7 @@ class QuizProgressBar extends StatelessWidget {
                   borderRadius: BorderRadius.circular(3),
                   boxShadow: [
                     BoxShadow(
-                      color: accentColor.withValues(alpha: 0.4),
+                      color: Colors.white.withValues(alpha: 0.3),
                       blurRadius: 8,
                       spreadRadius: 0,
                     ),

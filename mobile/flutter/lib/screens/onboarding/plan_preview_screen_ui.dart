@@ -105,7 +105,7 @@ extension _PlanPreviewScreenExt on PlanPreviewScreen {
                       style: OutlinedButton.styleFrom(
                         foregroundColor: textSecondary,
                         side: BorderSide(
-                          color: isDark ? AppColors.glassBorder : AppColorsLight.cardBorder,
+                          color: Colors.white.withValues(alpha: 0.15),
                         ),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),

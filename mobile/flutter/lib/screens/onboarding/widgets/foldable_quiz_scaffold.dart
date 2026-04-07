@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../core/constants/app_colors.dart';
 import '../../../core/providers/window_mode_provider.dart';
 
 /// Reusable foldable-adaptive scaffold for onboarding screens.
@@ -9,25 +8,12 @@ import '../../../core/providers/window_mode_provider.dart';
 /// On book-fold open (vertical hinge): Supporting Pane pattern —
 ///   header content on the left pane, interactive content on the right pane.
 class FoldableQuizScaffold extends ConsumerWidget {
-  /// Title text displayed in the left pane on foldable, or above content on phone.
   final String headerTitle;
-
-  /// Subtitle text displayed below the title.
   final String? headerSubtitle;
-
-  /// Extra widget below the subtitle (illustration, icon, progress dots, etc.).
   final Widget? headerExtra;
-
-  /// Floating overlay spanning full width (back button, step counter, etc.).
   final Widget? headerOverlay;
-
-  /// Progress bar widget shown above the content area.
   final Widget? progressBar;
-
-  /// Main interactive content (quiz options, form fields) — right pane on foldable.
   final Widget content;
-
-  /// Button pinned at the bottom of the content area (continue, generate, etc.).
   final Widget? button;
 
   const FoldableQuizScaffold({
@@ -41,26 +27,15 @@ class FoldableQuizScaffold extends ConsumerWidget {
     this.button,
   });
 
-  /// Determine hinge orientation: true = vertical hinge (book-fold),
-  /// false = horizontal hinge (flip phone).
   static bool isVerticalHinge(Rect? hingeBounds) {
-    if (hingeBounds == null) return true; // default to book-fold
+    if (hingeBounds == null) return true;
     return hingeBounds.height > hingeBounds.width;
   }
 
-  /// Whether the current window state should use a foldable side-by-side layout.
-  ///
-  /// Uses [isFoldable] + [hingeBounds] as primary detection, since the
-  /// posture enum can report `none` on devices where the hinge IS present
-  /// but the Android API reports an unknown posture state (e.g. Pixel Fold).
   static bool shouldUseFoldableLayout(WindowModeState windowState) {
-    // Primary: if the device has a detected hinge/fold with bounds, use it.
-    // hingeBounds is only non-null when the app window spans the hinge
-    // (i.e. device is open), so this won't trigger on the cover screen.
     if (windowState.isFoldable && windowState.hingeBounds != null) {
       return isVerticalHinge(windowState.hingeBounds);
     }
-    // Fallback: posture-based check
     final posture = windowState.foldablePosture;
     if (posture == FoldablePosture.none) return false;
     return isVerticalHinge(windowState.hingeBounds);
@@ -76,8 +51,6 @@ class FoldableQuizScaffold extends ConsumerWidget {
     }
     return _buildPhoneLayout(context);
   }
-
-  // ─── Phone / closed layout ────────────────────────────────────────
 
   Widget _buildPhoneLayout(BuildContext context) {
     return Column(
@@ -95,15 +68,7 @@ class FoldableQuizScaffold extends ConsumerWidget {
     );
   }
 
-  // ─── Foldable side-by-side layout (vertical hinge) ────────────────
-
   Widget _buildFoldableLayout(BuildContext context, WindowModeState windowState) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final textPrimary =
-        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textSecondary =
-        isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
-
     final hingeBounds = windowState.hingeBounds;
     final safeLeft = MediaQuery.of(context).padding.left;
     final rawHingeLeft =
@@ -114,7 +79,6 @@ class FoldableQuizScaffold extends ConsumerWidget {
     return Column(
       children: [
         if (headerOverlay != null) SizedBox(width: double.infinity, child: headerOverlay!),
-        // Progress bar spans full width across both panes
         if (progressBar != null) ...[
           progressBar!,
           const SizedBox(height: 16),
@@ -122,23 +86,22 @@ class FoldableQuizScaffold extends ConsumerWidget {
         Expanded(
           child: Row(
             children: [
-              // ── Left pane (header / context) ──
+              // Left pane (header / context)
               SizedBox(
                 width: hingeLeft,
                 child: Center(
                   child: SingleChildScrollView(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 28, vertical: 16),
+                    padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 16),
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
                           headerTitle,
-                          style: TextStyle(
+                          style: const TextStyle(
                             fontSize: 26,
                             fontWeight: FontWeight.w700,
-                            color: textPrimary,
+                            color: Colors.white,
                             height: 1.3,
                             letterSpacing: -0.5,
                           ),
@@ -149,7 +112,7 @@ class FoldableQuizScaffold extends ConsumerWidget {
                             headerSubtitle!,
                             style: TextStyle(
                               fontSize: 15,
-                              color: textSecondary,
+                              color: Colors.white.withValues(alpha: 0.7),
                               fontWeight: FontWeight.w500,
                               height: 1.4,
                             ),
@@ -164,11 +127,8 @@ class FoldableQuizScaffold extends ConsumerWidget {
                   ),
                 ),
               ),
-
-              // ── Hinge gap ──
               SizedBox(width: hingeWidth),
-
-              // ── Right pane (interactive content) ──
+              // Right pane (interactive content)
               Expanded(
                 child: Column(
                   children: [

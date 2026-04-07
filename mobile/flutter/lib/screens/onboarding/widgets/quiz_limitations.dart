@@ -1,7 +1,8 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import '../../../core/constants/app_colors.dart';
 
 /// Physical limitations selection widget (moved from QuizProgressionConstraints).
 ///
@@ -50,10 +51,6 @@ class _QuizLimitationsState extends State<QuizLimitations> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final textPrimary = isDark ? Colors.white : const Color(0xFF0A0A0A);
-    final textSecondary = isDark ? const Color(0xFFD4D4D8) : const Color(0xFF52525B);
-
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Column(
@@ -65,7 +62,7 @@ class _QuizLimitationsState extends State<QuizLimitations> {
               style: TextStyle(
                 fontSize: 28,
                 fontWeight: FontWeight.bold,
-                color: textPrimary,
+                color: Colors.white,
               ),
             ).animate().fadeIn(delay: 100.ms),
             const SizedBox(height: 6),
@@ -73,7 +70,7 @@ class _QuizLimitationsState extends State<QuizLimitations> {
               "We'll avoid exercises that stress these areas",
               style: TextStyle(
                 fontSize: 15,
-                color: textSecondary,
+                color: Colors.white.withValues(alpha: 0.7),
               ),
             ).animate().fadeIn(delay: 200.ms),
             const SizedBox(height: 24),
@@ -88,105 +85,119 @@ class _QuizLimitationsState extends State<QuizLimitations> {
                   spacing: 12,
                   runSpacing: 12,
                   children: [
-                    _buildLimitationChip('none', 'None', isDark, 300.ms),
-                    _buildLimitationChip('knees', 'Knees', isDark, 325.ms),
-                    _buildLimitationChip('shoulders', 'Shoulders', isDark, 350.ms),
-                    _buildLimitationChip('lower_back', 'Lower Back', isDark, 375.ms),
-                    _buildLimitationChip('wrists', 'Wrists', isDark, 400.ms),
-                    _buildLimitationChip('elbows', 'Elbows', isDark, 425.ms),
-                    _buildLimitationChip('hips', 'Hips', isDark, 450.ms),
-                    _buildLimitationChip('ankles', 'Ankles', isDark, 475.ms),
-                    _buildLimitationChip('neck', 'Neck', isDark, 500.ms),
-                    _buildLimitationChip('other', 'Other', isDark, 525.ms),
+                    _buildLimitationChip('none', 'None', 300.ms),
+                    _buildLimitationChip('knees', 'Knees', 325.ms),
+                    _buildLimitationChip('shoulders', 'Shoulders', 350.ms),
+                    _buildLimitationChip('lower_back', 'Lower Back', 375.ms),
+                    _buildLimitationChip('wrists', 'Wrists', 400.ms),
+                    _buildLimitationChip('elbows', 'Elbows', 425.ms),
+                    _buildLimitationChip('hips', 'Hips', 450.ms),
+                    _buildLimitationChip('ankles', 'Ankles', 475.ms),
+                    _buildLimitationChip('neck', 'Neck', 500.ms),
+                    _buildLimitationChip('other', 'Other', 525.ms),
                   ],
                 ),
                 const SizedBox(height: 16),
 
                 // Custom limitation input field (shown when "Other" is selected)
                 if (widget.selectedLimitations.contains('other')) ...[
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: AppColors.orange.withValues(alpha: 0.08),
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(
-                        color: AppColors.orange.withValues(alpha: 0.3),
-                        width: 1.5,
-                      ),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(16),
+                    child: BackdropFilter(
+                      filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+                      child: Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: [
+                              Colors.white.withValues(alpha: 0.15),
+                              Colors.white.withValues(alpha: 0.08),
+                            ],
+                          ),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                            color: Colors.white.withValues(alpha: 0.25),
+                            width: 1.5,
+                          ),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Icon(
-                              Icons.edit_outlined,
-                              size: 18,
-                              color: AppColors.orange,
+                            Row(
+                              children: [
+                                Icon(
+                                  Icons.edit_outlined,
+                                  size: 18,
+                                  color: Colors.white.withValues(alpha: 0.9),
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  'Describe your limitation',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                    color: Colors.white.withValues(alpha: 0.9),
+                                  ),
+                                ),
+                              ],
                             ),
-                            const SizedBox(width: 8),
-                            Text(
-                              'Describe your limitation',
-                              style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w600,
-                                color: AppColors.orange,
+                            const SizedBox(height: 12),
+                            TextField(
+                              controller: _customLimitationController,
+                              focusNode: _customLimitationFocus,
+                              style: const TextStyle(
+                                fontSize: 15,
+                                color: Colors.white,
                               ),
+                              decoration: InputDecoration(
+                                hintText: 'e.g., Carpal tunnel, herniated disc, etc.',
+                                hintStyle: TextStyle(
+                                  fontSize: 14,
+                                  color: Colors.white.withValues(alpha: 0.4),
+                                ),
+                                filled: true,
+                                fillColor: Colors.white.withValues(alpha: 0.08),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: BorderSide(
+                                    color: Colors.white.withValues(alpha: 0.15),
+                                  ),
+                                ),
+                                enabledBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: BorderSide(
+                                    color: Colors.white.withValues(alpha: 0.15),
+                                  ),
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: BorderSide(
+                                    color: Colors.white.withValues(alpha: 0.5),
+                                    width: 2,
+                                  ),
+                                ),
+                                contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                  vertical: 14,
+                                ),
+                              ),
+                              cursorColor: Colors.white,
+                              maxLines: 2,
+                              textInputAction: TextInputAction.done,
+                              onChanged: (value) {
+                                if (widget.onCustomLimitationChanged != null) {
+                                  widget.onCustomLimitationChanged!(value.trim().isEmpty ? null : value.trim());
+                                }
+                              },
+                              onSubmitted: (_) {
+                                _customLimitationFocus.unfocus();
+                              },
                             ),
                           ],
                         ),
-                        const SizedBox(height: 12),
-                        TextField(
-                          controller: _customLimitationController,
-                          focusNode: _customLimitationFocus,
-                          style: TextStyle(
-                            fontSize: 15,
-                            color: textPrimary,
-                          ),
-                          decoration: InputDecoration(
-                            hintText: 'e.g., Carpal tunnel, herniated disc, etc.',
-                            hintStyle: TextStyle(
-                              fontSize: 14,
-                              color: textSecondary.withOpacity(0.6),
-                            ),
-                            filled: true,
-                            fillColor: isDark ? AppColors.glassSurface : Colors.white,
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              borderSide: BorderSide(
-                                color: isDark ? AppColors.glassBorder : AppColorsLight.cardBorder,
-                              ),
-                            ),
-                            enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              borderSide: BorderSide(
-                                color: isDark ? AppColors.glassBorder : AppColorsLight.cardBorder,
-                              ),
-                            ),
-                            focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              borderSide: BorderSide(
-                                color: AppColors.orange,
-                                width: 2,
-                              ),
-                            ),
-                            contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 14,
-                            ),
-                          ),
-                          maxLines: 2,
-                          textInputAction: TextInputAction.done,
-                          onChanged: (value) {
-                            if (widget.onCustomLimitationChanged != null) {
-                              widget.onCustomLimitationChanged!(value.trim().isEmpty ? null : value.trim());
-                            }
-                          },
-                          onSubmitted: (_) {
-                            _customLimitationFocus.unfocus();
-                          },
-                        ),
-                      ],
+                      ),
                     ),
                   ).animate().fadeIn(delay: 550.ms).slideY(begin: 0.05),
                   const SizedBox(height: 16),
@@ -201,9 +212,8 @@ class _QuizLimitationsState extends State<QuizLimitations> {
     );
   }
 
-  Widget _buildLimitationChip(String id, String label, bool isDark, Duration delay) {
+  Widget _buildLimitationChip(String id, String label, Duration delay) {
     final isSelected = widget.selectedLimitations.contains(id);
-    final textPrimary = isDark ? Colors.white : const Color(0xFF0A0A0A);
 
     return GestureDetector(
       onTap: () {
@@ -245,27 +255,43 @@ class _QuizLimitationsState extends State<QuizLimitations> {
 
         widget.onLimitationsChanged(newLimitations);
       },
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-        decoration: BoxDecoration(
-          color: isSelected
-              ? AppColors.orange
-              : (isDark ? AppColors.glassSurface : AppColorsLight.glassSurface),
-          borderRadius: BorderRadius.circular(24),
-          border: Border.all(
-            color: isSelected
-                ? AppColors.orange
-                : (isDark ? AppColors.glassBorder : AppColorsLight.cardBorder),
-            width: isSelected ? 2 : 1,
-          ),
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            fontSize: 15,
-            fontWeight: FontWeight.w600,
-            color: isSelected ? Colors.white : textPrimary,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(24),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+            decoration: BoxDecoration(
+              gradient: isSelected
+                  ? LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        Colors.white.withValues(alpha: 0.28),
+                        Colors.white.withValues(alpha: 0.16),
+                      ],
+                    )
+                  : null,
+              color: isSelected ? null : Colors.white.withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(
+                color: isSelected
+                    ? Colors.white.withValues(alpha: 0.5)
+                    : Colors.white.withValues(alpha: 0.15),
+                width: isSelected ? 2 : 1,
+              ),
+            ),
+            child: Text(
+              label,
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w600,
+                color: isSelected
+                    ? Colors.white
+                    : Colors.white.withValues(alpha: 0.7),
+              ),
+            ),
           ),
         ),
       ),
