@@ -1,360 +1,61 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useRef } from 'react';
+import { motion, useInView } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import { motion, useInView, AnimatePresence } from 'framer-motion';
 import MarketingNav from '../components/marketing/MarketingNav';
 import MarketingFooter from '../components/marketing/MarketingFooter';
 import { CinematicHero } from '../components/ui/cinematic-landing-hero';
 
-// Apple-style animations - very subtle, purposeful
-const fade = {
-  hidden: { opacity: 0 },
-  visible: { opacity: 1, transition: { duration: 1, ease: [0.25, 0.1, 0.25, 1] as const } },
-};
-
 const fadeUp = {
-  hidden: { opacity: 0, y: 8 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.8, ease: [0.25, 0.1, 0.25, 1] as const } },
+  hidden: { opacity: 0, y: 24 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: [0.25, 0.1, 0.25, 1] as const } },
 };
 
 const stagger = {
-  visible: { transition: { staggerChildren: 0.15 } },
+  visible: { transition: { staggerChildren: 0.08 } },
 };
 
-// Carousel slides data - app features showcase (updated with green theme)
-const carouselSlides = [
-  {
-    id: 1,
-    title: 'AI-Powered Workouts',
-    description: 'Get personalized workout plans tailored to your goals, equipment, and schedule.',
-    gradient: 'from-emerald-600 via-green-500 to-teal-400',
-    icon: (
-      <svg className="w-16 h-16 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" />
-      </svg>
-    ),
-  },
-  {
-    id: 2,
-    title: 'Smart Coaching',
-    description: 'Chat with your AI coach anytime. Get form tips, nutrition advice, and motivation.',
-    gradient: 'from-lime-500 via-green-500 to-emerald-500',
-    icon: (
-      <svg className="w-16 h-16 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-      </svg>
-    ),
-  },
-  {
-    id: 3,
-    title: 'Real-time Tracking',
-    description: 'Log your sets, reps, and weights as you train. Rest timers keep you on track.',
-    gradient: 'from-teal-500 via-cyan-500 to-emerald-400',
-    icon: (
-      <svg className="w-16 h-16 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
-      </svg>
-    ),
-  },
-  {
-    id: 4,
-    title: 'Progress Analytics',
-    description: 'Visualize your gains. Track personal records, streaks, and strength trends.',
-    gradient: 'from-green-600 via-emerald-500 to-lime-400',
-    icon: (
-      <svg className="w-16 h-16 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
-      </svg>
-    ),
-  },
+const appScreenshots = [
+  { src: '/screenshots/intro_phone_1.png', label: 'AI Coach', description: 'Real-time coaching mid-workout' },
+  { src: '/screenshots/intro_phone_2.png', label: 'Nutrition', description: 'Photo-based meal scoring' },
+  { src: '/screenshots/intro_phone_3.png', label: 'Workouts', description: 'AI-designed training plans' },
+  { src: '/screenshots/intro_phone_4.png', label: 'Tracking', description: 'Sets, reps, weight logging' },
+  { src: '/screenshots/intro_phone_5.png', label: 'Progress', description: 'Side-by-side transformations' },
+  { src: '/screenshots/intro_phone_6.png', label: 'Stats', description: 'Heatmaps, streaks, PRs' },
+  { src: '/screenshots/intro_phone_7.png', label: 'Library', description: '1,722 exercises' },
 ];
 
-// Phone showcase features - mapped to real app screenshots
-const phoneFeatures = [
-  {
-    id: 'ai-coach',
-    label: 'AI Coach',
-    color: '#10B981',
-    description: 'Chat with your coach 24/7 for form tips, exercise swaps, and motivation.',
-    hasIcon: true,
-    screenshot: '/screenshots/intro_phone_1.png',
-  },
-  {
-    id: 'nutrition',
-    label: 'Nutrition Tracking',
-    color: '',
-    description: 'Log meals with photos and get instant macro breakdowns from your AI coach.',
-    hasIcon: false,
-    screenshot: '/screenshots/intro_phone_2.png',
-  },
-  {
-    id: 'personalized',
-    label: 'Workout Plans',
-    color: '',
-    description: 'AI creates custom workouts based on your goals, equipment, and available time.',
-    hasIcon: false,
-    screenshot: '/screenshots/intro_phone_3.png',
-  },
-  {
-    id: 'tracking',
-    label: 'Exercise Tracking',
-    color: '',
-    description: 'Log sets, reps, and weights as you train with automatic rest timers.',
-    hasIcon: false,
-    screenshot: '/screenshots/intro_phone_4.png',
-  },
-  {
-    id: 'progress',
-    label: 'Progress Photos',
-    color: '',
-    description: 'Track your physical transformation with side-by-side progress photos.',
-    hasIcon: false,
-    screenshot: '/screenshots/intro_phone_5.png',
-  },
-  {
-    id: 'analytics',
-    label: 'Stats & Scores',
-    color: '',
-    description: 'Track personal records, streaks, and visualize your strength gains over time.',
-    hasIcon: false,
-    screenshot: '/screenshots/intro_phone_6.png',
-  },
-  {
-    id: 'library',
-    label: 'Exercise Library',
-    color: '',
-    description: 'Browse hundreds of exercises with detailed instructions and video demos.',
-    hasIcon: false,
-    screenshot: '/screenshots/intro_phone_7.png',
-  },
+const freeFeatures = [
+  '1,722 exercises with videos',
+  'Unlimited workout logging',
+  'Manual food logging & barcode scanner',
+  'Habit tracking & streaks',
+  'Progress photos & measurements',
+  '5 AI chat messages/day',
+  'No ads, ever',
 ];
 
-// Feature gallery data (updated gradients - no purple/blue)
-const galleryFeatures = [
-  {
-    id: 1,
-    title: 'Exercise Library',
-    subtitle: '1700+ exercises with video demos',
-    gradient: 'from-emerald-500 to-teal-400',
-    icon: (
-      <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-        <path strokeLinecap="round" strokeLinejoin="round" d="M15.91 11.672a.375.375 0 010 .656l-5.603 3.113a.375.375 0 01-.557-.328V8.887c0-.286.307-.466.557-.327l5.603 3.112z" />
-      </svg>
-    ),
-  },
-  {
-    id: 2,
-    title: 'Nutrition Tracking',
-    subtitle: 'Photo-based meal logging',
-    gradient: 'from-orange-500 to-amber-400',
-    icon: (
-      <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z" />
-        <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0zM18.75 10.5h.008v.008h-.008V10.5z" />
-      </svg>
-    ),
-  },
-  {
-    id: 3,
-    title: 'Smart Scheduling',
-    subtitle: 'Weekly plans that adapt to you',
-    gradient: 'from-lime-500 to-green-400',
-    icon: (
-      <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" />
-      </svg>
-    ),
-  },
-  {
-    id: 4,
-    title: 'Warmup & Cooldown',
-    subtitle: 'Auto-generated mobility work',
-    gradient: 'from-teal-500 to-cyan-400',
-    icon: (
-      <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M15.362 5.214A8.252 8.252 0 0112 21 8.25 8.25 0 016.038 7.048 8.287 8.287 0 009 9.6a8.983 8.983 0 013.361-6.867 8.21 8.21 0 003 2.48z" />
-        <path strokeLinecap="round" strokeLinejoin="round" d="M12 18a3.75 3.75 0 00.495-7.467 5.99 5.99 0 00-1.925 3.546 5.974 5.974 0 01-2.133-1A3.75 3.75 0 0012 18z" />
-      </svg>
-    ),
-  },
-  {
-    id: 5,
-    title: 'Rest Timers',
-    subtitle: 'Optimized recovery between sets',
-    gradient: 'from-emerald-500 to-green-400',
-    icon: (
-      <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
-      </svg>
-    ),
-  },
-  {
-    id: 6,
-    title: 'Skill Progressions',
-    subtitle: '52+ exercises from beginner to advanced',
-    gradient: 'from-green-600 to-emerald-400',
-    icon: (
-      <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 18L9 11.25l4.306 4.307a11.95 11.95 0 015.814-5.519l2.74-1.22m0 0l-5.94-2.28m5.94 2.28l-2.28 5.941" />
-      </svg>
-    ),
-  },
+const premiumFeatures = [
+  'Everything in Free, plus:',
+  'Unlimited AI chat (5 specialist agents)',
+  'AI workout generation',
+  'AI photo food logging',
+  'Adaptive TDEE & smart suggestions',
+  'Advanced charts (all-time history)',
+  'Muscle heatmap & balance analysis',
+  'Voice guidance & coach personas',
 ];
-
-// Stats data
-const stats = [
-  { value: 1700, suffix: '+', label: 'Exercises' },
-  { value: 24, suffix: '/7', label: 'AI Coach' },
-  { value: 1000, suffix: '+', label: 'Features' },
-];
-
-// Typing animation messages
-const chatMessages = [
-  { role: 'user', text: 'My shoulder feels tight today' },
-  { role: 'ai', text: "I've adjusted your workout to focus on lower body and core. Added shoulder mobility stretches to your cooldown. Ready when you are!" },
-];
-
-// Animated Counter Hook
-function useCounter(target: number, duration: number = 2000, shouldStart: boolean = false) {
-  const [count, setCount] = useState(0);
-
-  useEffect(() => {
-    if (!shouldStart) return;
-
-    let startTime: number | null = null;
-    let animationFrame: number;
-
-    const animate = (timestamp: number) => {
-      if (!startTime) startTime = timestamp;
-      const progress = Math.min((timestamp - startTime) / duration, 1);
-      const easeOut = 1 - Math.pow(1 - progress, 3);
-      setCount(Math.floor(easeOut * target));
-
-      if (progress < 1) {
-        animationFrame = requestAnimationFrame(animate);
-      }
-    };
-
-    animationFrame = requestAnimationFrame(animate);
-    return () => cancelAnimationFrame(animationFrame);
-  }, [target, duration, shouldStart]);
-
-  return count;
-}
-
-// Typing Animation Component
-function TypingText({ text, onComplete }: { text: string; onComplete?: () => void }) {
-  const [displayText, setDisplayText] = useState('');
-  const [isComplete, setIsComplete] = useState(false);
-
-  useEffect(() => {
-    let index = 0;
-    const interval = setInterval(() => {
-      if (index < text.length) {
-        setDisplayText(text.slice(0, index + 1));
-        index++;
-      } else {
-        setIsComplete(true);
-        clearInterval(interval);
-        onComplete?.();
-      }
-    }, 30);
-
-    return () => clearInterval(interval);
-  }, [text, onComplete]);
-
-  return (
-    <span>
-      {displayText}
-      {!isComplete && <span className="animate-pulse">|</span>}
-    </span>
-  );
-}
 
 export default function MarketingLanding() {
-  const [currentSlide, setCurrentSlide] = useState(0);
-  const [isPaused, setIsPaused] = useState(false);
-  const [isHovering, setIsHovering] = useState(false);
-  const [progress, setProgress] = useState(0);
-  const progressRef = useRef<number | null>(null);
-  const lastTimeRef = useRef<number>(0);
-  const [chatStep, setChatStep] = useState(0);
-  const [chatStarted, setChatStarted] = useState(false);
-  const [activePhoneFeature, setActivePhoneFeature] = useState<string | null>('personalized');
-
-  const galleryRef = useRef<HTMLDivElement>(null);
-  const statsRef = useRef<HTMLDivElement>(null);
-  const chatRef = useRef<HTMLDivElement>(null);
-  const phoneRef = useRef<HTMLDivElement>(null);
-
-  const statsInView = useInView(statsRef, { once: true, margin: '-100px' });
-  const chatInView = useInView(chatRef, { once: true, margin: '-100px' });
-  const phoneInView = useInView(phoneRef, { once: true, margin: '-100px' });
-
-  // Auto-advance carousel with progress animation
-  useEffect(() => {
-    setProgress(0);
-    lastTimeRef.current = 0;
-
-    if (isPaused || isHovering) {
-      if (progressRef.current) {
-        cancelAnimationFrame(progressRef.current);
-        progressRef.current = null;
-      }
-      return;
-    }
-
-    const DURATION = 5000;
-
-    const animate = (timestamp: number) => {
-      if (!lastTimeRef.current) {
-        lastTimeRef.current = timestamp;
-      }
-
-      const elapsed = timestamp - lastTimeRef.current;
-      const newProgress = Math.min((elapsed / DURATION) * 100, 100);
-
-      setProgress(newProgress);
-
-      if (newProgress >= 100) {
-        setCurrentSlide((prev) => (prev + 1) % carouselSlides.length);
-      } else {
-        progressRef.current = requestAnimationFrame(animate);
-      }
-    };
-
-    progressRef.current = requestAnimationFrame(animate);
-
-    return () => {
-      if (progressRef.current) {
-        cancelAnimationFrame(progressRef.current);
-      }
-    };
-  }, [isPaused, isHovering, currentSlide]);
-
-  // Start chat animation when in view
-  useEffect(() => {
-    if (chatInView && !chatStarted) {
-      setChatStarted(true);
-      setChatStep(1);
-    }
-  }, [chatInView, chatStarted]);
-
-  const scrollGallery = useCallback((direction: 'left' | 'right') => {
-    if (!galleryRef.current) return;
-    const scrollAmount = 320;
-    galleryRef.current.scrollBy({
-      left: direction === 'left' ? -scrollAmount : scrollAmount,
-      behavior: 'smooth',
-    });
-  }, []);
+  const showcaseRef = useRef<HTMLDivElement>(null);
+  const pricingRef = useRef<HTMLDivElement>(null);
+  const showcaseInView = useInView(showcaseRef, { once: true, margin: '-80px' });
+  const pricingInView = useInView(pricingRef, { once: true, margin: '-80px' });
 
   return (
     <div className="min-h-screen bg-[var(--color-background)] text-[var(--color-text)] selection:bg-emerald-500/20 overflow-x-hidden">
-      {/* Navigation */}
       <MarketingNav />
 
-      {/* Cinematic Hero Section */}
+      {/* Cinematic Hero */}
       <CinematicHero
         brandName="FitWiz"
         tagline1="Train smarter,"
@@ -365,759 +66,219 @@ export default function MarketingLanding() {
         metricLabel="Workouts Done"
         ctaHeading="Start your journey."
         ctaDescription="Join thousands of athletes training with their personal AI coach. Personalized workouts, real-time guidance, and intelligent progress tracking."
+        phoneScreenshot="/screenshots/intro_phone_1.png"
+        badges={[
+          {
+            emoji: "💪",
+            title: "New PR Unlocked",
+            subtitle: "Bench Press 185 lbs",
+            color: "from-emerald-500/20 to-emerald-900/10",
+            borderColor: "border-emerald-400/30",
+          },
+          {
+            emoji: "🤖",
+            title: "AI Coach",
+            subtitle: "Form check complete",
+            color: "from-green-500/20 to-green-900/10",
+            borderColor: "border-green-400/30",
+          },
+        ]}
       />
 
-      {/* Highlights Carousel Section */}
-      <section id="highlights" className="py-20 sm:py-28 px-6">
+      {/* ── Screenshot Showcase ── */}
+      <section ref={showcaseRef} className="py-20 sm:py-28 px-6">
         <div className="max-w-[1200px] mx-auto">
           <motion.div
             initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, margin: '-100px' }}
+            animate={showcaseInView ? 'visible' : 'hidden'}
             variants={stagger}
-            className="text-center mb-12"
+            className="text-center mb-14"
           >
-            <motion.p variants={fade} className="text-[17px] text-[var(--color-text-muted)] mb-2">
-              Get the highlights.
+            <motion.p variants={fadeUp} className="text-[15px] text-[var(--color-text-muted)] mb-2 uppercase tracking-wider font-medium">
+              Inside the app
             </motion.p>
             <motion.h2
               variants={fadeUp}
               className="text-[32px] sm:text-[48px] font-semibold tracking-[-0.02em]"
               style={{ fontFamily: 'var(--font-heading)' }}
             >
-              See what's new.
+              Everything you need. One app.
             </motion.h2>
           </motion.div>
 
-          {/* Carousel */}
-          <div
-            className="relative"
-            onMouseEnter={() => setIsHovering(true)}
-            onMouseLeave={() => setIsHovering(false)}
-          >
-            <div className="overflow-hidden rounded-3xl">
-              <AnimatePresence mode="wait">
-                <motion.div
-                  key={currentSlide}
-                  initial={{ opacity: 0, x: 100 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -100 }}
-                  transition={{ duration: 0.5, ease: [0.25, 0.1, 0.25, 1] as const }}
-                  className={`relative h-[400px] sm:h-[480px] bg-gradient-to-br ${carouselSlides[currentSlide].gradient} flex flex-col items-center justify-center p-8 sm:p-12`}
-                >
-                  <motion.div
-                    initial={{ scale: 0.8, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    transition={{ delay: 0.2, duration: 0.5 }}
-                    className="mb-6"
-                  >
-                    {carouselSlides[currentSlide].icon}
-                  </motion.div>
-                  <motion.h3
-                    initial={{ y: 20, opacity: 0 }}
-                    animate={{ y: 0, opacity: 1 }}
-                    transition={{ delay: 0.3, duration: 0.5 }}
-                    className="text-[28px] sm:text-[40px] font-semibold text-white text-center mb-4"
-                  >
-                    {carouselSlides[currentSlide].title}
-                  </motion.h3>
-                  <motion.p
-                    initial={{ y: 20, opacity: 0 }}
-                    animate={{ y: 0, opacity: 1 }}
-                    transition={{ delay: 0.4, duration: 0.5 }}
-                    className="text-[17px] sm:text-[19px] text-white/90 text-center max-w-[500px]"
-                  >
-                    {carouselSlides[currentSlide].description}
-                  </motion.p>
-                </motion.div>
-              </AnimatePresence>
-            </div>
-
-            {/* Carousel Controls */}
-            <div className="flex items-center justify-center gap-4 mt-6">
-              <div className="flex items-center gap-2">
-                {carouselSlides.map((_, index) => (
-                  <button
-                    key={index}
-                    onClick={() => setCurrentSlide(index)}
-                    className="relative h-1 rounded-full overflow-hidden transition-all duration-300"
-                    style={{ width: index === currentSlide ? '48px' : '24px' }}
-                    aria-label={`Go to slide ${index + 1}`}
-                  >
-                    <div className="absolute inset-0 bg-[var(--color-surface-muted)]" />
-                    <div
-                      className="absolute inset-y-0 left-0 bg-emerald-500 rounded-full transition-none"
-                      style={{
-                        width: index === currentSlide
-                          ? `${progress}%`
-                          : index < currentSlide
-                            ? '100%'
-                            : '0%',
-                      }}
-                    />
-                  </button>
-                ))}
-              </div>
-
-              <button
-                onClick={() => setIsPaused(!isPaused)}
-                className="p-2 rounded-full bg-[var(--color-surface-muted)] hover:bg-[var(--color-surface-elevated)] transition-colors"
-                aria-label={isPaused ? 'Play' : 'Pause'}
-              >
-                {isPaused ? (
-                  <svg className="w-4 h-4 text-[var(--color-text)]" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M8 5v14l11-7z" />
-                  </svg>
-                ) : (
-                  <svg className="w-4 h-4 text-[var(--color-text)]" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z" />
-                  </svg>
-                )}
-              </button>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Phone Showcase Section */}
-      <section className="py-20 sm:py-28 px-6">
-        <div className="max-w-[1200px] mx-auto">
-          <motion.h2
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="text-[32px] sm:text-[48px] font-semibold tracking-[-0.02em] mb-16"
-            style={{ fontFamily: 'var(--font-heading)' }}
-          >
-            Take a closer look.
-          </motion.h2>
-
-          <motion.div
-            ref={phoneRef}
-            initial={{ opacity: 0, y: 40 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.8 }}
-            className="card-spur rounded-3xl p-8 sm:p-12 lg:p-16"
-          >
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
-              {/* Left side - Feature buttons */}
-              <div className="space-y-3">
-                {phoneFeatures.map((feature, index) => (
-                  <motion.button
-                    key={feature.id}
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={phoneInView ? { opacity: 1, x: 0 } : {}}
-                    transition={{ delay: index * 0.1, duration: 0.5 }}
-                    onClick={() => setActivePhoneFeature(activePhoneFeature === feature.id ? null : feature.id)}
-                    className={`w-full text-left px-5 py-3.5 rounded-full transition-all duration-300 flex items-center gap-3 ${
-                      activePhoneFeature === feature.id
-                        ? 'bg-[var(--color-surface-elevated)]'
-                        : 'bg-[var(--color-surface-muted)] hover:bg-[var(--color-surface-elevated)]'
-                    }`}
-                  >
-                    <span className={`flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center ${
-                      feature.hasIcon && feature.color ? '' : 'border border-[var(--color-border)]'
-                    }`}
-                    style={feature.hasIcon && feature.color ? { backgroundColor: feature.color } : {}}>
-                      {feature.hasIcon && feature.color ? (
-                        <span className="w-2 h-2 rounded-full bg-white" />
-                      ) : (
-                        <svg className="w-3 h-3 text-[var(--color-text-muted)]" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-                        </svg>
-                      )}
-                    </span>
-                    <span className="text-[15px] sm:text-[17px] text-[var(--color-text)] font-medium">{feature.label}</span>
-                  </motion.button>
-                ))}
-
-                {/* Expanded description */}
-                <AnimatePresence mode="wait">
-                  {activePhoneFeature && (
-                    <motion.div
-                      key={activePhoneFeature}
-                      initial={{ opacity: 0, height: 0 }}
-                      animate={{ opacity: 1, height: 'auto' }}
-                      exit={{ opacity: 0, height: 0 }}
-                      transition={{ duration: 0.3 }}
-                      className="overflow-hidden"
-                    >
-                      <p className="text-[15px] text-[var(--color-text-secondary)] leading-relaxed pt-4 pl-14">
-                        {phoneFeatures.find(f => f.id === activePhoneFeature)?.description}
-                      </p>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
-
-              {/* Right side - Phone mockup with real screenshots */}
-              <div className="relative flex justify-center lg:justify-end">
-                <motion.div
-                  className="relative"
-                  animate={{
-                    rotateY: activePhoneFeature ? [0, -5, 0] : 0,
-                  }}
-                  transition={{ duration: 0.6, ease: 'easeOut' }}
-                  style={{ perspective: 1000 }}
-                >
-                  {/* Phone device frame */}
-                  <div
-                    className="relative w-[280px] sm:w-[320px] rounded-[3rem] p-3 shadow-2xl"
-                    style={{
-                      background: 'linear-gradient(145deg, #3a3a3c 0%, #1c1c1e 50%, #0a0a0a 100%)',
-                      boxShadow: `
-                        0 50px 100px -20px rgba(0, 0, 0, 0.8),
-                        0 30px 60px -10px rgba(0, 0, 0, 0.6),
-                        inset 0 1px 0 rgba(255, 255, 255, 0.1),
-                        inset 0 -1px 0 rgba(0, 0, 0, 0.3)
-                      `,
-                      transform: 'rotateY(-8deg) rotateX(2deg)',
-                      transformStyle: 'preserve-3d',
-                    }}
-                  >
-                    {/* Phone notch */}
-                    <div className="absolute top-5 left-1/2 -translate-x-1/2 w-28 h-8 bg-black rounded-full z-20" />
-
-                    {/* Phone screen with real screenshots */}
-                    <div
-                      className="relative rounded-[2.5rem] overflow-hidden bg-black"
-                      style={{ aspectRatio: '9/19.5' }}
-                    >
-                      <AnimatePresence mode="wait">
-                        {activePhoneFeature ? (
-                          <motion.img
-                            key={activePhoneFeature}
-                            src={phoneFeatures.find(f => f.id === activePhoneFeature)?.screenshot}
-                            alt={phoneFeatures.find(f => f.id === activePhoneFeature)?.label}
-                            className="absolute inset-0 w-full h-full object-cover"
-                            initial={{ opacity: 0, scale: 1.05 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            exit={{ opacity: 0, scale: 0.95 }}
-                            transition={{ duration: 0.4, ease: [0.25, 0.1, 0.25, 1] }}
-                          />
-                        ) : (
-                          <motion.img
-                            key="default"
-                            src="/screenshots/intro_phone_1.png"
-                            alt="FitWiz AI Coach"
-                            className="absolute inset-0 w-full h-full object-cover"
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            exit={{ opacity: 0 }}
-                            transition={{ duration: 0.4 }}
-                          />
-                        )}
-                      </AnimatePresence>
-
-                      {/* Home indicator */}
-                      <div className="absolute bottom-2 left-1/2 -translate-x-1/2 w-32 h-1 bg-white/30 rounded-full z-10" />
-                    </div>
-                  </div>
-
-                  {/* Glow effect */}
-                  <div
-                    className="absolute -bottom-20 left-1/2 -translate-x-1/2 w-48 h-48 rounded-full opacity-20 blur-3xl"
-                    style={{ background: '#10B981' }}
-                  />
-                </motion.div>
-              </div>
-            </div>
-          </motion.div>
-        </div>
-      </section>
-
-      {/* Feature Gallery Section */}
-      <section id="features" className="py-20 sm:py-28 px-6 bg-[var(--color-surface-muted)]">
-        <div className="max-w-[1200px] mx-auto">
+          {/* Horizontal scroll gallery */}
           <motion.div
             initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, margin: '-100px' }}
+            animate={showcaseInView ? 'visible' : 'hidden'}
             variants={stagger}
-            className="flex items-end justify-between mb-8"
-          >
-            <div>
-              <motion.p variants={fade} className="text-[17px] text-[var(--color-text-muted)] mb-2">
-                Take a closer look.
-              </motion.p>
-              <motion.h2
-                variants={fadeUp}
-                className="text-[32px] sm:text-[48px] font-semibold tracking-[-0.02em]"
-                style={{ fontFamily: 'var(--font-heading)' }}
-              >
-                Features that work.
-              </motion.h2>
-            </div>
-
-            <div className="hidden sm:flex items-center gap-2">
-              <button
-                onClick={() => scrollGallery('left')}
-                className="p-3 rounded-full bg-[var(--color-surface)] hover:bg-[var(--color-surface-elevated)] transition-colors border border-[var(--color-border)]"
-                aria-label="Scroll left"
-              >
-                <svg className="w-5 h-5 text-[var(--color-text)]" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-                </svg>
-              </button>
-              <button
-                onClick={() => scrollGallery('right')}
-                className="p-3 rounded-full bg-[var(--color-surface)] hover:bg-[var(--color-surface-elevated)] transition-colors border border-[var(--color-border)]"
-                aria-label="Scroll right"
-              >
-                <svg className="w-5 h-5 text-[var(--color-text)]" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-                </svg>
-              </button>
-            </div>
-          </motion.div>
-
-          <div
-            ref={galleryRef}
-            className="flex gap-5 overflow-x-auto pb-4 scrollbar-hide snap-x snap-mandatory"
+            className="flex gap-6 overflow-x-auto pb-6 snap-x snap-mandatory scrollbar-hide"
             style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
           >
-            {galleryFeatures.map((feature) => (
+            {appScreenshots.map((item) => (
               <motion.div
-                key={feature.id}
-                initial={{ opacity: 0, scale: 0.95 }}
-                whileInView={{ opacity: 1, scale: 1 }}
-                viewport={{ once: true }}
-                whileHover={{ scale: 1.02 }}
-                transition={{ duration: 0.3 }}
-                className="flex-shrink-0 w-[280px] sm:w-[320px] snap-start"
+                key={item.label}
+                variants={fadeUp}
+                className="flex-shrink-0 snap-center w-[220px] sm:w-[260px] group"
               >
-                <div className="h-[360px] p-6 rounded-3xl card-spur flex flex-col">
-                  <div className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${feature.gradient} flex items-center justify-center mb-auto`}>
-                    {feature.icon}
+                {/* Phone frame */}
+                <div
+                  className="relative rounded-[2.2rem] p-[8px] mb-4 transition-transform duration-300 group-hover:scale-[1.03]"
+                  style={{
+                    background: 'linear-gradient(145deg, #3a3a3c 0%, #1c1c1e 50%, #0a0a0a 100%)',
+                    boxShadow: '0 30px 60px -15px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.08)',
+                  }}
+                >
+                  {/* Notch */}
+                  <div className="absolute top-[10px] left-1/2 -translate-x-1/2 w-20 h-6 bg-black rounded-full z-20" />
+
+                  {/* Screen */}
+                  <div className="relative rounded-[1.8rem] overflow-hidden bg-black" style={{ aspectRatio: '9/19.5' }}>
+                    <img
+                      src={item.src}
+                      alt={item.label}
+                      className="absolute inset-0 w-full h-full object-cover"
+                      loading="lazy"
+                    />
                   </div>
-                  <div>
-                    <h3 className="text-[21px] font-semibold text-[var(--color-text)] mb-1">{feature.title}</h3>
-                    <p className="text-[15px] text-[var(--color-text-secondary)]">{feature.subtitle}</p>
-                  </div>
+                </div>
+
+                {/* Label */}
+                <div className="text-center px-2">
+                  <p className="text-[15px] font-semibold text-[var(--color-text)] mb-0.5">{item.label}</p>
+                  <p className="text-[13px] text-[var(--color-text-secondary)]">{item.description}</p>
                 </div>
               </motion.div>
             ))}
 
-            {/* See All Features Card */}
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              whileInView={{ opacity: 1, scale: 1 }}
-              viewport={{ once: true }}
-              whileHover={{ scale: 1.02 }}
-              transition={{ duration: 0.3 }}
-              className="flex-shrink-0 w-[280px] sm:w-[320px] snap-start"
-            >
+            {/* See all features card */}
+            <motion.div variants={fadeUp} className="flex-shrink-0 snap-center w-[220px] sm:w-[260px] flex items-center justify-center">
               <Link
                 to="/features"
-                className="h-[360px] p-6 rounded-3xl bg-gradient-to-br from-emerald-900/50 to-green-900/30 border border-emerald-500/20 hover:border-emerald-500/40 transition-all flex flex-col items-center justify-center text-center"
+                className="flex flex-col items-center justify-center gap-4 w-full h-full min-h-[380px] rounded-[2.2rem] border-2 border-dashed border-[var(--color-border)] hover:border-emerald-500/50 transition-colors group"
               >
-                <div className="w-16 h-16 rounded-2xl bg-emerald-500/20 flex items-center justify-center mb-6">
-                  <svg className="w-8 h-8 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+                <div className="w-14 h-14 rounded-full bg-emerald-500/10 flex items-center justify-center group-hover:bg-emerald-500/20 transition-colors">
+                  <svg className="w-6 h-6 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
                   </svg>
                 </div>
-                <h3 className="text-[21px] font-semibold text-[var(--color-text)] mb-2">See All Features</h3>
-                <p className="text-[15px] text-[var(--color-text-secondary)]">Explore 1000+ features</p>
+                <div className="text-center">
+                  <p className="text-[15px] font-semibold text-[var(--color-text)]">See all features</p>
+                  <p className="text-[13px] text-[var(--color-text-secondary)]">With full screenshots</p>
+                </div>
               </Link>
             </motion.div>
-          </div>
-        </div>
-      </section>
-
-      {/* Stats Section */}
-      <section className="py-20 sm:py-28 px-6">
-        <div className="max-w-[1200px] mx-auto">
-          <motion.div
-            ref={statsRef}
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, margin: '-100px' }}
-            variants={stagger}
-            className="grid grid-cols-1 sm:grid-cols-3 gap-8 sm:gap-12"
-          >
-            {stats.map((stat, index) => {
-              const count = useCounter(stat.value, 2000, statsInView);
-              return (
-                <motion.div key={index} variants={fadeUp} className="text-center">
-                  <div className="text-[56px] sm:text-[72px] font-semibold tracking-[-0.02em] leading-none mb-2">
-                    <span className="bg-gradient-to-r from-emerald-400 to-green-400 bg-clip-text text-transparent">
-                      {count}{stat.suffix}
-                    </span>
-                  </div>
-                  <p className="text-[17px] text-[var(--color-text-secondary)]">{stat.label}</p>
-                </motion.div>
-              );
-            })}
           </motion.div>
         </div>
       </section>
 
-      {/* AI Coach Demo */}
-      <section className="py-20 sm:py-28 px-6 bg-[var(--color-surface-muted)]">
-        <div className="max-w-[1200px] mx-auto">
+      {/* ── Pricing ── */}
+      <section ref={pricingRef} className="py-20 sm:py-28 px-6 bg-[var(--color-surface-muted)]">
+        <div className="max-w-[900px] mx-auto">
           <motion.div
             initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, margin: '-100px' }}
+            animate={pricingInView ? 'visible' : 'hidden'}
             variants={stagger}
-            className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center"
+            className="text-center mb-14"
           >
-            <motion.div variants={fadeUp}>
-              <h2
-                className="text-[32px] sm:text-[48px] font-semibold tracking-[-0.02em] mb-6"
-                style={{ fontFamily: 'var(--font-heading)' }}
-              >
-                Your coach,<br />always available.
-              </h2>
-              <p className="text-[17px] sm:text-[19px] text-[var(--color-text-secondary)] leading-[1.47] mb-8">
-                Get instant answers about your training, nutrition, and recovery. Your AI coach knows your goals, schedule, and limitations.
-              </p>
-              <div className="space-y-4">
-                {[
-                  'Understands your fitness context',
-                  'Analyzes meals from photos',
-                  'Suggests exercise alternatives',
-                  'Available around the clock',
-                ].map((item, i) => (
-                  <div key={i} className="flex items-center gap-3">
-                    <svg className="w-5 h-5 text-emerald-400" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                    </svg>
-                    <span className="text-[15px] sm:text-[17px] text-[var(--color-text)]">{item}</span>
-                  </div>
-                ))}
-              </div>
-            </motion.div>
-
-            <motion.div variants={fadeUp} ref={chatRef}>
-              <div className="p-6 rounded-3xl card-spur">
-                <div className="flex items-center gap-3 pb-4 border-b border-[var(--color-border)]">
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-emerald-500 to-green-500 flex items-center justify-center">
-                    <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" />
-                    </svg>
-                  </div>
-                  <div>
-                    <div className="text-[15px] font-medium text-[var(--color-text)]">AI Coach</div>
-                    <div className="text-[13px] text-emerald-400 flex items-center gap-1">
-                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                      Online
-                    </div>
-                  </div>
-                </div>
-
-                <div className="py-5 space-y-4 min-h-[180px]">
-                  <AnimatePresence>
-                    {chatStep >= 1 && (
-                      <motion.div
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className="flex justify-end"
-                      >
-                        <div className="max-w-[80%] px-4 py-2.5 rounded-2xl rounded-br-md bg-emerald-500 text-[15px] text-white">
-                          <TypingText
-                            text={chatMessages[0].text}
-                            onComplete={() => setTimeout(() => setChatStep(2), 500)}
-                          />
-                        </div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-
-                  <AnimatePresence>
-                    {chatStep >= 2 && (
-                      <motion.div
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className="flex justify-start"
-                      >
-                        <div className="max-w-[85%] px-4 py-2.5 rounded-2xl rounded-bl-md bg-[var(--color-surface-elevated)] text-[15px] text-[var(--color-text)]">
-                          <TypingText text={chatMessages[1].text} />
-                        </div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </div>
-
-                <div className="pt-4 border-t border-[var(--color-border)]">
-                  <Link
-                    to="/login"
-                    className="block w-full px-4 py-3 rounded-xl bg-[var(--color-surface-elevated)] hover:bg-[var(--color-surface-muted)] text-[15px] text-center text-[var(--color-text-secondary)] hover:text-[var(--color-text)] transition-colors"
-                  >
-                    Try it yourself
-                  </Link>
-                </div>
-              </div>
-            </motion.div>
-          </motion.div>
-        </div>
-      </section>
-
-      {/* How It Works */}
-      <section id="how-it-works" className="py-20 sm:py-28 px-6">
-        <div className="max-w-[1200px] mx-auto">
-          <motion.div
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, margin: '-100px' }}
-            variants={stagger}
-            className="text-center mb-16"
-          >
+            <motion.p variants={fadeUp} className="text-[15px] text-[var(--color-text-muted)] mb-2 uppercase tracking-wider font-medium">
+              Simple pricing
+            </motion.p>
             <motion.h2
               variants={fadeUp}
-              className="text-[32px] sm:text-[48px] font-semibold tracking-[-0.02em] mb-4"
+              className="text-[32px] sm:text-[48px] font-semibold tracking-[-0.02em]"
               style={{ fontFamily: 'var(--font-heading)' }}
             >
-              Start in minutes.
+              Free forever. Premium for power.
             </motion.h2>
-            <motion.p variants={fadeUp} className="text-[17px] sm:text-[21px] text-[var(--color-text-secondary)]">
-              Three simple steps to your first workout.
-            </motion.p>
           </motion.div>
 
           <motion.div
             initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, margin: '-50px' }}
+            animate={pricingInView ? 'visible' : 'hidden'}
             variants={stagger}
-            className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-12"
+            className="grid grid-cols-1 md:grid-cols-2 gap-6"
           >
-            {[
-              { num: '1', title: 'Sign up', desc: 'Create your account with Google. Takes seconds.', color: 'from-emerald-500 to-green-400' },
-              { num: '2', title: 'Tell us about you', desc: 'Quick conversation to understand your goals.', color: 'from-lime-500 to-green-400' },
-              { num: '3', title: 'Start training', desc: 'Get your first AI workout instantly.', color: 'from-teal-500 to-emerald-400' },
-            ].map((step, i) => (
-              <motion.div
-                key={i}
-                variants={fadeUp}
-                whileHover={{ y: -4 }}
-                className="text-center p-8 rounded-3xl card-spur"
-              >
-                <div className={`inline-flex w-16 h-16 rounded-2xl bg-gradient-to-br ${step.color} items-center justify-center mb-6`}>
-                  <span className="text-[28px] font-bold text-white">{step.num}</span>
-                </div>
-                <h3 className="text-[21px] sm:text-[24px] font-semibold tracking-[-0.01em] mb-2">{step.title}</h3>
-                <p className="text-[15px] sm:text-[17px] text-[var(--color-text-secondary)]">{step.desc}</p>
-              </motion.div>
-            ))}
-          </motion.div>
-        </div>
-      </section>
-
-      {/* Before & After FitWiz Section */}
-      <section className="py-20 sm:py-28 px-6 bg-[var(--color-surface-muted)]">
-        <div className="max-w-[1200px] mx-auto">
-          <motion.div
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true }}
-            variants={stagger}
-            className="text-center mb-16"
-          >
-            <motion.h2
+            {/* Free Plan */}
+            <motion.div
               variants={fadeUp}
-              className="text-[32px] sm:text-[48px] font-semibold tracking-[-0.02em] mb-4"
-              style={{ fontFamily: 'var(--font-heading)' }}
+              className="p-8 rounded-3xl bg-[var(--color-surface)] border border-[var(--color-border)]"
             >
-              <span className="bg-gradient-to-r from-emerald-400 via-green-400 to-lime-400 bg-clip-text text-transparent">
-                Before & After FitWiz
-              </span>
-            </motion.h2>
-            <motion.p variants={fadeUp} className="text-[17px] sm:text-[21px] text-[var(--color-text-secondary)] max-w-[560px] mx-auto">
-              Everything changes when your fitness app actually works for you.
-            </motion.p>
+              <h3 className="text-2xl font-semibold mb-1">Free</h3>
+              <p className="text-[var(--color-text-secondary)] text-sm mb-6">Everything to get started</p>
+              <div className="flex items-baseline gap-1 mb-8">
+                <span className="text-[48px] font-bold tracking-tight">$0</span>
+                <span className="text-[var(--color-text-secondary)] text-sm">/forever</span>
+              </div>
+              <ul className="space-y-3 mb-8">
+                {freeFeatures.map((f) => (
+                  <li key={f} className="flex items-start gap-3 text-[15px]">
+                    <svg className="w-5 h-5 text-emerald-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                    </svg>
+                    <span className="text-[var(--color-text)]">{f}</span>
+                  </li>
+                ))}
+              </ul>
+              <a
+                href="https://play.google.com/store"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block w-full text-center py-3 rounded-full border border-[var(--color-border)] hover:border-emerald-500/50 text-[var(--color-text)] font-medium transition-colors"
+              >
+                Get Started Free
+              </a>
+            </motion.div>
+
+            {/* Premium Plan */}
+            <motion.div
+              variants={fadeUp}
+              className="relative p-8 rounded-3xl bg-gradient-to-b from-emerald-500/10 to-[var(--color-surface)] border-2 border-emerald-500/30"
+            >
+              <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1 bg-emerald-500 text-white text-xs font-bold uppercase tracking-wider rounded-full">
+                Most Popular
+              </div>
+              <h3 className="text-2xl font-semibold mb-1">Premium</h3>
+              <p className="text-[var(--color-text-secondary)] text-sm mb-6">Full AI-powered fitness</p>
+              <div className="flex items-baseline gap-1 mb-2">
+                <span className="text-[48px] font-bold tracking-tight bg-gradient-to-r from-emerald-400 to-green-400 bg-clip-text text-transparent">$4.99</span>
+                <span className="text-[var(--color-text-secondary)] text-sm">/month</span>
+              </div>
+              <p className="text-[13px] text-[var(--color-text-muted)] mb-8">7-day free trial included</p>
+              <ul className="space-y-3 mb-8">
+                {premiumFeatures.map((f) => (
+                  <li key={f} className="flex items-start gap-3 text-[15px]">
+                    <svg className="w-5 h-5 text-emerald-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                    </svg>
+                    <span className="text-[var(--color-text)]">{f}</span>
+                  </li>
+                ))}
+              </ul>
+              <a
+                href="https://play.google.com/store"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block w-full text-center py-3 rounded-full bg-emerald-500 hover:bg-emerald-400 text-white font-medium transition-colors"
+              >
+                Start 7-Day Free Trial
+              </a>
+            </motion.div>
           </motion.div>
 
-          {/* Before / After Comparison */}
+          {/* Comparison link */}
           <motion.div
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true }}
-            variants={stagger}
-            className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12"
-          >
-            {/* Before */}
-            <motion.div variants={fadeUp} className="p-6 sm:p-8 rounded-3xl card-spur">
-              <div className="flex items-center gap-3 mb-6">
-                <div className="w-10 h-10 rounded-full bg-[var(--color-surface-muted)] flex items-center justify-center">
-                  <svg className="w-5 h-5 text-[var(--color-text-muted)]" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </div>
-                <h3 className="text-[21px] sm:text-[24px] font-semibold text-[var(--color-text-secondary)]">Before FitWiz</h3>
-              </div>
-              <div className="space-y-4">
-                {[
-                  'Googling random workout routines',
-                  'No idea if you\'re progressing',
-                  'Paying for 3+ separate apps',
-                  'Generic plans that don\'t fit your schedule',
-                  'No guidance on form or alternatives',
-                  'Skipping workouts when motivation drops',
-                ].map((item, i) => (
-                  <div key={i} className="flex items-start gap-3">
-                    <svg className="w-5 h-5 text-[var(--color-text-muted)] flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                    <span className="text-[15px] text-[var(--color-text-secondary)]">{item}</span>
-                  </div>
-                ))}
-              </div>
-            </motion.div>
-
-            {/* After */}
-            <motion.div variants={fadeUp} className="p-6 sm:p-8 rounded-3xl bg-gradient-to-br from-emerald-900/40 to-green-900/20 border border-emerald-500/20">
-              <div className="flex items-center gap-3 mb-6">
-                <div className="w-10 h-10 rounded-full bg-emerald-500/20 flex items-center justify-center">
-                  <svg className="w-5 h-5 text-emerald-400" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                  </svg>
-                </div>
-                <h3 className="text-[21px] sm:text-[24px] font-semibold text-emerald-400">After FitWiz</h3>
-              </div>
-              <div className="space-y-4">
-                {[
-                  'AI generates workouts tailored to your goals',
-                  'Track every rep, set, and personal record',
-                  'One app for workouts, nutrition, fasting & coaching',
-                  'Plans that adapt to your schedule and equipment',
-                  'AI coach available 24/7 for form tips and swaps',
-                  'Smart accountability with streaks and progress insights',
-                ].map((item, i) => (
-                  <div key={i} className="flex items-start gap-3">
-                    <svg className="w-5 h-5 text-emerald-400 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                    </svg>
-                    <span className="text-[15px] text-[var(--color-text)]">{item}</span>
-                  </div>
-                ))}
-              </div>
-            </motion.div>
-          </motion.div>
-
-          <motion.p
             initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            viewport={{ once: true }}
-            className="text-center text-[15px] text-[var(--color-text-secondary)]"
-          >
-            <span className="text-emerald-400 font-medium">FitWiz</span> replaces your entire fitness app stack — workouts, nutrition, fasting, and AI coaching — all in one place.
-          </motion.p>
-        </div>
-      </section>
-
-      {/* Pricing Preview */}
-      <section className="py-20 sm:py-28 px-6">
-        <div className="max-w-[1200px] mx-auto">
-          <motion.div
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true }}
-            variants={stagger}
-            className="text-center mb-12"
-          >
-            <motion.h2
-              variants={fadeUp}
-              className="text-[32px] sm:text-[48px] font-semibold tracking-[-0.02em] mb-4"
-              style={{ fontFamily: 'var(--font-heading)' }}
-            >
-              Simple, transparent pricing.
-            </motion.h2>
-            <motion.p variants={fadeUp} className="text-[17px] sm:text-[21px] text-[var(--color-text-secondary)]">
-              Start free. Upgrade when you're ready.
-            </motion.p>
-          </motion.div>
-
-          <motion.div
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true }}
-            variants={stagger}
-            className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-[700px] mx-auto"
-          >
-            {[
-              { name: 'Free', price: '$0', period: 'forever', features: ['1,722 exercises with videos', 'Unlimited workout logging', 'Barcode scanner & food logging', '5 AI chat messages/day', 'No ads, ever'], highlight: false },
-              { name: 'Premium', price: '$5.99', period: '/month', features: ['Unlimited AI chat (5 agents)', 'AI workout generation', 'AI photo food scanning', 'Advanced analytics & heatmaps', 'All 10 fasting protocols'], highlight: true },
-            ].map((plan, i) => (
-              <motion.div
-                key={i}
-                variants={fadeUp}
-                className={`p-6 rounded-3xl transition-all ${
-                  plan.highlight
-                    ? 'bg-gradient-to-br from-emerald-900/50 to-green-900/30 border-2 border-emerald-500/50'
-                    : 'card-spur'
-                }`}
-              >
-                <h3 className="text-[21px] font-semibold text-[var(--color-text)] mb-2">{plan.name}</h3>
-                <div className="flex items-baseline gap-1 mb-6">
-                  <span className="text-[40px] font-bold text-[var(--color-text)]">{plan.price}</span>
-                  <span className="text-[15px] text-[var(--color-text-secondary)]">{plan.period}</span>
-                </div>
-                <ul className="space-y-3 mb-6">
-                  {plan.features.map((feature, j) => (
-                    <li key={j} className="flex items-center gap-2 text-[15px] text-[var(--color-text-secondary)]">
-                      <svg className="w-4 h-4 text-emerald-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                      </svg>
-                      {feature}
-                    </li>
-                  ))}
-                </ul>
-                <Link
-                  to="/pricing"
-                  className={`block w-full py-3 rounded-xl text-center text-[15px] font-medium transition-colors ${
-                    plan.highlight
-                      ? 'bg-emerald-500 text-white hover:bg-emerald-400'
-                      : 'bg-[var(--color-surface-elevated)] text-[var(--color-text)] hover:bg-[var(--color-surface-muted)]'
-                  }`}
-                >
-                  {plan.name === 'Free' ? 'Get Started' : 'Start Free Trial'}
-                </Link>
-              </motion.div>
-            ))}
-          </motion.div>
-
-          <motion.div
-            variants={fadeUp}
+            animate={pricingInView ? { opacity: 1 } : {}}
+            transition={{ delay: 0.5 }}
             className="text-center mt-8"
           >
-            <Link to="/pricing" className="text-emerald-400 hover:underline text-[15px]">
-              See full pricing details
+            <Link to="/pricing" className="text-sm text-emerald-500 hover:underline">
+              See full feature comparison →
             </Link>
           </motion.div>
         </div>
       </section>
 
-      {/* Final CTA */}
-      <section className="py-20 sm:py-32 px-6">
-        <motion.div
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true }}
-          variants={stagger}
-          className="max-w-[680px] mx-auto text-center"
-        >
-          <motion.h2
-            variants={fadeUp}
-            className="text-[40px] sm:text-[56px] md:text-[64px] font-semibold tracking-[-0.02em] leading-[1.05] mb-6"
-            style={{ fontFamily: 'var(--font-heading)' }}
-          >
-            Start training<br />smarter today.
-          </motion.h2>
-          <motion.div variants={fadeUp}>
-            <Link
-              to="/login"
-              className="inline-flex px-8 py-3.5 bg-emerald-500 text-white text-[17px] rounded-full hover:bg-emerald-400 transition-colors"
-            >
-              Get started free
-            </Link>
-            <p className="mt-5 text-[13px] text-[var(--color-text-secondary)]">No credit card required.</p>
-          </motion.div>
-        </motion.div>
-      </section>
-
-      {/* Footer */}
       <MarketingFooter />
     </div>
   );

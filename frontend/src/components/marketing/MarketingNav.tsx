@@ -78,16 +78,17 @@ const socialLinks = [
 export default function MarketingNav() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [communityOpen, setCommunityOpen] = useState(false);
-  const [contactOpen, setContactOpen] = useState(false);
+  const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const location = useLocation();
   const { theme, toggleTheme } = useAppStore();
 
   const communityRef = useRef<HTMLDivElement>(null);
+  const legalRef = useRef<HTMLDivElement>(null);
   const contactRef = useRef<HTMLDivElement>(null);
 
-  useClickOutside(communityRef, () => setCommunityOpen(false));
-  useClickOutside(contactRef, () => setContactOpen(false));
+  useClickOutside(communityRef, () => { if (openDropdown === 'community') setOpenDropdown(null); });
+  useClickOutside(legalRef, () => { if (openDropdown === 'legal') setOpenDropdown(null); });
+  useClickOutside(contactRef, () => { if (openDropdown === 'contact') setOpenDropdown(null); });
 
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 10);
@@ -96,17 +97,40 @@ export default function MarketingNav() {
   }, []);
 
   const isActive = (path: string) => location.pathname === path;
+  const toggle = (key: string) => setOpenDropdown(openDropdown === key ? null : key);
 
-  const navLinks = [
-    { label: 'Home', to: '/' },
-    { label: 'Features', to: '/features' },
-    { label: 'Pricing', to: '/pricing' },
-    { label: 'Privacy', to: '/privacy' },
-    { label: 'Terms', to: '/terms' },
-    { label: 'Refunds', to: '/refunds' },
-  ];
+  const dropdownBtnClass = (key: string) =>
+    `text-sm font-medium transition-colors flex items-center gap-1 ${
+      openDropdown === key
+        ? 'text-emerald-500'
+        : 'text-[var(--color-text-secondary)] hover:text-[var(--color-text)]'
+    }`;
 
   const dropdownItemClass = "flex items-center gap-3 px-4 py-2.5 text-sm text-[var(--color-text-secondary)] hover:text-[var(--color-text)] hover:bg-[var(--color-surface-muted)] rounded-lg transition-colors";
+
+  const chevron = (key: string) => (
+    <svg className={`w-3.5 h-3.5 transition-transform ${openDropdown === key ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+    </svg>
+  );
+
+  const dropdownPanel = (children: React.ReactNode, width = "w-52") => (
+    <motion.div
+      className={`absolute top-full mt-2 right-0 ${width} bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl shadow-lg overflow-hidden p-1.5`}
+      initial={{ opacity: 0, y: -8, scale: 0.96 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      exit={{ opacity: 0, y: -8, scale: 0.96 }}
+      transition={{ duration: 0.15 }}
+    >
+      {children}
+    </motion.div>
+  );
+
+  // Top-level links (minimal)
+  const navLinks = [
+    { label: 'Features', to: '/features' },
+    { label: 'FAQ', to: '/faq' },
+  ];
 
   return (
     <motion.nav
@@ -151,101 +175,80 @@ export default function MarketingNav() {
               </Link>
             ))}
 
-            {/* Community Dropdown */}
-            <div ref={communityRef} className="relative">
-              <button
-                onClick={() => { setCommunityOpen(!communityOpen); setContactOpen(false); }}
-                className={`text-sm font-medium transition-colors flex items-center gap-1 ${
-                  communityOpen
-                    ? 'text-emerald-500'
-                    : 'text-[var(--color-text-secondary)] hover:text-[var(--color-text)]'
-                }`}
-              >
-                Community
-                <svg className={`w-3.5 h-3.5 transition-transform ${communityOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
-                </svg>
+            {/* Legal Dropdown (Privacy, Terms, Refunds) */}
+            <div ref={legalRef} className="relative">
+              <button onClick={() => toggle('legal')} className={dropdownBtnClass('legal')}>
+                Legal {chevron('legal')}
               </button>
               <AnimatePresence>
-                {communityOpen && (
-                  <motion.div
-                    className="absolute top-full mt-2 right-0 w-52 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl shadow-lg overflow-hidden p-1.5"
-                    initial={{ opacity: 0, y: -8, scale: 0.96 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    exit={{ opacity: 0, y: -8, scale: 0.96 }}
-                    transition={{ duration: 0.15 }}
-                  >
-                    {socialLinks.map((social) => (
-                      <a
-                        key={social.label}
-                        href={social.href}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className={dropdownItemClass}
-                        onClick={() => setCommunityOpen(false)}
-                      >
-                        {social.icon}
-                        {social.label}
-                      </a>
-                    ))}
-                  </motion.div>
+                {openDropdown === 'legal' && dropdownPanel(
+                  <>
+                    <Link to="/privacy" onClick={() => setOpenDropdown(null)} className={dropdownItemClass}>
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" /></svg>
+                      Privacy Policy
+                    </Link>
+                    <Link to="/terms" onClick={() => setOpenDropdown(null)} className={dropdownItemClass}>
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" /></svg>
+                      Terms of Service
+                    </Link>
+                    <Link to="/refunds" onClick={() => setOpenDropdown(null)} className={dropdownItemClass}>
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5z" /></svg>
+                      Refund Policy
+                    </Link>
+                  </>
+                )}
+              </AnimatePresence>
+            </div>
+
+            {/* Community Dropdown */}
+            <div ref={communityRef} className="relative">
+              <button onClick={() => toggle('community')} className={dropdownBtnClass('community')}>
+                Community {chevron('community')}
+              </button>
+              <AnimatePresence>
+                {openDropdown === 'community' && dropdownPanel(
+                  socialLinks.map((social) => (
+                    <a
+                      key={social.label}
+                      href={social.href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={dropdownItemClass}
+                      onClick={() => setOpenDropdown(null)}
+                    >
+                      {social.icon}
+                      {social.label}
+                    </a>
+                  ))
                 )}
               </AnimatePresence>
             </div>
 
             {/* Contact Dropdown */}
             <div ref={contactRef} className="relative">
-              <button
-                onClick={() => { setContactOpen(!contactOpen); setCommunityOpen(false); }}
-                className={`text-sm font-medium transition-colors flex items-center gap-1 ${
-                  contactOpen
-                    ? 'text-emerald-500'
-                    : 'text-[var(--color-text-secondary)] hover:text-[var(--color-text)]'
-                }`}
-              >
-                Contact
-                <svg className={`w-3.5 h-3.5 transition-transform ${contactOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
-                </svg>
+              <button onClick={() => toggle('contact')} className={dropdownBtnClass('contact')}>
+                Contact {chevron('contact')}
               </button>
               <AnimatePresence>
-                {contactOpen && (
-                  <motion.div
-                    className="absolute top-full mt-2 right-0 w-64 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl shadow-lg overflow-hidden p-1.5"
-                    initial={{ opacity: 0, y: -8, scale: 0.96 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    exit={{ opacity: 0, y: -8, scale: 0.96 }}
-                    transition={{ duration: 0.15 }}
-                  >
-                    <a
-                      href="mailto:support@fitwiz.us"
-                      className={dropdownItemClass}
-                      onClick={() => setContactOpen(false)}
-                    >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />
-                      </svg>
+                {openDropdown === 'contact' && dropdownPanel(
+                  <>
+                    <a href="mailto:support@fitwiz.us" className={dropdownItemClass} onClick={() => setOpenDropdown(null)}>
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" /></svg>
                       support@fitwiz.us
                     </a>
-                    <Link
-                      to="/contact"
-                      className={dropdownItemClass}
-                      onClick={() => setContactOpen(false)}
-                    >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 01-2.555-.337A5.972 5.972 0 015.41 20.97a5.969 5.969 0 01-.474-.065 4.48 4.48 0 00.978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25z" />
-                      </svg>
+                    <Link to="/contact" className={dropdownItemClass} onClick={() => setOpenDropdown(null)}>
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 01-2.555-.337A5.972 5.972 0 015.41 20.97a5.969 5.969 0 01-.474-.065 4.48 4.48 0 00.978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25z" /></svg>
                       Contact Page
                     </Link>
-                  </motion.div>
+                  </>,
+                  "w-64"
                 )}
               </AnimatePresence>
             </div>
           </div>
 
-          {/* Right side: Theme toggle + Google Play */}
+          {/* Right side: Theme toggle + Pricing CTA */}
           <div className="hidden md:flex items-center gap-4">
-            {/* Theme Toggle */}
             <button
               onClick={toggleTheme}
               className="p-2 rounded-lg text-[var(--color-text-secondary)] hover:text-[var(--color-text)] hover:bg-[var(--color-surface-muted)] transition-all"
@@ -262,18 +265,16 @@ export default function MarketingNav() {
               )}
             </button>
 
-            {/* Google Play Store link */}
             <a
               href="https://play.google.com/store"
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-2 px-4 py-2 bg-[var(--color-surface-muted)] hover:bg-[var(--color-surface-elevated)] text-[var(--color-text)] rounded-full transition-colors border border-[var(--color-border)]"
-              aria-label="Get it on Google Play"
+              className="flex items-center gap-2 px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-white rounded-full transition-colors text-sm font-medium"
             >
-              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 512 512">
+              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 512 512">
                 <path d="M325.3 234.3L104.6 13l280.8 161.2-60.1 60.1zM47 0C34 6.8 25.3 19.2 25.3 35.3v441.3c0 16.1 8.7 28.5 21.7 35.3l256.6-256L47 0zm425.2 225.6l-58.9-34.1-65.7 64.5 65.7 64.5 60.1-34.1c18-14.3 18-46.5-1.2-60.8zM104.6 499l280.8-161.2-60.1-60.1L104.6 499z"/>
               </svg>
-              <span className="text-sm font-medium">Google Play</span>
+              $4.99/mo
             </a>
           </div>
 
@@ -322,6 +323,7 @@ export default function MarketingNav() {
             transition={{ duration: 0.2 }}
           >
             <div className="max-w-[1200px] mx-auto px-6 py-4 flex flex-col gap-1">
+              {/* Main links */}
               {navLinks.map((link) => (
                 <Link
                   key={link.to}
@@ -337,9 +339,26 @@ export default function MarketingNav() {
                 </Link>
               ))}
 
+              {/* Legal links */}
+              <p className="text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wider px-4 pt-3 pb-1">Legal</p>
+              {[
+                { label: 'Privacy Policy', to: '/privacy' },
+                { label: 'Terms of Service', to: '/terms' },
+                { label: 'Refund Policy', to: '/refunds' },
+              ].map((link) => (
+                <Link
+                  key={link.to}
+                  to={link.to}
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="text-sm font-medium py-2.5 px-4 rounded-lg text-[var(--color-text-secondary)] hover:text-[var(--color-text)] hover:bg-[var(--color-surface-muted)] transition-colors"
+                >
+                  {link.label}
+                </Link>
+              ))}
+
               <hr className="border-[var(--color-border)] my-2" />
 
-              {/* Community section */}
+              {/* Community */}
               <p className="text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wider px-4 pt-1 pb-2">Community</p>
               <div className="grid grid-cols-3 gap-2 px-2">
                 {socialLinks.map((social) => (
@@ -370,31 +389,21 @@ export default function MarketingNav() {
                 </svg>
                 support@fitwiz.us
               </a>
-              <Link
-                to="/contact"
-                onClick={() => setMobileMenuOpen(false)}
-                className="flex items-center gap-3 text-sm font-medium py-3 px-4 text-[var(--color-text-secondary)] hover:text-[var(--color-text)] hover:bg-[var(--color-surface-muted)] rounded-lg transition-colors"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 01-2.555-.337A5.972 5.972 0 015.41 20.97a5.969 5.969 0 01-.474-.065 4.48 4.48 0 00.978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25z" />
-                </svg>
-                Contact Page
-              </Link>
 
               <hr className="border-[var(--color-border)] my-2" />
 
-              {/* Google Play */}
+              {/* CTA */}
               <a
                 href="https://play.google.com/store"
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={() => setMobileMenuOpen(false)}
-                className="flex items-center justify-center gap-2 text-sm font-medium py-3 px-4 bg-[var(--color-surface-muted)] text-[var(--color-text)] rounded-full mt-2 border border-[var(--color-border)]"
+                className="flex items-center justify-center gap-2 text-sm font-medium py-3 px-4 bg-emerald-500 text-white rounded-full mt-1"
               >
-                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 512 512">
+                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 512 512">
                   <path d="M325.3 234.3L104.6 13l280.8 161.2-60.1 60.1zM47 0C34 6.8 25.3 19.2 25.3 35.3v441.3c0 16.1 8.7 28.5 21.7 35.3l256.6-256L47 0zm425.2 225.6l-58.9-34.1-65.7 64.5 65.7 64.5 60.1-34.1c18-14.3 18-46.5-1.2-60.8zM104.6 499l280.8-161.2-60.1-60.1L104.6 499z"/>
                 </svg>
-                Get it on Google Play
+                $4.99/mo — Get on Google Play
               </a>
             </div>
           </motion.div>
