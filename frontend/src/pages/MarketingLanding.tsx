@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import MarketingNav from '../components/marketing/MarketingNav';
 import MarketingFooter from '../components/marketing/MarketingFooter';
 import { CinematicHero } from '../components/ui/cinematic-landing-hero';
+import GalleryHoverCarousel from '../components/ui/gallery-hover-carousel';
 
 const fadeUp = {
   hidden: { opacity: 0, y: 24 },
@@ -13,16 +14,6 @@ const fadeUp = {
 const stagger = {
   visible: { transition: { staggerChildren: 0.08 } },
 };
-
-const appScreenshots = [
-  { src: '/screenshots/intro_phone_1.png', label: 'AI Coach', description: 'Real-time coaching mid-workout' },
-  { src: '/screenshots/intro_phone_2.png', label: 'Nutrition', description: 'Photo-based meal scoring' },
-  { src: '/screenshots/intro_phone_3.png', label: 'Workouts', description: 'AI-designed training plans' },
-  { src: '/screenshots/intro_phone_4.png', label: 'Tracking', description: 'Sets, reps, weight logging' },
-  { src: '/screenshots/intro_phone_5.png', label: 'Progress', description: 'Side-by-side transformations' },
-  { src: '/screenshots/intro_phone_6.png', label: 'Stats', description: 'Heatmaps, streaks, PRs' },
-  { src: '/screenshots/intro_phone_7.png', label: 'Library', description: '1,722 exercises' },
-];
 
 const freeFeatures = [
   '1,722 exercises with videos',
@@ -46,9 +37,7 @@ const premiumFeatures = [
 ];
 
 export default function MarketingLanding() {
-  const showcaseRef = useRef<HTMLDivElement>(null);
   const pricingRef = useRef<HTMLDivElement>(null);
-  const showcaseInView = useInView(showcaseRef, { once: true, margin: '-80px' });
   const pricingInView = useInView(pricingRef, { once: true, margin: '-80px' });
 
   return (
@@ -85,91 +74,19 @@ export default function MarketingLanding() {
         ]}
       />
 
-      {/* ── Screenshot Showcase ── */}
-      <section ref={showcaseRef} className="py-20 sm:py-28 px-6">
-        <div className="max-w-[1200px] mx-auto">
-          <motion.div
-            initial="hidden"
-            animate={showcaseInView ? 'visible' : 'hidden'}
-            variants={stagger}
-            className="text-center mb-14"
-          >
-            <motion.p variants={fadeUp} className="text-[15px] text-[var(--color-text-muted)] mb-2 uppercase tracking-wider font-medium">
-              Inside the app
-            </motion.p>
-            <motion.h2
-              variants={fadeUp}
-              className="text-[32px] sm:text-[48px] font-semibold tracking-[-0.02em]"
-              style={{ fontFamily: 'var(--font-heading)' }}
-            >
-              Everything you need. One app.
-            </motion.h2>
-          </motion.div>
-
-          {/* Horizontal scroll gallery */}
-          <motion.div
-            initial="hidden"
-            animate={showcaseInView ? 'visible' : 'hidden'}
-            variants={stagger}
-            className="flex gap-6 overflow-x-auto pb-6 snap-x snap-mandatory scrollbar-hide"
-            style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
-          >
-            {appScreenshots.map((item) => (
-              <motion.div
-                key={item.label}
-                variants={fadeUp}
-                className="flex-shrink-0 snap-center w-[220px] sm:w-[260px] group"
-              >
-                {/* Phone frame */}
-                <div
-                  className="relative rounded-[2.2rem] p-[8px] mb-4 transition-transform duration-300 group-hover:scale-[1.03]"
-                  style={{
-                    background: 'linear-gradient(145deg, #3a3a3c 0%, #1c1c1e 50%, #0a0a0a 100%)',
-                    boxShadow: '0 30px 60px -15px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.08)',
-                  }}
-                >
-                  {/* Notch */}
-                  <div className="absolute top-[10px] left-1/2 -translate-x-1/2 w-20 h-6 bg-black rounded-full z-20" />
-
-                  {/* Screen */}
-                  <div className="relative rounded-[1.8rem] overflow-hidden bg-black" style={{ aspectRatio: '9/19.5' }}>
-                    <img
-                      src={item.src}
-                      alt={item.label}
-                      className="absolute inset-0 w-full h-full object-cover"
-                      loading="lazy"
-                    />
-                  </div>
-                </div>
-
-                {/* Label */}
-                <div className="text-center px-2">
-                  <p className="text-[15px] font-semibold text-[var(--color-text)] mb-0.5">{item.label}</p>
-                  <p className="text-[13px] text-[var(--color-text-secondary)]">{item.description}</p>
-                </div>
-              </motion.div>
-            ))}
-
-            {/* See all features card */}
-            <motion.div variants={fadeUp} className="flex-shrink-0 snap-center w-[220px] sm:w-[260px] flex items-center justify-center">
-              <Link
-                to="/features"
-                className="flex flex-col items-center justify-center gap-4 w-full h-full min-h-[380px] rounded-[2.2rem] border-2 border-dashed border-[var(--color-border)] hover:border-emerald-500/50 transition-colors group"
-              >
-                <div className="w-14 h-14 rounded-full bg-emerald-500/10 flex items-center justify-center group-hover:bg-emerald-500/20 transition-colors">
-                  <svg className="w-6 h-6 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
-                  </svg>
-                </div>
-                <div className="text-center">
-                  <p className="text-[15px] font-semibold text-[var(--color-text)]">See all features</p>
-                  <p className="text-[13px] text-[var(--color-text-secondary)]">With full screenshots</p>
-                </div>
-              </Link>
-            </motion.div>
-          </motion.div>
-        </div>
-      </section>
+      {/* ── Screenshot Showcase (Gallery Hover Carousel) ── */}
+      <GalleryHoverCarousel
+        heading="Everything you need. One app."
+        items={[
+          { id: 'ai-coach', title: 'AI Coach', summary: 'Get real-time coaching during your workout. Ask about form, get exercise swaps, or request motivation — your coach knows your full context.', url: '/features', image: '/screenshots/intro_phone_1.png' },
+          { id: 'nutrition', title: 'Smart Nutrition', summary: 'Snap a photo of your meal and get instant macro breakdowns, a 9/10 nutrition score, and personalized tips from Coach Mike.', url: '/features', image: '/screenshots/intro_phone_2.png' },
+          { id: 'workouts', title: 'AI Workout Plans', summary: 'Every workout is designed by AI for your specific goals, equipment, and experience level. Complete with exercise reasoning.', url: '/features', image: '/screenshots/intro_phone_3.png' },
+          { id: 'tracking', title: 'Exercise Tracking', summary: 'Log sets, reps, and weight in real time. Track RIR, use pyramid sets, supersets, and breathing cues — all in one clean interface.', url: '/features', image: '/screenshots/intro_phone_4.png' },
+          { id: 'progress', title: 'Progress Photos', summary: 'Side-by-side transformation photos with customizable layouts, overlays, stats, and sharing — see how far you\'ve come.', url: '/features', image: '/screenshots/intro_phone_5.png' },
+          { id: 'stats', title: 'Stats & Scores', summary: 'Heatmaps, streaks, achievements, body measurements, weekly summaries, and 1RM tracking — all your data in one place.', url: '/features', image: '/screenshots/intro_phone_6.png' },
+          { id: 'library', title: 'Exercise Library', summary: 'Browse and customize 1,722 exercises. Set favorites, staples, avoids, queue exercises, and configure weight increments.', url: '/features', image: '/screenshots/intro_phone_7.png' },
+        ]}
+      />
 
       {/* ── Pricing ── */}
       <section ref={pricingRef} className="py-20 sm:py-28 px-6 bg-[var(--color-surface-muted)]">
