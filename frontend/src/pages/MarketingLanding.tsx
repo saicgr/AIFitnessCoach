@@ -58,19 +58,39 @@ export default function MarketingLanding() {
         phoneScreenshot="/screenshots/intro_phone_1.png"
         sideScreenshots={["/screenshots/intro_phone_4.png", "/screenshots/intro_phone_6.png"]}
         badges={[
+          { emoji: "💪", title: "New PR Unlocked", subtitle: "Bench Press 185 lbs", color: "from-emerald-500/20 to-emerald-900/10", borderColor: "border-emerald-400/30" },
+          { emoji: "🤖", title: "AI Coach", subtitle: "Form check complete", color: "from-green-500/20 to-green-900/10", borderColor: "border-green-400/30" },
+        ]}
+        cardSlides={[
           {
-            emoji: "💪",
-            title: "New PR Unlocked",
-            subtitle: "Bench Press 185 lbs",
-            color: "from-emerald-500/20 to-emerald-900/10",
-            borderColor: "border-emerald-400/30",
+            screenshot: "/screenshots/intro_phone_1.png",
+            sideScreenshots: ["/screenshots/intro_phone_4.png", "/screenshots/intro_phone_6.png"],
+            heading: "AI coaching, redefined.",
+            description: "FitWiz gives you personalized workout plans, real-time AI coaching, intelligent progress tracking, and nutrition guidance — all powered by advanced AI.",
+            badges: [
+              { emoji: "💪", title: "New PR Unlocked", subtitle: "Bench Press 185 lbs", color: "from-emerald-500/20 to-emerald-900/10", borderColor: "border-emerald-400/30" },
+              { emoji: "🤖", title: "AI Coach", subtitle: "Form check complete", color: "from-green-500/20 to-green-900/10", borderColor: "border-green-400/30" },
+            ],
           },
           {
-            emoji: "🤖",
-            title: "AI Coach",
-            subtitle: "Form check complete",
-            color: "from-green-500/20 to-green-900/10",
-            borderColor: "border-green-400/30",
+            screenshot: "/screenshots/intro_phone_2.png",
+            sideScreenshots: ["/screenshots/intro_phone_1.png", "/screenshots/intro_phone_3.png"],
+            heading: "Nutrition made simple.",
+            description: "Snap a photo of any meal and get instant macro breakdowns, a nutrition score out of 10, and personalized tips from Coach Mike.",
+            badges: [
+              { emoji: "📸", title: "Meal Logged", subtitle: "9/10 nutrition score", color: "from-orange-500/20 to-orange-900/10", borderColor: "border-orange-400/30" },
+              { emoji: "🥗", title: "Daily Goal", subtitle: "142g protein hit", color: "from-green-500/20 to-green-900/10", borderColor: "border-green-400/30" },
+            ],
+          },
+          {
+            screenshot: "/screenshots/intro_phone_5.png",
+            sideScreenshots: ["/screenshots/intro_phone_6.png", "/screenshots/intro_phone_7.png"],
+            heading: "See your transformation.",
+            description: "Track progress with side-by-side photos, heatmaps, streaks, achievements, and 1RM records — all your data in one beautiful dashboard.",
+            badges: [
+              { emoji: "🔥", title: "52 Workouts", subtitle: "3-month streak", color: "from-rose-500/20 to-rose-900/10", borderColor: "border-rose-400/30" },
+              { emoji: "📈", title: "Strength Up", subtitle: "+15% this quarter", color: "from-blue-500/20 to-blue-900/10", borderColor: "border-blue-400/30" },
+            ],
           },
         ]}
       />

@@ -1,6 +1,6 @@
 // src/components/ui/cinematic-landing-hero.tsx
 
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState, useCallback } from "react";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { cn } from "@/lib/utils";
@@ -176,6 +176,14 @@ export interface FloatingBadge {
   borderColor: string; // e.g. "border-emerald-400/30"
 }
 
+export interface CardSlide {
+  screenshot: string;
+  sideScreenshots: [string, string];
+  heading: string;
+  description: string;
+  badges: [FloatingBadge, FloatingBadge];
+}
+
 export interface CinematicHeroProps extends React.HTMLAttributes<HTMLDivElement> {
   brandName?: string;
   tagline1?: string;
@@ -189,6 +197,7 @@ export interface CinematicHeroProps extends React.HTMLAttributes<HTMLDivElement>
   phoneScreenshot?: string;
   sideScreenshots?: [string, string];
   badges?: [FloatingBadge, FloatingBadge];
+  cardSlides?: CardSlide[];
 }
 
 export function CinematicHero({
@@ -204,6 +213,7 @@ export function CinematicHero({
   phoneScreenshot,
   sideScreenshots,
   badges,
+  cardSlides,
   className,
   ...props
 }: CinematicHeroProps) {
@@ -212,6 +222,21 @@ export function CinematicHero({
   const mainCardRef = useRef<HTMLDivElement>(null);
   const mockupRef = useRef<HTMLDivElement>(null);
   const requestRef = useRef<number>(0);
+  const [activeSlide, setActiveSlide] = useState(0);
+
+  // Compute current slide data
+  const slides = cardSlides && cardSlides.length > 0 ? cardSlides : null;
+  const currentSlide = slides ? slides[activeSlide] : null;
+  const activeScreenshot = currentSlide?.screenshot ?? phoneScreenshot;
+  const activeSides = currentSlide?.sideScreenshots ?? sideScreenshots;
+  const activeBadges = currentSlide?.badges ?? badges;
+  const activeHeading = currentSlide?.heading ?? cardHeading;
+  const activeDescription = currentSlide?.description ?? (typeof cardDescription === 'string' ? cardDescription : null);
+
+  // Slide cycling callback for GSAP
+  const handleSlideChange = useCallback((index: number) => {
+    setActiveSlide(index);
+  }, []);
 
   // 1. High-Performance Mouse Interaction Logic (Using requestAnimationFrame)
   useEffect(() => {
@@ -287,7 +312,32 @@ export function CinematicHero({
         .fromTo(".floating-badge", { y: 100, autoAlpha: 0, scale: 0.7, rotationZ: -10 }, { y: 0, autoAlpha: 1, scale: 1, rotationZ: 0, ease: "back.out(1.5)", duration: 1.5, stagger: 0.2 }, "-=2.0")
         .fromTo(".card-left-text", { x: -50, autoAlpha: 0 }, { x: 0, autoAlpha: 1, ease: "power4.out", duration: 1.5 }, "-=1.5")
         .fromTo(".card-right-text", { x: 50, autoAlpha: 0, scale: 0.8 }, { x: 0, autoAlpha: 1, scale: 1, ease: "expo.out", duration: 1.5 }, "<")
-        .to({}, { duration: 2.5 })
+        .to({}, { duration: 1.5 });
+
+      // Slide cycling during the card hold phase
+      const slideCount = slides ? slides.length : 0;
+      if (slideCount > 1) {
+        for (let i = 1; i < slideCount; i++) {
+          const slideIdx = i;
+          // Fade out current content
+          scrollTl
+            .to([".card-left-text", ".phone-screen-img", ".side-phone-left", ".side-phone-right", ".floating-badge"], {
+              autoAlpha: 0, scale: 0.95, duration: 0.6, ease: "power2.in",
+            })
+            // Trigger slide change at midpoint
+            .call(() => handleSlideChange(slideIdx))
+            .to({}, { duration: 0.1 })
+            // Fade in new content
+            .to([".card-left-text", ".phone-screen-img", ".side-phone-left", ".side-phone-right", ".floating-badge"], {
+              autoAlpha: 1, scale: 1, duration: 0.8, ease: "power2.out",
+            })
+            .to({}, { duration: 1.2 }); // Hold on this slide
+        }
+      } else {
+        scrollTl.to({}, { duration: 2.5 });
+      }
+
+      scrollTl
         .set(".hero-text-wrapper", { autoAlpha: 0 })
         .set(".cta-wrapper", { autoAlpha: 1 })
         .to({}, { duration: 1.5 })
@@ -389,9 +439,9 @@ export function CinematicHero({
               <div className="relative w-full h-full flex items-center justify-center transform scale-[0.65] md:scale-85 lg:scale-100">
 
                 {/* Side phone - left */}
-                {sideScreenshots && sideScreenshots[0] && (
+                {activeSides && activeSides[0] && (
                   <div
-                    className="absolute w-[200px] h-[415px] rounded-[2.2rem] overflow-hidden opacity-40 -left-[140px] lg:-left-[180px] top-1/2 -translate-y-1/2 z-0 hidden md:block"
+                    className="side-phone-left absolute w-[200px] h-[415px] rounded-[2.2rem] overflow-hidden opacity-40 -left-[140px] lg:-left-[180px] top-1/2 -translate-y-1/2 z-0 hidden md:block"
                     style={{
                       background: 'linear-gradient(145deg, #2a2a2c 0%, #111 100%)',
                       boxShadow: '0 20px 40px -10px rgba(0,0,0,0.6)',
@@ -399,15 +449,15 @@ export function CinematicHero({
                     }}
                   >
                     <div className="absolute inset-[5px] rounded-[1.8rem] overflow-hidden bg-black">
-                      <img src={sideScreenshots[0]} alt="App preview" className="absolute inset-0 w-full h-full object-cover" />
+                      <img src={activeSides[0]} alt="App preview" className="absolute inset-0 w-full h-full object-cover" />
                     </div>
                   </div>
                 )}
 
                 {/* Side phone - right */}
-                {sideScreenshots && sideScreenshots[1] && (
+                {activeSides && activeSides[1] && (
                   <div
-                    className="absolute w-[200px] h-[415px] rounded-[2.2rem] overflow-hidden opacity-40 -right-[140px] lg:-right-[180px] top-1/2 -translate-y-1/2 z-0 hidden md:block"
+                    className="side-phone-right absolute w-[200px] h-[415px] rounded-[2.2rem] overflow-hidden opacity-40 -right-[140px] lg:-right-[180px] top-1/2 -translate-y-1/2 z-0 hidden md:block"
                     style={{
                       background: 'linear-gradient(145deg, #2a2a2c 0%, #111 100%)',
                       boxShadow: '0 20px 40px -10px rgba(0,0,0,0.6)',
@@ -415,7 +465,7 @@ export function CinematicHero({
                     }}
                   >
                     <div className="absolute inset-[5px] rounded-[1.8rem] overflow-hidden bg-black">
-                      <img src={sideScreenshots[1]} alt="App preview" className="absolute inset-0 w-full h-full object-cover" />
+                      <img src={activeSides[1]} alt="App preview" className="absolute inset-0 w-full h-full object-cover" />
                     </div>
                   </div>
                 )}
@@ -436,11 +486,11 @@ export function CinematicHero({
                     <div className="absolute inset-0 screen-glare z-40 pointer-events-none" aria-hidden="true" />
 
                     {/* Real app screenshot */}
-                    {phoneScreenshot ? (
+                    {activeScreenshot ? (
                       <img
-                        src={phoneScreenshot}
+                        src={activeScreenshot}
                         alt={`${brandName} app screenshot`}
-                        className="absolute inset-0 w-full h-full object-cover"
+                        className="phone-screen-img absolute inset-0 w-full h-full object-cover transition-opacity duration-300"
                       />
                     ) : (
                       <div className="absolute inset-0 bg-gradient-to-b from-[#0a0a0a] to-[#1a1a1a] flex items-center justify-center">
@@ -454,26 +504,26 @@ export function CinematicHero({
                 </div>
 
                 {/* Floating Glass Badges */}
-                {badges && badges[0] && (
+                {activeBadges && activeBadges[0] && (
                   <div className="floating-badge absolute flex top-6 lg:top-12 left-[-15px] lg:left-[-80px] floating-ui-badge rounded-xl lg:rounded-2xl p-3 lg:p-4 items-center gap-3 lg:gap-4 z-30">
-                    <div className={`w-8 h-8 lg:w-10 lg:h-10 rounded-full bg-gradient-to-b ${badges[0].color} flex items-center justify-center border ${badges[0].borderColor} shadow-inner`}>
-                      <span className="text-base lg:text-xl drop-shadow-lg" aria-hidden="true">{badges[0].emoji}</span>
+                    <div className={`w-8 h-8 lg:w-10 lg:h-10 rounded-full bg-gradient-to-b ${activeBadges[0].color} flex items-center justify-center border ${activeBadges[0].borderColor} shadow-inner`}>
+                      <span className="text-base lg:text-xl drop-shadow-lg" aria-hidden="true">{activeBadges[0].emoji}</span>
                     </div>
                     <div>
-                      <p className="text-white text-xs lg:text-sm font-bold tracking-tight">{badges[0].title}</p>
-                      <p className="text-blue-200/50 text-[10px] lg:text-xs font-medium">{badges[0].subtitle}</p>
+                      <p className="text-white text-xs lg:text-sm font-bold tracking-tight">{activeBadges[0].title}</p>
+                      <p className="text-blue-200/50 text-[10px] lg:text-xs font-medium">{activeBadges[0].subtitle}</p>
                     </div>
                   </div>
                 )}
 
-                {badges && badges[1] && (
+                {activeBadges && activeBadges[1] && (
                   <div className="floating-badge absolute flex bottom-12 lg:bottom-20 right-[-15px] lg:right-[-80px] floating-ui-badge rounded-xl lg:rounded-2xl p-3 lg:p-4 items-center gap-3 lg:gap-4 z-30">
-                    <div className={`w-8 h-8 lg:w-10 lg:h-10 rounded-full bg-gradient-to-b ${badges[1].color} flex items-center justify-center border ${badges[1].borderColor} shadow-inner`}>
-                      <span className="text-base lg:text-lg drop-shadow-lg" aria-hidden="true">{badges[1].emoji}</span>
+                    <div className={`w-8 h-8 lg:w-10 lg:h-10 rounded-full bg-gradient-to-b ${activeBadges[1].color} flex items-center justify-center border ${activeBadges[1].borderColor} shadow-inner`}>
+                      <span className="text-base lg:text-lg drop-shadow-lg" aria-hidden="true">{activeBadges[1].emoji}</span>
                     </div>
                     <div>
-                      <p className="text-white text-xs lg:text-sm font-bold tracking-tight">{badges[1].title}</p>
-                      <p className="text-blue-200/50 text-[10px] lg:text-xs font-medium">{badges[1].subtitle}</p>
+                      <p className="text-white text-xs lg:text-sm font-bold tracking-tight">{activeBadges[1].title}</p>
+                      <p className="text-blue-200/50 text-[10px] lg:text-xs font-medium">{activeBadges[1].subtitle}</p>
                     </div>
                   </div>
                 )}
@@ -484,11 +534,11 @@ export function CinematicHero({
             {/* 3. BOTTOM (Mobile) / LEFT (Desktop): ACCOUNTABILITY TEXT */}
             <div className="card-left-text gsap-reveal order-3 lg:order-1 flex flex-col justify-center text-center lg:text-left z-20 w-full lg:max-w-none px-4 lg:px-0">
               <h3 className="text-white text-2xl md:text-3xl lg:text-4xl font-bold mb-0 lg:mb-5 tracking-tight">
-                {cardHeading}
+                {activeHeading}
               </h3>
-              {/* HIDDEN ON MOBILE (added hidden md:block) */}
+              {/* HIDDEN ON MOBILE */}
               <p className="hidden md:block text-blue-100/70 text-sm md:text-base lg:text-lg font-normal leading-relaxed mx-auto lg:mx-0 max-w-sm lg:max-w-none">
-                {cardDescription}
+                {activeDescription ?? cardDescription}
               </p>
             </div>
 
