@@ -43,11 +43,8 @@ class PlanPreviewScreen extends ConsumerWidget {
     final textPrimary = Colors.white;
     final textSecondary = Colors.white.withValues(alpha: 0.7);
 
-    final gradient = OnboardingTheme.of(context).backgroundGradient;
-
     return Scaffold(
-      body: Container(
-        decoration: BoxDecoration(gradient: gradient),
+      body: OnboardingBackground(
         child: SafeArea(
           child: FoldableQuizScaffold(
             headerTitle: 'Your Personalized Plan',

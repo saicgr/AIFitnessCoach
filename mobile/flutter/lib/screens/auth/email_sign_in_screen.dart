@@ -162,8 +162,7 @@ class _EmailSignInScreenState extends ConsumerState<EmailSignInScreen> {
     final t = OnboardingTheme.of(context);
 
     return Scaffold(
-      body: Container(
-        decoration: BoxDecoration(gradient: t.backgroundGradient),
+      body: OnboardingBackground(
         child: SafeArea(
           child: SingleChildScrollView(
             padding: const EdgeInsets.symmetric(horizontal: 24),

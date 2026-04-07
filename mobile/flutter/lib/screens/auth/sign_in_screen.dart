@@ -179,8 +179,7 @@ class _SignInScreenState extends ConsumerState<SignInScreen>
     }
 
     return Scaffold(
-      body: Container(
-        decoration: BoxDecoration(gradient: t.backgroundGradient),
+      body: OnboardingBackground(
         child: SafeArea(
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 24),

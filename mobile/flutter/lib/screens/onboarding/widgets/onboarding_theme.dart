@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 
 /// Centralized color definitions for the glassmorphic onboarding flow.
@@ -33,76 +34,72 @@ class OnboardingTheme {
 
   // ── Text colors ───────────────────────────────────────────────────
 
-  /// Primary text (headings, labels).
   Color get textPrimary =>
       isDark ? Colors.white : const Color(0xFF1A1A2E);
 
-  /// Secondary text (subtitles, descriptions).
   Color get textSecondary =>
       isDark ? Colors.white.withValues(alpha: 0.7) : const Color(0xFF52525B);
 
-  /// Muted text (skip links, disabled labels).
   Color get textMuted =>
       isDark ? Colors.white.withValues(alpha: 0.5) : const Color(0xFF8E8E93);
 
-  /// Disabled text.
   Color get textDisabled =>
       isDark ? Colors.white.withValues(alpha: 0.35) : const Color(0xFFAEAEB2);
 
   // ── Glass base color ──────────────────────────────────────────────
-  // In dark mode glass is white-on-dark; in light mode it's black-on-light.
 
   Color get _glass => isDark ? Colors.white : Colors.black;
 
   // ── Card / chip backgrounds ───────────────────────────────────────
 
-  /// Unselected card fill.
-  Color get cardFill =>
-      _glass.withValues(alpha: isDark ? 0.08 : 0.04);
+  Color get cardFill => isDark
+      ? Colors.white.withValues(alpha: 0.10)
+      : Colors.white.withValues(alpha: 0.55);
 
-  /// Selected card gradient (use as `LinearGradient(colors: [...])` ).
-  List<Color> get cardSelectedGradient => [
-        _glass.withValues(alpha: isDark ? 0.28 : 0.08),
-        _glass.withValues(alpha: isDark ? 0.16 : 0.04),
-      ];
+  List<Color> get cardSelectedGradient => isDark
+      ? [Colors.white.withValues(alpha: 0.22), Colors.white.withValues(alpha: 0.12)]
+      : [Colors.white.withValues(alpha: 0.80), Colors.white.withValues(alpha: 0.60)];
 
   // ── Borders ───────────────────────────────────────────────────────
 
-  Color get borderDefault =>
-      _glass.withValues(alpha: isDark ? 0.15 : 0.08);
+  Color get borderDefault => isDark
+      ? Colors.white.withValues(alpha: 0.18)
+      : Colors.white.withValues(alpha: 0.70);
 
-  Color get borderSelected =>
-      _glass.withValues(alpha: isDark ? 0.5 : 0.2);
+  Color get borderSelected => isDark
+      ? Colors.white.withValues(alpha: 0.50)
+      : Colors.white.withValues(alpha: 0.90);
 
-  Color get borderSubtle =>
-      _glass.withValues(alpha: isDark ? 0.12 : 0.06);
+  Color get borderSubtle => isDark
+      ? Colors.white.withValues(alpha: 0.10)
+      : Colors.white.withValues(alpha: 0.50);
 
   // ── Checkmarks & indicators ───────────────────────────────────────
 
-  Color get checkBg =>
-      _glass.withValues(alpha: isDark ? 0.3 : 0.1);
+  Color get checkBg => isDark
+      ? Colors.white.withValues(alpha: 0.3)
+      : Colors.black.withValues(alpha: 0.08);
 
   Color get checkIcon => textPrimary;
 
-  Color get checkBorderUnselected =>
-      _glass.withValues(alpha: isDark ? 0.3 : 0.15);
+  Color get checkBorderUnselected => isDark
+      ? Colors.white.withValues(alpha: 0.3)
+      : Colors.black.withValues(alpha: 0.15);
 
   // ── Buttons ───────────────────────────────────────────────────────
 
-  List<Color> get buttonGradient => [
-        _glass.withValues(alpha: isDark ? 0.25 : 0.08),
-        _glass.withValues(alpha: isDark ? 0.15 : 0.04),
-      ];
+  List<Color> get buttonGradient => isDark
+      ? [Colors.white.withValues(alpha: 0.20), Colors.white.withValues(alpha: 0.10)]
+      : [Colors.white.withValues(alpha: 0.75), Colors.white.withValues(alpha: 0.55)];
 
-  Color get buttonBorder =>
-      _glass.withValues(alpha: isDark ? 0.4 : 0.15);
+  Color get buttonBorder => isDark
+      ? Colors.white.withValues(alpha: 0.35)
+      : Colors.white.withValues(alpha: 0.80);
 
   Color get buttonText => textPrimary;
 
   // ── Icon containers ───────────────────────────────────────────────
 
-  /// Background for the small icon square inside option cards.
-  /// Pass the icon's accent color.
   List<Color> iconContainerGradient(Color accent) => [
         accent.withValues(alpha: 0.45),
         accent.withValues(alpha: 0.25),
@@ -111,12 +108,101 @@ class OnboardingTheme {
   Color iconContainerBorder(Color accent) =>
       accent.withValues(alpha: 0.5);
 
-  /// Selected state icon container (white glass).
-  List<Color> get iconContainerSelectedGradient => [
-        _glass.withValues(alpha: isDark ? 0.3 : 0.12),
-        _glass.withValues(alpha: isDark ? 0.15 : 0.06),
-      ];
+  List<Color> get iconContainerSelectedGradient => isDark
+      ? [Colors.white.withValues(alpha: 0.3), Colors.white.withValues(alpha: 0.15)]
+      : [Colors.white.withValues(alpha: 0.6), Colors.white.withValues(alpha: 0.4)];
 
-  Color get iconContainerSelectedBorder =>
-      _glass.withValues(alpha: isDark ? 0.4 : 0.15);
+  Color get iconContainerSelectedBorder => isDark
+      ? Colors.white.withValues(alpha: 0.4)
+      : Colors.white.withValues(alpha: 0.8);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+
+/// Background widget with decorative gradient orbs that give the frosted
+/// glass cards something to blur over. Wrap your Scaffold body in this.
+class OnboardingBackground extends StatelessWidget {
+  final Widget child;
+
+  const OnboardingBackground({super.key, required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    final t = OnboardingTheme.of(context);
+
+    return Container(
+      decoration: BoxDecoration(gradient: t.backgroundGradient),
+      child: Stack(
+        children: [
+          // ── Decorative gradient orbs ──
+          // These give the BackdropFilter blur visible frosted glass effect.
+          Positioned(
+            top: -80,
+            right: -60,
+            child: _GlowOrb(
+              size: 260,
+              color: t.isDark
+                  ? const Color(0xFF6366F1).withValues(alpha: 0.20)
+                  : const Color(0xFF6366F1).withValues(alpha: 0.12),
+            ),
+          ),
+          Positioned(
+            top: MediaQuery.of(context).size.height * 0.35,
+            left: -100,
+            child: _GlowOrb(
+              size: 300,
+              color: t.isDark
+                  ? const Color(0xFF0EA5E9).withValues(alpha: 0.15)
+                  : const Color(0xFF0EA5E9).withValues(alpha: 0.10),
+            ),
+          ),
+          Positioned(
+            bottom: -60,
+            right: -40,
+            child: _GlowOrb(
+              size: 220,
+              color: t.isDark
+                  ? const Color(0xFF8B5CF6).withValues(alpha: 0.18)
+                  : const Color(0xFFA855F7).withValues(alpha: 0.08),
+            ),
+          ),
+          Positioned(
+            bottom: MediaQuery.of(context).size.height * 0.25,
+            left: 40,
+            child: _GlowOrb(
+              size: 160,
+              color: t.isDark
+                  ? const Color(0xFF14B8A6).withValues(alpha: 0.12)
+                  : const Color(0xFF14B8A6).withValues(alpha: 0.08),
+            ),
+          ),
+          // ── Content ──
+          child,
+        ],
+      ),
+    );
+  }
+}
+
+/// Soft, blurred circular gradient orb for background decoration.
+class _GlowOrb extends StatelessWidget {
+  final double size;
+  final Color color;
+
+  const _GlowOrb({required this.size, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return ImageFiltered(
+      imageFilter: ImageFilter.blur(sigmaX: 60, sigmaY: 60),
+      child: Container(
+        width: size,
+        height: size,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: color,
+        ),
+      ),
+    );
+  }
 }

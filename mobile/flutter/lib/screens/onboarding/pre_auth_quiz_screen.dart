@@ -553,11 +553,8 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
     final windowState = ref.watch(windowModeProvider);
     final isFoldableOpen = FoldableQuizScaffold.shouldUseFoldableLayout(windowState);
 
-    final onboardingGradient = OnboardingTheme.of(context).backgroundGradient;
-
     return Scaffold(
-      body: Container(
-        decoration: BoxDecoration(gradient: onboardingGradient),
+      body: OnboardingBackground(
         child: SafeArea(
           child: FoldableQuizScaffold(
             headerTitle: _getStepTitle(_currentQuestion),
