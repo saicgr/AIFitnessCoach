@@ -311,7 +311,7 @@ class _PhotoHeroCard extends StatelessWidget {
           onTap: () {
             HapticFeedback.lightImpact();
             onClose();
-            context.push('/stats');
+            context.push('/stats?tab=1&openPhoto=true');
           },
           borderRadius: BorderRadius.circular(16),
           child: Container(

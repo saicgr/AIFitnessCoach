@@ -1,8 +1,10 @@
 """Second part of health_logging_helpers.py (auto-split for size)."""
+from __future__ import annotations
+from collections import Counter
 from typing import Any, Dict, Optional
 from datetime import datetime, timedelta, date
 import logging
-from services.user_context.models import EventType
+from services.user_context.models import EventType, HormonalHealthContext
 from services.user_context.models_helpers import DiabetesPatterns
 
 logger = logging.getLogger(__name__)

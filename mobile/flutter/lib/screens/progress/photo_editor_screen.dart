@@ -6,6 +6,7 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:image_cropper/image_cropper.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/constants/app_colors.dart';
 import '../../widgets/pill_app_bar.dart';
 
@@ -256,9 +257,10 @@ class _PhotoEditorScreenState extends State<PhotoEditorScreen> {
   };
 
   void _showEmojiPicker() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     showModalBottomSheet(
       context: context,
-      backgroundColor: AppColors.nearBlack,
+      backgroundColor: isDark ? AppColors.nearBlack : AppColorsLight.pureWhite,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
@@ -295,10 +297,17 @@ class _PhotoEditorScreenState extends State<PhotoEditorScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bgColor = isDark ? AppColors.pureBlack : AppColorsLight.pureWhite;
+    final borderColor = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+    final mutedColor = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final secondaryColor = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+    final accentColor = isDark ? AppColors.cyan : AppColorsLight.accent;
+
     return AnnotatedRegion<SystemUiOverlayStyle>(
-      value: SystemUiOverlayStyle.light,
+      value: isDark ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark,
       child: Scaffold(
-      backgroundColor: AppColors.pureBlack,
+      backgroundColor: bgColor,
       appBar: PillAppBar(
         title: 'Edit ${widget.viewTypeName} Photo',
         actions: [
@@ -316,7 +325,7 @@ class _PhotoEditorScreenState extends State<PhotoEditorScreen> {
               child: RepaintBoundary(
                 key: _captureKey,
                 child: Container(
-                  color: AppColors.pureBlack,
+                  color: bgColor,
                   child: Stack(
                     children: [
                       // The image
@@ -416,14 +425,21 @@ class _PhotoEditorScreenState extends State<PhotoEditorScreen> {
           ),
 
           // Bottom toolbar
-          Container(
+          ClipRect(
+            child: BackdropFilter(
+              filter: ui.ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+              child: Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: AppColors.nearBlack,
+              color: isDark
+                  ? AppColors.glassSurface
+                  : AppColorsLight.glassSurface.withValues(alpha: 0.85),
               border: Border(
                 top: BorderSide(
-                  color: AppColors.cardBorder,
-                  width: 1,
+                  color: isDark
+                      ? Colors.white.withValues(alpha: 0.08)
+                      : Colors.black.withValues(alpha: 0.06),
+                  width: 0.5,
                 ),
               ),
             ),
@@ -441,13 +457,13 @@ class _PhotoEditorScreenState extends State<PhotoEditorScreen> {
                           Icon(
                             Icons.touch_app,
                             size: 16,
-                            color: AppColors.textMuted,
+                            color: mutedColor,
                           ),
                           const SizedBox(width: 8),
                           Text(
                             'Drag logo to move • Pinch to resize',
                             style: TextStyle(
-                              color: AppColors.textMuted,
+                              color: mutedColor,
                               fontSize: 12,
                             ),
                           ),
@@ -462,14 +478,14 @@ class _PhotoEditorScreenState extends State<PhotoEditorScreen> {
                         Icon(
                           Icons.photo_size_select_small,
                           size: 20,
-                          color: AppColors.textSecondary,
+                          color: secondaryColor,
                         ),
                         Expanded(
                           child: Slider(
                             value: _logoScale,
                             min: 0.5,
                             max: 3.0,
-                            inactiveColor: AppColors.cardBorder,
+                            inactiveColor: borderColor,
                             onChanged: (value) {
                               setState(() => _logoScale = value);
                             },
@@ -478,7 +494,7 @@ class _PhotoEditorScreenState extends State<PhotoEditorScreen> {
                         Icon(
                           Icons.photo_size_select_large,
                           size: 20,
-                          color: AppColors.textSecondary,
+                          color: secondaryColor,
                         ),
                       ],
                     ),
@@ -498,7 +514,7 @@ class _PhotoEditorScreenState extends State<PhotoEditorScreen> {
                           Text(
                             'Selected sticker',
                             style: TextStyle(
-                              color: AppColors.cyan,
+                              color: accentColor,
                               fontSize: 13,
                               fontWeight: FontWeight.w500,
                             ),
@@ -529,41 +545,41 @@ class _PhotoEditorScreenState extends State<PhotoEditorScreen> {
                     // Size slider
                     Row(
                       children: [
-                        Icon(Icons.photo_size_select_small, size: 18, color: AppColors.textSecondary),
+                        Icon(Icons.photo_size_select_small, size: 18, color: secondaryColor),
                         const SizedBox(width: 4),
-                        Text('Size', style: TextStyle(color: AppColors.textSecondary, fontSize: 11)),
+                        Text('Size', style: TextStyle(color: secondaryColor, fontSize: 11)),
                         Expanded(
                           child: Slider(
                             value: _emojiStickers[_activeEmojiIndex!].scale,
                             min: 0.3,
                             max: 5.0,
-                            inactiveColor: AppColors.cardBorder,
+                            inactiveColor: borderColor,
                             onChanged: (value) {
                               setState(() => _emojiStickers[_activeEmojiIndex!].scale = value);
                             },
                           ),
                         ),
-                        Icon(Icons.photo_size_select_large, size: 18, color: AppColors.textSecondary),
+                        Icon(Icons.photo_size_select_large, size: 18, color: secondaryColor),
                       ],
                     ),
                     // Rotation slider
                     Row(
                       children: [
-                        Icon(Icons.rotate_left, size: 18, color: AppColors.textSecondary),
+                        Icon(Icons.rotate_left, size: 18, color: secondaryColor),
                         const SizedBox(width: 4),
-                        Text('Rotate', style: TextStyle(color: AppColors.textSecondary, fontSize: 11)),
+                        Text('Rotate', style: TextStyle(color: secondaryColor, fontSize: 11)),
                         Expanded(
                           child: Slider(
                             value: _emojiStickers[_activeEmojiIndex!].rotation,
                             min: -pi,
                             max: pi,
-                            inactiveColor: AppColors.cardBorder,
+                            inactiveColor: borderColor,
                             onChanged: (value) {
                               setState(() => _emojiStickers[_activeEmojiIndex!].rotation = value);
                             },
                           ),
                         ),
-                        Icon(Icons.rotate_right, size: 18, color: AppColors.textSecondary),
+                        Icon(Icons.rotate_right, size: 18, color: secondaryColor),
                       ],
                     ),
                   ],
@@ -603,6 +619,8 @@ class _PhotoEditorScreenState extends State<PhotoEditorScreen> {
                 ],
               ),
             ),
+          ),
+          ),
           ),
         ],
       ),
@@ -784,6 +802,12 @@ class _PhotoEditorScreenState extends State<PhotoEditorScreen> {
     bool isActive = false,
     bool enabled = true,
   }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final accentColor = isDark ? AppColors.cyan : AppColorsLight.accent;
+    final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final borderColor = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+    final secondaryColor = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+
     return GestureDetector(
       onTap: enabled ? onTap : null,
       child: Opacity(
@@ -795,16 +819,16 @@ class _PhotoEditorScreenState extends State<PhotoEditorScreen> {
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
                 color: isActive
-                    ? AppColors.cyan.withValues(alpha: 0.2)
-                    : AppColors.elevated,
+                    ? accentColor.withValues(alpha: 0.2)
+                    : elevatedColor,
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
-                  color: isActive ? AppColors.cyan : AppColors.cardBorder,
+                  color: isActive ? accentColor : borderColor,
                 ),
               ),
               child: Icon(
                 icon,
-                color: isActive ? AppColors.cyan : AppColors.textSecondary,
+                color: isActive ? accentColor : secondaryColor,
                 size: 24,
               ),
             ),
@@ -812,7 +836,7 @@ class _PhotoEditorScreenState extends State<PhotoEditorScreen> {
             Text(
               label,
               style: TextStyle(
-                color: isActive ? AppColors.cyan : AppColors.textSecondary,
+                color: isActive ? accentColor : secondaryColor,
                 fontSize: 11,
               ),
             ),
@@ -889,7 +913,7 @@ class _PhotoEditorScreenState extends State<PhotoEditorScreen> {
   }
 }
 
-/// Scrollable emoji picker with category tabs
+/// Scrollable emoji picker with category tabs and history
 class _EmojiPickerSheet extends StatefulWidget {
   final void Function(String emoji) onEmojiSelected;
   final Map<String, List<String>> categories;
@@ -904,7 +928,12 @@ class _EmojiPickerSheet extends StatefulWidget {
 }
 
 class _EmojiPickerSheetState extends State<_EmojiPickerSheet> {
-  late int _selectedCategory;
+  // -1 = History tab, 0+ = emoji categories
+  int _selectedCategory = -1;
+  List<String> _history = [];
+  static const _historyKey = 'sticker_history';
+  static const _maxHistory = 30;
+
   static const _categoryLabels = [
     'Fitness', 'Fire', 'Faces', 'Food', 'Hearts', 'Objects', 'Animals', 'Nature',
   ];
@@ -912,13 +941,51 @@ class _EmojiPickerSheetState extends State<_EmojiPickerSheet> {
   @override
   void initState() {
     super.initState();
-    _selectedCategory = 0;
+    _loadHistory();
+  }
+
+  Future<void> _loadHistory() async {
+    final prefs = await SharedPreferences.getInstance();
+    final stored = prefs.getStringList(_historyKey) ?? [];
+    setState(() {
+      _history = stored;
+      // Default to first category if no history
+      if (_history.isEmpty) _selectedCategory = 0;
+    });
+  }
+
+  Future<void> _saveToHistory(String emoji) async {
+    final prefs = await SharedPreferences.getInstance();
+    _history.remove(emoji); // Remove duplicate
+    _history.insert(0, emoji); // Add to front
+    if (_history.length > _maxHistory) {
+      _history = _history.sublist(0, _maxHistory);
+    }
+    await prefs.setStringList(_historyKey, _history);
+  }
+
+  void _onEmojiTapped(String emoji) {
+    _saveToHistory(emoji);
+    widget.onEmojiSelected(emoji);
   }
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final mutedColor = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final secondaryColor = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+    final accentColor = isDark ? AppColors.cyan : AppColorsLight.accent;
+    final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final borderColor = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+
     final keys = widget.categories.keys.toList();
-    final currentEmojis = widget.categories[keys[_selectedCategory]]!;
+    final List<String> currentEmojis;
+    if (_selectedCategory == -1) {
+      currentEmojis = _history;
+    } else {
+      currentEmojis = widget.categories[keys[_selectedCategory]]!;
+    }
 
     return SafeArea(
       child: SizedBox(
@@ -931,7 +998,7 @@ class _EmojiPickerSheetState extends State<_EmojiPickerSheet> {
               width: 40,
               height: 4,
               decoration: BoxDecoration(
-                color: AppColors.textMuted,
+                color: mutedColor,
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -939,48 +1006,68 @@ class _EmojiPickerSheetState extends State<_EmojiPickerSheet> {
             Text(
               'Add Sticker',
               style: TextStyle(
-                color: Colors.white,
+                color: textPrimary,
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
               ),
             ),
             const SizedBox(height: 12),
-            // Category tabs
+            // Category tabs (History + emoji categories)
             SizedBox(
               height: 40,
               child: ListView.separated(
                 scrollDirection: Axis.horizontal,
                 padding: const EdgeInsets.symmetric(horizontal: 16),
-                itemCount: keys.length,
+                itemCount: keys.length + 1, // +1 for History
                 separatorBuilder: (_, __) => const SizedBox(width: 6),
                 itemBuilder: (context, index) {
-                  final isSelected = _selectedCategory == index;
+                  final isHistory = index == 0;
+                  final categoryIndex = isHistory ? -1 : index - 1;
+                  final isSelected = _selectedCategory == categoryIndex;
+
                   return GestureDetector(
-                    onTap: () => setState(() => _selectedCategory = index),
+                    onTap: () => setState(() => _selectedCategory = categoryIndex),
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                       decoration: BoxDecoration(
                         color: isSelected
-                            ? AppColors.cyan.withValues(alpha: 0.2)
-                            : AppColors.elevated,
+                            ? accentColor.withValues(alpha: 0.2)
+                            : elevatedColor,
                         borderRadius: BorderRadius.circular(20),
                         border: Border.all(
-                          color: isSelected ? AppColors.cyan : AppColors.cardBorder,
+                          color: isSelected ? accentColor : borderColor,
                         ),
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Text(keys[index], style: const TextStyle(fontSize: 18)),
-                          const SizedBox(width: 6),
-                          Text(
-                            _categoryLabels[index],
-                            style: TextStyle(
-                              color: isSelected ? AppColors.cyan : AppColors.textSecondary,
-                              fontSize: 12,
-                              fontWeight: FontWeight.w500,
+                          if (isHistory) ...[
+                            Icon(
+                              Icons.history,
+                              size: 18,
+                              color: isSelected ? accentColor : secondaryColor,
                             ),
-                          ),
+                            const SizedBox(width: 6),
+                            Text(
+                              'History',
+                              style: TextStyle(
+                                color: isSelected ? accentColor : secondaryColor,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ] else ...[
+                            Text(keys[categoryIndex], style: const TextStyle(fontSize: 18)),
+                            const SizedBox(width: 6),
+                            Text(
+                              _categoryLabels[categoryIndex],
+                              style: TextStyle(
+                                color: isSelected ? accentColor : secondaryColor,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
                         ],
                       ),
                     ),
@@ -991,24 +1078,43 @@ class _EmojiPickerSheetState extends State<_EmojiPickerSheet> {
             const SizedBox(height: 12),
             // Emoji grid — scrollable
             Expanded(
-              child: GridView.builder(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 8,
-                  mainAxisSpacing: 4,
-                  crossAxisSpacing: 4,
-                ),
-                itemCount: currentEmojis.length,
-                itemBuilder: (context, index) => GestureDetector(
-                  onTap: () => widget.onEmojiSelected(currentEmojis[index]),
-                  child: Center(
-                    child: Text(
-                      currentEmojis[index],
-                      style: const TextStyle(fontSize: 30),
+              child: currentEmojis.isEmpty
+                  ? Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.history, size: 40, color: mutedColor),
+                          const SizedBox(height: 8),
+                          Text(
+                            'No stickers used yet',
+                            style: TextStyle(color: mutedColor, fontSize: 14),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'Your recently used stickers will appear here',
+                            style: TextStyle(color: mutedColor.withValues(alpha: 0.7), fontSize: 12),
+                          ),
+                        ],
+                      ),
+                    )
+                  : GridView.builder(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 8,
+                        mainAxisSpacing: 4,
+                        crossAxisSpacing: 4,
+                      ),
+                      itemCount: currentEmojis.length,
+                      itemBuilder: (context, index) => GestureDetector(
+                        onTap: () => _onEmojiTapped(currentEmojis[index]),
+                        child: Center(
+                          child: Text(
+                            currentEmojis[index],
+                            style: const TextStyle(fontSize: 30),
+                          ),
+                        ),
+                      ),
                     ),
-                  ),
-                ),
-              ),
             ),
           ],
         ),

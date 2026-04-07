@@ -86,7 +86,7 @@ const quickActionRegistry = <String, QuickAction>{
     icon: Icons.history_outlined,
     color: Color(0xFF6B7280),
     behavior: QuickActionBehavior.route,
-    route: '/stats',
+    route: '/workout-gallery',
   ),
   'steps': QuickAction(
     id: 'steps',
@@ -157,7 +157,7 @@ const quickActionRegistry = <String, QuickAction>{
     icon: Icons.show_chart_outlined,
     color: Color(0xFF22C55E),
     behavior: QuickActionBehavior.route,
-    route: '/progress',
+    route: '/stats?tab=2',
   ),
   'achievements': QuickAction(
     id: 'achievements',
