@@ -178,6 +178,7 @@ extension WorkoutUIBuildersMixinUI2 on WorkoutUIBuildersMixin {
                               GestureDetector(
                                 onTap: () {
                                   HapticFeedback.lightImpact();
+                                  exerciseInfoOpened++;
                                   showExerciseDetailsSheet(exercises[viewingExerciseIndex]);
                                 },
                                 child: Container(
@@ -231,6 +232,7 @@ extension WorkoutUIBuildersMixinUI2 on WorkoutUIBuildersMixin {
                               GestureDetector(
                                 onTap: () {
                                   HapticFeedback.lightImpact();
+                                  breathingGuideOpened++;
                                   showBreathingGuide(
                                     context: context,
                                     exercise: exercises[viewingExerciseIndex],

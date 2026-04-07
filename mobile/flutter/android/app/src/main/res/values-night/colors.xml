@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- uCrop dark mode overrides -->
+    <color name="ucrop_color_widget_background">#141414</color>
+    <color name="ucrop_color_widget">#FAFAFA</color>
+    <color name="ucrop_color_widget_active">#FAFAFA</color>
+    <color name="ucrop_color_widget_text">#00D9FF</color>
+    <color name="ucrop_color_widget_rotate_angle">#262626</color>
+    <color name="ucrop_color_widget_rotate_mid_line">#00D9FF</color>
+    <color name="ucrop_color_active_controls_color">#00D9FF</color>
+    <color name="ucrop_color_inactive_controls_color">#71717A</color>
+    <color name="ucrop_color_active_aspect_ratio">#00D9FF</color>
+    <color name="ucrop_color_inactive_aspect_ratio">#141414</color>
+    <color name="ucrop_color_crop_background">#000000</color>
+    <color name="ucrop_color_default_dimmed">#8C000000</color>
+    <color name="ucrop_color_toolbar">#0A0A0A</color>
+    <color name="ucrop_color_toolbar_widget">#FFFFFF</color>
+    <color name="ucrop_color_statusbar">#0A0A0A</color>
+</resources>

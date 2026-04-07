@@ -46,6 +46,19 @@ WORKOUT_TOOLS = [
     compare_exercise_form,
 ]
 
+# Tools for non-creation requests (excludes generate_quick_workout to prevent
+# the LLM from voluntarily generating workouts for simple schedule queries)
+WORKOUT_QUERY_TOOLS = [
+    add_exercise_to_workout,
+    remove_exercise_from_workout,
+    replace_all_exercises,
+    modify_workout_intensity,
+    reschedule_workout,
+    delete_workout,
+    check_exercise_form,
+    compare_exercise_form,
+]
+
 # Workout expertise base prompt template (coach name is inserted dynamically)
 WORKOUT_BASE_PROMPT_TEMPLATE = """You are {coach_name}, an expert AI personal trainer and workout coach. You specialize in:
 - Creating and modifying workout plans
@@ -302,7 +315,7 @@ async def workout_agent_node(state: WorkoutAgentState) -> Dict[str, Any]:
             tool_choice="generate_quick_workout"
         )
     else:
-        llm_with_tools = llm.bind_tools(WORKOUT_TOOLS)
+        llm_with_tools = llm.bind_tools(WORKOUT_QUERY_TOOLS)
 
     # Build system message
     # Get personalized system prompt
@@ -367,7 +380,9 @@ If they just want information or advice, respond conversationally."""
             logger.warning(f"[Workout Agent] Thought signature error, retrying without tool_choice: {e}")
             # Retry with basic tool binding (no forced tool choice)
             llm_retry = get_langchain_llm(temperature=0.7)
-            llm_with_tools_retry = llm_retry.bind_tools(WORKOUT_TOOLS)
+            llm_with_tools_retry = llm_retry.bind_tools(
+                WORKOUT_TOOLS if is_workout_creation else WORKOUT_QUERY_TOOLS
+            )
             response = await llm_with_tools_retry.ainvoke(messages)
         else:
             raise

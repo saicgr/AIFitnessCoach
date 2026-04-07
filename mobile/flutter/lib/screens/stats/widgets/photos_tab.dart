@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
@@ -41,6 +42,10 @@ class _PhotosTabState extends ConsumerState<PhotosTab>
   bool _sortNewestFirst = true;
   bool _latestByViewExpanded = true;
   bool _savedComparisonsExpanded = false;
+
+  // Multi-select state
+  final Set<String> _selectedPhotoIds = {};
+  bool get _isSelectionMode => _selectedPhotoIds.isNotEmpty;
 
   @override
   bool get wantKeepAlive => true;
@@ -152,6 +157,95 @@ class _PhotosTabState extends ConsumerState<PhotosTab>
             ],
           ),
         ),
+        // Selection action bar
+        if (_isSelectionMode)
+          Positioned(
+            left: 16,
+            right: 16,
+            bottom: MediaQuery.of(context).padding.bottom + 16,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              decoration: BoxDecoration(
+                color: isDark ? AppColors.elevated : AppColorsLight.pureWhite,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: isDark ? AppColors.cardBorder : AppColorsLight.cardBorder,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.15),
+                    blurRadius: 12,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Row(
+                children: [
+                  GestureDetector(
+                    onTap: () => setState(() => _selectedPhotoIds.clear()),
+                    child: Icon(Icons.close, color: isDark ? AppColors.textSecondary : AppColorsLight.textSecondary),
+                  ),
+                  const SizedBox(width: 12),
+                  Text(
+                    '${_selectedPhotoIds.length} selected',
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                      color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
+                    ),
+                  ),
+                  const Spacer(),
+                  // Select all
+                  GestureDetector(
+                    onTap: () {
+                      final state = ref.read(progressPhotosNotifierProvider(widget.userId!));
+                      setState(() {
+                        for (final p in state.photos) {
+                          _selectedPhotoIds.add(p.id);
+                        }
+                      });
+                    },
+                    child: Text(
+                      'All',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: accentColor,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  // Delete button
+                  GestureDetector(
+                    onTap: _deleteSelectedPhotos,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: Colors.red.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(Icons.delete_outline, size: 18, color: Colors.red),
+                          const SizedBox(width: 4),
+                          Text(
+                            'Delete',
+                            style: const TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.red,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          )
+        else
         // Camera FAB
         Positioned(
           right: 16,
@@ -713,6 +807,41 @@ class _PhotosTabState extends ConsumerState<PhotosTab>
     }
   }
 
+  Future<void> _editExistingPhoto(ProgressPhoto photo) async {
+    // Close the detail sheet
+    Navigator.pop(context);
+
+    try {
+      // Download the image from cache/network
+      final file = await DefaultCacheManager().getSingleFile(photo.photoUrl);
+      if (!mounted) return;
+
+      // Open editor
+      final editedFile = await Navigator.push<File>(
+        context,
+        AppPageRoute(
+          builder: (context) => PhotoEditorScreen(
+            imageFile: file,
+            viewTypeName: photo.viewTypeEnum.displayName,
+          ),
+        ),
+      );
+
+      if (editedFile != null && mounted) {
+        _uploadPhoto(editedFile, photo.viewTypeEnum);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to open editor: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
   void _showPhotoDetail(ProgressPhoto photo) {
     final colorScheme = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -721,88 +850,110 @@ class _PhotosTabState extends ConsumerState<PhotosTab>
       useRootNavigator: true,
       builder: (context) => GlassSheet(
         showHandle: false,
-        child: DraggableScrollableSheet(
-          initialChildSize: 0.9,
-          minChildSize: 0.5,
-          maxChildSize: 0.95,
-          builder: (context, scrollController) => Column(
-            children: [
-              GlassSheetHandle(isDark: isDark),
-              // Photo
-              Expanded(
-                child: SingleChildScrollView(
-                  controller: scrollController,
-                  child: Column(
-                    children: [
-                      AspectRatio(
-                        aspectRatio: 0.75,
-                        child: CachedNetworkImage(
-                          imageUrl: photo.photoUrl,
-                          fit: BoxFit.contain,
-                        ),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.all(16),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              photo.viewTypeEnum.displayName,
-                              style: TextStyle(
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold,
-                                color: colorScheme.onSurface,
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              DateFormat('MMMM d, yyyy').format(photo.takenAt),
-                              style: TextStyle(
-                                color: colorScheme.onSurfaceVariant,
-                              ),
-                            ),
-                            if (photo.formattedWeight != null) ...[
-                              const SizedBox(height: 4),
-                              Text(
-                                'Weight: ${photo.formattedWeight}',
-                                style: TextStyle(
-                                  color: colorScheme.onSurfaceVariant,
-                                ),
-                              ),
-                            ],
-                            if (photo.notes != null && photo.notes!.isNotEmpty) ...[
-                              const SizedBox(height: 12),
-                              Text(
-                                photo.notes!,
-                                style: TextStyle(
-                                  color: colorScheme.onSurface,
-                                ),
-                              ),
-                            ],
-                            const SizedBox(height: 24),
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: OutlinedButton.icon(
-                                    onPressed: () => _deletePhoto(photo),
-                                    icon: const Icon(Icons.delete_outline),
-                                    label: const Text('Delete'),
-                                    style: OutlinedButton.styleFrom(
-                                      foregroundColor: colorScheme.error,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
+        maxHeightFraction: 0.92,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Handle + delete row
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 8, 0),
+              child: Row(
+                children: [
+                  const Spacer(),
+                  Container(
+                    width: 36,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: isDark ? Colors.white24 : Colors.black12,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                  const Spacer(),
+                  IconButton(
+                    onPressed: () => _editExistingPhoto(photo),
+                    icon: Icon(Icons.edit_outlined, color: colorScheme.onSurfaceVariant),
+                    tooltip: 'Edit',
+                  ),
+                  IconButton(
+                    onPressed: () => _deletePhoto(photo),
+                    icon: Icon(Icons.delete_outline, color: colorScheme.error),
+                    tooltip: 'Delete',
+                  ),
+                ],
+              ),
+            ),
+            // Photo
+            Flexible(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: CachedNetworkImage(
+                    imageUrl: photo.photoUrl,
+                    fit: BoxFit.contain,
+                    width: double.infinity,
                   ),
                 ),
               ),
-            ],
-          ),
+            ),
+            // Info row
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          photo.viewTypeEnum.displayName,
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: colorScheme.onSurface,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          DateFormat('MMMM d, yyyy').format(photo.takenAt),
+                          style: TextStyle(
+                            color: colorScheme.onSurfaceVariant,
+                            fontSize: 13,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  if (photo.formattedWeight != null)
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: isDark
+                            ? Colors.white.withValues(alpha: 0.08)
+                            : Colors.black.withValues(alpha: 0.05),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        photo.formattedWeight!,
+                        style: TextStyle(
+                          color: colorScheme.onSurfaceVariant,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+            if (photo.notes != null && photo.notes!.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                child: Text(
+                  photo.notes!,
+                  style: TextStyle(color: colorScheme.onSurface),
+                ),
+              ),
+          ],
         ),
       ),
     );
@@ -835,6 +986,54 @@ class _PhotosTabState extends ConsumerState<PhotosTab>
       await ref
           .read(progressPhotosNotifierProvider(widget.userId!).notifier)
           .deletePhoto(photo.id);
+    }
+  }
+
+  Future<void> _deleteSelectedPhotos() async {
+    if (_selectedPhotoIds.isEmpty || widget.userId == null) return;
+
+    final count = _selectedPhotoIds.length;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Delete $count photo${count > 1 ? 's' : ''}?'),
+        content: const Text('This action cannot be undone.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: TextButton.styleFrom(
+              foregroundColor: Theme.of(context).colorScheme.error,
+            ),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true || !mounted) return;
+
+    final idsToDelete = _selectedPhotoIds.toList();
+    setState(() => _selectedPhotoIds.clear());
+
+    final notifier = ref.read(progressPhotosNotifierProvider(widget.userId!).notifier);
+    int deleted = 0;
+    for (final id in idsToDelete) {
+      try {
+        await notifier.deletePhoto(id);
+        deleted++;
+      } catch (e) {
+        debugPrint('❌ Failed to delete photo $id: $e');
+      }
+    }
+
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Deleted $deleted photo${deleted > 1 ? 's' : ''}')),
+      );
     }
   }
 

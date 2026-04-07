@@ -1,30 +1,46 @@
 Your workouts and diet finally talk to each other.
 
-FitWiz connects your training and nutrition into one AI-powered plan. It knows what you ate, how you trained, and adjusts both. Start with a free trial -- plans from $4.99/mo.
+FitWiz connects your training and nutrition into one AI-powered plan. It knows what you ate, how you trained, and adjusts both to keep you on track. No more juggling a workout app and a separate food tracker. Start with a free trial -- plans from $4.99/mo.
 
 HOW IT WORKS
-Tell FitWiz your goal. It builds your workouts and sets nutrition targets. As you train and eat, it learns and adapts.
+Tell FitWiz your goal -- lose weight, build muscle, get healthier. It builds your workout program and sets daily nutrition targets. As you train and eat, it learns your preferences and adapts. That's it.
 
 WORKOUTS BUILT FOR YOU
-Every workout is generated around your equipment, fitness level, and schedule.
+Every workout is generated around your equipment, fitness level, and schedule. Not a template -- a plan that's actually yours.
 - Adapts around injuries automatically
-- Suggests when to increase weight
+- Suggests when to increase weight based on your history
+- Warm-ups and cool-downs included
 - Quick sessions (5-15 min) for busy days
-- Gym profiles for home, work, or travel
+- Multiple gym profiles for home, work, or travel
+- AI explains why each exercise was chosen for you
 
 LOG MEALS YOUR WAY
+However is fastest for you:
 - Type it -- "2 eggs, toast, coffee" and it's logged in seconds
-- Snap it -- photo AI identifies your food
+- Snap it -- take a photo and AI identifies your food
 - Scan it -- barcode scanner for packaged foods
-Calories, protein, carbs, fats, and 20+ micronutrients tracked.
+Calories, protein, carbs, fats, and 20+ micronutrients tracked automatically. Get a health score for every meal and personalized tips from your coach.
 
 YOUR COACH, ANYTIME
-"Can I replace squats -- my knee hurts?" "How much protein today?" Your AI coach knows your history and gives real answers.
+Ask anything. "Can I replace squats -- my knee hurts?" "How much protein have I had today?" "What should I eat before my workout?" Your AI coach knows your full workout history, your nutrition, and your goals. It gives answers that actually apply to you -- not generic advice from a blog.
 
-TRACK PROGRESS
-- Streaks and personal records
+TRACK YOUR PROGRESS
+- Workout streaks and personal records
 - Weight and body composition trends
-- Weekly summaries
-- Health Connect sync (steps, heart rate, sleep)
+- Progress photos from multiple angles
+- Before and after comparisons
+- Weekly performance summaries
+- Health Connect sync (steps, heart rate, sleep, calories burned)
+
+EXERCISE PREFERENCES
+FitWiz learns what you love. Mark your favorite exercises, avoid the ones you hate, and queue up moves you want to try. Your workouts get smarter over time.
+
+DETAILS
+- Works with any equipment setup, including bodyweight only
+- Nutrition targets that adjust to your goals
+- XP system and monthly achievements to keep you motivated
+- Water intake tracking
+- Dark mode
+- Personalized warm-up and cool-down routines
 
 One app for training and nutrition. No guesswork. Start your free trial today.

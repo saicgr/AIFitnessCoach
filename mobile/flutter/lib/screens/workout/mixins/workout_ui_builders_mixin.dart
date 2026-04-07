@@ -127,6 +127,10 @@ mixin WorkoutUIBuildersMixin<T extends StatefulWidget> on State<T> {
   List<WarmupExerciseData>? get warmupExercises;
   List<StretchExerciseData>? get stretchExercises;
   bool get useV2Design;
+  int get exerciseInfoOpened;
+  set exerciseInfoOpened(int value);
+  int get breathingGuideOpened;
+  set breathingGuideOpened(int value);
   bool get isActiveRowExpanded;
   set isActiveRowExpanded(bool value);
   bool get isDragActive;

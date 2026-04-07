@@ -19,6 +19,8 @@ class SetLog {
   final DateTime? startedAt; // When the set started (after rest ended)
   final int? durationSeconds; // How long the set took (start → checkmark)
   final int? restDurationSeconds; // Actual rest taken before this set (null for first set)
+  final double? previousWeightKg; // Weight from previous session for this set
+  final int? previousReps; // Reps from previous session for this set
 
   SetLog({
     required this.reps,
@@ -33,6 +35,8 @@ class SetLog {
     this.startedAt,
     this.durationSeconds,
     this.restDurationSeconds,
+    this.previousWeightKg,
+    this.previousReps,
   }) : completedAt = completedAt ?? DateTime.now();
 
   SetLog copyWith({
@@ -48,6 +52,8 @@ class SetLog {
     DateTime? startedAt,
     int? durationSeconds,
     int? restDurationSeconds,
+    double? previousWeightKg,
+    int? previousReps,
   }) {
     return SetLog(
       reps: reps ?? this.reps,
@@ -62,6 +68,8 @@ class SetLog {
       startedAt: startedAt ?? this.startedAt,
       durationSeconds: durationSeconds ?? this.durationSeconds,
       restDurationSeconds: restDurationSeconds ?? this.restDurationSeconds,
+      previousWeightKg: previousWeightKg ?? this.previousWeightKg,
+      previousReps: previousReps ?? this.previousReps,
     );
   }
 
@@ -79,6 +87,8 @@ class SetLog {
         if (startedAt != null) 'started_at': startedAt!.toIso8601String(),
         if (durationSeconds != null) 'set_duration_seconds': durationSeconds,
         if (restDurationSeconds != null) 'rest_duration_seconds': restDurationSeconds,
+        if (previousWeightKg != null) 'previous_weight_kg': previousWeightKg,
+        if (previousReps != null) 'previous_reps': previousReps,
       };
 
   /// Create from JSON (database retrieval)
@@ -100,6 +110,8 @@ class SetLog {
           : null,
       durationSeconds: json['set_duration_seconds'] as int?,
       restDurationSeconds: json['rest_duration_seconds'] as int?,
+      previousWeightKg: (json['previous_weight_kg'] as num?)?.toDouble(),
+      previousReps: json['previous_reps'] as int?,
     );
   }
 }

@@ -293,7 +293,7 @@ class ChatRepository {
           mediaUrl: mediaUrl,
         ).toJson(),
         // Media requests go through Gemini Vision — allow up to 3 minutes
-        options: hasMedia ? Options(receiveTimeout: const Duration(minutes: 3)) : null,
+        options: Options(receiveTimeout: hasMedia ? const Duration(minutes: 3) : ApiConstants.aiReceiveTimeout),
       );
 
       if (response.statusCode == 200) {

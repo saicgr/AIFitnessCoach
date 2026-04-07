@@ -87,22 +87,56 @@ class _PhotoEditorScreenState extends State<PhotoEditorScreen> {
     try {
       if (_editedImage == null) return;
 
+      final isDark = Theme.of(context).brightness == Brightness.dark;
+
       final croppedFile = await ImageCropper().cropImage(
         sourcePath: _editedImage!.path,
         uiSettings: [
           AndroidUiSettings(
             toolbarTitle: 'Crop Photo',
-            toolbarColor: AppColors.nearBlack,
-            toolbarWidgetColor: Colors.white,
-            backgroundColor: AppColors.pureBlack,
-            activeControlsWidgetColor: AppColors.cyan,
+            toolbarColor: isDark ? AppColors.nearBlack : AppColorsLight.pureWhite,
+            toolbarWidgetColor: isDark ? Colors.white : AppColorsLight.textPrimary,
+            backgroundColor: isDark ? AppColors.pureBlack : AppColorsLight.nearWhite,
+            activeControlsWidgetColor: isDark ? AppColors.cyan : AppColorsLight.accent,
+            dimmedLayerColor: isDark
+                ? Colors.black.withValues(alpha: 0.6)
+                : Colors.white.withValues(alpha: 0.6),
+            cropFrameColor: isDark ? AppColors.cyan : AppColorsLight.accent,
+            cropGridColor: isDark
+                ? Colors.white.withValues(alpha: 0.3)
+                : Colors.black.withValues(alpha: 0.2),
+            statusBarLight: !isDark,
             initAspectRatio: CropAspectRatioPreset.original,
             lockAspectRatio: false,
+            showCropGrid: true,
+            aspectRatioPresets: [
+              CropAspectRatioPreset.original,
+              CropAspectRatioPreset.square,
+              CropAspectRatioPreset.ratio3x2,
+              CropAspectRatioPreset.ratio4x3,
+              CropAspectRatioPreset.ratio5x3,
+              CropAspectRatioPreset.ratio5x4,
+              CropAspectRatioPreset.ratio7x5,
+              CropAspectRatioPreset.ratio16x9,
+            ],
           ),
           IOSUiSettings(
             title: 'Crop Photo',
             doneButtonTitle: 'Done',
             cancelButtonTitle: 'Cancel',
+            aspectRatioPickerButtonHidden: false,
+            rotateButtonsHidden: false,
+            resetButtonHidden: false,
+            aspectRatioPresets: [
+              CropAspectRatioPreset.original,
+              CropAspectRatioPreset.square,
+              CropAspectRatioPreset.ratio3x2,
+              CropAspectRatioPreset.ratio4x3,
+              CropAspectRatioPreset.ratio5x3,
+              CropAspectRatioPreset.ratio5x4,
+              CropAspectRatioPreset.ratio7x5,
+              CropAspectRatioPreset.ratio16x9,
+            ],
           ),
         ],
       );
@@ -182,77 +216,98 @@ class _PhotoEditorScreenState extends State<PhotoEditorScreen> {
   }
 
   static const _emojiCategories = <String, List<String>>{
-    '\u{1F4AA}': [ // Fitness & Sports
-      '\u{1F4AA}', '\u{1F3CB}\u{FE0F}', '\u{1F3C3}', '\u{1F6B4}', '\u{1F3CA}',
-      '\u{1F938}', '\u{1F93C}', '\u{1F93E}', '\u{26F9}\u{FE0F}', '\u{1F3AF}',
-      '\u{1F93A}', '\u{1F3C4}', '\u{1F6A3}', '\u{1F9D7}', '\u{1F3CC}\u{FE0F}',
-      '\u{1F3C7}', '\u{26BD}', '\u{1F3C0}', '\u{1F3C8}', '\u{26BE}',
-      '\u{1F3BE}', '\u{1F3D0}', '\u{1F3D3}', '\u{1F94A}', '\u{1F94B}',
-      '\u{1F945}', '\u{1FA83}', '\u{1F6F9}', '\u{1F3BF}', '\u{26F7}\u{FE0F}',
+    '💪': [ // Fitness & Sports
+      '💪', '🏋️', '🏃', '🚴', '🏊', '🤸', '🤼', '🤾', '⛹️', '🎯',
+      '🤺', '🏄', '🚣', '🧗', '🏌️', '🏇', '⚽', '🏀', '🏈', '⚾',
+      '🎾', '🏐', '🏓', '🥊', '🥋', '🥅', '🪃', '🛹', '🏂', '⛷️',
+      '🛷', '🏒', '🥍', '🤿', '🏹', '🛶', '⛸️', '🎿', '🥏', '🪂',
+      '🏋️‍♀️', '🏃‍♀️', '🚴‍♀️', '🏊‍♀️', '🤸‍♀️', '⛹️‍♀️', '🚵', '🚵‍♀️',
+      '🤽', '🤽‍♀️', '🧘', '🧘‍♀️', '🧘‍♂️', '🏃‍♂️', '🚶', '🚶‍♀️',
     ],
-    '\u{1F525}': [ // Fire & Energy
-      '\u{1F525}', '\u{26A1}', '\u{2B50}', '\u{1F31F}', '\u{1F4A5}',
-      '\u{1F4AB}', '\u{1FA90}', '\u{2728}', '\u{1F3C6}', '\u{1F396}\u{FE0F}',
-      '\u{1F947}', '\u{1F948}', '\u{1F949}', '\u{1F3C5}', '\u{1F397}\u{FE0F}',
-      '\u{1F4AF}', '\u{1F389}', '\u{1F38A}', '\u{1F388}', '\u{1F451}',
-      '\u{1F48E}', '\u{1F4A3}', '\u{1F680}', '\u{2604}\u{FE0F}', '\u{1F30B}',
-      '\u{1F308}', '\u{2600}\u{FE0F}', '\u{1F319}', '\u{1F4A2}', '\u{1F4A8}',
+    '🔥': [ // Fire & Energy
+      '🔥', '⚡', '⭐', '🌟', '💥', '💫', '🪐', '✨', '🏆', '🎖️',
+      '🥇', '🥈', '🥉', '🏅', '🎗️', '💯', '🎉', '🎊', '🎈', '👑',
+      '💎', '💣', '🚀', '☄️', '🌋', '🌈', '☀️', '🌙', '💢', '💨',
+      '🫡', '🦾', '🦿', '🧬', '⚔️', '🛡️', '🔱', '⚜️', '🏴', '🚩',
+      '✊', '👊', '🤘', '🤙', '💪🏻', '💪🏼', '💪🏽', '💪🏾', '💪🏿',
+      '🎆', '🎇', '🧨', '🪩', '🎭', '🔔', '📣', '🔊', '💡', '🔋',
     ],
-    '\u{1F60E}': [ // Faces & Expressions
-      '\u{1F60E}', '\u{1F929}', '\u{1F624}', '\u{1F621}', '\u{1F608}',
-      '\u{1F600}', '\u{1F603}', '\u{1F604}', '\u{1F606}', '\u{1F605}',
-      '\u{1F923}', '\u{1F602}', '\u{1F609}', '\u{1F60A}', '\u{1F60D}',
-      '\u{1F618}', '\u{1F970}', '\u{1F917}', '\u{1F914}', '\u{1F928}',
-      '\u{1F610}', '\u{1F644}', '\u{1F612}', '\u{1F61E}', '\u{1F622}',
-      '\u{1F62D}', '\u{1F92F}', '\u{1F975}', '\u{1F976}', '\u{1F974}',
-      '\u{1F92E}', '\u{1F927}', '\u{1F637}', '\u{1F911}', '\u{1F920}',
-      '\u{1F973}', '\u{1F978}', '\u{1F60F}', '\u{1F913}', '\u{1F9D0}',
+    '😎': [ // Faces & Expressions
+      '😀', '😃', '😄', '😁', '😆', '😅', '🤣', '😂', '🙂', '🙃',
+      '😉', '😊', '😇', '🥰', '😍', '🤩', '😘', '😗', '☺️', '😚',
+      '😙', '🥲', '😋', '😛', '😜', '🤪', '😝', '🤑', '🤗', '🤭',
+      '🫢', '🫣', '🤫', '🤔', '🫡', '🤐', '🤨', '😐', '😑', '😶',
+      '🫥', '😏', '😒', '🙄', '😬', '🤥', '🫠', '😌', '😔', '😪',
+      '🤤', '😴', '😷', '🤒', '🤕', '🤢', '🤮', '🥵', '🥶', '🥴',
+      '😵', '😵‍💫', '🤯', '🤠', '🥳', '🥸', '😎', '🤓', '🧐', '😕',
+      '🫤', '😟', '🙁', '☹️', '😮', '😯', '😲', '😳', '🥺', '🥹',
+      '😦', '😧', '😨', '😰', '😥', '😢', '😭', '😱', '😖', '😣',
+      '😞', '😓', '😩', '😫', '🥱', '😤', '😡', '😠', '🤬', '😈',
+      '👿', '💀', '☠️', '💩', '🤡', '👹', '👺', '👻', '👽', '👾',
+      '🤖', '😺', '😸', '😹', '😻', '😼', '😽', '🙀', '😿', '😾',
+      '🙈', '🙉', '🙊', '🫶', '🫵', '🫰', '🫱', '🫲', '🫳', '🫴',
     ],
-    '\u{1F34E}': [ // Food & Nutrition
-      '\u{1F34E}', '\u{1F34C}', '\u{1F951}', '\u{1F966}', '\u{1F95A}',
-      '\u{1F357}', '\u{1F4A7}', '\u{1F95B}', '\u{1F955}', '\u{1F353}',
-      '\u{1F347}', '\u{1F348}', '\u{1F34A}', '\u{1F34B}', '\u{1F34D}',
-      '\u{1F96D}', '\u{1F349}', '\u{1F352}', '\u{1FAD0}', '\u{1F95D}',
-      '\u{1F345}', '\u{1F346}', '\u{1F33D}', '\u{1FAD1}', '\u{1F954}',
-      '\u{1F360}', '\u{1F35E}', '\u{1F950}', '\u{1F969}', '\u{1F953}',
-      '\u{1F355}', '\u{1F354}', '\u{1F37F}', '\u{1F96A}', '\u{1F32E}',
-      '\u{1F363}', '\u{1F371}', '\u{1F958}', '\u{1F375}', '\u{1F9C3}',
+    '🍎': [ // Food & Nutrition
+      '🍎', '🍐', '🍊', '🍋', '🍌', '🍉', '🍇', '🍓', '🫐', '🍈',
+      '🍒', '🍑', '🥭', '🍍', '🥥', '🥝', '🍅', '🫒', '🥑', '🍆',
+      '🥔', '🥕', '🌽', '🌶️', '🫑', '🥒', '🥬', '🥦', '🧄', '🧅',
+      '🍄', '🥜', '🫘', '🌰', '🍞', '🥐', '🥖', '🫓', '🥨', '🥯',
+      '🥞', '🧇', '🧀', '🍖', '🍗', '🥩', '🥓', '🍔', '🍟', '🍕',
+      '🌭', '🥪', '🌮', '🌯', '🫔', '🥙', '🧆', '🥚', '🍳', '🥘',
+      '🍲', '🫕', '🥣', '🥗', '🍿', '🧈', '🧂', '🥫', '🍱', '🍘',
+      '🍙', '🍚', '🍛', '🍜', '🍝', '🍠', '🍢', '🍣', '🍤', '🍥',
+      '🥮', '🍡', '🥟', '🥠', '🥡', '🦀', '🦞', '🦐', '🦑', '🦪',
+      '🍦', '🍧', '🍨', '🍩', '🍪', '🎂', '🍰', '🧁', '🥧', '🍫',
+      '🍬', '🍭', '🍮', '🍯', '🥤', '🧋', '🫗', '☕', '🍵', '🧃',
+      '🥛', '🍼', '🫖', '🍶', '🍺', '🍻', '🥂', '🍷', '🍸', '🍹',
+      '🍾', '🧊', '🥄', '🍽️', '🥢', '🧑‍🍳', '💧', '🔪', '🏺', '🫙',
     ],
-    '\u{2764}\u{FE0F}': [ // Hearts & Symbols
-      '\u{2764}\u{FE0F}', '\u{1F9E1}', '\u{1F49B}', '\u{1F49A}', '\u{1F499}',
-      '\u{1F49C}', '\u{1F5A4}', '\u{1FA76}', '\u{1F90D}', '\u{1F90E}',
-      '\u{1F493}', '\u{1F495}', '\u{1F496}', '\u{1F497}', '\u{1F498}',
-      '\u{1F49D}', '\u{1F49E}', '\u{1F49F}', '\u{2763}\u{FE0F}', '\u{1F48C}',
-      '\u{1F44D}', '\u{1F44F}', '\u{1F64C}', '\u{1F91D}', '\u{270C}\u{FE0F}',
-      '\u{1F91F}', '\u{1F918}', '\u{1F919}', '\u{1F448}', '\u{1F449}',
-      '\u{1F446}', '\u{261D}\u{FE0F}', '\u{270A}', '\u{1F44A}', '\u{1F44B}',
-      '\u{1F590}\u{FE0F}', '\u{1F4AD}', '\u{1F4AC}', '\u{1F5E8}\u{FE0F}', '\u{1F440}',
+    '❤️': [ // Hearts & Hands
+      '❤️', '🧡', '💛', '💚', '💙', '💜', '🖤', '🩷', '🤍', '🤎',
+      '💔', '❤️‍🔥', '❤️‍🩹', '❣️', '💕', '💞', '💓', '💗', '💖', '💘',
+      '💝', '💟', '♥️', '💌', '💐', '🌹', '🥀', '💋', '💏', '💑',
+      '👍', '👎', '👊', '✊', '🤛', '🤜', '👏', '🙌', '🫶', '👐',
+      '🤲', '🤝', '🙏', '✌️', '🤟', '🤘', '🤙', '👈', '👉', '👆',
+      '👇', '☝️', '🫵', '🫰', '🫱', '🫲', '🫳', '🫴', '👋', '🤚',
+      '🖐️', '✋', '🖖', '👌', '🤌', '🤏', '🫰', '✍️', '🤳', '💅',
+      '🦵', '🦶', '👂', '🦻', '👃', '👀', '👁️', '🧠', '🫀', '🫁',
+      '🦷', '🦴', '👅', '👄', '🫦', '💬', '💭', '🗯️', '💤', '💫',
     ],
-    '\u{1F3A8}': [ // Objects & Fun
-      '\u{1F3A8}', '\u{1F3B5}', '\u{1F3B6}', '\u{1F3A4}', '\u{1F3A7}',
-      '\u{1F3B8}', '\u{1F941}', '\u{1F3AC}', '\u{1F3A0}', '\u{1F3A1}',
-      '\u{1F4F7}', '\u{1F4F8}', '\u{1F4F9}', '\u{1F4FA}', '\u{1F4BB}',
-      '\u{1F4F1}', '\u{231A}', '\u{1F4A1}', '\u{1F50B}', '\u{1FA84}',
-      '\u{1F9F2}', '\u{1F52E}', '\u{1F3B2}', '\u{1F3AE}', '\u{1F3B0}',
-      '\u{1F9E9}', '\u{1F9F8}', '\u{1FA81}', '\u{1FAA9}', '\u{1FA78}',
+    '🎨': [ // Objects & Fun
+      '🎨', '🎵', '🎶', '🎤', '🎧', '🎸', '🪕', '🎹', '🥁', '🪘',
+      '🎺', '🎻', '🪗', '🎬', '🎠', '🎡', '🎢', '🎪', '🎭', '🎰',
+      '📷', '📸', '📹', '🎥', '📽️', '📺', '📻', '📱', '💻', '⌨️',
+      '🖥️', '🖨️', '🖱️', '💾', '💿', '📀', '⌚', '📡', '🔦', '💡',
+      '🔋', '🪫', '🔌', '🧲', '🔮', '🎲', '🎮', '🕹️', '🧩', '🧸',
+      '🪁', '🪀', '🎳', '🪄', '🎩', '📯', '🎼', '🪈', '🎙️', '📲',
+      '💿', '🖊️', '🖋️', '✒️', '📝', '📚', '📖', '📰', '🗞️', '📌',
+      '📎', '🖇️', '📏', '📐', '✂️', '🗃️', '🗂️', '📁', '📂', '🗄️',
+      '🔒', '🔓', '🔑', '🗝️', '🧰', '🪛', '🔧', '🔨', '⛏️', '🪚',
+      '🧲', '🧪', '🧫', '🧬', '🔬', '🔭', '📡', '💊', '💉', '🩺',
     ],
-    '\u{1F431}': [ // Animals
-      '\u{1F431}', '\u{1F436}', '\u{1F42F}', '\u{1F981}', '\u{1F43B}',
-      '\u{1F43C}', '\u{1F428}', '\u{1F435}', '\u{1F412}', '\u{1F993}',
-      '\u{1F98D}', '\u{1F9A7}', '\u{1F418}', '\u{1F98F}', '\u{1F42A}',
-      '\u{1F434}', '\u{1F984}', '\u{1F43A}', '\u{1F98A}', '\u{1F415}',
-      '\u{1F985}', '\u{1F986}', '\u{1F989}', '\u{1F426}', '\u{1F54A}\u{FE0F}',
-      '\u{1F40A}', '\u{1F422}', '\u{1F40D}', '\u{1F409}', '\u{1F432}',
-      '\u{1F41D}', '\u{1F98B}', '\u{1F41B}', '\u{1F577}\u{FE0F}', '\u{1F982}',
-      '\u{1F40C}', '\u{1F419}', '\u{1F420}', '\u{1F42C}', '\u{1F433}',
+    '🐱': [ // Animals
+      '🐱', '🐶', '🐯', '🦁', '🐻', '🐼', '🐨', '🐵', '🐒', '🦍',
+      '🦧', '🐹', '🐭', '🐰', '🦊', '🐺', '🐗', '🐴', '🦄', '🐮',
+      '🐷', '🐸', '🐲', '🐉', '🦎', '🐊', '🐢', '🐍', '🐙', '🦑',
+      '🦐', '🦞', '🦀', '🐡', '🐠', '🐟', '🐬', '🐳', '🐋', '🦈',
+      '🐧', '🐦', '🐤', '🐣', '🐥', '🦆', '🦅', '🦉', '🦇', '🐺',
+      '🦢', '🦩', '🕊️', '🦜', '🦚', '🦤', '🪶', '🐓', '🦃', '🦨',
+      '🦝', '🦡', '🦫', '🦦', '🦥', '🐁', '🐀', '🐿️', '🦔', '🐾',
+      '🐛', '🦋', '🐌', '🐝', '🐜', '🪲', '🐞', '🦗', '🪳', '🕷️',
+      '🦂', '🐚', '🪸', '🪼', '🐠', '🦭', '🦬', '🐃', '🐂', '🐄',
+      '🐎', '🐖', '🐏', '🐑', '🐐', '🦌', '🐕', '🐩', '🦮', '🐕‍🦺',
+      '🐈', '🐈‍⬛', '🪺', '🐊', '🐘', '🦏', '🦛', '🐫', '🐪', '🦒',
     ],
-    '\u{1F3D4}\u{FE0F}': [ // Nature & Weather
-      '\u{1F3D4}\u{FE0F}', '\u{1F30A}', '\u{1F3D6}\u{FE0F}', '\u{1F305}', '\u{1F304}',
-      '\u{1F306}', '\u{1F307}', '\u{1F303}', '\u{1F301}', '\u{1F33A}',
-      '\u{1F339}', '\u{1F337}', '\u{1F33B}', '\u{1F33C}', '\u{1F338}',
-      '\u{1F332}', '\u{1F333}', '\u{1F334}', '\u{1F335}', '\u{1FAB5}',
-      '\u{1F340}', '\u{1F341}', '\u{1F342}', '\u{1F343}', '\u{1F490}',
-      '\u{26C8}\u{FE0F}', '\u{2744}\u{FE0F}', '\u{1F328}\u{FE0F}', '\u{1F326}\u{FE0F}', '\u{1F324}\u{FE0F}',
+    '🏔️': [ // Nature & Weather
+      '🏔️', '🌊', '🏖️', '🌅', '🌄', '🌆', '🌇', '🌃', '🌁', '🌉',
+      '🌌', '🌠', '🎑', '🏞️', '🌋', '🏜️', '🏝️', '🌍', '🌎', '🌏',
+      '🌺', '🌹', '🌷', '🌻', '🌼', '🌸', '💮', '🏵️', '🌾', '🪻',
+      '🪷', '🪹', '🫧', '🍀', '🍁', '🍂', '🍃', '🌿', '☘️', '🪴',
+      '🌱', '🪵', '🪨', '🌵', '🌴', '🌳', '🌲', '🎋', '🎍', '🎄',
+      '💐', '🌰', '🍄', '🐚', '🪸', '🪨', '🌙', '🌛', '🌜', '🌚',
+      '🌝', '🌞', '☀️', '⭐', '🌟', '✨', '🌤️', '⛅', '🌥️', '☁️',
+      '🌦️', '🌧️', '⛈️', '🌩️', '🌨️', '❄️', '☃️', '⛄', '🌬️', '💨',
+      '🌪️', '🌫️', '🌈', '☔', '💧', '💦', '🫧', '🌊', '⚡', '🔥',
     ],
   };
 
@@ -300,9 +355,7 @@ class _PhotoEditorScreenState extends State<PhotoEditorScreen> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final bgColor = isDark ? AppColors.pureBlack : AppColorsLight.pureWhite;
     final borderColor = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
-    final mutedColor = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final secondaryColor = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
-    final accentColor = isDark ? AppColors.cyan : AppColorsLight.accent;
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: isDark ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark,
@@ -317,310 +370,225 @@ class _PhotoEditorScreenState extends State<PhotoEditorScreen> {
           PillAppBarAction(icon: Icons.save_outlined, visible: !_isSaving, onTap: _saveAndReturn),
         ],
       ),
-      body: Column(
+      body: Stack(
         children: [
-          // Image with logo overlay
-          Expanded(
-            child: Center(
-              child: RepaintBoundary(
-                key: _captureKey,
-                child: Container(
-                  color: bgColor,
-                  child: Stack(
-                    children: [
-                      // The image
-                      if (_editedImage != null)
-                        Image.file(
-                          _editedImage!,
-                          key: _imageKey,
-                          fit: BoxFit.contain,
-                        ),
+          // Full-bleed image area — never changes size
+          Positioned.fill(
+            child: GestureDetector(
+              onTap: () {
+                if (_activeEmojiIndex != null) {
+                  setState(() => _activeEmojiIndex = null);
+                }
+              },
+              child: Container(
+                color: bgColor,
+                child: Center(
+                  child: RepaintBoundary(
+                    key: _captureKey,
+                    child: Stack(
+                      fit: StackFit.passthrough,
+                      children: [
+                        if (_editedImage != null)
+                          Image.file(
+                            _editedImage!,
+                            key: _imageKey,
+                            fit: BoxFit.contain,
+                          ),
 
-                      // Moveable/Resizable FitWiz logo
-                      if (_showLogo)
-                        Positioned(
-                          left: _logoPosition.dx,
-                          top: _logoPosition.dy,
-                          child: GestureDetector(
-                            onScaleStart: (details) {
-                              _lastFocalPoint = details.focalPoint;
-                              _lastScale = _logoScale;
-                            },
-                            onScaleUpdate: (details) {
-                              setState(() {
-                                // Handle drag
-                                final delta = details.focalPoint - _lastFocalPoint;
-                                _logoPosition = Offset(
-                                  _logoPosition.dx + delta.dx,
-                                  _logoPosition.dy + delta.dy,
-                                );
+                        // Moveable/Resizable FitWiz logo
+                        if (_showLogo)
+                          Positioned(
+                            left: _logoPosition.dx,
+                            top: _logoPosition.dy,
+                            child: GestureDetector(
+                              onScaleStart: (details) {
                                 _lastFocalPoint = details.focalPoint;
-
-                                // Handle pinch-to-scale
-                                if (details.scale != 1.0) {
-                                  _logoScale = (_lastScale * details.scale)
-                                      .clamp(0.5, 3.0);
-                                }
-                              });
-                            },
-                            child: Transform.scale(
-                              scale: _logoScale,
-                              child: _buildFitWizLogo(),
+                                _lastScale = _logoScale;
+                              },
+                              onScaleUpdate: (details) {
+                                setState(() {
+                                  final delta = details.focalPoint - _lastFocalPoint;
+                                  _logoPosition = Offset(
+                                    _logoPosition.dx + delta.dx,
+                                    _logoPosition.dy + delta.dy,
+                                  );
+                                  _lastFocalPoint = details.focalPoint;
+                                  if (details.scale != 1.0) {
+                                    _logoScale = (_lastScale * details.scale)
+                                        .clamp(0.5, 3.0);
+                                  }
+                                });
+                              },
+                              child: Transform.scale(
+                                scale: _logoScale,
+                                child: _buildFitWizLogo(),
+                              ),
                             ),
                           ),
-                        ),
 
-                      // Emoji stickers
-                      for (int i = 0; i < _emojiStickers.length; i++)
-                        _buildEmojiOverlay(i),
+                        // Emoji stickers
+                        for (int i = 0; i < _emojiStickers.length; i++)
+                          _buildEmojiOverlay(i),
 
-                      // Pose guide hint — auto-fades after 4s
-                      Positioned(
-                        top: 12,
-                        right: 12,
-                        child: IgnorePointer(
-                          ignoring: !_showPoseHint,
-                          child: AnimatedOpacity(
-                            opacity: _showPoseHint ? 1.0 : 0.0,
-                            duration: const Duration(milliseconds: 600),
-                            child: GestureDetector(
-                              onTap: () => setState(() => _showPoseHint = false),
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 10, vertical: 6),
-                                decoration: BoxDecoration(
-                                  color: Colors.black.withValues(alpha: 0.65),
-                                  borderRadius: BorderRadius.circular(20),
-                                  border: Border.all(
-                                    color: AppColors.cyan.withValues(alpha: 0.35),
+                        // Pose guide hint
+                        Positioned(
+                          top: 12,
+                          right: 12,
+                          child: IgnorePointer(
+                            ignoring: !_showPoseHint,
+                            child: AnimatedOpacity(
+                              opacity: _showPoseHint ? 1.0 : 0.0,
+                              duration: const Duration(milliseconds: 600),
+                              child: GestureDetector(
+                                onTap: () => setState(() => _showPoseHint = false),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 10, vertical: 6),
+                                  decoration: BoxDecoration(
+                                    color: Colors.black.withValues(alpha: 0.65),
+                                    borderRadius: BorderRadius.circular(20),
+                                    border: Border.all(
+                                      color: AppColors.cyan.withValues(alpha: 0.35),
+                                    ),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(_poseIcon,
+                                          size: 16, color: AppColors.cyan),
+                                      const SizedBox(width: 6),
+                                      Text(
+                                        '${widget.viewTypeName} pose',
+                                        style: TextStyle(
+                                          color:
+                                              Colors.white.withValues(alpha: 0.9),
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Icon(_poseIcon,
-                                        size: 16, color: AppColors.cyan),
-                                    const SizedBox(width: 6),
-                                    Text(
-                                      '${widget.viewTypeName} pose',
-                                      style: TextStyle(
-                                        color:
-                                            Colors.white.withValues(alpha: 0.9),
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.w500,
-                                      ),
-                                    ),
-                                  ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+
+          // Bottom toolbar — overlays the image, never pushes it
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 0,
+            child: ClipRect(
+              child: BackdropFilter(
+                filter: ui.ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+                child: Container(
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+                  decoration: BoxDecoration(
+                    color: isDark
+                        ? AppColors.glassSurface
+                        : AppColorsLight.glassSurface.withValues(alpha: 0.85),
+                    border: Border(
+                      top: BorderSide(
+                        color: isDark
+                            ? Colors.white.withValues(alpha: 0.08)
+                            : Colors.black.withValues(alpha: 0.06),
+                        width: 0.5,
+                      ),
+                    ),
+                  ),
+                  child: SafeArea(
+                    top: false,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        // Logo size slider (compact)
+                        if (_showLogo)
+                          Row(
+                            children: [
+                              Icon(Icons.photo_size_select_small, size: 18, color: secondaryColor),
+                              Expanded(
+                                child: Slider(
+                                  value: _logoScale,
+                                  min: 0.5,
+                                  max: 3.0,
+                                  inactiveColor: borderColor,
+                                  onChanged: (value) => setState(() => _logoScale = value),
                                 ),
                               ),
-                            ),
+                              Icon(Icons.photo_size_select_large, size: 18, color: secondaryColor),
+                            ],
                           ),
+
+                        // Active emoji controls (compact)
+                        if (_activeEmojiIndex != null && _activeEmojiIndex! < _emojiStickers.length) ...[
+                          Row(
+                            children: [
+                              Text(_emojiStickers[_activeEmojiIndex!].emoji, style: const TextStyle(fontSize: 18)),
+                              const SizedBox(width: 6),
+                              Text('Size', style: TextStyle(color: secondaryColor, fontSize: 11)),
+                              Expanded(
+                                child: Slider(
+                                  value: _emojiStickers[_activeEmojiIndex!].scale,
+                                  min: 0.3,
+                                  max: 5.0,
+                                  inactiveColor: borderColor,
+                                  onChanged: (value) => setState(() => _emojiStickers[_activeEmojiIndex!].scale = value),
+                                ),
+                              ),
+                              GestureDetector(
+                                onTap: () => _removeEmojiSticker(_activeEmojiIndex!),
+                                child: Icon(Icons.delete_outline, size: 20, color: AppColors.error),
+                              ),
+                            ],
+                          ),
+                        ],
+
+                        const SizedBox(height: 4),
+
+                        // Action buttons row
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          children: [
+                            _buildToolButton(
+                              icon: Icons.crop,
+                              label: 'Crop',
+                              onTap: _cropImage,
+                            ),
+                            _buildToolButton(
+                              icon: _showLogo
+                                  ? Icons.branding_watermark
+                                  : Icons.branding_watermark_outlined,
+                              label: _showLogo ? 'Hide Logo' : 'Show Logo',
+                              onTap: () => setState(() => _showLogo = !_showLogo),
+                              isActive: _showLogo,
+                            ),
+                            _buildToolButton(
+                              icon: Icons.refresh,
+                              label: 'Reset Logo',
+                              onTap: () {
+                                setState(() {
+                                  _logoPosition = const Offset(20, 20);
+                                  _logoScale = 1.0;
+                                });
+                              },
+                              enabled: _showLogo,
+                            ),
+                          ],
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
               ),
             ),
-          ),
-
-          // Bottom toolbar
-          ClipRect(
-            child: BackdropFilter(
-              filter: ui.ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-              child: Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: isDark
-                  ? AppColors.glassSurface
-                  : AppColorsLight.glassSurface.withValues(alpha: 0.85),
-              border: Border(
-                top: BorderSide(
-                  color: isDark
-                      ? Colors.white.withValues(alpha: 0.08)
-                      : Colors.black.withValues(alpha: 0.06),
-                  width: 0.5,
-                ),
-              ),
-            ),
-            child: SafeArea(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // Instructions
-                  if (_showLogo)
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 12),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.touch_app,
-                            size: 16,
-                            color: mutedColor,
-                          ),
-                          const SizedBox(width: 8),
-                          Text(
-                            'Drag logo to move • Pinch to resize',
-                            style: TextStyle(
-                              color: mutedColor,
-                              fontSize: 12,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-
-                  // Logo size slider
-                  if (_showLogo)
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.photo_size_select_small,
-                          size: 20,
-                          color: secondaryColor,
-                        ),
-                        Expanded(
-                          child: Slider(
-                            value: _logoScale,
-                            min: 0.5,
-                            max: 3.0,
-                            inactiveColor: borderColor,
-                            onChanged: (value) {
-                              setState(() => _logoScale = value);
-                            },
-                          ),
-                        ),
-                        Icon(
-                          Icons.photo_size_select_large,
-                          size: 20,
-                          color: secondaryColor,
-                        ),
-                      ],
-                    ),
-
-                  // Active emoji controls
-                  if (_activeEmojiIndex != null && _activeEmojiIndex! < _emojiStickers.length) ...[
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 8),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            _emojiStickers[_activeEmojiIndex!].emoji,
-                            style: const TextStyle(fontSize: 20),
-                          ),
-                          const SizedBox(width: 8),
-                          Text(
-                            'Selected sticker',
-                            style: TextStyle(
-                              color: accentColor,
-                              fontSize: 13,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                          const Spacer(),
-                          GestureDetector(
-                            onTap: () => _removeEmojiSticker(_activeEmojiIndex!),
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                              decoration: BoxDecoration(
-                                color: AppColors.error.withValues(alpha: 0.15),
-                                borderRadius: BorderRadius.circular(8),
-                                border: Border.all(color: AppColors.error.withValues(alpha: 0.3)),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(Icons.delete_outline, size: 14, color: AppColors.error),
-                                  const SizedBox(width: 4),
-                                  Text('Remove', style: TextStyle(color: AppColors.error, fontSize: 12)),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    // Size slider
-                    Row(
-                      children: [
-                        Icon(Icons.photo_size_select_small, size: 18, color: secondaryColor),
-                        const SizedBox(width: 4),
-                        Text('Size', style: TextStyle(color: secondaryColor, fontSize: 11)),
-                        Expanded(
-                          child: Slider(
-                            value: _emojiStickers[_activeEmojiIndex!].scale,
-                            min: 0.3,
-                            max: 5.0,
-                            inactiveColor: borderColor,
-                            onChanged: (value) {
-                              setState(() => _emojiStickers[_activeEmojiIndex!].scale = value);
-                            },
-                          ),
-                        ),
-                        Icon(Icons.photo_size_select_large, size: 18, color: secondaryColor),
-                      ],
-                    ),
-                    // Rotation slider
-                    Row(
-                      children: [
-                        Icon(Icons.rotate_left, size: 18, color: secondaryColor),
-                        const SizedBox(width: 4),
-                        Text('Rotate', style: TextStyle(color: secondaryColor, fontSize: 11)),
-                        Expanded(
-                          child: Slider(
-                            value: _emojiStickers[_activeEmojiIndex!].rotation,
-                            min: -pi,
-                            max: pi,
-                            inactiveColor: borderColor,
-                            onChanged: (value) {
-                              setState(() => _emojiStickers[_activeEmojiIndex!].rotation = value);
-                            },
-                          ),
-                        ),
-                        Icon(Icons.rotate_right, size: 18, color: secondaryColor),
-                      ],
-                    ),
-                  ],
-
-                  const SizedBox(height: 8),
-
-                  // Action buttons row
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      _buildToolButton(
-                        icon: Icons.crop,
-                        label: 'Crop',
-                        onTap: _cropImage,
-                      ),
-                      _buildToolButton(
-                        icon: _showLogo
-                            ? Icons.branding_watermark
-                            : Icons.branding_watermark_outlined,
-                        label: _showLogo ? 'Hide Logo' : 'Show Logo',
-                        onTap: () => setState(() => _showLogo = !_showLogo),
-                        isActive: _showLogo,
-                      ),
-                      _buildToolButton(
-                        icon: Icons.refresh,
-                        label: 'Reset Logo',
-                        onTap: () {
-                          setState(() {
-                            _logoPosition = const Offset(20, 20);
-                            _logoScale = 1.0;
-                          });
-                        },
-                        enabled: _showLogo,
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ),
-          ),
           ),
         ],
       ),

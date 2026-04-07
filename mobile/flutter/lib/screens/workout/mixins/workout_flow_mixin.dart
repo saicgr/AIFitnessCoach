@@ -15,6 +15,7 @@ import '../../../data/providers/xp_provider.dart';
 import '../../../data/repositories/workout_repository.dart';
 import '../../../data/services/api_client.dart';
 import '../../../core/providers/ble_heart_rate_provider.dart';
+import '../../../core/providers/heart_rate_provider.dart';
 import '../../../core/providers/warmup_duration_provider.dart';
 import '../../../data/services/ble_heart_rate_service.dart';
 import '../../../data/services/workout_notification_service.dart';
@@ -39,12 +40,30 @@ mixin WorkoutFlowMixin<T extends StatefulWidget> on State<T> {
   WorkoutTimerController get timerController;
   List<Map<String, dynamic>> get restIntervals;
   int get totalDrinkIntakeMl;
+  List<Map<String, dynamic>> get drinkEvents;
   bool get isPaused;
   set isPaused(bool value);
   bool get isResting;
   int get viewingExerciseIndex;
   WorkoutPhase get currentPhase;
   set currentPhase(WorkoutPhase value);
+  List<WarmupExerciseData>? get warmupExercises;
+  List<StretchExerciseData>? get stretchExercises;
+  Set<int> get skippedExercises;
+
+  // AI/UI interaction counters (for metadata)
+  int get aiCoachOpened;
+  int get aiChatMessagesSent;
+  int get aiWeightSuggestionsShown;
+  int get aiWeightSuggestionsAccepted;
+  int get fatigueAlertsTriggered;
+  int get coachTipsShown;
+  int get coachTipsDismissed;
+  int get restSuggestionsShown;
+  int get exerciseInfoOpened;
+  int get breathingGuideOpened;
+  int get exerciseSwapsRequested;
+  int get videoViews;
 
   // Widget access
   dynamic get workoutWidget; // The StatefulWidget with workout property
@@ -351,6 +370,7 @@ mixin WorkoutFlowMixin<T extends StatefulWidget> on State<T> {
       'exercise_order': exerciseOrder,
       'rest_intervals': restIntervals,
       'drink_intake_ml': totalDrinkIntakeMl,
+      'drink_events': drinkEvents,
       'progression_models': progressionModels,
       'increment_settings': {
         'dumbbell': incrementState.dumbbell,
@@ -364,6 +384,58 @@ mixin WorkoutFlowMixin<T extends StatefulWidget> on State<T> {
         'group_id': e.key,
         'exercises': e.value,
       }).toList(),
+      // Warmup/stretch exercises
+      'warmup_exercises': warmupExercises?.map((e) => {
+        'name': e.name,
+        'duration_seconds': e.duration,
+        'equipment': e.equipment,
+        'is_staple': e.isStaple,
+        if (e.inclinePercent != null) 'incline_percent': e.inclinePercent,
+        if (e.speedMph != null) 'speed_mph': e.speedMph,
+        if (e.rpm != null) 'rpm': e.rpm,
+        if (e.resistanceLevel != null) 'resistance_level': e.resistanceLevel,
+        if (e.strokeRateSpm != null) 'stroke_rate_spm': e.strokeRateSpm,
+      }).toList() ?? [],
+      'stretch_exercises': stretchExercises?.map((e) => {
+        'name': e.name,
+        'duration_seconds': e.duration,
+        'equipment': e.equipment,
+        if (e.inclinePercent != null) 'incline_percent': e.inclinePercent,
+        if (e.speedMph != null) 'speed_mph': e.speedMph,
+        if (e.rpm != null) 'rpm': e.rpm,
+        if (e.resistanceLevel != null) 'resistance_level': e.resistanceLevel,
+        if (e.strokeRateSpm != null) 'stroke_rate_spm': e.strokeRateSpm,
+      }).toList() ?? [],
+      'warmup_completed': currentPhase != WorkoutPhase.warmup,
+      'stretch_completed': currentPhase == WorkoutPhase.complete,
+      'skipped_exercise_indices': skippedExercises.toList(),
+      'ai_interactions': {
+        'coach_opened': aiCoachOpened,
+        'chat_messages_sent': aiChatMessagesSent,
+        'weight_suggestions_shown': aiWeightSuggestionsShown,
+        'weight_suggestions_accepted': aiWeightSuggestionsAccepted,
+        'fatigue_alerts_triggered': fatigueAlertsTriggered,
+        'coach_tips_shown': coachTipsShown,
+        'coach_tips_dismissed': coachTipsDismissed,
+        'rest_suggestions_shown': restSuggestionsShown,
+        'exercise_info_opened': exerciseInfoOpened,
+        'breathing_guide_opened': breathingGuideOpened,
+        'exercise_swaps_requested': exerciseSwapsRequested,
+        'video_views': videoViews,
+      },
+      // Heart rate data (if watch/BLE connected)
+      if (ref.read(workoutHeartRateHistoryProvider).isNotEmpty) 'heart_rate': () {
+        final stats = ref.read(workoutHeartRateHistoryProvider.notifier).getStats();
+        final readings = ref.read(workoutHeartRateHistoryProvider);
+        return {
+          'avg_bpm': stats?.avg,
+          'max_bpm': stats?.max,
+          'min_bpm': stats?.min,
+          'readings': readings
+              .map((r) => {'bpm': r.bpm, 'timestamp': r.timestamp.toIso8601String()})
+              .toList(),
+        };
+      }(),
     };
   }
 

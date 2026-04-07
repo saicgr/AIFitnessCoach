@@ -109,6 +109,15 @@ mixin SetLoggingMixin<T extends StatefulWidget> on State<T> {
       }
     }
 
+    // Look up previous session data for this set
+    final prevSets = previousSets[currentExerciseIndex];
+    double? prevWeight;
+    int? prevReps;
+    if (prevSets != null && setIndex < prevSets.length) {
+      prevWeight = (prevSets[setIndex]['weight'] as num?)?.toDouble();
+      prevReps = prevSets[setIndex]['reps'] as int?;
+    }
+
     final setLog = SetLog(
       reps: reps,
       weight: useKg ? weight : weight * 0.453592,
@@ -116,6 +125,8 @@ mixin SetLoggingMixin<T extends StatefulWidget> on State<T> {
       startedAt: currentSetStartTime,
       durationSeconds: setDuration,
       restDurationSeconds: restBefore,
+      previousWeightKg: prevWeight,
+      previousReps: prevReps,
     );
 
     pendingSetLog = setLog;
@@ -880,6 +891,11 @@ mixin SetLoggingMixin<T extends StatefulWidget> on State<T> {
           if (exercise.supersetOrder != null) 'superset_order': exercise.supersetOrder,
           if (sets[j].durationSeconds != null) 'set_duration_seconds': sets[j].durationSeconds,
           if (sets[j].restDurationSeconds != null) 'rest_duration_seconds': sets[j].restDurationSeconds,
+          if (exerciseBarType.containsKey(i)) 'bar_type': exerciseBarType[i],
+          if (sets[j].previousWeightKg != null) 'previous_weight_kg': sets[j].previousWeightKg,
+          if (sets[j].previousReps != null) 'previous_reps': sets[j].previousReps,
+          if (sets[j].aiInputSource != null) 'ai_input_source': sets[j].aiInputSource,
+          if (sets[j].notes != null) 'notes': sets[j].notes,
         });
       }
     }

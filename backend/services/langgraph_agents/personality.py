@@ -94,9 +94,9 @@ def build_personality_prompt(
 
     # Build response length guidance
     length_descriptions = {
-        "concise": "Keep responses SHORT and to-the-point. 1-3 sentences max unless more detail is explicitly needed.",
-        "balanced": "Provide moderate detail. Cover the key points without being overly verbose. 2-4 sentences typically.",
-        "detailed": "Provide comprehensive responses with explanations, context, and additional helpful information.",
+        "concise": "Keep responses VERY short. 1-2 sentences max. No filler, no preamble.",
+        "balanced": "Keep responses brief and direct. 1-3 sentences. Get to the point quickly — no unnecessary preamble or filler phrases.",
+        "detailed": "Provide comprehensive responses with explanations, context, and additional helpful information. 3-5 sentences.",
     }
     length_prompt = length_descriptions.get(
         settings.response_length,

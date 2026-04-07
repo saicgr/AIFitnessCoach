@@ -97,94 +97,157 @@ extension _PhotosTabStateUI on _PhotosTabState {
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final dateStr = DateFormat('MMM d, yyyy').format(photo.takenAt);
     final timeStr = DateFormat('h:mm a').format(photo.takenAt);
+    final isSelected = _selectedPhotoIds.contains(photo.id);
 
     return GestureDetector(
-      onTap: () => _showPhotoDetail(photo),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Expanded(
-            child: Container(
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(10),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.08),
-                    blurRadius: 4,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(10),
-                child: Stack(
-                  fit: StackFit.expand,
-                  children: [
-                    CachedNetworkImage(
-                      imageUrl: photo.thumbnailUrl ?? photo.photoUrl,
-                      fit: BoxFit.cover,
-                      placeholder: (_, __) => Container(
-                        color: elevated,
-                        child: const Center(
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        ),
-                      ),
-                      errorWidget: (_, __, ___) => Container(
-                        color: elevated,
-                        child: const Icon(Icons.broken_image, color: Colors.red),
-                      ),
-                    ),
-                    // View type badge
-                    Positioned(
-                      top: 4,
-                      left: 4,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
-                        decoration: BoxDecoration(
-                          color: accentColor.withValues(alpha: 0.85),
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: Text(
-                          photo.viewTypeEnum.displayName,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 9,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
+      onTap: () {
+        if (_isSelectionMode) {
+          setState(() {
+            if (isSelected) {
+              _selectedPhotoIds.remove(photo.id);
+            } else {
+              _selectedPhotoIds.add(photo.id);
+            }
+          });
+        } else {
+          _showPhotoDetail(photo);
+        }
+      },
+      onLongPress: () {
+        if (!_isSelectionMode) {
+          HapticService.medium();
+          setState(() => _selectedPhotoIds.add(photo.id));
+        }
+      },
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        decoration: isSelected
+            ? BoxDecoration(
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: accentColor, width: 2.5),
+              )
+            : null,
+        padding: isSelected ? const EdgeInsets.all(2) : EdgeInsets.zero,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: Container(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(10),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.08),
+                      blurRadius: 4,
+                      offset: const Offset(0, 2),
                     ),
                   ],
                 ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(10),
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      CachedNetworkImage(
+                        imageUrl: photo.thumbnailUrl ?? photo.photoUrl,
+                        fit: BoxFit.cover,
+                        placeholder: (_, __) => Container(
+                          color: elevated,
+                          child: const Center(
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          ),
+                        ),
+                        errorWidget: (_, __, ___) => Container(
+                          color: elevated,
+                          child: const Icon(Icons.broken_image, color: Colors.red),
+                        ),
+                      ),
+                      // Dim overlay when selected
+                      if (isSelected)
+                        Container(color: Colors.black.withValues(alpha: 0.25)),
+                      // View type badge
+                      Positioned(
+                        top: 4,
+                        left: 4,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: accentColor.withValues(alpha: 0.85),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Text(
+                            photo.viewTypeEnum.displayName,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 9,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ),
+                      // Selection checkmark
+                      if (isSelected)
+                        Positioned(
+                          top: 4,
+                          right: 4,
+                          child: Container(
+                            width: 24,
+                            height: 24,
+                            decoration: BoxDecoration(
+                              color: accentColor,
+                              shape: BoxShape.circle,
+                              border: Border.all(color: Colors.white, width: 2),
+                            ),
+                            child: const Icon(Icons.check, size: 14, color: Colors.white),
+                          ),
+                        ),
+                      // Empty circle when in selection mode but not selected
+                      if (_isSelectionMode && !isSelected)
+                        Positioned(
+                          top: 4,
+                          right: 4,
+                          child: Container(
+                            width: 24,
+                            height: 24,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              border: Border.all(color: Colors.white.withValues(alpha: 0.8), width: 2),
+                              color: Colors.black.withValues(alpha: 0.3),
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
               ),
             ),
-          ),
-          // Date and time below the photo
-          Padding(
-            padding: const EdgeInsets.only(top: 4, left: 2),
-            child: Text(
-              dateStr,
-              style: TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w600,
-                color: textPrimary,
+            // Date and time below the photo
+            Padding(
+              padding: const EdgeInsets.only(top: 4, left: 2),
+              child: Text(
+                dateStr,
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: textPrimary,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
             ),
-          ),
-          Padding(
-            padding: const EdgeInsets.only(left: 2),
-            child: Text(
-              timeStr,
-              style: TextStyle(
-                fontSize: 10,
-                color: textMuted,
+            Padding(
+              padding: const EdgeInsets.only(left: 2),
+              child: Text(
+                timeStr,
+                style: TextStyle(
+                  fontSize: 10,
+                  color: textMuted,
+                ),
+                maxLines: 1,
               ),
-              maxLines: 1,
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

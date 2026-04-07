@@ -245,6 +245,11 @@ class ChatMessageBubble extends ConsumerWidget {
               audioUrl: message.audioUrl!,
               durationMs: message.audioDurationMs ?? 0,
             )
+          else if (isUser && message.content.contains('[ACTIVE WORKOUT CONTEXT]'))
+            _WorkoutContextMessage(
+              content: message.content,
+              textColor: AppColors.pureBlack,
+            )
           else
             Text(
               message.content,
@@ -566,5 +571,156 @@ class ChatMessageBubble extends ConsumerWidget {
       final months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
       return '${months[time.month - 1]} ${time.day}, $timeStr';
     }
+  }
+}
+
+/// Displays a user message that contains [ACTIVE WORKOUT CONTEXT].
+/// Shows only the user's question with a collapsible context chip.
+class _WorkoutContextMessage extends StatefulWidget {
+  final String content;
+  final Color textColor;
+
+  const _WorkoutContextMessage({
+    required this.content,
+    required this.textColor,
+  });
+
+  @override
+  State<_WorkoutContextMessage> createState() => _WorkoutContextMessageState();
+}
+
+class _WorkoutContextMessageState extends State<_WorkoutContextMessage>
+    with SingleTickerProviderStateMixin {
+  bool _expanded = false;
+
+  /// Extract the user's actual question from the context block.
+  (String userQuestion, List<(String, String)> contextItems) _parse() {
+    final lines = widget.content.split('\n');
+    String userQuestion = widget.content;
+    final contextItems = <(String, String)>[];
+
+    final questionIndex = lines.indexWhere((l) => l.startsWith('User question:'));
+    if (questionIndex != -1) {
+      userQuestion = lines[questionIndex].replaceFirst('User question: ', '').trim();
+    }
+
+    for (final line in lines) {
+      final trimmed = line.trim();
+      if (trimmed.startsWith('[') || trimmed.startsWith('---') || trimmed.isEmpty) continue;
+      if (trimmed.startsWith('User question:')) continue;
+      final colonIdx = trimmed.indexOf(':');
+      if (colonIdx > 0 && colonIdx < trimmed.length - 1) {
+        contextItems.add((trimmed.substring(0, colonIdx).trim(), trimmed.substring(colonIdx + 1).trim()));
+      }
+    }
+    return (userQuestion, contextItems);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final (userQuestion, contextItems) = _parse();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // User's actual question
+        Text(
+          userQuestion,
+          style: TextStyle(
+            color: widget.textColor,
+            fontSize: 15,
+            height: 1.4,
+          ),
+        ),
+        const SizedBox(height: 8),
+        // Collapsible context chip
+        GestureDetector(
+          onTap: () => setState(() => _expanded = !_expanded),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            decoration: BoxDecoration(
+              color: Colors.black.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.fitness_center,
+                  size: 12,
+                  color: widget.textColor.withValues(alpha: 0.7),
+                ),
+                const SizedBox(width: 4),
+                Text(
+                  'Workout context',
+                  style: TextStyle(
+                    color: widget.textColor.withValues(alpha: 0.7),
+                    fontSize: 11,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(width: 2),
+                AnimatedRotation(
+                  turns: _expanded ? 0.5 : 0,
+                  duration: const Duration(milliseconds: 200),
+                  child: Icon(
+                    Icons.keyboard_arrow_down,
+                    size: 14,
+                    color: widget.textColor.withValues(alpha: 0.7),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        // Expanded context details
+        AnimatedCrossFade(
+          firstChild: const SizedBox.shrink(),
+          secondChild: Padding(
+            padding: const EdgeInsets.only(top: 6),
+            child: Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.black.withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  for (final (label, value) in contextItems)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 2),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            '$label: ',
+                            style: TextStyle(
+                              color: widget.textColor.withValues(alpha: 0.6),
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          Flexible(
+                            child: Text(
+                              value,
+                              style: TextStyle(
+                                color: widget.textColor.withValues(alpha: 0.8),
+                                fontSize: 11,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ),
+          crossFadeState: _expanded ? CrossFadeState.showSecond : CrossFadeState.showFirst,
+          duration: const Duration(milliseconds: 200),
+        ),
+      ],
+    );
   }
 }

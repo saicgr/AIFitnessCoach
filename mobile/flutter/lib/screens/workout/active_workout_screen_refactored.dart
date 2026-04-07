@@ -233,6 +233,7 @@ class _ActiveWorkoutScreenState
 
   // Tracking state
   int _totalDrinkIntakeMl = 0;
+  final List<Map<String, dynamic>> _drinkEvents = [];
   bool _isActiveRowExpanded = true;
   final List<Map<String, dynamic>> _restIntervals = [];
   final Map<int, int> _exerciseTimeSeconds = {};
@@ -294,6 +295,20 @@ class _ActiveWorkoutScreenState
 
   // Tracks exercises the user explicitly skipped (treated as "done" for navigation)
   final Set<int> _skippedExercises = {};
+
+  // AI/UI interaction counters for analytics
+  int _aiCoachOpened = 0;
+  int _aiChatMessagesSent = 0;
+  int _aiWeightSuggestionsShown = 0;
+  int _aiWeightSuggestionsAccepted = 0;
+  int _fatigueAlertsTriggered = 0;
+  int _coachTipsShown = 0;
+  int _coachTipsDismissed = 0;
+  int _restSuggestionsShown = 0;
+  int _exerciseInfoOpened = 0;
+  int _breathingGuideOpened = 0;
+  int _exerciseSwapsRequested = 0;
+  int _videoViews = 0;
 
   // Superset round tracking
   // Maps superset group ID -> set of exercise indices that have completed a set in this round
@@ -404,6 +419,7 @@ class _ActiveWorkoutScreenState
   @override set currentSetStartTime(DateTime? value) => _currentSetStartTime = value;
   @override Map<int, List<int>> get actualRestDurations => _actualRestDurations;
   @override set totalDrinkIntakeMl(int value) => _totalDrinkIntakeMl = value;
+  @override List<Map<String, dynamic>> get drinkEvents => _drinkEvents;
   @override List<WarmupExerciseData>? get warmupExercises => _warmupExercises;
   @override set warmupExercises(List<WarmupExerciseData>? value) => _warmupExercises = value;
   @override List<StretchExerciseData>? get stretchExercises => _stretchExercises;
@@ -424,6 +440,32 @@ class _ActiveWorkoutScreenState
   @override bool get isPaused => _isPaused;
   @override set isPaused(bool value) => _isPaused = value;
   @override Set<int> get skippedExercises => _skippedExercises;
+
+  // AI/UI interaction counter getters and setters
+  @override int get aiCoachOpened => _aiCoachOpened;
+  set aiCoachOpened(int value) => _aiCoachOpened = value;
+  @override int get aiChatMessagesSent => _aiChatMessagesSent;
+  set aiChatMessagesSent(int value) => _aiChatMessagesSent = value;
+  @override int get aiWeightSuggestionsShown => _aiWeightSuggestionsShown;
+  @override set aiWeightSuggestionsShown(int value) => _aiWeightSuggestionsShown = value;
+  @override int get aiWeightSuggestionsAccepted => _aiWeightSuggestionsAccepted;
+  @override set aiWeightSuggestionsAccepted(int value) => _aiWeightSuggestionsAccepted = value;
+  @override int get fatigueAlertsTriggered => _fatigueAlertsTriggered;
+  @override set fatigueAlertsTriggered(int value) => _fatigueAlertsTriggered = value;
+  @override int get coachTipsShown => _coachTipsShown;
+  @override set coachTipsShown(int value) => _coachTipsShown = value;
+  @override int get coachTipsDismissed => _coachTipsDismissed;
+  @override set coachTipsDismissed(int value) => _coachTipsDismissed = value;
+  @override int get restSuggestionsShown => _restSuggestionsShown;
+  @override set restSuggestionsShown(int value) => _restSuggestionsShown = value;
+  @override int get exerciseInfoOpened => _exerciseInfoOpened;
+  @override set exerciseInfoOpened(int value) => _exerciseInfoOpened = value;
+  @override int get breathingGuideOpened => _breathingGuideOpened;
+  @override set breathingGuideOpened(int value) => _breathingGuideOpened = value;
+  @override int get exerciseSwapsRequested => _exerciseSwapsRequested;
+  set exerciseSwapsRequested(int value) => _exerciseSwapsRequested = value;
+  @override int get videoViews => _videoViews;
+  set videoViews(int value) => _videoViews = value;
 
   @override
   void initState() {

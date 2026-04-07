@@ -73,6 +73,7 @@ mixin WorkoutSheetsMixin<T extends StatefulWidget> on State<T> {
   set isVideoPlaying(bool value);
   int get totalDrinkIntakeMl;
   set totalDrinkIntakeMl(int value);
+  List<Map<String, dynamic>> get drinkEvents;
   bool get hideAICoachForSession;
   set hideAICoachForSession(bool value);
   String? get coachTipMessage;
@@ -102,6 +103,21 @@ mixin WorkoutSheetsMixin<T extends StatefulWidget> on State<T> {
     );
 
     if (result != null && result.amountMl > 0) {
+      // Capture exercise/set context at time of drink
+      final exerciseName = exercises[currentExerciseIndex].name;
+      final exerciseIdx = currentExerciseIndex;
+      final afterSet = completedSets[currentExerciseIndex]?.length ?? 0;
+
+      // Track granular drink event for metadata
+      drinkEvents.add({
+        'amount_ml': result.amountMl,
+        'drink_type': result.drinkType.value,
+        'exercise_name': exerciseName,
+        'exercise_index': exerciseIdx,
+        'after_set': afterSet,
+        'logged_at': DateTime.now().toIso8601String(),
+      });
+
       // Update local workout state
       setState(() => totalDrinkIntakeMl = totalDrinkIntakeMl + result.amountMl);
 
@@ -113,7 +129,7 @@ mixin WorkoutSheetsMixin<T extends StatefulWidget> on State<T> {
           drinkType: result.drinkType.value,
           amountMl: result.amountMl,
           workoutId: (workoutWidget as dynamic).workout.id,
-          notes: 'Logged during workout',
+          notes: 'During $exerciseName (set $afterSet)',
         );
 
         // Show confirmation

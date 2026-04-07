@@ -70,6 +70,10 @@ mixin TimerRestMixin<T extends StatefulWidget> on State<T> {
   set currentSetStartTime(DateTime? value);
   Map<int, List<int>> get actualRestDurations;
 
+  // AI interaction counter
+  int get restSuggestionsShown;
+  set restSuggestionsShown(int value);
+
   // Cross-mixin method access
   void advanceToSupersetExercise(int nextIndex);
   List<int> getSupersetIndices(int groupId);
@@ -629,6 +633,7 @@ mixin TimerRestMixin<T extends StatefulWidget> on State<T> {
 
       if (response.statusCode == 200 && response.data != null) {
         final suggestion = RestSuggestion.fromJson(response.data);
+        restSuggestionsShown++;
         setState(() {
           restSuggestion = suggestion;
           isLoadingRestSuggestion = false;

@@ -42,6 +42,18 @@ mixin AIFeaturesMixin<T extends StatefulWidget> on State<T> {
   Map<int, List<Map<String, dynamic>>> get previousSets;
   Map<String, double> get exerciseMaxWeights;
 
+  // AI interaction counters
+  int get aiWeightSuggestionsShown;
+  set aiWeightSuggestionsShown(int value);
+  int get aiWeightSuggestionsAccepted;
+  set aiWeightSuggestionsAccepted(int value);
+  int get fatigueAlertsTriggered;
+  set fatigueAlertsTriggered(int value);
+  int get coachTipsShown;
+  set coachTipsShown(int value);
+  int get coachTipsDismissed;
+  set coachTipsDismissed(int value);
+
   WeightSuggestion? get currentWeightSuggestion;
   set currentWeightSuggestion(WeightSuggestion? value);
   bool get isLoadingWeightSuggestion;
@@ -113,6 +125,7 @@ mixin AIFeaturesMixin<T extends StatefulWidget> on State<T> {
       if (!mounted) return;
 
       if (aiSuggestion != null) {
+        aiWeightSuggestionsShown++;
         setState(() {
           currentWeightSuggestion = aiSuggestion;
           isLoadingWeightSuggestion = false;
@@ -360,6 +373,7 @@ mixin AIFeaturesMixin<T extends StatefulWidget> on State<T> {
       if (!mounted) return;
 
       if (alertData != null && alertData.fatigueDetected) {
+        fatigueAlertsTriggered++;
         setState(() {
           fatigueAlertData = alertData;
           showFatigueAlert = true;
@@ -575,6 +589,7 @@ mixin AIFeaturesMixin<T extends StatefulWidget> on State<T> {
 
       if (!mounted) return;
 
+      coachTipsShown++;
       setState(() {
         coachTipMessage = tip;
         showCoachTip = true;
