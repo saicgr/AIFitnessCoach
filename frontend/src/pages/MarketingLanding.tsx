@@ -135,7 +135,7 @@ export default function MarketingLanding() {
             initial="hidden"
             animate={pricingInView ? 'visible' : 'hidden'}
             variants={stagger}
-            className="grid grid-cols-1 md:grid-cols-2 gap-6"
+            className="grid grid-cols-1 md:grid-cols-3 gap-6"
           >
             {/* Free Plan */}
             <motion.div
@@ -168,21 +168,22 @@ export default function MarketingLanding() {
               </a>
             </motion.div>
 
-            {/* Premium Plan */}
+            {/* Premium Yearly — Best Value */}
             <motion.div
               variants={fadeUp}
               className="relative p-8 rounded-3xl bg-gradient-to-b from-emerald-500/10 to-[var(--color-surface)] border-2 border-emerald-500/30"
             >
               <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1 bg-emerald-500 text-white text-xs font-bold uppercase tracking-wider rounded-full">
-                Most Popular
+                Best Value
               </div>
-              <h3 className="text-2xl font-semibold mb-1">Premium</h3>
+              <h3 className="text-2xl font-semibold mb-1">Premium Yearly</h3>
               <p className="text-[var(--color-text-secondary)] text-sm mb-6">Full AI-powered fitness</p>
-              <div className="flex items-baseline gap-1 mb-2">
-                <span className="text-[48px] font-bold tracking-tight bg-gradient-to-r from-emerald-400 to-green-400 bg-clip-text text-transparent">$4.99</span>
+              <div className="flex items-baseline gap-1 mb-1">
+                <span className="text-[48px] font-bold tracking-tight bg-gradient-to-r from-emerald-400 to-green-400 bg-clip-text text-transparent">$4.17</span>
                 <span className="text-[var(--color-text-secondary)] text-sm">/month</span>
               </div>
-              <p className="text-[13px] text-[var(--color-text-muted)] mb-8">7-day free trial included</p>
+              <p className="text-[13px] text-[var(--color-text-muted)] mb-2">Billed as $49.99/year</p>
+              <p className="text-[13px] text-emerald-500 font-medium mb-6">7-day free trial included</p>
               <ul className="space-y-3 mb-8">
                 {premiumFeatures.map((f) => (
                   <li key={f} className="flex items-start gap-3 text-[15px]">
@@ -199,7 +200,39 @@ export default function MarketingLanding() {
                 rel="noopener noreferrer"
                 className="block w-full text-center py-3 rounded-full bg-emerald-500 hover:bg-emerald-400 text-white font-medium transition-colors"
               >
-                Start 7-Day Free Trial
+                Try Premium Free for 7 Days
+              </a>
+            </motion.div>
+
+            {/* Premium Monthly */}
+            <motion.div
+              variants={fadeUp}
+              className="p-8 rounded-3xl bg-[var(--color-surface)] border border-[var(--color-border)]"
+            >
+              <h3 className="text-2xl font-semibold mb-1">Premium Monthly</h3>
+              <p className="text-[var(--color-text-secondary)] text-sm mb-6">Pay as you go</p>
+              <div className="flex items-baseline gap-1 mb-2">
+                <span className="text-[48px] font-bold tracking-tight">$4.99</span>
+                <span className="text-[var(--color-text-secondary)] text-sm">/month</span>
+              </div>
+              <p className="text-[13px] text-[var(--color-text-muted)] mb-8">Billed monthly, cancel anytime</p>
+              <ul className="space-y-3 mb-8">
+                {premiumFeatures.map((f) => (
+                  <li key={f} className="flex items-start gap-3 text-[15px]">
+                    <svg className="w-5 h-5 text-emerald-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                    </svg>
+                    <span className="text-[var(--color-text)]">{f}</span>
+                  </li>
+                ))}
+              </ul>
+              <a
+                href="https://play.google.com/store"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block w-full text-center py-3 rounded-full border border-[var(--color-border)] hover:border-emerald-500/50 text-[var(--color-text)] font-medium transition-colors"
+              >
+                Subscribe Now
               </a>
             </motion.div>
           </motion.div>
