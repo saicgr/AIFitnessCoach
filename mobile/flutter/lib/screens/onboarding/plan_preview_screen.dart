@@ -42,18 +42,12 @@ class PlanPreviewScreen extends ConsumerWidget {
     final textPrimary = Colors.white;
     final textSecondary = Colors.white.withValues(alpha: 0.7);
 
-    // Glassmorphic gradient matching the quiz flow
-    final gradient = isDark
-        ? const LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [Color(0xFF0A1628), Color(0xFF0D2137), Color(0xFF061220)],
-          )
-        : const LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [Color(0xFF1A6B5A), Color(0xFF2D9E8A), Color(0xFF1A6B5A)],
-          );
+    // Dark gradient matching the onboarding flow
+    const gradient = LinearGradient(
+      begin: Alignment.topCenter,
+      end: Alignment.bottomCenter,
+      colors: [Color(0xFF1A1A2E), Color(0xFF16213E), Color(0xFF0F3460)],
+    );
 
     return Scaffold(
       body: Container(

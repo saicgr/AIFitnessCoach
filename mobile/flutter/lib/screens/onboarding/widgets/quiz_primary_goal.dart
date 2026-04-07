@@ -278,8 +278,8 @@ class _GlassPrimaryGoalCard extends StatelessWidget {
                                 Colors.white.withValues(alpha: 0.15),
                               ]
                             : [
-                                color.withValues(alpha: 0.3),
-                                color.withValues(alpha: 0.15),
+                                color.withValues(alpha: 0.45),
+                                color.withValues(alpha: 0.25),
                               ],
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
@@ -288,7 +288,7 @@ class _GlassPrimaryGoalCard extends StatelessWidget {
                       border: Border.all(
                         color: isSelected
                             ? Colors.white.withValues(alpha: 0.4)
-                            : color.withValues(alpha: 0.4),
+                            : color.withValues(alpha: 0.5),
                         width: 1.5,
                       ),
                     ),

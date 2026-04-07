@@ -552,19 +552,13 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
     final windowState = ref.watch(windowModeProvider);
     final isFoldableOpen = FoldableQuizScaffold.shouldUseFoldableLayout(windowState);
 
-    // Onboarding always uses a rich gradient regardless of system theme
+    // Onboarding always uses a dark gradient regardless of system theme
     // to maintain the glassmorphic aesthetic from the intro screen.
-    final onboardingGradient = isDark
-        ? const LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [Color(0xFF0A1628), Color(0xFF0D2137), Color(0xFF061220)],
-          )
-        : const LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [Color(0xFF1A6B5A), Color(0xFF2D9E8A), Color(0xFF1A6B5A)],
-          );
+    const onboardingGradient = LinearGradient(
+      begin: Alignment.topCenter,
+      end: Alignment.bottomCenter,
+      colors: [Color(0xFF1A1A2E), Color(0xFF16213E), Color(0xFF0F3460)],
+    );
 
     return Scaffold(
       body: Container(
