@@ -234,6 +234,8 @@ class _ActiveWorkoutScreenState
   // Tracking state
   int _totalDrinkIntakeMl = 0;
   final List<Map<String, dynamic>> _drinkEvents = [];
+  bool _warmupSkipped = false;
+  bool _stretchSkipped = false;
   bool _isActiveRowExpanded = true;
   final List<Map<String, dynamic>> _restIntervals = [];
   final Map<int, int> _exerciseTimeSeconds = {};
@@ -420,6 +422,10 @@ class _ActiveWorkoutScreenState
   @override Map<int, List<int>> get actualRestDurations => _actualRestDurations;
   @override set totalDrinkIntakeMl(int value) => _totalDrinkIntakeMl = value;
   @override List<Map<String, dynamic>> get drinkEvents => _drinkEvents;
+  @override bool get warmupSkipped => _warmupSkipped;
+  @override set warmupSkipped(bool value) => _warmupSkipped = value;
+  @override bool get stretchSkipped => _stretchSkipped;
+  @override set stretchSkipped(bool value) => _stretchSkipped = value;
   @override List<WarmupExerciseData>? get warmupExercises => _warmupExercises;
   @override set warmupExercises(List<WarmupExerciseData>? value) => _warmupExercises = value;
   @override List<StretchExerciseData>? get stretchExercises => _stretchExercises;

@@ -41,6 +41,10 @@ mixin WorkoutFlowMixin<T extends StatefulWidget> on State<T> {
   List<Map<String, dynamic>> get restIntervals;
   int get totalDrinkIntakeMl;
   List<Map<String, dynamic>> get drinkEvents;
+  bool get warmupSkipped;
+  set warmupSkipped(bool value);
+  bool get stretchSkipped;
+  set stretchSkipped(bool value);
   bool get isPaused;
   set isPaused(bool value);
   bool get isResting;
@@ -104,6 +108,7 @@ mixin WorkoutFlowMixin<T extends StatefulWidget> on State<T> {
 
   /// Handle warmup skip
   void handleSkipWarmup() {
+    warmupSkipped = true;
     ref.read(posthogServiceProvider).capture(
       eventName: 'warmup_skipped',
       properties: {
@@ -129,6 +134,7 @@ mixin WorkoutFlowMixin<T extends StatefulWidget> on State<T> {
 
   /// Handle stretch skip
   void handleSkipStretch() {
+    stretchSkipped = true;
     ref.read(posthogServiceProvider).capture(
       eventName: 'stretch_skipped',
       properties: {
@@ -406,8 +412,8 @@ mixin WorkoutFlowMixin<T extends StatefulWidget> on State<T> {
         if (e.resistanceLevel != null) 'resistance_level': e.resistanceLevel,
         if (e.strokeRateSpm != null) 'stroke_rate_spm': e.strokeRateSpm,
       }).toList() ?? [],
-      'warmup_completed': currentPhase != WorkoutPhase.warmup,
-      'stretch_completed': currentPhase == WorkoutPhase.complete,
+      'warmup_status': warmupSkipped ? 'skipped' : (currentPhase != WorkoutPhase.warmup ? 'completed' : 'not_started'),
+      'stretch_status': stretchSkipped ? 'skipped' : (currentPhase == WorkoutPhase.complete ? 'completed' : 'not_started'),
       'skipped_exercise_indices': skippedExercises.toList(),
       'ai_interactions': {
         'coach_opened': aiCoachOpened,
