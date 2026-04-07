@@ -380,10 +380,23 @@ extension _LogMealSheetStateUI on _LogMealSheetState {
                     ],
                     if (_analysisElapsedMs != null) ...[
                       const SizedBox(width: 6),
-                      Text('(${(_analysisElapsedMs! / 1000).toStringAsFixed(1)}s)', style: TextStyle(fontSize: 12, color: textMuted)),
+                      Text(
+                        _analysisElapsedMs! < 500 ? '(Cached)' : '(${(_analysisElapsedMs! / 1000).toStringAsFixed(1)}s)',
+                        style: TextStyle(fontSize: 12, color: textMuted),
+                      ),
                     ],
                   ],
                 ),
+                // Plate description - what AI sees (image analysis only)
+                if (response.plateDescription != null && response.plateDescription!.isNotEmpty && _sourceType == 'image') ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    response.plateDescription!,
+                    style: TextStyle(fontSize: 12, fontStyle: FontStyle.italic, color: textMuted),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
                 const SizedBox(height: 6),
                 // Action buttons row
                 Row(

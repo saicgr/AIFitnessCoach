@@ -286,6 +286,9 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
         vitaminDIu: _analyzedResponse!.vitaminDIu,
         calciumMg: _analyzedResponse!.calciumMg,
         ironMg: _analyzedResponse!.ironMg,
+        imageUrl: _analyzedResponse!.imageUrl,
+        imageStorageKey: _analyzedResponse!.imageStorageKey,
+        plateDescription: _analyzedResponse!.plateDescription,
       );
     });
   }
@@ -349,6 +352,9 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
         vitaminDIu: _analyzedResponse!.vitaminDIu,
         calciumMg: _analyzedResponse!.calciumMg,
         ironMg: _analyzedResponse!.ironMg,
+        imageUrl: _analyzedResponse!.imageUrl,
+        imageStorageKey: _analyzedResponse!.imageStorageKey,
+        plateDescription: _analyzedResponse!.plateDescription,
       );
     });
   }
@@ -375,7 +381,7 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
 
 
   Future<void> _handleLog() async {
-    if (_analyzedResponse == null) return;
+    if (_analyzedResponse == null || _hasLoggedThisSession) return;
 
     setState(() => _hasLoggedThisSession = true);
 
@@ -631,6 +637,7 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
 
         if (progress.isCompleted && progress.foodLog != null) {
           response = progress.foodLog;
+          setState(() => _analysisElapsedMs = progress.elapsedMs);
           break;
         }
 

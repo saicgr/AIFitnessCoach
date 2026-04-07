@@ -262,13 +262,14 @@ async def get_daily_crates(
         db = get_supabase_db()
         user_id = current_user["id"]
 
-        result = db.client.rpc(
-            "init_daily_crates",
-            {"p_user_id": user_id}
-        ).execute()
-
+        # Resolve user timezone and pass their local date to RPC
         user_tz = resolve_timezone(request, db, user_id)
         today_str = get_user_today(user_tz)
+
+        result = db.client.rpc(
+            "init_daily_crates",
+            {"p_user_id": user_id, "p_user_date": today_str}
+        ).execute()
 
         if result.data:
             data = result.data
@@ -292,6 +293,7 @@ async def get_daily_crates(
 
 @router.get("/unclaimed-crates", response_model=UnclaimedCratesResponse)
 async def get_unclaimed_crates(
+    request: Request,
     current_user=Depends(get_current_user)
 ):
     """
@@ -304,9 +306,13 @@ async def get_unclaimed_crates(
         db = get_supabase_db()
         user_id = current_user["id"]
 
+        # Pass user's local date so unclaimed crates are filtered correctly
+        user_tz = resolve_timezone(request, db, user_id)
+        today_str = get_user_today(user_tz)
+
         result = db.client.rpc(
             "get_unclaimed_crates",
-            {"p_user_id": user_id}
+            {"p_user_id": user_id, "p_user_date": today_str}
         ).execute()
 
         unclaimed_list = result.data or []
@@ -333,6 +339,7 @@ async def get_unclaimed_crates(
 @router.post("/claim-daily-crate", response_model=ClaimDailyCrateResponse)
 async def claim_daily_crate(
     request: ClaimDailyCrateRequest,
+    http_request: Request,
     current_user=Depends(get_current_user)
 ):
     """
@@ -347,7 +354,29 @@ async def claim_daily_crate(
         user_id = current_user["id"]
         crate_type = request.crate_type
 
+        # Resolve user timezone for date validation and default
+        user_tz = resolve_timezone(http_request, db, user_id)
+        today_str = get_user_today(user_tz)
+
         crate_date = request.crate_date  # Optional ISO date string
+
+        # Validate crate_date if provided
+        if crate_date:
+            from datetime import date as date_type
+            try:
+                crate_date_obj = date_type.fromisoformat(crate_date)
+            except ValueError:
+                raise HTTPException(status_code=400, detail="Invalid date format. Use ISO format: YYYY-MM-DD")
+
+            today_obj = date_type.fromisoformat(today_str)
+
+            if crate_date_obj > today_obj:
+                raise HTTPException(status_code=400, detail="Cannot claim crates from the future")
+            if (today_obj - crate_date_obj).days > 9:
+                raise HTTPException(status_code=400, detail="Crate too old to claim (max 9 days)")
+        else:
+            # Default to user's local today
+            crate_date = today_str
 
         logger.info(f"[XP] Claim daily crate: user_id={user_id}, crate_type={crate_type}, crate_date={crate_date}")
 
@@ -355,9 +384,7 @@ async def claim_daily_crate(
         if crate_type not in valid_types:
             raise HTTPException(status_code=400, detail=f"Invalid crate type: {crate_type}")
 
-        rpc_params = {"p_user_id": user_id, "p_crate_type": crate_type}
-        if crate_date:
-            rpc_params["p_crate_date"] = crate_date
+        rpc_params = {"p_user_id": user_id, "p_crate_type": crate_type, "p_crate_date": crate_date}
 
         result = db.client.rpc(
             "claim_daily_crate",
@@ -407,6 +434,14 @@ async def claim_daily_crate(
                     json_str = details[2:-1]
                     data = json.loads(json_str)
                     logger.info(f"[XP] claim-daily-crate extracted data from RPC response")
+
+                    # Respect the actual RPC result — don't hardcode success
+                    if not data.get("success", False):
+                        return ClaimDailyCrateResponse(
+                            success=False,
+                            message=data.get("message", "Failed to claim crate")
+                        )
+
                     # RPC returns flat structure (migration 230): reward_type, reward_amount
                     reward_type = data.get("reward_type", "xp")
                     reward_amount = data.get("reward_amount", 0)
@@ -430,6 +465,7 @@ async def claim_daily_crate(
 
 @router.post("/unlock-activity-crate")
 async def unlock_activity_crate(
+    request: Request,
     current_user=Depends(get_current_user)
 ):
     """
@@ -440,9 +476,13 @@ async def unlock_activity_crate(
         db = get_supabase_db()
         user_id = current_user["id"]
 
+        # Pass user's local date so activity crate unlocks for correct day
+        user_tz = resolve_timezone(request, db, user_id)
+        today_str = get_user_today(user_tz)
+
         result = db.client.rpc(
             "update_activity_crate_availability",
-            {"p_user_id": user_id}
+            {"p_user_id": user_id, "p_user_date": today_str}
         ).execute()
 
         if result.data:

@@ -88,6 +88,7 @@ class BonusTemplate(BaseModel):
 
 @router.post("/daily-login", response_model=DailyLoginResponse)
 async def process_daily_login(
+    request: Request,
     current_user=Depends(get_current_user)
 ):
     """
@@ -103,9 +104,14 @@ async def process_daily_login(
         db = get_supabase_db()
         user_id = current_user["id"]
         logger.info(f"[XP] daily-login called for user_id: {user_id}, auth_id: {current_user.get('auth_id')}")
+
+        # Resolve user timezone and pass their local date to RPC
+        user_tz = resolve_timezone(request, db, user_id)
+        user_today = get_user_today(user_tz)
+
         result = db.client.rpc(
             "process_daily_login",
-            {"p_user_id": user_id}
+            {"p_user_id": user_id, "p_user_date": user_today}
         ).execute()
 
         if result.data:
@@ -150,7 +156,13 @@ async def process_daily_login(
                         data["longest_streak"] = data.pop("max_streak")
                     if "multiplier" not in data:
                         data["multiplier"] = 1.0
-                    logger.info(f"[XP] daily-login extracted data from RPC response")
+                    # Ensure already_claimed responses have 0 XP to prevent phantom rewards
+                    if data.get("already_claimed"):
+                        data.setdefault("total_xp_awarded", 0)
+                        data.setdefault("daily_xp", 0)
+                        data.setdefault("first_login_xp", 0)
+                        data.setdefault("streak_milestone_xp", 0)
+                    logger.info(f"[XP] daily-login extracted data from RPC response (already_claimed={data.get('already_claimed', False)})")
                     return DailyLoginResponse(**data)
             except Exception as parse_error:
                 logger.error(f"[XP] Failed to parse RPC response: {parse_error}")
@@ -585,6 +597,17 @@ async def award_goal_xp(
     except HTTPException:
         raise
     except Exception as e:
+        # Handle race condition: unique index violation means another concurrent
+        # request already awarded XP for this goal today
+        error_str = str(e).lower()
+        if "unique" in error_str or "duplicate" in error_str or "idx_xp_transactions_daily_goal_dedup" in error_str:
+            logger.warning(f"[XP] Race condition caught: {request.goal_type} already awarded (concurrent request)")
+            return AwardGoalXPResponse(
+                success=True,
+                xp_awarded=0,
+                message=f"Already claimed {request.goal_type} XP today",
+                already_claimed=True
+            )
         logger.error(f"[XP] Error awarding goal XP: {e}")
         raise safe_internal_error(e, "xp")
 

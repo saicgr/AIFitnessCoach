@@ -241,12 +241,18 @@ mixin TimerRestMixin<T extends StatefulWidget> on State<T> {
 
     try {
       final achievementService = ref.read(achievementPromptServiceProvider);
+      final coachSettings = ref.read(aiSettingsProvider);
       final prompt = await achievementService.getPromptForSet(
         exerciseName: exercise.name,
         currentWeight: lastSet.weight,
         currentReps: lastSet.reps,
         setNumber: exerciseSets.length,
         totalSets: totalSets,
+        coachingStyle: coachSettings.coachingStyle,
+        communicationTone: coachSettings.communicationTone,
+        encouragementLevel: coachSettings.encouragementLevel,
+        useEmojis: coachSettings.useEmojis,
+        coachName: coachSettings.coachName,
       );
 
       if (mounted) {

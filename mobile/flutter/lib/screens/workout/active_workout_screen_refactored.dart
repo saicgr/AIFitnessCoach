@@ -886,7 +886,7 @@ class _ActiveWorkoutScreenState
     final isFoldableOpen = FoldableQuizScaffold.shouldUseFoldableLayout(windowState);
 
     // Route to appropriate phase screen
-    debugPrint('🔥 [Build] _currentPhase=$_currentPhase, _isWarmupLoading=$_isWarmupLoading, _warmupExercises=${_warmupExercises?.length ?? 'null'}');
+    // debugPrint('🔥 [Build] _currentPhase=$_currentPhase, _isWarmupLoading=$_isWarmupLoading, _warmupExercises=${_warmupExercises?.length ?? 'null'}');
     switch (_currentPhase) {
       case WorkoutPhase.warmup:
         // Still loading warmup data from API - show loading

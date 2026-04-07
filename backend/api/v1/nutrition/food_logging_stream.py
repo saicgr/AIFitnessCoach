@@ -628,19 +628,36 @@ async def analyze_food_from_image_streaming(
 
             gemini_service = GeminiService()
 
-            # Run Gemini analysis with keep-alive pings to prevent proxy timeout
-            analysis_task = asyncio.create_task(gemini_service.analyze_food_image(
-                image_base64=image_base64,
-                mime_type=content_type,
-                request_id=request_id,
-                user_id=user_id,
+            # Run Gemini analysis and S3 upload in parallel with keep-alive pings
+            async def safe_s3_upload():
+                """Upload to S3 with graceful failure — don't block analysis."""
+                try:
+                    return await upload_food_image_to_s3(
+                        file_bytes=image_bytes,
+                        user_id=user_id,
+                        content_type=content_type,
+                    )
+                except Exception as s3_err:
+                    logger.warning(f"[ANALYZE-STREAM:{request_id}] S3 upload failed (non-blocking): {s3_err}")
+                    return (None, None)
+
+            analysis_task = asyncio.create_task(asyncio.gather(
+                gemini_service.analyze_food_image(
+                    image_base64=image_base64,
+                    mime_type=content_type,
+                    request_id=request_id,
+                    user_id=user_id,
+                ),
+                safe_s3_upload(),
             ))
             while not analysis_task.done():
                 try:
                     await asyncio.wait_for(asyncio.shield(analysis_task), timeout=10.0)
                 except asyncio.TimeoutError:
                     yield ": keep-alive\n\n"
-            food_analysis = analysis_task.result()
+            food_analysis, (image_url, image_storage_key) = analysis_task.result()
+            if image_url:
+                logger.info(f"[ANALYZE-STREAM:{request_id}] S3 upload complete: {image_url}")
 
             # Check if Gemini returned an error structure
             if food_analysis and food_analysis.get('error'):
@@ -682,6 +699,8 @@ async def analyze_food_from_image_streaming(
             vitamin_d_iu = food_analysis.get('vitamin_d_iu')
             calcium_mg = food_analysis.get('calcium_mg')
             iron_mg = food_analysis.get('iron_mg')
+
+            plate_description = food_analysis.get('plate_description')
 
             # Enrich image analysis with contextual coach tips
             ai_suggestion = food_analysis.get('feedback')
@@ -747,6 +766,11 @@ async def analyze_food_from_image_streaming(
                 "vitamin_d_iu": vitamin_d_iu,
                 "calcium_mg": calcium_mg,
                 "iron_mg": iron_mg,
+                # Image storage (from parallel S3 upload)
+                "image_url": image_url,
+                "image_storage_key": image_storage_key,
+                # Visual description of what AI sees
+                "plate_description": plate_description,
             }
             yield f"event: done\ndata: {json.dumps(response_data)}\n\n"
 

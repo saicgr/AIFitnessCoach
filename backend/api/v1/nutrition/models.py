@@ -227,6 +227,12 @@ class LogDirectRequest(BaseModel):
     choline_mg: Optional[float] = None
     omega3_g: Optional[float] = None
     omega6_g: Optional[float] = None
+    # Image storage (from analyze-image-stream S3 upload)
+    image_url: Optional[str] = None
+    image_storage_key: Optional[str] = None
+    # Scores from analysis
+    health_score: Optional[int] = None
+    overall_meal_score: Optional[int] = None
 
     @validator('user_id')
     def user_id_must_not_be_empty(cls, v):

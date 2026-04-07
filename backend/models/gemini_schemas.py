@@ -218,6 +218,7 @@ class FoodAnalysisResponse(BaseModel):
     warnings: Optional[List[str]] = Field(default=None, description="Nutritional concerns - high sodium, low fiber, excess calories, etc. Always include for scores 1-7")
     ai_suggestion: Optional[str] = Field(default=None, description="Actionable tip starting with 'Next time:'")
     recommended_swap: Optional[str] = Field(default=None, description="Concrete healthier swap with benefit, e.g. 'Swap white rice for brown rice: +3g fiber'")
+    plate_description: Optional[str] = Field(default=None, description="Brief visual description of the plate/scene for image analysis, max 100 chars. e.g. 'A South Indian breakfast with steamed idlis, sambar, and chutneys'")
 
 
 # =============================================================================

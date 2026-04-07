@@ -606,6 +606,16 @@ class LogFoodResponse {
   @JsonKey(name: 'source_label')
   final String? sourceLabel;
 
+  // Image storage (from S3 upload during image analysis)
+  @JsonKey(name: 'image_url')
+  final String? imageUrl;
+  @JsonKey(name: 'image_storage_key')
+  final String? imageStorageKey;
+
+  // Visual description of what AI sees in the image
+  @JsonKey(name: 'plate_description')
+  final String? plateDescription;
+
   const LogFoodResponse({
     required this.success,
     this.foodLogId,  // Optional for analyze-only responses
@@ -637,6 +647,9 @@ class LogFoodResponse {
     this.calciumMg,
     this.ironMg,
     this.sourceLabel,
+    this.imageUrl,
+    this.imageStorageKey,
+    this.plateDescription,
   });
 
   factory LogFoodResponse.fromJson(Map<String, dynamic> json) =>
@@ -733,6 +746,9 @@ class LogFoodResponse {
       vitaminDIu: vitaminDIu != null ? vitaminDIu! * multiplier : null,
       calciumMg: calciumMg != null ? calciumMg! * multiplier : null,
       ironMg: ironMg != null ? ironMg! * multiplier : null,
+      imageUrl: imageUrl,
+      imageStorageKey: imageStorageKey,
+      plateDescription: plateDescription,
     );
   }
 }

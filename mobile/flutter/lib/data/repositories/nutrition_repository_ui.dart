@@ -344,6 +344,12 @@ extension NutritionRepositoryExt on NutritionRepository {
     double? cholineMg,
     double? omega3G,
     double? omega6G,
+    // Image storage
+    String? imageUrl,
+    String? imageStorageKey,
+    // Scores
+    int? healthScore,
+    int? overallMealScore,
   }) async {
     try {
       final response = await _client.post(
@@ -359,6 +365,10 @@ extension NutritionRepositoryExt on NutritionRepository {
           if (totalFiber != null) 'total_fiber': totalFiber,
           'source_type': sourceType,
           if (notes != null) 'notes': notes,
+          if (imageUrl != null) 'image_url': imageUrl,
+          if (imageStorageKey != null) 'image_storage_key': imageStorageKey,
+          if (healthScore != null) 'health_score': healthScore,
+          if (overallMealScore != null) 'overall_meal_score': overallMealScore,
           // Micronutrients
           if (sodiumMg != null) 'sodium_mg': sodiumMg,
           if (sugarG != null) 'sugar_g': sugarG,
@@ -486,6 +496,11 @@ extension NutritionRepositoryExt on NutritionRepository {
       calciumMg: adjustedCalcium,
       ironMg: adjustedIron,
       potassiumMg: adjustedPotassium,
+      // Image storage and scores from analysis
+      imageUrl: analyzedFood.imageUrl,
+      imageStorageKey: analyzedFood.imageStorageKey,
+      healthScore: analyzedFood.healthScore,
+      overallMealScore: analyzedFood.overallMealScore,
     );
   }
 

@@ -67,7 +67,8 @@ Return ONLY valid JSON (no markdown):
   "carbs_g": 40.0,
   "fat_g": 15.0,
   "fiber_g": 5.0,
-  "feedback": "Brief nutritional feedback"
+  "feedback": "Brief nutritional feedback",
+  "plate_description": "Brief visual description of the plate/scene, max 100 chars (e.g. 'A South Indian breakfast with steamed idlis, sambar, and chutneys')"
 }
 
 CRITICAL RULES:

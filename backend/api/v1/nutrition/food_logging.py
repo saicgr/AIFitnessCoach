@@ -522,8 +522,11 @@ async def log_food_direct(body: LogDirectRequest, request: Request, current_user
             fat_g=body.total_fat,
             fiber_g=body.total_fiber,
             ai_feedback=f"Logged via {body.source_type}" + (f": {body.notes}" if body.notes else ""),
-            health_score=None,  # No AI scoring for direct logs
+            health_score=body.health_score or body.overall_meal_score,
             logged_at=user_tz_logged_at,
+            image_url=body.image_url,
+            image_storage_key=body.image_storage_key,
+            source_type=body.source_type,
             **micronutrients,
         )
 
@@ -543,7 +546,8 @@ async def log_food_direct(body: LogDirectRequest, request: Request, current_user
             carbs_g=float(body.total_carbs),
             fat_g=float(body.total_fat),
             fiber_g=float(body.total_fiber) if body.total_fiber else 0.0,
-            overall_meal_score=None,
+            overall_meal_score=body.overall_meal_score,
+            health_score=body.health_score or body.overall_meal_score,
             ai_suggestion=None,
             confidence_score=confidence_score,
             confidence_level=confidence_level,
