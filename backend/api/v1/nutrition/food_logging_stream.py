@@ -641,7 +641,7 @@ async def analyze_food_from_image_streaming(
                     logger.warning(f"[ANALYZE-STREAM:{request_id}] S3 upload failed (non-blocking): {s3_err}")
                     return (None, None)
 
-            analysis_task = asyncio.create_task(asyncio.gather(
+            analysis_future = asyncio.ensure_future(asyncio.gather(
                 gemini_service.analyze_food_image(
                     image_base64=image_base64,
                     mime_type=content_type,
@@ -650,12 +650,12 @@ async def analyze_food_from_image_streaming(
                 ),
                 safe_s3_upload(),
             ))
-            while not analysis_task.done():
+            while not analysis_future.done():
                 try:
-                    await asyncio.wait_for(asyncio.shield(analysis_task), timeout=10.0)
+                    await asyncio.wait_for(asyncio.shield(analysis_future), timeout=10.0)
                 except asyncio.TimeoutError:
                     yield ": keep-alive\n\n"
-            food_analysis, (image_url, image_storage_key) = analysis_task.result()
+            food_analysis, (image_url, image_storage_key) = analysis_future.result()
             if image_url:
                 logger.info(f"[ANALYZE-STREAM:{request_id}] S3 upload complete: {image_url}")
 
