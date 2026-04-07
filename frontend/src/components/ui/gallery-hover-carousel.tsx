@@ -1,6 +1,5 @@
 import { ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
 import { useState, useRef, useCallback, useEffect } from "react";
-import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 
@@ -14,9 +13,11 @@ interface GalleryHoverCarouselItem {
 
 export default function GalleryHoverCarousel({
   heading = "Featured Projects",
+  subtitle = "Real screenshots from the app. No mockups.",
   items = [],
 }: {
   heading?: string;
+  subtitle?: string;
   items?: GalleryHoverCarouselItem[];
 }) {
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -44,7 +45,7 @@ export default function GalleryHoverCarousel({
 
   const scroll = (dir: "prev" | "next") => {
     if (!scrollRef.current) return;
-    const amount = scrollRef.current.clientWidth * 0.7;
+    const amount = scrollRef.current.clientWidth * 0.6;
     scrollRef.current.scrollBy({
       left: dir === "next" ? amount : -amount,
       behavior: "smooth",
@@ -53,90 +54,103 @@ export default function GalleryHoverCarousel({
 
   return (
     <section className="py-20 sm:py-28 bg-[var(--color-background)]">
-      <div className="max-w-[1200px] mx-auto px-6">
-        {/* Header */}
-        <div className="mb-10 flex flex-col justify-between md:mb-14 md:flex-row md:items-end">
-          <div className="max-w-2xl">
+      {/* Header — contained */}
+      <div className="max-w-[1200px] mx-auto px-6 mb-10 md:mb-14">
+        <div className="flex flex-col justify-between md:flex-row md:items-end gap-4">
+          <div>
             <h3
-              className="text-2xl sm:text-3xl lg:text-4xl font-semibold text-[var(--color-text)] tracking-[-0.02em] leading-snug"
+              className="text-[32px] sm:text-[40px] lg:text-[48px] font-semibold text-[var(--color-text)] tracking-[-0.02em] leading-tight mb-2"
               style={{ fontFamily: "var(--font-heading)" }}
             >
-              {heading}{" "}
-              <span className="text-[var(--color-text-muted)] text-lg sm:text-xl lg:text-2xl font-normal">
-                Real screenshots from the app. No mockups.
-              </span>
+              {heading}
             </h3>
+            <p className="text-[var(--color-text-muted)] text-base sm:text-lg font-normal">
+              {subtitle}
+            </p>
           </div>
-          <div className="flex gap-2 mt-4 md:mt-0">
+          <div className="flex gap-2 flex-shrink-0">
             <Button
               variant="outline"
               size="icon"
               onClick={() => scroll("prev")}
               disabled={!canScrollPrev}
-              className="h-10 w-10 rounded-full"
+              className="h-11 w-11 rounded-full"
             >
-              <ChevronLeft className="h-4 w-4" />
+              <ChevronLeft className="h-5 w-5" />
             </Button>
             <Button
               variant="outline"
               size="icon"
               onClick={() => scroll("next")}
               disabled={!canScrollNext}
-              className="h-10 w-10 rounded-full"
+              className="h-11 w-11 rounded-full"
             >
-              <ChevronRight className="h-4 w-4" />
+              <ChevronRight className="h-5 w-5" />
             </Button>
           </div>
         </div>
+      </div>
 
-        {/* Carousel */}
-        <div
-          ref={scrollRef}
-          className="flex gap-5 overflow-x-auto pb-4 snap-x snap-mandatory"
-          style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
-        >
-          {items.map((item) => (
-            <Link
-              key={item.id}
-              to={item.url}
-              className="group flex-shrink-0 snap-start w-[300px] sm:w-[360px] md:w-[400px]"
+      {/* Carousel — full bleed, no max-w constraint */}
+      <div
+        ref={scrollRef}
+        className="flex gap-6 sm:gap-8 overflow-x-auto pl-6 sm:pl-[max(1.5rem,calc((100vw-1200px)/2+1.5rem))] pr-6 pb-4 snap-x snap-mandatory"
+        style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+      >
+        {items.map((item) => (
+          <Link
+            key={item.id}
+            to={item.url}
+            className="group flex-shrink-0 snap-start w-[280px] sm:w-[320px] md:w-[340px]"
+          >
+            {/* Phone frame */}
+            <div
+              className="relative rounded-[2.8rem] p-[10px] transition-transform duration-500 ease-out group-hover:scale-[1.03] group-hover:-translate-y-2"
+              style={{
+                background: "linear-gradient(145deg, #3a3a3c 0%, #1c1c1e 50%, #0a0a0a 100%)",
+                boxShadow: "0 40px 80px -20px rgba(0,0,0,0.5), 0 20px 40px -10px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.1)",
+              }}
             >
-              <Card className="overflow-hidden rounded-3xl h-[520px] sm:h-[600px] md:h-[660px] relative border-0 shadow-lg">
-                {/* Image — full height, shrinks to half on hover */}
-                <div className="relative h-full w-full transition-all duration-500 ease-out group-hover:h-1/2">
-                  <img
-                    src={item.image}
-                    alt={item.title}
-                    className="h-full w-full object-cover object-top"
-                    loading="lazy"
-                  />
-                  {/* Bottom fade on hover */}
-                  <div className="absolute bottom-0 left-0 w-full h-24 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                </div>
+              {/* Notch */}
+              <div className="absolute top-[14px] left-1/2 -translate-x-1/2 w-24 h-7 bg-black rounded-full z-20" />
 
-                {/* Text section — revealed on hover */}
-                <div className="absolute bottom-0 left-0 w-full h-0 group-hover:h-1/2 transition-all duration-500 ease-out overflow-hidden bg-[var(--color-surface)]/95 backdrop-blur-sm flex flex-col justify-center px-5 opacity-0 group-hover:opacity-100">
-                  <h4 className="text-lg font-semibold text-[var(--color-text)] mb-2">
+              {/* Screen */}
+              <div className="relative rounded-[2.2rem] overflow-hidden bg-black" style={{ aspectRatio: "9/19.5" }}>
+                <img
+                  src={item.image}
+                  alt={item.title}
+                  className="absolute inset-0 w-full h-full object-cover object-top"
+                  loading="lazy"
+                />
+
+                {/* Hover overlay */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+
+                {/* Text revealed on hover */}
+                <div className="absolute bottom-0 left-0 w-full p-5 translate-y-4 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-500 ease-out">
+                  <h4 className="text-lg font-semibold text-white mb-1.5">
                     {item.title}
                   </h4>
-                  <p className="text-[var(--color-text-secondary)] text-sm leading-relaxed line-clamp-3">
+                  <p className="text-white/70 text-sm leading-relaxed line-clamp-2">
                     {item.summary}
                   </p>
-                  <div className="absolute bottom-3 right-3">
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      className="h-9 w-9 rounded-full group-hover:hover:-rotate-45 transition-all duration-300"
-                      tabIndex={-1}
-                    >
-                      <ArrowRight className="h-4 w-4" />
-                    </Button>
+                  <div className="mt-3 inline-flex items-center gap-1.5 text-emerald-400 text-sm font-medium">
+                    Learn more
+                    <ArrowRight className="h-3.5 w-3.5 group-hover:translate-x-1 transition-transform duration-300" />
                   </div>
                 </div>
-              </Card>
-            </Link>
-          ))}
-        </div>
+              </div>
+
+              {/* Home indicator */}
+              <div className="absolute bottom-[8px] left-1/2 -translate-x-1/2 w-28 h-1 bg-white/20 rounded-full" />
+            </div>
+
+            {/* Label below phone */}
+            <div className="text-center mt-5 px-2">
+              <p className="text-[15px] font-semibold text-[var(--color-text)]">{item.title}</p>
+            </div>
+          </Link>
+        ))}
       </div>
     </section>
   );

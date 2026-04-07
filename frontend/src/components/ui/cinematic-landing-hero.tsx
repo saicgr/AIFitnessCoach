@@ -330,8 +330,8 @@ export function CinematicHero({
       </div>
 
       {/* BACKGROUND LAYER 2: Tactile CTA Buttons */}
-      <div className="cta-wrapper absolute z-10 flex flex-col items-center justify-center text-center w-screen px-4 gsap-reveal pointer-events-auto will-change-transform">
-        <h2 className="text-4xl md:text-6xl lg:text-7xl font-bold mb-6 tracking-tight text-silver-matte">
+      <div className="cta-wrapper absolute z-10 flex flex-col items-center justify-center text-center w-screen px-4 pb-4 gsap-reveal pointer-events-auto will-change-transform">
+        <h2 className="text-4xl md:text-6xl lg:text-7xl font-bold mb-6 tracking-tight text-silver-matte pb-2">
           {ctaHeading}
         </h2>
         <p className="text-muted-foreground text-lg md:text-xl mb-12 max-w-xl mx-auto font-light leading-relaxed">

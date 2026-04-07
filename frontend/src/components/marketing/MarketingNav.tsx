@@ -149,13 +149,7 @@ export default function MarketingNav() {
             className="flex items-center gap-2 text-[22px] font-bold tracking-[-0.02em] text-[var(--color-text)] hover:text-emerald-500 transition-colors"
             style={{ fontFamily: 'var(--font-heading)' }}
           >
-            <svg className="w-7 h-7 text-emerald-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M6.5 6.5a2 2 0 0 1 3 0l8 8a2 2 0 0 1-3 3l-8-8a2 2 0 0 1 0-3z" />
-              <path d="M14.5 6.5a2 2 0 0 1 3 0" />
-              <path d="M3.5 14.5a2 2 0 0 0 3 0" />
-              <path d="m18 3-3 3" />
-              <path d="m6 21 3-3" />
-            </svg>
+            <img src="/fitwiz-logo.png" alt="FitWiz" className="w-8 h-8 object-contain" />
             FitWiz
           </Link>
 
