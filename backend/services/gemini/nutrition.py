@@ -92,7 +92,7 @@ WEIGHT/COUNT FIELDS (required for portion editing):
 - For non-countable items (curry, rice, dal): count=null, weight_per_unit_g=null'''
 
         # Timeout for image analysis - needs to be generous for complex images
-        IMAGE_ANALYSIS_TIMEOUT = 20  # 20 seconds — most images analyze in 2-8s, fail fast on stalls
+        IMAGE_ANALYSIS_TIMEOUT = 30  # 30 seconds — most images analyze in 2-8s, generous buffer for API spikes
         start_time = time.time()
 
         try:

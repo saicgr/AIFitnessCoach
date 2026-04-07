@@ -607,6 +607,7 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
         _showLoadingIndicator = false;
         _error = null;
         _sourceType = 'image';
+        _capturedImagePath = image.path;
         _currentStep = 0;
         _progressMessage = 'Preparing image...';
         _progressDetail = null;

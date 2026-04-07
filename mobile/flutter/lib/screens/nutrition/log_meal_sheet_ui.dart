@@ -387,14 +387,79 @@ extension _LogMealSheetStateUI on _LogMealSheetState {
                     ],
                   ],
                 ),
-                // Plate description - what AI sees (image analysis only)
-                if (response.plateDescription != null && response.plateDescription!.isNotEmpty && _sourceType == 'image') ...[
-                  const SizedBox(height: 4),
-                  Text(
-                    response.plateDescription!,
-                    style: TextStyle(fontSize: 12, fontStyle: FontStyle.italic, color: textMuted),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
+                // Plate description + food image thumbnail (image analysis only)
+                if (_sourceType == 'image' && (response.plateDescription != null && response.plateDescription!.isNotEmpty || _capturedImagePath != null || response.imageUrl != null)) ...[
+                  const SizedBox(height: 8),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Food image thumbnail
+                      if (_capturedImagePath != null || response.imageUrl != null)
+                        GestureDetector(
+                          onTap: () => _showFullScreenImage(context, _capturedImagePath, response.imageUrl),
+                          child: Hero(
+                            tag: 'food_image_preview',
+                            child: Container(
+                              width: 56,
+                              height: 56,
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(10),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withValues(alpha: 0.1),
+                                    blurRadius: 4,
+                                    offset: const Offset(0, 2),
+                                  ),
+                                ],
+                              ),
+                              child: Stack(
+                                children: [
+                                  ClipRRect(
+                                    borderRadius: BorderRadius.circular(10),
+                                    child: _capturedImagePath != null
+                                        ? Image.file(
+                                            File(_capturedImagePath!),
+                                            width: 56,
+                                            height: 56,
+                                            fit: BoxFit.cover,
+                                          )
+                                        : Image.network(
+                                            response.imageUrl!,
+                                            width: 56,
+                                            height: 56,
+                                            fit: BoxFit.cover,
+                                          ),
+                                  ),
+                                  Positioned(
+                                    right: 2,
+                                    bottom: 2,
+                                    child: Container(
+                                      padding: const EdgeInsets.all(2),
+                                      decoration: BoxDecoration(
+                                        color: Colors.black.withValues(alpha: 0.5),
+                                        borderRadius: BorderRadius.circular(4),
+                                      ),
+                                      child: const Icon(Icons.open_in_full, size: 12, color: Colors.white),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      if ((_capturedImagePath != null || response.imageUrl != null) && response.plateDescription != null && response.plateDescription!.isNotEmpty)
+                        const SizedBox(width: 10),
+                      // Plate description text
+                      if (response.plateDescription != null && response.plateDescription!.isNotEmpty)
+                        Expanded(
+                          child: Text(
+                            response.plateDescription!,
+                            style: TextStyle(fontSize: 12, fontStyle: FontStyle.italic, color: textMuted),
+                            maxLines: 3,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                    ],
                   ),
                 ],
                 const SizedBox(height: 6),
@@ -551,6 +616,54 @@ extension _LogMealSheetStateUI on _LogMealSheetState {
           ),
         ),
       ],
+    );
+  }
+
+  void _showFullScreenImage(BuildContext context, String? localPath, String? networkUrl) {
+    Navigator.of(context).push(
+      PageRouteBuilder(
+        opaque: false,
+        barrierColor: Colors.black87,
+        pageBuilder: (context, animation, secondaryAnimation) {
+          return FadeTransition(
+            opacity: animation,
+            child: Scaffold(
+              backgroundColor: Colors.black,
+              body: Stack(
+                children: [
+                  Center(
+                    child: Hero(
+                      tag: 'food_image_preview',
+                      child: InteractiveViewer(
+                        minScale: 0.5,
+                        maxScale: 4.0,
+                        child: localPath != null
+                            ? Image.file(File(localPath), fit: BoxFit.contain)
+                            : Image.network(networkUrl!, fit: BoxFit.contain),
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    top: MediaQuery.of(context).padding.top + 8,
+                    right: 12,
+                    child: GestureDetector(
+                      onTap: () => Navigator.of(context).pop(),
+                      child: Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: Colors.black.withValues(alpha: 0.5),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(Icons.close, color: Colors.white, size: 24),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
     );
   }
 

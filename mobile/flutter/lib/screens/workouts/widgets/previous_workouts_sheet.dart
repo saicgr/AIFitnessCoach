@@ -187,6 +187,25 @@ class _PreviousWorkoutsSheet extends ConsumerWidget {
     // Calculate duration or use stored value
     final duration = workout.bestDurationMinutes;
 
+    // Determine completion status color and icon
+    final method = workout.completionMethod;
+    final Color statusColor;
+    final IconData statusIcon;
+    if (method == 'tracked') {
+      statusColor = Colors.green;
+      statusIcon = Icons.check_circle;
+    } else if (method == 'marked_done') {
+      statusColor = Colors.orange;
+      statusIcon = Icons.check_circle_outline;
+    } else if (method == 'quit_early') {
+      statusColor = Colors.grey;
+      statusIcon = Icons.remove_circle_outline;
+    } else {
+      // Legacy data or unknown
+      statusColor = Colors.green;
+      statusIcon = Icons.check_circle;
+    }
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: Material(
@@ -196,37 +215,37 @@ class _PreviousWorkoutsSheet extends ConsumerWidget {
           onTap: () {
             HapticService.light();
             Navigator.of(context).pop();
-            context.push('/workout/${workout.id}', extra: workout);
+            context.push('/workout-summary/${workout.id}');
           },
           borderRadius: BorderRadius.circular(12),
           child: Padding(
             padding: const EdgeInsets.all(14),
             child: Row(
               children: [
-                // Date badge with checkmark
+                // Date badge with status color
                 Container(
                   width: 52,
                   padding: const EdgeInsets.symmetric(vertical: 8),
                   decoration: BoxDecoration(
-                    color: Colors.green.withValues(alpha: 0.15),
+                    color: statusColor.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Column(
                     children: [
                       Text(
                         dayName.toUpperCase(),
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 10,
                           fontWeight: FontWeight.w600,
-                          color: Colors.green,
+                          color: statusColor,
                         ),
                       ),
                       Text(
                         dayNum,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
-                          color: Colors.green,
+                          color: statusColor,
                         ),
                       ),
                     ],
@@ -253,9 +272,9 @@ class _PreviousWorkoutsSheet extends ConsumerWidget {
                               overflow: TextOverflow.ellipsis,
                             ),
                           ),
-                          const Icon(
-                            Icons.check_circle,
-                            color: Colors.green,
+                          Icon(
+                            statusIcon,
+                            color: statusColor,
                             size: 18,
                           ),
                         ],

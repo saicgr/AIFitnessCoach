@@ -7,6 +7,7 @@ import '../../data/models/workout.dart';
 import '../../data/repositories/workout_repository.dart';
 import '../../widgets/glass_back_button.dart';
 import '../../widgets/lottie_animations.dart';
+import 'workout_summary_detail.dart';
 import 'workout_summary_general.dart';
 import 'workout_summary_advanced.dart';
 import 'widgets/summary_floating_pill.dart';
@@ -23,9 +24,10 @@ class WorkoutSummaryScreenV2 extends ConsumerStatefulWidget {
 
 class _WorkoutSummaryScreenV2State
     extends ConsumerState<WorkoutSummaryScreenV2> {
-  int _selectedView = 0; // 0 = General, 1 = Advanced
+  int _selectedView = 0; // 0 = Detail, 1 = General, 2 = Advanced
   WorkoutSummaryResponse? _summaryData;
   Map<String, dynamic>? _metadata;
+  Workout? _parsedWorkout;
   bool _isLoading = true;
   String? _error;
 
@@ -59,9 +61,21 @@ class _WorkoutSummaryScreenV2State
       // Parse metadata — the endpoint flattens metadata fields to top level
       final rawLog = results[1] as Map<String, dynamic>?;
 
+      // Parse workout object from summary data for the Detail tab
+      Workout? parsed;
+      final summaryResult = results[0] as WorkoutSummaryResponse?;
+      if (summaryResult != null) {
+        try {
+          parsed = Workout.fromJson(summaryResult.workout);
+        } catch (e) {
+          debugPrint('Failed to parse workout from summary: $e');
+        }
+      }
+
       setState(() {
-        _summaryData = results[0] as WorkoutSummaryResponse?;
+        _summaryData = summaryResult;
         _metadata = rawLog;
+        _parsedWorkout = parsed;
         _isLoading = false;
       });
     } catch (e) {
@@ -99,22 +113,30 @@ class _WorkoutSummaryScreenV2State
 
     return Stack(
       children: [
-        // Main content - switches between General and Advanced
+        // Main content - switches between Detail, General, and Advanced
         AnimatedSwitcher(
           duration: const Duration(milliseconds: 300),
           child: _selectedView == 0
-              ? WorkoutSummaryGeneral(
-                  key: const ValueKey('general'),
+              ? WorkoutSummaryDetail(
+                  key: const ValueKey('detail'),
                   data: _summaryData,
                   metadata: _metadata,
+                  workout: _parsedWorkout,
                   topPadding: topPadding,
                 )
-              : WorkoutSummaryAdvanced(
-                  key: const ValueKey('advanced'),
-                  data: _summaryData,
-                  metadata: _metadata,
-                  topPadding: topPadding,
-                ),
+              : _selectedView == 1
+                  ? WorkoutSummaryGeneral(
+                      key: const ValueKey('general'),
+                      data: _summaryData,
+                      metadata: _metadata,
+                      topPadding: topPadding,
+                    )
+                  : WorkoutSummaryAdvanced(
+                      key: const ValueKey('advanced'),
+                      data: _summaryData,
+                      metadata: _metadata,
+                      topPadding: topPadding,
+                    ),
         ),
 
         // Floating back button

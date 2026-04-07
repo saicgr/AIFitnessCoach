@@ -150,6 +150,7 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet> {
   bool _hasLoggedThisSession = false;
   bool _isSaving = false;
   String _sourceType = 'text';
+  String? _capturedImagePath; // Local file path of the photo taken/picked for display in results
   int? _analysisElapsedMs;
 
   // Voice input state

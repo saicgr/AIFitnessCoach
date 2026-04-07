@@ -5,21 +5,21 @@ import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
 
 /// A glassmorphic floating pill toggle for switching between
-/// "General" and "Advanced" workout summary views.
+/// workout summary views (Detail / General / Advanced).
 class SummaryFloatingPill extends StatelessWidget {
-  final int selectedIndex; // 0 = General, 1 = Advanced
+  final int selectedIndex;
   final ValueChanged<int> onChanged;
+  final List<String> labels;
 
   const SummaryFloatingPill({
     super.key,
     required this.selectedIndex,
     required this.onChanged,
+    this.labels = const ['Detail', 'General', 'Advanced'],
   });
 
-  static const double _pillWidth = 250;
   static const double _pillHeight = 48;
   static const double _borderRadius = 25;
-  static const List<String> _labels = ['General', 'Advanced'];
 
   @override
   Widget build(BuildContext context) {
@@ -34,6 +34,10 @@ class SummaryFloatingPill extends StatelessWidget {
         ? AppColors.textMuted
         : Colors.grey.shade600;
 
+    // Dynamic width based on label count
+    final pillWidth = labels.length * 95.0 + 16;
+    final segmentWidth = (pillWidth - 8) / labels.length;
+
     return Positioned(
       bottom: 0,
       left: 0,
@@ -47,7 +51,7 @@ class SummaryFloatingPill extends StatelessWidget {
               child: BackdropFilter(
                 filter: ImageFilter.blur(sigmaX: 24, sigmaY: 24),
                 child: Container(
-                  width: _pillWidth,
+                  width: pillWidth,
                   height: _pillHeight,
                   decoration: BoxDecoration(
                     color: pillBg,
@@ -65,15 +69,14 @@ class SummaryFloatingPill extends StatelessWidget {
                   child: Stack(
                     children: [
                       // Animated sliding indicator
-                      AnimatedContainer(
+                      AnimatedPositioned(
                         duration: const Duration(milliseconds: 250),
                         curve: Curves.easeInOut,
-                        alignment: selectedIndex == 0
-                            ? Alignment.centerLeft
-                            : Alignment.centerRight,
+                        left: segmentWidth * selectedIndex,
+                        top: 0,
+                        bottom: 0,
+                        width: segmentWidth,
                         child: Container(
-                          width: (_pillWidth - 8) / 2,
-                          height: _pillHeight - 8,
                           decoration: BoxDecoration(
                             color: AppColors.orange,
                             borderRadius:
@@ -83,7 +86,7 @@ class SummaryFloatingPill extends StatelessWidget {
                       ),
                       // Label buttons
                       Row(
-                        children: List.generate(_labels.length, (i) {
+                        children: List.generate(labels.length, (i) {
                           final isSelected = selectedIndex == i;
                           return Expanded(
                             child: GestureDetector(
@@ -101,7 +104,7 @@ class SummaryFloatingPill extends StatelessWidget {
                                         ? Colors.white
                                         : unselectedText,
                                   ),
-                                  child: Text(_labels[i]),
+                                  child: Text(labels[i]),
                                 ),
                               ),
                             ),
