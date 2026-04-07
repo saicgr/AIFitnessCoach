@@ -46,12 +46,12 @@ extension _PreAuthQuizScreenStateUI on _PreAuthQuizScreenState {
                           style: TextStyle(
                             fontSize: 17,
                             fontWeight: FontWeight.w600,
-                            color: _canProceed ? t.buttonText : t.textDisabled,
+                            color: _canProceed ? t.accent : t.textDisabled,
                           ),
                         ),
                         if (_canProceed) ...[
                           const SizedBox(width: 8),
-                          Icon(Icons.auto_awesome_rounded, size: 20, color: t.buttonText.withValues(alpha: 0.9)),
+                          Icon(Icons.auto_awesome_rounded, size: 20, color: t.accent),
                         ],
                       ],
                     ),

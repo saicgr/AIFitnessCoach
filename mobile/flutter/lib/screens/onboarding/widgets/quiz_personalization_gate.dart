@@ -121,11 +121,11 @@ class QuizPersonalizationGate extends StatelessWidget {
                             style: TextStyle(
                               fontSize: 17,
                               fontWeight: FontWeight.w600,
-                              color: t.buttonText,
+                              color: t.accent,
                             ),
                           ),
                           const SizedBox(width: 8),
-                          Icon(Icons.arrow_forward_rounded, size: 20, color: t.textPrimary),
+                          Icon(Icons.arrow_forward_rounded, size: 20, color: t.accent),
                         ],
                       ),
                     ),

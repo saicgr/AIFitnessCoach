@@ -86,6 +86,11 @@ class OnboardingTheme {
       ? Colors.white.withValues(alpha: 0.3)
       : Colors.black.withValues(alpha: 0.15);
 
+  // ── Accent (for active CTA buttons) ────────────────────────────────
+
+  /// Accent color for active/enabled call-to-action buttons.
+  Color get accent => const Color(0xFFFF8C00); // FitWiz orange
+
   // ── Buttons ───────────────────────────────────────────────────────
 
   List<Color> get buttonGradient => isDark

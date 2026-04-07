@@ -78,12 +78,12 @@ class QuizContinueButton extends StatelessWidget {
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w600,
-                            color: canProceed ? t.buttonText : t.textDisabled,
+                            color: canProceed ? t.accent : t.textDisabled,
                           ),
                         ),
                         if (canProceed) ...[
                           const SizedBox(width: 8),
-                          Icon(Icons.arrow_forward_rounded, size: 20, color: t.buttonText.withValues(alpha: 0.9)),
+                          Icon(Icons.arrow_forward_rounded, size: 20, color: t.accent),
                         ],
                       ],
                     ),
