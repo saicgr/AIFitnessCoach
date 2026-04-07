@@ -113,9 +113,6 @@ export default function Features() {
                       boxShadow: '0 40px 80px -20px rgba(0,0,0,0.6), 0 20px 40px -10px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.1)',
                     }}
                   >
-                    {/* Notch */}
-                    <div className="absolute top-[14px] left-1/2 -translate-x-1/2 w-24 h-7 bg-black rounded-full z-20" />
-
                     {/* Screen */}
                     <div className="relative rounded-[2.2rem] overflow-hidden bg-black" style={{ aspectRatio: '9/19.5' }}>
                       <img

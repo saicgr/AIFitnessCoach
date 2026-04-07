@@ -77,14 +77,15 @@ export default function MarketingLanding() {
       {/* ── Screenshot Showcase (Gallery Hover Carousel) ── */}
       <GalleryHoverCarousel
         heading="Everything you need. One app."
+        subtitle="Real screenshots. No mockups."
         items={[
-          { id: 'ai-coach', title: 'AI Coach', summary: 'Get real-time coaching during your workout. Ask about form, get exercise swaps, or request motivation — your coach knows your full context.', url: '/features', image: '/screenshots/intro_phone_1.png' },
-          { id: 'nutrition', title: 'Smart Nutrition', summary: 'Snap a photo of your meal and get instant macro breakdowns, a 9/10 nutrition score, and personalized tips from Coach Mike.', url: '/features', image: '/screenshots/intro_phone_2.png' },
-          { id: 'workouts', title: 'AI Workout Plans', summary: 'Every workout is designed by AI for your specific goals, equipment, and experience level. Complete with exercise reasoning.', url: '/features', image: '/screenshots/intro_phone_3.png' },
-          { id: 'tracking', title: 'Exercise Tracking', summary: 'Log sets, reps, and weight in real time. Track RIR, use pyramid sets, supersets, and breathing cues — all in one clean interface.', url: '/features', image: '/screenshots/intro_phone_4.png' },
-          { id: 'progress', title: 'Progress Photos', summary: 'Side-by-side transformation photos with customizable layouts, overlays, stats, and sharing — see how far you\'ve come.', url: '/features', image: '/screenshots/intro_phone_5.png' },
-          { id: 'stats', title: 'Stats & Scores', summary: 'Heatmaps, streaks, achievements, body measurements, weekly summaries, and 1RM tracking — all your data in one place.', url: '/features', image: '/screenshots/intro_phone_6.png' },
-          { id: 'library', title: 'Exercise Library', summary: 'Browse and customize 1,722 exercises. Set favorites, staples, avoids, queue exercises, and configure weight increments.', url: '/features', image: '/screenshots/intro_phone_7.png' },
+          { id: 'ai-coach', title: 'AI Coach', summary: 'Real-time coaching mid-workout. Ask about form, get exercise swaps, and motivation from Coach Mike.', url: '/features', image: '/screenshots/intro_phone_1.png' },
+          { id: 'nutrition', title: 'Smart Nutrition', summary: 'Snap a photo and get instant macro breakdowns, nutrition scores, and personalized tips.', url: '/features', image: '/screenshots/intro_phone_2.png' },
+          { id: 'workouts', title: 'AI Workout Plans', summary: 'AI-designed workouts for your goals, equipment, and experience level with full exercise reasoning.', url: '/features', image: '/screenshots/intro_phone_3.png' },
+          { id: 'tracking', title: 'Exercise Tracking', summary: 'Log sets, reps, and weight in real time. Track RIR, pyramids, supersets, and breathing cues.', url: '/features', image: '/screenshots/intro_phone_4.png' },
+          { id: 'progress', title: 'Progress Photos', summary: 'Side-by-side transformation photos with customizable layouts, overlays, and sharing.', url: '/features', image: '/screenshots/intro_phone_5.png' },
+          { id: 'stats', title: 'Stats & Scores', summary: 'Heatmaps, streaks, achievements, body measurements, weekly summaries, and 1RM tracking.', url: '/features', image: '/screenshots/intro_phone_6.png' },
+          { id: 'library', title: 'Exercise Library', summary: 'Browse 1,722 exercises. Set favorites, staples, avoids, queue exercises, and weight increments.', url: '/features', image: '/screenshots/intro_phone_7.png' },
         ]}
       />
 

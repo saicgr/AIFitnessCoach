@@ -103,7 +103,7 @@ export default function GalleryHoverCarousel({
             to={item.url}
             className="group flex-shrink-0 snap-start w-[280px] sm:w-[320px] md:w-[340px]"
           >
-            {/* Phone frame */}
+            {/* Phone frame — no notch */}
             <div
               className="relative rounded-[2.8rem] p-[10px] transition-transform duration-500 ease-out group-hover:scale-[1.03] group-hover:-translate-y-2"
               style={{
@@ -111,9 +111,6 @@ export default function GalleryHoverCarousel({
                 boxShadow: "0 40px 80px -20px rgba(0,0,0,0.5), 0 20px 40px -10px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.1)",
               }}
             >
-              {/* Notch */}
-              <div className="absolute top-[14px] left-1/2 -translate-x-1/2 w-24 h-7 bg-black rounded-full z-20" />
-
               {/* Screen */}
               <div className="relative rounded-[2.2rem] overflow-hidden bg-black" style={{ aspectRatio: "9/19.5" }}>
                 <img
@@ -140,9 +137,6 @@ export default function GalleryHoverCarousel({
                   </div>
                 </div>
               </div>
-
-              {/* Home indicator */}
-              <div className="absolute bottom-[8px] left-1/2 -translate-x-1/2 w-28 h-1 bg-white/20 rounded-full" />
             </div>
 
             {/* Label below phone */}
