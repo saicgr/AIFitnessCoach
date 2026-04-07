@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../../core/constants/app_colors.dart';
+import 'onboarding_theme.dart';
 
 /// Glassmorphic combined fitness level, training experience, and activity level widget.
 class QuizFitnessLevel extends StatelessWidget {
@@ -66,6 +67,8 @@ class QuizFitnessLevel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = OnboardingTheme.of(context);
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24),
       child: SingleChildScrollView(
@@ -73,12 +76,12 @@ class QuizFitnessLevel extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             if (showHeader) ...[
-              const Text(
+              Text(
                 "What's your current fitness level?",
                 style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
-                  color: Colors.white,
+                  color: t.textPrimary,
                   height: 1.3,
                 ),
               ).animate().fadeIn(delay: 100.ms).slideX(begin: -0.05),
@@ -87,19 +90,19 @@ class QuizFitnessLevel extends StatelessWidget {
                 "Be honest - we'll adjust as you progress",
                 style: TextStyle(
                   fontSize: 14,
-                  color: Colors.white.withValues(alpha: 0.7),
+                  color: t.textSecondary,
                 ),
               ).animate().fadeIn(delay: 200.ms),
               const SizedBox(height: 16),
             ],
-            ..._buildLevelCards(),
+            ..._buildLevelCards(t),
             if (selectedLevel != null) ...[
               const SizedBox(height: 20),
-              _buildExperienceSection(),
+              _buildExperienceSection(t),
             ],
             if (selectedExperience != null && onActivityLevelChanged != null) ...[
               const SizedBox(height: 20),
-              _buildActivityLevelSection(),
+              _buildActivityLevelSection(t),
             ],
             const SizedBox(height: 16),
           ],
@@ -108,7 +111,7 @@ class QuizFitnessLevel extends StatelessWidget {
     );
   }
 
-  List<Widget> _buildLevelCards() {
+  List<Widget> _buildLevelCards(OnboardingTheme t) {
     return _levels.asMap().entries.map((entry) {
       final index = entry.key;
       final level = entry.value;
@@ -131,26 +134,15 @@ class QuizFitnessLevel extends StatelessWidget {
                 decoration: BoxDecoration(
                   gradient: isSelected
                       ? LinearGradient(
-                          colors: [
-                            Colors.white.withValues(alpha: 0.28),
-                            Colors.white.withValues(alpha: 0.16),
-                          ],
+                          colors: t.cardSelectedGradient,
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
                         )
-                      : LinearGradient(
-                          colors: [
-                            Colors.white.withValues(alpha: 0.10),
-                            Colors.white.withValues(alpha: 0.06),
-                          ],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                        ),
+                      : null,
+                  color: isSelected ? null : t.cardFill,
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
-                    color: isSelected
-                        ? Colors.white.withValues(alpha: 0.5)
-                        : Colors.white.withValues(alpha: 0.15),
+                    color: isSelected ? t.borderSelected : t.borderDefault,
                     width: isSelected ? 1.5 : 1,
                   ),
                 ),
@@ -158,7 +150,7 @@ class QuizFitnessLevel extends StatelessWidget {
                   children: [
                     Icon(
                       level['icon'] as IconData,
-                      color: isSelected ? Colors.white : (level['color'] as Color),
+                      color: isSelected ? t.textPrimary : (level['color'] as Color),
                       size: 22,
                     ),
                     const SizedBox(width: 12),
@@ -168,17 +160,17 @@ class QuizFitnessLevel extends StatelessWidget {
                         children: [
                           Text(
                             level['label'] as String,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.w600,
-                              color: Colors.white,
+                              color: t.textPrimary,
                             ),
                           ),
                           Text(
                             level['description'] as String,
                             style: TextStyle(
                               fontSize: 11,
-                              color: Colors.white.withValues(alpha: 0.6),
+                              color: t.textMuted,
                             ),
                           ),
                         ],
@@ -188,14 +180,14 @@ class QuizFitnessLevel extends StatelessWidget {
                       width: 22,
                       height: 22,
                       decoration: BoxDecoration(
-                        color: isSelected ? Colors.white.withValues(alpha: 0.3) : Colors.transparent,
+                        color: isSelected ? t.checkBg : Colors.transparent,
                         shape: BoxShape.circle,
                         border: isSelected
                             ? null
-                            : Border.all(color: Colors.white.withValues(alpha: 0.3), width: 2),
+                            : Border.all(color: t.checkBorderUnselected, width: 2),
                       ),
                       child: isSelected
-                          ? const Icon(Icons.check, color: Colors.white, size: 14)
+                          ? Icon(Icons.check, color: t.checkIcon, size: 14)
                           : null,
                     ),
                   ],
@@ -208,18 +200,18 @@ class QuizFitnessLevel extends StatelessWidget {
     }).toList();
   }
 
-  Widget _buildExperienceSection() {
+  Widget _buildExperienceSection(OnboardingTheme t) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        Text(
           'How long have you been lifting weights?',
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.white),
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: t.textPrimary),
         ).animate().fadeIn(delay: 100.ms),
         const SizedBox(height: 4),
         Text(
           'This helps us pick the right exercises',
-          style: TextStyle(fontSize: 12, color: Colors.white.withValues(alpha: 0.6)),
+          style: TextStyle(fontSize: 12, color: t.textMuted),
         ).animate().fadeIn(delay: 150.ms),
         const SizedBox(height: 12),
         Wrap(
@@ -245,18 +237,13 @@ class QuizFitnessLevel extends StatelessWidget {
                     decoration: BoxDecoration(
                       gradient: isSelected
                           ? LinearGradient(
-                              colors: [
-                                Colors.white.withValues(alpha: 0.28),
-                                Colors.white.withValues(alpha: 0.16),
-                              ],
+                              colors: t.cardSelectedGradient,
                             )
                           : null,
-                      color: isSelected ? null : Colors.white.withValues(alpha: 0.08),
+                      color: isSelected ? null : t.cardFill,
                       borderRadius: BorderRadius.circular(20),
                       border: Border.all(
-                        color: isSelected
-                            ? Colors.white.withValues(alpha: 0.5)
-                            : Colors.white.withValues(alpha: 0.15),
+                        color: isSelected ? t.borderSelected : t.borderDefault,
                         width: isSelected ? 1.5 : 1,
                       ),
                     ),
@@ -265,7 +252,7 @@ class QuizFitnessLevel extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 13,
                         fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                        color: Colors.white,
+                        color: t.textPrimary,
                       ),
                     ),
                   ),
@@ -278,18 +265,18 @@ class QuizFitnessLevel extends StatelessWidget {
     );
   }
 
-  Widget _buildActivityLevelSection() {
+  Widget _buildActivityLevelSection(OnboardingTheme t) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        Text(
           'Daily activity level (outside gym)?',
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.white),
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: t.textPrimary),
         ).animate().fadeIn(delay: 100.ms),
         const SizedBox(height: 4),
         Text(
           'Helps calculate your calorie needs',
-          style: TextStyle(fontSize: 12, color: Colors.white.withValues(alpha: 0.6)),
+          style: TextStyle(fontSize: 12, color: t.textMuted),
         ).animate().fadeIn(delay: 150.ms),
         const SizedBox(height: 12),
         Wrap(
@@ -315,18 +302,13 @@ class QuizFitnessLevel extends StatelessWidget {
                     decoration: BoxDecoration(
                       gradient: isSelected
                           ? LinearGradient(
-                              colors: [
-                                Colors.white.withValues(alpha: 0.28),
-                                Colors.white.withValues(alpha: 0.16),
-                              ],
+                              colors: t.cardSelectedGradient,
                             )
                           : null,
-                      color: isSelected ? null : Colors.white.withValues(alpha: 0.08),
+                      color: isSelected ? null : t.cardFill,
                       borderRadius: BorderRadius.circular(14),
                       border: Border.all(
-                        color: isSelected
-                            ? Colors.white.withValues(alpha: 0.5)
-                            : Colors.white.withValues(alpha: 0.15),
+                        color: isSelected ? t.borderSelected : t.borderDefault,
                         width: isSelected ? 1.5 : 1,
                       ),
                     ),
@@ -340,7 +322,7 @@ class QuizFitnessLevel extends StatelessWidget {
                           style: TextStyle(
                             fontSize: 12,
                             fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                            color: Colors.white,
+                            color: t.textPrimary,
                           ),
                         ),
                       ],

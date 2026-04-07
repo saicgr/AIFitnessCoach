@@ -2,6 +2,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'onboarding_theme.dart';
 
 /// Gate screen asking user if they want nutrition guidance.
 ///
@@ -33,8 +34,7 @@ class QuizNutritionGate extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const textPrimary = Colors.white;
-    final textSecondary = Colors.white.withValues(alpha: 0.7);
+    final t = OnboardingTheme.of(context);
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -51,10 +51,10 @@ class QuizNutritionGate extends StatelessWidget {
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.15),
+                    color: t.cardFill,
                     borderRadius: BorderRadius.circular(20),
                     border: Border.all(
-                      color: Colors.white.withValues(alpha: 0.3),
+                      color: t.checkBorderUnselected,
                       width: 1,
                     ),
                   ),
@@ -71,7 +71,7 @@ class QuizNutritionGate extends StatelessWidget {
                         style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w600,
-                          color: Colors.white.withValues(alpha: 0.95),
+                          color: t.textPrimary,
                         ),
                       ),
                     ],
@@ -87,10 +87,10 @@ class QuizNutritionGate extends StatelessWidget {
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.08),
+                    color: t.cardFill,
                     borderRadius: BorderRadius.circular(20),
                     border: Border.all(
-                      color: Colors.white.withValues(alpha: 0.15),
+                      color: t.borderDefault,
                       width: 1,
                     ),
                   ),
@@ -99,7 +99,7 @@ class QuizNutritionGate extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w500,
-                      color: textSecondary,
+                      color: t.textSecondary,
                     ),
                   ),
                 ),
@@ -107,12 +107,12 @@ class QuizNutritionGate extends StatelessWidget {
             ).animate().fadeIn(delay: 100.ms).scale(begin: const Offset(0.8, 0.8)),
           const SizedBox(height: 20),
           // Title
-          const Text(
+          Text(
             'Want nutrition guidance too?',
             style: TextStyle(
               fontSize: 32,
               fontWeight: FontWeight.bold,
-              color: textPrimary,
+              color: t.textPrimary,
               height: 1.2,
             ),
           ).animate().fadeIn(delay: 200.ms).slideY(begin: -0.1),
@@ -122,7 +122,7 @@ class QuizNutritionGate extends StatelessWidget {
             'Get personalized calorie and macro targets to support your fitness goals',
             style: TextStyle(
               fontSize: 16,
-              color: textSecondary,
+              color: t.textSecondary,
               height: 1.5,
             ),
           ).animate().fadeIn(delay: 300.ms).slideY(begin: -0.05),
@@ -133,6 +133,7 @@ class QuizNutritionGate extends StatelessWidget {
               child: Column(
                 children: [
                   _buildBenefitItem(
+                    t: t,
                     icon: Icons.restaurant_menu,
                     title: 'Calorie & macro targets',
                     description: 'Tailored to your goals and activity level',
@@ -140,6 +141,7 @@ class QuizNutritionGate extends StatelessWidget {
                   ),
                   const SizedBox(height: 16),
                   _buildBenefitItem(
+                    t: t,
                     icon: Icons.schedule,
                     title: 'Meal timing guidance',
                     description: 'Optimize when you eat for better results',
@@ -147,6 +149,7 @@ class QuizNutritionGate extends StatelessWidget {
                   ),
                   const SizedBox(height: 16),
                   _buildBenefitItem(
+                    t: t,
                     icon: Icons.local_dining,
                     title: 'Dietary preferences',
                     description: 'Respects your restrictions and preferences',
@@ -179,20 +182,17 @@ class QuizNutritionGate extends StatelessWidget {
                         child: Container(
                           decoration: BoxDecoration(
                             gradient: LinearGradient(
-                              colors: [
-                                Colors.white.withValues(alpha: 0.28),
-                                Colors.white.withValues(alpha: 0.16),
-                              ],
+                              colors: t.buttonGradient,
                               begin: Alignment.topLeft,
                               end: Alignment.bottomRight,
                             ),
                             borderRadius: BorderRadius.circular(16),
                             border: Border.all(
-                              color: Colors.white.withValues(alpha: 0.4),
+                              color: t.buttonBorder,
                               width: 1.5,
                             ),
                           ),
-                          child: const Row(
+                          child: Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               Text(
@@ -200,11 +200,11 @@ class QuizNutritionGate extends StatelessWidget {
                                 style: TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.w600,
-                                  color: Colors.white,
+                                  color: t.buttonText,
                                 ),
                               ),
-                              SizedBox(width: 8),
-                              Icon(Icons.arrow_forward_rounded, size: 20, color: Colors.white),
+                              const SizedBox(width: 8),
+                              Icon(Icons.arrow_forward_rounded, size: 20, color: t.textPrimary),
                             ],
                           ),
                         ),
@@ -224,7 +224,7 @@ class QuizNutritionGate extends StatelessWidget {
                     onSkip();
                   },
                   style: TextButton.styleFrom(
-                    foregroundColor: textSecondary,
+                    foregroundColor: t.textSecondary,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(16),
                     ),
@@ -234,7 +234,7 @@ class QuizNutritionGate extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w500,
-                      color: textSecondary,
+                      color: t.textSecondary,
                     ),
                   ),
                 ),
@@ -248,13 +248,12 @@ class QuizNutritionGate extends StatelessWidget {
   }
 
   Widget _buildBenefitItem({
+    required OnboardingTheme t,
     required IconData icon,
     required String title,
     required String description,
     required Duration delay,
   }) {
-    final textSecondary = Colors.white.withValues(alpha: 0.7);
-
     return ClipRRect(
       borderRadius: BorderRadius.circular(16),
       child: BackdropFilter(
@@ -262,10 +261,10 @@ class QuizNutritionGate extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.08),
+            color: t.cardFill,
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
-              color: Colors.white.withValues(alpha: 0.15),
+              color: t.borderDefault,
               width: 1,
             ),
           ),
@@ -276,12 +275,12 @@ class QuizNutritionGate extends StatelessWidget {
                 width: 48,
                 height: 48,
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.12),
+                  color: t.cardFill,
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(
                   icon,
-                  color: Colors.white.withValues(alpha: 0.9),
+                  color: t.textPrimary,
                   size: 24,
                 ),
               ),
@@ -293,10 +292,10 @@ class QuizNutritionGate extends StatelessWidget {
                   children: [
                     Text(
                       title,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
-                        color: Colors.white,
+                        color: t.textPrimary,
                       ),
                     ),
                     const SizedBox(height: 4),
@@ -304,7 +303,7 @@ class QuizNutritionGate extends StatelessWidget {
                       description,
                       style: TextStyle(
                         fontSize: 14,
-                        color: textSecondary,
+                        color: t.textSecondary,
                         height: 1.4,
                       ),
                     ),

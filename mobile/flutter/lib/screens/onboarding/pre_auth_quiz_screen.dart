@@ -36,6 +36,7 @@ import 'widgets/quiz_progression_constraints.dart';
 import 'widgets/quiz_nutrition_gate.dart';
 import 'widgets/did_you_know_chip.dart';
 import 'widgets/foldable_quiz_scaffold.dart';
+import 'widgets/onboarding_theme.dart';
 import '../../core/providers/window_mode_provider.dart';
 import 'plan_preview_screen.dart';
 
@@ -552,28 +553,12 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
     final windowState = ref.watch(windowModeProvider);
     final isFoldableOpen = FoldableQuizScaffold.shouldUseFoldableLayout(windowState);
 
-    // Onboarding always uses a dark gradient regardless of system theme
-    // to maintain the glassmorphic aesthetic from the intro screen.
-    const onboardingGradient = LinearGradient(
-      begin: Alignment.topCenter,
-      end: Alignment.bottomCenter,
-      colors: [Color(0xFF1A1A2E), Color(0xFF16213E), Color(0xFF0F3460)],
-    );
+    final onboardingGradient = OnboardingTheme.of(context).backgroundGradient;
 
     return Scaffold(
       body: Container(
         decoration: BoxDecoration(gradient: onboardingGradient),
-        child: Theme(
-          // Force dark theme inside quiz so all widgets render white text
-          // on the gradient background (glassmorphic aesthetic).
-          data: Theme.of(context).copyWith(
-            brightness: Brightness.dark,
-            scaffoldBackgroundColor: Colors.transparent,
-            colorScheme: Theme.of(context).colorScheme.copyWith(
-              brightness: Brightness.dark,
-            ),
-          ),
-          child: SafeArea(
+        child: SafeArea(
           child: FoldableQuizScaffold(
             headerTitle: _getStepTitle(_currentQuestion),
             headerSubtitle: _getStepSubtitle(_currentQuestion),
@@ -621,7 +606,6 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
             ),
             button: _buildActionButton(isDark),
           ),
-        ),
         ),
       ),
     );

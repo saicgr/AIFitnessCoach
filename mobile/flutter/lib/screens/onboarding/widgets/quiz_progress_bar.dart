@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../core/constants/app_colors.dart';
+import 'onboarding_theme.dart';
 
 /// Glassmorphic animated progress bar for quiz screens.
 class QuizProgressBar extends StatelessWidget {
@@ -14,6 +14,8 @@ class QuizProgressBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = OnboardingTheme.of(context);
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24),
       child: TweenAnimationBuilder<double>(
@@ -24,7 +26,7 @@ class QuizProgressBar extends StatelessWidget {
           return Container(
             height: 6,
             decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.12),
+              color: t.cardFill,
               borderRadius: BorderRadius.circular(3),
             ),
             child: FractionallySizedBox(
@@ -34,8 +36,8 @@ class QuizProgressBar extends StatelessWidget {
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     colors: [
-                      Colors.white.withValues(alpha: 0.9),
-                      Colors.white.withValues(alpha: 0.6),
+                      t.textPrimary.withValues(alpha: 0.7),
+                      t.textPrimary.withValues(alpha: 0.4),
                     ],
                     begin: Alignment.centerLeft,
                     end: Alignment.centerRight,
@@ -43,7 +45,7 @@ class QuizProgressBar extends StatelessWidget {
                   borderRadius: BorderRadius.circular(3),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.white.withValues(alpha: 0.3),
+                      color: t.textPrimary.withValues(alpha: 0.15),
                       blurRadius: 8,
                       spreadRadius: 0,
                     ),

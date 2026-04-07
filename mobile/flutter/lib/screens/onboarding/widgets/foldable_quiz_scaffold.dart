@@ -1,12 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/providers/window_mode_provider.dart';
+import 'onboarding_theme.dart';
 
 /// Reusable foldable-adaptive scaffold for onboarding screens.
-///
-/// On phone / closed foldable: standard vertical Column layout.
-/// On book-fold open (vertical hinge): Supporting Pane pattern —
-///   header content on the left pane, interactive content on the right pane.
 class FoldableQuizScaffold extends ConsumerWidget {
   final String headerTitle;
   final String? headerSubtitle;
@@ -69,10 +66,10 @@ class FoldableQuizScaffold extends ConsumerWidget {
   }
 
   Widget _buildFoldableLayout(BuildContext context, WindowModeState windowState) {
+    final t = OnboardingTheme.of(context);
     final hingeBounds = windowState.hingeBounds;
     final safeLeft = MediaQuery.of(context).padding.left;
-    final rawHingeLeft =
-        hingeBounds?.left ?? MediaQuery.of(context).size.width / 2;
+    final rawHingeLeft = hingeBounds?.left ?? MediaQuery.of(context).size.width / 2;
     final hingeLeft = (rawHingeLeft - safeLeft).clamp(100.0, double.infinity);
     final hingeWidth = hingeBounds?.width ?? 0;
 
@@ -86,7 +83,6 @@ class FoldableQuizScaffold extends ConsumerWidget {
         Expanded(
           child: Row(
             children: [
-              // Left pane (header / context)
               SizedBox(
                 width: hingeLeft,
                 child: Center(
@@ -98,12 +94,9 @@ class FoldableQuizScaffold extends ConsumerWidget {
                       children: [
                         Text(
                           headerTitle,
-                          style: const TextStyle(
-                            fontSize: 26,
-                            fontWeight: FontWeight.w700,
-                            color: Colors.white,
-                            height: 1.3,
-                            letterSpacing: -0.5,
+                          style: TextStyle(
+                            fontSize: 26, fontWeight: FontWeight.w700,
+                            color: t.textPrimary, height: 1.3, letterSpacing: -0.5,
                           ),
                         ),
                         if (headerSubtitle != null) ...[
@@ -111,10 +104,8 @@ class FoldableQuizScaffold extends ConsumerWidget {
                           Text(
                             headerSubtitle!,
                             style: TextStyle(
-                              fontSize: 15,
-                              color: Colors.white.withValues(alpha: 0.7),
-                              fontWeight: FontWeight.w500,
-                              height: 1.4,
+                              fontSize: 15, color: t.textSecondary,
+                              fontWeight: FontWeight.w500, height: 1.4,
                             ),
                           ),
                         ],
@@ -128,7 +119,6 @@ class FoldableQuizScaffold extends ConsumerWidget {
                 ),
               ),
               SizedBox(width: hingeWidth),
-              // Right pane (interactive content)
               Expanded(
                 child: Column(
                   children: [

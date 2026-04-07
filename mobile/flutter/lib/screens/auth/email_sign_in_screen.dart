@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
 import '../../data/repositories/auth_repository.dart';
+import '../onboarding/widgets/onboarding_theme.dart';
 
 /// Glassmorphic email sign-in screen
 class EmailSignInScreen extends ConsumerStatefulWidget {
@@ -158,18 +159,11 @@ class _EmailSignInScreenState extends ConsumerState<EmailSignInScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    // Dark gradient matching the onboarding flow
-    const gradient = LinearGradient(
-      begin: Alignment.topCenter,
-      end: Alignment.bottomCenter,
-      colors: [Color(0xFF1A1A2E), Color(0xFF16213E), Color(0xFF0F3460)],
-    );
+    final t = OnboardingTheme.of(context);
 
     return Scaffold(
       body: Container(
-        decoration: BoxDecoration(gradient: gradient),
+        decoration: BoxDecoration(gradient: t.backgroundGradient),
         child: SafeArea(
           child: SingleChildScrollView(
             padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -191,11 +185,11 @@ class _EmailSignInScreenState extends ConsumerState<EmailSignInScreen> {
                               width: 44,
                               height: 44,
                               decoration: BoxDecoration(
-                                color: Colors.white.withValues(alpha: 0.15),
+                                color: t.cardFill,
                                 borderRadius: BorderRadius.circular(22),
-                                border: Border.all(color: Colors.white.withValues(alpha: 0.25)),
+                                border: Border.all(color: t.borderDefault),
                               ),
-                              child: const Icon(Icons.arrow_back_ios_rounded, color: Colors.white, size: 18),
+                              child: Icon(Icons.arrow_back_ios_rounded, color: t.textPrimary, size: 18),
                             ),
                           ),
                         ),
@@ -203,10 +197,10 @@ class _EmailSignInScreenState extends ConsumerState<EmailSignInScreen> {
                       const Spacer(),
                       Text(
                         _isSignUp ? 'Create Account' : 'Sign In',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.w600,
-                          color: Colors.white,
+                          color: t.textPrimary,
                         ),
                       ),
                       const Spacer(),
@@ -226,12 +220,12 @@ class _EmailSignInScreenState extends ConsumerState<EmailSignInScreen> {
                       width: 80,
                       height: 80,
                       decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.15),
+                        color: t.cardFill,
                         borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: Colors.white.withValues(alpha: 0.3)),
+                        border: Border.all(color: t.borderDefault),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.white.withOpacity(0.1),
+                            color: t.textPrimary.withOpacity(0.1),
                             blurRadius: 16,
                             spreadRadius: 2,
                           ),
@@ -242,9 +236,9 @@ class _EmailSignInScreenState extends ConsumerState<EmailSignInScreen> {
                         child: Image.asset(
                           'assets/images/app_icon.png',
                           fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) => const Icon(
+                          errorBuilder: (context, error, stackTrace) => Icon(
                             Icons.fitness_center,
-                            color: Colors.white,
+                            color: t.textPrimary,
                             size: 40,
                           ),
                         ),
@@ -264,15 +258,12 @@ class _EmailSignInScreenState extends ConsumerState<EmailSignInScreen> {
                       padding: const EdgeInsets.all(24),
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
-                          colors: [
-                            Colors.white.withValues(alpha: 0.12),
-                            Colors.white.withValues(alpha: 0.06),
-                          ],
+                          colors: t.buttonGradient,
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
                         ),
                         borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
+                        border: Border.all(color: t.borderDefault),
                       ),
                       child: Form(
                         key: _formKey,
@@ -284,20 +275,20 @@ class _EmailSignInScreenState extends ConsumerState<EmailSignInScreen> {
                               controller: _emailController,
                               keyboardType: TextInputType.emailAddress,
                               autocorrect: false,
-                              style: const TextStyle(color: Colors.white),
+                              style: TextStyle(color: t.textPrimary),
                               decoration: InputDecoration(
                                 labelText: 'Email',
-                                labelStyle: TextStyle(color: Colors.white.withValues(alpha: 0.6)),
+                                labelStyle: TextStyle(color: t.textMuted),
                                 hintText: 'Enter your email',
-                                hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.3)),
-                                prefixIcon: Icon(Icons.email_outlined, color: Colors.white.withValues(alpha: 0.6)),
+                                hintStyle: TextStyle(color: t.textDisabled),
+                                prefixIcon: Icon(Icons.email_outlined, color: t.textMuted),
                                 enabledBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(12),
-                                  borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.2)),
+                                  borderSide: BorderSide(color: t.borderDefault),
                                 ),
                                 focusedBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(12),
-                                  borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.5)),
+                                  borderSide: BorderSide(color: t.borderSelected),
                                 ),
                                 errorBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(12),
@@ -308,7 +299,7 @@ class _EmailSignInScreenState extends ConsumerState<EmailSignInScreen> {
                                   borderSide: const BorderSide(color: AppColors.error),
                                 ),
                                 filled: true,
-                                fillColor: Colors.white.withValues(alpha: 0.06),
+                                fillColor: t.cardFill,
                               ),
                               validator: (value) {
                                 if (value == null || value.isEmpty) return 'Please enter your email';
@@ -323,27 +314,27 @@ class _EmailSignInScreenState extends ConsumerState<EmailSignInScreen> {
                             TextFormField(
                               controller: _passwordController,
                               obscureText: _obscurePassword,
-                              style: const TextStyle(color: Colors.white),
+                              style: TextStyle(color: t.textPrimary),
                               decoration: InputDecoration(
                                 labelText: 'Password',
-                                labelStyle: TextStyle(color: Colors.white.withValues(alpha: 0.6)),
+                                labelStyle: TextStyle(color: t.textMuted),
                                 hintText: 'Enter your password',
-                                hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.3)),
-                                prefixIcon: Icon(Icons.lock_outline, color: Colors.white.withValues(alpha: 0.6)),
+                                hintStyle: TextStyle(color: t.textDisabled),
+                                prefixIcon: Icon(Icons.lock_outline, color: t.textMuted),
                                 suffixIcon: IconButton(
                                   icon: Icon(
                                     _obscurePassword ? Icons.visibility_outlined : Icons.visibility_off_outlined,
-                                    color: Colors.white.withValues(alpha: 0.6),
+                                    color: t.textMuted,
                                   ),
                                   onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
                                 ),
                                 enabledBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(12),
-                                  borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.2)),
+                                  borderSide: BorderSide(color: t.borderDefault),
                                 ),
                                 focusedBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(12),
-                                  borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.5)),
+                                  borderSide: BorderSide(color: t.borderSelected),
                                 ),
                                 errorBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(12),
@@ -354,7 +345,7 @@ class _EmailSignInScreenState extends ConsumerState<EmailSignInScreen> {
                                   borderSide: const BorderSide(color: AppColors.error),
                                 ),
                                 filled: true,
-                                fillColor: Colors.white.withValues(alpha: 0.06),
+                                fillColor: t.cardFill,
                               ),
                               validator: (value) {
                                 if (value == null || value.isEmpty) return 'Please enter your password';
@@ -377,7 +368,7 @@ class _EmailSignInScreenState extends ConsumerState<EmailSignInScreen> {
                                   child: Text(
                                     'Forgot Password?',
                                     style: TextStyle(
-                                      color: Colors.white.withValues(alpha: 0.7),
+                                      color: t.textSecondary,
                                       fontSize: 14,
                                     ),
                                   ),
@@ -423,32 +414,29 @@ class _EmailSignInScreenState extends ConsumerState<EmailSignInScreen> {
                                     height: 52,
                                     decoration: BoxDecoration(
                                       gradient: LinearGradient(
-                                        colors: [
-                                          Colors.white.withValues(alpha: 0.25),
-                                          Colors.white.withValues(alpha: 0.15),
-                                        ],
+                                        colors: t.buttonGradient,
                                         begin: Alignment.topLeft,
                                         end: Alignment.bottomRight,
                                       ),
                                       borderRadius: BorderRadius.circular(26),
-                                      border: Border.all(color: Colors.white.withValues(alpha: 0.35)),
+                                      border: Border.all(color: t.buttonBorder),
                                     ),
                                     child: Center(
                                       child: _isLoading
-                                          ? const SizedBox(
+                                          ? SizedBox(
                                               width: 24,
                                               height: 24,
                                               child: CircularProgressIndicator(
                                                 strokeWidth: 2.5,
-                                                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                                valueColor: AlwaysStoppedAnimation<Color>(t.textPrimary),
                                               ),
                                             )
                                           : Text(
                                               _isSignUp ? 'Create Account' : 'Sign In',
-                                              style: const TextStyle(
+                                              style: TextStyle(
                                                 fontSize: 16,
                                                 fontWeight: FontWeight.w600,
-                                                color: Colors.white,
+                                                color: t.textPrimary,
                                               ),
                                             ),
                                     ),
@@ -471,7 +459,7 @@ class _EmailSignInScreenState extends ConsumerState<EmailSignInScreen> {
                   children: [
                     Text(
                       _isSignUp ? 'Already have an account?' : "Don't have an account?",
-                      style: TextStyle(color: Colors.white.withValues(alpha: 0.6), fontSize: 14),
+                      style: TextStyle(color: t.textMuted, fontSize: 14),
                     ),
                     GestureDetector(
                       onTap: () {
@@ -485,7 +473,7 @@ class _EmailSignInScreenState extends ConsumerState<EmailSignInScreen> {
                         child: Text(
                           _isSignUp ? 'Sign In' : 'Sign Up',
                           style: TextStyle(
-                            color: Colors.white.withValues(alpha: 0.9),
+                            color: t.textPrimary.withValues(alpha: 0.9),
                             fontSize: 14,
                             fontWeight: FontWeight.w600,
                           ),

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../../core/constants/app_colors.dart';
+import 'onboarding_theme.dart';
 
 /// Glassmorphic gate screen asking user if they want to personalize further.
 class QuizPersonalizationGate extends StatelessWidget {
@@ -17,18 +18,20 @@ class QuizPersonalizationGate extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = OnboardingTheme.of(context);
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const SizedBox(height: 16),
-          const Text(
+          Text(
             'Want better results?',
             style: TextStyle(
               fontSize: 28,
               fontWeight: FontWeight.bold,
-              color: Colors.white,
+              color: t.textPrimary,
               height: 1.2,
             ),
           ).animate().fadeIn(delay: 100.ms).slideY(begin: -0.1),
@@ -37,7 +40,7 @@ class QuizPersonalizationGate extends StatelessWidget {
             'Optional — takes about 2 minutes',
             style: TextStyle(
               fontSize: 15,
-              color: Colors.white.withValues(alpha: 0.7),
+              color: t.textSecondary,
               height: 1.5,
             ),
           ).animate().fadeIn(delay: 200.ms).slideY(begin: -0.05),
@@ -47,6 +50,7 @@ class QuizPersonalizationGate extends StatelessWidget {
               child: Column(
                 children: [
                   _buildBenefitItem(
+                    t: t,
                     icon: Icons.fitness_center,
                     title: 'Muscle targeting',
                     description: 'Focus on the muscle groups you want to develop most',
@@ -55,6 +59,7 @@ class QuizPersonalizationGate extends StatelessWidget {
                   ),
                   const SizedBox(height: 16),
                   _buildBenefitItem(
+                    t: t,
                     icon: Icons.tune,
                     title: 'Training style',
                     description: 'Choose your preferred split and workout structure',
@@ -63,6 +68,7 @@ class QuizPersonalizationGate extends StatelessWidget {
                   ),
                   const SizedBox(height: 16),
                   _buildBenefitItem(
+                    t: t,
                     icon: Icons.trending_up,
                     title: 'Progression',
                     description: 'Set how quickly you want to increase difficulty',
@@ -71,6 +77,7 @@ class QuizPersonalizationGate extends StatelessWidget {
                   ),
                   const SizedBox(height: 16),
                   _buildBenefitItem(
+                    t: t,
                     icon: Icons.health_and_safety_outlined,
                     title: 'Injury accommodations',
                     description: 'Flag any injuries or joint issues to work around',
@@ -99,29 +106,26 @@ class QuizPersonalizationGate extends StatelessWidget {
                       height: 56,
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
-                          colors: [
-                            Colors.white.withValues(alpha: 0.25),
-                            Colors.white.withValues(alpha: 0.15),
-                          ],
+                          colors: t.buttonGradient,
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
                         ),
                         borderRadius: BorderRadius.circular(28),
-                        border: Border.all(color: Colors.white.withValues(alpha: 0.4)),
+                        border: Border.all(color: t.buttonBorder),
                       ),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          const Text(
+                          Text(
                             'Continue',
                             style: TextStyle(
                               fontSize: 17,
                               fontWeight: FontWeight.w600,
-                              color: Colors.white,
+                              color: t.buttonText,
                             ),
                           ),
                           const SizedBox(width: 8),
-                          Icon(Icons.arrow_forward_rounded, size: 20, color: Colors.white.withValues(alpha: 0.9)),
+                          Icon(Icons.arrow_forward_rounded, size: 20, color: t.textPrimary),
                         ],
                       ),
                     ),
@@ -144,9 +148,9 @@ class QuizPersonalizationGate extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w500,
-                        color: Colors.white.withValues(alpha: 0.5),
+                        color: t.textMuted,
                         decoration: TextDecoration.underline,
-                        decorationColor: Colors.white.withValues(alpha: 0.3),
+                        decorationColor: t.textDisabled,
                       ),
                     ),
                   ),
@@ -161,6 +165,7 @@ class QuizPersonalizationGate extends StatelessWidget {
   }
 
   Widget _buildBenefitItem({
+    required OnboardingTheme t,
     required IconData icon,
     required String title,
     required String description,
@@ -174,16 +179,9 @@ class QuizPersonalizationGate extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [
-                Colors.white.withValues(alpha: 0.10),
-                Colors.white.withValues(alpha: 0.06),
-              ],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
+            color: t.cardFill,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: Colors.white.withValues(alpha: 0.15)),
+            border: Border.all(color: t.borderDefault),
           ),
           child: Row(
             children: [
@@ -191,10 +189,10 @@ class QuizPersonalizationGate extends StatelessWidget {
                 width: 48,
                 height: 48,
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.12),
+                  color: t.cardFill,
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: Icon(icon, color: Colors.white.withValues(alpha: 0.9), size: 24),
+                child: Icon(icon, color: t.textPrimary, size: 24),
               ),
               const SizedBox(width: 16),
               Expanded(
@@ -203,12 +201,12 @@ class QuizPersonalizationGate extends StatelessWidget {
                   children: [
                     Text(
                       title,
-                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.white),
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: t.textPrimary),
                     ),
                     const SizedBox(height: 4),
                     Text(
                       description,
-                      style: TextStyle(fontSize: 14, color: Colors.white.withValues(alpha: 0.7), height: 1.4),
+                      style: TextStyle(fontSize: 14, color: t.textSecondary, height: 1.4),
                     ),
                     if (microValue != null) ...[
                       const SizedBox(height: 6),
@@ -217,7 +215,7 @@ class QuizPersonalizationGate extends StatelessWidget {
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w500,
-                          color: Colors.white.withValues(alpha: 0.5),
+                          color: t.textMuted,
                           fontStyle: FontStyle.italic,
                         ),
                       ),

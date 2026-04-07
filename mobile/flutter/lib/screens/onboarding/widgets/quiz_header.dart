@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:ui';
 import '../../../widgets/glass_back_button.dart';
+import 'onboarding_theme.dart';
 
-/// Floating header for quiz screens with glassmorphic back button and question counter.
-/// Always uses white/glass styling for gradient backgrounds.
+/// Floating header for quiz screens with glassmorphic back button and counter.
 class QuizHeader extends StatelessWidget {
   final int currentQuestion;
   final int totalQuestions;
@@ -34,6 +34,8 @@ class QuizHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = OnboardingTheme.of(context);
+
     return Padding(
       padding: const EdgeInsets.all(16),
       child: Row(
@@ -49,7 +51,7 @@ class QuizHeader extends StatelessWidget {
           else
             const SizedBox(width: 44),
 
-          // Glassmorphic counter pill — always white-on-glass
+          // Glassmorphic counter pill
           ClipRRect(
             borderRadius: BorderRadius.circular(17),
             child: BackdropFilter(
@@ -57,17 +59,14 @@ class QuizHeader extends StatelessWidget {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.15),
+                  color: t.cardFill,
                   borderRadius: BorderRadius.circular(17),
-                  border: Border.all(
-                    color: Colors.white.withValues(alpha: 0.25),
-                    width: 0.5,
-                  ),
+                  border: Border.all(color: t.borderDefault, width: 0.5),
                 ),
                 child: Text(
                   _getProgressText(),
-                  style: const TextStyle(
-                    color: Colors.white,
+                  style: TextStyle(
+                    color: t.textPrimary,
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
                     letterSpacing: 0.3,

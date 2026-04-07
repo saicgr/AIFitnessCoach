@@ -2,6 +2,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'onboarding_theme.dart';
 
 /// Muscle focus points allocation widget for quiz screens.
 /// Users can allocate up to 5 focus points to prioritize specific muscle groups.
@@ -28,8 +29,7 @@ class QuizMuscleFocus extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const textPrimary = Colors.white;
-    final textSecondary = Colors.white.withValues(alpha: 0.7);
+    final t = OnboardingTheme.of(context);
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -39,10 +39,10 @@ class QuizMuscleFocus extends StatelessWidget {
           if (showHeader) ...[
             Text(
               question,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
-                color: textPrimary,
+                color: t.textPrimary,
                 height: 1.3,
               ),
             ).animate().fadeIn(delay: 100.ms).slideX(begin: -0.05),
@@ -51,7 +51,7 @@ class QuizMuscleFocus extends StatelessWidget {
               subtitle,
               style: TextStyle(
                 fontSize: 14,
-                color: textSecondary,
+                color: t.textSecondary,
               ),
             ).animate().fadeIn(delay: 200.ms),
             const SizedBox(height: 16),
@@ -59,8 +59,6 @@ class QuizMuscleFocus extends StatelessWidget {
           // Focus points indicator
           _FocusPointsIndicator(
             usedPoints: totalPointsUsed,
-            textPrimary: textPrimary,
-            textSecondary: textSecondary,
           ).animate().fadeIn(delay: 300.ms),
           const SizedBox(height: 16),
           Expanded(
@@ -73,8 +71,6 @@ class QuizMuscleFocus extends StatelessWidget {
                   focusPoints: focusPoints,
                   availablePoints: availablePoints,
                   onPointsChanged: onPointsChanged,
-                  textPrimary: textPrimary,
-                  textSecondary: textSecondary,
                 ),
                 const SizedBox(height: 16),
                 _MuscleGroupSection(
@@ -83,8 +79,6 @@ class QuizMuscleFocus extends StatelessWidget {
                   focusPoints: focusPoints,
                   availablePoints: availablePoints,
                   onPointsChanged: onPointsChanged,
-                  textPrimary: textPrimary,
-                  textSecondary: textSecondary,
                 ),
                 const SizedBox(height: 16),
                 _MuscleGroupSection(
@@ -93,8 +87,6 @@ class QuizMuscleFocus extends StatelessWidget {
                   focusPoints: focusPoints,
                   availablePoints: availablePoints,
                   onPointsChanged: onPointsChanged,
-                  textPrimary: textPrimary,
-                  textSecondary: textSecondary,
                 ),
               ],
             ),
@@ -134,17 +126,14 @@ class QuizMuscleFocus extends StatelessWidget {
 
 class _FocusPointsIndicator extends StatelessWidget {
   final int usedPoints;
-  final Color textPrimary;
-  final Color textSecondary;
 
   const _FocusPointsIndicator({
     required this.usedPoints,
-    required this.textPrimary,
-    required this.textSecondary,
   });
 
   @override
   Widget build(BuildContext context) {
+    final t = OnboardingTheme.of(context);
     final availablePoints = QuizMuscleFocus.maxTotalPoints - usedPoints;
 
     return ClipRRect(
@@ -154,9 +143,9 @@ class _FocusPointsIndicator extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.08),
+            color: t.cardFill,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Colors.white.withValues(alpha: 0.15)),
+            border: Border.all(color: t.borderDefault),
           ),
           child: Row(
             children: [
@@ -168,7 +157,7 @@ class _FocusPointsIndicator extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
-                      color: textPrimary,
+                      color: t.textPrimary,
                     ),
                   ),
                   const SizedBox(height: 2),
@@ -176,7 +165,7 @@ class _FocusPointsIndicator extends StatelessWidget {
                     '$availablePoints/${QuizMuscleFocus.maxTotalPoints} available',
                     style: TextStyle(
                       fontSize: 12,
-                      color: textSecondary,
+                      color: t.textSecondary,
                     ),
                   ),
                 ],
@@ -196,22 +185,22 @@ class _FocusPointsIndicator extends StatelessWidget {
                         gradient: isFilled
                             ? LinearGradient(
                                 colors: [
-                                  Colors.white.withValues(alpha: 0.9),
-                                  Colors.white.withValues(alpha: 0.7),
+                                  t.textPrimary.withValues(alpha: 0.9),
+                                  t.textPrimary.withValues(alpha: 0.7),
                                 ],
                               )
                             : null,
-                        color: isFilled ? null : Colors.white.withValues(alpha: 0.08),
+                        color: isFilled ? null : t.cardFill,
                         border: Border.all(
                           color: isFilled
-                              ? Colors.white
-                              : Colors.white.withValues(alpha: 0.3),
+                              ? t.textPrimary
+                              : t.checkBorderUnselected,
                           width: 2,
                         ),
                         boxShadow: isFilled
                             ? [
                                 BoxShadow(
-                                  color: Colors.white.withOpacity(0.3),
+                                  color: t.textPrimary.withOpacity(0.3),
                                   blurRadius: 6,
                                   spreadRadius: 0,
                                 ),
@@ -236,8 +225,6 @@ class _MuscleGroupSection extends StatelessWidget {
   final Map<String, int> focusPoints;
   final int availablePoints;
   final ValueChanged<Map<String, int>> onPointsChanged;
-  final Color textPrimary;
-  final Color textSecondary;
 
   const _MuscleGroupSection({
     required this.title,
@@ -245,21 +232,21 @@ class _MuscleGroupSection extends StatelessWidget {
     required this.focusPoints,
     required this.availablePoints,
     required this.onPointsChanged,
-    required this.textPrimary,
-    required this.textSecondary,
   });
 
   @override
   Widget build(BuildContext context) {
+    final t = OnboardingTheme.of(context);
+
     return ClipRRect(
       borderRadius: BorderRadius.circular(16),
       child: BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
         child: Container(
           decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.08),
+            color: t.cardFill,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: Colors.white.withValues(alpha: 0.15)),
+            border: Border.all(color: t.borderDefault),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -271,7 +258,7 @@ class _MuscleGroupSection extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
-                    color: textSecondary,
+                    color: t.textSecondary,
                     letterSpacing: 0.5,
                   ),
                 ),
@@ -307,8 +294,6 @@ class _MuscleGroupSection extends StatelessWidget {
                       onPointsChanged(newPoints);
                     }
                   },
-                  textPrimary: textPrimary,
-                  textSecondary: textSecondary,
                   showDivider: !isLast,
                 );
               }),
@@ -326,8 +311,6 @@ class _MuscleRow extends StatelessWidget {
   final bool canIncrement;
   final VoidCallback onIncrement;
   final VoidCallback onDecrement;
-  final Color textPrimary;
-  final Color textSecondary;
   final bool showDivider;
 
   const _MuscleRow({
@@ -336,13 +319,12 @@ class _MuscleRow extends StatelessWidget {
     required this.canIncrement,
     required this.onIncrement,
     required this.onDecrement,
-    required this.textPrimary,
-    required this.textSecondary,
     required this.showDivider,
   });
 
   @override
   Widget build(BuildContext context) {
+    final t = OnboardingTheme.of(context);
     final hasPoints = points > 0;
 
     return Column(
@@ -356,13 +338,13 @@ class _MuscleRow extends StatelessWidget {
                 height: 32,
                 decoration: BoxDecoration(
                   color: hasPoints
-                      ? Colors.white.withValues(alpha: 0.2)
-                      : Colors.white.withValues(alpha: 0.05),
+                      ? t.checkBg
+                      : t.borderSubtle,
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Icon(
                   muscle['icon'] as IconData,
-                  color: hasPoints ? Colors.white : textSecondary,
+                  color: hasPoints ? t.textPrimary : t.textSecondary,
                   size: 18,
                 ),
               ),
@@ -373,7 +355,7 @@ class _MuscleRow extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 15,
                     fontWeight: hasPoints ? FontWeight.w600 : FontWeight.w500,
-                    color: hasPoints ? textPrimary : textSecondary,
+                    color: hasPoints ? t.textPrimary : t.textSecondary,
                   ),
                 ),
               ),
@@ -395,7 +377,7 @@ class _MuscleRow extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
-                      color: hasPoints ? Colors.white : textSecondary,
+                      color: hasPoints ? t.textPrimary : t.textSecondary,
                     ),
                   ),
                 ),
@@ -412,7 +394,7 @@ class _MuscleRow extends StatelessWidget {
           Divider(
             height: 1,
             indent: 56,
-            color: Colors.white.withValues(alpha: 0.08),
+            color: t.borderSubtle,
           ),
       ],
     );
@@ -430,6 +412,7 @@ class _PointButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = OnboardingTheme.of(context);
     final isEnabled = onTap != null;
 
     return GestureDetector(
@@ -440,13 +423,13 @@ class _PointButton extends StatelessWidget {
         height: 32,
         decoration: BoxDecoration(
           color: isEnabled
-              ? Colors.white.withValues(alpha: 0.15)
-              : Colors.white.withValues(alpha: 0.05),
+              ? t.cardFill
+              : t.borderSubtle,
           borderRadius: BorderRadius.circular(8),
           border: Border.all(
             color: isEnabled
-                ? Colors.white.withValues(alpha: 0.4)
-                : Colors.white.withValues(alpha: 0.15),
+                ? t.buttonBorder
+                : t.borderDefault,
             width: 1.5,
           ),
         ),
@@ -454,8 +437,8 @@ class _PointButton extends StatelessWidget {
           icon,
           size: 18,
           color: isEnabled
-              ? Colors.white
-              : Colors.white.withValues(alpha: 0.3),
+              ? t.textPrimary
+              : t.textDisabled,
         ),
       ),
     );

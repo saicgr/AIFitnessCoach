@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../../core/constants/app_colors.dart';
+import 'onboarding_theme.dart';
 
 /// Training style selection widget (Screen 8: Phase 2 personalization).
 ///
@@ -157,8 +158,7 @@ class _QuizTrainingStyleState extends State<QuizTrainingStyle> {
 
   @override
   Widget build(BuildContext context) {
-    const textPrimary = Colors.white;
-    final textSecondary = Colors.white.withValues(alpha: 0.7);
+    final t = OnboardingTheme.of(context);
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -168,12 +168,12 @@ class _QuizTrainingStyleState extends State<QuizTrainingStyle> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               if (widget.showHeader) ...[
-                const Text(
+                Text(
                   'Training Style',
                   style: TextStyle(
                     fontSize: 28,
                     fontWeight: FontWeight.bold,
-                    color: textPrimary,
+                    color: t.textPrimary,
                   ),
                 ).animate().fadeIn(delay: 100.ms),
                 const SizedBox(height: 6),
@@ -181,7 +181,7 @@ class _QuizTrainingStyleState extends State<QuizTrainingStyle> {
                   'Choose how you want to structure your workouts',
                   style: TextStyle(
                     fontSize: 15,
-                    color: textSecondary,
+                    color: t.textSecondary,
                   ),
                 ).animate().fadeIn(delay: 200.ms),
                 const SizedBox(height: 24),
@@ -193,17 +193,18 @@ class _QuizTrainingStyleState extends State<QuizTrainingStyle> {
                   padding: EdgeInsets.zero,
                   children: [
                 if (widget.showSplitSection) ...[
-                const Text(
+                Text(
                   'Training Split',
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
-                    color: textPrimary,
+                    color: t.textPrimary,
                   ),
                 ),
                 const SizedBox(height: 12),
 
                 _buildSplitOption(
+                  t: t,
                   id: 'ai_decide',
                   title: 'Let AI Decide',
                   description: 'Automatically optimized for your schedule (Recommended)',
@@ -212,6 +213,7 @@ class _QuizTrainingStyleState extends State<QuizTrainingStyle> {
                 ),
                 const SizedBox(height: 12),
                 _buildSplitOption(
+                  t: t,
                   id: 'push_pull_legs',
                   title: 'Push / Pull / Legs (PPL)',
                   description: 'Best for 5-6 days/week',
@@ -219,6 +221,7 @@ class _QuizTrainingStyleState extends State<QuizTrainingStyle> {
                 ),
                 const SizedBox(height: 12),
                 _buildSplitOption(
+                  t: t,
                   id: 'full_body',
                   title: 'Full Body',
                   description: 'Train all muscles each workout (2-4 days)',
@@ -226,6 +229,7 @@ class _QuizTrainingStyleState extends State<QuizTrainingStyle> {
                 ),
                 const SizedBox(height: 12),
                 _buildSplitOption(
+                  t: t,
                   id: 'upper_lower',
                   title: 'Upper / Lower',
                   description: 'Split between upper and lower body (4 days)',
@@ -233,6 +237,7 @@ class _QuizTrainingStyleState extends State<QuizTrainingStyle> {
                 ),
                 const SizedBox(height: 12),
                 _buildSplitOption(
+                  t: t,
                   id: 'phul',
                   title: 'PHUL',
                   description: 'Power + Hypertrophy, Upper + Lower (4 days)',
@@ -240,6 +245,7 @@ class _QuizTrainingStyleState extends State<QuizTrainingStyle> {
                 ),
                 const SizedBox(height: 12),
                 _buildSplitOption(
+                  t: t,
                   id: 'phat',
                   title: 'PHAT',
                   description: 'Power Hypertrophy Adaptive Training (5 days)',
@@ -247,6 +253,7 @@ class _QuizTrainingStyleState extends State<QuizTrainingStyle> {
                 ),
                 const SizedBox(height: 12),
                 _buildSplitOption(
+                  t: t,
                   id: 'pplul',
                   title: 'PPLUL',
                   description: 'Push/Pull/Legs/Upper/Lower (5 days)',
@@ -254,6 +261,7 @@ class _QuizTrainingStyleState extends State<QuizTrainingStyle> {
                 ),
                 const SizedBox(height: 12),
                 _buildSplitOption(
+                  t: t,
                   id: 'body_part',
                   title: 'Body Part Split',
                   description: 'One muscle group per day (5+ days)',
@@ -261,6 +269,7 @@ class _QuizTrainingStyleState extends State<QuizTrainingStyle> {
                 ),
                 const SizedBox(height: 12),
                 _buildSplitOption(
+                  t: t,
                   id: 'arnold_split',
                   title: 'Arnold Split',
                   description: 'Chest/Back, Shoulders/Arms, Legs (6 days)',
@@ -313,7 +322,7 @@ class _QuizTrainingStyleState extends State<QuizTrainingStyle> {
                               ' requires ${_getRecommendedDaysForSplit(widget.selectedSplit)} days/week, but you selected ${widget.daysPerWeek} days/week.',
                               style: TextStyle(
                                 fontSize: 13,
-                                color: Colors.white.withValues(alpha: 0.7),
+                                color: t.textSecondary,
                                 height: 1.4,
                               ),
                             ),
@@ -340,29 +349,26 @@ class _QuizTrainingStyleState extends State<QuizTrainingStyle> {
                                           padding: const EdgeInsets.symmetric(vertical: 12),
                                           decoration: BoxDecoration(
                                             gradient: LinearGradient(
-                                              colors: [
-                                                Colors.white.withValues(alpha: 0.22),
-                                                Colors.white.withValues(alpha: 0.12),
-                                              ],
+                                              colors: t.buttonGradient,
                                               begin: Alignment.topLeft,
                                               end: Alignment.bottomRight,
                                             ),
                                             borderRadius: BorderRadius.circular(10),
                                             border: Border.all(
-                                              color: Colors.white.withValues(alpha: 0.3),
+                                              color: t.buttonBorder,
                                             ),
                                           ),
                                           child: Row(
                                             mainAxisAlignment: MainAxisAlignment.center,
                                             children: [
-                                              const Icon(Icons.auto_fix_high_rounded, size: 18, color: Colors.white),
+                                              Icon(Icons.auto_fix_high_rounded, size: 18, color: t.textPrimary),
                                               const SizedBox(width: 8),
                                               Text(
                                                 'Update to ${_getRecommendedDaysForSplit(widget.selectedSplit)} days/week',
-                                                style: const TextStyle(
+                                                style: TextStyle(
                                                   fontSize: 14,
                                                   fontWeight: FontWeight.w600,
-                                                  color: Colors.white,
+                                                  color: t.textPrimary,
                                                 ),
                                               ),
                                             ],
@@ -384,12 +390,12 @@ class _QuizTrainingStyleState extends State<QuizTrainingStyle> {
                 ],
 
                 // Section B: Workout Type
-                const Text(
+                Text(
                   'Workout Type',
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
-                    color: textPrimary,
+                    color: t.textPrimary,
                   ),
                 ),
                 const SizedBox(height: 12),
@@ -398,21 +404,21 @@ class _QuizTrainingStyleState extends State<QuizTrainingStyle> {
                   spacing: 12,
                   runSpacing: 12,
                   children: [
-                    _buildTypeChip('strength', 'Strength', 650.ms),
-                    _buildTypeChip('cardio', 'Cardio', 700.ms),
-                    _buildTypeChip('mixed', 'Mixed', 750.ms),
+                    _buildTypeChip(t, 'strength', 'Strength', 650.ms),
+                    _buildTypeChip(t, 'cardio', 'Cardio', 700.ms),
+                    _buildTypeChip(t, 'mixed', 'Mixed', 750.ms),
                   ],
                 ),
 
                 // Section C: Exercise Variety
                 if (widget.onWorkoutVarietyChanged != null) ...[
                   const SizedBox(height: 28),
-                  const Text(
+                  Text(
                     'Exercise Variety',
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
-                      color: textPrimary,
+                      color: t.textPrimary,
                     ),
                   ),
                   const SizedBox(height: 8),
@@ -420,7 +426,7 @@ class _QuizTrainingStyleState extends State<QuizTrainingStyle> {
                     'Do you prefer the same exercises each week or variety?',
                     style: TextStyle(
                       fontSize: 13,
-                      color: textSecondary,
+                      color: t.textSecondary,
                     ),
                   ),
                   const SizedBox(height: 12),
@@ -429,8 +435,8 @@ class _QuizTrainingStyleState extends State<QuizTrainingStyle> {
                     spacing: 12,
                     runSpacing: 12,
                     children: [
-                      _buildVarietyChip('consistent', 'Consistent', 'Same exercises for progress tracking', Icons.repeat, 800.ms),
-                      _buildVarietyChip('varied', 'Varied', 'Different exercises to keep it fresh', Icons.shuffle, 850.ms),
+                      _buildVarietyChip(t, 'consistent', 'Consistent', 'Same exercises for progress tracking', Icons.repeat, 800.ms),
+                      _buildVarietyChip(t, 'varied', 'Varied', 'Different exercises to keep it fresh', Icons.shuffle, 850.ms),
                     ],
                   ),
                 ],
@@ -455,12 +461,12 @@ class _QuizTrainingStyleState extends State<QuizTrainingStyle> {
                     height: 40,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: Colors.white.withValues(alpha: 0.25),
-                      border: Border.all(color: Colors.white.withValues(alpha: 0.4)),
+                      color: t.checkBg,
+                      border: Border.all(color: t.buttonBorder),
                     ),
                     child: Icon(
                       Icons.keyboard_arrow_down_rounded,
-                      color: Colors.white.withValues(alpha: 0.9),
+                      color: t.textPrimary,
                       size: 24,
                     ),
                   )
@@ -479,6 +485,7 @@ class _QuizTrainingStyleState extends State<QuizTrainingStyle> {
   }
 
   Widget _buildSplitOption({
+    required OnboardingTheme t,
     required String id,
     required String title,
     required String description,
@@ -486,7 +493,6 @@ class _QuizTrainingStyleState extends State<QuizTrainingStyle> {
     required Duration delay,
   }) {
     final isSelected = widget.selectedSplit == id;
-    final textSecondary = Colors.white.withValues(alpha: 0.7);
 
     return GestureDetector(
       onTap: () {
@@ -503,20 +509,15 @@ class _QuizTrainingStyleState extends State<QuizTrainingStyle> {
             decoration: BoxDecoration(
               gradient: isSelected
                   ? LinearGradient(
-                      colors: [
-                        Colors.white.withValues(alpha: 0.28),
-                        Colors.white.withValues(alpha: 0.16),
-                      ],
+                      colors: t.cardSelectedGradient,
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                     )
                   : null,
-              color: isSelected ? null : Colors.white.withValues(alpha: 0.08),
+              color: isSelected ? null : t.cardFill,
               borderRadius: BorderRadius.circular(16),
               border: Border.all(
-                color: isSelected
-                    ? Colors.white.withValues(alpha: 0.5)
-                    : Colors.white.withValues(alpha: 0.15),
+                color: isSelected ? t.borderSelected : t.borderDefault,
                 width: isSelected ? 2 : 1,
               ),
             ),
@@ -530,11 +531,11 @@ class _QuizTrainingStyleState extends State<QuizTrainingStyle> {
                     shape: BoxShape.circle,
                     border: Border.all(
                       color: isSelected
-                          ? Colors.white
-                          : Colors.white.withValues(alpha: 0.4),
+                          ? t.textPrimary
+                          : t.buttonBorder,
                       width: 2,
                     ),
-                    color: isSelected ? Colors.white : Colors.transparent,
+                    color: isSelected ? t.textPrimary : Colors.transparent,
                   ),
                   child: isSelected
                       ? const Icon(Icons.check, size: 16, color: Color(0xFF0D9488))
@@ -553,7 +554,7 @@ class _QuizTrainingStyleState extends State<QuizTrainingStyle> {
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.w600,
-                              color: isSelected ? Colors.white : Colors.white.withValues(alpha: 0.9),
+                              color: t.textPrimary,
                             ),
                           ),
                           if (recommended) ...[
@@ -561,7 +562,7 @@ class _QuizTrainingStyleState extends State<QuizTrainingStyle> {
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                               decoration: BoxDecoration(
-                                color: Colors.white.withValues(alpha: 0.2),
+                                color: t.checkBg,
                                 borderRadius: BorderRadius.circular(4),
                               ),
                               child: Text(
@@ -569,7 +570,7 @@ class _QuizTrainingStyleState extends State<QuizTrainingStyle> {
                                 style: TextStyle(
                                   fontSize: 10,
                                   fontWeight: FontWeight.bold,
-                                  color: Colors.white.withValues(alpha: 0.9),
+                                  color: t.textPrimary,
                                 ),
                               ),
                             ),
@@ -581,7 +582,7 @@ class _QuizTrainingStyleState extends State<QuizTrainingStyle> {
                         description,
                         style: TextStyle(
                           fontSize: 14,
-                          color: textSecondary,
+                          color: t.textSecondary,
                         ),
                       ),
                     ],
@@ -595,7 +596,7 @@ class _QuizTrainingStyleState extends State<QuizTrainingStyle> {
     ).animate().fadeIn(delay: delay).slideX(begin: -0.05);
   }
 
-  Widget _buildTypeChip(String id, String label, Duration delay) {
+  Widget _buildTypeChip(OnboardingTheme t, String id, String label, Duration delay) {
     final isSelected = widget.selectedWorkoutType == id;
 
     return GestureDetector(
@@ -613,20 +614,15 @@ class _QuizTrainingStyleState extends State<QuizTrainingStyle> {
             decoration: BoxDecoration(
               gradient: isSelected
                   ? LinearGradient(
-                      colors: [
-                        Colors.white.withValues(alpha: 0.28),
-                        Colors.white.withValues(alpha: 0.16),
-                      ],
+                      colors: t.cardSelectedGradient,
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                     )
                   : null,
-              color: isSelected ? null : Colors.white.withValues(alpha: 0.08),
+              color: isSelected ? null : t.cardFill,
               borderRadius: BorderRadius.circular(24),
               border: Border.all(
-                color: isSelected
-                    ? Colors.white.withValues(alpha: 0.5)
-                    : Colors.white.withValues(alpha: 0.15),
+                color: isSelected ? t.borderSelected : t.borderDefault,
                 width: isSelected ? 2 : 1,
               ),
             ),
@@ -635,7 +631,7 @@ class _QuizTrainingStyleState extends State<QuizTrainingStyle> {
               style: TextStyle(
                 fontSize: 15,
                 fontWeight: FontWeight.w600,
-                color: isSelected ? Colors.white : Colors.white.withValues(alpha: 0.9),
+                color: t.textPrimary,
               ),
             ),
           ),
@@ -644,9 +640,8 @@ class _QuizTrainingStyleState extends State<QuizTrainingStyle> {
     ).animate().fadeIn(delay: delay).scale(begin: const Offset(0.9, 0.9));
   }
 
-  Widget _buildVarietyChip(String id, String label, String description, IconData icon, Duration delay) {
+  Widget _buildVarietyChip(OnboardingTheme t, String id, String label, String description, IconData icon, Duration delay) {
     final isSelected = widget.selectedWorkoutVariety == id;
-    final textSecondary = Colors.white.withValues(alpha: 0.6);
 
     return GestureDetector(
       onTap: () {
@@ -663,20 +658,15 @@ class _QuizTrainingStyleState extends State<QuizTrainingStyle> {
             decoration: BoxDecoration(
               gradient: isSelected
                   ? LinearGradient(
-                      colors: [
-                        Colors.white.withValues(alpha: 0.28),
-                        Colors.white.withValues(alpha: 0.16),
-                      ],
+                      colors: t.cardSelectedGradient,
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                     )
                   : null,
-              color: isSelected ? null : Colors.white.withValues(alpha: 0.08),
+              color: isSelected ? null : t.cardFill,
               borderRadius: BorderRadius.circular(16),
               border: Border.all(
-                color: isSelected
-                    ? Colors.white.withValues(alpha: 0.5)
-                    : Colors.white.withValues(alpha: 0.15),
+                color: isSelected ? t.borderSelected : t.borderDefault,
                 width: isSelected ? 2 : 1,
               ),
             ),
@@ -686,7 +676,7 @@ class _QuizTrainingStyleState extends State<QuizTrainingStyle> {
                 Icon(
                   icon,
                   size: 20,
-                  color: isSelected ? Colors.white : textSecondary,
+                  color: isSelected ? t.textPrimary : t.textMuted,
                 ),
                 const SizedBox(width: 10),
                 Column(
@@ -698,14 +688,14 @@ class _QuizTrainingStyleState extends State<QuizTrainingStyle> {
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
-                        color: isSelected ? Colors.white : Colors.white.withValues(alpha: 0.9),
+                        color: t.textPrimary,
                       ),
                     ),
                     Text(
                       description,
                       style: TextStyle(
                         fontSize: 11,
-                        color: textSecondary,
+                        color: t.textMuted,
                       ),
                     ),
                   ],
@@ -715,7 +705,7 @@ class _QuizTrainingStyleState extends State<QuizTrainingStyle> {
                   Icon(
                     Icons.check_circle,
                     size: 18,
-                    color: Colors.white.withValues(alpha: 0.9),
+                    color: t.textPrimary,
                   ),
                 ],
               ],

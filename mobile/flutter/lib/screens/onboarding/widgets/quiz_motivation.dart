@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../../core/constants/app_colors.dart';
+import 'onboarding_theme.dart';
 
 /// Motivation multi-select widget for quiz screens.
 class QuizMotivation extends StatelessWidget {
@@ -30,8 +31,7 @@ class QuizMotivation extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const textPrimary = Colors.white;
-    final textSecondary = Colors.white.withValues(alpha: 0.7);
+    final t = OnboardingTheme.of(context);
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -39,9 +39,9 @@ class QuizMotivation extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (showHeader) ...[
-            _buildTitle(textPrimary),
+            _buildTitle(t),
             const SizedBox(height: 8),
-            _buildSubtitle(textSecondary),
+            _buildSubtitle(t),
             const SizedBox(height: 24),
           ],
           Expanded(
@@ -58,7 +58,6 @@ class QuizMotivation extends StatelessWidget {
                     onToggle(motivation['id'] as String);
                   },
                   index: index,
-                  textPrimary: textPrimary,
                 );
               },
             ),
@@ -68,24 +67,24 @@ class QuizMotivation extends StatelessWidget {
     );
   }
 
-  Widget _buildTitle(Color textPrimary) {
+  Widget _buildTitle(OnboardingTheme t) {
     return Text(
       "What's driving you to work out?",
       style: TextStyle(
         fontSize: 24,
         fontWeight: FontWeight.bold,
-        color: textPrimary,
+        color: t.textPrimary,
         height: 1.3,
       ),
     ).animate().fadeIn(delay: 100.ms).slideX(begin: -0.05);
   }
 
-  Widget _buildSubtitle(Color textSecondary) {
+  Widget _buildSubtitle(OnboardingTheme t) {
     return Text(
       'Select all that resonate with you',
       style: TextStyle(
         fontSize: 14,
-        color: textSecondary,
+        color: t.textSecondary,
       ),
     ).animate().fadeIn(delay: 200.ms);
   }
@@ -96,18 +95,18 @@ class _MotivationCard extends StatelessWidget {
   final bool isSelected;
   final VoidCallback onTap;
   final int index;
-  final Color textPrimary;
 
   const _MotivationCard({
     required this.motivation,
     required this.isSelected,
     required this.onTap,
     required this.index,
-    required this.textPrimary,
   });
 
   @override
   Widget build(BuildContext context) {
+    final t = OnboardingTheme.of(context);
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: GestureDetector(
@@ -124,18 +123,13 @@ class _MotivationCard extends StatelessWidget {
                     ? LinearGradient(
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
-                        colors: [
-                          Colors.white.withValues(alpha: 0.28),
-                          Colors.white.withValues(alpha: 0.16),
-                        ],
+                        colors: t.cardSelectedGradient,
                       )
                     : null,
-                color: isSelected ? null : Colors.white.withValues(alpha: 0.08),
+                color: isSelected ? null : t.cardFill,
                 borderRadius: BorderRadius.circular(14),
                 border: Border.all(
-                  color: isSelected
-                      ? Colors.white.withValues(alpha: 0.5)
-                      : Colors.white.withValues(alpha: 0.15),
+                  color: isSelected ? t.borderSelected : t.borderDefault,
                   width: isSelected ? 2 : 1,
                 ),
               ),
@@ -145,14 +139,12 @@ class _MotivationCard extends StatelessWidget {
                     width: 36,
                     height: 36,
                     decoration: BoxDecoration(
-                      color: isSelected
-                          ? Colors.white.withValues(alpha: 0.2)
-                          : Colors.white.withValues(alpha: 0.1),
+                      color: isSelected ? t.checkBg : t.cardFill,
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Icon(
                       motivation['icon'] as IconData,
-                      color: Colors.white,
+                      color: t.textPrimary,
                       size: 20,
                     ),
                   ),
@@ -163,7 +155,7 @@ class _MotivationCard extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.w600,
-                        color: isSelected ? Colors.white : Colors.white.withValues(alpha: 0.9),
+                        color: t.textPrimary,
                       ),
                     ),
                   ),
@@ -171,16 +163,14 @@ class _MotivationCard extends StatelessWidget {
                     width: 22,
                     height: 22,
                     decoration: BoxDecoration(
-                      color: isSelected
-                          ? Colors.white.withValues(alpha: 0.3)
-                          : Colors.transparent,
+                      color: isSelected ? t.checkBg : Colors.transparent,
                       shape: BoxShape.circle,
                       border: isSelected
                           ? null
-                          : Border.all(color: Colors.white.withValues(alpha: 0.3), width: 2),
+                          : Border.all(color: t.checkBorderUnselected, width: 2),
                     ),
                     child: isSelected
-                        ? const Icon(Icons.check, color: Colors.white, size: 14)
+                        ? Icon(Icons.check, color: t.checkIcon, size: 14)
                         : null,
                   ),
                 ],

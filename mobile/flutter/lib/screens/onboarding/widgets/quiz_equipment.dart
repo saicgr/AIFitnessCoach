@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../widgets/glass_sheet.dart';
+import 'onboarding_theme.dart';
 
 /// Workout environment options for quick selection
 class _WorkoutEnvironmentOption {
@@ -152,18 +153,6 @@ class QuizEquipment extends StatefulWidget {
 class _QuizEquipmentState extends State<QuizEquipment> {
   final _shownFollowUps = <String>{};
 
-  // Glassmorphic color constants
-  static const _textPrimary = Colors.white;
-  static final _textSecondary = Colors.white.withValues(alpha: 0.7);
-  static final _chipBgUnselected = Colors.white.withValues(alpha: 0.08);
-  static final _chipBorderUnselected = Colors.white.withValues(alpha: 0.15);
-  static final _chipBorderSelected = Colors.white.withValues(alpha: 0.5);
-  static const _selectedGradient = LinearGradient(
-    colors: [Color.fromRGBO(255, 255, 255, 0.28), Color.fromRGBO(255, 255, 255, 0.16)],
-    begin: Alignment.topLeft,
-    end: Alignment.bottomRight,
-  );
-
   bool get _hasFullGym =>
       widget.selectedEquipment.contains('full_gym') ||
       QuizEquipment._allEquipmentIds.every((id) => widget.selectedEquipment.contains(id));
@@ -202,24 +191,25 @@ class _QuizEquipmentState extends State<QuizEquipment> {
   }
 
   void _showFollowUpDialog(BuildContext context, _FollowUp followUp) {
+    final t = OnboardingTheme.of(context);
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: Colors.white.withValues(alpha: 0.12),
+        backgroundColor: t.cardFill,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: Text(
           followUp.title,
-          style: const TextStyle(
+          style: TextStyle(
             fontWeight: FontWeight.bold,
             fontSize: 17,
-            color: _textPrimary,
+            color: t.textPrimary,
           ),
         ),
         content: Text(
           followUp.subtitle,
           style: TextStyle(
             fontSize: 14,
-            color: _textSecondary,
+            color: t.textSecondary,
           ),
         ),
         actions: [
@@ -227,7 +217,7 @@ class _QuizEquipmentState extends State<QuizEquipment> {
             onPressed: () => Navigator.of(ctx).pop(),
             child: Text(
               'Skip',
-              style: TextStyle(color: _textSecondary),
+              style: TextStyle(color: t.textSecondary),
             ),
           ),
           ElevatedButton(
@@ -236,8 +226,8 @@ class _QuizEquipmentState extends State<QuizEquipment> {
               Navigator.of(ctx).pop();
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.white.withValues(alpha: 0.25),
-              foregroundColor: Colors.white,
+              backgroundColor: t.buttonBorder,
+              foregroundColor: t.textPrimary,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
             ),
             child: const Text('Yes, Add It'),
@@ -249,20 +239,22 @@ class _QuizEquipmentState extends State<QuizEquipment> {
 
   @override
   Widget build(BuildContext context) {
+    final t = OnboardingTheme.of(context);
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (widget.showHeader) ...[
-            _buildTitle(),
+            _buildTitle(t),
             const SizedBox(height: 6),
-            _buildSubtitle(),
+            _buildSubtitle(t),
             const SizedBox(height: 12),
           ],
           // Environment quick selection chips
           if (widget.onEnvironmentChanged != null) ...[
-            _buildEnvironmentSection(context),
+            _buildEnvironmentSection(context, t),
             const SizedBox(height: 12),
           ],
           Expanded(
@@ -271,7 +263,7 @@ class _QuizEquipmentState extends State<QuizEquipment> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildTwoColumnGrid(context),
+                  _buildTwoColumnGrid(context, t),
                   // Quantity selectors shown below the grid when applicable
                   if (widget.selectedEquipment.contains('dumbbells') && !_hasFullGym) ...[
                     const SizedBox(height: 12),
@@ -304,7 +296,7 @@ class _QuizEquipmentState extends State<QuizEquipment> {
     );
   }
 
-  Widget _buildEnvironmentSection(BuildContext context) {
+  Widget _buildEnvironmentSection(BuildContext context, OnboardingTheme t) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -315,16 +307,16 @@ class _QuizEquipmentState extends State<QuizEquipment> {
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
-                color: _textSecondary,
+                color: t.textSecondary,
               ),
             ),
             const SizedBox(width: 6),
             GestureDetector(
-              onTap: () => _showEnvironmentInfo(context),
+              onTap: () => _showEnvironmentInfo(context, t),
               child: Icon(
                 Icons.info_outline,
                 size: 18,
-                color: Colors.white.withValues(alpha: 0.6),
+                color: t.textMuted,
               ),
             ),
           ],
@@ -350,11 +342,17 @@ class _QuizEquipmentState extends State<QuizEquipment> {
                         duration: const Duration(milliseconds: 200),
                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                         decoration: BoxDecoration(
-                          gradient: isSelected ? _selectedGradient : null,
-                          color: isSelected ? null : _chipBgUnselected,
+                          gradient: isSelected
+                              ? LinearGradient(
+                                  colors: t.cardSelectedGradient,
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                )
+                              : null,
+                          color: isSelected ? null : t.cardFill,
                           borderRadius: BorderRadius.circular(16),
                           border: Border.all(
-                            color: isSelected ? _chipBorderSelected : _chipBorderUnselected,
+                            color: isSelected ? t.borderSelected : t.borderDefault,
                             width: isSelected ? 2 : 1,
                           ),
                         ),
@@ -371,7 +369,7 @@ class _QuizEquipmentState extends State<QuizEquipment> {
                               style: TextStyle(
                                 fontSize: 12,
                                 fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                                color: isSelected ? Colors.white : _textPrimary,
+                                color: t.textPrimary,
                               ),
                             ),
                           ],
@@ -390,7 +388,7 @@ class _QuizEquipmentState extends State<QuizEquipment> {
             QuizEquipment._environments.firstWhere((e) => e.id == widget.selectedEnvironment).description,
             style: TextStyle(
               fontSize: 12,
-              color: _textSecondary,
+              color: t.textSecondary,
               fontStyle: FontStyle.italic,
             ),
           ).animate().fadeIn(),
@@ -399,7 +397,7 @@ class _QuizEquipmentState extends State<QuizEquipment> {
     );
   }
 
-  void _showEnvironmentInfo(BuildContext context) {
+  void _showEnvironmentInfo(BuildContext context, OnboardingTheme t) {
     showGlassSheet(
       context: context,
       builder: (context) => GlassSheet(
@@ -410,12 +408,12 @@ class _QuizEquipmentState extends State<QuizEquipment> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-              const Text(
+              Text(
                 'Workout Environment',
                 style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
-                  color: _textPrimary,
+                  color: t.textPrimary,
                 ),
               ),
               const SizedBox(height: 12),
@@ -423,7 +421,7 @@ class _QuizEquipmentState extends State<QuizEquipment> {
                 'Selecting your workout environment helps us recommend the right exercises and equipment for your setup.',
                 style: TextStyle(
                   fontSize: 14,
-                  color: _textSecondary,
+                  color: t.textSecondary,
                 ),
               ),
               const SizedBox(height: 20),
@@ -440,10 +438,10 @@ class _QuizEquipmentState extends State<QuizEquipment> {
                         children: [
                           Text(
                             env.label,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.w600,
-                              color: _textPrimary,
+                              color: t.textPrimary,
                             ),
                           ),
                           const SizedBox(height: 2),
@@ -451,7 +449,7 @@ class _QuizEquipmentState extends State<QuizEquipment> {
                             env.description,
                             style: TextStyle(
                               fontSize: 13,
-                              color: _textSecondary,
+                              color: t.textSecondary,
                             ),
                           ),
                         ],
@@ -465,7 +463,7 @@ class _QuizEquipmentState extends State<QuizEquipment> {
                 'You can customize equipment after selecting an environment, or skip this and select equipment manually.',
                 style: TextStyle(
                   fontSize: 12,
-                  color: _textSecondary,
+                  color: t.textSecondary,
                   fontStyle: FontStyle.italic,
                 ),
               ),
@@ -477,34 +475,34 @@ class _QuizEquipmentState extends State<QuizEquipment> {
     );
   }
 
-  Widget _buildTitle() {
-    return const Text(
+  Widget _buildTitle(OnboardingTheme t) {
+    return Text(
       'What equipment do you have access to?',
       style: TextStyle(
         fontSize: 22,
         fontWeight: FontWeight.bold,
-        color: _textPrimary,
+        color: t.textPrimary,
         height: 1.2,
       ),
     ).animate().fadeIn(delay: 100.ms).slideX(begin: -0.05);
   }
 
-  Widget _buildSubtitle() {
+  Widget _buildSubtitle(OnboardingTheme t) {
     return Text(
       "Select all that apply - we'll design workouts around what you have",
       style: TextStyle(
         fontSize: 13,
-        color: _textSecondary,
+        color: t.textSecondary,
       ),
     ).animate().fadeIn(delay: 200.ms);
   }
 
-  Widget _buildTwoColumnGrid(BuildContext context) {
+  Widget _buildTwoColumnGrid(BuildContext context, OnboardingTheme t) {
     final chips = [
       ...QuizEquipment._equipment.map((item) =>
-        _buildEquipmentChip(context, item),
+        _buildEquipmentChip(context, item, t),
       ),
-      _buildOtherChip(context),
+      _buildOtherChip(context, t),
     ];
 
     final rows = <Widget>[];
@@ -531,6 +529,7 @@ class _QuizEquipmentState extends State<QuizEquipment> {
   Widget _buildEquipmentChip(
     BuildContext context,
     Map<String, dynamic> item,
+    OnboardingTheme t,
   ) {
     final id = item['id'] as String;
     final isFullGymOption = id == 'full_gym';
@@ -551,15 +550,21 @@ class _QuizEquipmentState extends State<QuizEquipment> {
                   duration: const Duration(milliseconds: 200),
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                   decoration: BoxDecoration(
-                    gradient: isSelected ? _selectedGradient : null,
-                    color: isSelected ? null : _chipBgUnselected,
+                    gradient: isSelected
+                        ? LinearGradient(
+                            colors: t.cardSelectedGradient,
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          )
+                        : null,
+                    color: isSelected ? null : t.cardFill,
                     borderRadius: BorderRadius.circular(10),
                     border: Border.all(
                       color: isSelected
-                          ? _chipBorderSelected
+                          ? t.borderSelected
                           : recommended
-                              ? Colors.white.withValues(alpha: 0.35)
-                              : _chipBorderUnselected,
+                              ? t.checkBorderUnselected
+                              : t.borderDefault,
                       width: isSelected ? 2 : 1,
                     ),
                   ),
@@ -568,7 +573,7 @@ class _QuizEquipmentState extends State<QuizEquipment> {
                     children: [
                       Icon(
                         item['icon'] as IconData,
-                        color: isSelected ? Colors.white : _textSecondary,
+                        color: isSelected ? t.textPrimary : t.textSecondary,
                         size: 18,
                       ),
                       const SizedBox(width: 8),
@@ -582,7 +587,7 @@ class _QuizEquipmentState extends State<QuizEquipment> {
                               style: TextStyle(
                                 fontSize: 13,
                                 fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                                color: isSelected ? Colors.white : _textPrimary,
+                                color: t.textPrimary,
                               ),
                               overflow: TextOverflow.ellipsis,
                             ),
@@ -592,7 +597,7 @@ class _QuizEquipmentState extends State<QuizEquipment> {
                                 subtitle,
                                 style: TextStyle(
                                   fontSize: 11,
-                                  color: isSelected ? Colors.white70 : _textSecondary,
+                                  color: t.textSecondary,
                                 ),
                                 overflow: TextOverflow.ellipsis,
                               ),
@@ -605,16 +610,16 @@ class _QuizEquipmentState extends State<QuizEquipment> {
                         width: 20,
                         height: 20,
                         decoration: BoxDecoration(
-                          color: isSelected ? Colors.white.withValues(alpha: 0.2) : Colors.transparent,
+                          color: isSelected ? t.checkBg : Colors.transparent,
                           shape: BoxShape.circle,
                           border: isSelected
                               ? null
                               : Border.all(
-                                  color: _chipBorderUnselected,
+                                  color: t.borderDefault,
                                   width: 1.5,
                                 ),
                         ),
-                        child: isSelected ? const Icon(Icons.check, color: Colors.white, size: 13) : null,
+                        child: isSelected ? Icon(Icons.check, color: t.checkIcon, size: 13) : null,
                       ),
                     ],
                   ),
@@ -629,19 +634,19 @@ class _QuizEquipmentState extends State<QuizEquipment> {
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                   decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.25),
+                    color: t.checkBg,
                     borderRadius: BorderRadius.circular(8),
                     border: Border.all(
-                      color: Colors.white.withValues(alpha: 0.4),
+                      color: t.buttonBorder,
                       width: 1,
                     ),
                   ),
-                  child: const Text(
+                  child: Text(
                     'Recommended',
                     style: TextStyle(
                       fontSize: 9,
                       fontWeight: FontWeight.w600,
-                      color: Colors.white,
+                      color: t.textPrimary,
                     ),
                   ),
                 ),
@@ -651,7 +656,7 @@ class _QuizEquipmentState extends State<QuizEquipment> {
     );
   }
 
-  Widget _buildOtherChip(BuildContext context) {
+  Widget _buildOtherChip(BuildContext context, OnboardingTheme t) {
     final hasOtherSelected = widget.otherSelectedEquipment.isNotEmpty;
 
     return GestureDetector(
@@ -667,11 +672,17 @@ class _QuizEquipmentState extends State<QuizEquipment> {
             duration: const Duration(milliseconds: 200),
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
             decoration: BoxDecoration(
-              gradient: hasOtherSelected ? _selectedGradient : null,
-              color: hasOtherSelected ? null : _chipBgUnselected,
+              gradient: hasOtherSelected
+                  ? LinearGradient(
+                      colors: t.cardSelectedGradient,
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    )
+                  : null,
+              color: hasOtherSelected ? null : t.cardFill,
               borderRadius: BorderRadius.circular(10),
               border: Border.all(
-                color: hasOtherSelected ? _chipBorderSelected : _chipBorderUnselected,
+                color: hasOtherSelected ? t.borderSelected : t.borderDefault,
                 width: hasOtherSelected ? 2 : 1,
               ),
             ),
@@ -680,7 +691,7 @@ class _QuizEquipmentState extends State<QuizEquipment> {
               children: [
                 Icon(
                   Icons.more_horiz,
-                  color: hasOtherSelected ? Colors.white : _textSecondary,
+                  color: hasOtherSelected ? t.textPrimary : t.textSecondary,
                   size: 18,
                 ),
                 const SizedBox(width: 8),
@@ -692,7 +703,7 @@ class _QuizEquipmentState extends State<QuizEquipment> {
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: hasOtherSelected ? FontWeight.w600 : FontWeight.w500,
-                      color: hasOtherSelected ? Colors.white : _textPrimary,
+                      color: t.textPrimary,
                     ),
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -700,7 +711,7 @@ class _QuizEquipmentState extends State<QuizEquipment> {
                 const SizedBox(width: 6),
                 Icon(
                   Icons.search,
-                  color: hasOtherSelected ? Colors.white70 : _textSecondary,
+                  color: t.textSecondary,
                   size: 16,
                 ),
               ],
@@ -732,19 +743,18 @@ class _QuantityRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const textColor = Colors.white;
-    final mutedColor = Colors.white.withValues(alpha: 0.7);
+    final t = OnboardingTheme.of(context);
 
     return Row(
       children: [
-        Icon(icon, size: 16, color: mutedColor),
+        Icon(icon, size: 16, color: t.textSecondary),
         const SizedBox(width: 8),
         Text(
           '$label:',
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 13,
             fontWeight: FontWeight.w500,
-            color: textColor,
+            color: t.textPrimary,
           ),
         ),
         const SizedBox(width: 10),
@@ -754,10 +764,10 @@ class _QuantityRow extends StatelessWidget {
             filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
             child: Container(
               decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.08),
+                color: t.cardFill,
                 borderRadius: BorderRadius.circular(8),
                 border: Border.all(
-                  color: Colors.white.withValues(alpha: 0.25),
+                  color: t.borderDefault,
                   width: 1,
                 ),
               ),
@@ -772,13 +782,13 @@ class _QuantityRow extends StatelessWidget {
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
                       decoration: BoxDecoration(
-                        color: isSingle ? Colors.white.withValues(alpha: 0.25) : Colors.transparent,
+                        color: isSingle ? t.checkBg : Colors.transparent,
                         borderRadius: const BorderRadius.horizontal(left: Radius.circular(7)),
                       ),
                       child: Text(
                         '1',
                         style: TextStyle(
-                          color: isSingle ? Colors.white : mutedColor,
+                          color: isSingle ? t.textPrimary : t.textSecondary,
                           fontSize: 13,
                           fontWeight: isSingle ? FontWeight.w700 : FontWeight.w500,
                         ),
@@ -788,7 +798,7 @@ class _QuantityRow extends StatelessWidget {
                   Container(
                     width: 1,
                     height: 18,
-                    color: Colors.white.withValues(alpha: 0.2),
+                    color: t.borderDefault,
                   ),
                   GestureDetector(
                     onTap: () {
@@ -798,13 +808,13 @@ class _QuantityRow extends StatelessWidget {
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
                       decoration: BoxDecoration(
-                        color: !isSingle ? Colors.white.withValues(alpha: 0.25) : Colors.transparent,
+                        color: !isSingle ? t.checkBg : Colors.transparent,
                         borderRadius: const BorderRadius.horizontal(right: Radius.circular(7)),
                       ),
                       child: Text(
                         '1+',
                         style: TextStyle(
-                          color: !isSingle ? Colors.white : mutedColor,
+                          color: !isSingle ? t.textPrimary : t.textSecondary,
                           fontSize: 13,
                           fontWeight: !isSingle ? FontWeight.w700 : FontWeight.w500,
                         ),
@@ -822,7 +832,7 @@ class _QuantityRow extends StatelessWidget {
           child: Icon(
             Icons.info_outline,
             size: 18,
-            color: Colors.white.withValues(alpha: 0.6),
+            color: t.textMuted,
           ),
         ),
       ],

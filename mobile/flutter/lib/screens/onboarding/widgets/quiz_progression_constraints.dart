@@ -2,6 +2,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'onboarding_theme.dart';
 
 /// Progression pace selection widget (Phase 2 personalization).
 ///
@@ -30,8 +31,7 @@ class QuizProgressionConstraints extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const textPrimary = Colors.white;
-    final textSecondary = Colors.white.withValues(alpha: 0.7);
+    final t = OnboardingTheme.of(context);
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -39,12 +39,12 @@ class QuizProgressionConstraints extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (showHeader) ...[
-            const Text(
+            Text(
               'Progression Pace',
               style: TextStyle(
                 fontSize: 28,
                 fontWeight: FontWeight.bold,
-                color: textPrimary,
+                color: t.textPrimary,
               ),
             ).animate().fadeIn(delay: 100.ms),
             const SizedBox(height: 6),
@@ -52,7 +52,7 @@ class QuizProgressionConstraints extends StatelessWidget {
               'How fast do you want to progress?',
               style: TextStyle(
                 fontSize: 15,
-                color: textSecondary,
+                color: t.textSecondary,
               ),
             ).animate().fadeIn(delay: 200.ms),
             const SizedBox(height: 24),
@@ -114,8 +114,8 @@ class QuizProgressionConstraints extends StatelessWidget {
     String? badgeLabel,
     required Duration delay,
   }) {
+    final t = OnboardingTheme.of(context);
     final isSelected = selectedPace == id;
-    final textSecondary = Colors.white.withValues(alpha: 0.7);
 
     return GestureDetector(
       onTap: () {
@@ -132,20 +132,15 @@ class QuizProgressionConstraints extends StatelessWidget {
             decoration: BoxDecoration(
               gradient: isSelected
                   ? LinearGradient(
-                      colors: [
-                        Colors.white.withValues(alpha: 0.28),
-                        Colors.white.withValues(alpha: 0.16),
-                      ],
+                      colors: t.cardSelectedGradient,
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                     )
                   : null,
-              color: isSelected ? null : Colors.white.withValues(alpha: 0.08),
+              color: isSelected ? null : t.cardFill,
               borderRadius: BorderRadius.circular(16),
               border: Border.all(
-                color: isSelected
-                    ? Colors.white.withValues(alpha: 0.5)
-                    : Colors.white.withValues(alpha: 0.15),
+                color: isSelected ? t.borderSelected : t.borderDefault,
                 width: isSelected ? 2.5 : 1,
               ),
             ),
@@ -156,14 +151,12 @@ class QuizProgressionConstraints extends StatelessWidget {
                   width: 48,
                   height: 48,
                   decoration: BoxDecoration(
-                    color: isSelected
-                        ? Colors.white.withValues(alpha: 0.2)
-                        : Colors.white.withValues(alpha: 0.08),
+                    color: isSelected ? t.checkBg : t.cardFill,
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Icon(
                     icon,
-                    color: isSelected ? Colors.white : textSecondary,
+                    color: isSelected ? t.textPrimary : t.textSecondary,
                     size: 24,
                   ),
                 ),
@@ -180,7 +173,7 @@ class QuizProgressionConstraints extends StatelessWidget {
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.w600,
-                              color: isSelected ? Colors.white : Colors.white.withValues(alpha: 0.9),
+                              color: t.textPrimary,
                             ),
                           ),
                           if (recommended && badgeLabel != null) ...[
@@ -188,7 +181,7 @@ class QuizProgressionConstraints extends StatelessWidget {
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                               decoration: BoxDecoration(
-                                color: Colors.white.withValues(alpha: 0.2),
+                                color: t.checkBg,
                                 borderRadius: BorderRadius.circular(6),
                               ),
                               child: Text(
@@ -196,7 +189,7 @@ class QuizProgressionConstraints extends StatelessWidget {
                                 style: TextStyle(
                                   fontSize: 10,
                                   fontWeight: FontWeight.w700,
-                                  color: Colors.white.withValues(alpha: 0.9),
+                                  color: t.textPrimary,
                                 ),
                               ),
                             ),
@@ -209,8 +202,8 @@ class QuizProgressionConstraints extends StatelessWidget {
                         style: TextStyle(
                           fontSize: 14,
                           color: isSelected
-                              ? Colors.white.withValues(alpha: 0.9)
-                              : textSecondary,
+                              ? t.textPrimary
+                              : t.textSecondary,
                         ),
                       ),
                     ],
@@ -221,9 +214,9 @@ class QuizProgressionConstraints extends StatelessWidget {
                   Container(
                     width: 28,
                     height: 28,
-                    decoration: const BoxDecoration(
+                    decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: Colors.white,
+                      color: t.textPrimary,
                     ),
                     child: const Icon(Icons.check, size: 20, color: Color(0xFF0D9488), weight: 700),
                   ),

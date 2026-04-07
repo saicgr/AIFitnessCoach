@@ -10,6 +10,7 @@ import '../../core/providers/window_mode_provider.dart';
 import '../../data/models/workout.dart';
 import 'pre_auth_quiz_screen.dart';
 import 'widgets/foldable_quiz_scaffold.dart';
+import 'widgets/onboarding_theme.dart';
 
 part 'plan_preview_screen_ui.dart';
 
@@ -42,12 +43,7 @@ class PlanPreviewScreen extends ConsumerWidget {
     final textPrimary = Colors.white;
     final textSecondary = Colors.white.withValues(alpha: 0.7);
 
-    // Dark gradient matching the onboarding flow
-    const gradient = LinearGradient(
-      begin: Alignment.topCenter,
-      end: Alignment.bottomCenter,
-      colors: [Color(0xFF1A1A2E), Color(0xFF16213E), Color(0xFF0F3460)],
-    );
+    final gradient = OnboardingTheme.of(context).backgroundGradient;
 
     return Scaffold(
       body: Container(

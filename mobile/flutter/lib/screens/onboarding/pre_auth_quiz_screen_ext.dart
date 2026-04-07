@@ -219,7 +219,7 @@ extension __PreAuthQuizScreenStateExt on _PreAuthQuizScreenState {
   /// Extra widget shown in the scaffold's left pane (foldable only).
   /// Used for info buttons that belong near the question title.
   Widget? _getStepHeaderExtra(BuildContext context, int step) {
-    final textSecondary = Colors.white.withValues(alpha: 0.7);
+    final textSecondary = OnboardingTheme.of(context).textSecondary;
 
     Widget buildTip({
       required IconData icon,
@@ -509,6 +509,7 @@ extension __PreAuthQuizScreenStateExt on _PreAuthQuizScreenState {
 
 
   Widget _buildDayCheckbox(int day, String label, Duration delay) {
+    final t = OnboardingTheme.of(context);
     final isSelected = _selectedWorkoutDays.contains(day);
     final canSelect = _selectedWorkoutDays.length < (_selectedDays ?? 7);
 
@@ -533,20 +534,15 @@ extension __PreAuthQuizScreenStateExt on _PreAuthQuizScreenState {
             decoration: BoxDecoration(
               gradient: isSelected
                   ? LinearGradient(
-                      colors: [
-                        Colors.white.withValues(alpha: 0.28),
-                        Colors.white.withValues(alpha: 0.16),
-                      ],
+                      colors: t.cardSelectedGradient,
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                     )
                   : null,
-              color: isSelected ? null : Colors.white.withValues(alpha: 0.08),
+              color: isSelected ? null : t.cardFill,
               borderRadius: BorderRadius.circular(16),
               border: Border.all(
-                color: isSelected
-                    ? Colors.white.withValues(alpha: 0.5)
-                    : Colors.white.withValues(alpha: 0.15),
+                color: isSelected ? t.borderSelected : t.borderDefault,
                 width: isSelected ? 1.5 : 1,
               ),
             ),
@@ -558,26 +554,22 @@ extension __PreAuthQuizScreenStateExt on _PreAuthQuizScreenState {
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     border: Border.all(
-                      color: isSelected
-                          ? Colors.white
-                          : Colors.white.withValues(alpha: 0.4),
+                      color: isSelected ? t.checkIcon : t.checkBorderUnselected,
                       width: 2,
                     ),
-                    color: isSelected
-                        ? Colors.white.withValues(alpha: 0.3)
-                        : Colors.transparent,
+                    color: isSelected ? t.checkBg : Colors.transparent,
                   ),
                   child: isSelected
-                      ? const Icon(Icons.check, size: 16, color: Colors.white)
+                      ? Icon(Icons.check, size: 16, color: t.checkIcon)
                       : null,
                 ),
                 const SizedBox(width: 16),
                 Text(
                   label,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
-                    color: Colors.white,
+                    color: t.textPrimary,
                   ),
                 ),
               ],

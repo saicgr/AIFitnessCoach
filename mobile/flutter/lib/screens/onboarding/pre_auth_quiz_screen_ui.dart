@@ -5,6 +5,8 @@ extension _PreAuthQuizScreenStateUI on _PreAuthQuizScreenState {
 
   /// Build the action button for the current question step — glassmorphic.
   Widget? _buildActionButton(bool isDark) {
+    final t = OnboardingTheme.of(context);
+
     // Case 6 gets special "Generate" button with optional skip
     if (_currentQuestion == 6) {
       return Padding(
@@ -25,22 +27,15 @@ extension _PreAuthQuizScreenStateUI on _PreAuthQuizScreenState {
                     decoration: BoxDecoration(
                       gradient: _canProceed
                           ? LinearGradient(
-                              colors: [
-                                Colors.white.withValues(alpha: 0.25),
-                                Colors.white.withValues(alpha: 0.15),
-                              ],
+                              colors: t.buttonGradient,
                               begin: Alignment.topLeft,
                               end: Alignment.bottomRight,
                             )
                           : null,
-                      color: _canProceed
-                          ? null
-                          : Colors.white.withValues(alpha: 0.08),
+                      color: _canProceed ? null : t.cardFill,
                       borderRadius: BorderRadius.circular(28),
                       border: Border.all(
-                        color: _canProceed
-                            ? Colors.white.withValues(alpha: 0.4)
-                            : Colors.white.withValues(alpha: 0.12),
+                        color: _canProceed ? t.buttonBorder : t.borderSubtle,
                       ),
                     ),
                     child: Row(
@@ -51,14 +46,12 @@ extension _PreAuthQuizScreenStateUI on _PreAuthQuizScreenState {
                           style: TextStyle(
                             fontSize: 17,
                             fontWeight: FontWeight.w600,
-                            color: _canProceed
-                                ? Colors.white
-                                : Colors.white.withValues(alpha: 0.35),
+                            color: _canProceed ? t.buttonText : t.textDisabled,
                           ),
                         ),
                         if (_canProceed) ...[
                           const SizedBox(width: 8),
-                          Icon(Icons.auto_awesome_rounded, size: 20, color: Colors.white.withValues(alpha: 0.9)),
+                          Icon(Icons.auto_awesome_rounded, size: 20, color: t.buttonText.withValues(alpha: 0.9)),
                         ],
                       ],
                     ),
@@ -66,7 +59,6 @@ extension _PreAuthQuizScreenStateUI on _PreAuthQuizScreenState {
                 ),
               ),
             ),
-            // Skip option below the generate button
             if (!_canProceed)
               GestureDetector(
                 onTap: _skipCurrentPage,
@@ -77,7 +69,7 @@ extension _PreAuthQuizScreenStateUI on _PreAuthQuizScreenState {
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w500,
-                      color: Colors.white.withValues(alpha: 0.5),
+                      color: t.textMuted,
                     ),
                   ),
                 ),
@@ -86,11 +78,9 @@ extension _PreAuthQuizScreenStateUI on _PreAuthQuizScreenState {
         ),
       ).animate().fadeIn(delay: 400.ms).slideY(begin: 0.1);
     }
-    // Case 7 (personalization gate) has its own action buttons
     if (_currentQuestion == 7) {
       return null;
     }
-    // All other cases: standard continue button with optional skip
     return QuizContinueButton(
       canProceed: _canProceed,
       isLastQuestion: _currentQuestion == _totalQuestions - 1,
@@ -102,18 +92,20 @@ extension _PreAuthQuizScreenStateUI on _PreAuthQuizScreenState {
 
 
   Widget _buildWorkoutDaysSelector({bool showHeader = true}) {
+    final t = OnboardingTheme.of(context);
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (showHeader) ...[
-            const Text(
+            Text(
               'Which days work best?',
               style: TextStyle(
                 fontSize: 28,
                 fontWeight: FontWeight.bold,
-                color: Colors.white,
+                color: t.textPrimary,
               ),
             ).animate().fadeIn(delay: 100.ms),
             const SizedBox(height: 6),
@@ -121,12 +113,11 @@ extension _PreAuthQuizScreenStateUI on _PreAuthQuizScreenState {
               'Select ${_selectedDays ?? 0} days for your workouts',
               style: TextStyle(
                 fontSize: 15,
-                color: Colors.white.withValues(alpha: 0.7),
+                color: t.textSecondary,
               ),
             ).animate().fadeIn(delay: 200.ms),
             const SizedBox(height: 24),
           ],
-          // Days of week selector
           Expanded(
             child: ListView(
               padding: EdgeInsets.zero,

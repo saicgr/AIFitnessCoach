@@ -15,6 +15,7 @@ import '../../data/repositories/auth_repository.dart';
 import '../../data/services/api_client.dart';
 import '../onboarding/pre_auth_quiz_screen.dart';
 import '../onboarding/widgets/foldable_quiz_scaffold.dart';
+import '../onboarding/widgets/onboarding_theme.dart';
 
 /// Glassmorphic sign-in screen shown after quiz and preview
 class SignInScreen extends ConsumerStatefulWidget {
@@ -149,15 +150,8 @@ class _SignInScreenState extends ConsumerState<SignInScreen>
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final t = OnboardingTheme.of(context);
     final authState = ref.watch(authStateProvider);
-
-    // Dark gradient matching the onboarding flow
-    const gradient = LinearGradient(
-      begin: Alignment.topCenter,
-      end: Alignment.bottomCenter,
-      colors: [Color(0xFF1A1A2E), Color(0xFF16213E), Color(0xFF0F3460)],
-    );
 
     Widget errorWidget = const SizedBox.shrink();
     if (authState.status == AuthStatus.error && authState.errorMessage != null) {
@@ -186,7 +180,7 @@ class _SignInScreenState extends ConsumerState<SignInScreen>
 
     return Scaffold(
       body: Container(
-        decoration: BoxDecoration(gradient: gradient),
+        decoration: BoxDecoration(gradient: t.backgroundGradient),
         child: SafeArea(
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -198,14 +192,14 @@ class _SignInScreenState extends ConsumerState<SignInScreen>
                     child: IntrinsicHeight(
                       child: Column(
                         children: [
-                          _buildHeader(),
+                          _buildHeader(t),
                           const Spacer(),
-                          _buildMainContent(),
+                          _buildMainContent(t),
                           const Spacer(),
-                          _buildSignInButtons(),
+                          _buildSignInButtons(t),
                           errorWidget,
                           const SizedBox(height: 24),
-                          _buildTermsText(),
+                          _buildTermsText(t),
                           const SizedBox(height: 24),
                         ],
                       ),
@@ -220,7 +214,7 @@ class _SignInScreenState extends ConsumerState<SignInScreen>
     );
   }
 
-  Widget _buildHeader() {
+  Widget _buildHeader(OnboardingTheme t) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 12),
       child: Row(
@@ -236,11 +230,11 @@ class _SignInScreenState extends ConsumerState<SignInScreen>
                   width: 44,
                   height: 44,
                   decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.15),
+                    color: t.cardFill,
                     borderRadius: BorderRadius.circular(22),
-                    border: Border.all(color: Colors.white.withValues(alpha: 0.25)),
+                    border: Border.all(color: t.borderDefault),
                   ),
-                  child: const Icon(Icons.arrow_back_ios_rounded, color: Colors.white, size: 18),
+                  child: Icon(Icons.arrow_back_ios_rounded, color: t.textPrimary, size: 18),
                 ),
               ),
             ),
@@ -254,9 +248,9 @@ class _SignInScreenState extends ConsumerState<SignInScreen>
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.15),
+                  color: t.cardFill,
                   borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: Colors.white.withValues(alpha: 0.25)),
+                  border: Border.all(color: t.borderDefault),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
@@ -268,7 +262,7 @@ class _SignInScreenState extends ConsumerState<SignInScreen>
                         children: [
                           Container(
                             decoration: BoxDecoration(
-                              color: Colors.white.withValues(alpha: 0.12),
+                              color: t.borderDefault,
                               borderRadius: BorderRadius.circular(3),
                             ),
                           ),
@@ -278,8 +272,8 @@ class _SignInScreenState extends ConsumerState<SignInScreen>
                               decoration: BoxDecoration(
                                 gradient: LinearGradient(
                                   colors: [
-                                    Colors.white.withValues(alpha: 0.9),
-                                    Colors.white.withValues(alpha: 0.6),
+                                    t.textPrimary.withValues(alpha: 0.9),
+                                    t.textPrimary.withValues(alpha: 0.6),
                                   ],
                                 ),
                                 borderRadius: BorderRadius.circular(3),
@@ -293,7 +287,7 @@ class _SignInScreenState extends ConsumerState<SignInScreen>
                     Text(
                       '90%',
                       style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.9),
+                        color: t.textPrimary.withValues(alpha: 0.9),
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
                       ),
@@ -310,7 +304,7 @@ class _SignInScreenState extends ConsumerState<SignInScreen>
     ).animate().fadeIn(duration: 300.ms);
   }
 
-  Widget _buildMainContent() {
+  Widget _buildMainContent(OnboardingTheme t) {
     final quizData = ref.watch(preAuthQuizProvider);
     return Column(
       children: [
@@ -327,7 +321,7 @@ class _SignInScreenState extends ConsumerState<SignInScreen>
                   borderRadius: BorderRadius.circular(28),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.white.withOpacity(0.15 + _pulseController.value * 0.1),
+                      color: t.textPrimary.withOpacity(0.15 + _pulseController.value * 0.1),
                       blurRadius: 24,
                       spreadRadius: 2,
                     ),
@@ -339,18 +333,18 @@ class _SignInScreenState extends ConsumerState<SignInScreen>
                     filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
                     child: Container(
                       decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.15),
+                        color: t.cardFill,
                         borderRadius: BorderRadius.circular(28),
-                        border: Border.all(color: Colors.white.withValues(alpha: 0.3)),
+                        border: Border.all(color: t.borderDefault),
                       ),
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(28),
                         child: Image.asset(
                           'assets/images/app_icon.png',
                           fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) => const Icon(
+                          errorBuilder: (context, error, stackTrace) => Icon(
                             Icons.fitness_center,
-                            color: Colors.white,
+                            color: t.textPrimary,
                             size: 48,
                           ),
                         ),
@@ -366,12 +360,12 @@ class _SignInScreenState extends ConsumerState<SignInScreen>
         const SizedBox(height: 32),
 
         // Title
-        const Text(
+        Text(
           'Almost There!',
           style: TextStyle(
             fontSize: 32,
             fontWeight: FontWeight.bold,
-            color: Colors.white,
+            color: t.textPrimary,
           ),
           textAlign: TextAlign.center,
         ).animate().fadeIn(delay: 300.ms),
@@ -383,7 +377,7 @@ class _SignInScreenState extends ConsumerState<SignInScreen>
           'Sign in to save your personalized plan and start your fitness journey',
           style: TextStyle(
             fontSize: 16,
-            color: Colors.white.withValues(alpha: 0.7),
+            color: t.textSecondary,
             height: 1.4,
           ),
           textAlign: TextAlign.center,
@@ -392,7 +386,7 @@ class _SignInScreenState extends ConsumerState<SignInScreen>
         const SizedBox(height: 32),
 
         // Value reminder card — glassmorphic
-        _buildValueReminderCard(quizData)
+        _buildValueReminderCard(quizData, t)
             .animate()
             .fadeIn(delay: 500.ms)
             .slideY(begin: 0.1),
@@ -400,7 +394,7 @@ class _SignInScreenState extends ConsumerState<SignInScreen>
     );
   }
 
-  Widget _buildValueReminderCard(PreAuthQuizData quizData) {
+  Widget _buildValueReminderCard(PreAuthQuizData quizData, OnboardingTheme t) {
     String goalDisplay = _formatGoal(quizData.goal ?? 'build_muscle');
 
     return ClipRRect(
@@ -411,15 +405,12 @@ class _SignInScreenState extends ConsumerState<SignInScreen>
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
             gradient: LinearGradient(
-              colors: [
-                Colors.white.withValues(alpha: 0.12),
-                Colors.white.withValues(alpha: 0.06),
-              ],
+              colors: t.buttonGradient,
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
+            border: Border.all(color: t.borderDefault),
           ),
           child: Row(
             children: [
@@ -427,12 +418,12 @@ class _SignInScreenState extends ConsumerState<SignInScreen>
                 width: 48,
                 height: 48,
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.15),
+                  color: t.cardFill,
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(
                   Icons.check_circle_outline,
-                  color: Colors.white.withValues(alpha: 0.9),
+                  color: t.textPrimary.withValues(alpha: 0.9),
                   size: 24,
                 ),
               ),
@@ -443,10 +434,10 @@ class _SignInScreenState extends ConsumerState<SignInScreen>
                   children: [
                     Text(
                       'Your $goalDisplay Plan',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
-                        color: Colors.white,
+                        color: t.textPrimary,
                       ),
                     ),
                     const SizedBox(height: 2),
@@ -454,7 +445,7 @@ class _SignInScreenState extends ConsumerState<SignInScreen>
                       '${quizData.daysPerWeek ?? 3} days/week • Personalized for you',
                       style: TextStyle(
                         fontSize: 12,
-                        color: Colors.white.withValues(alpha: 0.6),
+                        color: t.textMuted,
                       ),
                     ),
                   ],
@@ -489,7 +480,7 @@ class _SignInScreenState extends ConsumerState<SignInScreen>
     );
   }
 
-  Widget _buildSignInButtons() {
+  Widget _buildSignInButtons(OnboardingTheme t) {
     return Column(
       children: [
         // Google Sign In button — glassmorphic
@@ -503,20 +494,24 @@ class _SignInScreenState extends ConsumerState<SignInScreen>
                 width: double.infinity,
                 height: 54,
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.2),
+                  gradient: LinearGradient(
+                    colors: t.buttonGradient,
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
                   borderRadius: BorderRadius.circular(27),
-                  border: Border.all(color: Colors.white.withValues(alpha: 0.35)),
+                  border: Border.all(color: t.buttonBorder),
                 ),
                 child: _isLoading
                     ? Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          const SizedBox(
+                          SizedBox(
                             width: 20,
                             height: 20,
                             child: CircularProgressIndicator(
                               strokeWidth: 2,
-                              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                              valueColor: AlwaysStoppedAnimation<Color>(t.textPrimary),
                             ),
                           ),
                           const SizedBox(width: 12),
@@ -525,7 +520,7 @@ class _SignInScreenState extends ConsumerState<SignInScreen>
                             style: TextStyle(
                               fontSize: 15,
                               fontWeight: FontWeight.w500,
-                              color: Colors.white.withValues(alpha: 0.8),
+                              color: t.textSecondary,
                             ),
                           ),
                         ],
@@ -537,19 +532,19 @@ class _SignInScreenState extends ConsumerState<SignInScreen>
                             'https://www.google.com/favicon.ico',
                             width: 20,
                             height: 20,
-                            errorBuilder: (_, __, ___) => const Icon(
+                            errorBuilder: (_, __, ___) => Icon(
                               Icons.g_mobiledata,
                               size: 24,
-                              color: Colors.white,
+                              color: t.textPrimary,
                             ),
                           ),
                           const SizedBox(width: 12),
-                          const Text(
+                          Text(
                             'Continue with Google',
                             style: TextStyle(
                               fontSize: 15,
                               fontWeight: FontWeight.w600,
-                              color: Colors.white,
+                              color: t.textPrimary,
                             ),
                           ),
                         ],
@@ -569,9 +564,9 @@ class _SignInScreenState extends ConsumerState<SignInScreen>
             style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w500,
-              color: Colors.white.withValues(alpha: 0.6),
+              color: t.textMuted,
               decoration: TextDecoration.underline,
-              decorationColor: Colors.white.withValues(alpha: 0.3),
+              decorationColor: t.textMuted.withValues(alpha: 0.5),
             ),
           ),
         ).animate().fadeIn(delay: 800.ms),
@@ -579,19 +574,19 @@ class _SignInScreenState extends ConsumerState<SignInScreen>
     );
   }
 
-  Widget _buildTermsText() {
+  Widget _buildTermsText(OnboardingTheme t) {
     return RichText(
       textAlign: TextAlign.center,
       text: TextSpan(
-        style: TextStyle(fontSize: 12, color: Colors.white.withValues(alpha: 0.5), height: 1.4),
+        style: TextStyle(fontSize: 12, color: t.textMuted, height: 1.4),
         children: [
           const TextSpan(text: 'By continuing, you agree to our '),
           TextSpan(
             text: 'Terms of Service',
             style: TextStyle(
-              color: Colors.white.withValues(alpha: 0.8),
+              color: t.textSecondary,
               decoration: TextDecoration.underline,
-              decorationColor: Colors.white.withValues(alpha: 0.4),
+              decorationColor: t.textMuted,
             ),
             recognizer: TapGestureRecognizer()
               ..onTap = () => launchUrl(Uri.parse('${AppLinks.termsOfService}'), mode: LaunchMode.externalApplication),
@@ -600,9 +595,9 @@ class _SignInScreenState extends ConsumerState<SignInScreen>
           TextSpan(
             text: 'Privacy Policy',
             style: TextStyle(
-              color: Colors.white.withValues(alpha: 0.8),
+              color: t.textSecondary,
               decoration: TextDecoration.underline,
-              decorationColor: Colors.white.withValues(alpha: 0.4),
+              decorationColor: t.textMuted,
             ),
             recognizer: TapGestureRecognizer()
               ..onTap = () => launchUrl(Uri.parse('${AppLinks.privacyPolicy}'), mode: LaunchMode.externalApplication),

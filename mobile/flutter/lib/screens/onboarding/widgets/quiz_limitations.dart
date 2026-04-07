@@ -3,6 +3,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'onboarding_theme.dart';
 
 /// Physical limitations selection widget (moved from QuizProgressionConstraints).
 ///
@@ -51,6 +52,8 @@ class _QuizLimitationsState extends State<QuizLimitations> {
 
   @override
   Widget build(BuildContext context) {
+    final t = OnboardingTheme.of(context);
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Column(
@@ -62,7 +65,7 @@ class _QuizLimitationsState extends State<QuizLimitations> {
               style: TextStyle(
                 fontSize: 28,
                 fontWeight: FontWeight.bold,
-                color: Colors.white,
+                color: t.textPrimary,
               ),
             ).animate().fadeIn(delay: 100.ms),
             const SizedBox(height: 6),
@@ -70,7 +73,7 @@ class _QuizLimitationsState extends State<QuizLimitations> {
               "We'll avoid exercises that stress these areas",
               style: TextStyle(
                 fontSize: 15,
-                color: Colors.white.withValues(alpha: 0.7),
+                color: t.textSecondary,
               ),
             ).animate().fadeIn(delay: 200.ms),
             const SizedBox(height: 24),
@@ -85,16 +88,16 @@ class _QuizLimitationsState extends State<QuizLimitations> {
                   spacing: 12,
                   runSpacing: 12,
                   children: [
-                    _buildLimitationChip('none', 'None', 300.ms),
-                    _buildLimitationChip('knees', 'Knees', 325.ms),
-                    _buildLimitationChip('shoulders', 'Shoulders', 350.ms),
-                    _buildLimitationChip('lower_back', 'Lower Back', 375.ms),
-                    _buildLimitationChip('wrists', 'Wrists', 400.ms),
-                    _buildLimitationChip('elbows', 'Elbows', 425.ms),
-                    _buildLimitationChip('hips', 'Hips', 450.ms),
-                    _buildLimitationChip('ankles', 'Ankles', 475.ms),
-                    _buildLimitationChip('neck', 'Neck', 500.ms),
-                    _buildLimitationChip('other', 'Other', 525.ms),
+                    _buildLimitationChip(t, 'none', 'None', 300.ms),
+                    _buildLimitationChip(t, 'knees', 'Knees', 325.ms),
+                    _buildLimitationChip(t, 'shoulders', 'Shoulders', 350.ms),
+                    _buildLimitationChip(t, 'lower_back', 'Lower Back', 375.ms),
+                    _buildLimitationChip(t, 'wrists', 'Wrists', 400.ms),
+                    _buildLimitationChip(t, 'elbows', 'Elbows', 425.ms),
+                    _buildLimitationChip(t, 'hips', 'Hips', 450.ms),
+                    _buildLimitationChip(t, 'ankles', 'Ankles', 475.ms),
+                    _buildLimitationChip(t, 'neck', 'Neck', 500.ms),
+                    _buildLimitationChip(t, 'other', 'Other', 525.ms),
                   ],
                 ),
                 const SizedBox(height: 16),
@@ -111,14 +114,11 @@ class _QuizLimitationsState extends State<QuizLimitations> {
                           gradient: LinearGradient(
                             begin: Alignment.topLeft,
                             end: Alignment.bottomRight,
-                            colors: [
-                              Colors.white.withValues(alpha: 0.15),
-                              Colors.white.withValues(alpha: 0.08),
-                            ],
+                            colors: t.cardSelectedGradient,
                           ),
                           borderRadius: BorderRadius.circular(16),
                           border: Border.all(
-                            color: Colors.white.withValues(alpha: 0.25),
+                            color: t.borderDefault,
                             width: 1.5,
                           ),
                         ),
@@ -130,7 +130,7 @@ class _QuizLimitationsState extends State<QuizLimitations> {
                                 Icon(
                                   Icons.edit_outlined,
                                   size: 18,
-                                  color: Colors.white.withValues(alpha: 0.9),
+                                  color: t.textPrimary,
                                 ),
                                 const SizedBox(width: 8),
                                 Text(
@@ -138,7 +138,7 @@ class _QuizLimitationsState extends State<QuizLimitations> {
                                   style: TextStyle(
                                     fontSize: 14,
                                     fontWeight: FontWeight.w600,
-                                    color: Colors.white.withValues(alpha: 0.9),
+                                    color: t.textPrimary,
                                   ),
                                 ),
                               ],
@@ -147,34 +147,34 @@ class _QuizLimitationsState extends State<QuizLimitations> {
                             TextField(
                               controller: _customLimitationController,
                               focusNode: _customLimitationFocus,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 15,
-                                color: Colors.white,
+                                color: t.textPrimary,
                               ),
                               decoration: InputDecoration(
                                 hintText: 'e.g., Carpal tunnel, herniated disc, etc.',
                                 hintStyle: TextStyle(
                                   fontSize: 14,
-                                  color: Colors.white.withValues(alpha: 0.4),
+                                  color: t.textDisabled,
                                 ),
                                 filled: true,
-                                fillColor: Colors.white.withValues(alpha: 0.08),
+                                fillColor: t.cardFill,
                                 border: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(12),
                                   borderSide: BorderSide(
-                                    color: Colors.white.withValues(alpha: 0.15),
+                                    color: t.borderDefault,
                                   ),
                                 ),
                                 enabledBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(12),
                                   borderSide: BorderSide(
-                                    color: Colors.white.withValues(alpha: 0.15),
+                                    color: t.borderDefault,
                                   ),
                                 ),
                                 focusedBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(12),
                                   borderSide: BorderSide(
-                                    color: Colors.white.withValues(alpha: 0.5),
+                                    color: t.borderSelected,
                                     width: 2,
                                   ),
                                 ),
@@ -183,7 +183,7 @@ class _QuizLimitationsState extends State<QuizLimitations> {
                                   vertical: 14,
                                 ),
                               ),
-                              cursorColor: Colors.white,
+                              cursorColor: t.textPrimary,
                               maxLines: 2,
                               textInputAction: TextInputAction.done,
                               onChanged: (value) {
@@ -212,7 +212,7 @@ class _QuizLimitationsState extends State<QuizLimitations> {
     );
   }
 
-  Widget _buildLimitationChip(String id, String label, Duration delay) {
+  Widget _buildLimitationChip(OnboardingTheme t, String id, String label, Duration delay) {
     final isSelected = widget.selectedLimitations.contains(id);
 
     return GestureDetector(
@@ -267,18 +267,13 @@ class _QuizLimitationsState extends State<QuizLimitations> {
                   ? LinearGradient(
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
-                      colors: [
-                        Colors.white.withValues(alpha: 0.28),
-                        Colors.white.withValues(alpha: 0.16),
-                      ],
+                      colors: t.cardSelectedGradient,
                     )
                   : null,
-              color: isSelected ? null : Colors.white.withValues(alpha: 0.08),
+              color: isSelected ? null : t.cardFill,
               borderRadius: BorderRadius.circular(24),
               border: Border.all(
-                color: isSelected
-                    ? Colors.white.withValues(alpha: 0.5)
-                    : Colors.white.withValues(alpha: 0.15),
+                color: isSelected ? t.borderSelected : t.borderDefault,
                 width: isSelected ? 2 : 1,
               ),
             ),
@@ -287,9 +282,7 @@ class _QuizLimitationsState extends State<QuizLimitations> {
               style: TextStyle(
                 fontSize: 15,
                 fontWeight: FontWeight.w600,
-                color: isSelected
-                    ? Colors.white
-                    : Colors.white.withValues(alpha: 0.7),
+                color: isSelected ? t.textPrimary : t.textSecondary,
               ),
             ),
           ),

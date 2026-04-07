@@ -1,7 +1,9 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../../core/constants/app_colors.dart';
+import 'onboarding_theme.dart';
 import 'scroll_hint_arrow.dart';
 
 part 'quiz_fasting_ui.dart';
@@ -163,36 +165,30 @@ class _QuizFastingState extends State<QuizFasting> {
     },
   ];
 
-  /// Get recommended protocol based on user data
   String? _getRecommendedProtocol() {
     final fitness = widget.fitnessLevel?.toLowerCase() ?? 'beginner';
     final direction = widget.weightDirection?.toLowerCase() ?? 'maintain';
 
-    // Beginners
     if (fitness == 'beginner') {
       if (direction == 'lose') return '14:10';
       return '12:12';
     }
 
-    // Intermediate
     if (fitness == 'intermediate') {
       if (direction == 'lose') return '16:8';
       if (direction == 'gain') return '14:10';
       return '16:8';
     }
 
-    // Advanced
     if (fitness == 'advanced') {
       if (direction == 'lose') return '18:6';
       if (direction == 'gain') return '16:8';
       return '16:8';
     }
 
-    // Default
     return '16:8';
   }
 
-  /// Get recommendation reason text
   String _getRecommendationReason() {
     final fitness = widget.fitnessLevel?.toLowerCase() ?? 'beginner';
     final direction = widget.weightDirection?.toLowerCase() ?? 'maintain';
@@ -209,7 +205,6 @@ class _QuizFastingState extends State<QuizFasting> {
     return 'Balanced approach for your fitness level';
   }
 
-  /// Get personalized benefit message based on user's goals
   String _getBenefitMessage() {
     final direction = widget.weightDirection?.toLowerCase() ?? 'maintain';
 
@@ -222,12 +217,10 @@ class _QuizFastingState extends State<QuizFasting> {
     return 'Intermittent fasting improves insulin sensitivity, mental clarity, and can help maintain a healthy metabolism.';
   }
 
-  /// Get max meals allowed based on eating window hours
-  /// Rule: Need at least 2 hours between meals for digestion
   int _getMaxMealsForProtocol(String? protocolId) {
     if (protocolId == null) return 6;
 
-    int eatingHours = 8; // default
+    int eatingHours = 8;
 
     if (protocolId.startsWith('custom:')) {
       final parts = protocolId.split(':');
@@ -242,11 +235,6 @@ class _QuizFastingState extends State<QuizFasting> {
       eatingHours = (protocol['eatingHours'] as num).toInt();
     }
 
-    // OMAD (1 hour eating window) = 1 meal
-    // 4 hour window = max 2 meals (2 hours apart)
-    // 6 hour window = max 3 meals
-    // 8 hour window = max 4 meals
-    // 10+ hour window = max 5-6 meals
     if (eatingHours <= 1) return 1;
     if (eatingHours <= 4) return 2;
     if (eatingHours <= 6) return 3;
@@ -255,7 +243,6 @@ class _QuizFastingState extends State<QuizFasting> {
     return 6;
   }
 
-  /// Get eating window hours for a protocol
   int _getEatingHours(String? protocolId) {
     if (protocolId == null) return 24;
 
@@ -273,49 +260,48 @@ class _QuizFastingState extends State<QuizFasting> {
     return (protocol['eatingHours'] as num).toInt();
   }
 
-  /// Get benefit chips based on user's goals
-  List<Widget> _getBenefitChips(bool isDark, Color textSecondary) {
+  List<Widget> _getBenefitChips(OnboardingTheme t) {
     final direction = widget.weightDirection?.toLowerCase() ?? 'maintain';
 
     List<Map<String, dynamic>> benefits;
 
     if (direction == 'lose') {
       benefits = [
-        {'icon': Icons.local_fire_department, 'text': 'Burns fat', 'color': AppColors.orange},
-        {'icon': Icons.trending_down, 'text': 'Reduces cravings', 'color': AppColors.purple},
-        {'icon': Icons.bolt, 'text': 'Boosts energy', 'color': AppColors.electricBlue},
+        {'icon': Icons.local_fire_department, 'text': 'Burns fat'},
+        {'icon': Icons.trending_down, 'text': 'Reduces cravings'},
+        {'icon': Icons.bolt, 'text': 'Boosts energy'},
       ];
     } else if (direction == 'gain') {
       benefits = [
-        {'icon': Icons.fitness_center, 'text': 'Builds muscle', 'color': AppColors.orange},
-        {'icon': Icons.trending_up, 'text': 'Growth hormone', 'color': AppColors.green},
-        {'icon': Icons.restaurant, 'text': 'Better digestion', 'color': AppColors.teal},
+        {'icon': Icons.fitness_center, 'text': 'Builds muscle'},
+        {'icon': Icons.trending_up, 'text': 'Growth hormone'},
+        {'icon': Icons.restaurant, 'text': 'Better digestion'},
       ];
     } else {
       benefits = [
-        {'icon': Icons.psychology, 'text': 'Mental clarity', 'color': AppColors.purple},
-        {'icon': Icons.favorite, 'text': 'Heart health', 'color': AppColors.pink},
-        {'icon': Icons.schedule, 'text': 'Simple routine', 'color': AppColors.orange},
+        {'icon': Icons.psychology, 'text': 'Mental clarity'},
+        {'icon': Icons.favorite, 'text': 'Heart health'},
+        {'icon': Icons.schedule, 'text': 'Simple routine'},
       ];
     }
 
     return benefits.map((b) => Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: (b['color'] as Color).withValues(alpha: 0.12),
+        color: t.cardFill,
         borderRadius: BorderRadius.circular(6),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(b['icon'] as IconData, size: 12, color: b['color'] as Color),
+          Icon(b['icon'] as IconData, size: 12, color: t.textPrimary),
           const SizedBox(width: 4),
           Text(
             b['text'] as String,
             style: TextStyle(
               fontSize: 11,
               fontWeight: FontWeight.w600,
-              color: b['color'] as Color,
+              color: t.textPrimary,
             ),
           ),
         ],
@@ -325,14 +311,9 @@ class _QuizFastingState extends State<QuizFasting> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    // Use stronger, more visible colors with proper contrast
-    final textPrimary = isDark ? Colors.white : const Color(0xFF0A0A0A);
-    final textSecondary = isDark ? const Color(0xFFD4D4D8) : const Color(0xFF52525B);
-    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+    final t = OnboardingTheme.of(context);
     final recommendedId = _getRecommendedProtocol();
 
-    // Get personalized benefit message based on user's goal
     final benefitMessage = _getBenefitMessage();
 
     return Stack(
@@ -349,7 +330,7 @@ class _QuizFastingState extends State<QuizFasting> {
                   style: TextStyle(
                     fontSize: 22,
                     fontWeight: FontWeight.bold,
-                    color: textPrimary,
+                    color: t.textPrimary,
                     height: 1.3,
                   ),
                 ).animate().fadeIn(delay: 100.ms).slideX(begin: -0.05),
@@ -357,31 +338,37 @@ class _QuizFastingState extends State<QuizFasting> {
               ],
 
               // Benefits container
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: AppColors.accent.withValues(alpha: 0.08),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: AppColors.accent.withValues(alpha: 0.2)),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      benefitMessage,
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: textPrimary,
-                        height: 1.4,
-                      ),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+                  child: Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: t.cardFill,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: t.borderDefault),
                     ),
-                    const SizedBox(height: 8),
-                    Wrap(
-                      spacing: 6,
-                      runSpacing: 6,
-                      children: _getBenefitChips(isDark, textSecondary),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          benefitMessage,
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: t.textPrimary,
+                            height: 1.4,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Wrap(
+                          spacing: 6,
+                          runSpacing: 6,
+                          children: _getBenefitChips(t),
+                        ),
+                      ],
                     ),
-                  ],
+                  ),
                 ),
               ).animate().fadeIn(delay: 200.ms),
               const SizedBox(height: 16),
@@ -398,9 +385,7 @@ class _QuizFastingState extends State<QuizFasting> {
                         HapticFeedback.selectionClick();
                         widget.onInterestChanged(true);
                       },
-                      isDark: isDark,
-                      textPrimary: textPrimary,
-                      cardBorder: cardBorder,
+                      t: t,
                     ),
                   ),
                   const SizedBox(width: 10),
@@ -414,9 +399,7 @@ class _QuizFastingState extends State<QuizFasting> {
                         widget.onInterestChanged(false);
                         widget.onProtocolChanged(null);
                       },
-                      isDark: isDark,
-                      textPrimary: textPrimary,
-                      cardBorder: cardBorder,
+                      t: t,
                     ),
                   ),
                 ],
@@ -430,7 +413,7 @@ class _QuizFastingState extends State<QuizFasting> {
                   style: TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.w600,
-                    color: textPrimary,
+                    color: t.textPrimary,
                   ),
                 ).animate().fadeIn(delay: 100.ms),
                 const SizedBox(height: 2),
@@ -438,12 +421,12 @@ class _QuizFastingState extends State<QuizFasting> {
                   'Optional - you can set this later',
                   style: TextStyle(
                     fontSize: 12,
-                    color: textSecondary,
+                    color: t.textSecondary,
                   ),
                 ).animate().fadeIn(delay: 150.ms),
                 const SizedBox(height: 10),
 
-                // Protocol list (inline, not in ListView)
+                // Protocol list
                 ...allFastingProtocols.asMap().entries.map((entry) {
                   final index = entry.key;
                   final protocol = entry.value;
@@ -467,174 +450,171 @@ class _QuizFastingState extends State<QuizFasting> {
                                 widget.onProtocolChanged(isSelected ? null : 'custom:$_customFastingHours:$_customEatingHours');
                               }
                             } else {
-                              // Toggle off if already selected
                               widget.onProtocolChanged(isSelected ? null : id);
                               setState(() => _showCustomInput = false);
                             }
                           },
-                          child: AnimatedContainer(
-                            duration: const Duration(milliseconds: 200),
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                            decoration: BoxDecoration(
-                              gradient: isSelected
-                                  ? LinearGradient(
-                                      colors: [AppColors.orange, AppColors.orange.withOpacity(0.8)],
-                                      begin: Alignment.topLeft,
-                                      end: Alignment.bottomRight,
-                                    )
-                                  : null,
-                              color: isSelected
-                                  ? null
-                                  : (isDark ? AppColors.glassSurface : AppColorsLight.glassSurface),
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(
-                                color: isRecommended && !isSelected
-                                    ? AppColors.green
-                                    : (isSelected ? AppColors.orange : cardBorder),
-                                width: isSelected || isRecommended ? 2 : 1,
-                              ),
-                              boxShadow: isSelected
-                                  ? [
-                                      BoxShadow(
-                                        color: AppColors.orange.withOpacity(0.4),
-                                        blurRadius: 12,
-                                        spreadRadius: 0,
-                                        offset: const Offset(0, 4),
-                                      ),
-                                    ]
-                                  : null,
-                            ),
-                            child: Row(
-                              children: [
-                                Container(
-                                  width: 32,
-                                  height: 32,
-                                  decoration: BoxDecoration(
-                                    color: isSelected
-                                        ? Colors.white.withValues(alpha: 0.2)
-                                        : color.withValues(alpha: 0.15),
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  child: Icon(
-                                    protocol['icon'] as IconData,
-                                    color: isSelected ? Colors.white : color,
-                                    size: 16,
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(12),
+                            child: BackdropFilter(
+                              filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+                              child: AnimatedContainer(
+                                duration: const Duration(milliseconds: 200),
+                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                                decoration: BoxDecoration(
+                                  gradient: isSelected
+                                      ? LinearGradient(
+                                          colors: t.cardSelectedGradient,
+                                          begin: Alignment.topLeft,
+                                          end: Alignment.bottomRight,
+                                        )
+                                      : null,
+                                  color: isSelected ? null : t.cardFill,
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(
+                                    color: isRecommended && !isSelected
+                                        ? AppColors.green.withValues(alpha: 0.6)
+                                        : (isSelected
+                                            ? t.borderSelected
+                                            : t.borderDefault),
+                                    width: isSelected || isRecommended ? 2 : 1,
                                   ),
                                 ),
-                                const SizedBox(width: 10),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Row(
+                                child: Row(
+                                  children: [
+                                    Container(
+                                      width: 32,
+                                      height: 32,
+                                      decoration: BoxDecoration(
+                                        color: isSelected
+                                            ? t.checkBg
+                                            : color.withValues(alpha: 0.2),
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      child: Icon(
+                                        protocol['icon'] as IconData,
+                                        color: isSelected ? t.textPrimary : color,
+                                        size: 16,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 10),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
                                         children: [
+                                          Row(
+                                            children: [
+                                              Text(
+                                                protocol['label'] as String,
+                                                style: TextStyle(
+                                                  fontSize: 14,
+                                                  fontWeight: FontWeight.bold,
+                                                  color: t.textPrimary,
+                                                ),
+                                              ),
+                                              if (isRecommended) ...[
+                                                const SizedBox(width: 8),
+                                                Container(
+                                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                                  decoration: BoxDecoration(
+                                                    color: isSelected
+                                                        ? t.checkBg
+                                                        : AppColors.green.withValues(alpha: 0.2),
+                                                    borderRadius: BorderRadius.circular(4),
+                                                  ),
+                                                  child: Text(
+                                                    'Recommended',
+                                                    style: TextStyle(
+                                                      fontSize: 10,
+                                                      fontWeight: FontWeight.w600,
+                                                      color: isSelected ? t.textPrimary : AppColors.green,
+                                                    ),
+                                                  ),
+                                                ),
+                                              ],
+                                              if (protocol['popular'] == true && !isRecommended) ...[
+                                                const SizedBox(width: 8),
+                                                Container(
+                                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                                  decoration: BoxDecoration(
+                                                    color: t.cardFill,
+                                                    borderRadius: BorderRadius.circular(4),
+                                                  ),
+                                                  child: Text(
+                                                    'Popular',
+                                                    style: TextStyle(
+                                                      fontSize: 10,
+                                                      fontWeight: FontWeight.w600,
+                                                      color: t.textPrimary,
+                                                    ),
+                                                  ),
+                                                ),
+                                              ],
+                                            ],
+                                          ),
+                                          const SizedBox(height: 1),
                                           Text(
-                                            protocol['label'] as String,
+                                            protocol['description'] as String,
                                             style: TextStyle(
-                                              fontSize: 14,
-                                              fontWeight: FontWeight.bold,
-                                              color: isSelected ? Colors.white : textPrimary,
+                                              fontSize: 11,
+                                              color: t.textSecondary,
                                             ),
                                           ),
-                                          if (isRecommended) ...[
-                                            const SizedBox(width: 8),
-                                            Container(
-                                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                              decoration: BoxDecoration(
-                                                color: isSelected
-                                                    ? Colors.white.withValues(alpha: 0.2)
-                                                    : AppColors.green.withValues(alpha: 0.15),
-                                                borderRadius: BorderRadius.circular(4),
-                                              ),
-                                              child: Text(
-                                                'Recommended',
-                                                style: TextStyle(
-                                                  fontSize: 10,
-                                                  fontWeight: FontWeight.w600,
-                                                  color: isSelected ? Colors.white : AppColors.green,
-                                                ),
+                                          if (isRecommended && !isSelected) ...[
+                                            const SizedBox(height: 4),
+                                            Text(
+                                              _getRecommendationReason(),
+                                              style: TextStyle(
+                                                fontSize: 11,
+                                                fontStyle: FontStyle.italic,
+                                                color: AppColors.green,
                                               ),
                                             ),
                                           ],
-                                          if (protocol['popular'] == true && !isRecommended) ...[
-                                            const SizedBox(width: 8),
-                                            Container(
-                                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                              decoration: BoxDecoration(
-                                                color: isSelected
-                                                    ? Colors.white.withValues(alpha: 0.2)
-                                                    : AppColors.accent.withValues(alpha: 0.15),
-                                                borderRadius: BorderRadius.circular(4),
-                                              ),
-                                              child: Text(
-                                                'Popular',
-                                                style: TextStyle(
-                                                  fontSize: 10,
-                                                  fontWeight: FontWeight.w600,
-                                                  color: isSelected ? Colors.white : AppColors.accent,
+                                          if (protocol['warning'] != null) ...[
+                                            const SizedBox(height: 4),
+                                            Row(
+                                              children: [
+                                                Icon(
+                                                  Icons.info_outline,
+                                                  size: 12,
+                                                  color: isSelected
+                                                      ? t.textSecondary
+                                                      : AppColors.warning,
                                                 ),
-                                              ),
+                                                const SizedBox(width: 4),
+                                                Text(
+                                                  protocol['warning'] as String,
+                                                  style: TextStyle(
+                                                    fontSize: 10,
+                                                    color: isSelected
+                                                        ? t.textSecondary
+                                                        : AppColors.warning,
+                                                  ),
+                                                ),
+                                              ],
                                             ),
                                           ],
                                         ],
                                       ),
-                                      const SizedBox(height: 1),
-                                      Text(
-                                        protocol['description'] as String,
-                                        style: TextStyle(
-                                          fontSize: 11,
-                                          color: isSelected ? Colors.white70 : textSecondary,
-                                        ),
+                                    ),
+                                    Container(
+                                      width: 18,
+                                      height: 18,
+                                      decoration: BoxDecoration(
+                                        color: isSelected ? t.checkBg : Colors.transparent,
+                                        shape: BoxShape.circle,
+                                        border: isSelected
+                                            ? null
+                                            : Border.all(color: t.borderDefault, width: 1.5),
                                       ),
-                                      if (isRecommended && !isSelected) ...[
-                                        const SizedBox(height: 4),
-                                        Text(
-                                          _getRecommendationReason(),
-                                          style: TextStyle(
-                                            fontSize: 11,
-                                            fontStyle: FontStyle.italic,
-                                            color: AppColors.green,
-                                          ),
-                                        ),
-                                      ],
-                                      if (protocol['warning'] != null) ...[
-                                        const SizedBox(height: 4),
-                                        Row(
-                                          children: [
-                                            Icon(
-                                              Icons.info_outline,
-                                              size: 12,
-                                              color: isSelected ? Colors.white70 : AppColors.warning,
-                                            ),
-                                            const SizedBox(width: 4),
-                                            Text(
-                                              protocol['warning'] as String,
-                                              style: TextStyle(
-                                                fontSize: 10,
-                                                color: isSelected ? Colors.white70 : AppColors.warning,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ],
-                                    ],
-                                  ),
+                                      child: isSelected
+                                          ? Icon(Icons.check, color: t.checkIcon, size: 12)
+                                          : null,
+                                    ),
+                                  ],
                                 ),
-                                Container(
-                                  width: 18,
-                                  height: 18,
-                                  decoration: BoxDecoration(
-                                    color: isSelected ? Colors.white.withValues(alpha: 0.2) : Colors.transparent,
-                                    shape: BoxShape.circle,
-                                    border: isSelected
-                                        ? null
-                                        : Border.all(color: cardBorder, width: 1.5),
-                                  ),
-                                  child: isSelected
-                                      ? const Icon(Icons.check, color: Colors.white, size: 12)
-                                      : null,
-                                ),
-                              ],
+                              ),
                             ),
                           ),
                         ).animate(delay: (200 + index * 60).ms).fadeIn().slideX(begin: 0.05),
@@ -642,23 +622,23 @@ class _QuizFastingState extends State<QuizFasting> {
                         // Custom protocol input
                         if (isCustom && _showCustomInput) ...[
                           const SizedBox(height: 8),
-                          _buildCustomProtocolInput(isDark, textPrimary, textSecondary, cardBorder),
+                          _buildCustomProtocolInput(t),
                         ],
                       ],
                     ),
                   );
                 }),
 
-                // Meal distribution info (show when protocol selected and meals are set)
+                // Meal distribution info
                 if (widget.selectedProtocol != null && widget.mealsPerDay != null)
-                  _buildMealDistributionInfo(isDark, textPrimary, textSecondary, cardBorder),
+                  _buildMealDistributionInfo(t),
 
                 // Sleep schedule section
                 if (widget.onWakeTimeChanged != null)
-                  _buildSleepScheduleSection(isDark, textPrimary, textSecondary, cardBorder),
+                  _buildSleepScheduleSection(t),
               ],
 
-              const SizedBox(height: 60), // Bottom padding for scroll hint
+              const SizedBox(height: 60),
             ],
           ),
         ),
@@ -667,201 +647,226 @@ class _QuizFastingState extends State<QuizFasting> {
     );
   }
 
-  Widget _buildCustomProtocolInput(
-    bool isDark,
-    Color textPrimary,
-    Color textSecondary,
-    Color cardBorder,
-  ) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.elevated : AppColorsLight.elevated,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: cardBorder),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Set your custom fasting window',
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-              color: textPrimary,
-            ),
+  Widget _buildCustomProtocolInput(OnboardingTheme t) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(12),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: t.cardFill,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: t.borderDefault),
           ),
-          const SizedBox(height: 16),
-
-          // Fasting hours
-          Row(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Fasting hours',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: textSecondary,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        _buildIncrementButton(
-                          icon: Icons.remove,
-                          onTap: () {
-                            if (_customFastingHours > 1) {
-                              setState(() => _customFastingHours--);
-                              _updateCustomProtocol();
-                            }
-                          },
-                          isDark: isDark,
-                          cardBorder: cardBorder,
-                        ),
-                        Expanded(
-                          child: Center(
-                            child: Text(
-                              '$_customFastingHours h',
-                              style: TextStyle(
-                                fontSize: 24,
-                                fontWeight: FontWeight.bold,
-                                color: AppColors.accent,
-                              ),
-                            ),
-                          ),
-                        ),
-                        _buildIncrementButton(
-                          icon: Icons.add,
-                          onTap: () {
-                            if (_customFastingHours < 23) {
-                              setState(() => _customFastingHours++);
-                              _updateCustomProtocol();
-                            }
-                          },
-                          isDark: isDark,
-                          cardBorder: cardBorder,
-                        ),
-                      ],
-                    ),
-                  ],
+              Text(
+                'Set your custom fasting window',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: t.textPrimary,
                 ),
               ),
-              const SizedBox(width: 24),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Eating hours',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: textSecondary,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        _buildIncrementButton(
-                          icon: Icons.remove,
-                          onTap: () {
-                            if (_customEatingHours > 1) {
-                              setState(() => _customEatingHours--);
-                              _updateCustomProtocol();
-                            }
-                          },
-                          isDark: isDark,
-                          cardBorder: cardBorder,
-                        ),
-                        Expanded(
-                          child: Center(
-                            child: Text(
-                              '$_customEatingHours h',
-                              style: TextStyle(
-                                fontSize: 24,
-                                fontWeight: FontWeight.bold,
-                                color: AppColors.success,
-                              ),
-                            ),
-                          ),
-                        ),
-                        _buildIncrementButton(
-                          icon: Icons.add,
-                          onTap: () {
-                            if (_customEatingHours < 23) {
-                              setState(() => _customEatingHours++);
-                              _updateCustomProtocol();
-                            }
-                          },
-                          isDark: isDark,
-                          cardBorder: cardBorder,
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
+              const SizedBox(height: 16),
 
-          // Total hours indicator
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: (_customFastingHours + _customEatingHours == 24)
-                  ? AppColors.success.withValues(alpha: 0.1)
-                  : AppColors.warning.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Row(
-              children: [
-                Icon(
-                  (_customFastingHours + _customEatingHours == 24)
-                      ? Icons.check_circle
-                      : Icons.info_outline,
-                  size: 16,
+              // Fasting hours
+              Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Fasting hours',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: t.textSecondary,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Row(
+                          children: [
+                            _buildIncrementButton(
+                              icon: Icons.remove,
+                              onTap: () {
+                                if (_customFastingHours > 1) {
+                                  setState(() => _customFastingHours--);
+                                  _updateCustomProtocol();
+                                }
+                              },
+                              t: t,
+                            ),
+                            Expanded(
+                              child: Center(
+                                child: Text(
+                                  '$_customFastingHours h',
+                                  style: TextStyle(
+                                    fontSize: 24,
+                                    fontWeight: FontWeight.bold,
+                                    color: t.textPrimary,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            _buildIncrementButton(
+                              icon: Icons.add,
+                              onTap: () {
+                                if (_customFastingHours < 23) {
+                                  setState(() => _customFastingHours++);
+                                  _updateCustomProtocol();
+                                }
+                              },
+                              t: t,
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 24),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Eating hours',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: t.textSecondary,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Row(
+                          children: [
+                            _buildIncrementButton(
+                              icon: Icons.remove,
+                              onTap: () {
+                                if (_customEatingHours > 1) {
+                                  setState(() => _customEatingHours--);
+                                  _updateCustomProtocol();
+                                }
+                              },
+                              t: t,
+                            ),
+                            Expanded(
+                              child: Center(
+                                child: Text(
+                                  '$_customEatingHours h',
+                                  style: TextStyle(
+                                    fontSize: 24,
+                                    fontWeight: FontWeight.bold,
+                                    color: t.textPrimary,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            _buildIncrementButton(
+                              icon: Icons.add,
+                              onTap: () {
+                                if (_customEatingHours < 23) {
+                                  setState(() => _customEatingHours++);
+                                  _updateCustomProtocol();
+                                }
+                              },
+                              t: t,
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+
+              // Total hours indicator
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
                   color: (_customFastingHours + _customEatingHours == 24)
-                      ? AppColors.success
-                      : AppColors.warning,
+                      ? AppColors.success.withValues(alpha: 0.15)
+                      : AppColors.warning.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(8),
                 ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    (_customFastingHours + _customEatingHours == 24)
-                        ? 'Custom $_customFastingHours:$_customEatingHours protocol'
-                        : 'Total should equal 24h (currently ${_customFastingHours + _customEatingHours}h)',
-                    style: TextStyle(
-                      fontSize: 12,
+                child: Row(
+                  children: [
+                    Icon(
+                      (_customFastingHours + _customEatingHours == 24)
+                          ? Icons.check_circle
+                          : Icons.info_outline,
+                      size: 16,
                       color: (_customFastingHours + _customEatingHours == 24)
                           ? AppColors.success
                           : AppColors.warning,
                     ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        (_customFastingHours + _customEatingHours == 24)
+                            ? 'Custom $_customFastingHours:$_customEatingHours protocol'
+                            : 'Total should equal 24h (currently ${_customFastingHours + _customEatingHours}h)',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: (_customFastingHours + _customEatingHours == 24)
+                              ? AppColors.success
+                              : AppColors.warning,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 12),
+
+              // Apply button - glassmorphic
+              SizedBox(
+                width: double.infinity,
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(10),
+                  child: BackdropFilter(
+                    filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+                    child: Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        onTap: () {
+                          HapticFeedback.mediumImpact();
+                          widget.onProtocolChanged('custom:$_customFastingHours:$_customEatingHours');
+                          setState(() => _showCustomInput = false);
+                        },
+                        borderRadius: BorderRadius.circular(10),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: t.buttonGradient,
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            ),
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(color: t.buttonBorder),
+                          ),
+                          child: Center(
+                            child: Text(
+                              'Apply Custom Protocol',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                                color: t.buttonText,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
                   ),
                 ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 12),
-
-          // Apply button
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: () {
-                HapticFeedback.mediumImpact();
-                widget.onProtocolChanged('custom:$_customFastingHours:$_customEatingHours');
-                setState(() => _showCustomInput = false);
-              },
-              style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 12),
               ),
-              child: const Text('Apply Custom Protocol'),
-            ),
+            ],
           ),
-        ],
+        ),
       ),
     ).animate().fadeIn().slideY(begin: 0.1);
   }
@@ -869,8 +874,7 @@ class _QuizFastingState extends State<QuizFasting> {
   Widget _buildIncrementButton({
     required IconData icon,
     required VoidCallback onTap,
-    required bool isDark,
-    required Color cardBorder,
+    required OnboardingTheme t,
   }) {
     return GestureDetector(
       onTap: () {
@@ -881,13 +885,13 @@ class _QuizFastingState extends State<QuizFasting> {
         width: 36,
         height: 36,
         decoration: BoxDecoration(
-          color: isDark ? AppColors.glassSurface : AppColorsLight.glassSurface,
+          color: t.cardFill,
           borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: cardBorder),
+          border: Border.all(color: t.borderDefault),
         ),
         child: Icon(
           icon,
-          color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
+          color: t.textPrimary,
           size: 18,
         ),
       ),

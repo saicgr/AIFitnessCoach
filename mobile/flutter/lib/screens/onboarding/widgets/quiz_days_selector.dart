@@ -3,6 +3,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'onboarding_theme.dart';
 
 /// Callback for duration range selection (min, max)
 typedef DurationRangeCallback = void Function(int min, int max);
@@ -50,8 +51,7 @@ class QuizDaysSelector extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const textPrimary = Colors.white;
-    final textSecondary = Colors.white.withValues(alpha: 0.7);
+    final t = OnboardingTheme.of(context);
 
     final requiredDays = selectedDays ?? 0;
     final selectedCount = selectedWorkoutDays.length;
@@ -63,21 +63,21 @@ class QuizDaysSelector extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             if (showHeader) ...[
-              _buildTitle(textPrimary),
+              _buildTitle(t),
               const SizedBox(height: 6),
-              _buildSubtitle(textSecondary),
+              _buildSubtitle(t),
               const SizedBox(height: 16),
             ],
-            _buildDaysPerWeekSelector(textPrimary, textSecondary),
+            _buildDaysPerWeekSelector(t),
             const SizedBox(height: 20),
             if (selectedDays != null) ...[
-              _buildWhichDaysSection(textPrimary, textSecondary, requiredDays, selectedCount),
+              _buildWhichDaysSection(t, requiredDays, selectedCount),
             ],
 
             // Workout Duration Section (only show if callback is provided)
             if (onDurationChanged != null) ...[
               const SizedBox(height: 20),
-              _buildDurationSection(textPrimary, textSecondary),
+              _buildDurationSection(t),
             ],
           ],
         ),
@@ -85,7 +85,7 @@ class QuizDaysSelector extends StatelessWidget {
     );
   }
 
-  Widget _buildDurationSection(Color textPrimary, Color textSecondary) {
+  Widget _buildDurationSection(OnboardingTheme t) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -94,7 +94,7 @@ class QuizDaysSelector extends StatelessWidget {
           style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.w600,
-            color: textPrimary,
+            color: t.textPrimary,
           ),
         ).animate().fadeIn(delay: 100.ms),
         const SizedBox(height: 6),
@@ -102,7 +102,7 @@ class QuizDaysSelector extends StatelessWidget {
           'Your workout duration target (AI will generate within this range)',
           style: TextStyle(
             fontSize: 13,
-            color: textSecondary,
+            color: t.textSecondary,
           ),
         ).animate().fadeIn(delay: 150.ms),
         const SizedBox(height: 12),
@@ -138,24 +138,19 @@ class QuizDaysSelector extends StatelessWidget {
                             decoration: BoxDecoration(
                               gradient: isSelected
                                   ? LinearGradient(
-                                      colors: [
-                                        Colors.white.withValues(alpha: 0.28),
-                                        Colors.white.withValues(alpha: 0.16),
-                                      ],
+                                      colors: t.cardSelectedGradient,
                                       begin: Alignment.topLeft,
                                       end: Alignment.bottomRight,
                                     )
                                   : null,
-                              color: isSelected
-                                  ? null
-                                  : Colors.white.withValues(alpha: 0.08),
+                              color: isSelected ? null : t.cardFill,
                               borderRadius: BorderRadius.circular(12),
                               border: Border.all(
                                 color: isSelected
-                                    ? Colors.white.withValues(alpha: 0.5)
+                                    ? t.borderSelected
                                     : isRecommended
-                                        ? Colors.white.withValues(alpha: 0.3)
-                                        : Colors.white.withValues(alpha: 0.15),
+                                        ? t.checkBorderUnselected
+                                        : t.borderDefault,
                                 width: isSelected ? 2 : 1,
                               ),
                               boxShadow: isSelected
@@ -175,14 +170,14 @@ class QuizDaysSelector extends StatelessWidget {
                                   style: TextStyle(
                                     fontSize: 18,
                                     fontWeight: FontWeight.bold,
-                                    color: isSelected ? Colors.white : textPrimary,
+                                    color: t.textPrimary,
                                   ),
                                 ),
                                 Text(
                                   'min',
                                   style: TextStyle(
                                     fontSize: 10,
-                                    color: isSelected ? Colors.white70 : textSecondary,
+                                    color: t.textSecondary,
                                   ),
                                 ),
                               ],
@@ -195,7 +190,7 @@ class QuizDaysSelector extends StatelessWidget {
                         Icon(
                           Icons.star_rounded,
                           size: 14,
-                          color: Colors.white.withValues(alpha: 0.7),
+                          color: t.textSecondary,
                         ),
                       ],
                     ],
@@ -216,20 +211,20 @@ class QuizDaysSelector extends StatelessWidget {
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
                   decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.12),
+                    color: t.cardFill,
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: Colors.white.withValues(alpha: 0.25)),
+                    border: Border.all(color: t.borderDefault),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(Icons.timer_outlined, size: 16, color: Colors.white.withValues(alpha: 0.9)),
+                      Icon(Icons.timer_outlined, size: 16, color: t.textPrimary),
                       const SizedBox(width: 6),
                       Text(
                         _getDurationHint(workoutDurationMax!),
                         style: TextStyle(
                           fontSize: 12,
-                          color: textPrimary,
+                          color: t.textPrimary,
                           fontWeight: FontWeight.w500,
                         ),
                       ),
@@ -257,29 +252,29 @@ class QuizDaysSelector extends StatelessWidget {
     }
   }
 
-  Widget _buildTitle(Color textPrimary) {
+  Widget _buildTitle(OnboardingTheme t) {
     return Text(
       'How many days per week can you train?',
       style: TextStyle(
         fontSize: 24,
         fontWeight: FontWeight.bold,
-        color: textPrimary,
+        color: t.textPrimary,
         height: 1.3,
       ),
     ).animate().fadeIn(delay: 100.ms).slideX(begin: -0.05);
   }
 
-  Widget _buildSubtitle(Color textSecondary) {
+  Widget _buildSubtitle(OnboardingTheme t) {
     return Text(
       'Consistency beats intensity - pick what you can maintain',
       style: TextStyle(
         fontSize: 14,
-        color: textSecondary,
+        color: t.textSecondary,
       ),
     ).animate().fadeIn(delay: 200.ms);
   }
 
-  Widget _buildDaysPerWeekSelector(Color textPrimary, Color textSecondary) {
+  Widget _buildDaysPerWeekSelector(OnboardingTheme t) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: List.generate(7, (index) {
@@ -306,22 +301,15 @@ class QuizDaysSelector extends StatelessWidget {
                     decoration: BoxDecoration(
                       gradient: isSelected
                           ? LinearGradient(
-                              colors: [
-                                Colors.white.withValues(alpha: 0.28),
-                                Colors.white.withValues(alpha: 0.16),
-                              ],
+                              colors: t.cardSelectedGradient,
                               begin: Alignment.topLeft,
                               end: Alignment.bottomRight,
                             )
                           : null,
-                      color: isSelected
-                          ? null
-                          : Colors.white.withValues(alpha: 0.08),
+                      color: isSelected ? null : t.cardFill,
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
-                        color: isSelected
-                            ? Colors.white.withValues(alpha: 0.5)
-                            : Colors.white.withValues(alpha: 0.15),
+                        color: isSelected ? t.borderSelected : t.borderDefault,
                         width: isSelected ? 2 : 1,
                       ),
                       boxShadow: isSelected
@@ -342,14 +330,14 @@ class QuizDaysSelector extends StatelessWidget {
                           style: TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.bold,
-                            color: isSelected ? Colors.white : textPrimary,
+                            color: t.textPrimary,
                           ),
                         ),
                         Text(
                           day == 1 ? 'day' : 'days',
                           style: TextStyle(
                             fontSize: 10,
-                            color: isSelected ? Colors.white70 : textSecondary,
+                            color: t.textSecondary,
                           ),
                         ),
                       ],
@@ -362,7 +350,7 @@ class QuizDaysSelector extends StatelessWidget {
                 Icon(
                   Icons.star_rounded,
                   size: 12,
-                  color: Colors.white.withValues(alpha: 0.7),
+                  color: t.textSecondary,
                 ),
               ] else ...[
                 const SizedBox(height: 16),
@@ -375,8 +363,7 @@ class QuizDaysSelector extends StatelessWidget {
   }
 
   Widget _buildWhichDaysSection(
-    Color textPrimary,
-    Color textSecondary,
+    OnboardingTheme t,
     int requiredDays,
     int selectedCount,
   ) {
@@ -388,7 +375,7 @@ class QuizDaysSelector extends StatelessWidget {
           style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.w600,
-            color: textPrimary,
+            color: t.textPrimary,
           ),
         ).animate().fadeIn(delay: 100.ms),
         const SizedBox(height: 6),
@@ -396,7 +383,7 @@ class QuizDaysSelector extends StatelessWidget {
           'Select $selectedDays day${selectedDays == 1 ? '' : 's'} for your workouts',
           style: TextStyle(
             fontSize: 13,
-            color: textSecondary,
+            color: t.textSecondary,
           ),
         ).animate().fadeIn(delay: 150.ms),
         const SizedBox(height: 12),
@@ -425,10 +412,7 @@ class QuizDaysSelector extends StatelessWidget {
                     decoration: BoxDecoration(
                       gradient: isSelected
                           ? LinearGradient(
-                              colors: [
-                                Colors.white.withValues(alpha: 0.28),
-                                Colors.white.withValues(alpha: 0.16),
-                              ],
+                              colors: t.cardSelectedGradient,
                               begin: Alignment.topLeft,
                               end: Alignment.bottomRight,
                             )
@@ -436,15 +420,15 @@ class QuizDaysSelector extends StatelessWidget {
                       color: isSelected
                           ? null
                           : isDisabled
-                              ? Colors.white.withValues(alpha: 0.03)
-                              : Colors.white.withValues(alpha: 0.08),
+                              ? t.borderSubtle
+                              : t.cardFill,
                       borderRadius: BorderRadius.circular(10),
                       border: Border.all(
                         color: isSelected
-                            ? Colors.white.withValues(alpha: 0.5)
+                            ? t.borderSelected
                             : isDisabled
                                 ? Colors.transparent
-                                : Colors.white.withValues(alpha: 0.15),
+                                : t.borderDefault,
                         width: isSelected ? 2 : 1,
                       ),
                       boxShadow: isSelected
@@ -466,10 +450,10 @@ class QuizDaysSelector extends StatelessWidget {
                             fontSize: 13,
                             fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
                             color: isSelected
-                                ? Colors.white
+                                ? t.textPrimary
                                 : isDisabled
-                                    ? Colors.white.withValues(alpha: 0.3)
-                                    : textPrimary,
+                                    ? t.textDisabled
+                                    : t.textPrimary,
                           ),
                         ),
                         if (isSelected) ...[
@@ -477,8 +461,8 @@ class QuizDaysSelector extends StatelessWidget {
                           Container(
                             width: 5,
                             height: 5,
-                            decoration: const BoxDecoration(
-                              color: Colors.white,
+                            decoration: BoxDecoration(
+                              color: t.textPrimary,
                               shape: BoxShape.circle,
                             ),
                           ),
@@ -492,12 +476,12 @@ class QuizDaysSelector extends StatelessWidget {
           }).toList(),
         ),
         const SizedBox(height: 12),
-        _buildSelectionCounter(textPrimary, requiredDays, selectedCount),
+        _buildSelectionCounter(t, requiredDays, selectedCount),
       ],
     );
   }
 
-  Widget _buildSelectionCounter(Color textPrimary, int requiredDays, int selectedCount) {
+  Widget _buildSelectionCounter(OnboardingTheme t, int requiredDays, int selectedCount) {
     final isComplete = selectedCount >= requiredDays;
 
     return Center(
@@ -510,26 +494,15 @@ class QuizDaysSelector extends StatelessWidget {
             decoration: BoxDecoration(
               gradient: isComplete
                   ? LinearGradient(
-                      colors: [
-                        Colors.white.withValues(alpha: 0.3),
-                        Colors.white.withValues(alpha: 0.18),
-                      ],
+                      colors: t.cardSelectedGradient,
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                     )
-                  : LinearGradient(
-                      colors: [
-                        Colors.white.withValues(alpha: 0.15),
-                        Colors.white.withValues(alpha: 0.08),
-                      ],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
+                  : null,
+              color: isComplete ? null : t.cardFill,
               borderRadius: BorderRadius.circular(20),
               border: Border.all(
-                color: isComplete
-                    ? Colors.white.withValues(alpha: 0.6)
-                    : Colors.white.withValues(alpha: 0.25),
+                color: isComplete ? t.borderSelected : t.borderDefault,
                 width: isComplete ? 2 : 1.5,
               ),
               boxShadow: isComplete
@@ -548,15 +521,15 @@ class QuizDaysSelector extends StatelessWidget {
                 Icon(
                   isComplete ? Icons.check_circle_rounded : Icons.calendar_today_rounded,
                   size: 18,
-                  color: Colors.white,
+                  color: t.textPrimary,
                 ),
                 const SizedBox(width: 8),
                 Text(
                   '$selectedCount / $requiredDays days selected',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.bold,
-                    color: Colors.white,
+                    color: t.textPrimary,
                   ),
                 ),
               ],
@@ -567,7 +540,7 @@ class QuizDaysSelector extends StatelessWidget {
     ).animate().fadeIn(delay: 350.ms).scale(begin: const Offset(0.95, 0.95));
   }
 
-  Widget _buildSelectedDaysSummary(Color textSecondary) {
+  Widget _buildSelectedDaysSummary(OnboardingTheme t) {
     final dayNames = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
     final sorted = selectedWorkoutDays.toList()..sort();
     final names = sorted.map((i) => dayNames[i]).toList();
@@ -585,17 +558,17 @@ class QuizDaysSelector extends StatelessWidget {
     return Center(
       child: Text(
         summary,
-        style: const TextStyle(
+        style: TextStyle(
           fontSize: 14,
           fontWeight: FontWeight.w600,
-          color: Colors.white,
+          color: t.textPrimary,
         ),
         textAlign: TextAlign.center,
       ),
     ).animate().fadeIn(delay: 300.ms);
   }
 
-  Widget _buildRecommendation(Color textPrimary) {
+  Widget _buildRecommendation(OnboardingTheme t) {
     String recommendation;
     if (selectedDays! <= 2) {
       recommendation = "Perfect for maintaining fitness. We'll make each session count!";
@@ -614,17 +587,10 @@ class QuizDaysSelector extends StatelessWidget {
           child: Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  Colors.white.withValues(alpha: 0.15),
-                  Colors.white.withValues(alpha: 0.08),
-                ],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
+              color: t.cardFill,
               borderRadius: BorderRadius.circular(16),
               border: Border.all(
-                color: Colors.white.withValues(alpha: 0.25),
+                color: t.borderDefault,
                 width: 1.5,
               ),
             ),
@@ -633,12 +599,12 @@ class QuizDaysSelector extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.15),
+                    color: t.cardFill,
                     shape: BoxShape.circle,
                   ),
                   child: Icon(
                     Icons.lightbulb_rounded,
-                    color: Colors.white.withValues(alpha: 0.9),
+                    color: t.textPrimary,
                     size: 20,
                   ),
                 ),
@@ -649,7 +615,7 @@ class QuizDaysSelector extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w500,
-                      color: textPrimary,
+                      color: t.textPrimary,
                       height: 1.4,
                     ),
                   ),
