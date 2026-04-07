@@ -155,8 +155,25 @@ class NotificationsNotifier extends StateNotifier<List<NotificationItem>> {
   }
 }
 
-class NotificationsScreen extends ConsumerWidget {
+class NotificationsScreen extends ConsumerStatefulWidget {
   const NotificationsScreen({super.key});
+
+  @override
+  ConsumerState<NotificationsScreen> createState() => _NotificationsScreenState();
+}
+
+class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
+  String _selectedFilter = 'All';
+
+  static const _filterCategories = <String, Set<String>>{
+    'All': {},
+    'Workouts': {'missed_workout', 'workout_reminder'},
+    'Coach': {'ai_coach', 'ai_coach_accountability', 'week1_tip', 'contextual'},
+    'Rewards': {'daily_crate', 'double_xp', 'streak_alert', 'achievement', 'wrapped'},
+    'Social': {'friend_request', 'friend_accepted', 'reaction', 'comment', 'mention',
+               'challenge_received', 'challenge_accepted', 'challenge_completed', 'challenge_beaten'},
+    'System': {'renewal', 'billing', 'test'},
+  };
 
   void _navigateForNotificationType(BuildContext context, String type, {String? challengeId}) {
     switch (type) {
@@ -212,6 +229,20 @@ class NotificationsScreen extends ConsumerWidget {
       case 'test':
         // Test notifications stay on this screen
         break;
+      // Banner-originated notification types
+      case 'missed_workout':
+      case 'daily_crate':
+      case 'double_xp':
+      case 'week1_tip':
+      case 'contextual':
+        context.push('/home');
+        break;
+      case 'wrapped':
+        context.push('/home');
+        break;
+      case 'renewal':
+        context.push('/settings/subscription');
+        break;
       default:
         // Unknown type - stay on notifications screen
         break;
@@ -219,14 +250,14 @@ class NotificationsScreen extends ConsumerWidget {
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     ref.read(posthogServiceProvider).capture(eventName: 'notifications_viewed');
-    // Use actual brightness to support ThemeMode.system
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final backgroundColor = isDark ? AppColors.pureBlack : AppColorsLight.pureWhite;
     final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final accentColor = isDark ? AppColors.cyan : AppColorsLight.accent;
 
     final unifiedState = ref.watch(unifiedNotificationsProvider);
 
@@ -295,13 +326,77 @@ class NotificationsScreen extends ConsumerWidget {
           if (notifications.isEmpty) {
             return _EmptyNotificationsView(isDark: isDark);
           }
-          return RefreshIndicator(
+
+          // Apply filter
+          final filteredNotifications = _selectedFilter == 'All'
+              ? notifications
+              : notifications.where((n) =>
+                  _filterCategories[_selectedFilter]!.contains(n.type)
+                ).toList();
+
+          return Column(
+            children: [
+              // Filter pills
+              SizedBox(
+                height: 44,
+                child: ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  itemCount: _filterCategories.length,
+                  separatorBuilder: (_, __) => const SizedBox(width: 6),
+                  itemBuilder: (context, index) {
+                    final label = _filterCategories.keys.elementAt(index);
+                    final isSelected = _selectedFilter == label;
+                    return GestureDetector(
+                      onTap: () => setState(() => _selectedFilter = label),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: isSelected
+                              ? accentColor.withValues(alpha: 0.15)
+                              : elevatedColor,
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(
+                            color: isSelected ? accentColor : (isDark ? AppColors.cardBorder : AppColorsLight.cardBorder),
+                          ),
+                        ),
+                        child: Text(
+                          label,
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                            color: isSelected ? accentColor : textMuted,
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+              const SizedBox(height: 8),
+              // Notification list
+              Expanded(
+                child: filteredNotifications.isEmpty
+                    ? Center(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.filter_list, size: 40, color: textMuted),
+                            const SizedBox(height: 8),
+                            Text(
+                              'No notifications in this category',
+                              style: TextStyle(color: textMuted, fontSize: 14),
+                            ),
+                          ],
+                        ),
+                      )
+                    : RefreshIndicator(
             onRefresh: () => ref.read(unifiedNotificationsProvider.notifier).refresh(),
             child: ListView.builder(
-              padding: const EdgeInsets.all(16),
-              itemCount: notifications.length,
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              itemCount: filteredNotifications.length,
               itemBuilder: (context, index) {
-                final notification = notifications[index];
+                final notification = filteredNotifications[index];
                 final isChallengeNotification = notification.id.startsWith('challenge_');
                 final isSocialNotification = notification.id.startsWith('social_');
                 final isFriendRequest = notification.type == 'friend_request';
@@ -397,6 +492,9 @@ class NotificationsScreen extends ConsumerWidget {
                 );
               },
             ),
+          ),
+              ),
+            ],
           );
         },
       ),

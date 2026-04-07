@@ -189,6 +189,20 @@ class _NotificationCard extends StatelessWidget {
         return Icons.alternate_email;
       case 'friend_accepted':
         return Icons.people;
+      case 'missed_workout':
+        return Icons.schedule_rounded;
+      case 'daily_crate':
+        return Icons.card_giftcard;
+      case 'double_xp':
+        return Icons.bolt;
+      case 'week1_tip':
+        return Icons.lightbulb_outline;
+      case 'contextual':
+        return Icons.insights;
+      case 'wrapped':
+        return Icons.auto_awesome;
+      case 'renewal':
+        return Icons.credit_card_rounded;
       default:
         return Icons.notifications;
     }
@@ -230,6 +244,20 @@ class _NotificationCard extends StatelessWidget {
         return AppColors.orange;
       case 'friend_accepted':
         return AppColors.success;
+      case 'missed_workout':
+        return AppColors.orange;
+      case 'daily_crate':
+        return AppColors.purple;
+      case 'double_xp':
+        return AppColors.success;
+      case 'week1_tip':
+        return AppColors.cyan;
+      case 'contextual':
+        return AppColors.cyan;
+      case 'wrapped':
+        return AppColors.purple;
+      case 'renewal':
+        return AppColors.orange;
       default:
         return AppColors.cyan;
     }
@@ -412,6 +440,20 @@ class _UnifiedNotificationCard extends StatelessWidget {
         return Icons.flag;
       case 'challenge_beaten':
         return Icons.military_tech;
+      case 'missed_workout':
+        return Icons.schedule_rounded;
+      case 'daily_crate':
+        return Icons.card_giftcard;
+      case 'double_xp':
+        return Icons.bolt;
+      case 'week1_tip':
+        return Icons.lightbulb_outline;
+      case 'contextual':
+        return Icons.insights;
+      case 'wrapped':
+        return Icons.auto_awesome;
+      case 'renewal':
+        return Icons.credit_card_rounded;
       default:
         return Icons.notifications;
     }
@@ -443,6 +485,20 @@ class _UnifiedNotificationCard extends StatelessWidget {
         return AppColors.success;
       case 'challenge_beaten':
         return const Color(0xFFFFD700);
+      case 'missed_workout':
+        return AppColors.orange;
+      case 'daily_crate':
+        return AppColors.purple;
+      case 'double_xp':
+        return AppColors.success;
+      case 'week1_tip':
+        return AppColors.cyan;
+      case 'contextual':
+        return AppColors.cyan;
+      case 'wrapped':
+        return AppColors.purple;
+      case 'renewal':
+        return AppColors.orange;
       default:
         return AppColors.cyan;
     }

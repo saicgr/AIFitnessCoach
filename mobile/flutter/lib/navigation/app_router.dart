@@ -48,7 +48,7 @@ import '../screens/metrics/metrics_dashboard_screen.dart';
 import '../screens/workout/active_workout_screen_refactored.dart';
 import '../screens/workout/workout_complete_screen.dart';
 import '../screens/workout/workout_detail_screen.dart';
-import '../screens/workout/workout_summary_screen.dart';
+import '../screens/workout/workout_summary_screen_v2.dart';
 import '../screens/workout/exercise_detail_screen.dart';
 import '../screens/workout/custom_workout_builder_screen.dart';
 import '../screens/schedule/schedule_screen.dart';

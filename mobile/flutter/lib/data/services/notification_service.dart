@@ -280,8 +280,7 @@ class NotificationService {
     // requestPermissionWhenReady() to avoid "Unable to detect current Android Activity"
     // error when called before runApp() completes
 
-    // Check exact alarm permission for Android 12+
-    await checkAndRequestExactAlarmPermission();
+    // Exact alarm permission removed — using inexact scheduling instead
 
     // NOTE: Firebase Messaging listeners are set up in requestPermissionWhenReady()
     // because they require Activity context on Android

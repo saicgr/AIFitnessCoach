@@ -510,3 +510,55 @@ async def get_exercise_history(
     except Exception as e:
         logger.error(f"Error getting exercise history: {e}")
         raise safe_internal_error(e, "performance_db")
+
+
+# ── Workout Log by Workout ID ─────────────────────────────────────────────────
+
+@router.get("/workout-logs/by-workout/{workout_id}")
+async def get_workout_log_by_workout(
+    workout_id: str,
+    current_user: dict = Depends(get_current_user),
+):
+    """
+    Fetch the most recent workout log for a given workout ID.
+    Returns the full row including metadata JSONB and sets_json.
+    Used by the workout summary V2 screen to display rich per-set data,
+    AI interactions, warmup/stretch details, drink events, etc.
+    """
+    try:
+        db = get_supabase_db()
+        user_id = current_user.get("id") or current_user.get("sub")
+
+        response = db.client.table("workout_logs").select(
+            "id, workout_id, user_id, sets_json, metadata, completed_at, "
+            "total_time_seconds, exercises_completed"
+        ).eq("workout_id", workout_id).eq(
+            "user_id", user_id
+        ).order("completed_at", desc=True).limit(1).execute()
+
+        if not response.data:
+            return None
+
+        row = response.data[0]
+
+        # Flatten metadata into the response for frontend consumption
+        result = {
+            "id": row.get("id"),
+            "workout_id": row.get("workout_id"),
+            "user_id": row.get("user_id"),
+            "sets_json": row.get("sets_json"),
+            "completed_at": row.get("completed_at"),
+            "total_time_seconds": row.get("total_time_seconds"),
+            "exercises_completed": row.get("exercises_completed"),
+        }
+
+        # Merge metadata fields into top level
+        metadata = row.get("metadata")
+        if metadata and isinstance(metadata, dict):
+            result.update(metadata)
+
+        return result
+
+    except Exception as e:
+        logger.error(f"Error fetching workout log by workout: {e}")
+        raise safe_internal_error(e, "performance_db")

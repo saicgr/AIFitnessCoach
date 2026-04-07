@@ -18,7 +18,7 @@ List<RouteBase> _workoutRoutes() => [
         path: '/workout-summary/:id',
         builder: (context, state) {
           final workoutId = state.pathParameters['id'] ?? '';
-          return WorkoutSummaryScreen(workoutId: workoutId);
+          return WorkoutSummaryScreenV2(workoutId: workoutId);
         },
       ),
 

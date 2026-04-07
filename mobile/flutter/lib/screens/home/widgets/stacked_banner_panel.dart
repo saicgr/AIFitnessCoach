@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/utils/banner_notification_mapper.dart';
+import '../../notifications/notifications_screen.dart';
 import '../../../data/providers/billing_reminder_provider.dart';
 import '../../../data/providers/scheduling_provider.dart';
 import '../../../data/providers/scores_provider.dart';
@@ -419,6 +421,9 @@ class _StackedBannerPanelState extends ConsumerState<StackedBannerPanel>
     HapticService.light();
     ref.read(stackedBannerControllerProvider.notifier).dismiss(banner.id);
     await _persistBannerDismissal(banner);
+    ref.read(notificationsProvider.notifier).addNotification(
+      BannerNotificationMapper.toNotification(banner),
+    );
   }
 
   Future<void> _showCrateDismissConfirmation(List<BannerCardData> banners) async {
@@ -678,6 +683,14 @@ class _StackedBannerPanelState extends ConsumerState<StackedBannerPanel>
         'dismissed_missed_workout_ids',
         _dismissedMissedWorkoutIds.toList(),
       );
+      // Also mark as skipped on backend so it won't reappear after reinstall
+      final workoutId = banner.id.replaceFirst('missed_', '');
+      if (workoutId.isNotEmpty) {
+        ref.read(schedulingActionProvider.notifier).skipWorkout(
+          workoutId,
+          reasonCategory: 'dismissed',
+        );
+      }
     }
   }
 
@@ -692,9 +705,12 @@ class _StackedBannerPanelState extends ConsumerState<StackedBannerPanel>
     final ids = banners.map((b) => b.id).toList();
     ref.read(stackedBannerControllerProvider.notifier).dismissAll(ids);
 
-    // Persist dismissals for all banner types
+    // Persist dismissals and create notifications for all banner types
     for (final banner in banners) {
       _persistBannerDismissal(banner);
+      ref.read(notificationsProvider.notifier).addNotification(
+        BannerNotificationMapper.toNotification(banner),
+      );
     }
 
     setState(() => _isDismissAllExpanded = false);

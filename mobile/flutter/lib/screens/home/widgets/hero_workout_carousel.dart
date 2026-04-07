@@ -98,6 +98,7 @@ class HeroWorkoutCarousel extends ConsumerStatefulWidget {
 class _HeroWorkoutCarouselState extends ConsumerState<HeroWorkoutCarousel> {
   PageController? _ownedPageController;
   int _currentPage = 0;
+  bool _hasScrolledToInitial = false;
 
   /// Whether we own (and should dispose) the page controller
   bool get _ownsController => widget.externalPageController == null;
@@ -292,6 +293,40 @@ class _HeroWorkoutCarouselState extends ConsumerState<HeroWorkoutCarousel> {
                 carouselItems.insert(insertIdx, CarouselItem.workout(workout));
               }
             }
+          }
+        }
+
+        // Auto-scroll to the first non-completed workout on first data load.
+        // Recreates the PageController with the correct initialPage so there's
+        // no visible flicker from jumping after render.
+        if (!_hasScrolledToInitial && carouselItems.length > 1 && _ownsController) {
+          _hasScrolledToInitial = true;
+          int targetIndex = 0;
+          for (int i = 0; i < carouselItems.length; i++) {
+            final item = carouselItems[i];
+            // A non-completed workout or a placeholder (not yet generated)
+            if (item.isPlaceholder || (item.isWorkout && item.workout!.isCompleted == false)) {
+              targetIndex = i;
+              break;
+            }
+            // If we've checked all and none matched, default to last item
+            if (i == carouselItems.length - 1) {
+              targetIndex = i;
+            }
+          }
+          if (targetIndex != _currentPage) {
+            _currentPage = targetIndex;
+            // Recreate controller with correct initial page — no flicker
+            _ownedPageController?.dispose();
+            _ownedPageController = PageController(
+              viewportFraction: 0.88,
+              initialPage: targetIndex,
+            );
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (mounted) {
+                widget.onPageChanged?.call(targetIndex);
+              }
+            });
           }
         }
 

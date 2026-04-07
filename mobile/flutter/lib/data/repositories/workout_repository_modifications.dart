@@ -559,6 +559,24 @@ extension WorkoutRepositoryModifications on WorkoutRepository {
     }
   }
 
+  /// Fetch the workout log (including metadata) by workout ID
+  Future<Map<String, dynamic>?> getWorkoutLogByWorkoutId(String workoutId) async {
+    try {
+      debugPrint('🔍 [Workout] Fetching workout log for workout: $workoutId');
+      final response = await apiClient.get(
+        '/performance/workout-logs/by-workout/$workoutId',
+      );
+      if (response.statusCode == 200 && response.data != null) {
+        debugPrint('✅ [Workout] Workout log fetched successfully');
+        return response.data as Map<String, dynamic>;
+      }
+      return null;
+    } catch (e) {
+      debugPrint('⚠️ [Workout] Error fetching workout log: $e');
+      return null;
+    }
+  }
+
   /// Get completion summary for a completed workout (PRs, performance comparison, coach summary)
   Future<WorkoutSummaryResponse?> getWorkoutCompletionSummary(String workoutId) async {
     try {

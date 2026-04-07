@@ -38,31 +38,18 @@ class NotificationBellButton extends ConsumerWidget {
         ),
         if (unreadCount > 0)
           Positioned(
-            right: 6,
-            top: 6,
+            right: 8,
+            top: 8,
             child: Container(
-              padding: const EdgeInsets.all(4),
-              constraints: const BoxConstraints(
-                minWidth: 18,
-                minHeight: 18,
-              ),
+              width: 10,
+              height: 10,
               decoration: BoxDecoration(
                 color: AppColors.error,
-                borderRadius: BorderRadius.circular(10),
+                shape: BoxShape.circle,
                 border: Border.all(
                   color: isDark ? AppColors.pureBlack : AppColorsLight.pureWhite,
                   width: 2,
                 ),
-              ),
-              child: Text(
-                unreadCount > 99 ? '99+' : '$unreadCount',
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 10,
-                  fontWeight: FontWeight.bold,
-                  height: 1,
-                ),
-                textAlign: TextAlign.center,
               ),
             ),
           ),
