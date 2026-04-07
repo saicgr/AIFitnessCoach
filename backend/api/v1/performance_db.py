@@ -143,6 +143,8 @@ async def create_performance_log(log: PerformanceLogCreate,
             "target_weight_kg": log.target_weight_kg,
             "target_reps": log.target_reps,
             "progression_model": log.progression_model,
+            "set_duration_seconds": log.set_duration_seconds,
+            "rest_duration_seconds": log.rest_duration_seconds,
         }
 
         created = db.create_performance_log(log_data)

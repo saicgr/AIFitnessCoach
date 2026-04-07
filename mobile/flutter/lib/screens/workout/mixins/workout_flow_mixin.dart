@@ -388,6 +388,8 @@ mixin WorkoutFlowMixin<T extends StatefulWidget> on State<T> {
             targetWeightKg: setTarget?.targetWeightKg ?? exercise.weight?.toDouble(),
             targetReps: setTarget?.targetReps ?? exercise.reps,
             progressionModel: pattern.storageKey,
+            setDurationSeconds: setLog.durationSeconds,
+            restDurationSeconds: setLog.restDurationSeconds,
           );
         } catch (e) {
           debugPrint('⚠️ Failed to log set performance: $e');

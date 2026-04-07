@@ -120,6 +120,8 @@ extension WorkoutRepositoryPerformance on WorkoutRepository {
     double? targetWeightKg,
     int? targetReps,
     String? progressionModel,
+    int? setDurationSeconds,
+    int? restDurationSeconds,
   }) async {
     try {
       debugPrint('🔍 [Workout] Logging set $setNumber ($setType) for $exerciseName');
@@ -142,6 +144,8 @@ extension WorkoutRepositoryPerformance on WorkoutRepository {
           if (targetWeightKg != null) 'target_weight_kg': targetWeightKg,
           if (targetReps != null) 'target_reps': targetReps,
           if (progressionModel != null) 'progression_model': progressionModel,
+          if (setDurationSeconds != null) 'set_duration_seconds': setDurationSeconds,
+          if (restDurationSeconds != null) 'rest_duration_seconds': restDurationSeconds,
         },
       );
       if (response.statusCode == 200) {

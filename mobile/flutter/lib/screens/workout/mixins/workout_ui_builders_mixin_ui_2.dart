@@ -119,14 +119,24 @@ extension WorkoutUIBuildersMixinUI2 on WorkoutUIBuildersMixin {
                                     child: Column(
                                       crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
-                                        Text(
-                                          exercises[viewingExerciseIndex].name,
-                                          style: WorkoutDesign.titleStyle.copyWith(
-                                            fontSize: 26, // Bigger font size
-                                            color: isDark ? WorkoutDesign.textPrimary : Colors.grey.shade900,
-                                          ),
-                                          maxLines: 2,
-                                          overflow: TextOverflow.ellipsis,
+                                        Builder(
+                                          builder: (context) {
+                                            final name = exercises[viewingExerciseIndex].name;
+                                            final len = name.length;
+                                            final fontSize = len <= 15 ? 26.0
+                                                : len <= 25 ? 22.0
+                                                : len <= 35 ? 19.0
+                                                : 16.0;
+                                            return Text(
+                                              name,
+                                              style: WorkoutDesign.titleStyle.copyWith(
+                                                fontSize: fontSize,
+                                                color: isDark ? WorkoutDesign.textPrimary : Colors.grey.shade900,
+                                              ),
+                                              maxLines: 2,
+                                              overflow: TextOverflow.ellipsis,
+                                            );
+                                          },
                                         ),
                                       ],
                                     ),

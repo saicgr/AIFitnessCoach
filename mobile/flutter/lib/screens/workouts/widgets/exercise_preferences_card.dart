@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/theme/theme_colors.dart';
 import '../../../core/providers/avoided_provider.dart';
@@ -30,16 +31,33 @@ class ExercisePreferencesCard extends ConsumerStatefulWidget {
 
 class _ExercisePreferencesCardState
     extends ConsumerState<ExercisePreferencesCard> {
+  static const _kSkipWarningKey = 'skip_incomplete_warning_dismissed';
   bool _isExpanded = false;
+  bool _skipWarningDismissed = false;
 
   @override
   void initState() {
     super.initState();
+    _loadSkipWarningPref();
     // Ensure avoided exercises are loaded (lazy initialization)
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(avoidedProvider.notifier).ensureInitialized();
       ref.read(customExercisesProvider.notifier).initialize();
     });
+  }
+
+  Future<void> _loadSkipWarningPref() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (!mounted) return;
+    setState(() => _skipWarningDismissed = prefs.getBool(_kSkipWarningKey) ?? false);
+  }
+
+  Future<void> _toggleSkipWarning(bool showWarning) async {
+    HapticFeedback.lightImpact();
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_kSkipWarningKey, !showWarning);
+    if (!mounted) return;
+    setState(() => _skipWarningDismissed = !showWarning);
   }
 
   @override
@@ -328,6 +346,17 @@ class _ExercisePreferencesCardState
                     HapticFeedback.lightImpact();
                     ref.read(warmupDurationProvider.notifier).setStretchEnabled(value);
                   },
+                  isDark: isDark,
+                  textPrimary: textPrimary,
+                  textMuted: textMuted,
+                ),
+                _buildToggleItem(
+                  context,
+                  icon: Icons.checklist_rounded,
+                  title: 'Incomplete Exercise Warning',
+                  subtitle: 'Warn before finishing with unlogged sets',
+                  value: !_skipWarningDismissed,
+                  onChanged: _toggleSkipWarning,
                   isDark: isDark,
                   textPrimary: textPrimary,
                   textMuted: textMuted,

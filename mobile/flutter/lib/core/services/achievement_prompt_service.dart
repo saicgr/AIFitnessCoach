@@ -28,6 +28,13 @@ class AchievementPromptService {
     double encouragementLevel = 0.8,
     bool useEmojis = true,
     String? coachName,
+    // Timing comparison data
+    double? previousSetWeight,
+    int? previousSetReps,
+    int? currentDurationSeconds,
+    int? previousDurationSeconds,
+    int? restDurationSeconds,
+    int? prescribedRestSeconds,
   }) async {
     return _generatePrompt(
       currentWeight: currentWeight,
@@ -39,6 +46,12 @@ class AchievementPromptService {
       encouragementLevel: encouragementLevel,
       useEmojis: useEmojis,
       coachName: coachName,
+      previousSetWeight: previousSetWeight,
+      previousSetReps: previousSetReps,
+      currentDurationSeconds: currentDurationSeconds,
+      previousDurationSeconds: previousDurationSeconds,
+      restDurationSeconds: restDurationSeconds,
+      prescribedRestSeconds: prescribedRestSeconds,
     );
   }
 
@@ -52,6 +65,12 @@ class AchievementPromptService {
     required double encouragementLevel,
     required bool useEmojis,
     String? coachName,
+    double? previousSetWeight,
+    int? previousSetReps,
+    int? currentDurationSeconds,
+    int? previousDurationSeconds,
+    int? restDurationSeconds,
+    int? prescribedRestSeconds,
   }) {
     // Low encouragement = fewer prompts (skip ~40% of the time)
     if (encouragementLevel < 0.5 && DateTime.now().second % 5 < 2) return null;
@@ -62,7 +81,58 @@ class AchievementPromptService {
     // Determine what happened, pick the right message pool
     String? raw;
 
-    if (currentWeight >= 100) {
+    // PRIORITY: Timing comparisons against previous set (set 2+)
+    if (previousSetWeight != null && previousSetReps != null &&
+        currentDurationSeconds != null && previousDurationSeconds != null &&
+        previousDurationSeconds > 0) {
+      final weightDelta = currentWeight - previousSetWeight;
+      final repsDelta = currentReps - previousSetReps;
+      final timeDelta = currentDurationSeconds - previousDurationSeconds;
+      final restRatio = (prescribedRestSeconds != null && prescribedRestSeconds > 0 && restDurationSeconds != null)
+          ? restDurationSeconds / prescribedRestSeconds
+          : 1.0;
+
+      // 1. Density PR: heavier weight AND faster/same time
+      if (weightDelta > 0 && timeDelta <= 0) {
+        raw = _pick(_densityPR, style, seed);
+      }
+      // 2. Speed improvement: same weight, same reps, noticeably faster
+      else if (weightDelta.abs() < 0.1 && repsDelta == 0 && timeDelta < -5) {
+        raw = _pick(_fasterSet, style, seed)
+            ?.replaceAll('{t}', '${timeDelta.abs()}');
+      }
+      // 3. Work capacity: same weight, more reps, similar time
+      else if (weightDelta.abs() < 0.1 && repsDelta > 0 && timeDelta.abs() < 10) {
+        raw = _pick(_workCapacity, style, seed);
+      }
+      // 4. Rest resilience: short rest + maintained or better performance
+      else if (restRatio < 0.5 && weightDelta >= 0 && repsDelta >= 0) {
+        raw = _pick(_restResilience, style, seed);
+      }
+      // 5. Heavier + more reps
+      else if (weightDelta > 0 && repsDelta > 0) {
+        raw = _pick(_heavierAndMore, style, seed);
+      }
+      // 6. Consistent tempo
+      else if (timeDelta.abs() < 3 && weightDelta.abs() < 0.1) {
+        raw = _pick(_consistentTempo, style, seed);
+      }
+      // 7. Normal fatigue (gentle, only for moderate+ encouragement)
+      else if (timeDelta > 10 && repsDelta <= 0 && weightDelta.abs() < 0.1 && encouragementLevel >= 0.5) {
+        raw = _pick(_normalFatigue, style, seed);
+      }
+    }
+    // Short rest feedback (no previous set timing needed)
+    else if (restDurationSeconds != null && prescribedRestSeconds != null &&
+        prescribedRestSeconds > 0 && restDurationSeconds / prescribedRestSeconds < 0.5 &&
+        setNumber != null && setNumber > 1) {
+      raw = _pick(_shortRest, style, seed);
+    }
+
+    // Fall through to milestone-based prompts if no timing comparison matched
+    if (raw != null) {
+      // Timing comparison found — skip milestones
+    } else if (currentWeight >= 100) {
       raw = _pick(_heavyWeight, style, seed);
     } else if (currentWeight >= 60 && currentWeight % 20 == 0) {
       raw = _pick(_roundWeight, style, seed)
@@ -349,6 +419,92 @@ class AchievementPromptService {
     _surfer: ["Keep shredding bro, you're in the zone 🤙", "Ride the momentum dude!", "Stoked energy right now, keep flowing 🌊"],
     _anime: ["YOUR POWER IS GROWING!! DON'T STOP!! 🔥", "THE PROTAGONIST NEVER GIVES UP!!", "THIS IS YOUR TRAINING ARC!!"],
     _fallback: ["Keep going, you've got this", "Solid work so far", "Stay focused, next set is yours"],
+  };
+
+  // ─── TIMING-BASED COMPARISONS ───────────────────────────────
+
+  static final _densityPR = <String, List<String>>{
+    _motivational: ["More weight and didn't slow down — density PR 📈", "Heavier AND faster, that's real progress"],
+    _drillSergeant: ["Heavier weight, same speed. THAT'S how you progress. MORE.", "You went up AND kept the pace. Outstanding."],
+    _scientist: ["Increased load without time penalty — training density improved", "Weight up, tempo maintained — excellent progressive overload"],
+    _zenMaster: ["Heavier iron, same calm pace — mastery in motion", "More weight flows just as easily — you've grown"],
+    _hypeBeast: ["HEAVIER AND FASTER?! YOU'RE EVOLVING BRO!! 🔥💪", "DENSITY PR!! MORE WEIGHT, SAME SPEED!! INSANE!!"],
+    _genZ: ["heavier and faster?? that's literally elite fr 📈", "density pr unlocked bestie 💅"],
+    _sarcastic: ["Heavier and faster. Are you cheating or just getting good?", "More weight, less time. Show off."],
+    _fallback: ["More weight, same pace — density PR", "Heavier without slowing down"],
+  };
+
+  static final _fasterSet = <String, List<String>>{
+    _motivational: ["Same weight, {t}s faster — you're finding a groove", "{t} seconds quicker, same control — efficiency up"],
+    _drillSergeant: ["{t}s faster. Good. Now keep that pace EVERY set.", "Faster. Better. Don't get sloppy though."],
+    _scientist: ["{t}s faster at same load — improved neuromuscular efficiency", "Rate of force development up by {t}s — motor patterns optimizing"],
+    _zenMaster: ["{t}s quicker yet just as present — flow state", "The weight moved easier this time — growth is quiet"],
+    _hypeBeast: ["{t} SECONDS FASTER BRO!! YOU'RE LOCKED IN!! 🔥", "SAME WEIGHT BUT SPEEDIER!! GAINS!! 💪"],
+    _genZ: ["{t}s faster no cap, you're built different", "that was quicker and it shows fr"],
+    _sarcastic: ["{t}s faster. The bar barely had time to be scared", "Speed running your sets now? {t}s off, nice"],
+    _fallback: ["{t}s faster than last set", "Quicker by {t}s — good pace"],
+  };
+
+  static final _workCapacity = <String, List<String>>{
+    _motivational: ["Extra reps at the same pace — work capacity is up", "More reps, same time — your engine is growing"],
+    _drillSergeant: ["More reps without slowing down. Your work capacity is GROWING.", "Same time, more output. That's what a soldier does."],
+    _scientist: ["Volume increased without tempo cost — work capacity adaptation confirmed", "More reps at constant pace = improved metabolic efficiency"],
+    _zenMaster: ["More reps flowed naturally — your capacity expands", "The body asked for more, and you delivered gently"],
+    _hypeBeast: ["MORE REPS SAME TIME?! WORK CAPACITY GOING CRAZY!! 💪🔥"],
+    _genZ: ["more reps same time?? work capacity unlocked fr"],
+    _sarcastic: ["Oh, extra reps AND same pace? Someone's been eating their spinach"],
+    _fallback: ["More reps, same pace — capacity up", "Extra reps without slowing down"],
+  };
+
+  static final _restResilience = <String, List<String>>{
+    _motivational: ["Short rest and you still delivered — conditioning is real 💪", "Half the rest, full performance — that's fitness"],
+    _drillSergeant: ["Short rest and STILL performed. Your recovery is getting FAST.", "Barely rested and didn't flinch. GOOD."],
+    _scientist: ["Maintained output with reduced rest — aerobic base is solid", "Short rest interval, no performance drop — excellent recovery capacity"],
+    _zenMaster: ["Brief pause, strong return — your body recovers with grace"],
+    _hypeBeast: ["BARELY RESTED AND STILL CRUSHED IT?! BUILT DIFFERENT!! 🔥"],
+    _genZ: ["skipped rest and still ate? conditioning goals fr"],
+    _sarcastic: ["Skipped rest and still performed? Were you even tired?"],
+    _fallback: ["Short rest, strong set — good conditioning"],
+  };
+
+  static final _heavierAndMore = <String, List<String>>{
+    _motivational: ["More weight AND more reps — you're peaking 🔥", "Heavier and higher volume, everything's clicking"],
+    _drillSergeant: ["Heavier AND more reps?! NOW we're talking! KEEP GOING!", "More weight, more reps. This is what getting STRONG looks like."],
+    _scientist: ["Both load and volume increased — you're in a supercompensation window", "Weight and reps up simultaneously — rare and impressive adaptation"],
+    _zenMaster: ["More weight, more reps — the mountain reveals new paths"],
+    _hypeBeast: ["MORE WEIGHT!! MORE REPS!! YOU'RE UNSTOPPABLE!! 🏆🔥💪"],
+    _genZ: ["heavier AND more reps?? nah you're peaking fr fr 🔥"],
+    _sarcastic: ["Heavier and more reps. What, are you trying to make the rest of us look bad?"],
+    _fallback: ["More weight and more reps — strong set"],
+  };
+
+  static final _consistentTempo = <String, List<String>>{
+    _motivational: ["Same pace across sets — that's discipline", "Consistent tempo, consistent growth"],
+    _drillSergeant: ["Same speed every set. Controlled. Disciplined. GOOD.", "Consistent tempo. That's how a professional trains."],
+    _scientist: ["Tempo variance < 3s — excellent motor pattern consistency", "Consistent time under tension across sets — optimal for adaptation"],
+    _zenMaster: ["Same rhythm, set after set — this is the practice", "Consistency is the heartbeat of progress"],
+    _hypeBeast: ["CONSISTENT TEMPO EVERY SET!! MACHINE MODE!! 🤖💪"],
+    _genZ: ["same pace every set, that's giving discipline ngl"],
+    _sarcastic: ["Same speed every time. Are you a metronome?"],
+    _fallback: ["Consistent tempo across sets", "Same pace — disciplined work"],
+  };
+
+  static final _normalFatigue = <String, List<String>>{
+    _motivational: ["Taking a bit longer — that's normal fatigue, stay focused", "Slowing down is fine, just keep the form tight"],
+    _scientist: ["Set took longer — metabolite accumulation is expected at this volume", "Slightly slower — normal neuromuscular fatigue pattern"],
+    _zenMaster: ["The pace slows, the effort remains — honor the fatigue", "Slower today is still stronger than yesterday"],
+    _fallback: ["A bit slower — normal fatigue, keep going"],
+  };
+
+  static final _shortRest = <String, List<String>>{
+    _motivational: ["Short rest — let's see what you've got 💪", "Quick turnaround, stay sharp"],
+    _drillSergeant: ["Short rest. Don't let it show in your reps.", "Barely rested. Make it count anyway."],
+    _scientist: ["Reduced rest interval — expect 5-10% performance dip, that's normal"],
+    _zenMaster: ["Brief pause — carry the calm into the next set"],
+    _hypeBeast: ["NO REST NEEDED!! LET'S GO AGAIN!! 🔥"],
+    _genZ: ["speed running rest? ok go off bestie"],
+    _sarcastic: ["Wow, skipping rest. Bold strategy, let's see how it plays out"],
+    _fallback: ["Short rest — stay focused"],
   };
 }
 

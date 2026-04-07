@@ -401,6 +401,8 @@ class PerformanceLogCreate(BaseModel):
     target_weight_kg: Optional[float] = Field(default=None, ge=0, le=1000, description="Planned target weight for this set")
     target_reps: Optional[int] = Field(default=None, ge=0, le=1000, description="Planned target reps (0 = AMRAP)")
     progression_model: Optional[str] = Field(default=None, max_length=50, description="Progression pattern: pyramidUp, straightSets, reversePyramid, dropSets, etc.")
+    set_duration_seconds: Optional[int] = Field(default=None, ge=0, le=600, description="Time in seconds from set start to completion")
+    rest_duration_seconds: Optional[int] = Field(default=None, ge=0, le=3600, description="Actual rest taken before this set (null for first set)")
 
 
 class PerformanceLog(PerformanceLogCreate):

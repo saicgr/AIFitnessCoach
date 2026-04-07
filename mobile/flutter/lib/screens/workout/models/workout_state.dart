@@ -16,6 +16,9 @@ class SetLog {
   final int targetReps; // Original target reps for this set
   final String? notes; // Optional user notes for this set
   final String? aiInputSource; // Original AI input that created this set (e.g., "135*8", "+10")
+  final DateTime? startedAt; // When the set started (after rest ended)
+  final int? durationSeconds; // How long the set took (start → checkmark)
+  final int? restDurationSeconds; // Actual rest taken before this set (null for first set)
 
   SetLog({
     required this.reps,
@@ -27,6 +30,9 @@ class SetLog {
     this.targetReps = 0,
     this.notes,
     this.aiInputSource,
+    this.startedAt,
+    this.durationSeconds,
+    this.restDurationSeconds,
   }) : completedAt = completedAt ?? DateTime.now();
 
   SetLog copyWith({
@@ -39,6 +45,9 @@ class SetLog {
     int? targetReps,
     String? notes,
     String? aiInputSource,
+    DateTime? startedAt,
+    int? durationSeconds,
+    int? restDurationSeconds,
   }) {
     return SetLog(
       reps: reps ?? this.reps,
@@ -50,6 +59,9 @@ class SetLog {
       targetReps: targetReps ?? this.targetReps,
       notes: notes ?? this.notes,
       aiInputSource: aiInputSource ?? this.aiInputSource,
+      startedAt: startedAt ?? this.startedAt,
+      durationSeconds: durationSeconds ?? this.durationSeconds,
+      restDurationSeconds: restDurationSeconds ?? this.restDurationSeconds,
     );
   }
 
@@ -64,6 +76,9 @@ class SetLog {
         'target_reps': targetReps,
         'notes': notes,
         'ai_input_source': aiInputSource,
+        if (startedAt != null) 'started_at': startedAt!.toIso8601String(),
+        if (durationSeconds != null) 'set_duration_seconds': durationSeconds,
+        if (restDurationSeconds != null) 'rest_duration_seconds': restDurationSeconds,
       };
 
   /// Create from JSON (database retrieval)
@@ -80,6 +95,11 @@ class SetLog {
       targetReps: json['target_reps'] as int? ?? 0,
       notes: json['notes'] as String?,
       aiInputSource: json['ai_input_source'] as String?,
+      startedAt: json['started_at'] != null
+          ? DateTime.parse(json['started_at'] as String)
+          : null,
+      durationSeconds: json['set_duration_seconds'] as int?,
+      restDurationSeconds: json['rest_duration_seconds'] as int?,
     );
   }
 }

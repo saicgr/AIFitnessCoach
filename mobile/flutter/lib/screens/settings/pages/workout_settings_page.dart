@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/providers/auth_provider.dart';
 import '../../../core/providers/user_provider.dart';
@@ -20,6 +21,29 @@ class WorkoutSettingsPage extends ConsumerStatefulWidget {
 }
 
 class _WorkoutSettingsPageState extends ConsumerState<WorkoutSettingsPage> {
+  static const _kSkipWarningKey = 'skip_incomplete_warning_dismissed';
+  bool _skipWarningDismissed = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSkipWarningPref();
+  }
+
+  Future<void> _loadSkipWarningPref() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (!mounted) return;
+    setState(() => _skipWarningDismissed = prefs.getBool(_kSkipWarningKey) ?? false);
+  }
+
+  Future<void> _toggleSkipWarning(bool showWarning) async {
+    HapticFeedback.lightImpact();
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_kSkipWarningKey, !showWarning);
+    if (!mounted) return;
+    setState(() => _skipWarningDismissed = !showWarning);
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -175,6 +199,19 @@ class _WorkoutSettingsPageState extends ConsumerState<WorkoutSettingsPage> {
                     subtitle: 'Step size: ${ref.watch(weightIncrementsProvider).unit.toUpperCase()} · Tap to customize',
                     onTap: () => showWeightIncrementsSheet(context),
                     iconColor: isDark ? AppColors.textSecondary : AppColorsLight.textSecondary,
+                  ),
+                  SettingItemData(
+                    icon: Icons.checklist_rounded,
+                    title: 'Incomplete Exercise Warning',
+                    subtitle: !_skipWarningDismissed
+                        ? 'ON — Warns before finishing with unlogged sets'
+                        : 'OFF — No warning on incomplete logs',
+                    onTap: () => _toggleSkipWarning(_skipWarningDismissed),
+                    trailing: Switch.adaptive(
+                      value: !_skipWarningDismissed,
+                      onChanged: _toggleSkipWarning,
+                    ),
+                    iconColor: isDark ? AppColors.orange : AppColorsLight.orange,
                   ),
                 ],
               ),

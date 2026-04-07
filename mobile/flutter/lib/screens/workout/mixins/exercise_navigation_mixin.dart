@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/workout_design.dart';
@@ -8,6 +9,7 @@ import '../../../core/models/set_progression.dart';
 import '../../../core/providers/warmup_duration_provider.dart';
 import '../../../core/providers/tts_provider.dart';
 import '../../../core/services/posthog_service.dart';
+import '../../../core/theme/accent_color_provider.dart';
 import '../widgets/barbell_plate_indicator.dart';
 import '../../../data/models/exercise.dart';
 import '../../../data/models/parsed_exercise.dart';
@@ -47,6 +49,8 @@ mixin ExerciseNavigationMixin<T extends StatefulWidget> on State<T> {
   Map<int, int> get exerciseTimeSeconds;
   DateTime? get currentExerciseStartTime;
   set currentExerciseStartTime(DateTime? value);
+  DateTime? get currentSetStartTime;
+  set currentSetStartTime(DateTime? value);
   bool get useKg;
   bool get isResting;
   set isResting(bool value);
@@ -57,6 +61,7 @@ mixin ExerciseNavigationMixin<T extends StatefulWidget> on State<T> {
   Map<int, Set<int>> get supersetRoundProgress;
   Map<int, List<int>> get supersetIndicesCache;
   set supersetIndicesCache(Map<int, List<int>> value);
+  Set<int> get skippedExercises;
 
   // Widget access
   dynamic get workoutWidget; // Widget with workout property
@@ -99,7 +104,7 @@ mixin ExerciseNavigationMixin<T extends StatefulWidget> on State<T> {
   // ── Exercise Navigation Methods ──
 
   /// Move to the next incomplete exercise
-  void moveToNextExercise() {
+  void moveToNextExercise() async {
     ref.read(posthogServiceProvider).capture(
       eventName: 'exercise_completed',
       properties: {
@@ -116,7 +121,7 @@ mixin ExerciseNavigationMixin<T extends StatefulWidget> on State<T> {
     int? nextIndex;
     for (int i = 1; i <= exercises.length; i++) {
       final candidateIndex = (currentExerciseIndex + i) % exercises.length;
-      if (!isExerciseCompleted(candidateIndex)) {
+      if (!isExerciseCompleted(candidateIndex) && !skippedExercises.contains(candidateIndex)) {
         nextIndex = candidateIndex;
         break;
       }
@@ -139,10 +144,20 @@ mixin ExerciseNavigationMixin<T extends StatefulWidget> on State<T> {
       initControllersForExercise(nextIndex);
       fetchSmartWeightForExercise(nextExercise);
       fetchMediaForExercise(nextExercise);
+      showCoachTipIfNeeded();
       startRest(true);
 
       currentExerciseStartTime = DateTime.now();
+      currentSetStartTime = DateTime.now(); // First set of new exercise
     } else {
+      // All exercises completed or skipped — check for incomplete logs
+      final shouldContinue = await _showIncompleteExercisesDialog();
+      if (!shouldContinue) {
+        // User cancelled — un-skip the current exercise so they stay on it
+        skippedExercises.remove(currentExerciseIndex);
+        return;
+      }
+
       HapticService.workoutComplete();
 
       ref.read(voiceAnnouncementsProvider.notifier).announceWorkoutCompleteIfEnabled();
@@ -168,7 +183,176 @@ mixin ExerciseNavigationMixin<T extends StatefulWidget> on State<T> {
         'exercise_index': currentExerciseIndex,
       },
     );
+    skippedExercises.add(currentExerciseIndex);
     moveToNextExercise();
+  }
+
+  static const _kSkipWarningDismissedKey = 'skip_incomplete_warning_dismissed';
+
+  /// Check if any exercises have incomplete or missing logs
+  List<_ExerciseLogStatus> _getExerciseLogStatuses() {
+    final statuses = <_ExerciseLogStatus>[];
+    for (int i = 0; i < exercises.length; i++) {
+      final logged = completedSets[i]?.length ?? 0;
+      final total = totalSetsPerExercise[i] ?? 3;
+      statuses.add(_ExerciseLogStatus(
+        name: exercises[i].name,
+        loggedSets: logged,
+        totalSets: total,
+      ));
+    }
+    return statuses;
+  }
+
+  /// Show dialog listing incomplete exercises before finishing workout.
+  /// Returns true if user wants to continue, false to cancel.
+  Future<bool> _showIncompleteExercisesDialog() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (prefs.getBool(_kSkipWarningDismissedKey) == true) return true;
+
+    final statuses = _getExerciseLogStatuses();
+    final hasIncomplete = statuses.any((s) => s.loggedSets < s.totalSets);
+    if (!hasIncomplete) return true;
+
+    if (!mounted) return false;
+
+    bool dontShowAgain = false;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final accentColor = ref.read(accentColorProvider).getColor(isDark);
+
+    final result = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialogState) => AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: Row(
+            children: [
+              Icon(Icons.warning_amber_rounded, color: Colors.orange.shade700, size: 24),
+              const SizedBox(width: 8),
+              const Expanded(child: Text('Incomplete Exercises', style: TextStyle(fontSize: 18))),
+            ],
+          ),
+          content: SizedBox(
+            width: double.maxFinite,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Some exercises have missing logs:',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: isDark ? Colors.grey.shade300 : Colors.grey.shade700,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                ConstrainedBox(
+                  constraints: const BoxConstraints(maxHeight: 300),
+                  child: ListView.separated(
+                    shrinkWrap: true,
+                    itemCount: statuses.length,
+                    separatorBuilder: (_, __) => const SizedBox(height: 6),
+                    itemBuilder: (_, i) {
+                      final s = statuses[i];
+                      final isComplete = s.loggedSets >= s.totalSets;
+                      final isPartial = s.loggedSets > 0 && s.loggedSets < s.totalSets;
+                      return Row(
+                        children: [
+                          Icon(
+                            isComplete
+                                ? Icons.check_circle
+                                : isPartial
+                                    ? Icons.remove_circle
+                                    : Icons.cancel,
+                            size: 18,
+                            color: isComplete
+                                ? Colors.green
+                                : isPartial
+                                    ? Colors.orange
+                                    : Colors.red.shade400,
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              s.name,
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: isComplete ? FontWeight.normal : FontWeight.w600,
+                                color: isComplete
+                                    ? (isDark ? Colors.grey.shade400 : Colors.grey.shade600)
+                                    : (isDark ? Colors.white : Colors.black87),
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          Text(
+                            '${s.loggedSets}/${s.totalSets}',
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w500,
+                              color: isComplete
+                                  ? Colors.green
+                                  : isPartial
+                                      ? Colors.orange
+                                      : Colors.red.shade400,
+                            ),
+                          ),
+                        ],
+                      );
+                    },
+                  ),
+                ),
+                const SizedBox(height: 16),
+                GestureDetector(
+                  onTap: () => setDialogState(() => dontShowAgain = !dontShowAgain),
+                  child: Row(
+                    children: [
+                      SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: Checkbox(
+                          value: dontShowAgain,
+                          onChanged: (v) => setDialogState(() => dontShowAgain = v ?? false),
+                          activeColor: accentColor,
+                          materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Do not show again',
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              style: FilledButton.styleFrom(backgroundColor: accentColor),
+              child: const Text('Continue anyway'),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    if (dontShowAgain && result == true) {
+      prefs.setBool(_kSkipWarningDismissedKey, true);
+    }
+
+    return result ?? false;
   }
 
   /// Handle back button press
@@ -871,6 +1055,7 @@ mixin ExerciseNavigationMixin<T extends StatefulWidget> on State<T> {
     fetchMediaForExercise(nextExercise);
 
     currentExerciseStartTime = DateTime.now();
+    currentSetStartTime = DateTime.now(); // First set of new exercise
 
     ScaffoldMessenger.of(context).clearSnackBars();
     ScaffoldMessenger.of(context).showSnackBar(
@@ -888,4 +1073,17 @@ mixin ExerciseNavigationMixin<T extends StatefulWidget> on State<T> {
       ),
     );
   }
+}
+
+/// Simple status for each exercise's logging completeness
+class _ExerciseLogStatus {
+  final String name;
+  final int loggedSets;
+  final int totalSets;
+
+  const _ExerciseLogStatus({
+    required this.name,
+    required this.loggedSets,
+    required this.totalSets,
+  });
 }

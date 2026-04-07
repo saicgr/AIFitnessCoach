@@ -32,6 +32,7 @@ Future<void> showWorkoutAICoachSheet({
   required double currentWeight,
   required bool useKg,
   required List<WorkoutExercise> remainingExercises,
+  String? coachTipMessage,
 }) {
   return showGlassSheet(
     context: context,
@@ -44,6 +45,7 @@ Future<void> showWorkoutAICoachSheet({
         currentWeight: currentWeight,
         useKg: useKg,
         remainingExercises: remainingExercises,
+        coachTipMessage: coachTipMessage,
       ),
     ),
   );
@@ -72,6 +74,7 @@ class WorkoutAICoachSheet extends ConsumerStatefulWidget {
   final double currentWeight;
   final bool useKg;
   final List<WorkoutExercise> remainingExercises;
+  final String? coachTipMessage;
 
   const WorkoutAICoachSheet({
     super.key,
@@ -81,6 +84,7 @@ class WorkoutAICoachSheet extends ConsumerStatefulWidget {
     required this.currentWeight,
     required this.useKg,
     required this.remainingExercises,
+    this.coachTipMessage,
   });
 
   @override
@@ -451,6 +455,16 @@ User question: $message
     }
 
     if (messages.isEmpty && !_isWaitingForResponse) {
+      // Show coach tip as greeting if available
+      if (widget.coachTipMessage != null) {
+        return ListView(
+          controller: _scrollController,
+          padding: const EdgeInsets.all(16),
+          children: [
+            _buildCoachTipBubble(isDark, coach),
+          ],
+        );
+      }
       return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -478,20 +492,29 @@ User question: $message
         ? messages.sublist(messages.length - 20)
         : messages;
 
-    // Add +1 for typing indicator if waiting
-    final itemCount = recentMessages.length + (_isWaitingForResponse ? 1 : 0);
+    // Add +1 for typing indicator if waiting, +1 for coach tip if present
+    final hasTip = widget.coachTipMessage != null;
+    final tipOffset = hasTip ? 1 : 0;
+    final itemCount = tipOffset + recentMessages.length + (_isWaitingForResponse ? 1 : 0);
 
     return ListView.builder(
       controller: _scrollController,
       padding: const EdgeInsets.all(16),
       itemCount: itemCount,
       itemBuilder: (context, index) {
+        // Show coach tip as first item
+        if (hasTip && index == 0) {
+          return _buildCoachTipBubble(isDark, coach);
+        }
+
+        final messageIndex = index - tipOffset;
+
         // Show typing indicator as last item
-        if (_isWaitingForResponse && index == recentMessages.length) {
+        if (_isWaitingForResponse && messageIndex == recentMessages.length) {
           return _buildTypingIndicator(isDark, coach);
         }
 
-        final message = recentMessages[index];
+        final message = recentMessages[messageIndex];
         final isUser = message.role == 'user';
 
         return _buildMessageBubble(message, isUser, isDark, coach);
@@ -541,6 +564,48 @@ User question: $message
         ],
       ),
     ).animate().fadeIn(duration: 200.ms);
+  }
+
+  /// Build the coach tip as a greeting bubble (looks like an assistant message)
+  Widget _buildCoachTipBubble(bool isDark, CoachPersona coach) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          CoachAvatar(
+            coach: coach,
+            size: 32,
+            showBorder: true,
+            showShadow: false,
+            enableTapToView: false,
+          ),
+          const SizedBox(width: 8),
+          Flexible(
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              decoration: BoxDecoration(
+                color: isDark ? AppColors.elevated : Colors.grey.shade100,
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(16),
+                  topRight: Radius.circular(16),
+                  bottomLeft: Radius.circular(4),
+                  bottomRight: Radius.circular(16),
+                ),
+              ),
+              child: Text(
+                widget.coachTipMessage!,
+                style: TextStyle(
+                  fontSize: 14,
+                  color: isDark ? Colors.white : Colors.black87,
+                  height: 1.4,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    ).animate().fadeIn(duration: 300.ms);
   }
 
   Widget _buildMessageBubble(

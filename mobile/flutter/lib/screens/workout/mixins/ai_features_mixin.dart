@@ -6,6 +6,7 @@ import 'package:video_player/video_player.dart';
 import '../../../core/constants/workout_design.dart';
 import '../../../core/utils/default_weights.dart';
 import '../../../core/models/set_progression.dart';
+import '../../../core/services/exercise_tip_service.dart';
 import '../../../core/services/fatigue_service.dart';
 import '../../../core/services/weight_suggestion_service.dart';
 import '../../../data/models/exercise.dart';
@@ -38,6 +39,8 @@ mixin AIFeaturesMixin<T extends StatefulWidget> on State<T> {
   bool get useKg;
   int? get lastSetRpe;
   int? get lastSetRir;
+  Map<int, List<Map<String, dynamic>>> get previousSets;
+  Map<String, double> get exerciseMaxWeights;
 
   WeightSuggestion? get currentWeightSuggestion;
   set currentWeightSuggestion(WeightSuggestion? value);
@@ -51,8 +54,6 @@ mixin AIFeaturesMixin<T extends StatefulWidget> on State<T> {
   set showCoachTip(bool value);
   String? get coachTipMessage;
   set coachTipMessage(String? value);
-  bool get coachTipSent;
-  set coachTipSent(bool value);
   VideoPlayerController? get videoController;
   set videoController(VideoPlayerController? value);
   bool get isVideoInitialized;
@@ -476,53 +477,117 @@ mixin AIFeaturesMixin<T extends StatefulWidget> on State<T> {
     }
   }
 
-  /// Show coach tip bubble -- fires once when workout exercises start
-  void showCoachTipIfNeeded() {
-    if (coachTipSent || !mounted) return;
-    coachTipSent = true;
+  /// Track which exercise indices have already shown a tip
+  final Set<int> _tippedExerciseIndices = {};
 
+  /// Lookahead: pre-fetch tips for the next few exercises so they're
+  /// cached by the time the user gets there. Only fetches 2 ahead
+  /// to avoid saturating the network at workout start.
+  void _prefetchUpcomingTips() {
+    final tipService = ref.read(exerciseTipServiceProvider);
+    final aiSettings = ref.read(aiSettingsProvider);
+    final userGoal = ref.read(authStateProvider).user?.primaryGoal;
+
+    // Pre-fetch next 2 exercises (current + 1 and + 2)
+    for (int offset = 1; offset <= 2; offset++) {
+      final i = currentExerciseIndex + offset;
+      if (i >= exercises.length) break;
+
+      final exercise = exercises[i];
+
+      // Skip if already cached
+      if (tipService.getCachedTip(exercise.name) != null) continue;
+
+      final pattern = exerciseProgressionPattern[i]
+          ?? SetProgressionPattern.pyramidUp;
+      final prevSets = previousSets[i];
+      final prWeight = exerciseMaxWeights[exercise.name];
+
+      tipService.getExerciseTip(
+        exerciseName: exercise.name,
+        aiSettings: aiSettings,
+        bodyPart: exercise.bodyPart,
+        equipment: exercise.equipment,
+        sets: exercise.sets ?? 3,
+        reps: exercise.reps,
+        targetWeight: exercise.weight,
+        useKg: useKg,
+        userGoal: userGoal,
+        progressionPattern: pattern.displayName,
+        previousSets: prevSets,
+        prWeight: prWeight,
+      ).catchError((e) {
+        debugPrint('⚠️ [AIFeatures] Pre-fetch failed for ${exercise.name}: $e');
+        return ''; // Return empty to satisfy Future<String> type
+      });
+    }
+  }
+
+  /// Show coach tip bubble — fires for EACH new exercise.
+  /// Also pre-fetches the next 2 exercises' tips in the background.
+  void showCoachTipIfNeeded() {
+    if (!mounted) return;
+
+    // Skip if this exercise already showed a tip
+    if (_tippedExerciseIndices.contains(currentExerciseIndex)) return;
+    _tippedExerciseIndices.add(currentExerciseIndex);
+
+    // Dismiss any previous tip
+    if (showCoachTip) {
+      setState(() => showCoachTip = false);
+    }
+
+    // Fetch current exercise tip (instant if cached)
+    _showCachedOrFetchTip();
+
+    // Pre-fetch next 2 exercises in background
+    _prefetchUpcomingTips();
+  }
+
+  Future<void> _showCachedOrFetchTip() async {
+    final exercise = exercises[currentExerciseIndex];
+    final aiSettings = ref.read(aiSettingsProvider);
     final userGoal = ref.read(authStateProvider).user?.primaryGoal;
     final pattern = exerciseProgressionPattern[currentExerciseIndex]
         ?? SetProgressionPattern.pyramidUp;
-    final goalRange = TrainingGoalRepRange.forGoal(userGoal);
+    final prevSets = previousSets[currentExerciseIndex];
+    final prWeight = exerciseMaxWeights[exercise.name];
+    final targetWeight = double.tryParse(weightController.text);
 
-    String tip;
-    switch (userGoal) {
-      case 'muscle_strength':
-        tip = 'Strength day — heavy weight, ${goalRange.minReps}-${goalRange.maxReps} reps. Rest 3-5 min between sets.';
-        break;
-      case 'muscle_hypertrophy':
-        tip = 'Hypertrophy — ${goalRange.minReps}-${goalRange.maxReps} reps, controlled tempo. Rest 60-90s.';
-        break;
-      case 'strength_hypertrophy':
-        tip = 'Strength + size — ${goalRange.minReps}-${goalRange.maxReps} reps, moderate-heavy. Rest 2-3 min.';
-        break;
-      default:
-        tip = 'Target ${goalRange.minReps}-${goalRange.maxReps} reps per set. Adjust weight to match.';
-    }
+    try {
+      final tipService = ref.read(exerciseTipServiceProvider);
 
-    if (pattern.goalTags.first != goalTagForUserGoal(userGoal)) {
-      tip += '\n💡 ${pattern.displayName} is best for ${pattern.goalTags.join("/")}';
-    }
+      // This returns instantly if pre-fetched, or fetches on cache miss
+      final tip = await tipService.getExerciseTip(
+        exerciseName: exercise.name,
+        aiSettings: aiSettings,
+        bodyPart: exercise.bodyPart,
+        equipment: exercise.equipment,
+        sets: exercise.sets ?? 3,
+        reps: exercise.reps,
+        targetWeight: targetWeight,
+        useKg: useKg,
+        userGoal: userGoal,
+        progressionPattern: pattern.displayName,
+        previousSets: prevSets,
+        prWeight: prWeight,
+      );
 
-    setState(() {
-      coachTipMessage = tip;
-      showCoachTip = true;
-    });
+      if (!mounted) return;
 
-    Future.delayed(const Duration(seconds: 8), () {
-      if (mounted) {
-        setState(() => showCoachTip = false);
-      }
-    });
-  }
+      setState(() {
+        coachTipMessage = tip;
+        showCoachTip = true;
+      });
 
-  String goalTagForUserGoal(String? goal) {
-    switch (goal) {
-      case 'muscle_strength': return 'Strength';
-      case 'muscle_hypertrophy': return 'Hypertrophy';
-      case 'strength_hypertrophy': return 'Strength';
-      default: return 'Hypertrophy';
+      // Auto-dismiss after 10 seconds
+      Future.delayed(const Duration(seconds: 10), () {
+        if (mounted) {
+          setState(() => showCoachTip = false);
+        }
+      });
+    } catch (e) {
+      debugPrint('❌ [AIFeatures] Coach tip fetch failed: $e');
     }
   }
 

@@ -66,6 +66,9 @@ mixin TimerRestMixin<T extends StatefulWidget> on State<T> {
   double get weightIncrement;
   int get viewingExerciseIndex;
   TextEditingController get weightController;
+  DateTime? get currentSetStartTime;
+  set currentSetStartTime(DateTime? value);
+  Map<int, List<int>> get actualRestDurations;
 
   // Cross-mixin method access
   void advanceToSupersetExercise(int nextIndex);
@@ -78,6 +81,14 @@ mixin TimerRestMixin<T extends StatefulWidget> on State<T> {
   void handleRestComplete() {
     final currentExercise = exercises[currentExerciseIndex];
     final groupId = currentExercise.supersetGroup;
+
+    // Track actual rest taken (prescribed - remaining)
+    final actualRest = timerController.initialRestDuration - timerController.restSecondsRemaining;
+    actualRestDurations[currentExerciseIndex] ??= [];
+    actualRestDurations[currentExerciseIndex]!.add(actualRest);
+
+    // Mark start time for the next set
+    currentSetStartTime = DateTime.now();
 
     setState(() {
       isResting = false;
@@ -189,7 +200,8 @@ mixin TimerRestMixin<T extends StatefulWidget> on State<T> {
     restIntervals.add({
       'exercise_id': exercises[currentExerciseIndex].id,
       'exercise_name': exercises[currentExerciseIndex].name,
-      'rest_seconds': restSeconds,
+      'prescribed_rest_seconds': restSeconds,
+      'rest_seconds': restSeconds, // Updated to actual rest in handleRestComplete
       'rest_type': betweenExercises ? 'between_exercises' : 'between_sets',
       'recorded_at': DateTime.now().toIso8601String(),
     });
@@ -242,6 +254,11 @@ mixin TimerRestMixin<T extends StatefulWidget> on State<T> {
     try {
       final achievementService = ref.read(achievementPromptServiceProvider);
       final coachSettings = ref.read(aiSettingsProvider);
+      // Get previous set data for timing comparisons
+      final previousSet = exerciseSets.length > 1 ? exerciseSets[exerciseSets.length - 2] : null;
+      final rests = actualRestDurations[currentExerciseIndex];
+      final latestRest = (rests != null && rests.isNotEmpty) ? rests.last : null;
+
       final prompt = await achievementService.getPromptForSet(
         exerciseName: exercise.name,
         currentWeight: lastSet.weight,
@@ -253,6 +270,13 @@ mixin TimerRestMixin<T extends StatefulWidget> on State<T> {
         encouragementLevel: coachSettings.encouragementLevel,
         useEmojis: coachSettings.useEmojis,
         coachName: coachSettings.coachName,
+        // Timing comparison data
+        previousSetWeight: previousSet?.weight,
+        previousSetReps: previousSet?.reps,
+        currentDurationSeconds: lastSet.durationSeconds,
+        previousDurationSeconds: previousSet?.durationSeconds,
+        restDurationSeconds: latestRest,
+        prescribedRestSeconds: exercise.restSeconds ?? 90,
       );
 
       if (mounted) {

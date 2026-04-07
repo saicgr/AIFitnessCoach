@@ -75,6 +75,7 @@ mixin WorkoutSheetsMixin<T extends StatefulWidget> on State<T> {
   set totalDrinkIntakeMl(int value);
   bool get hideAICoachForSession;
   set hideAICoachForSession(bool value);
+  String? get coachTipMessage;
   dynamic get workoutWidget;
   void breakSuperset(int groupId);
   void applyProgressionTargets(int exerciseIndex, SetProgressionPattern pattern);
@@ -165,6 +166,7 @@ mixin WorkoutSheetsMixin<T extends StatefulWidget> on State<T> {
       currentWeight: currentWeight,
       useKg: useKg,
       remainingExercises: remainingExercises,
+      coachTipMessage: coachTipMessage,
     );
   }
 

@@ -62,6 +62,9 @@ mixin SetLoggingMixin<T extends StatefulWidget> on State<T> {
   bool get isDoneButtonPressed;
   int? get justCompletedSetIndex;
   set justCompletedSetIndex(int? value);
+  DateTime? get currentSetStartTime;
+  set currentSetStartTime(DateTime? value);
+  Map<int, List<int>> get actualRestDurations;
 
   // Cross-mixin method access
   void checkForPRs(SetLog setLog, WorkoutExercise exercise);
@@ -90,10 +93,29 @@ mixin SetLoggingMixin<T extends StatefulWidget> on State<T> {
     final setTarget = exercise.getTargetForSet(currentSetNumber);
     final targetReps = setTarget?.targetReps ?? exercise.reps ?? 10;
 
+    // Calculate set duration from start time (capped at 10 min for backgrounding edge case)
+    int? setDuration;
+    if (currentSetStartTime != null) {
+      setDuration = DateTime.now().difference(currentSetStartTime!).inSeconds.clamp(0, 600);
+    }
+
+    // Look up rest duration that preceded this set
+    int? restBefore;
+    final setIndex = completedSets[currentExerciseIndex]?.length ?? 0;
+    if (setIndex > 0) {
+      final rests = actualRestDurations[currentExerciseIndex];
+      if (rests != null && rests.length >= setIndex) {
+        restBefore = rests[setIndex - 1];
+      }
+    }
+
     final setLog = SetLog(
       reps: reps,
       weight: useKg ? weight : weight * 0.453592,
       targetReps: targetReps,
+      startedAt: currentSetStartTime,
+      durationSeconds: setDuration,
+      restDurationSeconds: restBefore,
     );
 
     pendingSetLog = setLog;
@@ -806,6 +828,8 @@ mixin SetLoggingMixin<T extends StatefulWidget> on State<T> {
           'progression_model': pattern.storageKey,
           if (exercise.supersetGroup != null) 'superset_group': exercise.supersetGroup,
           if (exercise.supersetOrder != null) 'superset_order': exercise.supersetOrder,
+          if (sets[j].durationSeconds != null) 'set_duration_seconds': sets[j].durationSeconds,
+          if (sets[j].restDurationSeconds != null) 'rest_duration_seconds': sets[j].restDurationSeconds,
         });
       }
     }

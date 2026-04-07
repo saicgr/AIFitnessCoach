@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/providers/warmup_duration_provider.dart';
 import '../widgets/section_header.dart';
@@ -234,6 +235,11 @@ class _WarmupSettingsCard extends ConsumerWidget {
             ),
           ),
 
+          Divider(height: 1, color: cardBorder, indent: 16, endIndent: 16),
+
+          // Skip warning toggle
+          const _SkipWarningToggle(),
+
           if (warmupState.warmupEnabled || warmupState.stretchEnabled)
             Divider(height: 1, color: cardBorder),
 
@@ -357,6 +363,90 @@ class _WarmupSettingsCard extends ConsumerWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+/// Toggle for re-enabling the "incomplete exercises" warning when skipping.
+class _SkipWarningToggle extends StatefulWidget {
+  const _SkipWarningToggle();
+
+  @override
+  State<_SkipWarningToggle> createState() => _SkipWarningToggleState();
+}
+
+class _SkipWarningToggleState extends State<_SkipWarningToggle> {
+  static const _key = 'skip_incomplete_warning_dismissed';
+  bool _isDismissed = false;
+  bool _loaded = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (!mounted) return;
+    setState(() {
+      _isDismissed = prefs.getBool(_key) ?? false;
+      _loaded = true;
+    });
+  }
+
+  Future<void> _toggle(bool showWarning) async {
+    HapticFeedback.lightImpact();
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_key, !showWarning);
+    if (!mounted) return;
+    setState(() => _isDismissed = !showWarning);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (!_loaded) return const SizedBox.shrink();
+
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
+      child: Row(
+        children: [
+          Icon(
+            Icons.checklist_rounded,
+            color: textPrimary,
+            size: 22,
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Incomplete Exercise Warning',
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w500,
+                    color: textPrimary,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  'Warn before finishing with unlogged sets',
+                  style: TextStyle(fontSize: 12, color: textMuted),
+                ),
+              ],
+            ),
+          ),
+          Switch.adaptive(
+            value: !_isDismissed,
+            onChanged: _toggle,
+          ),
+        ],
+      ),
     );
   }
 }

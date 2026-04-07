@@ -46,6 +46,10 @@ class SetRowData {
   final int? previousReps;
   final int? previousRir;
 
+  // Timing data (populated for completed sets)
+  final int? durationSeconds; // How long the set took
+  final int? restDurationSeconds; // Actual rest taken before this set
+
   const SetRowData({
     required this.setNumber,
     this.isWarmup = false,
@@ -60,6 +64,8 @@ class SetRowData {
     this.previousWeight,
     this.previousReps,
     this.previousRir,
+    this.durationSeconds,
+    this.restDurationSeconds,
   });
 }
 
@@ -290,6 +296,11 @@ class _SetTrackingTableState extends State<SetTrackingTable> {
 
       setRows.add(row);
 
+      // Insert timing label under completed set rows
+      if (set.isCompleted && set.durationSeconds != null) {
+        setRows.add(_buildTimingRow(set, isDark));
+      }
+
       // Insert RIR quick-select bar below the active set row
       if (set.isActive && !set.isCompleted && widget.onActiveRirChanged != null) {
         setRows.add(_RirQuickSelectBar(
@@ -483,6 +494,49 @@ class _SetTrackingTableState extends State<SetTrackingTable> {
           ),
         ],
       ),
+    );
+  }
+
+  /// Format seconds as "45s" or "1:22" for durations > 60s
+  String _formatDuration(int seconds) {
+    if (seconds >= 60) {
+      final m = seconds ~/ 60;
+      final s = seconds % 60;
+      return '$m:${s.toString().padLeft(2, '0')}';
+    }
+    return '${seconds}s';
+  }
+
+  /// Build a compact timing label + divider under a completed set row
+  Widget _buildTimingRow(SetRowData set, bool isDark) {
+    final textMuted = isDark ? AppColors.textMuted : const Color(0xFF9CA3AF);
+    final borderColor = isDark ? Colors.white.withValues(alpha: 0.06) : Colors.black.withValues(alpha: 0.06);
+
+    final duration = _formatDuration(set.durationSeconds!);
+    String label = duration;
+
+    if (set.restDurationSeconds != null) {
+      if (set.restDurationSeconds! < 3) {
+        label = '$duration · skipped rest';
+      } else {
+        label = '$duration · ${_formatDuration(set.restDurationSeconds!)} rest';
+      }
+    }
+
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(left: 48, top: 2, bottom: 2),
+          child: Align(
+            alignment: Alignment.centerLeft,
+            child: Text(
+              label,
+              style: TextStyle(fontSize: 11, color: textMuted, fontStyle: FontStyle.italic),
+            ),
+          ),
+        ),
+        Divider(height: 1, thickness: 0.5, color: borderColor),
+      ],
     );
   }
 

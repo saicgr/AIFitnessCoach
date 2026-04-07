@@ -197,7 +197,8 @@ class _ActiveWorkoutScreenState
   /// Coach tip bubble state
   bool _showCoachTip = false;
   String? _coachTipMessage;
-  bool _coachTipSent = false; // Only send once per workout
+  // ignore: unused_field
+  bool _coachTipSent = false; // Legacy — tips now tracked per-exercise in AIFeaturesMixin
 
   // Video state
   VideoPlayerController? _videoController;
@@ -239,6 +240,9 @@ class _ActiveWorkoutScreenState
   bool _isDoneButtonPressed = false;
   int? _justCompletedSetIndex;
   final Map<String, double> _exerciseMaxWeights = {};
+  // Per-set timing
+  DateTime? _currentSetStartTime;
+  final Map<int, List<int>> _actualRestDurations = {}; // exercise index → rest durations per set gap
 
   // Per-exercise progression pattern (persisted across sessions)
   final Map<int, SetProgressionPattern> _exerciseProgressionPattern = {};
@@ -287,6 +291,9 @@ class _ActiveWorkoutScreenState
   // Drag-to-action state (Delete/Swap zones at top of screen)
   bool _isDragActive = false;
   int? _draggedExerciseIndex;
+
+  // Tracks exercises the user explicitly skipped (treated as "done" for navigation)
+  final Set<int> _skippedExercises = {};
 
   // Superset round tracking
   // Maps superset group ID -> set of exercise indices that have completed a set in this round
@@ -360,8 +367,8 @@ class _ActiveWorkoutScreenState
   @override set showCoachTip(bool value) => _showCoachTip = value;
   @override String? get coachTipMessage => _coachTipMessage;
   @override set coachTipMessage(String? value) => _coachTipMessage = value;
-  @override bool get coachTipSent => _coachTipSent;
-  @override set coachTipSent(bool value) => _coachTipSent = value;
+  bool get coachTipSent => _coachTipSent;
+  set coachTipSent(bool value) => _coachTipSent = value;
   @override VideoPlayerController? get videoController => _videoController;
   @override set videoController(VideoPlayerController? value) => _videoController = value;
   @override bool get isVideoInitialized => _isVideoInitialized;
@@ -393,6 +400,9 @@ class _ActiveWorkoutScreenState
   @override set supersetIndicesCache(Map<int, List<int>> value) => _supersetIndicesCache = value;
   @override dynamic get workoutWidget => widget;
   @override int get totalDrinkIntakeMl => _totalDrinkIntakeMl;
+  @override DateTime? get currentSetStartTime => _currentSetStartTime;
+  @override set currentSetStartTime(DateTime? value) => _currentSetStartTime = value;
+  @override Map<int, List<int>> get actualRestDurations => _actualRestDurations;
   @override set totalDrinkIntakeMl(int value) => _totalDrinkIntakeMl = value;
   @override List<WarmupExerciseData>? get warmupExercises => _warmupExercises;
   @override set warmupExercises(List<WarmupExerciseData>? value) => _warmupExercises = value;
@@ -413,17 +423,30 @@ class _ActiveWorkoutScreenState
   @override set draggedExerciseIndex(int? value) => _draggedExerciseIndex = value;
   @override bool get isPaused => _isPaused;
   @override set isPaused(bool value) => _isPaused = value;
+  @override Set<int> get skippedExercises => _skippedExercises;
 
   @override
   void initState() {
     super.initState();
     _initializeWorkout();
     loadWarmupAndStretches();
+    _startWarmupLoadingTimeout();
     checkWarmupEnabled();
     initBleHrAutoReconnect();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       triggerWorkoutTour();
+    });
+  }
+
+  /// If warmup loading takes too long, skip the loading screen
+  /// so the user isn't stuck waiting. The warmup will either load
+  /// in time or auto-skip to the active phase.
+  void _startWarmupLoadingTimeout() {
+    Future.delayed(const Duration(seconds: 3), () {
+      if (!mounted || !_isWarmupLoading) return;
+      debugPrint('⚠️ [Warmup] Loading timeout — skipping loading screen');
+      setState(() => _isWarmupLoading = false);
     });
   }
 
@@ -599,7 +622,7 @@ class _ActiveWorkoutScreenState
       debugPrint('🎬 [ActiveWorkout] Restored ${miniPlayerState.completedSets.length} exercise completed sets');
     }
 
-    // Fetch historical data
+    // Fetch historical data (fire-and-forget, doesn't block workout start)
     fetchExerciseHistory();
 
     // Fetch smart weight for first exercise based on history
@@ -609,6 +632,7 @@ class _ActiveWorkoutScreenState
 
     // Initialize time tracking
     _currentExerciseStartTime = DateTime.now();
+    _currentSetStartTime = DateTime.now(); // First set starts when exercise loads
   }
 
   @override
@@ -1075,6 +1099,8 @@ class _ActiveWorkoutScreenState
         previousWeight: prevWeight,
         previousReps: prevReps,
         previousRir: prevRir,
+        durationSeconds: isCompleted ? completedSets[i].durationSeconds : null,
+        restDurationSeconds: isCompleted ? completedSets[i].restDurationSeconds : null,
       ));
     }
 

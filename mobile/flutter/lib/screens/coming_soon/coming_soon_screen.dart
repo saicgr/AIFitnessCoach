@@ -271,6 +271,9 @@ class _RoadmapTabState extends State<_RoadmapTab> {
             _Feature(Icons.local_fire_department, const Color(0xFFF97316), 'Check-in Streaks', 'Build consistency with daily check-in streaks', eta: 'Q4 2026'),
             _Feature(Icons.schedule, const Color(0xFF06B6D4), 'Smart Notification Timing', 'AI-optimized reminder timing based on your habits', eta: 'Q4 2026'),
             _Feature(Icons.monitor_heart_outlined, const Color(0xFFEF4444), 'Wearable HRV Integration', 'Heart rate variability data from your wearable device', eta: 'Q4 2026'),
+            _Feature(Icons.speed, const Color(0xFF8B5CF6), 'Tempo Analysis', 'Track set speed and rep tempo patterns across workouts', eta: 'Q3 2026'),
+            _Feature(Icons.show_chart, const Color(0xFF14B8A6), 'Work Capacity Trends', 'Monitor total volume and work capacity over time', eta: 'Q3 2026'),
+            _Feature(Icons.compress, const Color(0xFFEC4899), 'Training Density', 'Track more work in less time — the ultimate progress metric', eta: 'Q3 2026'),
           ],
         ),
 

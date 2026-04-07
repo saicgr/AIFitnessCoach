@@ -1,4 +1,5 @@
 """Helper functions extracted from warmup_stretch_service."""
+import asyncio
 from typing import Any, Dict, List, Optional
 from datetime import datetime, timedelta
 import logging
@@ -865,12 +866,17 @@ class WarmupStretchService:
         injuries: Optional[List[str]] = None,
         user_id: Optional[str] = None
     ) -> Dict[str, Any]:
-        """Generate and store both warmup and stretches for a workout with variety tracking."""
-        warmup = await self.create_warmup_for_workout(
-            workout_id, exercises, warmup_duration, injuries, user_id
-        )
-        stretches = await self.create_stretches_for_workout(
-            workout_id, exercises, stretch_duration, injuries, user_id
+        """Generate and store both warmup and stretches for a workout with variety tracking.
+
+        Runs warmup and stretch generation in parallel for faster response.
+        """
+        warmup, stretches = await asyncio.gather(
+            self.create_warmup_for_workout(
+                workout_id, exercises, warmup_duration, injuries, user_id
+            ),
+            self.create_stretches_for_workout(
+                workout_id, exercises, stretch_duration, injuries, user_id
+            ),
         )
 
         return {

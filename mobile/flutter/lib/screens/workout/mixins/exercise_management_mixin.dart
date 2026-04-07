@@ -19,6 +19,7 @@ mixin ExerciseManagementMixin<T extends StatefulWidget> on State<T> {
 
   // Callbacks that must be provided by the implementing class
   void onExerciseChanged(WorkoutExercise exercise);
+  void showCoachTipIfNeeded();
   Future<void> createSupersetPair(int index1, int index2);
   Future<void> removeFromSuperset(int index);
   Future<WorkoutExercise?> showSwapSheet(BuildContext context, WorkoutExercise exercise);
@@ -214,6 +215,7 @@ mixin ExerciseManagementMixin<T extends StatefulWidget> on State<T> {
     });
 
     onExerciseChanged(exercise);
+    showCoachTipIfNeeded();
     HapticFeedback.mediumImpact();
   }
 
