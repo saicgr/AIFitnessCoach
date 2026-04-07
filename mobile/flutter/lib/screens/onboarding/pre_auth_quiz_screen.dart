@@ -553,7 +553,11 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
     final windowState = ref.watch(windowModeProvider);
     final isFoldableOpen = FoldableQuizScaffold.shouldUseFoldableLayout(windowState);
 
-    return Scaffold(
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: isDark ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark,
+      child: Scaffold(
+      backgroundColor: Colors.transparent,
+      extendBodyBehindAppBar: true,
       body: OnboardingBackground(
         child: SafeArea(
           child: FoldableQuizScaffold(
@@ -605,6 +609,7 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
           ),
         ),
       ),
+    ),
     );
   }
 

@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:ui';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -178,7 +179,11 @@ class _SignInScreenState extends ConsumerState<SignInScreen>
       ).animate().fadeIn().shake();
     }
 
-    return Scaffold(
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: t.isDark ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark,
+      child: Scaffold(
+      backgroundColor: Colors.transparent,
+      extendBodyBehindAppBar: true,
       body: OnboardingBackground(
         child: SafeArea(
           child: Padding(
@@ -210,6 +215,7 @@ class _SignInScreenState extends ConsumerState<SignInScreen>
           ),
         ),
       ),
+    ),
     );
   }
 

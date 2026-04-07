@@ -161,7 +161,11 @@ class _EmailSignInScreenState extends ConsumerState<EmailSignInScreen> {
   Widget build(BuildContext context) {
     final t = OnboardingTheme.of(context);
 
-    return Scaffold(
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: t.isDark ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark,
+      child: Scaffold(
+      backgroundColor: Colors.transparent,
+      extendBodyBehindAppBar: true,
       body: OnboardingBackground(
         child: SafeArea(
           child: SingleChildScrollView(
@@ -488,6 +492,7 @@ class _EmailSignInScreenState extends ConsumerState<EmailSignInScreen> {
           ),
         ),
       ),
+    ),
     );
   }
 }
