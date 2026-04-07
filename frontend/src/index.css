@@ -91,6 +91,12 @@ html.dark-mode {
   --shadow-nav: 0 1px 3px rgba(0, 0, 0, 0.3);
 }
 
+/* === SHADCN-COMPATIBLE ALIASES (for cinematic-hero component) === */
+:root {
+  --color-foreground: var(--color-text);
+  --color-muted-foreground: var(--color-text-secondary);
+}
+
 /* === BASE STYLES === */
 * {
   box-sizing: border-box;

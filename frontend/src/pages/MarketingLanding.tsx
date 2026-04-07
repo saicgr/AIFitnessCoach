@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { motion, useInView, AnimatePresence } from 'framer-motion';
 import MarketingNav from '../components/marketing/MarketingNav';
 import MarketingFooter from '../components/marketing/MarketingFooter';
+import { CinematicHero } from '../components/ui/cinematic-landing-hero';
 
 // Apple-style animations - very subtle, purposeful
 const fade = {
@@ -67,42 +68,15 @@ const carouselSlides = [
   },
 ];
 
-// Phone showcase features - expandable buttons like Apple
+// Phone showcase features - mapped to real app screenshots
 const phoneFeatures = [
-  {
-    id: 'personalized',
-    label: 'Personalized Plans',
-    color: '#10B981', // emerald
-    description: 'AI creates custom workouts based on your goals, equipment, and available time.',
-    hasIcon: true,
-  },
   {
     id: 'ai-coach',
     label: 'AI Coach',
-    color: '',
+    color: '#10B981',
     description: 'Chat with your coach 24/7 for form tips, exercise swaps, and motivation.',
-    hasIcon: false,
-  },
-  {
-    id: 'tracking',
-    label: 'Real-time Tracking',
-    color: '',
-    description: 'Log sets, reps, and weights as you train with automatic rest timers.',
-    hasIcon: false,
-  },
-  {
-    id: 'videos',
-    label: 'Exercise Videos',
-    color: '',
-    description: 'Watch proper form demonstrations for every exercise in your workout.',
-    hasIcon: false,
-  },
-  {
-    id: 'analytics',
-    label: 'Progress Analytics',
-    color: '',
-    description: 'Track personal records, streaks, and visualize your strength gains over time.',
-    hasIcon: false,
+    hasIcon: true,
+    screenshot: '/screenshots/intro_phone_1.png',
   },
   {
     id: 'nutrition',
@@ -110,13 +84,47 @@ const phoneFeatures = [
     color: '',
     description: 'Log meals with photos and get instant macro breakdowns from your AI coach.',
     hasIcon: false,
+    screenshot: '/screenshots/intro_phone_2.png',
   },
   {
-    id: 'scheduling',
-    label: 'Smart Scheduling',
+    id: 'personalized',
+    label: 'Workout Plans',
     color: '',
-    description: 'Weekly workout plans that automatically adapt to your schedule.',
+    description: 'AI creates custom workouts based on your goals, equipment, and available time.',
     hasIcon: false,
+    screenshot: '/screenshots/intro_phone_3.png',
+  },
+  {
+    id: 'tracking',
+    label: 'Exercise Tracking',
+    color: '',
+    description: 'Log sets, reps, and weights as you train with automatic rest timers.',
+    hasIcon: false,
+    screenshot: '/screenshots/intro_phone_4.png',
+  },
+  {
+    id: 'progress',
+    label: 'Progress Photos',
+    color: '',
+    description: 'Track your physical transformation with side-by-side progress photos.',
+    hasIcon: false,
+    screenshot: '/screenshots/intro_phone_5.png',
+  },
+  {
+    id: 'analytics',
+    label: 'Stats & Scores',
+    color: '',
+    description: 'Track personal records, streaks, and visualize your strength gains over time.',
+    hasIcon: false,
+    screenshot: '/screenshots/intro_phone_6.png',
+  },
+  {
+    id: 'library',
+    label: 'Exercise Library',
+    color: '',
+    description: 'Browse hundreds of exercises with detailed instructions and video demos.',
+    hasIcon: false,
+    screenshot: '/screenshots/intro_phone_7.png',
   },
 ];
 
@@ -332,10 +340,6 @@ export default function MarketingLanding() {
     }
   }, [chatInView, chatStarted]);
 
-  const scrollTo = (id: string) => {
-    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
-  };
-
   const scrollGallery = useCallback((direction: 'left' | 'right') => {
     if (!galleryRef.current) return;
     const scrollAmount = 320;
@@ -350,76 +354,18 @@ export default function MarketingLanding() {
       {/* Navigation */}
       <MarketingNav />
 
-      {/* Hero Section */}
-      <section className="relative min-h-screen flex flex-col items-center justify-center px-6 pt-12">
-        <motion.div
-          className="max-w-[680px] mx-auto text-center"
-          initial="hidden"
-          animate="visible"
-          variants={stagger}
-        >
-          <motion.p variants={fade} className="text-[17px] text-[var(--color-text-muted)] mb-3">
-            Introducing
-          </motion.p>
-
-          <motion.h1
-            variants={fadeUp}
-            className="text-[56px] sm:text-[80px] md:text-[96px] font-semibold tracking-[-0.03em] leading-[1.05] mb-4"
-            style={{ fontFamily: 'var(--font-heading)' }}
-          >
-            <span className="bg-gradient-to-r from-emerald-400 via-green-400 to-lime-400 bg-clip-text text-transparent">
-              FitWiz
-            </span>
-          </motion.h1>
-
-          <motion.p
-            variants={fadeUp}
-            className="text-[28px] sm:text-[32px] md:text-[40px] font-semibold tracking-[-0.02em] leading-[1.1] text-[var(--color-text-secondary)] mb-6"
-          >
-            Your AI fitness coach.
-          </motion.p>
-
-          <motion.p
-            variants={fadeUp}
-            className="text-[17px] sm:text-[19px] text-[var(--color-text-secondary)] max-w-[500px] mx-auto leading-[1.47] mb-10"
-          >
-            Personalized workouts. Real-time guidance. Intelligent progress tracking.
-          </motion.p>
-
-          <motion.div variants={fadeUp} className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Link
-              to="/login"
-              className="min-w-[160px] px-7 py-3 bg-emerald-500 text-white text-[17px] rounded-full hover:bg-emerald-400 transition-colors"
-            >
-              Get started
-            </Link>
-            <button
-              onClick={() => scrollTo('highlights')}
-              className="min-w-[160px] px-7 py-3 text-emerald-400 text-[17px] hover:underline transition-all"
-            >
-              Learn more
-            </button>
-          </motion.div>
-        </motion.div>
-
-        {/* Scroll indicator */}
-        <motion.div
-          className="absolute bottom-8 left-1/2 -translate-x-1/2"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 0.3 }}
-          transition={{ delay: 1.5, duration: 1 }}
-        >
-          <motion.svg
-            className="w-6 h-6 text-[var(--color-text-muted)]"
-            fill="none"
-            viewBox="0 0 24 24"
-            animate={{ y: [0, 8, 0] }}
-            transition={{ duration: 2, repeat: Infinity }}
-          >
-            <path stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
-          </motion.svg>
-        </motion.div>
-      </section>
+      {/* Cinematic Hero Section */}
+      <CinematicHero
+        brandName="FitWiz"
+        tagline1="Train smarter,"
+        tagline2="not just harder."
+        cardHeading="AI coaching, redefined."
+        cardDescription={<><span className="text-white font-semibold">FitWiz</span> gives you personalized workout plans, real-time AI coaching, intelligent progress tracking, and nutrition guidance — all powered by advanced AI.</>}
+        metricValue={365}
+        metricLabel="Workouts Done"
+        ctaHeading="Start your journey."
+        ctaDescription="Join thousands of athletes training with their personal AI coach. Personalized workouts, real-time guidance, and intelligent progress tracking."
+      />
 
       {/* Highlights Carousel Section */}
       <section id="highlights" className="py-20 sm:py-28 px-6">
@@ -605,7 +551,7 @@ export default function MarketingLanding() {
                 </AnimatePresence>
               </div>
 
-              {/* Right side - Phone mockup */}
+              {/* Right side - Phone mockup with real screenshots */}
               <div className="relative flex justify-center lg:justify-end">
                 <motion.div
                   className="relative"
@@ -615,7 +561,7 @@ export default function MarketingLanding() {
                   transition={{ duration: 0.6, ease: 'easeOut' }}
                   style={{ perspective: 1000 }}
                 >
-                  {/* Phone device frame - stays dark always */}
+                  {/* Phone device frame */}
                   <div
                     className="relative w-[280px] sm:w-[320px] rounded-[3rem] p-3 shadow-2xl"
                     style={{
@@ -633,195 +579,46 @@ export default function MarketingLanding() {
                     {/* Phone notch */}
                     <div className="absolute top-5 left-1/2 -translate-x-1/2 w-28 h-8 bg-black rounded-full z-20" />
 
-                    {/* Phone screen - stays dark (it's a phone UI) */}
+                    {/* Phone screen with real screenshots */}
                     <div
                       className="relative rounded-[2.5rem] overflow-hidden bg-black"
                       style={{ aspectRatio: '9/19.5' }}
                     >
-                      <div className="absolute inset-0 bg-gradient-to-b from-[#0a0a0a] to-[#1a1a1a]">
-                        <div className="flex items-center justify-between px-6 pt-14 pb-2">
-                          <span className="text-[11px] text-white/60 font-medium">9:41</span>
-                          <div className="flex items-center gap-1">
-                            <svg className="w-4 h-4 text-white/60" fill="currentColor" viewBox="0 0 24 24">
-                              <path d="M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9 9-4.03 9-9-4.03-9-9-9zm0 16c-3.86 0-7-3.14-7-7s3.14-7 7-7 7 3.14 7 7-3.14 7-7 7z" opacity={0.3}/>
-                              <path d="M12 5c-3.86 0-7 3.14-7 7h2c0-2.76 2.24-5 5-5V5z"/>
-                            </svg>
-                            <svg className="w-4 h-4 text-white/60" fill="currentColor" viewBox="0 0 24 24">
-                              <path d="M15.67 4H14V2h-4v2H8.33C7.6 4 7 4.6 7 5.33v15.33C7 21.4 7.6 22 8.33 22h7.33c.74 0 1.34-.6 1.34-1.33V5.33C17 4.6 16.4 4 15.67 4z"/>
-                            </svg>
-                          </div>
-                        </div>
+                      <AnimatePresence mode="wait">
+                        {activePhoneFeature ? (
+                          <motion.img
+                            key={activePhoneFeature}
+                            src={phoneFeatures.find(f => f.id === activePhoneFeature)?.screenshot}
+                            alt={phoneFeatures.find(f => f.id === activePhoneFeature)?.label}
+                            className="absolute inset-0 w-full h-full object-cover"
+                            initial={{ opacity: 0, scale: 1.05 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0, scale: 0.95 }}
+                            transition={{ duration: 0.4, ease: [0.25, 0.1, 0.25, 1] }}
+                          />
+                        ) : (
+                          <motion.img
+                            key="default"
+                            src="/screenshots/intro_phone_1.png"
+                            alt="FitWiz AI Coach"
+                            className="absolute inset-0 w-full h-full object-cover"
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            transition={{ duration: 0.4 }}
+                          />
+                        )}
+                      </AnimatePresence>
 
-                        <AnimatePresence mode="wait">
-                          <motion.div
-                            key={activePhoneFeature || 'default'}
-                            initial={{ opacity: 0, y: 10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: -10 }}
-                            transition={{ duration: 0.3 }}
-                            className="px-4 pt-2"
-                          >
-                            {activePhoneFeature === 'personalized' && (
-                              <div className="space-y-3">
-                                <div className="text-[10px] text-white/40 uppercase tracking-wider">Today's Workout</div>
-                                <div className="bg-gradient-to-br from-emerald-500/20 to-green-500/10 rounded-2xl p-4 border border-emerald-500/20">
-                                  <div className="text-white font-semibold mb-1">Upper Body Strength</div>
-                                  <div className="text-[11px] text-white/60">45 min - 6 exercises</div>
-                                  <div className="flex gap-2 mt-3">
-                                    <span className="px-2 py-1 rounded-full bg-white/10 text-[9px] text-white/80">Push</span>
-                                    <span className="px-2 py-1 rounded-full bg-white/10 text-[9px] text-white/80">Dumbbells</span>
-                                  </div>
-                                </div>
-                                <div className="bg-[#1d1d1f] rounded-xl p-3">
-                                  <div className="flex items-center gap-3">
-                                    <div className="w-8 h-8 rounded-lg bg-emerald-500/20 flex items-center justify-center">
-                                      <span className="text-[10px]">1</span>
-                                    </div>
-                                    <div>
-                                      <div className="text-[12px] text-white">Bench Press</div>
-                                      <div className="text-[10px] text-white/50">4 sets x 8 reps</div>
-                                    </div>
-                                  </div>
-                                </div>
-                              </div>
-                            )}
-
-                            {activePhoneFeature === 'ai-coach' && (
-                              <div className="space-y-3">
-                                <div className="flex items-center gap-2 mb-4">
-                                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-emerald-500 to-green-500" />
-                                  <div>
-                                    <div className="text-[12px] text-white font-medium">AI Coach</div>
-                                    <div className="text-[9px] text-emerald-400">Online</div>
-                                  </div>
-                                </div>
-                                <div className="bg-[#2d2d2f] rounded-2xl rounded-bl-sm p-3 max-w-[85%]">
-                                  <p className="text-[11px] text-white/90 leading-relaxed">
-                                    Great work on yesterday's session! Ready for today's upper body workout?
-                                  </p>
-                                </div>
-                                <div className="bg-emerald-500 rounded-2xl rounded-br-sm p-3 max-w-[85%] ml-auto">
-                                  <p className="text-[11px] text-white leading-relaxed">
-                                    Yes! But my shoulder is a bit sore.
-                                  </p>
-                                </div>
-                              </div>
-                            )}
-
-                            {activePhoneFeature === 'tracking' && (
-                              <div className="space-y-3">
-                                <div className="text-center py-4">
-                                  <div className="text-[40px] font-bold text-white">1:32</div>
-                                  <div className="text-[11px] text-white/50 uppercase tracking-wider">Rest Timer</div>
-                                </div>
-                                <div className="bg-[#1d1d1f] rounded-xl p-4">
-                                  <div className="flex justify-between items-center mb-3">
-                                    <span className="text-[12px] text-white">Set 3 of 4</span>
-                                    <span className="text-[12px] text-emerald-400">Completed</span>
-                                  </div>
-                                  <div className="flex gap-2">
-                                    {[1,2,3,4].map(i => (
-                                      <div key={i} className={`flex-1 h-1.5 rounded-full ${i <= 3 ? 'bg-emerald-500' : 'bg-white/20'}`} />
-                                    ))}
-                                  </div>
-                                </div>
-                              </div>
-                            )}
-
-                            {activePhoneFeature === 'videos' && (
-                              <div className="space-y-3">
-                                <div className="bg-[#1d1d1f] rounded-xl overflow-hidden">
-                                  <div className="h-32 bg-gradient-to-br from-gray-700 to-gray-900 flex items-center justify-center">
-                                    <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center">
-                                      <svg className="w-5 h-5 text-white ml-1" fill="currentColor" viewBox="0 0 24 24">
-                                        <path d="M8 5v14l11-7z" />
-                                      </svg>
-                                    </div>
-                                  </div>
-                                  <div className="p-3">
-                                    <div className="text-[12px] text-white font-medium">Dumbbell Row</div>
-                                    <div className="text-[10px] text-white/50">Proper form demonstration</div>
-                                  </div>
-                                </div>
-                              </div>
-                            )}
-
-                            {activePhoneFeature === 'analytics' && (
-                              <div className="space-y-3">
-                                <div className="text-[10px] text-white/40 uppercase tracking-wider">This Week</div>
-                                <div className="grid grid-cols-2 gap-2">
-                                  <div className="bg-[#1d1d1f] rounded-xl p-3">
-                                    <div className="text-[20px] font-bold text-white">4</div>
-                                    <div className="text-[10px] text-white/50">Workouts</div>
-                                  </div>
-                                  <div className="bg-[#1d1d1f] rounded-xl p-3">
-                                    <div className="text-[20px] font-bold text-orange-400">12</div>
-                                    <div className="text-[10px] text-white/50">Day Streak</div>
-                                  </div>
-                                </div>
-                                <div className="bg-[#1d1d1f] rounded-xl p-3">
-                                  <div className="text-[10px] text-white/50 mb-2">Bench Press PR</div>
-                                  <div className="text-[16px] font-bold text-emerald-400">185 lbs</div>
-                                </div>
-                              </div>
-                            )}
-
-                            {activePhoneFeature === 'nutrition' && (
-                              <div className="space-y-3">
-                                <div className="text-[10px] text-white/40 uppercase tracking-wider">Today's Nutrition</div>
-                                <div className="flex justify-between">
-                                  {[
-                                    { label: 'Protein', value: '142g', color: 'bg-emerald-500' },
-                                    { label: 'Carbs', value: '185g', color: 'bg-green-500' },
-                                    { label: 'Fat', value: '65g', color: 'bg-orange-500' },
-                                  ].map(macro => (
-                                    <div key={macro.label} className="text-center">
-                                      <div className={`w-10 h-10 mx-auto rounded-full ${macro.color}/20 flex items-center justify-center mb-1`}>
-                                        <div className={`w-6 h-6 rounded-full ${macro.color}`} />
-                                      </div>
-                                      <div className="text-[11px] text-white font-medium">{macro.value}</div>
-                                      <div className="text-[9px] text-white/50">{macro.label}</div>
-                                    </div>
-                                  ))}
-                                </div>
-                              </div>
-                            )}
-
-                            {activePhoneFeature === 'scheduling' && (
-                              <div className="space-y-3">
-                                <div className="text-[10px] text-white/40 uppercase tracking-wider">This Week</div>
-                                <div className="space-y-2">
-                                  {['Mon', 'Tue', 'Wed', 'Thu', 'Fri'].map((day, i) => (
-                                    <div key={day} className={`flex items-center gap-3 p-2 rounded-lg ${i === 1 ? 'bg-emerald-500/20 border border-emerald-500/30' : ''}`}>
-                                      <span className="text-[11px] text-white/60 w-8">{day}</span>
-                                      <span className="text-[11px] text-white">
-                                        {['Upper Body', 'Lower Body', 'Rest', 'Push', 'Pull'][i]}
-                                      </span>
-                                      {i < 2 && <span className="ml-auto text-[9px] text-emerald-400">Done</span>}
-                                    </div>
-                                  ))}
-                                </div>
-                              </div>
-                            )}
-
-                            {!activePhoneFeature && (
-                              <div className="flex items-center justify-center h-48">
-                                <p className="text-[13px] text-white/40">Select a feature</p>
-                              </div>
-                            )}
-                          </motion.div>
-                        </AnimatePresence>
-                      </div>
-
-                      <div className="absolute bottom-2 left-1/2 -translate-x-1/2 w-32 h-1 bg-white/30 rounded-full" />
+                      {/* Home indicator */}
+                      <div className="absolute bottom-2 left-1/2 -translate-x-1/2 w-32 h-1 bg-white/30 rounded-full z-10" />
                     </div>
                   </div>
 
+                  {/* Glow effect */}
                   <div
                     className="absolute -bottom-20 left-1/2 -translate-x-1/2 w-48 h-48 rounded-full opacity-20 blur-3xl"
-                    style={{
-                      background: '#10B981',
-                    }}
+                    style={{ background: '#10B981' }}
                   />
                 </motion.div>
               </div>

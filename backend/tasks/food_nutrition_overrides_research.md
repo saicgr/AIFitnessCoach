@@ -2241,39 +2241,361 @@ INSERT INTO food_nutrition_overrides (
 
 ---
 
-## Progress Summary
+## Section 59: From foods_needed.md - Missing Items (40 items)
+
+| # | Food Name | Brand | Country | Category | Priority | Status | Date Added | Date Completed | Notes |
+|---|-----------|-------|---------|----------|----------|--------|------------|----------------|-------|
+| 2041 | Hungry Jack's Whopper (Australia) | Hungry Jack's | AU | fast_food | H | TODO | 2026-04-07 | | Australian Burger King |
+| 2042 | Hungry Jack's Stunner Meal | Hungry Jack's | AU | fast_food | M | TODO | 2026-04-07 | | |
+| 2043 | Concha Mexican Sweet Bread (per piece) | Various | MX | bread | H | TODO | 2026-04-07 | | Pan dulce icon |
+| 2044 | Vindaloo Curry (per serving) | Various | IN | curry | H | TODO | 2026-04-07 | | Goan Portuguese-Indian |
+| 2045 | Hush Puppy Deep Fried Cornmeal (per piece) | Various | US | snack | M | TODO | 2026-04-07 | | Southern US |
+| 2046 | Pine Nuts (per 30g) | Various | US | snack | M | TODO | 2026-04-07 | | |
+| 2047 | Escargot in Garlic Butter (per 6 pieces) | Various | FR | protein | M | TODO | 2026-04-07 | | |
+| 2048 | Wasabi Paste (per tsp) | Various | JP | condiment | M | TODO | 2026-04-07 | | |
+| 2049 | Gushers Fruit Snack (per pouch) | Betty Crocker | US | confectionery | M | TODO | 2026-04-07 | | |
+| 2050 | Radish Raw (per 100g) | Various | US | vegetable | L | TODO | 2026-04-07 | | |
+| 2051 | Parsnip Cooked (per 100g) | Various | GB | vegetable | M | TODO | 2026-04-07 | | |
+| 2052 | Rutabaga Cooked (per 100g) | Various | US | vegetable | M | TODO | 2026-04-07 | | |
+| 2053 | Beetroot Cooked (per 100g) | Various | GB | vegetable | M | TODO | 2026-04-07 | | |
+| 2054 | Pistachios Roasted Salted (per 30g) | Various | US | snack | H | TODO | 2026-04-07 | | |
+| 2055 | Durian Fresh (per 100g) | Various | MY | fruit | M | TODO | 2026-04-07 | | |
+| 2056 | Strawberry Fresh (per 100g) | Various | US | fruit | H | TODO | 2026-04-07 | | |
+| 2057 | Chalupa Taco Bell (per piece) | Taco Bell | US | fast_food | M | TODO | 2026-04-07 | | |
+| 2058 | Paella Valenciana (per serving) | Various | ES | rice | H | TODO | 2026-04-07 | | |
+| 2059 | Cayenne Pepper Ground (per tsp) | Various | US | condiment | L | TODO | 2026-04-07 | | |
+| 2060 | Saffron (per pinch/0.1g) | Various | IR | condiment | L | TODO | 2026-04-07 | | |
+| 2061 | Hazelnut Raw (per 30g) | Various | TR | snack | M | TODO | 2026-04-07 | | |
+| 2062 | Kudos Granola Bar (per bar) | Kudos | US | snack | L | TODO | 2026-04-07 | | |
+| 2063 | Mirepoix (per 100g) | Various | FR | vegetable | L | TODO | 2026-04-07 | | Celery carrot onion mix |
+| 2064 | Foie Gras (per 30g) | Various | FR | protein | M | TODO | 2026-04-07 | | |
+| 2065 | Quiznos Classic Italian Sub (per 8-inch) | Quiznos | US | fast_food | M | TODO | 2026-04-07 | | |
+| 2066 | Dunkaroos (per pack) | Betty Crocker | US | snack | M | TODO | 2026-04-07 | | |
+| 2067 | Kelp Fries (per serving) | Various | US | snack | M | TODO | 2026-04-07 | | Health food trend |
+| 2068 | Dippin' Dots Ice Cream (per serving) | Dippin' Dots | US | dessert | M | TODO | 2026-04-07 | | |
+| 2069 | Popsicle Fruit Bar (per bar) | Popsicle | US | dessert | M | TODO | 2026-04-07 | | |
+| 2070 | Jelly Belly Jelly Beans (per 35 pieces) | Jelly Belly | US | confectionery | M | TODO | 2026-04-07 | | |
+| 2071 | Reuben Sandwich (per sandwich) | Various | US | fast_food | H | TODO | 2026-04-07 | | |
+| 2072 | Mocha Coffee Latte (per 16oz) | Various | US | beverage | H | TODO | 2026-04-07 | | |
+| 2073 | Negroni Cocktail (per glass) | Various | IT | beverage | M | TODO | 2026-04-07 | | |
+| 2074 | Okra Fried (per 100g) | Various | US | vegetable | M | TODO | 2026-04-07 | | |
+| 2075 | Goulash Hungarian (per serving) | Various | HU | soup | M | TODO | 2026-04-07 | | |
+| 2076 | Cheddar Bay Biscuit Red Lobster (per piece) | Red Lobster | US | bread | M | TODO | 2026-04-07 | | |
+| 2077 | Dragon Fruit Fresh (per 100g) | Various | VN | fruit | M | TODO | 2026-04-07 | | |
+| 2078 | Apricot Fresh (per piece) | Various | TR | fruit | M | TODO | 2026-04-07 | | |
+| 2079 | Dahi Vada (per piece) | Various | IN | snack | H | TODO | 2026-04-07 | | |
+| 2080 | Pao de Queijo Brazilian Cheese Bread (per piece) | Various | BR | bread | M | TODO | 2026-04-07 | | |
+
+## Section 60: From WRONG_FOOD_MATCHES.md - Generic Entries Needed (15 items)
+
+| # | Food Name | Brand | Country | Category | Priority | Status | Date Added | Date Completed | Notes |
+|---|-----------|-------|---------|----------|----------|--------|------------|----------------|-------|
+| 2081 | Water Plain (per 100ml) | Various | US | beverage | H | TODO | 2026-04-07 | | 0 cal - prevents wrong matches |
+| 2082 | Salt Table (per tsp) | Various | US | condiment | H | TODO | 2026-04-07 | | 0 cal - prevents wrong matches |
+| 2083 | Black Pepper Ground (per tsp) | Various | US | condiment | H | TODO | 2026-04-07 | | |
+| 2084 | Vegetable Oil Generic (per tbsp) | Various | US | cooking | H | TODO | 2026-04-07 | | 884 cal/100g |
+| 2085 | Cola Generic Soda (per can 355ml) | Various | US | beverage | H | TODO | 2026-04-07 | | |
+| 2086 | Cantaloupe Melon (per 100g) | Various | US | fruit | M | TODO | 2026-04-07 | | Prevents melon→smoothie match |
+| 2087 | Salad Dressing Generic (per tbsp) | Various | US | condiment | H | TODO | 2026-04-07 | | Prevents dressing→stuffing match |
+| 2088 | Custard Dessert (per serving) | Various | GB | dessert | M | TODO | 2026-04-07 | | |
+| 2089 | Guacamole (per tbsp) | Various | MX | dip | H | TODO | 2026-04-07 | | Needs "guac" variant |
+| 2090 | Chocolate Mousse (per serving) | Various | FR | dessert | M | TODO | 2026-04-07 | | |
+| 2091 | Chapati Indian Flatbread (per piece) | Various | IN | bread | H | TODO | 2026-04-07 | | |
+| 2092 | Candy Generic (per piece) | Various | US | confectionery | M | TODO | 2026-04-07 | | |
+| 2093 | Cereal Generic (per serving) | Various | US | cereal | M | TODO | 2026-04-07 | | |
+| 2094 | Roti Indian Whole Wheat (per piece) | Various | IN | bread | H | TODO | 2026-04-07 | | |
+| 2095 | Dal Generic Lentil Soup (per serving) | Various | IN | protein | H | TODO | 2026-04-07 | | |
+
+## Section 61: Street Food - Top Priority Countries (200 items)
+
+| # | Food Name | Brand | Country | Category | Priority | Status | Date Added | Date Completed | Notes |
+|---|-----------|-------|---------|----------|----------|--------|------------|----------------|-------|
+| 2096 | Jianbing Chinese Breakfast Crepe Street Cart | Various | CN | street_food | H | TODO | 2026-04-07 | | China #1 street breakfast |
+| 2097 | Chuan'r Lamb Skewer Street Grill (per stick) | Various | CN | street_food | H | TODO | 2026-04-07 | | |
+| 2098 | Chuan'r Chicken Heart Skewer (per stick) | Various | CN | street_food | M | TODO | 2026-04-07 | | |
+| 2099 | Chuan'r Squid Skewer (per stick) | Various | CN | street_food | M | TODO | 2026-04-07 | | |
+| 2100 | Rou Jia Mo Chinese Meat Burger (per piece) | Various | CN | street_food | H | TODO | 2026-04-07 | | "Chinese hamburger" |
+| 2101 | Scallion Pancake Cong You Bing (per piece) | Various | CN | street_food | M | TODO | 2026-04-07 | | |
+| 2102 | Stinky Tofu Chou Doufu Fried (per serving) | Various | CN | street_food | M | TODO | 2026-04-07 | | |
+| 2103 | Tanghulu Candied Hawthorn (per stick) | Various | CN | street_food | M | TODO | 2026-04-07 | | TikTok viral |
+| 2104 | Boba Tea Street Stand Classic Milk Tea (per cup) | Various | CN | street_food | H | TODO | 2026-04-07 | | |
+| 2105 | Malatang Sichuan Hot Pot Street (per serving) | Various | CN | street_food | M | TODO | 2026-04-07 | | |
+| 2106 | Takoyaki Street Stand (per 6 pieces) | Various | JP | street_food | H | TODO | 2026-04-07 | | Osaka icon |
+| 2107 | Yakitori Street Grill Chicken Thigh (per stick) | Various | JP | street_food | H | TODO | 2026-04-07 | | |
+| 2108 | Yakitori Street Grill Tsukune (per stick) | Various | JP | street_food | M | TODO | 2026-04-07 | | Chicken meatball |
+| 2109 | Okonomiyaki Street Stand (per piece) | Various | JP | street_food | M | TODO | 2026-04-07 | | |
+| 2110 | Taiyaki Street Cart Red Bean (per piece) | Various | JP | street_food | M | TODO | 2026-04-07 | | |
+| 2111 | Yaki Imo Roasted Sweet Potato Street Cart | Various | JP | street_food | M | TODO | 2026-04-07 | | |
+| 2112 | Crepe Stand Strawberry Cream Harajuku (per piece) | Various | JP | street_food | M | TODO | 2026-04-07 | | |
+| 2113 | Karaage Stand Street Fried Chicken (per serving) | Various | JP | street_food | M | TODO | 2026-04-07 | | |
+| 2114 | Tteokbokki Street Cart (per serving) | Various | KR | street_food | H | TODO | 2026-04-07 | | |
+| 2115 | Korean Corn Dog Street Hotteok (per piece) | Various | KR | street_food | H | TODO | 2026-04-07 | | Cheese-stuffed |
+| 2116 | Odeng Fish Cake Street (per stick) | Various | KR | street_food | M | TODO | 2026-04-07 | | |
+| 2117 | Hotteok Sweet Pancake Street (per piece) | Various | KR | street_food | M | TODO | 2026-04-07 | | |
+| 2118 | Bungeoppang Fish Shaped Waffle (per piece) | Various | KR | street_food | M | TODO | 2026-04-07 | | |
+| 2119 | Gyeranppang Egg Bread Street (per piece) | Various | KR | street_food | M | TODO | 2026-04-07 | | |
+| 2120 | Sundae Korean Blood Sausage (per serving) | Various | KR | street_food | M | TODO | 2026-04-07 | | |
+| 2121 | Doner Kebab Stand Germany (per wrap) | Various | DE | street_food | H | TODO | 2026-04-07 | | |
+| 2122 | Doner Box with Fries (per serving) | Various | DE | street_food | H | TODO | 2026-04-07 | | |
+| 2123 | Currywurst Stand with Pommes (per serving) | Various | DE | street_food | H | TODO | 2026-04-07 | | |
+| 2124 | Bratwurst Stand im Brötchen (per piece) | Various | DE | street_food | M | TODO | 2026-04-07 | | |
+| 2125 | Fischbrötchen Bismarck Herring (per piece) | Various | DE | street_food | M | TODO | 2026-04-07 | | North German |
+| 2126 | Crepe Stand Nutella Banana (per piece) | Various | FR | street_food | H | TODO | 2026-04-07 | | |
+| 2127 | Crepe Stand Ham Cheese Egg (per piece) | Various | FR | street_food | H | TODO | 2026-04-07 | | Galette complète |
+| 2128 | Kebab Stand Shawarma Paris (per wrap) | Various | FR | street_food | M | TODO | 2026-04-07 | | |
+| 2129 | Baguette Sandwich Jambon Beurre (per piece) | Various | FR | street_food | H | TODO | 2026-04-07 | | France #1 sandwich |
+| 2130 | Fish and Chips Van UK (per serving) | Various | GB | street_food | H | TODO | 2026-04-07 | | |
+| 2131 | Kebab Van Chicken Doner (per wrap) | Various | GB | street_food | H | TODO | 2026-04-07 | | |
+| 2132 | Kebab Van Lamb Doner Meat & Chips | Various | GB | street_food | M | TODO | 2026-04-07 | | |
+| 2133 | Jacket Potato Van Cheese & Beans | Various | GB | street_food | M | TODO | 2026-04-07 | | |
+| 2134 | Pie & Mash Stand Steak Pie | Various | GB | street_food | M | TODO | 2026-04-07 | | |
+| 2135 | Pani Puri Street Cart (per 6 pieces) | Various | IN | street_food | H | TODO | 2026-04-07 | | Golgappa/Puchka |
+| 2136 | Bhel Puri Street Cart (per plate) | Various | IN | street_food | H | TODO | 2026-04-07 | | |
+| 2137 | Sev Puri Street Cart (per plate) | Various | IN | street_food | M | TODO | 2026-04-07 | | |
+| 2138 | Dahi Puri Street Cart (per plate) | Various | IN | street_food | M | TODO | 2026-04-07 | | |
+| 2139 | Aloo Tikki Chaat Street (per piece) | Various | IN | street_food | H | TODO | 2026-04-07 | | |
+| 2140 | Chole Kulche Street Cart (per serving) | Various | IN | street_food | M | TODO | 2026-04-07 | | |
+| 2141 | Dosa Street Cart Masala (per piece) | Various | IN | street_food | M | TODO | 2026-04-07 | | |
+| 2142 | Egg Roll Kolkata Street (per piece) | Various | IN | street_food | M | TODO | 2026-04-07 | | |
+| 2143 | Kathi Roll Chicken Street (per piece) | Various | IN | street_food | H | TODO | 2026-04-07 | | |
+| 2144 | Mirchi Bajji Chilli Fritter Street (per piece) | Various | IN | street_food | M | TODO | 2026-04-07 | | |
+| 2145 | Chai Street Cart (per cup) | Various | IN | street_food | H | TODO | 2026-04-07 | | Cutting chai |
+| 2146 | Tacos Al Pastor Street Taco (per taco) | Various | MX | street_food | H | TODO | 2026-04-07 | | |
+| 2147 | Tacos de Birria Street (per taco) | Various | MX | street_food | H | TODO | 2026-04-07 | | |
+| 2148 | Tacos de Carnitas Street (per taco) | Various | MX | street_food | M | TODO | 2026-04-07 | | |
+| 2149 | Tacos de Barbacoa Street (per taco) | Various | MX | street_food | M | TODO | 2026-04-07 | | |
+| 2150 | Tamales Street Cart Pork (per piece) | Various | MX | street_food | H | TODO | 2026-04-07 | | |
+| 2151 | Gorditas Street Cart (per piece) | Various | MX | street_food | M | TODO | 2026-04-07 | | |
+| 2152 | Torta Ahogada Street (per piece) | Various | MX | street_food | M | TODO | 2026-04-07 | | Guadalajara specialty |
+| 2153 | Tlayuda Oaxacan Street Pizza (per piece) | Various | MX | street_food | M | TODO | 2026-04-07 | | |
+| 2154 | Churros Street Cart with Chocolate (per 3) | Various | MX | street_food | M | TODO | 2026-04-07 | | |
+| 2155 | Elotes Grilled Corn Street Cart (per ear) | Various | MX | street_food | M | TODO | 2026-04-07 | | |
+| 2156 | Gyros Pork Stand Greece (per wrap) | Various | GR | street_food | H | TODO | 2026-04-07 | | |
+| 2157 | Souvlaki Chicken Stand (per stick) | Various | GR | street_food | M | TODO | 2026-04-07 | | |
+| 2158 | Loukoumades Greek Donuts (per 6 pieces) | Various | GR | street_food | M | TODO | 2026-04-07 | | |
+| 2159 | Thai Pad Thai Street Cart (per plate) | Various | TH | street_food | H | TODO | 2026-04-07 | | |
+| 2160 | Thai Mango Sticky Rice Street (per serving) | Various | TH | street_food | M | TODO | 2026-04-07 | | |
+| 2161 | Thai Grilled Pork Skewer Moo Ping (per stick) | Various | TH | street_food | M | TODO | 2026-04-07 | | |
+| 2162 | Thai Boat Noodles Street (per bowl) | Various | TH | street_food | M | TODO | 2026-04-07 | | |
+| 2163 | Thai Satay Gai Chicken Skewer (per stick) | Various | TH | street_food | M | TODO | 2026-04-07 | | |
+| 2164 | Thai Roti Mataba Street (per piece) | Various | TH | street_food | M | TODO | 2026-04-07 | | |
+| 2165 | Bakso Meatball Cart Indonesia (per serving) | Various | ID | street_food | H | TODO | 2026-04-07 | | |
+| 2166 | Gorengan Fried Snacks Cart (per piece) | Various | ID | street_food | M | TODO | 2026-04-07 | | |
+| 2167 | Martabak Manis Sweet Pancake (per slice) | Various | ID | street_food | M | TODO | 2026-04-07 | | |
+| 2168 | Nasi Goreng Street Cart (per plate) | Various | ID | street_food | M | TODO | 2026-04-07 | | |
+| 2169 | Satay Street Grill Ayam (per stick) | Various | ID | street_food | M | TODO | 2026-04-07 | | |
+| 2170 | Soto Ayam Street Cart (per bowl) | Various | ID | street_food | M | TODO | 2026-04-07 | | |
+| 2171 | Turkish Simit Street Cart (per piece) | Various | TR | street_food | H | TODO | 2026-04-07 | | |
+| 2172 | Turkish Kumpir Stuffed Potato (per piece) | Various | TR | street_food | M | TODO | 2026-04-07 | | |
+| 2173 | Turkish Döner Street Wrap (per wrap) | Various | TR | street_food | H | TODO | 2026-04-07 | | |
+| 2174 | Turkish Balık Ekmek Fish Sandwich (per piece) | Various | TR | street_food | M | TODO | 2026-04-07 | | Istanbul icon |
+| 2175 | Turkish Midye Dolma Stuffed Mussels (per 5) | Various | TR | street_food | M | TODO | 2026-04-07 | | |
+| 2176 | Turkish Kokoreç Offal Wrap (per piece) | Various | TR | street_food | M | TODO | 2026-04-07 | | |
+| 2177 | Arepas Street Cart Reina Pepiada (per piece) | Various | VE | street_food | M | TODO | 2026-04-07 | | |
+| 2178 | Choripán Argentine Sausage Sandwich (per piece) | Various | AR | street_food | M | TODO | 2026-04-07 | | |
+| 2179 | Empanada Street Cart Beef Argentina (per piece) | Various | AR | street_food | M | TODO | 2026-04-07 | | |
+| 2180 | Pastel Street Cart Carne Brazil (per piece) | Various | BR | street_food | M | TODO | 2026-04-07 | | |
+| 2181 | Acarajé Street Stand Bahia (per piece) | Various | BR | street_food | M | TODO | 2026-04-07 | | |
+| 2182 | Tapioca Street Cart Coco Brazil (per piece) | Various | BR | street_food | M | TODO | 2026-04-07 | | |
+| 2183 | Espetinho Street Grill Chicken (per stick) | Various | BR | street_food | M | TODO | 2026-04-07 | | |
+| 2184 | Poutine Street Stand Classic Canada (per serving) | Various | CA | street_food | H | TODO | 2026-04-07 | | |
+| 2185 | BeaverTails Pastry Cinnamon Sugar (per piece) | BeaverTails | CA | street_food | M | TODO | 2026-04-07 | | Canadian icon |
+| 2186 | Peameal Bacon Sandwich Toronto (per piece) | Various | CA | street_food | M | TODO | 2026-04-07 | | |
+| 2187 | Belgian Frites Stand Double Fried (per cone) | Various | BE | street_food | H | TODO | 2026-04-07 | | |
+| 2188 | Belgian Waffle Street Cart Brussels (per piece) | Various | BE | street_food | M | TODO | 2026-04-07 | | |
+| 2189 | Egyptian Koshari Street Cart (per serving) | Various | EG | street_food | H | TODO | 2026-04-07 | | |
+| 2190 | Egyptian Falafel Ta'ameya Cart (per 3 pieces) | Various | EG | street_food | M | TODO | 2026-04-07 | | |
+| 2191 | Egyptian Ful Medames Cart (per serving) | Various | EG | street_food | M | TODO | 2026-04-07 | | |
+| 2192 | Israeli Falafel Stand in Pita (per pita) | Various | IL | street_food | H | TODO | 2026-04-07 | | |
+| 2193 | Israeli Sabich Stand Eggplant Pita (per pita) | Various | IL | street_food | M | TODO | 2026-04-07 | | |
+| 2194 | Würstelstand Käsekrainer Vienna (per piece) | Various | AT | street_food | M | TODO | 2026-04-07 | | Cheese sausage |
+| 2195 | Würstelstand Bosna Vienna (per piece) | Various | AT | street_food | M | TODO | 2026-04-07 | | |
+| 2196 | Shawarma Stand Chicken UAE (per wrap) | Various | AE | street_food | H | TODO | 2026-04-07 | | |
+| 2197 | Luqaimat Sweet Dumpling UAE (per 5 pieces) | Various | AE | street_food | M | TODO | 2026-04-07 | | |
+| 2198 | Hong Kong Egg Waffle Gai Daan Jai (per piece) | Various | HK | street_food | M | TODO | 2026-04-07 | | |
+| 2199 | Hong Kong Fish Ball Curry (per 6 pieces) | Various | HK | street_food | M | TODO | 2026-04-07 | | |
+| 2200 | Lángos Hungarian Fried Bread Street (per piece) | Various | HU | street_food | M | TODO | 2026-04-07 | | |
+| 2201 | Kürtőskalács Chimney Cake Hungary (per piece) | Various | HU | street_food | M | TODO | 2026-04-07 | | |
+| 2202 | Danish Pølse Hot Dog Cart (per piece) | Various | DK | street_food | M | TODO | 2026-04-07 | | Rød pølse |
+| 2203 | Completo Chilean Hot Dog (per piece) | Various | CL | street_food | M | TODO | 2026-04-07 | | With avocado, sauerkraut |
+| 2204 | Colombian Arepa de Huevo (per piece) | Various | CO | street_food | M | TODO | 2026-04-07 | | |
+| 2205 | Colombian Empanada Street (per piece) | Various | CO | street_food | M | TODO | 2026-04-07 | | |
+| 2206 | Jamaican Jerk Chicken Street (per serving) | Various | JM | street_food | M | TODO | 2026-04-07 | | |
+| 2207 | Jamaican Patty Beef (per piece) | Various | JM | street_food | M | TODO | 2026-04-07 | | |
+| 2208 | Peruvian Anticucho Heart Skewer (per stick) | Various | PE | street_food | M | TODO | 2026-04-07 | | |
+| 2209 | Nigerian Suya Beef Skewer Street (per stick) | Various | NG | street_food | M | TODO | 2026-04-07 | | |
+| 2210 | Nigerian Akara Bean Fritter (per piece) | Various | NG | street_food | M | TODO | 2026-04-07 | | |
+| 2211 | South African Bunny Chow (per quarter loaf) | Various | ZA | street_food | M | TODO | 2026-04-07 | | Durban icon |
+| 2212 | South African Boerewors Roll (per piece) | Various | ZA | street_food | M | TODO | 2026-04-07 | | |
+| 2213 | Moroccan Snail Soup Babbouche (per bowl) | Various | MA | street_food | M | TODO | 2026-04-07 | | |
+| 2214 | Moroccan Msemen Flatbread (per piece) | Various | MA | street_food | M | TODO | 2026-04-07 | | |
+| 2215 | Senegalese Fataya Pastry (per piece) | Various | SN | street_food | M | TODO | 2026-04-07 | | |
+| 2216 | Ghanaian Kelewele Fried Plantain Street (per serving) | Various | GH | street_food | M | TODO | 2026-04-07 | | |
+| 2217 | Vietnamese Bun Cha Street Hanoi (per serving) | Various | VN | street_food | M | TODO | 2026-04-07 | | |
+| 2218 | Vietnamese Banh Xeo Crispy Pancake Street (per piece) | Various | VN | street_food | M | TODO | 2026-04-07 | | |
+| 2219 | Filipino Isaw Grilled Intestine (per stick) | Various | PH | street_food | M | TODO | 2026-04-07 | | |
+| 2220 | Filipino Kwek Kwek Quail Egg Fritter (per 5) | Various | PH | street_food | M | TODO | 2026-04-07 | | |
+| 2221 | Filipino Fishball Street Cart (per 5 pieces) | Various | PH | street_food | M | TODO | 2026-04-07 | | |
+| 2222 | Malaysian Satay Kajang (per stick) | Various | MY | street_food | M | TODO | 2026-04-07 | | |
+| 2223 | Malaysian Lok Lok Skewer (per stick) | Various | MY | street_food | M | TODO | 2026-04-07 | | |
+| 2224 | Malaysian Apam Balik Peanut Pancake (per piece) | Various | MY | street_food | M | TODO | 2026-04-07 | | |
+| 2225 | Singaporean Satay Street Chicken (per stick) | Various | SG | street_food | M | TODO | 2026-04-07 | | |
+| 2226 | Singaporean Carrot Cake Chai Tow Kway (per serving) | Various | SG | street_food | M | TODO | 2026-04-07 | | Fried radish cake |
+| 2227 | Bangladeshi Fuchka (per 6 pieces) | Various | BD | street_food | M | TODO | 2026-04-07 | | Like pani puri |
+| 2228 | Bangladeshi Jhalmuri Puffed Rice Snack (per serving) | Various | BD | street_food | M | TODO | 2026-04-07 | | |
+| 2229 | Sri Lankan Kottu Roti Street (per serving) | Various | LK | street_food | M | TODO | 2026-04-07 | | |
+| 2230 | Sri Lankan Isso Wade Prawn Fritter (per piece) | Various | LK | street_food | M | TODO | 2026-04-07 | | |
+| 2231 | Nepali Momo Buff Steamed (per 8 pieces) | Various | NP | street_food | M | TODO | 2026-04-07 | | |
+| 2232 | Nepali Chatamari Rice Crepe (per piece) | Various | NP | street_food | M | TODO | 2026-04-07 | | |
+| 2233 | Spanish Churros with Chocolate (per 3 churros) | Various | ES | street_food | M | TODO | 2026-04-07 | | |
+| 2234 | Spanish Bocadillo de Calamares (per piece) | Various | ES | street_food | M | TODO | 2026-04-07 | | Madrid icon |
+| 2235 | Czech Trdelník Chimney Cake (per piece) | Various | CZ | street_food | M | TODO | 2026-04-07 | | |
+| 2236 | Czech Klobása Grilled Sausage (per piece) | Various | CZ | street_food | M | TODO | 2026-04-07 | | |
+| 2237 | Polish Zapiekanka Open Baguette (per piece) | Various | PL | street_food | M | TODO | 2026-04-07 | | |
+| 2238 | Polish Oscypek Grilled Cheese Street (per piece) | Various | PL | street_food | M | TODO | 2026-04-07 | | |
+| 2239 | Russian Blini Cart with Sour Cream (per 2 pieces) | Various | RU | street_food | M | TODO | 2026-04-07 | | |
+| 2240 | Russian Pirozhki Fried Pie (per piece) | Various | RU | street_food | M | TODO | 2026-04-07 | | |
+| 2241 | Raclette Street Stand Switzerland (per serving) | Various | CH | street_food | M | TODO | 2026-04-07 | | |
+| 2242 | Swedish Tunnbrödsrulle Hot Dog Wrap (per piece) | Various | SE | street_food | M | TODO | 2026-04-07 | | |
+| 2243 | Finnish Lihapiirakka Meat Pie (per piece) | Various | FI | street_food | M | TODO | 2026-04-07 | | |
+| 2244 | Australian Sausage Sizzle (per piece) | Various | AU | street_food | M | TODO | 2026-04-07 | | Bunnings icon |
+| 2245 | Australian Halal Snack Pack HSP (per serving) | Various | AU | street_food | M | TODO | 2026-04-07 | | |
+| 2246 | Australian Dim Sim Fried (per piece) | Various | AU | street_food | M | TODO | 2026-04-07 | | |
+| 2247 | Afghan Bolani Stuffed Flatbread (per piece) | Various | AF | street_food | M | TODO | 2026-04-07 | | |
+| 2248 | Afghan Mantu Dumplings (per 5 pieces) | Various | AF | street_food | M | TODO | 2026-04-07 | | |
+| 2249 | Ethiopian Sambusa (per piece) | Various | ET | street_food | M | TODO | 2026-04-07 | | |
+| 2250 | Tanzanian Zanzibar Pizza (per piece) | Various | TZ | street_food | M | TODO | 2026-04-07 | | |
+| 2251 | Kenyan Mutura Blood Sausage (per piece) | Various | KE | street_food | M | TODO | 2026-04-07 | | |
+| 2252 | Kenyan Nyama Choma Street Grill (per 100g) | Various | KE | street_food | M | TODO | 2026-04-07 | | |
+| 2253 | Lebanese Manakish Zaatar Street (per piece) | Various | LB | street_food | M | TODO | 2026-04-07 | | |
+| 2254 | Lebanese Arayes Grilled Pita (per piece) | Various | LB | street_food | M | TODO | 2026-04-07 | | |
+| 2255 | Cambodian Num Pang Sandwich (per piece) | Various | KH | street_food | M | TODO | 2026-04-07 | | |
+| 2256 | Myanmar Tea Leaf Salad Lahpet (per serving) | Various | MM | street_food | M | TODO | 2026-04-07 | | |
+| 2257 | Laotian Khao Piak Sen Noodle Soup (per serving) | Various | LA | street_food | M | TODO | 2026-04-07 | | |
+| 2258 | Georgian Khachapuri Adjarian (per piece) | Various | GE | street_food | H | TODO | 2026-04-07 | | Cheese bread with egg |
+| 2259 | Georgian Khinkali Dumplings (per 5 pieces) | Various | GE | street_food | M | TODO | 2026-04-07 | | |
+| 2260 | Irish Chip Van Curry Chips (per serving) | Various | IE | street_food | M | TODO | 2026-04-07 | | |
+| 2261 | Trinidadian Doubles with Channa (per piece) | Various | TT | street_food | M | TODO | 2026-04-07 | | |
+| 2262 | Salvadoran Pupusa Revuelta Street (per piece) | Various | SV | street_food | M | TODO | 2026-04-07 | | |
+| 2263 | Cuban Sandwich Cubano (per piece) | Various | CU | street_food | M | TODO | 2026-04-07 | | |
+| 2264 | Haitian Griot Fried Pork (per serving) | Various | HT | street_food | M | TODO | 2026-04-07 | | |
+| 2265 | Pakistani Bun Kebab Street (per piece) | Various | PK | street_food | M | TODO | 2026-04-07 | | |
+| 2266 | Pakistani Gol Gappay Street Cart (per 6) | Various | PK | street_food | M | TODO | 2026-04-07 | | |
+| 2267 | Pakistani Chana Chaat Street (per plate) | Various | PK | street_food | M | TODO | 2026-04-07 | | |
+| 2268 | Pakistani Seekh Kebab Street Grill (per stick) | Various | PK | street_food | M | TODO | 2026-04-07 | | |
+| 2269 | Uzbek Somsa Meat Pastry (per piece) | Various | UZ | street_food | M | TODO | 2026-04-07 | | |
+| 2270 | Uzbek Plov Rice Pilaf Street (per serving) | Various | UZ | street_food | M | TODO | 2026-04-07 | | |
+
+## Section 62: From FOOD_LOG_EDGE_CASES.md - Common User Inputs Missing (80 items)
+
+| # | Food Name | Brand | Country | Category | Priority | Status | Date Added | Date Completed | Notes |
+|---|-----------|-------|---------|----------|----------|--------|------------|----------------|-------|
+| 2271 | PB&J Sandwich Peanut Butter Jelly (per sandwich) | Various | US | fast_food | H | TODO | 2026-04-07 | | Ultra common user input |
+| 2272 | Protein Shake Generic Whey with Milk (per serving) | Various | US | protein_drink | H | TODO | 2026-04-07 | | |
+| 2273 | Rice and Dal Combo (per serving) | Various | IN | staple | H | TODO | 2026-04-07 | | Common Indian input |
+| 2274 | Steak and Potatoes Dinner (per serving) | Various | US | protein | M | TODO | 2026-04-07 | | |
+| 2275 | Noodles and Egg Stir Fry (per serving) | Various | CN | noodle | M | TODO | 2026-04-07 | | |
+| 2276 | Bowl of Cereal with Milk Generic (per serving) | Various | US | breakfast | H | TODO | 2026-04-07 | | |
+| 2277 | Momo Steamed Chicken (per 5 pieces) | Various | NP | snack | H | TODO | 2026-04-07 | | |
+| 2278 | Momos Fried (per 5 pieces) | Various | IN | snack | H | TODO | 2026-04-07 | | |
+| 2279 | Anabolic French Toast (per 4 slices) | Various | US | breakfast | M | TODO | 2026-04-07 | | Fitness trend |
+| 2280 | Protein Fluff Casein Ice (per serving) | Various | US | dessert | M | TODO | 2026-04-07 | | Fitness trend |
+| 2281 | Rice Cake with Peanut Butter (per 2 cakes) | Various | US | snack | M | TODO | 2026-04-07 | | |
+| 2282 | Post Workout Shake Generic (per serving) | Various | US | protein_drink | M | TODO | 2026-04-07 | | 2 scoops + milk |
+| 2283 | Tagine Lamb with Apricots Couscous (per serving) | Various | MA | protein | M | TODO | 2026-04-07 | | From edge cases |
+| 2284 | Khachapuri Georgian Cheese Bread (per piece) | Various | GE | bread | H | TODO | 2026-04-07 | | From edge cases |
+| 2285 | Mole Negro with Chicken (per serving) | Various | MX | protein | M | TODO | 2026-04-07 | | |
+| 2286 | Pesarattu Green Gram Dosa (per piece) | Various | IN | breakfast | M | TODO | 2026-04-07 | | Andhra specialty |
+| 2287 | Thepla Gujarati Flatbread (per piece) | Various | IN | bread | M | TODO | 2026-04-07 | | |
+| 2288 | Aam Ras Mango Pulp with Milk (per serving) | Various | IN | dessert | M | TODO | 2026-04-07 | | |
+| 2289 | Chhachh Buttermilk Spiced (per glass) | Various | IN | beverage | M | TODO | 2026-04-07 | | Gujarat specialty |
+| 2290 | Parotta Kerala Layered Bread (per piece) | Various | IN | bread | M | TODO | 2026-04-07 | | |
+| 2291 | Appam Kerala Rice Pancake (per piece) | Various | IN | bread | M | TODO | 2026-04-07 | | |
+| 2292 | Fish Curry Kerala Style (per serving) | Various | IN | protein | M | TODO | 2026-04-07 | | |
+| 2293 | Rajma Chawal (per serving) | Various | IN | staple | H | TODO | 2026-04-07 | | Super common input |
+| 2294 | Chicken 65 (per serving) | Various | IN | protein | H | TODO | 2026-04-07 | | |
+| 2295 | Mirchi ka Salan (per serving) | Various | IN | curry | M | TODO | 2026-04-07 | | Hyderabadi biryani side |
+| 2296 | Sambar Rice (per serving) | Various | IN | staple | H | TODO | 2026-04-07 | | South Indian staple |
+| 2297 | Rasam (per serving) | Various | IN | soup | M | TODO | 2026-04-07 | | |
+| 2298 | Poriyal Vegetable Stir Fry (per serving) | Various | IN | vegetable | M | TODO | 2026-04-07 | | |
+| 2299 | Curd Rice Thayir Sadam (per serving) | Various | IN | staple | M | TODO | 2026-04-07 | | |
+| 2300 | Appalam Papadum Fried (per piece) | Various | IN | snack | M | TODO | 2026-04-07 | | |
+| 2301 | Caramel Frappuccino Grande Starbucks (per cup) | Starbucks | US | beverage | H | TODO | 2026-04-07 | | |
+| 2302 | Chipotle Bowl Double Chicken Extra Guac (per bowl) | Chipotle | US | fast_food | H | TODO | 2026-04-07 | | Common user order |
+| 2303 | Chick-fil-A Spicy Deluxe Sandwich | Chick-fil-A | US | fast_food | H | TODO | 2026-04-07 | | |
+| 2304 | Chick-fil-A Waffle Fries (per medium) | Chick-fil-A | US | fast_food | M | TODO | 2026-04-07 | | |
+| 2305 | Sweetgreen Harvest Bowl | Sweetgreen | US | fast_food | M | TODO | 2026-04-07 | | |
+| 2306 | CAVA Bowl Grilled Chicken | CAVA | US | fast_food | M | TODO | 2026-04-07 | | |
+| 2307 | Popeyes 3 Piece Chicken Tender | Popeyes | US | fast_food | M | TODO | 2026-04-07 | | |
+| 2308 | Popeyes Biscuit (per piece) | Popeyes | US | fast_food | M | TODO | 2026-04-07 | | |
+| 2309 | Jersey Mike's #13 Italian Sub (per regular) | Jersey Mike's | US | fast_food | M | TODO | 2026-04-07 | | |
+| 2310 | Poke Bowl Tuna Salmon Crab Generic (per bowl) | Various | US | fast_food | H | TODO | 2026-04-07 | | |
+| 2311 | Grain Bowl Salmon Avocado Edamame (per bowl) | Various | US | fast_food | M | TODO | 2026-04-07 | | |
+| 2312 | Charcuterie Board (per serving estimate) | Various | US | snack | M | TODO | 2026-04-07 | | Cheese crackers meat fruit |
+| 2313 | IPA Beer Craft (per pint) | Various | US | beverage | M | TODO | 2026-04-07 | | Higher cal than lager |
+| 2314 | Red Wine Generic (per glass 150ml) | Various | US | beverage | M | TODO | 2026-04-07 | | |
+| 2315 | White Wine Generic (per glass 150ml) | Various | US | beverage | M | TODO | 2026-04-07 | | |
+| 2316 | Whiskey Shot (per 44ml) | Various | US | beverage | M | TODO | 2026-04-07 | | |
+| 2317 | Margarita Classic (per glass) | Various | MX | beverage | M | TODO | 2026-04-07 | | |
+| 2318 | Mimosa Champagne OJ (per glass) | Various | US | beverage | M | TODO | 2026-04-07 | | |
+| 2319 | Green Smoothie Kale Spinach Banana Mango (per 16oz) | Various | US | beverage | M | TODO | 2026-04-07 | | |
+| 2320 | Mango Lassi (per glass) | Various | IN | beverage | H | TODO | 2026-04-07 | | Very common input |
+| 2321 | Masala Chai with Milk and Sugar (per cup) | Various | IN | beverage | H | TODO | 2026-04-07 | | |
+| 2322 | Boba Tea Taro Large with Tapioca (per cup) | Various | TW | beverage | H | TODO | 2026-04-07 | | |
+| 2323 | Eggs Benedict with Hash Browns (per serving) | Various | US | breakfast | M | TODO | 2026-04-07 | | Brunch order |
+| 2324 | Overnight Oats with Chia Almonds Maple (per serving) | Various | US | breakfast | M | TODO | 2026-04-07 | | |
+| 2325 | Avocado Toast with Fried Egg (per serving) | Various | US | breakfast | H | TODO | 2026-04-07 | | |
+| 2326 | Açaí Bowl with Granola Banana PB (per bowl) | Various | BR | breakfast | H | TODO | 2026-04-07 | | |
+| 2327 | Bagel with Cream Cheese and Smoked Salmon (per bagel) | Various | US | breakfast | M | TODO | 2026-04-07 | | |
+| 2328 | Smoothie Bowl Acai Mixed Berries Coconut (per bowl) | Various | US | breakfast | M | TODO | 2026-04-07 | | |
+| 2329 | Egg White Omelette Spinach Mushroom Feta (per serving) | Various | US | breakfast | M | TODO | 2026-04-07 | | |
+| 2330 | Breakfast Burrito Eggs Cheese Beans Salsa (per burrito) | Various | US | breakfast | H | TODO | 2026-04-07 | | |
+| 2331 | Cottage Cheese with Pineapple Walnuts (per serving) | Various | US | snack | M | TODO | 2026-04-07 | | |
+| 2332 | Turkey Avocado Sandwich Whole Wheat (per sandwich) | Various | US | fast_food | M | TODO | 2026-04-07 | | |
+| 2333 | Caesar Salad Grilled Chicken (per serving) | Various | US | salad | H | TODO | 2026-04-07 | | |
+| 2334 | Sushi California Roll (per 8 pieces) | Various | US | fast_food | H | TODO | 2026-04-07 | | |
+| 2335 | Sushi Spicy Tuna Roll (per 8 pieces) | Various | US | fast_food | M | TODO | 2026-04-07 | | |
+| 2336 | Buffalo Wings Traditional (per 8 wings) | Various | US | protein | H | TODO | 2026-04-07 | | |
+| 2337 | Nachos with Cheese Jalapenos (per serving) | Various | US | snack | M | TODO | 2026-04-07 | | |
+| 2338 | Chicken Alfredo Pasta (per serving) | Various | US | pasta | M | TODO | 2026-04-07 | | |
+| 2339 | Spaghetti Bolognese with Parmesan (per serving) | Various | IT | pasta | M | TODO | 2026-04-07 | | |
+| 2340 | Fish Tacos with Mango Salsa (per 2 tacos) | Various | MX | fast_food | M | TODO | 2026-04-07 | | |
+| 2341 | BBQ Ribs Half Rack with Cornbread (per serving) | Various | US | protein | M | TODO | 2026-04-07 | | |
+| 2342 | Lobster Tail with Butter (per tail) | Various | US | protein | M | TODO | 2026-04-07 | | |
+| 2343 | Thai Green Curry Chicken Jasmine Rice (per serving) | Various | TH | curry | M | TODO | 2026-04-07 | | |
+| 2344 | Tonkotsu Ramen Chashu Ajitama (per bowl) | Various | JP | noodle | H | TODO | 2026-04-07 | | Common user input |
+| 2345 | Shawarma with Toum Pickled Turnips (per wrap) | Various | LB | fast_food | M | TODO | 2026-04-07 | | |
+| 2346 | Golgappa 2 Plates (per 2 plates ~12 pcs) | Various | IN | snack | M | TODO | 2026-04-07 | | Hindi name for pani puri |
+| 2347 | Schnitzel with Kartoffelsalat (per serving) | Various | DE | protein | M | TODO | 2026-04-07 | | |
+| 2348 | Weissbier German Wheat Beer (per 500ml) | Various | DE | beverage | M | TODO | 2026-04-07 | | |
+| 2349 | Indian Thali Full Meal (per thali) | Various | IN | fast_food | H | TODO | 2026-04-07 | | Dal paneer aloo rice roti raita |
+| 2350 | Korean BBQ Bulgogi with Rice Banchan (per serving) | Various | KR | protein | M | TODO | 2026-04-07 | | |
+
+---
+
+## Updated Progress Summary
 
 | Metric | Count |
 |--------|-------|
-| **Total items** | 1909 |
-| **TODO** | 1909 |
-| **DUPLICATE** | 0 (all removed) |
+| **Total items** | ~2350 |
+| **TODO** | ~2350 |
+| **DUPLICATE** | 0 |
 | **DONE** | 0 |
 
-### Sections
-| # | Section | Items | Focus |
-|---|---------|-------|-------|
-| 1-40 | Original sections (cleaned) | ~899 | Protein bars/cereals, energy drinks, noodles, chocolate, snacks, beverages, biscuits, spreads, frozen meals, bread, Asian/ME/LatAm/African/EU/Plant-based/Fitness/Meal prep |
-| 41 | UK Supermarket Own Brands | 50 | Tesco, Sainsbury's, M&S, Waitrose, Asda, Aldi, Lidl |
-| 42 | German Supermarket & Brands | 50 | Aldi Süd, Lidl, Ehrmann, Ferrero DE, Funny Frisch, Fritz Kola |
-| 43 | International Fast Food Unique Items | 60 | McDonald's India/Japan, Paris Baguette, Pret, Wagamama, MrBeast |
-| 44 | Indian Specific Brands | 60 | Patanjali, Saffola, iD Fresh, Licious, MTR, Wow Momo |
-| 45 | Japanese & Korean Specific | 60 | Konbini items, SAVAS, Lawson, FamilyMart, CU, GS25, Genki Forest |
-| 46 | Southeast Asian Specific | 50 | Lucky Me, Silverqueen, Gardenia, Hao Hao, Vinamilk |
-| 47 | Middle East & Turkey Specific | 50 | Pinar, Ülker, Almarai, Americana, Egyptian/Lebanese brands |
-| 48 | European Brands & Products | 50 | Migros, Fazer, Marabou, Freia, Carrefour, Mulino Bianco |
-| 49 | Latin American Specific | 40 | Bauducco, Bimbo, Havanna, Peruvian/Colombian dishes |
-| 50 | African Brands & Foods | 40 | Shoprite, Koo, Nigerian staples, East African dishes |
-| 51 | More Fitness & Health | 50 | Bloom, Vital Proteins, LMNT, running gels, SA protein brands |
-| 52 | International Dairy & Cheese | 40 | Philadelphia, Boursin, Galbani, Korean/Japanese dairy |
-| 53 | Sauces, Pastes & Cooking | 40 | Kikkoman, Sriracha, Mae Ploy, global condiments |
-| 54 | Frozen Foods & Ready Meals | 40 | Amy's, Lean Cuisine, Bibigo, Trader Joe's frozen |
-| 55 | More International Snacks | 50 | Oreo, Reese's, UK chocolates, Cadbury bars |
-| 56 | Breads & Breakfast | 30 | Intl bread brands, UK cereals, breakfast items |
-| 57 | Remaining (oils, superfoods, desserts, street food) | 240 | Cooking oils, supplements, Indian sweets, Asian desserts, beer, fast food chains |
+### New Sections Added (59-62)
+| # | Section | Items | Source |
+|---|---------|-------|--------|
+| 59 | Missing Items from foods_needed.md | 40 | Root file: foods_needed.md |
+| 60 | Generic Entries for Wrong Matches | 15 | Root file: WRONG_FOOD_MATCHES.md |
+| 61 | Street Food - Top Priority Countries | 175 | Root file: street_food_by_country.md |
+| 62 | Common User Food Log Inputs | 80 | Root files: FOOD_LOG_EDGE_CASES.md, FOOD_LOG_TEST_PROMPTS.md |
 
-### Countries covered (65+)
-AR, AT, AU, BA, BE, BO, BR, CA, CH, CN, CO, CR, DE, DK, EC, EE, EG, ES, ET, FI, FR, GB, GE, GH, GR, HK, HU, ID, IE, IL, IN, IS, IT, JP, KE, KH, KR, LB, LV, MA, MM, MX, MY, MZ, NG, NL, NO, NZ, PE, PH, PK, PL, PS, PT, RS, RU, RW, SA, SE, SG, SN, TH, TN, TR, TW, TZ, UA, UG, US, VE, VN, YE, ZA
-
-### Brands covered
-500+ unique brands across fitness, supermarket own-label, artisan, restaurant, convenience store, and traditional categories
+### All Sources Used
+- `foods_needed.md` - Missing foods list
+- `MISSING_GENERIC_FOODS.md` - 31 generic foods causing wrong matches
+- `WRONG_FOOD_MATCHES.md` - Foods with bad fuzzy matching
+- `FOOD_LOG_EDGE_CASES.md` - 200+ real user food log inputs
+- `FOOD_LOG_TEST_PROMPTS.md` - 100 realistic meal descriptions
+- `FOODS_BY_WEIGHT.md` - Foods commonly described by weight
+- `street_food_by_country.md` - 241 vendor types across 60+ countries
+- `chain_restaurants_by_country.md` - Country-exclusive chain items
