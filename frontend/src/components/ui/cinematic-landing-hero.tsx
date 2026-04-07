@@ -187,6 +187,7 @@ export interface CinematicHeroProps extends React.HTMLAttributes<HTMLDivElement>
   ctaHeading?: string;
   ctaDescription?: string;
   phoneScreenshot?: string;
+  sideScreenshots?: [string, string];
   badges?: [FloatingBadge, FloatingBadge];
 }
 
@@ -201,6 +202,7 @@ export function CinematicHero({
   ctaHeading = "Start your recovery.",
   ctaDescription = "Join thousands of others in the 12-step program and take control of your timeline today.",
   phoneScreenshot,
+  sideScreenshots,
   badges,
   className,
   ...props
@@ -375,7 +377,7 @@ export function CinematicHero({
 
             {/* 1. TOP (Mobile) / RIGHT (Desktop): BRAND NAME */}
             <div className="card-right-text gsap-reveal order-1 lg:order-3 flex justify-center lg:justify-end z-20 w-full">
-              <h2 className="text-6xl md:text-[6rem] lg:text-[8rem] font-black uppercase tracking-tighter text-card-silver-matte lg:mt-0">
+              <h2 className="text-6xl md:text-[6rem] lg:text-[8rem] font-black tracking-tighter text-card-silver-matte lg:mt-0">
                 {brandName}
               </h2>
             </div>
@@ -386,10 +388,42 @@ export function CinematicHero({
               {/* Inner wrapper for safe CSS scaling that doesn't conflict with GSAP */}
               <div className="relative w-full h-full flex items-center justify-center transform scale-[0.65] md:scale-85 lg:scale-100">
 
-                {/* The iPhone Bezel */}
+                {/* Side phone - left */}
+                {sideScreenshots && sideScreenshots[0] && (
+                  <div
+                    className="absolute w-[200px] h-[415px] rounded-[2.2rem] overflow-hidden opacity-40 -left-[140px] lg:-left-[180px] top-1/2 -translate-y-1/2 z-0 hidden md:block"
+                    style={{
+                      background: 'linear-gradient(145deg, #2a2a2c 0%, #111 100%)',
+                      boxShadow: '0 20px 40px -10px rgba(0,0,0,0.6)',
+                      transform: 'translateY(-50%) rotateY(15deg) scale(0.85)',
+                    }}
+                  >
+                    <div className="absolute inset-[5px] rounded-[1.8rem] overflow-hidden bg-black">
+                      <img src={sideScreenshots[0]} alt="App preview" className="absolute inset-0 w-full h-full object-cover" />
+                    </div>
+                  </div>
+                )}
+
+                {/* Side phone - right */}
+                {sideScreenshots && sideScreenshots[1] && (
+                  <div
+                    className="absolute w-[200px] h-[415px] rounded-[2.2rem] overflow-hidden opacity-40 -right-[140px] lg:-right-[180px] top-1/2 -translate-y-1/2 z-0 hidden md:block"
+                    style={{
+                      background: 'linear-gradient(145deg, #2a2a2c 0%, #111 100%)',
+                      boxShadow: '0 20px 40px -10px rgba(0,0,0,0.6)',
+                      transform: 'translateY(-50%) rotateY(-15deg) scale(0.85)',
+                    }}
+                  >
+                    <div className="absolute inset-[5px] rounded-[1.8rem] overflow-hidden bg-black">
+                      <img src={sideScreenshots[1]} alt="App preview" className="absolute inset-0 w-full h-full object-cover" />
+                    </div>
+                  </div>
+                )}
+
+                {/* Main phone bezel */}
                 <div
                   ref={mockupRef}
-                  className="relative w-[280px] h-[580px] rounded-[3rem] iphone-bezel flex flex-col will-change-transform transform-style-3d"
+                  className="relative w-[280px] h-[580px] rounded-[3rem] iphone-bezel flex flex-col will-change-transform transform-style-3d z-10"
                 >
                   {/* Physical Hardware Buttons */}
                   <div className="absolute top-[120px] -left-[3px] w-[3px] h-[25px] hardware-btn rounded-l-md z-0" aria-hidden="true" />

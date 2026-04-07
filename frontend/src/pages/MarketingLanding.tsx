@@ -56,6 +56,7 @@ export default function MarketingLanding() {
         ctaHeading="Start your journey."
         ctaDescription="Join thousands of athletes training with their personal AI coach. Personalized workouts, real-time guidance, and intelligent progress tracking."
         phoneScreenshot="/screenshots/intro_phone_1.png"
+        sideScreenshots={["/screenshots/intro_phone_4.png", "/screenshots/intro_phone_6.png"]}
         badges={[
           {
             emoji: "💪",
