@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'dart:ui';
 import 'package:flutter/material.dart';
 
@@ -50,15 +51,30 @@ class OnboardingTheme {
 
   Color get _glass => isDark ? Colors.white : Colors.black;
 
+  // ── Accent colors ─────────────────────────────────────────────────
+
+  /// Orange accent for CTA buttons (Continue, Generate).
+  Color get accent => const Color(0xFFFF8C00);
+
+  /// Green accent for selection confirmation (checkmarks, counters, badges).
+  Color get selectionAccent => const Color(0xFF34C759);
+
+  /// Badge background for "Recommended" / "BEST" labels.
+  Color get badgeBg => selectionAccent.withValues(alpha: 0.15);
+
+  /// Badge text color.
+  Color get badgeText => selectionAccent;
+
   // ── Card / chip backgrounds ───────────────────────────────────────
 
   Color get cardFill => isDark
       ? Colors.white.withValues(alpha: 0.10)
       : Colors.white.withValues(alpha: 0.55);
 
+  /// Selected card gradient — green-tinted for clear visual feedback.
   List<Color> get cardSelectedGradient => isDark
-      ? [Colors.white.withValues(alpha: 0.22), Colors.white.withValues(alpha: 0.12)]
-      : [Colors.white.withValues(alpha: 0.80), Colors.white.withValues(alpha: 0.60)];
+      ? [selectionAccent.withValues(alpha: 0.18), selectionAccent.withValues(alpha: 0.08)]
+      : [selectionAccent.withValues(alpha: 0.10), selectionAccent.withValues(alpha: 0.05)];
 
   // ── Borders ───────────────────────────────────────────────────────
 
@@ -66,9 +82,10 @@ class OnboardingTheme {
       ? Colors.white.withValues(alpha: 0.18)
       : Colors.white.withValues(alpha: 0.70);
 
+  /// Selected border — green-tinted.
   Color get borderSelected => isDark
-      ? Colors.white.withValues(alpha: 0.50)
-      : Colors.white.withValues(alpha: 0.90);
+      ? selectionAccent.withValues(alpha: 0.50)
+      : selectionAccent.withValues(alpha: 0.35);
 
   Color get borderSubtle => isDark
       ? Colors.white.withValues(alpha: 0.10)
@@ -76,20 +93,16 @@ class OnboardingTheme {
 
   // ── Checkmarks & indicators ───────────────────────────────────────
 
-  Color get checkBg => isDark
-      ? Colors.white.withValues(alpha: 0.3)
-      : Colors.black.withValues(alpha: 0.08);
+  /// Solid green background for checkmark circles.
+  Color get checkBg => selectionAccent;
 
-  Color get checkIcon => textPrimary;
+  /// White check icon on green background.
+  Color get checkIcon => Colors.white;
 
+  /// Unselected checkmark circle border.
   Color get checkBorderUnselected => isDark
       ? Colors.white.withValues(alpha: 0.3)
       : Colors.black.withValues(alpha: 0.15);
-
-  // ── Accent (for active CTA buttons) ────────────────────────────────
-
-  /// Accent color for active/enabled call-to-action buttons.
-  Color get accent => const Color(0xFFFF8C00); // FitWiz orange
 
   // ── Buttons ───────────────────────────────────────────────────────
 
@@ -105,84 +118,121 @@ class OnboardingTheme {
 
   // ── Icon containers ───────────────────────────────────────────────
 
-  List<Color> iconContainerGradient(Color accent) => [
-        accent.withValues(alpha: 0.45),
-        accent.withValues(alpha: 0.25),
+  /// Unselected icon container — uses the icon's accent color.
+  List<Color> iconContainerGradient(Color iconColor) => [
+        iconColor.withValues(alpha: 0.45),
+        iconColor.withValues(alpha: 0.25),
       ];
 
-  Color iconContainerBorder(Color accent) =>
-      accent.withValues(alpha: 0.5);
+  Color iconContainerBorder(Color iconColor) =>
+      iconColor.withValues(alpha: 0.5);
 
-  List<Color> get iconContainerSelectedGradient => isDark
-      ? [Colors.white.withValues(alpha: 0.3), Colors.white.withValues(alpha: 0.15)]
-      : [Colors.white.withValues(alpha: 0.6), Colors.white.withValues(alpha: 0.4)];
+  /// Selected icon container — KEEPS the accent color but brighter.
+  List<Color> iconContainerSelectedGradient(Color iconColor) => [
+        iconColor.withValues(alpha: 0.55),
+        iconColor.withValues(alpha: 0.35),
+      ];
 
-  Color get iconContainerSelectedBorder => isDark
-      ? Colors.white.withValues(alpha: 0.4)
-      : Colors.white.withValues(alpha: 0.8);
+  Color iconContainerSelectedBorder(Color iconColor) =>
+      iconColor.withValues(alpha: 0.65);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
 
-/// Background widget with decorative gradient orbs that give the frosted
-/// glass cards something to blur over. Wrap your Scaffold body in this.
-class OnboardingBackground extends StatelessWidget {
+/// Background widget with animated decorative gradient orbs that give the
+/// frosted glass cards something to blur over.
+class OnboardingBackground extends StatefulWidget {
   final Widget child;
 
   const OnboardingBackground({super.key, required this.child});
 
   @override
+  State<OnboardingBackground> createState() => _OnboardingBackgroundState();
+}
+
+class _OnboardingBackgroundState extends State<OnboardingBackground>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 30),
+    )..repeat();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final t = OnboardingTheme.of(context);
+    final screenH = MediaQuery.of(context).size.height;
 
     return Container(
       decoration: BoxDecoration(gradient: t.backgroundGradient),
       child: Stack(
         children: [
-          // ── Decorative gradient orbs ──
-          // These give the BackdropFilter blur visible frosted glass effect.
-          Positioned(
-            top: -80,
-            right: -60,
-            child: _GlowOrb(
-              size: 260,
-              color: t.isDark
-                  ? const Color(0xFF6366F1).withValues(alpha: 0.20)
-                  : const Color(0xFF6366F1).withValues(alpha: 0.12),
+          // Animated orbs layer — isolated for performance
+          RepaintBoundary(
+            child: AnimatedBuilder(
+              animation: _controller,
+              builder: (context, _) {
+                final v = _controller.value * 2 * math.pi;
+                return Stack(
+                  children: [
+                    Positioned(
+                      top: -80 + math.sin(v) * 20,
+                      right: -60 + math.cos(v * 0.7) * 15,
+                      child: _GlowOrb(
+                        size: 260,
+                        color: t.isDark
+                            ? const Color(0xFF6366F1).withValues(alpha: 0.20)
+                            : const Color(0xFF6366F1).withValues(alpha: 0.12),
+                      ),
+                    ),
+                    Positioned(
+                      top: screenH * 0.35 + math.cos(v * 0.8) * 25,
+                      left: -100 + math.sin(v * 0.6) * 18,
+                      child: _GlowOrb(
+                        size: 300,
+                        color: t.isDark
+                            ? const Color(0xFF0EA5E9).withValues(alpha: 0.15)
+                            : const Color(0xFF0EA5E9).withValues(alpha: 0.10),
+                      ),
+                    ),
+                    Positioned(
+                      bottom: -60 + math.sin(v * 0.9) * 22,
+                      right: -40 + math.cos(v * 0.5) * 16,
+                      child: _GlowOrb(
+                        size: 220,
+                        color: t.isDark
+                            ? const Color(0xFF8B5CF6).withValues(alpha: 0.18)
+                            : const Color(0xFFA855F7).withValues(alpha: 0.08),
+                      ),
+                    ),
+                    Positioned(
+                      bottom: screenH * 0.25 + math.cos(v * 1.1) * 20,
+                      left: 40 + math.sin(v * 0.4) * 14,
+                      child: _GlowOrb(
+                        size: 160,
+                        color: t.isDark
+                            ? const Color(0xFF14B8A6).withValues(alpha: 0.12)
+                            : const Color(0xFF14B8A6).withValues(alpha: 0.08),
+                      ),
+                    ),
+                  ],
+                );
+              },
             ),
           ),
-          Positioned(
-            top: MediaQuery.of(context).size.height * 0.35,
-            left: -100,
-            child: _GlowOrb(
-              size: 300,
-              color: t.isDark
-                  ? const Color(0xFF0EA5E9).withValues(alpha: 0.15)
-                  : const Color(0xFF0EA5E9).withValues(alpha: 0.10),
-            ),
-          ),
-          Positioned(
-            bottom: -60,
-            right: -40,
-            child: _GlowOrb(
-              size: 220,
-              color: t.isDark
-                  ? const Color(0xFF8B5CF6).withValues(alpha: 0.18)
-                  : const Color(0xFFA855F7).withValues(alpha: 0.08),
-            ),
-          ),
-          Positioned(
-            bottom: MediaQuery.of(context).size.height * 0.25,
-            left: 40,
-            child: _GlowOrb(
-              size: 160,
-              color: t.isDark
-                  ? const Color(0xFF14B8A6).withValues(alpha: 0.12)
-                  : const Color(0xFF14B8A6).withValues(alpha: 0.08),
-            ),
-          ),
-          // ── Content ──
-          child,
+          // Content
+          widget.child,
         ],
       ),
     );

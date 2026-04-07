@@ -486,14 +486,21 @@ class _QuizFastingState extends State<QuizFasting> {
                                       width: 32,
                                       height: 32,
                                       decoration: BoxDecoration(
-                                        color: isSelected
-                                            ? t.checkBg
-                                            : color.withValues(alpha: 0.2),
+                                        gradient: LinearGradient(
+                                          colors: isSelected
+                                              ? t.iconContainerSelectedGradient(color)
+                                              : t.iconContainerGradient(color),
+                                        ),
                                         borderRadius: BorderRadius.circular(8),
+                                        border: Border.all(
+                                          color: isSelected
+                                              ? t.iconContainerSelectedBorder(color)
+                                              : t.iconContainerBorder(color),
+                                        ),
                                       ),
                                       child: Icon(
                                         protocol['icon'] as IconData,
-                                        color: isSelected ? t.textPrimary : color,
+                                        color: color,
                                         size: 16,
                                       ),
                                     ),
@@ -517,9 +524,7 @@ class _QuizFastingState extends State<QuizFasting> {
                                                 Container(
                                                   padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                                                   decoration: BoxDecoration(
-                                                    color: isSelected
-                                                        ? t.checkBg
-                                                        : AppColors.green.withValues(alpha: 0.2),
+                                                    color: t.badgeBg,
                                                     borderRadius: BorderRadius.circular(4),
                                                   ),
                                                   child: Text(
@@ -527,7 +532,7 @@ class _QuizFastingState extends State<QuizFasting> {
                                                     style: TextStyle(
                                                       fontSize: 10,
                                                       fontWeight: FontWeight.w600,
-                                                      color: isSelected ? t.textPrimary : AppColors.green,
+                                                      color: t.badgeText,
                                                     ),
                                                   ),
                                                 ),

@@ -151,12 +151,12 @@ class QuizProgressionConstraints extends StatelessWidget {
                   width: 48,
                   height: 48,
                   decoration: BoxDecoration(
-                    color: isSelected ? t.checkBg : t.cardFill,
+                    color: isSelected ? t.selectionAccent.withValues(alpha: 0.2) : t.cardFill,
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Icon(
                     icon,
-                    color: isSelected ? t.textPrimary : t.textSecondary,
+                    color: isSelected ? t.selectionAccent : t.textSecondary,
                     size: 24,
                   ),
                 ),
@@ -181,7 +181,7 @@ class QuizProgressionConstraints extends StatelessWidget {
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                               decoration: BoxDecoration(
-                                color: t.checkBg,
+                                color: t.badgeBg,
                                 borderRadius: BorderRadius.circular(6),
                               ),
                               child: Text(
@@ -189,7 +189,7 @@ class QuizProgressionConstraints extends StatelessWidget {
                                 style: TextStyle(
                                   fontSize: 10,
                                   fontWeight: FontWeight.w700,
-                                  color: t.textPrimary,
+                                  color: t.badgeText,
                                 ),
                               ),
                             ),
@@ -216,9 +216,9 @@ class QuizProgressionConstraints extends StatelessWidget {
                     height: 28,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: t.textPrimary,
+                      color: t.checkBg,
                     ),
-                    child: const Icon(Icons.check, size: 20, color: Color(0xFF0D9488), weight: 700),
+                    child: Icon(Icons.check, size: 20, color: t.checkIcon, weight: 700),
                   ),
               ],
             ),

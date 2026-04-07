@@ -192,47 +192,90 @@ class _QuizEquipmentState extends State<QuizEquipment> {
 
   void _showFollowUpDialog(BuildContext context, _FollowUp followUp) {
     final t = OnboardingTheme.of(context);
-    showDialog(
+    showGlassSheet(
       context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: t.cardFill,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Text(
-          followUp.title,
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            fontSize: 17,
-            color: t.textPrimary,
-          ),
-        ),
-        content: Text(
-          followUp.subtitle,
-          style: TextStyle(
-            fontSize: 14,
-            color: t.textSecondary,
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(),
-            child: Text(
-              'Skip',
-              style: TextStyle(color: t.textSecondary),
+      builder: (context) => GlassSheet(
+        child: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  followUp.title,
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 17,
+                    color: t.textPrimary,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  followUp.subtitle,
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: t.textSecondary,
+                  ),
+                ),
+                const SizedBox(height: 20),
+                Row(
+                  children: [
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: () => Navigator.pop(context),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          decoration: BoxDecoration(
+                            color: t.cardFill,
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(color: t.borderDefault),
+                          ),
+                          child: Center(
+                            child: Text(
+                              'Skip',
+                              style: TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w600,
+                                color: t.textSecondary,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: () {
+                          widget.onEquipmentToggled(followUp.suggest);
+                          Navigator.pop(context);
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          decoration: BoxDecoration(
+                            color: t.selectionAccent,
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Center(
+                            child: Text(
+                              'Yes, Add It',
+                              style: TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
             ),
           ),
-          ElevatedButton(
-            onPressed: () {
-              widget.onEquipmentToggled(followUp.suggest);
-              Navigator.of(ctx).pop();
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: t.buttonBorder,
-              foregroundColor: t.textPrimary,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-            ),
-            child: const Text('Yes, Add It'),
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -479,7 +522,7 @@ class _QuizEquipmentState extends State<QuizEquipment> {
     return Text(
       'What equipment do you have access to?',
       style: TextStyle(
-        fontSize: 22,
+        fontSize: 20,
         fontWeight: FontWeight.bold,
         color: t.textPrimary,
         height: 1.2,
@@ -573,7 +616,7 @@ class _QuizEquipmentState extends State<QuizEquipment> {
                     children: [
                       Icon(
                         item['icon'] as IconData,
-                        color: isSelected ? t.textPrimary : t.textSecondary,
+                        color: t.textSecondary,
                         size: 18,
                       ),
                       const SizedBox(width: 8),
@@ -634,10 +677,10 @@ class _QuizEquipmentState extends State<QuizEquipment> {
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                   decoration: BoxDecoration(
-                    color: t.checkBg,
+                    color: t.badgeBg,
                     borderRadius: BorderRadius.circular(8),
                     border: Border.all(
-                      color: t.buttonBorder,
+                      color: t.selectionAccent.withValues(alpha: 0.3),
                       width: 1,
                     ),
                   ),
@@ -646,7 +689,7 @@ class _QuizEquipmentState extends State<QuizEquipment> {
                     style: TextStyle(
                       fontSize: 9,
                       fontWeight: FontWeight.w600,
-                      color: t.textPrimary,
+                      color: t.badgeText,
                     ),
                   ),
                 ),

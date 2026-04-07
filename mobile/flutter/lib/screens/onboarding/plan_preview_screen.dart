@@ -39,9 +39,10 @@ class PlanPreviewScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final textPrimary = Colors.white;
-    final textSecondary = Colors.white.withValues(alpha: 0.7);
+    final t = OnboardingTheme.of(context);
+    final textPrimary = t.textPrimary;
+    final textSecondary = t.textSecondary;
+    final isDark = t.isDark;
 
     return Scaffold(
       body: OnboardingBackground(
@@ -679,8 +680,9 @@ class PlanPreviewScreen extends ConsumerWidget {
 
   /// Show bottom sheet explaining AI-generated workouts
   void _showAIInfoBottomSheet(BuildContext context, bool isDark) {
-    final textPrimary = isDark ? Colors.white : const Color(0xFF0A0A0A);
-    final textSecondary = isDark ? const Color(0xFFD4D4D8) : const Color(0xFF52525B);
+    final t = OnboardingTheme.of(context);
+    final textPrimary = t.textPrimary;
+    final textSecondary = t.textSecondary;
 
     HapticFeedback.lightImpact();
 
@@ -739,28 +741,28 @@ class PlanPreviewScreen extends ConsumerWidget {
               icon: Icons.fitness_center_rounded,
               title: 'Your Equipment',
               description: 'Exercises matched to what you have available',
-              isDark: isDark,
+              t: t,
             ),
             const SizedBox(height: 12),
             _buildInfoItem(
               icon: Icons.trending_up_rounded,
               title: 'Your Goals',
               description: 'Training focus aligned with what you want to achieve',
-              isDark: isDark,
+              t: t,
             ),
             const SizedBox(height: 12),
             _buildInfoItem(
               icon: Icons.science_rounded,
               title: 'Progressive Overload',
               description: 'Workouts adapt each week to keep you improving',
-              isDark: isDark,
+              t: t,
             ),
             const SizedBox(height: 12),
             _buildInfoItem(
               icon: Icons.psychology_rounded,
               title: 'Smart Recovery',
               description: 'Balanced muscle group targeting for optimal results',
-              isDark: isDark,
+              t: t,
             ),
 
             const SizedBox(height: 24),
@@ -804,10 +806,10 @@ class PlanPreviewScreen extends ConsumerWidget {
     required IconData icon,
     required String title,
     required String description,
-    required bool isDark,
+    required OnboardingTheme t,
   }) {
-    final textPrimary = isDark ? Colors.white : const Color(0xFF0A0A0A);
-    final textSecondary = isDark ? const Color(0xFFD4D4D8) : const Color(0xFF52525B);
+    final textPrimary = t.textPrimary;
+    final textSecondary = t.textSecondary;
 
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,

@@ -135,19 +135,34 @@ class _MotivationCard extends StatelessWidget {
               ),
               child: Row(
                 children: [
-                  Container(
-                    width: 36,
-                    height: 36,
-                    decoration: BoxDecoration(
-                      color: isSelected ? t.checkBg : t.cardFill,
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Icon(
-                      motivation['icon'] as IconData,
-                      color: t.textPrimary,
-                      size: 20,
-                    ),
-                  ),
+                  Builder(builder: (context) {
+                    final color = motivation['color'] as Color? ?? AppColors.orange;
+                    return Container(
+                      width: 36,
+                      height: 36,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: isSelected
+                              ? t.iconContainerSelectedGradient(color)
+                              : t.iconContainerGradient(color),
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(
+                          color: isSelected
+                              ? t.iconContainerSelectedBorder(color)
+                              : t.iconContainerBorder(color),
+                          width: 1,
+                        ),
+                      ),
+                      child: Icon(
+                        motivation['icon'] as IconData,
+                        color: color,
+                        size: 20,
+                      ),
+                    );
+                  }),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(

@@ -508,7 +508,7 @@ class QuizDaysSelector extends StatelessWidget {
               boxShadow: isComplete
                   ? [
                       BoxShadow(
-                        color: Colors.white.withValues(alpha: 0.15),
+                        color: t.selectionAccent.withValues(alpha: 0.15),
                         blurRadius: 8,
                         spreadRadius: 0,
                       ),
@@ -521,7 +521,7 @@ class QuizDaysSelector extends StatelessWidget {
                 Icon(
                   isComplete ? Icons.check_circle_rounded : Icons.calendar_today_rounded,
                   size: 18,
-                  color: t.textPrimary,
+                  color: isComplete ? t.selectionAccent : t.textPrimary,
                 ),
                 const SizedBox(width: 8),
                 Text(
@@ -529,7 +529,7 @@ class QuizDaysSelector extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.bold,
-                    color: t.textPrimary,
+                    color: isComplete ? t.selectionAccent : t.textPrimary,
                   ),
                 ),
               ],

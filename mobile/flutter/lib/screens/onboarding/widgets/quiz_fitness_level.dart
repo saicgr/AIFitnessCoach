@@ -150,7 +150,7 @@ class QuizFitnessLevel extends StatelessWidget {
                   children: [
                     Icon(
                       level['icon'] as IconData,
-                      color: isSelected ? t.textPrimary : (level['color'] as Color),
+                      color: level['color'] as Color,
                       size: 22,
                     ),
                     const SizedBox(width: 12),

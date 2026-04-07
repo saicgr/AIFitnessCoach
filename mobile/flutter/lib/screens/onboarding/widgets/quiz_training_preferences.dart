@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../widgets/glass_sheet.dart';
+import 'onboarding_theme.dart';
 import 'scroll_hint_arrow.dart';
 
 /// Combined Training Preferences widget for quiz screens.
@@ -93,9 +94,11 @@ class _QuizTrainingPreferencesState extends State<QuizTrainingPreferences> {
   ];
 
   void _showExplanationSheet(BuildContext context) {
-    // The glass sheet uses its own styling, keep internal content white-on-glass
+    // The glass sheet uses its own styling — always white-on-glass inside the sheet
     const textPrimary = Colors.white;
     final textSecondary = Colors.white.withValues(alpha: 0.7);
+    // NOTE: textPrimary/textSecondary are intentionally hardcoded here because
+    // the GlassSheet always renders dark glass regardless of system brightness.
 
     showGlassSheet(
       context: context,
@@ -231,8 +234,7 @@ class _QuizTrainingPreferencesState extends State<QuizTrainingPreferences> {
 
   @override
   Widget build(BuildContext context) {
-    const textPrimary = Colors.white;
-    final textSecondary = Colors.white.withValues(alpha: 0.7);
+    final t = OnboardingTheme.of(context);
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -241,12 +243,12 @@ class _QuizTrainingPreferencesState extends State<QuizTrainingPreferences> {
         children: [
           if (widget.showHeader) ...[
             // Title
-            const Text(
+            Text(
               "Training Preferences",
               style: TextStyle(
                 fontSize: 22,
                 fontWeight: FontWeight.bold,
-                color: textPrimary,
+                color: t.textPrimary,
                 height: 1.2,
               ),
             ).animate().fadeIn(delay: 100.ms).slideX(begin: -0.05),
@@ -256,7 +258,7 @@ class _QuizTrainingPreferencesState extends State<QuizTrainingPreferences> {
               children: [
                 Text(
                   'All optional',
-                  style: TextStyle(fontSize: 12, color: textSecondary),
+                  style: TextStyle(fontSize: 12, color: t.textSecondary),
                 ),
                 const SizedBox(width: 6),
                 GestureDetector(
@@ -268,7 +270,7 @@ class _QuizTrainingPreferencesState extends State<QuizTrainingPreferences> {
                     'Not sure? Tap to learn more',
                     style: TextStyle(
                       fontSize: 12,
-                      color: Colors.white.withValues(alpha: 0.9),
+                      color: t.textPrimary,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
@@ -287,10 +289,10 @@ class _QuizTrainingPreferencesState extends State<QuizTrainingPreferences> {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.1),
+                  color: t.cardFill,
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(
-                    color: Colors.white.withValues(alpha: 0.2),
+                    color: t.borderDefault,
                     width: 1,
                   ),
                 ),
@@ -300,7 +302,7 @@ class _QuizTrainingPreferencesState extends State<QuizTrainingPreferences> {
                     Icon(
                       Icons.trending_up,
                       size: 14,
-                      color: Colors.white.withValues(alpha: 0.9),
+                      color: t.textPrimary,
                     ),
                     const SizedBox(width: 6),
                     Text(
@@ -308,7 +310,7 @@ class _QuizTrainingPreferencesState extends State<QuizTrainingPreferences> {
                       style: TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.w500,
-                        color: Colors.white.withValues(alpha: 0.9),
+                        color: t.textPrimary,
                       ),
                     ),
                   ],
@@ -329,36 +331,36 @@ class _QuizTrainingPreferencesState extends State<QuizTrainingPreferences> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       // Section 1: Training Split
-                      _buildSectionLabel('Training Split', textSecondary, 0),
+                      _buildSectionLabel('Training Split', t.textSecondary, 0),
                       const SizedBox(height: 6),
-                      _buildSplitCards(textPrimary),
+                      _buildSplitCards(t),
 
                       const SizedBox(height: 12),
 
                       // Section 2: Workout Type
-                      _buildSectionLabel('Workout Type', textSecondary, 1),
+                      _buildSectionLabel('Workout Type', t.textSecondary, 1),
                       const SizedBox(height: 6),
-                      _buildWorkoutTypeChips(textPrimary),
+                      _buildWorkoutTypeChips(t),
 
                       const SizedBox(height: 12),
 
                       // Section 3: Progression Pace
-                      _buildSectionLabel('Weight Progression', textSecondary, 2),
+                      _buildSectionLabel('Weight Progression', t.textSecondary, 2),
                       const SizedBox(height: 6),
-                      _buildPaceChips(textPrimary, textSecondary),
+                      _buildPaceChips(t),
 
                       // Section 4: Sleep Quality
                       if (widget.onSleepQualityChanged != null) ...[
                         const SizedBox(height: 16),
-                        _buildSectionLabel('Sleep Quality', textSecondary, 3),
+                        _buildSectionLabel('Sleep Quality', t.textSecondary, 3),
                         const SizedBox(height: 6),
-                        _buildSleepQualityChips(textPrimary, textSecondary),
+                        _buildSleepQualityChips(t),
                       ],
 
                       // Section 5: Obstacles
                       if (widget.onObstacleToggle != null) ...[
                         const SizedBox(height: 16),
-                        _buildObstaclesSection(textPrimary, textSecondary),
+                        _buildObstaclesSection(t),
                       ],
 
                       const SizedBox(height: 60),
@@ -386,7 +388,7 @@ class _QuizTrainingPreferencesState extends State<QuizTrainingPreferences> {
     ).animate(delay: (200 + index * 50).ms).fadeIn();
   }
 
-  Widget _buildSplitCards(Color textPrimary) {
+  Widget _buildSplitCards(OnboardingTheme t) {
     return Column(
       children: _splits.asMap().entries.map((entry) {
         final index = entry.key;
@@ -413,18 +415,15 @@ class _QuizTrainingPreferencesState extends State<QuizTrainingPreferences> {
                         ? LinearGradient(
                             begin: Alignment.topLeft,
                             end: Alignment.bottomRight,
-                            colors: [
-                              Colors.white.withValues(alpha: 0.28),
-                              Colors.white.withValues(alpha: 0.16),
-                            ],
+                            colors: t.cardSelectedGradient,
                           )
                         : null,
-                    color: isSelected ? null : Colors.white.withValues(alpha: 0.08),
+                    color: isSelected ? null : t.cardFill,
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
                       color: isSelected
-                          ? Colors.white.withValues(alpha: 0.5)
-                          : Colors.white.withValues(alpha: 0.15),
+                          ? t.borderSelected
+                          : t.borderDefault,
                       width: isSelected ? 2 : 1,
                     ),
                   ),
@@ -434,14 +433,21 @@ class _QuizTrainingPreferencesState extends State<QuizTrainingPreferences> {
                         width: 32,
                         height: 32,
                         decoration: BoxDecoration(
-                          color: isSelected
-                              ? Colors.white.withValues(alpha: 0.2)
-                              : color.withValues(alpha: 0.2),
+                          gradient: LinearGradient(
+                            colors: isSelected
+                                ? t.iconContainerSelectedGradient(color)
+                                : t.iconContainerGradient(color),
+                          ),
                           borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                            color: isSelected
+                                ? t.iconContainerSelectedBorder(color)
+                                : t.iconContainerBorder(color),
+                          ),
                         ),
                         child: Icon(
                           split['icon'] as IconData,
-                          color: isSelected ? Colors.white : color,
+                          color: color,
                           size: 18,
                         ),
                       ),
@@ -456,16 +462,14 @@ class _QuizTrainingPreferencesState extends State<QuizTrainingPreferences> {
                               style: TextStyle(
                                 fontSize: 13,
                                 fontWeight: FontWeight.w600,
-                                color: isSelected ? Colors.white : Colors.white.withValues(alpha: 0.9),
+                                color: t.textPrimary,
                               ),
                             ),
                             Text(
                               split['desc'] as String,
                               style: TextStyle(
                                 fontSize: 10,
-                                color: isSelected
-                                    ? Colors.white.withValues(alpha: 0.7)
-                                    : Colors.white.withValues(alpha: 0.6),
+                                color: t.textSecondary,
                               ),
                             ),
                           ],
@@ -475,13 +479,13 @@ class _QuizTrainingPreferencesState extends State<QuizTrainingPreferences> {
                         width: 20,
                         height: 20,
                         decoration: BoxDecoration(
-                          color: isSelected ? Colors.white.withValues(alpha: 0.3) : Colors.transparent,
+                          color: isSelected ? t.checkBg : Colors.transparent,
                           shape: BoxShape.circle,
                           border: isSelected
                               ? null
-                              : Border.all(color: Colors.white.withValues(alpha: 0.3), width: 2),
+                              : Border.all(color: t.checkBorderUnselected, width: 2),
                         ),
-                        child: isSelected ? const Icon(Icons.check, color: Colors.white, size: 14) : null,
+                        child: isSelected ? Icon(Icons.check, color: t.checkIcon, size: 14) : null,
                       ),
                     ],
                   ),
@@ -494,7 +498,7 @@ class _QuizTrainingPreferencesState extends State<QuizTrainingPreferences> {
     );
   }
 
-  Widget _buildWorkoutTypeChips(Color textPrimary) {
+  Widget _buildWorkoutTypeChips(OnboardingTheme t) {
     return Row(
       children: _workoutTypes.asMap().entries.map((entry) {
         final index = entry.key;
@@ -522,18 +526,15 @@ class _QuizTrainingPreferencesState extends State<QuizTrainingPreferences> {
                           ? LinearGradient(
                               begin: Alignment.topLeft,
                               end: Alignment.bottomRight,
-                              colors: [
-                                Colors.white.withValues(alpha: 0.28),
-                                Colors.white.withValues(alpha: 0.16),
-                              ],
+                              colors: t.cardSelectedGradient,
                             )
                           : null,
-                      color: isSelected ? null : Colors.white.withValues(alpha: 0.08),
+                      color: isSelected ? null : t.cardFill,
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
                         color: isSelected
-                            ? Colors.white.withValues(alpha: 0.5)
-                            : Colors.white.withValues(alpha: 0.15),
+                            ? t.borderSelected
+                            : t.borderDefault,
                         width: isSelected ? 2 : 1,
                       ),
                     ),
@@ -541,7 +542,7 @@ class _QuizTrainingPreferencesState extends State<QuizTrainingPreferences> {
                       children: [
                         Icon(
                           type['icon'] as IconData,
-                          color: isSelected ? Colors.white : color,
+                          color: color,
                           size: 20,
                         ),
                         const SizedBox(height: 3),
@@ -550,7 +551,7 @@ class _QuizTrainingPreferencesState extends State<QuizTrainingPreferences> {
                           style: TextStyle(
                             fontSize: 11,
                             fontWeight: FontWeight.w600,
-                            color: isSelected ? Colors.white : Colors.white.withValues(alpha: 0.9),
+                            color: t.textPrimary,
                           ),
                         ),
                       ],
@@ -565,7 +566,7 @@ class _QuizTrainingPreferencesState extends State<QuizTrainingPreferences> {
     );
   }
 
-  Widget _buildPaceChips(Color textPrimary, Color textSecondary) {
+  Widget _buildPaceChips(OnboardingTheme t) {
     return Row(
       children: _paces.asMap().entries.map((entry) {
         final index = entry.key;
@@ -592,18 +593,15 @@ class _QuizTrainingPreferencesState extends State<QuizTrainingPreferences> {
                           ? LinearGradient(
                               begin: Alignment.topLeft,
                               end: Alignment.bottomRight,
-                              colors: [
-                                Colors.white.withValues(alpha: 0.28),
-                                Colors.white.withValues(alpha: 0.16),
-                              ],
+                              colors: t.cardSelectedGradient,
                             )
                           : null,
-                      color: isSelected ? null : Colors.white.withValues(alpha: 0.08),
+                      color: isSelected ? null : t.cardFill,
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
                         color: isSelected
-                            ? Colors.white.withValues(alpha: 0.5)
-                            : Colors.white.withValues(alpha: 0.15),
+                            ? t.borderSelected
+                            : t.borderDefault,
                         width: isSelected ? 2 : 1,
                       ),
                     ),
@@ -614,7 +612,7 @@ class _QuizTrainingPreferencesState extends State<QuizTrainingPreferences> {
                           style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
-                            color: isSelected ? Colors.white : Colors.white.withValues(alpha: 0.9),
+                            color: t.textPrimary,
                           ),
                         ),
                         const SizedBox(height: 1),
@@ -622,9 +620,7 @@ class _QuizTrainingPreferencesState extends State<QuizTrainingPreferences> {
                           pace['desc'] as String,
                           style: TextStyle(
                             fontSize: 9,
-                            color: isSelected
-                                ? Colors.white.withValues(alpha: 0.7)
-                                : Colors.white.withValues(alpha: 0.6),
+                            color: t.textSecondary,
                           ),
                         ),
                       ],
@@ -639,7 +635,7 @@ class _QuizTrainingPreferencesState extends State<QuizTrainingPreferences> {
     );
   }
 
-  Widget _buildSleepQualityChips(Color textPrimary, Color textSecondary) {
+  Widget _buildSleepQualityChips(OnboardingTheme t) {
     return Row(
       children: _sleepQualityOptions.asMap().entries.map((entry) {
         final index = entry.key;
@@ -666,18 +662,15 @@ class _QuizTrainingPreferencesState extends State<QuizTrainingPreferences> {
                           ? LinearGradient(
                               begin: Alignment.topLeft,
                               end: Alignment.bottomRight,
-                              colors: [
-                                Colors.white.withValues(alpha: 0.28),
-                                Colors.white.withValues(alpha: 0.16),
-                              ],
+                              colors: t.cardSelectedGradient,
                             )
                           : null,
-                      color: isSelected ? null : Colors.white.withValues(alpha: 0.08),
+                      color: isSelected ? null : t.cardFill,
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
                         color: isSelected
-                            ? Colors.white.withValues(alpha: 0.5)
-                            : Colors.white.withValues(alpha: 0.15),
+                            ? t.borderSelected
+                            : t.borderDefault,
                         width: isSelected ? 2 : 1,
                       ),
                     ),
@@ -693,7 +686,7 @@ class _QuizTrainingPreferencesState extends State<QuizTrainingPreferences> {
                           style: TextStyle(
                             fontSize: 10,
                             fontWeight: FontWeight.w600,
-                            color: isSelected ? Colors.white : Colors.white.withValues(alpha: 0.9),
+                            color: t.textPrimary,
                           ),
                         ),
                       ],
@@ -708,7 +701,7 @@ class _QuizTrainingPreferencesState extends State<QuizTrainingPreferences> {
     );
   }
 
-  Widget _buildObstaclesSection(Color textPrimary, Color textSecondary) {
+  Widget _buildObstaclesSection(OnboardingTheme t) {
     final selectedCount = widget.selectedObstacles?.length ?? 0;
 
     return Column(
@@ -721,7 +714,7 @@ class _QuizTrainingPreferencesState extends State<QuizTrainingPreferences> {
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
-                color: textSecondary,
+                color: t.textSecondary,
               ),
             ),
             const SizedBox(width: 8),
@@ -729,7 +722,7 @@ class _QuizTrainingPreferencesState extends State<QuizTrainingPreferences> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.2),
+                  color: t.cardFill,
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
@@ -737,7 +730,7 @@ class _QuizTrainingPreferencesState extends State<QuizTrainingPreferences> {
                   style: TextStyle(
                     fontSize: 10,
                     fontWeight: FontWeight.w600,
-                    color: Colors.white.withValues(alpha: 0.9),
+                    color: t.textPrimary,
                   ),
                 ),
               ),
@@ -770,10 +763,7 @@ class _QuizTrainingPreferencesState extends State<QuizTrainingPreferences> {
                     decoration: BoxDecoration(
                       gradient: isSelected
                           ? LinearGradient(
-                              colors: [
-                                Colors.white.withValues(alpha: 0.28),
-                                Colors.white.withValues(alpha: 0.16),
-                              ],
+                              colors: t.cardSelectedGradient,
                               begin: Alignment.topLeft,
                               end: Alignment.bottomRight,
                             )
@@ -781,15 +771,15 @@ class _QuizTrainingPreferencesState extends State<QuizTrainingPreferences> {
                       color: isSelected
                           ? null
                           : isDisabled
-                              ? Colors.white.withValues(alpha: 0.03)
-                              : Colors.white.withValues(alpha: 0.08),
+                              ? t.borderSubtle
+                              : t.cardFill,
                       borderRadius: BorderRadius.circular(10),
                       border: Border.all(
                         color: isSelected
-                            ? Colors.white.withValues(alpha: 0.5)
+                            ? t.borderSelected
                             : isDisabled
-                                ? Colors.white.withValues(alpha: 0.08)
-                                : Colors.white.withValues(alpha: 0.15),
+                                ? Colors.transparent
+                                : t.borderDefault,
                         width: isSelected ? 2 : 1,
                       ),
                     ),
@@ -810,10 +800,10 @@ class _QuizTrainingPreferencesState extends State<QuizTrainingPreferences> {
                             fontSize: 11,
                             fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
                             color: isSelected
-                                ? Colors.white
+                                ? t.textPrimary
                                 : isDisabled
-                                    ? Colors.white.withValues(alpha: 0.3)
-                                    : Colors.white.withValues(alpha: 0.9),
+                                    ? t.textDisabled
+                                    : t.textPrimary,
                           ),
                         ),
                       ],

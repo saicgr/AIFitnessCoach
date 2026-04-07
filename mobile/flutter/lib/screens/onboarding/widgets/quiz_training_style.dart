@@ -531,14 +531,14 @@ class _QuizTrainingStyleState extends State<QuizTrainingStyle> {
                     shape: BoxShape.circle,
                     border: Border.all(
                       color: isSelected
-                          ? t.textPrimary
+                          ? t.selectionAccent
                           : t.buttonBorder,
                       width: 2,
                     ),
-                    color: isSelected ? t.textPrimary : Colors.transparent,
+                    color: isSelected ? t.checkBg : Colors.transparent,
                   ),
                   child: isSelected
-                      ? const Icon(Icons.check, size: 16, color: Color(0xFF0D9488))
+                      ? Icon(Icons.check, size: 16, color: t.checkIcon)
                       : null,
                 ),
                 const SizedBox(width: 16),
@@ -562,7 +562,7 @@ class _QuizTrainingStyleState extends State<QuizTrainingStyle> {
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                               decoration: BoxDecoration(
-                                color: t.checkBg,
+                                color: t.badgeBg,
                                 borderRadius: BorderRadius.circular(4),
                               ),
                               child: Text(
@@ -570,7 +570,7 @@ class _QuizTrainingStyleState extends State<QuizTrainingStyle> {
                                 style: TextStyle(
                                   fontSize: 10,
                                   fontWeight: FontWeight.bold,
-                                  color: t.textPrimary,
+                                  color: t.badgeText,
                                 ),
                               ),
                             ),

@@ -698,8 +698,9 @@ extension __PreAuthQuizScreenStateExt on _PreAuthQuizScreenState {
 
 
   void _showEquipmentInfo(BuildContext context, String equipmentId, bool isDark) {
-    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+    final t = OnboardingTheme.of(context);
+    final textPrimary = t.textPrimary;
+    final textSecondary = t.textSecondary;
 
     String title;
     String description;

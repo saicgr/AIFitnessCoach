@@ -5,8 +5,9 @@ extension _PlanPreviewScreenExt on PlanPreviewScreen {
 
   /// Show bottom sheet explaining personalization options
   void _showPersonalizeInfoBottomSheet(BuildContext context, bool isDark) {
-    final textPrimary = isDark ? Colors.white : const Color(0xFF0A0A0A);
-    final textSecondary = isDark ? const Color(0xFFD4D4D8) : const Color(0xFF52525B);
+    final t = OnboardingTheme.of(context);
+    final textPrimary = t.textPrimary;
+    final textSecondary = t.textSecondary;
 
     HapticFeedback.lightImpact();
 
@@ -65,28 +66,28 @@ extension _PlanPreviewScreenExt on PlanPreviewScreen {
               icon: Icons.fitness_center,
               title: 'Muscle Targeting',
               description: 'Prioritize specific muscle groups (triceps, lats, etc.)',
-              isDark: isDark,
+              t: t,
             ),
             const SizedBox(height: 12),
             _buildInfoItem(
               icon: Icons.view_week_rounded,
               title: 'Training Style',
               description: 'Choose PPL, Upper/Lower, Full Body, or let AI decide',
-              isDark: isDark,
+              t: t,
             ),
             const SizedBox(height: 12),
             _buildInfoItem(
               icon: Icons.speed_rounded,
               title: 'Progression Pace',
               description: 'Set how quickly you want to increase difficulty',
-              isDark: isDark,
+              t: t,
             ),
             const SizedBox(height: 12),
             _buildInfoItem(
               icon: Icons.health_and_safety_outlined,
               title: 'Limitations',
               description: 'Flag any injuries or joint issues to work around',
-              isDark: isDark,
+              t: t,
             ),
 
             const SizedBox(height: 24),

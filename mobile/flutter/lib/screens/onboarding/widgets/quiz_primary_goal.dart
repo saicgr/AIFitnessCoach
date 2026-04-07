@@ -270,7 +270,7 @@ class _GlassPrimaryGoalCard extends StatelessWidget {
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
                         colors: isSelected
-                            ? t.iconContainerSelectedGradient
+                            ? t.iconContainerSelectedGradient(color)
                             : t.iconContainerGradient(color),
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
@@ -278,14 +278,14 @@ class _GlassPrimaryGoalCard extends StatelessWidget {
                       borderRadius: BorderRadius.circular(14),
                       border: Border.all(
                         color: isSelected
-                            ? t.iconContainerSelectedBorder
+                            ? t.iconContainerSelectedBorder(color)
                             : t.iconContainerBorder(color),
                         width: 1.5,
                       ),
                     ),
                     child: Icon(
                       option['icon'] as IconData,
-                      color: isSelected ? t.textPrimary : color,
+                      color: color,
                       size: 28,
                     ),
                   ),
