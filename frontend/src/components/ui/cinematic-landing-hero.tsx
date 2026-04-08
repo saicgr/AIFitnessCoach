@@ -344,18 +344,19 @@ export function CinematicHero({
       scrollTl
         .set(".hero-text-wrapper", { autoAlpha: 0 })
         .set(".cta-wrapper", { autoAlpha: 1 })
-        .to({}, { duration: d.exitHold })
+        // Content exits and CTA appears at the same time — no empty card
         .to([".mockup-scroll-wrapper", ".floating-badge", ".card-left-text", ".card-right-text"], {
-          scale: 0.9, y: -40, z: -200, autoAlpha: 0, ease: "power3.in", duration: d.exitContent, stagger: 0.05,
-        })
+          scale: 0.9, y: -40, z: -200, autoAlpha: 0, ease: "power3.in", duration: d.exitContent, stagger: 0.03,
+        }, "exit")
         .to(".main-card", {
           width: isMobile ? "92vw" : "85vw",
           height: isMobile ? "92vh" : "85vh",
           borderRadius: isMobile ? "32px" : "40px",
           ease: "expo.inOut",
           duration: d.pullback
-        }, "pullback")
-        .to(".cta-wrapper", { scale: 1, filter: "blur(0px)", ease: "expo.inOut", duration: d.pullback }, "pullback")
+        }, "exit")
+        .to(".cta-wrapper", { scale: 1, filter: "blur(0px)", ease: "expo.inOut", duration: d.pullback }, "exit")
+        .to({}, { duration: 0.3 }) // brief hold on CTA
         .to(".main-card", { y: -window.innerHeight - 300, ease: "power3.in", duration: d.cardExit });
 
     }, containerRef);
