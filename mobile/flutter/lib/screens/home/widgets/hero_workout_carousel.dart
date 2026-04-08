@@ -99,6 +99,7 @@ class _HeroWorkoutCarouselState extends ConsumerState<HeroWorkoutCarousel> {
   PageController? _ownedPageController;
   int _currentPage = 0;
   bool _hasScrolledToInitial = false;
+  int _lastCompletedCount = -1; // Track completed count to auto-scroll on new completions
 
   /// Whether we own (and should dispose) the page controller
   bool get _ownsController => widget.externalPageController == null;
@@ -329,6 +330,34 @@ class _HeroWorkoutCarouselState extends ConsumerState<HeroWorkoutCarousel> {
             });
           }
         }
+
+        // Auto-scroll to next incomplete workout when a workout is newly completed
+        final completedCount = carouselItems.where((item) => item.isWorkout && item.workout!.isCompleted == true).length;
+        if (_hasScrolledToInitial && _lastCompletedCount >= 0 && completedCount > _lastCompletedCount && carouselItems.length > 1 && _ownsController) {
+          int targetIndex = 0;
+          bool found = false;
+          for (int i = 0; i < carouselItems.length; i++) {
+            final item = carouselItems[i];
+            if (item.isPlaceholder || (item.isWorkout && item.workout!.isCompleted == false)) {
+              targetIndex = i;
+              found = true;
+              break;
+            }
+          }
+          if (!found) targetIndex = carouselItems.length - 1;
+          if (targetIndex != _currentPage) {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (mounted && _pageController.hasClients) {
+                _pageController.animateToPage(
+                  targetIndex,
+                  duration: const Duration(milliseconds: 400),
+                  curve: Curves.easeInOut,
+                );
+              }
+            });
+          }
+        }
+        _lastCompletedCount = completedCount;
 
         // Notify parent of carousel items (for week strip sync)
         if (widget.onCarouselItemsChanged != null) {

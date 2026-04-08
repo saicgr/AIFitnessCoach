@@ -131,20 +131,20 @@ const fitwizIncludes = [
 
 const faqs = [
   {
-    question: 'Is there really a free plan?',
-    answer: 'Yes! The Free plan gives you unlimited workout logging, 1,722 exercises with videos, manual food logging with barcode scanner, fasting timer, habit tracking, social features, and 5 AI chat messages daily. No credit card required.',
+    question: 'What do I get for free?',
+    answer: 'Plenty — unlimited workout logging, 1,722 exercises with videos, barcode food scanning, fasting timer, habit tracking, social features, and 5 AI coach messages a day. No credit card needed.',
   },
   {
-    question: 'How does the 7-day free trial work?',
-    answer: 'You get full access to all Premium features for 7 days. After the trial, you can choose to subscribe or continue with the Free plan. No payment required to start.',
+    question: 'How does the free trial work?',
+    answer: 'You get 7 days of full Premium access — no payment upfront. After the trial you can subscribe or just keep using the free plan.',
   },
   {
-    question: 'Can I cancel anytime?',
-    answer: "Yes, you can cancel your subscription anytime through the app or your device's subscription settings. You'll keep access until the end of your billing period.",
+    question: 'Can I cancel whenever I want?',
+    answer: "Yes, cancel anytime through Google Play. No fees, no questions. You keep Premium until the end of your billing period.",
   },
   {
-    question: 'What payment methods do you accept?',
-    answer: 'We accept all major payment methods through the App Store (iOS) and Google Play (Android), including credit cards, debit cards, and digital wallets.',
+    question: 'What payment methods are accepted?',
+    answer: 'Everything supported by Google Play — credit cards, debit cards, Google Pay, and carrier billing in supported regions.',
   },
   {
     question: 'Can I upgrade or downgrade my plan?',
@@ -282,8 +282,10 @@ export default function Pricing() {
                 )}
               </div>
 
-              <Link
-                to="/login"
+              <a
+                href="https://play.google.com/store"
+                target="_blank"
+                rel="noopener noreferrer"
                 className={`block w-full py-3.5 rounded-xl text-center text-[15px] font-medium transition-colors mb-6 ${
                   plan.highlight
                     ? 'bg-emerald-500 text-white hover:bg-emerald-400'
@@ -291,7 +293,7 @@ export default function Pricing() {
                 }`}
               >
                 {plan.cta}
-              </Link>
+              </a>
 
               <ul className="space-y-3">
                 {plan.features.map((feature, i) => (
@@ -602,12 +604,14 @@ export default function Pricing() {
             Start free today. No credit card required.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Link
-              to="/login"
+            <a
+              href="https://play.google.com/store"
+              target="_blank"
+              rel="noopener noreferrer"
               className="px-8 py-3.5 bg-emerald-500 text-white text-[17px] rounded-full hover:bg-emerald-400 transition-colors"
             >
               Get started free
-            </Link>
+            </a>
             <Link
               to="/features"
               className="px-8 py-3.5 text-emerald-400 text-[17px] hover:underline transition-all"

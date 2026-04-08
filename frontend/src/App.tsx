@@ -24,7 +24,7 @@ import WorkoutDetails from './pages/WorkoutDetails';
 import ActiveWorkout from './pages/ActiveWorkout';
 import Chat from './pages/Chat';
 import Settings from './pages/Settings';
-import DemoLogin from './pages/DemoLogin';
+// DemoLogin removed — all CTAs now link to Play Store
 import AuthCallback from './pages/AuthCallback';
 import Profile from './pages/Profile';
 import Metrics from './pages/Metrics';
@@ -98,7 +98,8 @@ function App() {
           path="/home"
           element={isValidUser ? <Home /> : <Navigate to="/login" replace />}
         />
-        <Route path="/login" element={<DemoLogin />} />
+        {/* /login removed — redirects to home page */}
+        <Route path="/login" element={<Navigate to="/" replace />} />
         <Route path="/auth/callback" element={<AuthCallback />} />
         <Route
           path="/onboarding/selector"

@@ -290,18 +290,20 @@ export function CinematicHero({
         .to(".text-track", { duration: 1.8, autoAlpha: 1, y: 0, scale: 1, filter: "blur(0px)", rotationX: 0, ease: "expo.out" })
         .to(".text-days", { duration: 1.4, clipPath: "inset(0 0% 0 0)", ease: "power4.inOut" }, "-=1.0");
 
+      const scrollDistance = isMobile ? 4000 : 7000;
       const scrollTl = gsap.timeline({
         scrollTrigger: {
           trigger: containerRef.current,
           start: "top top",
-          end: "+=7000",
+          end: `+=${scrollDistance}`,
           pin: true,
-          scrub: 1,
+          scrub: isMobile ? 0.5 : 1,
           anticipatePin: 1,
         },
       });
 
       scrollTl
+        .to(".scroll-hint", { autoAlpha: 0, y: 20, duration: 0.5, ease: "power2.in" }, 0)
         .to([".hero-text-wrapper", ".bg-grid-theme"], { scale: 1.15, filter: "blur(20px)", opacity: 0.2, ease: "power2.inOut", duration: 2 }, 0)
         .to(".main-card", { y: 0, ease: "power3.inOut", duration: 2 }, 0)
         .to(".main-card", { width: "100%", height: "100%", borderRadius: "0px", ease: "power3.inOut", duration: 1.5 })
@@ -324,14 +326,14 @@ export function CinematicHero({
             .to([".card-left-text", ".phone-screen-img", ".side-phone-left", ".side-phone-right", ".floating-badge"], {
               autoAlpha: 0, scale: 0.95, duration: 0.6, ease: "power2.in",
             })
-            // Trigger slide change at midpoint
+            // Trigger slide change while faded out, with buffer for React render
             .call(() => handleSlideChange(slideIdx))
-            .to({}, { duration: 0.1 })
+            .to({}, { duration: 0.3 })
             // Fade in new content
             .to([".card-left-text", ".phone-screen-img", ".side-phone-left", ".side-phone-right", ".floating-badge"], {
               autoAlpha: 1, scale: 1, duration: 0.8, ease: "power2.out",
             })
-            .to({}, { duration: 1.2 }); // Hold on this slide
+            .to({}, { duration: 1.0 }); // Hold on this slide
         }
       } else {
         scrollTl.to({}, { duration: 2.5 });
@@ -379,6 +381,20 @@ export function CinematicHero({
         <h1 className="text-days gsap-reveal text-silver-matte text-5xl md:text-7xl lg:text-[6rem] font-extrabold tracking-tighter">
           {tagline2}
         </h1>
+      </div>
+
+      {/* Scroll indicator arrow */}
+      <div className="scroll-hint absolute bottom-8 left-1/2 -translate-x-1/2 z-30 flex flex-col items-center gap-2 pointer-events-none">
+        <span className="text-[11px] uppercase tracking-[0.2em] text-muted-foreground/60 font-medium">Scroll</span>
+        <svg
+          className="w-5 h-5 text-muted-foreground/50 animate-bounce"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+          strokeWidth={2}
+        >
+          <path strokeLinecap="round" strokeLinejoin="round" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+        </svg>
       </div>
 
       {/* BACKGROUND LAYER 2: Tactile CTA Buttons */}

@@ -7,7 +7,7 @@ import '../../data/models/workout.dart';
 import '../../data/repositories/workout_repository.dart';
 import '../../widgets/glass_back_button.dart';
 import '../../widgets/lottie_animations.dart';
-import 'workout_summary_detail.dart';
+import 'workout_detail_screen.dart';
 import 'workout_summary_general.dart';
 import 'workout_summary_advanced.dart';
 import 'widgets/summary_floating_pill.dart';
@@ -111,42 +111,54 @@ class _WorkoutSummaryScreenV2State
 
     final topPadding = MediaQuery.of(context).padding.top;
 
+    // Detail tab renders the full WorkoutDetailScreen (which has its own Scaffold + back button)
+    // General/Advanced tabs render inside this screen's Scaffold
+    if (_selectedView == 0) {
+      return Stack(
+        children: [
+          WorkoutDetailScreen(
+            key: const ValueKey('detail'),
+            workoutId: widget.workoutId,
+            initialWorkout: _parsedWorkout,
+          ),
+
+          // Floating pill at bottom
+          SummaryFloatingPill(
+            selectedIndex: _selectedView,
+            onChanged: (i) => setState(() => _selectedView = i),
+          ),
+        ],
+      );
+    }
+
     return Stack(
       children: [
-        // Main content - switches between Detail, General, and Advanced
+        // General or Advanced view
         AnimatedSwitcher(
           duration: const Duration(milliseconds: 300),
-          child: _selectedView == 0
-              ? WorkoutSummaryDetail(
-                  key: const ValueKey('detail'),
+          child: _selectedView == 1
+              ? WorkoutSummaryGeneral(
+                  key: const ValueKey('general'),
                   data: _summaryData,
                   metadata: _metadata,
-                  workout: _parsedWorkout,
                   topPadding: topPadding,
                 )
-              : _selectedView == 1
-                  ? WorkoutSummaryGeneral(
-                      key: const ValueKey('general'),
-                      data: _summaryData,
-                      metadata: _metadata,
-                      topPadding: topPadding,
-                    )
-                  : WorkoutSummaryAdvanced(
-                      key: const ValueKey('advanced'),
-                      data: _summaryData,
-                      metadata: _metadata,
-                      topPadding: topPadding,
-                    ),
+              : WorkoutSummaryAdvanced(
+                  key: const ValueKey('advanced'),
+                  data: _summaryData,
+                  metadata: _metadata,
+                  topPadding: topPadding,
+                ),
         ),
 
-        // Floating back button
+        // Floating back button (only for General/Advanced — Detail has its own)
         Positioned(
           top: topPadding + 8,
           left: 16,
           child: const GlassBackButton(),
         ),
 
-        // Floating pill at bottom (widget includes its own Positioned wrapper)
+        // Floating pill at bottom
         SummaryFloatingPill(
           selectedIndex: _selectedView,
           onChanged: (i) => setState(() => _selectedView = i),

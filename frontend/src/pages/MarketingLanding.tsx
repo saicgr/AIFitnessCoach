@@ -164,7 +164,7 @@ export default function MarketingLanding() {
                 rel="noopener noreferrer"
                 className="block w-full text-center py-3 rounded-full border border-[var(--color-border)] hover:border-emerald-500/50 text-[var(--color-text)] font-medium transition-colors"
               >
-                Get Started Free
+                Download Free
               </a>
             </motion.div>
 

@@ -375,12 +375,12 @@ export default function Landing() {
               <button onClick={() => scrollTo('how-it-works')} className="text-xs text-white/80 hover:text-white transition-colors">
                 How It Works
               </button>
-              <Link to="/login" className="text-xs text-white/80 hover:text-white transition-colors">
-                Sign In
-              </Link>
-              <Link to="/login" className="text-xs px-4 py-1.5 bg-white text-black rounded-full hover:bg-white/90 transition-colors">
+              <a href="https://play.google.com/store" target="_blank" rel="noopener noreferrer" className="text-xs text-white/80 hover:text-white transition-colors">
+                Download App
+              </a>
+              <a href="https://play.google.com/store" target="_blank" rel="noopener noreferrer" className="text-xs px-4 py-1.5 bg-white text-black rounded-full hover:bg-white/90 transition-colors">
                 Get Started
-              </Link>
+              </a>
             </div>
 
             <button
@@ -413,8 +413,8 @@ export default function Landing() {
                 <button onClick={() => scrollTo('highlights')} className="text-sm text-white/80 hover:text-white text-left py-2">Highlights</button>
                 <button onClick={() => scrollTo('features')} className="text-sm text-white/80 hover:text-white text-left py-2">Features</button>
                 <button onClick={() => scrollTo('how-it-works')} className="text-sm text-white/80 hover:text-white text-left py-2">How It Works</button>
-                <Link to="/login" className="text-sm text-white/80 hover:text-white py-2">Sign In</Link>
-                <Link to="/login" className="text-sm text-center py-2.5 bg-white text-black rounded-full mt-2">Get Started</Link>
+                <a href="https://play.google.com/store" target="_blank" rel="noopener noreferrer" className="text-sm text-white/80 hover:text-white py-2">Download App</a>
+                <a href="https://play.google.com/store" target="_blank" rel="noopener noreferrer" className="text-sm text-center py-2.5 bg-white text-black rounded-full mt-2">Get Started</a>
               </div>
             </motion.div>
           )}
@@ -455,12 +455,14 @@ export default function Landing() {
           </motion.p>
 
           <motion.div variants={fadeUp} className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Link
-              to="/login"
+            <a
+              href="https://play.google.com/store"
+              target="_blank"
+              rel="noopener noreferrer"
               className="min-w-[160px] px-7 py-3 bg-[#0071e3] text-white text-[17px] rounded-full hover:bg-[#0077ed] transition-colors"
             >
               Get started
-            </Link>
+            </a>
             <button
               onClick={() => scrollTo('highlights')}
               className="min-w-[160px] px-7 py-3 text-[#2997ff] text-[17px] hover:underline transition-all"
@@ -1094,12 +1096,14 @@ export default function Landing() {
 
                 {/* Input */}
                 <div className="pt-4 border-t border-white/[0.05]">
-                  <Link
-                    to="/login"
+                  <a
+                    href="https://play.google.com/store"
+                    target="_blank"
+                    rel="noopener noreferrer"
                     className="block w-full px-4 py-3 rounded-xl bg-[#2d2d2f] hover:bg-[#3d3d3f] text-[15px] text-center text-[#86868b] hover:text-white transition-colors"
                   >
                     Try it yourself →
-                  </Link>
+                  </a>
                 </div>
               </div>
             </motion.div>
@@ -1167,12 +1171,14 @@ export default function Landing() {
             Start training<br />smarter today.
           </motion.h2>
           <motion.div variants={fadeUp}>
-            <Link
-              to="/login"
+            <a
+              href="https://play.google.com/store"
+              target="_blank"
+              rel="noopener noreferrer"
               className="inline-flex px-8 py-3.5 bg-[#0071e3] text-white text-[17px] rounded-full hover:bg-[#0077ed] transition-colors"
             >
               Get started free
-            </Link>
+            </a>
             <p className="mt-5 text-[13px] text-[#86868b]">No credit card required.</p>
           </motion.div>
         </motion.div>
@@ -1187,7 +1193,7 @@ export default function Landing() {
               <button onClick={() => scrollTo('highlights')} className="hover:text-[#f5f5f7] transition-colors">Highlights</button>
               <button onClick={() => scrollTo('features')} className="hover:text-[#f5f5f7] transition-colors">Features</button>
               <button onClick={() => scrollTo('how-it-works')} className="hover:text-[#f5f5f7] transition-colors">How It Works</button>
-              <Link to="/login" className="hover:text-[#f5f5f7] transition-colors">Sign In</Link>
+              <a href="https://play.google.com/store" target="_blank" rel="noopener noreferrer" className="hover:text-[#f5f5f7] transition-colors">Download App</a>
             </div>
           </div>
         </div>

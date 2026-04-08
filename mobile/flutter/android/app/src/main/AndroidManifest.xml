@@ -1,4 +1,5 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
     <!-- Network access -->
     <uses-permission android:name="android.permission.INTERNET"/>
 
@@ -6,7 +7,9 @@
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
     <uses-permission android:name="android.permission.VIBRATE"/>
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
-    <!-- Exact alarm permissions removed — not needed for fitness app notifications -->
+    <!-- Block exact alarm permissions from being merged by dependencies -->
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" tools:node="remove"/>
+    <uses-permission android:name="android.permission.USE_EXACT_ALARM" tools:node="remove"/>
 
     <!-- Foreground service for persistent workout notification -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>

@@ -17,24 +17,24 @@ const faqData: FAQCategory[] = [
     title: 'Getting Started',
     items: [
       {
-        question: 'What is FitWiz?',
+        question: 'What exactly is FitWiz?',
         answer:
-          'FitWiz is an AI-powered fitness coach that creates personalized workouts, tracks nutrition, and provides real-time coaching — all tailored to your goals, experience level, and available equipment.',
+          'Think of it as a personal trainer, nutritionist, and workout tracker rolled into one app. FitWiz uses AI to build workouts around your goals, track what you eat, and coach you in real time — whether you train at home or in a gym.',
       },
       {
-        question: 'Is FitWiz free?',
+        question: 'How much does it cost?',
         answer:
-          'Yes, FitWiz has a free tier with core features. Premium is $4.99/month for unlimited workouts, unlimited food scans, full nutrition tracking, advanced analytics, and priority AI coaching.',
+          'The core app is completely free — you get 1,722 exercises with videos, unlimited workout logging, barcode food scanning, habit tracking, and 5 AI messages a day. Premium is $4.99/month (or $4.17/month billed yearly) and unlocks unlimited AI coaching, photo food logging, AI-generated workouts, and advanced analytics.',
       },
       {
-        question: 'What devices are supported?',
+        question: 'Which devices does it work on?',
         answer:
-          'FitWiz is currently available on Android (iOS coming soon). A web app is also available at fitwiz.us.',
+          'FitWiz is available on Android right now, with iOS on the way. You can also access some features through the web app at fitwiz.us.',
       },
       {
-        question: 'Do I need gym equipment?',
+        question: 'What if I don\'t have gym equipment?',
         answer:
-          'No, FitWiz creates workouts for any equipment level — including bodyweight only. Just tell us what you have access to during onboarding and the AI will adapt.',
+          'No problem. During onboarding you tell FitWiz what you have access to — even if that\'s nothing — and every workout is built around that. Bodyweight-only plans work great.',
       },
     ],
   },
@@ -42,24 +42,24 @@ const faqData: FAQCategory[] = [
     title: 'Workouts',
     items: [
       {
-        question: 'How does AI generate my workouts?',
+        question: 'How are my workouts created?',
         answer:
-          "FitWiz uses Google's Gemini AI to generate workouts based on your goals, experience level, available equipment, weekly schedule, and even how you're feeling that day. Every workout is unique to you.",
+          'FitWiz uses advanced AI to design each workout based on your goals, fitness level, available equipment, schedule, and even how you\'re feeling that day. No two workouts are the same.',
       },
       {
-        question: 'Can I customize my workouts?',
+        question: 'Can I change exercises I don\'t like?',
         answer:
-          "Yes, you can add or remove exercises, mark favorites with a star, avoid exercises you don't like, and queue specific exercises for your next workout. The AI learns your preferences over time.",
+          'Absolutely. Star your favorites, flag exercises you want to avoid, swap mid-workout, or queue specific moves for next time. The AI picks up on your preferences and gets smarter over time.',
       },
       {
-        question: 'What are supersets?',
+        question: 'What are supersets and does FitWiz support them?',
         answer:
-          'Supersets are paired exercises performed back-to-back with minimal rest for greater efficiency. FitWiz automatically detects and groups compatible exercises into supersets within your workout.',
+          'Supersets pair two exercises back-to-back with minimal rest to save time and boost intensity. FitWiz automatically groups compatible exercises into supersets when it makes sense for your workout.',
       },
       {
-        question: 'Can I modify a workout mid-session?',
+        question: 'Can I adjust things during a workout?',
         answer:
-          'Yes, just ask your AI coach to swap, add, or remove exercises during your workout. The coach will suggest alternatives that fit your current session.',
+          'Yes — just ask your AI coach to swap, add, or drop exercises while you\'re training. It\'ll suggest alternatives that fit the rest of your session.',
       },
     ],
   },
@@ -67,19 +67,19 @@ const faqData: FAQCategory[] = [
     title: 'Nutrition',
     items: [
       {
-        question: 'How does food scanning work?',
+        question: 'How does the food photo scanner work?',
         answer:
-          'Take a photo of your meal or type what you ate. The AI instantly identifies the foods in the image and calculates calories, protein, carbs, and fats — no manual searching required.',
+          'Point your camera at a meal and tap. The AI identifies each food on your plate and gives you a full calorie and macro breakdown in seconds — no searching through databases.',
       },
       {
-        question: 'Can I scan barcodes?',
+        question: 'Does it support barcode scanning?',
         answer:
-          'Yes, scan any food barcode for instant nutrition data. The barcode scanner pulls from a comprehensive food database to give you accurate macro and calorie information.',
+          'Yes. Scan any packaged food barcode and FitWiz pulls the nutrition info instantly from a comprehensive food database.',
       },
       {
-        question: 'Does FitWiz track water intake?',
+        question: 'Can FitWiz help me drink more water?',
         answer:
-          'Yes, FitWiz includes hydration tracking with customizable daily goals. The AI hydration agent can also remind you to drink water and adjust targets based on your activity level.',
+          'It can. Set a daily hydration goal and the AI will nudge you throughout the day. It also adjusts targets based on how active you\'ve been.',
       },
     ],
   },
@@ -87,19 +87,19 @@ const faqData: FAQCategory[] = [
     title: 'AI Coach',
     items: [
       {
-        question: 'What can I ask the AI coach?',
+        question: 'What kind of things can I ask the coach?',
         answer:
-          'Anything about fitness, nutrition, injuries, exercise form, meal suggestions, workout modifications, hydration, and more. The coach uses specialized agents for each domain to give you expert-level answers.',
+          'Pretty much anything fitness-related — exercise form tips, meal ideas, injury modifications, workout swaps, hydration advice, and more. Behind the scenes, specialized AI agents handle each topic so you get genuinely useful answers.',
       },
       {
-        question: 'Is the AI personalized to me?',
+        question: 'Does the AI actually know my history?',
         answer:
-          'Yes, the AI knows your workout history, goals, preferences, injuries, and dietary needs. It adapts its recommendations over time as it learns more about you.',
+          'Yes. It has context on your past workouts, goals, preferences, injuries, and dietary needs. The longer you use FitWiz, the more personalized the coaching gets.',
       },
       {
-        question: 'Is my data private?',
+        question: 'Is my data safe?',
         answer:
-          'Yes, your data is encrypted and never sold to third parties. We only share data with essential service providers to operate the app. See our Privacy Policy for full details.',
+          'Your data is encrypted and never sold. We only share what\'s strictly necessary with service providers to keep the app running. Full details are in our Privacy Policy.',
       },
     ],
   },
@@ -107,19 +107,19 @@ const faqData: FAQCategory[] = [
     title: 'Subscription',
     items: [
       {
-        question: 'What does Premium include?',
+        question: 'What do I get with Premium?',
         answer:
-          'Premium unlocks unlimited AI-generated workouts, unlimited food scans, full nutrition tracking with macro breakdowns, advanced analytics and progress charts, and priority AI coaching.',
+          'Unlimited AI-generated workouts, unlimited photo food logging, full macro tracking, advanced progress charts, muscle heatmaps, voice coaching, and priority AI responses.',
       },
       {
-        question: 'Can I cancel anytime?',
+        question: 'Can I cancel whenever I want?',
         answer:
-          'Yes, you can cancel your subscription at any time through your app store (Google Play). There are no cancellation fees, and you keep Premium access until the end of your billing period.',
+          'Yes, cancel anytime through Google Play. No fees, no hoops. You keep Premium access until the end of your current billing period.',
       },
       {
-        question: 'Is there a free trial?',
+        question: 'Is there a way to try Premium first?',
         answer:
-          'Yes, new users get a 7-day free trial of Premium. You can explore all features before deciding to subscribe.',
+          'New users get a 7-day free trial with full access to every Premium feature. No payment is required to start — you only get charged if you decide to keep it.',
       },
     ],
   },
@@ -129,17 +129,17 @@ const faqData: FAQCategory[] = [
       {
         question: 'How do I delete my account?',
         answer:
-          'Go to Settings > Privacy & Data > Delete Account within the app. You can also visit fitwiz.us/delete-account to request deletion. Your data will be permanently removed within 30 days.',
+          'Head to Settings > Privacy & Data > Delete Account in the app, or visit fitwiz.us/delete-account. All your data is permanently removed within 30 days.',
       },
       {
-        question: 'Can I export my data?',
+        question: 'Can I download a copy of my data?',
         answer:
-          'Yes, go to Settings > Privacy & Data > Export Data to download a copy of your fitness data, workout history, and nutrition logs.',
+          'Yes — go to Settings > Privacy & Data > Export Data. You\'ll get a download of your workout history, nutrition logs, and fitness data.',
       },
       {
-        question: 'How do I change my email?',
+        question: 'How do I update my email address?',
         answer:
-          'Go to Settings > Account to update your email address. You will receive a verification email at your new address to confirm the change.',
+          'Go to Settings > Account and change it there. You\'ll get a verification email at your new address to confirm.',
       },
     ],
   },
