@@ -290,72 +290,73 @@ export function CinematicHero({
         .to(".text-track", { duration: 1.8, autoAlpha: 1, y: 0, scale: 1, filter: "blur(0px)", rotationX: 0, ease: "expo.out" })
         .to(".text-days", { duration: 1.4, clipPath: "inset(0 0% 0 0)", ease: "power4.inOut" }, "-=1.0");
 
-      const scrollDistance = isMobile ? 4000 : 7000;
+      // Compact timelines — no dead space, content appears quickly
+      const scrollDistance = isMobile ? 2000 : 3500;
+      const d = isMobile
+        ? { enter: 1, expand: 0.8, reveal: 1, hold: 0.6, fadeOut: 0.4, fadeIn: 0.5, slideHold: 0.5, exitHold: 0.3, exitContent: 0.6, pullback: 0.8, cardExit: 0.6 }
+        : { enter: 1.2, expand: 0.8, reveal: 1.5, hold: 0.8, fadeOut: 0.5, fadeIn: 0.6, slideHold: 0.7, exitHold: 0.5, exitContent: 0.8, pullback: 1.0, cardExit: 0.8 };
+
       const scrollTl = gsap.timeline({
         scrollTrigger: {
           trigger: containerRef.current,
           start: "top top",
           end: `+=${scrollDistance}`,
           pin: true,
-          scrub: isMobile ? 0.5 : 1,
+          scrub: isMobile ? 0.3 : 0.5,
           anticipatePin: 1,
         },
       });
 
       scrollTl
         .to(".scroll-hint", { autoAlpha: 0, y: 20, duration: 0.5, ease: "power2.in" }, 0)
-        .to([".hero-text-wrapper", ".bg-grid-theme"], { scale: 1.15, filter: "blur(20px)", opacity: 0.2, ease: "power2.inOut", duration: 2 }, 0)
-        .to(".main-card", { y: 0, ease: "power3.inOut", duration: 2 }, 0)
-        .to(".main-card", { width: "100%", height: "100%", borderRadius: "0px", ease: "power3.inOut", duration: 1.5 })
+        .to([".hero-text-wrapper", ".bg-grid-theme"], { scale: 1.15, filter: "blur(20px)", opacity: 0.2, ease: "power2.inOut", duration: d.enter }, 0)
+        .to(".main-card", { y: 0, ease: "power3.inOut", duration: d.enter }, 0)
+        .to(".main-card", { width: "100%", height: "100%", borderRadius: "0px", ease: "power3.inOut", duration: d.expand })
         .fromTo(".mockup-scroll-wrapper",
-          { y: 300, z: -500, rotationX: 50, rotationY: -30, autoAlpha: 0, scale: 0.6 },
-          { y: 0, z: 0, rotationX: 0, rotationY: 0, autoAlpha: 1, scale: 1, ease: "expo.out", duration: 2.5 }, "-=0.8"
+          { y: isMobile ? 150 : 200, z: isMobile ? -200 : -300, rotationX: isMobile ? 20 : 30, rotationY: isMobile ? -10 : -15, autoAlpha: 0, scale: isMobile ? 0.8 : 0.7 },
+          { y: 0, z: 0, rotationX: 0, rotationY: 0, autoAlpha: 1, scale: 1, ease: "expo.out", duration: d.reveal }, "-=0.6"
         )
-        .fromTo(".floating-badge", { y: 100, autoAlpha: 0, scale: 0.7, rotationZ: -10 }, { y: 0, autoAlpha: 1, scale: 1, rotationZ: 0, ease: "back.out(1.5)", duration: 1.5, stagger: 0.2 }, "-=2.0")
-        .fromTo(".card-left-text", { x: -50, autoAlpha: 0 }, { x: 0, autoAlpha: 1, ease: "power4.out", duration: 1.5 }, "-=1.5")
-        .fromTo(".card-right-text", { x: 50, autoAlpha: 0, scale: 0.8 }, { x: 0, autoAlpha: 1, scale: 1, ease: "expo.out", duration: 1.5 }, "<")
-        .to({}, { duration: 1.5 });
+        .fromTo(".floating-badge", { y: 100, autoAlpha: 0, scale: 0.7, rotationZ: -10 }, { y: 0, autoAlpha: 1, scale: 1, rotationZ: 0, ease: "back.out(1.5)", duration: isMobile ? 0.8 : 1.0, stagger: 0.15 }, "-=0.8")
+        .fromTo(".card-left-text", { x: -50, autoAlpha: 0 }, { x: 0, autoAlpha: 1, ease: "power4.out", duration: isMobile ? 0.8 : 1.0 }, "-=0.8")
+        .fromTo(".card-right-text", { x: 50, autoAlpha: 0, scale: 0.8 }, { x: 0, autoAlpha: 1, scale: 1, ease: "expo.out", duration: isMobile ? 0.8 : 1.0 }, "<")
+        .to({}, { duration: d.hold });
 
       // Slide cycling during the card hold phase
       const slideCount = slides ? slides.length : 0;
       if (slideCount > 1) {
         for (let i = 1; i < slideCount; i++) {
           const slideIdx = i;
-          // Fade out current content
           scrollTl
             .to([".card-left-text", ".phone-screen-img", ".side-phone-left", ".side-phone-right", ".floating-badge"], {
-              autoAlpha: 0, scale: 0.95, duration: 0.6, ease: "power2.in",
+              autoAlpha: 0, scale: 0.95, duration: d.fadeOut, ease: "power2.in",
             })
-            // Trigger slide change while faded out, with buffer for React render
             .call(() => handleSlideChange(slideIdx))
             .to({}, { duration: 0.3 })
-            // Fade in new content
             .to([".card-left-text", ".phone-screen-img", ".side-phone-left", ".side-phone-right", ".floating-badge"], {
-              autoAlpha: 1, scale: 1, duration: 0.8, ease: "power2.out",
+              autoAlpha: 1, scale: 1, duration: d.fadeIn, ease: "power2.out",
             })
-            .to({}, { duration: 1.0 }); // Hold on this slide
+            .to({}, { duration: d.slideHold });
         }
       } else {
-        scrollTl.to({}, { duration: 2.5 });
+        scrollTl.to({}, { duration: d.hold });
       }
 
       scrollTl
         .set(".hero-text-wrapper", { autoAlpha: 0 })
         .set(".cta-wrapper", { autoAlpha: 1 })
-        .to({}, { duration: 1.5 })
+        .to({}, { duration: d.exitHold })
         .to([".mockup-scroll-wrapper", ".floating-badge", ".card-left-text", ".card-right-text"], {
-          scale: 0.9, y: -40, z: -200, autoAlpha: 0, ease: "power3.in", duration: 1.2, stagger: 0.05,
+          scale: 0.9, y: -40, z: -200, autoAlpha: 0, ease: "power3.in", duration: d.exitContent, stagger: 0.05,
         })
-        // Responsive card pullback sizing
         .to(".main-card", {
           width: isMobile ? "92vw" : "85vw",
           height: isMobile ? "92vh" : "85vh",
           borderRadius: isMobile ? "32px" : "40px",
           ease: "expo.inOut",
-          duration: 1.8
+          duration: d.pullback
         }, "pullback")
-        .to(".cta-wrapper", { scale: 1, filter: "blur(0px)", ease: "expo.inOut", duration: 1.8 }, "pullback")
-        .to(".main-card", { y: -window.innerHeight - 300, ease: "power3.in", duration: 1.5 });
+        .to(".cta-wrapper", { scale: 1, filter: "blur(0px)", ease: "expo.inOut", duration: d.pullback }, "pullback")
+        .to(".main-card", { y: -window.innerHeight - 300, ease: "power3.in", duration: d.cardExit });
 
     }, containerRef);
 
