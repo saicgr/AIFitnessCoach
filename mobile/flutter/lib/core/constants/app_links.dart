@@ -33,7 +33,9 @@ class AppLinks {
 
   // ── App Store Links ───────────────────────────────────────────────────────
 
-  static const String playStore = 'https://play.google.com/store/apps/details?id=com.aifitnesscoach.app';
+  // TODO: Switch back to production URL after public launch
+  // static const String playStore = 'https://play.google.com/store/apps/details?id=com.aifitnesscoach.app';
+  static const String playStore = 'https://play.google.com/apps/testing/com.aifitnesscoach.app';
   static const String appStore = ''; // TODO: add App Store listing URL
 
   // ── Legal & Support ───────────────────────────────────────────────────────

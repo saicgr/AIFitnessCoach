@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { motion, useInView } from 'framer-motion';
 import MarketingNav from '../components/marketing/MarketingNav';
 import MarketingFooter from '../components/marketing/MarketingFooter';
+import { APP_LINKS } from '../lib/links';
 
 const fadeUp = {
   hidden: { opacity: 0, y: 20 },
@@ -283,7 +284,7 @@ export default function Pricing() {
               </div>
 
               <a
-                href="https://play.google.com/store"
+                href="{APP_LINKS.playStore}"
                 target="_blank"
                 rel="noopener noreferrer"
                 className={`block w-full py-3.5 rounded-xl text-center text-[15px] font-medium transition-colors mb-6 ${
@@ -605,7 +606,7 @@ export default function Pricing() {
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <a
-              href="https://play.google.com/store"
+              href="{APP_LINKS.playStore}"
               target="_blank"
               rel="noopener noreferrer"
               className="px-8 py-3.5 bg-emerald-500 text-white text-[17px] rounded-full hover:bg-emerald-400 transition-colors"

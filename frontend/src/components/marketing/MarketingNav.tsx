@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAppStore } from '../../store';
+import { APP_LINKS } from '../../lib/links';
 
 function useClickOutside(ref: React.RefObject<HTMLElement | null>, handler: () => void) {
   useEffect(() => {
@@ -260,7 +261,7 @@ export default function MarketingNav() {
             </button>
 
             <a
-              href="https://play.google.com/store"
+              href="{APP_LINKS.playStore}"
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center gap-2 px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-white rounded-full transition-colors text-sm font-medium"
@@ -388,7 +389,7 @@ export default function MarketingNav() {
 
               {/* CTA */}
               <a
-                href="https://play.google.com/store"
+                href="{APP_LINKS.playStore}"
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={() => setMobileMenuOpen(false)}

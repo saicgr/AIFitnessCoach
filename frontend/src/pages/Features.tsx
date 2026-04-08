@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion';
 import MarketingNav from '../components/marketing/MarketingNav';
 import MarketingFooter from '../components/marketing/MarketingFooter';
+import { APP_LINKS } from '../lib/links';
 
 const fadeUp = {
   hidden: { opacity: 0, y: 30 },
@@ -161,7 +162,7 @@ export default function Features() {
             $4.99/month. Cancel anytime. Your AI coach is waiting.
           </p>
           <a
-            href="https://play.google.com/store"
+            href="{APP_LINKS.playStore}"
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-3 px-8 py-4 bg-emerald-500 hover:bg-emerald-400 text-white rounded-full transition-colors text-[17px] font-medium"

@@ -3,6 +3,7 @@ import { motion, useInView } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import MarketingNav from '../components/marketing/MarketingNav';
 import MarketingFooter from '../components/marketing/MarketingFooter';
+import { APP_LINKS } from '../lib/links';
 import { CinematicHero } from '../components/ui/cinematic-landing-hero';
 import GalleryHoverCarousel from '../components/ui/gallery-hover-carousel';
 
@@ -159,7 +160,7 @@ export default function MarketingLanding() {
                 ))}
               </ul>
               <a
-                href="https://play.google.com/store"
+                href="{APP_LINKS.playStore}"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="block w-full text-center py-3 rounded-full border border-[var(--color-border)] hover:border-emerald-500/50 text-[var(--color-text)] font-medium transition-colors"
@@ -195,7 +196,7 @@ export default function MarketingLanding() {
                 ))}
               </ul>
               <a
-                href="https://play.google.com/store"
+                href="{APP_LINKS.playStore}"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="block w-full text-center py-3 rounded-full bg-emerald-500 hover:bg-emerald-400 text-white font-medium transition-colors"
@@ -227,7 +228,7 @@ export default function MarketingLanding() {
                 ))}
               </ul>
               <a
-                href="https://play.google.com/store"
+                href="{APP_LINKS.playStore}"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="block w-full text-center py-3 rounded-full border border-[var(--color-border)] hover:border-emerald-500/50 text-[var(--color-text)] font-medium transition-colors"
