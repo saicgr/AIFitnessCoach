@@ -293,8 +293,8 @@ export function CinematicHero({
       // Compact timelines — no dead space, content appears quickly
       const scrollDistance = isMobile ? 2000 : 3500;
       const d = isMobile
-        ? { enter: 1, expand: 0.8, reveal: 1, hold: 0.6, fadeOut: 0.4, fadeIn: 0.5, slideHold: 0.5, exitHold: 0.3, exitContent: 0.6, pullback: 0.8, cardExit: 0.6 }
-        : { enter: 1.2, expand: 0.8, reveal: 1.5, hold: 0.8, fadeOut: 0.5, fadeIn: 0.6, slideHold: 0.7, exitHold: 0.5, exitContent: 0.8, pullback: 1.0, cardExit: 0.8 };
+        ? { enter: 1, expand: 0.8, reveal: 1, hold: 0.6, fadeOut: 0.25, fadeIn: 0.3, slideHold: 0.3, exitHold: 0.3, exitContent: 0.6, pullback: 0.8, cardExit: 0.6 }
+        : { enter: 1.2, expand: 0.8, reveal: 1.5, hold: 0.8, fadeOut: 0.3, fadeIn: 0.35, slideHold: 0.4, exitHold: 0.5, exitContent: 0.8, pullback: 1.0, cardExit: 0.8 };
 
       const scrollTl = gsap.timeline({
         scrollTrigger: {
@@ -334,19 +334,23 @@ export function CinematicHero({
         )
         .to({}, { duration: d.hold });
 
-      // Slide cycling during the card hold phase
+      // Slide cycling during the card hold phase — fluid crossfade
       const slideCount = slides ? slides.length : 0;
+      const slideTargets = [".card-left-text", ".phone-screen-img", ".side-phone-left", ".side-phone-right", ".floating-badge"];
       if (slideCount > 1) {
         for (let i = 1; i < slideCount; i++) {
           const slideIdx = i;
           scrollTl
-            .to([".card-left-text", ".phone-screen-img", ".side-phone-left", ".side-phone-right", ".floating-badge"], {
-              autoAlpha: 0, scale: 0.95, duration: d.fadeOut, ease: "power2.in",
+            // Slide out: gentle drift up + fade
+            .to(slideTargets, {
+              autoAlpha: 0, y: -20, scale: 0.97, duration: d.fadeOut, ease: "power3.inOut", stagger: 0.02,
             })
             .call(() => handleSlideChange(slideIdx))
-            .to({}, { duration: 0.3 })
-            .to([".card-left-text", ".phone-screen-img", ".side-phone-left", ".side-phone-right", ".floating-badge"], {
-              autoAlpha: 1, scale: 1, duration: d.fadeIn, ease: "power2.out",
+            // Reset position below for entrance
+            .set(slideTargets, { y: 25, scale: 0.97 })
+            // Slide in: drift up into place + fade in
+            .to(slideTargets, {
+              autoAlpha: 1, y: 0, scale: 1, duration: d.fadeIn, ease: "expo.out", stagger: 0.02,
             })
             .to({}, { duration: d.slideHold });
         }
