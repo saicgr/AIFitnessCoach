@@ -1,9 +1,21 @@
 """Second part of neat_service_helpers.py (auto-split for size)."""
 from __future__ import annotations
 from typing import Any, Dict, List, Optional
-from datetime import datetime, timedelta, date
+from datetime import datetime, timedelta, date, time
 import logging
 from core.db import get_supabase_db
+
+
+def _neat_part2_parent():
+    """Lazy import to avoid circular dependency."""
+    from services.neat_service import ReminderPreferences
+    return ReminderPreferences
+
+
+def _get_neat_service_class():
+    """Lazy import to avoid circular dependency."""
+    from services.neat_service_helpers import NEATService
+    return NEATService
 
 logger = logging.getLogger(__name__)
 
@@ -478,6 +490,7 @@ class NEATServicePart2:
         Returns:
             ReminderPreferences
         """
+        ReminderPreferences = _neat_part2_parent()
         try:
             db = get_supabase_db()
 
@@ -748,13 +761,14 @@ class NEATServicePart2:
 _neat_service: Optional[NEATService] = None
 
 
-def get_neat_service() -> NEATService:
+def get_neat_service() -> "NEATService":
     """
     Get the singleton NEATService instance.
 
     Returns:
         NEATService instance
     """
+    NEATService = _get_neat_service_class()
     global _neat_service
     if _neat_service is None:
         _neat_service = NEATService()

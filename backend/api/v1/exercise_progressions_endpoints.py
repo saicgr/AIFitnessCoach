@@ -17,14 +17,27 @@ Example chains:
 """
 from typing import List, Optional
 from datetime import datetime
+import uuid
 from fastapi import APIRouter, Depends, HTTPException
 import logging
 logger = logging.getLogger(__name__)
 from core.auth import get_current_user
 from core.db import get_supabase_db
 from core.exceptions import safe_internal_error
+from core.activity_logger import log_user_activity
+
+
+def _progressions_parent():
+    """Lazy import to avoid circular dependency."""
+    from .exercise_progressions import check_progression_readiness, get_next_variant, _parse_mastery
+    return check_progression_readiness, get_next_variant, _parse_mastery
+
 
 from .exercise_progressions_models import (
+    TrainingFocus,
+    ProgressionStyle,
+    ChainType,
+    MuscleGroup,
     ProgressionVariant,
     ProgressionChainResponse,
     ExerciseMastery,
@@ -196,6 +209,7 @@ async def check_readiness_endpoint(user_id: str, exercise_name: str, current_use
 
     Returns readiness status with reason and suggested next variant.
     """
+    check_progression_readiness, get_next_variant, _parse_mastery = _progressions_parent()
     if str(current_user["id"]) != str(user_id):
         raise HTTPException(status_code=403, detail="Access denied")
     logger.info(f"Checking readiness for user {user_id}, exercise: {exercise_name}")
@@ -211,6 +225,7 @@ async def get_next_variant_endpoint(exercise_name: str, current_user: dict = Dep
 
     Returns variant info or null if not in a progression chain.
     """
+    check_progression_readiness, get_next_variant, _parse_mastery = _progressions_parent()
     logger.info(f"Getting next variant for: {exercise_name}")
 
     result = await get_next_variant(exercise_name)
@@ -298,6 +313,7 @@ async def get_user_mastery_for_exercise(user_id: str, exercise_name: str) -> Opt
     Get mastery data for a specific exercise.
     Used by workout generation to consider mastery when selecting exercises.
     """
+    check_progression_readiness, get_next_variant, _parse_mastery = _progressions_parent()
     try:
         db = get_supabase_db()
         result = db.client.table("exercise_mastery").select("*").eq(

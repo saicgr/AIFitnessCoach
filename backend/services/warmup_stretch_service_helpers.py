@@ -1,5 +1,6 @@
 """Helper functions extracted from warmup_stretch_service."""
 import asyncio
+import random
 from typing import Any, Dict, List, Optional
 from datetime import datetime, timedelta
 import logging
@@ -8,6 +9,12 @@ logger = logging.getLogger(__name__)
 from core.config import get_settings
 from core.supabase_client import get_supabase
 from services.warmup_stretch_algorithm import get_warmup_stretch_algorithm
+
+
+def _warmup_parent():
+    """Lazy import to avoid circular dependency."""
+    from services.warmup_stretch_service import MUSCLE_KEYWORDS
+    return MUSCLE_KEYWORDS
 
 settings = get_settings()
 
@@ -114,6 +121,7 @@ class WarmupStretchService:
         Get warmup exercises from the warmup_exercises_cleaned view.
         Returns exercises with videos that target the specified muscle groups.
         """
+        MUSCLE_KEYWORDS = _warmup_parent()
         try:
             # Fetch all warmup exercises from the view
             response = self.supabase.table("warmup_exercises_cleaned").select(
@@ -194,6 +202,7 @@ class WarmupStretchService:
         Get stretch exercises from the stretch_exercises_cleaned view.
         Returns exercises with videos that target the specified muscle groups.
         """
+        MUSCLE_KEYWORDS = _warmup_parent()
         try:
             # Fetch all stretch exercises from the view
             response = self.supabase.table("stretch_exercises_cleaned").select(

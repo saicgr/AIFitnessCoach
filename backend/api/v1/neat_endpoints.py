@@ -16,13 +16,32 @@ Endpoints:
 - Scheduler: Cron job endpoints for background processing
 """
 from typing import Any, Dict
-from datetime import datetime, timedelta, date
+from datetime import datetime, timedelta, date, time
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
 import logging
 logger = logging.getLogger(__name__)
+import random
 from core.auth import get_current_user
 from core.db import get_supabase_db
 from core.exceptions import safe_internal_error
+from core.activity_logger import log_user_activity
+from services.user_context_service import UserContextService, EventType
+
+
+def _neat_parent():
+    """Lazy import to avoid circular dependency with parent module."""
+    from .neat import (
+        get_streak_message, get_motivation_message_for_dashboard,
+        get_neat_goals, get_today_neat_score, get_hourly_breakdown,
+        get_neat_score_history, calculate_neat_score,
+        calculate_progressive_goal, update_neat_goals,
+    )
+    return (
+        get_streak_message, get_motivation_message_for_dashboard,
+        get_neat_goals, get_today_neat_score, get_hourly_breakdown,
+        get_neat_score_history, calculate_neat_score,
+        calculate_progressive_goal, update_neat_goals,
+    )
 from models.neat import (
     NEATGoal, NEATGoalProgress, ProgressiveGoalRequest, ProgressiveGoalResponse,
     UpdateGoalRequest, GoalAdjustmentStrategy,
@@ -52,6 +71,10 @@ async def get_streak_summary(user_id: str,
     Returns current streak values for each type and identifies
     the best performing streak.
     """
+    (get_streak_message, get_motivation_message_for_dashboard,
+     get_neat_goals, get_today_neat_score, get_hourly_breakdown,
+     get_neat_score_history, calculate_neat_score,
+     calculate_progressive_goal, update_neat_goals) = _neat_parent()
     db = get_supabase_db()
 
     try:
@@ -636,6 +659,10 @@ async def get_neat_dashboard(
     - Hourly breakdown
     - Trend information
     """
+    (get_streak_message, get_motivation_message_for_dashboard,
+     get_neat_goals, get_today_neat_score, get_hourly_breakdown,
+     get_neat_score_history, calculate_neat_score,
+     calculate_progressive_goal, update_neat_goals) = _neat_parent()
     try:
         logger.info(f"Fetching NEAT dashboard for user {user_id}")
 
@@ -787,6 +814,10 @@ async def calculate_daily_scores(request: CalculateDailyScoresRequest,
     Called by cron job at end of day to calculate final scores
     and update streaks.
     """
+    (get_streak_message, get_motivation_message_for_dashboard,
+     get_neat_goals, get_today_neat_score, get_hourly_breakdown,
+     get_neat_score_history, calculate_neat_score,
+     calculate_progressive_goal, update_neat_goals) = _neat_parent()
     db = get_supabase_db()
 
     try:
@@ -846,6 +877,10 @@ async def adjust_weekly_goals(request: AdjustWeeklyGoalsRequest,
     Called by cron job weekly to evaluate user performance and
     adjust step goals according to their progressive goal settings.
     """
+    (get_streak_message, get_motivation_message_for_dashboard,
+     get_neat_goals, get_today_neat_score, get_hourly_breakdown,
+     get_neat_score_history, calculate_neat_score,
+     calculate_progressive_goal, update_neat_goals) = _neat_parent()
     db = get_supabase_db()
 
     try:

@@ -1,7 +1,9 @@
 """Second part of nutrition_db_helpers.py (auto-split for size)."""
 from typing import Any, Dict, List, Optional
 from datetime import datetime, timedelta
+import hashlib
 import logging
+import re
 logger = logging.getLogger(__name__)
 
 

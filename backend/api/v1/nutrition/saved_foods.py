@@ -2,10 +2,11 @@
 from core.db import get_supabase_db
 from datetime import datetime
 from typing import List, Optional
+import uuid
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Form, Request
 
-from core.timezone_utils import resolve_timezone, get_user_now_iso
+from core.timezone_utils import resolve_timezone, get_user_now_iso, target_date_to_utc_iso
 from core.rate_limiter import limiter
 from core.auth import get_current_user
 from core.exceptions import safe_internal_error

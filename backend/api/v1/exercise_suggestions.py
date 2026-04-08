@@ -256,6 +256,14 @@ async def get_fast_exercise_suggestions(body: FastSuggestionRequest, current_use
 
         logger.info(f"Current exercise: {current_ex['name']}, muscle: {target_muscle} (raw: {target_muscle_raw}), parens_muscles: {parens_muscles}, equipment: {equipment}")
 
+        # Initialize equipment resolver for category-aware scoring
+        from services.equipment_resolver import EquipmentResolver
+        resolver = await EquipmentResolver.get_instance()
+        current_canonical = resolver.resolve(equipment) if equipment else None
+        current_category = resolver.get_category(equipment) if equipment else None
+        current_substitutes = dict(resolver.get_substitutes(equipment)) if equipment else {}
+        logger.info(f"Equipment resolved: canonical={current_canonical}, category={current_category}, substitutes={list(current_substitutes.keys())}")
+
         # Build query for similar exercises
         # Query by target muscle OR body part for better matches
         query = db.client.table("exercise_library_cleaned") \
@@ -284,8 +292,8 @@ async def get_fast_exercise_suggestions(body: FastSuggestionRequest, current_use
         # Exclude current exercise (case-insensitive)
         query = query.neq("name", current_ex["name"])
 
-        # Get more results to filter and score
-        result = query.limit(50).execute()
+        # Fetch more candidates to ensure diverse equipment representation in the pool
+        result = query.limit(150).execute()
 
         if not result.data:
             logger.info("No similar exercises found")
@@ -300,25 +308,37 @@ async def get_fast_exercise_suggestions(body: FastSuggestionRequest, current_use
             if ex["name"].lower() not in avoided_lower
         ]
 
+        # Generic muscle tokens that indicate a non-specific target
+        GENERIC_MUSCLE_TOKENS = {"full body", "general", "multiple", "all", "whole body"}
+
         # Score candidates
         scored = []
         for ex in candidates:
             score = 0.0
             reasons = []
 
-            # Muscle match — score proportional to overlap across multi-muscle values
+            # --- Muscle match ---
             ex_muscle = " ".join((ex.get("target_muscle") or "").split()).lower()
+            is_generic_muscle = (
+                ex_muscle.strip() in GENERIC_MUSCLE_TOKENS
+                or len(ex_muscle.strip()) < 4
+            )
+
             if target_muscles:
                 matched = [m for m in target_muscles if m.lower() in ex_muscle]
                 n_matched = len(matched)
                 if n_matched == len(target_muscles):
-                    score += 2.0
-                    reasons.append("Targets all muscle groups")
+                    if is_generic_muscle:
+                        score += 0.8
+                        reasons.append("General fitness exercise")
+                    else:
+                        score += 2.0
+                        reasons.append(f"Targets {', '.join(matched)}")
                 elif n_matched > 0:
                     score += 2.0 * (n_matched / len(target_muscles))
                     reasons.append(f"Targets {', '.join(matched)}")
                 else:
-                    # Check if parens-extracted muscles match (e.g., "Rectus Abdominis" in "Abdominals (rectus abdominis)")
+                    # Check if parens-extracted muscles match
                     parens_matched = [pm for pm in parens_muscles if pm.lower() in ex_muscle]
                     if parens_matched:
                         score += 1.8
@@ -327,20 +347,35 @@ async def get_fast_exercise_suggestions(body: FastSuggestionRequest, current_use
                         score += 1.5
                         reasons.append(f"Works {body_part}")
             elif target_muscle and target_muscle.lower() in ex_muscle:
-                score += 2.0
-                reasons.append(f"Targets {target_muscle}")
+                score += 0.8 if is_generic_muscle else 2.0
+                reasons.append("General fitness exercise" if is_generic_muscle else f"Targets {target_muscle}")
             elif body_part and body_part.lower() not in NON_ANATOMICAL_BODY_PARTS and body_part.lower() in (ex.get("body_part") or "").lower():
                 score += 1.5
                 reasons.append(f"Works {body_part}")
 
-            # Equipment match = bonus
-            ex_equipment = ex.get("equipment") or ""
-            if equipment and equipment.lower() == ex_equipment.lower():
-                score += 1.0
+            # --- Equipment match (category-aware, dominant signal) ---
+            ex_equipment = (ex.get("equipment") or "").strip()
+            ex_canonical = resolver.resolve(ex_equipment) if ex_equipment else None
+            ex_category = resolver.get_category(ex_equipment) if ex_equipment else None
+
+            if current_canonical and ex_canonical:
+                if current_canonical == ex_canonical:
+                    score += 3.0
+                    reasons.append(f"Uses {ex_equipment}")
+                elif ex_canonical in current_substitutes:
+                    compat_score = current_substitutes[ex_canonical]
+                    score += compat_score * 3.0
+                    reasons.append(f"Similar equipment ({ex_equipment})")
+                elif current_category and ex_category and current_category == ex_category:
+                    score += 1.5
+                    reasons.append(f"Same equipment type ({ex_equipment})")
+            elif equipment and ex_equipment and equipment.lower() == ex_equipment.lower():
+                # Exact string fallback for equipment not in resolver
+                score += 3.0
                 reasons.append(f"Uses {equipment}")
 
-            # Small random factor for variety
-            score += random.uniform(0, 0.5)
+            # Small random factor for variety (kept small so equipment dominates)
+            score += random.uniform(0, 0.3)
 
             reason = " • ".join(reasons) if reasons else "Similar exercise"
             scored.append({

@@ -20,6 +20,7 @@ Calendar:
 """
 from typing import Any, Dict, List, Optional
 from datetime import datetime, timedelta, date
+import uuid
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from pydantic import BaseModel, Field
 import logging
@@ -28,6 +29,14 @@ from core.auth import get_current_user
 from core.db import get_supabase_db
 from core.exceptions import safe_internal_error
 from core.rate_limiter import limiter
+from core.activity_logger import log_user_activity, log_user_error
+
+
+def _fasting_parent():
+    """Lazy import to avoid circular dependency."""
+    from .fasting_impact import get_fasting_status_for_date
+    return get_fasting_status_for_date
+
 
 from .fasting_impact_models import (
     LogWeightWithFastingRequest,
@@ -651,6 +660,7 @@ async def mark_historical_fasting_day(
     - Date cannot be more than 30 days in the past
     - Cannot mark a date that already has a fasting record
     """
+    get_fasting_status_for_date = _fasting_parent()
     if str(current_user["id"]) != str(data.user_id):
         raise HTTPException(status_code=403, detail="Access denied")
     logger.info(f"Marking historical fasting day for user {data.user_id} on {data.date}")

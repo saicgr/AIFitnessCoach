@@ -4,8 +4,18 @@ Gemini Service Workout Generation - Core workout plan generation.
 
 """
 from typing import Any, Dict, List, Optional
+import asyncio
+import json
 import logging
+
+from google.genai import types
+from core.anonymize import age_to_bracket
+from models.gemini_schemas import GeneratedWorkoutResponse
+from services.gemini.constants import client, _log_token_usage, _gemini_semaphore
+from services.gemini.utils import safe_join_list, _build_equipment_usage_rule, validate_set_targets_strict
+from services.split_descriptions import get_split_context
 from services.gemini.workout_generation_helpers_part2 import WorkoutGenerationMixinPart2
+
 logger = logging.getLogger(__name__)
 class WorkoutGenerationMixin(WorkoutGenerationMixinPart2):
     """Mixin providing core workout generation methods for GeminiService."""

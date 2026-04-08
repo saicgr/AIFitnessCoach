@@ -4,6 +4,7 @@ from collections import Counter
 from typing import Any, Dict, Optional
 from datetime import datetime, timedelta, date
 import logging
+from core.db import get_supabase_db
 from services.user_context.models import EventType, HormonalHealthContext
 from services.user_context.models_helpers import DiabetesPatterns
 

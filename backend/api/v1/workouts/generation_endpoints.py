@@ -14,6 +14,7 @@ Large endpoint groups are split into focused sub-modules:
 """
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request
 import asyncio
+import json
 import logging
 from typing import List, Dict, Any, Optional
 from datetime import datetime, timedelta
@@ -29,7 +30,7 @@ from models.schemas import (
 )
 from services.gemini_service import GeminiService, validate_set_targets_strict
 from services.exercise_library_service import get_exercise_library_service
-from api.v1.workouts.utils import parse_json_field, row_to_workout, normalize_goals_list, get_intensity_from_fitness_level, get_recently_used_exercises
+from api.v1.workouts.utils import parse_json_field, row_to_workout, normalize_goals_list, get_intensity_from_fitness_level, get_recently_used_exercises, get_recent_workout_name_words
 from api.v1.workouts.user_preference_utils import (
     get_user_avoided_exercises,
     get_user_avoided_muscles,

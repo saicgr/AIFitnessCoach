@@ -2,6 +2,7 @@
 from core.db import get_supabase_db
 from datetime import datetime
 from typing import List, Optional
+import uuid
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 

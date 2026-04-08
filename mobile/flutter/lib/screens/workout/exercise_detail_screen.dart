@@ -139,20 +139,22 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen>
     try {
       final apiClient = ref.read(apiClientProvider);
 
-      // First check if exercise already has a gifUrl from the database
-      final exerciseGifUrl = widget.exercise.gifUrl;
-      if (exerciseGifUrl != null && exerciseGifUrl.isNotEmpty) {
-        _imageUrl = exerciseGifUrl;
-      } else {
-        // Load image from API as fallback
-        try {
-          final imageResponse = await apiClient.get(
-            '/exercise-images/${Uri.encodeComponent(exerciseName)}',
-          );
-          if (imageResponse.statusCode == 200 && imageResponse.data != null) {
-            _imageUrl = imageResponse.data['url'] as String?;
-          }
-        } catch (_) {}
+      // Load authoritative S3 illustration from API first
+      try {
+        final imageResponse = await apiClient.get(
+          '/exercise-images/${Uri.encodeComponent(exerciseName)}',
+        );
+        if (imageResponse.statusCode == 200 && imageResponse.data != null) {
+          _imageUrl = imageResponse.data['url'] as String?;
+        }
+      } catch (_) {}
+
+      // Fall back to gifUrl from exercise data if API failed
+      if (_imageUrl == null) {
+        final exerciseGifUrl = widget.exercise.gifUrl;
+        if (exerciseGifUrl != null && exerciseGifUrl.isNotEmpty) {
+          _imageUrl = exerciseGifUrl;
+        }
       }
 
       // Load and autoplay video

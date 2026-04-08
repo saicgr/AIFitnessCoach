@@ -37,13 +37,13 @@ class DailyActivityInput(BaseModel):
     blood_oxygen: Optional[float] = Field(None, ge=0, le=100)
     body_temperature: Optional[float] = Field(None, ge=30, le=45)
     respiratory_rate: Optional[int] = Field(None, ge=5, le=60)
-    flights_climbed: int = Field(default=0, ge=0)
-    basal_calories: float = Field(default=0, ge=0)
+    flights_climbed: Optional[int] = Field(default=0, ge=0)
+    basal_calories: Optional[float] = Field(default=0, ge=0)
     deep_sleep_minutes: Optional[int] = Field(None, ge=0, le=1440)
     light_sleep_minutes: Optional[int] = Field(None, ge=0, le=1440)
     awake_sleep_minutes: Optional[int] = Field(None, ge=0, le=1440)
     rem_sleep_minutes: Optional[int] = Field(None, ge=0, le=1440)
-    water_ml: int = Field(default=0, ge=0)
+    water_ml: Optional[int] = Field(default=0, ge=0)
     source: str = Field(default="health_connect", description="health_connect or apple_health")
 
 
@@ -152,13 +152,13 @@ async def sync_daily_activity(input: DailyActivityInput, current_user: dict = De
         "blood_oxygen": input.blood_oxygen,
         "body_temperature": input.body_temperature,
         "respiratory_rate": input.respiratory_rate,
-        "flights_climbed": input.flights_climbed,
-        "basal_calories": input.basal_calories,
+        "flights_climbed": input.flights_climbed or 0,
+        "basal_calories": input.basal_calories or 0,
         "deep_sleep_minutes": input.deep_sleep_minutes,
         "light_sleep_minutes": input.light_sleep_minutes,
         "awake_sleep_minutes": input.awake_sleep_minutes,
         "rem_sleep_minutes": input.rem_sleep_minutes,
-        "water_ml": input.water_ml,
+        "water_ml": input.water_ml or 0,
         "source": input.source,
     }
 

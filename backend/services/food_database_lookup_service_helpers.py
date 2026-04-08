@@ -9,9 +9,11 @@ Provides single and batch food lookups with in-memory TTL caching.
 
 
 """
+import asyncio
 import time
 from typing import Dict, List, Optional
 import logging
+from sqlalchemy import text
 from core.supabase_client import get_supabase
 from services.food_database_lookup_service_helpers_part2 import FoodDatabaseLookupServicePart2
 logger = logging.getLogger(__name__)

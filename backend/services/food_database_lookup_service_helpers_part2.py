@@ -1,7 +1,9 @@
 """Second part of food_database_lookup_service_helpers.py (auto-split for size)."""
 from typing import Dict, List, Optional
+import asyncio
 import logging
 import re
+from sqlalchemy import text
 from core.supabase_client import get_supabase
 logger = logging.getLogger(__name__)
 

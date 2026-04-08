@@ -1,9 +1,11 @@
 // src/components/ui/cinematic-landing-hero.tsx
 
-import React, { useEffect, useRef, useState, useCallback } from "react";
+import React, { useEffect, useRef, useState, useCallback, lazy, Suspense } from "react";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { cn } from "@/lib/utils";
+
+const LandingFlux = lazy(() => import("@/components/ui/landing-flux"));
 
 if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger);
@@ -105,14 +107,7 @@ const INJECTED_STYLES = `
       background: linear-gradient(110deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0) 45%);
   }
 
-  .widget-depth {
-      background: linear-gradient(180deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.01) 100%);
-      box-shadow:
-          0 10px 20px rgba(0,0,0,0.3),
-          inset 0 1px 1px rgba(255,255,255,0.05),
-          inset 0 -1px 1px rgba(0,0,0,0.5);
-      border: 1px solid rgba(255,255,255,0.03);
-  }
+  /* Removed unused .widget-depth */
 
   .floating-ui-badge {
       background: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.01) 100%);
@@ -159,13 +154,7 @@ const INJECTED_STYLES = `
       box-shadow: 0 0 0 1px rgba(255,255,255,0.05), inset 0 3px 8px rgba(0,0,0,0.9), inset 0 0 0 1px rgba(0,0,0,0.5);
   }
 
-  .progress-ring {
-      transform: rotate(-90deg);
-      transform-origin: center;
-      stroke-dasharray: 402;
-      stroke-dashoffset: 402;
-      stroke-linecap: round;
-  }
+  /* Removed unused .progress-ring */
 `;
 
 export interface FloatingBadge {
@@ -238,6 +227,16 @@ export function CinematicHero({
     setActiveSlide(index);
   }, []);
 
+  // Preload all slide images to prevent flash during transitions
+  useEffect(() => {
+    if (!slides) return;
+    const urls = slides.flatMap(s => [s.screenshot, ...s.sideScreenshots]);
+    urls.forEach(url => {
+      const img = new Image();
+      img.src = url;
+    });
+  }, [slides]);
+
   // 1. High-Performance Mouse Interaction Logic (Using requestAnimationFrame)
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
@@ -279,22 +278,22 @@ export function CinematicHero({
     const isMobile = window.innerWidth < 768;
 
     const ctx = gsap.context(() => {
-      gsap.set(".text-track", { autoAlpha: 0, y: 60, scale: 0.85, filter: "blur(20px)", rotationX: -20 });
+      gsap.set(".text-track", { autoAlpha: 0, y: 60, scale: 0.85, rotationX: -20 });
       gsap.set(".text-days", { autoAlpha: 1, clipPath: "inset(0 100% 0 0)" });
       gsap.set(".main-card", { y: window.innerHeight + 200, autoAlpha: 1 });
       gsap.set([".card-left-text", ".card-right-text", ".mockup-scroll-wrapper", ".floating-badge"], { autoAlpha: 0 });
-      gsap.set(".cta-wrapper", { autoAlpha: 0, scale: 0.8, filter: "blur(30px)" });
+      gsap.set(".cta-wrapper", { autoAlpha: 0, scale: 0.8 });
 
       const introTl = gsap.timeline({ delay: 0.1 });
       introTl
-        .to(".text-track", { duration: 0.8, autoAlpha: 1, y: 0, scale: 1, filter: "blur(0px)", rotationX: 0, ease: "expo.out" })
+        .to(".text-track", { duration: 0.8, autoAlpha: 1, y: 0, scale: 1, rotationX: 0, ease: "expo.out" })
         .to(".text-days", { duration: 0.6, clipPath: "inset(0 0% 0 0)", ease: "power4.inOut" }, "-=0.4");
 
-      // Compact timelines — reduced scroll distance to prevent duplicate feeling
-      const scrollDistance = isMobile ? 1400 : 2400;
+      // Balanced: smooth entrance, tight slide transitions to avoid duplicate feeling
+      const scrollDistance = isMobile ? 1800 : 3000;
       const d = isMobile
-        ? { enter: 1, expand: 0.8, reveal: 1, hold: 0.3, fadeOut: 0.2, fadeIn: 0.25, slideHold: 0.15, exitHold: 0.2, exitContent: 0.5, pullback: 0.6, cardExit: 0.5 }
-        : { enter: 1.2, expand: 0.8, reveal: 1.2, hold: 0.4, fadeOut: 0.25, fadeIn: 0.3, slideHold: 0.2, exitHold: 0.3, exitContent: 0.6, pullback: 0.8, cardExit: 0.6 };
+        ? { enter: 1.2, expand: 0.8, reveal: 1.2, hold: 0.5, fadeOut: 0.2, fadeIn: 0.25, slideHold: 0.15, exitHold: 0.2, exitContent: 0.5, pullback: 0.7, cardExit: 0.6 }
+        : { enter: 1.5, expand: 0.8, reveal: 1.5, hold: 0.6, fadeOut: 0.25, fadeIn: 0.3, slideHold: 0.2, exitHold: 0.3, exitContent: 0.7, pullback: 0.9, cardExit: 0.7 };
 
       const scrollTl = gsap.timeline({
         scrollTrigger: {
@@ -302,7 +301,7 @@ export function CinematicHero({
           start: "top top",
           end: `+=${scrollDistance}`,
           pin: true,
-          scrub: isMobile ? 0.2 : 0.3,
+          scrub: isMobile ? 0.4 : 0.6,
           anticipatePin: 1,
         },
       });
@@ -314,7 +313,7 @@ export function CinematicHero({
 
       scrollTl
         .to(".scroll-hint", { autoAlpha: 0, y: 20, duration: 0.3, ease: "power2.in" }, 0)
-        .to([".hero-text-wrapper", ".bg-grid-theme"], { scale: 1.15, filter: "blur(20px)", opacity: 0.2, ease: "power2.inOut", duration: enterDur }, 0)
+        .to([".hero-text-wrapper", ".bg-grid-theme"], { scale: 1.15, opacity: 0, ease: "power2.inOut", duration: enterDur }, 0)
         .to(".main-card", { y: 0, width: "100%", height: "100%", borderRadius: "0px", ease: "power3.inOut", duration: enterDur }, 0)
         // Mockup appears immediately with card but starts deeply rotated
         .fromTo(".mockup-scroll-wrapper",
@@ -335,16 +334,20 @@ export function CinematicHero({
         .to({}, { duration: d.hold });
 
       // Slide cycling during the card hold phase — fluid crossfade
+      // Side phones excluded from slideTargets to avoid overwriting their inline rotateY transform
       const slideCount = slides ? slides.length : 0;
-      const slideTargets = [".card-left-text", ".phone-screen-img", ".side-phone-left", ".side-phone-right", ".floating-badge"];
+      const slideTargets = [".card-left-text", ".phone-screen-img", ".floating-badge"];
       if (slideCount > 1) {
         for (let i = 1; i < slideCount; i++) {
           const slideIdx = i;
           scrollTl
-            // Slide out: gentle drift up + fade
+            // Slide out: gentle drift up + fade (side phones fade via opacity only)
             .to(slideTargets, {
               autoAlpha: 0, y: -20, scale: 0.97, duration: d.fadeOut, ease: "power3.inOut", stagger: 0.02,
             })
+            .to([".side-phone-left", ".side-phone-right"], {
+              opacity: 0, duration: d.fadeOut, ease: "power3.inOut",
+            }, "<")
             .call(() => handleSlideChange(slideIdx))
             // Reset position below for entrance
             .set(slideTargets, { y: 25, scale: 0.97 })
@@ -352,6 +355,9 @@ export function CinematicHero({
             .to(slideTargets, {
               autoAlpha: 1, y: 0, scale: 1, duration: d.fadeIn, ease: "expo.out", stagger: 0.02,
             })
+            .to([".side-phone-left", ".side-phone-right"], {
+              opacity: 0.4, duration: d.fadeIn, ease: "expo.out",
+            }, "<")
             .to({}, { duration: d.slideHold });
         }
       } else {
@@ -365,7 +371,7 @@ export function CinematicHero({
         .to([".mockup-scroll-wrapper", ".floating-badge", ".card-left-text", ".card-right-text"], {
           scale: 0.9, y: -40, z: -200, autoAlpha: 0, ease: "power3.in", duration: d.exitContent, stagger: 0.02,
         }, "pre-exit")
-        .to(".cta-wrapper", { scale: 1, filter: "blur(0px)", ease: "expo.out", duration: d.exitContent }, "pre-exit+=0.1")
+        .to(".cta-wrapper", { scale: 1, ease: "expo.out", duration: d.exitContent }, "pre-exit+=0.1")
         .to(".main-card", {
           width: isMobile ? "92vw" : "85vw",
           height: isMobile ? "92vh" : "85vh",
@@ -389,6 +395,21 @@ export function CinematicHero({
       {...props}
     >
       <style dangerouslySetInnerHTML={{ __html: INJECTED_STYLES }} />
+
+      {/* BACKGROUND LAYER 0: Animated flux marquee */}
+      <div className="absolute inset-0 z-0 pointer-events-auto" aria-hidden="true">
+        <Suspense fallback={null}>
+          <LandingFlux
+            className="absolute inset-0 w-full h-full"
+            rows={8}
+            barHeight={16}
+            gap={10}
+            color="#94A3B8"
+            disableMarquee={false}
+          />
+        </Suspense>
+      </div>
+
       <div className="film-grain" aria-hidden="true" />
       <div className="bg-grid-theme absolute inset-0 z-0 pointer-events-none opacity-50" aria-hidden="true" />
 
@@ -453,7 +474,7 @@ export function CinematicHero({
       <div className="absolute inset-0 z-20 flex items-center justify-center pointer-events-none" style={{ perspective: "1500px" }}>
         <div
           ref={mainCardRef}
-          className="main-card premium-depth-card relative overflow-hidden gsap-reveal flex items-center justify-center pointer-events-auto w-[92vw] md:w-[85vw] h-[92vh] md:h-[85vh] rounded-[32px] md:rounded-[40px]"
+          className="main-card premium-depth-card relative overflow-hidden gsap-reveal flex items-center justify-center pointer-events-auto w-[92vw] md:w-[85vw] h-[92vh] md:h-[85vh] rounded-[32px] md:rounded-[40px] will-change-transform"
         >
           <div className="card-sheen" aria-hidden="true" />
 

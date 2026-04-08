@@ -22,6 +22,8 @@ Benefits:
 """
 from typing import Any, Dict, List, Optional
 from datetime import datetime, timedelta
+import json
+import uuid
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
 import logging
@@ -29,6 +31,13 @@ logger = logging.getLogger(__name__)
 from core.auth import get_current_user
 from core.db import get_supabase_db
 from core.exceptions import safe_internal_error
+
+
+def _supersets_parent():
+    """Lazy import to avoid circular dependency."""
+    from .supersets import ANTAGONIST_PAIRS
+    return ANTAGONIST_PAIRS
+
 
 from .supersets_models import (
     SupersetPreferences,
@@ -377,6 +386,7 @@ def get_antagonist_muscles(muscle: str) -> List[str]:
     Get antagonist muscles for a given muscle group.
     Used by workout generation for smart pairing.
     """
+    ANTAGONIST_PAIRS = _supersets_parent()
     return ANTAGONIST_PAIRS.get(muscle.lower(), [])
 
 
@@ -384,6 +394,7 @@ def is_valid_superset_pair(muscle_1: str, muscle_2: str, allow_same: bool = Fals
     """
     Check if two muscle groups make a valid superset pair.
     """
+    ANTAGONIST_PAIRS = _supersets_parent()
     m1, m2 = muscle_1.lower(), muscle_2.lower()
 
     if m1 == m2:

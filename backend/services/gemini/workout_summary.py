@@ -14,7 +14,8 @@ from services.gemini.constants import (
     client, _log_token_usage, _gemini_semaphore,
     _summary_cache, settings,
 )
-from services.gemini.utils import _sanitize_for_prompt
+from services.gemini.utils import _sanitize_for_prompt, safe_join_list
+from services.split_descriptions import get_split_context
 
 logger = logging.getLogger("gemini")
 

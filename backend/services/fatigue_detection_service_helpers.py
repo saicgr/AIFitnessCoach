@@ -29,6 +29,7 @@ Usage:
     recommendation = service.get_set_recommendation(analysis)
 """
 from __future__ import annotations
+import statistics
 from typing import Any, Dict, List, Optional, Literal, TYPE_CHECKING
 from dataclasses import dataclass
 from datetime import datetime

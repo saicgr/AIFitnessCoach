@@ -280,6 +280,17 @@ def _find_replacement_exercise(
         avoided_lower = {n.lower() for n in avoided_exercises}
         avoided_muscles_lower = {_normalize_muscle(m) for m in avoided_muscles}
 
+        # Equipment resolver for category-aware scoring (sync access to cached singleton)
+        from services.equipment_resolver import EquipmentResolver
+        resolver = EquipmentResolver._instance if (EquipmentResolver._instance and EquipmentResolver._instance._loaded) else None
+        current_canonical = None
+        current_category = None
+        current_substitutes = {}
+        if resolver and equipment_pref:
+            current_canonical = resolver.resolve(equipment_pref)
+            current_category = resolver.get_category(equipment_pref)
+            current_substitutes = dict(resolver.get_substitutes(equipment_pref))
+
         candidates = []
         for ex in result.data:
             name_lower = ex["name"].lower()
@@ -305,10 +316,24 @@ def _find_replacement_exercise(
             ex_muscle = _strip_parens(ex.get("target_muscle") or "")
             if clean_muscle.lower() in (ex_muscle or "").lower():
                 score += 2.0
-            ex_eq = (ex.get("equipment") or "").lower()
-            if equipment_pref and equipment_pref.lower() == ex_eq:
-                score += 1.0
-            score += random.uniform(0, 0.5)
+            # Equipment scoring: category-aware via EquipmentResolver
+            ex_eq = (ex.get("equipment") or "").strip()
+            if resolver and current_canonical:
+                ex_canonical = resolver.resolve(ex_eq) if ex_eq else None
+                if current_canonical and ex_canonical:
+                    if current_canonical == ex_canonical:
+                        score += 3.0
+                    elif ex_canonical in current_substitutes:
+                        score += current_substitutes[ex_canonical] * 3.0
+                    else:
+                        ex_cat = resolver.get_category(ex_eq)
+                        if current_category and ex_cat and current_category == ex_cat:
+                            score += 1.5
+                elif equipment_pref and ex_eq and equipment_pref.lower() == ex_eq.lower():
+                    score += 3.0
+            elif equipment_pref and equipment_pref.lower() == ex_eq.lower():
+                score += 1.0  # Fallback when resolver not loaded
+            score += random.uniform(0, 0.3)
 
             candidates.append({**ex, "_score": score})
 

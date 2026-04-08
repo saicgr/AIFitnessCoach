@@ -15,7 +15,9 @@ from models.goal_suggestions import (
 )
 from models.weekly_personal_goals import (
     WorkoutSyncRequest, WorkoutSyncResponse, SyncedGoalUpdate,
+    GoalType,
 )
+from core.activity_logger import log_user_activity, log_user_error
 from api.v1.goal_social import get_iso_week_boundaries
 
 router = APIRouter()

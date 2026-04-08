@@ -11,6 +11,7 @@ might look like."
 """
 from typing import Any, Dict, List, Optional
 from datetime import datetime, timedelta
+import uuid
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from pydantic import BaseModel
 import logging
@@ -19,6 +20,14 @@ from core.auth import get_admin_user
 from core.db import get_supabase_db
 from core.exceptions import safe_internal_error
 from core.rate_limiter import limiter
+from .demo_models import CURATED_TEMPLATES, CURATED_EXERCISES
+
+
+def _demo_parent():
+    """Lazy import to avoid circular dependency."""
+    from .demo import DEFAULT_TOUR_CONFIG, get_sample_workouts
+    return DEFAULT_TOUR_CONFIG, get_sample_workouts
+
 
 from .demo_models import (
     PreviewPlanRequest,
@@ -46,6 +55,7 @@ async def start_app_tour(request: Request, body: TourStartRequest):
     For new users, it always shows the tour. For returning users from settings
     or deep links, it allows retaking the tour.
     """
+    DEFAULT_TOUR_CONFIG, get_sample_workouts = _demo_parent()
     try:
         db = get_supabase_db()
         session_id = str(uuid.uuid4())
@@ -628,6 +638,7 @@ async def start_try_workout(request: Request, body: TryWorkoutRequest):
         - A token that expires in 1 hour
         - Instructions for completing the trial workout
     """
+    DEFAULT_TOUR_CONFIG, get_sample_workouts = _demo_parent()
     try:
         db = get_supabase_db()
 

@@ -268,7 +268,7 @@ class TestSampleWorkouts:
         data = response.json()
         assert "workouts" in data
 
-    @pytest.mark.asyncio
+
 class TestSessionConversion:
     """Tests for session conversion tracking."""
 

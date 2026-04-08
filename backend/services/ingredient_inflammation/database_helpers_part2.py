@@ -1,5 +1,8 @@
 """Second part of database_helpers.py (auto-split for size)."""
 from typing import Dict, Optional
+from services.ingredient_inflammation.database_helpers import INGREDIENT_DATABASE, IngredientRecord
+
+_ALIAS_INDEX: Dict[str, IngredientRecord] = {}
 
 
 class IngredientRecordPart2:

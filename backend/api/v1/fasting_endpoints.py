@@ -31,6 +31,7 @@ Fasting Scores:
 """
 from typing import Optional
 from datetime import datetime, timedelta, date
+import uuid
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from pydantic import BaseModel, Field
 import logging

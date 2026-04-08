@@ -99,20 +99,10 @@ class _ExpandedExerciseCardState extends ConsumerState<ExpandedExerciseCard> {
       return;
     }
 
-    // First check if exercise already has a gifUrl from the database
-    final exerciseGifUrl = widget.exercise.gifUrl;
-    if (exerciseGifUrl != null && exerciseGifUrl.isNotEmpty) {
-      final cacheKey = exerciseName.toLowerCase();
-      _imageCache[cacheKey] = exerciseGifUrl;
-      setState(() {
-        _imageUrl = exerciseGifUrl;
-        _isLoadingImage = false;
-      });
-      return;
-    }
-
-    // Fall back to cache
     final cacheKey = exerciseName.toLowerCase();
+
+    // Check API-resolved cache first (populated only by the authoritative
+    // /exercise-images/ endpoint, not by potentially wrong gif_url values)
     if (_imageCache.containsKey(cacheKey)) {
       setState(() {
         _imageUrl = _imageCache[cacheKey];
@@ -121,7 +111,7 @@ class _ExpandedExerciseCardState extends ConsumerState<ExpandedExerciseCard> {
       return;
     }
 
-    // Last resort: fetch from API
+    // Fetch from the authoritative /exercise-images/ API (returns S3 illustration)
     try {
       final apiClient = ref.read(apiClientProvider);
       final response = await apiClient.get(
@@ -140,7 +130,17 @@ class _ExpandedExerciseCardState extends ConsumerState<ExpandedExerciseCard> {
         }
       }
     } catch (e) {
-      // Image not found
+      // Image not found from API
+    }
+
+    // Fall back to gifUrl from exercise data if API failed
+    final exerciseGifUrl = widget.exercise.gifUrl;
+    if (exerciseGifUrl != null && exerciseGifUrl.isNotEmpty && mounted) {
+      setState(() {
+        _imageUrl = exerciseGifUrl;
+        _isLoadingImage = false;
+      });
+      return;
     }
 
     if (mounted) {

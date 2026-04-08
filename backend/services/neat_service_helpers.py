@@ -33,6 +33,15 @@ from core.db import get_supabase_db
 from models.neat import NEATGoal
 from services.neat_service_helpers_part2 import NEATServicePart2
 
+
+def _neat_svc_parent():
+    """Lazy import to avoid circular dependency."""
+    from services.neat_service import (
+        NEATScore as _NEATScore, StreakType as _StreakType,
+        DEFAULT_WAKING_HOURS, GOAL_INCREASE_MAX, GOAL_INCREASE_MIN,
+    )
+    return _NEATScore, _StreakType, DEFAULT_WAKING_HOURS, GOAL_INCREASE_MAX, GOAL_INCREASE_MIN
+
 logger = logging.getLogger(__name__)
 
 
@@ -167,6 +176,7 @@ class NEATService(NEATServicePart2):
         Returns:
             Recommended new step goal
         """
+        NEATScore, StreakType, DEFAULT_WAKING_HOURS, GOAL_INCREASE_MAX, GOAL_INCREASE_MIN = _neat_svc_parent()
         try:
             db = get_supabase_db()
 
@@ -559,6 +569,7 @@ class NEATService(NEATServicePart2):
         Returns:
             NEATScore with detailed breakdown
         """
+        NEATScore, StreakType, DEFAULT_WAKING_HOURS, GOAL_INCREASE_MAX, GOAL_INCREASE_MIN = _neat_svc_parent()
         try:
             db = get_supabase_db()
 
@@ -637,6 +648,7 @@ class NEATService(NEATServicePart2):
         step_goal: int,
     ) -> float:
         """Calculate raw NEAT score value."""
+        NEATScore, StreakType, DEFAULT_WAKING_HOURS, GOAL_INCREASE_MAX, GOAL_INCREASE_MIN = _neat_svc_parent()
         active_component = min(50, (active_hours / DEFAULT_WAKING_HOURS) * 50)
         steps_component = min(50, (total_steps / step_goal) * 50) if step_goal > 0 else 0
         return min(100, round(active_component + steps_component, 1))
@@ -729,6 +741,7 @@ class NEATService(NEATServicePart2):
         Returns:
             Updated streak count
         """
+        NEATScore, StreakType, DEFAULT_WAKING_HOURS, GOAL_INCREASE_MAX, GOAL_INCREASE_MIN = _neat_svc_parent()
         try:
             db = get_supabase_db()
             today = date.today()

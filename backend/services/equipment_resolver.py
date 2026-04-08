@@ -27,6 +27,7 @@ class EquipmentResolver:
     def __init__(self):
         self._alias_to_canonical: Dict[str, str] = {}  # alias -> canonical_name
         self._canonical_to_display: Dict[str, str] = {}  # canonical -> display_name
+        self._canonical_to_category: Dict[str, str] = {}  # canonical -> category
         self._substitutions: Dict[str, List[Tuple[str, float]]] = {}  # canonical -> [(target, score)]
         self._loaded = False
 
@@ -48,7 +49,7 @@ class EquipmentResolver:
 
             # Load equipment types
             types_result = supabase.table("equipment_types").select(
-                "canonical_name, display_name, aliases"
+                "canonical_name, display_name, category, aliases"
             ).execute()
 
             if types_result.data:
@@ -58,6 +59,7 @@ class EquipmentResolver:
                     aliases = row.get("aliases") or []
 
                     self._canonical_to_display[canonical] = display
+                    self._canonical_to_category[canonical] = row.get("category", "")
                     self._alias_to_canonical[canonical] = canonical
                     self._alias_to_canonical[display.lower()] = canonical
 
@@ -124,6 +126,13 @@ class EquipmentResolver:
     def get_display_name(self, canonical_name: str) -> str:
         """Get display name for a canonical equipment name."""
         return self._canonical_to_display.get(canonical_name, canonical_name)
+
+    def get_category(self, equipment: str) -> Optional[str]:
+        """Get equipment category (e.g., 'machines', 'free_weights') for any equipment string."""
+        canonical = self.resolve(equipment)
+        if not canonical:
+            return None
+        return self._canonical_to_category.get(canonical)
 
     def is_compatible(self, exercise_equipment: str, user_equipment: List[str]) -> bool:
         """

@@ -19,6 +19,13 @@ if TYPE_CHECKING:
     from .percentage_training_service import UserExercise1RM
 
 logger = logging.getLogger(__name__)
+
+
+def _pct_parent():
+    """Lazy import to avoid circular dependency."""
+    from .percentage_training_service import LinkedExercise, WorkingWeightResult
+    from .strength_calculator_service import strength_calculator_service
+    return LinkedExercise, WorkingWeightResult, strength_calculator_service
 class PercentageTrainingService:
     """
     Service for percentage-based 1RM training.
@@ -377,6 +384,7 @@ class PercentageTrainingService:
         Returns:
             List of LinkedExercise objects
         """
+        LinkedExercise, WorkingWeightResult, strength_calculator_service = _pct_parent()
         if not self.supabase:
             return []
 
@@ -427,6 +435,7 @@ class PercentageTrainingService:
         Returns:
             Created LinkedExercise object
         """
+        LinkedExercise, WorkingWeightResult, strength_calculator_service = _pct_parent()
         if not self.supabase:
             raise ValueError("Supabase client not configured")
 
@@ -481,6 +490,7 @@ class PercentageTrainingService:
         Returns:
             Updated LinkedExercise or None if not found
         """
+        LinkedExercise, WorkingWeightResult, strength_calculator_service = _pct_parent()
         if not self.supabase:
             raise ValueError("Supabase client not configured")
 
@@ -809,6 +819,7 @@ class PercentageTrainingService:
         Returns:
             Number of 1RMs calculated and saved
         """
+        LinkedExercise, WorkingWeightResult, strength_calculator_service = _pct_parent()
         if not self.supabase:
             return 0
 
@@ -911,6 +922,7 @@ class PercentageTrainingService:
         Returns:
             List of WorkingWeightResult for all exercises (including estimated 1RMs)
         """
+        LinkedExercise, WorkingWeightResult, strength_calculator_service = _pct_parent()
         results = []
 
         # Get user's 1RMs

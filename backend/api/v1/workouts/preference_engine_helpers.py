@@ -10,8 +10,27 @@ Core principle: Parse JSON → find target → replace with library match → up
 
 """
 from datetime import datetime, timedelta, date
+import json
 import logging
 logger = logging.getLogger(__name__)
+
+
+def _engine_parent():
+    """Lazy import to avoid circular dependency with preference_engine.py."""
+    from .preference_engine import (
+        get_exercise_params, _build_exercise_object, _strip_parens,
+        _normalize_muscle, _find_replacement_exercise,
+        _find_compatible_replacement, _log_workout_change,
+        inject_staple_into_workout, _fetch_preference_context,
+        _get_upcoming_workouts, DAY_NAMES,
+    )
+    return (
+        get_exercise_params, _build_exercise_object, _strip_parens,
+        _normalize_muscle, _find_replacement_exercise,
+        _find_compatible_replacement, _log_workout_change,
+        inject_staple_into_workout, _fetch_preference_context,
+        _get_upcoming_workouts, DAY_NAMES,
+    )
 def _inject_into_section(
     db,
     workout_id: str,
@@ -21,6 +40,11 @@ def _inject_into_section(
     user_id: str,
 ) -> dict:
     """Inject a staple into the warmups or stretches table."""
+    (get_exercise_params, _build_exercise_object, _strip_parens,
+     _normalize_muscle, _find_replacement_exercise,
+     _find_compatible_replacement, _log_workout_change,
+     inject_staple_into_workout, _fetch_preference_context,
+     _get_upcoming_workouts, DAY_NAMES) = _engine_parent()
     table = "warmups" if section == "warmup" else "stretches"
     staple_name = staple["exercise_name"]
 
@@ -90,6 +114,11 @@ async def remove_exercise_from_workout(
 
     Returns: {"action": "replaced"|"removed", "old": name, "new": name}
     """
+    (get_exercise_params, _build_exercise_object, _strip_parens,
+     _normalize_muscle, _find_replacement_exercise,
+     _find_compatible_replacement, _log_workout_change,
+     inject_staple_into_workout, _fetch_preference_context,
+     _get_upcoming_workouts, DAY_NAMES) = _engine_parent()
     workout_id = workout["id"]
     exercises = workout.get("exercises_json") or []
     if isinstance(exercises, str):
@@ -178,6 +207,11 @@ async def remove_muscle_from_workout(
 
     Returns: {"action": "replaced", "replaced": [{"old": name, "new": name}, ...]}
     """
+    (get_exercise_params, _build_exercise_object, _strip_parens,
+     _normalize_muscle, _find_replacement_exercise,
+     _find_compatible_replacement, _log_workout_change,
+     inject_staple_into_workout, _fetch_preference_context,
+     _get_upcoming_workouts, DAY_NAMES) = _engine_parent()
     workout_id = workout["id"]
     exercises = workout.get("exercises_json") or []
     if isinstance(exercises, str):
@@ -348,6 +382,11 @@ async def _create_staple_workout_for_date(
 
     Returns the created workout dict or None on failure.
     """
+    (get_exercise_params, _build_exercise_object, _strip_parens,
+     _normalize_muscle, _find_replacement_exercise,
+     _find_compatible_replacement, _log_workout_change,
+     inject_staple_into_workout, _fetch_preference_context,
+     _get_upcoming_workouts, DAY_NAMES) = _engine_parent()
     date_str = target_date.isoformat()
 
     # Check if a workout already exists for this date
@@ -424,6 +463,11 @@ async def apply_staple_to_workouts(db, user_id: str, staple: dict) -> dict:
 
     Returns: {"changes": [...], "message": "..."}
     """
+    (get_exercise_params, _build_exercise_object, _strip_parens,
+     _normalize_muscle, _find_replacement_exercise,
+     _find_compatible_replacement, _log_workout_change,
+     inject_staple_into_workout, _fetch_preference_context,
+     _get_upcoming_workouts, DAY_NAMES) = _engine_parent()
     context = await _fetch_preference_context(db, user_id)
     workouts = _get_upcoming_workouts(db, user_id)
 
@@ -530,6 +574,11 @@ async def apply_avoid_exercise_to_workouts(db, user_id: str, exercise_name: str)
 
     Returns: {"changes": [...], "message": "..."}
     """
+    (get_exercise_params, _build_exercise_object, _strip_parens,
+     _normalize_muscle, _find_replacement_exercise,
+     _find_compatible_replacement, _log_workout_change,
+     inject_staple_into_workout, _fetch_preference_context,
+     _get_upcoming_workouts, DAY_NAMES) = _engine_parent()
     context = await _fetch_preference_context(db, user_id)
     workouts = _get_upcoming_workouts(db, user_id)
 
@@ -568,6 +617,11 @@ async def apply_avoid_muscle_to_workouts(db, user_id: str, muscle_group: str, se
 
     Returns: {"changes": [...], "message": "..."}
     """
+    (get_exercise_params, _build_exercise_object, _strip_parens,
+     _normalize_muscle, _find_replacement_exercise,
+     _find_compatible_replacement, _log_workout_change,
+     inject_staple_into_workout, _fetch_preference_context,
+     _get_upcoming_workouts, DAY_NAMES) = _engine_parent()
     context = await _fetch_preference_context(db, user_id)
     workouts = _get_upcoming_workouts(db, user_id)
 
@@ -593,6 +647,11 @@ async def inject_queued_exercise_into_next_workout(db, user_id: str, exercise_na
 
     Returns: {"changes": [...], "message": "..."}
     """
+    (get_exercise_params, _build_exercise_object, _strip_parens,
+     _normalize_muscle, _find_replacement_exercise,
+     _find_compatible_replacement, _log_workout_change,
+     inject_staple_into_workout, _fetch_preference_context,
+     _get_upcoming_workouts, DAY_NAMES) = _engine_parent()
     context = await _fetch_preference_context(db, user_id)
     workouts = _get_upcoming_workouts(db, user_id)
 

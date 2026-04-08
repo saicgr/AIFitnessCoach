@@ -11,6 +11,7 @@ ChromaDB queries to avoid redundant network calls (500ms-2s each).
 
 
 """
+import time
 from typing import Any, Dict, List, Optional
 from core.config import get_settings
 from core.chroma_cloud import get_chroma_cloud_client
@@ -154,7 +155,8 @@ class NutritionRAGService:
         Returns:
             List of similar meals
         """
-        # Check query result cache
+        # Check query result cache (lazy import to avoid circular dependency)
+        from services.rag_service import _query_cache
         query_cache_key = _query_cache.make_key("find_similar_meals", query, user_id, n_results, meal_type)
         cached_results = await _query_cache.get(query_cache_key)
         if cached_results is not None:

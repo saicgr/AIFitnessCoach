@@ -7,10 +7,18 @@ counting, and Health Connect integration.
 """
 from typing import Optional
 from datetime import datetime, timedelta, date
+import uuid
 from fastapi import APIRouter, Depends, HTTPException
 from core.auth import get_current_user
 from core.db import get_supabase_db
 from core.exceptions import safe_internal_error
+
+
+def _diabetes_parent():
+    """Lazy import to avoid circular dependency."""
+    from .diabetes import glucose_to_a1c, classify_glucose_status
+    return glucose_to_a1c, classify_glucose_status
+
 
 from .diabetes_models import (
     CreateDiabetesProfileRequest,
@@ -58,6 +66,7 @@ router = APIRouter()
 @router.get("/a1c/{user_id}/estimated", response_model=EstimatedA1cResponse)
 async def calculate_estimated_a1c(user_id: str, days: int = 90, current_user: dict = Depends(get_current_user)):
     """Calculate estimated A1C from glucose readings."""
+    glucose_to_a1c, classify_glucose_status = _diabetes_parent()
     if str(current_user["id"]) != str(user_id):
         raise HTTPException(status_code=403, detail="Access denied")
     import statistics
@@ -425,6 +434,7 @@ async def calculate_time_in_range(
 @router.get("/analytics/{user_id}/variability", response_model=VariabilityResponse)
 async def calculate_glucose_variability(user_id: str, days: int = 7, current_user: dict = Depends(get_current_user)):
     """Calculate glucose variability metrics."""
+    glucose_to_a1c, classify_glucose_status = _diabetes_parent()
     if str(current_user["id"]) != str(user_id):
         raise HTTPException(status_code=403, detail="Access denied")
     import statistics
@@ -500,6 +510,7 @@ async def detect_glucose_patterns(user_id: str, days: int = 14, current_user: di
 @router.get("/analytics/{user_id}/dashboard", response_model=DashboardDataResponse)
 async def get_dashboard_data(user_id: str, current_user: dict = Depends(get_current_user)):
     """Get comprehensive dashboard data."""
+    glucose_to_a1c, classify_glucose_status = _diabetes_parent()
     if str(current_user["id"]) != str(user_id):
         raise HTTPException(status_code=403, detail="Access denied")
     db = get_supabase_db()

@@ -1,6 +1,12 @@
 """Second part of workout_generation_helpers.py (auto-split for size)."""
 from typing import Dict, List, Optional
+import asyncio
 import logging
+
+from google.genai import types
+from models.gemini_schemas import WorkoutNamingResponse
+from services.gemini.constants import client
+
 logger = logging.getLogger(__name__)
 
 

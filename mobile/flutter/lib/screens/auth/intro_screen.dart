@@ -32,12 +32,12 @@ class _IntroScreenState extends State<IntroScreen>
   static const _lastIndex = 6;
 
   static const List<_PageData> _pages = [
-    _PageData(headline: 'Your 24/7', headlineAccent: 'Coach', subtitle: 'Workouts + Nutrition + Coaching', image: 'assets/images/intro_phone_1.png', bgColor: Color(0xFFE8A0B4), bgColorLight: Color(0xFFF5CAD8), borderColor: Color(0xFFC46A82)),
-    _PageData(headline: 'Log any Meal', headlineAccent: 'in any way', subtitle: 'Photo, text, barcode — instant nutrition breakdown', image: 'assets/images/intro_phone_2.png', bgColor: Color(0xFFF0C040), bgColorLight: Color(0xFFF8E088), borderColor: Color(0xFFD49A18)),
-    _PageData(headline: 'Workouts', headlineAccent: 'made For You', subtitle: 'AI builds your perfect plan with every detail explained', image: 'assets/images/intro_phone_3.png', bgColor: Color(0xFF40C4B4), bgColorLight: Color(0xFF80DDD0), borderColor: Color(0xFF188878)),
-    _PageData(headline: 'Track Every REP', headlineAccent: 'See every Gain', subtitle: 'Sets, reps, weight — all tracked with smart suggestions', image: 'assets/images/intro_phone_4.png', bgColor: Color(0xFF78C880), bgColorLight: Color(0xFFB0E4B4), borderColor: Color(0xFF3E8E48)),
-    _PageData(headline: 'See your', headlineAccent: 'transformation', subtitle: 'Progress photos, side-by-side comparisons', image: 'assets/images/intro_phone_5.png', bgColor: Color(0xFFB898D8), bgColorLight: Color(0xFFD8C0F0), borderColor: Color(0xFF8060A8)),
-    _PageData(headline: 'It learns', headlineAccent: 'what you love', subtitle: 'Stats, streaks, achievements — all in one place', image: 'assets/images/intro_phone_6.png', bgColor: Color(0xFF9A9A9A), bgColorLight: Color(0xFFC4C4C4), borderColor: Color(0xFF606060)),
+    _PageData(headline: 'Your 24/7', headlineAccent: 'Coach', subtitle: 'Workouts + Nutrition + Coaching', image: 'assets/images/intro_phone_1.png', bgColor: Color(0xFFA86878), bgColorLight: Color(0xFFC4899A), borderColor: Color(0xFF8A4A5E)),
+    _PageData(headline: 'Log any Meal', headlineAccent: 'in any way', subtitle: 'Photo, text, barcode — instant nutrition breakdown', image: 'assets/images/intro_phone_2.png', bgColor: Color(0xFFB89020), bgColorLight: Color(0xFFD4AD48), borderColor: Color(0xFF9A7410)),
+    _PageData(headline: 'Workouts', headlineAccent: 'made For You', subtitle: 'AI builds your perfect plan with every detail explained', image: 'assets/images/intro_phone_3.png', bgColor: Color(0xFF2A9488), bgColorLight: Color(0xFF58B8AC), borderColor: Color(0xFF146860)),
+    _PageData(headline: 'Track Every REP', headlineAccent: 'See every Gain', subtitle: 'Sets, reps, weight — all tracked with smart suggestions', image: 'assets/images/intro_phone_4.png', bgColor: Color(0xFF4A9A54), bgColorLight: Color(0xFF78C080), borderColor: Color(0xFF2E6E36)),
+    _PageData(headline: 'See your', headlineAccent: 'transformation', subtitle: 'Progress photos, side-by-side comparisons', image: 'assets/images/intro_phone_5.png', bgColor: Color(0xFF8868A8), bgColorLight: Color(0xFFAA90C8), borderColor: Color(0xFF604880)),
+    _PageData(headline: 'It learns', headlineAccent: 'what you love', subtitle: 'Stats, streaks, achievements — all in one place', image: 'assets/images/intro_phone_6.png', bgColor: Color(0xFF707070), bgColorLight: Color(0xFF959595), borderColor: Color(0xFF484848)),
     _PageData(headline: 'Adapts to', headlineAccent: 'your style', subtitle: 'Your exercises, your preferences, your way', image: 'assets/images/intro_phone_7.png', bgColor: Color(0xFF3A3A3A), bgColorLight: Color(0xFF555555), borderColor: Color(0xFF1A1A1A)),
   ];
 
@@ -224,19 +224,6 @@ class _IntroScreenState extends State<IntroScreen>
         ),
         child: Stack(
           children: [
-            // ── Background depth cards ──
-            if (uiFade > 0)
-              Positioned(
-                top: actualCarouselTop, left: 0, right: 0, height: normalCardH,
-                child: _DepthCards(
-                  pages: _pages,
-                  pageOffset: _pageOffset,
-                  cardWidth: normalCardW,
-                  cardHeight: normalCardH,
-                  fadeMultiplier: uiFade,
-                ),
-              ),
-
             // ── Center card — expands on last page ──
             Positioned(
               left: cardLeft, top: cardTop,
@@ -312,21 +299,21 @@ class _IntroScreenState extends State<IntroScreen>
                     final pw = _pageController.position.viewportDimension;
                     final cw = screenW * 0.58;
                     _pageController.position.moveTo(
-                      _pageController.position.pixels - d.delta.dx * (pw / cw) * 0.5,
+                      _pageController.position.pixels - d.delta.dx * (pw / cw) * 0.85,
                     );
                   },
                   onHorizontalDragEnd: (d) {
                     final v = d.primaryVelocity ?? 0;
                     int target;
-                    if (v.abs() > 200) {
+                    if (v.abs() > 120) {
                       target = v < 0 ? _pageOffset.ceil() : _pageOffset.floor();
                     } else {
                       target = _pageOffset.round();
                     }
                     _pageController.animateToPage(
                       target.clamp(0, _pages.length - 1),
-                      duration: const Duration(milliseconds: 350),
-                      curve: Curves.easeOut,
+                      duration: const Duration(milliseconds: 250),
+                      curve: Curves.easeOutCubic,
                     );
                     _resetAutoRotate();
                   },
@@ -444,7 +431,7 @@ class _DepthCards extends StatelessWidget {
         index: i, zIndex: (100 - abs * 10).toInt(),
         scale: math.max(0.82, 1.0 - abs * 0.08),
         opacity: ((1.0 - abs * 0.35) * fadeMultiplier).clamp(0.0, 1.0),
-        xOffset: -dist * cardWidth * 0.18,
+        xOffset: -dist * cardWidth * 0.30,
         yOffset: abs * 8.0,
         blurAmount: (abs * 6.0).clamp(0.0, 14.0),
       ));
@@ -454,9 +441,11 @@ class _DepthCards extends StatelessWidget {
       clipBehavior: Clip.none, alignment: Alignment.center,
       children: entries.map((e) => Transform.translate(
         offset: Offset(e.xOffset, e.yOffset),
-        child: Transform.scale(scale: e.scale, child: Opacity(opacity: e.opacity, child: SizedBox(
-          width: cardWidth, height: cardHeight,
-          child: _PhoneCard(data: pages[e.index], blurAmount: e.blurAmount),
+        child: Transform.scale(scale: e.scale, child: Opacity(opacity: e.opacity, child: RepaintBoundary(
+          child: SizedBox(
+            width: cardWidth, height: cardHeight,
+            child: _PhoneCard(data: pages[e.index], blurAmount: e.blurAmount),
+          ),
         ))),
       )).toList(),
     );

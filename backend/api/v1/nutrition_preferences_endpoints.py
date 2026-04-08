@@ -31,12 +31,22 @@ Food Search:
 """
 from typing import Optional
 from datetime import datetime, timedelta
+import uuid
 from fastapi import APIRouter, Depends, HTTPException, Query
 import logging
 logger = logging.getLogger(__name__)
 from core.auth import get_current_user
 from core.db import get_supabase_db
 from core.exceptions import safe_internal_error
+from core.activity_logger import log_user_activity, log_user_error
+from services.user_context_service import UserContextService
+
+
+def _nutrition_prefs_parent():
+    """Lazy import to avoid circular dependency."""
+    from .nutrition_preferences import calculate_template_totals
+    return calculate_template_totals
+
 
 from .nutrition_preferences_models import (
     NutritionPreferences,
@@ -137,6 +147,7 @@ async def create_meal_template(
 
     Templates allow one-tap logging of common meals.
     """
+    calculate_template_totals = _nutrition_prefs_parent()
     user_id = current_user["id"]
     logger.info(f"Creating meal template '{request.name}' for user {user_id}")
 
@@ -241,6 +252,7 @@ async def update_meal_template(
 
     Only user-owned templates can be updated. System templates cannot be modified.
     """
+    calculate_template_totals = _nutrition_prefs_parent()
     user_id = current_user["id"]
     logger.info(f"Updating meal template {template_id} for user {user_id}")
 
