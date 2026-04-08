@@ -117,7 +117,7 @@ async def google_auth(request: Request, body: GoogleAuthRequest,
                 get_email_service().send_welcome_email, email, full_name or ""
             )
 
-        return row_to_user(created, is_new_user=True, support_friend_added=support_friend_added)
+        return row_to_user(created, is_new_user=True, support_friend_added=False)
 
     except HTTPException:
         raise
@@ -212,7 +212,7 @@ async def email_auth(request: Request, body: EmailAuthRequest,
                 get_email_service().send_welcome_email, email, full_name or ""
             )
 
-        return row_to_user(created, is_new_user=True, support_friend_added=support_friend_added)
+        return row_to_user(created, is_new_user=True, support_friend_added=False)
 
     except HTTPException:
         raise
@@ -305,7 +305,7 @@ async def email_signup(request: Request, body: EmailSignupRequest,
                 get_email_service().send_welcome_email, email, full_name or ""
             )
 
-        return row_to_user(created, is_new_user=True, support_friend_added=support_friend_added)
+        return row_to_user(created, is_new_user=True, support_friend_added=False)
 
     except HTTPException:
         raise
