@@ -15,6 +15,8 @@ const stagger = {
   visible: { transition: { staggerChildren: 0.08 } },
 };
 
+const PLAY_STORE = 'https://play.google.com/store/apps/details?id=com.aifitnesscoach.app';
+
 const freeFeatures = [
   '1,722 exercises with videos',
   'Unlimited workout logging',
@@ -159,7 +161,7 @@ export default function MarketingLanding() {
                 ))}
               </ul>
               <a
-                href="https://play.google.com/store/apps/details?id=com.aifitnesscoach.app"
+                href={PLAY_STORE}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="block w-full text-center py-3 rounded-full border border-[var(--color-border)] hover:border-emerald-500/50 text-[var(--color-text)] font-medium transition-colors"
@@ -195,7 +197,7 @@ export default function MarketingLanding() {
                 ))}
               </ul>
               <a
-                href="https://play.google.com/store/apps/details?id=com.aifitnesscoach.app"
+                href={PLAY_STORE}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="block w-full text-center py-3 rounded-full bg-emerald-500 hover:bg-emerald-400 text-white font-medium transition-colors"
@@ -227,7 +229,7 @@ export default function MarketingLanding() {
                 ))}
               </ul>
               <a
-                href="https://play.google.com/store/apps/details?id=com.aifitnesscoach.app"
+                href={PLAY_STORE}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="block w-full text-center py-3 rounded-full border border-[var(--color-border)] hover:border-emerald-500/50 text-[var(--color-text)] font-medium transition-colors"

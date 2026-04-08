@@ -290,11 +290,11 @@ export function CinematicHero({
         .to(".text-track", { duration: 0.8, autoAlpha: 1, y: 0, scale: 1, filter: "blur(0px)", rotationX: 0, ease: "expo.out" })
         .to(".text-days", { duration: 0.6, clipPath: "inset(0 0% 0 0)", ease: "power4.inOut" }, "-=0.4");
 
-      // Compact timelines — no dead space, content appears quickly
-      const scrollDistance = isMobile ? 2000 : 3500;
+      // Compact timelines — reduced scroll distance to prevent duplicate feeling
+      const scrollDistance = isMobile ? 1400 : 2400;
       const d = isMobile
-        ? { enter: 1, expand: 0.8, reveal: 1, hold: 0.6, fadeOut: 0.25, fadeIn: 0.3, slideHold: 0.3, exitHold: 0.3, exitContent: 0.6, pullback: 0.8, cardExit: 0.6 }
-        : { enter: 1.2, expand: 0.8, reveal: 1.5, hold: 0.8, fadeOut: 0.3, fadeIn: 0.35, slideHold: 0.4, exitHold: 0.5, exitContent: 0.8, pullback: 1.0, cardExit: 0.8 };
+        ? { enter: 1, expand: 0.8, reveal: 1, hold: 0.3, fadeOut: 0.2, fadeIn: 0.25, slideHold: 0.15, exitHold: 0.2, exitContent: 0.5, pullback: 0.6, cardExit: 0.5 }
+        : { enter: 1.2, expand: 0.8, reveal: 1.2, hold: 0.4, fadeOut: 0.25, fadeIn: 0.3, slideHold: 0.2, exitHold: 0.3, exitContent: 0.6, pullback: 0.8, cardExit: 0.6 };
 
       const scrollTl = gsap.timeline({
         scrollTrigger: {
@@ -302,7 +302,7 @@ export function CinematicHero({
           start: "top top",
           end: `+=${scrollDistance}`,
           pin: true,
-          scrub: isMobile ? 0.3 : 0.5,
+          scrub: isMobile ? 0.2 : 0.3,
           anticipatePin: 1,
         },
       });
@@ -360,20 +360,20 @@ export function CinematicHero({
 
       scrollTl
         .set(".hero-text-wrapper", { autoAlpha: 0 })
-        .set(".cta-wrapper", { autoAlpha: 1 })
-        // Content exits and CTA appears at the same time — no empty card
+        // CTA fades in BEFORE content fully exits — no blank frame
+        .to(".cta-wrapper", { autoAlpha: 1, duration: 0.01 }, "pre-exit")
         .to([".mockup-scroll-wrapper", ".floating-badge", ".card-left-text", ".card-right-text"], {
-          scale: 0.9, y: -40, z: -200, autoAlpha: 0, ease: "power3.in", duration: d.exitContent, stagger: 0.03,
-        }, "exit")
+          scale: 0.9, y: -40, z: -200, autoAlpha: 0, ease: "power3.in", duration: d.exitContent, stagger: 0.02,
+        }, "pre-exit")
+        .to(".cta-wrapper", { scale: 1, filter: "blur(0px)", ease: "expo.out", duration: d.exitContent }, "pre-exit+=0.1")
         .to(".main-card", {
           width: isMobile ? "92vw" : "85vw",
           height: isMobile ? "92vh" : "85vh",
           borderRadius: isMobile ? "32px" : "40px",
           ease: "expo.inOut",
           duration: d.pullback
-        }, "exit")
-        .to(".cta-wrapper", { scale: 1, filter: "blur(0px)", ease: "expo.inOut", duration: d.pullback }, "exit")
-        .to({}, { duration: 0.3 }) // brief hold on CTA
+        }, "pre-exit+=0.2")
+        .to({}, { duration: 0.2 }) // brief hold on CTA
         .to(".main-card", { y: -window.innerHeight - 300, ease: "power3.in", duration: d.cardExit });
 
     }, containerRef);
@@ -567,12 +567,14 @@ export function CinematicHero({
             </div>
 
             {/* 3. BOTTOM (Mobile) / LEFT (Desktop): ACCOUNTABILITY TEXT */}
-            <div className="card-left-text gsap-reveal order-3 lg:order-1 flex flex-col justify-center text-center lg:text-left z-20 w-full lg:max-w-none px-4 lg:px-0">
-              <h3 className="text-white text-2xl md:text-3xl lg:text-4xl font-bold mb-0 lg:mb-5 tracking-tight">
+            <div className="card-left-text gsap-reveal order-3 lg:order-1 flex flex-col justify-center text-center lg:text-left z-20 w-full lg:max-w-none px-4 lg:px-0 relative">
+              {/* Dark gradient behind text for readability when phones overlap */}
+              <div className="absolute inset-0 -mx-4 lg:-mx-8 bg-gradient-to-r from-[#0A101D] via-[#0A101D]/90 to-transparent rounded-2xl pointer-events-none" />
+              <h3 className="relative text-white text-2xl md:text-3xl lg:text-4xl font-bold mb-0 lg:mb-5 tracking-tight">
                 {activeHeading}
               </h3>
               {/* HIDDEN ON MOBILE */}
-              <p className="hidden md:block text-blue-100/70 text-sm md:text-base lg:text-lg font-normal leading-relaxed mx-auto lg:mx-0 max-w-sm lg:max-w-none">
+              <p className="relative hidden md:block text-blue-100/70 text-sm md:text-base lg:text-lg font-normal leading-relaxed mx-auto lg:mx-0 max-w-sm lg:max-w-none">
                 {activeDescription ?? cardDescription}
               </p>
             </div>
