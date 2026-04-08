@@ -159,7 +159,7 @@ export default function MarketingLanding() {
                 ))}
               </ul>
               <a
-                href="{APP_LINKS.playStore}"
+                href="https://play.google.com/store/apps/details?id=com.aifitnesscoach.app"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="block w-full text-center py-3 rounded-full border border-[var(--color-border)] hover:border-emerald-500/50 text-[var(--color-text)] font-medium transition-colors"
@@ -195,7 +195,7 @@ export default function MarketingLanding() {
                 ))}
               </ul>
               <a
-                href="{APP_LINKS.playStore}"
+                href="https://play.google.com/store/apps/details?id=com.aifitnesscoach.app"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="block w-full text-center py-3 rounded-full bg-emerald-500 hover:bg-emerald-400 text-white font-medium transition-colors"
@@ -227,7 +227,7 @@ export default function MarketingLanding() {
                 ))}
               </ul>
               <a
-                href="{APP_LINKS.playStore}"
+                href="https://play.google.com/store/apps/details?id=com.aifitnesscoach.app"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="block w-full text-center py-3 rounded-full border border-[var(--color-border)] hover:border-emerald-500/50 text-[var(--color-text)] font-medium transition-colors"

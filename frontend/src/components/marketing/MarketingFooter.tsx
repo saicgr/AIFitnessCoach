@@ -26,7 +26,7 @@ export default function MarketingFooter() {
             <ul className="space-y-3">
               <li><Link to="/features" className="text-sm text-slate-400 hover:text-white transition-colors">Features</Link></li>
               <li><Link to="/pricing" className="text-sm text-slate-400 hover:text-white transition-colors">Pricing</Link></li>
-              <li><a href="{APP_LINKS.playStore}" target="_blank" rel="noopener noreferrer" className="text-sm text-slate-400 hover:text-white transition-colors">Get Started</a></li>
+              <li><a href="https://play.google.com/store/apps/details?id=com.aifitnesscoach.app" target="_blank" rel="noopener noreferrer" className="text-sm text-slate-400 hover:text-white transition-colors">Get Started</a></li>
             </ul>
           </div>
 
