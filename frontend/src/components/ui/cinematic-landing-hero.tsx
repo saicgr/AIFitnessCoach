@@ -307,18 +307,20 @@ export function CinematicHero({
         },
       });
 
+      // Everything enters together — card, expansion, and content all at once
+      // so the card is never visible without content inside it
+      const enterDur = d.enter;
       scrollTl
-        .to(".scroll-hint", { autoAlpha: 0, y: 20, duration: 0.5, ease: "power2.in" }, 0)
-        .to([".hero-text-wrapper", ".bg-grid-theme"], { scale: 1.15, filter: "blur(20px)", opacity: 0.2, ease: "power2.inOut", duration: d.enter }, 0)
-        .to(".main-card", { y: 0, ease: "power3.inOut", duration: d.enter }, 0)
-        .to(".main-card", { width: "100%", height: "100%", borderRadius: "0px", ease: "power3.inOut", duration: d.expand })
+        .to(".scroll-hint", { autoAlpha: 0, y: 20, duration: 0.3, ease: "power2.in" }, 0)
+        .to([".hero-text-wrapper", ".bg-grid-theme"], { scale: 1.15, filter: "blur(20px)", opacity: 0.2, ease: "power2.inOut", duration: enterDur }, 0)
+        .to(".main-card", { y: 0, width: "100%", height: "100%", borderRadius: "0px", ease: "power3.inOut", duration: enterDur }, 0)
         .fromTo(".mockup-scroll-wrapper",
           { y: isMobile ? 150 : 200, z: isMobile ? -200 : -300, rotationX: isMobile ? 20 : 30, rotationY: isMobile ? -10 : -15, autoAlpha: 0, scale: isMobile ? 0.8 : 0.7 },
-          { y: 0, z: 0, rotationX: 0, rotationY: 0, autoAlpha: 1, scale: 1, ease: "expo.out", duration: d.reveal }, "-=0.6"
+          { y: 0, z: 0, rotationX: 0, rotationY: 0, autoAlpha: 1, scale: 1, ease: "expo.out", duration: enterDur }, 0.3
         )
-        .fromTo(".floating-badge", { y: 100, autoAlpha: 0, scale: 0.7, rotationZ: -10 }, { y: 0, autoAlpha: 1, scale: 1, rotationZ: 0, ease: "back.out(1.5)", duration: isMobile ? 0.8 : 1.0, stagger: 0.15 }, "-=0.8")
-        .fromTo(".card-left-text", { x: -50, autoAlpha: 0 }, { x: 0, autoAlpha: 1, ease: "power4.out", duration: isMobile ? 0.8 : 1.0 }, "-=0.8")
-        .fromTo(".card-right-text", { x: 50, autoAlpha: 0, scale: 0.8 }, { x: 0, autoAlpha: 1, scale: 1, ease: "expo.out", duration: isMobile ? 0.8 : 1.0 }, "<")
+        .fromTo(".floating-badge", { y: 40, autoAlpha: 0, scale: 0.8 }, { y: 0, autoAlpha: 1, scale: 1, ease: "back.out(1.5)", duration: enterDur * 0.8, stagger: 0.1 }, 0.5)
+        .fromTo(".card-left-text", { x: -30, autoAlpha: 0 }, { x: 0, autoAlpha: 1, ease: "power4.out", duration: enterDur * 0.8 }, 0.4)
+        .fromTo(".card-right-text", { x: 30, autoAlpha: 0, scale: 0.9 }, { x: 0, autoAlpha: 1, scale: 1, ease: "expo.out", duration: enterDur * 0.8 }, 0.4)
         .to({}, { duration: d.hold });
 
       // Slide cycling during the card hold phase
