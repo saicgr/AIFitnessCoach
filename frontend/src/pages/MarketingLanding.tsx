@@ -3,7 +3,6 @@ import { motion, useInView } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import MarketingNav from '../components/marketing/MarketingNav';
 import MarketingFooter from '../components/marketing/MarketingFooter';
-import { APP_LINKS } from '../lib/links';
 import { CinematicHero } from '../components/ui/cinematic-landing-hero';
 import GalleryHoverCarousel from '../components/ui/gallery-hover-carousel';
 

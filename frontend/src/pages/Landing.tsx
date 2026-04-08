@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, useInView, AnimatePresence } from 'framer-motion';
-import { APP_LINKS } from '../lib/links';
 
 // Apple-style animations - very subtle, purposeful
 const fade = {

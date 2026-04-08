@@ -1,5 +1,4 @@
 import { Link } from 'react-router-dom';
-import { APP_LINKS } from '../../lib/links';
 
 export default function MarketingFooter() {
   return (
