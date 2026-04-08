@@ -14,6 +14,7 @@ from services.gemini.constants import (
     client, _log_token_usage, _gemini_semaphore, settings,
 )
 from services.gemini.utils import _sanitize_for_prompt, safe_join_list
+from core.ai_response_parser import parse_ai_json
 
 logger = logging.getLogger("gemini")
 

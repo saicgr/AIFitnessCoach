@@ -29,8 +29,29 @@ from models.schemas import (
 )
 from services.gemini_service import GeminiService, validate_set_targets_strict
 from services.exercise_library_service import get_exercise_library_service
-from api.v1.workouts.utils import parse_json_field, row_to_workout, normalize_goals_list, get_intensity_from_fitness_level
-from api.v1.workouts.user_preference_utils import get_user_avoided_exercises
+from api.v1.workouts.utils import parse_json_field, row_to_workout, normalize_goals_list, get_intensity_from_fitness_level, get_recently_used_exercises
+from api.v1.workouts.user_preference_utils import (
+    get_user_avoided_exercises,
+    get_user_avoided_muscles,
+    get_user_staple_exercises,
+    get_staple_names,
+    get_user_variation_percentage,
+    get_user_favorite_exercises,
+    get_user_exercise_queue,
+    get_user_consistency_mode,
+    get_user_1rm_data,
+    get_user_training_intensity,
+    get_user_intensity_overrides,
+)
+from api.v1.workouts.progression_utils import (
+    get_user_rep_preferences,
+    get_user_progression_context,
+    get_user_workout_patterns,
+)
+from api.v1.workouts.hormonal_utils import get_user_hormonal_context
+from api.v1.workouts.readiness_utils import get_active_injuries_with_muscles, get_user_comeback_status
+from api.v1.workouts.focus_validation_utils import get_user_favorite_workouts
+from services.adaptive_workout_service_helpers_part2 import get_user_set_type_preferences
 
 logger = logging.getLogger(__name__)
 

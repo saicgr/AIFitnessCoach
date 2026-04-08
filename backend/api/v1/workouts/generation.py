@@ -186,6 +186,8 @@ async def generate_next_day_background(user_id: str, target_date: str):
 
             # Use the existing generate_workout function
             from models.schemas import GenerateWorkoutRequest
+            from starlette.requests import Request as StarletteRequest
+            from starlette.datastructures import Headers
 
             # Try to get user's active gym profile
             gym_profile_id = None
@@ -200,13 +202,24 @@ async def generate_next_day_background(user_id: str, target_date: str):
             except Exception as e:
                 logger.warning(f"Failed to get active gym profile: {e}")
 
-            request = GenerateWorkoutRequest(
+            gen_body = GenerateWorkoutRequest(
                 user_id=user_id,
                 scheduled_date=target_date,
                 gym_profile_id=gym_profile_id,
             )
 
-            result = await generate_workout(request, background_tasks=BackgroundTasks())
+            # Build a minimal Starlette Request for the endpoint
+            dummy_scope = {"type": "http", "method": "POST", "path": "/api/v1/workouts/generate", "headers": []}
+            dummy_request = StarletteRequest(scope=dummy_scope)
+            # Attach state for rate limiter / timezone resolution
+            dummy_request.state.user_id = user_id
+
+            result = await generate_workout(
+                dummy_request,
+                body=gen_body,
+                background_tasks=BackgroundTasks(),
+                current_user={"id": user_id},
+            )
             logger.info(f"[NEXT-DAY] Successfully pre-cached workout for {user_id} on {target_date}: "
                         f"{result.name if result else 'unknown'}")
 
