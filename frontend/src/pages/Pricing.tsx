@@ -76,7 +76,7 @@ const plans: PricingPlan[] = [
     yearlyTotal: '$59.88',
     features: [
       'Everything in Free, plus:',
-      'Unlimited AI chat (5 specialist agents)',
+      'Unlimited AI coach chat',
       'AI workout generation (monthly/weekly/quick)',
       'AI photo food logging (Vision)',
       'Adaptive TDEE & smart weight suggestions',
@@ -518,7 +518,7 @@ export default function Pricing() {
             className="grid grid-cols-1 sm:grid-cols-2 gap-4"
           >
             {[
-              { icon: '🤖', title: 'AI Infrastructure', desc: 'Gemini-powered workout generation, nutrition analysis, and real-time coaching with 5 specialist agents' },
+              { icon: '🤖', title: 'AI Infrastructure', desc: 'Gemini-powered workout generation, nutrition analysis, and real-time coaching with real-time coaching' },
               { icon: '☁️', title: 'Cloud Servers', desc: 'Fast, reliable servers running 24/7 to sync your data, workouts, and chat history' },
               { icon: '📱', title: 'App Development', desc: 'Continuous updates, bug fixes, and new features based on your feedback' },
               { icon: '💪', title: 'Exercise Library', desc: '1,722 exercises with video demos, instructions, and AI-powered alternatives' },

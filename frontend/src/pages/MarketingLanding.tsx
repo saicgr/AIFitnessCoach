@@ -27,7 +27,7 @@ const freeFeatures = [
 
 const premiumFeatures = [
   'Everything in Free, plus:',
-  'Unlimited AI chat (5 specialist agents)',
+  'Unlimited AI coach chat',
   'AI workout generation',
   'AI photo food logging',
   'Adaptive TDEE & smart suggestions',

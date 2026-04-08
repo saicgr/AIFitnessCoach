@@ -285,10 +285,10 @@ export function CinematicHero({
       gsap.set([".card-left-text", ".card-right-text", ".mockup-scroll-wrapper", ".floating-badge"], { autoAlpha: 0 });
       gsap.set(".cta-wrapper", { autoAlpha: 0, scale: 0.8, filter: "blur(30px)" });
 
-      const introTl = gsap.timeline({ delay: 0.3 });
+      const introTl = gsap.timeline({ delay: 0.1 });
       introTl
-        .to(".text-track", { duration: 1.8, autoAlpha: 1, y: 0, scale: 1, filter: "blur(0px)", rotationX: 0, ease: "expo.out" })
-        .to(".text-days", { duration: 1.4, clipPath: "inset(0 0% 0 0)", ease: "power4.inOut" }, "-=1.0");
+        .to(".text-track", { duration: 0.8, autoAlpha: 1, y: 0, scale: 1, filter: "blur(0px)", rotationX: 0, ease: "expo.out" })
+        .to(".text-days", { duration: 0.6, clipPath: "inset(0 0% 0 0)", ease: "power4.inOut" }, "-=0.4");
 
       // Compact timelines — no dead space, content appears quickly
       const scrollDistance = isMobile ? 2000 : 3500;
