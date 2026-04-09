@@ -121,7 +121,6 @@ export function createSketch(
   colorHex: string,
   disableMarquee: boolean,
   getContainerWidth: () => number,
-  getContainerHeight: () => number,
 ) {
   let rows: RowState[] = [];
   let startTime = 0;
@@ -130,7 +129,7 @@ export function createSketch(
   return (p: p5Type) => {
     p.setup = () => {
       const w = getContainerWidth();
-      const h = getContainerHeight();
+      const h = numRows * barHeight + (numRows - 1) * gap + 40;
       p.createCanvas(w, h);
       p.textFont('Inter, system-ui, sans-serif');
       p.textSize(11);
@@ -155,10 +154,7 @@ export function createSketch(
 
       for (let ri = 0; ri < rows.length; ri++) {
         const row = rows[ri];
-        // Distribute rows evenly across the full canvas height
-        const totalRowsHeight = numRows * barHeight;
-        const availableGap = (p.height - totalRowsHeight) / (numRows + 1);
-        const rowY = availableGap + ri * (barHeight + availableGap);
+        const rowY = 20 + ri * (barHeight + gap);
 
         // Check if mouse is in this row's vertical band
         const mouseInRow = my >= rowY && my <= rowY + barHeight && mx >= 0 && mx <= p.width;

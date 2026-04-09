@@ -392,11 +392,11 @@ export function CinematicHero({
     >
       <style dangerouslySetInnerHTML={{ __html: INJECTED_STYLES }} />
 
-      {/* BACKGROUND LAYER 0: Animated flux marquee */}
-      <div className="absolute inset-0 z-0 pointer-events-auto" aria-hidden="true">
+      {/* BACKGROUND LAYER 0: Animated flux marquee — centered behind hero text */}
+      <div className="absolute left-0 right-0 top-1/2 -translate-y-1/2 z-0 pointer-events-auto" aria-hidden="true">
         <Suspense fallback={null}>
           <LandingFlux
-            className="absolute inset-0 w-full h-full"
+            className="w-full"
             rows={8}
             barHeight={16}
             gap={10}
@@ -576,7 +576,7 @@ export function CinematicHero({
 
                 {/* Floating Glass Badges — pre-rendered per slide */}
                 {(slides || badges?.[0]) && (
-                  <div className="floating-badge absolute top-6 lg:top-12 left-[-15px] lg:left-[-80px] z-30 relative">
+                  <div className="floating-badge absolute top-6 lg:top-12 left-[-15px] lg:left-[-80px] z-30">
                     {slides ? slides.map((slide, idx) => (
                       <div key={idx} className={`slide-badge-0-${idx} ${idx > 0 ? 'absolute inset-0' : ''} flex floating-ui-badge rounded-xl lg:rounded-2xl p-3 lg:p-4 items-center gap-3 lg:gap-4`}>
                         <div className={`w-8 h-8 lg:w-10 lg:h-10 rounded-full bg-gradient-to-b ${slide.badges[0].color} flex items-center justify-center border ${slide.badges[0].borderColor} shadow-inner`}>
@@ -602,7 +602,7 @@ export function CinematicHero({
                 )}
 
                 {(slides || badges?.[1]) && (
-                  <div className="floating-badge absolute bottom-12 lg:bottom-20 right-[-15px] lg:right-[-80px] z-30 relative">
+                  <div className="floating-badge absolute bottom-12 lg:bottom-20 right-[-15px] lg:right-[-80px] z-30">
                     {slides ? slides.map((slide, idx) => (
                       <div key={idx} className={`slide-badge-1-${idx} ${idx > 0 ? 'absolute inset-0' : ''} flex floating-ui-badge rounded-xl lg:rounded-2xl p-3 lg:p-4 items-center gap-3 lg:gap-4`}>
                         <div className={`w-8 h-8 lg:w-10 lg:h-10 rounded-full bg-gradient-to-b ${slide.badges[1].color} flex items-center justify-center border ${slide.badges[1].borderColor} shadow-inner`}>
