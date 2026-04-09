@@ -421,8 +421,8 @@ async def auto_generate_workout(user_id: str, target_date: date, gym_profile_id:
 
         # Call the unwrapped function to bypass the @user_limiter.limit decorator.
         # Background generation has no HTTP request context and should not be rate-limited.
-        # The `request: Request` param is only used by the rate limiter decorator (which
-        # we bypass via __wrapped__), so passing None is safe.
+        # Note: request=None means resolve_timezone() will fall back to DB/UTC for timezone,
+        # and skip_comeback reads from body (not request).
         unwrapped = getattr(generate_workout, "__wrapped__", generate_workout)
         result = await unwrapped(None, body=request, background_tasks=BackgroundTasks(), current_user={"id": user_id})
         logger.info(f"[BG-GEN] Successfully generated workout for {generation_key}: {result.name if result else 'unknown'}")

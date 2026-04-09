@@ -844,7 +844,7 @@ async def generate_workout(request: Request, *, body: GenerateWorkoutRequest, ba
 
             comeback_status = await get_user_comeback_status(body.user_id)
             is_comeback = comeback_status.get("in_comeback_mode", False)
-            if getattr(request, 'skip_comeback', None):
+            if getattr(body, 'skip_comeback', None):
                 is_comeback = False
 
             if exercises:
