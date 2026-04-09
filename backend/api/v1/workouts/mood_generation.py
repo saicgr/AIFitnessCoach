@@ -145,15 +145,14 @@ async def generate_mood_workout_streaming(request: Request, body: MoodWorkoutReq
 
             from google.genai import types
             from core.config import get_settings
-            from core.gemini_client import get_genai_client
+            from services.gemini.constants import gemini_generate_with_retry
             from models.gemini_schemas import GeneratedWorkoutResponse
 
             settings = get_settings()
-            client = get_genai_client()
 
             try:
                 gemini_start = datetime.now()
-                response = await client.aio.models.generate_content(
+                response = await gemini_generate_with_retry(
                     model=settings.gemini_model,
                     contents=prompt,
                     config=types.GenerateContentConfig(
@@ -162,6 +161,8 @@ async def generate_mood_workout_streaming(request: Request, body: MoodWorkoutReq
                         temperature=0.7,
                         max_output_tokens=4096,
                     ),
+                    method_name="mood_workout",
+                    user_id=body.user_id,
                 )
                 gemini_time_ms = (datetime.now() - gemini_start).total_seconds() * 1000
                 logger.info(f"⚡ [Mood Workout] Gemini non-streaming completed in {gemini_time_ms:.0f}ms")

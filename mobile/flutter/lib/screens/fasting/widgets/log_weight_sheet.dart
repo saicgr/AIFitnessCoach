@@ -6,7 +6,6 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../../../data/providers/xp_provider.dart';
 import '../../../data/repositories/auth_repository.dart';
-import '../../../data/repositories/fasting_repository.dart';
 import '../../../data/repositories/measurements_repository.dart';
 import '../../../data/services/haptic_service.dart';
 import '../../../widgets/glass_sheet.dart';
@@ -85,6 +84,13 @@ class _LogWeightSheetState extends ConsumerState<_LogWeightSheet>
   bool _isSubmitting = false;
   bool _showSuccess = false;
   String? _errorMessage;
+
+  // Feedback state (computed on submit)
+  double? _previousWeightKg;
+  String? _feedbackMessage;
+  IconData? _feedbackIcon;
+  Color? _feedbackColor;
+  bool _isAnomaly = false;
 
   // TODO: Re-enable fasting day detection when fasting feature launches
   // bool? _isFastingDay;
@@ -216,6 +222,85 @@ class _LogWeightSheetState extends ConsumerState<_LogWeightSheet>
     }
   }
 
+  void _computeFeedback() {
+    // Get previous weight from measurements state
+    final measState = ref.read(measurementsProvider);
+    final prevEntry = measState.summary?.latestByType[MeasurementType.weight];
+    _previousWeightKg = prevEntry?.value;
+
+    if (_previousWeightKg == null) {
+      _feedbackMessage = 'Great start! Keep logging to track your progress.';
+      _feedbackIcon = Icons.flag_rounded;
+      _feedbackColor = null; // will use accent
+      return;
+    }
+
+    final changeKg = _weightKg - _previousWeightKg!;
+    final changeAbs = changeKg.abs();
+    final changeInUnit = _selectedUnit.fromKg(changeAbs);
+    final changeStr = '${changeInUnit.toStringAsFixed(1)} ${_selectedUnit.label}';
+
+    // Anomaly detection: >5kg in a single log is suspicious
+    if (changeAbs > 5.0) {
+      _isAnomaly = true;
+      _feedbackMessage = changeKg > 0
+          ? 'That\'s +$changeStr since last weigh-in. Double-check this is correct!'
+          : 'That\'s -$changeStr since last weigh-in. Double-check this is correct!';
+      _feedbackIcon = Icons.warning_amber_rounded;
+      _feedbackColor = const Color(0xFFF59E0B); // amber
+      return;
+    }
+
+    // Get user goals to provide context-aware feedback
+    final authState = ref.read(authStateProvider);
+    final goals = authState.user?.goalsList ?? [];
+    final wantsToLose = goals.any((g) => g.contains('lose'));
+    final wantsToGain = goals.any((g) => g.contains('muscle') || g.contains('gain'));
+
+    if (changeAbs < 0.2) {
+      // Essentially stable
+      _feedbackMessage = 'Holding steady. Consistency is key!';
+      _feedbackIcon = Icons.horizontal_rule_rounded;
+      _feedbackColor = null;
+    } else if (changeKg < 0) {
+      // Weight went down
+      if (wantsToLose) {
+        _feedbackMessage = 'Down $changeStr — you\'re on track!';
+        _feedbackIcon = Icons.trending_down_rounded;
+        _feedbackColor = const Color(0xFF10B981); // green
+      } else if (wantsToGain) {
+        _feedbackMessage = 'Down $changeStr — make sure you\'re eating enough to support your gains.';
+        _feedbackIcon = Icons.trending_down_rounded;
+        _feedbackColor = const Color(0xFFF59E0B); // amber
+      } else {
+        _feedbackMessage = 'Down $changeStr — keep it up!';
+        _feedbackIcon = Icons.trending_down_rounded;
+        _feedbackColor = const Color(0xFF10B981);
+      }
+    } else {
+      // Weight went up
+      if (wantsToGain) {
+        _feedbackMessage = 'Up $changeStr — gains are coming!';
+        _feedbackIcon = Icons.trending_up_rounded;
+        _feedbackColor = const Color(0xFF10B981);
+      } else if (wantsToLose) {
+        if (changeAbs > 2.0) {
+          _feedbackMessage = 'Up $changeStr — stay focused, review your meals and activity this week.';
+          _feedbackIcon = Icons.trending_up_rounded;
+          _feedbackColor = const Color(0xFFEF4444); // red
+        } else {
+          _feedbackMessage = 'Up $changeStr — small fluctuations are normal. Stay consistent!';
+          _feedbackIcon = Icons.trending_up_rounded;
+          _feedbackColor = const Color(0xFFF59E0B);
+        }
+      } else {
+        _feedbackMessage = 'Up $changeStr — weight fluctuations are normal.';
+        _feedbackIcon = Icons.trending_up_rounded;
+        _feedbackColor = null;
+      }
+    }
+  }
+
   Future<void> _submitWeight() async {
     final authState = ref.read(authStateProvider);
     final userId = authState.user?.id;
@@ -235,13 +320,15 @@ class _LogWeightSheetState extends ConsumerState<_LogWeightSheet>
     HapticService.medium();
 
     try {
-      final fastingRepo = ref.read(fastingRepositoryProvider);
+      // Compute feedback BEFORE recording (so we compare against previous weight)
+      _computeFeedback();
 
-      // Call the API to log weight
-      final result = await fastingRepo.logWeight(
+      // Log weight through the consolidated measurements endpoint
+      await ref.read(measurementsProvider.notifier).recordMeasurement(
         userId: userId,
-        weightKg: _weightKg,
-        date: _selectedDate.toIso8601String().split('T')[0],
+        type: MeasurementType.weight,
+        value: _weightKg,
+        unit: 'kg',
         notes: _notesController.text.trim().isEmpty
             ? null
             : _notesController.text.trim(),
@@ -263,25 +350,7 @@ class _LogWeightSheetState extends ConsumerState<_LogWeightSheet>
         setState(() {
           _isSubmitting = false;
           _showSuccess = true;
-          // TODO: Re-enable when fasting feature launches
-          // _isFastingDay = result.isFastingDay;
         });
-
-        // Wait a moment to show success animation
-        await Future.delayed(const Duration(milliseconds: 1500));
-
-        if (mounted) {
-          Navigator.of(context).pop(WeightLogResult(
-            weightKg: _weightKg,
-            date: _selectedDate,
-            notes: _notesController.text.trim().isEmpty
-                ? null
-                : _notesController.text.trim(),
-            // TODO: Re-enable when fasting feature launches
-            // wasFastingDay: result.isFastingDay,
-            message: 'Weight logged successfully',
-          ));
-        }
       }
     } catch (e) {
       if (mounted) {
@@ -311,78 +380,176 @@ class _LogWeightSheetState extends ConsumerState<_LogWeightSheet>
   }
 
   Widget _buildSuccessState(SheetColors colors) {
+    final feedbackColor = _feedbackColor ?? colors.cyan;
+    final changeKg = _previousWeightKg != null ? _weightKg - _previousWeightKg! : null;
+    final changeInUnit = changeKg != null ? _selectedUnit.fromKg(changeKg.abs()) : null;
+
     return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              color: colors.success.withValues(alpha: 0.15),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(
-              Icons.check_rounded,
-              color: colors.success,
-              size: 64,
-            ),
-          )
-              .animate()
-              .scale(
-                begin: const Offset(0.5, 0.5),
-                end: const Offset(1.0, 1.0),
-                duration: 400.ms,
-                curve: Curves.elasticOut,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Checkmark
+            Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: colors.success.withValues(alpha: 0.15),
+                shape: BoxShape.circle,
               ),
-          const SizedBox(height: 24),
-          Text(
-            'Weight Logged!',
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              color: colors.textPrimary,
-            ),
-          )
-              .animate()
-              .fadeIn(delay: 200.ms)
-              .slideY(begin: 0.2, end: 0),
-          const SizedBox(height: 8),
-          Text(
-            '${_selectedUnit.fromKg(_weightKg).toStringAsFixed(1)} ${_selectedUnit.label}',
-            style: TextStyle(
-              fontSize: 18,
-              color: colors.textSecondary,
-            ),
-          )
-              .animate()
-              .fadeIn(delay: 300.ms),
-          // TODO: Re-enable fasting day badge in success state when fasting feature launches
-          // if (_isFastingDay == true) ...[
-          //   const SizedBox(height: 16),
-          //   Container(
-          //     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          //     decoration: BoxDecoration(
-          //       color: colors.purple.withValues(alpha: 0.15),
-          //       borderRadius: BorderRadius.circular(20),
-          //       border: Border.all(color: colors.purple.withValues(alpha: 0.3)),
-          //     ),
-          //     child: Row(
-          //       mainAxisSize: MainAxisSize.min,
-          //       children: [
-          //         Icon(Icons.bolt, color: colors.purple, size: 18),
-          //         const SizedBox(width: 6),
-          //         Text(
-          //           'Fasting Day',
-          //           style: TextStyle(
-          //             color: colors.purple,
-          //             fontWeight: FontWeight.w600,
-          //           ),
-          //         ),
-          //       ],
-          //     ),
-          //   ),
-          // ],
-        ],
+              child: Icon(
+                Icons.check_rounded,
+                color: colors.success,
+                size: 64,
+              ),
+            )
+                .animate()
+                .scale(
+                  begin: const Offset(0.5, 0.5),
+                  end: const Offset(1.0, 1.0),
+                  duration: 400.ms,
+                  curve: Curves.elasticOut,
+                ),
+            const SizedBox(height: 24),
+
+            // Title
+            Text(
+              'Weight Logged!',
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: colors.textPrimary,
+              ),
+            )
+                .animate()
+                .fadeIn(delay: 200.ms)
+                .slideY(begin: 0.2, end: 0),
+            const SizedBox(height: 8),
+
+            // Weight value with change badge
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  '${_selectedUnit.fromKg(_weightKg).toStringAsFixed(1)} ${_selectedUnit.label}',
+                  style: TextStyle(
+                    fontSize: 18,
+                    color: colors.textSecondary,
+                  ),
+                ),
+                if (changeKg != null && changeInUnit != null && changeInUnit >= 0.1) ...[
+                  const SizedBox(width: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: feedbackColor.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      '${changeKg > 0 ? '+' : '-'}${changeInUnit.toStringAsFixed(1)}',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                        color: feedbackColor,
+                      ),
+                    ),
+                  ),
+                ],
+              ],
+            )
+                .animate()
+                .fadeIn(delay: 300.ms),
+            const SizedBox(height: 20),
+
+            // Feedback message
+            if (_feedbackMessage != null)
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                decoration: BoxDecoration(
+                  color: feedbackColor.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: feedbackColor.withValues(alpha: 0.2)),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(_feedbackIcon ?? Icons.info_outline, color: feedbackColor, size: 20),
+                    const SizedBox(width: 10),
+                    Flexible(
+                      child: Text(
+                        _feedbackMessage!,
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: colors.textPrimary,
+                          height: 1.4,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              )
+                  .animate()
+                  .fadeIn(delay: 400.ms)
+                  .slideY(begin: 0.15, end: 0),
+
+            // Anomaly warning
+            if (_isAnomaly)
+              Padding(
+                padding: const EdgeInsets.only(top: 8),
+                child: Text(
+                  'If this was a mistake, log again with the correct weight.',
+                  style: TextStyle(fontSize: 12, color: colors.textSecondary),
+                  textAlign: TextAlign.center,
+                ),
+              )
+                  .animate()
+                  .fadeIn(delay: 500.ms),
+
+            const SizedBox(height: 24),
+
+            // Action buttons
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(WeightLogResult(
+                    weightKg: _weightKg,
+                    date: _selectedDate,
+                    notes: _notesController.text.trim().isEmpty
+                        ? null
+                        : _notesController.text.trim(),
+                    message: 'Weight logged successfully',
+                  )),
+                  child: Text(
+                    'Done',
+                    style: TextStyle(
+                      color: colors.textSecondary,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                FilledButton.icon(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                    context.push('/measurements/weight');
+                  },
+                  icon: const Icon(Icons.show_chart_rounded, size: 18),
+                  label: const Text('Weight Chart'),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: colors.cyan,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                ),
+              ],
+            )
+                .animate()
+                .fadeIn(delay: 500.ms),
+          ],
+        ),
       ),
     );
   }

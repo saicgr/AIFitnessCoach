@@ -11,7 +11,7 @@ import logging
 from google.genai import types
 from core.anonymize import age_to_bracket
 from models.gemini_schemas import GeneratedWorkoutResponse
-from services.gemini.constants import client, _log_token_usage, _gemini_semaphore
+from services.gemini.constants import gemini_generate_with_retry
 from services.gemini.utils import safe_join_list, _build_equipment_usage_rule, validate_set_targets_strict
 from services.split_descriptions import get_split_context
 from services.gemini.workout_generation_helpers_part2 import WorkoutGenerationMixinPart2
@@ -1147,22 +1147,19 @@ If user has gym equipment - most exercises MUST use that equipment!"""
         logger.info("=" * 80)
 
         try:
-            async with _gemini_semaphore(user_id=user_id):
-                response = await asyncio.wait_for(
-                    client.aio.models.generate_content(
-                        model=self.model,
-                        contents=prompt,
-                        config=types.GenerateContentConfig(
-                            response_mime_type="application/json",
-                            response_schema=GeneratedWorkoutResponse,
-                            temperature=0.7,  # Higher creativity for unique workout names
-                            max_output_tokens=8000  # Increased for detailed workout plans with set_targets
-                        ),
-                    ),
-                    timeout=90,  # 90s for full workout generation (large prompt + response)
-                )
-
-            _log_token_usage(response, "generate_workout_plan")
+            response = await gemini_generate_with_retry(
+                model=self.model,
+                contents=prompt,
+                config=types.GenerateContentConfig(
+                    response_mime_type="application/json",
+                    response_schema=GeneratedWorkoutResponse,
+                    temperature=0.7,  # Higher creativity for unique workout names
+                    max_output_tokens=8000  # Increased for detailed workout plans with set_targets
+                ),
+                user_id=user_id,
+                timeout=90,
+                method_name="generate_workout_plan",
+            )
 
             # Use response.parsed for structured output - SDK handles JSON parsing
             parsed = response.parsed

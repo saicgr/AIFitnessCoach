@@ -12,7 +12,7 @@ import base64
 import pytz
 
 from google.genai import types
-from core.gemini_client import get_genai_client
+from services.gemini.constants import gemini_generate_with_retry
 
 from .state import CoachAgentState
 from ..personality import build_personality_prompt, sanitize_coach_name
@@ -471,11 +471,10 @@ Respond naturally as a coach who can see the image."""
                 role = msg.get("role", "user")
                 conv_text += f"{role}: {msg.get('content', '')}\n"
 
-            gemini_client = get_genai_client()
             from core.config import get_settings as get_app_settings
             app_settings = get_app_settings()
 
-            vision_response = await gemini_client.aio.models.generate_content(
+            vision_response = await gemini_generate_with_retry(
                 model=app_settings.gemini_model,
                 contents=[
                     f"{vision_system_prompt}\n\nConversation:\n{conv_text}\n\nUser: {state['user_message']}",
@@ -485,6 +484,8 @@ Respond naturally as a coach who can see the image."""
                     temperature=0.7,
                     max_output_tokens=2000,
                 ),
+                user_id=str(state.get("user_id", "")),
+                method_name="coach_respond",
             )
             response = vision_response.text
             logger.info(f"[Coach Response] Vision response: {response[:100]}...")

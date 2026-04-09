@@ -708,7 +708,7 @@ class XPNotifier extends StateNotifier<XPState> {
     return awardFirstTimeBonus('first_body_measurements');
   }
 
-  /// Award first chat bonus (50 XP)
+  /// Award first chat bonus (15 XP)
   Future<int> checkFirstChatBonus() async {
     return awardFirstTimeBonus('first_chat');
   }

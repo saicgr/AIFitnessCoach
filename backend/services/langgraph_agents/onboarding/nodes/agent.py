@@ -4,6 +4,7 @@ AI agent node for onboarding.
 Contains the node that generates natural, human-like questions for onboarding.
 """
 
+import asyncio
 import json
 import time
 from typing import Dict, Any, Optional, Tuple

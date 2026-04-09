@@ -5,7 +5,7 @@ import logging
 
 from google.genai import types
 from models.gemini_schemas import WorkoutNamingResponse
-from services.gemini.constants import client
+from services.gemini.constants import gemini_generate_with_retry
 
 logger = logging.getLogger(__name__)
 
@@ -186,19 +186,18 @@ Return a JSON object with:
         logger.info("=" * 80)
 
         try:
-            response = await asyncio.wait_for(
-                client.aio.models.generate_content(
-                    model=self.model,
-                    contents=prompt,
-                    config=types.GenerateContentConfig(
-                        system_instruction="You are a creative fitness coach. Generate motivating workout names. Return ONLY valid JSON.",
-                        response_mime_type="application/json",
-                        response_schema=WorkoutNamingResponse,
-                        temperature=0.8,
-                        max_output_tokens=2000  # Increased for thinking models
-                    ),
+            response = await gemini_generate_with_retry(
+                model=self.model,
+                contents=prompt,
+                config=types.GenerateContentConfig(
+                    system_instruction="You are a creative fitness coach. Generate motivating workout names. Return ONLY valid JSON.",
+                    response_mime_type="application/json",
+                    response_schema=WorkoutNamingResponse,
+                    temperature=0.8,
+                    max_output_tokens=2000  # Increased for thinking models
                 ),
-                timeout=30,  # 30s for workout naming (small response)
+                timeout=30,
+                method_name="generate_workout_from_library",
             )
 
             # Use response.parsed for structured output - SDK handles JSON parsing

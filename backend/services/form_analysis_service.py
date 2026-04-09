@@ -368,7 +368,7 @@ class FormAnalysisService:
         import base64
 
         logger.info(f"Analyzing form from {len(frames_base64)} pre-extracted frames")
-        client = get_genai_client()
+        from services.gemini.constants import gemini_generate_with_retry_sync
         settings = get_settings()
 
         parts = []
@@ -398,10 +398,11 @@ class FormAnalysisService:
             gen_config.cached_content = cache_name
 
         response = await asyncio.to_thread(
-            client.models.generate_content,
+            gemini_generate_with_retry_sync,
             model=settings.gemini_model,
             contents=[genai_types.Content(parts=parts)],
             config=gen_config,
+            method_name="form_analysis",
         )
 
         response_text = None

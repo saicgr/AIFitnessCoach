@@ -10,6 +10,7 @@ import '../../core/providers/window_mode_provider.dart';
 import '../../core/services/posthog_service.dart';
 import '../../widgets/glass_back_button.dart';
 import 'pre_auth_quiz_screen.dart';
+import 'widgets/calorie_macro_estimator.dart';
 import 'widgets/foldable_quiz_scaffold.dart';
 import 'widgets/quiz_weight_rate.dart';
 
@@ -247,6 +248,17 @@ class _WeightProjectionScreenState
       );
     }
 
+    // Calculate TDEE for calorie labels on rate chips
+    final userAge = quizData.age ?? 25;
+    final userGender = quizData.gender ?? 'male';
+    final bmr = CalorieMacroEstimator.calculateBMR(
+      weightKg: currentWeight,
+      heightCm: quizData.heightCm ?? 170,
+      age: userAge,
+      gender: userGender,
+    );
+    final tdee = CalorieMacroEstimator.calculateTDEE(bmr, quizData.activityLevel);
+
     final weeklyRate = WeightProjectionCalculator.calculateWeeklyRate(
       currentWeight: currentWeight,
       goalWeight: goalWeight,
@@ -350,7 +362,7 @@ class _WeightProjectionScreenState
                 const SizedBox(height: 8),
                 QuizWeightRateChips(
                   selectedRate: weightChangeRate ?? 'moderate',
-                  rates: getWeightRateOptions(isLosing: isLosingWeight, useMetric: useMetric),
+                  rates: getWeightRateOptions(isLosing: isLosingWeight, useMetric: useMetric, tdee: tdee, gender: userGender),
                   onRateChanged: (rate) {
                     final notifier = ref.read(preAuthQuizProvider.notifier);
                     notifier.setBodyMetrics(

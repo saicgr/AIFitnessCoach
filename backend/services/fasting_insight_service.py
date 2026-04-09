@@ -17,20 +17,16 @@ from datetime import datetime, date, timedelta
 import uuid
 import json
 import asyncio
-from google import genai
 from google.genai import types
 
 from core.logger import get_logger
 from core.config import get_settings
-from core.gemini_client import get_genai_client
 from core.supabase_db import get_supabase_db
 from models.gemini_schemas import FastingInsightResponse
+from services.gemini.constants import gemini_generate_with_retry
 
 logger = get_logger(__name__)
 settings = get_settings()
-
-# Initialize Gemini client
-client = get_genai_client()
 
 # Cache for insights (in production, use Redis)
 _insight_cache: Dict[str, Dict[str, Any]] = {}
@@ -205,26 +201,25 @@ Guidelines:
         try:
             logger.info(f"Calling Gemini API for fasting insight")
 
-            # Use timeout wrapper for the API call
-            response = await asyncio.wait_for(
-                client.aio.models.generate_content(
-                    model=self.model,
-                    contents=prompt,
-                    config=types.GenerateContentConfig(
-                        response_mime_type="application/json",
-                        response_schema=FastingInsightResponse,
-                        max_output_tokens=1000,
-                        temperature=0.3,  # Lower temperature for consistent analysis
-                        # Safety settings for fitness content
-                        safety_settings=[
-                            types.SafetySetting(
-                                category="HARM_CATEGORY_DANGEROUS_CONTENT",
-                                threshold="BLOCK_ONLY_HIGH",
-                            ),
-                        ],
-                    ),
+            # Use centralized retry utility for the API call
+            response = await gemini_generate_with_retry(
+                model=self.model,
+                contents=prompt,
+                config=types.GenerateContentConfig(
+                    response_mime_type="application/json",
+                    response_schema=FastingInsightResponse,
+                    max_output_tokens=1000,
+                    temperature=0.3,  # Lower temperature for consistent analysis
+                    # Safety settings for fitness content
+                    safety_settings=[
+                        types.SafetySetting(
+                            category="HARM_CATEGORY_DANGEROUS_CONTENT",
+                            threshold="BLOCK_ONLY_HIGH",
+                        ),
+                    ],
                 ),
-                timeout=self.timeout_seconds
+                timeout=self.timeout_seconds,
+                method_name="fasting_insights",
             )
 
             # Check for blocked response

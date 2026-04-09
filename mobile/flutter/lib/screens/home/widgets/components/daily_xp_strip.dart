@@ -290,8 +290,10 @@ class _DailyXPStripState extends ConsumerState<DailyXPStrip>
     // 1. Log in today - Fixed +5 XP (one-time per day)
     // 2. Complete 1 workout - 100 XP
     // 3. Log a meal - 25 XP
-    // 4. Hit protein goal - 50 XP
-    const totalGoals = 4;
+    // 4. Log weight - 15 XP
+    // 5. Hit protein goal - 50 XP
+    // 6. Log body measurements - 20 XP
+    const totalGoals = 6;
     // Fixed daily login XP
     const dailyLoginXP = 5;
 

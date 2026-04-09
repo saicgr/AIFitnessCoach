@@ -21,6 +21,7 @@ Handles:
 - Workout type preference
 - Exercise substitution
 """
+import asyncio
 import json
 import re
 from datetime import datetime, timedelta

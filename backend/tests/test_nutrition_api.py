@@ -8,6 +8,7 @@ Tests:
 
 Run with: pytest backend/tests/test_nutrition_api.py -v
 """
+import asyncio
 
 import pytest
 from unittest.mock import MagicMock, patch

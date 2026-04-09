@@ -15,6 +15,7 @@ Endpoints:
 - Dashboard: Combined endpoint for efficient UI loading
 - Scheduler: Cron job endpoints for background processing
 """
+import asyncio
 from typing import Any, Dict
 from datetime import datetime, timedelta, date, time
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException

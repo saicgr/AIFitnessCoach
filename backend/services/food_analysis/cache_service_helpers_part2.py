@@ -9,12 +9,23 @@ from core.supabase_client import get_supabase
 from services.food_analysis.parser import ParsedFoodItem
 from services.food_analysis.constants import (
     _WEIGHT_REGEX, _WEIGHT_AFTER_REGEX, _VOLUME_REGEX, _VOLUME_AFTER_REGEX,
+    _FILLER_REGEX, _WORD_NUMBERS,
 )
 from services.food_analysis.parser import _weight_unit_to_grams, _volume_unit_to_ml
 from services.food_database_lookup_service import get_food_db_lookup_service
 from services.food_analysis.modifiers_helpers import _classify_modifier
+from services.food_analysis.modifiers import (
+    _FOOD_MODIFIERS, _MODIFIER_METADATA, _MODIFIER_GROUPS,
+    ModifierType, _MODIFIER_PHRASES_SORTED,
+    _BULLET_REGEX, _NUM_UNIT_REGEX, _WORD_NUM_UNIT_REGEX,
+    _BARE_NUM_REGEX, _FRACTION_REGEX,
+)
+from core.db.nutrition_db import NutritionDB
+from core.redis_cache import RedisCache
 
 logger = logging.getLogger(__name__)
+
+_food_analysis_cache = RedisCache(prefix="food_analysis", ttl_seconds=86400, max_size=200)
 
 
 class FoodAnalysisCacheServicePart2:

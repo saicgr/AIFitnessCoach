@@ -259,12 +259,12 @@ class _MissedWorkoutBannerState extends ConsumerState<MissedWorkoutBanner>
                     icon: Icon(
                       Icons.close_rounded,
                       color: textSecondary,
-                      size: 20,
+                      size: 28,
                     ),
-                    padding: EdgeInsets.zero,
+                    padding: const EdgeInsets.all(4),
                     constraints: const BoxConstraints(
-                      minWidth: 32,
-                      minHeight: 32,
+                      minWidth: 40,
+                      minHeight: 40,
                     ),
                   ),
                 ],

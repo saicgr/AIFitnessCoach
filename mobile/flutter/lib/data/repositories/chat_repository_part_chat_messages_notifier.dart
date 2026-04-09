@@ -175,6 +175,10 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
 
         state = AsyncValue.data(messages);
         _currentOffset = messages.length;
+        // If initial load returned fewer than page size, no older messages exist
+        if (messages.length < 50) {
+          _hasMoreMessages = false;
+        }
         // 3. Update cache with fresh data
         await _saveToCache(userId, messages);
       } catch (e, st) {

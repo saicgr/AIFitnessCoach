@@ -14,14 +14,13 @@ from typing import Dict, List, Optional
 from datetime import datetime, timedelta
 import json
 
-from google import genai
 from google.genai import types
 
 from core.config import get_settings
-from core.gemini_client import get_genai_client
 from core.supabase_db import get_supabase_db
 from core.logger import get_logger
 from models.gemini_schemas import CustomGoalKeywordsResponse
+from services.gemini.constants import gemini_generate_with_retry
 
 logger = get_logger(__name__)
 settings = get_settings()
@@ -34,7 +33,6 @@ class CustomGoalService:
     """Manages custom goal keyword generation and caching."""
 
     def __init__(self):
-        self.client = get_genai_client()
         self.model = settings.gemini_model
         self.db = get_supabase_db()
 
@@ -110,7 +108,7 @@ Example for "Improve box jump height":
 }}"""
 
         try:
-            response = await self.client.aio.models.generate_content(
+            response = await gemini_generate_with_retry(
                 model=self.model,
                 contents=prompt,
                 config=types.GenerateContentConfig(
@@ -119,6 +117,7 @@ Example for "Improve box jump height":
                     temperature=0.3,
                     max_output_tokens=2000,
                 ),
+                method_name="goal_keywords",
             )
 
             content = response.text.strip()

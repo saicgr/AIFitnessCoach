@@ -5,6 +5,7 @@ Contains tools for:
 - Analyzing exercise form from uploaded video/image media
 - Comparing exercise form across multiple videos
 """
+import asyncio
 
 from typing import Any, Dict, List, Optional
 

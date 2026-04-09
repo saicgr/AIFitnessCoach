@@ -282,6 +282,7 @@ class ActionIconButton extends StatelessWidget {
   final VoidCallback onTap;
   final bool isDark;
   final bool isActive;
+  final Color? color;
 
   const ActionIconButton({
     super.key,
@@ -289,13 +290,12 @@ class ActionIconButton extends StatelessWidget {
     required this.onTap,
     required this.isDark,
     this.isActive = false,
+    this.color,
   });
 
   @override
   Widget build(BuildContext context) {
-    final glassSurface = isDark ? AppColors.glassSurface : AppColorsLight.glassSurface;
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    const orange = Color(0xFFF97316);
+    final c = color ?? const Color(0xFFF97316);
 
     return GestureDetector(
       onTap: onTap,
@@ -304,20 +304,16 @@ class ActionIconButton extends StatelessWidget {
         width: 44,
         height: 44,
         decoration: BoxDecoration(
-          color: isActive ? orange : glassSurface,
+          color: isActive ? c : c.withValues(alpha: 0.12),
           borderRadius: BorderRadius.circular(14),
           border: Border.all(
-            color: isActive
-                ? orange
-                : isDark
-                    ? Colors.white.withValues(alpha: 0.1)
-                    : Colors.black.withValues(alpha: 0.06),
+            color: isActive ? c : c.withValues(alpha: 0.25),
           ),
         ),
         child: Icon(
           icon,
           size: 20,
-          color: isActive ? Colors.white : textMuted,
+          color: isActive ? Colors.white : c.withValues(alpha: 0.85),
         ),
       ),
     );

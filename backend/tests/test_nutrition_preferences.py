@@ -11,6 +11,7 @@ Tests the new nutrition system endpoints:
 
 Run with: pytest backend/tests/test_nutrition_preferences.py -v
 """
+import asyncio
 from typing import Set
 
 import pytest

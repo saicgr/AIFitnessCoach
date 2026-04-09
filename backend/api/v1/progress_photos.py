@@ -763,12 +763,11 @@ async def delete_photo_comparison(
 async def generate_ai_summary(request: Request, data: AiSummaryRequest, current_user: dict = Depends(get_current_user)):
     """Generate an AI progress summary by analyzing before/after photos."""
     try:
-        from google import genai
         from google.genai import types
+        from services.gemini.constants import gemini_generate_with_retry_sync
         import httpx
 
         settings = get_settings()
-        client = genai.Client(api_key=settings.gemini_api_key)
 
         # Download both images
         async with httpx.AsyncClient() as http_client:
@@ -790,7 +789,7 @@ Describe visible changes in 1-2 sentences focusing on: muscle development, body 
 Be encouraging but honest. If changes are subtle, acknowledge effort and consistency.
 Return ONLY a JSON object: {{"summary": "your analysis here"}}"""
 
-        response = client.models.generate_content(
+        response = gemini_generate_with_retry_sync(
             model="gemini-2.0-flash",
             contents=[
                 types.Part.from_bytes(data=before_resp.content, mime_type="image/jpeg"),
@@ -801,6 +800,7 @@ Return ONLY a JSON object: {{"summary": "your analysis here"}}"""
                 temperature=0.7,
                 max_output_tokens=200,
             ),
+            method_name="progress_photos",
         )
 
         text = response.text.strip()

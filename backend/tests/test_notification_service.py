@@ -10,6 +10,7 @@ Tests:
 
 Run with: pytest backend/tests/test_notification_service.py -v
 """
+import asyncio
 
 import pytest
 from unittest.mock import MagicMock, patch, AsyncMock

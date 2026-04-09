@@ -122,7 +122,7 @@ class _MeasurementsTabState extends ConsumerState<MeasurementsTab> {
     );
   }
 
-  bool _seeded = false;
+
 
   Future<void> _loadMeasurements() async {
     final userId = widget.userId;
@@ -136,25 +136,8 @@ class _MeasurementsTabState extends ConsumerState<MeasurementsTab> {
     debugPrint('🔍 [MeasurementsTab] Loaded ${weightHistory.length} weight entries, '
         '${state.historyByType.length} total types with data');
 
-    // Seed body_measurements from profile if no weight data (one-time)
-    if (!_seeded) {
-      _seeded = true;
-      if (weightHistory.isEmpty) {
-        final auth = ref.read(authStateProvider);
-        final profileWeight = auth.user?.weightKg;
-        if (profileWeight != null && profileWeight > 0) {
-          debugPrint('🌱 [MeasurementsTab] Seeding weight from profile: $profileWeight kg');
-          final success = await ref.read(measurementsProvider.notifier).recordMeasurement(
-            userId: userId,
-            type: MeasurementType.weight,
-            value: profileWeight,
-            unit: 'kg',
-            notes: 'Initial weight from profile',
-          );
-          debugPrint('🌱 [MeasurementsTab] Seed result: $success');
-        }
-      }
-    }
+    // NOTE: No client-side seeding needed — DB trigger (sync_user_weight_to_body_measurements)
+    // automatically creates the initial body_measurements entry when onboarding sets weight_kg.
   }
 
   List<MeasurementEntry> _filterByPeriod(List<MeasurementEntry> history) {

@@ -153,6 +153,7 @@ extension _LogMealSheetStateUI on _LogMealSheetState {
                 isActive: _isListening,
                 onTap: _toggleVoiceInput,
                 isDark: isDark,
+                color: const Color(0xFFEF4444), // red
               ),
               const SizedBox(width: 4),
 
@@ -161,6 +162,7 @@ extension _LogMealSheetStateUI on _LogMealSheetState {
                 icon: Icons.camera_alt,
                 onTap: () => _pickImage(ImageSource.camera),
                 isDark: isDark,
+                color: const Color(0xFF3B82F6), // blue
               ),
               const SizedBox(width: 4),
 
@@ -169,6 +171,7 @@ extension _LogMealSheetStateUI on _LogMealSheetState {
                 icon: Icons.photo_library_outlined,
                 onTap: () => _pickImage(ImageSource.gallery),
                 isDark: isDark,
+                color: const Color(0xFF8B5CF6), // purple
               ),
               const SizedBox(width: 4),
 
@@ -177,6 +180,7 @@ extension _LogMealSheetStateUI on _LogMealSheetState {
                 icon: Icons.qr_code_scanner,
                 onTap: _openBarcodeScanner,
                 isDark: isDark,
+                color: const Color(0xFF10B981), // green
               ),
 
               const Spacer(),

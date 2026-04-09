@@ -14,7 +14,7 @@ from core.ai_response_parser import parse_ai_json
 from models.gemini_schemas import FoodAnalysisResponse
 from services.gemini.constants import (
     client, _log_token_usage, _gemini_semaphore,
-    _food_text_cache, settings,
+    _food_text_cache, settings, gemini_generate_with_retry,
 )
 from services.gemini.utils import _sanitize_for_prompt, safe_join_list
 
@@ -115,20 +115,19 @@ WEIGHT/COUNT FIELDS (required for portion editing):
             # Add timeout to prevent hanging on slow Gemini responses
             logger.info(f"[IMAGE-ANALYSIS:{req_id}] Sending to Gemini API | model={self.model} | timeout={IMAGE_ANALYSIS_TIMEOUT}s")
             try:
-                async with _gemini_semaphore(user_id=user_id):
-                    response = await asyncio.wait_for(
-                        client.aio.models.generate_content(
-                            model=self.model,
-                            contents=[prompt, image_part],
-                            config=types.GenerateContentConfig(
-                                response_mime_type="application/json",
-                                response_schema=FoodAnalysisResponse,
-                                max_output_tokens=8192,  # High limit to prevent truncation with micronutrients
-                                temperature=0.3,
-                            ),
-                        ),
-                        timeout=IMAGE_ANALYSIS_TIMEOUT
-                    )
+                response = await gemini_generate_with_retry(
+                    model=self.model,
+                    contents=[prompt, image_part],
+                    config=types.GenerateContentConfig(
+                        response_mime_type="application/json",
+                        response_schema=FoodAnalysisResponse,
+                        max_output_tokens=8192,  # High limit to prevent truncation with micronutrients
+                        temperature=0.3,
+                    ),
+                    user_id=user_id,
+                    timeout=IMAGE_ANALYSIS_TIMEOUT,
+                    method_name="analyze_food_image",
+                )
                 elapsed = time.time() - start_time
                 logger.info(f"[IMAGE-ANALYSIS:{req_id}] Gemini API responded | elapsed={elapsed:.2f}s")
             except asyncio.TimeoutError:
@@ -141,8 +140,6 @@ WEIGHT/COUNT FIELDS (required for portion editing):
                     "request_id": req_id,
                     "elapsed_seconds": elapsed,
                 }
-
-            _log_token_usage(response, "analyze_food_image")
 
             # Check for blocked/filtered response
             if hasattr(response, 'prompt_feedback') and response.prompt_feedback:
@@ -550,137 +547,112 @@ IMPORTANT - ALWAYS identify foods:
 - Fast food items without exact data: estimate based on ingredients and similar menu items
 - NEVER return empty food_items - always make your best estimate'''
 
-        # Retry logic for intermittent Gemini failures
-        max_retries = 2
+        # Timeout for food analysis
+        FOOD_ANALYSIS_TIMEOUT = 25
         last_error = None
         content = ""
 
-        # Timeout for food analysis (25 seconds base, progressive per retry)
-        FOOD_ANALYSIS_TIMEOUT = 25
-
-        for attempt in range(max_retries):
-            try:
-                logger.info(f"[Gemini] Parsing food description (attempt {attempt + 1}/{max_retries}): {description[:100]}...")
-
-                # Add timeout to prevent hanging on slow Gemini responses
-                try:
-                    attempt_timeout = FOOD_ANALYSIS_TIMEOUT + (attempt * 10)
-                    async with _gemini_semaphore(user_id=user_id):
-                        response = await asyncio.wait_for(
-                            client.aio.models.generate_content(
-                                model=self.model,
-                                contents=prompt,
-                                config=types.GenerateContentConfig(
-                                    response_mime_type="application/json",
-                                    response_schema=FoodAnalysisResponse,
-                                    max_output_tokens=8192,  # High limit to prevent truncation (MAX_TOKENS causes parsed=None)
-                                    temperature=0.2,  # Lower = faster, more deterministic
-                                ),
-                            ),
-                            timeout=attempt_timeout
-                        )
-                except asyncio.TimeoutError:
-                    logger.warning(f"[Gemini] Request timed out after {attempt_timeout}s (attempt {attempt + 1})", exc_info=True)
-                    last_error = f"Timeout after {attempt_timeout}s"
-                    await asyncio.sleep(1 + attempt)
-                    continue
-
-                _log_token_usage(response, "parse_food_description")
-
-                # Use response.parsed for structured output - SDK handles JSON parsing
-                parsed = response.parsed
-                result = None
-
-                if parsed:
-                    result = parsed.model_dump()
-                else:
-                    # Log details about why structured parsing failed
-                    logger.warning(f"[Gemini] Structured parsing returned None (attempt {attempt + 1})")
-                    raw_text = response.text if response.text else ""
-                    logger.info(f"[Gemini] Raw response text: {raw_text[:500] if raw_text else 'None'}")
-
-                    # Check for safety/blocking issues
-                    if hasattr(response, 'candidates') and response.candidates:
-                        for i, candidate in enumerate(response.candidates):
-                            if hasattr(candidate, 'finish_reason'):
-                                logger.info(f"[Gemini] Candidate {i} finish_reason: {candidate.finish_reason}")
-                            if hasattr(candidate, 'safety_ratings'):
-                                logger.info(f"[Gemini] Candidate {i} safety_ratings: {candidate.safety_ratings}")
-
-                    # Try to parse raw text as JSON fallback
-                    if raw_text:
-                        logger.info(f"[Gemini] Attempting fallback JSON parsing from raw text...")
-                        result = self._extract_json_robust(raw_text)
-                        if result:
-                            logger.info(f"[Gemini] Fallback JSON parsing succeeded")
-                        else:
-                            logger.warning(f"[Gemini] Fallback JSON parsing also failed")
-
-                    if not result:
-                        last_error = "Empty response - structured and fallback parsing failed"
-                        continue
-
-                logger.info(f"[Gemini] Parsed response with {len(result.get('food_items', []))} items")
-
-                if result and result.get('food_items'):
-                    logger.info(f"[Gemini] Parsed {len(result.get('food_items', []))} food items")
-
-                    # Enhance food items with USDA per-100g data for accurate scaling
-                    try:
-                        enhanced_items = await self._enhance_food_items_with_nutrition_db(result['food_items'])
-                        result['food_items'] = enhanced_items
-
-                        # Recalculate totals based on enhanced items
-                        total_calories = sum(item.get('calories', 0) or 0 for item in enhanced_items)
-                        total_protein = sum(item.get('protein_g', 0) or 0 for item in enhanced_items)
-                        total_carbs = sum(item.get('carbs_g', 0) or 0 for item in enhanced_items)
-                        total_fat = sum(item.get('fat_g', 0) or 0 for item in enhanced_items)
-                        total_fiber = sum(item.get('fiber_g', 0) or 0 for item in enhanced_items)
-
-                        result['total_calories'] = total_calories
-                        result['protein_g'] = round(total_protein, 1)
-                        result['carbs_g'] = round(total_carbs, 1)
-                        result['fat_g'] = round(total_fat, 1)
-                        result['fiber_g'] = round(total_fiber, 1)
-
-                        logger.info(f"[NutritionDB] Enhanced {len(enhanced_items)} items, total: {total_calories} cal")
-                    except Exception as e:
-                        logger.warning(f"Nutrition DB enhancement failed, using AI estimates: {e}", exc_info=True)
-                        # Continue with original AI estimates if enhancement fails
-
-                    # Cache the successful result
-                    try:
-                        await _food_text_cache.set(cache_key, result)
-                        logger.info(f"[FoodTextCache] Cache MISS - stored result for: '{description[:60]}...'")
-                    except Exception as cache_err:
-                        logger.warning(f"[FoodTextCache] Failed to store result: {cache_err}", exc_info=True)
-
-                    return result
-                else:
-                    logger.warning(f"[Gemini] Failed to extract valid JSON with food_items (attempt {attempt + 1})")
-                    last_error = "No food_items in response"
-                    continue
-
-            except Exception as e:
-                logger.warning(f"[Gemini] Food description parsing failed (attempt {attempt + 1}): {e}", exc_info=True)
-                last_error = str(e)
-                continue
-
-        # All retries exhausted with structured output - try one more time without schema
-        logger.warning(f"[Gemini] Structured output failed after {max_retries} attempts. Trying unstructured fallback...")
-
         try:
-            # Try without response_schema - just ask for JSON
-            fallback_response = await asyncio.wait_for(
-                client.aio.models.generate_content(
-                    model=self.model,
-                    contents=prompt,
-                    config=types.GenerateContentConfig(
-                        max_output_tokens=4096,
-                        temperature=0.2,
-                    ),
+            logger.info(f"[Gemini] Parsing food description: {description[:100]}...")
+
+            response = await gemini_generate_with_retry(
+                model=self.model,
+                contents=prompt,
+                config=types.GenerateContentConfig(
+                    response_mime_type="application/json",
+                    response_schema=FoodAnalysisResponse,
+                    max_output_tokens=8192,  # High limit to prevent truncation (MAX_TOKENS causes parsed=None)
+                    temperature=0.2,  # Lower = faster, more deterministic
                 ),
-                timeout=FOOD_ANALYSIS_TIMEOUT + 15
+                user_id=user_id,
+                max_retries=2,
+                timeout=FOOD_ANALYSIS_TIMEOUT,
+                method_name="parse_food_description",
+            )
+
+            # Use response.parsed for structured output - SDK handles JSON parsing
+            parsed = response.parsed
+            result = None
+
+            if parsed:
+                result = parsed.model_dump()
+            else:
+                # Log details about why structured parsing failed
+                logger.warning(f"[Gemini] Structured parsing returned None")
+                raw_text = response.text if response.text else ""
+                logger.info(f"[Gemini] Raw response text: {raw_text[:500] if raw_text else 'None'}")
+
+                # Check for safety/blocking issues
+                if hasattr(response, 'candidates') and response.candidates:
+                    for i, candidate in enumerate(response.candidates):
+                        if hasattr(candidate, 'finish_reason'):
+                            logger.info(f"[Gemini] Candidate {i} finish_reason: {candidate.finish_reason}")
+                        if hasattr(candidate, 'safety_ratings'):
+                            logger.info(f"[Gemini] Candidate {i} safety_ratings: {candidate.safety_ratings}")
+
+                # Try to parse raw text as JSON fallback
+                if raw_text:
+                    logger.info(f"[Gemini] Attempting fallback JSON parsing from raw text...")
+                    result = self._extract_json_robust(raw_text)
+                    if result:
+                        logger.info(f"[Gemini] Fallback JSON parsing succeeded")
+                    else:
+                        logger.warning(f"[Gemini] Fallback JSON parsing also failed")
+
+            if result and result.get('food_items'):
+                logger.info(f"[Gemini] Parsed {len(result.get('food_items', []))} food items")
+
+                # Enhance food items with USDA per-100g data for accurate scaling
+                try:
+                    enhanced_items = await self._enhance_food_items_with_nutrition_db(result['food_items'])
+                    result['food_items'] = enhanced_items
+
+                    # Recalculate totals based on enhanced items
+                    total_calories = sum(item.get('calories', 0) or 0 for item in enhanced_items)
+                    total_protein = sum(item.get('protein_g', 0) or 0 for item in enhanced_items)
+                    total_carbs = sum(item.get('carbs_g', 0) or 0 for item in enhanced_items)
+                    total_fat = sum(item.get('fat_g', 0) or 0 for item in enhanced_items)
+                    total_fiber = sum(item.get('fiber_g', 0) or 0 for item in enhanced_items)
+
+                    result['total_calories'] = total_calories
+                    result['protein_g'] = round(total_protein, 1)
+                    result['carbs_g'] = round(total_carbs, 1)
+                    result['fat_g'] = round(total_fat, 1)
+                    result['fiber_g'] = round(total_fiber, 1)
+
+                    logger.info(f"[NutritionDB] Enhanced {len(enhanced_items)} items, total: {total_calories} cal")
+                except Exception as e:
+                    logger.warning(f"Nutrition DB enhancement failed, using AI estimates: {e}", exc_info=True)
+                    # Continue with original AI estimates if enhancement fails
+
+                # Cache the successful result
+                try:
+                    await _food_text_cache.set(cache_key, result)
+                    logger.info(f"[FoodTextCache] Cache MISS - stored result for: '{description[:60]}...'")
+                except Exception as cache_err:
+                    logger.warning(f"[FoodTextCache] Failed to store result: {cache_err}", exc_info=True)
+
+                return result
+
+            # Structured output succeeded but no food_items - try unstructured fallback
+            logger.warning(f"[Gemini] Structured output returned no food_items. Trying unstructured fallback...")
+
+        except Exception as e:
+            logger.warning(f"[Gemini] Food description parsing failed: {e}", exc_info=True)
+            last_error = str(e)
+
+        # Fallback: try without response_schema - just ask for JSON
+        try:
+            fallback_response = await gemini_generate_with_retry(
+                model=self.model,
+                contents=prompt,
+                config=types.GenerateContentConfig(
+                    max_output_tokens=4096,
+                    temperature=0.2,
+                ),
+                user_id=user_id,
+                timeout=FOOD_ANALYSIS_TIMEOUT + 15,
+                method_name="parse_food_description_fallback",
             )
 
             if fallback_response.text:
@@ -712,7 +684,7 @@ IMPORTANT - ALWAYS identify foods:
         except Exception as e:
             logger.error(f"[Gemini] Unstructured fallback also failed: {e}", exc_info=True)
 
-        logger.error(f"[Gemini] All {max_retries} attempts + fallback failed. Last error: {last_error}")
+        logger.error(f"[Gemini] All attempts + fallback failed. Last error: {last_error}")
         logger.error(f"[Gemini] Last content was: {content[:500] if content else 'empty'}")
         return None
 

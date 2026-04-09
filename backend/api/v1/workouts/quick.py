@@ -38,8 +38,6 @@ from .utils import (
 router = APIRouter()
 logger = get_logger(__name__)
 
-# Use shared fair semaphore from gemini_service (global + per-user limits)
-from services.gemini_service import _gemini_semaphore
 
 
 # ============================================
@@ -306,47 +304,29 @@ async def generate_quick_workout(request: Request, body: QuickWorkoutRequest, ba
             injuries=body.injuries,
         )
 
-        # Generate with Gemini (with semaphore + retry)
+        # Generate with Gemini (with retry + semaphore via utility)
         try:
             from google.genai import types
             from core.config import get_settings
-            from core.gemini_client import get_genai_client
+            from services.gemini.constants import gemini_generate_with_retry
 
             settings = get_settings()
-            client = get_genai_client()
 
-            content = ""
-            last_error = None
-            for attempt in range(2):  # 1 initial + 1 retry
-                try:
-                    async with _gemini_semaphore(user_id=body.user_id):
-                        response = await client.aio.models.generate_content(
-                            model=settings.gemini_model,
-                            contents=prompt,
-                            config=types.GenerateContentConfig(
-                                response_mime_type="application/json",
-                                response_schema=GeneratedWorkoutResponse,
-                                max_output_tokens=8192,
-                                temperature=0.7,
-                            ),
-                        )
+            response = await gemini_generate_with_retry(
+                model=settings.gemini_model,
+                contents=prompt,
+                config=types.GenerateContentConfig(
+                    response_mime_type="application/json",
+                    response_schema=GeneratedWorkoutResponse,
+                    max_output_tokens=8192,
+                    temperature=0.7,
+                ),
+                user_id=body.user_id,
+                method_name="quick_workout",
+            )
 
-                    content = response.text.strip() if response.text else ""
-                    if content:
-                        break
-                except Exception as e:
-                    last_error = e
-                    error_str = str(e).lower()
-                    if "resourceexhausted" in error_str or "429" in error_str or "quota" in error_str:
-                        if attempt == 0:
-                            logger.warning(f"[Quick Workout] Gemini quota hit, retrying in 2s...", exc_info=True)
-                            await asyncio.sleep(2)
-                            continue
-                    raise
-
+            content = response.text.strip() if response.text else ""
             if not content:
-                if last_error:
-                    raise last_error
                 raise HTTPException(status_code=500, detail="Empty response from AI")
 
             # Parse the response - try direct parse first, then extract JSON

@@ -329,17 +329,17 @@ If it doesn't fit any category, create a simple 1-3 word normalized form."""
 
             from google.genai import types
             from core.config import get_settings
-            from core.gemini_client import get_genai_client
+            from services.gemini.constants import gemini_generate_with_retry
             settings = get_settings()
 
-            client = get_genai_client()
-            response = await client.aio.models.generate_content(
+            response = await gemini_generate_with_retry(
                 model=settings.gemini_model,
                 contents=f"You are a fitness terminology normalizer. Return ONLY the normalized term, nothing else.\n\n{prompt}",
                 config=types.GenerateContentConfig(
                     temperature=0.1,
                     max_output_tokens=1000,  # Increased for thinking models
                 ),
+                method_name="normalize_custom_input",
             )
 
             normalized = response.text.strip().lower()

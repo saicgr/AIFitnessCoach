@@ -19,6 +19,7 @@ Endpoints:
 - POST /fitness/calculate - Calculate overall fitness score
 - GET /overview - Combined dashboard data
 """
+import asyncio
 from typing import Any, Dict, List, Optional
 from datetime import datetime, timedelta, date
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query

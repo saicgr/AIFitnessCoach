@@ -16,6 +16,7 @@ from core.chroma_cloud import get_chroma_cloud_client
 from core.supabase_client import get_supabase
 from core.logger import get_logger
 from services.gemini_service import GeminiService
+from services.gemini.constants import gemini_generate_with_retry, settings as gemini_settings
 from models.gemini_schemas import ExerciseIndicesResponse
 
 from .utils import clean_exercise_name_for_display, infer_equipment_from_name
@@ -295,6 +296,7 @@ class ExerciseRAGService:
         difficulty_adjustment: int = 0,
         batch_offset: int = 0,
         workout_environment: Optional[str] = None,
+        very_recently_used_exercises: Optional[List[str]] = None,
     ) -> List[Dict[str, Any]]:
         """
         Intelligently select exercises for a workout using RAG + AI.
@@ -642,6 +644,36 @@ class ExerciseRAGService:
         apply_favorites_boost(candidates, favorite_exercises)
         apply_consistency_mode(candidates, recently_used_exercises, consistency_mode, variation_percentage)
 
+        # Hard-remove very recently used exercises from candidate pool
+        # This ensures they cannot be selected by AI, backfill, or any other path
+        candidates_before_removal = list(candidates)
+        if very_recently_used_exercises and consistency_mode != "consistent":
+            very_recent_lower = {e.lower() for e in very_recently_used_exercises}
+            staple_lower = {s.lower() for s in staple_names}
+            before_count = len(candidates)
+            candidates = [
+                c for c in candidates
+                if c["name"].lower() not in very_recent_lower
+                or c["name"].lower() in staple_lower
+            ]
+            removed = before_count - len(candidates)
+            if removed > 0:
+                logger.info(
+                    f"🔄 [Variety] Hard-removed {removed} recently used exercises from pool "
+                    f"(variation={variation_percentage}%, pool: {before_count} -> {len(candidates)})"
+                )
+            # Safety: if pool too small after removal, restore with heavy penalty
+            if len(candidates) < count * 2 and removed > 0:
+                logger.warning(
+                    f"⚠️ [Variety] Pool too small after removal ({len(candidates)} < {count * 2}), "
+                    f"restoring with 0.05x penalty"
+                )
+                candidates = list(candidates_before_removal)
+                for c in candidates:
+                    if c["name"].lower() in very_recent_lower and c["name"].lower() not in staple_lower:
+                        c["similarity"] = c["similarity"] * 0.05
+                candidates.sort(key=lambda x: x.get("similarity", 0), reverse=True)
+
         # Process STAPLE exercises
         staple_included, staple_names_used, candidates = extract_staple_exercises(
             candidates, staple_names, staple_exercises
@@ -708,22 +740,43 @@ class ExerciseRAGService:
                 progression_pace=progression_pace,
                 equipment=equipment,
                 avoid_exercises=avoid_exercises if avoid_exercises else None,
+                user_id=user_id,
+                recently_used_exercises=recently_used_exercises,
             )
 
             # Backfill from full candidate pool if AI returned too few
+            # Two-pass: first avoid recently used, then allow as last resort
             if len(selected) < remaining_count:
                 all_used = {e['name'].lower().strip() for e in selected}
                 all_used |= {s['name'].lower().strip() for s in staple_included}
                 all_used |= {q['name'].lower().strip() for q in queued_included}
-                for candidate in candidates:  # Full pool, not offset slice
+                very_recent_lower = {e.lower() for e in (very_recently_used_exercises or [])}
+
+                # Pass 1: backfill only from non-recently-used candidates
+                for candidate in candidates:
                     if len(selected) >= remaining_count:
                         break
-                    if candidate['name'].lower().strip() not in all_used:
-                        all_used.add(candidate['name'].lower().strip())
+                    name_lower = candidate['name'].lower().strip()
+                    if name_lower not in all_used and name_lower not in very_recent_lower:
+                        all_used.add(name_lower)
                         selected.append(self._format_exercise_for_workout(
                             candidate, fitness_level, adjusted_workout_params,
                             strength_history, progression_pace
                         ))
+
+                # Pass 2: if still short, allow recently used as last resort
+                if len(selected) < remaining_count:
+                    for candidate in candidates_before_removal:
+                        if len(selected) >= remaining_count:
+                            break
+                        name_lower = candidate['name'].lower().strip()
+                        if name_lower not in all_used:
+                            all_used.add(name_lower)
+                            selected.append(self._format_exercise_for_workout(
+                                candidate, fitness_level, adjusted_workout_params,
+                                strength_history, progression_pace
+                            ))
+
                 if len(selected) < remaining_count:
                     logger.warning(
                         f"Could only select {len(selected)}/{remaining_count} exercises "
@@ -744,6 +797,50 @@ class ExerciseRAGService:
 
         # Combine in priority order: staples first, then queued, then AI-selected
         final_selection = formatted_staples + formatted_queued + selected
+
+        # Post-selection overlap check: swap exercises that overlap with recent workouts
+        if very_recently_used_exercises and consistency_mode != "consistent" and final_selection:
+            protected_names = {s.lower() for s in staple_names_used + queued_names_used}
+
+            overlapping_indices = []
+            for i, ex in enumerate(final_selection):
+                name_lower = ex["name"].lower()
+                if name_lower in protected_names:
+                    continue
+                for recent in very_recently_used_exercises:
+                    if is_similar_exercise(ex["name"], recent):
+                        overlapping_indices.append(i)
+                        break
+
+            non_protected_count = max(len(final_selection) - len(protected_names), 1)
+            overlap_ratio = len(overlapping_indices) / non_protected_count
+
+            if overlap_ratio > 0.5:
+                # Build swap pool from unused, non-recent candidates
+                selected_names = {ex["name"].lower() for ex in final_selection}
+                swap_pool = [
+                    c for c in candidates_before_removal
+                    if c["name"].lower() not in selected_names
+                    and not any(is_similar_exercise(c["name"], r) for r in very_recently_used_exercises)
+                    and c.get("similarity", 0) > 0.05
+                ]
+                swap_pool.sort(key=lambda x: x.get("similarity", 0), reverse=True)
+
+                swap_idx = 0
+                for i in overlapping_indices:
+                    if swap_idx < len(swap_pool):
+                        replacement = self._format_exercise_for_workout(
+                            swap_pool[swap_idx], fitness_level, adjusted_workout_params,
+                            strength_history, progression_pace
+                        )
+                        logger.info(
+                            f"🔄 [Variety] Post-swap: '{final_selection[i]['name']}' -> '{replacement['name']}'"
+                        )
+                        final_selection[i] = replacement
+                        swap_idx += 1
+
+                if swap_idx > 0:
+                    logger.info(f"🔄 [Variety] Post-selection: swapped {swap_idx}/{len(overlapping_indices)} overlapping exercises")
 
         # Store queued exercise names for marking as used (returned via metadata)
         if queued_names_used:
@@ -790,6 +887,8 @@ class ExerciseRAGService:
         progression_pace: str = "medium",
         equipment: Optional[List[str]] = None,
         avoid_exercises: Optional[List[str]] = None,
+        user_id: Optional[str] = None,
+        recently_used_exercises: Optional[List[str]] = None,
     ) -> List[Dict[str, Any]]:
         """Use AI to select the best exercises from candidates."""
 
@@ -842,6 +941,16 @@ AVOID these exercises already used in adjacent workouts: {', '.join(avoid_exerci
 Do NOT select any exercise from the above list. Pick different exercises for variety.
 """
 
+        recently_used_section = ""
+        if recently_used_exercises:
+            recent_names = recently_used_exercises[:15]
+            recently_used_section = f"""
+VARIETY RULE - RECENTLY USED EXERCISES:
+These exercises were used in the user's recent workouts: {', '.join(recent_names)}
+STRONGLY prefer different exercises for variety. Only pick a recently used exercise
+if there is absolutely no suitable alternative in the candidate list.
+"""
+
         prompt = f"""You are an expert fitness coach selecting exercises for a workout.
 
 TARGET WORKOUT:
@@ -864,6 +973,7 @@ SELECTION CRITERIA:
 8. Align with goals: {', '.join(goals) if goals else 'General fitness'}
 {equipment_priority_section}
 {adjacent_day_section}
+{recently_used_section}
 IMPORTANT: You MUST select {count} DIFFERENT exercises. Each number in your response must be unique.
 
 Return a JSON object with "selected_indices" array containing {count} UNIQUE exercise numbers (1-indexed), in the order they should be performed.
@@ -878,18 +988,18 @@ Select exactly {count} UNIQUE exercises that are SAFE for this user."""
             system_content += ". Select exercises wisely. Return ONLY valid JSON."
 
             from google.genai import types
-            from core.gemini_client import get_genai_client
 
-            client = get_genai_client()
-            response = await client.aio.models.generate_content(
-                model=settings.gemini_model,
+            response = await gemini_generate_with_retry(
+                model=gemini_settings.gemini_model,
                 contents=f"{system_content}\n\n{prompt}",
                 config=types.GenerateContentConfig(
                     response_mime_type="application/json",
                     response_schema=ExerciseIndicesResponse,
-                    temperature=0.5,
+                    temperature=0.7,
                     max_output_tokens=2000,
                 ),
+                user_id=user_id,
+                method_name="ai_select_exercises",
             )
 
             content = response.text.strip()

@@ -19,18 +19,14 @@ from typing import List, Dict, Any, Optional
 from dataclasses import dataclass, asdict
 from enum import Enum
 
-from google import genai
 from google.genai import types
 
 from core.config import get_settings
-from core.gemini_client import get_genai_client
 from core.db import get_supabase_db
+from services.gemini.constants import gemini_generate_with_retry
 
 settings = get_settings()
 logger = logging.getLogger(__name__)
-
-# Initialize Gemini client
-client = get_genai_client()
 
 
 class BodyType(str, Enum):
@@ -342,13 +338,14 @@ IMPORTANT:
             # Call Gemini
             start_time = datetime.now()
 
-            response = await client.aio.models.generate_content(
+            response = await gemini_generate_with_retry(
                 model=self.model,
                 contents=[types.Content(role="user", parts=[types.Part.from_text(text=prompt)])],
                 config=types.GenerateContentConfig(
                     max_output_tokens=8000,
                     temperature=0.7,  # Some creativity for recipes
                 ),
+                method_name="recipe_suggestions",
             )
 
             generation_time_ms = int((datetime.now() - start_time).total_seconds() * 1000)

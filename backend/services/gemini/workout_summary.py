@@ -11,7 +11,7 @@ from google.genai import types
 from core.config import get_settings
 from models.gemini_schemas import ExerciseReasoningResponse
 from services.gemini.constants import (
-    client, _log_token_usage, _gemini_semaphore,
+    gemini_generate_with_retry,
     _summary_cache, settings,
 )
 from services.gemini.utils import _sanitize_for_prompt, safe_join_list
@@ -178,56 +178,41 @@ RULES:
 5. Avoid generic phrases like "great exercise" or "builds strength"
 """
 
-            # Retry logic for intermittent failures
-            max_retries = 2
-            last_error = None
-            content = ""
+            response = await gemini_generate_with_retry(
+                model=self.model,
+                contents=prompt,
+                config=types.GenerateContentConfig(
+                    response_mime_type="application/json",
+                    response_schema=ExerciseReasoningResponse,
+                    temperature=0.7,
+                    max_output_tokens=4000,  # Increased to prevent truncation
+                ),
+                timeout=30,
+                method_name="exercise_reasoning",
+            )
 
-            for attempt in range(max_retries + 1):
-                try:
-                    response = await asyncio.wait_for(
-                        client.aio.models.generate_content(
-                            model=self.model,
-                            contents=prompt,
-                            config=types.GenerateContentConfig(
-                                response_mime_type="application/json",
-                                response_schema=ExerciseReasoningResponse,
-                                temperature=0.7,
-                                max_output_tokens=4000,  # Increased to prevent truncation
-                            ),
-                        ),
-                        timeout=30,  # 30s for exercise reasoning
-                    )
+            # Use response.parsed for structured output - SDK handles JSON parsing
+            parsed = response.parsed
+            if not parsed:
+                logger.warning("[Exercise Reasoning] Empty response from Gemini")
+                return {
+                    "workout_reasoning": "",
+                    "exercise_reasoning": [],
+                }
 
-                    # Use response.parsed for structured output - SDK handles JSON parsing
-                    parsed = response.parsed
-                    if not parsed:
-                        logger.warning(f"[Exercise Reasoning] Empty response (attempt {attempt + 1})")
-                        last_error = "Empty response from Gemini"
-                        continue
+            result = parsed.model_dump()
 
-                    result = parsed.model_dump()
-
-                    if result.get("workout_reasoning") and result.get("exercise_reasoning"):
-                        return {
-                            "workout_reasoning": result.get("workout_reasoning", ""),
-                            "exercise_reasoning": result.get("exercise_reasoning", []),
-                        }
-                    else:
-                        logger.warning(f"[Exercise Reasoning] Incomplete result (attempt {attempt + 1})")
-                        last_error = "Incomplete result from Gemini"
-                        continue
-
-                except Exception as e:
-                    logger.warning(f"[Exercise Reasoning] Failed (attempt {attempt + 1}): {e}", exc_info=True)
-                    last_error = str(e)
-                    continue
-
-            logger.error(f"[Exercise Reasoning] All {max_retries + 1} attempts failed. Last error: {last_error}")
-            return {
-                "workout_reasoning": "",
-                "exercise_reasoning": [],
-            }
+            if result.get("workout_reasoning") and result.get("exercise_reasoning"):
+                return {
+                    "workout_reasoning": result.get("workout_reasoning", ""),
+                    "exercise_reasoning": result.get("exercise_reasoning", []),
+                }
+            else:
+                logger.warning("[Exercise Reasoning] Incomplete result from Gemini")
+                return {
+                    "workout_reasoning": "",
+                    "exercise_reasoning": [],
+                }
 
         except Exception as e:
             logger.error(f"Error generating exercise reasoning: {e}", exc_info=True)

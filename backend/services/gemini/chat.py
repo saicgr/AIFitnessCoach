@@ -20,6 +20,7 @@ from models.gemini_schemas import (
 from services.gemini.constants import (
     client, _log_token_usage, _gemini_semaphore,
     _intent_cache, _embedding_cache, settings,
+    gemini_generate_with_retry, _is_transient_gemini_error,
 )
 from services.gemini.utils import _sanitize_for_prompt
 
@@ -79,23 +80,18 @@ class ChatMixin:
             ),
         ]
 
-        try:
-            response = await asyncio.wait_for(
-                client.aio.models.generate_content(
-                    model=self.model,
-                    contents=contents,
-                    config=types.GenerateContentConfig(
-                        system_instruction=system_prompt,
-                        max_output_tokens=settings.gemini_max_tokens,
-                        temperature=settings.gemini_temperature,
-                        safety_settings=chat_safety_settings,
-                    ),
-                ),
-                timeout=60,  # 60s for chat responses
-            )
-        except asyncio.TimeoutError:
-            logger.error("[Chat] Gemini API timed out after 60s", exc_info=True)
-            raise Exception("AI response timed out. Please try again.")
+        response = await gemini_generate_with_retry(
+            model=self.model,
+            contents=contents,
+            config=types.GenerateContentConfig(
+                system_instruction=system_prompt,
+                max_output_tokens=settings.gemini_max_tokens,
+                temperature=settings.gemini_temperature,
+                safety_settings=chat_safety_settings,
+            ),
+            timeout=60,
+            method_name="chat",
+        )
 
         return response.text
 
@@ -233,22 +229,19 @@ User message: "''' + _sanitize_for_prompt(user_message) + '"'
             logger.warning(f"[IntentCache] Cache lookup error (falling through): {cache_err}", exc_info=True)
 
         try:
-            async with _gemini_semaphore(user_id=user_id):
-                response = await asyncio.wait_for(
-                    client.aio.models.generate_content(
-                        model=self.model,
-                        contents=extraction_prompt,
-                        config=types.GenerateContentConfig(
-                            response_mime_type="application/json",
-                            response_schema=IntentExtractionResponse,
-                            max_output_tokens=2000,  # Increased for thinking models
-                            temperature=0.1,  # Low temp for consistent extraction
-                        ),
-                    ),
-                    timeout=15,  # Intent extraction should be fast
-                )
-
-            _log_token_usage(response, "extract_intent")
+            response = await gemini_generate_with_retry(
+                model=self.model,
+                contents=extraction_prompt,
+                config=types.GenerateContentConfig(
+                    response_mime_type="application/json",
+                    response_schema=IntentExtractionResponse,
+                    max_output_tokens=2000,  # Increased for thinking models
+                    temperature=0.1,  # Low temp for consistent extraction
+                ),
+                user_id=user_id,
+                method_name="extract_intent",
+                timeout=15,
+            )
 
             # Use response.parsed for structured output - SDK handles JSON parsing
             data = response.parsed
@@ -305,18 +298,17 @@ IMPORTANT:
 - If no exercises are mentioned, return: {{"exercises": []}}'''
 
         try:
-            response = await asyncio.wait_for(
-                client.aio.models.generate_content(
-                    model=self.model,
-                    contents=extraction_prompt,
-                    config=types.GenerateContentConfig(
-                        response_mime_type="application/json",
-                        response_schema=ExerciseListResponse,
-                        max_output_tokens=2000,  # Increased for thinking models
-                        temperature=0.1,
-                    ),
+            response = await gemini_generate_with_retry(
+                model=self.model,
+                contents=extraction_prompt,
+                config=types.GenerateContentConfig(
+                    response_mime_type="application/json",
+                    response_schema=ExerciseListResponse,
+                    max_output_tokens=2000,  # Increased for thinking models
+                    temperature=0.1,
                 ),
-                timeout=15,  # 15s for simple extraction
+                method_name="extract_exercises",
+                timeout=15,
             )
 
             # Use response.parsed for structured output - SDK handles JSON parsing
@@ -329,9 +321,6 @@ IMPORTANT:
                 return exercises
             return None
 
-        except asyncio.TimeoutError:
-            logger.error("[ExerciseExtraction] Gemini API timed out after 15s", exc_info=True)
-            return None
         except Exception as e:
             logger.error(f"Exercise extraction from response failed: {e}", exc_info=True)
             return None
@@ -421,18 +410,17 @@ Return a summary describing what was found and any warnings about unclear parsin
                     mime_type="image/jpeg"
                 ))
 
-            response = await asyncio.wait_for(
-                client.aio.models.generate_content(
-                    model=self.model,
-                    contents=contents,
-                    config=types.GenerateContentConfig(
-                        response_mime_type="application/json",
-                        response_schema=ParseWorkoutInputResponse,
-                        max_output_tokens=4000,
-                        temperature=0.2,  # Low for consistent parsing
-                    ),
+            response = await gemini_generate_with_retry(
+                model=self.model,
+                contents=contents,
+                config=types.GenerateContentConfig(
+                    response_mime_type="application/json",
+                    response_schema=ParseWorkoutInputResponse,
+                    max_output_tokens=4000,
+                    temperature=0.2,  # Low for consistent parsing
                 ),
-                timeout=30,  # 30s for workout input parsing
+                method_name="parse_workout_input",
+                timeout=30,
             )
 
             data = response.parsed
@@ -725,18 +713,17 @@ INPUT TO PARSE:
                     mime_type="image/jpeg"
                 ))
 
-            response = await asyncio.wait_for(
-                client.aio.models.generate_content(
-                    model=self.model,
-                    contents=contents,
-                    config=types.GenerateContentConfig(
-                        response_mime_type="application/json",
-                        response_schema=ParseWorkoutInputV2Response,
-                        max_output_tokens=4000,
-                        temperature=0.2,  # Low for consistent parsing
-                    ),
+            response = await gemini_generate_with_retry(
+                model=self.model,
+                contents=contents,
+                config=types.GenerateContentConfig(
+                    response_mime_type="application/json",
+                    response_schema=ParseWorkoutInputV2Response,
+                    max_output_tokens=4000,
+                    temperature=0.2,  # Low for consistent parsing
                 ),
-                timeout=30,  # 30s for workout input parsing
+                method_name="parse_workout_input_v2",
+                timeout=30,
             )
 
             data = response.parsed
@@ -852,12 +839,28 @@ INPUT TO PARSE:
         except Exception as cache_err:
             logger.warning(f"[EmbeddingCache] Cache lookup error (falling through): {cache_err}", exc_info=True)
 
-        async with _gemini_semaphore(user_id=None):
-            result = await client.aio.models.embed_content(
-                model=self.embedding_model,
-                contents=text,
-                config=types.EmbedContentConfig(output_dimensionality=768),
-            )
+        delays = [2.0, 5.0, 10.0]
+        max_retries = 3
+        for attempt in range(max_retries + 1):
+            try:
+                async with _gemini_semaphore(user_id=None):
+                    result = await client.aio.models.embed_content(
+                        model=self.embedding_model,
+                        contents=text,
+                        config=types.EmbedContentConfig(output_dimensionality=768),
+                    )
+                break
+            except Exception as e:
+                if _is_transient_gemini_error(e) and attempt < max_retries:
+                    import random
+                    delay = delays[min(attempt, len(delays) - 1)] + random.uniform(0, 1)
+                    logger.warning(
+                        f"[get_embedding_async] Attempt {attempt + 1}/{max_retries + 1} failed (transient), "
+                        f"retrying in {delay:.1f}s: {e}"
+                    )
+                    await asyncio.sleep(delay)
+                    continue
+                raise
         embedding = result.embeddings[0].values
 
         # Cache the result

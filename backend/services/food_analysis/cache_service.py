@@ -39,8 +39,6 @@ from core.db.nutrition_db import NutritionDB
 from core.supabase_client import get_supabase
 from services.food_database_lookup_service import get_food_db_lookup_service
 from services.gemini_service import GeminiService
-from core.redis_cache import RedisCache
-
 from services.food_analysis.constants import (
     _WORD_NUMBERS,
     _COUNT_UNITS,
@@ -74,6 +72,4 @@ from services.food_analysis.modifiers import (
 )
 
 logger = logging.getLogger(__name__)
-
-_food_analysis_cache = RedisCache(prefix="food_analysis", ttl_seconds=86400, max_size=200)
 

@@ -11,6 +11,7 @@ This module handles holistic weekly plan generation and management:
 - PUT /{id}/daily/{date} - Update daily entry
 - POST /meal-suggestions - Generate AI meal suggestions for a day
 """
+import asyncio
 from core.db import get_supabase_db
 
 import json

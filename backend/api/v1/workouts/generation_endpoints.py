@@ -268,6 +268,13 @@ async def generate_workout(request: Request, *, body: GenerateWorkoutRequest, ba
         if lookback_days > 7:
             recently_used_exercises = await get_recently_used_exercises(body.user_id, days=lookback_days)
             logger.info(f"🔄 [Variety] Extended lookback to {lookback_days} days (variation={variation_percentage}%)")
+
+        # Fetch exercises for hard-exclusion (scaled by variation_percentage)
+        # 30% → 7 days, 50% → 11 days, 80% → 17 days, 100% → 21 days
+        hard_exclude_days = max(7, 7 + max(0, (variation_percentage - 10)) // 5)
+        very_recently_used_exercises = await get_recently_used_exercises(body.user_id, days=hard_exclude_days)
+        logger.info(f"🔄 [Variety] Hard-exclude window: {hard_exclude_days} days, found {len(very_recently_used_exercises)} exercises")
+
         # Fetch recent workout name words to avoid repetitive names
         avoid_name_words = await get_recent_workout_name_words(body.user_id, days=lookback_days if lookback_days > 7 else 14)
         logger.info(f"🔄 [Consistency] Mode: {consistency_mode}, Recently used: {len(recently_used_exercises) if recently_used_exercises else 0}, Variation: {variation_percentage}%")
@@ -469,6 +476,7 @@ async def generate_workout(request: Request, *, body: GenerateWorkoutRequest, ba
                 favorite_exercises=favorite_exercises if favorite_exercises else None,
                 queued_exercises=exercise_queue if exercise_queue else None,
                 batch_offset=body.batch_offset,
+                very_recently_used_exercises=very_recently_used_exercises,
             )
 
             if rag_exercises:

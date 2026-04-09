@@ -410,11 +410,10 @@ Example format: {{"suggestions": [...]}}"""
 
         from google.genai import types
         from core.config import get_settings
-        from core.gemini_client import get_genai_client
+        from services.gemini.constants import gemini_generate_with_retry
         settings = get_settings()
 
-        client = get_genai_client()
-        response = await client.aio.models.generate_content(
+        response = await gemini_generate_with_retry(
             model=settings.gemini_model,
             contents=f"{system_prompt}\n\nUser request: {user_prompt}",
             config=types.GenerateContentConfig(
@@ -423,6 +422,8 @@ Example format: {{"suggestions": [...]}}"""
                 temperature=0.7,
                 max_output_tokens=4000,
             ),
+            user_id=body.user_id,
+            method_name="suggest_workout_db",
         )
 
         content = response.text.strip()

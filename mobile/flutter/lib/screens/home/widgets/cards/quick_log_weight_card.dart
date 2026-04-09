@@ -8,7 +8,6 @@ import '../../../../data/models/home_layout.dart';
 import '../../../../data/providers/nutrition_preferences_provider.dart';
 import '../../../../data/providers/xp_provider.dart';
 import '../../../../data/repositories/auth_repository.dart';
-import '../../../../data/repositories/fasting_repository.dart';
 import '../../../../data/repositories/measurements_repository.dart';
 import '../../../../data/services/haptic_service.dart';
 import '../../../fasting/widgets/log_weight_sheet.dart';
@@ -98,11 +97,11 @@ class _QuickLogWeightCardState extends ConsumerState<QuickLogWeightCard> {
     HapticService.medium();
 
     try {
-      final fastingRepo = ref.read(fastingRepositoryProvider);
-      await fastingRepo.logWeight(
+      await ref.read(measurementsProvider.notifier).recordMeasurement(
         userId: userId,
-        weightKg: weightKg,
-        date: DateTime.now().toIso8601String().split('T')[0],
+        type: MeasurementType.weight,
+        value: weightKg,
+        unit: 'kg',
       );
 
       // Refresh weight history by re-initializing the provider

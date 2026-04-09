@@ -15,21 +15,17 @@ import json
 import base64
 from datetime import datetime
 from typing import Optional
-from google import genai
 from google.genai import types
 
 import boto3
 
 from core.config import get_settings
-from core.gemini_client import get_genai_client
 from core.logger import get_logger
 from models.gemini_schemas import FoodAnalysisResponse
+from services.gemini.constants import gemini_generate_with_retry
 
 logger = get_logger(__name__)
 settings = get_settings()
-
-# Initialize Gemini client
-client = get_genai_client()
 
 
 def _get_nutrition_cache() -> Optional[str]:
@@ -168,10 +164,11 @@ Guidelines:
                 gen_config.cached_content = cache_name
 
             # Generate content with image
-            response = await client.aio.models.generate_content(
+            response = await gemini_generate_with_retry(
                 model=self.model,
                 contents=[prompt, image_part],
                 config=gen_config,
+                method_name="vision_analyze_food_image",
             )
 
             # Parse the response - try structured parsed result first, fall back to text
@@ -312,13 +309,14 @@ Guidelines:
 
             image_part = types.Part.from_bytes(data=raw_bytes, mime_type=mime_type)
 
-            response = await client.aio.models.generate_content(
+            response = await gemini_generate_with_retry(
                 model=self.model,
                 contents=[classify_prompt, image_part],
                 config=types.GenerateContentConfig(
                     temperature=0.1,
                     max_output_tokens=15,
                 ),
+                method_name="vision_classify_media",
             )
 
             raw_text = response.text.strip().lower()
@@ -369,13 +367,14 @@ Guidelines:
             "Look at these food-related images. Classify what they show as ONE of: "
             "plate, buffet, menu. Respond with one word only."
         )
-        response = await client.aio.models.generate_content(
+        response = await gemini_generate_with_retry(
             model=self.model,
             contents=[classify_prompt] + image_parts,
             config=types.GenerateContentConfig(
                 temperature=0.1,
                 max_output_tokens=10,
             ),
+            method_name="vision_classify_food_images",
         )
         classification = response.text.strip().lower()
         if "buffet" in classification or "spread" in classification:
@@ -587,10 +586,11 @@ Guidelines:
 
             logger.info(f"Multi-image food analysis: mode={analysis_mode}, cache={'yes' if cache_name else 'no'}")
 
-            response = await client.aio.models.generate_content(
+            response = await gemini_generate_with_retry(
                 model=self.model,
                 contents=[prompt] + image_parts,
                 config=gen_config,
+                method_name="vision_analyze_food_s3",
             )
 
             content = response.text.strip()
@@ -690,7 +690,7 @@ Guidelines:
 
             image_part = types.Part.from_bytes(data=image_bytes, mime_type=mime_type)
 
-            response = await client.aio.models.generate_content(
+            response = await gemini_generate_with_retry(
                 model=self.model,
                 contents=[prompt, image_part],
                 config=types.GenerateContentConfig(
@@ -698,6 +698,7 @@ Guidelines:
                     max_output_tokens=4000,
                     temperature=0.2,
                 ),
+                method_name="vision_analyze_app_screenshot",
             )
 
             content = response.text.strip()
@@ -801,7 +802,7 @@ Guidelines:
 
             image_part = types.Part.from_bytes(data=image_bytes, mime_type=mime_type)
 
-            response = await client.aio.models.generate_content(
+            response = await gemini_generate_with_retry(
                 model=self.model,
                 contents=[prompt, image_part],
                 config=types.GenerateContentConfig(
@@ -809,6 +810,7 @@ Guidelines:
                     max_output_tokens=3000,
                     temperature=0.2,
                 ),
+                method_name="vision_analyze_nutrition_label",
             )
 
             content = response.text.strip()

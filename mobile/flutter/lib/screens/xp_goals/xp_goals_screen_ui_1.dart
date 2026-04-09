@@ -347,6 +347,12 @@ extension _XPGoalsScreenStateUI1 on _XPGoalsScreenState {
         isComplete: dailyGoalsState?.hitProteinGoal ?? false,
         icon: Icons.egg_alt,
       ),
+      _DailyGoal(
+        title: 'Log body measurements',
+        xp: 20,
+        isComplete: dailyGoalsState?.loggedBodyMeasurements ?? false,
+        icon: Icons.straighten,
+      ),
     ];
 
     final completedCount = dailyGoals.where((g) => g.isComplete).length;

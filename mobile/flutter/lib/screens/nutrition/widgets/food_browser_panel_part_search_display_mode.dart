@@ -34,10 +34,10 @@ class _BrowseFilterTabs extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final teal = isDark ? AppColors.cyan : AppColorsLight.cyan;
     final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+    const orange = Color(0xFFF97316);
 
     Widget tab(FoodBrowserFilter filter, String label, IconData icon) {
       final isActive = selected == filter;
@@ -47,9 +47,9 @@ class _BrowseFilterTabs extends StatelessWidget {
           duration: const Duration(milliseconds: 150),
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
           decoration: BoxDecoration(
-            color: isActive ? teal : elevated,
+            color: isActive ? orange : elevated,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: isActive ? teal : cardBorder),
+            border: Border.all(color: isActive ? orange : cardBorder),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,

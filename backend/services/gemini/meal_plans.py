@@ -11,7 +11,7 @@ from google.genai import types
 from core.config import get_settings
 from models.gemini_schemas import DailyMealPlanResponse, MealSuggestionsResponse, SnackSuggestionsResponse
 from services.gemini.constants import (
-    client, _log_token_usage, _gemini_semaphore, settings,
+    client, _log_token_usage, _gemini_semaphore, settings, gemini_generate_with_retry,
 )
 from services.gemini.utils import _sanitize_for_prompt, safe_join_list
 from core.anonymize import age_to_bracket
@@ -174,17 +174,16 @@ Add coordination_notes array with warnings if any conflicts exist (e.g., workout
 '''
 
         try:
-            response = await asyncio.wait_for(
-                client.aio.models.generate_content(
-                    model=self.model,
-                    contents=[types.Content(role="user", parts=[types.Part.from_text(text=prompt)])],
-                    config=types.GenerateContentConfig(
-                        system_instruction="You are a fitness and nutrition planning AI. Return only valid JSON.",
-                        max_output_tokens=8000,
-                        temperature=0.7,
-                    ),
+            response = await gemini_generate_with_retry(
+                model=self.model,
+                contents=[types.Content(role="user", parts=[types.Part.from_text(text=prompt)])],
+                config=types.GenerateContentConfig(
+                    system_instruction="You are a fitness and nutrition planning AI. Return only valid JSON.",
+                    max_output_tokens=8000,
+                    temperature=0.7,
                 ),
                 timeout=90,  # 90s for large weekly plan generation
+                method_name="generate_weekly_holistic_plan",
             )
 
             # Extract JSON from response
@@ -290,17 +289,16 @@ Return ONLY valid JSON (no markdown) as an array:
 '''
 
         try:
-            response = await asyncio.wait_for(
-                client.aio.models.generate_content(
-                    model=self.model,
-                    contents=[types.Content(role="user", parts=[types.Part.from_text(text=prompt)])],
-                    config=types.GenerateContentConfig(
-                        system_instruction="You are a nutrition planning AI. Generate practical, healthy meal suggestions. Return only valid JSON.",
-                        max_output_tokens=4000,
-                        temperature=0.7,
-                    ),
+            response = await gemini_generate_with_retry(
+                model=self.model,
+                contents=[types.Content(role="user", parts=[types.Part.from_text(text=prompt)])],
+                config=types.GenerateContentConfig(
+                    system_instruction="You are a nutrition planning AI. Generate practical, healthy meal suggestions. Return only valid JSON.",
+                    max_output_tokens=4000,
+                    temperature=0.7,
                 ),
                 timeout=60,  # 60s for daily meal plan
+                method_name="generate_daily_meal_plan",
             )
 
             # Extract JSON from response
@@ -380,17 +378,16 @@ Return ONLY valid JSON (no markdown):
 '''
 
         try:
-            response = await asyncio.wait_for(
-                client.aio.models.generate_content(
-                    model=self.model,
-                    contents=[types.Content(role="user", parts=[types.Part.from_text(text=prompt)])],
-                    config=types.GenerateContentConfig(
-                        system_instruction="You are a nutrition planning AI. Return only valid JSON.",
-                        max_output_tokens=2000,
-                        temperature=0.8,
-                    ),
+            response = await gemini_generate_with_retry(
+                model=self.model,
+                contents=[types.Content(role="user", parts=[types.Part.from_text(text=prompt)])],
+                config=types.GenerateContentConfig(
+                    system_instruction="You are a nutrition planning AI. Return only valid JSON.",
+                    max_output_tokens=2000,
+                    temperature=0.8,
                 ),
                 timeout=30,  # 30s for single meal regeneration
+                method_name="regenerate_meal",
             )
 
             text = response.text.strip()
@@ -701,17 +698,16 @@ Rules:
 '''
 
         try:
-            response = await asyncio.wait_for(
-                client.aio.models.generate_content(
-                    model=self.model,
-                    contents=[types.Content(role="user", parts=[types.Part.from_text(text=prompt)])],
-                    config=types.GenerateContentConfig(
-                        system_instruction="You are a nutrition expert AI. Return only valid JSON.",
-                        max_output_tokens=500,
-                        temperature=0.1,
-                    ),
+            response = await gemini_generate_with_retry(
+                model=self.model,
+                contents=[types.Content(role="user", parts=[types.Part.from_text(text=prompt)])],
+                config=types.GenerateContentConfig(
+                    system_instruction="You are a nutrition expert AI. Return only valid JSON.",
+                    max_output_tokens=500,
+                    temperature=0.1,
                 ),
                 timeout=15,
+                method_name="review_food",
             )
 
             if not response.text:

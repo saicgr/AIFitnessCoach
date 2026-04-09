@@ -6,6 +6,7 @@ This module handles reaction operations:
 - DELETE /reactions/{activity_id} - Remove a reaction
 - GET /reactions/{activity_id} - Get reactions for an activity
 """
+import asyncio
 from typing import Optional
 
 from fastapi import APIRouter, Depends, BackgroundTasks, HTTPException

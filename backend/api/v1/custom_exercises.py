@@ -24,7 +24,7 @@ from core.supabase_db import get_supabase_db
 from core.auth import get_current_user
 from core.config import get_settings
 from core.exceptions import safe_internal_error
-from core.gemini_client import get_genai_client
+from services.gemini.constants import gemini_generate_with_retry
 from services.custom_exercise_media_service import get_custom_exercise_media_service
 
 logger = logging.getLogger(__name__)
@@ -539,9 +539,8 @@ Rules:
 
         # Call Gemini Vision
         settings = get_settings()
-        gemini_client = get_genai_client()
 
-        response = await gemini_client.aio.models.generate_content(
+        response = await gemini_generate_with_retry(
             model=settings.gemini_model,
             contents=[prompt, image_part],
             config=types.GenerateContentConfig(
@@ -549,6 +548,8 @@ Rules:
                 temperature=0.3,
                 max_output_tokens=1000,
             ),
+            user_id=str(user_id),
+            method_name="create_custom_exercise",
         )
 
         # Parse the response

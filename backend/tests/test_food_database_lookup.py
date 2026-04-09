@@ -8,6 +8,7 @@ applies per-100g nutrition data.
 
 Run with: pytest backend/tests/test_food_database_lookup.py -v
 """
+import asyncio
 
 import sys
 import os

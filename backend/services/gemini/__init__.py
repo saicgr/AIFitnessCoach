@@ -14,7 +14,10 @@ from services.gemini.service import (
 from services.gemini.constants import (
     ResponseCache,
     _gemini_semaphore,
+    _is_transient_gemini_error,
     cost_tracker,
+    gemini_generate_with_retry,
+    gemini_generate_with_retry_sync,
     _log_token_usage,
 )
 from services.gemini.utils import (
@@ -34,7 +37,10 @@ __all__ = [
     "gemini_service",
     "ResponseCache",
     "_gemini_semaphore",
+    "_is_transient_gemini_error",
     "cost_tracker",
+    "gemini_generate_with_retry",
+    "gemini_generate_with_retry_sync",
     "_log_token_usage",
     "validate_set_targets_strict",
     "ensure_set_targets",

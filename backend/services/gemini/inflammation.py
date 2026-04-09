@@ -11,7 +11,7 @@ from google.genai import types
 from core.config import get_settings
 from models.gemini_schemas import InflammationAnalysisGeminiResponse
 from services.gemini.constants import (
-    client, _log_token_usage, settings,
+    client, _log_token_usage, settings, gemini_generate_with_retry,
 )
 
 logger = logging.getLogger("gemini")
@@ -119,18 +119,17 @@ IMPORTANT RULES:
         try:
             logger.info(f"[Gemini] Analyzing ingredient inflammation for: {product_name or 'Unknown product'}")
             try:
-                response = await asyncio.wait_for(
-                    client.aio.models.generate_content(
-                        model=self.model,
-                        contents=prompt,
-                        config=types.GenerateContentConfig(
-                            response_mime_type="application/json",
-                            response_schema=InflammationAnalysisGeminiResponse,
-                            max_output_tokens=4000,
-                            temperature=0.2,  # Low temperature for consistent classification
-                        ),
+                response = await gemini_generate_with_retry(
+                    model=self.model,
+                    contents=prompt,
+                    config=types.GenerateContentConfig(
+                        response_mime_type="application/json",
+                        response_schema=InflammationAnalysisGeminiResponse,
+                        max_output_tokens=4000,
+                        temperature=0.2,  # Low temperature for consistent classification
                     ),
                     timeout=30,  # 30s for inflammation analysis
+                    method_name="analyze_inflammation",
                 )
             except asyncio.TimeoutError:
                 logger.error("[Inflammation] Gemini API timed out after 30s", exc_info=True)

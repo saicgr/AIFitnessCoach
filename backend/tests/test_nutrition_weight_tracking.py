@@ -8,6 +8,7 @@ Tests the weight logging and trend calculation endpoints:
 Run with: pytest backend/tests/test_nutrition_weight_tracking.py -v
 """
 
+import asyncio
 import pytest
 from unittest.mock import MagicMock, patch
 from datetime import datetime, timedelta

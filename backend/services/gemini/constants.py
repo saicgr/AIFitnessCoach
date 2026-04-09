@@ -5,7 +5,9 @@ from google import genai
 from core.gemini_client import get_genai_client
 from google.genai import types
 from typing import Dict, Optional
+import asyncio
 import logging
+import random
 import time
 
 from core.config import get_settings
@@ -150,6 +152,120 @@ class _CostTracker:
 
 # Singleton tracker - importable by health.py
 cost_tracker = _CostTracker()
+
+
+def _is_transient_gemini_error(e: Exception) -> bool:
+    """Check if a Gemini API error is transient and worth retrying."""
+    error_str = str(e).lower()
+    return any(kw in error_str for kw in [
+        "429", "resource_exhausted", "503", "rate limit",
+        "timeout", "unavailable", "deadline exceeded",
+    ])
+
+
+async def gemini_generate_with_retry(
+    *,
+    model: str,
+    contents,
+    config,
+    user_id: Optional[str] = None,
+    max_retries: int = 3,
+    timeout: Optional[float] = None,
+    method_name: str = "unknown",
+):
+    """Gemini API call with semaphore concurrency control + exponential backoff retry for transient errors.
+
+    Args:
+        model: Gemini model name.
+        contents: Prompt contents.
+        config: GenerateContentConfig.
+        user_id: User ID for per-user semaphore fairness (None = global-only).
+        max_retries: Max retry attempts for transient errors.
+        timeout: Optional timeout in seconds for each attempt.
+        method_name: Name for logging/cost tracking.
+
+    Returns:
+        Gemini API response.
+
+    Raises:
+        The original exception after all retries are exhausted, or immediately for non-transient errors.
+    """
+    delays = [2.0, 5.0, 10.0]
+    for attempt in range(max_retries + 1):
+        try:
+            async with _gemini_semaphore(user_id=user_id):
+                if timeout:
+                    response = await asyncio.wait_for(
+                        client.aio.models.generate_content(
+                            model=model, contents=contents, config=config,
+                        ),
+                        timeout=timeout,
+                    )
+                else:
+                    response = await client.aio.models.generate_content(
+                        model=model, contents=contents, config=config,
+                    )
+            _log_token_usage(response, method_name, user_id or "system")
+            return response
+        except Exception as e:
+            if _is_transient_gemini_error(e) and attempt < max_retries:
+                delay = delays[min(attempt, len(delays) - 1)] + random.uniform(0, 1)
+                logger.warning(
+                    f"[{method_name}] Attempt {attempt + 1}/{max_retries + 1} failed (transient), "
+                    f"retrying in {delay:.1f}s: {e}"
+                )
+                await asyncio.sleep(delay)
+                continue
+            raise
+
+
+def gemini_generate_with_retry_sync(
+    *,
+    model: str,
+    contents,
+    config,
+    max_retries: int = 3,
+    timeout: Optional[float] = None,
+    method_name: str = "unknown",
+):
+    """Synchronous Gemini API call with retry for transient errors (no semaphore).
+
+    Use for sync call sites that cannot be easily converted to async.
+    """
+    delays = [2.0, 5.0, 10.0]
+    for attempt in range(max_retries + 1):
+        try:
+            if timeout:
+                import signal
+
+                def _timeout_handler(signum, frame):
+                    raise TimeoutError(f"Gemini sync call timed out after {timeout}s")
+
+                old_handler = signal.signal(signal.SIGALRM, _timeout_handler)
+                signal.alarm(int(timeout))
+                try:
+                    response = client.models.generate_content(
+                        model=model, contents=contents, config=config,
+                    )
+                finally:
+                    signal.alarm(0)
+                    signal.signal(signal.SIGALRM, old_handler)
+            else:
+                response = client.models.generate_content(
+                    model=model, contents=contents, config=config,
+                )
+            _log_token_usage(response, method_name)
+            return response
+        except Exception as e:
+            if _is_transient_gemini_error(e) and attempt < max_retries:
+                delay = delays[min(attempt, len(delays) - 1)] + random.uniform(0, 1)
+                logger.warning(
+                    f"[{method_name}] Sync attempt {attempt + 1}/{max_retries + 1} failed (transient), "
+                    f"retrying in {delay:.1f}s: {e}"
+                )
+                time.sleep(delay)
+                continue
+            raise
 
 
 def _log_token_usage(response, method_name: str, user_id: str = "unknown") -> None:

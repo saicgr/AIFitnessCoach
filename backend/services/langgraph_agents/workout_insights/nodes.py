@@ -8,8 +8,8 @@ with fallback to the centralized AI response parser.
 import json
 from typing import Any, Dict, List
 
-from google import genai
 from google.genai import types
+from services.gemini.constants import gemini_generate_with_retry
 
 from .state import WorkoutInsightsState
 from core.config import get_settings
@@ -182,10 +182,6 @@ Rules:
 BAD example (too generic): "These compound movements maximize calorie burn"
 GOOD example: "Lead with Barbell Squats at 4x8-12 while fresh — drive through your heels and keep your chest up to load your quads fully" """
 
-    # Initialize google.genai client
-    from core.gemini_client import get_genai_client
-    client = get_genai_client()
-
     # Deterministic fallback based on workout data (no AI needed)
     def _build_fallback(headline_text: str = None):
         fb_headline = headline_text or "Time to get to work"
@@ -201,122 +197,101 @@ GOOD example: "Lead with Barbell Squats at 4x8-12 while fresh — drive through 
             "summary": json.dumps({"headline": fb_headline, "sections": fb_sections}),
         }
 
-    max_retries = 2
-    last_error = None
+    try:
+        response = await gemini_generate_with_retry(
+            model=settings.gemini_model,
+            contents=prompt,
+            config=types.GenerateContentConfig(
+                response_mime_type="application/json",
+                response_schema=WorkoutInsightsResponse,
+                temperature=0.7,
+                max_output_tokens=8192,  # High to account for thinking model token budget
+            ),
+            method_name="workout_insights",
+        )
 
-    for attempt in range(max_retries + 1):
-        try:
-            if attempt > 0:
-                logger.info(f"[Generate Node] Retry attempt {attempt}/{max_retries}")
+        # Primary: Use structured output (response.parsed)
+        # The SDK automatically parses JSON when response_schema is provided
+        insights = None
 
-            response = await client.aio.models.generate_content(
-                model=settings.gemini_model,
-                contents=prompt,
-                config=types.GenerateContentConfig(
-                    response_mime_type="application/json",
-                    response_schema=WorkoutInsightsResponse,
-                    temperature=0.7,
-                    max_output_tokens=8192,  # High to account for thinking model token budget
-                ),
+        if response.parsed:
+            # Structured output succeeded - convert Pydantic model to dict
+            insights = response.parsed.model_dump()
+            logger.debug("[Generate Node] Structured output parsing succeeded")
+        else:
+            # Log diagnostic info to understand why structured output failed
+            finish_reason = None
+            if hasattr(response, 'candidates') and response.candidates:
+                finish_reason = response.candidates[0].finish_reason
+            raw_text = response.text if response.text else ""
+            logger.warning(
+                f"[Generate Node] Structured output empty. "
+                f"finish_reason={finish_reason}, "
+                f"raw_text_len={len(raw_text)}, "
+                f"raw_text_preview={raw_text[:200] if raw_text else 'None'}"
             )
 
-            # Primary: Use structured output (response.parsed)
-            # The SDK automatically parses JSON when response_schema is provided
-            insights = None
+            # Fallback 1: Try direct json.loads on raw text (SDK parse can fail even with valid JSON)
+            if raw_text:
+                try:
+                    insights = json.loads(raw_text)
+                    if isinstance(insights, str):
+                        insights = json.loads(insights)
+                    if isinstance(insights, dict):
+                        logger.info("[Generate Node] Direct json.loads succeeded on raw text")
+                    else:
+                        insights = None
+                except (json.JSONDecodeError, ValueError) as e:
+                    logger.debug(f"Direct JSON parse failed: {e}")
 
-            if response.parsed:
-                # Structured output succeeded - convert Pydantic model to dict
-                insights = response.parsed.model_dump()
-                logger.debug("[Generate Node] Structured output parsing succeeded")
-            else:
-                # Log diagnostic info to understand why structured output failed
-                finish_reason = None
-                if hasattr(response, 'candidates') and response.candidates:
-                    finish_reason = response.candidates[0].finish_reason
-                raw_text = response.text if response.text else ""
-                logger.warning(
-                    f"[Generate Node] Structured output empty. "
-                    f"finish_reason={finish_reason}, "
-                    f"raw_text_len={len(raw_text)}, "
-                    f"raw_text_preview={raw_text[:200] if raw_text else 'None'}"
+            # Fallback 2: Use centralized AI response parser
+            if insights is None and raw_text:
+                parse_result = parse_ai_json(
+                    raw_text,
+                    expected_fields=["headline", "sections"],
+                    context="workout_insights"
                 )
 
-                # Fallback 1: Try direct json.loads on raw text (SDK parse can fail even with valid JSON)
-                if raw_text:
-                    try:
-                        insights = json.loads(raw_text)
-                        if isinstance(insights, str):
-                            insights = json.loads(insights)
-                        if isinstance(insights, dict):
-                            logger.info("[Generate Node] Direct json.loads succeeded on raw text")
-                        else:
-                            insights = None
-                    except (json.JSONDecodeError, ValueError) as e:
-                        logger.debug(f"Direct JSON parse failed: {e}")
+                if parse_result.success:
+                    insights = parse_result.data
+                    if parse_result.was_repaired:
+                        logger.info(f"[Generate Node] JSON repaired using {parse_result.strategy_used.value}: {parse_result.repair_steps}")
+                else:
+                    logger.warning(f"[Generate Node] Fallback parser failed: {parse_result.error}")
 
-                # Fallback 2: Use centralized AI response parser
-                if insights is None and raw_text:
-                    parse_result = parse_ai_json(
-                        raw_text,
-                        expected_fields=["headline", "sections"],
-                        context="workout_insights"
-                    )
-
-                    if parse_result.success:
-                        insights = parse_result.data
-                        if parse_result.was_repaired:
-                            logger.info(f"[Generate Node] JSON repaired using {parse_result.strategy_used.value}: {parse_result.repair_steps}")
-                    else:
-                        logger.warning(f"[Generate Node] Fallback parser failed: {parse_result.error}")
-                        last_error = ValueError(f"Failed to parse AI response: {parse_result.error}")
-                        if attempt < max_retries:
-                            continue  # Retry
-
-            # Validate we got the expected structure
-            if insights is None:
-                last_error = ValueError("No insights generated")
-                if attempt < max_retries:
-                    continue
-                # All retries exhausted - use deterministic fallback
-                logger.warning(f"[Generate Node] All {max_retries + 1} attempts failed to produce insights, using fallback")
-                return _build_fallback()
-
-            headline = insights.get("headline", "Let's crush this workout!")
-            sections = insights.get("sections", [])
-
-            # Validate section count
-            if len(sections) < 3:
-                logger.warning(f"[Generate Node] Insufficient sections: {len(sections)}")
-                if attempt < max_retries:
-                    continue  # Retry
-                # All retries exhausted - use deterministic fallback sections
-                logger.warning(f"[Generate Node] Using fallback sections after {max_retries + 1} attempts")
-                return _build_fallback(headline)
-
-            # Truncate headline if too long (max 5 words)
-            if len(headline.split()) > 5:
-                headline = " ".join(headline.split()[:5])
-
-            # Truncate section content if too long (max 30 words)
-            for section in sections:
-                content = section.get("content", "")
-                words = content.split()
-                if len(words) > 30:
-                    section["content"] = " ".join(words[:30])
-
-            logger.info(f"[Generate Node] Generated {len(sections)} sections (attempt {attempt})")
-
-            # Return both structured data and JSON string for API
-            return {
-                "headline": headline,
-                "sections": sections,
-                "summary": json.dumps({"headline": headline, "sections": sections}),
-            }
-
-        except Exception as e:
-            last_error = e
-            if attempt < max_retries:
-                logger.warning(f"[Generate Node] Attempt {attempt} failed: {e}, retrying...", exc_info=True)
-                continue
-            logger.error(f"[Generate Node] All {max_retries + 1} attempts failed: {e}, using fallback", exc_info=True)
+        # Validate we got the expected structure
+        if insights is None:
+            logger.warning("[Generate Node] Failed to produce insights, using fallback")
             return _build_fallback()
+
+        headline = insights.get("headline", "Let's crush this workout!")
+        sections = insights.get("sections", [])
+
+        # Validate section count
+        if len(sections) < 3:
+            logger.warning(f"[Generate Node] Insufficient sections: {len(sections)}, using fallback")
+            return _build_fallback(headline)
+
+        # Truncate headline if too long (max 5 words)
+        if len(headline.split()) > 5:
+            headline = " ".join(headline.split()[:5])
+
+        # Truncate section content if too long (max 30 words)
+        for section in sections:
+            content = section.get("content", "")
+            words = content.split()
+            if len(words) > 30:
+                section["content"] = " ".join(words[:30])
+
+        logger.info(f"[Generate Node] Generated {len(sections)} sections")
+
+        # Return both structured data and JSON string for API
+        return {
+            "headline": headline,
+            "sections": sections,
+            "summary": json.dumps({"headline": headline, "sections": sections}),
+        }
+
+    except Exception as e:
+        logger.error(f"[Generate Node] Failed: {e}, using fallback", exc_info=True)
+        return _build_fallback()

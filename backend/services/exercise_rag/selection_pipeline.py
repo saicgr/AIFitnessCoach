@@ -210,8 +210,9 @@ def apply_consistency_mode(
             logger.info(f"Consistency mode: boosted {boosted_count} recently used exercises")
             candidates.sort(key=lambda x: x["similarity"], reverse=True)
     else:
-        # "vary" mode (default)
-        penalty_factor = max(0.25, 1.0 - (variation_percentage / 100.0) * 0.75 - 0.15)
+        # "vary" mode (default) — strong penalty scaled by variation_percentage
+        # 30% → 0.225x, 50% → 0.175x, 80% → 0.10x, 100% → 0.05x
+        penalty_factor = max(0.05, 0.3 - (variation_percentage / 100.0) * 0.25)
         penalized_count = 0
         for candidate in candidates:
             if candidate["name"].lower() in recently_used_lower:

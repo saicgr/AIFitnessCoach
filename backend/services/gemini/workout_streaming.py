@@ -17,7 +17,7 @@ from core.weight_utils import kg_to_lbs_gym
 from models.gemini_schemas import GeneratedWorkoutResponse
 from services.split_descriptions import SPLIT_DESCRIPTIONS, get_split_context
 from services.gemini.constants import (
-    client, cost_tracker, _log_token_usage, _gemini_semaphore, settings,
+    client, cost_tracker, _log_token_usage, _gemini_semaphore, _is_transient_gemini_error, settings,
 )
 from services.gemini.utils import (
     _sanitize_for_prompt, safe_join_list,
@@ -259,16 +259,31 @@ If user has gym equipment (full_gym, barbell, dumbbells, cable_machine, machines
 
         try:
             logger.info(f"[Streaming] Calling Gemini API with model={self.model}, prompt length={len(prompt)}")
-            stream = await client.aio.models.generate_content_stream(
-                model=self.model,
-                contents=prompt,
-                config=types.GenerateContentConfig(
-                    response_mime_type="application/json",
-                    response_schema=GeneratedWorkoutResponse,
-                    temperature=0.7,
-                    max_output_tokens=16384  # Increased to prevent truncation with detailed workouts
-                ),
-            )
+            _streaming_max_retries = 3
+            _streaming_delays = [2.0, 5.0, 10.0]
+            stream = None
+            for _attempt in range(_streaming_max_retries + 1):
+                try:
+                    async with _gemini_semaphore(user_id=user_id):
+                        stream = await client.aio.models.generate_content_stream(
+                            model=self.model,
+                            contents=prompt,
+                            config=types.GenerateContentConfig(
+                                response_mime_type="application/json",
+                                response_schema=GeneratedWorkoutResponse,
+                                temperature=0.7,
+                                max_output_tokens=16384  # Increased to prevent truncation with detailed workouts
+                            ),
+                        )
+                    break
+                except Exception as _e:
+                    if _is_transient_gemini_error(_e) and _attempt < _streaming_max_retries:
+                        import random as _rand
+                        _delay = _streaming_delays[min(_attempt, len(_streaming_delays) - 1)] + _rand.uniform(0, 1)
+                        logger.warning(f"[Streaming] Attempt {_attempt + 1}/{_streaming_max_retries + 1} failed (transient), retrying in {_delay:.1f}s: {_e}")
+                        await asyncio.sleep(_delay)
+                        continue
+                    raise
 
             if stream is None:
                 logger.error(f"❌ [Streaming] Gemini returned None stream - API may be unavailable or prompt rejected")
@@ -429,17 +444,32 @@ If user has gym equipment (full_gym, barbell, dumbbells, cable_machine, machines
             logger.info(f"[CachedStreaming] Using cache: {cache_name}")
             logger.info(f"[CachedStreaming] User prompt length: {len(user_prompt)} chars (vs ~15000 non-cached)")
 
-            stream = await client.aio.models.generate_content_stream(
-                model=self.model,
-                contents=user_prompt,
-                config=types.GenerateContentConfig(
-                    cached_content=cache_name,  # USE THE CACHE!
-                    response_mime_type="application/json",
-                    response_schema=GeneratedWorkoutResponse,
-                    temperature=0.7,
-                    max_output_tokens=16384,  # Must match non-cached - workouts with set_targets can exceed 4000 tokens
-                ),
-            )
+            _streaming_max_retries = 3
+            _streaming_delays = [2.0, 5.0, 10.0]
+            stream = None
+            for _attempt in range(_streaming_max_retries + 1):
+                try:
+                    async with _gemini_semaphore(user_id=user_id):
+                        stream = await client.aio.models.generate_content_stream(
+                            model=self.model,
+                            contents=user_prompt,
+                            config=types.GenerateContentConfig(
+                                cached_content=cache_name,  # USE THE CACHE!
+                                response_mime_type="application/json",
+                                response_schema=GeneratedWorkoutResponse,
+                                temperature=0.7,
+                                max_output_tokens=16384,  # Must match non-cached - workouts with set_targets can exceed 4000 tokens
+                            ),
+                        )
+                    break
+                except Exception as _e:
+                    if _is_transient_gemini_error(_e) and _attempt < _streaming_max_retries:
+                        import random as _rand
+                        _delay = _streaming_delays[min(_attempt, len(_streaming_delays) - 1)] + _rand.uniform(0, 1)
+                        logger.warning(f"[CachedStreaming] Attempt {_attempt + 1}/{_streaming_max_retries + 1} failed (transient), retrying in {_delay:.1f}s: {_e}")
+                        await asyncio.sleep(_delay)
+                        continue
+                    raise
 
             if stream is None:
                 logger.error(f"❌ [CachedStreaming] Gemini returned None stream")

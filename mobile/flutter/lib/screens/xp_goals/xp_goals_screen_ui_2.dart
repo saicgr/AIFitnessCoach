@@ -53,7 +53,7 @@ extension _XPGoalsScreenStateUI2 on _XPGoalsScreenState {
       _FirstTimeBonus(
         type: 'first_chat',
         title: 'Chat with AI Coach',
-        xp: 50,
+        xp: 15,
         icon: Icons.chat_bubble_outline,
         isAwarded: awardedBonuses.contains('first_chat'),
       ),

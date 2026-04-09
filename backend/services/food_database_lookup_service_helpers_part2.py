@@ -513,7 +513,7 @@ class FoodDatabaseLookupServicePart2:
                 if not query or not user_id:
                     return []
                 try:
-                    async with supabase.get_session() as session:
+                    async with supabase.get_managed_session() as session:
                         result = await asyncio.wait_for(
                             session.execute(
                                 text("""
@@ -533,7 +533,7 @@ class FoodDatabaseLookupServicePart2:
                                         ABS(sfe.calories)::INTEGER AS total_calories
                                     FROM saved_foods_exploded sfe
                                     WHERE sfe.user_id = CAST(:uid AS uuid)
-                                      AND LOWER(sfe.name) LIKE LOWER('%' || :q || '%')
+                                      AND sfe.name ILIKE '%' || :q || '%'
                                 """),
                                 {"q": query, "uid": user_id},
                             ),

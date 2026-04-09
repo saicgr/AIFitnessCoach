@@ -267,7 +267,7 @@ class XPState {
   int get currentLevel => userXp?.currentLevel ?? 1;
 
   /// Current title
-  String get title => userXp?.title ?? 'Novice';
+  String get title => userXp?.title ?? 'Beginner';
 
   /// Total XP
   int get totalXp => userXp?.totalXp ?? 0;
@@ -279,7 +279,7 @@ class XPState {
   int get progressPercent => userXp?.progressPercent ?? 0;
 
   /// XP needed for next level
-  int get xpToNextLevel => userXp?.xpToNextLevel ?? 1000;
+  int get xpToNextLevel => userXp?.xpToNextLevel ?? 25;
 
   /// XP earned in current level
   int get xpInCurrentLevel => userXp?.xpInCurrentLevel ?? 0;

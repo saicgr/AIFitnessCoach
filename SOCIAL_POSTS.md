@@ -22,13 +22,25 @@ You don't need to understand fitness. Just show up. The AI handles the rest.
 
 Android live. iOS soon. Free to start.
 
+Building this solo taught me more than any course:
+
+Data Engineering -- Supabase (Postgres), ChromaDB vector search, Redis caching, 200K+ food database pipelines, RAG retrieval, migration management
+
+AI Engineering -- Gemini multimodal (text, image, video), prompt engineering, structured output parsing, streaming responses, safety filter tuning
+
+Deployment & Infrastructure -- FastAPI on Render, Flutter cross-platform, Vercel for the landing page, CI/CD pipelines, cold start optimization
+
+Error Monitoring & Observability -- GCP billing alerts, Firebase Analytics for usage tracking, structured logging with severity levels, Discord webhook notifications for real-time error alerts, health check endpoints
+
+Every layer built from scratch. No templates. No shortcuts.
+
 Website: https://fitwiz.us
 Discord: https://discord.gg/WAYNZpVgsK
 Instagram: https://instagram.com/fitwiz.us
 
 Questions? DM me here or on Discord/Instagram -- happy to help!
 
-#buildinpublic #flutter #ai #fitness #gemini #vertexai #supabase #langgraph #solodev #dataengineering #aiengineering #promptengineering #rag #chromadb #redis #fastapi #python #dart #machinelearning #llm #googlecloud #firebase #fittech
+#buildinpublic #flutter #ai #fitness #gemini #vertexai #supabase #solodev #dataengineering #aiengineering #promptengineering #rag #chromadb #redis #fastapi #python #dart #machinelearning #llm #googlecloud #firebase #fittech #devops #monitoring #observability
 
 ---
 
@@ -175,6 +187,15 @@ Hey team! I built a fitness app that actually coaches you instead of just showin
 Take a photo of your food -- it scores your meal and tells you exactly what to fix. Say "my shoulder hurts" -- workout adapts instantly. Don't know what exercises to do? It builds your entire month. Never been to a gym? Doesn't matter -- just tell it your goals.
 
 200K+ curated foods, 500+ exercises. Free to start.
+
+The tech side if anyone's curious:
+
+- Data Engineering: Supabase (Postgres), ChromaDB for vector search/RAG, Redis caching, 200K+ food database pipelines
+- AI Engineering: Gemini multimodal (text/image/video), prompt engineering, structured output parsing, streaming responses
+- Deployment: FastAPI on Render, Flutter cross-platform, Vercel landing page
+- Monitoring: GCP billing alerts, Firebase Analytics, structured logging, Discord webhooks for real-time error notifications, health checks
+
+All solo. Happy to walk through any of the architecture if you're interested.
 
 I've added your work emails to the tester list. If you have 2 min:
 1. Open: https://play.google.com/apps/testing/com.aifitnesscoach.app

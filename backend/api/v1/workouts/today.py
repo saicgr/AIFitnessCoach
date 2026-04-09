@@ -306,7 +306,13 @@ def _backfill_gym_profile_id(db, user_id: str, gym_profile_id: str) -> None:
         logger.warning(f"[BACKFILL] Failed to backfill gym_profile_id: {e}", exc_info=True)
 
 
-async def auto_generate_workout(user_id: str, target_date: date, gym_profile_id: Optional[str] = None, selected_days: Optional[List[int]] = None, adjacent_day_exercises: Optional[List[str]] = None, batch_offset: int = 0):
+def _is_transient_error_str(err: str) -> bool:
+    """Check if an error string indicates a transient/retryable error."""
+    err_lower = err.lower()
+    return any(kw in err_lower for kw in ["429", "resource_exhausted", "503", "timeout", "rate limit", "unavailable"])
+
+
+async def auto_generate_workout(user_id: str, target_date: date, gym_profile_id: Optional[str] = None, selected_days: Optional[List[int]] = None, adjacent_day_exercises: Optional[List[str]] = None, batch_offset: int = 0, _retry_count: int = 0):
     """Background task: generate a workout for a specific date.
 
     Safety guarantees:
@@ -429,6 +435,14 @@ async def auto_generate_workout(user_id: str, target_date: date, gym_profile_id:
         return result
 
     except Exception as e:
+        if _retry_count < 1 and _is_transient_error_str(str(e)):
+            logger.warning(f"[BG-GEN] Transient error for {generation_key}, retrying in 10s: {e}")
+            _active_background_generations.discard(generation_key)
+            await asyncio.sleep(10)
+            return await auto_generate_workout(
+                user_id, target_date, gym_profile_id, selected_days,
+                adjacent_day_exercises, batch_offset, _retry_count=_retry_count + 1,
+            )
         logger.error(f"[BG-GEN] Failed to generate workout for {generation_key}: {e}", exc_info=True)
     finally:
         _active_background_generations.discard(generation_key)
@@ -450,14 +464,18 @@ async def _sequential_generate_workouts(
     all_batch_exercises: List[str] = []
     for i, gen_date in enumerate(dates):
         logger.info(f"[SEQ-GEN] Generating workout {i+1}/{len(dates)} for {gen_date.isoformat()} (batch_offset={i}, avoiding {len(all_batch_exercises)} exercises)")
-        result = await auto_generate_workout(
-            user_id=user_id,
-            target_date=gen_date,
-            gym_profile_id=gym_profile_id,
-            selected_days=selected_days,
-            adjacent_day_exercises=all_batch_exercises if all_batch_exercises else None,
-            batch_offset=i,
-        )
+        try:
+            result = await auto_generate_workout(
+                user_id=user_id,
+                target_date=gen_date,
+                gym_profile_id=gym_profile_id,
+                selected_days=selected_days,
+                adjacent_day_exercises=all_batch_exercises if all_batch_exercises else None,
+                batch_offset=i,
+            )
+        except Exception as e:
+            logger.error(f"[SEQ-GEN] Failed workout {i+1}/{len(dates)} for {gen_date}: {e}", exc_info=True)
+            result = None
         # Accumulate exercise names from ALL generated workouts for the avoid list
         if result and hasattr(result, 'exercises') and result.exercises:
             new_exercises = [ex.name for ex in result.exercises if hasattr(ex, 'name') and ex.name]

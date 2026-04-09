@@ -8,6 +8,7 @@ Detection uses fast keyword matching (<1ms, no AI calls).
 Resolution queries the user's food_logs table.
 """
 
+import asyncio
 import re
 import logging
 from datetime import date, timedelta

@@ -9,27 +9,68 @@ class WeightRateOption {
   final String label;
   final double weeklyRate;
   final String rateLabel;
+  final String calorieLabel; // e.g. "~1,800 cal/day" or "-500 cal/day"
   final IconData icon;
   final Color color;
   final bool recommended;
 
-  const WeightRateOption(this.id, this.label, this.weeklyRate, this.rateLabel, this.icon, this.color, this.recommended);
+  const WeightRateOption(this.id, this.label, this.weeklyRate, this.rateLabel, this.calorieLabel, this.icon, this.color, this.recommended);
 }
 
-/// Returns rate options based on direction
-List<WeightRateOption> getWeightRateOptions({required bool isLosing, required bool useMetric}) {
+/// Calorie adjustments per rate (matches CalorieMacroEstimator._goalAdjustments)
+const _loseAdjustments = {'slow': -250, 'moderate': -500, 'fast': -750, 'aggressive': -1000};
+const _gainAdjustments = {'slow': 250, 'moderate': 375, 'fast': 500};
+
+String _formatCalorieLabel(int tdee, int adjustment, String gender) {
+  final target = (tdee + adjustment).clamp(
+    gender.toLowerCase() == 'male' ? 1500 : 1200,
+    4000,
+  );
+  // Format with comma separator
+  final formatted = target.toString().replaceAllMapped(
+    RegExp(r'(\d)(?=(\d{3})+$)'),
+    (m) => '${m[1]},',
+  );
+  return '~$formatted cal/day';
+}
+
+/// Returns rate options based on direction, with calorie estimates per option.
+/// [tdee] is the user's total daily energy expenditure; [gender] for safety minimums.
+List<WeightRateOption> getWeightRateOptions({
+  required bool isLosing,
+  required bool useMetric,
+  int? tdee,
+  String? gender,
+}) {
+  final effectiveTdee = tdee ?? 2200; // reasonable default
+  final effectiveGender = gender ?? 'male';
+
   if (isLosing) {
     return [
-      WeightRateOption('slow', 'Gradual', 0.25, useMetric ? '0.25 kg/wk' : '0.5 lbs/wk', Icons.spa_outlined, AppColors.success, false),
-      WeightRateOption('moderate', 'Moderate', 0.5, useMetric ? '0.5 kg/wk' : '1 lb/wk', Icons.balance_outlined, AppColors.success, true),
-      WeightRateOption('fast', 'Faster', 0.75, useMetric ? '0.75 kg/wk' : '1.5 lbs/wk', Icons.speed_outlined, AppColors.accent, false),
-      WeightRateOption('aggressive', 'Aggressive', 1.0, useMetric ? '1 kg/wk' : '2 lbs/wk', Icons.whatshot_outlined, AppColors.accent, false),
+      WeightRateOption('slow', 'Gradual', 0.25, useMetric ? '0.25 kg/wk' : '0.5 lbs/wk',
+          _formatCalorieLabel(effectiveTdee, _loseAdjustments['slow']!, effectiveGender),
+          Icons.spa_outlined, AppColors.success, false),
+      WeightRateOption('moderate', 'Moderate', 0.5, useMetric ? '0.5 kg/wk' : '1 lb/wk',
+          _formatCalorieLabel(effectiveTdee, _loseAdjustments['moderate']!, effectiveGender),
+          Icons.balance_outlined, AppColors.success, true),
+      WeightRateOption('fast', 'Faster', 0.75, useMetric ? '0.75 kg/wk' : '1.5 lbs/wk',
+          _formatCalorieLabel(effectiveTdee, _loseAdjustments['fast']!, effectiveGender),
+          Icons.speed_outlined, AppColors.accent, false),
+      WeightRateOption('aggressive', 'Aggressive', 1.0, useMetric ? '1 kg/wk' : '2 lbs/wk',
+          _formatCalorieLabel(effectiveTdee, _loseAdjustments['aggressive']!, effectiveGender),
+          Icons.whatshot_outlined, AppColors.accent, false),
     ];
   }
   return [
-    WeightRateOption('slow', 'Lean Bulk', 0.25, useMetric ? '0.25 kg/wk' : '0.5 lbs/wk', Icons.trending_up_outlined, AppColors.success, true),
-    WeightRateOption('moderate', 'Standard', 0.35, useMetric ? '0.35 kg/wk' : '0.75 lbs/wk', Icons.fitness_center_outlined, AppColors.success, false),
-    WeightRateOption('fast', 'Aggressive', 0.5, useMetric ? '0.5 kg/wk' : '1 lb/wk', Icons.rocket_launch_outlined, AppColors.accent, false),
+    WeightRateOption('slow', 'Lean Bulk', 0.25, useMetric ? '0.25 kg/wk' : '0.5 lbs/wk',
+        _formatCalorieLabel(effectiveTdee, _gainAdjustments['slow']!, effectiveGender),
+        Icons.trending_up_outlined, AppColors.success, true),
+    WeightRateOption('moderate', 'Standard', 0.35, useMetric ? '0.35 kg/wk' : '0.75 lbs/wk',
+        _formatCalorieLabel(effectiveTdee, _gainAdjustments['moderate']!, effectiveGender),
+        Icons.fitness_center_outlined, AppColors.success, false),
+    WeightRateOption('fast', 'Aggressive', 0.5, useMetric ? '0.5 kg/wk' : '1 lb/wk',
+        _formatCalorieLabel(effectiveTdee, _gainAdjustments['fast']!, effectiveGender),
+        Icons.rocket_launch_outlined, AppColors.accent, false),
   ];
 }
 
@@ -161,6 +202,17 @@ class QuizWeightRateChips extends StatelessWidget {
                       fontSize: 10,
                       fontWeight: FontWeight.w500,
                       color: isSelected ? Colors.white70 : textSecondary,
+                    ),
+                  ),
+                  const SizedBox(height: 1),
+                  Text(
+                    rate.calorieLabel,
+                    style: TextStyle(
+                      fontSize: 9,
+                      fontWeight: FontWeight.w600,
+                      color: isSelected
+                          ? Colors.white.withValues(alpha: 0.85)
+                          : AppColors.orange.withValues(alpha: 0.9),
                     ),
                   ),
                 ],

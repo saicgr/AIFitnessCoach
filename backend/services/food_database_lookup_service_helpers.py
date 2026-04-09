@@ -96,7 +96,11 @@ class FoodDatabaseLookupService(FoodDatabaseLookupServicePart2):
         food_category: Optional[str] = None,
         region: Optional[str] = None,
     ) -> List[Dict]:
-        """Search overrides using trigram similarity (uses GIN index) with exact-match boost."""
+        """Search overrides using a phased approach: exact → trigram → ILIKE substring.
+
+        Each phase short-circuits if enough results are found, avoiding the expensive
+        later phases. Uses per-phase timeouts with a global 3.0s deadline.
+        """
         try:
             sb = get_supabase()
 
@@ -133,41 +137,114 @@ class FoodDatabaseLookupService(FoodDatabaseLookupServicePart2):
 
             filter_clause = " ".join(filters)
 
-            async with sb.get_session() as session:
-                # Lower threshold for broader matching; GIN trigram index handles speed
-                await session.execute(text("SET pg_trgm.similarity_threshold = 0.3"))
-                result = await asyncio.wait_for(
-                    session.execute(text(f"""
-                        SELECT *,
-                            similarity(food_name_normalized, :q) AS sim_score,
-                            CASE
-                                WHEN food_name_normalized = :q THEN 0
-                                WHEN :q = ANY(variant_names) THEN 1
-                                ELSE 2
-                            END AS match_rank
-                        FROM food_nutrition_overrides
-                        WHERE is_active = TRUE
-                        AND (
-                            food_name_normalized = :q
-                            OR :q = ANY(variant_names)
-                            OR food_name_normalized % :q
-                            OR display_name % :q
-                            OR food_name_normalized ILIKE '%' || :q || '%'
-                            OR :q ILIKE '%' || food_name_normalized || '%'
+            results: List[Dict] = []
+            seen_ids: set = set()
+            deadline = time.monotonic() + 3.0
+
+            # --- Phase 1: Exact match (BTREE + GIN array indexes, ~1ms) ---
+            try:
+                remaining = deadline - time.monotonic()
+                if remaining > 0.1:
+                    async with sb.get_managed_session() as session:
+                        phase1 = await asyncio.wait_for(
+                            session.execute(text(f"""
+                                SELECT *,
+                                    similarity(food_name_normalized, :q) AS sim_score,
+                                    CASE WHEN food_name_normalized = :q THEN 0 ELSE 1 END AS match_rank
+                                FROM food_nutrition_overrides
+                                WHERE is_active = TRUE
+                                AND (food_name_normalized = :q OR :q = ANY(variant_names))
+                                {filter_clause}
+                                ORDER BY match_rank
+                                LIMIT :lim
+                            """), params),
+                            timeout=min(1.0, remaining),
                         )
-                        {filter_clause}
-                        ORDER BY match_rank, sim_score DESC
-                        LIMIT :lim
-                    """), params),
-                    timeout=3.0,
-                )
-                rows = [dict(row._mapping) for row in result.fetchall()]
+                        for row in phase1.fetchall():
+                            rd = dict(row._mapping)
+                            if rd['id'] not in seen_ids:
+                                seen_ids.add(rd['id'])
+                                results.append(rd)
+            except asyncio.TimeoutError:
+                logger.warning(f"[FoodDB] Phase 1 (exact) timed out for '{query}'")
+            except Exception as e:
+                logger.warning(f"[FoodDB] Phase 1 failed for '{query}': {e}")
 
-            return [self._override_row_to_search_result(row) for row in rows]
+            if len(results) >= limit:
+                return [self._override_row_to_search_result(r) for r in results[:limit]]
 
-        except asyncio.TimeoutError:
-            logger.warning(f"[FoodDB] Override search timed out for '{query}'", exc_info=True)
-            return []
+            # --- Phase 2: Trigram similarity (GIN trigram indexes, ~50-200ms) ---
+            try:
+                remaining = deadline - time.monotonic()
+                if remaining > 0.1:
+                    p2_params = {**params, "lim": limit - len(results)}
+                    async with sb.get_managed_session() as session:
+                        await session.execute(text("SET LOCAL pg_trgm.similarity_threshold = 0.35"))
+                        phase2 = await asyncio.wait_for(
+                            session.execute(text(f"""
+                                SELECT *,
+                                    similarity(food_name_normalized, :q) AS sim_score,
+                                    2 AS match_rank
+                                FROM food_nutrition_overrides
+                                WHERE is_active = TRUE
+                                AND (food_name_normalized % :q OR display_name % :q)
+                                AND food_name_normalized != :q
+                                AND NOT (:q = ANY(COALESCE(variant_names, '{{}}')))
+                                {filter_clause}
+                                ORDER BY sim_score DESC
+                                LIMIT :lim
+                            """), p2_params),
+                            timeout=min(1.5, remaining),
+                        )
+                        for row in phase2.fetchall():
+                            rd = dict(row._mapping)
+                            if rd['id'] not in seen_ids:
+                                seen_ids.add(rd['id'])
+                                results.append(rd)
+            except asyncio.TimeoutError:
+                logger.warning(f"[FoodDB] Phase 2 (trigram) timed out for '{query}'")
+            except Exception as e:
+                logger.warning(f"[FoodDB] Phase 2 failed for '{query}': {e}")
+
+            if len(results) >= limit:
+                return [self._override_row_to_search_result(r) for r in results[:limit]]
+
+            # --- Phase 3: Substring ILIKE (slower, only if still under limit) ---
+            try:
+                remaining = deadline - time.monotonic()
+                if remaining > 0.1:
+                    p3_params = {**params, "lim": limit - len(results)}
+                    async with sb.get_managed_session() as session:
+                        await session.execute(text("SET LOCAL pg_trgm.similarity_threshold = 0.35"))
+                        phase3 = await asyncio.wait_for(
+                            session.execute(text(f"""
+                                SELECT *,
+                                    similarity(food_name_normalized, :q) AS sim_score,
+                                    3 AS match_rank
+                                FROM food_nutrition_overrides
+                                WHERE is_active = TRUE
+                                AND food_name_normalized ILIKE '%' || :q || '%'
+                                AND NOT (food_name_normalized % :q OR display_name % :q)
+                                AND food_name_normalized != :q
+                                AND NOT (:q = ANY(COALESCE(variant_names, '{{}}')))
+                                {filter_clause}
+                                ORDER BY length(food_name_normalized), sim_score DESC
+                                LIMIT :lim
+                            """), p3_params),
+                            timeout=min(1.0, remaining),
+                        )
+                        for row in phase3.fetchall():
+                            rd = dict(row._mapping)
+                            if rd['id'] not in seen_ids:
+                                seen_ids.add(rd['id'])
+                                results.append(rd)
+            except asyncio.TimeoutError:
+                logger.warning(f"[FoodDB] Phase 3 (ILIKE) timed out for '{query}'")
+            except Exception as e:
+                logger.warning(f"[FoodDB] Phase 3 failed for '{query}': {e}")
+
+            return [self._override_row_to_search_result(r) for r in results[:limit]]
+
         except Exception as e:
             logger.warning(f"[FoodDB] Override DB search failed: {e}", exc_info=True)
             return []
@@ -208,7 +285,7 @@ class FoodDatabaseLookupService(FoodDatabaseLookupServicePart2):
 
         try:
             supabase = get_supabase()
-            async with supabase.get_session() as session:
+            async with supabase.get_managed_session() as session:
                 result = await asyncio.wait_for(
                     session.execute(
                         text("SELECT * FROM food_nutrition_overrides WHERE is_active = TRUE")
@@ -511,24 +588,22 @@ class FoodDatabaseLookupService(FoodDatabaseLookupServicePart2):
             return self._ai_validation_cache[cache_key]
 
         try:
-            from google import genai
             from google.genai import types
-            client = genai.Client()
+            from services.gemini.constants import gemini_generate_with_retry
 
             prompt = (
                 f"Is '{matched_name}' a reasonable food database match for someone "
                 f"searching '{query}'? Answer ONLY 'YES' or 'NO'."
             )
-            response = await asyncio.wait_for(
-                client.aio.models.generate_content(
-                    model="gemini-2.0-flash",
-                    contents=prompt,
-                    config=types.GenerateContentConfig(
-                        temperature=0,
-                        max_output_tokens=3,
-                    ),
+            response = await gemini_generate_with_retry(
+                model="gemini-2.0-flash",
+                contents=prompt,
+                config=types.GenerateContentConfig(
+                    temperature=0,
+                    max_output_tokens=3,
                 ),
-                timeout=2.0,
+                timeout=3.0,
+                method_name="validate_food_match",
             )
             answer = (response.text or "").strip().upper()
             is_valid = answer.startswith("YES")
@@ -608,15 +683,17 @@ class FoodDatabaseLookupService(FoodDatabaseLookupServicePart2):
                     return override_data
 
             # Step 4: Trigram similarity on food_name_normalized (4+ chars only)
+            # Uses % operator with GIN index instead of similarity() in WHERE
             if len(normalized) >= 4:
                 try:
-                    async with sb.get_session() as session:
+                    async with sb.get_managed_session() as session:
+                        await session.execute(text("SET LOCAL pg_trgm.similarity_threshold = 0.4"))
                         result_row = await asyncio.wait_for(
                             session.execute(text("""
                                 SELECT *, similarity(food_name_normalized, :q) AS sim
                                 FROM food_nutrition_overrides
                                 WHERE is_active = TRUE
-                                AND similarity(food_name_normalized, :q) > 0.4
+                                AND food_name_normalized % :q
                                 ORDER BY sim DESC
                                 LIMIT 1
                             """), {"q": normalized}),
@@ -638,8 +715,8 @@ class FoodDatabaseLookupService(FoodDatabaseLookupServicePart2):
                                     f"[FoodDB] Rejected fuzzy match (no word overlap): "
                                     f"'{food_name}' ≠ '{matched_name}' (sim={sim_score:.2f})"
                                 )
-                            elif sim_score < 0.6:
-                                # Low confidence match — AI validation
+                            elif sim_score < 0.6 and not (sim_score >= 0.5 and has_word_overlap):
+                                # Low confidence match without word overlap — AI validation
                                 is_valid = await self._ai_validate_match(normalized, matched_name)
                                 if not is_valid:
                                     logger.info(

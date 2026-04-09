@@ -15,7 +15,7 @@ import '../../../data/providers/weekly_plan_provider.dart';
 import '../../../data/providers/wrapped_provider.dart';
 import '../../../data/providers/xp_provider.dart'
     show activeDoubleXPEventProvider, dailyCratesProvider, showDailyCrateBannerProvider,
-         unclaimedCratesProvider, unclaimedCratesCountProvider, xpProvider;
+         unclaimedCratesProvider, unclaimedCratesCountProvider, xpProvider, XPNotifierExt;
 import '../../../data/repositories/xp_repository.dart' show UnclaimedCrate;
 import '../../../data/models/weekly_plan.dart';
 import '../../../data/repositories/auth_repository.dart';
@@ -898,12 +898,12 @@ class _StackedBannerPanelState extends ConsumerState<StackedBannerPanel>
         builder: (context, child) {
           return Container(
             padding: EdgeInsets.symmetric(
-              horizontal: _isDismissAllExpanded ? 8 : 6,
-              vertical: 2,
+              horizontal: _isDismissAllExpanded ? 10 : 8,
+              vertical: 4,
             ),
             decoration: BoxDecoration(
               color: isDark ? AppColors.glassSurface : AppColorsLight.glassSurface,
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(10),
               border: Border.all(
                 color: _isDismissAllExpanded
                     ? AppColors.orange.withOpacity(0.5)
@@ -916,7 +916,7 @@ class _StackedBannerPanelState extends ConsumerState<StackedBannerPanel>
               children: [
                 Icon(
                   Icons.close_rounded,
-                  size: 12,
+                  size: 18,
                   color: _isDismissAllExpanded
                       ? AppColors.orange
                       : (isDark ? AppColors.textSecondary : AppColorsLight.textSecondary),

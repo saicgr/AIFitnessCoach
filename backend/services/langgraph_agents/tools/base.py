@@ -3,6 +3,7 @@ Base utilities for LangGraph tools.
 
 Contains shared utilities like service accessors and async helpers.
 """
+import asyncio
 
 from typing import Optional
 

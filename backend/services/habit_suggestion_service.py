@@ -8,21 +8,17 @@ Provides personalized habit suggestions based on:
 - Nutrition preferences
 """
 
-from google import genai
 from google.genai import types
 from typing import List, Dict, Optional, Any
 import json
 import logging
 import re
 from core.config import get_settings
-from core.gemini_client import get_genai_client
 from core.logger import get_logger
+from services.gemini.constants import gemini_generate_with_retry
 
 settings = get_settings()
 logger = get_logger(__name__)
-
-# Initialize the Gemini client
-client = get_genai_client()
 
 
 class HabitSuggestionService:
@@ -70,7 +66,7 @@ class HabitSuggestionService:
             )
 
             # Call Gemini
-            response = await client.aio.models.generate_content(
+            response = await gemini_generate_with_retry(
                 model=self.model,
                 contents=[types.Content(role="user", parts=[types.Part.from_text(text=prompt)])],
                 config=types.GenerateContentConfig(
@@ -78,6 +74,7 @@ class HabitSuggestionService:
                     max_output_tokens=2048,
                     temperature=0.7,  # Slightly creative but not too random
                 ),
+                method_name="habit_suggestions",
             )
 
             # Parse the response
@@ -357,7 +354,7 @@ Return ONLY the JSON array. No markdown, no explanation."""
             # Build insight prompt
             prompt = self._build_insights_prompt(habits_data, completion_stats)
 
-            response = await client.aio.models.generate_content(
+            response = await gemini_generate_with_retry(
                 model=self.model,
                 contents=[types.Content(role="user", parts=[types.Part.from_text(text=prompt)])],
                 config=types.GenerateContentConfig(
@@ -365,6 +362,7 @@ Return ONLY the JSON array. No markdown, no explanation."""
                     max_output_tokens=1024,
                     temperature=0.5,
                 ),
+                method_name="habit_suggestions",
             )
 
             return self._parse_insights(response.text)

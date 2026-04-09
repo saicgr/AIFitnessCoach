@@ -755,7 +755,7 @@ void _showXPInfoDialog(BuildContext context, bool isDark) {
           mainAxisSize: MainAxisSize.min,
           children: [
             _buildXPInfoSection(
-              'Daily Goals',
+              'Daily Goals (6 total)',
               [
                 'Login: +5 XP',
                 'Complete Workout: +100 XP',
@@ -774,28 +774,18 @@ void _showXPInfoDialog(BuildContext context, bool isDark) {
                 'First Protein Goal: +100 XP',
                 'First PR: +100 XP',
                 'First Progress Photo: +75 XP',
-                'First Meal/Weight/Chat/Measurements: +50 XP each',
+                'First Meal/Weight/Measurements: +50 XP each',
+                'First Chat with AI Coach: +15 XP',
               ],
               isDark,
             ),
             const SizedBox(height: 16),
             _buildXPInfoSection(
-              'Streaks & Milestones',
+              'Levels',
               [
-                '7-Day Streak: +100 XP',
-                '30-Day Streak: +500 XP',
-                '100-Day Streak: +2000 XP',
-                '365-Day Streak: +10000 XP',
-              ],
-              isDark,
-            ),
-            const SizedBox(height: 16),
-            _buildXPInfoSection(
-              'Special Bonuses',
-              [
-                'First Login: +250 XP',
-                'Early Adopter (First 100): +525 XP',
-                'Weekly/Monthly Checkpoints: +100-200 XP',
+                '250 levels across 11 tiers',
+                'Beginner (1-10) to Transcendent (226-250)',
+                'Milestone rewards at key levels',
               ],
               isDark,
             ),

@@ -101,7 +101,7 @@ extension _HeroWorkoutCardStateUI on _HeroWorkoutCardState {
           // The actual image
           CachedNetworkImage(
             imageUrl: _backgroundImageUrl!,
-            fit: BoxFit.contain,
+            fit: BoxFit.cover,
             alignment: Alignment.center,
             // Perf fix 2.2: limit decoded image size in memory cache
             memCacheWidth: 400,

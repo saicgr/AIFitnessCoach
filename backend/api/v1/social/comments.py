@@ -7,6 +7,7 @@ This module handles comment operations:
 - DELETE /comments/{comment_id} - Delete a comment
 - GET /comments/{activity_id} - Get comments for an activity
 """
+import asyncio
 from datetime import datetime, timezone
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query

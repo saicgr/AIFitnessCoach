@@ -5,6 +5,7 @@ Contains the node that extracts structured data from user messages using AI
 and pattern matching.
 """
 
+import asyncio
 import json
 import re
 import time

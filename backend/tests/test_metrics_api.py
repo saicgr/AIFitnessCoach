@@ -11,6 +11,7 @@ Tests:
 
 Run with: pytest backend/tests/test_metrics_api.py -v
 """
+import asyncio
 
 import pytest
 from unittest.mock import MagicMock, patch

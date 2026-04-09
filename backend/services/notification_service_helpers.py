@@ -610,11 +610,10 @@ class NotificationService(NotificationServicePart2):
         """
         try:
             from google import genai
-            from core.gemini_client import get_genai_client
             from core.config import get_settings
+            from services.gemini.constants import gemini_generate_with_retry_sync
 
             settings = get_settings()
-            client = get_genai_client()
 
             # Build context string
             context_parts = []
@@ -665,13 +664,14 @@ class NotificationService(NotificationServicePart2):
                     "BODY: <body text>"
                 )
 
-            response = client.models.generate_content(
+            response = gemini_generate_with_retry_sync(
                 model=settings.gemini_model,
                 contents=prompt,
                 config=genai.types.GenerateContentConfig(
                     max_output_tokens=60,
                     temperature=0.9,
                 ),
+                method_name="push_notification",
             )
 
             text = response.text.strip()
