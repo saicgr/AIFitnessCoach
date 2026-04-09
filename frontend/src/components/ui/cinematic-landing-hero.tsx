@@ -285,11 +285,11 @@ export function CinematicHero({
         .to(".text-track", { duration: 0.8, autoAlpha: 1, y: 0, scale: 1, rotationX: 0, ease: "expo.out" })
         .to(".text-days", { duration: 0.6, clipPath: "inset(0 0% 0 0)", ease: "power4.inOut" }, "-=0.4");
 
-      // Balanced: smooth entrance, tight slide transitions to avoid duplicate feeling
-      const scrollDistance = isMobile ? 1800 : 3000;
+      // Balanced: smooth entrance, generous slide transitions, snappy exit
+      const scrollDistance = isMobile ? 2000 : 3500;
       const d = isMobile
-        ? { enter: 1.2, expand: 0.8, reveal: 1.2, hold: 0.5, fadeOut: 0.2, fadeIn: 0.25, slideHold: 0.15, exitHold: 0.2, exitContent: 0.5, pullback: 0.7, cardExit: 0.6 }
-        : { enter: 1.5, expand: 0.8, reveal: 1.5, hold: 0.6, fadeOut: 0.25, fadeIn: 0.3, slideHold: 0.2, exitHold: 0.3, exitContent: 0.7, pullback: 0.9, cardExit: 0.7 };
+        ? { enter: 1.2, expand: 0.8, reveal: 1.2, hold: 0.5, fadeOut: 0.35, fadeIn: 0.4, slideHold: 0.4, exitHold: 0.2, exitContent: 0.4, pullback: 0.5, cardExit: 0.4 }
+        : { enter: 1.5, expand: 0.8, reveal: 1.5, hold: 0.6, fadeOut: 0.4, fadeIn: 0.5, slideHold: 0.5, exitHold: 0.2, exitContent: 0.5, pullback: 0.6, cardExit: 0.5 };
 
       const scrollTl = gsap.timeline({
         scrollTrigger: {
@@ -309,7 +309,7 @@ export function CinematicHero({
 
       scrollTl
         .to(".scroll-hint", { autoAlpha: 0, y: 20, duration: 0.3, ease: "power2.in" }, 0)
-        .to([".hero-text-wrapper", ".bg-grid-theme"], { scale: 1.15, opacity: 0, ease: "power2.inOut", duration: enterDur }, 0)
+        .to([".hero-text-wrapper", ".bg-grid-theme", ".flux-bg"], { scale: 1.15, opacity: 0, ease: "power2.inOut", duration: enterDur }, 0)
         .to(".main-card", { y: 0, width: "100%", height: "100%", borderRadius: "0px", ease: "power3.inOut", duration: enterDur }, 0)
         // Mockup appears immediately with card but starts deeply rotated
         .fromTo(".mockup-scroll-wrapper",
@@ -361,7 +361,6 @@ export function CinematicHero({
       }
 
       scrollTl
-        .set(".hero-text-wrapper", { autoAlpha: 0 })
         // CTA fades in BEFORE content fully exits — no blank frame
         .to(".cta-wrapper", { autoAlpha: 1, duration: 0.01 }, "pre-exit")
         .to([".mockup-scroll-wrapper", ".floating-badge", ".card-left-text", ".card-right-text"], {
@@ -393,7 +392,7 @@ export function CinematicHero({
       <style dangerouslySetInnerHTML={{ __html: INJECTED_STYLES }} />
 
       {/* BACKGROUND LAYER 0: Animated flux marquee — centered behind hero text */}
-      <div className="absolute left-0 right-0 top-1/2 -translate-y-1/2 z-0 pointer-events-auto" aria-hidden="true">
+      <div className="flux-bg absolute left-0 right-0 top-1/2 -translate-y-1/2 z-0 pointer-events-auto" aria-hidden="true">
         <Suspense fallback={null}>
           <LandingFlux
             className="w-full"
