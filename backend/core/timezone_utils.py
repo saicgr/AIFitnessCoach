@@ -67,7 +67,7 @@ def resolve_timezone(request, db=None, user_id: Optional[str] = None) -> str:
         3. Fallback to 'UTC'
     """
     # 1. Header (try IANA first, then map abbreviation)
-    header_tz = request.headers.get("x-user-timezone")
+    header_tz = request.headers.get("x-user-timezone") if request is not None else None
     if header_tz:
         if _is_valid_tz(header_tz):
             return header_tz
