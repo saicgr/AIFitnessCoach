@@ -694,7 +694,7 @@ class NotificationService(NotificationServicePart2):
             return None
 
         except Exception as e:
-            logger.warning(f"🤖 [Notification] Gemini personalization failed: {e}")
+            logger.warning(f"🤖 [Notification] Gemini personalization failed: {e}", exc_info=True)
             return None
 
     # ─────────────────────────────────────────────────────────────────

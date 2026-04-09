@@ -363,7 +363,7 @@ Always be helpful, empathetic about injuries, provide encouraging nutrition feed
         response = await llm_with_tools.ainvoke(messages)
     except Exception as e:
         if "thought_signature" in str(e).lower():
-            logger.warning(f"Thought signature error, retrying: {e}")
+            logger.warning(f"Thought signature error, retrying: {e}", exc_info=True)
             llm_retry = get_langchain_llm(temperature=0.7)
             response = await llm_retry.bind_tools(ALL_TOOLS).ainvoke(messages)
         else:
@@ -459,7 +459,7 @@ async def tool_executor_node(state: FitnessCoachState) -> Dict[str, Any]:
 
                 logger.info(f"[Tool Executor] Result: {result.get('message', 'Done')}")
             except Exception as e:
-                logger.error(f"[Tool Executor] Error: {e}")
+                logger.error(f"[Tool Executor] Error: {e}", exc_info=True)
                 error_result = {"success": False, "error": str(e)}
                 tool_results.append(error_result)
                 tool_messages.append(ToolMessage(

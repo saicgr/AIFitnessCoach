@@ -209,7 +209,7 @@ async def suggest_recipes(request: Request, user_id: str, body: SuggestRecipesRe
                 },
             )
         except Exception as ctx_err:
-            logger.warning(f"⚠️ Failed to log context: {ctx_err}")
+            logger.warning(f"⚠️ Failed to log context: {ctx_err}", exc_info=True)
 
         return SuggestRecipesResponse(
             success=True,
@@ -218,10 +218,10 @@ async def suggest_recipes(request: Request, user_id: str, body: SuggestRecipesRe
         )
 
     except ValueError as e:
-        logger.error(f"❌ [API] Recipe suggestion error: {e}")
+        logger.error(f"❌ [API] Recipe suggestion error: {e}", exc_info=True)
         raise HTTPException(status_code=400, detail="Invalid request")
     except Exception as e:
-        logger.error(f"❌ [API] Recipe suggestion error: {e}")
+        logger.error(f"❌ [API] Recipe suggestion error: {e}", exc_info=True)
         raise safe_internal_error(e, "recipe_suggestions")
 
 
@@ -276,7 +276,7 @@ async def get_saved_suggestions(
         ]
 
     except Exception as e:
-        logger.error(f"❌ [API] Error getting suggestions: {e}")
+        logger.error(f"❌ [API] Error getting suggestions: {e}", exc_info=True)
         raise safe_internal_error(e, "recipe_suggestions")
 
 
@@ -466,5 +466,5 @@ async def update_recipe_preferences(user_id: str, request: UpdatePreferencesRequ
         return {"success": True, "message": "Preferences updated"}
 
     except Exception as e:
-        logger.error(f"❌ [API] Error updating preferences: {e}")
+        logger.error(f"❌ [API] Error updating preferences: {e}", exc_info=True)
         raise safe_internal_error(e, "recipe_suggestions")

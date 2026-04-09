@@ -32,7 +32,7 @@ class SavedFoodsRAGService:
         try:
             _count = self.collection.count()
         except Exception as e:
-            logger.warning(f"Failed to get collection count: {e}")
+            logger.warning(f"Failed to get collection count: {e}", exc_info=True)
             _count = "unknown"
         logger.info(f"SavedFoodsRAG initialized with {_count} documents")
 
@@ -94,7 +94,7 @@ class SavedFoodsRAGService:
         try:
             _count = self.collection.count()
         except Exception as e:
-            logger.warning(f"Failed to get collection count: {e}")
+            logger.warning(f"Failed to get collection count: {e}", exc_info=True)
             _count = "unknown"
         logger.info(f"Saved food to ChromaDB: {saved_food_id[:8]}... (total: {_count})")
         return saved_food_id
@@ -180,7 +180,7 @@ class SavedFoodsRAGService:
             logger.info(f"Deleted saved food from ChromaDB: {saved_food_id[:8]}...")
             return True
         except Exception as e:
-            logger.error(f"Failed to delete saved food from ChromaDB: {e}")
+            logger.error(f"Failed to delete saved food from ChromaDB: {e}", exc_info=True)
             return False
 
     async def update_food(
@@ -226,7 +226,7 @@ class SavedFoodsRAGService:
             c = self.collection.count()
             return c if c >= 0 else -1
         except Exception as e:
-            logger.warning(f"Failed to get saved foods count: {e}")
+            logger.warning(f"Failed to get saved foods count: {e}", exc_info=True)
             return -1
 
     def get_user_food_count(self, user_id: str) -> int:
@@ -238,7 +238,7 @@ class SavedFoodsRAGService:
             )
             return len(results.get("ids", []))
         except Exception as e:
-            logger.warning(f"Failed to get user food count: {e}")
+            logger.warning(f"Failed to get user food count: {e}", exc_info=True)
             return 0
 
 

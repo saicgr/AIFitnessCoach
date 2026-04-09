@@ -158,7 +158,7 @@ async def get_weekly_dashboard(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to fetch weekly dashboard for user {user_id}: {e}")
+        logger.error(f"Failed to fetch weekly dashboard for user {user_id}: {e}", exc_info=True)
         raise safe_internal_error()
 
 
@@ -177,7 +177,7 @@ async def _query_async(
         ).gte(date_column, start).lte(date_column, end).execute()
         return response.data or []
     except Exception as e:
-        logger.warning(f"Dashboard query failed for {table}: {e}")
+        logger.warning(f"Dashboard query failed for {table}: {e}", exc_info=True)
         return []
 
 
@@ -189,7 +189,7 @@ async def _query_user(db, user_id: str):
         ).eq("id", user_id).limit(1).execute()
         return response.data[0] if response.data else {}
     except Exception as e:
-        logger.warning(f"Dashboard user query failed: {e}")
+        logger.warning(f"Dashboard user query failed: {e}", exc_info=True)
         return {}
 
 
@@ -201,7 +201,7 @@ async def _query_measurements(db, user_id: str):
         ).order("measured_at", desc=True).limit(2).execute()
         return response.data or []
     except Exception as e:
-        logger.warning(f"Dashboard measurements query failed: {e}")
+        logger.warning(f"Dashboard measurements query failed: {e}", exc_info=True)
         return []
 
 
@@ -213,7 +213,7 @@ async def _query_goals(db, user_id: str):
         ).eq("user_id", user_id).eq("status", "active").execute()
         return response.data or []
     except Exception as e:
-        logger.warning(f"Dashboard goals query failed: {e}")
+        logger.warning(f"Dashboard goals query failed: {e}", exc_info=True)
         return []
 
 

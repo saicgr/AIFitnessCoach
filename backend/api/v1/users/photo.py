@@ -74,7 +74,7 @@ async def delete_profile_photo_from_s3(storage_key: str) -> bool:
         )
         return True
     except Exception as e:
-        logger.error(f"Error deleting profile photo from S3: {e}")
+        logger.error(f"Error deleting profile photo from S3: {e}", exc_info=True)
         return False
 
 
@@ -140,7 +140,7 @@ async def upload_profile_photo(
                 await delete_profile_photo_from_s3(old_storage_key)
                 logger.info(f"🗑️ [ProfilePhoto] Deleted old photo: {old_storage_key}")
             except Exception as e:
-                logger.warning(f"⚠️ [ProfilePhoto] Could not delete old photo: {e}")
+                logger.warning(f"⚠️ [ProfilePhoto] Could not delete old photo: {e}", exc_info=True)
 
         return ProfilePhotoResponse(
             photo_url=photo_url,
@@ -150,7 +150,7 @@ async def upload_profile_photo(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"❌ [ProfilePhoto] Upload failed: {e}")
+        logger.error(f"❌ [ProfilePhoto] Upload failed: {e}", exc_info=True)
         raise safe_internal_error(e, "profile_photo_upload")
 
 
@@ -188,7 +188,7 @@ async def delete_profile_photo(id: str,
                 await delete_profile_photo_from_s3(storage_key)
                 logger.info(f"✅ [ProfilePhoto] Deleted from S3: {storage_key}")
             except Exception as e:
-                logger.warning(f"⚠️ [ProfilePhoto] Could not delete from S3: {e}")
+                logger.warning(f"⚠️ [ProfilePhoto] Could not delete from S3: {e}", exc_info=True)
 
         # Update user's photo_url to null
         db.client.table("users").update({
@@ -201,5 +201,5 @@ async def delete_profile_photo(id: str,
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"❌ [ProfilePhoto] Delete failed: {e}")
+        logger.error(f"❌ [ProfilePhoto] Delete failed: {e}", exc_info=True)
         raise safe_internal_error(e, "profile_photo_delete")

@@ -94,7 +94,7 @@ async def get_story_presigned_url(
             "public_url": public_url,
         }
     except Exception as e:
-        logger.error(f"[Stories] Error generating presigned URL: {e}")
+        logger.error(f"[Stories] Error generating presigned URL: {e}", exc_info=True)
         raise safe_internal_error(e, "stories_presign")
 
 
@@ -157,7 +157,7 @@ async def create_story(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"[Stories] Error creating story: {e}")
+        logger.error(f"[Stories] Error creating story: {e}", exc_info=True)
         raise safe_internal_error(e, "stories")
 
 
@@ -254,7 +254,7 @@ async def get_stories_feed(
         return {"story_groups": story_groups}
 
     except Exception as e:
-        logger.error(f"[Stories] Error getting stories feed: {e}")
+        logger.error(f"[Stories] Error getting stories feed: {e}", exc_info=True)
         raise safe_internal_error(e, "stories")
 
 
@@ -321,7 +321,7 @@ async def get_story_views(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"[Stories] Error getting story views: {e}")
+        logger.error(f"[Stories] Error getting story views: {e}", exc_info=True)
         raise safe_internal_error(e, "stories")
 
 
@@ -368,5 +368,5 @@ async def delete_story(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"[Stories] Error deleting story: {e}")
+        logger.error(f"[Stories] Error deleting story: {e}", exc_info=True)
         raise safe_internal_error(e, "stories")

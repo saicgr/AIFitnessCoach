@@ -52,7 +52,7 @@ async def get_program_categories():
         return sorted_cats
 
     except Exception as e:
-        logger.error(f"Error getting program categories: {e}")
+        logger.error(f"Error getting program categories: {e}", exc_info=True)
         raise safe_internal_error(e, "programs")
 
 
@@ -93,7 +93,7 @@ async def list_programs(
         return programs
 
     except Exception as e:
-        logger.error(f"Error listing programs: {e}")
+        logger.error(f"Error listing programs: {e}", exc_info=True)
         raise safe_internal_error(e, "programs")
 
 
@@ -138,7 +138,7 @@ async def get_programs_grouped(
         return grouped
 
     except Exception as e:
-        logger.error(f"Error getting grouped programs: {e}")
+        logger.error(f"Error getting grouped programs: {e}", exc_info=True)
         raise safe_internal_error(e, "programs")
 
 
@@ -184,5 +184,5 @@ async def get_program(program_id: str):
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error getting program {program_id}: {e}")
+        logger.error(f"Error getting program {program_id}: {e}", exc_info=True)
         raise safe_internal_error(e, "programs")

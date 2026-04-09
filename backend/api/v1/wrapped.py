@@ -39,7 +39,7 @@ async def wrapped_summary(
         summary = await get_wrapped_summary(user_id, auth_id)
         return summary
     except Exception as e:
-        logger.error(f"Failed to get wrapped summary: {e}")
+        logger.error(f"Failed to get wrapped summary: {e}", exc_info=True)
         raise safe_internal_error(e, "wrapped_summary")
 
 
@@ -61,7 +61,7 @@ async def list_available_periods(
         periods = await get_available_periods(user_id)
         return {"periods": periods}
     except Exception as e:
-        logger.error(f"Failed to list wrapped periods: {e}")
+        logger.error(f"Failed to list wrapped periods: {e}", exc_info=True)
         raise safe_internal_error(e, "wrapped_available_periods")
 
 
@@ -88,5 +88,5 @@ async def get_wrapped(
         data = await get_or_generate_wrapped(user_id, period_key, auth_id=auth_id)
         return data
     except Exception as e:
-        logger.error(f"Failed to generate wrapped: {e}")
+        logger.error(f"Failed to generate wrapped: {e}", exc_info=True)
         raise safe_internal_error(e, "wrapped_generate")

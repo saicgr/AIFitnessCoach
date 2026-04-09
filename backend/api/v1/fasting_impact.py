@@ -186,7 +186,7 @@ def calculate_correlation_score(fasting_days_success: List[bool], non_fasting_da
         return round(numerator / denominator, 3)
 
     except Exception as e:
-        logger.warning(f"Could not calculate correlation: {e}")
+        logger.warning(f"Could not calculate correlation: {e}", exc_info=True)
         return None
 
 def generate_impact_insight(
@@ -473,7 +473,7 @@ async def log_weight_with_fasting(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error logging weight: {e}")
+        logger.error(f"Error logging weight: {e}", exc_info=True)
         await log_user_error(
             user_id=data.user_id,
             action="weight_logged_with_fasting",
@@ -586,7 +586,7 @@ async def get_weight_correlation(
         )
 
     except Exception as e:
-        logger.error(f"Error getting weight correlation: {e}")
+        logger.error(f"Error getting weight correlation: {e}", exc_info=True)
         await log_user_error(
             user_id=user_id,
             action="weight_correlation_viewed",
@@ -805,7 +805,7 @@ async def get_fasting_impact_analysis(
         return response
 
     except Exception as e:
-        logger.error(f"Error analyzing fasting impact: {e}")
+        logger.error(f"Error analyzing fasting impact: {e}", exc_info=True)
         await log_user_error(
             user_id=user_id,
             action="fasting_impact_viewed",
@@ -863,7 +863,7 @@ async def trigger_fasting_analysis(
         try:
             db.client.table("fasting_impact_analysis").insert(analysis_record).execute()
         except Exception as store_error:
-            logger.warning(f"Could not store analysis (table may not exist): {store_error}")
+            logger.warning(f"Could not store analysis (table may not exist): {store_error}", exc_info=True)
 
         # Log activity
         await log_user_activity(
@@ -880,7 +880,7 @@ async def trigger_fasting_analysis(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error triggering fasting analysis: {e}")
+        logger.error(f"Error triggering fasting analysis: {e}", exc_info=True)
         await log_user_error(
             user_id=user_id,
             action="fasting_analysis_triggered",
@@ -971,7 +971,7 @@ async def get_fasting_insights(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error getting fasting insights: {e}")
+        logger.error(f"Error getting fasting insights: {e}", exc_info=True)
         await log_user_error(
             user_id=user_id,
             action="fasting_insights_viewed",

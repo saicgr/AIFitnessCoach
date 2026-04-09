@@ -86,7 +86,7 @@ async def create_workout_exit(data: WorkoutExitCreate,
         return row_to_workout_exit(created)
 
     except Exception as e:
-        logger.error(f"Error creating workout exit: {e}")
+        logger.error(f"Error creating workout exit: {e}", exc_info=True)
         raise safe_internal_error(e, "performance_db")
 
 
@@ -105,7 +105,7 @@ async def list_workout_exits(
         return [row_to_workout_exit(row) for row in rows]
 
     except Exception as e:
-        logger.error(f"Error listing workout exits: {e}")
+        logger.error(f"Error listing workout exits: {e}", exc_info=True)
         raise safe_internal_error(e, "performance_db")
 
 
@@ -145,7 +145,7 @@ async def create_drink_intake(data: DrinkIntakeCreate,
         return row_to_drink_intake(created)
 
     except Exception as e:
-        logger.error(f"Error creating drink intake: {e}")
+        logger.error(f"Error creating drink intake: {e}", exc_info=True)
         raise safe_internal_error(e, "performance_db")
 
 
@@ -164,7 +164,7 @@ async def list_drink_intakes(
         return [row_to_drink_intake(row) for row in rows]
 
     except Exception as e:
-        logger.error(f"Error listing drink intakes: {e}")
+        logger.error(f"Error listing drink intakes: {e}", exc_info=True)
         raise safe_internal_error(e, "performance_db")
 
 
@@ -192,7 +192,7 @@ async def get_drink_intake_summary(workout_log_id: str,
         )
 
     except Exception as e:
-        logger.error(f"Error getting drink intake summary: {e}")
+        logger.error(f"Error getting drink intake summary: {e}", exc_info=True)
         raise safe_internal_error(e, "performance_db")
 
 
@@ -247,7 +247,7 @@ async def create_rest_interval(data: RestIntervalCreate,
         return row_to_rest_interval(created)
 
     except Exception as e:
-        logger.error(f"Error creating rest interval: {e}")
+        logger.error(f"Error creating rest interval: {e}", exc_info=True)
         raise safe_internal_error(e, "performance_db")
 
 
@@ -266,7 +266,7 @@ async def list_rest_intervals(
         return [row_to_rest_interval(row) for row in rows]
 
     except Exception as e:
-        logger.error(f"Error listing rest intervals: {e}")
+        logger.error(f"Error listing rest intervals: {e}", exc_info=True)
         raise safe_internal_error(e, "performance_db")
 
 
@@ -295,7 +295,7 @@ async def get_rest_interval_stats(workout_log_id: str,
         )
 
     except Exception as e:
-        logger.error(f"Error getting rest interval stats: {e}")
+        logger.error(f"Error getting rest interval stats: {e}", exc_info=True)
         raise safe_internal_error(e, "performance_db")
 
 
@@ -385,7 +385,7 @@ async def get_all_exercise_stats(user_id: str,
         )
 
     except Exception as e:
-        logger.error(f"Error getting exercise stats: {e}")
+        logger.error(f"Error getting exercise stats: {e}", exc_info=True)
         raise safe_internal_error(e, "performance_db")
 
 
@@ -451,7 +451,7 @@ async def get_single_exercise_stats(user_id: str, exercise_name: str,
         )
 
     except Exception as e:
-        logger.error(f"Error getting exercise stats for '{exercise_name}': {e}")
+        logger.error(f"Error getting exercise stats for '{exercise_name}': {e}", exc_info=True)
         raise safe_internal_error(e, "performance_db")
 
 
@@ -508,7 +508,7 @@ async def get_exercise_history(
         return result
 
     except Exception as e:
-        logger.error(f"Error getting exercise history: {e}")
+        logger.error(f"Error getting exercise history: {e}", exc_info=True)
         raise safe_internal_error(e, "performance_db")
 
 
@@ -560,5 +560,5 @@ async def get_workout_log_by_workout(
         return result
 
     except Exception as e:
-        logger.error(f"Error fetching workout log by workout: {e}")
+        logger.error(f"Error fetching workout log by workout: {e}", exc_info=True)
         raise safe_internal_error(e, "performance_db")

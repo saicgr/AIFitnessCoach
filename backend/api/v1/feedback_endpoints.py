@@ -75,7 +75,7 @@ async def get_exercise_progress(
         }
 
     except Exception as e:
-        logger.error(f"Failed to get exercise progress: {e}")
+        logger.error(f"Failed to get exercise progress: {e}", exc_info=True)
         raise safe_internal_error(e, "endpoint")
 
 @router.get("/ai-coach/stats")
@@ -85,7 +85,7 @@ async def get_ai_coach_rag_stats(current_user: dict = Depends(get_current_user))
         rag_service = _get_rag_service()
         return rag_service.get_stats()
     except Exception as e:
-        logger.error(f"Failed to get AI Coach stats: {e}")
+        logger.error(f"Failed to get AI Coach stats: {e}", exc_info=True)
         raise safe_internal_error(e, "endpoint")
 
 @router.get("/ai-coach/achievements/{user_id}")
@@ -178,7 +178,7 @@ async def get_user_achievements(
         }
 
     except Exception as e:
-        logger.error(f"Failed to get user achievements: {e}")
+        logger.error(f"Failed to get user achievements: {e}", exc_info=True)
         raise safe_internal_error(e, "endpoint")
 
 # ============================================
@@ -224,7 +224,7 @@ async def get_progression_suggestions(
         ]
 
     except Exception as e:
-        logger.error(f"Failed to get progression suggestions: {e}")
+        logger.error(f"Failed to get progression suggestions: {e}", exc_info=True)
         raise safe_internal_error(e, "endpoint")
 
 @router.post("/progression-response")
@@ -300,7 +300,7 @@ async def respond_to_progression(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to record progression response: {e}")
+        logger.error(f"Failed to record progression response: {e}", exc_info=True)
         await log_user_error(
             user_id=request.user_id,
             action="progression_response",
@@ -408,7 +408,7 @@ async def submit_challenge_exercise_feedback(
         )
 
     except Exception as e:
-        logger.error(f"Failed to submit challenge exercise feedback: {e}")
+        logger.error(f"Failed to submit challenge exercise feedback: {e}", exc_info=True)
         await log_user_error(
             user_id=request.user_id,
             action="challenge_exercise_feedback",
@@ -467,5 +467,5 @@ async def get_user_challenge_mastery(
         }
 
     except Exception as e:
-        logger.error(f"Failed to get challenge mastery: {e}")
+        logger.error(f"Failed to get challenge mastery: {e}", exc_info=True)
         raise safe_internal_error(e, "endpoint")

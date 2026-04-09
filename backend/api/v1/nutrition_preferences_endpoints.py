@@ -133,7 +133,7 @@ async def list_meal_templates(
         )
 
     except Exception as e:
-        logger.error(f"Error listing meal templates: {e}")
+        logger.error(f"Error listing meal templates: {e}", exc_info=True)
         raise safe_internal_error(e, "nutrition_preferences")
 
 
@@ -230,7 +230,7 @@ async def create_meal_template(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error creating meal template: {e}")
+        logger.error(f"Error creating meal template: {e}", exc_info=True)
         await log_user_error(
             user_id=user_id,
             action="meal_template_create",
@@ -332,7 +332,7 @@ async def update_meal_template(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error updating meal template: {e}")
+        logger.error(f"Error updating meal template: {e}", exc_info=True)
         raise safe_internal_error(e, "nutrition_preferences")
 
 
@@ -391,7 +391,7 @@ async def delete_meal_template(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error deleting meal template: {e}")
+        logger.error(f"Error deleting meal template: {e}", exc_info=True)
         raise safe_internal_error(e, "nutrition_preferences")
 
 
@@ -517,7 +517,7 @@ async def log_meal_template(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error logging meal template: {e}")
+        logger.error(f"Error logging meal template: {e}", exc_info=True)
         await log_user_error(
             user_id=user_id,
             action="meal_template_log",
@@ -673,5 +673,5 @@ async def search_foods(
         )
 
     except Exception as e:
-        logger.error(f"Error searching foods: {e}")
+        logger.error(f"Error searching foods: {e}", exc_info=True)
         raise safe_internal_error(e, "nutrition_preferences")

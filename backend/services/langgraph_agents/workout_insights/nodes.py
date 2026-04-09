@@ -316,7 +316,7 @@ GOOD example: "Lead with Barbell Squats at 4x8-12 while fresh — drive through 
         except Exception as e:
             last_error = e
             if attempt < max_retries:
-                logger.warning(f"[Generate Node] Attempt {attempt} failed: {e}, retrying...")
+                logger.warning(f"[Generate Node] Attempt {attempt} failed: {e}, retrying...", exc_info=True)
                 continue
-            logger.error(f"[Generate Node] All {max_retries + 1} attempts failed: {e}, using fallback")
+            logger.error(f"[Generate Node] All {max_retries + 1} attempts failed: {e}, using fallback", exc_info=True)
             return _build_fallback()

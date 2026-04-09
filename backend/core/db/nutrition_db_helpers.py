@@ -407,7 +407,7 @@ class NutritionDB(NutritionDBPart2, BaseDB):
                 if prefs_sync:
                     self.client.table("nutrition_preferences").update(prefs_sync).eq("user_id", user_id).execute()
             except Exception as e:
-                logger.warning(f"Failed to sync targets to nutrition_preferences: {e}")
+                logger.warning(f"Failed to sync targets to nutrition_preferences: {e}", exc_info=True)
             return result.data[0] if result.data else None
         return None
 
@@ -450,7 +450,7 @@ class NutritionDB(NutritionDBPart2, BaseDB):
                     "daily_fat_target_g": prefs.get("target_fat_g"),
                 }
         except Exception as e:
-            logger.warning(f"Error fetching nutrition_preferences for {user_id}: {e}")
+            logger.warning(f"Error fetching nutrition_preferences for {user_id}: {e}", exc_info=True)
 
         try:
             # Fallback to users table for legacy data
@@ -467,7 +467,7 @@ class NutritionDB(NutritionDBPart2, BaseDB):
             if result and result.data:
                 return result.data
         except Exception as e:
-            logger.warning(f"Error fetching user nutrition targets for {user_id}: {e}")
+            logger.warning(f"Error fetching user nutrition targets for {user_id}: {e}", exc_info=True)
 
         return empty_response
 
@@ -486,7 +486,7 @@ class NutritionDB(NutritionDBPart2, BaseDB):
                     if val is not None:
                         user_dict[col] = val
         except Exception as e:
-            logger.warning(f"Failed to enrich user nutrition targets: {e}")
+            logger.warning(f"Failed to enrich user nutrition targets: {e}", exc_info=True)
         return user_dict
 
     # ==================== WEIGHT LOGS ====================

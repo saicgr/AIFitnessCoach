@@ -113,10 +113,10 @@ class CustomExerciseMediaService:
             logger.info(f"Uploaded custom exercise image: {key}")
             return key, None
         except ClientError as e:
-            logger.error(f"Failed to upload image to S3: {e}")
+            logger.error(f"Failed to upload image to S3: {e}", exc_info=True)
             return None, str(e)
         except Exception as e:
-            logger.error(f"Unexpected error uploading to S3: {e}")
+            logger.error(f"Unexpected error uploading to S3: {e}", exc_info=True)
             return None, str(e)
 
     async def upload_video(
@@ -161,10 +161,10 @@ class CustomExerciseMediaService:
             logger.info(f"Uploaded custom exercise video: {key}")
             return key, None
         except ClientError as e:
-            logger.error(f"Failed to upload video to S3: {e}")
+            logger.error(f"Failed to upload video to S3: {e}", exc_info=True)
             return None, str(e)
         except Exception as e:
-            logger.error(f"Unexpected error uploading to S3: {e}")
+            logger.error(f"Unexpected error uploading to S3: {e}", exc_info=True)
             return None, str(e)
 
     async def upload_thumbnail(
@@ -199,7 +199,7 @@ class CustomExerciseMediaService:
             logger.info(f"Uploaded custom exercise thumbnail: {key}")
             return key, None
         except Exception as e:
-            logger.error(f"Failed to upload thumbnail: {e}")
+            logger.error(f"Failed to upload thumbnail: {e}", exc_info=True)
             return None, str(e)
 
     def get_signed_url(self, storage_key: str, expires_in: int = 3600) -> Optional[str]:
@@ -224,7 +224,7 @@ class CustomExerciseMediaService:
             )
             return url
         except Exception as e:
-            logger.error(f"Failed to generate presigned URL: {e}")
+            logger.error(f"Failed to generate presigned URL: {e}", exc_info=True)
             return None
 
     def get_public_url(self, storage_key: str) -> Optional[str]:
@@ -277,7 +277,7 @@ class CustomExerciseMediaService:
             logger.info(f"Deleted {len(objects_to_delete)} media files for exercise {exercise_id}")
             return True
         except Exception as e:
-            logger.error(f"Failed to delete exercise media: {e}")
+            logger.error(f"Failed to delete exercise media: {e}", exc_info=True)
             return False
 
     def generate_presigned_upload_url(
@@ -325,7 +325,7 @@ class CustomExerciseMediaService:
             )
             return url, key, None
         except Exception as e:
-            logger.error(f"Failed to generate presigned upload URL: {e}")
+            logger.error(f"Failed to generate presigned upload URL: {e}", exc_info=True)
             return None, None, str(e)
 
 

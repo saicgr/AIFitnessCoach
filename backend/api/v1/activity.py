@@ -358,7 +358,7 @@ async def sync_batch_activity(activities: List[DailyActivityInput], current_user
                     "status": "failed"
                 })
         except Exception as e:
-            logger.error(f"Failed to sync activity for {activity.activity_date}: {e}")
+            logger.error(f"Failed to sync activity for {activity.activity_date}: {e}", exc_info=True)
             results.append({
                 "date": activity.activity_date.isoformat(),
                 "status": "error",

@@ -98,6 +98,10 @@ class Settings(BaseSettings):
     slack_support_webhook: Optional[str] = None
     # Discord webhook URL for live chat / support notifications
     discord_webhook_url: Optional[str] = None
+    # Discord webhook URLs for automated notifications
+    discord_growth_webhook: Optional[str] = None    # New user signups → #growth
+    discord_reviews_webhook: Optional[str] = None   # Play Store reviews → #reviews
+    discord_alerts_webhook: Optional[str] = None    # Backend errors → #alerts
     # Admin email for live chat notification fallback (via Resend)
     admin_notification_email: Optional[str] = None
     # Admin dashboard URL for action buttons in webhook messages

@@ -569,7 +569,7 @@ async def resolve_contextual_reference(
             return ResolvedMeal(found=False, message="Could not understand the reference.")
 
     except Exception as e:
-        logger.error(f"[ContextualMeal] Resolution error: {e}")
+        logger.error(f"[ContextualMeal] Resolution error: {e}", exc_info=True)
         return ResolvedMeal(found=False, message="Something went wrong looking up your meal history.")
 
 

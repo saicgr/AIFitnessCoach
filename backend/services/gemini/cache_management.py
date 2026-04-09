@@ -89,12 +89,12 @@ class CacheManagementMixin:
                         deleted_count += 1
                         logger.info(f"[CacheManager] Deleted duplicate cache: {dup.name}")
                     except Exception as e:
-                        logger.warning(f"[CacheManager] Failed to delete cache {dup.name}: {e}")
+                        logger.warning(f"[CacheManager] Failed to delete cache {dup.name}: {e}", exc_info=True)
 
             if deleted_count > 0:
                 logger.info(f"[CacheManager] Cleaned up {deleted_count} duplicate cache(s)")
         except Exception as e:
-            logger.warning(f"[CacheManager] Cache cleanup failed: {e}")
+            logger.warning(f"[CacheManager] Cache cleanup failed: {e}", exc_info=True)
 
     @classmethod
     def _adopt_existing_cache(cls, prefix: str, cache) -> None:
@@ -169,7 +169,7 @@ class CacheManagementMixin:
                 else:
                     logger.info(f"[CacheManager] Nutrition analysis cache already adopted, skipping pre-warm")
         except Exception as e:
-            logger.warning(f"[CacheManager] Cache pre-warm failed: {e}")
+            logger.warning(f"[CacheManager] Cache pre-warm failed: {e}", exc_info=True)
 
     @staticmethod
     def _find_existing_server_cache(display_name_prefix: str):
@@ -187,7 +187,7 @@ class CacheManagementMixin:
                             continue
                     return cache
         except Exception as e:
-            logger.warning(f"[Cache] Failed to list server caches: {e}")
+            logger.warning(f"[Cache] Failed to list server caches: {e}", exc_info=True)
         return None
 
     async def _get_or_create_workout_cache(self) -> Optional[str]:
@@ -254,7 +254,7 @@ class CacheManagementMixin:
                 return cache.name
 
             except Exception as e:
-                logger.warning(f"⚠️ [Cache] Failed to create workout cache: {e}")
+                logger.warning(f"⚠️ [Cache] Failed to create workout cache: {e}", exc_info=True)
                 return None
 
     def _build_workout_cache_system_instruction(self) -> str:
@@ -480,7 +480,7 @@ Create engaging, creative names that:
                 return cache.name
 
             except Exception as e:
-                logger.warning(f"⚠️ [Cache] Failed to create form analysis cache: {e}")
+                logger.warning(f"⚠️ [Cache] Failed to create form analysis cache: {e}", exc_info=True)
                 return None
 
     async def _get_or_create_nutrition_analysis_cache(self) -> Optional[str]:
@@ -540,5 +540,5 @@ Create engaging, creative names that:
                 return cache.name
 
             except Exception as e:
-                logger.warning(f"⚠️ [Cache] Failed to create nutrition analysis cache: {e}")
+                logger.warning(f"⚠️ [Cache] Failed to create nutrition analysis cache: {e}", exc_info=True)
                 return None

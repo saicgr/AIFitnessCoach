@@ -141,7 +141,7 @@ Respond ONLY with valid JSON, no explanations."""
             "target_muscle_group": target_muscle,
         }
     except Exception as e:
-        logger.error(f"[Analyze Node] Error: {e}")
+        logger.error(f"[Analyze Node] Error: {e}", exc_info=True)
         # Default analysis
         return {
             "swap_reason": "variety",
@@ -308,7 +308,7 @@ async def search_exercises_node(state: ExerciseSuggestionState) -> Dict[str, Any
         return {"candidate_exercises": raw_candidates[:30]}
 
     except Exception as e:
-        logger.error(f"[Search Node] Error: {e}")
+        logger.error(f"[Search Node] Error: {e}", exc_info=True)
         return {"candidate_exercises": [], "error": str(e)}
 
 
@@ -477,7 +477,7 @@ IMPORTANT: Only suggest exercises from the provided list. Match names exactly.""
                         s["gif_url"] = gif_map.get(s.get("name", "").lower())
                     logger.info(f"[Generate Node] Added gif_urls for {len(gif_map)} exercises")
         except Exception as e:
-            logger.warning(f"[Generate Node] Could not fetch gif_urls: {e}")
+            logger.warning(f"[Generate Node] Could not fetch gif_urls: {e}", exc_info=True)
 
         logger.info(f"[Generate Node] Generated {len(enriched_suggestions)} suggestions")
 
@@ -487,7 +487,7 @@ IMPORTANT: Only suggest exercises from the provided list. Match names exactly.""
         }
 
     except Exception as e:
-        logger.error(f"[Generate Node] Error generating AI suggestions: {e}")
+        logger.error(f"[Generate Node] Error generating AI suggestions: {e}", exc_info=True)
         # Fallback: return top candidates without AI ranking
         fallback_suggestions = []
         for candidate in candidates[:5]:
@@ -496,7 +496,7 @@ IMPORTANT: Only suggest exercises from the provided list. Match names exactly.""
                 "reason": f"Similar exercise targeting the same muscle group ({candidate.get('body_part', 'unknown')})",
                 "tip": "This exercise was selected based on similarity to your current exercise.",
             })
-        logger.warning(f"[Generate Node] Returning {len(fallback_suggestions)} fallback suggestions")
+        logger.warning(f"[Generate Node] Returning {len(fallback_suggestions)} fallback suggestions", exc_info=True)
         return {
             "suggestions": fallback_suggestions,
             "response_message": "Here are some alternative exercises based on similarity:",

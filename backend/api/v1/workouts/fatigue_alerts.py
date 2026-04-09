@@ -321,7 +321,7 @@ async def check_fatigue(request: FatigueCheckRequest) -> FatigueCheckResponse:
         )
 
     except Exception as e:
-        logger.error(f"[Fatigue Check] Error: {e}")
+        logger.error(f"[Fatigue Check] Error: {e}", exc_info=True)
         raise HTTPException(
             status_code=500,
             detail="Failed to process fatigue check"
@@ -407,7 +407,7 @@ async def get_next_set_preview(
         )
 
     except Exception as e:
-        logger.error(f"[Next Set Preview] Error: {e}")
+        logger.error(f"[Next Set Preview] Error: {e}", exc_info=True)
         raise HTTPException(
             status_code=500,
             detail="Failed to calculate preview"
@@ -503,7 +503,7 @@ async def check_fatigue_with_preview(
         }
 
     except Exception as e:
-        logger.error(f"[Combined Check] Error: {e}")
+        logger.error(f"[Combined Check] Error: {e}", exc_info=True)
         raise HTTPException(
             status_code=500,
             detail="Failed to process check"

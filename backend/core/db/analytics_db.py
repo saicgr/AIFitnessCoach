@@ -106,7 +106,7 @@ class AnalyticsDB(BaseDB):
 
             return regeneration
         except Exception as e:
-            logger.warning(f"Failed to record regeneration analytics: {e}")
+            logger.warning(f"Failed to record regeneration analytics: {e}", exc_info=True)
             return None
 
     def _upsert_custom_input(
@@ -146,7 +146,7 @@ class AnalyticsDB(BaseDB):
                     }
                 ).execute()
         except Exception as e:
-            logger.warning(f"Failed to upsert custom input: {e}")
+            logger.warning(f"Failed to upsert custom input: {e}", exc_info=True)
 
     def _upsert_equipment_usage(self, user_id: str, equipment: List[str]) -> None:
         """
@@ -184,7 +184,7 @@ class AnalyticsDB(BaseDB):
                     }
                 ).execute()
         except Exception as e:
-            logger.warning(f"Failed to upsert equipment usage: {e}")
+            logger.warning(f"Failed to upsert equipment usage: {e}", exc_info=True)
 
     def get_user_regeneration_analytics(
         self, user_id: str, limit: int = 50

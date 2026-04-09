@@ -166,7 +166,7 @@ class RecipeSuggestionService:
             )
 
         except Exception as e:
-            logger.error(f"❌ [RecipeSuggestion] Error fetching user context: {e}")
+            logger.error(f"❌ [RecipeSuggestion] Error fetching user context: {e}", exc_info=True)
             return None
 
     def _build_recipe_prompt(
@@ -420,11 +420,11 @@ IMPORTANT:
             return suggestions
 
         except json.JSONDecodeError as e:
-            logger.error(f"❌ [RecipeSuggestion] JSON parse error: {e}")
-            logger.error(f"Response text: {response_text[:500]}...")
+            logger.error(f"❌ [RecipeSuggestion] JSON parse error: {e}", exc_info=True)
+            logger.error(f"Response text: {response_text[:500]}...", exc_info=True)
             raise ValueError("Failed to parse recipe suggestions from AI")
         except Exception as e:
-            logger.error(f"❌ [RecipeSuggestion] Error generating recipes: {e}")
+            logger.error(f"❌ [RecipeSuggestion] Error generating recipes: {e}", exc_info=True)
             raise
 
     async def _save_suggestion_session(
@@ -513,7 +513,7 @@ IMPORTANT:
             return session_id
 
         except Exception as e:
-            logger.warning(f"⚠️ [RecipeSuggestion] Failed to save session: {e}")
+            logger.warning(f"⚠️ [RecipeSuggestion] Failed to save session: {e}", exc_info=True)
             return ""
 
     async def get_saved_suggestions(
@@ -537,7 +537,7 @@ IMPORTANT:
             return response.data or []
 
         except Exception as e:
-            logger.error(f"❌ [RecipeSuggestion] Error getting saved suggestions: {e}")
+            logger.error(f"❌ [RecipeSuggestion] Error getting saved suggestions: {e}", exc_info=True)
             return []
 
     async def rate_suggestion(
@@ -564,7 +564,7 @@ IMPORTANT:
             return True
 
         except Exception as e:
-            logger.error(f"❌ [RecipeSuggestion] Error rating suggestion: {e}")
+            logger.error(f"❌ [RecipeSuggestion] Error rating suggestion: {e}", exc_info=True)
             return False
 
     async def save_suggestion(
@@ -585,7 +585,7 @@ IMPORTANT:
             return True
 
         except Exception as e:
-            logger.error(f"❌ [RecipeSuggestion] Error saving suggestion: {e}")
+            logger.error(f"❌ [RecipeSuggestion] Error saving suggestion: {e}", exc_info=True)
             return False
 
     async def mark_cooked(
@@ -606,7 +606,7 @@ IMPORTANT:
             return True
 
         except Exception as e:
-            logger.error(f"❌ [RecipeSuggestion] Error marking cooked: {e}")
+            logger.error(f"❌ [RecipeSuggestion] Error marking cooked: {e}", exc_info=True)
             return False
 
     async def convert_to_user_recipe(
@@ -679,7 +679,7 @@ IMPORTANT:
             return recipe_id
 
         except Exception as e:
-            logger.error(f"❌ [RecipeSuggestion] Error converting to recipe: {e}")
+            logger.error(f"❌ [RecipeSuggestion] Error converting to recipe: {e}", exc_info=True)
             return None
 
     async def get_cuisines_list(self) -> List[Dict[str, Any]]:
@@ -689,7 +689,7 @@ IMPORTANT:
             response = db.client.table("cuisine_types").select("*").order("display_order").execute()
             return response.data or []
         except Exception as e:
-            logger.error(f"❌ [RecipeSuggestion] Error getting cuisines: {e}")
+            logger.error(f"❌ [RecipeSuggestion] Error getting cuisines: {e}", exc_info=True)
             return []
 
     async def get_body_types_list(self) -> List[Dict[str, Any]]:
@@ -699,7 +699,7 @@ IMPORTANT:
             response = db.client.table("body_types").select("*").order("display_order").execute()
             return response.data or []
         except Exception as e:
-            logger.error(f"❌ [RecipeSuggestion] Error getting body types: {e}")
+            logger.error(f"❌ [RecipeSuggestion] Error getting body types: {e}", exc_info=True)
             return []
 
 

@@ -56,7 +56,7 @@ async def _background_log_generation(user_id: str, workout_id: str, workout_name
             status_code=200
         )
     except Exception as e:
-        logger.warning(f"Background: Failed to log generation activity: {e}")
+        logger.warning(f"Background: Failed to log generation activity: {e}", exc_info=True)
 
 
 async def _background_index_rag(workout: Workout):
@@ -64,7 +64,7 @@ async def _background_index_rag(workout: Workout):
     try:
         await index_workout_to_rag(workout)
     except Exception as e:
-        logger.warning(f"Background: Failed to index workout to RAG: {e}")
+        logger.warning(f"Background: Failed to index workout to RAG: {e}", exc_info=True)
 
 
 @router.post("/generate", response_model=Workout)
@@ -145,7 +145,7 @@ async def generate_workout(request: Request, body: GenerateWorkoutRequest, backg
                 await set_cached_generation(cache_key, workout_data)
 
             except Exception as ai_error:
-                logger.error(f"AI workout generation failed: {ai_error}")
+                logger.error(f"AI workout generation failed: {ai_error}", exc_info=True)
                 raise HTTPException(
                     status_code=500,
                     detail=f"Failed to generate workout: {str(ai_error)}"
@@ -195,7 +195,7 @@ async def generate_workout(request: Request, body: GenerateWorkoutRequest, backg
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to generate workout: {e}")
+        logger.error(f"Failed to generate workout: {e}", exc_info=True)
         await log_user_error(
             user_id=body.user_id,
             action="workout_generation",
@@ -322,10 +322,10 @@ async def generate_workout_streaming(request: Request, body: GenerateWorkoutRequ
             yield f"event: done\ndata: {json.dumps(workout_response)}\n\n"
 
         except json.JSONDecodeError as e:
-            logger.error(f"[Streaming] JSON parse error: {e}")
+            logger.error(f"[Streaming] JSON parse error: {e}", exc_info=True)
             yield f"event: error\ndata: {json.dumps({'error': f'Failed to parse AI response: {str(e)}'})}\n\n"
         except Exception as e:
-            logger.error(f"[Streaming] Error: {e}")
+            logger.error(f"[Streaming] Error: {e}", exc_info=True)
             yield f"event: error\ndata: {json.dumps({'error': str(e)})}\n\n"
 
     return StreamingResponse(
@@ -445,7 +445,7 @@ Example format: {{"suggestions": [...]}}"""
         return WorkoutSuggestionsResponse(suggestions=suggestions)
 
     except json.JSONDecodeError as e:
-        logger.error(f"Failed to parse AI response: {e}")
+        logger.error(f"Failed to parse AI response: {e}", exc_info=True)
         return WorkoutSuggestionsResponse(suggestions=[
             WorkoutSuggestion(
                 name="Power Strength", type="Strength", difficulty="medium",
@@ -469,5 +469,5 @@ Example format: {{"suggestions": [...]}}"""
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to get workout suggestions: {e}")
+        logger.error(f"Failed to get workout suggestions: {e}", exc_info=True)
         raise safe_internal_error(e, "workouts_db")

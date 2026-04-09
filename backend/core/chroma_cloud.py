@@ -124,7 +124,7 @@ class ChromaCloudClient:
             self.client.delete_collection(name=collection_name)
             logger.info(f"Deleted collection: {collection_name}")
         except Exception as e:
-            logger.error(f"Failed to delete collection {collection_name}: {e}")
+            logger.error(f"Failed to delete collection {collection_name}: {e}", exc_info=True)
 
     def list_collections(self):
         """List all collections."""

@@ -161,7 +161,7 @@ async def parse_onboarding_response(request: Request, body: ParseOnboardingReque
         )
 
     except Exception as e:
-        logger.error(f"❌ [LangGraph] Onboarding parse failed: {e}")
+        logger.error(f"❌ [LangGraph] Onboarding parse failed: {e}", exc_info=True)
         # Log error with webhook alert
         await log_user_error(
             user_id=body.user_id,
@@ -216,7 +216,7 @@ async def validate_onboarding_data(request: Request, body: ValidateDataRequest,
         )
 
     except Exception as e:
-        logger.error(f"❌ [LangGraph] Validation failed: {e}")
+        logger.error(f"❌ [LangGraph] Validation failed: {e}", exc_info=True)
         raise safe_internal_error(e, "onboarding")
 
 
@@ -270,7 +270,7 @@ async def save_conversation(request: Request, body: SaveConversationRequest,
                 logger.info(f"✅ Saved {len(conversation_data)} messages to database")
         except Exception as save_error:
             # Log but don't fail - the columns might not exist yet
-            logger.warning(f"⚠️ Could not save conversation to database (columns may not exist): {save_error}")
+            logger.warning(f"⚠️ Could not save conversation to database (columns may not exist): {save_error}", exc_info=True)
             logger.info("💡 To fix: Add 'onboarding_conversation' (JSONB) and 'onboarding_conversation_completed_at' (TIMESTAMPTZ) columns to users table")
 
         return {
@@ -279,5 +279,5 @@ async def save_conversation(request: Request, body: SaveConversationRequest,
         }
 
     except Exception as e:
-        logger.error(f"❌ Failed to save conversation: {e}")
+        logger.error(f"❌ Failed to save conversation: {e}", exc_info=True)
         raise safe_internal_error(e, "onboarding")

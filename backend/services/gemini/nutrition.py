@@ -16,7 +16,7 @@ from services.gemini.constants import (
     client, _log_token_usage, _gemini_semaphore,
     _food_text_cache, settings,
 )
-from services.gemini.utils import _sanitize_for_prompt
+from services.gemini.utils import _sanitize_for_prompt, safe_join_list
 
 logger = logging.getLogger("gemini")
 
@@ -104,7 +104,7 @@ WEIGHT/COUNT FIELDS (required for portion editing):
                 )
                 logger.info(f"[IMAGE-ANALYSIS:{req_id}] Image decoded successfully")
             except Exception as decode_err:
-                logger.error(f"[IMAGE-ANALYSIS:{req_id}] FAILED to decode base64 image | error={decode_err}")
+                logger.error(f"[IMAGE-ANALYSIS:{req_id}] FAILED to decode base64 image | error={decode_err}", exc_info=True)
                 return {
                     "error": "Failed to decode image",
                     "error_code": "IMAGE_DECODE_FAILED",
@@ -133,7 +133,7 @@ WEIGHT/COUNT FIELDS (required for portion editing):
                 logger.info(f"[IMAGE-ANALYSIS:{req_id}] Gemini API responded | elapsed={elapsed:.2f}s")
             except asyncio.TimeoutError:
                 elapsed = time.time() - start_time
-                logger.error(f"[IMAGE-ANALYSIS:{req_id}] TIMEOUT after {elapsed:.2f}s (limit={IMAGE_ANALYSIS_TIMEOUT}s)")
+                logger.error(f"[IMAGE-ANALYSIS:{req_id}] TIMEOUT after {elapsed:.2f}s (limit={IMAGE_ANALYSIS_TIMEOUT}s)", exc_info=True)
                 return {
                     "error": f"Image analysis timed out after {IMAGE_ANALYSIS_TIMEOUT} seconds. Please try again.",
                     "error_code": "GEMINI_TIMEOUT",
@@ -250,7 +250,7 @@ WEIGHT/COUNT FIELDS (required for portion editing):
                             f"usda_data={'YES' if item.get('usda_data') else 'NO'}"
                         )
                 except Exception as e:
-                    logger.warning(f"[IMAGE-ANALYSIS:{req_id}] USDA enhancement failed, using AI estimates | error={e}")
+                    logger.warning(f"[IMAGE-ANALYSIS:{req_id}] USDA enhancement failed, using AI estimates | error={e}", exc_info=True)
 
             # Check if we got empty food items
             if not result.get('food_items'):
@@ -282,7 +282,7 @@ WEIGHT/COUNT FIELDS (required for portion editing):
                 f"error_type={type(e).__name__} | "
                 f"error={str(e)} | "
                 f"elapsed={elapsed:.2f}s"
-            )
+            , exc_info=True)
             logger.exception(f"[IMAGE-ANALYSIS:{req_id}] Full traceback:")
             return {
                 "error": "An unexpected error occurred during image analysis. Please try again.",
@@ -324,7 +324,7 @@ WEIGHT/COUNT FIELDS (required for portion editing):
                 logger.info(f"[FoodTextCache] Cache HIT for: '{description[:60]}...'")
                 return cached_result
         except Exception as cache_err:
-            logger.warning(f"[FoodTextCache] Cache lookup error (falling through): {cache_err}")
+            logger.warning(f"[FoodTextCache] Cache lookup error (falling through): {cache_err}", exc_info=True)
 
         # Build user context section for goal-based scoring
         user_context = ""
@@ -580,7 +580,7 @@ IMPORTANT - ALWAYS identify foods:
                             timeout=attempt_timeout
                         )
                 except asyncio.TimeoutError:
-                    logger.warning(f"[Gemini] Request timed out after {attempt_timeout}s (attempt {attempt + 1})")
+                    logger.warning(f"[Gemini] Request timed out after {attempt_timeout}s (attempt {attempt + 1})", exc_info=True)
                     last_error = f"Timeout after {attempt_timeout}s"
                     await asyncio.sleep(1 + attempt)
                     continue
@@ -645,7 +645,7 @@ IMPORTANT - ALWAYS identify foods:
 
                         logger.info(f"[NutritionDB] Enhanced {len(enhanced_items)} items, total: {total_calories} cal")
                     except Exception as e:
-                        logger.warning(f"Nutrition DB enhancement failed, using AI estimates: {e}")
+                        logger.warning(f"Nutrition DB enhancement failed, using AI estimates: {e}", exc_info=True)
                         # Continue with original AI estimates if enhancement fails
 
                     # Cache the successful result
@@ -653,7 +653,7 @@ IMPORTANT - ALWAYS identify foods:
                         await _food_text_cache.set(cache_key, result)
                         logger.info(f"[FoodTextCache] Cache MISS - stored result for: '{description[:60]}...'")
                     except Exception as cache_err:
-                        logger.warning(f"[FoodTextCache] Failed to store result: {cache_err}")
+                        logger.warning(f"[FoodTextCache] Failed to store result: {cache_err}", exc_info=True)
 
                     return result
                 else:
@@ -662,7 +662,7 @@ IMPORTANT - ALWAYS identify foods:
                     continue
 
             except Exception as e:
-                logger.warning(f"[Gemini] Food description parsing failed (attempt {attempt + 1}): {e}")
+                logger.warning(f"[Gemini] Food description parsing failed (attempt {attempt + 1}): {e}", exc_info=True)
                 last_error = str(e)
                 continue
 
@@ -699,18 +699,18 @@ IMPORTANT - ALWAYS identify foods:
                         result['fat_g'] = round(sum(item.get('fat_g', 0) or 0 for item in enhanced_items), 1)
                         result['fiber_g'] = round(sum(item.get('fiber_g', 0) or 0 for item in enhanced_items), 1)
                     except Exception as e:
-                        logger.warning(f"Nutrition DB enhancement failed in fallback: {e}")
+                        logger.warning(f"Nutrition DB enhancement failed in fallback: {e}", exc_info=True)
 
                     # Cache the fallback result too
                     try:
                         await _food_text_cache.set(cache_key, result)
                         logger.info(f"[FoodTextCache] Cache MISS (fallback) - stored result for: '{description[:60]}...'")
                     except Exception as cache_err:
-                        logger.warning(f"[FoodTextCache] Failed to store fallback result: {cache_err}")
+                        logger.warning(f"[FoodTextCache] Failed to store fallback result: {cache_err}", exc_info=True)
 
                     return result
         except Exception as e:
-            logger.error(f"[Gemini] Unstructured fallback also failed: {e}")
+            logger.error(f"[Gemini] Unstructured fallback also failed: {e}", exc_info=True)
 
         logger.error(f"[Gemini] All {max_retries} attempts + fallback failed. Last error: {last_error}")
         logger.error(f"[Gemini] Last content was: {content[:500] if content else 'empty'}")
@@ -858,7 +858,7 @@ IMPORTANT - ALWAYS identify foods:
                     logger.info(f"[Gemini] Recovered {len(food_objects)} food items via regex extraction")
                     return recovered_result
         except Exception as e:
-            logger.warning(f"[Gemini] Food-specific regex recovery failed: {e}")
+            logger.warning(f"[Gemini] Food-specific regex recovery failed: {e}", exc_info=True)
 
         logger.error(f"[Gemini] All JSON parsing attempts failed. Content preview: {original_content[:200]}")
         return None

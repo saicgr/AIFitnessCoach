@@ -109,7 +109,7 @@ class FeedbackAnalysisService:
             return self._calculate_adjustment(exercise_feedback, workout_feedback, user_id)
 
         except Exception as e:
-            logger.error(f"Failed to analyze user feedback: {e}")
+            logger.error(f"Failed to analyze user feedback: {e}", exc_info=True)
             # Return neutral adjustment on error
             return FeedbackAnalysis(
                 difficulty_adjustment=0,
@@ -375,7 +375,7 @@ async def get_user_difficulty_adjustment(
                 workout_type=workout_type,
             )
         except Exception as e:
-            logger.warning(f"Failed to log difficulty adjustment: {e}")
+            logger.warning(f"Failed to log difficulty adjustment: {e}", exc_info=True)
 
     return analysis.difficulty_adjustment, analysis.recommendation
 
@@ -535,7 +535,7 @@ async def update_exercise_mastery(
             )
 
     except Exception as e:
-        logger.error(f"Failed to update exercise mastery: {e}")
+        logger.error(f"Failed to update exercise mastery: {e}", exc_info=True)
         return ExerciseMasteryUpdate(
             exercise_name=exercise_name,
             consecutive_easy_sessions=0,
@@ -626,7 +626,7 @@ async def get_exercises_ready_for_progression(
         return suggestionable
 
     except Exception as e:
-        logger.error(f"Failed to get exercises ready for progression: {e}")
+        logger.error(f"Failed to get exercises ready for progression: {e}", exc_info=True)
         return []
 
 
@@ -704,7 +704,7 @@ async def _find_next_exercise_variant(
         return None  # At top of chain
 
     except Exception as e:
-        logger.error(f"Failed to find next exercise variant: {e}")
+        logger.error(f"Failed to find next exercise variant: {e}", exc_info=True)
         return None
 
 
@@ -824,7 +824,7 @@ async def record_challenge_exercise_completion(
             }
 
     except Exception as e:
-        logger.error(f"Failed to record challenge exercise completion: {e}")
+        logger.error(f"Failed to record challenge exercise completion: {e}", exc_info=True)
         return {
             "exercise_name": exercise_name,
             "error": str(e),
@@ -873,7 +873,7 @@ async def get_challenges_ready_for_main_workout(
         return ready_exercises
 
     except Exception as e:
-        logger.error(f"Failed to get challenges ready for main workout: {e}")
+        logger.error(f"Failed to get challenges ready for main workout: {e}", exc_info=True)
         return []
 
 
@@ -981,5 +981,5 @@ async def record_progression_response(
         return True
 
     except Exception as e:
-        logger.error(f"Failed to record progression response: {e}")
+        logger.error(f"Failed to record progression response: {e}", exc_info=True)
         return False

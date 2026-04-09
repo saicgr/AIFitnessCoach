@@ -163,7 +163,7 @@ async def complete_workout(
                             user_profile={"id": user_id},
                         )
                     except Exception as e:
-                        logger.warning(f"Failed to generate AI celebration: {e}")
+                        logger.warning(f"Failed to generate AI celebration: {e}", exc_info=True)
                         ai_celebration = pr.celebration_message
 
                     pr_record = {
@@ -203,7 +203,7 @@ async def complete_workout(
                 logger.info(f"Saved {len(detected_prs)} PRs for workout {workout_id}")
 
         except Exception as e:
-            logger.error(f"Error during PR detection: {e}")
+            logger.error(f"Error during PR detection: {e}", exc_info=True)
 
         # Background: Populate performance_logs
         workout_log_response = supabase.table("workout_logs").select(
@@ -294,12 +294,12 @@ async def complete_workout(
                 try:
                     supabase.table("workout_performance_summary").upsert(workout_summary, on_conflict="workout_log_id").execute()
                 except Exception as e:
-                    logger.warning(f"Failed to store workout summary: {e}")
+                    logger.warning(f"Failed to store workout summary: {e}", exc_info=True)
                 for ex_summary in exercise_summaries:
                     try:
                         supabase.table("exercise_performance_summary").upsert(ex_summary, on_conflict="workout_log_id,exercise_name").execute()
                     except Exception as e:
-                        logger.warning(f"Failed to store exercise summary: {e}")
+                        logger.warning(f"Failed to store exercise summary: {e}", exc_info=True)
 
             exercise_comparisons: List[ExerciseComparisonInfo] = []
             for ex_perf in exercises_performance:
@@ -405,10 +405,10 @@ async def complete_workout(
                     volume_diff_percentage=workout_comparison.volume_diff_percent,
                 )
             except Exception as log_error:
-                logger.warning(f"Failed to log performance comparison view: {log_error}")
+                logger.warning(f"Failed to log performance comparison view: {log_error}", exc_info=True)
 
         except Exception as e:
-            logger.error(f"Error calculating performance comparison: {e}")
+            logger.error(f"Error calculating performance comparison: {e}", exc_info=True)
 
         # Background: Accountability Coach Nudges
         workout_name = existing.get("name", "your workout")
@@ -431,7 +431,7 @@ async def complete_workout(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to complete workout: {e}")
+        logger.error(f"Failed to complete workout: {e}", exc_info=True)
         raise safe_internal_error(e, "crud")
 
 
@@ -477,7 +477,7 @@ async def uncomplete_workout(workout_id: str,
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to uncomplete workout: {e}")
+        logger.error(f"Failed to uncomplete workout: {e}", exc_info=True)
         raise safe_internal_error(e, "crud")
 
 
@@ -548,7 +548,7 @@ async def get_workout_completion_summary(workout_id: str,
                         rir=pl.get("rir"), set_type=pl.get("set_type", "working"),
                     ))
             except Exception as e:
-                logger.warning(f"Failed to fetch performance logs for summary: {e}")
+                logger.warning(f"Failed to fetch performance logs for summary: {e}", exc_info=True)
 
         # Get personal records
         prs_response = supabase.table("personal_records").select("*").eq("workout_id", workout_id).execute()
@@ -640,7 +640,7 @@ async def get_workout_completion_summary(workout_id: str,
                     declined_count=declined_count, first_time_count=first_time_count,
                 )
             except Exception as e:
-                logger.warning(f"Failed to build performance comparison for summary: {e}")
+                logger.warning(f"Failed to build performance comparison for summary: {e}", exc_info=True)
 
         # Generate AI coach summary
         coach_summary = None
@@ -693,7 +693,7 @@ async def get_workout_completion_summary(workout_id: str,
             )
             coach_summary = await ai_insights_service.gemini.chat(user_message=summary_prompt)
         except Exception as e:
-            logger.warning(f"Failed to generate AI coach summary: {e}")
+            logger.warning(f"Failed to generate AI coach summary: {e}", exc_info=True)
             coach_summary = "Great work completing your workout!"
 
         return WorkoutSummaryResponse(
@@ -706,7 +706,7 @@ async def get_workout_completion_summary(workout_id: str,
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to get workout summary: {e}")
+        logger.error(f"Failed to get workout summary: {e}", exc_info=True)
         raise safe_internal_error(e, "crud")
 
 
@@ -795,5 +795,5 @@ async def update_exercise_sets(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to update exercise sets: {e}")
+        logger.error(f"Failed to update exercise sets: {e}", exc_info=True)
         raise safe_internal_error(e, "crud")

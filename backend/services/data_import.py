@@ -154,7 +154,7 @@ def import_user_data(user_id: str, zip_content: bytes) -> Dict[str, int]:
     except zipfile.BadZipFile:
         raise ValueError("Invalid ZIP file format")
     except Exception as e:
-        logger.error(f"Import error: {e}")
+        logger.error(f"Import error: {e}", exc_info=True)
         raise
 
     logger.info(f"Data import complete for user {truncated_uid}: {counts}")
@@ -270,7 +270,7 @@ def _import_body_metrics(db, user_id: str, metrics: List[Dict[str, str]]) -> int
             db.create_user_metrics(data)
             count += 1
         except Exception as e:
-            logger.warning(f"Failed to import metric: {e}")
+            logger.warning(f"Failed to import metric: {e}", exc_info=True)
 
     return count
 
@@ -320,7 +320,7 @@ def _import_workouts(db, user_id: str, workouts: List[Dict[str, str]]) -> tuple:
                     id_map[old_id] = new_id
                 count += 1
         except Exception as e:
-            logger.warning(f"Failed to import workout: {e}")
+            logger.warning(f"Failed to import workout: {e}", exc_info=True)
 
     return count, id_map
 
@@ -359,7 +359,7 @@ def _import_workout_logs(db, user_id: str, logs: List[Dict[str, str]], workout_i
                     id_map[old_id] = new_id
                 count += 1
         except Exception as e:
-            logger.warning(f"Failed to import workout log: {e}")
+            logger.warning(f"Failed to import workout log: {e}", exc_info=True)
 
     return count, id_map
 
@@ -418,7 +418,7 @@ def _import_exercise_sets(db, user_id: str, sets: List[Dict[str, str]], log_id_m
             db.create_performance_log(data)
             count += 1
         except Exception as e:
-            logger.warning(f"Failed to import exercise set: {e}")
+            logger.warning(f"Failed to import exercise set: {e}", exc_info=True)
 
     return count
 
@@ -458,7 +458,7 @@ def _import_strength_records(db, user_id: str, records: List[Dict[str, str]]) ->
             db.create_strength_record(data)
             count += 1
         except Exception as e:
-            logger.warning(f"Failed to import strength record: {e}")
+            logger.warning(f"Failed to import strength record: {e}", exc_info=True)
 
     return count
 
@@ -505,7 +505,7 @@ def _import_achievements(db, user_id: str, achievements: List[Dict[str, str]]) -
             db.client.table("user_achievements").insert(data).execute()
             count += 1
         except Exception as e:
-            logger.warning(f"Failed to import achievement: {e}")
+            logger.warning(f"Failed to import achievement: {e}", exc_info=True)
 
     return count
 
@@ -550,6 +550,6 @@ def _import_streaks(db, user_id: str, streaks: List[Dict[str, str]]) -> int:
 
             count += 1
         except Exception as e:
-            logger.warning(f"Failed to import streak: {e}")
+            logger.warning(f"Failed to import streak: {e}", exc_info=True)
 
     return count

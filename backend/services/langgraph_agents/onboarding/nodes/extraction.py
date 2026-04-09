@@ -870,7 +870,7 @@ async def extract_data_node(state: OnboardingState) -> Dict[str, Any]:
             break
         except Exception as e:
             last_error = e
-            logger.warning(f"[Extract Data] Attempt {attempt + 1} failed: {e}")
+            logger.warning(f"[Extract Data] Attempt {attempt + 1} failed: {e}", exc_info=True)
             if attempt < max_retries - 1:
                 wait_time = 2 ** attempt
                 logger.info(f"[Extract Data] Retrying in {wait_time}s...")
@@ -958,8 +958,8 @@ async def extract_data_node(state: OnboardingState) -> Dict[str, Any]:
         }
 
     except json.JSONDecodeError as e:
-        logger.error(f"[Extract Data] JSON parse error: {e}")
-        logger.error(f"[Extract Data] Response was: {response.content}")
+        logger.error(f"[Extract Data] JSON parse error: {e}", exc_info=True)
+        logger.error(f"[Extract Data] Response was: {response.content}", exc_info=True)
 
         return {
             "collected_data": collected_data,

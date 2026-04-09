@@ -266,7 +266,7 @@ async def get_user_progression_context(user_id: str, days: int = 30) -> dict:
         }
 
     except Exception as e:
-        logger.error(f"Error getting progression context: {e}")
+        logger.error(f"Error getting progression context: {e}", exc_info=True)
         return {
             "mastered_exercises": [],
             "progression_suggestions": {},
@@ -535,7 +535,7 @@ async def get_user_workout_patterns(user_id: str, days: int = 30) -> dict:
         }
 
     except Exception as e:
-        logger.error(f"Error getting workout patterns for user {user_id}: {e}")
+        logger.error(f"Error getting workout patterns for user {user_id}: {e}", exc_info=True)
         return {
             "exercise_patterns": {},
             "set_rep_limits": {

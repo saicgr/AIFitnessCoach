@@ -96,7 +96,7 @@ async def generate_workout_streaming(request: Request, body: GenerateWorkoutRequ
             if active_result.data:
                 stream_gym_profile_id = active_result.data.get("id")
         except Exception as e:
-            logger.warning(f"Failed to get active gym profile: {e}")
+            logger.warning(f"Failed to get active gym profile: {e}", exc_info=True)
 
     try:
         generating_query = db.client.table("workouts").select("id").eq(
@@ -142,7 +142,7 @@ async def generate_workout_streaming(request: Request, body: GenerateWorkoutRequ
             return StreamingResponse(existing_sse(), media_type="text/event-stream")
     except Exception as e:
         # Log but don't fail - idempotency check is a nice-to-have
-        logger.warning(f"[Idempotency] Check failed: {e}")
+        logger.warning(f"[Idempotency] Check failed: {e}", exc_info=True)
 
     # Premium gate check: enforce free-tier workout generation limits
     from core.premium_gate import check_premium_gate
@@ -178,7 +178,7 @@ async def generate_workout_streaming(request: Request, body: GenerateWorkoutRequ
                         gym_profile = profile_result.data if profile_result.data else None
                         logger.info(f"[GymProfile] Using requested profile: {body.gym_profile_id}")
                     except Exception as e:
-                        logger.warning(f"Failed to fetch gym profile: {e}")
+                        logger.warning(f"Failed to fetch gym profile: {e}", exc_info=True)
                 else:
                     try:
                         active_result = db.client.table("gym_profiles").select("*").eq("user_id", body.user_id).eq("is_active", True).single().execute()
@@ -385,7 +385,7 @@ async def generate_workout_streaming(request: Request, body: GenerateWorkoutRequ
                 accumulated_text = "".join(accumulated_chunks)
                 logger.info(f"[Streaming] Stream completed: {chunk_count} chunks, {len(accumulated_text)} total chars")
             except Exception as stream_error:
-                logger.error(f"[Streaming] Stream error after {chunk_count} chunks, {total_chars} chars: {stream_error}")
+                logger.error(f"[Streaming] Stream error after {chunk_count} chunks, {total_chars} chars: {stream_error}", exc_info=True)
                 yield f"event: error\ndata: {json.dumps({'error': f'Streaming failed: {str(stream_error)}'})}\n\n"
                 return
 
@@ -414,7 +414,7 @@ async def generate_workout_streaming(request: Request, body: GenerateWorkoutRequ
                     try:
                         workout_data = json.loads(workout_data)
                     except (json.JSONDecodeError, ValueError):
-                        logger.error(f"workout_data is a string that cannot be parsed: {workout_data[:200]}")
+                        logger.error(f"workout_data is a string that cannot be parsed: {workout_data[:200]}", exc_info=True)
                         workout_data = {}
 
                 if not isinstance(workout_data, dict):
@@ -588,13 +588,13 @@ async def generate_workout_streaming(request: Request, body: GenerateWorkoutRequ
                 exercises = validate_set_targets_strict(exercises, user_context)
 
             except json.JSONDecodeError as e:
-                logger.error(f"Failed to parse streaming response: {e}")
-                logger.error(f"Raw accumulated text ({len(accumulated_text)} chars): {accumulated_text[:1000]}")
-                logger.error(f"Cleaned content for parsing ({len(content)} chars): {content[:1000]}")
+                logger.error(f"Failed to parse streaming response: {e}", exc_info=True)
+                logger.error(f"Raw accumulated text ({len(accumulated_text)} chars): {accumulated_text[:1000]}", exc_info=True)
+                logger.error(f"Cleaned content for parsing ({len(content)} chars): {content[:1000]}", exc_info=True)
 
                 if content and (content.rstrip().endswith((',', '{', '[', ':')) or
                                not content.rstrip().endswith(('}', ']'))):
-                    logger.error(f"Detected truncated response - Gemini stream ended prematurely")
+                    logger.error(f"Detected truncated response - Gemini stream ended prematurely", exc_info=True)
                     yield f"event: error\ndata: {json.dumps({'error': 'Workout generation was interrupted. Please try again.', 'raw_length': len(accumulated_text), 'truncated': True})}\n\n"
                 else:
                     yield f"event: error\ndata: {json.dumps({'error': 'Failed to parse workout data', 'raw_length': len(accumulated_text)})}\n\n"
@@ -608,7 +608,7 @@ async def generate_workout_streaming(request: Request, body: GenerateWorkoutRequ
                     scheduled_date_str = target_date_to_utc_iso(body.scheduled_date, _stream_tz)
                     logger.info(f"[Streaming] Using provided scheduled_date: {body.scheduled_date} (tz={_stream_tz})")
                 except ValueError:
-                    logger.warning(f"Invalid scheduled_date format: {body.scheduled_date}, using today")
+                    logger.warning(f"Invalid scheduled_date format: {body.scheduled_date}, using today", exc_info=True)
                     scheduled_date_str = target_date_to_utc_iso(get_user_today(_stream_tz), _stream_tz)
             else:
                 scheduled_date_str = target_date_to_utc_iso(get_user_today(_stream_tz), _stream_tz)
@@ -643,7 +643,7 @@ async def generate_workout_streaming(request: Request, body: GenerateWorkoutRequ
                 created = db.create_workout(workout_db_data)
             except Exception as insert_err:
                 if 'PGRST204' in str(insert_err) and 'estimated_calories' in str(insert_err):
-                    logger.warning("[Streaming] estimated_calories column not in schema cache, retrying without it")
+                    logger.warning("[Streaming] estimated_calories column not in schema cache, retrying without it", exc_info=True)
                     workout_db_data.pop('estimated_calories', None)
                     created = db.create_workout(workout_db_data)
                 else:
@@ -689,12 +689,12 @@ async def generate_workout_streaming(request: Request, body: GenerateWorkoutRequ
                 from core.premium_gate import track_premium_usage
                 await track_premium_usage(body.user_id, "ai_workout_generation")
             except Exception as usage_err:
-                logger.warning(f"Failed to track workout generation usage: {usage_err}")
+                logger.warning(f"Failed to track workout generation usage: {usage_err}", exc_info=True)
 
             yield f"event: done\ndata: {json.dumps(workout_response)}\n\n"
 
         except Exception as e:
-            logger.error(f"Streaming workout generation failed: {e}")
+            logger.error(f"Streaming workout generation failed: {e}", exc_info=True)
             yield f"event: error\ndata: {json.dumps({'error': str(e)})}\n\n"
 
     return StreamingResponse(

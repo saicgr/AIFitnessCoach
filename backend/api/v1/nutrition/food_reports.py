@@ -71,7 +71,7 @@ async def report_food(request: FoodReportRequest, current_user: dict = Depends(g
         )
 
     except Exception as e:
-        logger.error(f"Failed to create food report: {e}")
+        logger.error(f"Failed to create food report: {e}", exc_info=True)
         raise safe_internal_error(e, "nutrition")
 
 

@@ -136,7 +136,7 @@ class SocialRAGService:
             collection.delete(ids=[f"reaction_{reaction_id}"])
             logger.info(f"Removed reaction {reaction_id} from social RAG")
         except Exception as e:
-            logger.warning(f"Failed to remove reaction {reaction_id}: {e}")
+            logger.warning(f"Failed to remove reaction {reaction_id}: {e}", exc_info=True)
 
     def get_user_recent_activities(
         self,
@@ -255,7 +255,7 @@ class SocialRAGService:
             collection.delete(ids=[f"activity_{activity_id}"])
             logger.info(f"Removed activity {activity_id} from social RAG")
         except Exception as e:
-            logger.warning(f"Failed to remove activity {activity_id}: {e}")
+            logger.warning(f"Failed to remove activity {activity_id}: {e}", exc_info=True)
 
     def _build_activity_document(
         self,

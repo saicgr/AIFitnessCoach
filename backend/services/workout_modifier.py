@@ -105,7 +105,7 @@ class WorkoutModifier:
             return True
 
         except Exception as e:
-            logger.error(f"Failed to add exercises to workout {workout_id}: {e}")
+            logger.error(f"Failed to add exercises to workout {workout_id}: {e}", exc_info=True)
             return False
 
     def remove_exercises_from_workout(
@@ -185,7 +185,7 @@ class WorkoutModifier:
             return True
 
         except Exception as e:
-            logger.error(f"Failed to remove exercises from workout {workout_id}: {e}")
+            logger.error(f"Failed to remove exercises from workout {workout_id}: {e}", exc_info=True)
             return False
 
     def modify_workout_intensity(
@@ -287,7 +287,7 @@ class WorkoutModifier:
             return True
 
         except Exception as e:
-            logger.error(f"Failed to modify intensity for workout {workout_id}: {e}")
+            logger.error(f"Failed to modify intensity for workout {workout_id}: {e}", exc_info=True)
             return False
 
     def _log_workout_change(
@@ -316,4 +316,4 @@ class WorkoutModifier:
             self.db.create_workout_change(change_data)
             logger.debug(f"Logged workout change: {change_type} for workout {workout_id}")
         except Exception as e:
-            logger.warning(f"Failed to log workout change: {e}")
+            logger.warning(f"Failed to log workout change: {e}", exc_info=True)

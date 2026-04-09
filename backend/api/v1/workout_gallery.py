@@ -64,7 +64,7 @@ async def upload_gallery_image(
                 base64.b64decode(request.user_photo_base64)  # Validate
                 user_photo_url = f"data:image/png;base64,{request.user_photo_base64}"
             except Exception as e:
-                logger.warning(f"User photo validation warning: {e}")
+                logger.warning(f"User photo validation warning: {e}", exc_info=True)
 
         # Insert into database
         gallery_data = {
@@ -101,7 +101,7 @@ async def upload_gallery_image(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error uploading gallery image: {e}")
+        logger.error(f"Error uploading gallery image: {e}", exc_info=True)
         raise safe_internal_error(e, "workout_gallery")
 
 
@@ -148,7 +148,7 @@ async def list_gallery_images(
         )
 
     except Exception as e:
-        logger.error(f"Error listing gallery images: {e}")
+        logger.error(f"Error listing gallery images: {e}", exc_info=True)
         raise safe_internal_error(e, "workout_gallery")
 
 
@@ -181,7 +181,7 @@ async def get_gallery_image(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error getting gallery image: {e}")
+        logger.error(f"Error getting gallery image: {e}", exc_info=True)
         raise safe_internal_error(e, "workout_gallery")
 
 
@@ -227,7 +227,7 @@ async def delete_gallery_image(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error deleting gallery image: {e}")
+        logger.error(f"Error deleting gallery image: {e}", exc_info=True)
         raise safe_internal_error(e, "workout_gallery")
 
 
@@ -303,7 +303,7 @@ async def share_image_to_feed(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error sharing to feed: {e}")
+        logger.error(f"Error sharing to feed: {e}", exc_info=True)
         raise safe_internal_error(e, "workout_gallery")
 
 
@@ -353,5 +353,5 @@ async def track_external_share(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error tracking external share: {e}")
+        logger.error(f"Error tracking external share: {e}", exc_info=True)
         raise safe_internal_error(e, "workout_gallery")

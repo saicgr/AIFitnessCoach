@@ -99,7 +99,7 @@ async def get_nutrition_preferences(user_id: str, current_user: dict = Depends(g
         )
 
     except Exception as e:
-        logger.error(f"Failed to get nutrition preferences: {e}")
+        logger.error(f"Failed to get nutrition preferences: {e}", exc_info=True)
         raise safe_internal_error(e, "nutrition")
 
 
@@ -152,7 +152,7 @@ async def update_nutrition_preferences(user_id: str, request: NutritionPreferenc
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to update nutrition preferences: {e}")
+        logger.error(f"Failed to update nutrition preferences: {e}", exc_info=True)
         raise safe_internal_error(e, "nutrition")
 
 
@@ -291,6 +291,6 @@ async def get_dynamic_nutrition_targets(
         )
 
     except Exception as e:
-        logger.error(f"Failed to get dynamic nutrition targets: {e}")
+        logger.error(f"Failed to get dynamic nutrition targets: {e}", exc_info=True)
         raise safe_internal_error(e, "nutrition")
 

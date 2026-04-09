@@ -343,7 +343,7 @@ async def get_superset_preferences(user_id: str,
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error getting superset preferences: {e}")
+        logger.error(f"Error getting superset preferences: {e}", exc_info=True)
         raise safe_internal_error(e, "supersets")
 
 
@@ -438,7 +438,7 @@ async def update_superset_preferences(user_id: str, request: SupersetPreferences
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error updating superset preferences: {e}")
+        logger.error(f"Error updating superset preferences: {e}", exc_info=True)
         raise safe_internal_error(e, "supersets")
 
 
@@ -553,7 +553,7 @@ async def create_superset_pair(request: CreateSupersetPairRequest,
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error creating superset pair: {e}")
+        logger.error(f"Error creating superset pair: {e}", exc_info=True)
         raise safe_internal_error(e, "supersets")
 
 
@@ -627,7 +627,7 @@ async def remove_superset_pair(workout_id: str, superset_group: int,
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error removing superset pair: {e}")
+        logger.error(f"Error removing superset pair: {e}", exc_info=True)
         raise safe_internal_error(e, "supersets")
 
 
@@ -794,7 +794,7 @@ async def get_superset_suggestions(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error getting superset suggestions: {e}")
+        logger.error(f"Error getting superset suggestions: {e}", exc_info=True)
         raise safe_internal_error(e, "supersets")
 
 

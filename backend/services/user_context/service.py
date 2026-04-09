@@ -125,7 +125,7 @@ class UserContextService(
             return None
 
         except Exception as e:
-            logger.error(f"Failed to log event: {e}")
+            logger.error(f"Failed to log event: {e}", exc_info=True)
             return None
 
     def _calculate_engagement_score(
@@ -259,7 +259,7 @@ class UserContextService(
             return context
 
         except Exception as e:
-            logger.error(f"Failed to get lifetime member context: {e}")
+            logger.error(f"Failed to get lifetime member context: {e}", exc_info=True)
             return LifetimeMemberContext()
 
     async def get_full_user_context_for_ai(
@@ -377,7 +377,7 @@ class UserContextService(
             return response.data or []
 
         except Exception as e:
-            logger.error(f"Failed to get mood workout correlation: {e}")
+            logger.error(f"Failed to get mood workout correlation: {e}", exc_info=True)
             return []
 
     async def get_conversion_attribution(
@@ -515,7 +515,7 @@ class UserContextService(
             }
 
         except Exception as e:
-            logger.error(f"Failed to get conversion attribution: {e}")
+            logger.error(f"Failed to get conversion attribution: {e}", exc_info=True)
             return {
                 "user_id": user_id,
                 "error": str(e),
@@ -618,7 +618,7 @@ class UserContextService(
             }
 
         except Exception as e:
-            logger.error(f"Failed to get trial funnel metrics: {e}")
+            logger.error(f"Failed to get trial funnel metrics: {e}", exc_info=True)
             return {
                 "period_days": days,
                 "error": str(e),

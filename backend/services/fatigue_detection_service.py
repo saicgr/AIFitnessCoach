@@ -784,7 +784,7 @@ class FatigueDetectionService:
             }
 
         except Exception as e:
-            logger.warning(f"Could not get historical context: {e}")
+            logger.warning(f"Could not get historical context: {e}", exc_info=True)
             return None
 
     def _determine_recommendation(

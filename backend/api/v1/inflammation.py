@@ -69,15 +69,15 @@ async def analyze_inflammation(
             )
         except Exception as log_error:
             # Don't fail the request if logging fails
-            logger.warning(f"Failed to log user activity: {log_error}")
+            logger.warning(f"Failed to log user activity: {log_error}", exc_info=True)
 
         return result
 
     except ValueError as e:
-        logger.error(f"Inflammation analysis failed: {e}")
+        logger.error(f"Inflammation analysis failed: {e}", exc_info=True)
         raise HTTPException(status_code=400, detail="Invalid request data")
     except Exception as e:
-        logger.error(f"Inflammation analysis error: {e}")
+        logger.error(f"Inflammation analysis error: {e}", exc_info=True)
         raise safe_internal_error(e, "endpoint")
 
 
@@ -117,7 +117,7 @@ async def get_inflammation_history(
         )
 
     except Exception as e:
-        logger.error(f"Failed to get inflammation history: {e}")
+        logger.error(f"Failed to get inflammation history: {e}", exc_info=True)
         raise safe_internal_error(e, "endpoint")
 
 
@@ -138,7 +138,7 @@ async def get_inflammation_stats(
         return await service.get_user_stats(user_id)
 
     except Exception as e:
-        logger.error(f"Failed to get inflammation stats: {e}")
+        logger.error(f"Failed to get inflammation stats: {e}", exc_info=True)
         raise safe_internal_error(e, "endpoint")
 
 
@@ -168,7 +168,7 @@ async def update_scan_notes(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to update scan notes: {e}")
+        logger.error(f"Failed to update scan notes: {e}", exc_info=True)
         raise safe_internal_error(e, "endpoint")
 
 
@@ -198,5 +198,5 @@ async def toggle_scan_favorite(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to toggle favorite: {e}")
+        logger.error(f"Failed to toggle favorite: {e}", exc_info=True)
         raise safe_internal_error(e, "endpoint")

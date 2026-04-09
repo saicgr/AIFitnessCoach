@@ -26,6 +26,7 @@ import '../../widgets/app_tour/app_tour_controller.dart';
 import '../../widgets/level_up_dialog.dart';
 import '../../data/models/user_xp.dart';
 import 'beast_mode_unlock_dialog.dart';
+import 'coming_soon_screen.dart';
 import '../../core/services/posthog_service.dart';
 import 'sections/sections.dart';
 import 'widgets/widgets.dart';
@@ -99,6 +100,10 @@ const Map<String, List<String>> _settingsSearchIndex = {
     'install watch', 'install on watch', 'connect watch', 'sync watch',
     'watch connection', 'watch status', 'track on watch', 'wrist',
     'workout on watch', 'log from watch',
+  ],
+  'coming_soon': [
+    'coming soon', 'upcoming', 'new features', 'planned', 'roadmap',
+    'future', 'widgets', 'home widgets', 'new widgets',
   ],
   'notifications': [
     'notifications', 'reminders', 'alerts', 'notify', 'push',
@@ -465,6 +470,17 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             value: 'Voice, audio, reminders',
             route: '/settings/sound-notifications',
             sectionKeys: const ['voice_announcements', 'audio_settings', 'notifications'],
+          ),
+          _SettingsRow(
+            icon: Icons.rocket_launch_rounded,
+            iconColor: isDark ? AppColors.purple : AppColorsLight.purple,
+            title: 'Coming Soon',
+            value: '21 upcoming widgets',
+            sectionKeys: const ['coming_soon', 'upcoming', 'new_features'],
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const ComingSoonScreen()),
+            ),
           ),
         ],
       ),

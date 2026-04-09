@@ -208,7 +208,7 @@ async def get_user_1rm(
         return await estimate_1rm_from_performance(user_id, exercise_id, exercise_name)
 
     except Exception as e:
-        logger.warning(f"Error fetching 1RM: {e}")
+        logger.warning(f"Error fetching 1RM: {e}", exc_info=True)
         return None
 
 
@@ -258,7 +258,7 @@ async def estimate_1rm_from_performance(
         return best_1rm if best_1rm > 0 else None
 
     except Exception as e:
-        logger.warning(f"Error estimating 1RM from performance: {e}")
+        logger.warning(f"Error estimating 1RM from performance: {e}", exc_info=True)
         return None
 
 
@@ -306,7 +306,7 @@ async def get_last_session_data(
         return None
 
     except Exception as e:
-        logger.warning(f"Error fetching last session data: {e}")
+        logger.warning(f"Error fetching last session data: {e}", exc_info=True)
         return None
 
 
@@ -505,7 +505,7 @@ async def get_smart_weight(
         )
 
     except Exception as e:
-        logger.error(f"Smart weight calculation failed: {e}")
+        logger.error(f"Smart weight calculation failed: {e}", exc_info=True)
         raise safe_internal_error(e, "smart_weights")
 
 

@@ -46,7 +46,7 @@ class NutritionRAGService:
         try:
             _count = self.food_collection.count()
         except Exception as e:
-            _rag_logger.warning(f"Failed to get food log count: {e}")
+            _rag_logger.warning(f"Failed to get food log count: {e}", exc_info=True)
             _count = "unknown"
         _rag_logger.info(f"Nutrition RAG initialized: {_count} food logs")
 
@@ -264,7 +264,7 @@ class NutritionRAGService:
             c = self.food_collection.count()
             total = c if c >= 0 else -1
         except Exception as e:
-            _rag_logger.warning(f"Failed to get food log count: {e}")
+            _rag_logger.warning(f"Failed to get food log count: {e}", exc_info=True)
             total = -1
         return {
             "total_food_logs": total,

@@ -20,7 +20,7 @@ from typing import List, Dict, Any, Optional
 from datetime import datetime, timedelta
 from core.auth import get_current_user
 from core.db import get_supabase_db
-from core.timezone_utils import resolve_timezone, get_user_today
+from core.timezone_utils import resolve_timezone, get_user_today, target_date_to_utc_iso
 from core.exceptions import safe_internal_error
 from core.config import get_settings
 from core.rate_limiter import user_limiter
@@ -30,29 +30,10 @@ from models.schemas import (
 )
 from services.gemini_service import GeminiService, validate_set_targets_strict
 from services.exercise_library_service import get_exercise_library_service
-from api.v1.workouts.utils import parse_json_field, row_to_workout, normalize_goals_list, get_intensity_from_fitness_level, get_recently_used_exercises, get_recent_workout_name_words
-from api.v1.workouts.user_preference_utils import (
-    get_user_avoided_exercises,
-    get_user_avoided_muscles,
-    get_user_staple_exercises,
-    get_staple_names,
-    get_user_variation_percentage,
-    get_user_favorite_exercises,
-    get_user_exercise_queue,
-    get_user_consistency_mode,
-    get_user_1rm_data,
-    get_user_training_intensity,
-    get_user_intensity_overrides,
-)
-from api.v1.workouts.progression_utils import (
-    get_user_rep_preferences,
-    get_user_progression_context,
-    get_user_workout_patterns,
-)
-from api.v1.workouts.hormonal_utils import get_user_hormonal_context
-from api.v1.workouts.readiness_utils import get_active_injuries_with_muscles, get_user_comeback_status
-from api.v1.workouts.focus_validation_utils import get_user_favorite_workouts
-from services.adaptive_workout_service_helpers_part2 import get_user_set_type_preferences
+from api.v1.workouts.utils import *  # Re-export hub for all workout sub-modules
+from api.v1.workouts.generation_helpers import normalize_exercise_numeric_fields, _estimate_workout_met
+from services.exercise_rag.service import get_exercise_rag_service
+from services.adaptive_workout_service_helpers_part2 import get_user_set_type_preferences, build_set_type_context
 
 logger = logging.getLogger(__name__)
 
@@ -78,7 +59,7 @@ async def generate_workout(request: Request, *, body: GenerateWorkoutRequest, ba
                 if active_result.data:
                     dedup_gym_profile_id = active_result.data.get("id")
             except Exception as e:
-                logger.warning(f"Failed to get active gym profile: {e}")
+                logger.warning(f"Failed to get active gym profile: {e}", exc_info=True)
 
         # Duplicate check: return existing workout if one already exists for this date+profile
         placeholder_id = None
@@ -100,7 +81,7 @@ async def generate_workout(request: Request, *, body: GenerateWorkoutRequest, ba
                     logger.info(f"✅ [Dedup] Workout already exists for {body.user_id} on {body.scheduled_date} (profile={dedup_gym_profile_id}), returning existing")
                     return row_to_workout(existing.data[0])
             except Exception as dedup_err:
-                logger.warning(f"Dedup check failed, proceeding with generation: {dedup_err}")
+                logger.warning(f"Dedup check failed, proceeding with generation: {dedup_err}", exc_info=True)
 
             # Premium gate check: enforce free-tier workout generation limits
             from core.premium_gate import check_premium_gate
@@ -126,7 +107,7 @@ async def generate_workout(request: Request, *, body: GenerateWorkoutRequest, ba
                 db.client.table("workouts").insert(placeholder_data).execute()
                 logger.info(f"🔒 [Dedup] Inserted placeholder {placeholder_id} for {body.user_id} on {body.scheduled_date} (profile={dedup_gym_profile_id})")
             except Exception as ph_err:
-                logger.warning(f"Placeholder insert failed: {ph_err}")
+                logger.warning(f"Placeholder insert failed: {ph_err}", exc_info=True)
                 placeholder_id = None
 
         equipment_details = []  # Initialize to empty, may be populated from user data
@@ -243,7 +224,7 @@ async def generate_workout(request: Request, *, body: GenerateWorkoutRequest, ba
             else:
                 logger.info(f"🏋️ [Workout Generation] No custom exercises found for user {body.user_id}")
         except Exception as e:
-            logger.warning(f"⚠️ [Workout Generation] Failed to fetch custom exercises: {e}")
+            logger.warning(f"⚠️ [Workout Generation] Failed to fetch custom exercises: {e}", exc_info=True)
 
         # Fetch ALL user preferences in PARALLEL for faster generation
         # This reduces ~900ms-1.8s of sequential DB calls to ~100-300ms
@@ -546,7 +527,7 @@ async def generate_workout(request: Request, *, body: GenerateWorkoutRequest, ba
                 try:
                     workout_data = json.loads(workout_data)
                 except (json.JSONDecodeError, ValueError):
-                    logger.error(f"workout_data is an unparseable string: {str(workout_data)[:200]}")
+                    logger.error(f"workout_data is an unparseable string: {str(workout_data)[:200]}", exc_info=True)
                     workout_data = {}
             if not isinstance(workout_data, dict):
                 logger.error(f"workout_data is not a dict: type={type(workout_data).__name__}")
@@ -953,7 +934,7 @@ async def generate_workout(request: Request, *, body: GenerateWorkoutRequest, ba
                     )
 
         except Exception as ai_error:
-            logger.error(f"AI workout generation failed: {ai_error}")
+            logger.error(f"AI workout generation failed: {ai_error}", exc_info=True)
             raise HTTPException(
                 status_code=500,
                 detail=f"Failed to generate workout: {str(ai_error)}"
@@ -990,7 +971,7 @@ async def generate_workout(request: Request, *, body: GenerateWorkoutRequest, ba
         except Exception as insert_err:
             # Retry without estimated_calories if column doesn't exist yet
             if 'PGRST204' in str(insert_err) and 'estimated_calories' in str(insert_err):
-                logger.warning("[Calories] estimated_calories column not in schema cache, retrying without it")
+                logger.warning("[Calories] estimated_calories column not in schema cache, retrying without it", exc_info=True)
                 workout_db_data.pop('estimated_calories', None)
                 created = db.create_workout(workout_db_data)
             else:
@@ -1003,7 +984,7 @@ async def generate_workout(request: Request, *, body: GenerateWorkoutRequest, ba
                 db.client.table("workouts").delete().eq("id", placeholder_id).execute()
                 logger.info(f"🔓 [Dedup] Deleted placeholder {placeholder_id}")
             except Exception as e:
-                logger.warning(f"Failed to delete placeholder: {e}")
+                logger.warning(f"Failed to delete placeholder: {e}", exc_info=True)
 
         # Log workout change synchronously (quick, important for audit trail)
         log_workout_change(
@@ -1021,7 +1002,7 @@ async def generate_workout(request: Request, *, body: GenerateWorkoutRequest, ba
             try:
                 await index_workout_to_rag(generated_workout)
             except Exception as e:
-                logger.warning(f"Background: Failed to index workout to RAG: {e}")
+                logger.warning(f"Background: Failed to index workout to RAG: {e}", exc_info=True)
 
         background_tasks.add_task(_bg_index_rag)
 
@@ -1037,7 +1018,7 @@ async def generate_workout(request: Request, *, body: GenerateWorkoutRequest, ba
             try:
                 db.client.table("workouts").delete().eq("id", placeholder_id).execute()
             except Exception as e:
-                logger.warning(f"Placeholder cleanup failed: {e}")
+                logger.warning(f"Placeholder cleanup failed: {e}", exc_info=True)
         raise
     except Exception as e:
         # Clean up placeholder on error
@@ -1045,8 +1026,8 @@ async def generate_workout(request: Request, *, body: GenerateWorkoutRequest, ba
             try:
                 db.client.table("workouts").delete().eq("id", placeholder_id).execute()
             except Exception as cleanup_err:
-                logger.warning(f"Placeholder cleanup failed: {cleanup_err}")
-        logger.error(f"Failed to generate workout: {e}")
+                logger.warning(f"Placeholder cleanup failed: {cleanup_err}", exc_info=True)
+        logger.error(f"Failed to generate workout: {e}", exc_info=True)
         raise safe_internal_error(e, "generation")
 
 

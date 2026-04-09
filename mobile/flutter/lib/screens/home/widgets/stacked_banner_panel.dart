@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/constants/app_links.dart';
 import '../../../core/utils/banner_notification_mapper.dart';
 import '../../notifications/notifications_screen.dart';
 import '../../../data/providers/billing_reminder_provider.dart';
@@ -13,7 +15,7 @@ import '../../../data/providers/weekly_plan_provider.dart';
 import '../../../data/providers/wrapped_provider.dart';
 import '../../../data/providers/xp_provider.dart'
     show activeDoubleXPEventProvider, dailyCratesProvider, showDailyCrateBannerProvider,
-         unclaimedCratesProvider, unclaimedCratesCountProvider;
+         unclaimedCratesProvider, unclaimedCratesCountProvider, xpProvider;
 import '../../../data/repositories/xp_repository.dart' show UnclaimedCrate;
 import '../../../data/models/weekly_plan.dart';
 import '../../../data/repositories/auth_repository.dart';
@@ -59,6 +61,14 @@ class _StackedBannerPanelState extends ConsumerState<StackedBannerPanel>
   // Contextual banner dismiss state (loaded from SharedPreferences)
   Set<String> _contextualDismissedKeys = {};
   bool _contextualPrefsLoaded = false;
+
+  // Discord community banner state
+  bool _discordJoined = false;
+  DateTime? _discordLastShown;
+
+  // Instagram follow banner state
+  bool _instagramFollowed = false;
+  DateTime? _instagramLastShown;
 
   // Wrapped banner dismiss state
   Map<String, bool> _wrappedDismissedMap = {};
@@ -147,6 +157,22 @@ class _StackedBannerPanelState extends ConsumerState<StackedBannerPanel>
     // Check if week1 tip was dismissed today
     final week1Dismissed = prefs.getString('week1_tip_dismissed_$todayKey');
 
+    // Discord community banner state
+    final discordJoined = prefs.getBool('discord_joined') ?? false;
+    final discordDismissedStr = prefs.getString('discord_banner_dismissed');
+    DateTime? discordLastShown;
+    if (discordDismissedStr != null) {
+      discordLastShown = DateTime.tryParse(discordDismissedStr);
+    }
+
+    // Instagram follow banner state
+    final instagramFollowed = prefs.getBool('instagram_followed') ?? false;
+    final instagramDismissedStr = prefs.getString('instagram_banner_dismissed');
+    DateTime? instagramLastShown;
+    if (instagramDismissedStr != null) {
+      instagramLastShown = DateTime.tryParse(instagramDismissedStr);
+    }
+
     if (mounted) {
       setState(() {
         _contextualDismissedKeys = contextualKeys;
@@ -154,6 +180,10 @@ class _StackedBannerPanelState extends ConsumerState<StackedBannerPanel>
         _wrappedDismissedMap = wrappedMap;
         _dismissedMissedWorkoutIds = prunedMissedIds.toSet();
         _week1TipDismissedToday = week1Dismissed != null;
+        _discordJoined = discordJoined;
+        _discordLastShown = discordLastShown;
+        _instagramFollowed = instagramFollowed;
+        _instagramLastShown = instagramLastShown;
       });
     }
   }
@@ -406,6 +436,63 @@ class _StackedBannerPanelState extends ConsumerState<StackedBannerPanel>
       }
     }
 
+    // Discord community invite — show every 3 days until user taps "Join"
+    if (AppLinks.discord.isNotEmpty && !_discordJoined) {
+      final lastShown = _discordLastShown;
+      final daysSince = lastShown == null
+          ? 999
+          : DateTime.now().difference(lastShown).inDays;
+      if (daysSince >= 3 &&
+          !_contextualDismissedKeys.contains('discord_community')) {
+        return BannerCardData(
+          type: BannerType.contextual,
+          id: 'contextual_discord_community',
+          icon: Icons.forum_outlined,
+          title: 'Join the Community',
+          subtitle: 'Get help, share wins, and request features on Discord',
+          accentColor: const Color(0xFF5865F2),
+          actionLabel: 'Join',
+          onTap: () async {
+            HapticService.light();
+            launchUrl(Uri.parse(AppLinks.discord),
+                mode: LaunchMode.externalApplication);
+            // Mark as joined so we stop showing
+            final prefs = await SharedPreferences.getInstance();
+            await prefs.setBool('discord_joined', true);
+            if (mounted) setState(() => _discordJoined = true);
+          },
+        );
+      }
+    }
+
+    // Instagram follow — show every 5 days until user taps "Follow"
+    if (AppLinks.instagram.isNotEmpty && !_instagramFollowed) {
+      final lastShown = _instagramLastShown;
+      final daysSince = lastShown == null
+          ? 999
+          : DateTime.now().difference(lastShown).inDays;
+      if (daysSince >= 5 &&
+          !_contextualDismissedKeys.contains('instagram_follow')) {
+        return BannerCardData(
+          type: BannerType.contextual,
+          id: 'contextual_instagram_follow',
+          icon: Icons.camera_alt_outlined,
+          title: 'Follow us on Instagram',
+          subtitle: 'Workout tips, meal ideas, and community highlights @fitwiz.us',
+          accentColor: const Color(0xFFE4405F),
+          actionLabel: 'Follow',
+          onTap: () async {
+            HapticService.light();
+            launchUrl(Uri.parse(AppLinks.instagram),
+                mode: LaunchMode.externalApplication);
+            final prefs = await SharedPreferences.getInstance();
+            await prefs.setBool('instagram_followed', true);
+            if (mounted) setState(() => _instagramFollowed = true);
+          },
+        );
+      }
+    }
+
     return null;
   }
 
@@ -540,6 +627,20 @@ class _StackedBannerPanelState extends ConsumerState<StackedBannerPanel>
 
     if (unclaimed.isEmpty) return;
 
+    // Single crate with only one option → auto-claim instantly
+    if (unclaimed.length == 1) {
+      final crate = unclaimed.first;
+      final availableTypes = <String>[];
+      if (crate.dailyCrateAvailable) availableTypes.add('daily');
+      if (crate.streakCrateAvailable) availableTypes.add('streak');
+      if (crate.activityCrateAvailable) availableTypes.add('activity');
+
+      if (availableTypes.length == 1) {
+        _autoClaimSingleCrate(availableTypes.first, crate.crateDate);
+        return;
+      }
+    }
+
     showGlassSheet(
       context: context,
       builder: (ctx) => GlassSheet(
@@ -553,6 +654,40 @@ class _StackedBannerPanelState extends ConsumerState<StackedBannerPanel>
         ),
       ),
     );
+  }
+
+  Future<void> _autoClaimSingleCrate(String crateType, DateTime crateDate) async {
+    final dateStr = '${crateDate.year}-${crateDate.month.toString().padLeft(2, '0')}-${crateDate.day.toString().padLeft(2, '0')}';
+    final result = await ref.read(xpProvider.notifier).claimDailyCrate(
+      crateType,
+      crateDate: dateStr,
+    );
+
+    if (!mounted) return;
+
+    if (result.success) {
+      HapticService.success();
+      ref.read(stackedBannerControllerProvider.notifier).dismiss('daily_crate');
+      ref.invalidate(unclaimedCratesProvider);
+
+      final rewardName = result.reward?.displayName ?? 'a reward';
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('🎁 Crate opened! You got $rewardName'),
+          backgroundColor: const Color(0xFFFFB300),
+          behavior: SnackBarBehavior.floating,
+          duration: const Duration(seconds: 3),
+        ),
+      );
+    } else {
+      HapticService.error();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(result.message ?? 'Failed to claim crate'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 
   static String _formatWorkoutType(String type) {
@@ -662,7 +797,15 @@ class _StackedBannerPanelState extends ConsumerState<StackedBannerPanel>
     } else if (banner.type == BannerType.contextual) {
       final prefs = await SharedPreferences.getInstance();
       final today = DateTime.now();
-      if (banner.id.contains('weekly_')) {
+      if (banner.id.contains('discord_community')) {
+        // Save dismiss timestamp — banner reappears after 3 days
+        await prefs.setString('discord_banner_dismissed', today.toIso8601String());
+        if (mounted) setState(() => _discordLastShown = today);
+      } else if (banner.id.contains('instagram_follow')) {
+        // Save dismiss timestamp — banner reappears after 5 days
+        await prefs.setString('instagram_banner_dismissed', today.toIso8601String());
+        if (mounted) setState(() => _instagramLastShown = today);
+      } else if (banner.id.contains('weekly_')) {
         final monday = today.subtract(Duration(days: today.weekday - 1));
         final weekKey = '${monday.year}-${monday.month}-${monday.day}';
         await prefs.setString('contextual_banner_weekly_dismissed', weekKey);

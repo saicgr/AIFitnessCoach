@@ -242,7 +242,7 @@ class EventLoggingMixin:
             return True
 
         except Exception as e:
-            logger.error(f"Failed to update mood workout completed: {e}")
+            logger.error(f"Failed to update mood workout completed: {e}", exc_info=True)
             return False
 
     async def get_cardio_patterns(
@@ -382,7 +382,7 @@ class EventLoggingMixin:
             )
 
         except Exception as e:
-            logger.error(f"Failed to get cardio patterns: {e}")
+            logger.error(f"Failed to get cardio patterns: {e}", exc_info=True)
             return CardioPatterns()
 
     async def get_user_patterns(
@@ -477,7 +477,7 @@ class EventLoggingMixin:
             return patterns
 
         except Exception as e:
-            logger.error(f"Failed to get user patterns: {e}")
+            logger.error(f"Failed to get user patterns: {e}", exc_info=True)
             return UserPatterns(user_id=user_id)
 
     async def get_user_patterns_with_cardio_context(

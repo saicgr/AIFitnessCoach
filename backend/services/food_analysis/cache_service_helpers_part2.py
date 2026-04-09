@@ -12,6 +12,7 @@ from services.food_analysis.constants import (
 )
 from services.food_analysis.parser import _weight_unit_to_grams, _volume_unit_to_ml
 from services.food_database_lookup_service import get_food_db_lookup_service
+from services.food_analysis.modifiers_helpers import _classify_modifier
 
 logger = logging.getLogger(__name__)
 
@@ -398,7 +399,7 @@ class FoodAnalysisCacheServicePart2:
             }
 
         except Exception as e:
-            logger.warning(f"Multi-item lookup failed: {e}")
+            logger.warning(f"Multi-item lookup failed: {e}", exc_info=True)
             return None
 
     async def _try_modified_override(self, description: str) -> Optional[Dict[str, Any]]:
@@ -640,7 +641,7 @@ class FoodAnalysisCacheServicePart2:
             }
 
         except Exception as e:
-            logger.warning(f"Modified override lookup failed: {e}")
+            logger.warning(f"Modified override lookup failed: {e}", exc_info=True)
             return None
 
     async def _resolve_single_parsed_item(
@@ -874,7 +875,7 @@ class FoodAnalysisCacheServicePart2:
             return cached
 
         except Exception as e:
-            logger.warning(f"Cache lookup failed: {e}")
+            logger.warning(f"Cache lookup failed: {e}", exc_info=True)
             return None
 
     async def _cache_result(
@@ -898,7 +899,7 @@ class FoodAnalysisCacheServicePart2:
             await _food_analysis_cache.set(query_hash, analysis)
             return True
         except Exception as e:
-            logger.warning(f"Failed to cache analysis: {e}")
+            logger.warning(f"Failed to cache analysis: {e}", exc_info=True)
             return False
 
     def get_cache_key(self, description: str) -> str:
@@ -936,7 +937,7 @@ class FoodAnalysisCacheServicePart2:
             return True
 
         except Exception as e:
-            logger.error(f"Failed to invalidate cache: {e}")
+            logger.error(f"Failed to invalidate cache: {e}", exc_info=True)
             return False
 
     async def review_food(self, food_name: str, macros: dict, user_id: str) -> dict:
@@ -986,7 +987,7 @@ class FoodAnalysisCacheServicePart2:
                 if targets_row:
                     nutrition_targets = dict(targets_row._mapping)
         except Exception as e:
-            logger.warning(f"[FoodReview] Failed to fetch user data: {e}")
+            logger.warning(f"[FoodReview] Failed to fetch user data: {e}", exc_info=True)
 
         # Build cache key: food_review_{normalize(food_name)}_{hash(goals)}
         normalized_name = NutritionDB.normalize_food_query(food_name)
@@ -1003,7 +1004,7 @@ class FoodAnalysisCacheServicePart2:
                 logger.info(f"[FoodReview] Cache HIT for: {food_name[:50]}")
                 return cached
         except Exception as e:
-            logger.warning(f"[FoodReview] Cache lookup failed: {e}")
+            logger.warning(f"[FoodReview] Cache lookup failed: {e}", exc_info=True)
 
         # Pre-compute health score for score-stratified guidance
         pre_score = self._compute_health_score(
@@ -1028,12 +1029,12 @@ class FoodAnalysisCacheServicePart2:
                     await _food_analysis_cache.set(query_hash, result)
                     logger.info(f"[FoodReview] Cached result for: {food_name[:50]}")
                 except Exception as cache_err:
-                    logger.warning(f"[FoodReview] Failed to cache: {cache_err}")
+                    logger.warning(f"[FoodReview] Failed to cache: {cache_err}", exc_info=True)
 
                 return result
 
         except Exception as e:
-            logger.error(f"[FoodReview] Gemini call failed: {e}")
+            logger.error(f"[FoodReview] Gemini call failed: {e}", exc_info=True)
 
         # Fallback: rule-based scoring
         logger.info(f"[FoodReview] Using rule-based fallback for: {food_name[:50]}")

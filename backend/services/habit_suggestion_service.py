@@ -87,7 +87,7 @@ class HabitSuggestionService:
             return suggestions
 
         except Exception as e:
-            logger.error(f"❌ Error generating habit suggestions: {e}")
+            logger.error(f"❌ Error generating habit suggestions: {e}", exc_info=True)
             # Return fallback suggestions
             return self._get_fallback_suggestions(goals, current_habits)
 
@@ -208,11 +208,11 @@ Return ONLY the JSON array. No markdown, no explanation."""
             return valid_suggestions
 
         except json.JSONDecodeError as e:
-            logger.error(f"Failed to parse AI response as JSON: {e}")
-            logger.error(f"Response was: {response_text[:500]}")
+            logger.error(f"Failed to parse AI response as JSON: {e}", exc_info=True)
+            logger.error(f"Response was: {response_text[:500]}", exc_info=True)
             return []
         except Exception as e:
-            logger.error(f"Error parsing suggestions: {e}")
+            logger.error(f"Error parsing suggestions: {e}", exc_info=True)
             return []
 
     def _validate_suggestion(self, suggestion: Dict[str, Any]) -> bool:
@@ -370,7 +370,7 @@ Return ONLY the JSON array. No markdown, no explanation."""
             return self._parse_insights(response.text)
 
         except Exception as e:
-            logger.error(f"❌ Error generating insights: {e}")
+            logger.error(f"❌ Error generating insights: {e}", exc_info=True)
             return {
                 "summary": "Keep building your habits consistently!",
                 "top_insight": "Consistency is key - focus on completing your habits daily.",
@@ -431,7 +431,7 @@ Return ONLY the JSON object."""
             return json.loads(cleaned)
 
         except (json.JSONDecodeError, Exception) as e:
-            logger.error(f"Failed to parse insights: {e}")
+            logger.error(f"Failed to parse insights: {e}", exc_info=True)
             return {
                 "summary": "Keep up the good work with your habits!",
                 "top_insight": "Every day you complete your habits is a step toward your goals.",

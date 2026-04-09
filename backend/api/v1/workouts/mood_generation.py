@@ -131,7 +131,7 @@ async def generate_mood_workout_streaming(request: Request, body: MoodWorkoutReq
                     logger.info(f"✅ Mood check-in created: {mood_checkin_id}")
 
             except Exception as e:
-                logger.warning(f"⚠️ Failed to log mood check-in: {e}")
+                logger.warning(f"⚠️ Failed to log mood check-in: {e}", exc_info=True)
 
             prompt = mood_workout_service.build_generation_prompt(
                 mood=mood,
@@ -180,7 +180,7 @@ async def generate_mood_workout_streaming(request: Request, body: MoodWorkoutReq
                 if not isinstance(workout_data, dict):
                     workout_data = {}
             except Exception as gemini_error:
-                logger.error(f"❌ [Mood Workout] Gemini error: {gemini_error}")
+                logger.error(f"❌ [Mood Workout] Gemini error: {gemini_error}", exc_info=True)
                 yield f"event: error\ndata: {json.dumps({'error': f'Failed to generate workout: {str(gemini_error)}'})}\n\n"
                 return
 
@@ -261,7 +261,7 @@ async def generate_mood_workout_streaming(request: Request, body: MoodWorkoutReq
                     exercises = validate_set_targets_strict(exercises, user_context)
 
             except json.JSONDecodeError as e:
-                logger.error(f"Failed to parse mood workout response: {e}")
+                logger.error(f"Failed to parse mood workout response: {e}", exc_info=True)
                 yield f"event: error\ndata: {json.dumps({'error': 'Failed to parse workout data'})}\n\n"
                 return
 
@@ -301,7 +301,7 @@ async def generate_mood_workout_streaming(request: Request, body: MoodWorkoutReq
                         "workout_id": workout_id,
                     }).eq("id", mood_checkin_id).execute()
                 except Exception as e:
-                    logger.warning(f"⚠️ Failed to update mood check-in: {e}")
+                    logger.warning(f"⚠️ Failed to update mood check-in: {e}", exc_info=True)
 
             log_workout_change(
                 workout_id=workout_id,
@@ -325,7 +325,7 @@ async def generate_mood_workout_streaming(request: Request, body: MoodWorkoutReq
                     app_version=body.app_version,
                 )
             except Exception as e:
-                logger.warning(f"⚠️ Failed to log context: {e}")
+                logger.warning(f"⚠️ Failed to log context: {e}", exc_info=True)
 
             generated_workout = row_to_workout(created)
 
@@ -354,7 +354,7 @@ async def generate_mood_workout_streaming(request: Request, body: MoodWorkoutReq
             yield f"event: done\ndata: {json.dumps(workout_response)}\n\n"
 
         except Exception as e:
-            logger.error(f"❌ Mood workout generation failed: {e}")
+            logger.error(f"❌ Mood workout generation failed: {e}", exc_info=True)
             yield f"event: error\ndata: {json.dumps({'error': str(e)})}\n\n"
 
     return StreamingResponse(

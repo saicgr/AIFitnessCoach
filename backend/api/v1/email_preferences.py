@@ -163,7 +163,7 @@ async def get_email_preferences(user_id: str, current_user: dict = Depends(get_c
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error getting email preferences: {e}")
+        logger.error(f"Error getting email preferences: {e}", exc_info=True)
         await log_user_error(
             user_id=user_id,
             action="get_email_preferences",
@@ -260,7 +260,7 @@ async def update_email_preferences(user_id: str, preferences: EmailPreferencesUp
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error updating email preferences: {e}")
+        logger.error(f"Error updating email preferences: {e}", exc_info=True)
         await log_user_error(
             user_id=user_id,
             action="update_email_preferences",
@@ -362,7 +362,7 @@ async def unsubscribe_from_marketing(user_id: str, current_user: dict = Depends(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error unsubscribing from marketing: {e}")
+        logger.error(f"Error unsubscribing from marketing: {e}", exc_info=True)
         await log_user_error(
             user_id=user_id,
             action="unsubscribe_from_marketing",
@@ -442,7 +442,7 @@ async def subscribe_to_all(user_id: str, current_user: dict = Depends(get_curren
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error subscribing to all: {e}")
+        logger.error(f"Error subscribing to all: {e}", exc_info=True)
         await log_user_error(
             user_id=user_id,
             action="subscribe_to_all",

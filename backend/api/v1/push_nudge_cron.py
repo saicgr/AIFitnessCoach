@@ -196,7 +196,7 @@ def _try_dedup_insert(supabase, user_id: str, nudge_type: str, nudge_date: str,
         # EDGE CASE: UNIQUE constraint violation = already sent today
         if "duplicate" in str(e).lower() or "unique" in str(e).lower() or "23505" in str(e):
             return False
-        logger.error(f"❌ [Nudge] Dedup insert error: {e}")
+        logger.error(f"❌ [Nudge] Dedup insert error: {e}", exc_info=True)
         return False
 
 
@@ -228,7 +228,7 @@ def _fetch_nudge_eligible_users(supabase) -> List[dict]:
             .execute()
         return result.data or []
     except Exception as e:
-        logger.error(f"❌ [Nudge] Failed to fetch users: {e}")
+        logger.error(f"❌ [Nudge] Failed to fetch users: {e}", exc_info=True)
         return []
 
 
@@ -247,7 +247,7 @@ def _fetch_ai_settings_batch(supabase, user_ids: List[str]) -> Dict[str, dict]:
             .execute()
         return {row["user_id"]: row for row in (result.data or [])}
     except Exception as e:
-        logger.error(f"❌ [Nudge] Failed to fetch ai_settings: {e}")
+        logger.error(f"❌ [Nudge] Failed to fetch ai_settings: {e}", exc_info=True)
         return {}
 
 
@@ -266,7 +266,7 @@ def _fetch_optimal_times_batch(supabase, user_ids: List[str]) -> Dict[str, dict]
             .execute()
         return {row["user_id"]: row for row in (result.data or [])}
     except Exception as e:
-        logger.error(f"❌ [Nudge] Failed to fetch optimal times: {e}")
+        logger.error(f"❌ [Nudge] Failed to fetch optimal times: {e}", exc_info=True)
         return {}
 
 
@@ -355,7 +355,7 @@ async def _send_nudge(
             chat_message_id = chat_msg.data[0].get("id")
     except Exception as e:
         # EDGE CASE: Chat save failed — still send push, just no chat history
-        logger.warning(f"⚠️ [Nudge] chat_history insert failed for {user_id}: {e}")
+        logger.warning(f"⚠️ [Nudge] chat_history insert failed for {user_id}: {e}", exc_info=True)
 
     # Update dedup record with chat_message_id if available
     if chat_message_id:

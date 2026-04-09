@@ -76,7 +76,7 @@ async def create_social_notification(
             }).execute()
     except Exception as e:
         # Don't fail the request if notification fails
-        logger.error(f"Failed to create notification: {e}")
+        logger.error(f"Failed to create notification: {e}", exc_info=True)
 
 
 @router.post("", response_model=FriendRequest)
@@ -185,7 +185,7 @@ async def send_friend_request(
                 data={"action": "open_social", "request_id": friend_request["id"]},
             )
     except Exception as e:
-        logger.warning(f"FCM push failed for friend request: {e}")
+        logger.warning(f"FCM push failed for friend request: {e}", exc_info=True)
 
     return FriendRequest(**friend_request)
 
@@ -424,7 +424,7 @@ async def accept_friend_request(
                 data={"action": "open_social", "request_id": request_id},
             )
     except Exception as e:
-        logger.warning(f"FCM push failed for friend accept: {e}")
+        logger.warning(f"FCM push failed for friend accept: {e}", exc_info=True)
 
     return {
         "message": "Friend request accepted",

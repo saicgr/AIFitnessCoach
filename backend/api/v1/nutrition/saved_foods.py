@@ -118,7 +118,7 @@ async def save_food(user_id: str = Form(...), request: SaveFoodFromLogRequest = 
                 tags=request.tags,
             )
         except Exception as e:
-            logger.warning(f"Failed to save food to ChromaDB: {e}")
+            logger.warning(f"Failed to save food to ChromaDB: {e}", exc_info=True)
             # Continue - database save is the primary storage
 
         logger.info(f"Successfully saved food {saved_food_id}")
@@ -153,7 +153,7 @@ async def save_food(user_id: str = Form(...), request: SaveFoodFromLogRequest = 
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to save food: {e}")
+        logger.error(f"Failed to save food: {e}", exc_info=True)
         raise safe_internal_error(e, "nutrition")
 
 
@@ -238,7 +238,7 @@ async def save_food_json(request: SaveFoodFromLogRequest, user_id: str = Query(.
                 tags=request.tags,
             )
         except Exception as e:
-            logger.warning(f"Failed to save food to ChromaDB: {e}")
+            logger.warning(f"Failed to save food to ChromaDB: {e}", exc_info=True)
 
         logger.info(f"Successfully saved food {saved_food_id}")
 
@@ -272,7 +272,7 @@ async def save_food_json(request: SaveFoodFromLogRequest, user_id: str = Query(.
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to save food: {e}")
+        logger.error(f"Failed to save food: {e}", exc_info=True)
         raise safe_internal_error(e, "nutrition")
 
 
@@ -388,7 +388,7 @@ async def list_saved_foods(
         return SavedFoodsResponse(items=items, total_count=total_count)
 
     except Exception as e:
-        logger.error(f"Failed to list saved foods: {e}")
+        logger.error(f"Failed to list saved foods: {e}", exc_info=True)
         raise safe_internal_error(e, "nutrition")
 
 
@@ -442,7 +442,7 @@ async def get_saved_food(saved_food_id: str, user_id: str = Query(...), current_
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to get saved food: {e}")
+        logger.error(f"Failed to get saved food: {e}", exc_info=True)
         raise safe_internal_error(e, "nutrition")
 
 
@@ -471,14 +471,14 @@ async def delete_saved_food(saved_food_id: str, user_id: str = Query(...), curre
             rag_service = get_saved_foods_rag_service()
             await rag_service.delete_food(saved_food_id)
         except Exception as e:
-            logger.warning(f"Failed to delete food from ChromaDB: {e}")
+            logger.warning(f"Failed to delete food from ChromaDB: {e}", exc_info=True)
 
         return {"status": "deleted", "id": saved_food_id}
 
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to delete saved food: {e}")
+        logger.error(f"Failed to delete saved food: {e}", exc_info=True)
         raise safe_internal_error(e, "nutrition")
 
 
@@ -568,7 +568,7 @@ async def relog_saved_food(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to re-log saved food: {e}")
+        logger.error(f"Failed to re-log saved food: {e}", exc_info=True)
         raise safe_internal_error(e, "nutrition")
 
 
@@ -619,7 +619,7 @@ async def search_saved_foods(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to search saved foods: {e}")
+        logger.error(f"Failed to search saved foods: {e}", exc_info=True)
         raise safe_internal_error(e, "nutrition")
 
 

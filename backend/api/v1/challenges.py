@@ -145,7 +145,7 @@ async def send_challenges(
                         ids=[f"challenge_sent_{challenge_id}"],
                     )
             except Exception as e:
-                logger.warning(f"[Challenges] Failed to log to ChromaDB: {e}")
+                logger.warning(f"[Challenges] Failed to log to ChromaDB: {e}", exc_info=True)
 
     logger.info(f"✅ [Challenges] User {user_id} sent {len(challenge_ids)} challenges")
 
@@ -340,7 +340,7 @@ async def accept_challenge(
             ids=[f"challenge_accepted_{challenge_id}_{datetime.now().timestamp()}"],
         )
     except Exception as e:
-        logger.warning(f"[Challenges] Failed to log to ChromaDB: {e}")
+        logger.warning(f"[Challenges] Failed to log to ChromaDB: {e}", exc_info=True)
 
     logger.info(f"[Challenges] User {user_id} accepted challenge {challenge_id}")
 
@@ -488,7 +488,7 @@ async def complete_challenge(
 
             logger.info(f"[Challenges] Posted challenge result to activity feed (beat: {did_beat})")
         except Exception as e:
-            logger.warning(f"[Challenges] Failed to post to activity feed: {e}")
+            logger.warning(f"[Challenges] Failed to post to activity feed: {e}", exc_info=True)
             # Don't fail the challenge completion if posting fails
 
     # Log to ChromaDB
@@ -511,7 +511,7 @@ async def complete_challenge(
             ids=[f"challenge_completed_{challenge_id}"],
         )
     except Exception as e:
-        logger.warning(f"[Challenges] Failed to log to ChromaDB: {e}")
+        logger.warning(f"[Challenges] Failed to log to ChromaDB: {e}", exc_info=True)
 
     logger.info(f"[Challenges] User {user_id} completed challenge {challenge_id} (beat: {did_beat})")
 
@@ -582,7 +582,7 @@ async def abandon_challenge(
 
         logger.info(f"[Challenges] User {user_id} abandoned challenge {challenge_id}: {request.quit_reason}")
     except Exception as e:
-        logger.warning(f"[Challenges] Error processing abandonment: {e}")
+        logger.warning(f"[Challenges] Error processing abandonment: {e}", exc_info=True)
 
     # Log to ChromaDB for AI insights
     try:
@@ -608,7 +608,7 @@ async def abandon_challenge(
             ids=[f"challenge_abandoned_{challenge_id}"],
         )
     except Exception as e:
-        logger.warning(f"[Challenges] Failed to log to ChromaDB: {e}")
+        logger.warning(f"[Challenges] Failed to log to ChromaDB: {e}", exc_info=True)
 
     return WorkoutChallenge(**update_result.data[0])
 
@@ -871,7 +871,7 @@ async def accept_challenge_from_feed(
             ids=[f"challenge_feed_{challenge_row['id']}"],
         )
     except Exception as e:
-        logger.warning(f"[Challenges] Failed to log feed-accept to ChromaDB: {e}")
+        logger.warning(f"[Challenges] Failed to log feed-accept to ChromaDB: {e}", exc_info=True)
 
     logger.info(f"✅ [Challenges] User {user_id} accepted feed challenge {challenge_row['id']} from activity {activity_id}")
 

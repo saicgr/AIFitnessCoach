@@ -72,7 +72,7 @@ class WatchLoggingMixin:
             }
 
         except Exception as e:
-            logger.error(f"Error getting watch activity context: {e}")
+            logger.error(f"Error getting watch activity context: {e}", exc_info=True)
             return {
                 "watch_connected": False,
                 "last_watch_sync": None,

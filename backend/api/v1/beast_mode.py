@@ -72,7 +72,7 @@ async def get_beast_mode_config(
         )
 
     except Exception as e:
-        logger.error(f"Error getting beast mode config for user {user_id}: {e}")
+        logger.error(f"Error getting beast mode config for user {user_id}: {e}", exc_info=True)
         raise safe_internal_error(e, "get_beast_mode_config")
 
 
@@ -115,7 +115,7 @@ async def update_beast_mode_config(
         )
 
     except Exception as e:
-        logger.error(f"Error updating beast mode config for user {user_id}: {e}")
+        logger.error(f"Error updating beast mode config for user {user_id}: {e}", exc_info=True)
         raise safe_internal_error(e, "update_beast_mode_config")
 
 
@@ -145,5 +145,5 @@ async def reset_beast_mode_config(
         )
 
     except Exception as e:
-        logger.error(f"Error resetting beast mode config for user {user_id}: {e}")
+        logger.error(f"Error resetting beast mode config for user {user_id}: {e}", exc_info=True)
         raise safe_internal_error(e, "reset_beast_mode_config")

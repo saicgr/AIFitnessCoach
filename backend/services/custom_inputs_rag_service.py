@@ -40,7 +40,7 @@ class CustomInputsRAGService:
         try:
             _count = self.collection.count()
         except Exception as e:
-            logger.warning(f"Failed to get collection count: {e}")
+            logger.warning(f"Failed to get collection count: {e}", exc_info=True)
             _count = "unknown"
         logger.info(f"CustomInputsRAG initialized with {_count} custom inputs")
 
@@ -98,7 +98,7 @@ class CustomInputsRAGService:
             return True
 
         except Exception as e:
-            logger.error(f"Failed to index custom input: {e}")
+            logger.error(f"Failed to index custom input: {e}", exc_info=True)
             return False
 
     async def index_all_custom_inputs(self, batch_size: int = 50) -> int:
@@ -163,7 +163,7 @@ class CustomInputsRAGService:
                 try:
                     embeddings = await self.gemini_service.get_embeddings_batch(documents)
                 except Exception as e:
-                    logger.error(f"Failed to get embeddings for batch: {e}")
+                    logger.error(f"Failed to get embeddings for batch: {e}", exc_info=True)
                     continue
 
                 # Upsert to collection
@@ -182,13 +182,13 @@ class CustomInputsRAGService:
                     )
                     indexed_count += len(ids)
                 except Exception as e:
-                    logger.error(f"Failed to add batch to Chroma: {e}")
+                    logger.error(f"Failed to add batch to Chroma: {e}", exc_info=True)
 
             logger.info(f"Indexed {indexed_count} custom inputs to ChromaDB")
             return indexed_count
 
         except Exception as e:
-            logger.error(f"Failed to index custom inputs: {e}")
+            logger.error(f"Failed to index custom inputs: {e}", exc_info=True)
             return 0
 
     def _build_input_text(
@@ -276,7 +276,7 @@ class CustomInputsRAGService:
             return similar_inputs
 
         except Exception as e:
-            logger.error(f"Failed to find similar inputs: {e}")
+            logger.error(f"Failed to find similar inputs: {e}", exc_info=True)
             return []
 
     async def normalize_custom_input(
@@ -348,7 +348,7 @@ If it doesn't fit any category, create a simple 1-3 word normalized form."""
             return normalized
 
         except Exception as e:
-            logger.error(f"Failed to normalize custom input: {e}")
+            logger.error(f"Failed to normalize custom input: {e}", exc_info=True)
             return None
 
     async def get_popular_suggestions(
@@ -376,7 +376,7 @@ If it doesn't fit any category, create a simple 1-3 word normalized form."""
             return result.data or []
 
         except Exception as e:
-            logger.error(f"Failed to get popular suggestions: {e}")
+            logger.error(f"Failed to get popular suggestions: {e}", exc_info=True)
             return []
 
     def get_stats(self) -> Dict[str, Any]:
@@ -385,7 +385,7 @@ If it doesn't fit any category, create a simple 1-3 word normalized form."""
             c = self.collection.count()
             total = c if c >= 0 else -1
         except Exception as e:
-            logger.warning(f"Failed to get inputs count: {e}")
+            logger.warning(f"Failed to get inputs count: {e}", exc_info=True)
             total = -1
         return {
             "total_indexed": total,

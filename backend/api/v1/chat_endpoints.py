@@ -276,7 +276,7 @@ async def presign_media_upload(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to generate presigned URL for user {user_id}: {e}")
+        logger.error(f"Failed to generate presigned URL for user {user_id}: {e}", exc_info=True)
         raise safe_internal_error(e, "media_presign")
 
 
@@ -400,7 +400,7 @@ async def upload_media_for_analysis(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Direct media upload failed for user {user_id}: {e}")
+        logger.error(f"Direct media upload failed for user {user_id}: {e}", exc_info=True)
         raise safe_internal_error(e, "media_upload")
     finally:
         if os.path.exists(tmp_path):
@@ -522,7 +522,7 @@ async def presign_media_upload_batch(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to generate batch presigned URLs for user {user_id}: {e}")
+        logger.error(f"Failed to generate batch presigned URLs for user {user_id}: {e}", exc_info=True)
         raise safe_internal_error(e, "media_presign_batch")
 
 

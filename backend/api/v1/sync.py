@@ -103,7 +103,7 @@ async def bulk_sync(
             logger.error(
                 f"Bulk sync failed for entity {item.entity_id} "
                 f"(type={item.entity_type}): {e}"
-            )
+            , exc_info=True)
             results.append(
                 SyncBulkResultItem(
                     entity_id=item.entity_id,
@@ -150,7 +150,7 @@ async def import_sync_data(
             }
         ).execute()
     except Exception as e:
-        logger.error(f"Failed to store sync import: {e}")
+        logger.error(f"Failed to store sync import: {e}", exc_info=True)
         # Don't fail the request -- just log and return success
         # The data was received; storage is best-effort
 

@@ -248,7 +248,7 @@ class FoodDatabaseService:
                     allergens=cached_data.get("allergens"),
                 )
         except Exception as e:
-            logger.warning(f"Cache lookup failed: {e}")
+            logger.warning(f"Cache lookup failed: {e}", exc_info=True)
         return None
 
     def _cache_barcode_result(self, barcode: str, product: BarcodeProduct):
@@ -269,7 +269,7 @@ class FoodDatabaseService:
 
             logger.info(f"Cached barcode result: {barcode}")
         except Exception as e:
-            logger.warning(f"Failed to cache barcode: {e}")
+            logger.warning(f"Failed to cache barcode: {e}", exc_info=True)
 
     async def _lookup_open_food_facts(self, barcode: str) -> Optional[BarcodeProduct]:
         """Look up barcode in Open Food Facts database."""
@@ -329,13 +329,13 @@ class FoodDatabaseService:
             return result
 
         except httpx.TimeoutException:
-            logger.error(f"Timeout looking up barcode in OFF: {barcode}")
+            logger.error(f"Timeout looking up barcode in OFF: {barcode}", exc_info=True)
             raise Exception("Request timed out. Please try again.")
         except httpx.HTTPStatusError as e:
-            logger.error(f"HTTP error looking up barcode {barcode}: {e}")
+            logger.error(f"HTTP error looking up barcode {barcode}: {e}", exc_info=True)
             raise Exception(f"API error: {e.response.status_code}")
         except Exception as e:
-            logger.error(f"Error looking up barcode {barcode}: {e}")
+            logger.error(f"Error looking up barcode {barcode}: {e}", exc_info=True)
             raise
 
     async def _lookup_usda_barcode(self, barcode: str) -> Optional[BarcodeProduct]:
@@ -395,7 +395,7 @@ class FoodDatabaseService:
             return None
 
         except Exception as e:
-            logger.warning(f"USDA fallback failed: {e}")
+            logger.warning(f"USDA fallback failed: {e}", exc_info=True)
             return None
 
 

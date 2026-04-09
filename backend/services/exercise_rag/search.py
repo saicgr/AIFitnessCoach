@@ -269,7 +269,7 @@ async def build_search_query_with_custom_goals(
                 logger.debug(f"Added custom program description to query for user {user_id}")
 
     except Exception as e:
-        logger.warning(f"Failed to get custom program description for user {user_id}: {e}")
+        logger.warning(f"Failed to get custom program description for user {user_id}: {e}", exc_info=True)
 
     # Get custom goal keywords (no Gemini call - reads from DB cache)
     try:
@@ -284,7 +284,7 @@ async def build_search_query_with_custom_goals(
             logger.debug(f"Enhanced query with {len(top_keywords)} custom keywords for user {user_id}")
 
     except Exception as e:
-        logger.warning(f"Failed to get custom goal keywords for user {user_id}: {e}")
+        logger.warning(f"Failed to get custom goal keywords for user {user_id}: {e}", exc_info=True)
 
     final_query = " ".join(enhanced_parts)
 

@@ -505,7 +505,7 @@ async def start_fast(data: StartFastRequest, current_user: dict = Depends(get_cu
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error starting fast: {e}")
+        logger.error(f"Error starting fast: {e}", exc_info=True)
         await log_user_error(
             user_id=data.user_id,
             action="fast_started",
@@ -596,7 +596,7 @@ async def end_fast(fast_id: str, data: EndFastRequest, http_request: Request, cu
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error ending fast: {e}")
+        logger.error(f"Error ending fast: {e}", exc_info=True)
         await log_user_error(
             user_id=data.user_id,
             action="fast_ended",

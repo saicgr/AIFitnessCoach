@@ -257,7 +257,7 @@ class HealthLoggingMixinPart2:
             return patterns
 
         except Exception as e:
-            logger.error(f"Failed to get diabetes patterns: {e}")
+            logger.error(f"Failed to get diabetes patterns: {e}", exc_info=True)
             return DiabetesPatterns()
 
     async def get_diabetes_context_for_ai(
@@ -409,7 +409,7 @@ class HealthLoggingMixinPart2:
             return context
 
         except Exception as e:
-            logger.error(f"Failed to get hormonal health context: {e}")
+            logger.error(f"Failed to get hormonal health context: {e}", exc_info=True)
             return HormonalHealthContext()
 
     async def get_hormonal_context_for_ai(

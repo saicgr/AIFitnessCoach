@@ -339,7 +339,7 @@ class SeniorWorkoutService:
             return None
 
         except Exception as e:
-            logger.error(f"Failed to get senior settings for user {user_id}: {e}")
+            logger.error(f"Failed to get senior settings for user {user_id}: {e}", exc_info=True)
             return None
 
     def _get_default_settings(self, user_id: str, age: int) -> Optional[SeniorSettings]:
@@ -419,7 +419,7 @@ class SeniorWorkoutService:
             return await self.get_user_settings(user_id)
 
         except Exception as e:
-            logger.error(f"Failed to update senior settings: {e}")
+            logger.error(f"Failed to update senior settings: {e}", exc_info=True)
             return None
 
     # -------------------------------------------------------------------------
@@ -511,7 +511,7 @@ class SeniorWorkoutService:
                 )
 
         except Exception as e:
-            logger.error(f"Failed to check recovery status: {e}")
+            logger.error(f"Failed to check recovery status: {e}", exc_info=True)
             return RecoveryStatus(
                 ready=True,
                 days_since_last=None,
@@ -683,7 +683,7 @@ class SeniorWorkoutService:
                     for ex in result.data
                 ]
         except Exception as e:
-            logger.warning(f"Failed to get mobility exercises from DB: {e}")
+            logger.warning(f"Failed to get mobility exercises from DB: {e}", exc_info=True)
 
         # Return defaults
         return DEFAULT_MOBILITY_EXERCISES[:count]
@@ -740,7 +740,7 @@ class SeniorWorkoutService:
             return True
 
         except Exception as e:
-            logger.error(f"Failed to log senior workout: {e}")
+            logger.error(f"Failed to log senior workout: {e}", exc_info=True)
             return False
 
     # -------------------------------------------------------------------------
@@ -848,7 +848,7 @@ class SeniorWorkoutService:
                     return (True, age)
             return (False, result.data[0].get("age") if result.data else None)
         except Exception as e:
-            logger.error(f"Failed to check if user is senior: {e}")
+            logger.error(f"Failed to check if user is senior: {e}", exc_info=True)
             return (False, None)
 
     async def get_low_impact_alternative(self, exercise_name: str) -> str:
@@ -870,7 +870,7 @@ class SeniorWorkoutService:
             if result.data:
                 return result.data[0]["alternative_exercise"]
         except Exception as e:
-            logger.warning(f"Failed to check low impact alternatives in DB: {e}")
+            logger.warning(f"Failed to check low impact alternatives in DB: {e}", exc_info=True)
 
         # Fall back to in-memory mapping
         for original, alternative in LOW_IMPACT_ALTERNATIVES.items():

@@ -114,7 +114,15 @@ class EmailService(EmailLifecycleMixin, EmailMarketingMixin):
               <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin-bottom:8px;"><tr><td width="48" valign="top"><div style="width:40px;height:40px;background:#0f2733;border-radius:12px;text-align:center;line-height:40px;font-size:20px;">&#128200;</div></td><td style="padding-left:16px;" valign="top"><p style="margin:0 0 4px;font-size:15px;font-weight:700;color:#ffffff;">Track Your Evolution</p><p style="margin:0;font-size:14px;color:#71717a;line-height:1.5;">Log sets, see your strength curve, and watch your body transform week by week.</p></td></tr></table>
             </td>
           </tr>
-          <tr><td style="padding:40px 40px 0;"><table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0"><tr><td style="border-top:1px solid #1e1e1e;font-size:0;line-height:0;">&nbsp;</td></tr></table></td></tr>
+          <tr><td style="padding:32px 40px 0;"><table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0"><tr><td style="border-top:1px solid #1e1e1e;font-size:0;line-height:0;">&nbsp;</td></tr></table></td></tr>
+          <tr>
+            <td align="center" style="padding:28px 40px 12px;">
+              <p style="margin:0 0 8px;font-size:15px;font-weight:700;color:#ffffff;">Join the Community</p>
+              <p style="margin:0 0 20px;font-size:14px;color:#71717a;line-height:1.5;">Get help, share your progress, request features, and chat with other FitWiz users.</p>
+              <a href="https://discord.gg/WAYNZpVgsK" style="display:inline-block;background:#5865F2;color:#ffffff;font-size:14px;font-weight:700;text-decoration:none;padding:12px 32px;border-radius:50px;letter-spacing:0.2px;">Join our Discord</a>
+            </td>
+          </tr>
+          <tr><td style="padding:24px 40px 0;"><table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0"><tr><td style="border-top:1px solid #1e1e1e;font-size:0;line-height:0;">&nbsp;</td></tr></table></td></tr>
           <tr>
             <td align="center" style="padding:28px 40px 40px;">
               <p style="margin:0 0 4px;font-size:12px;color:#3f3f46;">FitWiz &mdash; Your Personal AI Training Assistant</p>
@@ -134,7 +142,7 @@ class EmailService(EmailLifecycleMixin, EmailMarketingMixin):
             logger.info(f"Welcome email sent to {to_email}: {response}")
             return {"success": True, "id": response.get("id")}
         except Exception as e:
-            logger.error(f"Failed to send welcome email to {to_email}: {e}")
+            logger.error(f"Failed to send welcome email to {to_email}: {e}", exc_info=True)
             return {"error": str(e)}
 
     async def send_workout_reminder(
@@ -191,7 +199,7 @@ body{{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
             logger.info(f"Email sent successfully to {to_email}: {response}")
             return {"success": True, "id": response.get("id")}
         except Exception as e:
-            logger.error(f"Failed to send email to {to_email}: {e}")
+            logger.error(f"Failed to send email to {to_email}: {e}", exc_info=True)
             return {"error": str(e)}
 
     async def send_purchase_confirmation(
@@ -228,7 +236,7 @@ body{{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
             logger.info(f"Purchase confirmation email sent to {to_email}: {response}")
             return {"success": True, "id": response.get("id")}
         except Exception as e:
-            logger.error(f"Failed to send purchase confirmation email to {to_email}: {e}")
+            logger.error(f"Failed to send purchase confirmation email to {to_email}: {e}", exc_info=True)
             return {"error": str(e)}
 
     async def send_billing_issue(
@@ -264,7 +272,7 @@ body{{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
             logger.info(f"Billing issue email sent to {to_email}: {response}")
             return {"success": True, "id": response.get("id")}
         except Exception as e:
-            logger.error(f"Failed to send billing issue email to {to_email}: {e}")
+            logger.error(f"Failed to send billing issue email to {to_email}: {e}", exc_info=True)
             return {"error": str(e)}
 
     def _build_standard_email(

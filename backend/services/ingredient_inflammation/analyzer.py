@@ -58,7 +58,7 @@ class IngredientDatabaseAnalyzer:
         try:
             return await self._do_analyze(ingredients_text, product_name)
         except Exception as e:
-            logger.error(f"Analysis failed, returning neutral fallback: {e}")
+            logger.error(f"Analysis failed, returning neutral fallback: {e}", exc_info=True)
             return self._neutral_fallback(ingredients_text, product_name)
 
     async def _do_analyze(

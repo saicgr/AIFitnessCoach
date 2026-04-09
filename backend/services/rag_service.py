@@ -80,7 +80,7 @@ class RAGService:
         try:
             _count = self.collection.count()
         except Exception as e:
-            _rag_logger.warning(f"Failed to get collection count: {e}")
+            _rag_logger.warning(f"Failed to get collection count: {e}", exc_info=True)
             _count = "unknown"
         _rag_logger.info(f"RAG initialized with {_count} documents")
 
@@ -130,7 +130,7 @@ class RAGService:
         try:
             _count = self.collection.count()
         except Exception as e:
-            _rag_logger.warning(f"Failed to get collection count: {e}")
+            _rag_logger.warning(f"Failed to get collection count: {e}", exc_info=True)
             _count = "unknown"
         _rag_logger.info(f"Stored Q&A pair: {doc_id[:8]}... (total: {_count})")
         return doc_id
@@ -243,7 +243,7 @@ class RAGService:
             c = self.collection.count()
             total = c if c >= 0 else -1
         except Exception as e:
-            _rag_logger.warning(f"Failed to get document count: {e}")
+            _rag_logger.warning(f"Failed to get document count: {e}", exc_info=True)
             total = -1
         return {
             "total_documents": total,
@@ -285,12 +285,12 @@ class WorkoutRAGService:
         try:
             _w_count = self.workout_collection.count()
         except Exception as e:
-            _rag_logger.warning(f"Failed to get workout count: {e}")
+            _rag_logger.warning(f"Failed to get workout count: {e}", exc_info=True)
             _w_count = "unknown"
         try:
             _c_count = self.changes_collection.count()
         except Exception as e:
-            _rag_logger.warning(f"Failed to get changes count: {e}")
+            _rag_logger.warning(f"Failed to get changes count: {e}", exc_info=True)
             _c_count = "unknown"
         _rag_logger.info(f"Workout RAG initialized: {_w_count} workouts, {_c_count} changes")
 
@@ -693,7 +693,7 @@ class WorkoutRAGService:
             _rag_logger.info(f"Indexed program preferences for user {user_id}: {change_reason}")
             return doc_id
         except Exception as e:
-            _rag_logger.error(f"Failed to index program preferences: {e}")
+            _rag_logger.error(f"Failed to index program preferences: {e}", exc_info=True)
             return ""
 
     async def index_training_settings(
@@ -834,7 +834,7 @@ class WorkoutRAGService:
             _rag_logger.info(f"Indexed training settings for user {user_id}: {action}")
             return doc_id
         except Exception as e:
-            _rag_logger.error(f"Failed to index training settings: {e}")
+            _rag_logger.error(f"Failed to index training settings: {e}", exc_info=True)
             return ""
 
     def get_recent_training_settings(
@@ -1009,7 +1009,7 @@ class WorkoutRAGService:
             return consolidated
 
         except Exception as e:
-            _rag_logger.error(f"Failed to retrieve training settings: {e}")
+            _rag_logger.error(f"Failed to retrieve training settings: {e}", exc_info=True)
             return {
                 "one_rms": {},
                 "global_intensity_percent": None,
@@ -1041,13 +1041,13 @@ class WorkoutRAGService:
             c = self.workout_collection.count()
             total_workouts = c if c >= 0 else -1
         except Exception as e:
-            _rag_logger.warning(f"Failed to get workout count: {e}")
+            _rag_logger.warning(f"Failed to get workout count: {e}", exc_info=True)
             total_workouts = -1
         try:
             c = self.changes_collection.count()
             total_changes = c if c >= 0 else -1
         except Exception as e:
-            _rag_logger.warning(f"Failed to get changes count: {e}")
+            _rag_logger.warning(f"Failed to get changes count: {e}", exc_info=True)
             total_changes = -1
         return {
             "total_workouts": total_workouts,

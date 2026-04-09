@@ -144,7 +144,7 @@ async def get_templates(
         return templates
 
     except Exception as e:
-        logger.error(f"Error fetching layout templates: {e}")
+        logger.error(f"Error fetching layout templates: {e}", exc_info=True)
         raise safe_internal_error(e, "layouts")
 
 
@@ -178,7 +178,7 @@ async def get_user_layouts(user_id: str,
         return layouts
 
     except Exception as e:
-        logger.error(f"Error fetching layouts for user {user_id}: {e}")
+        logger.error(f"Error fetching layouts for user {user_id}: {e}", exc_info=True)
         raise safe_internal_error(e, "layouts")
 
 
@@ -242,7 +242,7 @@ async def get_active_layout(user_id: str,
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error fetching active layout for user {user_id}: {e}")
+        logger.error(f"Error fetching active layout for user {user_id}: {e}", exc_info=True)
         raise safe_internal_error(e, "layouts")
 
 
@@ -302,7 +302,7 @@ async def create_layout(user_id: str, layout: CreateLayoutRequest,
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error creating layout for user {user_id}: {e}")
+        logger.error(f"Error creating layout for user {user_id}: {e}", exc_info=True)
         await log_user_error(
             user_id=user_id,
             action="layout_created",
@@ -383,7 +383,7 @@ async def update_layout(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error updating layout {layout_id}: {e}")
+        logger.error(f"Error updating layout {layout_id}: {e}", exc_info=True)
         await log_user_error(
             user_id=user_id,
             action="layout_updated",
@@ -456,7 +456,7 @@ async def delete_layout(layout_id: str, user_id: str,
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error deleting layout {layout_id}: {e}")
+        logger.error(f"Error deleting layout {layout_id}: {e}", exc_info=True)
         await log_user_error(
             user_id=user_id,
             action="layout_deleted",
@@ -521,7 +521,7 @@ async def activate_layout(layout_id: str, user_id: str,
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error activating layout {layout_id}: {e}")
+        logger.error(f"Error activating layout {layout_id}: {e}", exc_info=True)
         await log_user_error(
             user_id=user_id,
             action="layout_activated",
@@ -596,7 +596,7 @@ async def create_from_template(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error creating layout from template {template_id}: {e}")
+        logger.error(f"Error creating layout from template {template_id}: {e}", exc_info=True)
         await log_user_error(
             user_id=user_id,
             action="layout_from_template",

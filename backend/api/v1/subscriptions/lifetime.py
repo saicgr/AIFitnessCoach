@@ -69,7 +69,7 @@ async def get_lifetime_status(user_id: str, current_user: dict = Depends(get_cur
                 days_as_member = max(0, delta.days)
                 months_as_member = max(0, days_as_member // 30)
             except (ValueError, TypeError) as e:
-                logger.warning(f"Error parsing purchase date: {e}")
+                logger.warning(f"Error parsing purchase date: {e}", exc_info=True)
 
         member_tier, tier_level = get_lifetime_member_tier(days_as_member)
 
@@ -266,7 +266,7 @@ async def convert_to_lifetime(
                 .eq("status", "pending")\
                 .execute()
         except Exception as e:
-            logger.warning(f"Failed to cancel billing notifications: {e}")
+            logger.warning(f"Failed to cancel billing notifications: {e}", exc_info=True)
 
         await log_user_activity(
             user_id=user_id,

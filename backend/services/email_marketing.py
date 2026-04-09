@@ -51,7 +51,7 @@ class EmailMarketingMixin:
             logger.info(f"Win-back email sent to {to_email}: {response}")
             return {"success": True, "id": response.get("id")}
         except Exception as e:
-            logger.error(f"Failed to send win-back email to {to_email}: {e}")
+            logger.error(f"Failed to send win-back email to {to_email}: {e}", exc_info=True)
             return {"error": str(e)}
 
     async def send_14day_upsell(
@@ -87,7 +87,7 @@ class EmailMarketingMixin:
             logger.info(f"14-day upsell email sent to {to_email}: {response}")
             return {"success": True, "id": response.get("id")}
         except Exception as e:
-            logger.error(f"Failed to send 14-day upsell email to {to_email}: {e}")
+            logger.error(f"Failed to send 14-day upsell email to {to_email}: {e}", exc_info=True)
             return {"error": str(e)}
 
     async def send_weekly_summary(
@@ -129,5 +129,5 @@ class EmailMarketingMixin:
             logger.info(f"Weekly summary email sent to {to_email}: {response}")
             return {"success": True, "id": response.get("id")}
         except Exception as e:
-            logger.error(f"Failed to send weekly summary email to {to_email}: {e}")
+            logger.error(f"Failed to send weekly summary email to {to_email}: {e}", exc_info=True)
             return {"error": str(e)}

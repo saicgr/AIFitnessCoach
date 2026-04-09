@@ -13,6 +13,7 @@ from core.username_generator import generate_username_sync
 from models.schemas import User
 from services.admin_service import get_admin_service
 from services.email_service import get_email_service
+from services.discord_webhooks import notify_signup
 
 from api.v1.users.models import (
     GoogleAuthRequest,
@@ -117,6 +118,12 @@ async def google_auth(request: Request, body: GoogleAuthRequest,
                 get_email_service().send_welcome_email, email, full_name or ""
             )
 
+        # Notify Discord #growth channel
+        background_tasks.add_task(
+            notify_signup, email=email or "", user_id=created["id"],
+            name=full_name, provider="google",
+        )
+
         return row_to_user(created, is_new_user=True, support_friend_added=False)
 
     except HTTPException:
@@ -124,8 +131,8 @@ async def google_auth(request: Request, body: GoogleAuthRequest,
     except Exception as e:
         import traceback
         full_traceback = traceback.format_exc()
-        logger.error(f"Google auth failed: {e}")
-        logger.error(f"Full traceback: {full_traceback}")
+        logger.error(f"Google auth failed: {e}", exc_info=True)
+        logger.error(f"Full traceback: {full_traceback}", exc_info=True)
         raise safe_internal_error(e, "google_auth")
 
 
@@ -219,8 +226,8 @@ async def email_auth(request: Request, body: EmailAuthRequest,
     except Exception as e:
         import traceback
         full_traceback = traceback.format_exc()
-        logger.error(f"Email auth failed: {e}")
-        logger.error(f"Full traceback: {full_traceback}")
+        logger.error(f"Email auth failed: {e}", exc_info=True)
+        logger.error(f"Full traceback: {full_traceback}", exc_info=True)
         raise HTTPException(status_code=401, detail="Invalid email or password")
 
 
@@ -305,6 +312,12 @@ async def email_signup(request: Request, body: EmailSignupRequest,
                 get_email_service().send_welcome_email, email, full_name or ""
             )
 
+        # Notify Discord #growth channel
+        background_tasks.add_task(
+            notify_signup, email=email or "", user_id=created["id"],
+            name=full_name, provider="email",
+        )
+
         return row_to_user(created, is_new_user=True, support_friend_added=False)
 
     except HTTPException:
@@ -312,8 +325,8 @@ async def email_signup(request: Request, body: EmailSignupRequest,
     except Exception as e:
         import traceback
         full_traceback = traceback.format_exc()
-        logger.error(f"Email signup failed: {e}")
-        logger.error(f"Full traceback: {full_traceback}")
+        logger.error(f"Email signup failed: {e}", exc_info=True)
+        logger.error(f"Full traceback: {full_traceback}", exc_info=True)
         raise HTTPException(status_code=400, detail="Signup failed. Please try again.")
 
 
@@ -342,7 +355,7 @@ async def forgot_password(request: Request, body: ForgotPasswordRequest):
         return {"message": "If an account exists with this email, a password reset link has been sent."}
 
     except Exception as e:
-        logger.error(f"Password reset failed: {e}")
+        logger.error(f"Password reset failed: {e}", exc_info=True)
         # Still return success for security
         return {"message": "If an account exists with this email, a password reset link has been sent."}
 
@@ -382,7 +395,7 @@ async def reset_password(request: Request, body: ResetPasswordRequest,
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Password reset failed: {e}")
+        logger.error(f"Password reset failed: {e}", exc_info=True)
         raise HTTPException(status_code=400, detail="Failed to reset password. Token may be expired.")
 
 
@@ -432,5 +445,5 @@ async def change_password(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Password change failed for user {current_user['id']}: {e}")
+        logger.error(f"Password change failed for user {current_user['id']}: {e}", exc_info=True)
         raise HTTPException(status_code=400, detail="Failed to change password. Please try again.")

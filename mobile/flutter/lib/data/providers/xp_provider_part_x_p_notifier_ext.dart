@@ -108,7 +108,8 @@ extension XPNotifierExt on XPNotifier {
 
   /// Claim a daily crate (pick 1 of 3).
   /// [crateDate] is optional — pass an ISO date string to claim a past crate.
-  Future<CrateRewardResult> claimDailyCrate(String crateType, {String? crateDate}) async {
+  /// [skipReload] — skip the post-claim server refresh (caller will batch-reload).
+  Future<CrateRewardResult> claimDailyCrate(String crateType, {String? crateDate, bool skipReload = false}) async {
     try {
       final result = await _repository.claimDailyCrate(crateType, crateDate: crateDate);
 
@@ -126,13 +127,7 @@ extension XPNotifierExt on XPNotifier {
           );
         }
 
-        // Reload daily crates state from server
-        await loadDailyCrates();
-
-        // Reload consumables in case we got items
-        await loadConsumables();
-
-        // If XP was awarded, trigger animation and refresh XP
+        // If XP was awarded, trigger animation
         if (result.reward != null && result.reward!.isXP) {
           state = state.copyWith(
             lastXPEarnedEvent: XPEarnedAnimationEvent(
@@ -140,7 +135,16 @@ extension XPNotifierExt on XPNotifier {
               goalType: XPGoalType.dailyLogin,
             ),
           );
-          await loadUserXP(userId: _currentUserId, showLoading: false);
+        }
+
+        if (!skipReload) {
+          // Single-crate path: reload everything now
+          await Future.wait([
+            loadDailyCrates(),
+            loadConsumables(),
+            if (result.reward != null && result.reward!.isXP)
+              loadUserXP(userId: _currentUserId, showLoading: false),
+          ]);
         }
 
         debugPrint('[XPProvider] Daily crate claimed! Reward: ${result.reward?.displayName}');
@@ -155,6 +159,15 @@ extension XPNotifierExt on XPNotifier {
         message: 'Error claiming crate',
       );
     }
+  }
+
+  /// Batch reload after claiming multiple crates.
+  Future<void> reloadAfterClaims() async {
+    await Future.wait([
+      loadDailyCrates(),
+      loadConsumables(),
+      loadUserXP(userId: _currentUserId, showLoading: false),
+    ]);
   }
 
 }

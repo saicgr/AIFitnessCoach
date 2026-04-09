@@ -6,7 +6,7 @@ from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 
 from core.timezone_utils import resolve_timezone, local_date_to_utc_range, get_user_today
-from core.auth import get_current_user
+from core.auth import get_current_user, verify_user_ownership
 from core.exceptions import safe_internal_error
 from core.supabase_db import get_supabase_db
 from core.logger import get_logger
@@ -87,7 +87,7 @@ async def get_daily_summary(
         )
 
     except Exception as e:
-        logger.error(f"Failed to get daily summary: {e}")
+        logger.error(f"Failed to get daily summary: {e}", exc_info=True)
         raise safe_internal_error(e, "nutrition")
 
 
@@ -144,7 +144,7 @@ async def get_weekly_summary(
         )
 
     except Exception as e:
-        logger.error(f"Failed to get weekly summary: {e}")
+        logger.error(f"Failed to get weekly summary: {e}", exc_info=True)
         raise safe_internal_error(e, "nutrition")
 
 
@@ -167,7 +167,7 @@ async def get_nutrition_targets(user_id: str, current_user: dict = Depends(get_c
         )
 
     except Exception as e:
-        logger.error(f"Failed to get nutrition targets: {e}")
+        logger.error(f"Failed to get nutrition targets: {e}", exc_info=True)
         raise safe_internal_error(e, "nutrition")
 
 
@@ -198,6 +198,6 @@ async def update_nutrition_targets(user_id: str, request: UpdateNutritionTargets
         )
 
     except Exception as e:
-        logger.error(f"Failed to update nutrition targets: {e}")
+        logger.error(f"Failed to update nutrition targets: {e}", exc_info=True)
         raise safe_internal_error(e, "nutrition")
 

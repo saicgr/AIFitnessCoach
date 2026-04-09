@@ -85,7 +85,7 @@ class ParsersMixin:
             except json.JSONDecodeError as e:
                 logger.debug(f"JSON recovery attempt failed: {e}")
 
-            logger.warning("Failed to recover truncated JSON")
+            logger.warning("Failed to recover truncated JSON", exc_info=True)
             return None
 
     def _fix_trailing_commas(self, json_str: str) -> str:
@@ -248,7 +248,7 @@ class ParsersMixin:
                     'fiber_per_100g': nutrients.fiber_per_100g,
                 }
         except Exception as e:
-            logger.warning(f"USDA lookup failed for '{food_name}': {e}")
+            logger.warning(f"USDA lookup failed for '{food_name}': {e}", exc_info=True)
         return None
 
     async def _enhance_food_items_with_nutrition_db(self, food_items: List[Dict], use_usda: bool = False) -> List[Dict]:
@@ -293,7 +293,7 @@ class ParsersMixin:
                 from services.usda_food_service import get_usda_food_service
                 usda_service = get_usda_food_service()
             except Exception as e:
-                logger.warning(f"Could not initialize USDA service: {e}")
+                logger.warning(f"Could not initialize USDA service: {e}", exc_info=True)
                 usda_service = None
 
             logger.info(f"[USDA] Looking up {len(food_names)} items in parallel (retry flow)...")
@@ -318,7 +318,7 @@ class ParsersMixin:
                 # Convert batch dict to ordered list matching food_names
                 nutrition_results = [batch_results.get(name) for name in food_names]
             except Exception as e:
-                logger.warning(f"Food DB batch lookup failed, falling back to AI estimates: {e}")
+                logger.warning(f"Food DB batch lookup failed, falling back to AI estimates: {e}", exc_info=True)
                 nutrition_results = [None] * len(food_names)
 
         # Process results (same logic for both flows)

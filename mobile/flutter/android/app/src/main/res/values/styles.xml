@@ -19,7 +19,6 @@
     <style name="NormalTheme" parent="@android:style/Theme.Light.NoTitleBar">
         <item name="android:windowBackground">?android:colorBackground</item>
     </style>
-
     <!-- uCrop aspect ratio tabs: bordered pill with ratio label -->
     <style name="ucrop_TextViewCropAspectRatio">
         <item name="android:layout_width">wrap_content</item>

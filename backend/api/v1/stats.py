@@ -179,7 +179,7 @@ async def get_comprehensive_stats(user_id: str, request: Request,
         )
 
     except Exception as e:
-        logger.error(f"Failed to get comprehensive stats: {e}")
+        logger.error(f"Failed to get comprehensive stats: {e}", exc_info=True)
         raise safe_internal_error(e, "stats")
 
 
@@ -196,7 +196,7 @@ async def get_quick_stats(user_id: str, request: Request,
         return await _get_quick_stats(user_id, db, user_tz)
 
     except Exception as e:
-        logger.error(f"Failed to get quick stats: {e}")
+        logger.error(f"Failed to get quick stats: {e}", exc_info=True)
         raise safe_internal_error(e, "stats")
 
 
@@ -251,7 +251,7 @@ async def get_workout_frequency(user_id: str, request: Request, weeks: int = 12,
         return frequency_data
 
     except Exception as e:
-        logger.error(f"Failed to get workout frequency: {e}")
+        logger.error(f"Failed to get workout frequency: {e}", exc_info=True)
         raise safe_internal_error(e, "stats")
 
 
@@ -289,7 +289,7 @@ async def get_weight_trend(user_id: str, request: Request, days: int = 90,
         ]
 
     except Exception as e:
-        logger.error(f"Failed to get weight trend: {e}")
+        logger.error(f"Failed to get weight trend: {e}", exc_info=True)
         raise safe_internal_error(e, "stats")
 
 
@@ -351,7 +351,7 @@ async def get_nutrition_stats(user_id: str, request: Request, days: int = 7,
         )
 
     except Exception as e:
-        logger.error(f"Failed to get nutrition stats: {e}")
+        logger.error(f"Failed to get nutrition stats: {e}", exc_info=True)
         raise safe_internal_error(e, "stats")
 
 
@@ -410,7 +410,7 @@ async def get_volume_progress(user_id: str, request: Request, days: int = 30,
         return volume_data
 
     except Exception as e:
-        logger.error(f"Failed to get volume progress: {e}")
+        logger.error(f"Failed to get volume progress: {e}", exc_info=True)
         raise safe_internal_error(e, "stats")
 
 

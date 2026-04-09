@@ -331,7 +331,7 @@ async def get_exercise_history(
         )
 
     except Exception as e:
-        logger.error(f"Error getting exercise history: {e}")
+        logger.error(f"Error getting exercise history: {e}", exc_info=True)
         raise safe_internal_error(e, "exercise_history")
 
 
@@ -430,7 +430,7 @@ async def get_exercise_chart_data(
         )
 
     except Exception as e:
-        logger.error(f"Error getting exercise chart data: {e}")
+        logger.error(f"Error getting exercise chart data: {e}", exc_info=True)
         raise safe_internal_error(e, "exercise_history")
 
 
@@ -502,7 +502,7 @@ async def get_exercise_personal_records(
         )
 
     except Exception as e:
-        logger.error(f"Error getting exercise PRs: {e}")
+        logger.error(f"Error getting exercise PRs: {e}", exc_info=True)
         raise safe_internal_error(e, "exercise_history")
 
 
@@ -562,7 +562,7 @@ async def get_most_performed_exercises(
         )
 
     except Exception as e:
-        logger.error(f"Error getting most performed exercises: {e}")
+        logger.error(f"Error getting most performed exercises: {e}", exc_info=True)
         # Fallback to simple query if RPC doesn't exist
         try:
             db = get_supabase_db()
@@ -606,7 +606,7 @@ async def get_most_performed_exercises(
             )
 
         except Exception as e2:
-            logger.error(f"Fallback also failed: {e2}")
+            logger.error(f"Fallback also failed: {e2}", exc_info=True)
             raise safe_internal_error(e, "exercise_history")
 
 
@@ -635,6 +635,6 @@ async def log_exercise_history_view(request: ViewLogRequest, current_user: dict 
         return {"status": "logged"}
 
     except Exception as e:
-        logger.warning(f"Failed to log exercise history view: {e}")
+        logger.warning(f"Failed to log exercise history view: {e}", exc_info=True)
         # Don't fail the request on logging errors
         return {"status": "error", "message": str(e)}

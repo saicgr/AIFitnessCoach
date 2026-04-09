@@ -381,7 +381,7 @@ async def get_consistency_insights(
         )
 
     except Exception as e:
-        logger.error(f"Error fetching consistency insights: {e}")
+        logger.error(f"Error fetching consistency insights: {e}", exc_info=True)
         raise safe_internal_error(e, "get_consistency_insights")
 
 
@@ -527,7 +527,7 @@ async def get_consistency_patterns(
         )
 
     except Exception as e:
-        logger.error(f"Error fetching consistency patterns: {e}")
+        logger.error(f"Error fetching consistency patterns: {e}", exc_info=True)
         raise safe_internal_error(e, "get_consistency_patterns")
 
 
@@ -605,7 +605,7 @@ async def get_calendar_heatmap(
                 }
             )
         except Exception as log_error:
-            logger.warning(f"Failed to log calendar access: {log_error}")
+            logger.warning(f"Failed to log calendar access: {log_error}", exc_info=True)
 
         # Get all scheduled workouts in range (use end-of-day for inclusive upper bound)
         workouts_response = db.client.table("workouts").select(
@@ -680,7 +680,7 @@ async def get_calendar_heatmap(
         # Re-raise HTTPExceptions (validation errors, etc.)
         raise
     except Exception as e:
-        logger.error(f"Error fetching calendar heatmap: {e}")
+        logger.error(f"Error fetching calendar heatmap: {e}", exc_info=True)
         raise safe_internal_error(e, "get_calendar_heatmap")
 
 
@@ -923,7 +923,7 @@ async def get_day_detail(
     except ValueError as e:
         raise HTTPException(status_code=400, detail="Invalid date format. Use YYYY-MM-DD.")
     except Exception as e:
-        logger.error(f"Error fetching day detail: {e}")
+        logger.error(f"Error fetching day detail: {e}", exc_info=True)
         raise safe_internal_error(e, "get_day_detail")
 
 

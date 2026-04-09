@@ -106,7 +106,7 @@ async def get_rep_preferences(user_id: str, current_user: dict = Depends(get_cur
         )
 
     except Exception as e:
-        logger.error(f"Failed to get rep preferences: {e}")
+        logger.error(f"Failed to get rep preferences: {e}", exc_info=True)
         raise safe_internal_error(e, "exercise_progressions")
 
 
@@ -194,7 +194,7 @@ async def update_rep_preferences(user_id: str, request: RepPreferences, current_
         )
 
     except Exception as e:
-        logger.error(f"Failed to update rep preferences: {e}")
+        logger.error(f"Failed to update rep preferences: {e}", exc_info=True)
         raise safe_internal_error(e, "exercise_progressions")
 
 
@@ -324,7 +324,7 @@ async def get_user_mastery_for_exercise(user_id: str, exercise_name: str) -> Opt
             return _parse_mastery(result.data[0])
         return None
     except Exception as e:
-        logger.error(f"Error getting mastery for {exercise_name}: {e}")
+        logger.error(f"Error getting mastery for {exercise_name}: {e}", exc_info=True)
         return None
 
 
@@ -345,7 +345,7 @@ async def get_user_ready_progressions(user_id: str) -> List[str]:
             if row.get("suggested_next_variant")
         ]
     except Exception as e:
-        logger.error(f"Error getting ready progressions for user {user_id}: {e}")
+        logger.error(f"Error getting ready progressions for user {user_id}: {e}", exc_info=True)
         return []
 
 
@@ -364,7 +364,7 @@ async def should_suggest_progression(user_id: str, exercise_name: str) -> bool:
             return result.data[0].get("ready_for_progression", False)
         return False
     except Exception as e:
-        logger.error(f"Error checking progression suggestion: {e}")
+        logger.error(f"Error checking progression suggestion: {e}", exc_info=True)
         return False
 
 
@@ -387,5 +387,5 @@ async def get_user_rep_range(user_id: str) -> tuple[int, int]:
             )
         return (6, 12)  # Default hypertrophy range
     except Exception as e:
-        logger.error(f"Error getting user rep range: {e}")
+        logger.error(f"Error getting user rep range: {e}", exc_info=True)
         return (6, 12)

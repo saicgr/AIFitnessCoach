@@ -244,7 +244,7 @@ async def analyze_user_for_recommendation(user_id: str, user_tz: str = "UTC") ->
             analysis["is_senior"] = age is not None and age >= 55
             analysis["fitness_level"] = user.get("fitness_level", "beginner")
     except Exception as e:
-        logger.warning(f"Could not get user profile: {e}")
+        logger.warning(f"Could not get user profile: {e}", exc_info=True)
 
     # Get active injuries
     try:
@@ -260,7 +260,7 @@ async def analyze_user_for_recommendation(user_id: str, user_tz: str = "UTC") ->
                 max_severity = max(severities, key=lambda x: severity_order.get(x, 0))
                 analysis["injury_severity_max"] = max_severity
     except Exception as e:
-        logger.warning(f"Could not get injuries: {e}")
+        logger.warning(f"Could not get injuries: {e}", exc_info=True)
 
     # Get strain history
     try:
@@ -278,7 +278,7 @@ async def analyze_user_for_recommendation(user_id: str, user_tz: str = "UTC") ->
                 max_severity = max(severities, key=lambda x: severity_order.get(x, 0))
                 analysis["strain_severity_max"] = max_severity
     except Exception as e:
-        logger.warning(f"Could not get strain history: {e}")
+        logger.warning(f"Could not get strain history: {e}", exc_info=True)
 
     return analysis
 
@@ -433,7 +433,7 @@ async def get_progression_preferences(user_id: str,
             return ProgressionPreferences(**defaults)
 
     except Exception as e:
-        logger.error(f"Failed to get progression preferences: {e}")
+        logger.error(f"Failed to get progression preferences: {e}", exc_info=True)
         raise safe_internal_error(e, "progression_settings")
 
 
@@ -504,7 +504,7 @@ async def update_progression_preferences(user_id: str, update: ProgressionPrefer
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to update progression preferences: {e}")
+        logger.error(f"Failed to update progression preferences: {e}", exc_info=True)
         raise safe_internal_error(e, "progression_settings")
 
 
@@ -564,7 +564,7 @@ async def get_pace_recommendation(user_id: str, request: Request,
         )
 
     except Exception as e:
-        logger.error(f"Failed to generate recommendation: {e}")
+        logger.error(f"Failed to generate recommendation: {e}", exc_info=True)
         raise safe_internal_error(e, "progression_settings")
 
 
@@ -599,7 +599,7 @@ async def apply_pace_recommendation(user_id: str, request: Request,
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to apply recommendation: {e}")
+        logger.error(f"Failed to apply recommendation: {e}", exc_info=True)
         raise safe_internal_error(e, "progression_settings")
 
 
@@ -640,7 +640,7 @@ async def get_category_paces(user_id: str,
         )
 
     except Exception as e:
-        logger.error(f"Failed to get category paces: {e}")
+        logger.error(f"Failed to get category paces: {e}", exc_info=True)
         raise safe_internal_error(e, "progression_settings")
 
 
@@ -668,5 +668,5 @@ async def update_category_paces(user_id: str, update: CategoryPacesUpdate,
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to update category paces: {e}")
+        logger.error(f"Failed to update category paces: {e}", exc_info=True)
         raise safe_internal_error(e, "progression_settings")

@@ -174,12 +174,12 @@ class ComebackService:
                     "last_workout_date": last_workout_date
                 }).eq("id", user_id).execute()
             except Exception as e:
-                logger.warning(f"Failed to update cached days_since_last_workout: {e}")
+                logger.warning(f"Failed to update cached days_since_last_workout: {e}", exc_info=True)
 
             return max(0, days_since)
 
         except Exception as e:
-            logger.error(f"Failed to get days since last workout: {e}")
+            logger.error(f"Failed to get days since last workout: {e}", exc_info=True)
             return 0  # Assume active on error to avoid false positives
 
     def classify_break_type(self, days_off: int) -> BreakType:
@@ -428,7 +428,7 @@ class ComebackService:
                             prompt_context=""
                         )
                 except Exception as e:
-                    logger.warning(f"Failed to update break status: {e}")
+                    logger.warning(f"Failed to update break status: {e}", exc_info=True)
 
             in_comeback_mode = user.get("in_comeback_mode", False)
             comeback_week = user.get("comeback_week", 0)
@@ -475,7 +475,7 @@ class ComebackService:
             )
 
         except Exception as e:
-            logger.error(f"Failed to detect break status: {e}")
+            logger.error(f"Failed to detect break status: {e}", exc_info=True)
             # Return safe defaults
             return BreakStatus(
                 days_since_last_workout=0,
@@ -603,7 +603,7 @@ class ComebackService:
                     return result.data
 
             except Exception as rpc_error:
-                logger.warning(f"RPC start_comeback_mode failed: {rpc_error}, using fallback")
+                logger.warning(f"RPC start_comeback_mode failed: {rpc_error}, using fallback", exc_info=True)
 
             # Fallback: manual update
             db.client.table("users").update({
@@ -634,7 +634,7 @@ class ComebackService:
             return None
 
         except Exception as e:
-            logger.error(f"Failed to start comeback mode: {e}")
+            logger.error(f"Failed to start comeback mode: {e}", exc_info=True)
             return None
 
     async def progress_comeback_week(self, user_id: str) -> int:
@@ -681,7 +681,7 @@ class ComebackService:
             return new_week
 
         except Exception as e:
-            logger.error(f"Failed to progress comeback week: {e}")
+            logger.error(f"Failed to progress comeback week: {e}", exc_info=True)
             return 0
 
     async def end_comeback_mode(self, user_id: str, successful: bool = True) -> bool:
@@ -719,7 +719,7 @@ class ComebackService:
             return True
 
         except Exception as e:
-            logger.error(f"Failed to end comeback mode: {e}")
+            logger.error(f"Failed to end comeback mode: {e}", exc_info=True)
             return False
 
     # -------------------------------------------------------------------------
@@ -825,7 +825,7 @@ class ComebackService:
             }).execute()
 
         except Exception as e:
-            logger.warning(f"Failed to log comeback event: {e}")
+            logger.warning(f"Failed to log comeback event: {e}", exc_info=True)
 
 
 # Singleton instance

@@ -77,7 +77,7 @@ async def respond_to_recommendation(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to respond to recommendation: {e}")
+        logger.error(f"Failed to respond to recommendation: {e}", exc_info=True)
         raise safe_internal_error(e, "nutrition")
 
 
@@ -123,7 +123,7 @@ async def get_weekly_recommendation(user_id: str, current_user: dict = Depends(g
         )
 
     except Exception as e:
-        logger.error(f"Failed to get weekly recommendation: {e}")
+        logger.error(f"Failed to get weekly recommendation: {e}", exc_info=True)
         raise safe_internal_error(e, "nutrition")
 
 
@@ -210,7 +210,7 @@ async def get_checkin_weekly_summary(request: Request, user_id: str, current_use
         )
 
     except Exception as e:
-        logger.error(f"Failed to get weekly summary: {e}")
+        logger.error(f"Failed to get weekly summary: {e}", exc_info=True)
         raise safe_internal_error(e, "nutrition")
 
 
@@ -343,7 +343,7 @@ async def generate_weekly_recommendation(request: Request, user_id: str, current
         )
 
     except Exception as e:
-        logger.error(f"Failed to generate weekly recommendation: {e}")
+        logger.error(f"Failed to generate weekly recommendation: {e}", exc_info=True)
         raise safe_internal_error(e, "nutrition")
 
 

@@ -127,10 +127,10 @@ Example for "Improve box jump height":
             return result
 
         except json.JSONDecodeError as e:
-            logger.error(f"Failed to parse Gemini response for goal '{goal_text}': {e}")
+            logger.error(f"Failed to parse Gemini response for goal '{goal_text}': {e}", exc_info=True)
             return self._get_fallback_keywords(goal_text)
         except Exception as e:
-            logger.error(f"Failed to generate keywords for goal '{goal_text}': {e}")
+            logger.error(f"Failed to generate keywords for goal '{goal_text}': {e}", exc_info=True)
             return self._get_fallback_keywords(goal_text)
 
     def _get_fallback_keywords(self, goal_text: str) -> Dict:
@@ -347,7 +347,7 @@ Example for "Improve box jump height":
                 refreshed += 1
                 logger.info(f"Refreshed keywords for goal {goal['id']}")
             except Exception as e:
-                logger.error(f"Failed to refresh goal {goal['id']}: {e}")
+                logger.error(f"Failed to refresh goal {goal['id']}: {e}", exc_info=True)
 
         return refreshed
 
@@ -387,7 +387,7 @@ Example for "Improve box jump height":
             }).eq("id", user_id).execute()
 
         except Exception as e:
-            logger.warning(f"Failed to update user active goals cache: {e}")
+            logger.warning(f"Failed to update user active goals cache: {e}", exc_info=True)
 
 
 # Singleton instance

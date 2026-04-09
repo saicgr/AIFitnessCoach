@@ -352,7 +352,7 @@ async def get_user_injuries(
         )
 
     except Exception as e:
-        logger.error(f"Failed to get user injuries: {e}")
+        logger.error(f"Failed to get user injuries: {e}", exc_info=True)
         raise safe_internal_error(e, "endpoint")
 
 
@@ -382,7 +382,7 @@ async def get_active_injuries(
         )
 
     except Exception as e:
-        logger.error(f"Failed to get active injuries: {e}")
+        logger.error(f"Failed to get active injuries: {e}", exc_info=True)
         raise safe_internal_error(e, "endpoint")
 
 
@@ -446,7 +446,7 @@ async def report_injury(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to report injury: {e}")
+        logger.error(f"Failed to report injury: {e}", exc_info=True)
         raise safe_internal_error(e, "endpoint")
 
 
@@ -533,7 +533,7 @@ async def get_injury(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to get injury details: {e}")
+        logger.error(f"Failed to get injury details: {e}", exc_info=True)
         raise safe_internal_error(e, "endpoint")
 
 
@@ -595,7 +595,7 @@ async def update_injury(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to update injury: {e}")
+        logger.error(f"Failed to update injury: {e}", exc_info=True)
         raise safe_internal_error(e, "endpoint")
 
 
@@ -643,7 +643,7 @@ async def mark_injury_healed(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to mark injury as healed: {e}")
+        logger.error(f"Failed to mark injury as healed: {e}", exc_info=True)
         raise safe_internal_error(e, "endpoint")
 
 
@@ -717,7 +717,7 @@ async def add_check_in(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to add check-in: {e}")
+        logger.error(f"Failed to add check-in: {e}", exc_info=True)
         raise safe_internal_error(e, "endpoint")
 
 
@@ -849,5 +849,5 @@ async def get_workout_modifications(
         )
 
     except Exception as e:
-        logger.error(f"Failed to get workout modifications: {e}")
+        logger.error(f"Failed to get workout modifications: {e}", exc_info=True)
         raise safe_internal_error(e, "endpoint")

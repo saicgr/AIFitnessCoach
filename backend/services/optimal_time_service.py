@@ -110,7 +110,7 @@ async def recalculate_all_optimal_times():
 
             results["updated"] += 1
         except Exception as e:
-            logger.error(f"Error calculating optimal time for user {user_id}: {e}")
+            logger.error(f"Error calculating optimal time for user {user_id}: {e}", exc_info=True)
             results["errors"] += 1
 
     logger.info(f"Optimal times recalculated: {results}")

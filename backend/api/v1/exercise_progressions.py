@@ -402,7 +402,7 @@ async def check_progression_readiness(user_id: str, exercise_name: str) -> dict:
         }
 
     except Exception as e:
-        logger.error(f"Error checking progression readiness: {e}")
+        logger.error(f"Error checking progression readiness: {e}", exc_info=True)
         return {
             "ready": False,
             "reason": f"Error: {str(e)}",
@@ -458,7 +458,7 @@ async def get_next_variant(exercise_name: str) -> Optional[dict]:
         }
 
     except Exception as e:
-        logger.error(f"Error getting next variant for {exercise_name}: {e}")
+        logger.error(f"Error getting next variant for {exercise_name}: {e}", exc_info=True)
         return None
 
 
@@ -507,7 +507,7 @@ async def get_progression_chains(
         return chains
 
     except Exception as e:
-        logger.error(f"Failed to get progression chains: {e}")
+        logger.error(f"Failed to get progression chains: {e}", exc_info=True)
         raise safe_internal_error(e, "exercise_progressions")
 
 
@@ -544,7 +544,7 @@ async def get_progression_chain(chain_id: str, current_user: dict = Depends(get_
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to get progression chain: {e}")
+        logger.error(f"Failed to get progression chain: {e}", exc_info=True)
         raise safe_internal_error(e, "exercise_progressions")
 
 
@@ -613,7 +613,7 @@ async def get_user_mastery(
         return mastery_list
 
     except Exception as e:
-        logger.error(f"Failed to get user mastery: {e}")
+        logger.error(f"Failed to get user mastery: {e}", exc_info=True)
         raise safe_internal_error(e, "exercise_progressions")
 
 
@@ -703,7 +703,7 @@ async def get_progression_suggestions(user_id: str, current_user: dict = Depends
         return suggestions
 
     except Exception as e:
-        logger.error(f"Failed to get progression suggestions: {e}")
+        logger.error(f"Failed to get progression suggestions: {e}", exc_info=True)
         raise safe_internal_error(e, "exercise_progressions")
 
 
@@ -897,7 +897,7 @@ async def update_exercise_mastery(user_id: str, request: UpdateMasteryRequest, c
         )
 
     except Exception as e:
-        logger.error(f"Failed to update exercise mastery: {e}")
+        logger.error(f"Failed to update exercise mastery: {e}", exc_info=True)
         await log_user_error(
             user_id=user_id,
             action="exercise_mastery_updated",
@@ -1024,7 +1024,7 @@ async def accept_progression(user_id: str, request: AcceptProgressionRequest, cu
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to accept progression: {e}")
+        logger.error(f"Failed to accept progression: {e}", exc_info=True)
         await log_user_error(
             user_id=user_id,
             action="exercise_progression_accepted",

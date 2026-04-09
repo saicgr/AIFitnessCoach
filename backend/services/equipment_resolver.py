@@ -97,7 +97,7 @@ class EquipmentResolver:
             self._loaded = True
 
         except Exception as e:
-            logger.error(f"Failed to load equipment data: {e}")
+            logger.error(f"Failed to load equipment data: {e}", exc_info=True)
             # Still mark as loaded to prevent retry loops - will use empty cache
             self._loaded = True
 

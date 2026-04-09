@@ -80,7 +80,7 @@ async def swap_workout_date(request: Request, payload: SwapWorkoutsRequest,
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to swap workout: {e}")
+        logger.error(f"Failed to swap workout: {e}", exc_info=True)
         raise safe_internal_error(e, "generation")
 
 
@@ -120,7 +120,7 @@ async def swap_exercise_in_workout(request: Request, payload: SwapExerciseReques
                         f"(similarity: {muscle_comparison.get('similarity_score', 0):.0%})"
                     )
         except Exception as e:
-            logger.warning(f"Non-critical: Failed to get muscle profiles for swap comparison: {e}")
+            logger.warning(f"Non-critical: Failed to get muscle profiles for swap comparison: {e}", exc_info=True)
 
         exercise_found = False
         i = 0
@@ -147,7 +147,7 @@ async def swap_exercise_in_workout(request: Request, payload: SwapExerciseReques
                             }]
                             logger.info(f"Found exercise in exercise_library_cleaned: {row.get('name')}")
                     except Exception as e:
-                        logger.warning(f"Fallback exercise_library_cleaned lookup failed: {e}")
+                        logger.warning(f"Fallback exercise_library_cleaned lookup failed: {e}", exc_info=True)
 
                 if new_exercise_data:
                     new_ex = new_exercise_data[0]
@@ -218,7 +218,7 @@ async def swap_exercise_in_workout(request: Request, payload: SwapExerciseReques
             }).execute()
             logger.info(f"Logged swap to exercise_swaps: {payload.old_exercise_name} -> {payload.new_exercise_name}")
         except Exception as e:
-            logger.warning(f"Failed to log swap to exercise_swaps: {e}")
+            logger.warning(f"Failed to log swap to exercise_swaps: {e}", exc_info=True)
 
         updated_workout = row_to_workout(updated)
 
@@ -231,7 +231,7 @@ async def swap_exercise_in_workout(request: Request, payload: SwapExerciseReques
             try:
                 await index_workout_to_rag(updated_workout)
             except Exception as e:
-                logger.warning(f"Background: Failed to index swapped workout to RAG: {e}")
+                logger.warning(f"Background: Failed to index swapped workout to RAG: {e}", exc_info=True)
 
         background_tasks.add_task(_bg_index)
 
@@ -240,7 +240,7 @@ async def swap_exercise_in_workout(request: Request, payload: SwapExerciseReques
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to swap exercise: {e}")
+        logger.error(f"Failed to swap exercise: {e}", exc_info=True)
         raise safe_internal_error(e, "generation")
 
 
@@ -334,7 +334,7 @@ async def add_exercise_to_workout(request: Request, payload: AddExerciseRequest,
                 try:
                     await index_workout_to_rag(updated_workout)
                 except Exception as e:
-                    logger.warning(f"Background: Failed to index workout to RAG after exercise add: {e}")
+                    logger.warning(f"Background: Failed to index workout to RAG after exercise add: {e}", exc_info=True)
 
             background_tasks.add_task(_bg_index)
 
@@ -451,7 +451,7 @@ async def add_exercise_to_workout(request: Request, payload: AddExerciseRequest,
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to add exercise: {e}")
+        logger.error(f"Failed to add exercise: {e}", exc_info=True)
         raise safe_internal_error(e, "generation")
 
 
@@ -573,7 +573,7 @@ Generate exactly {payload.additional_exercises} exercises that complement the ex
                 try:
                     parsed_response = json.loads(raw_response.strip())
                 except json.JSONDecodeError:
-                    logger.error(f"Failed to parse extension response: {raw_response[:500]}")
+                    logger.error(f"Failed to parse extension response: {raw_response[:500]}", exc_info=True)
                     raise ValueError("Failed to parse AI response as JSON")
 
             if isinstance(parsed_response, list):
@@ -600,7 +600,7 @@ Generate exactly {payload.additional_exercises} exercises that complement the ex
             logger.info(f"✅ Generated {len(new_exercises)} extension exercises")
 
         except Exception as ai_error:
-            logger.error(f"AI extension generation failed: {ai_error}")
+            logger.error(f"AI extension generation failed: {ai_error}", exc_info=True)
             raise HTTPException(
                 status_code=500,
                 detail=f"Failed to generate extension exercises: {str(ai_error)}"
@@ -640,5 +640,5 @@ Generate exactly {payload.additional_exercises} exercises that complement the ex
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to extend workout: {e}")
+        logger.error(f"Failed to extend workout: {e}", exc_info=True)
         raise safe_internal_error(e, "generation")

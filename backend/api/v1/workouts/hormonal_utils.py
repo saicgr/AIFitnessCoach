@@ -65,7 +65,7 @@ async def get_user_hormonal_context(user_id: str) -> dict:
                         context["recommended_intensity"] = "moderate"
 
                 except (ValueError, TypeError) as e:
-                    logger.warning(f"[Hormonal Context] Failed to calculate cycle phase: {e}")
+                    logger.warning(f"[Hormonal Context] Failed to calculate cycle phase: {e}", exc_info=True)
 
         cutoff = (datetime.now() - timedelta(days=3)).date().isoformat()
         logs_response = db.client.table("hormone_logs").select(
@@ -106,7 +106,7 @@ async def get_user_hormonal_context(user_id: str) -> dict:
         return context
 
     except Exception as e:
-        logger.error(f"[Hormonal Context] Failed to get hormonal context: {e}")
+        logger.error(f"[Hormonal Context] Failed to get hormonal context: {e}", exc_info=True)
         return {
             "gender": None, "hormone_goals": [], "primary_goal": None,
             "cycle_phase": None, "cycle_day": None, "recommended_intensity": None,
@@ -336,5 +336,5 @@ async def get_kegel_exercises_for_workout(
         return kegel_exercises
 
     except Exception as e:
-        logger.error(f"[Kegel Exercises] Failed to get kegel exercises for {placement}: {e}")
+        logger.error(f"[Kegel Exercises] Failed to get kegel exercises for {placement}: {e}", exc_info=True)
         return []

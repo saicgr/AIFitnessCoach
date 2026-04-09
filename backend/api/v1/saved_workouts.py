@@ -71,7 +71,7 @@ async def _notify_workout_interaction(
             "is_read": False,
         }).execute()
     except Exception as e:
-        logger.warning(f" [Notifications] Failed to notify {action}: {e}")
+        logger.warning(f" [Notifications] Failed to notify {action}: {e}", exc_info=True)
 
 
 # ============================================================
@@ -148,7 +148,7 @@ async def track_challenge_click(
             ids=[f"challenge_{user_id}_{activity_id}_{datetime.now().timestamp()}"],
         )
     except Exception as e:
-        logger.warning(f" [Challenge] Failed to log to ChromaDB: {e}")
+        logger.warning(f" [Challenge] Failed to log to ChromaDB: {e}", exc_info=True)
 
     logger.info(f" [Challenge] User {user_id} challenged activity {activity_id} (count: {new_count})")
 
@@ -173,7 +173,7 @@ async def track_challenge_click(
                 body=f"{actor_display} accepted your workout challenge",
             )
     except Exception as e:
-        logger.warning(f" [Challenge] Failed to send notification: {e}")
+        logger.warning(f" [Challenge] Failed to send notification: {e}", exc_info=True)
 
     # Log challenge click
     await log_user_activity(
@@ -382,7 +382,7 @@ async def save_workout_from_activity(
         )
         logger.info(f" [Saved Workouts] Logged save to ChromaDB")
     except Exception as e:
-        logger.warning(f" [Saved Workouts] Failed to log to ChromaDB: {e}")
+        logger.warning(f" [Saved Workouts] Failed to log to ChromaDB: {e}", exc_info=True)
 
     logger.info(f" [Saved Workouts] User {user_id} saved workout from activity {request.activity_id}")
 
@@ -397,7 +397,7 @@ async def save_workout_from_activity(
             body=f'{actor_display} saved your workout "{workout_name}"',
         )
     except Exception as e:
-        logger.warning(f" [Saved Workouts] Failed to send notification: {e}")
+        logger.warning(f" [Saved Workouts] Failed to send notification: {e}", exc_info=True)
 
     # Log workout save
     await log_user_activity(
@@ -713,7 +713,7 @@ async def schedule_workout(
                     extra_data={"scheduled_date": str(request.scheduled_date)},
                 )
         except Exception as e:
-            logger.warning(f" [Scheduled Workouts] Failed to send notification: {e}")
+            logger.warning(f" [Scheduled Workouts] Failed to send notification: {e}", exc_info=True)
 
     # Log workout scheduling
     await log_user_activity(

@@ -226,7 +226,7 @@ async def track_feature_usage(user_id: str, request: FeatureUsageRequest, curren
 
     except Exception as e:
         # If the RPC doesn't exist, fall back to manual upsert
-        logger.warning(f"RPC not available, using fallback: {e}")
+        logger.warning(f"RPC not available, using fallback: {e}", exc_info=True)
 
         try:
             # Check if record exists
@@ -303,7 +303,7 @@ async def track_paywall_impression(user_id: str, request: PaywallImpressionReque
         return {"status": "tracked"}
 
     except Exception as e:
-        logger.error(f"Failed to track paywall impression: {e}")
+        logger.error(f"Failed to track paywall impression: {e}", exc_info=True)
         # Don't fail the request for analytics errors
         return {"status": "error", "message": str(e)}
 
@@ -429,7 +429,7 @@ async def get_feature_limits(user_id: str, current_user: dict = Depends(get_curr
                 .execute()
             user_tier = sub_result.data["tier"] if sub_result.data else "free"
         except Exception as e:
-            logger.warning(f"Failed to fetch user tier: {e}")
+            logger.warning(f"Failed to fetch user tier: {e}", exc_info=True)
             user_tier = "free"
 
         is_premium = user_tier in ("premium", "premium_plus")

@@ -202,7 +202,7 @@ async def adjust_sets(workout_id: str, request: SetAdjustmentRequest,
             )
         except Exception as log_error:
             # Non-critical, continue even if logging fails
-            logger.warning(f"Failed to log set adjustment to user context: {log_error}")
+            logger.warning(f"Failed to log set adjustment to user context: {log_error}", exc_info=True)
 
         # Build response message
         sets_diff = request.original_sets - request.adjusted_sets
@@ -231,7 +231,7 @@ async def adjust_sets(workout_id: str, request: SetAdjustmentRequest,
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to record set adjustment: {e}")
+        logger.error(f"Failed to record set adjustment: {e}", exc_info=True)
         raise safe_internal_error(e, "set_adjustments")
 
 
@@ -354,7 +354,7 @@ async def edit_set(workout_id: str, set_number: int, request: EditSetRequest,
                 },
             )
         except Exception as log_error:
-            logger.warning(f"Failed to log set edit to user context: {log_error}")
+            logger.warning(f"Failed to log set edit to user context: {log_error}", exc_info=True)
 
         return EditSetResponse(
             success=True,
@@ -372,7 +372,7 @@ async def edit_set(workout_id: str, set_number: int, request: EditSetRequest,
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to edit set: {e}")
+        logger.error(f"Failed to edit set: {e}", exc_info=True)
         raise safe_internal_error(e, "set_adjustments")
 
 
@@ -494,7 +494,7 @@ async def delete_set(
                 },
             )
         except Exception as log_error:
-            logger.warning(f"Failed to log set deletion to user context: {log_error}")
+            logger.warning(f"Failed to log set deletion to user context: {log_error}", exc_info=True)
 
         return DeleteSetResponse(
             success=True,
@@ -509,7 +509,7 @@ async def delete_set(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to delete set: {e}")
+        logger.error(f"Failed to delete set: {e}", exc_info=True)
         raise safe_internal_error(e, "set_adjustments")
 
 
@@ -601,7 +601,7 @@ async def get_workout_adjustments(workout_id: str,
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to get workout adjustments: {e}")
+        logger.error(f"Failed to get workout adjustments: {e}", exc_info=True)
         raise safe_internal_error(e, "set_adjustments")
 
 

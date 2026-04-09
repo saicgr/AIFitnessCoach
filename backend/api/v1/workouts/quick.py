@@ -249,7 +249,7 @@ async def check_quick_workout_conflict(
         return {"has_conflict": False, "existing_workout": None}
 
     except Exception as e:
-        logger.warning(f"Conflict check failed: {e}")
+        logger.warning(f"Conflict check failed: {e}", exc_info=True)
         # Graceful degradation: assume no conflict so user isn't blocked
         return {"has_conflict": False, "existing_workout": None}
 
@@ -339,7 +339,7 @@ async def generate_quick_workout(request: Request, body: QuickWorkoutRequest, ba
                     error_str = str(e).lower()
                     if "resourceexhausted" in error_str or "429" in error_str or "quota" in error_str:
                         if attempt == 0:
-                            logger.warning(f"[Quick Workout] Gemini quota hit, retrying in 2s...")
+                            logger.warning(f"[Quick Workout] Gemini quota hit, retrying in 2s...", exc_info=True)
                             await asyncio.sleep(2)
                             continue
                     raise
@@ -407,12 +407,12 @@ async def generate_quick_workout(request: Request, body: QuickWorkoutRequest, ba
                 raise HTTPException(status_code=500, detail="No valid exercises generated")
 
         except json.JSONDecodeError as e:
-            logger.error(f"Failed to parse AI response: {e}")
+            logger.error(f"Failed to parse AI response: {e}", exc_info=True)
             raise HTTPException(status_code=500, detail="Failed to parse workout data")
         except HTTPException:
             raise
         except Exception as ai_error:
-            logger.error(f"AI generation failed: {ai_error}")
+            logger.error(f"AI generation failed: {ai_error}", exc_info=True)
             raise safe_internal_error(ai_error, "quick_workout")
 
         # Save the workout
@@ -464,7 +464,7 @@ async def generate_quick_workout(request: Request, body: QuickWorkoutRequest, ba
                 source=body.source,
             )
         except Exception as e:
-            logger.warning(f"Failed to track quick workout usage: {e}")
+            logger.warning(f"Failed to track quick workout usage: {e}", exc_info=True)
 
         # Log to user context
         try:
@@ -480,7 +480,7 @@ async def generate_quick_workout(request: Request, body: QuickWorkoutRequest, ba
                 }
             )
         except Exception as e:
-            logger.warning(f"Failed to log user context: {e}")
+            logger.warning(f"Failed to log user context: {e}", exc_info=True)
 
         generated_workout = row_to_workout(created)
 
@@ -499,7 +499,7 @@ async def generate_quick_workout(request: Request, body: QuickWorkoutRequest, ba
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to generate quick workout: {e}")
+        logger.error(f"Failed to generate quick workout: {e}", exc_info=True)
         raise safe_internal_error(e, "quick")
 
 
@@ -569,7 +569,7 @@ async def save_quick_workout(request: Request, body: QuickWorkoutSaveRequest, ba
                 saved_workout = row_to_workout(result.data[0])
                 background_tasks.add_task(index_workout_to_rag, saved_workout)
             except Exception as e:
-                logger.warning(f"Failed to prepare workout for RAG indexing: {e}")
+                logger.warning(f"Failed to prepare workout for RAG indexing: {e}", exc_info=True)
 
         # Track usage
         async def _background_track():
@@ -581,7 +581,7 @@ async def save_quick_workout(request: Request, body: QuickWorkoutSaveRequest, ba
                     source=body.source,
                 )
             except Exception as e:
-                logger.warning(f"Failed to track quick workout usage: {e}")
+                logger.warning(f"Failed to track quick workout usage: {e}", exc_info=True)
 
         # Log to user context
         async def _background_log_context():
@@ -597,7 +597,7 @@ async def save_quick_workout(request: Request, body: QuickWorkoutSaveRequest, ba
                     }
                 )
             except Exception as e:
-                logger.warning(f"Failed to log user context for saved workout: {e}")
+                logger.warning(f"Failed to log user context for saved workout: {e}", exc_info=True)
 
         background_tasks.add_task(_background_track)
         background_tasks.add_task(_background_log_context)
@@ -607,7 +607,7 @@ async def save_quick_workout(request: Request, body: QuickWorkoutSaveRequest, ba
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to save quick workout: {e}")
+        logger.error(f"Failed to save quick workout: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail="Failed to save workout")
 
 

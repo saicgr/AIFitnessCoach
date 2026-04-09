@@ -199,10 +199,10 @@ Add coordination_notes array with warnings if any conflicts exist (e.g., workout
             return json.loads(text.strip())
 
         except asyncio.TimeoutError:
-            logger.error("[WeeklyPlan] Gemini API timed out after 90s")
+            logger.error("[WeeklyPlan] Gemini API timed out after 90s", exc_info=True)
             raise Exception("Weekly plan generation timed out. Please try again.")
         except Exception as e:
-            logger.error(f"Error generating weekly holistic plan: {e}")
+            logger.error(f"Error generating weekly holistic plan: {e}", exc_info=True)
             raise
 
     async def generate_daily_meal_plan(
@@ -315,10 +315,10 @@ Return ONLY valid JSON (no markdown) as an array:
             return json.loads(text.strip())
 
         except asyncio.TimeoutError:
-            logger.error("[MealPlan] Gemini API timed out after 60s")
+            logger.error("[MealPlan] Gemini API timed out after 60s", exc_info=True)
             raise Exception("Meal plan generation timed out. Please try again.")
         except Exception as e:
-            logger.error(f"Error generating daily meal plan: {e}")
+            logger.error(f"Error generating daily meal plan: {e}", exc_info=True)
             raise
 
     async def regenerate_meal_for_day(
@@ -404,10 +404,10 @@ Return ONLY valid JSON (no markdown):
             return json.loads(text.strip())
 
         except asyncio.TimeoutError:
-            logger.error("[MealRegenerate] Gemini API timed out after 30s")
+            logger.error("[MealRegenerate] Gemini API timed out after 30s", exc_info=True)
             raise Exception("Meal regeneration timed out. Please try again.")
         except Exception as e:
-            logger.error(f"Error regenerating meal: {e}")
+            logger.error(f"Error regenerating meal: {e}", exc_info=True)
             raise
 
     def get_agent_personality(self, agent_type: str = "coach") -> dict:
@@ -749,8 +749,8 @@ Rules:
             }
 
         except asyncio.TimeoutError:
-            logger.error("[FoodReview] Gemini API timed out")
+            logger.error("[FoodReview] Gemini API timed out", exc_info=True)
             return None
         except Exception as e:
-            logger.error(f"[FoodReview] Error generating food review: {e}")
+            logger.error(f"[FoodReview] Error generating food review: {e}", exc_info=True)
             return None

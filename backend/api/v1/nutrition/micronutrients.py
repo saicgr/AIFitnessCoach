@@ -154,7 +154,7 @@ async def get_daily_micronutrients(
         )
 
     except Exception as e:
-        logger.error(f"Failed to get daily micronutrients: {e}")
+        logger.error(f"Failed to get daily micronutrients: {e}", exc_info=True)
         raise safe_internal_error(e, "nutrition")
 
 
@@ -244,7 +244,7 @@ async def get_nutrient_contributors(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to get nutrient contributors: {e}")
+        logger.error(f"Failed to get nutrient contributors: {e}", exc_info=True)
         raise safe_internal_error(e, "nutrition")
 
 
@@ -284,7 +284,7 @@ async def get_all_rdas(current_user: dict = Depends(get_current_user)):
         ]
 
     except Exception as e:
-        logger.error(f"Failed to get RDAs: {e}")
+        logger.error(f"Failed to get RDAs: {e}", exc_info=True)
         raise safe_internal_error(e, "nutrition")
 
 
@@ -316,5 +316,5 @@ async def update_pinned_nutrients(user_id: str, request: PinnedNutrientsUpdate, 
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to update pinned nutrients: {e}")
+        logger.error(f"Failed to update pinned nutrients: {e}", exc_info=True)
         raise safe_internal_error(e, "nutrition")

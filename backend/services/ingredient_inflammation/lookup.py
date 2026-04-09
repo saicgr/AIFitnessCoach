@@ -128,7 +128,7 @@ async def _ensure_food_db_cache() -> Dict[str, Tuple[int, str]]:
             return cache
 
         except Exception as e:
-            logger.warning(f"Failed to load food_database cache: {e}")
+            logger.warning(f"Failed to load food_database cache: {e}", exc_info=True)
             if _food_db_cache is not None:
                 return _food_db_cache
             _food_db_cache = {}
@@ -175,7 +175,7 @@ async def lookup_food_database(name: str) -> Optional[Tuple[str, IngredientRecor
         return None
 
     except Exception as e:
-        logger.warning(f"food_database lookup failed for '{name}': {e}")
+        logger.warning(f"food_database lookup failed for '{name}': {e}", exc_info=True)
         return None
 
 

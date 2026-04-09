@@ -123,7 +123,7 @@ async def get_streak_summary(user_id: str,
         )
 
     except Exception as e:
-        logger.error(f"Error fetching streak summary: {e}")
+        logger.error(f"Error fetching streak summary: {e}", exc_info=True)
         raise safe_internal_error(e, "neat_streak_summary")
 
 
@@ -184,7 +184,7 @@ async def get_neat_achievements(user_id: str,
         )
 
     except Exception as e:
-        logger.error(f"Error fetching NEAT achievements: {e}")
+        logger.error(f"Error fetching NEAT achievements: {e}", exc_info=True)
         raise safe_internal_error(e, "neat_achievements")
 
 
@@ -273,7 +273,7 @@ async def get_available_achievements(user_id: str,
         )
 
     except Exception as e:
-        logger.error(f"Error fetching available achievements: {e}")
+        logger.error(f"Error fetching available achievements: {e}", exc_info=True)
         raise safe_internal_error(e, "neat_available_achievements")
 
 
@@ -392,7 +392,7 @@ async def check_neat_achievements(user_id: str,
         )
 
     except Exception as e:
-        logger.error(f"Error checking NEAT achievements: {e}")
+        logger.error(f"Error checking NEAT achievements: {e}", exc_info=True)
         raise safe_internal_error(e, "neat_check_achievements")
 
 
@@ -445,7 +445,7 @@ async def get_reminder_preferences(user_id: str,
             return ReminderPreferences(user_id=user_id)
 
     except Exception as e:
-        logger.error(f"Error fetching reminder preferences: {e}")
+        logger.error(f"Error fetching reminder preferences: {e}", exc_info=True)
         raise safe_internal_error(e, "neat_reminder_preferences")
 
 
@@ -509,7 +509,7 @@ async def update_reminder_preferences(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error updating reminder preferences: {e}")
+        logger.error(f"Error updating reminder preferences: {e}", exc_info=True)
         raise safe_internal_error(e, "neat_reminder_update")
 
 
@@ -634,7 +634,7 @@ async def should_send_reminder(user_id: str,
         )
 
     except Exception as e:
-        logger.error(f"Error checking should remind: {e}")
+        logger.error(f"Error checking should remind: {e}", exc_info=True)
         raise safe_internal_error(e, "neat_should_remind")
 
 
@@ -727,7 +727,7 @@ async def get_neat_dashboard(
         return dashboard
 
     except Exception as e:
-        logger.error(f"Error fetching NEAT dashboard: {e}")
+        logger.error(f"Error fetching NEAT dashboard: {e}", exc_info=True)
         raise safe_internal_error(e, "neat_dashboard")
 
 
@@ -785,7 +785,7 @@ async def send_movement_reminders(request: SendRemindersRequest,
                 reminders_sent += 1
 
             except Exception as e:
-                logger.error(f"Error processing reminder for user {user_id}: {e}")
+                logger.error(f"Error processing reminder for user {user_id}: {e}", exc_info=True)
                 errors += 1
 
         logger.info(f"Movement reminders: {reminders_sent} sent, {skipped_active} skipped (active), {errors} errors")
@@ -800,7 +800,7 @@ async def send_movement_reminders(request: SendRemindersRequest,
         )
 
     except Exception as e:
-        logger.error(f"Error in movement reminder scheduler: {e}")
+        logger.error(f"Error in movement reminder scheduler: {e}", exc_info=True)
         raise safe_internal_error(e, "neat_reminder_scheduler")
 
 
@@ -849,7 +849,7 @@ async def calculate_daily_scores(request: CalculateDailyScoresRequest,
                 logger.info("Streak update not implemented: skipping streak check for user %s after score calculation", user_id)
 
             except Exception as e:
-                logger.error(f"Error calculating score for user {user_id}: {e}")
+                logger.error(f"Error calculating score for user {user_id}: {e}", exc_info=True)
                 errors += 1
 
         logger.info(f"Daily scores: {scores_calculated} calculated, {errors} errors")
@@ -863,7 +863,7 @@ async def calculate_daily_scores(request: CalculateDailyScoresRequest,
         )
 
     except Exception as e:
-        logger.error(f"Error in daily score calculator: {e}")
+        logger.error(f"Error in daily score calculator: {e}", exc_info=True)
         raise safe_internal_error(e, "neat_daily_scores")
 
 
@@ -932,7 +932,7 @@ async def adjust_weekly_goals(request: AdjustWeeklyGoalsRequest,
                     goals_unchanged += 1
 
             except Exception as e:
-                logger.error(f"Error adjusting goal for user {user_id}: {e}")
+                logger.error(f"Error adjusting goal for user {user_id}: {e}", exc_info=True)
 
         logger.info(f"Weekly goals: {goals_adjusted} adjusted ({goals_increased} increased, {goals_decreased} decreased)")
 
@@ -946,5 +946,5 @@ async def adjust_weekly_goals(request: AdjustWeeklyGoalsRequest,
         )
 
     except Exception as e:
-        logger.error(f"Error in weekly goal adjustment: {e}")
+        logger.error(f"Error in weekly goal adjustment: {e}", exc_info=True)
         raise safe_internal_error(e, "neat_weekly_goals")

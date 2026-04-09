@@ -48,7 +48,10 @@ class _TogglesTabState extends ConsumerState<_TogglesTab> {
       if (!a.isVisible && b.isVisible) return 1;
       return a.order.compareTo(b.order);
     });
-    _orderedTiles = allTiles.where((t) => !deprecatedTiles.contains(t.type)).toList();
+    final activeSet = {...defaultVisibleTiles, ...defaultHiddenTiles};
+    _orderedTiles = allTiles.where((t) =>
+      !deprecatedTiles.contains(t.type) && activeSet.contains(t.type)
+    ).toList();
   }
 
   Color _darkenColor(Color color) {
@@ -455,7 +458,7 @@ class _DiscoverTab extends ConsumerWidget {
           ),
           const SizedBox(height: 16),
 
-          // Preset cards grid
+          // Preset cards grid (only show presets with 2+ active tiles)
           GridView.count(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
@@ -464,6 +467,7 @@ class _DiscoverTab extends ConsumerWidget {
             crossAxisSpacing: 12,
             childAspectRatio: 0.85,
             children: layoutPresets
+                .where((preset) => preset.activeTiles.length >= 2)
                 .map((preset) => _buildPresetCard(context, ref, preset))
                 .toList(),
           ),
@@ -621,7 +625,7 @@ class _DiscoverTab extends ConsumerWidget {
           ),
           const SizedBox(height: 2),
           Text(
-            '${preset.tiles.length} tiles',
+            '${preset.activeTiles.length} tiles',
             style: TextStyle(fontSize: 11, color: textMuted),
           ),
           const SizedBox(height: 2),
@@ -746,7 +750,7 @@ class _DiscoverTab extends ConsumerWidget {
                             ),
                           ),
                           Text(
-                            '${preset.tiles.length} tiles',
+                            '${preset.activeTiles.length} tiles',
                             style: TextStyle(fontSize: 13, color: textMuted),
                           ),
                         ],
@@ -795,7 +799,7 @@ class _DiscoverTab extends ConsumerWidget {
                   child: ListView(
                     controller: scrollController,
                     padding: const EdgeInsets.all(16),
-                    children: _buildPreviewTiles(preset.tiles),
+                    children: _buildPreviewTiles(preset.activeTiles),
                   ),
                 ),
               ),

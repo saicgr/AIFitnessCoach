@@ -253,7 +253,7 @@ class MetricsCalculator:
 
             return round(max(bf, 0), 1)
         except (ValueError, ZeroDivisionError) as e:
-            logger.warning(f"Body fat calculation failed: {e}")
+            logger.warning(f"Body fat calculation failed: {e}", exc_info=True)
             return None
 
     def calculate_waist_to_height_ratio(self, waist_cm: float, height_cm: float) -> Optional[float]:

@@ -367,7 +367,7 @@ class AdaptiveWorkoutService(AdaptiveWorkoutServicePart2):
             }
 
         except Exception as e:
-            logger.error(f"Error fetching performance context: {e}")
+            logger.error(f"Error fetching performance context: {e}", exc_info=True)
             return {}
 
     async def get_exercise_stats(self, user_id: str, exercise_name: str = None) -> Dict[str, Any]:
@@ -424,7 +424,7 @@ class AdaptiveWorkoutService(AdaptiveWorkoutServicePart2):
             return self._calculate_exercise_stats(logs)
 
         except Exception as e:
-            logger.error(f"Error fetching exercise stats: {e}")
+            logger.error(f"Error fetching exercise stats: {e}", exc_info=True)
             return {"error": str(e)}
 
     def _calculate_exercise_stats(self, logs: List[Dict]) -> Dict[str, Any]:
@@ -595,7 +595,7 @@ class AdaptiveWorkoutService(AdaptiveWorkoutServicePart2):
             return exercise_list[:limit]
 
         except Exception as e:
-            logger.error(f"Error fetching exercise history: {e}")
+            logger.error(f"Error fetching exercise history: {e}", exc_info=True)
             return []
 
 

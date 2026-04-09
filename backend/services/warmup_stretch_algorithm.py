@@ -587,7 +587,7 @@ class WarmupStretchAlgorithm:
                 return response.data[0]
             return None
         except Exception as e:
-            logger.warning(f"⚠️ Could not fetch warmup preferences for user {user_id}: {e}")
+            logger.warning(f"⚠️ Could not fetch warmup preferences for user {user_id}: {e}", exc_info=True)
             return None
 
     async def select_warmups(

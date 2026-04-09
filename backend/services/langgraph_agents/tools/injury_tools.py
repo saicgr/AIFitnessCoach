@@ -146,7 +146,7 @@ def report_injury(
                         "change_reason": f"{body_part} injury ({severity})"
                     })
                 except Exception as log_error:
-                    logger.warning(f"Failed to log workout change: {log_error}")
+                    logger.warning(f"Failed to log workout change: {log_error}", exc_info=True)
 
         # Update user's active injuries list
         try:
@@ -169,7 +169,7 @@ def report_injury(
 
                 db.update_user(user_id, {"active_injuries": current_injuries})
         except Exception as user_update_error:
-            logger.warning(f"Failed to update user active injuries: {user_update_error}")
+            logger.warning(f"Failed to update user active injuries: {user_update_error}", exc_info=True)
 
         return {
             "success": True,
@@ -192,7 +192,7 @@ def report_injury(
         }
 
     except Exception as e:
-        logger.error(f"Report injury failed: {e}")
+        logger.error(f"Report injury failed: {e}", exc_info=True)
         return {
             "success": False,
             "action": "report_injury",
@@ -302,7 +302,7 @@ def clear_injury(
                 ]
                 db.update_user(user_id, {"active_injuries": updated_injuries})
         except Exception as user_update_error:
-            logger.warning(f"Failed to update user active injuries: {user_update_error}")
+            logger.warning(f"Failed to update user active injuries: {user_update_error}", exc_info=True)
 
         return {
             "success": True,
@@ -320,7 +320,7 @@ def clear_injury(
         }
 
     except Exception as e:
-        logger.error(f"Clear injury failed: {e}")
+        logger.error(f"Clear injury failed: {e}", exc_info=True)
         return {
             "success": False,
             "action": "clear_injury",
@@ -415,7 +415,7 @@ def get_active_injuries(user_id: str) -> Dict[str, Any]:
         }
 
     except Exception as e:
-        logger.error(f"Get active injuries failed: {e}")
+        logger.error(f"Get active injuries failed: {e}", exc_info=True)
         return {
             "success": False,
             "action": "get_active_injuries",
@@ -521,7 +521,7 @@ def update_injury_status(
         }
 
     except Exception as e:
-        logger.error(f"Update injury status failed: {e}")
+        logger.error(f"Update injury status failed: {e}", exc_info=True)
         return {
             "success": False,
             "action": "update_injury_status",

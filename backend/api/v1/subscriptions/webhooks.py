@@ -162,7 +162,7 @@ async def _handle_initial_purchase(supabase, event: dict, background_tasks=None)
                     currency,
                 )
         except Exception as email_err:
-            logger.error(f"❌ Failed to queue purchase confirmation email: {email_err}")
+            logger.error(f"❌ Failed to queue purchase confirmation email: {email_err}", exc_info=True)
 
 
 async def _handle_renewal(supabase, event: dict, background_tasks=None):
@@ -252,7 +252,7 @@ async def _handle_cancellation(supabase, event: dict, background_tasks=None):
                     0,    # current_streak simplified
                 )
         except Exception as email_err:
-            logger.error(f"❌ Failed to queue cancellation retention email: {email_err}")
+            logger.error(f"❌ Failed to queue cancellation retention email: {email_err}", exc_info=True)
 
 
 async def _handle_expiration(supabase, event: dict, background_tasks=None):
@@ -308,7 +308,7 @@ async def _handle_expiration(supabase, event: dict, background_tasks=None):
                     workout_count,
                 )
         except Exception as email_err:
-            logger.error(f"❌ Failed to queue trial expired email: {email_err}")
+            logger.error(f"❌ Failed to queue trial expired email: {email_err}", exc_info=True)
 
 
 async def _handle_product_change(supabase, event: dict, background_tasks=None):
@@ -384,7 +384,7 @@ async def _handle_billing_issue(supabase, event: dict, background_tasks=None):
                     tier_name,
                 )
         except Exception as email_err:
-            logger.error(f"❌ Failed to queue billing issue email: {email_err}")
+            logger.error(f"❌ Failed to queue billing issue email: {email_err}", exc_info=True)
 
 
 async def _handle_subscriber_alias(supabase, event: dict, background_tasks=None):

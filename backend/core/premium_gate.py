@@ -68,10 +68,10 @@ async def check_premium_gate(user_id: str, feature_key: str) -> Tuple[bool, Opti
     except Exception:
         # Gate not found — apply conservative defaults for known features
         if feature_key in PREMIUM_FEATURE_KEYS:
-            logger.warning(f"Feature gate '{feature_key}' not found in DB, applying fallback limits")
+            logger.warning(f"Feature gate '{feature_key}' not found in DB, applying fallback limits", exc_info=True)
             gate_result = type('obj', (object,), {'data': _get_fallback_gate(feature_key)})()
         else:
-            logger.warning(f"Unknown feature gate '{feature_key}', allowing access")
+            logger.warning(f"Unknown feature gate '{feature_key}', allowing access", exc_info=True)
             return True, None
 
     if not gate_result.data:
@@ -179,7 +179,7 @@ async def track_premium_usage(user_id: str, feature_key: str):
                     "metadata": {}
                 }).execute()
         except Exception as e:
-            logger.error(f"Failed to track usage for {feature_key}: {e}")
+            logger.error(f"Failed to track usage for {feature_key}: {e}", exc_info=True)
 
 
 def _get_current_usage(supabase, user_id: str, feature_key: str, reset_period: Optional[str]) -> int:
@@ -216,5 +216,5 @@ def _get_current_usage(supabase, user_id: str, feature_key: str, reset_period: O
             return sum(row["usage_count"] for row in (result.data or []))
 
     except Exception as e:
-        logger.warning(f"Failed to get usage for {feature_key}: {e}")
+        logger.warning(f"Failed to get usage for {feature_key}: {e}", exc_info=True)
         return 0

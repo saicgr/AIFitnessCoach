@@ -175,7 +175,7 @@ async def get_goal_friends(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to get goal friends: {e}")
+        logger.error(f"Failed to get goal friends: {e}", exc_info=True)
         raise safe_internal_error(e, "goal_social")
 
 
@@ -302,7 +302,7 @@ async def join_goal(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to join goal: {e}")
+        logger.error(f"Failed to join goal: {e}", exc_info=True)
         await log_user_error(
             user_id=user_id,
             action="goal_join",
@@ -416,7 +416,7 @@ async def invite_to_goal(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to invite to goal: {e}")
+        logger.error(f"Failed to invite to goal: {e}", exc_info=True)
         await log_user_error(
             user_id=user_id,
             action="goal_invite",
@@ -496,7 +496,7 @@ async def get_goal_invites(
         return invites
 
     except Exception as e:
-        logger.error(f"Failed to get goal invites: {e}")
+        logger.error(f"Failed to get goal invites: {e}", exc_info=True)
         raise safe_internal_error(e, "goal_social")
 
 
@@ -663,7 +663,7 @@ async def respond_to_invite(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to respond to invite: {e}")
+        logger.error(f"Failed to respond to invite: {e}", exc_info=True)
         raise safe_internal_error(e, "goal_social")
 
 
@@ -712,7 +712,7 @@ async def cancel_invite(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to cancel invite: {e}")
+        logger.error(f"Failed to cancel invite: {e}", exc_info=True)
         await log_user_error(
             user_id=user_id,
             action="goal_invite_cancel",
@@ -768,7 +768,7 @@ async def get_pending_invites_count(
         )
 
     except Exception as e:
-        logger.error(f"Failed to get pending invites count: {e}")
+        logger.error(f"Failed to get pending invites count: {e}", exc_info=True)
         raise safe_internal_error(e, "goal_social")
 
 

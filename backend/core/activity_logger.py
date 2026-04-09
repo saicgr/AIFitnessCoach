@@ -98,7 +98,7 @@ async def _send_error_alert(
             await client.post(ERROR_WEBHOOK_URL, json=message)
 
     except Exception as e:
-        logger.warning(f"Failed to send error alert: {e}")
+        logger.warning(f"Failed to send error alert: {e}", exc_info=True)
 
 
 async def log_user_activity(
@@ -147,7 +147,7 @@ async def log_user_activity(
 
     except Exception as e:
         # Don't fail the request if logging fails
-        logger.warning(f"Failed to log user activity: {e}")
+        logger.warning(f"Failed to log user activity: {e}", exc_info=True)
 
 
 async def log_user_error(
@@ -206,7 +206,7 @@ async def log_user_error(
 
     except Exception as e:
         # Don't fail the request if logging fails
-        logger.warning(f"Failed to log user error: {e}")
+        logger.warning(f"Failed to log user error: {e}", exc_info=True)
 
     # Send webhook alert (in background, don't block)
     if send_alert:
@@ -253,7 +253,7 @@ async def get_user_activity(
         return result.data or []
 
     except Exception as e:
-        logger.error(f"Failed to get user activity: {e}")
+        logger.error(f"Failed to get user activity: {e}", exc_info=True)
         return []
 
 

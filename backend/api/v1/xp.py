@@ -165,9 +165,9 @@ async def process_daily_login(
                     logger.info(f"[XP] daily-login extracted data from RPC response (already_claimed={data.get('already_claimed', False)})")
                     return DailyLoginResponse(**data)
             except Exception as parse_error:
-                logger.error(f"[XP] Failed to parse RPC response: {parse_error}")
+                logger.error(f"[XP] Failed to parse RPC response: {parse_error}", exc_info=True)
 
-        logger.error(f"[XP] daily-login error: {e}")
+        logger.error(f"[XP] daily-login error: {e}", exc_info=True)
         raise safe_internal_error(e, "xp")
 
 
@@ -385,7 +385,7 @@ async def get_checkpoint_progress(
         }
 
     except Exception as e:
-        logger.error(f"Error getting checkpoint progress: {e}")
+        logger.error(f"Error getting checkpoint progress: {e}", exc_info=True)
         # Return empty progress on error with default 5 days/week targets
         default_days_per_week = 5
         return {
@@ -419,7 +419,7 @@ async def get_all_checkpoint_progress(
         return {"weekly": None, "monthly": None}
 
     except Exception as e:
-        logger.error(f"Error getting all checkpoint progress: {e}")
+        logger.error(f"Error getting all checkpoint progress: {e}", exc_info=True)
         raise safe_internal_error(e, "xp")
 
 
@@ -464,7 +464,7 @@ async def increment_checkpoint_workout(
         return {"success": True, "weekly_xp_awarded": 0, "monthly_xp_awarded": 0, "total_xp_awarded": 0}
 
     except Exception as e:
-        logger.error(f"[XP] Error incrementing checkpoint workout: {e}")
+        logger.error(f"[XP] Error incrementing checkpoint workout: {e}", exc_info=True)
         raise safe_internal_error(e, "xp")
 
 
@@ -533,7 +533,7 @@ async def award_goal_xp(
             }, on_conflict="user_id", ignore_duplicates=True).execute()
             logger.info(f"[XP] Ensured user_xp record exists for user {user_id}")
         except Exception as init_err:
-            logger.warning(f"[XP] Could not ensure user_xp record: {init_err}")
+            logger.warning(f"[XP] Could not ensure user_xp record: {init_err}", exc_info=True)
 
         # Check if already awarded today (prevent double claiming)
         existing = db.client.table("xp_transactions").select("id").eq(
@@ -585,7 +585,7 @@ async def award_goal_xp(
                 if recent_tx.data and len(recent_tx.data) > 0:
                     actual_xp_awarded = recent_tx.data[0].get("xp_amount", xp_amount)
             except Exception as tx_err:
-                logger.warning(f"Could not fetch actual XP amount: {tx_err}")
+                logger.warning(f"Could not fetch actual XP amount: {tx_err}", exc_info=True)
 
         logger.info(f"[XP] Successfully awarded {actual_xp_awarded} XP for {request.goal_type}")
         return AwardGoalXPResponse(
@@ -601,14 +601,14 @@ async def award_goal_xp(
         # request already awarded XP for this goal today
         error_str = str(e).lower()
         if "unique" in error_str or "duplicate" in error_str or "idx_xp_transactions_daily_goal_dedup" in error_str:
-            logger.warning(f"[XP] Race condition caught: {request.goal_type} already awarded (concurrent request)")
+            logger.warning(f"[XP] Race condition caught: {request.goal_type} already awarded (concurrent request)", exc_info=True)
             return AwardGoalXPResponse(
                 success=True,
                 xp_awarded=0,
                 message=f"Already claimed {request.goal_type} XP today",
                 already_claimed=True
             )
-        logger.error(f"[XP] Error awarding goal XP: {e}")
+        logger.error(f"[XP] Error awarding goal XP: {e}", exc_info=True)
         raise safe_internal_error(e, "xp")
 
 
@@ -656,7 +656,7 @@ async def get_daily_goals_status(
         )
 
     except Exception as e:
-        logger.error(f"Error getting daily goals status: {e}")
+        logger.error(f"Error getting daily goals status: {e}", exc_info=True)
         raise safe_internal_error(e, "xp")
 
 
@@ -762,7 +762,7 @@ async def award_first_time_bonus(
                 "trust_level": 1
             }, on_conflict="user_id", ignore_duplicates=True).execute()
         except Exception as init_err:
-            logger.warning(f"[XP] Could not ensure user_xp record: {init_err}")
+            logger.warning(f"[XP] Could not ensure user_xp record: {init_err}", exc_info=True)
 
         # Record the bonus
         db.client.table("user_first_time_bonuses").insert({
@@ -795,7 +795,7 @@ async def award_first_time_bonus(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"[XP] Error awarding first-time bonus: {e}")
+        logger.error(f"[XP] Error awarding first-time bonus: {e}", exc_info=True)
         raise safe_internal_error(e, "xp")
 
 
@@ -826,7 +826,7 @@ async def get_first_time_bonuses(
         ]
 
     except Exception as e:
-        logger.error(f"[XP] Error getting first-time bonuses: {e}")
+        logger.error(f"[XP] Error getting first-time bonuses: {e}", exc_info=True)
         raise safe_internal_error(e, "xp")
 
 
@@ -862,7 +862,7 @@ async def get_available_first_time_bonuses(
         return {"bonuses": bonuses}
 
     except Exception as e:
-        logger.error(f"[XP] Error getting available first-time bonuses: {e}")
+        logger.error(f"[XP] Error getting available first-time bonuses: {e}", exc_info=True)
         raise safe_internal_error(e, "xp")
 
 
@@ -927,7 +927,7 @@ async def get_consumables(
         )
 
     except Exception as e:
-        logger.error(f"[XP] Error getting consumables: {e}")
+        logger.error(f"[XP] Error getting consumables: {e}", exc_info=True)
         raise safe_internal_error(e, "xp")
 
 

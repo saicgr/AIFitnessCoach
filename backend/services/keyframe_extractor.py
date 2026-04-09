@@ -154,7 +154,7 @@ async def extract_key_frames(
             )
             return None
         except subprocess.TimeoutExpired:
-            logger.warning("Frame extraction timed out at %.2fs", timestamp)
+            logger.warning("Frame extraction timed out at %.2fs", timestamp, exc_info=True)
             return None
 
     def _extract_all() -> List[Tuple[bytes, str]]:

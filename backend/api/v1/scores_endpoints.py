@@ -28,7 +28,9 @@ logger = logging.getLogger(__name__)
 from core.auth import get_current_user
 from core.db import get_supabase_db
 from services.strength_calculator_service import StrengthCalculatorService, StrengthLevel
-
+from services.personal_records_service import PersonalRecordsService
+from services.nutrition_calculator_service import NutritionCalculatorService, NutritionTargets, DailyNutrition
+from services.fitness_score_calculator_service import FitnessScoreCalculatorService, FitnessScore, FitnessLevel
 from .scores_models import (
     ReadinessCheckInRequest,
     ReadinessResponse,
@@ -114,6 +116,7 @@ async def get_dots_score(
     if not user_response.data:
         raise HTTPException(status_code=404, detail="User not found")
 
+    from .scores import get_user_body_info  # Lazy import to avoid circular import with scores.py
     bodyweight_kg, gender = get_user_body_info(user_response.data)
 
     # Get stored 1RMs for the big three lifts
@@ -778,7 +781,7 @@ async def get_scores_overview(
             }
             overall_score, overall_level = strength_service.calculate_overall_strength_score(score_objects)
     except Exception as e:
-        logger.warning(f"Failed to process strength scores: {e}")
+        logger.warning(f"Failed to process strength scores: {e}", exc_info=True)
 
     # Process recent PRs (already fetched in parallel)
     recent_prs = []
@@ -808,12 +811,12 @@ async def get_scores_overview(
                     created_at=datetime.fromisoformat(pr["created_at"]),
                 ))
             except Exception as e:
-                logger.warning(f"Failed to parse PR {pr.get('id')}: {e}")
+                logger.warning(f"Failed to parse PR {pr.get('id')}: {e}", exc_info=True)
 
         # Count PRs in last 30 days (already fetched in parallel)
         pr_count = pr_count_response.count or 0 if pr_count_response else 0
     except Exception as e:
-        logger.warning(f"Failed to fetch personal records: {e}")
+        logger.warning(f"Failed to fetch personal records: {e}", exc_info=True)
 
     # Process 7-day readiness average (already fetched in parallel)
     readiness_average = None
@@ -824,7 +827,7 @@ async def get_scores_overview(
             if readiness_scores else None
         )
     except Exception as e:
-        logger.warning(f"Failed to fetch readiness average: {e}")
+        logger.warning(f"Failed to fetch readiness average: {e}", exc_info=True)
 
     # Process nutrition score (already fetched in parallel)
     nutrition_score = None
@@ -833,7 +836,7 @@ async def get_scores_overview(
         nutrition_score = nutrition_response.data.get("nutrition_score") if nutrition_response and nutrition_response.data else None
         nutrition_level = nutrition_response.data.get("nutrition_level") if nutrition_response and nutrition_response.data else None
     except Exception as e:
-        logger.warning(f"Failed to fetch nutrition score: {e}")
+        logger.warning(f"Failed to fetch nutrition score: {e}", exc_info=True)
 
     # Process fitness score (already fetched in parallel)
     overall_fitness_score = None
@@ -844,7 +847,7 @@ async def get_scores_overview(
         fitness_level = fitness_response.data.get("fitness_level") if fitness_response and fitness_response.data else None
         consistency_score = fitness_response.data.get("consistency_score") if fitness_response and fitness_response.data else None
     except Exception as e:
-        logger.warning(f"Failed to fetch fitness score: {e}")
+        logger.warning(f"Failed to fetch fitness score: {e}", exc_info=True)
 
     return ScoresOverviewResponse(
         user_id=user_id,
@@ -932,4 +935,4 @@ async def generate_ai_readiness_insight(
         logger.info(f"AI readiness insight saved for user {user_id}")
 
     except Exception as e:
-        logger.error(f"Failed to generate AI readiness insight: {e}")
+        logger.error(f"Failed to generate AI readiness insight: {e}", exc_info=True)

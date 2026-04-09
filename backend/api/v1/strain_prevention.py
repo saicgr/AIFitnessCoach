@@ -326,7 +326,7 @@ async def get_risk_assessment(user_id: str,
         )
 
     except Exception as e:
-        logger.error(f"Failed to get risk assessment for user {user_id}: {e}")
+        logger.error(f"Failed to get risk assessment for user {user_id}: {e}", exc_info=True)
         raise safe_internal_error(e, "strain_prevention")
 
 
@@ -380,7 +380,7 @@ async def get_volume_history(
         )
 
     except Exception as e:
-        logger.error(f"Failed to get volume history for user {user_id}: {e}")
+        logger.error(f"Failed to get volume history for user {user_id}: {e}", exc_info=True)
         raise safe_internal_error(e, "strain_prevention")
 
 
@@ -444,7 +444,7 @@ async def record_strain(request: RecordStrainRequest,
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to record strain: {e}")
+        logger.error(f"Failed to record strain: {e}", exc_info=True)
         raise safe_internal_error(e, "strain_prevention")
 
 
@@ -488,7 +488,7 @@ async def adjust_workout(request: AdjustWorkoutRequest,
         )
 
     except Exception as e:
-        logger.error(f"Failed to adjust workout: {e}")
+        logger.error(f"Failed to adjust workout: {e}", exc_info=True)
         raise safe_internal_error(e, "strain_prevention")
 
 
@@ -540,7 +540,7 @@ async def get_volume_alerts(
         )
 
     except Exception as e:
-        logger.error(f"Failed to get volume alerts: {e}")
+        logger.error(f"Failed to get volume alerts: {e}", exc_info=True)
         raise safe_internal_error(e, "strain_prevention")
 
 
@@ -571,7 +571,7 @@ async def acknowledge_alert(alert_id: str,
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to acknowledge alert: {e}")
+        logger.error(f"Failed to acknowledge alert: {e}", exc_info=True)
         raise safe_internal_error(e, "strain_prevention")
 
 
@@ -643,5 +643,5 @@ async def get_volume_caps(user_id: str,
         )
 
     except Exception as e:
-        logger.error(f"Failed to get volume caps: {e}")
+        logger.error(f"Failed to get volume caps: {e}", exc_info=True)
         raise safe_internal_error(e, "strain_prevention")

@@ -29,6 +29,8 @@ from models.gym_profile import (
     ReorderProfilesRequest, ActivateProfileResponse,
     DuplicateProfileRequest,
 )
+from core.supabase_client import get_supabase
+from services.user_context_service import user_context_service, EventType
 
 router = APIRouter()
 @router.put("/{profile_id}", response_model=GymProfile)
@@ -116,6 +118,7 @@ async def update_gym_profile(
         if not result.data:
             raise safe_internal_error(e, "endpoint")
 
+        from .gym_profiles import row_to_gym_profile
         updated_profile = row_to_gym_profile(result.data[0])
 
         # Log changes
@@ -151,7 +154,7 @@ async def update_gym_profile(
     except Exception as e:
         if "0 rows" in str(e).lower() or "no rows" in str(e).lower():
             raise HTTPException(status_code=404, detail="Profile not found")
-        logger.error(f"❌ [GymProfile] Failed to update profile: {e}")
+        logger.error(f"❌ [GymProfile] Failed to update profile: {e}", exc_info=True)
         raise safe_internal_error(e, "endpoint")
 
 
@@ -251,7 +254,7 @@ async def delete_gym_profile(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"❌ [GymProfile] Failed to delete profile: {e}")
+        logger.error(f"❌ [GymProfile] Failed to delete profile: {e}", exc_info=True)
         raise safe_internal_error(e, "endpoint")
 
 
@@ -318,6 +321,7 @@ async def activate_gym_profile(
             .eq("id", user_id) \
             .execute()
 
+        from .gym_profiles import row_to_gym_profile
         active_profile = row_to_gym_profile(profile)
         active_profile.is_active = True
 
@@ -351,7 +355,7 @@ async def activate_gym_profile(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"❌ [GymProfile] Failed to activate profile: {e}")
+        logger.error(f"❌ [GymProfile] Failed to activate profile: {e}", exc_info=True)
         raise safe_internal_error(e, "endpoint")
 
 
@@ -470,6 +474,7 @@ async def duplicate_gym_profile(
         if not result.data:
             raise safe_internal_error(e, "endpoint")
 
+        from .gym_profiles import row_to_gym_profile
         duplicated_profile = row_to_gym_profile(result.data[0])
 
         # Log to user context
@@ -494,7 +499,7 @@ async def duplicate_gym_profile(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"❌ [GymProfile] Failed to duplicate profile: {e}")
+        logger.error(f"❌ [GymProfile] Failed to duplicate profile: {e}", exc_info=True)
         raise safe_internal_error(e, "endpoint")
 
 
@@ -562,5 +567,5 @@ async def reorder_gym_profiles(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"❌ [GymProfile] Failed to reorder profiles: {e}")
+        logger.error(f"❌ [GymProfile] Failed to reorder profiles: {e}", exc_info=True)
         raise safe_internal_error(e, "endpoint")

@@ -402,7 +402,7 @@ async def get_neat_goals(
         return progress
 
     except Exception as e:
-        logger.error(f"Error fetching NEAT goals: {e}")
+        logger.error(f"Error fetching NEAT goals: {e}", exc_info=True)
         raise safe_internal_error(e, "neat_goals_fetch")
 
 
@@ -461,7 +461,7 @@ async def update_neat_goals(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error updating NEAT goals: {e}")
+        logger.error(f"Error updating NEAT goals: {e}", exc_info=True)
         raise safe_internal_error(e, "neat_goals_update")
 
 
@@ -564,7 +564,7 @@ async def calculate_progressive_goal(
         )
 
     except Exception as e:
-        logger.error(f"Error calculating progressive goal: {e}")
+        logger.error(f"Error calculating progressive goal: {e}", exc_info=True)
         raise safe_internal_error(e, "neat_progressive_goal")
 
 
@@ -628,7 +628,7 @@ async def record_hourly_activity(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error recording hourly activity: {e}")
+        logger.error(f"Error recording hourly activity: {e}", exc_info=True)
         raise safe_internal_error(e, "neat_hourly_record")
 
 
@@ -692,7 +692,7 @@ async def get_hourly_breakdown(
         )
 
     except Exception as e:
-        logger.error(f"Error fetching hourly breakdown: {e}")
+        logger.error(f"Error fetching hourly breakdown: {e}", exc_info=True)
         raise safe_internal_error(e, "neat_hourly_breakdown")
 
 
@@ -771,7 +771,7 @@ async def batch_sync_hourly_activity(
         )
 
     except Exception as e:
-        logger.error(f"Error batch syncing hourly activity: {e}")
+        logger.error(f"Error batch syncing hourly activity: {e}", exc_info=True)
         raise safe_internal_error(e, "neat_hourly_batch")
 
 
@@ -826,7 +826,7 @@ async def get_today_neat_score(user_id: str,
         )
 
     except Exception as e:
-        logger.error(f"Error fetching today's NEAT score: {e}")
+        logger.error(f"Error fetching today's NEAT score: {e}", exc_info=True)
         raise safe_internal_error(e, "neat_score_today")
 
 
@@ -921,7 +921,7 @@ async def get_neat_score_history(
         )
 
     except Exception as e:
-        logger.error(f"Error fetching NEAT score history: {e}")
+        logger.error(f"Error fetching NEAT score history: {e}", exc_info=True)
         raise safe_internal_error(e, "neat_score_history")
 
 
@@ -1044,7 +1044,7 @@ async def calculate_neat_score(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error calculating NEAT score: {e}")
+        logger.error(f"Error calculating NEAT score: {e}", exc_info=True)
         raise safe_internal_error(e, "neat_score_calculate")
 
 
@@ -1089,7 +1089,7 @@ async def get_neat_streaks(user_id: str,
         )
 
     except Exception as e:
-        logger.error(f"Error fetching NEAT streaks: {e}")
+        logger.error(f"Error fetching NEAT streaks: {e}", exc_info=True)
         raise safe_internal_error(e, "neat_streaks")
 
 

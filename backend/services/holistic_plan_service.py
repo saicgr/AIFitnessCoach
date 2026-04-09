@@ -368,7 +368,7 @@ class HolisticPlanService:
             return plan_id
 
         except Exception as e:
-            logger.error(f"Failed to save weekly plan: {e}")
+            logger.error(f"Failed to save weekly plan: {e}", exc_info=True)
             raise
 
     async def get_current_week_plan(self, user_id: str) -> Optional[WeeklyPlan]:
@@ -463,7 +463,7 @@ class HolisticPlanService:
             return plan
 
         except Exception as e:
-            logger.error(f"Failed to get week plan: {e}")
+            logger.error(f"Failed to get week plan: {e}", exc_info=True)
             return None
 
     def _get_base_nutrition(self, user: Dict) -> NutritionTargets:

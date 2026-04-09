@@ -35,7 +35,7 @@ async def _get_achievement(db, achievement_id: str) -> Optional[Dict]:
         result = db.client.table("achievement_types").select("*").eq("id", achievement_id).execute()
         return result.data[0] if result.data else None
     except Exception as e:
-        logger.error(f"Error getting achievement {achievement_id}: {e}")
+        logger.error(f"Error getting achievement {achievement_id}: {e}", exc_info=True)
         return None
 
 
@@ -47,7 +47,7 @@ async def _has_achievement(db, user_id: str, achievement_id: str) -> bool:
         ).eq("achievement_id", achievement_id).execute()
         return len(result.data) > 0
     except Exception as e:
-        logger.error(f"Error checking achievement {achievement_id} for user {user_id}: {e}")
+        logger.error(f"Error checking achievement {achievement_id} for user {user_id}: {e}", exc_info=True)
         return False
 
 
@@ -122,7 +122,7 @@ async def _award_achievement(
                         except Exception:
                             pass  # Push is best-effort
             except Exception as notif_err:
-                logger.warning(f"[Trophies] Failed to send achievement notification: {notif_err}")
+                logger.warning(f"[Trophies] Failed to send achievement notification: {notif_err}", exc_info=True)
 
             # Award XP if configured
             xp_reward = achievement.get("xp_reward", 0)
@@ -136,7 +136,7 @@ async def _award_achievement(
                         "p_description": f"Trophy earned: {achievement.get('name', achievement_id)}"
                     }).execute()
                 except Exception as e:
-                    logger.error(f"Error awarding XP for achievement: {e}")
+                    logger.error(f"Error awarding XP for achievement: {e}", exc_info=True)
 
             return {
                 "id": achievement_id,
@@ -149,7 +149,7 @@ async def _award_achievement(
 
         return None
     except Exception as e:
-        logger.error(f"Error awarding achievement {achievement_id}: {e}")
+        logger.error(f"Error awarding achievement {achievement_id}: {e}", exc_info=True)
         return None
 
 
@@ -168,7 +168,7 @@ async def _update_trophy_progress(
             "updated_at": datetime.utcnow().isoformat()
         }, on_conflict="user_id,achievement_id").execute()
     except Exception as e:
-        logger.error(f"Error updating trophy progress: {e}")
+        logger.error(f"Error updating trophy progress: {e}", exc_info=True)
 
 
 # ============================================================================
@@ -252,7 +252,7 @@ async def check_volume_achievements(user_id: str) -> List[Dict]:
                     awarded.append(result)
 
     except Exception as e:
-        logger.error(f"Error checking volume achievements: {e}")
+        logger.error(f"Error checking volume achievements: {e}", exc_info=True)
 
     return awarded
 
@@ -298,7 +298,7 @@ async def check_time_achievements(user_id: str) -> List[Dict]:
                     awarded.append(result)
 
     except Exception as e:
-        logger.error(f"Error checking time achievements: {e}")
+        logger.error(f"Error checking time achievements: {e}", exc_info=True)
 
     return awarded
 
@@ -374,7 +374,7 @@ async def check_exercise_mastery_achievements(
                         awarded.append(result)
 
     except Exception as e:
-        logger.error(f"Error checking exercise mastery achievements: {e}")
+        logger.error(f"Error checking exercise mastery achievements: {e}", exc_info=True)
 
     return awarded
 
@@ -430,7 +430,7 @@ async def check_specific_exercise_achievements(
                     awarded.append(result)
 
     except Exception as e:
-        logger.error(f"Error checking specific exercise achievements: {e}")
+        logger.error(f"Error checking specific exercise achievements: {e}", exc_info=True)
 
     return awarded
 
@@ -509,7 +509,7 @@ async def check_consistency_achievements(user_id: str) -> List[Dict]:
                         awarded.append(result)
 
     except Exception as e:
-        logger.error(f"Error checking consistency achievements: {e}")
+        logger.error(f"Error checking consistency achievements: {e}", exc_info=True)
 
     return awarded
 
@@ -582,7 +582,7 @@ async def check_social_achievements(user_id: str) -> List[Dict]:
                     awarded.append(result)
 
     except Exception as e:
-        logger.error(f"Error checking social achievements: {e}")
+        logger.error(f"Error checking social achievements: {e}", exc_info=True)
 
     return awarded
 
@@ -653,7 +653,7 @@ async def check_body_achievements(user_id: str) -> List[Dict]:
                         awarded.append(result)
 
     except Exception as e:
-        logger.error(f"Error checking body achievements: {e}")
+        logger.error(f"Error checking body achievements: {e}", exc_info=True)
 
     return awarded
 

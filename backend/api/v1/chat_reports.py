@@ -222,7 +222,7 @@ Keep your analysis professional, objective, and constructive. Focus on actionabl
         logger.info(f"Gemini analysis completed for report {report_id}")
 
     except Exception as e:
-        logger.error(f"Failed to analyze reported message {report_id}: {e}")
+        logger.error(f"Failed to analyze reported message {report_id}: {e}", exc_info=True)
         # Don't raise - this is a background task, we don't want to affect the user
 
 
@@ -305,7 +305,7 @@ async def submit_chat_report(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to submit chat report: {e}")
+        logger.error(f"Failed to submit chat report: {e}", exc_info=True)
         await log_user_error(
             user_id=report.user_id,
             action="chat_report_submitted",
@@ -361,7 +361,7 @@ async def get_user_reports(
         return [_parse_report_summary(r) for r in result.data or []]
 
     except Exception as e:
-        logger.error(f"Failed to get user reports: {e}")
+        logger.error(f"Failed to get user reports: {e}", exc_info=True)
         raise safe_internal_error(e, "get_user_reports")
 
 
@@ -396,7 +396,7 @@ async def get_report(report_id: str, user_id: str, current_user: dict = Depends(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to get report: {e}")
+        logger.error(f"Failed to get report: {e}", exc_info=True)
         raise safe_internal_error(e, "get_report")
 
 
@@ -488,5 +488,5 @@ async def get_user_report_stats(user_id: str, current_user: dict = Depends(get_c
         }
 
     except Exception as e:
-        logger.error(f"Failed to get report stats: {e}")
+        logger.error(f"Failed to get report stats: {e}", exc_info=True)
         raise safe_internal_error(e, "get_user_report_stats")

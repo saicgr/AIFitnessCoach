@@ -48,7 +48,7 @@ async def get_kegel_preferences(user_id: UUID,
         return result.data[0]
 
     except Exception as e:
-        logger.error(f"[Kegel] Error fetching preferences: {e}")
+        logger.error(f"[Kegel] Error fetching preferences: {e}", exc_info=True)
         raise safe_internal_error(e, "kegel")
 
 
@@ -91,7 +91,7 @@ async def upsert_kegel_preferences(user_id: UUID, preferences: KegelPreferencesU
         return result.data[0]
 
     except Exception as e:
-        logger.error(f"[Kegel] Error upserting preferences: {e}")
+        logger.error(f"[Kegel] Error upserting preferences: {e}", exc_info=True)
         raise safe_internal_error(e, "kegel")
 
 
@@ -109,7 +109,7 @@ async def delete_kegel_preferences(user_id: UUID,
         return {"message": "Preferences deleted successfully"}
 
     except Exception as e:
-        logger.error(f"[Kegel] Error deleting preferences: {e}")
+        logger.error(f"[Kegel] Error deleting preferences: {e}", exc_info=True)
         raise safe_internal_error(e, "kegel")
 
 
@@ -144,7 +144,7 @@ async def create_kegel_session(user_id: UUID, session: KegelSessionCreate,
         return result.data[0]
 
     except Exception as e:
-        logger.error(f"[Kegel] Error creating session: {e}")
+        logger.error(f"[Kegel] Error creating session: {e}", exc_info=True)
         raise safe_internal_error(e, "kegel")
 
 
@@ -175,7 +175,7 @@ async def get_kegel_sessions(
         return result.data
 
     except Exception as e:
-        logger.error(f"[Kegel] Error fetching sessions: {e}")
+        logger.error(f"[Kegel] Error fetching sessions: {e}", exc_info=True)
         raise safe_internal_error(e, "kegel")
 
 
@@ -197,7 +197,7 @@ async def get_today_kegel_sessions(user_id: UUID, request: Request,
         return result.data
 
     except Exception as e:
-        logger.error(f"[Kegel] Error fetching today's sessions: {e}")
+        logger.error(f"[Kegel] Error fetching today's sessions: {e}", exc_info=True)
         raise safe_internal_error(e, "kegel")
 
 
@@ -293,7 +293,7 @@ async def get_kegel_stats(user_id: UUID, request: Request,
         )
 
     except Exception as e:
-        logger.error(f"[Kegel] Error calculating stats: {e}")
+        logger.error(f"[Kegel] Error calculating stats: {e}", exc_info=True)
         raise safe_internal_error(e, "kegel")
 
 
@@ -335,7 +335,7 @@ async def check_daily_goal(user_id: UUID, request: Request, check_date: date = Q
         )
 
     except Exception as e:
-        logger.error(f"[Kegel] Error checking daily goal: {e}")
+        logger.error(f"[Kegel] Error checking daily goal: {e}", exc_info=True)
         raise safe_internal_error(e, "kegel")
 
 
@@ -384,7 +384,7 @@ async def get_kegel_exercises(
         return exercises
 
     except Exception as e:
-        logger.error(f"[Kegel] Error fetching exercises: {e}")
+        logger.error(f"[Kegel] Error fetching exercises: {e}", exc_info=True)
         raise safe_internal_error(e, "kegel")
 
 
@@ -407,7 +407,7 @@ async def get_kegel_exercise(exercise_id: UUID,
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"[Kegel] Error fetching exercise: {e}")
+        logger.error(f"[Kegel] Error fetching exercise: {e}", exc_info=True)
         raise safe_internal_error(e, "kegel")
 
 
@@ -430,7 +430,7 @@ async def get_kegel_exercise_by_name(name: str,
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"[Kegel] Error fetching exercise: {e}")
+        logger.error(f"[Kegel] Error fetching exercise: {e}", exc_info=True)
         raise safe_internal_error(e, "kegel")
 
 
@@ -497,7 +497,7 @@ async def get_kegels_for_workout(
         }
 
     except Exception as e:
-        logger.error(f"[Kegel] Error getting kegels for workout: {e}")
+        logger.error(f"[Kegel] Error getting kegels for workout: {e}", exc_info=True)
         raise safe_internal_error(e, "kegel")
 
 
@@ -536,5 +536,5 @@ async def log_kegels_from_workout(
         return result.data[0]
 
     except Exception as e:
-        logger.error(f"[Kegel] Error logging from workout: {e}")
+        logger.error(f"[Kegel] Error logging from workout: {e}", exc_info=True)
         raise safe_internal_error(e, "kegel")

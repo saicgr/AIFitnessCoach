@@ -156,7 +156,7 @@ async def create_performance_log(log: PerformanceLogCreate,
         return row_to_performance_log(created)
 
     except Exception as e:
-        logger.error(f"Error creating performance log: {e}")
+        logger.error(f"Error creating performance log: {e}", exc_info=True)
         raise safe_internal_error(e, "performance_db")
 
 
@@ -179,7 +179,7 @@ async def list_performance_logs(
         return [row_to_performance_log(row) for row in rows]
 
     except Exception as e:
-        logger.error(f"Error listing performance logs: {e}")
+        logger.error(f"Error listing performance logs: {e}", exc_info=True)
         raise safe_internal_error(e, "performance_db")
 
 
@@ -260,7 +260,7 @@ async def get_exercise_last_performance(
         )
 
     except Exception as e:
-        logger.error(f"Error getting last performance for exercise: {e}")
+        logger.error(f"Error getting last performance for exercise: {e}", exc_info=True)
         raise safe_internal_error(e, "performance_db")
 
 
@@ -278,7 +278,7 @@ async def create_workout_log(log: WorkoutLogCreate,
         try:
             sets_data = json.loads(log.sets_json)
         except json.JSONDecodeError as je:
-            logger.error(f"Invalid JSON in sets_json: {je}")
+            logger.error(f"Invalid JSON in sets_json: {je}", exc_info=True)
             raise HTTPException(status_code=400, detail=f"Invalid JSON in sets_json: {je}")
 
         log_data = {
@@ -305,7 +305,7 @@ async def create_workout_log(log: WorkoutLogCreate,
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error creating workout log: {e}, workout_id={log.workout_id}, user_id={log.user_id}")
+        logger.error(f"Error creating workout log: {e}, workout_id={log.workout_id}, user_id={log.user_id}", exc_info=True)
         raise safe_internal_error(e, "performance_db")
 
 
@@ -323,7 +323,7 @@ async def list_workout_logs(
         return [row_to_workout_log(row) for row in rows]
 
     except Exception as e:
-        logger.error(f"Error listing workout logs: {e}")
+        logger.error(f"Error listing workout logs: {e}", exc_info=True)
         raise safe_internal_error(e, "performance_db")
 
 
@@ -353,7 +353,7 @@ async def create_strength_record(record: StrengthRecordCreate,
         return row_to_strength_record(created)
 
     except Exception as e:
-        logger.error(f"Error creating strength record: {e}")
+        logger.error(f"Error creating strength record: {e}", exc_info=True)
         raise safe_internal_error(e, "performance_db")
 
 
@@ -378,7 +378,7 @@ async def list_strength_records(
         return [row_to_strength_record(row) for row in rows]
 
     except Exception as e:
-        logger.error(f"Error listing strength records: {e}")
+        logger.error(f"Error listing strength records: {e}", exc_info=True)
         raise safe_internal_error(e, "performance_db")
 
 
@@ -410,7 +410,7 @@ async def upsert_weekly_volume(volume: WeeklyVolumeCreate,
         return row_to_weekly_volume(created)
 
     except Exception as e:
-        logger.error(f"Error upserting weekly volume: {e}")
+        logger.error(f"Error upserting weekly volume: {e}", exc_info=True)
         raise safe_internal_error(e, "performance_db")
 
 
@@ -433,7 +433,7 @@ async def list_weekly_volumes(
         return [row_to_weekly_volume(row) for row in rows]
 
     except Exception as e:
-        logger.error(f"Error listing weekly volumes: {e}")
+        logger.error(f"Error listing weekly volumes: {e}", exc_info=True)
         raise safe_internal_error(e, "performance_db")
 
 
@@ -553,7 +553,7 @@ async def get_user_streak(user_id: str,
         )
 
     except Exception as e:
-        logger.error(f"Error calculating streak: {e}")
+        logger.error(f"Error calculating streak: {e}", exc_info=True)
         raise safe_internal_error(e, "performance_db")
 
 

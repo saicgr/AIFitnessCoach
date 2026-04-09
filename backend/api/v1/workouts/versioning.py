@@ -369,7 +369,7 @@ async def regenerate_workout(request: RegenerateWorkoutRequest,
                 exercises = _apply_difficulty_scaling(exercises, user_difficulty)
 
         except Exception as ai_error:
-            logger.error(f"AI workout regeneration failed: {ai_error}")
+            logger.error(f"AI workout regeneration failed: {ai_error}", exc_info=True)
             raise safe_internal_error(ai_error, "versioning_ai_generation")
 
         # Track if RAG was used for metadata
@@ -491,17 +491,17 @@ async def regenerate_workout(request: RegenerateWorkoutRequest,
                         )
                         logger.info(f"Indexed custom injury to ChromaDB: {custom_injury}")
                 except Exception as chroma_error:
-                    logger.warning(f"Failed to index custom inputs to ChromaDB: {chroma_error}")
+                    logger.warning(f"Failed to index custom inputs to ChromaDB: {chroma_error}", exc_info=True)
         except Exception as analytics_error:
             # Don't fail the regeneration if analytics recording fails
-            logger.warning(f"Failed to record regeneration analytics: {analytics_error}")
+            logger.warning(f"Failed to record regeneration analytics: {analytics_error}", exc_info=True)
 
         return regenerated
 
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to regenerate workout: {e}")
+        logger.error(f"Failed to regenerate workout: {e}", exc_info=True)
         raise safe_internal_error(e, "versioning")
 
 
@@ -763,7 +763,7 @@ async def regenerate_workout_streaming(request: Request, body: RegenerateWorkout
                     generation_time_ms=elapsed_ms(),
                 )
             except Exception as analytics_error:
-                logger.warning(f"[STREAM] Failed to record analytics: {analytics_error}")
+                logger.warning(f"[STREAM] Failed to record analytics: {analytics_error}", exc_info=True)
 
             # Send the completed workout
             workout_response = {
@@ -783,7 +783,7 @@ async def regenerate_workout_streaming(request: Request, body: RegenerateWorkout
             yield f"event: done\ndata: {json.dumps(workout_response)}\n\n"
 
         except Exception as e:
-            logger.error(f"[STREAM] Regeneration error: {e}")
+            logger.error(f"[STREAM] Regeneration error: {e}", exc_info=True)
             yield send_error(str(e))
 
     return StreamingResponse(
@@ -842,7 +842,7 @@ async def get_workout_versions(workout_id: str,
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to get workout versions: {e}")
+        logger.error(f"Failed to get workout versions: {e}", exc_info=True)
         raise safe_internal_error(e, "versioning")
 
 
@@ -885,7 +885,7 @@ async def revert_workout(request: RevertWorkoutRequest,
     except ValueError as e:
         raise HTTPException(status_code=404, detail="Version not found")
     except Exception as e:
-        logger.error(f"Failed to revert workout: {e}")
+        logger.error(f"Failed to revert workout: {e}", exc_info=True)
         raise safe_internal_error(e, "versioning")
 
 
@@ -919,5 +919,5 @@ async def unsupersede_workout(
         return {"status": "ok", "workout_id": request.workout_id}
 
     except Exception as e:
-        logger.error(f"Failed to un-supersede workout: {e}")
+        logger.error(f"Failed to un-supersede workout: {e}", exc_info=True)
         raise safe_internal_error(e, "versioning")

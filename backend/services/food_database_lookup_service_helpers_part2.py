@@ -426,7 +426,7 @@ class FoodDatabaseLookupServicePart2:
             return foods
 
         except Exception as e:
-            logger.error(f"[FoodDB] Search failed for '{query}': {e}")
+            logger.error(f"[FoodDB] Search failed for '{query}': {e}", exc_info=True)
             raise
 
     async def search_foods_unified(
@@ -558,7 +558,7 @@ class FoodDatabaseLookupServicePart2:
             return foods
 
         except Exception as e:
-            logger.error(f"[FoodDB] Unified search failed for '{query}': {e}")
+            logger.error(f"[FoodDB] Unified search failed for '{query}': {e}", exc_info=True)
             # Fallback to regular search (will raise if that also fails)
             return await self.search_foods(
                 query=query, page_size=page_size, page=page,
@@ -671,7 +671,7 @@ class FoodDatabaseLookupServicePart2:
                 else:
                     still_unmatched.append(name)
         except Exception as e:
-            logger.warning(f"[FoodDB] Batch variant lookup failed: {e}")
+            logger.warning(f"[FoodDB] Batch variant lookup failed: {e}", exc_info=True)
             still_unmatched = uncached_names
 
         # Step 3: Fuzzy matching for remaining misses

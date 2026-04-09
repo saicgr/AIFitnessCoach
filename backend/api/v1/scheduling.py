@@ -270,7 +270,7 @@ async def get_missed_workouts(
         )
 
     except Exception as e:
-        logger.error(f"Error getting missed workouts: {e}")
+        logger.error(f"Error getting missed workouts: {e}", exc_info=True)
         await log_user_error(user_id, "get_missed_workouts", str(e))
         raise safe_internal_error(e, "scheduling")
 
@@ -377,7 +377,7 @@ async def reschedule_workout(request: RescheduleRequest,
         try:
             db.client.table("workout_scheduling_history").insert(history_record).execute()
         except Exception as e:
-            logger.warning(f"Could not log scheduling history: {e}")
+            logger.warning(f"Could not log scheduling history: {e}", exc_info=True)
 
         # Log activity
         await log_user_activity(
@@ -400,7 +400,7 @@ async def reschedule_workout(request: RescheduleRequest,
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error rescheduling workout: {e}")
+        logger.error(f"Error rescheduling workout: {e}", exc_info=True)
         raise safe_internal_error(e, "scheduling")
 
 
@@ -463,7 +463,7 @@ async def skip_workout(request: SkipRequest,
         try:
             db.client.table("workout_scheduling_history").insert(history_record).execute()
         except Exception as e:
-            logger.warning(f"Could not log scheduling history: {e}")
+            logger.warning(f"Could not log scheduling history: {e}", exc_info=True)
 
         # Log activity
         await log_user_activity(
@@ -483,7 +483,7 @@ async def skip_workout(request: SkipRequest,
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error skipping workout: {e}")
+        logger.error(f"Error skipping workout: {e}", exc_info=True)
         raise safe_internal_error(e, "scheduling")
 
 
@@ -640,7 +640,7 @@ async def get_scheduling_suggestions(
                     "Choose what works best for your schedule."
                 )
         except Exception as e:
-            logger.warning(f"Could not analyze patterns: {e}")
+            logger.warning(f"Could not analyze patterns: {e}", exc_info=True)
 
         logger.info(f"Generated {len(suggestions)} suggestions for workout {workout_id}")
 
@@ -654,7 +654,7 @@ async def get_scheduling_suggestions(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error getting scheduling suggestions: {e}")
+        logger.error(f"Error getting scheduling suggestions: {e}", exc_info=True)
         raise safe_internal_error(e, "scheduling")
 
 
@@ -694,7 +694,7 @@ async def get_skip_reasons(
             ]
 
     except Exception as e:
-        logger.error(f"Error getting skip reasons: {e}")
+        logger.error(f"Error getting skip reasons: {e}", exc_info=True)
         raise safe_internal_error(e, "scheduling")
 
 
@@ -753,7 +753,7 @@ async def detect_missed_workouts(
         }
 
     except Exception as e:
-        logger.error(f"Error detecting missed workouts: {e}")
+        logger.error(f"Error detecting missed workouts: {e}", exc_info=True)
         raise safe_internal_error(e, "scheduling")
 
 
@@ -788,7 +788,7 @@ async def get_scheduling_preferences(user_id: str = Query(..., description="User
         return SchedulingPreferences()
 
     except Exception as e:
-        logger.error(f"Error getting scheduling preferences: {e}")
+        logger.error(f"Error getting scheduling preferences: {e}", exc_info=True)
         raise safe_internal_error(e, "scheduling")
 
 
@@ -821,12 +821,12 @@ async def update_scheduling_preferences(
                 prefs_data, on_conflict="user_id"
             ).execute()
         except Exception as e:
-            logger.warning(f"Could not save preferences (table may not exist): {e}")
+            logger.warning(f"Could not save preferences (table may not exist): {e}", exc_info=True)
 
         return preferences
 
     except Exception as e:
-        logger.error(f"Error updating scheduling preferences: {e}")
+        logger.error(f"Error updating scheduling preferences: {e}", exc_info=True)
         raise safe_internal_error(e, "scheduling")
 
 
@@ -894,7 +894,7 @@ async def get_scheduling_history(
             )
 
         except Exception as e:
-            logger.warning(f"Could not get history (table may not exist): {e}")
+            logger.warning(f"Could not get history (table may not exist): {e}", exc_info=True)
             return SchedulingHistoryResponse(
                 history=[],
                 total_count=0,
@@ -903,5 +903,5 @@ async def get_scheduling_history(
             )
 
     except Exception as e:
-        logger.error(f"Error getting scheduling history: {e}")
+        logger.error(f"Error getting scheduling history: {e}", exc_info=True)
         raise safe_internal_error(e, "scheduling")

@@ -110,7 +110,7 @@ async def log_workout_exit(workout_id: str, exit_data: WorkoutExitCreate,
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to log workout exit: {e}")
+        logger.error(f"Failed to log workout exit: {e}", exc_info=True)
         raise safe_internal_error(e, "exit_tracking")
 
 
@@ -144,7 +144,7 @@ async def get_workout_exits(workout_id: str,
         ]
 
     except Exception as e:
-        logger.error(f"Failed to get workout exits: {e}")
+        logger.error(f"Failed to get workout exits: {e}", exc_info=True)
         raise safe_internal_error(e, "exit_tracking")
 
 
@@ -189,5 +189,5 @@ async def get_user_exit_stats(user_id: str,
         }
 
     except Exception as e:
-        logger.error(f"Failed to get user exit stats: {e}")
+        logger.error(f"Failed to get user exit stats: {e}", exc_info=True)
         raise safe_internal_error(e, "exit_tracking")

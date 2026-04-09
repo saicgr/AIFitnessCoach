@@ -16,11 +16,14 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 import logging
 logger = logging.getLogger(__name__)
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from core.auth import get_current_user
 from core.db import get_supabase_db
 from core.exceptions import safe_internal_error
 from core.supabase_client import get_supabase
+from core.activity_logger import log_user_activity
+from services.notification_service_helpers import get_notification_service
+from services.optimal_time_service import recalculate_all_optimal_times
 
 from .notifications_models import (
     TestNotificationRequest,
@@ -130,7 +133,7 @@ async def get_billing_reminders(user_id: str,
         )
 
     except Exception as e:
-        logger.error(f"Error getting billing reminders: {e}")
+        logger.error(f"Error getting billing reminders: {e}", exc_info=True)
         raise safe_internal_error(e, "notifications")
 
 
@@ -165,7 +168,7 @@ async def update_billing_preferences(user_id: str, request: BillingPreferencesRe
         }
 
     except Exception as e:
-        logger.error(f"Error updating billing preferences: {e}")
+        logger.error(f"Error updating billing preferences: {e}", exc_info=True)
         raise safe_internal_error(e, "notifications")
 
 
@@ -209,7 +212,7 @@ async def dismiss_renewal_banner(user_id: str, request: DismissBannerRequest,
         }
 
     except Exception as e:
-        logger.error(f"Error dismissing renewal banner: {e}")
+        logger.error(f"Error dismissing renewal banner: {e}", exc_info=True)
         raise safe_internal_error(e, "notifications")
 
 
@@ -357,7 +360,7 @@ async def send_billing_reminders(
                     })
 
             except Exception as e:
-                logger.error(f"Error processing notification {notif_id}: {e}")
+                logger.error(f"Error processing notification {notif_id}: {e}", exc_info=True)
                 results["errors"] += 1
 
                 # Update notification with error
@@ -371,7 +374,7 @@ async def send_billing_reminders(
         return results
 
     except Exception as e:
-        logger.error(f"❌ Error sending billing reminders: {e}")
+        logger.error(f"❌ Error sending billing reminders: {e}", exc_info=True)
         raise safe_internal_error(e, "notifications")
 
 
@@ -435,7 +438,7 @@ async def send_plan_change_notification(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error sending plan change notification: {e}")
+        logger.error(f"Error sending plan change notification: {e}", exc_info=True)
         raise safe_internal_error(e, "notifications")
 
 
@@ -501,7 +504,7 @@ async def send_refund_confirmation(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error sending refund confirmation: {e}")
+        logger.error(f"Error sending refund confirmation: {e}", exc_info=True)
         raise safe_internal_error(e, "notifications")
 
 
@@ -594,7 +597,7 @@ async def track_notification_interaction(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error tracking notification interaction: {e}")
+        logger.error(f"Error tracking notification interaction: {e}", exc_info=True)
         raise safe_internal_error(e, "notifications")
 
 
@@ -616,7 +619,7 @@ async def recalculate_optimal_times(
         logger.info(f"Optimal times recalculation complete: {results}")
         return results
     except Exception as e:
-        logger.error(f"Error recalculating optimal times: {e}")
+        logger.error(f"Error recalculating optimal times: {e}", exc_info=True)
         raise safe_internal_error(e, "notifications")
 
 
@@ -677,7 +680,7 @@ async def send_movement_reminder(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"❌ [Movement] Error sending reminder: {e}")
+        logger.error(f"❌ [Movement] Error sending reminder: {e}", exc_info=True)
         raise safe_internal_error(e, "notifications")
 
 
@@ -857,7 +860,7 @@ async def send_movement_reminders(
                     })
 
             except Exception as e:
-                logger.error(f"🚶 [Movement] Error processing user {user_id}: {e}")
+                logger.error(f"🚶 [Movement] Error processing user {user_id}: {e}", exc_info=True)
                 results["errors"] += 1
 
         logger.info(
@@ -868,7 +871,7 @@ async def send_movement_reminders(
         return results
 
     except Exception as e:
-        logger.error(f"❌ [Movement] Error in scheduler: {e}")
+        logger.error(f"❌ [Movement] Error in scheduler: {e}", exc_info=True)
         raise safe_internal_error(e, "notifications")
 
 
@@ -934,5 +937,5 @@ async def get_movement_reminder_status(user_id: str,
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"❌ [Movement] Error getting status: {e}")
+        logger.error(f"❌ [Movement] Error getting status: {e}", exc_info=True)
         raise safe_internal_error(e, "notifications")

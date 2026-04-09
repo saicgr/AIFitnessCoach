@@ -103,7 +103,7 @@ async def get_user_insights(
         }
 
     except Exception as e:
-        logger.error(f"Failed to fetch insights: {e}")
+        logger.error(f"Failed to fetch insights: {e}", exc_info=True)
         raise safe_internal_error(e, "endpoint")
 
 
@@ -263,7 +263,7 @@ async def generate_insights(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to generate insights: {e}")
+        logger.error(f"Failed to generate insights: {e}", exc_info=True)
         raise safe_internal_error(e, "endpoint")
 
 
@@ -283,7 +283,7 @@ async def dismiss_insight(
         return {"message": "Insight dismissed"}
 
     except Exception as e:
-        logger.error(f"Failed to dismiss insight: {e}")
+        logger.error(f"Failed to dismiss insight: {e}", exc_info=True)
         raise safe_internal_error(e, "endpoint")
 
 
@@ -303,7 +303,7 @@ async def get_weekly_progress(
         return {"weeks": result.data if result.data else []}
 
     except Exception as e:
-        logger.error(f"Failed to get weekly progress: {e}")
+        logger.error(f"Failed to get weekly progress: {e}", exc_info=True)
         raise safe_internal_error(e, "endpoint")
 
 
@@ -386,7 +386,7 @@ async def update_weekly_progress(
         }
 
     except Exception as e:
-        logger.error(f"Failed to update weekly progress: {e}")
+        logger.error(f"Failed to update weekly progress: {e}", exc_info=True)
         raise safe_internal_error(e, "endpoint")
 
 
@@ -566,7 +566,7 @@ async def get_weight_insight(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to get weight insight: {e}")
+        logger.error(f"Failed to get weight insight: {e}", exc_info=True)
         return {
             "insight": _fallback_weight_insight(0, "maintaining"),
             "cached": False,
@@ -661,7 +661,7 @@ async def get_daily_tip(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to get daily tip: {e}")
+        logger.error(f"Failed to get daily tip: {e}", exc_info=True)
         return {
             "tip": _fallback_daily_tip(0, "morning"),
             "cached": False,
@@ -740,7 +740,7 @@ async def get_habit_suggestions(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to get habit suggestions: {e}")
+        logger.error(f"Failed to get habit suggestions: {e}", exc_info=True)
         return {
             "suggestions": _fallback_habit_suggestions(),
             "cached": False,
@@ -775,7 +775,7 @@ def _cache_insight(db, cache_key: str, insight: str, hours: int = 24):
             db.client.table("ai_insight_cache").insert(data).execute()
 
     except Exception as e:
-        logger.warning(f"Failed to cache insight: {e}")
+        logger.warning(f"Failed to cache insight: {e}", exc_info=True)
 
 
 def _calculate_streak(workouts: List[Dict]) -> int:

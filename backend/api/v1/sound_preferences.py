@@ -67,7 +67,7 @@ async def get_sound_preferences(user=Depends(get_current_user)):
         return SoundPreferences()
 
     except Exception as e:
-        logger.error(f"❌ Failed to get sound preferences: {e}")
+        logger.error(f"❌ Failed to get sound preferences: {e}", exc_info=True)
         raise safe_internal_error(e, "sound_preferences")
 
 
@@ -120,7 +120,7 @@ async def update_sound_preferences(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"❌ Failed to update sound preferences: {e}")
+        logger.error(f"❌ Failed to update sound preferences: {e}", exc_info=True)
         raise safe_internal_error(e, "sound_preferences")
 
 
@@ -139,5 +139,5 @@ async def reset_sound_preferences(user=Depends(get_current_user)):
         return {"message": "Sound preferences reset to defaults"}
 
     except Exception as e:
-        logger.error(f"❌ Failed to reset sound preferences: {e}")
+        logger.error(f"❌ Failed to reset sound preferences: {e}", exc_info=True)
         raise safe_internal_error(e, "sound_preferences")

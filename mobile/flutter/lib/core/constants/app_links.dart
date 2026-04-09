@@ -11,10 +11,10 @@ class AppLinks {
 
   // ── Social Media ──────────────────────────────────────────────────────────
 
-  static const String discord = ''; // TODO: create and add Discord invite link
+  static const String discord = 'https://discord.gg/WAYNZpVgsK';
   static const String reddit = ''; // TODO: create and add subreddit URL
   static const String twitter = ''; // TODO: add X/Twitter profile URL
-  static const String instagram = ''; // TODO: add Instagram profile URL
+  static const String instagram = 'https://instagram.com/fitwiz.us';
   static const String tiktok = ''; // TODO: add TikTok profile URL
   static const String youtube = ''; // TODO: add YouTube channel URL
 

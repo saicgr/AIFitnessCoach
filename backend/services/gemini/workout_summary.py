@@ -65,7 +65,7 @@ class WorkoutSummaryMixin:
                 logger.info(f"[SummaryCache] Cache HIT for workout: '{workout_name}'")
                 return cached_result
         except Exception as cache_err:
-            logger.warning(f"[SummaryCache] Cache lookup error (falling through): {cache_err}")
+            logger.warning(f"[SummaryCache] Cache lookup error (falling through): {cache_err}", exc_info=True)
 
         try:
             # Use the Workout Insights LangGraph agent
@@ -87,12 +87,12 @@ class WorkoutSummaryMixin:
                 await _summary_cache.set(cache_key, summary)
                 logger.info(f"[SummaryCache] Cache MISS - stored summary for: '{workout_name}'")
             except Exception as cache_err:
-                logger.warning(f"[SummaryCache] Failed to store result: {cache_err}")
+                logger.warning(f"[SummaryCache] Failed to store result: {cache_err}", exc_info=True)
 
             return summary
 
         except Exception as e:
-            logger.error(f"Error generating workout summary with agent: {e}")
+            logger.error(f"Error generating workout summary with agent: {e}", exc_info=True)
             raise  # No fallback - let errors propagate
 
     async def generate_exercise_reasoning(
@@ -219,7 +219,7 @@ RULES:
                         continue
 
                 except Exception as e:
-                    logger.warning(f"[Exercise Reasoning] Failed (attempt {attempt + 1}): {e}")
+                    logger.warning(f"[Exercise Reasoning] Failed (attempt {attempt + 1}): {e}", exc_info=True)
                     last_error = str(e)
                     continue
 
@@ -230,7 +230,7 @@ RULES:
             }
 
         except Exception as e:
-            logger.error(f"Error generating exercise reasoning: {e}")
+            logger.error(f"Error generating exercise reasoning: {e}", exc_info=True)
             # Return empty result - caller should use fallback
             return {
                 "workout_reasoning": "",

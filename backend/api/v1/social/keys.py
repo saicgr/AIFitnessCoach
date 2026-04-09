@@ -80,7 +80,7 @@ async def upload_public_key(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"[Keys] Failed to upload public key: {e}")
+        logger.error(f"[Keys] Failed to upload public key: {e}", exc_info=True)
         raise safe_internal_error(e, "encryption_keys")
 
 
@@ -119,5 +119,5 @@ async def get_public_key(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"[Keys] Failed to get public key: {e}")
+        logger.error(f"[Keys] Failed to get public key: {e}", exc_info=True)
         raise safe_internal_error(e, "encryption_keys")

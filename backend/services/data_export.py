@@ -61,7 +61,7 @@ def export_user_data(
         results["metrics"] = _get_filtered_metrics(db, user_id, start_date, end_date)
         logger.info(f"  ✓ metrics: {len(results['metrics'])} rows")
     except Exception as e:
-        logger.error(f"Error fetching metrics: {e}")
+        logger.error(f"Error fetching metrics: {e}", exc_info=True)
         results["metrics"] = []
 
     try:
@@ -69,7 +69,7 @@ def export_user_data(
         results["workouts"] = _get_filtered_workouts(db, user_id, start_date, end_date)
         logger.info(f"  ✓ workouts: {len(results['workouts'])} rows")
     except Exception as e:
-        logger.error(f"Error fetching workouts: {e}")
+        logger.error(f"Error fetching workouts: {e}", exc_info=True)
         results["workouts"] = []
 
     try:
@@ -77,7 +77,7 @@ def export_user_data(
         results["workout_logs"] = _get_filtered_workout_logs(db, user_id, start_date, end_date)
         logger.info(f"  ✓ workout_logs: {len(results['workout_logs'])} rows")
     except Exception as e:
-        logger.error(f"Error fetching workout_logs: {e}")
+        logger.error(f"Error fetching workout_logs: {e}", exc_info=True)
         results["workout_logs"] = []
 
     try:
@@ -85,7 +85,7 @@ def export_user_data(
         results["performance_logs"] = _get_filtered_performance_logs(db, user_id, start_date, end_date)
         logger.info(f"  ✓ performance_logs: {len(results['performance_logs'])} rows")
     except Exception as e:
-        logger.error(f"Error fetching performance_logs: {e}")
+        logger.error(f"Error fetching performance_logs: {e}", exc_info=True)
         results["performance_logs"] = []
 
     try:
@@ -93,7 +93,7 @@ def export_user_data(
         results["strength_records"] = _get_filtered_strength_records(db, user_id, start_date, end_date)
         logger.info(f"  ✓ strength_records: {len(results['strength_records'])} rows")
     except Exception as e:
-        logger.error(f"Error fetching strength_records: {e}")
+        logger.error(f"Error fetching strength_records: {e}", exc_info=True)
         results["strength_records"] = []
 
     try:
@@ -101,7 +101,7 @@ def export_user_data(
         results["achievements"] = _get_filtered_achievements(db, user_id, start_date, end_date)
         logger.info(f"  ✓ achievements: {len(results['achievements'])} rows")
     except Exception as e:
-        logger.error(f"Error fetching achievements: {e}")
+        logger.error(f"Error fetching achievements: {e}", exc_info=True)
         results["achievements"] = []
 
     try:
@@ -109,7 +109,7 @@ def export_user_data(
         results["streaks"] = _get_user_streaks(db, user_id)
         logger.info(f"  ✓ streaks: {len(results['streaks'])} rows")
     except Exception as e:
-        logger.error(f"Error fetching streaks: {e}")
+        logger.error(f"Error fetching streaks: {e}", exc_info=True)
         results["streaks"] = []
 
     logger.info(f"⏱️ All queries completed in {time.time() - t:.2f}s")
@@ -197,7 +197,7 @@ def _query_all_data(user_id: str, start_date: Optional[str], end_date: Optional[
         try:
             results[key] = query_fn()
         except Exception as e:
-            logger.error(f"Error fetching {key}: {e}")
+            logger.error(f"Error fetching {key}: {e}", exc_info=True)
             results[key] = []
 
     return user, results

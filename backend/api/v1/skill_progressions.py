@@ -165,7 +165,7 @@ async def get_all_progression_chains(
         return [_parse_chain(c) for c in result.data]
 
     except Exception as e:
-        logger.error(f"Failed to get progression chains: {e}")
+        logger.error(f"Failed to get progression chains: {e}", exc_info=True)
         raise safe_internal_error(e, "skill_progressions")
 
 
@@ -206,7 +206,7 @@ async def get_progression_chain(chain_id: str,
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to get progression chain: {e}")
+        logger.error(f"Failed to get progression chain: {e}", exc_info=True)
         raise safe_internal_error(e, "skill_progressions")
 
 
@@ -240,7 +240,7 @@ async def get_chain_steps(chain_id: str,
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to get chain steps: {e}")
+        logger.error(f"Failed to get chain steps: {e}", exc_info=True)
         raise safe_internal_error(e, "skill_progressions")
 
 
@@ -307,7 +307,7 @@ async def get_user_skill_progress(
         return progress_list
 
     except Exception as e:
-        logger.error(f"Failed to get user skill progress: {e}")
+        logger.error(f"Failed to get user skill progress: {e}", exc_info=True)
         raise safe_internal_error(e, "skill_progressions")
 
 
@@ -378,7 +378,7 @@ async def get_user_chain_progress(user_id: str, chain_id: str,
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to get user chain progress: {e}")
+        logger.error(f"Failed to get user chain progress: {e}", exc_info=True)
         raise safe_internal_error(e, "skill_progressions")
 
 
@@ -458,7 +458,7 @@ async def get_user_skills_summary(user_id: str,
         )
 
     except Exception as e:
-        logger.error(f"Failed to get user skills summary: {e}")
+        logger.error(f"Failed to get user skills summary: {e}", exc_info=True)
         raise safe_internal_error(e, "skill_progressions")
 
 
@@ -555,7 +555,7 @@ async def start_progression_chain(user_id: str, chain_id: str,
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to start progression chain: {e}")
+        logger.error(f"Failed to start progression chain: {e}", exc_info=True)
         await log_user_error(
             user_id=user_id,
             action="skill_chain_started",
@@ -689,7 +689,7 @@ async def log_skill_attempt(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to log skill attempt: {e}")
+        logger.error(f"Failed to log skill attempt: {e}", exc_info=True)
         raise safe_internal_error(e, "skill_progressions")
 
 
@@ -825,7 +825,7 @@ async def unlock_next_step(user_id: str, chain_id: str,
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to unlock next step: {e}")
+        logger.error(f"Failed to unlock next step: {e}", exc_info=True)
         await log_user_error(
             user_id=user_id,
             action="skill_step_unlocked",
@@ -883,7 +883,7 @@ async def toggle_progression_active(user_id: str, chain_id: str, is_active: bool
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to toggle progression active status: {e}")
+        logger.error(f"Failed to toggle progression active status: {e}", exc_info=True)
         raise safe_internal_error(e, "skill_progressions")
 
 
@@ -934,5 +934,5 @@ async def delete_progression_progress(user_id: str, chain_id: str,
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to delete progression progress: {e}")
+        logger.error(f"Failed to delete progression progress: {e}", exc_info=True)
         raise safe_internal_error(e, "skill_progressions")

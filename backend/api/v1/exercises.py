@@ -113,7 +113,7 @@ async def create_exercise(exercise: ExerciseCreate, current_user: dict = Depends
         return row_to_exercise(created)
 
     except Exception as e:
-        logger.error(f"Error creating exercise: {e}")
+        logger.error(f"Error creating exercise: {e}", exc_info=True)
         raise safe_internal_error(e, "exercises")
 
 
@@ -142,7 +142,7 @@ async def list_exercises(
         return [row_to_exercise(row) for row in rows]
 
     except Exception as e:
-        logger.error(f"Error listing exercises: {e}")
+        logger.error(f"Error listing exercises: {e}", exc_info=True)
         raise safe_internal_error(e, "exercises")
 
 
@@ -161,7 +161,7 @@ async def get_exercise(exercise_id: int, current_user: dict = Depends(get_curren
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error getting exercise: {e}")
+        logger.error(f"Error getting exercise: {e}", exc_info=True)
         raise safe_internal_error(e, "exercises")
 
 
@@ -180,7 +180,7 @@ async def get_exercise_by_external_id(external_id: str, current_user: dict = Dep
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error getting exercise: {e}")
+        logger.error(f"Error getting exercise: {e}", exc_info=True)
         raise safe_internal_error(e, "exercises")
 
 
@@ -202,7 +202,7 @@ async def delete_exercise(exercise_id: int, current_user: dict = Depends(get_cur
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error deleting exercise: {e}")
+        logger.error(f"Error deleting exercise: {e}", exc_info=True)
         raise safe_internal_error(e, "exercises")
 
 
@@ -230,7 +230,7 @@ async def index_exercises_for_rag(current_user: dict = Depends(get_current_user)
         }
 
     except Exception as e:
-        logger.error(f"❌ Failed to index exercises: {e}")
+        logger.error(f"❌ Failed to index exercises: {e}", exc_info=True)
         raise safe_internal_error(e, "exercises")
 
 
@@ -252,7 +252,7 @@ async def get_rag_stats(current_user: dict = Depends(get_current_user)):
         }
 
     except Exception as e:
-        logger.error(f"Error getting RAG stats: {e}")
+        logger.error(f"Error getting RAG stats: {e}", exc_info=True)
         raise safe_internal_error(e, "exercises")
 
 
@@ -295,7 +295,7 @@ async def get_exercise_from_library_by_name(name: str, current_user: dict = Depe
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error getting exercise from library: {e}")
+        logger.error(f"Error getting exercise from library: {e}", exc_info=True)
         raise safe_internal_error(e, "exercises")
 
 

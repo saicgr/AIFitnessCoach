@@ -232,7 +232,7 @@ class AIInsightsService:
             return response.get("response", self._fallback_strength_insight(strength_scores))
 
         except Exception as e:
-            logger.error(f"Error generating strength insights: {e}")
+            logger.error(f"Error generating strength insights: {e}", exc_info=True)
             return self._fallback_strength_insight(strength_scores)
 
     def _fallback_strength_insight(self, strength_scores: Dict) -> str:
@@ -313,7 +313,7 @@ class AIInsightsService:
             return response.get("response", self._fallback_readiness_recommendation(readiness_data))
 
         except Exception as e:
-            logger.error(f"Error generating readiness recommendation: {e}")
+            logger.error(f"Error generating readiness recommendation: {e}", exc_info=True)
             return self._fallback_readiness_recommendation(readiness_data)
 
     def _fallback_readiness_recommendation(self, readiness_data: Dict) -> str:
@@ -379,7 +379,7 @@ class AIInsightsService:
             return response.get("response", self._fallback_pr_celebration(pr_data))
 
         except Exception as e:
-            logger.error(f"Error generating PR celebration: {e}")
+            logger.error(f"Error generating PR celebration: {e}", exc_info=True)
             return self._fallback_pr_celebration(pr_data)
 
     def _fallback_pr_celebration(self, pr_data: Dict) -> str:
@@ -457,7 +457,7 @@ class AIInsightsService:
             return response.get("response", self._fallback_weekly_summary(weekly_metrics))
 
         except Exception as e:
-            logger.error(f"Error generating weekly summary: {e}")
+            logger.error(f"Error generating weekly summary: {e}", exc_info=True)
             return self._fallback_weekly_summary(weekly_metrics)
 
     def _fallback_weekly_summary(self, weekly_metrics: Dict) -> str:

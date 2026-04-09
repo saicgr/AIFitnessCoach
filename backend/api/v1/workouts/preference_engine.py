@@ -7,6 +7,7 @@ applied directly to existing workout exercises_json.
 
 Core principle: Parse JSON → find target → replace with library match → update row.
 """
+from __future__ import annotations
 
 from .preference_engine_helpers import (  # noqa: F401
     _inject_into_section,
@@ -346,7 +347,7 @@ def _find_replacement_exercise(
         return best
 
     except Exception as e:
-        logger.error(f"Error finding replacement exercise: {e}")
+        logger.error(f"Error finding replacement exercise: {e}", exc_info=True)
         return None
 
 
@@ -444,35 +445,35 @@ async def _fetch_preference_context(db, user_id: str) -> dict:
                 if isinstance(wd, list):
                     context["workout_days"] = [int(d) for d in wd if isinstance(d, (int, float))]
     except Exception as e:
-        logger.warning(f"Could not fetch user profile: {e}")
+        logger.warning(f"Could not fetch user profile: {e}", exc_info=True)
 
     try:
         # Exercise history
         from api.v1.workouts.utils import get_user_strength_history
         context["exercise_history"] = await get_user_strength_history(user_id)
     except Exception as e:
-        logger.warning(f"Could not fetch exercise history: {e}")
+        logger.warning(f"Could not fetch exercise history: {e}", exc_info=True)
 
     try:
         # Staples (for knowing which exercises are staples — don't replace them)
         staples_result = db.client.table("user_staples_with_details").select("*").eq("user_id", user_id).execute()
         context["staples"] = staples_result.data or []
     except Exception as e:
-        logger.warning(f"Could not fetch staples: {e}")
+        logger.warning(f"Could not fetch staples: {e}", exc_info=True)
 
     try:
         # Avoided exercises
         avoided_result = db.client.table("avoided_exercises").select("exercise_name").eq("user_id", user_id).execute()
         context["avoided_exercises"] = {r["exercise_name"].lower() for r in (avoided_result.data or [])}
     except Exception as e:
-        logger.warning(f"Could not fetch avoided exercises: {e}")
+        logger.warning(f"Could not fetch avoided exercises: {e}", exc_info=True)
 
     try:
         # Avoided muscles
         muscles_result = db.client.table("avoided_muscles").select("muscle_group, severity").eq("user_id", user_id).execute()
         context["avoided_muscles"] = {r["muscle_group"].lower() for r in (muscles_result.data or [])}
     except Exception as e:
-        logger.warning(f"Could not fetch avoided muscles: {e}")
+        logger.warning(f"Could not fetch avoided muscles: {e}", exc_info=True)
 
     return context
 
@@ -494,7 +495,7 @@ def _get_upcoming_workouts(db, user_id: str) -> list[dict]:
         ).order("scheduled_date").execute()
         return result.data or []
     except Exception as e:
-        logger.error(f"Error fetching upcoming workouts: {e}")
+        logger.error(f"Error fetching upcoming workouts: {e}", exc_info=True)
         return []
 
 
@@ -509,7 +510,7 @@ def _log_workout_change(db, user_id: str, workout_id: str, change_type: str, det
             "created_at": datetime.utcnow().isoformat(),
         }).execute()
     except Exception as e:
-        logger.warning(f"Could not log workout change: {e}")
+        logger.warning(f"Could not log workout change: {e}", exc_info=True)
 
 
 def _validate_equipment(exercise_equipment: str | None, user_equipment: list | None) -> bool:
@@ -649,7 +650,7 @@ async def inject_staple_into_workout(
             "workout_name": workout.get("workout_name"),
         }
     except Exception as e:
-        logger.error(f"Error updating workout {workout_id}: {e}")
+        logger.error(f"Error updating workout {workout_id}: {e}", exc_info=True)
         return {"action": "error", "reason": str(e), "workout_id": workout_id}
 
 

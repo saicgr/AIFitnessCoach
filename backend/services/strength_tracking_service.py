@@ -76,7 +76,7 @@ class StrengthTrackingService:
                 "recorded_at": datetime.now().isoformat(),
             }).execute()
         except Exception as e:
-            logger.warning(f"Failed to persist strength record to Supabase: {e}")
+            logger.warning(f"Failed to persist strength record to Supabase: {e}", exc_info=True)
 
         # Update local cache (bounded)
         key = f"{user_id}:{exercise_id}"
@@ -141,7 +141,7 @@ class StrengthTrackingService:
             return records
 
         except Exception as e:
-            logger.warning(f"Failed to load strength history from Supabase: {e}")
+            logger.warning(f"Failed to load strength history from Supabase: {e}", exc_info=True)
             return self._cache.get(key, [])[:limit]
 
     def get_current_1rm(
@@ -187,7 +187,7 @@ class StrengthTrackingService:
             return records
 
         except Exception as e:
-            logger.warning(f"Failed to load PRs from Supabase: {e}")
+            logger.warning(f"Failed to load PRs from Supabase: {e}", exc_info=True)
             # Fallback to cache
             prs = []
             for key, records in self._cache.items():

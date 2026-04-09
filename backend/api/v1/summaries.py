@@ -119,7 +119,7 @@ async def generate_weekly_summary(user_id: str, request: Request, week_start: Op
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to generate weekly summary: {e}")
+        logger.error(f"Failed to generate weekly summary: {e}", exc_info=True)
         raise safe_internal_error(e, "generate_weekly_summary")
 
 
@@ -141,7 +141,7 @@ async def get_user_summaries(user_id: str, request: Request, limit: int = 12, cu
         return [_build_weekly_summary_response(ws) for ws in result.data]
 
     except Exception as e:
-        logger.error(f"Failed to get user summaries: {e}")
+        logger.error(f"Failed to get user summaries: {e}", exc_info=True)
         raise safe_internal_error(e, "get_user_summaries")
 
 
@@ -164,7 +164,7 @@ async def get_latest_summary(user_id: str, current_user: dict = Depends(get_curr
         return None
 
     except Exception as e:
-        logger.error(f"Failed to get latest summary: {e}")
+        logger.error(f"Failed to get latest summary: {e}", exc_info=True)
         raise safe_internal_error(e, "get_latest_summary")
 
 
@@ -213,7 +213,7 @@ async def get_notification_preferences(user_id: str, current_user: dict = Depend
         return NotificationPreferences(user_id=user_id)
 
     except Exception as e:
-        logger.error(f"Failed to get notification preferences: {e}")
+        logger.error(f"Failed to get notification preferences: {e}", exc_info=True)
         raise safe_internal_error(e, "get_notification_preferences")
 
 
@@ -274,7 +274,7 @@ async def update_notification_preferences(user_id: str, prefs: NotificationPrefe
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to update notification preferences: {e}")
+        logger.error(f"Failed to update notification preferences: {e}", exc_info=True)
         raise safe_internal_error(e, "update_notification_preferences")
 
 
@@ -554,7 +554,7 @@ Respond ONLY with valid JSON, no markdown."""
             }
 
     except Exception as e:
-        logger.error(f"Failed to generate AI summary: {e}")
+        logger.error(f"Failed to generate AI summary: {e}", exc_info=True)
 
     # Fallback content
     return {
@@ -859,5 +859,5 @@ async def generate_period_insight(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to generate period insight: {e}")
+        logger.error(f"Failed to generate period insight: {e}", exc_info=True)
         raise safe_internal_error(e, "generate_period_insight")

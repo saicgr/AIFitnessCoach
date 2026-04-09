@@ -613,7 +613,7 @@ Be creative, fun, and encouraging. Make it feel like a Spotify Wrapped reveal.""
                 "motivation_quote": parsed.get("motivation_quote", "Consistency beats intensity."),
             }
     except Exception as e:
-        logger.error(f"Failed to generate AI personality: {e}")
+        logger.error(f"Failed to generate AI personality: {e}", exc_info=True)
 
     # Fallback personality
     return {

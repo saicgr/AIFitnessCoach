@@ -201,7 +201,7 @@ async def parse_workout_input(request: Request, body: ParseWorkoutInputRequest,
         )
 
     except Exception as e:
-        logger.error(f"❌ [ParseInput] Failed to parse input: {e}")
+        logger.error(f"❌ [ParseInput] Failed to parse input: {e}", exc_info=True)
         raise safe_internal_error(e, "parse_workout_input")
 
 
@@ -320,7 +320,7 @@ async def parse_workout_input_v2(request: Request, body: ParseWorkoutInputV2Requ
         )
 
     except Exception as e:
-        logger.error(f"❌ [ParseInputV2] Failed to parse input: {e}")
+        logger.error(f"❌ [ParseInputV2] Failed to parse input: {e}", exc_info=True)
         raise safe_internal_error(e, "parse_workout_input_v2")
 
 
@@ -431,5 +431,5 @@ async def add_exercises_batch(request: Request, body: BatchAddExercisesRequest,
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"❌ [BatchAdd] Failed to add exercises: {e}")
+        logger.error(f"❌ [BatchAdd] Failed to add exercises: {e}", exc_info=True)
         raise safe_internal_error(e, "batch_add_exercises")

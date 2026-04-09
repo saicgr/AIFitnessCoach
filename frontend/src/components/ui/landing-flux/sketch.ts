@@ -173,7 +173,6 @@ export function createSketch(
 
         // Reset hover state
         let foundCircle = false;
-        let foundGap = false;
 
         for (let ei = 0; ei < row.elements.length; ei++) {
           const el = row.elements[ei];
@@ -369,40 +368,18 @@ export function createSketch(
       p.resizeCanvas(w, h);
     };
 
-    // Touch support
-    p.touchStarted = () => {
-      // Handled by mouseX/mouseY which p5 sets from touch
-    };
-    p.touchMoved = () => {
-      return false; // prevent default
-    };
-    p.touchEnded = () => {
-      // Reset hover states
-      for (const row of rows) {
-        row.hoveredCircle = null;
-        row.hoverBarActive = false;
-      }
-    };
+    // Touch support — p5 v2 uses event handlers on canvas directly
+    // mouseX/mouseY are set from touch events automatically by p5
   };
 }
 
-// 4-pointed bezier star
+// 4-pointed star using vertices (alternating outer/inner points)
 function drawStar(p: p5Type, cx: number, cy: number, innerR: number, outerR: number) {
   p.beginShape();
-  for (let i = 0; i < 4; i++) {
-    const angle = (i * Math.PI) / 2;
-    const outerX = cx + Math.cos(angle) * outerR;
-    const outerY = cy + Math.sin(angle) * outerR;
-
-    const prevAngle = angle - Math.PI / 4;
-    const nextAngle = angle + Math.PI / 4;
-    const cp1x = cx + Math.cos(prevAngle) * innerR;
-    const cp1y = cy + Math.sin(prevAngle) * innerR;
-    const cp2x = cx + Math.cos(nextAngle) * innerR;
-    const cp2y = cy + Math.sin(nextAngle) * innerR;
-
-    p.vertex(cp1x, cp1y);
-    p.bezierVertex(cp1x, cp1y, outerX, outerY, cp2x, cp2y);
+  for (let i = 0; i < 8; i++) {
+    const angle = (i * Math.PI) / 4;
+    const radius = i % 2 === 0 ? outerR : innerR;
+    p.vertex(cx + Math.cos(angle) * radius, cy + Math.sin(angle) * radius);
   }
   p.endShape(p.CLOSE);
 }

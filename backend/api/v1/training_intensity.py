@@ -236,7 +236,7 @@ async def set_user_1rm(body: Set1RMRequest,
                 }],
             )
         except Exception as rag_error:
-            logger.warning(f"Failed to index 1RM to ChromaDB: {rag_error}")
+            logger.warning(f"Failed to index 1RM to ChromaDB: {rag_error}", exc_info=True)
 
         return UserExercise1RMResponse(
             exercise_name=result.exercise_name,
@@ -248,7 +248,7 @@ async def set_user_1rm(body: Set1RMRequest,
             updated_at=str(result.updated_at) if result.updated_at else None,
         )
     except Exception as e:
-        logger.error(f"Error setting 1RM: {e}")
+        logger.error(f"Error setting 1RM: {e}", exc_info=True)
         raise safe_internal_error(e, "training_intensity")
 
 
@@ -277,7 +277,7 @@ async def get_user_1rms(user_id: str,
             for r in results
         ]
     except Exception as e:
-        logger.error(f"Error getting 1RMs: {e}")
+        logger.error(f"Error getting 1RMs: {e}", exc_info=True)
         raise safe_internal_error(e, "training_intensity")
 
 
@@ -306,7 +306,7 @@ async def get_user_1rm(user_id: str, exercise_name: str,
             updated_at=str(result.updated_at) if result.updated_at else None,
         )
     except Exception as e:
-        logger.error(f"Error getting 1RM: {e}")
+        logger.error(f"Error getting 1RM: {e}", exc_info=True)
         raise safe_internal_error(e, "training_intensity")
 
 
@@ -331,7 +331,7 @@ async def delete_user_1rm(user_id: str, exercise_name: str,
 
         return {"message": f"Deleted 1RM for {exercise_name}"}
     except Exception as e:
-        logger.error(f"Error deleting 1RM: {e}")
+        logger.error(f"Error deleting 1RM: {e}", exc_info=True)
         raise safe_internal_error(e, "training_intensity")
 
 
@@ -385,14 +385,14 @@ async def set_global_intensity(request: SetIntensityRequest,
                 global_intensity_percent=intensity,
             )
         except Exception as rag_error:
-            logger.warning(f"Failed to index intensity to ChromaDB: {rag_error}")
+            logger.warning(f"Failed to index intensity to ChromaDB: {rag_error}", exc_info=True)
 
         return IntensityResponse(
             intensity_percent=intensity,
             description=description,
         )
     except Exception as e:
-        logger.error(f"Error setting intensity: {e}")
+        logger.error(f"Error setting intensity: {e}", exc_info=True)
         raise safe_internal_error(e, "training_intensity")
 
 
@@ -416,7 +416,7 @@ async def get_intensity_settings(user_id: str,
             exercise_overrides=overrides,
         )
     except Exception as e:
-        logger.error(f"Error getting intensity settings: {e}")
+        logger.error(f"Error getting intensity settings: {e}", exc_info=True)
         raise safe_internal_error(e, "training_intensity")
 
 
@@ -453,7 +453,7 @@ async def set_exercise_intensity_override(request: SetExerciseIntensityRequest,
             description=description,
         )
     except Exception as e:
-        logger.error(f"Error setting exercise intensity: {e}")
+        logger.error(f"Error setting exercise intensity: {e}", exc_info=True)
         raise safe_internal_error(e, "training_intensity")
 
 
@@ -478,7 +478,7 @@ async def delete_exercise_intensity_override(user_id: str, exercise_name: str,
 
         return {"message": f"Removed intensity override for {exercise_name}"}
     except Exception as e:
-        logger.error(f"Error deleting exercise intensity: {e}")
+        logger.error(f"Error deleting exercise intensity: {e}", exc_info=True)
         raise safe_internal_error(e, "training_intensity")
 
 
@@ -519,7 +519,7 @@ async def calculate_working_weight(request: CalculateWeightRequest,
             description=description,
         )
     except Exception as e:
-        logger.error(f"Error calculating working weight: {e}")
+        logger.error(f"Error calculating working weight: {e}", exc_info=True)
         raise safe_internal_error(e, "training_intensity")
 
 
@@ -558,7 +558,7 @@ async def calculate_workout_weights(request: BulkWorkingWeightsRequest,
             for r in results
         ]
     except Exception as e:
-        logger.error(f"Error calculating workout weights: {e}")
+        logger.error(f"Error calculating workout weights: {e}", exc_info=True)
         raise safe_internal_error(e, "training_intensity")
 
 
@@ -631,14 +631,14 @@ async def auto_populate_1rms(
                     } for rm in all_1rms],
                 )
             except Exception as rag_error:
-                logger.warning(f"Failed to index auto-populated 1RMs to ChromaDB: {rag_error}")
+                logger.warning(f"Failed to index auto-populated 1RMs to ChromaDB: {rag_error}", exc_info=True)
 
         return AutoPopulateResponse(
             count=count,
             message=message,
         )
     except Exception as e:
-        logger.error(f"Error auto-populating 1RMs: {e}")
+        logger.error(f"Error auto-populating 1RMs: {e}", exc_info=True)
         raise safe_internal_error(e, "training_intensity")
 
 
@@ -701,7 +701,7 @@ async def create_linked_exercise(request: CreateLinkedExerciseRequest,
                 }],
             )
         except Exception as rag_error:
-            logger.warning(f"Failed to index linked exercise to ChromaDB: {rag_error}")
+            logger.warning(f"Failed to index linked exercise to ChromaDB: {rag_error}", exc_info=True)
 
         return LinkedExerciseResponse(
             id=result.id,
@@ -715,7 +715,7 @@ async def create_linked_exercise(request: CreateLinkedExerciseRequest,
             updated_at=str(result.updated_at) if result.updated_at else None,
         )
     except Exception as e:
-        logger.error(f"Error creating linked exercise: {e}")
+        logger.error(f"Error creating linked exercise: {e}", exc_info=True)
         raise safe_internal_error(e, "training_intensity")
 
 
@@ -756,7 +756,7 @@ async def get_linked_exercises(
             for r in results
         ]
     except Exception as e:
-        logger.error(f"Error getting linked exercises: {e}")
+        logger.error(f"Error getting linked exercises: {e}", exc_info=True)
         raise safe_internal_error(e, "training_intensity")
 
 
@@ -816,7 +816,7 @@ async def update_linked_exercise(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error updating linked exercise: {e}")
+        logger.error(f"Error updating linked exercise: {e}", exc_info=True)
         raise safe_internal_error(e, "training_intensity")
 
 
@@ -848,7 +848,7 @@ async def delete_linked_exercise(link_id: str, user_id: str = Query(...),
 
         return {"message": "Linked exercise deleted successfully"}
     except Exception as e:
-        logger.error(f"Error deleting linked exercise: {e}")
+        logger.error(f"Error deleting linked exercise: {e}", exc_info=True)
         raise safe_internal_error(e, "training_intensity")
 
 
@@ -894,5 +894,5 @@ async def get_exercise_linking_suggestions(
             for s in suggestions
         ]
     except Exception as e:
-        logger.error(f"Error getting exercise suggestions: {e}")
+        logger.error(f"Error getting exercise suggestions: {e}", exc_info=True)
         raise safe_internal_error(e, "training_intensity")

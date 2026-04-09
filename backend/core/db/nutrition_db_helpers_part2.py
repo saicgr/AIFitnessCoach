@@ -252,7 +252,7 @@ class NutritionDBPart2:
                         "last_accessed_at": datetime.utcnow().isoformat()
                     }).eq("id", cache_entry["id"]).execute()
                 except Exception as e:
-                    logger.warning(f"Failed to update cache hit stats: {e}")
+                    logger.warning(f"Failed to update cache hit stats: {e}", exc_info=True)
 
                 logger.info(f"🎯 Cache HIT for food query (hash: {query_hash[:8]}...)")
                 return cache_entry.get("analysis_result")
@@ -260,7 +260,7 @@ class NutritionDBPart2:
             return None
 
         except Exception as e:
-            logger.error(f"Error checking food analysis cache: {e}")
+            logger.error(f"Error checking food analysis cache: {e}", exc_info=True)
             return None
 
     def cache_food_analysis(
@@ -299,7 +299,7 @@ class NutritionDBPart2:
             return True
 
         except Exception as e:
-            logger.error(f"Error caching food analysis: {e}")
+            logger.error(f"Error caching food analysis: {e}", exc_info=True)
             return False
 
     # ==================== COMMON FOODS DATABASE ====================
@@ -355,7 +355,7 @@ class NutritionDBPart2:
             return None
 
         except Exception as e:
-            logger.error(f"Error searching common foods: {e}")
+            logger.error(f"Error searching common foods: {e}", exc_info=True)
             return None
 
     def list_common_foods(
@@ -385,7 +385,7 @@ class NutritionDBPart2:
             return result.data or []
 
         except Exception as e:
-            logger.error(f"Error listing common foods: {e}")
+            logger.error(f"Error listing common foods: {e}", exc_info=True)
             return []
 
     def upsert_learned_food(
@@ -514,7 +514,7 @@ class NutritionDBPart2:
             return result.data[0] if result.data else None
 
         except Exception as e:
-            logger.error(f"Error upserting learned food '{name}': {e}")
+            logger.error(f"Error upserting learned food '{name}': {e}", exc_info=True)
             return None
 
     # ==================== RAG CONTEXT CACHING ====================
@@ -560,7 +560,7 @@ class NutritionDBPart2:
                         "last_accessed_at": datetime.utcnow().isoformat()
                     }).eq("id", cache_entry["id"]).execute()
                 except Exception as e:
-                    logger.warning(f"Failed to update RAG cache hit stats: {e}")
+                    logger.warning(f"Failed to update RAG cache hit stats: {e}", exc_info=True)
 
                 logger.info(f"🎯 RAG cache HIT for goal hash: {goal_hash[:8]}...")
                 return cache_entry.get("context_result")
@@ -568,7 +568,7 @@ class NutritionDBPart2:
             return None
 
         except Exception as e:
-            logger.error(f"Error checking RAG context cache: {e}")
+            logger.error(f"Error checking RAG context cache: {e}", exc_info=True)
             return None
 
     def cache_rag_context(
@@ -602,7 +602,7 @@ class NutritionDBPart2:
             return True
 
         except Exception as e:
-            logger.error(f"Error caching RAG context: {e}")
+            logger.error(f"Error caching RAG context: {e}", exc_info=True)
             return False
 
     @staticmethod

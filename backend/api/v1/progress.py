@@ -219,7 +219,7 @@ async def get_strength_over_time(
         )
 
     except Exception as e:
-        logger.error(f"Failed to get strength progression: {e}")
+        logger.error(f"Failed to get strength progression: {e}", exc_info=True)
         raise safe_internal_error(e, "progress")
 
 
@@ -287,7 +287,7 @@ async def get_volume_over_time(
         )
 
     except Exception as e:
-        logger.error(f"Failed to get volume progression: {e}")
+        logger.error(f"Failed to get volume progression: {e}", exc_info=True)
         raise safe_internal_error(e, "progress")
 
 
@@ -353,7 +353,7 @@ async def get_exercise_progression(
         )
 
     except Exception as e:
-        logger.error(f"Failed to get exercise progression: {e}")
+        logger.error(f"Failed to get exercise progression: {e}", exc_info=True)
         raise safe_internal_error(e, "progress")
 
 
@@ -464,7 +464,7 @@ async def get_progress_summary(
         )
 
     except Exception as e:
-        logger.error(f"Failed to get progress summary: {e}")
+        logger.error(f"Failed to get progress summary: {e}", exc_info=True)
         raise safe_internal_error(e, "progress")
 
 
@@ -494,7 +494,7 @@ async def log_chart_view(request: ChartViewLogRequest,
         return {"success": True, "message": "Chart view logged"}
 
     except Exception as e:
-        logger.error(f"Failed to log chart view: {e}")
+        logger.error(f"Failed to log chart view: {e}", exc_info=True)
         # Don't fail the request for logging errors
         return {"success": False, "message": str(e)}
 
@@ -528,7 +528,7 @@ async def get_available_muscle_groups(user_id: str,
         }
 
     except Exception as e:
-        logger.error(f"Failed to get muscle groups: {e}")
+        logger.error(f"Failed to get muscle groups: {e}", exc_info=True)
         raise safe_internal_error(e, "progress")
 
 

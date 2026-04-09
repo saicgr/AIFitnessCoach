@@ -235,7 +235,7 @@ Return ONLY the reasoning text, nothing else."""
         )
 
     except Exception as e:
-        logger.warning(f"AI reasoning generation failed: {e}")
+        logger.warning(f"AI reasoning generation failed: {e}", exc_info=True)
         raise
 
 
@@ -287,11 +287,11 @@ async def get_rest_suggestion(body: RestSuggestionRequest,
             return suggestion
 
         except Exception as ai_error:
-            logger.warning(f"AI suggestion failed, using rule-based: {ai_error}")
+            logger.warning(f"AI suggestion failed, using rule-based: {ai_error}", exc_info=True)
             return rule_based
 
     except Exception as e:
-        logger.error(f"Rest suggestion failed: {e}")
+        logger.error(f"Rest suggestion failed: {e}", exc_info=True)
         raise safe_internal_error(e, "rest_suggestions")
 
 

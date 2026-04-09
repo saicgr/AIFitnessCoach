@@ -63,7 +63,7 @@ async def get_favorite_exercises(user_id: str,
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to get favorite exercises: {e}")
+        logger.error(f"Failed to get favorite exercises: {e}", exc_info=True)
         raise safe_internal_error(e, "users")
 
 
@@ -121,7 +121,7 @@ async def add_favorite_exercise(user_id: str, request: FavoriteExerciseRequest,
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to add favorite exercise: {e}")
+        logger.error(f"Failed to add favorite exercise: {e}", exc_info=True)
         raise safe_internal_error(e, "users")
 
 
@@ -162,7 +162,7 @@ async def remove_favorite_exercise(user_id: str, exercise_name: str,
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to remove favorite exercise: {e}")
+        logger.error(f"Failed to remove favorite exercise: {e}", exc_info=True)
         raise safe_internal_error(e, "users")
 
 
@@ -220,7 +220,7 @@ async def get_exercise_queue(user_id: str,
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to get exercise queue: {e}")
+        logger.error(f"Failed to get exercise queue: {e}", exc_info=True)
         raise safe_internal_error(e, "users")
 
 
@@ -295,7 +295,7 @@ async def add_to_exercise_queue(user_id: str, request: QueueExerciseRequest,
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to add to exercise queue: {e}")
+        logger.error(f"Failed to add to exercise queue: {e}", exc_info=True)
         raise safe_internal_error(e, "users")
 
 
@@ -348,7 +348,7 @@ async def update_exercise_queue_item(user_id: str, exercise_name: str,
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to update exercise queue item: {e}")
+        logger.error(f"Failed to update exercise queue item: {e}", exc_info=True)
         raise safe_internal_error(e, "users")
 
 
@@ -385,5 +385,5 @@ async def remove_from_exercise_queue(user_id: str, exercise_name: str,
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to remove from exercise queue: {e}")
+        logger.error(f"Failed to remove from exercise queue: {e}", exc_info=True)
         raise safe_internal_error(e, "users")

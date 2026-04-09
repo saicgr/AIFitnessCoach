@@ -62,7 +62,7 @@ async def create_weight_log(request: WeightLogCreate, current_user: dict = Depen
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to create weight log: {e}")
+        logger.error(f"Failed to create weight log: {e}", exc_info=True)
         raise safe_internal_error(e, "nutrition")
 
 
@@ -112,7 +112,7 @@ async def get_weight_logs(
         return logs
 
     except Exception as e:
-        logger.error(f"Failed to get weight logs: {e}")
+        logger.error(f"Failed to get weight logs: {e}", exc_info=True)
         raise safe_internal_error(e, "nutrition")
 
 
@@ -139,7 +139,7 @@ async def delete_weight_log(
         return {"success": True, "message": "Weight log deleted"}
 
     except Exception as e:
-        logger.error(f"Failed to delete weight log: {e}")
+        logger.error(f"Failed to delete weight log: {e}", exc_info=True)
         raise safe_internal_error(e, "nutrition")
 
 
@@ -219,5 +219,5 @@ async def get_weight_trend(
         )
 
     except Exception as e:
-        logger.error(f"Failed to calculate weight trend: {e}")
+        logger.error(f"Failed to calculate weight trend: {e}", exc_info=True)
         raise safe_internal_error(e, "nutrition")

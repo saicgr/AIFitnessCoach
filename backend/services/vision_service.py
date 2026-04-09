@@ -192,7 +192,7 @@ Guidelines:
                     result = json.loads(content)
                 except json.JSONDecodeError:
                     # Try to repair truncated/malformed JSON by extracting food_items
-                    logger.warning(f"⚠️ JSON parse failed, attempting repair. Raw: {content[:300]}...")
+                    logger.warning(f"⚠️ JSON parse failed, attempting repair. Raw: {content[:300]}...", exc_info=True)
                     import re
                     # Extract what we can from the partial JSON
                     repaired = content
@@ -206,8 +206,8 @@ Guidelines:
                         result = json.loads(repaired)
                         logger.info(f"✅ JSON repair successful")
                     except json.JSONDecodeError as e2:
-                        logger.error(f"❌ JSON repair also failed: {e2}")
-                        logger.error(f"Raw content: {content[:500]}...")
+                        logger.error(f"❌ JSON repair also failed: {e2}", exc_info=True)
+                        logger.error(f"Raw content: {content[:500]}...", exc_info=True)
                         raise ValueError(f"Invalid JSON in vision response: {e2}")
 
             # Validate required fields
@@ -248,12 +248,12 @@ Guidelines:
             return result
 
         except json.JSONDecodeError as e:
-            logger.error(f"❌ Failed to parse JSON response: {e}")
-            logger.error(f"Raw content: {content[:500]}...")
+            logger.error(f"❌ Failed to parse JSON response: {e}", exc_info=True)
+            logger.error(f"Raw content: {content[:500]}...", exc_info=True)
             raise ValueError(f"Invalid JSON in vision response: {e}")
 
         except Exception as e:
-            logger.error(f"❌ Vision analysis failed: {e}")
+            logger.error(f"❌ Vision analysis failed: {e}", exc_info=True)
             raise
 
     # Valid media content types for classification
@@ -335,7 +335,7 @@ Guidelines:
 
         except Exception as e:
             elapsed = _time.time() - start
-            logger.warning(f"[MediaClassifier] Classification failed (took {elapsed:.2f}s): {e}")
+            logger.warning(f"[MediaClassifier] Classification failed (took {elapsed:.2f}s): {e}", exc_info=True)
             return "unknown"
 
     async def _download_image_from_s3(self, s3_key: str) -> bytes:
@@ -358,7 +358,7 @@ Guidelines:
             except Exception as e:
                 if "NoSuchKey" in str(type(e).__name__) or "NoSuchKey" in str(e):
                     if attempt == 0:
-                        logger.warning(f"⚠️ S3 key not found (attempt 1), retrying in 2s: {s3_key}")
+                        logger.warning(f"⚠️ S3 key not found (attempt 1), retrying in 2s: {s3_key}", exc_info=True)
                         await asyncio.sleep(2)
                         continue
                 raise
@@ -619,10 +619,10 @@ Guidelines:
             return result
 
         except json.JSONDecodeError as e:
-            logger.error(f"Failed to parse multi-image JSON response: {e}")
+            logger.error(f"Failed to parse multi-image JSON response: {e}", exc_info=True)
             raise ValueError(f"Invalid JSON in multi-image vision response: {e}")
         except Exception as e:
-            logger.error(f"Multi-image food analysis failed: {e}")
+            logger.error(f"Multi-image food analysis failed: {e}", exc_info=True)
             raise
 
     async def analyze_app_screenshot(
@@ -726,10 +726,10 @@ Guidelines:
             return result
 
         except json.JSONDecodeError as e:
-            logger.error(f"Failed to parse app screenshot JSON: {e}")
+            logger.error(f"Failed to parse app screenshot JSON: {e}", exc_info=True)
             raise ValueError(f"Invalid JSON in app screenshot response: {e}")
         except Exception as e:
-            logger.error(f"App screenshot analysis failed: {e}")
+            logger.error(f"App screenshot analysis failed: {e}", exc_info=True)
             raise
 
     async def analyze_nutrition_label(
@@ -839,10 +839,10 @@ Guidelines:
             return result
 
         except json.JSONDecodeError as e:
-            logger.error(f"Failed to parse nutrition label JSON: {e}")
+            logger.error(f"Failed to parse nutrition label JSON: {e}", exc_info=True)
             raise ValueError(f"Invalid JSON in nutrition label response: {e}")
         except Exception as e:
-            logger.error(f"Nutrition label analysis failed: {e}")
+            logger.error(f"Nutrition label analysis failed: {e}", exc_info=True)
             raise
 
     def _get_default_value(self, field: str):

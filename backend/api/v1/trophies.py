@@ -168,7 +168,7 @@ async def get_trophy_room_summary(user_id: str,
         )
 
     except Exception as e:
-        logger.error(f"Failed to get trophy summary: {e}")
+        logger.error(f"Failed to get trophy summary: {e}", exc_info=True)
         raise safe_internal_error(e, "trophies")
 
 
@@ -300,7 +300,7 @@ async def get_all_trophies(
         return result
 
     except Exception as e:
-        logger.error(f"Failed to get all trophies: {e}")
+        logger.error(f"Failed to get all trophies: {e}", exc_info=True)
         raise safe_internal_error(e, "trophies")
 
 
@@ -376,7 +376,7 @@ async def get_earned_trophies(user_id: str,
         return result
 
     except Exception as e:
-        logger.error(f"Failed to get earned trophies: {e}")
+        logger.error(f"Failed to get earned trophies: {e}", exc_info=True)
         raise safe_internal_error(e, "trophies")
 
 
@@ -458,7 +458,7 @@ async def get_recent_trophies(
         return result
 
     except Exception as e:
-        logger.error(f"Failed to get recent trophies: {e}")
+        logger.error(f"Failed to get recent trophies: {e}", exc_info=True)
         raise safe_internal_error(e, "trophies")
 
 
@@ -491,7 +491,7 @@ async def mark_trophies_notified(
         }
 
     except Exception as e:
-        logger.error(f"Failed to mark trophies as notified: {e}")
+        logger.error(f"Failed to mark trophies as notified: {e}", exc_info=True)
         raise safe_internal_error(e, "trophies")
 
 
@@ -532,7 +532,7 @@ async def check_all_user_trophies(user_id: str,
         )
 
     except Exception as e:
-        logger.error(f"Failed to check trophies: {e}")
+        logger.error(f"Failed to check trophies: {e}", exc_info=True)
         raise safe_internal_error(e, "trophies")
 
 
@@ -562,7 +562,7 @@ async def check_workout_trophies(
         }
 
     except Exception as e:
-        logger.error(f"Failed to check workout trophies: {e}")
+        logger.error(f"Failed to check workout trophies: {e}", exc_info=True)
         raise safe_internal_error(e, "trophies")
 
 
@@ -643,7 +643,7 @@ async def get_user_xp(user_id: str,
             )
 
     except Exception as e:
-        logger.error(f"Failed to get user XP: {e}")
+        logger.error(f"Failed to get user XP: {e}", exc_info=True)
         # Return default on error (migration 227 values)
         return UserXPResponse(
             user_id=user_id,

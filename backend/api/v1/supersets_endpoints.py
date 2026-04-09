@@ -124,7 +124,7 @@ async def save_favorite_superset_pair(user_id: str = Query(...), request: Favori
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error saving favorite superset pair: {e}")
+        logger.error(f"Error saving favorite superset pair: {e}", exc_info=True)
         raise safe_internal_error(e, "supersets")
 
 
@@ -166,7 +166,7 @@ async def get_favorite_superset_pairs(user_id: str,
         return pairs
 
     except Exception as e:
-        logger.error(f"Error getting favorite superset pairs: {e}")
+        logger.error(f"Error getting favorite superset pairs: {e}", exc_info=True)
         raise safe_internal_error(e, "supersets")
 
 
@@ -194,7 +194,7 @@ async def remove_favorite_superset_pair(pair_id: str, user_id: str = Query(...),
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error removing favorite superset pair: {e}")
+        logger.error(f"Error removing favorite superset pair: {e}", exc_info=True)
         raise safe_internal_error(e, "supersets")
 
 
@@ -312,7 +312,7 @@ async def get_superset_history(
         )
 
     except Exception as e:
-        logger.error(f"Error getting superset history: {e}")
+        logger.error(f"Error getting superset history: {e}", exc_info=True)
         raise safe_internal_error(e, "supersets")
 
 
@@ -350,7 +350,7 @@ async def get_user_superset_preferences(user_id: str) -> Dict[str, Any]:
             "allow_same_muscle": superset_prefs.get("allow_same_muscle", False),
         }
     except Exception as e:
-        logger.error(f"Error getting superset preferences: {e}")
+        logger.error(f"Error getting superset preferences: {e}", exc_info=True)
         return {"enabled": True, "max_pairs_per_workout": 3}
 
 
@@ -378,7 +378,7 @@ async def increment_favorite_pair_usage(user_id: str, exercise_1: str, exercise_
             }).eq("id", pair["id"]).execute()
 
     except Exception as e:
-        logger.error(f"Error incrementing favorite pair usage: {e}")
+        logger.error(f"Error incrementing favorite pair usage: {e}", exc_info=True)
 
 
 def get_antagonist_muscles(muscle: str) -> List[str]:
@@ -461,6 +461,6 @@ async def log_superset_usage(request: SupersetLogRequest,
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error logging superset: {e}")
+        logger.error(f"Error logging superset: {e}", exc_info=True)
         # Don't fail the request - logging is non-critical
         return {"success": False, "message": str(e)}

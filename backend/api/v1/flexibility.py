@@ -137,7 +137,7 @@ async def get_all_flexibility_tests(current_user: dict = Depends(get_current_use
         return [FlexibilityTest(**t) for t in service.get_all_tests()]
 
     except Exception as e:
-        logger.error(f"Failed to get flexibility tests: {e}")
+        logger.error(f"Failed to get flexibility tests: {e}", exc_info=True)
         # Return from service as fallback
         service = get_flexibility_assessment_service()
         return [FlexibilityTest(**t) for t in service.get_all_tests()]
@@ -173,7 +173,7 @@ async def get_flexibility_test(test_id: str, current_user: dict = Depends(get_cu
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to get flexibility test: {e}")
+        logger.error(f"Failed to get flexibility test: {e}", exc_info=True)
         raise safe_internal_error(e, "flexibility")
 
 
@@ -196,7 +196,7 @@ async def get_tests_by_muscle(muscle: str, current_user: dict = Depends(get_curr
         return {"tests": tests, "count": len(tests)}
 
     except Exception as e:
-        logger.error(f"Failed to get tests by muscle: {e}")
+        logger.error(f"Failed to get tests by muscle: {e}", exc_info=True)
         raise safe_internal_error(e, "flexibility")
 
 
@@ -344,7 +344,7 @@ async def record_flexibility_assessment(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to record flexibility assessment: {e}")
+        logger.error(f"Failed to record flexibility assessment: {e}", exc_info=True)
         await log_user_error(
             user_id=user_id,
             action="flexibility_assessment_recorded",
@@ -376,7 +376,7 @@ async def _update_stretch_plan(db, user_id: str, test_type: str, rating: str, st
             on_conflict="user_id,test_type"
         ).execute()
     except Exception as e:
-        logger.warning(f"Failed to update stretch plan: {e}")
+        logger.warning(f"Failed to update stretch plan: {e}", exc_info=True)
 
 
 # ============================================
@@ -418,7 +418,7 @@ async def get_user_assessments(
         return [_parse_assessment(a) for a in result.data]
 
     except Exception as e:
-        logger.error(f"Failed to get user assessments: {e}")
+        logger.error(f"Failed to get user assessments: {e}", exc_info=True)
         raise safe_internal_error(e, "flexibility")
 
 
@@ -460,7 +460,7 @@ async def get_latest_assessments(user_id: str, current_user: dict = Depends(get_
         return {"assessments": enriched, "count": len(enriched)}
 
     except Exception as e:
-        logger.error(f"Failed to get latest assessments: {e}")
+        logger.error(f"Failed to get latest assessments: {e}", exc_info=True)
         raise safe_internal_error(e, "flexibility")
 
 
@@ -495,7 +495,7 @@ async def delete_assessment(user_id: str, assessment_id: str, current_user: dict
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to delete assessment: {e}")
+        logger.error(f"Failed to delete assessment: {e}", exc_info=True)
         raise safe_internal_error(e, "flexibility")
 
 
@@ -599,7 +599,7 @@ async def get_flexibility_progress(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to get flexibility progress: {e}")
+        logger.error(f"Failed to get flexibility progress: {e}", exc_info=True)
         raise safe_internal_error(e, "flexibility")
 
 
@@ -667,7 +667,7 @@ async def get_flexibility_summary(user_id: str, current_user: dict = Depends(get
         )
 
     except Exception as e:
-        logger.error(f"Failed to get flexibility summary: {e}")
+        logger.error(f"Failed to get flexibility summary: {e}", exc_info=True)
         raise safe_internal_error(e, "flexibility")
 
 
@@ -706,7 +706,7 @@ async def get_flexibility_score(user_id: str, current_user: dict = Depends(get_c
         )
 
     except Exception as e:
-        logger.error(f"Failed to get flexibility score: {e}")
+        logger.error(f"Failed to get flexibility score: {e}", exc_info=True)
         raise safe_internal_error(e, "flexibility")
 
 
@@ -750,7 +750,7 @@ async def get_user_stretch_plans(user_id: str, current_user: dict = Depends(get_
         return {"plans": plans, "count": len(plans)}
 
     except Exception as e:
-        logger.error(f"Failed to get stretch plans: {e}")
+        logger.error(f"Failed to get stretch plans: {e}", exc_info=True)
         raise safe_internal_error(e, "flexibility")
 
 
@@ -796,7 +796,7 @@ async def get_stretch_plan_for_test(user_id: str, test_type: str, current_user: 
         }
 
     except Exception as e:
-        logger.error(f"Failed to get stretch plan: {e}")
+        logger.error(f"Failed to get stretch plan: {e}", exc_info=True)
         raise safe_internal_error(e, "flexibility")
 
 
@@ -835,7 +835,7 @@ async def evaluate_measurement(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to evaluate measurement: {e}")
+        logger.error(f"Failed to evaluate measurement: {e}", exc_info=True)
         raise safe_internal_error(e, "flexibility")
 
 
@@ -869,5 +869,5 @@ async def get_stretch_recommendations(test_type: str, rating: str, current_user:
         }
 
     except Exception as e:
-        logger.error(f"Failed to get recommendations: {e}")
+        logger.error(f"Failed to get recommendations: {e}", exc_info=True)
         raise safe_internal_error(e, "flexibility")

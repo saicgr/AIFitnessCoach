@@ -78,7 +78,7 @@ async def lookup_barcode(barcode: str, current_user: dict = Depends(get_current_
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to lookup barcode {barcode}: {e}")
+        logger.error(f"Failed to lookup barcode {barcode}: {e}", exc_info=True)
         raise safe_internal_error(e, "nutrition")
 
 
@@ -172,7 +172,7 @@ async def log_food_from_barcode(request: LogBarcodeRequest, http_request: Reques
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to log barcode {request.barcode}: {e}")
+        logger.error(f"Failed to log barcode {request.barcode}: {e}", exc_info=True)
         raise safe_internal_error(e, "nutrition")
 
 

@@ -137,7 +137,7 @@ def ensure_exercises_are_dicts(exercises) -> List[Dict[str, Any]]:
         try:
             exercises = json.loads(exercises)
         except (json.JSONDecodeError, ValueError):
-            logger.error(f"Failed to parse exercises string: {exercises[:200]}")
+            logger.error(f"Failed to parse exercises string: {exercises[:200]}", exc_info=True)
             return []
 
     if not isinstance(exercises, list):
@@ -149,7 +149,7 @@ def ensure_exercises_are_dicts(exercises) -> List[Dict[str, Any]]:
             try:
                 ex = json.loads(ex)
             except (json.JSONDecodeError, ValueError):
-                logger.warning(f"Skipping unparseable exercise string: {ex[:100]}")
+                logger.warning(f"Skipping unparseable exercise string: {ex[:100]}", exc_info=True)
                 continue
         if not isinstance(ex, dict):
             continue

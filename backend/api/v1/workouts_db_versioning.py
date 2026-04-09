@@ -48,7 +48,7 @@ async def _background_index_rag(workout: Workout):
     try:
         await index_workout_to_rag(workout)
     except Exception as e:
-        logger.warning(f"Background: Failed to index workout to RAG: {e}")
+        logger.warning(f"Background: Failed to index workout to RAG: {e}", exc_info=True)
 
 
 @router.post("/regenerate", response_model=Workout)
@@ -167,7 +167,7 @@ async def regenerate_workout(request: Request, body: RegenerateWorkoutRequest, b
             difficulty = user_difficulty or workout_data.get("difficulty", "medium")
 
         except Exception as ai_error:
-            logger.error(f"AI workout regeneration failed: {ai_error}")
+            logger.error(f"AI workout regeneration failed: {ai_error}", exc_info=True)
             raise HTTPException(
                 status_code=500,
                 detail=f"Failed to generate new workout: {str(ai_error)}"
@@ -278,9 +278,9 @@ async def regenerate_workout(request: Request, body: RegenerateWorkoutRequest, b
                                 user_id=body.user_id,
                             )
                     except Exception as chroma_error:
-                        logger.warning(f"Background: Failed to index custom inputs to ChromaDB: {chroma_error}")
+                        logger.warning(f"Background: Failed to index custom inputs to ChromaDB: {chroma_error}", exc_info=True)
             except Exception as analytics_error:
-                logger.warning(f"Background: Failed to record regeneration analytics: {analytics_error}")
+                logger.warning(f"Background: Failed to record regeneration analytics: {analytics_error}", exc_info=True)
 
         background_tasks.add_task(_bg_record_regeneration_analytics)
 
@@ -303,7 +303,7 @@ async def regenerate_workout(request: Request, body: RegenerateWorkoutRequest, b
                     status_code=200
                 )
             except Exception as e:
-                logger.warning(f"Background: Failed to log regeneration activity: {e}")
+                logger.warning(f"Background: Failed to log regeneration activity: {e}", exc_info=True)
 
         background_tasks.add_task(_bg_log_regeneration)
 
@@ -312,7 +312,7 @@ async def regenerate_workout(request: Request, body: RegenerateWorkoutRequest, b
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to regenerate workout: {e}")
+        logger.error(f"Failed to regenerate workout: {e}", exc_info=True)
         await log_user_error(
             user_id=body.user_id,
             action="workout_regeneration",
@@ -364,7 +364,7 @@ async def get_workout_versions(request: Request, workout_id: str,
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to get workout versions: {e}")
+        logger.error(f"Failed to get workout versions: {e}", exc_info=True)
         raise safe_internal_error(e, "workouts_db")
 
 
@@ -397,7 +397,7 @@ async def revert_workout(request: RevertWorkoutRequest,
     except ValueError:
         raise HTTPException(status_code=404, detail="Workout version not found")
     except Exception as e:
-        logger.error(f"Failed to revert workout: {e}")
+        logger.error(f"Failed to revert workout: {e}", exc_info=True)
         raise safe_internal_error(e, "workouts_db")
 
 
@@ -478,14 +478,14 @@ async def get_workout_ai_summary(workout_id: str, force_regenerate: bool = False
             else:
                 db.client.table("workout_summaries").insert(summary_record).execute()
         except Exception as store_error:
-            logger.warning(f"Failed to store workout summary: {store_error}")
+            logger.warning(f"Failed to store workout summary: {store_error}", exc_info=True)
 
         return {"summary": summary, "cached": False}
 
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to generate workout summary: {e}")
+        logger.error(f"Failed to generate workout summary: {e}", exc_info=True)
         raise safe_internal_error(e, "workouts_db")
 
 
@@ -505,7 +505,7 @@ async def get_workout_warmup(workout_id: str,
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to get warmup: {e}")
+        logger.error(f"Failed to get warmup: {e}", exc_info=True)
         raise safe_internal_error(e, "workouts_db")
 
 
@@ -523,7 +523,7 @@ async def get_workout_stretches(workout_id: str,
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to get stretches: {e}")
+        logger.error(f"Failed to get stretches: {e}", exc_info=True)
         raise safe_internal_error(e, "workouts_db")
 
 
@@ -552,7 +552,7 @@ async def create_workout_warmup(workout_id: str, duration_minutes: int = 5,
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to create warmup: {e}")
+        logger.error(f"Failed to create warmup: {e}", exc_info=True)
         raise safe_internal_error(e, "workouts_db")
 
 
@@ -581,7 +581,7 @@ async def create_workout_stretches(workout_id: str, duration_minutes: int = 5,
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to create stretches: {e}")
+        logger.error(f"Failed to create stretches: {e}", exc_info=True)
         raise safe_internal_error(e, "workouts_db")
 
 
@@ -611,7 +611,7 @@ async def create_workout_warmup_and_stretches(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to create warmup and stretches: {e}")
+        logger.error(f"Failed to create warmup and stretches: {e}", exc_info=True)
         raise safe_internal_error(e, "workouts_db")
 
 
@@ -648,7 +648,7 @@ async def get_user_exit_stats(user_id: str,
         }
 
     except Exception as e:
-        logger.error(f"Failed to get user exit stats: {e}")
+        logger.error(f"Failed to get user exit stats: {e}", exc_info=True)
         raise safe_internal_error(e, "workouts_db")
 
 
@@ -718,7 +718,7 @@ async def update_program(request: Request, body: UpdateProgramRequest,
             try:
                 db.delete_workout_changes_by_workout(w["id"])
             except Exception as e:
-                logger.warning(f"Could not delete workout changes for {w['id']}: {e}")
+                logger.warning(f"Could not delete workout changes for {w['id']}: {e}", exc_info=True)
 
         deleted_count = 0
         for w in workouts_to_delete:
@@ -726,7 +726,7 @@ async def update_program(request: Request, body: UpdateProgramRequest,
                 db.delete_workout(w["id"])
                 deleted_count += 1
             except Exception as e:
-                logger.error(f"Failed to delete workout {w['id']}: {e}")
+                logger.error(f"Failed to delete workout {w['id']}: {e}", exc_info=True)
 
         try:
             rag_service = get_workout_rag_service()
@@ -743,7 +743,7 @@ async def update_program(request: Request, body: UpdateProgramRequest,
                 change_reason="program_customization",
             )
         except Exception as e:
-            logger.warning(f"Could not index preferences to RAG: {e}")
+            logger.warning(f"Could not index preferences to RAG: {e}", exc_info=True)
 
         await log_user_activity(
             user_id=body.user_id,
@@ -770,7 +770,7 @@ async def update_program(request: Request, body: UpdateProgramRequest,
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to update program: {e}")
+        logger.error(f"Failed to update program: {e}", exc_info=True)
         await log_user_error(
             user_id=body.user_id,
             action="program_customization",
@@ -832,7 +832,7 @@ async def get_workout_generation_params(workout_id: str,
                     "equipment": parse_json_field(regen.get("selected_equipment"), []),
                 }
         except Exception as e:
-            logger.warning(f"Could not fetch program preferences: {e}")
+            logger.warning(f"Could not fetch program preferences: {e}", exc_info=True)
 
         exercises = parse_json_field(workout_data.get("exercises_json"), [])
         workout_type = workout_data.get("type", "strength")
@@ -890,7 +890,7 @@ async def get_workout_generation_params(workout_id: str,
                 raise ValueError("AI returned empty reasoning")
 
         except Exception as ai_error:
-            logger.warning(f"AI reasoning failed, using static fallback: {ai_error}")
+            logger.warning(f"AI reasoning failed, using static fallback: {ai_error}", exc_info=True)
 
             for i, ex in enumerate(exercises):
                 ex_name = ex.get("name", f"Exercise {i+1}")
@@ -937,5 +937,5 @@ async def get_workout_generation_params(workout_id: str,
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to get workout generation params: {e}")
+        logger.error(f"Failed to get workout generation params: {e}", exc_info=True)
         raise safe_internal_error(e, "workouts_db")

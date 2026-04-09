@@ -85,7 +85,7 @@ def resolve_timezone(request, db=None, user_id: Optional[str] = None) -> str:
             if db_tz and _is_valid_tz(db_tz):
                 return db_tz
         except Exception as e:
-            logger.warning(f"Could not read user timezone from DB: {e}")
+            logger.warning(f"Could not read user timezone from DB: {e}", exc_info=True)
 
     return "UTC"
 
@@ -140,5 +140,5 @@ def _safe_zone(tz_str: str) -> ZoneInfo:
     try:
         return ZoneInfo(tz_str)
     except (ZoneInfoNotFoundError, KeyError, ValueError):
-        logger.warning(f"Invalid timezone '{tz_str}', falling back to UTC")
+        logger.warning(f"Invalid timezone '{tz_str}', falling back to UTC", exc_info=True)
         return ZoneInfo("UTC")

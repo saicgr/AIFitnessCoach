@@ -11,6 +11,9 @@ from core.exceptions import safe_internal_error
 from core.supabase_db import get_supabase_db
 from core.logger import get_logger
 from core.activity_logger import log_user_activity
+from services.adaptive_tdee_service import get_adaptive_tdee_service, FoodLogSummary, WeightLog as ServiceWeightLog
+from services.adherence_tracking_service import get_adherence_tracking_service, NutritionTargets as ServiceNutritionTargets, NutritionActuals
+from services.metabolic_adaptation_service import get_metabolic_adaptation_service, TDEEHistoryEntry
 
 from api.v1.nutrition.models import (
     DetailedTDEEResponse,
@@ -180,7 +183,7 @@ async def get_detailed_tdee(request: Request, user_id: str, days: int = Query(de
                 "data_quality_score": calculation.data_quality_score,
             }).execute()
         except Exception as e:
-            logger.warning(f"Failed to store TDEE history: {e}")
+            logger.warning(f"Failed to store TDEE history: {e}", exc_info=True)
 
         return DetailedTDEEResponse(
             tdee=calculation.tdee,
@@ -210,7 +213,7 @@ async def get_detailed_tdee(request: Request, user_id: str, days: int = Query(de
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to get detailed TDEE: {e}")
+        logger.error(f"Failed to get detailed TDEE: {e}", exc_info=True)
         raise safe_internal_error(e, "nutrition")
 
 
@@ -317,7 +320,7 @@ async def get_adherence_summary(request: Request, user_id: str, weeks: int = Que
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to get adherence summary: {e}")
+        logger.error(f"Failed to get adherence summary: {e}", exc_info=True)
         raise safe_internal_error(e, "nutrition")
 
 
@@ -433,7 +436,7 @@ async def get_recommendation_options(user_id: str, current_user: dict = Depends(
             sustainability = adherence_service.calculate_sustainability_score(weekly_summaries)
             adherence_score = sustainability.score
         except Exception as adh_err:
-            logger.warning(f"Failed to compute adherence score, defaulting to 0.5: {adh_err}")
+            logger.warning(f"Failed to compute adherence score, defaulting to 0.5: {adh_err}", exc_info=True)
             adherence_score = 0.5
 
         # Get TDEE history for adaptation detection
@@ -481,7 +484,7 @@ async def get_recommendation_options(user_id: str, current_user: dict = Depends(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to get recommendation options: {e}")
+        logger.error(f"Failed to get recommendation options: {e}", exc_info=True)
         raise safe_internal_error(e, "nutrition")
 
 
@@ -664,6 +667,6 @@ async def select_recommendation(user_id: str, request: SelectRecommendationReque
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to select recommendation: {e}")
+        logger.error(f"Failed to select recommendation: {e}", exc_info=True)
         raise safe_internal_error(e, "nutrition")
 

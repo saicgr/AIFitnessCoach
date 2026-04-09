@@ -189,7 +189,7 @@ async def get_mood_history(
         )
 
     except Exception as e:
-        logger.error(f"Failed to get mood history for user {user_id}: {e}")
+        logger.error(f"Failed to get mood history for user {user_id}: {e}", exc_info=True)
         raise safe_internal_error(e, "generation")
 
 
@@ -432,7 +432,7 @@ async def get_mood_analytics(
         )
 
     except Exception as e:
-        logger.error(f"Failed to get mood analytics: {e}")
+        logger.error(f"Failed to get mood analytics: {e}", exc_info=True)
         raise safe_internal_error(e, "generation")
 
 
@@ -468,7 +468,7 @@ async def mark_mood_workout_completed(user_id: str, checkin_id: str,
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to mark mood workout completed: {e}")
+        logger.error(f"Failed to mark mood workout completed: {e}", exc_info=True)
         raise safe_internal_error(e, "generation")
 
 
@@ -515,7 +515,7 @@ async def get_today_mood(user_id: str,
         }
 
     except Exception as e:
-        logger.error(f"Failed to get today's mood: {e}")
+        logger.error(f"Failed to get today's mood: {e}", exc_info=True)
         raise safe_internal_error(e, "generation")
 
 
@@ -662,7 +662,7 @@ async def get_mood_weekly(user_id: str,
         )
 
     except Exception as e:
-        logger.error(f"Failed to get weekly mood data: {e}")
+        logger.error(f"Failed to get weekly mood data: {e}", exc_info=True)
         raise safe_internal_error(e, "generation")
 
 
@@ -785,5 +785,5 @@ async def get_mood_calendar(user_id: str, month: int, year: int,
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to get mood calendar data: {e}")
+        logger.error(f"Failed to get mood calendar data: {e}", exc_info=True)
         raise safe_internal_error(e, "generation")

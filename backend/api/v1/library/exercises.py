@@ -117,7 +117,7 @@ async def get_filter_options():
         return result
 
     except Exception as e:
-        logger.error(f"Error getting filter options: {e}")
+        logger.error(f"Error getting filter options: {e}", exc_info=True)
         raise safe_internal_error(e, "exercises")
 
 
@@ -153,7 +153,7 @@ async def get_equipment_types():
         return sorted_equipment
 
     except Exception as e:
-        logger.error(f"Error getting equipment types: {e}")
+        logger.error(f"Error getting equipment types: {e}", exc_info=True)
         raise safe_internal_error(e, "exercises")
 
 
@@ -187,7 +187,7 @@ async def get_exercise_types():
         return sorted_types
 
     except Exception as e:
-        logger.error(f"Error getting exercise types: {e}")
+        logger.error(f"Error getting exercise types: {e}", exc_info=True)
         raise safe_internal_error(e, "exercises")
 
 
@@ -221,7 +221,7 @@ async def get_body_parts():
         return sorted_parts
 
     except Exception as e:
-        logger.error(f"Error getting body parts: {e}")
+        logger.error(f"Error getting body parts: {e}", exc_info=True)
         raise safe_internal_error(e, "exercises")
 
 
@@ -415,7 +415,7 @@ async def list_exercises(
         return exercises
 
     except Exception as e:
-        logger.error(f"Error listing exercises: {e}")
+        logger.error(f"Error listing exercises: {e}", exc_info=True)
         raise safe_internal_error(e, "exercises")
 
 
@@ -461,7 +461,7 @@ async def get_exercises_grouped(
         return grouped
 
     except Exception as e:
-        logger.error(f"Error getting grouped exercises: {e}")
+        logger.error(f"Error getting grouped exercises: {e}", exc_info=True)
         raise safe_internal_error(e, "exercises")
 
 
@@ -490,5 +490,5 @@ async def get_exercise(exercise_id: str):
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error getting exercise {exercise_id}: {e}")
+        logger.error(f"Error getting exercise {exercise_id}: {e}", exc_info=True)
         raise safe_internal_error(e, "exercises")

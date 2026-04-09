@@ -4,79 +4,90 @@
 
 ## LinkedIn Post
 
-I was paying hundreds for an online fitness coach. He tracked my workouts, reviewed my meals, kept me accountable, and adjusted my plan every week. It worked -- but personal coaching adds up fast.
+I took a photo of my lunch. The app scored it 4/10 -- 40g short on protein, no fiber, double the sodium. Then told me exactly what to add.
 
-I kept thinking -- what if AI could do most of what he did? A coach that's always available, remembers everything, and costs a fraction of the price. So I spent months of tireless late nights building it.
+That's not a calorie counter. That's a coach.
 
-FitWiz -- an AI coach that generates personalized workouts, tracks your meals, and keeps you accountable. 200K+ curated foods. 500+ exercises.
+I used to pay hundreds for a trainer. Not for workouts -- for someone who actually looked at what I ate and said "this isn't enough." Who rebuilt my week when my shoulder hurt. Who called me out when I skipped legs.
 
-Type "chipotle bowl with chicken, rice, beans, guac" and it parses every item with calories, protein, carbs, fat, and 20+ micronutrients. Snap a photo of your plate -- same thing. Scan a barcode -- done. Three ways to log, all in seconds.
+So I built FitWiz -- an AI that does the same thing:
 
-Challenges that kept me up:
-- Gemini hallucinating fake exercises -- built RAG validation to catch them
-- Curating 200K+ foods from scratch across dozens of cuisines
-- Food logging parsing from 20-30s down to a few seconds
-- Workout generation via SSE streaming instead of 15-30s spinners
-- 50 performance issues found and fixed in a single audit
+- Snap your plate -- it scores your meal and tells you what to fix
+- "My knee hurts" -- workout rebuilds in seconds
+- Mid-set: "should I go heavier?" -- it checks your history and answers
+- Been slacking? It notices. It says something
+- Never worked out? It builds your entire plan
 
-What I picked up: data engineering (200K+ food DB, ETL, dedup, validation), AI engineering (prompt engineering, RAG, hallucination detection, streaming), LangGraph, ChromaDB, Redis, Supabase RLS, Drift, PostHog
+You don't need to understand fitness. Just show up. The AI handles the rest.
 
-Tech: Flutter, FastAPI, Supabase, Gemini, LangGraph, ChromaDB, Redis, Vercel, PostHog, Firebase, RevenueCat, AWS S3, Claude Code
+Android live. iOS soon. Free to start.
 
-Android is live. iOS coming soon. DM me your email for access (need to add you to the tester list first).
+Website: https://fitwiz.us
+Discord: https://discord.gg/WAYNZpVgsK
+Instagram: https://instagram.com/fitwiz.us
 
-fitwiz.us
+Questions? DM me here or on Discord/Instagram -- happy to help!
 
-#buildinpublic #flutter #ai #fitness #gemini #supabase #langgraph #solodev
+#buildinpublic #flutter #ai #fitness #gemini #vertexai #supabase #langgraph #solodev #dataengineering #aiengineering #promptengineering #rag #chromadb #redis #fastapi #python #dart #machinelearning #llm #googlecloud #firebase #fittech
 
 ---
 
 ## X (Twitter) Post
 
-I was paying hundreds for a coach who tracked my workouts, meals, and kept me accountable. It worked -- but adds up fast.
+I took a photo of my lunch.
 
-So I built an AI version. Months of tireless nights.
+The app said: "4/10. You're 40g short on protein, missing fiber, double the sodium you need. Add grilled chicken and swap the white rice for brown."
 
-- Type "chicken rice broccoli" -- parsed instantly with full macros
-- Knee hurts? Workouts adapt in seconds
-- 200K+ curated foods, 500+ exercises
+No fitness app does that. They show you a number and leave.
 
-Android live. iOS soon. DM me your email for access.
+FitWiz coaches you:
+- Knee hurts? Workout rebuilds around it in seconds
+- Not sure what weight to use? It checks your last 4 sessions
+- Been skipping legs? It notices. It says something
+- Don't know where to start? It builds your entire plan
 
-fitwiz.us
+You don't need to understand fitness. Just show up. The AI handles the rest.
 
----
+Free. No credit card. Android live, iOS soon.
 
-## Reddit Post - r/FitWiz (First Channel Post)
+Website: https://fitwiz.us
+Discord: https://discord.gg/WAYNZpVgsK
+Instagram: https://instagram.com/fitwiz.us
 
-**Title: Welcome to FitWiz -- your AI fitness coach is here**
-
-I used to pay hundreds for an online coach who tracked my workouts, reviewed my meals, and kept me accountable. It worked, but personal coaching adds up. I kept thinking AI could handle most of that. So I spent months building it.
-
-FitWiz: type "chipotle bowl with chicken, rice, beans" -- every item parsed with calories and macros. Snap a photo or scan a barcode. 200K+ curated foods. 500+ exercises. Streaks, progress photos, weight tracking.
-
-Android is live. iOS coming soon. DM me or drop your email for access.
-
-Feature requests, bugs, feedback all welcome. I read everything.
-
-fitwiz.us
+Questions? DM me here or on Discord/Instagram -- happy to help!
 
 ---
 
 ## Reddit Post - r/androidapps or r/fitness (Tester Recruitment)
 
-**Title: Solo-built an AI fitness coach -- need testers (free full access)**
+**Title: I took a photo of my lunch. The app told me it scored 4/10 and exactly what to fix.**
 
-Spent months building FitWiz -- an AI coach that generates workouts, tracks meals (type it, snap it, or scan it -- parsed instantly), and keeps you accountable. 200K+ curated foods, 500+ exercises.
+Not a calorie counter. An actual coach.
 
-Need testers before I can go public:
-1. DM me or drop your email (I need to add you first)
+I got tired of fitness apps that show you a number and leave. You log your food, see 1,800 calories, and think "cool I guess?" No one tells you the meal is trash because you're missing protein and fiber. No one rebuilds your workout when your knee is acting up. No one notices you haven't done legs in a month.
+
+So I built FitWiz:
+
+- Snap your plate -- it scores your meal out of 10, flags what's missing, tells you what to add
+- Tell it "my shoulder hurts" -- your entire week rebuilds around the injury. Not next session. Right now
+- Mid-workout: "should I go heavier?" -- it pulls your history and gives a real answer
+- Never worked out before? Tell it your goals and equipment. It builds your entire month
+- Been slacking? It notices. It brings it up
+
+You don't need to know anything about fitness. You just show up. The AI does the thinking.
+
+200K+ curated foods. 500+ exercises. Free to start, no credit card.
+
+Need testers before public launch:
+1. DM me or drop your email
 2. I send the testing link
 3. Accept + install (2 min)
 
-Full free access. No credit card. iOS coming soon.
+Website: https://fitwiz.us
+Discord: https://discord.gg/WAYNZpVgsK
+Instagram: https://instagram.com/fitwiz.us
 
-fitwiz.us
+Questions? DM me here or on Discord/Instagram -- happy to help!
 
 ---
 
@@ -84,18 +95,28 @@ fitwiz.us
 
 **Caption**:
 
-I was paying hundreds for a coach who tracked my workouts, meals, and kept me accountable. It worked -- but adds up fast.
+I took a photo of my lunch.
 
-So I built an AI version. Months of tireless nights.
+The app said: "4/10. You're 40g short on protein, missing fiber entirely. Add grilled chicken and a side of greens."
 
-Type what you ate -- parsed instantly with full macros.
-Snap a photo. Scan a barcode.
-200K+ curated foods. 500+ exercises.
-A coach that keeps you accountable.
+No fitness app does that. They give you a number and disappear.
 
-Android live. iOS soon. DM me your email for access.
+FitWiz actually coaches you:
 
-fitwiz.us
+Knee hurts? Workout rebuilds in seconds.
+Not sure what weight to use? It checks your history.
+Never worked out before? It builds your entire plan.
+Been slacking? It notices.
+
+You don't need to understand fitness. Just show up. The AI handles the rest.
+
+Free. No credit card. Android live, iOS soon.
+
+Website: https://fitwiz.us
+Discord: https://discord.gg/WAYNZpVgsK
+Instagram: https://instagram.com/fitwiz.us
+
+Questions? DM me here or on Discord/Instagram -- happy to help!
 
 #fitwiz #fitnessapp #aicoach #workoutplanner #mealtracker #caloriecounter #fitnessmotivation #gymlife #buildinpublic #solodev #personaltrainer #fittech
 
@@ -103,34 +124,44 @@ fitwiz.us
 
 ## DM to Testers (WhatsApp / Text / Discord)
 
-Hey! I've been building a fitness app for months -- it's an AI coach that tracks your workouts, parses your meals instantly (just type what you ate), and keeps you accountable. Like having a personal trainer in your pocket.
+Hey! I built a fitness app that actually coaches you -- not just tracks numbers.
+
+Take a photo of your food and it tells you what's wrong and how to fix it. Say "my shoulder hurts" and your workout rebuilds instantly. Don't know where to start? It builds your entire plan around your goals. You don't need to know anything about fitness.
 
 Need your help getting it on the Play Store:
 1. Send me your Gmail so I can add you as a tester
 2. Once added, open this link: https://play.google.com/apps/testing/com.aifitnesscoach.app
 3. Accept + install
 
-Takes 2 min. Full free access. Google requires 12 testers before I can launch publicly.
+Takes 2 min. Full free access.
 
-fitwiz.us
+Website: https://fitwiz.us
+Discord: https://discord.gg/WAYNZpVgsK
+Instagram: https://instagram.com/fitwiz.us
+
+Questions? DM me here or on Discord/Instagram -- happy to help!
 
 ---
 
 ## Email to Testers
 
-**Subject**: Quick favor -- help me launch FitWiz (2 min)
+**Subject**: This app told me I scored 4/10 on my lunch -- then fixed it
 
 Hey [NAME],
 
-I've been building a fitness app for months -- an AI coach that creates personalized workouts, tracks your meals (just type "eggs, toast, coffee" and it parses everything instantly with full macros), and keeps you accountable. 200K+ curated foods.
+I built a fitness app that actually coaches you. Take a photo of your meal -- it scores it out of 10, tells you what's missing, and suggests what to add. Tell it your knee hurts -- your workout rebuilds in seconds. Never worked out before? It builds your entire plan. You don't need to know anything about fitness.
 
-Need 12 testers for Google Play before I can go public. I've added your email to the tester list. Just:
+Need 12 testers for Google Play before I can go public. I've added your email:
 1. Open: https://play.google.com/apps/testing/com.aifitnesscoach.app
 2. Accept + install
 
-2 minutes. Full free access. No credit card.
+2 minutes. Free. No credit card.
 
-fitwiz.us
+Website: https://fitwiz.us
+Discord: https://discord.gg/WAYNZpVgsK
+Instagram: https://instagram.com/fitwiz.us
+
+Questions? DM me here or on Discord/Instagram -- happy to help!
 
 Thanks!
 [YOUR NAME]
@@ -139,16 +170,20 @@ Thanks!
 
 ## Slack (Work Channel)
 
-Hey team! I've been building a fitness app on the side for months and it's finally live on Google Play.
+Hey team! I built a fitness app that actually coaches you instead of just showing numbers.
 
-FitWiz -- an AI coach that tracks your workouts, parses your meals instantly (type "chicken rice broccoli" and it breaks down every item with macros), and keeps you accountable. Like having a personal trainer in your pocket. 200K+ curated foods, 500+ exercises. Built from scratch with Flutter, FastAPI, Gemini, LangGraph, ChromaDB, Redis, Supabase.
+Take a photo of your food -- it scores your meal and tells you exactly what to fix. Say "my shoulder hurts" -- workout adapts instantly. Don't know what exercises to do? It builds your entire month. Never been to a gym? Doesn't matter -- just tell it your goals.
+
+200K+ curated foods, 500+ exercises. Free to start.
 
 I've added your work emails to the tester list. If you have 2 min:
 1. Open: https://play.google.com/apps/testing/com.aifitnesscoach.app
 2. Accept + install
 
-Need 12 testers for Google to unlock production. iOS coming soon. Full free access.
+Website: https://fitwiz.us
+Discord: https://discord.gg/WAYNZpVgsK
+Instagram: https://instagram.com/fitwiz.us
 
-fitwiz.us
+Questions? DM me here or on Discord/Instagram -- happy to help!
 
 Thanks!

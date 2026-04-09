@@ -63,7 +63,7 @@ def parse_ai_response(response_content: str) -> Tuple[str, Optional[str]]:
             return response_content, None
 
     except json.JSONDecodeError as e:
-        logger.warning(f"[parse_ai_response] JSON parse failed: {e}, using raw response")
+        logger.warning(f"[parse_ai_response] JSON parse failed: {e}, using raw response", exc_info=True)
         return response_content, None
 
 
@@ -134,7 +134,7 @@ async def onboarding_agent_node(state: OnboardingState) -> Dict[str, Any]:
             )
             logger.info(f"[Onboarding Agent] Applied personality: {ai_settings_dict.get('coaching_style')} + {ai_settings_dict.get('communication_tone')}")
         except Exception as e:
-            logger.warning(f"[Onboarding Agent] Could not build personality prompt: {e}")
+            logger.warning(f"[Onboarding Agent] Could not build personality prompt: {e}", exc_info=True)
 
     # Combine base prompt with personality
     system_prompt = base_system_prompt
@@ -184,7 +184,7 @@ async def onboarding_agent_node(state: OnboardingState) -> Dict[str, Any]:
             break
         except Exception as e:
             last_error = e
-            logger.warning(f"[Onboarding Agent] Attempt {attempt + 1} failed: {e}")
+            logger.warning(f"[Onboarding Agent] Attempt {attempt + 1} failed: {e}", exc_info=True)
             if attempt < max_retries - 1:
                 wait_time = 2 ** attempt
                 logger.info(f"[Onboarding Agent] Retrying in {wait_time}s...")

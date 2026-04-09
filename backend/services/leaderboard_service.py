@@ -298,4 +298,4 @@ class LeaderboardService:
             )
             logger.info(f"[Leaderboard] Async challenge logged: {challenger_name} vs {target_name}")
         except Exception as e:
-            logger.warning(f"[Leaderboard] Failed to log to ChromaDB: {e}")
+            logger.warning(f"[Leaderboard] Failed to log to ChromaDB: {e}", exc_info=True)

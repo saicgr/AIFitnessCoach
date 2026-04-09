@@ -119,7 +119,7 @@ def _save_chat_to_db(user_id: str, message: str, response_message: str, response
         db.create_chat_message(chat_data)
         logger.debug(f"[Background] Chat message saved to database for user {user_id}, intent={response_intent}, agent={response_agent_type}")
     except Exception as db_error:
-        logger.warning(f"[Background] Failed to save chat to database: {db_error}")
+        logger.warning(f"[Background] Failed to save chat to database: {db_error}", exc_info=True)
 
 
 def _save_chat_analytics(user_id: str, message: str, response_message: str, response_intent, response_agent_type, response_rag_context_used: bool, response_time_ms: int, ai_settings):
@@ -143,7 +143,7 @@ def _save_chat_analytics(user_id: str, message: str, response_message: str, resp
         supabase.table("chat_interaction_analytics").insert(analytics_data).execute()
         logger.debug(f"[Background] Chat analytics recorded for user {user_id}")
     except Exception as analytics_error:
-        logger.warning(f"[Background] Failed to save chat analytics: {analytics_error}")
+        logger.warning(f"[Background] Failed to save chat analytics: {analytics_error}", exc_info=True)
 
 
 async def _log_chat_activity(user_id: str, response_intent, response_agent_type, response_rag_context_used: bool, response_time_ms: int):
@@ -163,7 +163,7 @@ async def _log_chat_activity(user_id: str, response_intent, response_agent_type,
             status_code=200
         )
     except Exception as activity_error:
-        logger.warning(f"[Background] Failed to log chat activity: {activity_error}")
+        logger.warning(f"[Background] Failed to log chat activity: {activity_error}", exc_info=True)
 
 
 async def _retry_task(fn, *args, max_retries=3, task_name=""):
@@ -177,7 +177,7 @@ async def _retry_task(fn, *args, max_retries=3, task_name=""):
             return
         except Exception as e:
             wait = 2 ** attempt
-            logger.warning(f"[Background] {task_name} attempt {attempt + 1} failed: {e}, retrying in {wait}s")
+            logger.warning(f"[Background] {task_name} attempt {attempt + 1} failed: {e}, retrying in {wait}s", exc_info=True)
             await asyncio.sleep(wait)
     logger.error(f"[Background] {task_name} failed after {max_retries} attempts")
 
@@ -303,7 +303,7 @@ async def send_message(
 
         return response
     except Exception as e:
-        logger.error(f"Failed to process message: {e}")
+        logger.error(f"Failed to process message: {e}", exc_info=True)
         # Log error to database with webhook alert
         await log_user_error(
             user_id=chat_request.user_id,
@@ -383,7 +383,7 @@ async def get_chat_history(
                     if action_data:
                         logger.debug(f"Loaded action_data from history: {action_data.get('action')}")
                 except Exception as e:
-                    logger.warning(f"Failed to parse context_json: {e}")
+                    logger.warning(f"Failed to parse context_json: {e}", exc_info=True)
 
             is_pinned = row.get("is_pinned", False)
             audio_url = row.get("audio_url")
@@ -461,7 +461,7 @@ async def toggle_message_pin(
         db.toggle_chat_message_pin(message_id, user_id, body.is_pinned)
         return {"status": "ok", "message_id": message_id, "is_pinned": body.is_pinned}
     except Exception as e:
-        logger.error(f"Failed to toggle pin for message {message_id}: {e}")
+        logger.error(f"Failed to toggle pin for message {message_id}: {e}", exc_info=True)
         raise safe_internal_error(e, "toggle_pin")
 
 
@@ -483,7 +483,7 @@ async def clear_chat_history(
         db.clear_chat_history(user_id)
         return {"status": "ok", "message": "Chat history cleared"}
     except Exception as e:
-        logger.error(f"Failed to clear chat history for user {user_id}: {e}")
+        logger.error(f"Failed to clear chat history for user {user_id}: {e}", exc_info=True)
         raise safe_internal_error(e, "clear_chat_history")
 
 
@@ -634,7 +634,7 @@ async def send_message_stream(
                 task_name="log_chat_activity",
             )
         except Exception as e:
-            logger.error(f"Streaming error: {e}")
+            logger.error(f"Streaming error: {e}", exc_info=True)
             yield f"data: {json.dumps({'event': 'error', 'message': str(e)})}\n\n"
 
     return StreamingResponse(

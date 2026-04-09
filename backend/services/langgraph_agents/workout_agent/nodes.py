@@ -377,7 +377,7 @@ If they just want information or advice, respond conversationally."""
         response = await llm_with_tools.ainvoke(messages)
     except Exception as e:
         if "thought_signature" in str(e).lower():
-            logger.warning(f"[Workout Agent] Thought signature error, retrying without tool_choice: {e}")
+            logger.warning(f"[Workout Agent] Thought signature error, retrying without tool_choice: {e}", exc_info=True)
             # Retry with basic tool binding (no forced tool choice)
             llm_retry = get_langchain_llm(temperature=0.7)
             llm_with_tools_retry = llm_retry.bind_tools(
@@ -509,7 +509,7 @@ async def workout_tool_executor_node(state: WorkoutAgentState) -> Dict[str, Any]
 
                 logger.info(f"[Workout Tool Executor] Result: success={result.get('success')}, action={result.get('action')}, workout_id={result.get('workout_id')}")
             except Exception as e:
-                logger.error(f"[Workout Tool Executor] Error: {e}")
+                logger.error(f"[Workout Tool Executor] Error: {e}", exc_info=True)
                 error_result = {"success": False, "error": str(e)}
                 tool_results.append(error_result)
                 tool_messages.append(ToolMessage(

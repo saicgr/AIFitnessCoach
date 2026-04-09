@@ -161,7 +161,7 @@ async def get_hormonal_profile(
         return result.data[0]
 
     except Exception as e:
-        logger.error(f"[Hormonal] Error fetching profile: {e}")
+        logger.error(f"[Hormonal] Error fetching profile: {e}", exc_info=True)
         raise safe_internal_error(e, "endpoint")
 
 
@@ -207,7 +207,7 @@ async def upsert_hormonal_profile(
         return result.data[0]
 
     except Exception as e:
-        logger.error(f"[Hormonal] Error upserting profile: {e}")
+        logger.error(f"[Hormonal] Error upserting profile: {e}", exc_info=True)
         raise safe_internal_error(e, "endpoint")
 
 
@@ -226,7 +226,7 @@ async def delete_hormonal_profile(
         return {"message": "Profile deleted successfully"}
 
     except Exception as e:
-        logger.error(f"[Hormonal] Error deleting profile: {e}")
+        logger.error(f"[Hormonal] Error deleting profile: {e}", exc_info=True)
         raise safe_internal_error(e, "endpoint")
 
 
@@ -282,7 +282,7 @@ async def create_hormone_log(
         return result.data[0]
 
     except Exception as e:
-        logger.error(f"[Hormonal] Error creating log: {e}")
+        logger.error(f"[Hormonal] Error creating log: {e}", exc_info=True)
         raise safe_internal_error(e, "endpoint")
 
 
@@ -313,7 +313,7 @@ async def get_hormone_logs(
         return result.data
 
     except Exception as e:
-        logger.error(f"[Hormonal] Error fetching logs: {e}")
+        logger.error(f"[Hormonal] Error fetching logs: {e}", exc_info=True)
         raise safe_internal_error(e, "endpoint")
 
 
@@ -336,7 +336,7 @@ async def get_today_hormone_log(
         return None
 
     except Exception as e:
-        logger.error(f"[Hormonal] Error fetching today's log: {e}")
+        logger.error(f"[Hormonal] Error fetching today's log: {e}", exc_info=True)
         raise safe_internal_error(e, "endpoint")
 
 
@@ -410,7 +410,7 @@ async def get_cycle_phase(
         )
 
     except Exception as e:
-        logger.error(f"[Hormonal] Error getting cycle phase: {e}")
+        logger.error(f"[Hormonal] Error getting cycle phase: {e}", exc_info=True)
         raise safe_internal_error(e, "endpoint")
 
 
@@ -464,7 +464,7 @@ async def log_period_start(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"[Hormonal] Error logging period: {e}")
+        logger.error(f"[Hormonal] Error logging period: {e}", exc_info=True)
         raise safe_internal_error(e, "endpoint")
 
 
@@ -512,7 +512,7 @@ async def get_hormone_supportive_foods(
         return result.data
 
     except Exception as e:
-        logger.error(f"[Hormonal] Error fetching foods: {e}")
+        logger.error(f"[Hormonal] Error fetching foods: {e}", exc_info=True)
         raise safe_internal_error(e, "endpoint")
 
 
@@ -614,7 +614,7 @@ async def get_food_recommendations(
         )
 
     except Exception as e:
-        logger.error(f"[Hormonal] Error getting food recommendations: {e}")
+        logger.error(f"[Hormonal] Error getting food recommendations: {e}", exc_info=True)
         raise safe_internal_error(e, "endpoint")
 
 
@@ -716,5 +716,5 @@ async def get_hormonal_insights(
         )
 
     except Exception as e:
-        logger.error(f"[Hormonal] Error getting insights: {e}")
+        logger.error(f"[Hormonal] Error getting insights: {e}", exc_info=True)
         raise safe_internal_error(e, "endpoint")

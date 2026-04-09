@@ -43,7 +43,7 @@ def parse_sets_json(sets_json: Any) -> Dict[str, List[Dict]]:
         try:
             sets_json = json.loads(sets_json)
         except json.JSONDecodeError:
-            logger.warning(f"Failed to parse sets_json string: {sets_json[:100]}...")
+            logger.warning(f"Failed to parse sets_json string: {sets_json[:100]}...", exc_info=True)
             return {}
 
     # If it's already a dict with exercise names as keys
@@ -224,7 +224,7 @@ def backfill_performance_logs(dry_run: bool = False, batch_size: int = 100):
                     total_records_created += len(batch_records)
                     logger.info(f"Inserted {len(batch_records)} performance_log records")
                 except Exception as e:
-                    logger.error(f"Failed to insert batch: {e}")
+                    logger.error(f"Failed to insert batch: {e}", exc_info=True)
                     # Continue with next batch
 
         offset += batch_size

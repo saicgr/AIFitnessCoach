@@ -74,7 +74,7 @@ async def get_user_custom_exercises(user_id: str, current_user: dict = Depends(g
         return exercises
 
     except Exception as e:
-        logger.error(f"❌ [Custom Exercises] Error getting custom exercises for user {user_id}: {e}")
+        logger.error(f"❌ [Custom Exercises] Error getting custom exercises for user {user_id}: {e}", exc_info=True)
         raise safe_internal_error(e, "exercises")
 
 
@@ -169,7 +169,7 @@ async def create_custom_exercise(user_id: str, exercise: CustomExerciseCreate, c
                 },
             )
         except Exception as log_err:
-            logger.warning(f"⚠️ [Custom Exercises] Failed to log user context: {log_err}")
+            logger.warning(f"⚠️ [Custom Exercises] Failed to log user context: {log_err}", exc_info=True)
 
         return CustomExerciseResponse(
             id=created["id"],
@@ -186,7 +186,7 @@ async def create_custom_exercise(user_id: str, exercise: CustomExerciseCreate, c
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"❌ [Custom Exercises] Error creating custom exercise: {e}")
+        logger.error(f"❌ [Custom Exercises] Error creating custom exercise: {e}", exc_info=True)
         raise safe_internal_error(e, "exercises")
 
 
@@ -238,14 +238,14 @@ async def delete_custom_exercise(user_id: str, exercise_id: str, current_user: d
                 },
             )
         except Exception as log_err:
-            logger.warning(f"⚠️ [Custom Exercises] Failed to log user context: {log_err}")
+            logger.warning(f"⚠️ [Custom Exercises] Failed to log user context: {log_err}", exc_info=True)
 
         return {"message": "Custom exercise deleted successfully"}
 
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"❌ [Custom Exercises] Error deleting custom exercise: {e}")
+        logger.error(f"❌ [Custom Exercises] Error deleting custom exercise: {e}", exc_info=True)
         raise safe_internal_error(e, "exercises")
 
 
@@ -417,7 +417,7 @@ async def get_all_user_exercises(user_id: str, current_user: dict = Depends(get_
         return exercises
 
     except Exception as e:
-        logger.error(f"❌ [Custom Exercises] Error getting all custom exercises: {e}")
+        logger.error(f"❌ [Custom Exercises] Error getting all custom exercises: {e}", exc_info=True)
         raise safe_internal_error(e, "exercises")
 
 
@@ -545,7 +545,7 @@ async def create_composite_exercise(user_id: str, exercise: CompositeExerciseCre
                 }
             )
         except Exception as ctx_err:
-            logger.warning(f"⚠️ Failed to log context: {ctx_err}")
+            logger.warning(f"⚠️ Failed to log context: {ctx_err}", exc_info=True)
 
         return CompositeExerciseResponse(
             id=created["id"],
@@ -568,7 +568,7 @@ async def create_composite_exercise(user_id: str, exercise: CompositeExerciseCre
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"❌ [Composite Exercise] Error creating: {e}")
+        logger.error(f"❌ [Composite Exercise] Error creating: {e}", exc_info=True)
         raise safe_internal_error(e, "exercises")
 
 
@@ -672,7 +672,7 @@ async def update_custom_exercise(user_id: str, exercise_id: str, updates: dict, 
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"❌ [Custom Exercises] Error updating: {e}")
+        logger.error(f"❌ [Custom Exercises] Error updating: {e}", exc_info=True)
         raise safe_internal_error(e, "exercises")
 
 
@@ -733,14 +733,14 @@ async def log_custom_exercise_usage(
                 }
             )
         except Exception as ctx_err:
-            logger.warning(f"⚠️ Failed to log context: {ctx_err}")
+            logger.warning(f"⚠️ Failed to log context: {ctx_err}", exc_info=True)
 
         return {"success": True, "message": "Usage logged successfully"}
 
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"❌ [Custom Exercises] Error logging usage: {e}")
+        logger.error(f"❌ [Custom Exercises] Error logging usage: {e}", exc_info=True)
         raise safe_internal_error(e, "exercises")
 
 
@@ -788,7 +788,7 @@ async def get_custom_exercise_stats(user_id: str, current_user: dict = Depends(g
         }
 
     except Exception as e:
-        logger.error(f"❌ [Custom Exercises] Error getting stats: {e}")
+        logger.error(f"❌ [Custom Exercises] Error getting stats: {e}", exc_info=True)
         raise safe_internal_error(e, "exercises")
 
 
@@ -831,5 +831,5 @@ async def search_exercise_library(
         return {"results": exercises, "count": len(exercises)}
 
     except Exception as e:
-        logger.error(f"❌ [Exercise Library] Search error: {e}")
+        logger.error(f"❌ [Exercise Library] Search error: {e}", exc_info=True)
         raise safe_internal_error(e, "exercises")

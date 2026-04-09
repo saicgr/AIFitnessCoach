@@ -26,6 +26,9 @@ from models.live_chat import (
     LiveChatMessage, AvailabilityResponse,
     LiveChatStatus, MessageSenderRole,
 )
+from models.support import TicketStatus
+from core.activity_logger import log_user_activity, log_user_error
+from services.user_context_service import user_context_service, EventType
 
 router = APIRouter()
 @router.post("/{ticket_id}/typing", response_model=LiveChatTypingResponse)
@@ -53,6 +56,7 @@ async def update_typing_indicator(ticket_id: str, request: LiveChatTypingRequest
         ticket_data = ticket_result.data[0]
 
         # Determine which typing field to update
+        from .live_chat import _check_if_user_is_agent
         is_agent = await _check_if_user_is_agent(request.user_id)
         typing_field = "agent_typing" if is_agent else "user_typing"
 
@@ -75,7 +79,7 @@ async def update_typing_indicator(ticket_id: str, request: LiveChatTypingRequest
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to update typing indicator: {e}")
+        logger.error(f"Failed to update typing indicator: {e}", exc_info=True)
         raise safe_internal_error(e, "live_chat")
 
 
@@ -106,6 +110,7 @@ async def mark_messages_read(ticket_id: str, request: LiveChatReadRequest,
             raise HTTPException(status_code=404, detail="Ticket not found")
 
         ticket_data = ticket_result.data[0]
+        from .live_chat import _check_if_user_is_agent
         is_agent = await _check_if_user_is_agent(request.user_id)
 
         # Verify user can mark messages in this ticket
@@ -129,7 +134,7 @@ async def mark_messages_read(ticket_id: str, request: LiveChatReadRequest,
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to mark messages as read: {e}")
+        logger.error(f"Failed to mark messages as read: {e}", exc_info=True)
         raise safe_internal_error(e, "live_chat")
 
 
@@ -161,6 +166,7 @@ async def end_live_chat(ticket_id: str, request: LiveChatEndRequest,
             raise HTTPException(status_code=404, detail="Ticket not found")
 
         ticket_data = ticket_result.data[0]
+        from .live_chat import _check_if_user_is_agent
         is_agent = await _check_if_user_is_agent(request.user_id)
 
         # Verify user can end this chat
@@ -242,7 +248,7 @@ async def end_live_chat(ticket_id: str, request: LiveChatEndRequest,
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to end live chat: {e}")
+        logger.error(f"Failed to end live chat: {e}", exc_info=True)
         await log_user_error(
             user_id=request.user_id,
             action="live_chat_ended",
@@ -286,6 +292,7 @@ async def get_messages(
             raise HTTPException(status_code=404, detail="Ticket not found")
 
         ticket_data = ticket_result.data[0]
+        from .live_chat import _check_if_user_is_agent
         is_agent = await _check_if_user_is_agent(user_id)
 
         if not is_agent and ticket_data["user_id"] != user_id:
@@ -306,6 +313,7 @@ async def get_messages(
 
         result = query.order("created_at", desc=False).limit(limit).execute()
 
+        from .live_chat import _parse_live_chat_message
         messages = [_parse_live_chat_message(row) for row in (result.data or [])]
 
         logger.info(f"Retrieved {len(messages)} messages for ticket {ticket_id}")
@@ -314,7 +322,7 @@ async def get_messages(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to get messages: {e}")
+        logger.error(f"Failed to get messages: {e}", exc_info=True)
         raise safe_internal_error(e, "live_chat")
 
 
@@ -334,6 +342,7 @@ async def check_availability(
     logger.info("Checking live chat availability")
 
     try:
+        from .live_chat import _get_agents_online_count, AVERAGE_CHAT_DURATION_MINUTES
         agents_online = await _get_agents_online_count()
         is_available = agents_online > 0
 
@@ -365,7 +374,7 @@ async def check_availability(
         )
 
     except Exception as e:
-        logger.error(f"Failed to check availability: {e}")
+        logger.error(f"Failed to check availability: {e}", exc_info=True)
         # Return unavailable on error rather than failing
         return AvailabilityResponse(
             is_available=False,

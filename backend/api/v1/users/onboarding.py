@@ -198,7 +198,7 @@ async def save_user_preferences(user_id: str, request: UserPreferencesRequest,
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to save preferences: {e}")
+        logger.error(f"Failed to save preferences: {e}", exc_info=True)
         await log_user_error(
             user_id=actual_user_id,
             action="preferences_saved",
@@ -268,7 +268,7 @@ async def calculate_nutrition_targets(user_id: str, request: NutritionCalculatio
                 timeout=90
             )
         except asyncio.TimeoutError:
-            logger.error(f"Nutrition calculation timed out for user {user_id}")
+            logger.error(f"Nutrition calculation timed out for user {user_id}", exc_info=True)
             raise HTTPException(status_code=504, detail="Calculation timed out. Please try again.")
 
         if not result.data:
@@ -296,7 +296,7 @@ async def calculate_nutrition_targets(user_id: str, request: NutritionCalculatio
             )
             logger.info(f"Saved nutrition_goals={nutrition_goals} to nutrition_preferences for user {user_id}")
         except Exception as _goal_save_err:
-            logger.warning(f"Could not persist nutrition_goals to nutrition_preferences: {_goal_save_err}")
+            logger.warning(f"Could not persist nutrition_goals to nutrition_preferences: {_goal_save_err}", exc_info=True)
 
         # Index for RAG in background (non-blocking)
         async def _index_rag():
@@ -305,7 +305,7 @@ async def calculate_nutrition_targets(user_id: str, request: NutritionCalculatio
                 await index_user_nutrition_metrics(user_id, metrics)
                 logger.info(f"Indexed nutrition metrics to RAG for user {user_id}")
             except Exception as rag_error:
-                logger.warning(f"Could not index nutrition metrics to RAG: {rag_error}")
+                logger.warning(f"Could not index nutrition metrics to RAG: {rag_error}", exc_info=True)
 
         background_tasks.add_task(_index_rag)
 
@@ -346,7 +346,7 @@ async def calculate_nutrition_targets(user_id: str, request: NutritionCalculatio
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to calculate nutrition targets: {e}")
+        logger.error(f"Failed to calculate nutrition targets: {e}", exc_info=True)
         await log_user_error(
             user_id=user_id,
             action="nutrition_targets_calculated",
@@ -416,7 +416,7 @@ async def get_nutrition_targets(user_id: str,
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to get nutrition targets: {e}")
+        logger.error(f"Failed to get nutrition targets: {e}", exc_info=True)
         raise safe_internal_error(e, "users")
 
 
@@ -500,7 +500,7 @@ async def sync_fasting_preferences(user_id: str, request: SyncFastingRequest,
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to sync fasting preferences: {e}")
+        logger.error(f"Failed to sync fasting preferences: {e}", exc_info=True)
         raise safe_internal_error(e, "users")
 
 
@@ -653,5 +653,5 @@ async def create_gym_profiles_from_onboarding(
         return profiles_created
 
     except Exception as e:
-        logger.error(f"❌ [GymProfile] Failed to create gym profiles: {e}")
+        logger.error(f"❌ [GymProfile] Failed to create gym profiles: {e}", exc_info=True)
         raise

@@ -38,7 +38,7 @@ def _get_blocked_user_ids(supabase, user_id: str) -> set:
 
         return blocked_ids
     except Exception as e:
-        logger.warning(f"[UserSearch] Failed to fetch blocked users: {e}")
+        logger.warning(f"[UserSearch] Failed to fetch blocked users: {e}", exc_info=True)
         return set()
 
 

@@ -159,7 +159,7 @@ class _OnboardingBackgroundState extends State<OnboardingBackground>
     super.initState();
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(seconds: 30),
+      duration: const Duration(seconds: 12),
     )..repeat();
   }
 
@@ -187,8 +187,8 @@ class _OnboardingBackgroundState extends State<OnboardingBackground>
                 return Stack(
                   children: [
                     Positioned(
-                      top: -80 + math.sin(v) * 20,
-                      right: -60 + math.cos(v * 0.7) * 15,
+                      top: -80 + math.sin(v) * 45,
+                      right: -60 + math.cos(v * 0.7) * 40,
                       child: _GlowOrb(
                         size: 260,
                         color: t.isDark
@@ -197,8 +197,8 @@ class _OnboardingBackgroundState extends State<OnboardingBackground>
                       ),
                     ),
                     Positioned(
-                      top: screenH * 0.35 + math.cos(v * 0.8) * 25,
-                      left: -100 + math.sin(v * 0.6) * 18,
+                      top: screenH * 0.35 + math.cos(v * 0.8) * 55,
+                      left: -100 + math.sin(v * 0.6) * 50,
                       child: _GlowOrb(
                         size: 300,
                         color: t.isDark
@@ -207,8 +207,8 @@ class _OnboardingBackgroundState extends State<OnboardingBackground>
                       ),
                     ),
                     Positioned(
-                      bottom: -60 + math.sin(v * 0.9) * 22,
-                      right: -40 + math.cos(v * 0.5) * 16,
+                      bottom: -60 + math.sin(v * 0.9) * 50,
+                      right: -40 + math.cos(v * 0.5) * 45,
                       child: _GlowOrb(
                         size: 220,
                         color: t.isDark
@@ -217,8 +217,8 @@ class _OnboardingBackgroundState extends State<OnboardingBackground>
                       ),
                     ),
                     Positioned(
-                      bottom: screenH * 0.25 + math.cos(v * 1.1) * 20,
-                      left: 40 + math.sin(v * 0.4) * 14,
+                      bottom: screenH * 0.25 + math.cos(v * 1.1) * 45,
+                      left: 40 + math.sin(v * 0.4) * 40,
                       child: _GlowOrb(
                         size: 160,
                         color: t.isDark

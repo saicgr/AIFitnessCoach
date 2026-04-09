@@ -145,7 +145,7 @@ async def get_ai_settings(user_id: str, current_user: dict = Depends(get_current
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error getting AI settings for user {user_id}: {e}")
+        logger.error(f"Error getting AI settings for user {user_id}: {e}", exc_info=True)
         raise safe_internal_error(e, "get_ai_settings")
 
 
@@ -245,7 +245,7 @@ async def update_ai_settings(user_id: str, settings: AISettingsUpdate, current_u
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error updating AI settings for user {user_id}: {e}")
+        logger.error(f"Error updating AI settings for user {user_id}: {e}", exc_info=True)
         await log_user_error(
             user_id=user_id,
             action="ai_settings_update",
@@ -288,7 +288,7 @@ async def get_ai_settings_history(
         )
 
     except Exception as e:
-        logger.error(f"Error getting AI settings history for user {user_id}: {e}")
+        logger.error(f"Error getting AI settings history for user {user_id}: {e}", exc_info=True)
         raise safe_internal_error(e, "get_ai_settings_history")
 
 
@@ -334,7 +334,7 @@ async def reset_ai_settings(user_id: str, current_user: dict = Depends(get_curre
         return {"success": True, "message": "AI settings reset to defaults"}
 
     except Exception as e:
-        logger.error(f"Error resetting AI settings for user {user_id}: {e}")
+        logger.error(f"Error resetting AI settings for user {user_id}: {e}", exc_info=True)
         await log_user_error(
             user_id=user_id,
             action="ai_settings_reset",
@@ -364,7 +364,7 @@ async def get_popular_settings():
         return {"popularity": result.data if result.data else []}
 
     except Exception as e:
-        logger.error(f"Error getting popular settings analytics: {e}")
+        logger.error(f"Error getting popular settings analytics: {e}", exc_info=True)
         raise safe_internal_error(e, "ai_settings_analytics")
 
 
@@ -383,7 +383,7 @@ async def get_settings_trends(days: int = Query(30, ge=1, le=365, description="N
         return {"trends": result.data if result.data else []}
 
     except Exception as e:
-        logger.error(f"Error getting settings trends: {e}")
+        logger.error(f"Error getting settings trends: {e}", exc_info=True)
         raise safe_internal_error(e, "ai_settings_analytics")
 
 
@@ -401,5 +401,5 @@ async def get_engagement_by_style():
         return {"engagement": result.data if result.data else []}
 
     except Exception as e:
-        logger.error(f"Error getting engagement analytics: {e}")
+        logger.error(f"Error getting engagement analytics: {e}", exc_info=True)
         raise safe_internal_error(e, "ai_settings_analytics")

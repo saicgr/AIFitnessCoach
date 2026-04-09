@@ -173,7 +173,7 @@ async def start_trial(user_id: str, request: StartTrialRequest, current_user: di
                     "ended_at": now.isoformat(),
                 }).eq("session_id", request.demo_session_id).execute()
             except Exception as e:
-                logger.warning(f"Failed to update demo session: {e}")
+                logger.warning(f"Failed to update demo session: {e}", exc_info=True)
 
         await log_user_activity(
             user_id=user_id,

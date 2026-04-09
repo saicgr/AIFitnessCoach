@@ -169,7 +169,7 @@ def add_exercise_to_workout(
                     logger.warning(f"Exercise not found in library: {exercise_name}")
 
             except Exception as search_error:
-                logger.warning(f"Failed to search for exercise {exercise_name}: {search_error}")
+                logger.warning(f"Failed to search for exercise {exercise_name}: {search_error}", exc_info=True)
 
         if not added_exercises:
             return {
@@ -197,7 +197,7 @@ def add_exercise_to_workout(
         }
 
     except Exception as e:
-        logger.error(f"Failed to add exercises: {e}")
+        logger.error(f"Failed to add exercises: {e}", exc_info=True)
         return {
             "success": False,
             "action": "add_exercise",
@@ -368,7 +368,7 @@ def replace_all_exercises(
         }
 
     except Exception as e:
-        logger.error(f"Error replacing exercises: {e}")
+        logger.error(f"Error replacing exercises: {e}", exc_info=True)
         return {
             "success": False,
             "action": "replace_all_exercises",
@@ -488,7 +488,7 @@ def reschedule_workout(
                 "change_reason": reason or "Rescheduled via AI coach"
             })
         except Exception as log_error:
-            logger.warning(f"Failed to log workout change: {log_error}")
+            logger.warning(f"Failed to log workout change: {log_error}", exc_info=True)
 
         if swapped_with:
             message = f"Moved '{workout_name}' to {new_date} and swapped with '{swapped_with['name']}'"
@@ -507,7 +507,7 @@ def reschedule_workout(
         }
 
     except Exception as e:
-        logger.error(f"Reschedule failed: {e}")
+        logger.error(f"Reschedule failed: {e}", exc_info=True)
         return {
             "success": False,
             "action": "reschedule",
@@ -576,7 +576,7 @@ def delete_workout(
                 "change_reason": reason or "Deleted via AI coach"
             })
         except Exception as log_error:
-            logger.warning(f"Failed to log workout deletion: {log_error}")
+            logger.warning(f"Failed to log workout deletion: {log_error}", exc_info=True)
 
         return {
             "success": True,
@@ -590,7 +590,7 @@ def delete_workout(
         }
 
     except Exception as e:
-        logger.error(f"Delete workout failed: {e}")
+        logger.error(f"Delete workout failed: {e}", exc_info=True)
         return {
             "success": False,
             "action": "delete_workout",
@@ -741,7 +741,7 @@ def generate_quick_workout(
                 timeout=30
             )
         except Exception as rag_error:
-            logger.error(f"Exercise RAG failed: {rag_error}")
+            logger.error(f"Exercise RAG failed: {rag_error}", exc_info=True)
             return {
                 "success": False,
                 "action": "generate_quick_workout",
@@ -877,7 +877,7 @@ def generate_quick_workout(
         }
 
     except Exception as e:
-        logger.error(f"Generate quick workout failed: {e}")
+        logger.error(f"Generate quick workout failed: {e}", exc_info=True)
         return {
             "success": False,
             "action": "generate_quick_workout",

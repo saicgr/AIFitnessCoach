@@ -100,7 +100,7 @@ async def create_workout(workout: WorkoutCreate,
         return created_workout
 
     except Exception as e:
-        logger.error(f"Failed to create workout: {e}")
+        logger.error(f"Failed to create workout: {e}", exc_info=True)
         raise safe_internal_error(e, "crud")
 
 
@@ -151,7 +151,7 @@ async def list_workouts(
         return [row_to_workout(row) for row in rows]
 
     except Exception as e:
-        logger.error(f"Failed to list workouts: {e}")
+        logger.error(f"Failed to list workouts: {e}", exc_info=True)
         raise safe_internal_error(e, "crud")
 
 
@@ -169,7 +169,7 @@ async def get_workout(workout_id: str,
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to get workout: {e}")
+        logger.error(f"Failed to get workout: {e}", exc_info=True)
         raise safe_internal_error(e, "crud")
 
 
@@ -223,7 +223,7 @@ async def update_workout(workout_id: str, workout: WorkoutUpdate,
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to update workout: {e}")
+        logger.error(f"Failed to update workout: {e}", exc_info=True)
         raise safe_internal_error(e, "crud")
 
 
@@ -252,7 +252,7 @@ async def toggle_workout_favorite(workout_id: str,
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to toggle workout favorite: {e}")
+        logger.error(f"Failed to toggle workout favorite: {e}", exc_info=True)
         raise safe_internal_error(e, "crud")
 
 
@@ -277,7 +277,7 @@ async def delete_workout(workout_id: str,
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to delete workout: {e}")
+        logger.error(f"Failed to delete workout: {e}", exc_info=True)
         raise safe_internal_error(e, "crud")
 
 
@@ -333,7 +333,7 @@ async def cleanup_old_workouts(
                 deleted_count += 1
                 deleted_names.append(workout.get("name", "Unknown"))
             except Exception as e:
-                logger.error(f"[Cleanup] Failed to delete workout {wid}: {e}")
+                logger.error(f"[Cleanup] Failed to delete workout {wid}: {e}", exc_info=True)
 
         logger.info(f"[Cleanup] Completed for user {user_id}: deleted {deleted_count}, kept {len(workouts_to_keep)} upcoming + {len(completed)} completed")
 
@@ -346,5 +346,5 @@ async def cleanup_old_workouts(
         }
 
     except Exception as e:
-        logger.error(f"[Cleanup] Failed: {e}")
+        logger.error(f"[Cleanup] Failed: {e}", exc_info=True)
         raise safe_internal_error(e, "crud")

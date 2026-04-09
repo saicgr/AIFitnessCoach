@@ -88,7 +88,7 @@ class MilestoneService:
                 for m in result.data
             ]
         except Exception as e:
-            logger.error(f"Error getting milestone definitions: {e}")
+            logger.error(f"Error getting milestone definitions: {e}", exc_info=True)
             return []
 
     # =========================================================================
@@ -156,7 +156,7 @@ class MilestoneService:
 
             return milestones
         except Exception as e:
-            logger.error(f"Error getting user milestones: {e}")
+            logger.error(f"Error getting user milestones: {e}", exc_info=True)
             return []
 
     async def get_milestone_progress(
@@ -247,7 +247,7 @@ class MilestoneService:
                 uncelebrated=uncelebrated,
             )
         except Exception as e:
-            logger.error(f"Error getting milestone progress: {e}")
+            logger.error(f"Error getting milestone progress: {e}", exc_info=True)
             return MilestonesResponse(achieved=[], upcoming=[])
 
     async def get_uncelebrated_milestones(
@@ -299,7 +299,7 @@ class MilestoneService:
 
             return milestones
         except Exception as e:
-            logger.error(f"Error getting uncelebrated milestones: {e}")
+            logger.error(f"Error getting uncelebrated milestones: {e}", exc_info=True)
             return []
 
     async def mark_milestones_celebrated(
@@ -328,7 +328,7 @@ class MilestoneService:
             logger.info(f"Marked {len(milestone_ids)} milestones as celebrated for user {user_id}")
             return True
         except Exception as e:
-            logger.error(f"Error marking milestones celebrated: {e}")
+            logger.error(f"Error marking milestones celebrated: {e}", exc_info=True)
             return False
 
     async def record_milestone_share(
@@ -359,7 +359,7 @@ class MilestoneService:
             logger.info(f"User {user_id} shared milestone {milestone_id} on {platform}")
             return True
         except Exception as e:
-            logger.error(f"Error recording milestone share: {e}")
+            logger.error(f"Error recording milestone share: {e}", exc_info=True)
             return False
 
     # =========================================================================
@@ -417,7 +417,7 @@ class MilestoneService:
                 roi_updated=True,
             )
         except Exception as e:
-            logger.error(f"Error checking milestones: {e}")
+            logger.error(f"Error checking milestones: {e}", exc_info=True)
             return MilestoneCheckResult(new_milestones=[], roi_updated=False)
 
     # =========================================================================
@@ -489,7 +489,7 @@ class MilestoneService:
 
             return roi.compute_derived_fields()
         except Exception as e:
-            logger.error(f"Error getting ROI metrics: {e}")
+            logger.error(f"Error getting ROI metrics: {e}", exc_info=True)
             return ROIMetrics(user_id=user_id).compute_derived_fields()
 
     async def get_roi_summary(
@@ -550,7 +550,7 @@ class MilestoneService:
                 motivational_message=motivational,
             )
         except Exception as e:
-            logger.error(f"Error getting ROI summary: {e}")
+            logger.error(f"Error getting ROI summary: {e}", exc_info=True)
             return ROISummary()
 
     def _generate_motivational_message(self, roi: ROIMetrics) -> str:
@@ -664,7 +664,7 @@ class MilestoneService:
                 share_message=definition.get("share_message"),
             )
         except Exception as e:
-            logger.error(f"Error awarding first_steps milestone '{trigger}': {e}")
+            logger.error(f"Error awarding first_steps milestone '{trigger}': {e}", exc_info=True)
             return None
 
     def _get_current_value_for_category(
@@ -760,7 +760,7 @@ class MilestoneService:
 
             return 0.0
         except Exception as e:
-            logger.error(f"Error calculating strength increase: {e}")
+            logger.error(f"Error calculating strength increase: {e}", exc_info=True)
             return 0.0
 
 

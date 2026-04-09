@@ -177,7 +177,7 @@ async def analyze_food_from_text_streaming(request: Request, body: LogTextReques
                         'daily_fat_target_g': user.get('daily_fat_target_g'),
                     }
             except Exception as e:
-                logger.warning(f"[ANALYZE-STREAM] Could not fetch user/cache: {e}")
+                logger.warning(f"[ANALYZE-STREAM] Could not fetch user/cache: {e}", exc_info=True)
                 food_analysis = None
 
             # If cache hit, skip to finalizing
@@ -205,7 +205,7 @@ async def analyze_food_from_text_streaming(request: Request, body: LogTextReques
                             n_results=3,
                         )
                     except Exception as e:
-                        logger.warning(f"[ANALYZE-STREAM] Could not fetch RAG context: {e}")
+                        logger.warning(f"[ANALYZE-STREAM] Could not fetch RAG context: {e}", exc_info=True)
 
                 # Skip cache checks (already done above) — go straight to Gemini
                 # Run analysis as a task and send keep-alive pings to prevent
@@ -306,7 +306,7 @@ async def analyze_food_from_text_streaming(request: Request, body: LogTextReques
             yield f"event: done\ndata: {json.dumps(response_data)}\n\n"
 
         except Exception as e:
-            logger.error(f"[ANALYZE-STREAM] Food analysis error: {e}")
+            logger.error(f"[ANALYZE-STREAM] Food analysis error: {e}", exc_info=True)
             yield send_error(str(e))
 
     return StreamingResponse(
@@ -465,7 +465,7 @@ async def log_food_from_image_streaming(
                     ai_suggestion = tips.get("ai_suggestion") or ai_suggestion
                     health_score = tips.get("health_score")
             except Exception as tip_err:
-                logger.warning(f"[STREAM] Tip enrichment failed for image log: {tip_err}")
+                logger.warning(f"[STREAM] Tip enrichment failed for image log: {tip_err}", exc_info=True)
 
             # Step 4: Save to database
             yield send_progress(4, 4, "Saving your meal...", "Almost done!")
@@ -514,7 +514,7 @@ async def log_food_from_image_streaming(
             yield f"event: done\ndata: {json.dumps(response_data)}\n\n"
 
         except Exception as e:
-            logger.error(f"[STREAM] Image food logging error: {e}")
+            logger.error(f"[STREAM] Image food logging error: {e}", exc_info=True)
             yield send_error(str(e))
 
     return StreamingResponse(
@@ -638,7 +638,7 @@ async def analyze_food_from_image_streaming(
                         content_type=content_type,
                     )
                 except Exception as s3_err:
-                    logger.warning(f"[ANALYZE-STREAM:{request_id}] S3 upload failed (non-blocking): {s3_err}")
+                    logger.warning(f"[ANALYZE-STREAM:{request_id}] S3 upload failed (non-blocking): {s3_err}", exc_info=True)
                     return (None, None)
 
             analysis_future = asyncio.ensure_future(asyncio.gather(
@@ -722,7 +722,7 @@ async def analyze_food_from_image_streaming(
                     recommended_swap = tips.get("recommended_swap")
                     health_score = tips.get("health_score")
             except Exception as tip_err:
-                logger.warning(f"[ANALYZE-STREAM:{request_id}] Tip enrichment failed: {tip_err}")
+                logger.warning(f"[ANALYZE-STREAM:{request_id}] Tip enrichment failed: {tip_err}", exc_info=True)
 
             # Log success with full details
             logger.info(

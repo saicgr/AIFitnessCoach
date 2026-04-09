@@ -888,7 +888,7 @@ class PercentageTrainingService:
                 )
                 saved_count += 1
             except Exception as e:
-                logger.error(f"Error saving 1RM for {exercise_name}: {e}")
+                logger.error(f"Error saving 1RM for {exercise_name}: {e}", exc_info=True)
 
         return saved_count
 

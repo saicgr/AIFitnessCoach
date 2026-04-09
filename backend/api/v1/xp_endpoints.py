@@ -103,7 +103,7 @@ async def use_consumable(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"[XP] Error using consumable: {e}")
+        logger.error(f"[XP] Error using consumable: {e}", exc_info=True)
         raise safe_internal_error(e, "xp")
 
 
@@ -214,7 +214,7 @@ async def open_crate(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"[XP] Error opening crate: {e}")
+        logger.error(f"[XP] Error opening crate: {e}", exc_info=True)
         raise safe_internal_error(e, "xp")
 
 
@@ -287,7 +287,7 @@ async def get_daily_crates(
         return DailyCratesResponse(crate_date=today_str)
 
     except Exception as e:
-        logger.error(f"[XP] Error getting daily crates: {e}")
+        logger.error(f"[XP] Error getting daily crates: {e}", exc_info=True)
         raise safe_internal_error(e, "xp")
 
 
@@ -332,7 +332,7 @@ async def get_unclaimed_crates(
         )
 
     except Exception as e:
-        logger.error(f"[XP] Error getting unclaimed crates: {e}")
+        logger.error(f"[XP] Error getting unclaimed crates: {e}", exc_info=True)
         raise safe_internal_error(e, "xp")
 
 
@@ -457,9 +457,9 @@ async def claim_daily_crate(
                         message=data.get("message", "Crate opened!")
                     )
             except Exception as parse_error:
-                logger.error(f"[XP] Failed to parse RPC response: {parse_error}")
+                logger.error(f"[XP] Failed to parse RPC response: {parse_error}", exc_info=True)
 
-        logger.error(f"[XP] Error claiming daily crate: {e}")
+        logger.error(f"[XP] Error claiming daily crate: {e}", exc_info=True)
         raise safe_internal_error(e, "xp")
 
 
@@ -492,7 +492,7 @@ async def unlock_activity_crate(
         return {"success": False, "message": "Activity crate not available or already claimed"}
 
     except Exception as e:
-        logger.error(f"[XP] Error unlocking activity crate: {e}")
+        logger.error(f"[XP] Error unlocking activity crate: {e}", exc_info=True)
         raise safe_internal_error(e, "xp")
 
 
@@ -544,7 +544,7 @@ async def get_weekly_checkpoints(
         }
 
     except Exception as e:
-        logger.error(f"[XP] Error getting weekly checkpoints: {e}")
+        logger.error(f"[XP] Error getting weekly checkpoints: {e}", exc_info=True)
         raise safe_internal_error(e, "xp")
 
 
@@ -592,7 +592,7 @@ async def increment_weekly_checkpoint(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"[XP] Error incrementing weekly checkpoint: {e}")
+        logger.error(f"[XP] Error incrementing weekly checkpoint: {e}", exc_info=True)
         raise safe_internal_error(e, "xp")
 
 
@@ -617,7 +617,7 @@ async def update_weekly_habits(
         return result.data if result.data else {"success": True, "completion_percent": completion_percent}
 
     except Exception as e:
-        logger.error(f"[XP] Error updating weekly habits: {e}")
+        logger.error(f"[XP] Error updating weekly habits: {e}", exc_info=True)
         raise safe_internal_error(e, "xp")
 
 
@@ -671,7 +671,7 @@ async def get_monthly_achievements(
         }
 
     except Exception as e:
-        logger.error(f"[XP] Error getting monthly achievements: {e}")
+        logger.error(f"[XP] Error getting monthly achievements: {e}", exc_info=True)
         raise safe_internal_error(e, "xp")
 
 
@@ -727,7 +727,7 @@ async def increment_monthly_achievement(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"[XP] Error incrementing monthly achievement: {e}")
+        logger.error(f"[XP] Error incrementing monthly achievement: {e}", exc_info=True)
         raise safe_internal_error(e, "xp")
 
 
@@ -752,7 +752,7 @@ async def update_monthly_goal_progress(
         return result.data if result.data else {"success": True, "progress": progress}
 
     except Exception as e:
-        logger.error(f"[XP] Error updating monthly goal progress: {e}")
+        logger.error(f"[XP] Error updating monthly goal progress: {e}", exc_info=True)
         raise safe_internal_error(e, "xp")
 
 
@@ -784,7 +784,7 @@ async def update_monthly_consistency(
         return result.data if result.data else {"success": True}
 
     except Exception as e:
-        logger.error(f"[XP] Error updating monthly consistency: {e}")
+        logger.error(f"[XP] Error updating monthly consistency: {e}", exc_info=True)
         raise safe_internal_error(e, "xp")
 
 
@@ -809,7 +809,7 @@ async def update_monthly_weight_status(
         return result.data if result.data else {"success": True, "on_track": on_track}
 
     except Exception as e:
-        logger.error(f"[XP] Error updating monthly weight status: {e}")
+        logger.error(f"[XP] Error updating monthly weight status: {e}", exc_info=True)
         raise safe_internal_error(e, "xp")
 
 
@@ -834,7 +834,7 @@ async def update_monthly_habits_endpoint(
         return result.data if result.data else {"success": True, "completion_percent": completion_percent}
 
     except Exception as e:
-        logger.error(f"[XP] Error updating monthly habits: {e}")
+        logger.error(f"[XP] Error updating monthly habits: {e}", exc_info=True)
         raise safe_internal_error(e, "xp")
 
 
@@ -863,7 +863,7 @@ async def evaluate_month_end(
         return result.data if result.data else {"success": True, "total_xp_awarded": 0}
 
     except Exception as e:
-        logger.error(f"[XP] Error evaluating month-end: {e}")
+        logger.error(f"[XP] Error evaluating month-end: {e}", exc_info=True)
         raise safe_internal_error(e, "xp")
 
 
@@ -912,7 +912,7 @@ async def get_daily_social_xp(
         }
 
     except Exception as e:
-        logger.error(f"[XP] Error getting daily social XP: {e}")
+        logger.error(f"[XP] Error getting daily social XP: {e}", exc_info=True)
         raise safe_internal_error(e, "xp")
 
 
@@ -960,7 +960,7 @@ async def award_social_xp(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"[XP] Error awarding social XP: {e}")
+        logger.error(f"[XP] Error awarding social XP: {e}", exc_info=True)
         raise safe_internal_error(e, "xp")
 
 

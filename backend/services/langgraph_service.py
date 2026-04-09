@@ -250,7 +250,7 @@ class LangGraphCoachService:
                     if tier in ("pro", "premium"):
                         cap = DAILY_MEDIA_CAP_PRO
             except Exception as e:
-                logger.warning(f"Failed to fetch subscription tier: {e}")
+                logger.warning(f"Failed to fetch subscription tier: {e}", exc_info=True)
 
             if current_count + media_count > cap:
                 raise ValueError(
@@ -276,7 +276,7 @@ class LangGraphCoachService:
             raise  # Re-raise usage limit errors
         except Exception as e:
             # Don't block requests if usage tracking fails
-            logger.warning(f"Media usage check failed (non-blocking): {e}")
+            logger.warning(f"Media usage check failed (non-blocking): {e}", exc_info=True)
 
     def _detect_agent_mention(self, message: str) -> Tuple[Optional[AgentType], str]:
         """
@@ -415,7 +415,7 @@ class LangGraphCoachService:
                 for doc in similar_docs[:3]
             ]
         except Exception as e:
-            logger.warning(f"Q&A RAG context retrieval failed: {e}")
+            logger.warning(f"Q&A RAG context retrieval failed: {e}", exc_info=True)
 
         # 2. Get training settings context (1RMs, intensity, etc.)
         try:
@@ -432,7 +432,7 @@ class LangGraphCoachService:
                 rag_used = True
                 logger.info(f"📊 Added training settings to RAG context for user {user_id}")
         except Exception as e:
-            logger.warning(f"Training settings RAG retrieval failed: {e}")
+            logger.warning(f"Training settings RAG retrieval failed: {e}", exc_info=True)
 
         # Combine all context parts
         combined_context = "\n\n".join(context_parts)
@@ -559,7 +559,7 @@ class LangGraphCoachService:
 
             return None
         except Exception as e:
-            logger.warning(f"Media classification failed (falling back to type-based): {e}")
+            logger.warning(f"Media classification failed (falling back to type-based): {e}", exc_info=True)
             return None
 
     async def _classify_video_media(self, media_ref, vision) -> Optional[str]:
@@ -589,7 +589,7 @@ class LangGraphCoachService:
 
             return None
         except Exception as e:
-            logger.warning(f"Video keyframe classification failed: {e}")
+            logger.warning(f"Video keyframe classification failed: {e}", exc_info=True)
             return None
 
     def _enrich_user_profile(self, request) -> Optional[Dict[str, Any]]:
@@ -602,7 +602,7 @@ class LangGraphCoachService:
                 db = get_supabase_db()
                 user_profile_dict = db.enrich_user_with_nutrition_targets(user_profile_dict)
             except Exception as e:
-                logger.warning(f"Failed to enrich user profile with nutrition targets: {e}")
+                logger.warning(f"Failed to enrich user profile with nutrition targets: {e}", exc_info=True)
         return user_profile_dict
 
     def _build_agent_state(
@@ -797,7 +797,7 @@ class LangGraphCoachService:
                         beast_mode_config = bm_result.data["beast_mode_config"]
                         logger.info(f"Beast mode config loaded for user {request.user_id}")
                 except Exception as bm_err:
-                    logger.warning(f"Failed to fetch beast mode config: {bm_err}")
+                    logger.warning(f"Failed to fetch beast mode config: {bm_err}", exc_info=True)
 
             # 5. Build agent state
             agent_state = self._build_agent_state(
@@ -836,12 +836,12 @@ class LangGraphCoachService:
                 else:
                     final_state = await _run_agent()
             except asyncio.TimeoutError:
-                logger.error(f"Agent {selected_agent.value} timed out after 120s")
+                logger.error(f"Agent {selected_agent.value} timed out after 120s", exc_info=True)
                 raise Exception(f"AI agent timed out. Please try again.")
             except Exception as agent_error:
                 error_msg = str(agent_error).lower()
                 if "thought_signature" in error_msg or "function call is missing" in error_msg:
-                    logger.warning(f"Thought signature error with {selected_agent.value} agent, retrying with fresh state...")
+                    logger.warning(f"Thought signature error with {selected_agent.value} agent, retrying with fresh state...", exc_info=True)
                     # Clear any cached message state and retry once
                     if "messages" in agent_state:
                         agent_state["messages"] = []
@@ -852,10 +852,10 @@ class LangGraphCoachService:
                         else:
                             final_state = await _run_agent()
                     except asyncio.TimeoutError:
-                        logger.error(f"Agent {selected_agent.value} retry timed out after 120s")
+                        logger.error(f"Agent {selected_agent.value} retry timed out after 120s", exc_info=True)
                         raise Exception(f"AI agent timed out on retry. Please try again.")
                     except Exception as retry_error:
-                        logger.error(f"Retry also failed: {retry_error}")
+                        logger.error(f"Retry also failed: {retry_error}", exc_info=True)
                         raise retry_error
                 else:
                     raise

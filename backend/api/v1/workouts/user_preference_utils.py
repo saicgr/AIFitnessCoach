@@ -130,7 +130,7 @@ async def get_user_strength_history(user_id: str) -> dict:
         logger.info(f"Found {len(strength_history)} exercises from completed workouts")
 
     except Exception as e:
-        logger.warning(f"Error getting ChromaDB strength history: {e}")
+        logger.warning(f"Error getting ChromaDB strength history: {e}", exc_info=True)
 
     # SOURCE 2: Get from imported workout history (Supabase)
     try:
@@ -176,7 +176,7 @@ async def get_user_strength_history(user_id: str) -> dict:
         logger.info(f"Added {imported_count} exercises from imported history")
 
     except Exception as e:
-        logger.warning(f"Error getting imported strength history: {e}")
+        logger.warning(f"Error getting imported strength history: {e}", exc_info=True)
 
     logger.info(f"Total strength history: {len(strength_history)} exercises for user {user_id}")
     return strength_history
@@ -331,7 +331,7 @@ async def get_user_consistency_mode(user_id: str) -> str:
         return consistency_mode
 
     except Exception as e:
-        logger.error(f"Error getting consistency mode: {e}")
+        logger.error(f"Error getting consistency mode: {e}", exc_info=True)
         return "vary"
 
 
@@ -392,7 +392,7 @@ async def mark_queued_exercises_used(user_id: str, exercise_names: List[str]):
         logger.info(f"Marked {len(exercise_names)} queued exercises as used for user {user_id}")
 
     except Exception as e:
-        logger.warning(f"Could not mark queued exercises as used: {e}")
+        logger.warning(f"Could not mark queued exercises as used: {e}", exc_info=True)
 
 
 async def get_user_staple_exercises(user_id: str, gym_profile_id: Optional[str] = None, scheduled_date: Optional[str] = None) -> List[dict]:
@@ -444,7 +444,7 @@ async def get_user_staple_exercises(user_id: str, gym_profile_id: Optional[str] 
                 logger.info(f"Filtered staples by day {day_of_week}: {len(staples)} → {len(filtered)}")
                 staples = filtered
             except (ValueError, TypeError) as e:
-                logger.warning(f"Could not parse scheduled_date '{scheduled_date}' for day filtering: {e}")
+                logger.warning(f"Could not parse scheduled_date '{scheduled_date}' for day filtering: {e}", exc_info=True)
 
         logger.info(f"Found {len(staples)} staple exercises for user {user_id} (profile: {gym_profile_id or 'all'}): {[s['name'] for s in staples]}")
         return staples
@@ -482,7 +482,7 @@ async def get_user_variation_percentage(user_id: str) -> int:
         return percentage
 
     except Exception as e:
-        logger.error(f"Error getting variation percentage: {e}")
+        logger.error(f"Error getting variation percentage: {e}", exc_info=True)
         return 30
 
 

@@ -111,7 +111,7 @@ async def log_hydration(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error logging hydration: {e}")
+        logger.error(f"Error logging hydration: {e}", exc_info=True)
         await log_user_error(
             user_id=data.user_id,
             action="hydration_log",
@@ -199,7 +199,7 @@ async def get_daily_hydration(
         )
 
     except Exception as e:
-        logger.error(f"Error getting daily hydration: {e}")
+        logger.error(f"Error getting daily hydration: {e}", exc_info=True)
         raise safe_internal_error(e, "endpoint")
 
 
@@ -237,7 +237,7 @@ async def get_hydration_logs(
         return [row_to_hydration_log(row) for row in (result.data or [])]
 
     except Exception as e:
-        logger.error(f"Error getting hydration logs: {e}")
+        logger.error(f"Error getting hydration logs: {e}", exc_info=True)
         raise safe_internal_error(e, "endpoint")
 
 
@@ -262,7 +262,7 @@ async def delete_hydration_log(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error deleting hydration log: {e}")
+        logger.error(f"Error deleting hydration log: {e}", exc_info=True)
         raise safe_internal_error(e, "endpoint")
 
 
@@ -317,7 +317,7 @@ async def update_hydration_goal(
         return {"user_id": user_id, "daily_goal_ml": data.daily_goal_ml}
 
     except Exception as e:
-        logger.error(f"Error updating hydration goal: {e}")
+        logger.error(f"Error updating hydration goal: {e}", exc_info=True)
         raise safe_internal_error(e, "endpoint")
 
 

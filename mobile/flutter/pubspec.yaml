@@ -170,14 +170,14 @@ flutter_launcher_icons:
   remove_alpha_ios: true
 
 flutter_native_splash:
-  color: "#FFFFFF"
-  image: assets/icon/app_icon.png
+  color: "#000000"
+  image: assets/icon/splash_logo.png
   android: true
-  ios: false
+  ios: true
   android_12:
-    color: "#FFFFFF"
-    icon_background_color: "#FFFFFF"
-    image: assets/icon/app_icon.png
+    color: "#000000"
+    icon_background_color: "#000000"
+    image: assets/icon/splash_logo.png
 
 flutter:
   uses-material-design: true

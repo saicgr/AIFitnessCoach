@@ -202,7 +202,7 @@ def validate_set_targets_strict(exercises: List[Dict], user_context: Dict = None
             try:
                 exercise = json.loads(exercise)
             except (json.JSONDecodeError, ValueError):
-                logger.error(f"❌ [set_targets] Exercise is an unparseable string: {exercise[:100]}")
+                logger.error(f"❌ [set_targets] Exercise is an unparseable string: {exercise[:100]}", exc_info=True)
                 continue
         if not isinstance(exercise, dict):
             logger.error(f"❌ [set_targets] Exercise is not a dict: type={type(exercise).__name__}")
@@ -216,7 +216,7 @@ def validate_set_targets_strict(exercises: List[Dict], user_context: Dict = None
                 set_targets = json.loads(set_targets)
                 exercise["set_targets"] = set_targets
             except (json.JSONDecodeError, ValueError):
-                logger.error(f"❌ [set_targets] set_targets is an unparseable string for '{ex_name}'")
+                logger.error(f"❌ [set_targets] set_targets is an unparseable string for '{ex_name}'", exc_info=True)
                 set_targets = None
 
         if not set_targets:
@@ -236,7 +236,7 @@ def validate_set_targets_strict(exercises: List[Dict], user_context: Dict = None
                     st = json.loads(st)
                     set_targets[idx] = st
                 except (json.JSONDecodeError, ValueError):
-                    logger.warning(f"⚠️ [set_targets] Skipping unparseable set_target string for '{ex_name}' set {idx + 1}")
+                    logger.warning(f"⚠️ [set_targets] Skipping unparseable set_target string for '{ex_name}' set {idx + 1}", exc_info=True)
                     continue
             if not isinstance(st, dict):
                 logger.warning(f"⚠️ [set_targets] Skipping non-dict set_target for '{ex_name}' set {idx + 1}: type={type(st).__name__}")

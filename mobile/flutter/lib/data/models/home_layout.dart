@@ -89,34 +89,16 @@ const List<TileType> defaultVisibleTiles = [
   TileType.quickActions, // Quick actions row (compact: Workout, Food, Water, Chat, +)
   TileType.todayStats, // Goals, calories, water pills
   TileType.habits, // Daily habits and goals tracker
-  TileType.weeklyGoals, // Weekly workout goals progress
 ];
 
 /// Hidden tiles available in the layout editor
 const List<TileType> defaultHiddenTiles = [
-  TileType.fitnessScore,
-  TileType.dailyStats,
-  TileType.quickLogWeight,
-  TileType.bodyWeight,
-  TileType.upcomingWorkouts,
+  TileType.weeklyGoals,
   TileType.aiCoachTip,
+  TileType.upcomingWorkouts,
   TileType.personalRecords,
   TileType.achievements,
-  TileType.weekChanges,
-  TileType.quickStart,
-  TileType.moodPicker,
-  TileType.dailyActivity,
-  TileType.quickLogMeasurements,
-  TileType.caloriesSummary,
-  TileType.macroRings,
-  TileType.myJourney,
-  TileType.progressCharts,
-  TileType.roiSummary,
-  TileType.weeklyPlan,
-  TileType.restDayTip,
-  TileType.leaderboardRank,
-  TileType.challengeProgress,
-  TileType.socialFeed,
+  TileType.quickLogWeight,
 ];
 
 /// Create default tiles for a new user
@@ -151,7 +133,7 @@ List<HomeTile> createDefaultTiles() {
   return tiles;
 }
 
-/// Available preset layouts (all use non-deprecated tile types only)
+/// Available preset layouts (only use active tile types)
 const List<LayoutPreset> layoutPresets = [
   LayoutPreset(
     id: 'minimalist',
@@ -168,75 +150,43 @@ const List<LayoutPreset> layoutPresets = [
   LayoutPreset(
     id: 'gym_focused',
     name: 'Gym Focused',
-    description: 'Workout-centric with personal records',
+    description: 'Workout-centric with personal records and coaching',
     icon: Icons.fitness_center,
     color: Color(0xFF00BCD4),
     tiles: [
       TileType.nextWorkout,
+      TileType.quickActions,
       TileType.personalRecords,
-      TileType.muscleHeatmap,
-      TileType.weekChanges,
-      TileType.challengeProgress,
       TileType.aiCoachTip,
+      TileType.upcomingWorkouts,
     ],
   ),
   LayoutPreset(
     id: 'fat_loss',
     name: 'Fat Loss Focus',
-    description: 'Weight trends, daily stats, habits',
+    description: 'Weight logging, habits, and achievements',
     icon: Icons.trending_down,
     color: Color(0xFFF97316),
     tiles: [
       TileType.nextWorkout,
-      TileType.dailyStats,
       TileType.quickLogWeight,
       TileType.habits,
-      TileType.bodyWeight,
+      TileType.todayStats,
       TileType.achievements,
-    ],
-  ),
-  LayoutPreset(
-    id: 'nutrition_focused',
-    name: 'Nutrition Focused',
-    description: 'Calories, macros, and meal logging',
-    icon: Icons.restaurant,
-    color: Color(0xFF22C55E),
-    tiles: [
-      TileType.caloriesSummary,
-      TileType.macroRings,
-      TileType.bodyWeight,
-      TileType.fasting,
-      TileType.nextWorkout,
-      TileType.moodPicker,
-      TileType.aiCoachTip,
     ],
   ),
   LayoutPreset(
     id: 'tracker_only',
     name: 'Tracker Only',
-    description: 'Simple progress tracking',
+    description: 'Simple progress tracking with goals',
     icon: Icons.insights,
     color: Color(0xFFA855F7),
     tiles: [
       TileType.nextWorkout,
-      TileType.dailyStats,
       TileType.quickLogWeight,
       TileType.habits,
+      TileType.weeklyGoals,
       TileType.achievements,
-    ],
-  ),
-  LayoutPreset(
-    id: 'fasting_focused',
-    name: 'Fasting Focused',
-    description: 'Intermittent fasting with weight trends',
-    icon: Icons.timer,
-    color: Color(0xFFEAB308),
-    tiles: [
-      TileType.nextWorkout,
-      TileType.fasting,
-      TileType.quickLogWeight,
-      TileType.bodyWeight,
-      TileType.moodPicker,
     ],
   ),
   LayoutPreset(
@@ -251,21 +201,22 @@ const List<LayoutPreset> layoutPresets = [
     ],
   ),
   LayoutPreset(
-    id: 'metrics',
-    name: 'Metrics',
-    description: 'Body metrics, scores, and progress charts',
-    icon: Icons.analytics,
+    id: 'all_in',
+    name: 'All In',
+    description: 'Everything enabled - all available widgets',
+    icon: Icons.dashboard,
     color: Color(0xFF3B82F6),
     tiles: [
-      TileType.fitnessScore,
-      TileType.bodyWeight,
-      TileType.quickLogWeight,
-      TileType.quickLogMeasurements,
-      TileType.dailyStats,
-      TileType.progressCharts,
-      TileType.roiSummary,
-      TileType.dailyActivity,
+      TileType.nextWorkout,
+      TileType.quickActions,
+      TileType.todayStats,
+      TileType.habits,
+      TileType.weeklyGoals,
+      TileType.aiCoachTip,
+      TileType.upcomingWorkouts,
+      TileType.personalRecords,
       TileType.achievements,
+      TileType.quickLogWeight,
     ],
   ),
 ];

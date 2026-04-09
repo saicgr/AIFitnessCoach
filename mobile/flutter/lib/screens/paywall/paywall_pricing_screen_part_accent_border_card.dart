@@ -6,11 +6,13 @@ class _AccentBorderCard extends StatefulWidget {
   final Widget child;
   final bool isSelected;
   final ThemeColors colors;
+  final Color? accentOverride;
 
   const _AccentBorderCard({
     required this.child,
     required this.isSelected,
     required this.colors,
+    this.accentOverride,
   });
 
   @override
@@ -39,7 +41,7 @@ class _AccentBorderCardState extends State<_AccentBorderCard>
 
   @override
   Widget build(BuildContext context) {
-    final accentColor = widget.colors.accent;
+    final accentColor = widget.accentOverride ?? widget.colors.accent;
     return AnimatedBuilder(
       animation: _controller,
       builder: (context, child) {
@@ -246,25 +248,9 @@ class _TierPlanCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Header row: Radio + Title + Badge + Price
+            // Header row: Title + Badge + Price
             Row(
               children: [
-                Container(
-                  width: 22,
-                  height: 22,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: isSelected ? accentColor : colors.cardBorder,
-                      width: 2,
-                    ),
-                    color: isSelected ? accentColor : Colors.transparent,
-                  ),
-                  child: isSelected
-                    ? Icon(Icons.check, size: 14, color: colors.accentContrast)
-                    : null,
-                ),
-                const SizedBox(width: 10),
                 Flexible(
                   child: Text(
                     tierName,
@@ -317,45 +303,29 @@ class _TierPlanCard extends StatelessWidget {
             ),
             // Billed as subtitle
             Padding(
-              padding: const EdgeInsets.only(left: 32, top: 2),
+              padding: const EdgeInsets.only(top: 2),
               child: Text(
                 billedAs,
                 style: TextStyle(fontSize: 12, color: colors.textSecondary),
               ),
             ),
             const SizedBox(height: 10),
-            // Features in 2 columns - responsive width
-            Padding(
-              padding: const EdgeInsets.only(left: 32),
-              child: Builder(
-                builder: (context) {
-                  final screenWidth = MediaQuery.of(context).size.width;
-                  // On small screens, use single column
-                  final featureWidth = screenWidth < 380 ? double.infinity : 140.0;
-                  return Wrap(
-                    spacing: 16,
-                    runSpacing: 4,
-                    children: features.map((feature) => SizedBox(
-                      width: featureWidth,
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(Icons.check, size: 14, color: accentColor),
-                          const SizedBox(width: 4),
-                          Flexible(
-                            child: Text(
-                              feature,
-                              style: TextStyle(fontSize: 11, color: colors.textPrimary),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                        ],
-                      ),
-                    )).toList(),
-                  );
-                },
+            // Features in single column — fully readable
+            ...features.map((feature) => Padding(
+              padding: const EdgeInsets.only(bottom: 4),
+              child: Row(
+                children: [
+                  Icon(Icons.check_circle, size: 16, color: accentColor),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      feature,
+                      style: TextStyle(fontSize: 13, color: colors.textPrimary),
+                    ),
+                  ),
+                ],
               ),
-            ),
+            )),
           ],
         ),
       ),

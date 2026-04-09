@@ -132,7 +132,7 @@ async def _log_weekly_plan_event(user_id: str, week_start_iso: str, workout_days
         )
         logger.debug(f"Background: Logged weekly plan event for user {user_id}")
     except Exception as e:
-        logger.warning(f"Background: Failed to log weekly plan event: {e}")
+        logger.warning(f"Background: Failed to log weekly plan event: {e}", exc_info=True)
 
 
 @router.post("/generate", response_model=WeeklyPlanResponse)
@@ -209,10 +209,10 @@ async def generate_weekly_plan(body: GenerateWeeklyPlanRequest, request: Request
         )
 
     except ValueError as e:
-        logger.error(f"Validation error generating plan: {e}")
+        logger.error(f"Validation error generating plan: {e}", exc_info=True)
         raise HTTPException(status_code=400, detail="Invalid request")
     except Exception as e:
-        logger.error(f"Error generating weekly plan: {e}")
+        logger.error(f"Error generating weekly plan: {e}", exc_info=True)
         raise safe_internal_error(e, "weekly_plan_generate")
 
 
@@ -225,7 +225,7 @@ async def _log_screen_view_event(user_id: str, screen: str, metadata: dict):
             metadata=metadata,
         )
     except Exception as e:
-        logger.warning(f"Background: Failed to log screen view event: {e}")
+        logger.warning(f"Background: Failed to log screen view event: {e}", exc_info=True)
 
 
 @router.get("/current")
@@ -267,7 +267,7 @@ async def get_current_week_plan(user_id: str, background_tasks: BackgroundTasks,
         )
 
     except Exception as e:
-        logger.error(f"Error getting current week plan: {e}")
+        logger.error(f"Error getting current week plan: {e}", exc_info=True)
         raise safe_internal_error(e, "weekly_plan_current")
 
 
@@ -308,7 +308,7 @@ async def get_week_plan(request: Request, week_start: str, user_id: str,
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error getting week plan: {e}")
+        logger.error(f"Error getting week plan: {e}", exc_info=True)
         raise safe_internal_error(e, "weekly_plan_get")
 
 
@@ -349,7 +349,7 @@ async def update_weekly_plan(plan_id: str, user_id: str, updates: dict,
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error updating weekly plan: {e}")
+        logger.error(f"Error updating weekly plan: {e}", exc_info=True)
         raise safe_internal_error(e, "weekly_plan_update")
 
 
@@ -382,7 +382,7 @@ async def archive_weekly_plan(plan_id: str, user_id: str,
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error archiving weekly plan: {e}")
+        logger.error(f"Error archiving weekly plan: {e}", exc_info=True)
         raise safe_internal_error(e, "weekly_plan_archive")
 
 
@@ -449,7 +449,7 @@ async def get_daily_entry(plan_id: str, plan_date: str, user_id: str, background
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error getting daily entry: {e}")
+        logger.error(f"Error getting daily entry: {e}", exc_info=True)
         raise safe_internal_error(e, "weekly_plan_daily_entry")
 
 
@@ -510,7 +510,7 @@ async def update_daily_entry(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error updating daily entry: {e}")
+        logger.error(f"Error updating daily entry: {e}", exc_info=True)
         raise safe_internal_error(e, "weekly_plan_daily_update")
 
 
@@ -610,7 +610,7 @@ Return JSON only:
                         },
                     )
                 except Exception as log_err:
-                    logger.warning(f"Background: Failed to log meal suggestions event: {log_err}")
+                    logger.warning(f"Background: Failed to log meal suggestions event: {log_err}", exc_info=True)
 
             import asyncio
             asyncio.create_task(_log_meal_event())
@@ -621,7 +621,7 @@ Return JSON only:
             )
 
         except json.JSONDecodeError as e:
-            logger.error(f"Failed to parse AI meal suggestions: {e}")
+            logger.error(f"Failed to parse AI meal suggestions: {e}", exc_info=True)
             # Return fallback basic meals
             return MealSuggestionsResponse(
                 meals=[
@@ -637,7 +637,7 @@ Return JSON only:
             )
 
     except Exception as e:
-        logger.error(f"Error generating meal suggestions: {e}")
+        logger.error(f"Error generating meal suggestions: {e}", exc_info=True)
         raise safe_internal_error(e, "weekly_plan_meals")
 
 
@@ -708,5 +708,5 @@ async def save_meal_suggestions_to_daily(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error saving meal suggestions: {e}")
+        logger.error(f"Error saving meal suggestions: {e}", exc_info=True)
         raise safe_internal_error(e, "weekly_plan_save_meals")

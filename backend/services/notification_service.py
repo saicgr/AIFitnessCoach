@@ -55,7 +55,7 @@ def initialize_firebase():
 
         return _firebase_app
     except Exception as e:
-        logger.error(f"❌ Failed to initialize Firebase: {e}")
+        logger.error(f"❌ Failed to initialize Firebase: {e}", exc_info=True)
         raise
 
 

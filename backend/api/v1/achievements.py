@@ -93,7 +93,7 @@ async def get_all_achievement_types(current_user: dict = Depends(get_current_use
         return cache["all"]
 
     except Exception as e:
-        logger.error(f"Failed to get achievement types: {e}")
+        logger.error(f"Failed to get achievement types: {e}", exc_info=True)
         raise safe_internal_error(e, "get_all_achievement_types")
 
 
@@ -107,7 +107,7 @@ async def get_achievements_by_category(category: str, current_user: dict = Depen
         return cache["by_category"].get(category, [])
 
     except Exception as e:
-        logger.error(f"Failed to get achievements by category: {e}")
+        logger.error(f"Failed to get achievements by category: {e}", exc_info=True)
         raise safe_internal_error(e, "get_achievements_by_category")
 
 
@@ -162,7 +162,7 @@ async def get_user_achievements(user_id: str, current_user: dict = Depends(get_c
         return achievements
 
     except Exception as e:
-        logger.error(f"Failed to get user achievements: {e}")
+        logger.error(f"Failed to get user achievements: {e}", exc_info=True)
         raise safe_internal_error(e, "get_user_achievements")
 
 
@@ -271,7 +271,7 @@ async def get_achievements_summary(user_id: str, current_user: dict = Depends(ge
         )
 
     except Exception as e:
-        logger.error(f"Failed to get achievements summary: {e}")
+        logger.error(f"Failed to get achievements summary: {e}", exc_info=True)
         raise safe_internal_error(e, "get_achievements_summary")
 
 
@@ -315,7 +315,7 @@ async def get_unnotified_achievements(user_id: str, current_user: dict = Depends
         return notifications
 
     except Exception as e:
-        logger.error(f"Failed to get unnotified achievements: {e}")
+        logger.error(f"Failed to get unnotified achievements: {e}", exc_info=True)
         raise safe_internal_error(e, "get_unnotified_achievements")
 
 
@@ -344,7 +344,7 @@ async def mark_achievements_notified(user_id: str, achievement_ids: List[str] = 
         return {"success": True}
 
     except Exception as e:
-        logger.error(f"Failed to mark achievements as notified: {e}")
+        logger.error(f"Failed to mark achievements as notified: {e}", exc_info=True)
         raise safe_internal_error(e, "mark_achievements_notified")
 
 
@@ -379,7 +379,7 @@ async def get_user_streaks(user_id: str, current_user: dict = Depends(get_curren
         ]
 
     except Exception as e:
-        logger.error(f"Failed to get user streaks: {e}")
+        logger.error(f"Failed to get user streaks: {e}", exc_info=True)
         raise safe_internal_error(e, "get_user_streaks")
 
 
@@ -471,7 +471,7 @@ async def update_streak(user_id: str, streak_type: str, request: Request, curren
         return {"success": True, "new_achievements": new_achievements}
 
     except Exception as e:
-        logger.error(f"Failed to update streak: {e}")
+        logger.error(f"Failed to update streak: {e}", exc_info=True)
         await log_user_error(
             user_id=user_id,
             action="streak_updated",
@@ -577,7 +577,7 @@ async def get_user_prs(user_id: str, exercise_name: Optional[str] = None, curren
         ]
 
     except Exception as e:
-        logger.error(f"Failed to get user PRs: {e}")
+        logger.error(f"Failed to get user PRs: {e}", exc_info=True)
         raise safe_internal_error(e, "get_user_prs")
 
 
@@ -679,7 +679,7 @@ async def check_and_record_pr(
         return {"is_new_pr": False, "pr": None}
 
     except Exception as e:
-        logger.error(f"Failed to check/record PR: {e}")
+        logger.error(f"Failed to check/record PR: {e}", exc_info=True)
         raise safe_internal_error(e, "check_and_record_pr")
 
 
@@ -713,4 +713,4 @@ async def _award_pr_achievement(db, user_id: str, exercise_name: str, value: flo
         logger.info(f"Awarded {achievement_id} to user {user_id}")
 
     except Exception as e:
-        logger.error(f"Failed to award PR achievement: {e}")
+        logger.error(f"Failed to award PR achievement: {e}", exc_info=True)

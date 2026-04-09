@@ -107,7 +107,7 @@ async def create_workout(workout: WorkoutCreate,
         return created_workout
 
     except Exception as e:
-        logger.error(f"Failed to create workout: {e}")
+        logger.error(f"Failed to create workout: {e}", exc_info=True)
         raise safe_internal_error(e, "workouts_db")
 
 
@@ -137,7 +137,7 @@ async def list_workouts(
         return [row_to_workout(row) for row in rows]
 
     except Exception as e:
-        logger.error(f"Failed to list workouts: {e}")
+        logger.error(f"Failed to list workouts: {e}", exc_info=True)
         raise safe_internal_error(e, "workouts_db")
 
 
@@ -160,7 +160,7 @@ async def get_workout(workout_id: str,
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to get workout: {e}")
+        logger.error(f"Failed to get workout: {e}", exc_info=True)
         raise safe_internal_error(e, "workouts_db")
 
 
@@ -217,7 +217,7 @@ async def update_workout(workout_id: str, workout: WorkoutUpdate,
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to update workout: {e}")
+        logger.error(f"Failed to update workout: {e}", exc_info=True)
         raise safe_internal_error(e, "workouts_db")
 
 
@@ -245,7 +245,7 @@ async def delete_workout(workout_id: str,
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to delete workout: {e}")
+        logger.error(f"Failed to delete workout: {e}", exc_info=True)
         raise safe_internal_error(e, "workouts_db")
 
 
@@ -298,13 +298,13 @@ async def complete_workout(workout_id: str, background_tasks: BackgroundTasks,
                     status_code=200
                 )
             except Exception as e:
-                logger.warning(f"Background: Failed to log workout completion: {e}")
+                logger.warning(f"Background: Failed to log workout completion: {e}", exc_info=True)
 
         async def _bg_index_rag():
             try:
                 await index_workout_to_rag(workout)
             except Exception as e:
-                logger.warning(f"Background: Failed to index workout to RAG: {e}")
+                logger.warning(f"Background: Failed to index workout to RAG: {e}", exc_info=True)
 
         background_tasks.add_task(_bg_log_completion)
         background_tasks.add_task(_bg_index_rag)
@@ -314,7 +314,7 @@ async def complete_workout(workout_id: str, background_tasks: BackgroundTasks,
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to complete workout: {e}")
+        logger.error(f"Failed to complete workout: {e}", exc_info=True)
         raise safe_internal_error(e, "workouts_db")
 
 
@@ -349,7 +349,7 @@ async def swap_workout_date(body: SwapWorkoutsRequest,
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to swap workout: {e}")
+        logger.error(f"Failed to swap workout: {e}", exc_info=True)
         raise safe_internal_error(e, "workouts_db")
 
 
@@ -427,5 +427,5 @@ async def swap_exercise_in_workout(request: SwapExerciseRequest,
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to swap exercise: {e}")
+        logger.error(f"Failed to swap exercise: {e}", exc_info=True)
         raise safe_internal_error(e, "workouts_db")

@@ -174,7 +174,7 @@ async def log_transparency_event(
         )
     except Exception as e:
         # Log but don't fail - transparency tracking shouldn't block user flow
-        logger.error(f"Failed to log transparency event: {e}")
+        logger.error(f"Failed to log transparency event: {e}", exc_info=True)
         return TransparencyEventResponse(
             id=event_id,
             event_type=request.event_type.value,
@@ -224,7 +224,7 @@ async def get_trial_status(
             is_active=is_active
         )
     except Exception as e:
-        logger.error(f"Failed to get trial status: {e}")
+        logger.error(f"Failed to get trial status: {e}", exc_info=True)
         return TrialStatusResponse(
             user_id=user_id,
             is_active=False
@@ -293,7 +293,7 @@ async def start_trial(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to start trial: {e}")
+        logger.error(f"Failed to start trial: {e}", exc_info=True)
         raise safe_internal_error(e, "subscription_start_trial")
 
 
@@ -364,7 +364,7 @@ async def check_pricing_shown(
             free_tier_explained=len(free_tier_result.data) > 0
         )
     except Exception as e:
-        logger.error(f"Failed to check pricing shown: {e}")
+        logger.error(f"Failed to check pricing shown: {e}", exc_info=True)
         return PricingShownResponse(
             user_id=user_id,
             device_id=device_id,
@@ -397,7 +397,7 @@ async def log_conversion_trigger(
 
         return {"success": True, "message": "Conversion trigger logged"}
     except Exception as e:
-        logger.error(f"Failed to log conversion trigger: {e}")
+        logger.error(f"Failed to log conversion trigger: {e}", exc_info=True)
         return {"success": False, "error": str(e)}
 
 
@@ -432,7 +432,7 @@ async def log_plan_preview(
 
         return {"success": True, "message": "Plan preview logged"}
     except Exception as e:
-        logger.error(f"Failed to log plan preview: {e}")
+        logger.error(f"Failed to log plan preview: {e}", exc_info=True)
         return {"success": False, "error": str(e)}
 
 
@@ -459,7 +459,7 @@ async def log_try_workout(
 
         return {"success": True, "message": "Try workout session started"}
     except Exception as e:
-        logger.error(f"Failed to log try workout: {e}")
+        logger.error(f"Failed to log try workout: {e}", exc_info=True)
         return {"success": False, "error": str(e)}
 
 
@@ -496,5 +496,5 @@ async def update_try_workout(
 
         return {"success": True, "message": "Try workout session updated"}
     except Exception as e:
-        logger.error(f"Failed to update try workout: {e}")
+        logger.error(f"Failed to update try workout: {e}", exc_info=True)
         return {"success": False, "error": str(e)}

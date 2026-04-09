@@ -68,7 +68,7 @@ async def _get_popularity_data(
             if response.data:
                 return _parse_popularity_rows(response.data)
         except Exception as e:
-            logger.warning(f"Failed to load user-excluded popularity data: {e}")
+            logger.warning(f"Failed to load user-excluded popularity data: {e}", exc_info=True)
         # Fall through to global cache
         return _popularity_cache
 
@@ -96,7 +96,7 @@ async def _get_popularity_data(
             return result
 
     except Exception as e:
-        logger.warning(f"Failed to load popularity data from DB: {e}")
+        logger.warning(f"Failed to load popularity data from DB: {e}", exc_info=True)
 
     # Return cached data even if stale, or empty dict
     return _popularity_cache

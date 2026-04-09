@@ -156,7 +156,7 @@ async def create_custom_goal(request: CreateGoalRequest, current_user: dict = De
         return _goal_to_response(goal)
 
     except Exception as e:
-        logger.error(f"Failed to create custom goal: {e}")
+        logger.error(f"Failed to create custom goal: {e}", exc_info=True)
         await log_user_error(
             user_id=request.user_id,
             action="custom_goal_creation",
@@ -185,7 +185,7 @@ async def get_user_goals(user_id: str, current_user: dict = Depends(get_current_
         return [_goal_to_response(g) for g in goals]
 
     except Exception as e:
-        logger.error(f"Failed to get goals for user {user_id}: {e}")
+        logger.error(f"Failed to get goals for user {user_id}: {e}", exc_info=True)
         raise safe_internal_error(e, "custom_goals")
 
 
@@ -212,7 +212,7 @@ async def get_combined_keywords(user_id: str, current_user: dict = Depends(get_c
         )
 
     except Exception as e:
-        logger.error(f"Failed to get keywords for user {user_id}: {e}")
+        logger.error(f"Failed to get keywords for user {user_id}: {e}", exc_info=True)
         raise safe_internal_error(e, "custom_goals")
 
 
@@ -242,7 +242,7 @@ async def update_goal(goal_id: str, request: UpdateGoalRequest, current_user: di
         return _goal_to_response(goal)
 
     except Exception as e:
-        logger.error(f"Failed to update goal {goal_id}: {e}")
+        logger.error(f"Failed to update goal {goal_id}: {e}", exc_info=True)
         if "not found" in str(e).lower():
             raise HTTPException(status_code=404, detail="Goal not found")
         raise safe_internal_error(e, "custom_goals")
@@ -270,7 +270,7 @@ async def delete_goal(goal_id: str, current_user: dict = Depends(get_current_use
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to delete goal {goal_id}: {e}")
+        logger.error(f"Failed to delete goal {goal_id}: {e}", exc_info=True)
         raise safe_internal_error(e, "custom_goals")
 
 
@@ -295,5 +295,5 @@ async def refresh_keywords(user_id: str, current_user: dict = Depends(get_curren
         }
 
     except Exception as e:
-        logger.error(f"Failed to refresh keywords for user {user_id}: {e}")
+        logger.error(f"Failed to refresh keywords for user {user_id}: {e}", exc_info=True)
         raise safe_internal_error(e, "custom_goals")

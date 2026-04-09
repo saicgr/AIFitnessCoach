@@ -98,7 +98,7 @@ async def log_fatigue_detection_event(
         return event_id
 
     except Exception as e:
-        logger.error(f"Failed to log fatigue detection event: {e}")
+        logger.error(f"Failed to log fatigue detection event: {e}", exc_info=True)
         return None
 
 

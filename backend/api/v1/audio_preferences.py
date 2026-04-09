@@ -144,7 +144,7 @@ async def get_audio_preferences(user_id: str, current_user: dict = Depends(get_c
             )
 
     except Exception as e:
-        logger.error(f"Failed to get audio preferences for user {user_id}: {e}")
+        logger.error(f"Failed to get audio preferences for user {user_id}: {e}", exc_info=True)
         raise safe_internal_error(e, "get_audio_preferences")
 
 
@@ -252,7 +252,7 @@ async def update_audio_preferences(user_id: str, update: AudioPreferencesUpdate,
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to update audio preferences for user {user_id}: {e}")
+        logger.error(f"Failed to update audio preferences for user {user_id}: {e}", exc_info=True)
         await log_user_error(
             user_id=user_id,
             action="audio_preferences_updated",
@@ -360,7 +360,7 @@ async def create_audio_preferences(user_id: str, preferences: Optional[AudioPref
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to create audio preferences for user {user_id}: {e}")
+        logger.error(f"Failed to create audio preferences for user {user_id}: {e}", exc_info=True)
         await log_user_error(
             user_id=user_id,
             action="audio_preferences_created",

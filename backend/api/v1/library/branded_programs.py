@@ -122,7 +122,7 @@ async def list_branded_programs(
         return programs
 
     except Exception as e:
-        logger.error(f"Error listing branded programs: {e}")
+        logger.error(f"Error listing branded programs: {e}", exc_info=True)
         raise safe_internal_error(e, "branded_programs")
 
 
@@ -140,7 +140,7 @@ async def get_featured_programs():
         return programs
 
     except Exception as e:
-        logger.error(f"Error fetching featured programs: {e}")
+        logger.error(f"Error fetching featured programs: {e}", exc_info=True)
         raise safe_internal_error(e, "branded_programs")
 
 
@@ -167,7 +167,7 @@ async def get_program_categories():
         return categories
 
     except Exception as e:
-        logger.error(f"Error getting program categories: {e}")
+        logger.error(f"Error getting program categories: {e}", exc_info=True)
         raise safe_internal_error(e, "branded_programs")
 
 
@@ -268,7 +268,7 @@ async def assign_program(request: AssignProgramRequest):
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error assigning program: {e}")
+        logger.error(f"Error assigning program: {e}", exc_info=True)
         raise safe_internal_error(e, "branded_programs")
 
 
@@ -301,7 +301,7 @@ async def get_current_program(user_id: str = Query(...)):
         return row_to_user_program(assignment, program_data)
 
     except Exception as e:
-        logger.error(f"Error getting current program for user {user_id}: {e}")
+        logger.error(f"Error getting current program for user {user_id}: {e}", exc_info=True)
         raise safe_internal_error(e, "branded_programs")
 
 
@@ -339,7 +339,7 @@ async def rename_current_program(request: RenameProgramRequest):
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error renaming program: {e}")
+        logger.error(f"Error renaming program: {e}", exc_info=True)
         raise safe_internal_error(e, "branded_programs")
 
 
@@ -366,7 +366,7 @@ async def end_current_program(user_id: str = Query(...)):
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error ending program: {e}")
+        logger.error(f"Error ending program: {e}", exc_info=True)
         raise safe_internal_error(e, "branded_programs")
 
 
@@ -396,7 +396,7 @@ async def get_program_history(user_id: str = Query(...)):
         return history
 
     except Exception as e:
-        logger.error(f"Error getting program history: {e}")
+        logger.error(f"Error getting program history: {e}", exc_info=True)
         raise safe_internal_error(e, "branded_programs")
 
 
@@ -464,7 +464,7 @@ async def get_program_durations(program_id: str):
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error getting durations for program {program_id}: {e}")
+        logger.error(f"Error getting durations for program {program_id}: {e}", exc_info=True)
         raise safe_internal_error(e, "branded_programs")
 
 
@@ -507,7 +507,7 @@ async def get_program_weeks(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error getting weeks for program {program_id}: {e}")
+        logger.error(f"Error getting weeks for program {program_id}: {e}", exc_info=True)
         raise safe_internal_error(e, "branded_programs")
 
 
@@ -530,5 +530,5 @@ async def get_branded_program(program_id: str):
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error getting program {program_id}: {e}")
+        logger.error(f"Error getting program {program_id}: {e}", exc_info=True)
         raise safe_internal_error(e, "branded_programs")

@@ -34,11 +34,11 @@ def _check_table_exists() -> bool:
     except Exception as e:
         if "PGRST205" in str(e) or "Could not find" in str(e):
             _table_available = False
-            logger.warning("media_analysis_jobs table not found - using in-memory fallback")
-            logger.warning("Run migrations/264_media_analysis_jobs.sql to enable persistence")
+            logger.warning("media_analysis_jobs table not found - using in-memory fallback", exc_info=True)
+            logger.warning("Run migrations/264_media_analysis_jobs.sql to enable persistence", exc_info=True)
         else:
             _table_available = False
-            logger.error(f"Error checking media_analysis_jobs table: {e}")
+            logger.error(f"Error checking media_analysis_jobs table: {e}", exc_info=True)
 
     return _table_available
 
@@ -86,7 +86,7 @@ class MediaJobService:
             else:
                 loop.run_until_complete(track_premium_usage(user_id, "form_video_analysis"))
         except Exception as e:
-            logger.warning(f"Failed to track form_video_analysis usage: {e}")
+            logger.warning(f"Failed to track form_video_analysis usage: {e}", exc_info=True)
 
     def create_job(
         self,
@@ -134,7 +134,7 @@ class MediaJobService:
                 logger.info(f"Created media job {job_id} ({job_type}) for user {user_id}")
                 return job_id
             except Exception as e:
-                logger.error(f"Failed to create media job in DB: {e}")
+                logger.error(f"Failed to create media job in DB: {e}", exc_info=True)
                 # Fall through to memory storage
 
         # In-memory fallback
@@ -167,7 +167,7 @@ class MediaJobService:
                 result = db.client.table("media_analysis_jobs").select("*").eq("id", job_id).limit(1).execute()
                 return result.data[0] if result.data else None
             except Exception as e:
-                logger.error(f"Failed to get media job from DB: {e}")
+                logger.error(f"Failed to get media job from DB: {e}", exc_info=True)
 
         return _memory_jobs.get(job_id)
 
@@ -217,7 +217,7 @@ class MediaJobService:
                 logger.info(f"Updated media job {job_id} status to {status}")
                 return
             except Exception as e:
-                logger.error(f"Failed to update media job in DB: {e}")
+                logger.error(f"Failed to update media job in DB: {e}", exc_info=True)
 
         # In-memory fallback
         if job_id in _memory_jobs:
@@ -235,7 +235,7 @@ class MediaJobService:
                     .execute()
                 return result.data if result.data else []
             except Exception as e:
-                logger.error(f"Failed to get pending media jobs from DB: {e}")
+                logger.error(f"Failed to get pending media jobs from DB: {e}", exc_info=True)
 
         # In-memory fallback
         return [j for j in _memory_jobs.values() if j["status"] in ("pending", "in_progress")]
@@ -260,7 +260,7 @@ class MediaJobService:
                 if result.data:
                     logger.info(f"Cancelled {len(result.data)} stale media jobs")
             except Exception as e:
-                logger.error(f"Failed to cancel stale media jobs: {e}")
+                logger.error(f"Failed to cancel stale media jobs: {e}", exc_info=True)
         else:
             # In-memory fallback
             cutoff_dt = datetime.now() - timedelta(hours=older_than_hours)
@@ -285,7 +285,7 @@ class MediaJobService:
                     .execute()
                 return result.data if result.data else []
             except Exception as e:
-                logger.error(f"Failed to get active media jobs from DB: {e}")
+                logger.error(f"Failed to get active media jobs from DB: {e}", exc_info=True)
 
         # In-memory fallback
         return [

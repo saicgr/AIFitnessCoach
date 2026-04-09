@@ -97,7 +97,7 @@ async def _get_queue_position(ticket_id: str) -> int:
         return (count_result.count or 0) + 1
 
     except Exception as e:
-        logger.warning(f"Failed to get queue position: {e}")
+        logger.warning(f"Failed to get queue position: {e}", exc_info=True)
         return 0
 
 
@@ -115,7 +115,7 @@ async def _get_agents_online_count() -> int:
         return result.count or 0
 
     except Exception as e:
-        logger.warning(f"Failed to get agents online count: {e}")
+        logger.warning(f"Failed to get agents online count: {e}", exc_info=True)
         return 0
 
 
@@ -207,7 +207,7 @@ async def _send_admin_webhook(
                     logger.warning(f"Discord webhook returned {resp.status_code}: {resp.text[:200]}")
 
         except Exception as e:
-            logger.error(f"Discord webhook failed: {e}")
+            logger.error(f"Discord webhook failed: {e}", exc_info=True)
 
     # --- Email Notification (optional fallback) ---
     if settings.admin_notification_email:
@@ -237,7 +237,7 @@ async def _send_admin_webhook(
                 })
                 logger.info(f"Admin email sent to {settings.admin_notification_email}")
         except Exception as e:
-            logger.error(f"Admin email notification failed: {e}")
+            logger.error(f"Admin email notification failed: {e}", exc_info=True)
 
     if not settings.discord_webhook_url and not settings.admin_notification_email:
         logger.warning("No admin notification channels configured (set DISCORD_WEBHOOK_URL or ADMIN_NOTIFICATION_EMAIL)")
@@ -256,7 +256,7 @@ async def _check_if_user_is_agent(user_id: str) -> bool:
         return False
 
     except Exception as e:
-        logger.warning(f"Failed to check user role: {e}")
+        logger.warning(f"Failed to check user role: {e}", exc_info=True)
         return False
 
 
@@ -392,7 +392,7 @@ async def start_live_chat(request: LiveChatStartRequest,
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to start live chat: {e}")
+        logger.error(f"Failed to start live chat: {e}", exc_info=True)
         await log_user_error(
             user_id=request.user_id,
             action="live_chat_started",
@@ -536,7 +536,7 @@ async def escalate_to_live_chat(ticket_id: str, request: LiveChatEscalateRequest
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to escalate ticket to live chat: {e}")
+        logger.error(f"Failed to escalate ticket to live chat: {e}", exc_info=True)
         await log_user_error(
             user_id=request.user_id,
             action="live_chat_escalated",
@@ -603,7 +603,7 @@ async def get_queue_position(ticket_id: str, user_id: str,
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to get queue position: {e}")
+        logger.error(f"Failed to get queue position: {e}", exc_info=True)
         raise safe_internal_error(e, "live_chat")
 
 
@@ -711,7 +711,7 @@ async def send_message(ticket_id: str, request: LiveChatMessageRequest,
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to send message: {e}")
+        logger.error(f"Failed to send message: {e}", exc_info=True)
         await log_user_error(
             user_id=request.user_id,
             action="live_chat_message",

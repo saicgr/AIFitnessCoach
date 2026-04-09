@@ -23,9 +23,12 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
 import logging
 logger = logging.getLogger(__name__)
+from collections import Counter
 from core.auth import get_current_user
 from core.db import get_supabase_db
 from core.exceptions import safe_internal_error
+from services.fatigue_detection_service import SetPerformance, FatigueAnalysis
+from services.fatigue_detection_service_helpers import get_fatigue_detection_service, log_fatigue_detection_event
 
 from .set_adjustments_models import (
     SetPerformanceInput,
@@ -67,7 +70,7 @@ async def get_user_set_adjustment_patterns(
 
     try:
         db = get_supabase_db()
-        supabase = get_db().client
+        supabase = db.client
 
         # Verify user exists
         user = db.get_user(user_id)
@@ -246,7 +249,7 @@ async def get_user_set_adjustment_patterns(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to get user set adjustment patterns: {e}")
+        logger.error(f"Failed to get user set adjustment patterns: {e}", exc_info=True)
         raise safe_internal_error(e, "set_adjustments")
 
 
@@ -451,7 +454,7 @@ async def check_fatigue(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error validating workout: {e}")
+        logger.error(f"Error validating workout: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail="Error validating workout")
 
     # Convert input to SetPerformance objects
@@ -506,7 +509,7 @@ async def check_fatigue(
         )
 
     except Exception as e:
-        logger.error(f"Error in fatigue analysis: {e}")
+        logger.error(f"Error in fatigue analysis: {e}", exc_info=True)
         raise HTTPException(
             status_code=500,
             detail="Error analyzing fatigue"
@@ -580,7 +583,7 @@ async def log_fatigue_response(
         )
 
     except Exception as e:
-        logger.error(f"Error logging fatigue response: {e}")
+        logger.error(f"Error logging fatigue response: {e}", exc_info=True)
         return FatigueResponseResponse(
             success=False,
             message=f"Failed to log response: {str(e)}",
@@ -668,7 +671,7 @@ async def get_fatigue_history(
         )
 
     except Exception as e:
-        logger.error(f"Error getting fatigue history: {e}")
+        logger.error(f"Error getting fatigue history: {e}", exc_info=True)
         raise HTTPException(
             status_code=500,
             detail="Error retrieving fatigue history"

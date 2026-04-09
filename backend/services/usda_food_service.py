@@ -449,7 +449,7 @@ class USDAFoodService:
                     food = self._parse_food(food_data, include_score=True)
                     foods.append(food)
                 except Exception as e:
-                    logger.warning(f"Failed to parse food: {e}")
+                    logger.warning(f"Failed to parse food: {e}", exc_info=True)
                     continue
 
             total_hits = data.get("totalHits", 0)
@@ -469,13 +469,13 @@ class USDAFoodService:
             return result
 
         except httpx.TimeoutException:
-            logger.error(f"Timeout searching USDA for: {query}")
+            logger.error(f"Timeout searching USDA for: {query}", exc_info=True)
             raise Exception("Request timed out. Please try again.")
         except httpx.HTTPStatusError as e:
-            logger.error(f"HTTP error searching USDA: {e}")
+            logger.error(f"HTTP error searching USDA: {e}", exc_info=True)
             raise Exception(f"API error: {e.response.status_code}")
         except Exception as e:
-            logger.error(f"Error searching USDA: {e}")
+            logger.error(f"Error searching USDA: {e}", exc_info=True)
             raise
 
     async def get_food(self, fdc_id: int) -> Optional[USDAFood]:
@@ -529,15 +529,15 @@ class USDAFoodService:
             return food
 
         except httpx.TimeoutException:
-            logger.error(f"Timeout fetching USDA food: {fdc_id}")
+            logger.error(f"Timeout fetching USDA food: {fdc_id}", exc_info=True)
             raise Exception("Request timed out. Please try again.")
         except httpx.HTTPStatusError as e:
-            logger.error(f"HTTP error fetching USDA food: {e}")
+            logger.error(f"HTTP error fetching USDA food: {e}", exc_info=True)
             if e.response.status_code == 404:
                 return None
             raise Exception(f"API error: {e.response.status_code}")
         except Exception as e:
-            logger.error(f"Error fetching USDA food: {e}")
+            logger.error(f"Error fetching USDA food: {e}", exc_info=True)
             raise
 
     async def get_foods_batch(self, fdc_ids: List[int]) -> List[USDAFood]:
@@ -587,20 +587,20 @@ class USDAFoodService:
                     # Cache individual foods
                     self._set_cached(f"food:{food.fdc_id}", food)
                 except Exception as e:
-                    logger.warning(f"Failed to parse food in batch: {e}")
+                    logger.warning(f"Failed to parse food in batch: {e}", exc_info=True)
                     continue
 
             logger.info(f"Successfully fetched {len(foods)} foods in batch")
             return foods
 
         except httpx.TimeoutException:
-            logger.error("Timeout fetching USDA foods batch")
+            logger.error("Timeout fetching USDA foods batch", exc_info=True)
             raise Exception("Request timed out. Please try again.")
         except httpx.HTTPStatusError as e:
-            logger.error(f"HTTP error fetching USDA foods batch: {e}")
+            logger.error(f"HTTP error fetching USDA foods batch: {e}", exc_info=True)
             raise Exception(f"API error: {e.response.status_code}")
         except Exception as e:
-            logger.error(f"Error fetching USDA foods batch: {e}")
+            logger.error(f"Error fetching USDA foods batch: {e}", exc_info=True)
             raise
 
     async def search_branded_foods(

@@ -377,7 +377,7 @@ class FormAnalysisService:
                 jpeg_bytes = base64.b64decode(frame_b64)
                 parts.append(genai_types.Part.from_bytes(data=jpeg_bytes, mime_type="image/jpeg"))
             except Exception as e:
-                logger.warning(f"Skipping invalid frame (base64 decode error): {e}")
+                logger.warning(f"Skipping invalid frame (base64 decode error): {e}", exc_info=True)
 
         if not parts:
             raise ValueError("No valid frames could be decoded from video_frames")
@@ -695,10 +695,10 @@ class FormAnalysisService:
             return result
 
         except TimeoutError:
-            logger.error(f"Form analysis timed out for {s3_key}")
+            logger.error(f"Form analysis timed out for {s3_key}", exc_info=True)
             raise
         except json.JSONDecodeError as e:
-            logger.error(f"Failed to parse Gemini response as JSON: {e}")
+            logger.error(f"Failed to parse Gemini response as JSON: {e}", exc_info=True)
             raise ValueError(f"Failed to parse form analysis response: {e}")
         except Exception as e:
             logger.error(f"Form analysis failed for {s3_key}: {e}", exc_info=True)
@@ -711,7 +711,7 @@ class FormAnalysisService:
                     os.unlink(tmp_path)
                     logger.debug(f"Cleaned up temp file: {tmp_path}")
                 except OSError as e:
-                    logger.warning(f"Failed to clean up temp file {tmp_path}: {e}")
+                    logger.warning(f"Failed to clean up temp file {tmp_path}: {e}", exc_info=True)
 
             # Clean up Gemini file (best effort)
             if gemini_file and hasattr(gemini_file, "name"):
@@ -720,7 +720,7 @@ class FormAnalysisService:
                     await asyncio.to_thread(files_client.files.delete, name=gemini_file.name)
                     logger.debug(f"Cleaned up Gemini file: {gemini_file.name}")
                 except Exception as e:
-                    logger.warning(f"Failed to clean up Gemini file: {e}")
+                    logger.warning(f"Failed to clean up Gemini file: {e}", exc_info=True)
 
     async def analyze_form_comparison(
         self,
@@ -786,7 +786,7 @@ class FormAnalysisService:
                             parts.append(genai_types.Part.from_bytes(data=jpeg_bytes, mime_type=frame_mime))
                         logger.info(f"Extracted {len(frames)} keyframes from video {i+1}")
                     except Exception as e:
-                        logger.warning(f"Keyframe extraction failed for video {i+1}, falling back to Files API: {e}")
+                        logger.warning(f"Keyframe extraction failed for video {i+1}, falling back to Files API: {e}", exc_info=True)
                         use_keyframes = False
                         parts = []  # Reset parts
                         break
@@ -879,10 +879,10 @@ class FormAnalysisService:
             return result
 
         except TimeoutError:
-            logger.error(f"Form comparison timed out for {len(s3_keys)} videos")
+            logger.error(f"Form comparison timed out for {len(s3_keys)} videos", exc_info=True)
             raise
         except json.JSONDecodeError as e:
-            logger.error(f"Failed to parse comparison JSON: {e}")
+            logger.error(f"Failed to parse comparison JSON: {e}", exc_info=True)
             raise ValueError(f"Failed to parse form comparison response: {e}")
         except Exception as e:
             logger.error(f"Form comparison failed: {e}", exc_info=True)
@@ -896,7 +896,7 @@ class FormAnalysisService:
                         os.unlink(tmp_path)
                         logger.debug(f"Cleaned up temp file: {tmp_path}")
                     except OSError as e:
-                        logger.warning(f"Failed to clean up temp file {tmp_path}: {e}")
+                        logger.warning(f"Failed to clean up temp file {tmp_path}: {e}", exc_info=True)
 
             # Clean up all Gemini files (best effort)
             for gf in gemini_files:
@@ -905,4 +905,4 @@ class FormAnalysisService:
                         await asyncio.to_thread(files_client.files.delete, name=gf.name)
                         logger.debug(f"Cleaned up Gemini file: {gf.name}")
                     except Exception as e:
-                        logger.warning(f"Failed to clean up Gemini file: {e}")
+                        logger.warning(f"Failed to clean up Gemini file: {e}", exc_info=True)

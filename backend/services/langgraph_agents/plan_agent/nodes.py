@@ -179,7 +179,7 @@ async def plan_generate_node(state: PlanAgentState) -> Dict[str, Any]:
         }
 
     except Exception as e:
-        logger.error(f"Error generating weekly plan: {e}")
+        logger.error(f"Error generating weekly plan: {e}", exc_info=True)
         error_response = "I encountered an issue generating your weekly plan. Please try again or adjust your preferences in Settings."
         return {
             "ai_response": error_response,
@@ -255,7 +255,7 @@ Would you like me to create one for you? Just say "Create my weekly plan" and I'
         }
 
     except Exception as e:
-        logger.error(f"Error querying plan: {e}")
+        logger.error(f"Error querying plan: {e}", exc_info=True)
         error_response = "I had trouble retrieving your plan. Please check the Weekly Plan section in the app."
         return {
             "ai_response": error_response,
@@ -325,7 +325,7 @@ If they seem interested in creating a plan, guide them to say "Create my weekly 
         }
 
     except Exception as e:
-        logger.error(f"Error in plan respond: {e}")
+        logger.error(f"Error in plan respond: {e}", exc_info=True)
         return {
             "ai_response": "I'm here to help with your fitness planning! Would you like to create a holistic weekly plan?",
             "final_response": "I'm here to help with your fitness planning! Would you like to create a holistic weekly plan?",

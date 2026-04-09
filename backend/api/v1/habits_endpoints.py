@@ -44,6 +44,7 @@ from models.habits import (
     BulkHabitLogCreate, BulkHabitLogResponse,
     HabitCalendarData, HabitCalendarResponse,
 )
+from core.activity_logger import log_user_error
 
 router = APIRouter()
 @router.post("/{user_id}/batch-log", response_model=BulkHabitLogResponse)
@@ -69,6 +70,7 @@ async def batch_log_habits(
     failed_count = 0
     results = []
 
+    from .habits import log_habit
     for log in request.logs:
         try:
             result = await log_habit(user_id, log)
@@ -127,7 +129,7 @@ async def get_all_streaks(
         return result.data
 
     except Exception as e:
-        logger.error(f"❌ Error getting streaks: {e}")
+        logger.error(f"❌ Error getting streaks: {e}", exc_info=True)
         await log_user_error(user_id, "get_all_streaks", str(e))
         raise safe_internal_error(e, "endpoint")
 
@@ -165,7 +167,7 @@ async def get_habit_streak(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"❌ Error getting streak: {e}")
+        logger.error(f"❌ Error getting streak: {e}", exc_info=True)
         await log_user_error(user_id, "get_habit_streak", str(e))
         raise safe_internal_error(e, "endpoint")
 
@@ -197,6 +199,7 @@ async def get_habits_summary(
         today = datetime.strptime(get_user_today(user_tz), "%Y-%m-%d").date()
 
         # Get today's habits response
+        from .habits import get_today_habits
         today_response = await get_today_habits(user_id, request)
 
         # Get all streaks to calculate averages
@@ -236,7 +239,7 @@ async def get_habits_summary(
         return summary
 
     except Exception as e:
-        logger.error(f"❌ Error getting habits summary: {e}")
+        logger.error(f"❌ Error getting habits summary: {e}", exc_info=True)
         await log_user_error(user_id, "get_habits_summary", str(e))
         raise safe_internal_error(e, "endpoint")
 
@@ -287,7 +290,7 @@ async def get_weekly_summary(
         return summaries
 
     except Exception as e:
-        logger.error(f"❌ Error getting weekly summary: {e}")
+        logger.error(f"❌ Error getting weekly summary: {e}", exc_info=True)
         await log_user_error(user_id, "get_weekly_summary", str(e))
         raise safe_internal_error(e, "endpoint")
 
@@ -394,7 +397,7 @@ async def get_habits_calendar(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"❌ Error getting calendar: {e}")
+        logger.error(f"❌ Error getting calendar: {e}", exc_info=True)
         await log_user_error(user_id, "get_habits_calendar", str(e))
         raise safe_internal_error(e, "endpoint")
 
@@ -435,7 +438,7 @@ async def get_habit_templates(
         return result.data
 
     except Exception as e:
-        logger.error(f"❌ Error getting templates: {e}")
+        logger.error(f"❌ Error getting templates: {e}", exc_info=True)
         raise safe_internal_error(e, "endpoint")
 
 
@@ -483,12 +486,13 @@ async def create_habit_from_template(
             color=t.get("color", "#4CAF50"),
         )
 
+        from .habits import create_habit
         return await create_habit(user_id, habit_create)
 
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"❌ Error creating from template: {e}")
+        logger.error(f"❌ Error creating from template: {e}", exc_info=True)
         await log_user_error(user_id, "create_habit_from_template", str(e))
         raise safe_internal_error(e, "endpoint")
 
@@ -546,14 +550,14 @@ async def get_ai_suggestions(
 
     except ImportError:
         # Fallback to templates if AI service not available
-        logger.warning("⚠️ AI suggestion service not available, falling back to templates")
+        logger.warning("⚠️ AI suggestion service not available, falling back to templates", exc_info=True)
         templates = await get_habit_templates()
         return HabitSuggestionResponse(
             suggested_habits=templates[:5],
             reasoning="Popular habits that can help you build a healthier routine."
         )
     except Exception as e:
-        logger.error(f"❌ Error getting AI suggestions: {e}")
+        logger.error(f"❌ Error getting AI suggestions: {e}", exc_info=True)
         await log_user_error(user_id, "get_ai_suggestions", str(e))
         raise safe_internal_error(e, "endpoint")
 
@@ -637,6 +641,6 @@ async def get_habit_insights(
         return insights
 
     except Exception as e:
-        logger.error(f"❌ Error getting insights: {e}")
+        logger.error(f"❌ Error getting insights: {e}", exc_info=True)
         await log_user_error(user_id, "get_habit_insights", str(e))
         raise safe_internal_error(e, "endpoint")

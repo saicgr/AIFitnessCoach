@@ -82,7 +82,7 @@ def _log_email_sent(supabase, user_id: str, email_type: str, metadata: Dict = No
             "metadata": metadata or {}
         }).execute()
     except Exception as e:
-        logger.error(f"❌ Failed to log email send: {e}")
+        logger.error(f"❌ Failed to log email send: {e}", exc_info=True)
 
 
 # ─── Main Endpoint ──────────────────────────────────────────────────────────
@@ -216,7 +216,7 @@ async def _job_streak_at_risk(supabase, email_svc) -> int:
                     sent += 1
 
     except Exception as e:
-        logger.error(f"❌ streak_at_risk job failed: {e}")
+        logger.error(f"❌ streak_at_risk job failed: {e}", exc_info=True)
         raise
 
     logger.info(f"🎯 streak_at_risk: {sent} emails sent")
@@ -288,7 +288,7 @@ async def _job_day3_activation(supabase, email_svc) -> int:
                 sent += 1
 
     except Exception as e:
-        logger.error(f"❌ day3_activation job failed: {e}")
+        logger.error(f"❌ day3_activation job failed: {e}", exc_info=True)
         raise
 
     logger.info(f"🎯 day3_activation: {sent} emails sent")
@@ -370,7 +370,7 @@ async def _job_trial_ending(supabase, email_svc) -> int:
                     sent += 1
 
     except Exception as e:
-        logger.error(f"❌ trial_ending job failed: {e}")
+        logger.error(f"❌ trial_ending job failed: {e}", exc_info=True)
         raise
 
     logger.info(f"🎯 trial_ending: {sent} emails sent")
@@ -441,7 +441,7 @@ async def _job_win_back_30(supabase, email_svc) -> int:
                 sent += 1
 
     except Exception as e:
-        logger.error(f"❌ win_back_30 job failed: {e}")
+        logger.error(f"❌ win_back_30 job failed: {e}", exc_info=True)
         raise
 
     logger.info(f"🎯 win_back_30: {sent} emails sent")
@@ -522,7 +522,7 @@ async def _job_14day_upsell(supabase, email_svc) -> int:
                 sent += 1
 
     except Exception as e:
-        logger.error(f"❌ 14day_upsell job failed: {e}")
+        logger.error(f"❌ 14day_upsell job failed: {e}", exc_info=True)
         raise
 
     logger.info(f"🎯 14day_upsell: {sent} emails sent")
@@ -580,7 +580,7 @@ async def _job_onboarding_incomplete(supabase, email_svc) -> int:
                 sent += 1
 
     except Exception as e:
-        logger.error(f"❌ onboarding_incomplete job failed: {e}")
+        logger.error(f"❌ onboarding_incomplete job failed: {e}", exc_info=True)
         raise
 
     logger.info(f"🎯 onboarding_incomplete: {sent} emails sent")
@@ -653,7 +653,7 @@ async def _job_weekly_summary(supabase, email_svc) -> int:
                 sent += 1
 
     except Exception as e:
-        logger.error(f"❌ weekly_summary job failed: {e}")
+        logger.error(f"❌ weekly_summary job failed: {e}", exc_info=True)
         raise
 
     logger.info(f"🎯 weekly_summary: {sent} emails sent")

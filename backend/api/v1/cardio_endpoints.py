@@ -45,8 +45,19 @@ from models.cardio_session import (
     CardioTypeStats,
     CardioLocation,
 )
-
 router = APIRouter()
+
+
+def _parse_cardio_session(row):
+    """Lazy proxy to avoid circular import with cardio.py."""
+    from .cardio import _parse_cardio_session as _impl
+    return _impl(row)
+
+
+def _parse_cardio_session_summary(row):
+    """Lazy proxy to avoid circular import with cardio.py."""
+    from .cardio import _parse_cardio_session_summary as _impl
+    return _impl(row)
 
 @router.get("/sessions/{user_id}", response_model=CardioSessionsListResponse, tags=["Cardio Sessions"])
 async def list_cardio_sessions(

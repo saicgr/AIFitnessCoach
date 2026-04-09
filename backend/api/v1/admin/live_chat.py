@@ -65,7 +65,7 @@ def get_notification_service() -> NotificationService:
         try:
             _notification_service = NotificationService()
         except Exception as e:
-            logger.warning(f"Failed to initialize notification service: {e}")
+            logger.warning(f"Failed to initialize notification service: {e}", exc_info=True)
     return _notification_service
 
 
@@ -136,7 +136,7 @@ async def verify_admin_token(authorization: str = Header(...)) -> AdminProfile:
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Token verification failed: {e}")
+        logger.error(f"Token verification failed: {e}", exc_info=True)
         raise HTTPException(status_code=401, detail="Authentication failed")
 
 
@@ -227,7 +227,7 @@ async def _send_push_notification_to_user(
         return success
 
     except Exception as e:
-        logger.error(f"Failed to send push notification: {e}")
+        logger.error(f"Failed to send push notification: {e}", exc_info=True)
         return False
 
 
@@ -313,7 +313,7 @@ async def admin_login(request: Request, payload: AdminLoginRequest):
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Admin login failed: {e}")
+        logger.error(f"Admin login failed: {e}", exc_info=True)
         raise HTTPException(status_code=401, detail="Authentication failed")
 
 
@@ -457,7 +457,7 @@ async def get_live_chats(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to get live chats: {e}")
+        logger.error(f"Failed to get live chats: {e}", exc_info=True)
         raise safe_internal_error(e, "admin_live_chat")
 
 
@@ -553,7 +553,7 @@ async def get_live_chat_detail(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to get live chat detail: {e}")
+        logger.error(f"Failed to get live chat detail: {e}", exc_info=True)
         raise safe_internal_error(e, "admin_live_chat")
 
 
@@ -661,7 +661,7 @@ async def reply_to_live_chat(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to reply to live chat: {e}")
+        logger.error(f"Failed to reply to live chat: {e}", exc_info=True)
         raise safe_internal_error(e, "admin_live_chat")
 
 
@@ -754,7 +754,7 @@ async def assign_chat(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to assign chat: {e}")
+        logger.error(f"Failed to assign chat: {e}", exc_info=True)
         raise safe_internal_error(e, "admin_live_chat")
 
 

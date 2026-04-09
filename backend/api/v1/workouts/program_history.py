@@ -119,7 +119,7 @@ async def save_program_snapshot(request: ProgramSnapshotRequest,
             raise Exception("No data returned from insert")
 
     except Exception as e:
-        logger.error(f"❌ Failed to save program snapshot: {e}")
+        logger.error(f"❌ Failed to save program snapshot: {e}", exc_info=True)
         raise safe_internal_error(e, "program_history")
 
 
@@ -162,7 +162,7 @@ async def list_program_history(user_id: str, limit: int = 20, offset: int = 0,
         return ProgramHistoryListResponse(programs=programs, total_count=total_count)
 
     except Exception as e:
-        logger.error(f"❌ Failed to list program history: {e}")
+        logger.error(f"❌ Failed to list program history: {e}", exc_info=True)
         raise safe_internal_error(e, "program_history")
 
 
@@ -240,7 +240,7 @@ async def restore_program(request: RestoreProgramRequest,
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"❌ Failed to restore program: {e}")
+        logger.error(f"❌ Failed to restore program: {e}", exc_info=True)
         raise safe_internal_error(e, "program_history")
 
 
@@ -288,5 +288,5 @@ async def delete_program_snapshot(program_id: str, user_id: str,
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"❌ Failed to delete program: {e}")
+        logger.error(f"❌ Failed to delete program: {e}", exc_info=True)
         raise safe_internal_error(e, "program_history")

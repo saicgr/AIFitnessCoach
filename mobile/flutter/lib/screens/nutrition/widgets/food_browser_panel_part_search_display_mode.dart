@@ -34,7 +34,7 @@ class _BrowseFilterTabs extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final teal = isDark ? AppColors.teal : AppColorsLight.teal;
+    final teal = isDark ? AppColors.cyan : AppColorsLight.cyan;
     final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
@@ -529,7 +529,7 @@ class _BrowseSectionHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final teal = isDark ? AppColors.teal : AppColorsLight.teal;
+    final teal = isDark ? AppColors.cyan : AppColorsLight.cyan;
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 2),

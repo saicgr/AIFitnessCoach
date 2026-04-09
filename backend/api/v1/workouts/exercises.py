@@ -82,7 +82,7 @@ async def update_workout_exercises(workout_id: str, request: UpdateWorkoutExerci
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to update workout exercises: {e}")
+        logger.error(f"Failed to update workout exercises: {e}", exc_info=True)
         raise safe_internal_error(e, "exercises")
 
 
@@ -125,7 +125,7 @@ async def update_warmup_exercises(workout_id: str, request: UpdateWarmupExercise
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to update warmup exercises: {e}")
+        logger.error(f"Failed to update warmup exercises: {e}", exc_info=True)
         raise safe_internal_error(e, "exercises")
 
 
@@ -168,5 +168,5 @@ async def update_stretch_exercises(workout_id: str, request: UpdateStretchExerci
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to update stretch exercises: {e}")
+        logger.error(f"Failed to update stretch exercises: {e}", exc_info=True)
         raise safe_internal_error(e, "exercises")

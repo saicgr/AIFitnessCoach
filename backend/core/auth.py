@@ -91,7 +91,7 @@ async def get_verified_auth_token(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Token verification error: {e}")
+        logger.error(f"Token verification error: {e}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Failed to validate token",
@@ -159,7 +159,7 @@ async def get_current_user(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Auth error: {e}")
+        logger.error(f"Auth error: {e}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Failed to validate token",

@@ -320,7 +320,7 @@ class FeatureLoggingMixin:
             }
 
         except Exception as e:
-            logger.error(f"Failed to get quick workout chat analytics: {e}")
+            logger.error(f"Failed to get quick workout chat analytics: {e}", exc_info=True)
             return {"error": str(e)}
 
     async def get_split_screen_usage_patterns(
@@ -417,7 +417,7 @@ class FeatureLoggingMixin:
             }
 
         except Exception as e:
-            logger.error(f"Failed to get split screen usage patterns: {e}")
+            logger.error(f"Failed to get split screen usage patterns: {e}", exc_info=True)
             return {
                 "user_id": user_id,
                 "period_days": days,
@@ -849,7 +849,7 @@ class FeatureLoggingMixin:
             }
 
         except Exception as e:
-            logger.error(f"Failed to get library preferences: {e}")
+            logger.error(f"Failed to get library preferences: {e}", exc_info=True)
             return {
                 "user_id": user_id,
                 "period_days": days,

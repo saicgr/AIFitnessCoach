@@ -182,7 +182,7 @@ async def presign_attachment_upload(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to generate presigned URL for support attachment: {e}")
+        logger.error(f"Failed to generate presigned URL for support attachment: {e}", exc_info=True)
         raise safe_internal_error(e, "support_attachment_presign")
 
 
@@ -321,7 +321,7 @@ async def create_support_ticket(ticket: SupportTicketCreate,
                             {"trello_card_id": card["id"]}
                         ).eq("id", ticket_id).execute()
                     except Exception as e:
-                        logger.warning(f"Failed to store Trello card ID: {e}")
+                        logger.warning(f"Failed to store Trello card ID: {e}", exc_info=True)
 
             background_tasks.add_task(_create_trello_card)
 
@@ -344,7 +344,7 @@ async def create_support_ticket(ticket: SupportTicketCreate,
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to create support ticket: {e}")
+        logger.error(f"Failed to create support ticket: {e}", exc_info=True)
         await log_user_error(
             user_id=ticket.user_id,
             action="support_ticket_created",
@@ -397,7 +397,7 @@ async def get_user_tickets(
         return [_parse_ticket_summary(t) for t in result.data or []]
 
     except Exception as e:
-        logger.error(f"Failed to get user tickets: {e}")
+        logger.error(f"Failed to get user tickets: {e}", exc_info=True)
         raise safe_internal_error(e, "support")
 
 
@@ -446,7 +446,7 @@ async def get_ticket(user_id: str, ticket_id: str,
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to get ticket: {e}")
+        logger.error(f"Failed to get ticket: {e}", exc_info=True)
         raise safe_internal_error(e, "support")
 
 
@@ -549,7 +549,7 @@ async def add_ticket_reply(ticket_id: str, user_id: str, reply: SupportTicketMes
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to add reply to ticket: {e}")
+        logger.error(f"Failed to add reply to ticket: {e}", exc_info=True)
         await log_user_error(
             user_id=user_id,
             action="support_ticket_reply",
@@ -668,7 +668,7 @@ async def close_ticket(ticket_id: str, user_id: str,
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to close ticket: {e}")
+        logger.error(f"Failed to close ticket: {e}", exc_info=True)
         await log_user_error(
             user_id=user_id,
             action="support_ticket_closed",
@@ -738,7 +738,7 @@ async def get_user_ticket_stats(user_id: str,
         )
 
     except Exception as e:
-        logger.error(f"Failed to get ticket stats: {e}")
+        logger.error(f"Failed to get ticket stats: {e}", exc_info=True)
         raise safe_internal_error(e, "support")
 
 

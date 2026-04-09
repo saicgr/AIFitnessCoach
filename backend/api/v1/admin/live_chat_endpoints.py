@@ -28,6 +28,7 @@ from models.admin import (
 )
 from models.live_chat import LiveChatMessage, LiveChatStatus, MessageSenderRole
 from models.admin import AdminRole
+from models.support import TicketCategory, TicketPriority, TicketStatus
 from core.supabase_client import get_supabase
 
 
@@ -65,7 +66,7 @@ async def verify_admin_token(authorization: str = Header(...)) -> AdminProfile:
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Admin auth error: {e}")
+        logger.error(f"Admin auth error: {e}", exc_info=True)
         raise HTTPException(status_code=401, detail="Authentication failed")
 
 router = APIRouter()
@@ -133,6 +134,7 @@ async def close_chat(
         db.client.table("live_chat_queue").delete().eq("ticket_id", ticket_id).execute()
 
         # Notify user
+        from api.v1.admin.live_chat import _send_push_notification_to_user  # Lazy import to avoid circular import
         await _send_push_notification_to_user(
             user_id=ticket_data["user_id"],
             title="Chat resolved",
@@ -155,7 +157,7 @@ async def close_chat(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to close chat: {e}")
+        logger.error(f"Failed to close chat: {e}", exc_info=True)
         raise safe_internal_error(e, "admin_live_chat")
 
 
@@ -264,7 +266,7 @@ async def get_support_tickets(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to get support tickets: {e}")
+        logger.error(f"Failed to get support tickets: {e}", exc_info=True)
         raise safe_internal_error(e, "admin_live_chat")
 
 
@@ -353,7 +355,7 @@ async def get_chat_reports(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to get chat reports: {e}")
+        logger.error(f"Failed to get chat reports: {e}", exc_info=True)
         raise safe_internal_error(e, "admin_live_chat")
 
 
@@ -522,7 +524,7 @@ async def get_dashboard_stats(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to get dashboard stats: {e}")
+        logger.error(f"Failed to get dashboard stats: {e}", exc_info=True)
         raise safe_internal_error(e, "admin_live_chat")
 
 
@@ -563,5 +565,5 @@ async def update_presence(
         )
 
     except Exception as e:
-        logger.error(f"Failed to update presence: {e}")
+        logger.error(f"Failed to update presence: {e}", exc_info=True)
         raise safe_internal_error(e, "admin_live_chat")

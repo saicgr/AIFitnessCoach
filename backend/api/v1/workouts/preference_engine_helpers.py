@@ -6,9 +6,9 @@ Handles instant exercise swaps/injections/removals when users change exercise pr
 applied directly to existing workout exercises_json.
 
 Core principle: Parse JSON → find target → replace with library match → update row.
-
-
 """
+from __future__ import annotations
+
 from datetime import datetime, timedelta, date
 import json
 import logging
@@ -98,7 +98,7 @@ def _inject_into_section(
             "section": section,
         }
     except Exception as e:
-        logger.error(f"Error injecting into {table}: {e}")
+        logger.error(f"Error injecting into {table}: {e}", exc_info=True)
         return {"action": "error", "reason": str(e)}
 
 
@@ -187,7 +187,7 @@ async def remove_exercise_from_workout(
             "workout_name": workout.get("workout_name"),
         }
     except Exception as e:
-        logger.error(f"Error updating workout {workout_id}: {e}")
+        logger.error(f"Error updating workout {workout_id}: {e}", exc_info=True)
         return {"action": "error", "reason": str(e), "workout_id": workout_id}
 
 
@@ -306,7 +306,7 @@ async def remove_muscle_from_workout(
             "workout_name": workout.get("workout_name"),
         }
     except Exception as e:
-        logger.error(f"Error updating workout {workout_id}: {e}")
+        logger.error(f"Error updating workout {workout_id}: {e}", exc_info=True)
         return {"action": "error", "reason": str(e), "workout_id": workout_id}
 
 
@@ -341,7 +341,7 @@ def resolve_staple_avoid_conflict(db, user_id: str, exercise_name: str, action: 
                 return f"Removed {exercise_name} from staples since it's now avoided"
 
     except Exception as e:
-        logger.warning(f"Error resolving staple/avoid conflict: {e}")
+        logger.warning(f"Error resolving staple/avoid conflict: {e}", exc_info=True)
 
     return None
 
@@ -450,7 +450,7 @@ async def _create_staple_workout_for_date(
             logger.info(f"Created staple-only workout for {day_name} {date_str}: {workout_name}")
             return result.data[0]
     except Exception as e:
-        logger.error(f"Error creating staple workout for {date_str}: {e}")
+        logger.error(f"Error creating staple workout for {date_str}: {e}", exc_info=True)
 
     return None
 
@@ -694,7 +694,7 @@ async def inject_queued_exercise_into_next_workout(db, user_id: str, exercise_na
                 "used_at": datetime.utcnow().isoformat(),
             }).eq("id", queue_id).execute()
         except Exception as e:
-            logger.warning(f"Could not mark queue item as used: {e}")
+            logger.warning(f"Could not mark queue item as used: {e}", exc_info=True)
 
     changes = [result] if result.get("action") not in ("error",) else []
     if changes:

@@ -164,7 +164,7 @@ Example format: {{"suggestions": [...]}}"""
         return WorkoutSuggestionsResponse(suggestions=suggestions)
 
     except json.JSONDecodeError as e:
-        logger.error(f"Failed to parse AI response: {e}")
+        logger.error(f"Failed to parse AI response: {e}", exc_info=True)
         # Return default suggestions on parse error
         return WorkoutSuggestionsResponse(suggestions=[
             WorkoutSuggestion(
@@ -198,7 +198,7 @@ Example format: {{"suggestions": [...]}}"""
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to get workout suggestions: {e}")
+        logger.error(f"Failed to get workout suggestions: {e}", exc_info=True)
         raise safe_internal_error(e, "suggestions")
 
 
@@ -334,7 +334,7 @@ async def get_workout_ai_summary(workout_id: str, force_regenerate: bool = False
                     workout_type=workout_data.get("type"),
                 )
         except Exception as gen_error:
-            logger.error(f"AI summary generation failed for workout {workout_id}: {gen_error}")
+            logger.error(f"AI summary generation failed for workout {workout_id}: {gen_error}", exc_info=True)
             # Generate a fallback summary instead of failing
             summary = _generate_fallback_summary(
                 workout_name=workout_data.get("name", "Workout"),
@@ -380,14 +380,14 @@ async def get_workout_ai_summary(workout_id: str, force_regenerate: bool = False
                 logger.info(f"Stored new summary for workout {workout_id}")
         except Exception as store_error:
             # Don't fail the request if storage fails, just log it
-            logger.warning(f"Failed to store workout summary: {store_error}")
+            logger.warning(f"Failed to store workout summary: {store_error}", exc_info=True)
 
         return {"summary": summary, "cached": False}
 
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to generate workout summary: {e}")
+        logger.error(f"Failed to generate workout summary: {e}", exc_info=True)
         raise safe_internal_error(e, "suggestions")
 
 
@@ -459,7 +459,7 @@ async def get_workout_generation_params(workout_id: str,
                     "equipment": parse_json_field(regen.get("selected_equipment"), []),
                 }
         except Exception as e:
-            logger.warning(f"Could not fetch program preferences: {e}")
+            logger.warning(f"Could not fetch program preferences: {e}", exc_info=True)
 
         # Parse workout exercises
         exercises = parse_json_field(workout_data.get("exercises_json"), [])
@@ -552,7 +552,7 @@ async def get_workout_generation_params(workout_id: str,
                 raise ValueError("AI returned empty reasoning")
 
         except Exception as ai_error:
-            logger.warning(f"⚠️ AI reasoning failed, using static fallback: {ai_error}")
+            logger.warning(f"⚠️ AI reasoning failed, using static fallback: {ai_error}", exc_info=True)
 
             # Fall back to static reasoning generation
             for i, ex in enumerate(exercises):
@@ -612,8 +612,8 @@ async def get_workout_generation_params(workout_id: str,
         raise
     except Exception as e:
         import traceback
-        logger.error(f"Failed to get workout generation params: {e}")
-        logger.error(f"Traceback: {traceback.format_exc()}")
+        logger.error(f"Failed to get workout generation params: {e}", exc_info=True)
+        logger.error(f"Traceback: {traceback.format_exc()}", exc_info=True)
         raise safe_internal_error(e, "suggestions")
 
 

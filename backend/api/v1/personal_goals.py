@@ -148,12 +148,13 @@ async def create_goal(user_id: str, request: CreateGoalRequest,
             status_code=200
         )
 
+        from .personal_goals_endpoints import _build_goal_response
         return _build_goal_response(goal, date.today())
 
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to create goal: {e}")
+        logger.error(f"Failed to create goal: {e}", exc_info=True)
         await log_user_error(
             user_id=user_id,
             action="goal_created",
@@ -203,6 +204,7 @@ async def get_current_goals(user_id: str,
             else:
                 friend_ids.add(conn["follower_id"])
 
+        from .personal_goals_endpoints import _build_goal_response
         goals = []
         prs_count = 0
 
@@ -239,7 +241,7 @@ async def get_current_goals(user_id: str,
         )
 
     except Exception as e:
-        logger.error(f"Failed to get current goals: {e}")
+        logger.error(f"Failed to get current goals: {e}", exc_info=True)
         raise safe_internal_error(e, "personal_goals")
 
 
@@ -313,6 +315,7 @@ async def record_attempt(user_id: str, goal_id: str, request: RecordAttemptReque
         updated = db.client.table("weekly_personal_goals").select("*").eq("id", goal_id).execute()
         attempts = db.client.table("goal_attempts").select("*").eq("goal_id", goal_id).order("attempted_at", desc=True).execute()
 
+        from .personal_goals_endpoints import _build_goal_response
         goal_response = _build_goal_response(updated.data[0], date.today())
         goal_response.attempts = [GoalAttempt(**a) for a in attempts.data]
 
@@ -323,7 +326,7 @@ async def record_attempt(user_id: str, goal_id: str, request: RecordAttemptReque
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to record attempt: {e}")
+        logger.error(f"Failed to record attempt: {e}", exc_info=True)
         raise safe_internal_error(e, "personal_goals")
 
 
@@ -389,12 +392,13 @@ async def add_volume(user_id: str, goal_id: str, request: AddVolumeRequest,
 
         logger.info(f"✅ Added {request.volume_to_add} volume. New total: {new_value}")
 
+        from .personal_goals_endpoints import _build_goal_response
         return _build_goal_response(updated.data[0], date.today())
 
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to add volume: {e}")
+        logger.error(f"Failed to add volume: {e}", exc_info=True)
         raise safe_internal_error(e, "personal_goals")
 
 
@@ -442,12 +446,13 @@ async def complete_goal(user_id: str, goal_id: str,
 
         logger.info(f"✅ Goal completed: {goal_id}")
 
+        from .personal_goals_endpoints import _build_goal_response
         return _build_goal_response(updated.data[0], date.today())
 
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to complete goal: {e}")
+        logger.error(f"Failed to complete goal: {e}", exc_info=True)
         raise safe_internal_error(e, "personal_goals")
 
 
@@ -488,12 +493,13 @@ async def abandon_goal(user_id: str, goal_id: str,
 
         logger.info(f"✅ Goal abandoned: {goal_id}")
 
+        from .personal_goals_endpoints import _build_goal_response
         return _build_goal_response(updated.data[0], date.today())
 
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to abandon goal: {e}")
+        logger.error(f"Failed to abandon goal: {e}", exc_info=True)
         raise safe_internal_error(e, "personal_goals")
 
 
@@ -530,7 +536,7 @@ async def delete_goal(user_id: str, goal_id: str,
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to delete goal: {e}")
+        logger.error(f"Failed to delete goal: {e}", exc_info=True)
         raise safe_internal_error(e, "personal_goals")
 
 
@@ -570,6 +576,7 @@ async def get_goal_history(
 
         all_time_best = record_result.data[0]["record_value"] if record_result.data else None
 
+        from .personal_goals_endpoints import _build_goal_response
         today = date.today()
         weeks = [_build_goal_response(w, today) for w in result.data]
 
@@ -582,7 +589,7 @@ async def get_goal_history(
         )
 
     except Exception as e:
-        logger.error(f"Failed to get goal history: {e}")
+        logger.error(f"Failed to get goal history: {e}", exc_info=True)
         raise safe_internal_error(e, "personal_goals")
 
 

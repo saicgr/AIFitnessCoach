@@ -119,7 +119,7 @@ class NEATService(NEATServicePart2):
             )
 
         except Exception as e:
-            logger.error(f"Error getting NEAT goal for user {user_id}: {e}")
+            logger.error(f"Error getting NEAT goal for user {user_id}: {e}", exc_info=True)
             return NEATGoal(
                 user_id=user_id,
                 current_goal=5000,
@@ -158,7 +158,7 @@ class NEATService(NEATServicePart2):
             return True
 
         except Exception as e:
-            logger.error(f"Error updating step goal: {e}")
+            logger.error(f"Error updating step goal: {e}", exc_info=True)
             return False
 
     async def calculate_progressive_goal(self, user_id: str) -> int:
@@ -250,7 +250,7 @@ class NEATService(NEATServicePart2):
             return new_goal
 
         except Exception as e:
-            logger.error(f"Error calculating progressive goal: {e}")
+            logger.error(f"Error calculating progressive goal: {e}", exc_info=True)
             return 5000
 
     async def _calculate_baseline_steps(self, user_id: str) -> int:
@@ -270,7 +270,7 @@ class NEATService(NEATServicePart2):
             return int(total / len(result.data))
 
         except Exception as e:
-            logger.error(f"Error calculating baseline steps: {e}")
+            logger.error(f"Error calculating baseline steps: {e}", exc_info=True)
             return 0
 
     async def _get_steps_for_date(self, user_id: str, activity_date: str) -> int:
@@ -287,7 +287,7 @@ class NEATService(NEATServicePart2):
             return 0
 
         except Exception as e:
-            logger.error(f"Error getting steps for date: {e}")
+            logger.error(f"Error getting steps for date: {e}", exc_info=True)
             return 0
 
     # =========================================================================
@@ -342,7 +342,7 @@ class NEATService(NEATServicePart2):
             return True
 
         except Exception as e:
-            logger.error(f"Error recording hourly activity: {e}")
+            logger.error(f"Error recording hourly activity: {e}", exc_info=True)
             return False
 
     async def get_hourly_breakdown(
@@ -382,7 +382,7 @@ class NEATService(NEATServicePart2):
             return activities
 
         except Exception as e:
-            logger.error(f"Error getting hourly breakdown: {e}")
+            logger.error(f"Error getting hourly breakdown: {e}", exc_info=True)
             return []
 
     async def detect_sedentary_hours(
@@ -416,7 +416,7 @@ class NEATService(NEATServicePart2):
             return sorted(sedentary_hours)
 
         except Exception as e:
-            logger.error(f"Error detecting sedentary hours: {e}")
+            logger.error(f"Error detecting sedentary hours: {e}", exc_info=True)
             return []
 
     async def get_current_hour_status(self, user_id: str) -> Dict[str, Any]:
@@ -464,7 +464,7 @@ class NEATService(NEATServicePart2):
             }
 
         except Exception as e:
-            logger.error(f"Error getting current hour status: {e}")
+            logger.error(f"Error getting current hour status: {e}", exc_info=True)
             return {
                 "current_hour": datetime.now().hour,
                 "steps_this_hour": 0,
@@ -530,7 +530,7 @@ class NEATService(NEATServicePart2):
             }, on_conflict="user_id,activity_date").execute()
 
         except Exception as e:
-            logger.error(f"Error updating daily summary: {e}")
+            logger.error(f"Error updating daily summary: {e}", exc_info=True)
 
     def _calculate_longest_sedentary_period(self, hourly: List[HourlyActivity]) -> int:
         """Calculate the longest consecutive sedentary period in hours."""
@@ -630,7 +630,7 @@ class NEATService(NEATServicePart2):
             )
 
         except Exception as e:
-            logger.error(f"Error calculating NEAT score: {e}")
+            logger.error(f"Error calculating NEAT score: {e}", exc_info=True)
             return NEATScore(
                 total_score=0,
                 active_hours_component=0,
@@ -691,7 +691,7 @@ class NEATService(NEATServicePart2):
             return trend
 
         except Exception as e:
-            logger.error(f"Error getting NEAT score trend: {e}")
+            logger.error(f"Error getting NEAT score trend: {e}", exc_info=True)
             return []
 
     async def save_daily_neat_score(self, user_id: str, activity_date: str) -> bool:
@@ -723,7 +723,7 @@ class NEATService(NEATServicePart2):
             return True
 
         except Exception as e:
-            logger.error(f"Error saving NEAT score: {e}")
+            logger.error(f"Error saving NEAT score: {e}", exc_info=True)
             return False
 
     # =========================================================================
@@ -795,7 +795,7 @@ class NEATService(NEATServicePart2):
             return current_streak
 
         except Exception as e:
-            logger.error(f"Error updating streak: {e}")
+            logger.error(f"Error updating streak: {e}", exc_info=True)
             return 0
 
 

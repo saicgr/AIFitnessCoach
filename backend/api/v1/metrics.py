@@ -512,7 +512,7 @@ async def record_simple_metric(input: SimpleMetricInput,
             days_since_last_fast=row.get("days_since_last_fast"),
         )
     except Exception as e:
-        logger.error(f"Failed to record measurement: {e}")
+        logger.error(f"Failed to record measurement: {e}", exc_info=True)
         raise safe_internal_error(e, "metrics")
 
 
@@ -596,7 +596,7 @@ async def get_body_measurement_history(
             return entries
 
     except Exception as e:
-        logger.error(f"Failed to get measurement history: {e}")
+        logger.error(f"Failed to get measurement history: {e}", exc_info=True)
         raise safe_internal_error(e, "metrics")
 
 
@@ -623,7 +623,7 @@ async def delete_body_measurement(user_id: str, measurement_id: str,
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to delete measurement: {e}")
+        logger.error(f"Failed to delete measurement: {e}", exc_info=True)
         raise safe_internal_error(e, "metrics")
 
 
@@ -683,7 +683,7 @@ async def get_grouped_body_measurements(user_id: str, limit: int = 300,
 
         return grouped
     except Exception as e:
-        logger.error(f"Failed to get grouped measurements: {e}")
+        logger.error(f"Failed to get grouped measurements: {e}", exc_info=True)
         raise safe_internal_error(e, "metrics")
 
 
@@ -816,5 +816,5 @@ async def export_body_measurements(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to export body measurements: {e}")
+        logger.error(f"Failed to export body measurements: {e}", exc_info=True)
         raise safe_internal_error(e, "metrics")

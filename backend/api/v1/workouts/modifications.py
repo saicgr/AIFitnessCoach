@@ -314,7 +314,7 @@ async def exclude_body_parts_from_workout(
                 "created_at": datetime.now().isoformat()
             }).execute()
         except Exception as e:
-            logger.warning(f"Failed to log context: {e}")
+            logger.warning(f"Failed to log context: {e}", exc_info=True)
             # Non-critical, continue
 
         # Calculate remaining non-skipped exercises
@@ -336,7 +336,7 @@ async def exclude_body_parts_from_workout(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"❌ Failed to exclude body parts: {e}")
+        logger.error(f"❌ Failed to exclude body parts: {e}", exc_info=True)
         raise safe_internal_error(e, "modifications")
 
 
@@ -483,7 +483,7 @@ async def replace_exercise_in_workout(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"❌ Failed to replace exercise: {e}")
+        logger.error(f"❌ Failed to replace exercise: {e}", exc_info=True)
         raise safe_internal_error(e, "modifications")
 
 
@@ -590,7 +590,7 @@ async def find_safe_alternative(
         return scored_candidates[0][1] if scored_candidates else None
 
     except Exception as e:
-        logger.error(f"Error finding safe alternative: {e}")
+        logger.error(f"Error finding safe alternative: {e}", exc_info=True)
         return None
 
 
@@ -627,5 +627,5 @@ async def get_modification_history(
         }
 
     except Exception as e:
-        logger.error(f"Error fetching modification history: {e}")
+        logger.error(f"Error fetching modification history: {e}", exc_info=True)
         raise safe_internal_error(e, "modifications")

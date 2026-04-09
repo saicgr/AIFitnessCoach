@@ -208,12 +208,13 @@ class _OpenAllCratesSheetState extends ConsumerState<OpenAllCratesSheet>
 
     final results = <CrateRewardResult>[];
 
-    // Claim all selected crates in parallel
+    // Claim all selected crates in parallel (skip per-claim reloads)
     final futures = _selectedByDate.values.map((option) {
       final dateStr = _dateKey(option.crateDate);
       return ref.read(xpProvider.notifier).claimDailyCrate(
         option.crateType,
         crateDate: dateStr,
+        skipReload: true,
       );
     }).toList();
 
@@ -223,6 +224,11 @@ class _OpenAllCratesSheetState extends ConsumerState<OpenAllCratesSheet>
     if (!mounted) return;
 
     final anySuccess = results.any((r) => r.success);
+
+    // Single batch reload after all claims complete
+    if (anySuccess) {
+      await ref.read(xpProvider.notifier).reloadAfterClaims();
+    }
 
     if (!anySuccess) {
       // All failed — show error, don't show rewards screen

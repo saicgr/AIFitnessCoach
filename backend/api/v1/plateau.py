@@ -314,5 +314,5 @@ async def get_plateau_dashboard(user_id: str, current_user: dict = Depends(get_c
         }
 
     except Exception as e:
-        logger.error(f"Error detecting plateaus for user {user_id}: {e}")
+        logger.error(f"Error detecting plateaus for user {user_id}: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail="Failed to analyze plateau data")

@@ -147,7 +147,7 @@ class LoggingMiddleware:
                 logger.warning(f"Response: {status_code} ({duration:.0f}ms)")
         except Exception as e:
             duration = (time.time() - start_time) * 1000
-            logger.error(f"Request failed: {type(e).__name__}: {str(e)} ({duration:.0f}ms)")
+            logger.error(f"Request failed: {type(e).__name__}: {str(e)} ({duration:.0f}ms)", exc_info=True)
             raise
         finally:
             clear_log_context()
@@ -197,8 +197,8 @@ async def _init_cache_manager():
             await GeminiService.initialize_cache_manager()
             logger.info(f"Gemini Context Cache Manager ready in {time.time() - t:.2f}s")
         except Exception as e:
-            logger.warning(f"Failed to initialize cache manager: {e}")
-            logger.warning("Workout generation will use non-cached mode")
+            logger.warning(f"Failed to initialize cache manager: {e}", exc_info=True)
+            logger.warning("Workout generation will use non-cached mode", exc_info=True)
     else:
         logger.info("Gemini Context Caching disabled (GEMINI_CACHE_ENABLED=false)")
 
@@ -218,8 +218,8 @@ async def _check_exercise_rag_index():
         else:
             logger.info(f"Exercise RAG ready with {indexed_count} exercises in Chroma Cloud")
     except Exception as e:
-        logger.error(f"Failed to initialize Exercise RAG: {e}")
-        logger.error("Workouts will fall back to AI-generated exercises")
+        logger.error(f"Failed to initialize Exercise RAG: {e}", exc_info=True)
+        logger.error("Workouts will fall back to AI-generated exercises", exc_info=True)
 
 
 async def _check_chromadb_dimensions():
@@ -241,9 +241,9 @@ async def _check_chromadb_dimensions():
                     chroma_client.delete_collection(name)
                     logger.info(f"   Recreated {name} (will repopulate with 768-dim on next use)")
                 except Exception as del_err:
-                    logger.error(f"   Failed to delete {name}: {del_err}")
+                    logger.error(f"   Failed to delete {name}: {del_err}", exc_info=True)
     except Exception as e:
-        logger.warning(f"Could not check ChromaDB dimensions: {e}")
+        logger.warning(f"Could not check ChromaDB dimensions: {e}", exc_info=True)
 
 
 async def _resume_pending_jobs():
@@ -288,7 +288,7 @@ async def _resume_pending_jobs():
             logger.info("No pending workout generation jobs")
 
     except Exception as e:
-        logger.error(f"Failed to check/resume pending jobs: {e}")
+        logger.error(f"Failed to check/resume pending jobs: {e}", exc_info=True)
         # Don't fail startup if job recovery fails
 
 
@@ -298,7 +298,7 @@ async def _resume_pending_media_jobs():
         from services.media_job_runner import resume_pending_media_jobs
         await resume_pending_media_jobs()
     except Exception as e:
-        logger.error(f"Failed to resume pending media jobs: {e}")
+        logger.error(f"Failed to resume pending media jobs: {e}", exc_info=True)
 
 
 async def get_langgraph_service() -> LangGraphCoachService:
@@ -481,6 +481,43 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
         f"{json.dumps(exc.errors(), default=str)}"
     )
     return JSONResponse(status_code=422, content={"detail": exc.errors()})
+
+# Send server errors to Discord #alerts (500, 502, 503, 504 + unhandled exceptions)
+from services.discord_webhooks import notify_error as _discord_notify_error
+
+# Alert-worthy status codes: 5xx (server errors), 401 (auth issues), 429 (abuse)
+_ALERT_STATUS_CODES = {401, 404, 429, 500, 502, 503, 504}
+
+@app.exception_handler(HTTPException)
+async def http_exception_handler(request: Request, exc: HTTPException):
+    if exc.status_code in _ALERT_STATUS_CODES:
+        try:
+            import asyncio
+            user_id = getattr(request.state, "user_id", None)
+            asyncio.create_task(_discord_notify_error(
+                error=exc,
+                context=f"HTTP {exc.status_code}: {exc.detail}",
+                endpoint=f"{request.method} {request.url.path}",
+                user_id=user_id,
+            ))
+        except Exception:
+            pass
+    return JSONResponse(status_code=exc.status_code, content={"detail": exc.detail})
+
+@app.exception_handler(Exception)
+async def unhandled_exception_handler(request: Request, exc: Exception):
+    logger.error(f"Unhandled exception on {request.method} {request.url.path}: {exc}", exc_info=True)
+    try:
+        import asyncio
+        user_id = getattr(request.state, "user_id", None)
+        asyncio.create_task(_discord_notify_error(
+            error=exc,
+            endpoint=f"{request.method} {request.url.path}",
+            user_id=user_id,
+        ))
+    except Exception:
+        pass
+    return JSONResponse(status_code=500, content={"detail": "Internal server error"})
 
 # Add GZip compression for responses >= 500 bytes
 app.add_middleware(GZipMiddleware, minimum_size=500)

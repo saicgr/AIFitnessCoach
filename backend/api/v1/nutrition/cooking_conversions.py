@@ -8,6 +8,7 @@ from core.auth import get_current_user
 from core.exceptions import safe_internal_error
 from core.supabase_db import get_supabase_db
 from core.logger import get_logger
+from core.activity_logger import log_user_activity
 from services.cooking_conversion_service import get_cooking_conversion_service
 
 from api.v1.nutrition.models import (
@@ -53,7 +54,7 @@ async def list_cooking_conversions(
         )
 
     except Exception as e:
-        logger.error(f"Failed to list cooking conversions: {e}")
+        logger.error(f"Failed to list cooking conversions: {e}", exc_info=True)
         raise safe_internal_error(e, "nutrition")
 
 
@@ -80,7 +81,7 @@ async def get_cooking_conversions_by_category(food_category: str, current_user: 
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to get cooking conversions by category: {e}")
+        logger.error(f"Failed to get cooking conversions by category: {e}", exc_info=True)
         raise safe_internal_error(e, "nutrition")
 
 
@@ -138,6 +139,6 @@ async def convert_food_weight(request: ConvertWeightRequest, current_user: dict 
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to convert food weight: {e}")
+        logger.error(f"Failed to convert food weight: {e}", exc_info=True)
         raise safe_internal_error(e, "nutrition")
 

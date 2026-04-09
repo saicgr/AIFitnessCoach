@@ -1,7 +1,7 @@
 """
 Exercise Preferences API - Staple exercises, variation control, and avoidance lists.
 """
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 from core.db import get_supabase_db
 from fastapi import APIRouter, HTTPException, Query, Depends
 from typing import List, Optional
@@ -279,7 +279,7 @@ async def get_user_staples(user_id: str, current_user: dict = Depends(get_curren
         return staples
 
     except Exception as e:
-        logger.error(f"Error getting staple exercises: {e}")
+        logger.error(f"Error getting staple exercises: {e}", exc_info=True)
         raise safe_internal_error(e, "exercise_preferences")
 
 
@@ -466,7 +466,7 @@ async def add_staple_exercise(request: StapleExerciseCreate, current_user: dict 
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error adding staple exercise: {e}")
+        logger.error(f"Error adding staple exercise: {e}", exc_info=True)
         raise safe_internal_error(e, "exercise_preferences")
 
 
@@ -608,7 +608,7 @@ async def update_staple_exercise(user_id: str, staple_id: str, request: StapleEx
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error updating staple exercise: {e}")
+        logger.error(f"Error updating staple exercise: {e}", exc_info=True)
         raise safe_internal_error(e, "exercise_preferences")
 
 
@@ -637,7 +637,7 @@ async def remove_staple_exercise(user_id: str, staple_id: str, current_user: dic
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error removing staple exercise: {e}")
+        logger.error(f"Error removing staple exercise: {e}", exc_info=True)
         raise safe_internal_error(e, "exercise_preferences")
 
 
@@ -688,7 +688,7 @@ async def get_variation_preference(user_id: str, current_user: dict = Depends(ge
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error getting variation preference: {e}")
+        logger.error(f"Error getting variation preference: {e}", exc_info=True)
         raise safe_internal_error(e, "exercise_preferences")
 
 
@@ -738,7 +738,7 @@ async def update_variation_preference(request: VariationPreferenceUpdate, curren
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error updating variation preference: {e}")
+        logger.error(f"Error updating variation preference: {e}", exc_info=True)
         raise safe_internal_error(e, "exercise_preferences")
 
 
@@ -815,7 +815,7 @@ async def get_sets_limits(user_id: str, current_user: dict = Depends(get_current
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error getting sets limits: {e}")
+        logger.error(f"Error getting sets limits: {e}", exc_info=True)
         raise safe_internal_error(e, "exercise_preferences")
 
 
@@ -896,7 +896,7 @@ async def update_sets_limits(request: SetsLimitsUpdate, current_user: dict = Dep
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error updating sets limits: {e}")
+        logger.error(f"Error updating sets limits: {e}", exc_info=True)
         raise safe_internal_error(e, "exercise_preferences")
 
 
@@ -984,7 +984,7 @@ async def get_week_comparison(
         )
 
     except Exception as e:
-        logger.error(f"Error getting week comparison: {e}")
+        logger.error(f"Error getting week comparison: {e}", exc_info=True)
         raise safe_internal_error(e, "exercise_preferences")
 
 
@@ -1028,7 +1028,7 @@ async def get_exercise_rotations(
         return rotations
 
     except Exception as e:
-        logger.error(f"Error getting exercise rotations: {e}")
+        logger.error(f"Error getting exercise rotations: {e}", exc_info=True)
         raise safe_internal_error(e, "exercise_preferences")
 
 
@@ -1046,7 +1046,7 @@ async def get_user_staple_exercises(user_id: str) -> List[str]:
         result = db.client.table("staple_exercises").select("exercise_name").eq("user_id", user_id).execute()
         return [row["exercise_name"] for row in result.data or []]
     except Exception as e:
-        logger.error(f"Error getting staple exercises: {e}")
+        logger.error(f"Error getting staple exercises: {e}", exc_info=True)
         return []
 
 
@@ -1063,7 +1063,7 @@ async def get_user_staples_by_section(user_id: str, section: str) -> List[dict]:
         ).eq("section", section).execute()
         return result.data or []
     except Exception as e:
-        logger.error(f"Error getting staples by section: {e}")
+        logger.error(f"Error getting staples by section: {e}", exc_info=True)
         return []
 
 
@@ -1079,7 +1079,7 @@ async def get_user_variation_percentage(user_id: str) -> int:
             return result.data[0].get("variation_percentage", 30)
         return 30  # Default
     except Exception as e:
-        logger.error(f"Error getting variation percentage: {e}")
+        logger.error(f"Error getting variation percentage: {e}", exc_info=True)
         return 30
 
 
@@ -1108,7 +1108,7 @@ async def log_exercise_rotation(
             "rotation_reason": rotation_reason
         }).execute()
     except Exception as e:
-        logger.error(f"Error logging exercise rotation: {e}")
+        logger.error(f"Error logging exercise rotation: {e}", exc_info=True)
 
 
 # =============================================================================
@@ -1157,7 +1157,7 @@ async def get_avoided_exercises(user_id: str, include_expired: bool = False, cur
         return exercises
 
     except Exception as e:
-        logger.error(f"Error getting avoided exercises: {e}")
+        logger.error(f"Error getting avoided exercises: {e}", exc_info=True)
         raise safe_internal_error(e, "exercise_preferences")
 
 

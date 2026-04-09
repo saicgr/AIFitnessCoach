@@ -223,7 +223,7 @@ Be empathetic, caring, and always suggest seeing a doctor for serious injuries!"
         response = await llm_with_tools.ainvoke(messages)
     except Exception as e:
         if "thought_signature" in str(e).lower():
-            logger.warning(f"Thought signature error, retrying: {e}")
+            logger.warning(f"Thought signature error, retrying: {e}", exc_info=True)
             llm_retry = get_langchain_llm(temperature=0.7)
             response = await llm_retry.bind_tools(INJURY_TOOLS).ainvoke(messages)
         else:
@@ -284,7 +284,7 @@ async def injury_tool_executor_node(state: InjuryAgentState) -> Dict[str, Any]:
 
                 logger.info(f"[Injury Tool Executor] Result: {result.get('message', 'Done')[:100]}")
             except Exception as e:
-                logger.error(f"[Injury Tool Executor] Error: {e}")
+                logger.error(f"[Injury Tool Executor] Error: {e}", exc_info=True)
                 error_result = {"success": False, "error": str(e)}
                 tool_results.append(error_result)
                 tool_messages.append(ToolMessage(

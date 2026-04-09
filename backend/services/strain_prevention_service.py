@@ -168,7 +168,7 @@ class StrainPreventionService:
             logger.info(f"🛡️ Tracked volume for {len(muscle_volumes)} muscle groups, user={user_id}")
 
         except Exception as e:
-            logger.error(f"Failed to track workout volume: {e}")
+            logger.error(f"Failed to track workout volume: {e}", exc_info=True)
             raise
 
         return VolumeTrackingResult(
@@ -279,7 +279,7 @@ class StrainPreventionService:
             await self._create_volume_alerts(user_id, assessments)
 
         except Exception as e:
-            logger.error(f"Failed to assess strain risk: {e}")
+            logger.error(f"Failed to assess strain risk: {e}", exc_info=True)
             raise
 
         return assessments
@@ -308,7 +308,7 @@ class StrainPreventionService:
                         f"user={user_id}"
                     )
         except Exception as e:
-            logger.warning(f"Failed to create volume alerts: {e}")
+            logger.warning(f"Failed to create volume alerts: {e}", exc_info=True)
 
     async def record_strain(
         self,
@@ -395,7 +395,7 @@ class StrainPreventionService:
             }
 
         except Exception as e:
-            logger.error(f"Failed to record strain: {e}")
+            logger.error(f"Failed to record strain: {e}", exc_info=True)
             raise
 
     async def get_safe_volume_for_workout(
@@ -474,7 +474,7 @@ class StrainPreventionService:
             return result.data or []
 
         except Exception as e:
-            logger.error(f"Failed to get volume history: {e}")
+            logger.error(f"Failed to get volume history: {e}", exc_info=True)
             raise
 
     async def get_strain_patterns(self, user_id: str) -> dict:
@@ -549,7 +549,7 @@ class StrainPreventionService:
             }
 
         except Exception as e:
-            logger.error(f"Failed to get strain patterns: {e}")
+            logger.error(f"Failed to get strain patterns: {e}", exc_info=True)
             raise
 
     async def get_unacknowledged_alerts(self, user_id: str) -> List[dict]:
@@ -572,7 +572,7 @@ class StrainPreventionService:
             return result.data or []
 
         except Exception as e:
-            logger.error(f"Failed to get unacknowledged alerts: {e}")
+            logger.error(f"Failed to get unacknowledged alerts: {e}", exc_info=True)
             raise
 
     async def acknowledge_alert(self, alert_id: str, user_id: str) -> bool:
@@ -598,7 +598,7 @@ class StrainPreventionService:
             return False
 
         except Exception as e:
-            logger.error(f"Failed to acknowledge alert: {e}")
+            logger.error(f"Failed to acknowledge alert: {e}", exc_info=True)
             raise
 
     async def get_muscle_volume_caps(self, user_id: str) -> Dict[str, dict]:
@@ -643,7 +643,7 @@ class StrainPreventionService:
             return caps
 
         except Exception as e:
-            logger.error(f"Failed to get muscle volume caps: {e}")
+            logger.error(f"Failed to get muscle volume caps: {e}", exc_info=True)
             return caps  # Return defaults on error
 
 

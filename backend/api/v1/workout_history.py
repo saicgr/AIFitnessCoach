@@ -142,7 +142,7 @@ async def import_workout_history(request: SingleImportRequest,
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error importing workout entry: {e}")
+        logger.error(f"Error importing workout entry: {e}", exc_info=True)
         raise safe_internal_error(e, "workout_history")
 
 
@@ -183,7 +183,7 @@ async def bulk_import_workout_history(request: BulkImportRequest,
                 })
                 exercises_affected.add(entry.exercise_name.strip())
             except Exception as e:
-                logger.warning(f"Failed to prepare entry: {e}")
+                logger.warning(f"Failed to prepare entry: {e}", exc_info=True)
                 failed_count += 1
 
         # Bulk insert
@@ -201,7 +201,7 @@ async def bulk_import_workout_history(request: BulkImportRequest,
         )
 
     except Exception as e:
-        logger.error(f"Error in bulk import: {e}")
+        logger.error(f"Error in bulk import: {e}", exc_info=True)
         raise safe_internal_error(e, "workout_history")
 
 
@@ -251,7 +251,7 @@ async def get_user_workout_history(
         return entries
 
     except Exception as e:
-        logger.error(f"Error getting workout history: {e}")
+        logger.error(f"Error getting workout history: {e}", exc_info=True)
         raise safe_internal_error(e, "workout_history")
 
 
@@ -326,7 +326,7 @@ async def get_strength_summary(user_id: str,
         return [StrengthSummary(**row) for row in result.data]
 
     except Exception as e:
-        logger.error(f"Error getting strength summary: {e}")
+        logger.error(f"Error getting strength summary: {e}", exc_info=True)
         raise safe_internal_error(e, "workout_history")
 
 
@@ -355,7 +355,7 @@ async def delete_workout_history_entry(user_id: str, entry_id: str,
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error deleting entry: {e}")
+        logger.error(f"Error deleting entry: {e}", exc_info=True)
         raise safe_internal_error(e, "workout_history")
 
 
@@ -383,5 +383,5 @@ async def clear_workout_history(user_id: str,
         }
 
     except Exception as e:
-        logger.error(f"Error clearing history: {e}")
+        logger.error(f"Error clearing history: {e}", exc_info=True)
         raise safe_internal_error(e, "workout_history")

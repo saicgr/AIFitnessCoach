@@ -99,7 +99,7 @@ async def get_habits(
         return result.data
 
     except Exception as e:
-        logger.error(f"❌ Error getting habits: {e}")
+        logger.error(f"❌ Error getting habits: {e}", exc_info=True)
         await log_user_error(user_id, "get_habits", str(e))
         raise safe_internal_error(e, "endpoint")
 
@@ -212,7 +212,7 @@ async def get_today_habits(
         )
 
     except Exception as e:
-        logger.error(f"❌ Error getting today's habits: {e}")
+        logger.error(f"❌ Error getting today's habits: {e}", exc_info=True)
         await log_user_error(user_id, "get_today_habits", str(e))
         raise safe_internal_error(e, "endpoint")
 
@@ -278,7 +278,7 @@ async def create_habit(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"❌ Error creating habit: {e}")
+        logger.error(f"❌ Error creating habit: {e}", exc_info=True)
         await log_user_error(user_id, "create_habit", str(e))
         raise safe_internal_error(e, "endpoint")
 
@@ -358,7 +358,7 @@ async def update_habit(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"❌ Error updating habit: {e}")
+        logger.error(f"❌ Error updating habit: {e}", exc_info=True)
         await log_user_error(user_id, "update_habit", str(e))
         raise safe_internal_error(e, "endpoint")
 
@@ -420,7 +420,7 @@ async def delete_habit(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"❌ Error deleting habit: {e}")
+        logger.error(f"❌ Error deleting habit: {e}", exc_info=True)
         await log_user_error(user_id, "delete_habit", str(e))
         raise safe_internal_error(e, "endpoint")
 
@@ -524,7 +524,7 @@ async def log_habit(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"❌ Error logging habit: {e}")
+        logger.error(f"❌ Error logging habit: {e}", exc_info=True)
         await log_user_error(user_id, "log_habit", str(e))
         raise safe_internal_error(e, "endpoint")
 
@@ -592,7 +592,7 @@ async def update_habit_log(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"❌ Error updating habit log: {e}")
+        logger.error(f"❌ Error updating habit log: {e}", exc_info=True)
         await log_user_error(user_id, "update_habit_log", str(e))
         raise safe_internal_error(e, "endpoint")
 
@@ -653,7 +653,7 @@ async def get_habit_logs(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"❌ Error getting habit logs: {e}")
+        logger.error(f"❌ Error getting habit logs: {e}", exc_info=True)
         await log_user_error(user_id, "get_habit_logs", str(e))
         raise safe_internal_error(e, "endpoint")
 

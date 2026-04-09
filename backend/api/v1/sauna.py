@@ -127,7 +127,7 @@ async def log_sauna(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error logging sauna: {e}")
+        logger.error(f"Error logging sauna: {e}", exc_info=True)
         await log_user_error(
             user_id=data.user_id,
             action="sauna_log",
@@ -197,7 +197,7 @@ async def get_daily_sauna(
         )
 
     except Exception as e:
-        logger.error(f"Error getting daily sauna: {e}")
+        logger.error(f"Error getting daily sauna: {e}", exc_info=True)
         raise safe_internal_error(e, "endpoint")
 
 
@@ -235,7 +235,7 @@ async def get_sauna_logs(
         return [row_to_sauna_log(row) for row in (result.data or [])]
 
     except Exception as e:
-        logger.error(f"Error getting sauna logs: {e}")
+        logger.error(f"Error getting sauna logs: {e}", exc_info=True)
         raise safe_internal_error(e, "endpoint")
 
 
@@ -265,5 +265,5 @@ async def delete_sauna_log(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error deleting sauna log: {e}")
+        logger.error(f"Error deleting sauna log: {e}", exc_info=True)
         raise safe_internal_error(e, "endpoint")

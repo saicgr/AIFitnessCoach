@@ -77,7 +77,7 @@ class NEATServicePart2:
             return streaks
 
         except Exception as e:
-            logger.error(f"Error getting user streaks: {e}")
+            logger.error(f"Error getting user streaks: {e}", exc_info=True)
             return UserStreaks(
                 daily_goal_streak=0,
                 longest_daily_goal_streak=0,
@@ -117,7 +117,7 @@ class NEATServicePart2:
             return unlocked
 
         except Exception as e:
-            logger.error(f"Error checking streak milestones: {e}")
+            logger.error(f"Error checking streak milestones: {e}", exc_info=True)
             return []
 
     # =========================================================================
@@ -208,7 +208,7 @@ class NEATServicePart2:
             return new_achievements
 
         except Exception as e:
-            logger.error(f"Error checking achievements: {e}")
+            logger.error(f"Error checking achievements: {e}", exc_info=True)
             return []
 
     async def get_user_achievements(self, user_id: str) -> List[Achievement]:
@@ -253,7 +253,7 @@ class NEATServicePart2:
             return achievements
 
         except Exception as e:
-            logger.error(f"Error getting user achievements: {e}")
+            logger.error(f"Error getting user achievements: {e}", exc_info=True)
             return []
 
     async def get_available_achievements(self, user_id: str) -> List[Achievement]:
@@ -321,7 +321,7 @@ class NEATServicePart2:
             return available
 
         except Exception as e:
-            logger.error(f"Error getting available achievements: {e}")
+            logger.error(f"Error getting available achievements: {e}", exc_info=True)
             return []
 
     async def _has_achievement(self, user_id: str, achievement_id: str) -> bool:
@@ -336,7 +336,7 @@ class NEATServicePart2:
             return len(result.data) > 0
 
         except Exception as e:
-            logger.error(f"Error checking achievement: {e}")
+            logger.error(f"Error checking achievement: {e}", exc_info=True)
             return False
 
     async def _award_achievement(
@@ -359,7 +359,7 @@ class NEATServicePart2:
             logger.info(f"Awarded achievement {achievement_id} to user {user_id}")
 
         except Exception as e:
-            logger.error(f"Error awarding achievement: {e}")
+            logger.error(f"Error awarding achievement: {e}", exc_info=True)
 
     def _get_achievement(self, achievement_id: str, achieved: bool = False) -> Achievement:
         """Get an achievement by ID."""
@@ -397,7 +397,7 @@ class NEATServicePart2:
             return new_achievements
 
         except Exception as e:
-            logger.error(f"Error checking weekly achievements: {e}")
+            logger.error(f"Error checking weekly achievements: {e}", exc_info=True)
             return []
 
     async def _get_week_days_met(self, user_id: str) -> int:
@@ -416,7 +416,7 @@ class NEATServicePart2:
             return len(result.data)
 
         except Exception as e:
-            logger.error(f"Error getting week days met: {e}")
+            logger.error(f"Error getting week days met: {e}", exc_info=True)
             return 0
 
     # =========================================================================
@@ -477,7 +477,7 @@ class NEATServicePart2:
             return False
 
         except Exception as e:
-            logger.error(f"Error checking if reminder should be sent: {e}")
+            logger.error(f"Error checking if reminder should be sent: {e}", exc_info=True)
             return False
 
     async def get_reminder_preferences(self, user_id: str) -> ReminderPreferences:
@@ -529,7 +529,7 @@ class NEATServicePart2:
             )
 
         except Exception as e:
-            logger.error(f"Error getting reminder preferences: {e}")
+            logger.error(f"Error getting reminder preferences: {e}", exc_info=True)
             return ReminderPreferences(
                 enabled=True,
                 interval_minutes=60,
@@ -594,7 +594,7 @@ class NEATServicePart2:
             return True
 
         except Exception as e:
-            logger.error(f"Error updating reminder preferences: {e}")
+            logger.error(f"Error updating reminder preferences: {e}", exc_info=True)
             return False
 
     def _parse_time(self, time_str: str) -> time:
@@ -696,7 +696,7 @@ class NEATServicePart2:
             return "\n".join(context_parts)
 
         except Exception as e:
-            logger.error(f"Error generating AI context: {e}")
+            logger.error(f"Error generating AI context: {e}", exc_info=True)
             return "## NEAT Activity Context\nUnable to retrieve activity data."
 
     def _generate_ai_recommendations(

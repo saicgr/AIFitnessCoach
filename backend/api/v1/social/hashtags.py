@@ -45,7 +45,7 @@ async def get_trending_hashtags(
         return {"hashtags": result.data or []}
 
     except Exception as e:
-        logger.error(f"[Hashtags] Error getting trending hashtags: {e}")
+        logger.error(f"[Hashtags] Error getting trending hashtags: {e}", exc_info=True)
         raise safe_internal_error(e, "hashtags")
 
 
@@ -78,7 +78,7 @@ async def search_hashtags(
         return {"hashtags": result.data or []}
 
     except Exception as e:
-        logger.error(f"[Hashtags] Error searching hashtags: {e}")
+        logger.error(f"[Hashtags] Error searching hashtags: {e}", exc_info=True)
         raise safe_internal_error(e, "hashtags")
 
 
@@ -147,5 +147,5 @@ async def get_posts_by_hashtag(
         }
 
     except Exception as e:
-        logger.error(f"[Hashtags] Error getting posts for hashtag '{name}': {e}")
+        logger.error(f"[Hashtags] Error getting posts for hashtag '{name}': {e}", exc_info=True)
         raise safe_internal_error(e, "hashtags")

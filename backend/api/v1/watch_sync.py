@@ -143,7 +143,7 @@ async def sync_watch_data(request: WatchSyncRequest, current_user: dict = Depend
         }).execute()
         sync_id = sync_record.data[0]["id"] if sync_record.data else None
     except Exception as e:
-        logger.warning(f"Failed to create sync record: {e}")
+        logger.warning(f"Failed to create sync record: {e}", exc_info=True)
         sync_id = None
 
     # Process workout sets
@@ -155,7 +155,7 @@ async def sync_watch_data(request: WatchSyncRequest, current_user: dict = Depend
             except Exception as e:
                 failed += 1
                 errors.append(f"Set log failed: {str(e)}")
-                logger.error(f"Failed to log set: {e}")
+                logger.error(f"Failed to log set: {e}", exc_info=True)
 
     # Process workout completions
     if request.workout_completions:
@@ -166,7 +166,7 @@ async def sync_watch_data(request: WatchSyncRequest, current_user: dict = Depend
             except Exception as e:
                 failed += 1
                 errors.append(f"Workout completion failed: {str(e)}")
-                logger.error(f"Failed to complete workout: {e}")
+                logger.error(f"Failed to complete workout: {e}", exc_info=True)
 
     # Process food logs with Gemini
     if request.food_logs:
@@ -177,7 +177,7 @@ async def sync_watch_data(request: WatchSyncRequest, current_user: dict = Depend
             except Exception as e:
                 failed += 1
                 errors.append(f"Food log failed: {str(e)}")
-                logger.error(f"Failed to log food: {e}")
+                logger.error(f"Failed to log food: {e}", exc_info=True)
 
     # Process fasting events
     if request.fasting_events:
@@ -188,7 +188,7 @@ async def sync_watch_data(request: WatchSyncRequest, current_user: dict = Depend
             except Exception as e:
                 failed += 1
                 errors.append(f"Fasting event failed: {str(e)}")
-                logger.error(f"Failed to log fasting event: {e}")
+                logger.error(f"Failed to log fasting event: {e}", exc_info=True)
 
     # Process activity data
     if request.activity:
@@ -198,7 +198,7 @@ async def sync_watch_data(request: WatchSyncRequest, current_user: dict = Depend
         except Exception as e:
             failed += 1
             errors.append(f"Activity sync failed: {str(e)}")
-            logger.error(f"Failed to sync activity: {e}")
+            logger.error(f"Failed to sync activity: {e}", exc_info=True)
 
     # Update sync record with results
     if sync_id:
@@ -209,7 +209,7 @@ async def sync_watch_data(request: WatchSyncRequest, current_user: dict = Depend
                 "error_message": "; ".join(errors) if errors else None
             }).eq("id", sync_id).execute()
         except Exception as e:
-            logger.warning(f"Failed to update sync record: {e}")
+            logger.warning(f"Failed to update sync record: {e}", exc_info=True)
 
     # Log to user context
     try:
@@ -229,7 +229,7 @@ async def sync_watch_data(request: WatchSyncRequest, current_user: dict = Depend
             context={"device": "wearos", "sync_type": "bulk"}
         )
     except Exception as e:
-        logger.warning(f"Failed to log context: {e}")
+        logger.warning(f"Failed to log context: {e}", exc_info=True)
 
     logger.info(f"Watch sync complete: {synced} synced, {failed} failed")
 
@@ -288,7 +288,7 @@ async def get_activity_goals(user_id: str, current_user: dict = Depends(get_curr
         )
 
     except Exception as e:
-        logger.error(f"Error getting activity goals: {e}")
+        logger.error(f"Error getting activity goals: {e}", exc_info=True)
         # Return defaults on error
         return ActivityGoalsResponse()
 
@@ -369,7 +369,7 @@ async def _log_food_with_gemini(db, user_id: str, food_log: FoodLogRequest, devi
 
             logger.info(f"Gemini analyzed food '{food_log.raw_input}': {calories} cal")
         except Exception as e:
-            logger.error(f"Gemini food analysis failed: {e}")
+            logger.error(f"Gemini food analysis failed: {e}", exc_info=True)
             # Fall back to watch's local parsing
             food_name = food_log.food_name or food_log.raw_input
             calories = food_log.calories or 0
@@ -464,7 +464,7 @@ async def _sync_activity(db, user_id: str, activity: ActivitySyncRequest, device
                 }).execute()
                 hr_samples_count += 1
             except Exception as e:
-                logger.warning(f"Failed to insert HR sample: {e}")
+                logger.warning(f"Failed to insert HR sample: {e}", exc_info=True)
 
     # Log to user context with watch-specific tracking
     context_service = UserContextService()

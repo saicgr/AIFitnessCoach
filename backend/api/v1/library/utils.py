@@ -99,7 +99,7 @@ def presign_s3_path(s3_path: Optional[str]) -> Optional[str]:
     except Exception as e:
         if not _presign_error_logged:
             from core.logger import get_logger
-            get_logger(__name__).warning(f"presign_s3_path failed (further errors suppressed): {e}")
+            get_logger(__name__).warning(f"presign_s3_path failed (further errors suppressed): {e}", exc_info=True)
             _presign_error_logged = True
         return None
 
@@ -248,7 +248,7 @@ async def fetch_fuzzy_search_results(
             return []
 
     except Exception as e:
-        logger.warning(f"Fuzzy search RPC failed, falling back to ILIKE: {e}")
+        logger.warning(f"Fuzzy search RPC failed, falling back to ILIKE: {e}", exc_info=True)
         # Fallback to regular ILIKE search if fuzzy function not available;
         # strip commas so the PostgREST OR filter isn't corrupted.
         safe_term = search_term.replace(",", " ").strip()

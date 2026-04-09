@@ -523,7 +523,7 @@ async def get_senior_settings(user_id: str,
             )
 
     except Exception as e:
-        logger.error(f"Failed to get senior settings: {e}")
+        logger.error(f"Failed to get senior settings: {e}", exc_info=True)
         raise safe_internal_error(e, "senior_fitness")
 
 
@@ -595,7 +595,7 @@ async def update_senior_settings(user_id: str, update: SeniorSettingsUpdate,
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to update senior settings: {e}")
+        logger.error(f"Failed to update senior settings: {e}", exc_info=True)
         raise safe_internal_error(e, "senior_fitness")
 
 
@@ -670,7 +670,7 @@ async def get_recovery_status(user_id: str, request: Request,
         )
 
     except Exception as e:
-        logger.error(f"Failed to get recovery status: {e}")
+        logger.error(f"Failed to get recovery status: {e}", exc_info=True)
         raise safe_internal_error(e, "senior_fitness")
 
 
@@ -720,7 +720,7 @@ async def check_is_senior(user_id: str,
         )
 
     except Exception as e:
-        logger.error(f"Failed to check senior status: {e}")
+        logger.error(f"Failed to check senior status: {e}", exc_info=True)
         raise safe_internal_error(e, "senior_fitness")
 
 
@@ -858,7 +858,7 @@ async def apply_workout_modifications(request: WorkoutModificationRequest,
         )
 
     except Exception as e:
-        logger.error(f"Failed to apply workout modifications: {e}")
+        logger.error(f"Failed to apply workout modifications: {e}", exc_info=True)
         raise safe_internal_error(e, "senior_fitness")
 
 
@@ -921,5 +921,5 @@ async def get_prompt_context(user_id: str,
         )
 
     except Exception as e:
-        logger.error(f"Failed to get prompt context: {e}")
+        logger.error(f"Failed to get prompt context: {e}", exc_info=True)
         raise safe_internal_error(e, "senior_fitness")

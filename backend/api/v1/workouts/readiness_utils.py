@@ -72,7 +72,7 @@ async def get_user_readiness_score(user_id: str) -> Optional[int]:
         return None
 
     except Exception as e:
-        logger.error(f"❌ [Readiness] Error getting readiness score for user {user_id}: {e}")
+        logger.error(f"❌ [Readiness] Error getting readiness score for user {user_id}: {e}", exc_info=True)
         return None
 
 
@@ -110,7 +110,7 @@ async def get_user_latest_mood(user_id: str) -> Optional[dict]:
         return None
 
     except Exception as e:
-        logger.error(f"❌ [Mood] Error getting mood for user {user_id}: {e}")
+        logger.error(f"❌ [Mood] Error getting mood for user {user_id}: {e}", exc_info=True)
         return None
 
 
@@ -265,7 +265,7 @@ async def get_active_injuries_with_muscles(user_id: str) -> dict:
         return result
 
     except Exception as e:
-        logger.error(f"❌ [Injuries] Error getting active injuries for user {user_id}: {e}")
+        logger.error(f"❌ [Injuries] Error getting active injuries for user {user_id}: {e}", exc_info=True)
         return {"injuries": [], "avoided_muscles": []}
 
 
@@ -346,7 +346,7 @@ async def get_user_comeback_status(user_id: str) -> dict:
                         "reason": f"Last workout {days_since} days ago (< 14 day threshold)"
                     }
             except Exception as e:
-                logger.warning(f"Failed to check workout history: {e}")
+                logger.warning(f"Failed to check workout history: {e}", exc_info=True)
 
         return {
             "in_comeback_mode": False,
@@ -355,7 +355,7 @@ async def get_user_comeback_status(user_id: str) -> dict:
         }
 
     except Exception as e:
-        logger.error(f"❌ [Comeback] Error checking comeback status for user {user_id}: {e}")
+        logger.error(f"❌ [Comeback] Error checking comeback status for user {user_id}: {e}", exc_info=True)
         return {"in_comeback_mode": False, "days_since_last_workout": None, "reason": str(e)}
 
 
@@ -410,7 +410,7 @@ async def get_comeback_context(user_id: str) -> dict:
         }
 
     except Exception as e:
-        logger.error(f"❌ [Comeback] Error getting comeback context: {e}")
+        logger.error(f"❌ [Comeback] Error getting comeback context: {e}", exc_info=True)
         return {
             "needs_comeback": False,
             "break_status": None,
@@ -494,7 +494,7 @@ async def start_comeback_mode_if_needed(user_id: str) -> bool:
         return False
 
     except Exception as e:
-        logger.error(f"❌ [Comeback] Error starting comeback mode: {e}")
+        logger.error(f"❌ [Comeback] Error starting comeback mode: {e}", exc_info=True)
         return False
 
 

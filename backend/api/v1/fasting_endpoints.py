@@ -379,7 +379,7 @@ async def log_fasting_context(data: LogFastingContextRequest, current_user: dict
         return {"status": "logged", "context_id": context_data["id"]}
 
     except Exception as e:
-        logger.error(f"Error logging fasting context: {e}")
+        logger.error(f"Error logging fasting context: {e}", exc_info=True)
         # Don't fail the request - context logging is optional
         return {"status": "error", "reason": str(e)}
 
@@ -416,7 +416,7 @@ async def get_fasting_context(
         return {"contexts": result.data or [], "count": len(result.data or [])}
 
     except Exception as e:
-        logger.error(f"Error getting fasting context: {e}")
+        logger.error(f"Error getting fasting context: {e}", exc_info=True)
         # Return empty if table doesn't exist
         return {"contexts": [], "count": 0}
 
@@ -584,7 +584,7 @@ async def get_fasting_score_trend(user_id: str, current_user: dict = Depends(get
         }
 
     except Exception as e:
-        logger.error(f"Error getting fasting score trend: {e}")
+        logger.error(f"Error getting fasting score trend: {e}", exc_info=True)
         # Return default on error to not break the frontend
         return {
             "current_score": 0,

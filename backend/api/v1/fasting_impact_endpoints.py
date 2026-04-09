@@ -226,7 +226,7 @@ async def get_fasting_calendar(
         )
 
     except Exception as e:
-        logger.error(f"Error getting fasting calendar: {e}")
+        logger.error(f"Error getting fasting calendar: {e}", exc_info=True)
         await log_user_error(
             user_id=user_id,
             action="fasting_calendar_viewed",
@@ -334,7 +334,7 @@ async def get_weight_data_for_ai(user_id: str, days: int = 30) -> List[Dict[str,
         return result
 
     except Exception as e:
-        logger.error(f"Error getting weight data for AI: {e}")
+        logger.error(f"Error getting weight data for AI: {e}", exc_info=True)
         return []
 
 async def get_goal_data_for_ai(user_id: str, days: int = 30) -> Dict[str, Any]:
@@ -405,7 +405,7 @@ async def get_goal_data_for_ai(user_id: str, days: int = 30) -> Dict[str, Any]:
         }
 
     except Exception as e:
-        logger.error(f"Error getting goal data for AI: {e}")
+        logger.error(f"Error getting goal data for AI: {e}", exc_info=True)
         return {
             "goals_fasting": 0,
             "goals_non_fasting": 0,
@@ -472,11 +472,11 @@ async def get_ai_fasting_insight(
 
     except ValueError as e:
         # Validation errors from AI parsing
-        logger.error(f"Validation error getting AI insight: {e}")
+        logger.error(f"Validation error getting AI insight: {e}", exc_info=True)
         raise HTTPException(status_code=422, detail="Invalid data format")
 
     except Exception as e:
-        logger.error(f"Error getting AI fasting insight: {e}")
+        logger.error(f"Error getting AI fasting insight: {e}", exc_info=True)
         await log_user_error(
             user_id=user_id,
             action="ai_fasting_insight_generated",
@@ -538,7 +538,7 @@ async def refresh_ai_fasting_insight(
         return AIFastingInsightResponse(**insight)
 
     except Exception as e:
-        logger.error(f"Error refreshing AI fasting insight: {e}")
+        logger.error(f"Error refreshing AI fasting insight: {e}", exc_info=True)
         await log_user_error(
             user_id=user_id,
             action="ai_fasting_insight_refreshed",
@@ -583,7 +583,7 @@ async def get_ai_correlation_score(
         )
 
     except Exception as e:
-        logger.error(f"Error getting AI correlation score: {e}")
+        logger.error(f"Error getting AI correlation score: {e}", exc_info=True)
         raise safe_internal_error(e, "endpoint")
 
 @router.get("/ai-summary/{user_id}", response_model=AIFastingSummaryResponse)
@@ -618,7 +618,7 @@ async def get_ai_fasting_summary(
         )
 
     except Exception as e:
-        logger.error(f"Error getting AI fasting summary: {e}")
+        logger.error(f"Error getting AI fasting summary: {e}", exc_info=True)
         raise safe_internal_error(e, "endpoint")
 
 # ==================== Mark Historical Fasting Day ====================
@@ -787,7 +787,7 @@ async def mark_historical_fasting_day(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error marking historical fasting day: {e}")
+        logger.error(f"Error marking historical fasting day: {e}", exc_info=True)
         await log_user_error(
             user_id=data.user_id,
             action="historical_fasting_day_marked",

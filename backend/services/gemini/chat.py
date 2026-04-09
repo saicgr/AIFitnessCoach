@@ -94,7 +94,7 @@ class ChatMixin:
                 timeout=60,  # 60s for chat responses
             )
         except asyncio.TimeoutError:
-            logger.error("[Chat] Gemini API timed out after 60s")
+            logger.error("[Chat] Gemini API timed out after 60s", exc_info=True)
             raise Exception("AI response timed out. Please try again.")
 
         return response.text
@@ -230,7 +230,7 @@ User message: "''' + _sanitize_for_prompt(user_message) + '"'
                 logger.info(f"[IntentCache] Cache HIT for message: '{user_message[:50]}...'")
                 return cached_result
         except Exception as cache_err:
-            logger.warning(f"[IntentCache] Cache lookup error (falling through): {cache_err}")
+            logger.warning(f"[IntentCache] Cache lookup error (falling through): {cache_err}", exc_info=True)
 
         try:
             async with _gemini_semaphore(user_id=user_id):
@@ -274,15 +274,15 @@ User message: "''' + _sanitize_for_prompt(user_message) + '"'
                 await _intent_cache.set(cache_key, result)
                 logger.info(f"[IntentCache] Cache MISS - stored result for: '{user_message[:50]}...'")
             except Exception as cache_err:
-                logger.warning(f"[IntentCache] Failed to store result: {cache_err}")
+                logger.warning(f"[IntentCache] Failed to store result: {cache_err}", exc_info=True)
 
             return result
 
         except asyncio.TimeoutError:
-            logger.error(f"[Intent] Gemini API timed out after 15s for intent extraction")
+            logger.error(f"[Intent] Gemini API timed out after 15s for intent extraction", exc_info=True)
             return IntentExtraction(intent=CoachIntent.QUESTION)
         except Exception as e:
-            logger.error(f"Intent extraction failed: {e}")
+            logger.error(f"Intent extraction failed: {e}", exc_info=True)
             return IntentExtraction(intent=CoachIntent.QUESTION)
 
     async def extract_exercises_from_response(self, ai_response: str) -> Optional[List[str]]:
@@ -330,10 +330,10 @@ IMPORTANT:
             return None
 
         except asyncio.TimeoutError:
-            logger.error("[ExerciseExtraction] Gemini API timed out after 15s")
+            logger.error("[ExerciseExtraction] Gemini API timed out after 15s", exc_info=True)
             return None
         except Exception as e:
-            logger.error(f"Exercise extraction from response failed: {e}")
+            logger.error(f"Exercise extraction from response failed: {e}", exc_info=True)
             return None
 
     async def parse_workout_input(
@@ -476,7 +476,7 @@ Return a summary describing what was found and any warnings about unclear parsin
             return result
 
         except Exception as e:
-            logger.error(f"❌ [ParseWorkout] Failed to parse workout input: {e}")
+            logger.error(f"❌ [ParseWorkout] Failed to parse workout input: {e}", exc_info=True)
             return {
                 "exercises": [],
                 "summary": f"Failed to parse input: {str(e)}",
@@ -786,7 +786,7 @@ INPUT TO PARSE:
             return result
 
         except Exception as e:
-            logger.error(f"❌ [ParseWorkoutV2] Failed to parse: {e}")
+            logger.error(f"❌ [ParseWorkoutV2] Failed to parse: {e}", exc_info=True)
             return {
                 "sets_to_log": [],
                 "exercises_to_add": [],
@@ -813,7 +813,7 @@ INPUT TO PARSE:
                 logger.debug(f"[EmbeddingCache] Cache HIT for: '{text[:40]}...'")
                 return cached
         except Exception as cache_err:
-            logger.warning(f"[EmbeddingCache] Cache lookup error (falling through): {cache_err}")
+            logger.warning(f"[EmbeddingCache] Cache lookup error (falling through): {cache_err}", exc_info=True)
 
         result = client.models.embed_content(
             model=self.embedding_model,
@@ -827,7 +827,7 @@ INPUT TO PARSE:
             _embedding_cache.set_sync(cache_key, embedding)
             logger.debug(f"[EmbeddingCache] Cache MISS - stored embedding for: '{text[:40]}...'")
         except Exception as cache_err:
-            logger.warning(f"[EmbeddingCache] Failed to store embedding: {cache_err}")
+            logger.warning(f"[EmbeddingCache] Failed to store embedding: {cache_err}", exc_info=True)
 
         return embedding
 
@@ -850,7 +850,7 @@ INPUT TO PARSE:
                 logger.debug(f"[EmbeddingCache] Cache HIT (async) for: '{text[:40]}...'")
                 return cached
         except Exception as cache_err:
-            logger.warning(f"[EmbeddingCache] Cache lookup error (falling through): {cache_err}")
+            logger.warning(f"[EmbeddingCache] Cache lookup error (falling through): {cache_err}", exc_info=True)
 
         async with _gemini_semaphore(user_id=None):
             result = await client.aio.models.embed_content(
@@ -865,7 +865,7 @@ INPUT TO PARSE:
             await _embedding_cache.set(cache_key, embedding)
             logger.debug(f"[EmbeddingCache] Cache MISS (async) - stored embedding for: '{text[:40]}...'")
         except Exception as cache_err:
-            logger.warning(f"[EmbeddingCache] Failed to store embedding: {cache_err}")
+            logger.warning(f"[EmbeddingCache] Failed to store embedding: {cache_err}", exc_info=True)
 
         return embedding
 

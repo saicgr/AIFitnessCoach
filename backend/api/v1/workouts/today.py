@@ -141,7 +141,7 @@ def _row_to_summary(row: dict, user_today_str: Optional[str] = None) -> TodayWor
         try:
             exercises = json.loads(exercises)
         except (json.JSONDecodeError, TypeError):
-            logger.warning(f"[_row_to_summary] Failed to parse exercises JSON for workout {row.get('id')}")
+            logger.warning(f"[_row_to_summary] Failed to parse exercises JSON for workout {row.get('id')}", exc_info=True)
             exercises = []
 
     # Get scheduled date
@@ -303,7 +303,7 @@ def _backfill_gym_profile_id(db, user_id: str, gym_profile_id: str) -> None:
         if count > 0:
             logger.info(f"[BACKFILL] Tagged {count} orphaned workouts with gym_profile_id={gym_profile_id}")
     except Exception as e:
-        logger.warning(f"[BACKFILL] Failed to backfill gym_profile_id: {e}")
+        logger.warning(f"[BACKFILL] Failed to backfill gym_profile_id: {e}", exc_info=True)
 
 
 async def auto_generate_workout(user_id: str, target_date: date, gym_profile_id: Optional[str] = None, selected_days: Optional[List[int]] = None, adjacent_day_exercises: Optional[List[str]] = None, batch_offset: int = 0):
@@ -403,7 +403,7 @@ async def auto_generate_workout(user_id: str, target_date: date, gym_profile_id:
                     workout_type = infer_workout_type_from_focus(focus_for_day)
                 logger.info(f"[BG-GEN] Day {target_date.weekday()} focus={focus_for_day}, type={workout_type}, split={resolved_split}")
             except Exception as e:
-                logger.warning(f"[BG-GEN] Could not determine focus for {target_date}: {e}")
+                logger.warning(f"[BG-GEN] Could not determine focus for {target_date}: {e}", exc_info=True)
 
         # Import the generation function (local import to avoid circular dependency)
         from .generation_endpoints import generate_workout
@@ -429,7 +429,7 @@ async def auto_generate_workout(user_id: str, target_date: date, gym_profile_id:
         return result
 
     except Exception as e:
-        logger.error(f"[BG-GEN] Failed to generate workout for {generation_key}: {e}")
+        logger.error(f"[BG-GEN] Failed to generate workout for {generation_key}: {e}", exc_info=True)
     finally:
         _active_background_generations.discard(generation_key)
 
@@ -712,7 +712,7 @@ async def get_today_workout(
         )
 
     except Exception as e:
-        logger.error(f"Failed to get today's workout: {e}")
+        logger.error(f"Failed to get today's workout: {e}", exc_info=True)
         raise safe_internal_error(e, "today")
 
 
@@ -749,7 +749,7 @@ async def log_quick_start(
         }
 
     except Exception as e:
-        logger.warning(f"Failed to log quick start: {e}")
+        logger.warning(f"Failed to log quick start: {e}", exc_info=True)
         # Don't fail the request - logging is non-critical
         return {
             "success": False,

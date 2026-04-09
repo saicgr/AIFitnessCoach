@@ -109,7 +109,7 @@ async def start_app_tour(request: Request, body: TourStartRequest):
                     },
                 }).execute()
             except Exception as e:
-                logger.warning(f"Failed to log tour start to user_context_logs: {e}")
+                logger.warning(f"Failed to log tour start to user_context_logs: {e}", exc_info=True)
 
         return {
             "session_id": session_id,
@@ -118,7 +118,7 @@ async def start_app_tour(request: Request, body: TourStartRequest):
         }
 
     except Exception as e:
-        logger.error(f"Failed to start app tour: {e}")
+        logger.error(f"Failed to start app tour: {e}", exc_info=True)
         raise safe_internal_error(e, "demo")
 
 
@@ -179,7 +179,7 @@ async def complete_tour_step(request: Request, body: TourStepCompletedRequest):
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to log tour step completion: {e}")
+        logger.error(f"Failed to log tour step completion: {e}", exc_info=True)
         raise safe_internal_error(e, "demo")
 
 
@@ -216,7 +216,7 @@ async def complete_app_tour(request: Request, body: TourCompletedRequest):
                     (datetime.utcnow() - started_at.replace(tzinfo=None)).total_seconds()
                 )
             except Exception as e:
-                logger.warning(f"Failed to calculate tour duration: {e}")
+                logger.warning(f"Failed to calculate tour duration: {e}", exc_info=True)
 
         # Update session with completion data
         update_data = {
@@ -261,7 +261,7 @@ async def complete_app_tour(request: Request, body: TourCompletedRequest):
                     },
                 }).execute()
             except Exception as e:
-                logger.warning(f"Failed to log tour completion to user_context_logs: {e}")
+                logger.warning(f"Failed to log tour completion to user_context_logs: {e}", exc_info=True)
 
         # Update ui_onboarding_state JSONB if user_id exists
         if user_id:
@@ -281,7 +281,7 @@ async def complete_app_tour(request: Request, body: TourCompletedRequest):
                         "ui_onboarding_state": current_state,
                     }).eq("id", user_id).execute()
             except Exception as e:
-                logger.warning(f"Failed to update ui_onboarding_state: {e}")
+                logger.warning(f"Failed to update ui_onboarding_state: {e}", exc_info=True)
 
         return {
             "status": body.status,
@@ -292,7 +292,7 @@ async def complete_app_tour(request: Request, body: TourCompletedRequest):
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to complete app tour: {e}")
+        logger.error(f"Failed to complete app tour: {e}", exc_info=True)
         raise safe_internal_error(e, "demo")
 
 
@@ -352,7 +352,7 @@ async def get_tour_status(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to get tour status: {e}")
+        logger.error(f"Failed to get tour status: {e}", exc_info=True)
         raise safe_internal_error(e, "demo")
 
 
@@ -486,7 +486,7 @@ async def get_tour_analytics(
         }
 
     except Exception as e:
-        logger.error(f"Failed to get tour analytics: {e}")
+        logger.error(f"Failed to get tour analytics: {e}", exc_info=True)
         raise safe_internal_error(e, "demo")
 
 
@@ -600,7 +600,7 @@ async def get_preview_workout(
                     }
                 }).execute()
             except Exception as e:
-                logger.warning(f"Failed to log preview workout view: {e}")
+                logger.warning(f"Failed to log preview workout view: {e}", exc_info=True)
 
         return {
             "workout": workout,
@@ -620,7 +620,7 @@ async def get_preview_workout(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to get preview workout: {e}")
+        logger.error(f"Failed to get preview workout: {e}", exc_info=True)
         raise safe_internal_error(e, "demo")
 
 
@@ -717,7 +717,7 @@ async def start_try_workout(request: Request, body: TryWorkoutRequest):
         }
 
     except Exception as e:
-        logger.error(f"Failed to start try workout: {e}")
+        logger.error(f"Failed to start try workout: {e}", exc_info=True)
         raise safe_internal_error(e, "demo")
 
 
@@ -785,7 +785,7 @@ async def complete_try_workout(request: Request, body: TryWorkoutCompleteRequest
         }
 
     except Exception as e:
-        logger.error(f"Failed to complete try workout: {e}")
+        logger.error(f"Failed to complete try workout: {e}", exc_info=True)
         raise safe_internal_error(e, "demo")
 
 
@@ -837,7 +837,7 @@ async def get_previewed_exercises(session_id: str):
         }
 
     except Exception as e:
-        logger.error(f"Failed to get previewed exercises: {e}")
+        logger.error(f"Failed to get previewed exercises: {e}", exc_info=True)
         raise safe_internal_error(e, "demo")
 
 

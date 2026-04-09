@@ -112,7 +112,7 @@ async def add_avoided_exercise(user_id: str, request: AvoidedExerciseCreate, cur
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error adding avoided exercise: {e}")
+        logger.error(f"Error adding avoided exercise: {e}", exc_info=True)
         raise safe_internal_error(e, "exercise_preferences")
 
 
@@ -158,7 +158,7 @@ async def update_avoided_exercise(user_id: str, exercise_id: str, request: Avoid
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error updating avoided exercise: {e}")
+        logger.error(f"Error updating avoided exercise: {e}", exc_info=True)
         raise safe_internal_error(e, "exercise_preferences")
 
 
@@ -191,7 +191,7 @@ async def remove_avoided_exercise(user_id: str, exercise_id: str, current_user: 
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error removing avoided exercise: {e}")
+        logger.error(f"Error removing avoided exercise: {e}", exc_info=True)
         raise safe_internal_error(e, "exercise_preferences")
 
 
@@ -239,7 +239,7 @@ async def get_avoided_muscles(user_id: str, include_expired: bool = False, curre
         return muscles
 
     except Exception as e:
-        logger.error(f"Error getting avoided muscles: {e}")
+        logger.error(f"Error getting avoided muscles: {e}", exc_info=True)
         raise safe_internal_error(e, "exercise_preferences")
 
 
@@ -306,7 +306,7 @@ async def add_avoided_muscle(user_id: str, request: AvoidedMuscleCreate, current
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error adding avoided muscle: {e}")
+        logger.error(f"Error adding avoided muscle: {e}", exc_info=True)
         raise safe_internal_error(e, "exercise_preferences")
 
 
@@ -360,7 +360,7 @@ async def update_avoided_muscle(user_id: str, muscle_id: str, request: AvoidedMu
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error updating avoided muscle: {e}")
+        logger.error(f"Error updating avoided muscle: {e}", exc_info=True)
         raise safe_internal_error(e, "exercise_preferences")
 
 
@@ -390,7 +390,7 @@ async def remove_avoided_muscle(user_id: str, muscle_id: str, current_user: dict
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error removing avoided muscle: {e}")
+        logger.error(f"Error removing avoided muscle: {e}", exc_info=True)
         raise safe_internal_error(e, "exercise_preferences")
 
 
@@ -657,7 +657,7 @@ async def suggest_exercise_substitutes(request: SubstituteRequest, current_user:
                                 is_safe_for_reason=is_safe,
                             ))
             except Exception as e:
-                logger.warning(f"Error searching exercise library: {e}")
+                logger.warning(f"Error searching exercise library: {e}", exc_info=True)
 
         # Limit to top 8 substitutes
         substitutes = substitutes[:8]
@@ -678,7 +678,7 @@ async def suggest_exercise_substitutes(request: SubstituteRequest, current_user:
         )
 
     except Exception as e:
-        logger.error(f"Error getting substitutes: {e}")
+        logger.error(f"Error getting substitutes: {e}", exc_info=True)
         raise safe_internal_error(e, "exercise_preferences")
 
 
@@ -730,7 +730,7 @@ async def get_user_avoided_exercises(user_id: str) -> List[str]:
 
         return [row["exercise_name"] for row in result.data or []]
     except Exception as e:
-        logger.error(f"Error getting avoided exercises: {e}")
+        logger.error(f"Error getting avoided exercises: {e}", exc_info=True)
         return []
 
 
@@ -757,7 +757,7 @@ async def get_user_avoided_muscles(user_id: str) -> List[dict]:
             for row in result.data or []
         ]
     except Exception as e:
-        logger.error(f"Error getting avoided muscles: {e}")
+        logger.error(f"Error getting avoided muscles: {e}", exc_info=True)
         return []
 
 
@@ -867,5 +867,5 @@ async def get_recent_swaps(
         return recent_exercises
 
     except Exception as e:
-        logger.error(f"Error getting recent swaps: {e}")
+        logger.error(f"Error getting recent swaps: {e}", exc_info=True)
         raise safe_internal_error(e, "exercise_preferences")

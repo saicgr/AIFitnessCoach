@@ -357,7 +357,7 @@ async def get_nutrition_preferences(current_user: dict = Depends(get_current_use
         )
 
     except Exception as e:
-        logger.error(f"Error getting nutrition preferences: {e}")
+        logger.error(f"Error getting nutrition preferences: {e}", exc_info=True)
         raise safe_internal_error(e, "nutrition_preferences")
 
 
@@ -457,7 +457,7 @@ async def update_nutrition_preferences(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error updating nutrition preferences: {e}")
+        logger.error(f"Error updating nutrition preferences: {e}", exc_info=True)
         await log_user_error(
             user_id=user_id,
             action="nutrition_preferences_update",
@@ -519,7 +519,7 @@ async def reset_nutrition_preferences(current_user: dict = Depends(get_current_u
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error resetting nutrition preferences: {e}")
+        logger.error(f"Error resetting nutrition preferences: {e}", exc_info=True)
         raise safe_internal_error(e, "nutrition_preferences")
 
 
@@ -642,7 +642,7 @@ async def quick_log_saved_food(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error quick logging food: {e}")
+        logger.error(f"Error quick logging food: {e}", exc_info=True)
         await log_user_error(
             user_id=user_id,
             action="quick_log",
@@ -771,7 +771,7 @@ async def get_quick_suggestions(
         )
 
     except Exception as e:
-        logger.error(f"Error getting quick suggestions: {e}")
+        logger.error(f"Error getting quick suggestions: {e}", exc_info=True)
         raise safe_internal_error(e, "nutrition_preferences")
 
 

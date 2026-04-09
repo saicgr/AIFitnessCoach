@@ -85,7 +85,7 @@ def _bg_notify_comment(activity_id: str, commenter_id: str, comment_text: str):
             pass  # Push notification is best-effort
 
     except Exception as e:
-        logger.error(f"[Social] Failed to notify comment: {e}")
+        logger.error(f"[Social] Failed to notify comment: {e}", exc_info=True)
 
 
 @router.post("/comments", response_model=ActivityComment)

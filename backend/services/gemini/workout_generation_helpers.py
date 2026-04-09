@@ -1211,6 +1211,6 @@ If user has gym equipment - most exercises MUST use that equipment!"""
             return workout_data
 
         except Exception as e:
-            logger.error(f"Workout generation failed: {e}")
+            logger.error(f"Workout generation failed: {e}", exc_info=True)
             raise
 

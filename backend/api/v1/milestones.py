@@ -63,7 +63,7 @@ async def get_milestone_definitions(
         )
         return definitions
     except Exception as e:
-        logger.error(f"Error getting milestone definitions: {e}")
+        logger.error(f"Error getting milestone definitions: {e}", exc_info=True)
         raise safe_internal_error(e, "milestones")
 
 
@@ -108,7 +108,7 @@ async def get_user_milestones(user_id: str,
 
         return progress
     except Exception as e:
-        logger.error(f"Error getting user milestones: {e}")
+        logger.error(f"Error getting user milestones: {e}", exc_info=True)
         await log_user_error(
             user_id=user_id,
             action="milestones_viewed",
@@ -136,7 +136,7 @@ async def get_uncelebrated_milestones(user_id: str,
         uncelebrated = await milestone_service.get_uncelebrated_milestones(user_id)
         return uncelebrated
     except Exception as e:
-        logger.error(f"Error getting uncelebrated milestones: {e}")
+        logger.error(f"Error getting uncelebrated milestones: {e}", exc_info=True)
         raise safe_internal_error(e, "milestones")
 
 
@@ -175,7 +175,7 @@ async def mark_milestones_celebrated(
 
         return {"success": success}
     except Exception as e:
-        logger.error(f"Error marking milestones celebrated: {e}")
+        logger.error(f"Error marking milestones celebrated: {e}", exc_info=True)
         raise safe_internal_error(e, "milestones")
 
 
@@ -226,7 +226,7 @@ async def record_milestone_share(
 
         return {"success": success}
     except Exception as e:
-        logger.error(f"Error recording milestone share: {e}")
+        logger.error(f"Error recording milestone share: {e}", exc_info=True)
         raise safe_internal_error(e, "milestones")
 
 
@@ -286,7 +286,7 @@ async def award_first_step_milestone(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error awarding first_step milestone: {e}")
+        logger.error(f"Error awarding first_step milestone: {e}", exc_info=True)
         raise safe_internal_error(e, "milestones")
 
 
@@ -325,7 +325,7 @@ async def check_milestones(user_id: str,
 
         return result
     except Exception as e:
-        logger.error(f"Error checking milestones: {e}")
+        logger.error(f"Error checking milestones: {e}", exc_info=True)
         raise safe_internal_error(e, "milestones")
 
 
@@ -376,7 +376,7 @@ async def get_roi_metrics(
 
         return metrics
     except Exception as e:
-        logger.error(f"Error getting ROI metrics: {e}")
+        logger.error(f"Error getting ROI metrics: {e}", exc_info=True)
         raise safe_internal_error(e, "milestones")
 
 
@@ -403,7 +403,7 @@ async def get_roi_summary(user_id: str,
         summary = await milestone_service.get_roi_summary(user_id)
         return summary
     except Exception as e:
-        logger.error(f"Error getting ROI summary: {e}")
+        logger.error(f"Error getting ROI summary: {e}", exc_info=True)
         raise safe_internal_error(e, "milestones")
 
 
@@ -434,5 +434,5 @@ async def get_progress_overview(user_id: str,
             "roi": roi_summary,
         }
     except Exception as e:
-        logger.error(f"Error getting progress overview: {e}")
+        logger.error(f"Error getting progress overview: {e}", exc_info=True)
         raise safe_internal_error(e, "milestones")

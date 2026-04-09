@@ -87,7 +87,7 @@ def invalidate_upcoming_workouts(
         return count
 
     except Exception as e:
-        logger.warning(f"[INVALIDATE] Failed to invalidate workouts for user {user_id} ({reason}): {e}")
+        logger.warning(f"[INVALIDATE] Failed to invalidate workouts for user {user_id} ({reason}): {e}", exc_info=True)
         return 0
 
 
@@ -252,7 +252,7 @@ def enrich_exercises_with_video_urls(exercises: List[Dict], db=None) -> List[Dic
             logger.info(f"✅ Enriched {enriched_count} exercise media URLs from library")
 
     except Exception as e:
-        logger.warning(f"⚠️ Failed to enrich exercises with media URLs: {e}")
+        logger.warning(f"⚠️ Failed to enrich exercises with media URLs: {e}", exc_info=True)
 
     return exercises
 
@@ -340,7 +340,7 @@ def log_workout_change(
         db.create_workout_change(change_data)
         logger.debug(f"Logged workout change: workout_id={workout_id}, type={change_type}")
     except Exception as e:
-        logger.error(f"Failed to log workout change: {e}")
+        logger.error(f"Failed to log workout change: {e}", exc_info=True)
 
 
 async def index_workout_to_rag(workout: Workout):
@@ -363,7 +363,7 @@ async def index_workout_to_rag(workout: Workout):
             generation_method=workout.generation_method,
         )
     except Exception as e:
-        logger.error(f"Failed to index workout to RAG: {e}")
+        logger.error(f"Failed to index workout to RAG: {e}", exc_info=True)
 
 
 async def get_recently_used_exercises(user_id: str, days: int = 7) -> List[str]:
@@ -400,7 +400,7 @@ async def get_recently_used_exercises(user_id: str, days: int = 7) -> List[str]:
         return list(recent_exercises)
 
     except Exception as e:
-        logger.error(f"Error getting recently used exercises: {e}")
+        logger.error(f"Error getting recently used exercises: {e}", exc_info=True)
         return []
 
 
@@ -427,7 +427,7 @@ async def get_recent_workout_name_words(user_id: str, days: int = 14) -> List[st
         logger.info(f"[NameDedup] {len(all_words)} name words to avoid for user (last {days} days)")
         return list(all_words)
     except Exception as e:
-        logger.error(f"Error getting recent workout name words: {e}")
+        logger.error(f"Error getting recent workout name words: {e}", exc_info=True)
         return []
 
 

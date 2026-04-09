@@ -314,7 +314,7 @@ def search_s3_for_image(exercise_name: str, gender: str = None) -> str:
         return None
 
     except Exception as e:
-        logger.error(f"Error searching S3 for image: {e}")
+        logger.error(f"Error searching S3 for image: {e}", exc_info=True)
         return None
 
 

@@ -50,7 +50,7 @@ async def run_media_job(job_id: str):
                     from core.premium_gate import track_premium_usage
                     await track_premium_usage(job["user_id"], "form_video_analysis")
                 except Exception as usage_err:
-                    logger.warning(f"Failed to track form_video_analysis usage for job {job_id}: {usage_err}")
+                    logger.warning(f"Failed to track form_video_analysis usage for job {job_id}: {usage_err}", exc_info=True)
         except Exception as e:
             retry_count = job.get("retry_count", 0)
             if _is_transient_error(e) and retry_count < 3:
@@ -64,12 +64,12 @@ async def run_media_job(job_id: str):
                 logger.warning(
                     f"Media job {job_id} failed (attempt {retry_count + 1}), "
                     f"retrying in {delay}s: {e}"
-                )
+                , exc_info=True)
                 await asyncio.sleep(delay)
                 asyncio.create_task(run_media_job(job_id))
             else:
                 service.update_job_status(job_id, "failed", error_message=str(e))
-                logger.error(f"Media job {job_id} permanently failed: {e}")
+                logger.error(f"Media job {job_id} permanently failed: {e}", exc_info=True)
 
 
 def _is_transient_error(e: Exception) -> bool:
@@ -155,4 +155,4 @@ async def resume_pending_media_jobs():
         else:
             logger.info("No pending media analysis jobs to resume")
     except Exception as e:
-        logger.error(f"Failed to resume media jobs: {e}")
+        logger.error(f"Failed to resume media jobs: {e}", exc_info=True)

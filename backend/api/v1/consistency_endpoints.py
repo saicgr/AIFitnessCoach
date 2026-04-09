@@ -20,7 +20,9 @@ from core.auth import get_current_user
 from core.db import get_supabase_db
 from core.timezone_utils import resolve_timezone, get_user_today
 from core.exceptions import safe_internal_error
-from models.consistency import StreakRecoveryRequest, StreakRecoveryResponse
+from models.consistency import StreakRecoveryRequest, StreakRecoveryResponse, RecoveryType
+from core.db_utils import safe_maybe_single
+from services.user_context_service import user_context_service, EventType
 
 router = APIRouter()
 @router.get("/search-exercise", tags=["Consistency"])
@@ -167,7 +169,7 @@ async def search_exercise_history(
         }
 
     except Exception as e:
-        logger.error(f"Error searching exercise history: {e}")
+        logger.error(f"Error searching exercise history: {e}", exc_info=True)
         raise safe_internal_error(e, "search_exercise_history")
 
 
@@ -236,7 +238,7 @@ async def get_exercise_suggestions(
         ]
 
     except Exception as e:
-        logger.error(f"Error fetching exercise suggestions: {e}")
+        logger.error(f"Error fetching exercise suggestions: {e}", exc_info=True)
         raise safe_internal_error(e, "get_exercise_suggestions")
 
 
@@ -294,6 +296,7 @@ async def initiate_streak_recovery(
             previous_streak = history_response.data[0]["streak_length"]
 
         # Generate motivation message
+        from .consistency import get_recovery_message, get_motivation_quote  # Lazy import to avoid circular import
         motivation_message = get_recovery_message(days_since, previous_streak)
         motivation_quote = get_motivation_quote()
 
@@ -340,7 +343,7 @@ async def initiate_streak_recovery(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error initiating streak recovery: {e}")
+        logger.error(f"Error initiating streak recovery: {e}", exc_info=True)
         raise safe_internal_error(e, "initiate_streak_recovery")
 
 
@@ -386,7 +389,7 @@ async def complete_streak_recovery(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error completing streak recovery: {e}")
+        logger.error(f"Error completing streak recovery: {e}", exc_info=True)
         raise safe_internal_error(e, "complete_streak_recovery")
 
 
@@ -407,7 +410,7 @@ async def log_insights_view(user_id: str, current_streak: int):
             context={"feature": "consistency_dashboard"},
         )
     except Exception as e:
-        logger.error(f"Failed to log insights view: {e}")
+        logger.error(f"Failed to log insights view: {e}", exc_info=True)
 
 
 async def log_recovery_attempt(user_id: str, attempt_id: str, days_since: int):
@@ -424,4 +427,4 @@ async def log_recovery_attempt(user_id: str, attempt_id: str, days_since: int):
             context={"feature": "streak_recovery"},
         )
     except Exception as e:
-        logger.error(f"Failed to log recovery attempt: {e}")
+        logger.error(f"Failed to log recovery attempt: {e}", exc_info=True)

@@ -56,7 +56,7 @@ async def get_adaptive_calculation(user_id: str, current_user: dict = Depends(ge
         )
 
     except Exception as e:
-        logger.error(f"Failed to get adaptive calculation: {e}")
+        logger.error(f"Failed to get adaptive calculation: {e}", exc_info=True)
         raise safe_internal_error(e, "nutrition")
 
 
@@ -148,7 +148,7 @@ async def calculate_adaptive_tdee(
                         weight_entries=weight_entries,
                     )
             except Exception as insert_err:
-                logger.warning(f"Failed to persist adaptive calculation (non-critical): {insert_err}")
+                logger.warning(f"Failed to persist adaptive calculation (non-critical): {insert_err}", exc_info=True)
 
             # Return response without persisted ID if insert failed
             return AdaptiveCalculationResponse(
@@ -233,7 +233,7 @@ async def calculate_adaptive_tdee(
                     weight_entries=weight_entries,
                 )
         except Exception as insert_err:
-            logger.warning(f"Failed to persist adaptive calculation (non-critical): {insert_err}")
+            logger.warning(f"Failed to persist adaptive calculation (non-critical): {insert_err}", exc_info=True)
 
         # Return response without persisted ID if insert failed
         return AdaptiveCalculationResponse(
@@ -253,7 +253,7 @@ async def calculate_adaptive_tdee(
         )
 
     except Exception as e:
-        logger.error(f"Failed to calculate adaptive TDEE: {e}")
+        logger.error(f"Failed to calculate adaptive TDEE: {e}", exc_info=True)
         raise safe_internal_error(e, "nutrition")
 
 

@@ -95,7 +95,7 @@ async def upload_stats_image(
                 }
             )
         except Exception as log_error:
-            logger.warning(f"Failed to log stats upload: {log_error}")
+            logger.warning(f"Failed to log stats upload: {log_error}", exc_info=True)
 
         return UploadStatsImageResponse(
             success=True,
@@ -106,7 +106,7 @@ async def upload_stats_image(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error uploading stats image: {e}")
+        logger.error(f"Error uploading stats image: {e}", exc_info=True)
         raise safe_internal_error(e, "stats_gallery")
 
 
@@ -153,7 +153,7 @@ async def list_stats_images(
         )
 
     except Exception as e:
-        logger.error(f"Error listing stats images: {e}")
+        logger.error(f"Error listing stats images: {e}", exc_info=True)
         raise safe_internal_error(e, "stats_gallery")
 
 
@@ -186,7 +186,7 @@ async def get_stats_image(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error getting stats image: {e}")
+        logger.error(f"Error getting stats image: {e}", exc_info=True)
         raise safe_internal_error(e, "stats_gallery")
 
 
@@ -232,7 +232,7 @@ async def delete_stats_image(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error deleting stats image: {e}")
+        logger.error(f"Error deleting stats image: {e}", exc_info=True)
         raise safe_internal_error(e, "stats_gallery")
 
 
@@ -308,7 +308,7 @@ async def share_stats_to_feed(
                 }
             )
         except Exception as log_error:
-            logger.warning(f"Failed to log stats share: {log_error}")
+            logger.warning(f"Failed to log stats share: {log_error}", exc_info=True)
 
         return ShareStatsToFeedResponse(
             success=True,
@@ -319,7 +319,7 @@ async def share_stats_to_feed(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error sharing stats to feed: {e}")
+        logger.error(f"Error sharing stats to feed: {e}", exc_info=True)
         raise safe_internal_error(e, "stats_gallery")
 
 
@@ -369,5 +369,5 @@ async def track_external_share(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error tracking external share: {e}")
+        logger.error(f"Error tracking external share: {e}", exc_info=True)
         raise safe_internal_error(e, "stats_gallery")

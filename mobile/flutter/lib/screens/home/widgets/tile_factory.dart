@@ -4,14 +4,14 @@ import 'package:go_router/go_router.dart';
 import '../../../data/models/home_layout.dart';
 import '../../../widgets/app_tour/app_tour_controller.dart';
 import '../../../data/repositories/workout_repository.dart';
-import '../../../widgets/xp_progress_card.dart';
+// import '../../../widgets/xp_progress_card.dart'; // Coming soon
 import 'cards/cards.dart';
-import 'cards/roi_summary_card.dart';
-import 'cards/weekly_plan_card.dart';
-import 'daily_activity_card.dart';
+// import 'cards/roi_summary_card.dart'; // Coming soon
+// import 'cards/weekly_plan_card.dart'; // Coming soon
+// import 'daily_activity_card.dart'; // Coming soon
 import 'components/components.dart';
 import 'habits_section.dart';
-import 'body_metrics_section.dart';
+// import 'body_metrics_section.dart'; // Coming soon
 import 'achievements_section.dart';
 import 'today_stats_row.dart';
 
@@ -26,15 +26,19 @@ class TileFactory {
   }) {
     switch (tile.type) {
       case TileType.quickStart:
-        return QuickStartCard(isDark: isDark);
+        // Coming soon
+        return const SizedBox.shrink();
       case TileType.nextWorkout:
         return _buildNextWorkoutTile(context, ref, tile, isDark);
       case TileType.fitnessScore:
-        return const FitnessScoreCard();
+        // Coming soon
+        return const SizedBox.shrink();
       case TileType.moodPicker:
-        return const MoodPickerCard();
+        // Coming soon
+        return const SizedBox.shrink();
       case TileType.dailyActivity:
-        return const DailyActivityCard();
+        // Coming soon
+        return const SizedBox.shrink();
       case TileType.quickActions:
         return Padding(
           key: AppTourKeys.quickLogKey,
@@ -47,7 +51,8 @@ class TileFactory {
       case TileType.weeklyGoals:
         return WeeklyGoalsCard(isDark: isDark);
       case TileType.weekChanges:
-        return const WeekChangesCard();
+        // Coming soon
+        return const SizedBox.shrink();
       case TileType.upcomingFeatures:
         // Removed feature - return empty widget
         return const SizedBox.shrink();
@@ -62,45 +67,60 @@ class TileFactory {
       case TileType.aiCoachTip:
         return AICoachTipCard(size: tile.size, isDark: isDark);
       case TileType.challengeProgress:
-        return ActiveChallengeCard(size: tile.size, isDark: isDark);
+        // Coming soon
+        return const SizedBox.shrink();
       case TileType.caloriesSummary:
-        return CaloriesSummaryCard(size: tile.size, isDark: isDark);
+        // Coming soon
+        return const SizedBox.shrink();
       case TileType.macroRings:
-        return MacroRingsCard(size: tile.size, isDark: isDark);
+        // Coming soon
+        return const SizedBox.shrink();
       case TileType.bodyWeight:
-        return const BodyMetricsSection();
+        // Coming soon
+        return const SizedBox.shrink();
       case TileType.progressPhoto:
-        return ProgressPhotoCard(size: tile.size, isDark: isDark);
+        // Coming soon
+        return const SizedBox.shrink();
       case TileType.socialFeed:
-        return WorkoutHistoryMiniCard(size: tile.size, isDark: isDark);
+        // Coming soon
+        return const SizedBox.shrink();
       case TileType.leaderboardRank:
-        return LeaderboardRankCard(size: tile.size, isDark: isDark);
+        // Coming soon
+        return const SizedBox.shrink();
       case TileType.fasting:
         // TODO: Re-enable when fasting feature launches
         return const SizedBox.shrink(); // was: FastingTimerCard
       case TileType.weeklyCalendar:
-        return WeeklyCalendarCard(size: tile.size, isDark: isDark);
+        // Coming soon
+        return const SizedBox.shrink();
       case TileType.muscleHeatmap:
-        return MuscleHeatmapCard(size: tile.size, isDark: isDark);
+        // Coming soon
+        return const SizedBox.shrink();
       case TileType.sleepScore:
         // Deprecated - return empty widget
         return const SizedBox.shrink();
       case TileType.restDayTip:
-        return RestDayTipCard(size: tile.size, isDark: isDark);
+        // Coming soon
+        return const SizedBox.shrink();
       case TileType.myJourney:
-        return MyJourneyCard(size: tile.size, isDark: isDark);
+        // Coming soon
+        return const SizedBox.shrink();
       case TileType.progressCharts:
-        return ProgressChartsTile(size: tile.size, isDark: isDark);
+        // Coming soon
+        return const SizedBox.shrink();
       case TileType.roiSummary:
-        return const ROISummaryCard();
+        // Coming soon
+        return const SizedBox.shrink();
       case TileType.weeklyPlan:
-        return const WeeklyPlanCard();
+        // Coming soon
+        return const SizedBox.shrink();
       // New fat loss UX tiles
       case TileType.weightTrend:
         // Deprecated - return empty widget
         return const SizedBox.shrink();
       case TileType.dailyStats:
-        return DailyStatsCard(size: tile.size, isDark: isDark);
+        // Coming soon
+        return const SizedBox.shrink();
       case TileType.achievements:
         return const AchievementsSection();
       case TileType.heroSection:
@@ -109,13 +129,16 @@ class TileFactory {
       case TileType.quickLogWeight:
         return QuickLogWeightCard(size: tile.size, isDark: isDark);
       case TileType.quickLogMeasurements:
-        return QuickLogMeasurementsCard(size: tile.size, isDark: isDark);
+        // Coming soon
+        return const SizedBox.shrink();
       case TileType.habits:
         return const HabitsSection();
       case TileType.xpProgress:
-        return XPProgressCard(size: tile.size, isDark: isDark);
+        // Coming soon
+        return const SizedBox.shrink();
       case TileType.upNext:
-        return UpNextCard(isDark: isDark);
+        // Coming soon
+        return const SizedBox.shrink();
       case TileType.todayStats:
         return const TodayStatsRow();
     }

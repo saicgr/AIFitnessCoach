@@ -114,7 +114,7 @@ async def export_user_data(
         raise
     except Exception as e:
         elapsed = time.time() - start_time
-        logger.error(f"Failed to export user data after {elapsed:.2f}s: {e}")
+        logger.error(f"Failed to export user data after {elapsed:.2f}s: {e}", exc_info=True)
         raise safe_internal_error(e, "users")
 
 
@@ -181,11 +181,11 @@ async def export_user_data_text(
     except HTTPException:
         raise
     except ValueError as e:
-        logger.error(f"Text export validation error: {e}")
+        logger.error(f"Text export validation error: {e}", exc_info=True)
         raise HTTPException(status_code=404, detail="Export failed")
     except Exception as e:
         elapsed = time.time() - start_time
-        logger.error(f"Failed to export user data as text after {elapsed:.2f}s: {e}")
+        logger.error(f"Failed to export user data as text after {elapsed:.2f}s: {e}", exc_info=True)
         raise safe_internal_error(e, "users")
 
 
@@ -241,8 +241,8 @@ async def import_user_data(user_id: str, file: UploadFile = File(...),
     except HTTPException:
         raise
     except ValueError as e:
-        logger.error(f"Import validation error: {e}")
+        logger.error(f"Import validation error: {e}", exc_info=True)
         raise HTTPException(status_code=400, detail="Import failed")
     except Exception as e:
-        logger.error(f"Failed to import user data: {e}")
+        logger.error(f"Failed to import user data: {e}", exc_info=True)
         raise safe_internal_error(e, "users")

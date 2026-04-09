@@ -141,7 +141,7 @@ async def get_senior_social_summary(user_id: str,
             ).in_("activity_id", activity_ids).execute()
             cheered_activity_ids = {row["activity_id"] for row in (reactions_result.data or [])}
         except Exception as e:
-            logger.warning("Failed to fetch user cheer status, defaulting to False: %s", e)
+            logger.warning("Failed to fetch user cheer status, defaulting to False: %s", e, exc_info=True)
 
     simplified_activities = []
     for item in feed_response.items:

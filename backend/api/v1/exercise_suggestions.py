@@ -162,7 +162,7 @@ async def get_exercise_suggestions(request: Request, body: SuggestionRequest, cu
         return response
 
     except Exception as e:
-        logger.error(f"Exercise suggestion failed: {e}")
+        logger.error(f"Exercise suggestion failed: {e}", exc_info=True)
         raise safe_internal_error(e, "exercise_suggestions")
 
 
@@ -409,5 +409,5 @@ async def get_fast_exercise_suggestions(body: FastSuggestionRequest, current_use
         return suggestions
 
     except Exception as e:
-        logger.error(f"Fast suggestion failed: {e}")
+        logger.error(f"Fast suggestion failed: {e}", exc_info=True)
         raise safe_internal_error(e, "exercise_suggestions")

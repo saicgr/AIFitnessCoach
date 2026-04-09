@@ -138,7 +138,7 @@ async def analyze_food_image(
         }
 
     except asyncio.TimeoutError:
-        logger.error(f"Food image analysis timed out after 90s for user {user_id}")
+        logger.error(f"Food image analysis timed out after 90s for user {user_id}", exc_info=True)
         return {
             "success": False,
             "action": "analyze_food_image",
@@ -146,7 +146,7 @@ async def analyze_food_image(
             "message": "Food analysis timed out. Please try again."
         }
     except Exception as e:
-        logger.error(f"Analyze food image failed: {e}")
+        logger.error(f"Analyze food image failed: {e}", exc_info=True)
         return {
             "success": False,
             "action": "analyze_food_image",
@@ -332,7 +332,7 @@ async def analyze_multi_food_images(
         }
 
     except asyncio.TimeoutError:
-        logger.error(f"Multi food image analysis timed out for user {user_id}")
+        logger.error(f"Multi food image analysis timed out for user {user_id}", exc_info=True)
         return {
             "success": False,
             "action": "analyze_multi_food_images",
@@ -340,7 +340,7 @@ async def analyze_multi_food_images(
             "message": "Food analysis timed out. Please try again.",
         }
     except Exception as e:
-        logger.error(f"Analyze multi food images failed: {e}")
+        logger.error(f"Analyze multi food images failed: {e}", exc_info=True)
         return {
             "success": False,
             "action": "analyze_multi_food_images",
@@ -485,7 +485,7 @@ async def parse_app_screenshot(
         }
 
     except Exception as e:
-        logger.error(f"Parse app screenshot failed: {e}")
+        logger.error(f"Parse app screenshot failed: {e}", exc_info=True)
         return {
             "success": False,
             "action": "parse_app_screenshot",
@@ -631,7 +631,7 @@ async def parse_nutrition_label(
         }
 
     except Exception as e:
-        logger.error(f"Parse nutrition label failed: {e}")
+        logger.error(f"Parse nutrition label failed: {e}", exc_info=True)
         return {
             "success": False,
             "action": "parse_nutrition_label",
@@ -738,7 +738,7 @@ def get_nutrition_summary(
             }
 
     except Exception as e:
-        logger.error(f"Get nutrition summary failed: {e}")
+        logger.error(f"Get nutrition summary failed: {e}", exc_info=True)
         return {
             "success": False,
             "action": "get_nutrition_summary",
@@ -817,7 +817,7 @@ def get_recent_meals(
         }
 
     except Exception as e:
-        logger.error(f"Get recent meals failed: {e}")
+        logger.error(f"Get recent meals failed: {e}", exc_info=True)
         return {
             "success": False,
             "action": "get_recent_meals",
@@ -991,7 +991,7 @@ async def log_food_from_text(
         }
 
     except Exception as e:
-        logger.error(f"Log food from text failed: {e}")
+        logger.error(f"Log food from text failed: {e}", exc_info=True)
         return {
             "success": False,
             "action": "log_food_from_text",

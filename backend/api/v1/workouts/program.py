@@ -139,7 +139,7 @@ async def update_program(request: UpdateProgramRequest,
             try:
                 db.delete_workout_changes_by_workout(w["id"])
             except Exception as e:
-                logger.warning(f"Could not delete workout changes for {w['id']}: {e}")
+                logger.warning(f"Could not delete workout changes for {w['id']}: {e}", exc_info=True)
 
         # Delete the workouts
         deleted_count = 0
@@ -148,7 +148,7 @@ async def update_program(request: UpdateProgramRequest,
                 db.delete_workout(w["id"])
                 deleted_count += 1
             except Exception as e:
-                logger.error(f"Failed to delete workout {w['id']}: {e}")
+                logger.error(f"Failed to delete workout {w['id']}: {e}", exc_info=True)
 
         logger.info(f"Deleted {deleted_count} future incomplete workouts for user {request.user_id}")
 
@@ -169,7 +169,7 @@ async def update_program(request: UpdateProgramRequest,
             )
             logger.info(f"Indexed program preferences to RAG for user {request.user_id}")
         except Exception as e:
-            logger.warning(f"Could not index preferences to RAG: {e}")
+            logger.warning(f"Could not index preferences to RAG: {e}", exc_info=True)
 
         # Save program snapshot to history
         try:
@@ -194,7 +194,7 @@ async def update_program(request: UpdateProgramRequest,
             db.client.table("program_history").insert(snapshot_data).execute()
             logger.info(f"Saved program snapshot to history for user {request.user_id}")
         except Exception as e:
-            logger.warning(f"Could not save program snapshot: {e}")
+            logger.warning(f"Could not save program snapshot: {e}", exc_info=True)
 
         return UpdateProgramResponse(
             success=True,
@@ -206,7 +206,7 @@ async def update_program(request: UpdateProgramRequest,
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to update program: {e}")
+        logger.error(f"Failed to update program: {e}", exc_info=True)
         raise safe_internal_error(e, "program")
 
 
@@ -266,7 +266,7 @@ async def quick_regenerate_workouts(request: QuickRegenerateRequest,
             try:
                 db.delete_workout_changes_by_workout(w["id"])
             except Exception as e:
-                logger.warning(f"Could not delete workout changes for {w['id']}: {e}")
+                logger.warning(f"Could not delete workout changes for {w['id']}: {e}", exc_info=True)
 
         # Delete the workouts
         deleted_count = 0
@@ -275,7 +275,7 @@ async def quick_regenerate_workouts(request: QuickRegenerateRequest,
                 db.delete_workout(w["id"])
                 deleted_count += 1
             except Exception as e:
-                logger.error(f"Failed to delete workout {w['id']}: {e}")
+                logger.error(f"Failed to delete workout {w['id']}: {e}", exc_info=True)
 
         logger.info(f"Deleted {deleted_count} future incomplete workouts for user {request.user_id}")
 
@@ -294,7 +294,7 @@ async def quick_regenerate_workouts(request: QuickRegenerateRequest,
             logger.info(f"Logged quick reset activity for user {request.user_id}")
         except Exception as e:
             # Table might not exist or other error - don't fail the operation
-            logger.warning(f"Could not log activity: {e}")
+            logger.warning(f"Could not log activity: {e}", exc_info=True)
 
         # Note: Actual workout generation is done by the frontend using streaming endpoint
         # This endpoint just clears the old workouts and returns success
@@ -309,5 +309,5 @@ async def quick_regenerate_workouts(request: QuickRegenerateRequest,
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to quick regenerate: {e}")
+        logger.error(f"Failed to quick regenerate: {e}", exc_info=True)
         raise safe_internal_error(e, "program")

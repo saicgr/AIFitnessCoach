@@ -94,7 +94,7 @@ class ExerciseRAGService:
         try:
             _count = self.collection.count()
         except Exception as e:
-            logger.warning(f"Failed to get collection count: {e}")
+            logger.warning(f"Failed to get collection count: {e}", exc_info=True)
             _count = "unknown"
         logger.info(f"Exercise RAG initialized with {_count} exercises")
 
@@ -201,7 +201,7 @@ class ExerciseRAGService:
                 embeddings = await self.gemini_service.get_embeddings_batch_async(documents)
                 logger.info(f"   Got {len(embeddings)} embeddings in 1 API call")
             except Exception as e:
-                logger.error(f"Failed to get batch embeddings: {e}")
+                logger.error(f"Failed to get batch embeddings: {e}", exc_info=True)
                 continue
 
             if ids and embeddings:
@@ -220,7 +220,7 @@ class ExerciseRAGService:
                     indexed_count += len(ids)
                     logger.info(f"   Indexed {len(ids)} exercises to Chroma Cloud")
                 except Exception as e:
-                    logger.error(f"Failed to index batch to Chroma: {e}")
+                    logger.error(f"Failed to index batch to Chroma: {e}", exc_info=True)
 
         logger.info(f"Finished indexing {indexed_count} exercises")
         return indexed_count
@@ -940,7 +940,7 @@ Select exactly {count} UNIQUE exercises that are SAFE for this user."""
             return selected
 
         except Exception as e:
-            logger.error(f"AI selection failed: {e}")
+            logger.error(f"AI selection failed: {e}", exc_info=True)
             raise
 
     def _detect_unilateral(self, exercise_name: str, metadata: dict = None) -> bool:
@@ -1085,7 +1085,7 @@ Select exactly {count} UNIQUE exercises that are SAFE for this user."""
             return formatted
 
         except Exception as e:
-            logger.error(f"Error selecting challenge exercise: {e}")
+            logger.error(f"Error selecting challenge exercise: {e}", exc_info=True)
             return None
 
     def _is_progression_of(self, challenge_name: str, main_name: str) -> bool:
@@ -1098,7 +1098,7 @@ Select exactly {count} UNIQUE exercises that are SAFE for this user."""
             c = self.collection.count()
             total = c if c >= 0 else -1
         except Exception as e:
-            logger.warning(f"Failed to get exercise count: {e}")
+            logger.warning(f"Failed to get exercise count: {e}", exc_info=True)
             total = -1
         return {
             "total_exercises": total,

@@ -3,6 +3,7 @@
 *.env
 .env.*
 !.env.example
+DISCORD_WEBHOOKS.md
 
 # Database files
 *.duckdb

@@ -231,7 +231,7 @@ async def search_foods(
         )
 
     except Exception as e:
-        logger.warning(f"Local food DB search failed, falling back to USDA: {e}")
+        logger.warning(f"Local food DB search failed, falling back to USDA: {e}", exc_info=True)
 
         # Fallback: Use USDA API
         try:
@@ -274,7 +274,7 @@ async def search_foods(
                 query=query,
             )
         except Exception as usda_error:
-            logger.error(f"Both local DB and USDA search failed: {usda_error}")
+            logger.error(f"Both local DB and USDA search failed: {usda_error}", exc_info=True)
             raise safe_internal_error(usda_error, "food_search")
 
 
@@ -319,7 +319,7 @@ async def get_usda_food(fdc_id: int, current_user: dict = Depends(get_current_us
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to get USDA food {fdc_id}: {e}")
+        logger.error(f"Failed to get USDA food {fdc_id}: {e}", exc_info=True)
         if "not configured" in str(e).lower():
             raise HTTPException(
                 status_code=503,
@@ -385,7 +385,7 @@ async def search_branded_foods(
         )
 
     except Exception as e:
-        logger.error(f"Failed to search branded foods: {e}")
+        logger.error(f"Failed to search branded foods: {e}", exc_info=True)
         raise safe_internal_error(e, "nutrition")
 
 
@@ -446,7 +446,7 @@ async def search_whole_foods(
         )
 
     except Exception as e:
-        logger.error(f"Failed to search whole foods: {e}")
+        logger.error(f"Failed to search whole foods: {e}", exc_info=True)
         raise safe_internal_error(e, "nutrition")
 
 

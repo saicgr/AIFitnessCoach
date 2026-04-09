@@ -9,11 +9,12 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from pydantic import BaseModel
 
 from core.timezone_utils import resolve_timezone, local_date_to_utc_range, get_user_today, get_user_now_iso, target_date_to_utc_iso
-from core.auth import get_current_user
+from core.auth import get_current_user, verify_resource_ownership
 from core.exceptions import safe_internal_error
 from core.supabase_db import get_supabase_db
 from core.logger import get_logger
 from core.activity_logger import log_user_activity
+from core.supabase_client import get_supabase
 from core.nutrition_bias import apply_calorie_bias, get_user_calorie_bias
 
 from api.v1.nutrition.models import (
@@ -95,7 +96,7 @@ async def list_food_logs(
         return result
 
     except Exception as e:
-        logger.error(f"Failed to list food logs: {e}")
+        logger.error(f"Failed to list food logs: {e}", exc_info=True)
         raise safe_internal_error(e, "nutrition")
 
 
@@ -136,7 +137,7 @@ async def get_food_log(user_id: str, log_id: str, current_user: dict = Depends(g
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to get food log: {e}")
+        logger.error(f"Failed to get food log: {e}", exc_info=True)
         raise safe_internal_error(e, "nutrition")
 
 
@@ -159,7 +160,7 @@ async def delete_food_log(log_id: str, current_user: dict = Depends(get_current_
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to delete food log: {e}")
+        logger.error(f"Failed to delete food log: {e}", exc_info=True)
         raise safe_internal_error(e, "nutrition")
 
 
@@ -197,7 +198,7 @@ async def update_food_log(log_id: str, body: UpdateFoodLogRequest, current_user:
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to update food log: {e}")
+        logger.error(f"Failed to update food log: {e}", exc_info=True)
         raise safe_internal_error(e, "nutrition")
 
 
@@ -234,7 +235,7 @@ async def update_food_log_mood(log_id: str, body: UpdateMoodRequest, current_use
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to update food log mood: {e}")
+        logger.error(f"Failed to update food log mood: {e}", exc_info=True)
         raise safe_internal_error(e, "nutrition")
 
 
@@ -286,5 +287,5 @@ async def copy_food_log(log_id: str, http_request: Request, meal_type: str = Que
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to copy food log: {e}")
+        logger.error(f"Failed to copy food log: {e}", exc_info=True)
         raise safe_internal_error(e, "nutrition")

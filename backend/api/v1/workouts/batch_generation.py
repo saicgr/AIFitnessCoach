@@ -147,5 +147,5 @@ async def get_upcoming_workouts(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"[BATCH] Failed to fetch upcoming workouts: {e}")
+        logger.error(f"[BATCH] Failed to fetch upcoming workouts: {e}", exc_info=True)
         raise safe_internal_error(e, "batch_generation")

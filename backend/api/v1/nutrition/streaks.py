@@ -5,7 +5,7 @@ from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 
-from core.timezone_utils import resolve_timezone
+from core.timezone_utils import resolve_timezone, get_user_today
 from core.auth import get_current_user
 from core.exceptions import safe_internal_error
 from core.supabase_db import get_supabase_db
@@ -62,7 +62,7 @@ async def get_nutrition_streak(user_id: str, current_user: dict = Depends(get_cu
         )
 
     except Exception as e:
-        logger.error(f"Failed to get nutrition streak: {e}")
+        logger.error(f"Failed to get nutrition streak: {e}", exc_info=True)
         raise safe_internal_error(e, "nutrition")
 
 
@@ -108,7 +108,7 @@ async def use_streak_freeze(request: Request, user_id: str, current_user: dict =
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to use streak freeze: {e}")
+        logger.error(f"Failed to use streak freeze: {e}", exc_info=True)
         raise safe_internal_error(e, "nutrition")
 
 

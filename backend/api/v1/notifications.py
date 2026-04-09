@@ -102,7 +102,7 @@ async def send_test_notification(request: TestNotificationRequest,
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"❌ Error sending test notification: {e}")
+        logger.error(f"❌ Error sending test notification: {e}", exc_info=True)
         raise safe_internal_error(e, "notifications")
 
 
@@ -152,7 +152,7 @@ async def register_fcm_token(request: RegisterTokenRequest,
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"❌ Error registering FCM token: {e}")
+        logger.error(f"❌ Error registering FCM token: {e}", exc_info=True)
         await log_user_error(
             user_id=request.user_id,
             action="fcm_token_registered",
@@ -229,7 +229,7 @@ async def send_notification(request: SendNotificationRequest,
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"❌ Error sending notification: {e}")
+        logger.error(f"❌ Error sending notification: {e}", exc_info=True)
         await log_user_error(
             user_id=request.user_id,
             action="notification_sent",
@@ -273,7 +273,7 @@ async def send_workout_reminder(user_id: str, workout_name: str = "today's worko
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error sending workout reminder: {e}")
+        logger.error(f"Error sending workout reminder: {e}", exc_info=True)
         raise safe_internal_error(e, "notifications")
 
 
@@ -308,7 +308,7 @@ async def send_guilt_notification(user_id: str, days_missed: int = 1,
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error sending guilt notification: {e}")
+        logger.error(f"Error sending guilt notification: {e}", exc_info=True)
         raise safe_internal_error(e, "notifications")
 
 
@@ -343,7 +343,7 @@ async def send_nutrition_reminder(user_id: str, meal_type: str = "meal",
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error sending nutrition reminder: {e}")
+        logger.error(f"Error sending nutrition reminder: {e}", exc_info=True)
         raise safe_internal_error(e, "notifications")
 
 
@@ -379,7 +379,7 @@ async def send_hydration_reminder(user_id: str, current_ml: int = 0, goal_ml: in
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error sending hydration reminder: {e}")
+        logger.error(f"Error sending hydration reminder: {e}", exc_info=True)
         raise safe_internal_error(e, "notifications")
 
 
@@ -486,14 +486,14 @@ async def check_inactive_users(
                         })
 
             except Exception as e:
-                logger.error(f"Error processing user {user_id}: {e}")
+                logger.error(f"Error processing user {user_id}: {e}", exc_info=True)
                 results["errors"] += 1
 
         logger.info(f"✅ Scheduler complete: {results['notifications_sent']} notifications sent")
         return results
 
     except Exception as e:
-        logger.error(f"❌ Error in scheduler: {e}")
+        logger.error(f"❌ Error in scheduler: {e}", exc_info=True)
         raise safe_internal_error(e, "notifications")
 
 
@@ -569,14 +569,14 @@ async def send_workout_reminders(
                     results["errors"] += 1
 
             except Exception as e:
-                logger.error(f"Error sending reminder to user {user_id}: {e}")
+                logger.error(f"Error sending reminder to user {user_id}: {e}", exc_info=True)
                 results["errors"] += 1
 
         logger.info(f"✅ Workout reminders complete: {results['notifications_sent']} sent")
         return results
 
     except Exception as e:
-        logger.error(f"❌ Error sending workout reminders: {e}")
+        logger.error(f"❌ Error sending workout reminders: {e}", exc_info=True)
         raise safe_internal_error(e, "notifications")
 
 

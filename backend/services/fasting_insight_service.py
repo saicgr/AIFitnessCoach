@@ -79,8 +79,8 @@ class FastingInsightService:
         try:
             return json.loads(content)
         except json.JSONDecodeError as e:
-            logger.error(f"Failed to parse JSON from Gemini response: {e}")
-            logger.error(f"Response content: {content[:500]}...")
+            logger.error(f"Failed to parse JSON from Gemini response: {e}", exc_info=True)
+            logger.error(f"Response content: {content[:500]}...", exc_info=True)
             raise ValueError(f"Invalid JSON response from AI: {e}")
 
     def _get_cache_key(self, user_id: str, data_hash: str) -> str:
@@ -273,16 +273,16 @@ Guidelines:
             return insight
 
         except asyncio.TimeoutError:
-            logger.error(f"Gemini API timeout after {self.timeout_seconds}s for fasting insight")
+            logger.error(f"Gemini API timeout after {self.timeout_seconds}s for fasting insight", exc_info=True)
             raise Exception("AI analysis is taking too long. Please try again later.")
 
         except ValueError as e:
             # Re-raise validation errors
-            logger.error(f"Validation error in fasting insight: {e}")
+            logger.error(f"Validation error in fasting insight: {e}", exc_info=True)
             raise
 
         except Exception as e:
-            logger.error(f"Error generating fasting insight: {e}")
+            logger.error(f"Error generating fasting insight: {e}", exc_info=True)
             # Per CLAUDE.md: NO fallback or mock data - propagate the error
             raise Exception(f"Failed to generate AI insight: {str(e)}")
 
@@ -398,7 +398,7 @@ Guidelines:
             return correlation
 
         except Exception as e:
-            logger.error(f"Error calculating correlation: {e}")
+            logger.error(f"Error calculating correlation: {e}", exc_info=True)
             return 0.0
 
     def _pearson_correlation(self, x: List[float], y: List[float]) -> float:
@@ -483,7 +483,7 @@ Guidelines:
             }
 
         except Exception as e:
-            logger.error(f"Error getting fasting summary: {e}")
+            logger.error(f"Error getting fasting summary: {e}", exc_info=True)
             raise
 
 

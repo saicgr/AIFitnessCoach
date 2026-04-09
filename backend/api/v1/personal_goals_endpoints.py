@@ -10,7 +10,9 @@ from core.exceptions import safe_internal_error
 from models.weekly_personal_goals import (
     PersonalRecordsResponse, GoalSummary, WeeklyPersonalGoal,
     WorkoutSyncRequest, WorkoutSyncResponse, SyncedGoalUpdate,
+    GoalProgressPreview, GoalType, PersonalGoalRecord,
 )
+from core.activity_logger import log_user_activity, log_user_error
 from api.v1.goal_social import get_iso_week_boundaries
 from models.goal_suggestions import (
     GoalSuggestionsResponse, GoalSuggestionItem, SuggestionCategoryGroup,
@@ -54,7 +56,7 @@ async def get_personal_records(user_id: str,
         )
 
     except Exception as e:
-        logger.error(f"Failed to get personal records: {e}")
+        logger.error(f"Failed to get personal records: {e}", exc_info=True)
         raise safe_internal_error(e, "personal_goals")
 
 
@@ -120,7 +122,7 @@ async def get_goals_summary(user_id: str,
         )
 
     except Exception as e:
-        logger.error(f"Failed to get goals summary: {e}")
+        logger.error(f"Failed to get goals summary: {e}", exc_info=True)
         raise safe_internal_error(e, "personal_goals")
 
 
@@ -308,7 +310,7 @@ async def sync_workout_with_goals(user_id: str, request: WorkoutSyncRequest,
         )
 
     except Exception as e:
-        logger.error(f"Failed to sync workout with goals: {e}")
+        logger.error(f"Failed to sync workout with goals: {e}", exc_info=True)
         await log_user_error(
             user_id=user_id,
             action="workout_goal_sync",
@@ -459,7 +461,7 @@ async def get_goal_suggestions(
         return _build_suggestions_response(result.data, now)
 
     except Exception as e:
-        logger.error(f"Failed to get goal suggestions: {e}")
+        logger.error(f"Failed to get goal suggestions: {e}", exc_info=True)
         raise safe_internal_error(e, "personal_goals")
 
 
@@ -499,7 +501,7 @@ async def dismiss_suggestion(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to dismiss suggestion: {e}")
+        logger.error(f"Failed to dismiss suggestion: {e}", exc_info=True)
         raise safe_internal_error(e, "personal_goals")
 
 
@@ -600,5 +602,5 @@ async def accept_suggestion(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to accept suggestion: {e}")
+        logger.error(f"Failed to accept suggestion: {e}", exc_info=True)
         raise safe_internal_error(e, "personal_goals")

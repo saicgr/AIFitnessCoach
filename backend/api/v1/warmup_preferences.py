@@ -97,7 +97,7 @@ async def get_warmup_preferences(user_id: str,
             return WarmupPreferencesResponse(user_id=user_id)
 
     except Exception as e:
-        logger.error(f"❌ Failed to get warmup preferences for {user_id}: {e}")
+        logger.error(f"❌ Failed to get warmup preferences for {user_id}: {e}", exc_info=True)
         raise safe_internal_error(e, "warmup_preferences")
 
 
@@ -157,7 +157,7 @@ async def update_warmup_preferences(user_id: str, request: WarmupPreferencesUpda
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"❌ Failed to update warmup preferences for {user_id}: {e}")
+        logger.error(f"❌ Failed to update warmup preferences for {user_id}: {e}", exc_info=True)
         raise safe_internal_error(e, "warmup_preferences")
 
 
@@ -206,7 +206,7 @@ async def add_pre_workout_exercise(user_id: str, exercise: ExerciseRoutineItem,
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"❌ Failed to add pre-workout exercise: {e}")
+        logger.error(f"❌ Failed to add pre-workout exercise: {e}", exc_info=True)
         raise safe_internal_error(e, "warmup_preferences")
 
 
@@ -255,7 +255,7 @@ async def add_post_exercise(user_id: str, exercise: ExerciseRoutineItem,
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"❌ Failed to add post-exercise: {e}")
+        logger.error(f"❌ Failed to add post-exercise: {e}", exc_info=True)
         raise safe_internal_error(e, "warmup_preferences")
 
 
@@ -294,7 +294,7 @@ async def remove_pre_workout_exercise(user_id: str, index: int,
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"❌ Failed to remove pre-workout exercise: {e}")
+        logger.error(f"❌ Failed to remove pre-workout exercise: {e}", exc_info=True)
         raise safe_internal_error(e, "warmup_preferences")
 
 
@@ -333,7 +333,7 @@ async def remove_post_exercise(user_id: str, index: int,
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"❌ Failed to remove post-exercise: {e}")
+        logger.error(f"❌ Failed to remove post-exercise: {e}", exc_info=True)
         raise safe_internal_error(e, "warmup_preferences")
 
 
@@ -353,5 +353,5 @@ async def clear_warmup_preferences(user_id: str,
         return {"message": "Preferences cleared"}
 
     except Exception as e:
-        logger.error(f"❌ Failed to clear warmup preferences: {e}")
+        logger.error(f"❌ Failed to clear warmup preferences: {e}", exc_info=True)
         raise safe_internal_error(e, "warmup_preferences")

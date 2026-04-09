@@ -44,7 +44,7 @@ class NutritionRAGService:
         try:
             _count = self.collection.count()
         except Exception as e:
-            logger.warning(f"Failed to get collection count: {e}")
+            logger.warning(f"Failed to get collection count: {e}", exc_info=True)
             _count = "unknown"
         logger.info(f"NutritionRAG initialized with {_count} documents")
 
@@ -57,7 +57,7 @@ class NutritionRAGService:
                 db = get_supabase_db()
                 self._nutrition_db = db.nutrition
             except Exception as e:
-                logger.warning(f"Could not initialize NutritionDB for caching: {e}")
+                logger.warning(f"Could not initialize NutritionDB for caching: {e}", exc_info=True)
                 return None
         return self._nutrition_db
 
@@ -100,7 +100,7 @@ class NutritionRAGService:
         try:
             _count = self.collection.count()
         except Exception as e:
-            logger.warning(f"Failed to get collection count: {e}")
+            logger.warning(f"Failed to get collection count: {e}", exc_info=True)
             _count = "unknown"
         logger.info(f"Added nutrition knowledge: {doc_id[:8]}... (total: {_count})")
         return doc_id
@@ -143,7 +143,7 @@ class NutritionRAGService:
                     # Return cached context formatted for this food
                     return self._format_cached_context(cached_context, food_description)
             except Exception as e:
-                logger.warning(f"RAG cache lookup failed: {e}")
+                logger.warning(f"RAG cache lookup failed: {e}", exc_info=True)
 
         # Cache miss - do full RAG query
         logger.info(f"🔄 RAG cache MISS - querying ChromaDB for goals: {user_goals}")
@@ -201,7 +201,7 @@ class NutritionRAGService:
                     ttl_hours=1,  # 1 hour TTL for goal context
                 )
             except Exception as e:
-                logger.warning(f"Failed to cache RAG context: {e}")
+                logger.warning(f"Failed to cache RAG context: {e}", exc_info=True)
 
         # Format as context string
         context_parts = []
@@ -244,7 +244,7 @@ class NutritionRAGService:
             c = self.collection.count()
             return c if c >= 0 else -1
         except Exception as e:
-            logger.warning(f"Failed to get nutrition count: {e}")
+            logger.warning(f"Failed to get nutrition count: {e}", exc_info=True)
             return -1
 
 
@@ -570,7 +570,7 @@ class UserNutritionProfileService:
             return None
 
         except Exception as e:
-            logger.warning(f"Could not retrieve nutrition profile for user {user_id}: {e}")
+            logger.warning(f"Could not retrieve nutrition profile for user {user_id}: {e}", exc_info=True)
             return None
 
     def delete_user_profile(self, user_id: str) -> None:
@@ -584,7 +584,7 @@ class UserNutritionProfileService:
             self.collection.delete(ids=[f"nutrition_profile_{user_id}"])
             logger.info(f"Deleted nutrition profile from RAG for user {user_id}")
         except Exception as e:
-            logger.warning(f"Could not delete nutrition profile for user {user_id}: {e}")
+            logger.warning(f"Could not delete nutrition profile for user {user_id}: {e}", exc_info=True)
 
 
 # Singleton instance for user profiles

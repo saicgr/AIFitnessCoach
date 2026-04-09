@@ -299,7 +299,7 @@ async def get_user_favorite_workouts(user_id: str) -> list:
 
         return result.data if result.data else []
     except Exception as e:
-        logger.error(f"Error getting favorite workouts: {e}")
+        logger.error(f"Error getting favorite workouts: {e}", exc_info=True)
         return []
 
 

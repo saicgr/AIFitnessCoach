@@ -182,7 +182,7 @@ async def submit_workout_feedback(
                     except Exception as mastery_error:
                         logger.warning(
                             f"Failed to update mastery for {ex_feedback.exercise_name}: {mastery_error}"
-                        )
+                        , exc_info=True)
 
         # Index feedback in ChromaDB for AI adaptation
         try:
@@ -198,7 +198,7 @@ async def submit_workout_feedback(
             )
             logger.info(f"🎯 Indexed workout feedback in ChromaDB for user {feedback.user_id}")
         except Exception as e:
-            logger.warning(f"Failed to index feedback in ChromaDB: {e}")
+            logger.warning(f"Failed to index feedback in ChromaDB: {e}", exc_info=True)
 
         # Get the updated workout feedback
         final_result = db.client.table("workout_feedback").select("*").eq(
@@ -244,7 +244,7 @@ async def submit_workout_feedback(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to submit workout feedback: {e}")
+        logger.error(f"Failed to submit workout feedback: {e}", exc_info=True)
         await log_user_error(
             user_id=feedback.user_id,
             action="workout_feedback",
@@ -317,7 +317,7 @@ async def get_workout_feedback(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to get workout feedback: {e}")
+        logger.error(f"Failed to get workout feedback: {e}", exc_info=True)
         raise safe_internal_error(e, "endpoint")
 
 @router.get("/user/{user_id}/recent", response_model=List[WorkoutFeedback])
@@ -355,7 +355,7 @@ async def get_user_recent_feedback(
         ]
 
     except Exception as e:
-        logger.error(f"Failed to get user feedback: {e}")
+        logger.error(f"Failed to get user feedback: {e}", exc_info=True)
         raise safe_internal_error(e, "endpoint")
 
 @router.get("/user/{user_id}/stats")
@@ -417,7 +417,7 @@ async def get_user_feedback_stats(
         }
 
     except Exception as e:
-        logger.error(f"Failed to get feedback stats: {e}")
+        logger.error(f"Failed to get feedback stats: {e}", exc_info=True)
         raise safe_internal_error(e, "endpoint")
 
 @router.get("/exercise/{exercise_name}/stats")
@@ -470,7 +470,7 @@ async def get_exercise_feedback_stats(
         }
 
     except Exception as e:
-        logger.error(f"Failed to get exercise feedback stats: {e}")
+        logger.error(f"Failed to get exercise feedback stats: {e}", exc_info=True)
         raise safe_internal_error(e, "endpoint")
 
 # ============================================
@@ -676,7 +676,7 @@ async def generate_ai_coach_feedback(
             indexed = True
             logger.info(f"Indexed workout session {body.workout_log_id} for RAG (intensity={training_intensity}%, pace={progression_pace})")
         except Exception as e:
-            logger.warning(f"Failed to index workout session: {e}")
+            logger.warning(f"Failed to index workout session: {e}", exc_info=True)
 
         return AICoachFeedbackResponse(
             feedback=feedback,
@@ -685,7 +685,7 @@ async def generate_ai_coach_feedback(
         )
 
     except Exception as e:
-        logger.error(f"Failed to generate AI Coach feedback: {e}")
+        logger.error(f"Failed to generate AI Coach feedback: {e}", exc_info=True)
         raise safe_internal_error(e, "endpoint")
 
 @router.get("/ai-coach/history/{user_id}")
@@ -737,7 +737,7 @@ async def get_ai_coach_workout_history(
         }
 
     except Exception as e:
-        logger.error(f"Failed to get AI Coach workout history: {e}")
+        logger.error(f"Failed to get AI Coach workout history: {e}", exc_info=True)
         raise safe_internal_error(e, "endpoint")
 
 

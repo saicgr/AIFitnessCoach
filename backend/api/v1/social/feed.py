@@ -110,7 +110,7 @@ async def get_presigned_upload_url(
             "public_url": public_url,
         }
     except Exception as e:
-        logger.error(f"[Social] Error generating presigned URL: {e}")
+        logger.error(f"[Social] Error generating presigned URL: {e}", exc_info=True)
         raise safe_internal_error(e, "feed_presign_url")
 
 
@@ -178,7 +178,7 @@ async def upload_post_image(
         }
 
     except Exception as e:
-        logger.error(f"[Social] Error uploading image to S3: {e}")
+        logger.error(f"[Social] Error uploading image to S3: {e}", exc_info=True)
         raise safe_internal_error(e, "feed_image_upload")
 
 
@@ -249,7 +249,7 @@ async def get_activity_feed(
     try:
         supabase = get_supabase_client()
     except Exception as e:
-        logger.error(f"[Social] Error getting supabase client: {e}")
+        logger.error(f"[Social] Error getting supabase client: {e}", exc_info=True)
         raise safe_internal_error(e, "feed_db_connection")
 
     offset = (page - 1) * page_size
@@ -266,13 +266,13 @@ async def get_activity_feed(
     except Exception as rpc_err:
         # RPC may fail if the function has a type mismatch or doesn't exist yet.
         # Fall back to a direct table query so the feed still loads.
-        logger.warning(f"[Social] RPC get_feed_for_user failed, using fallback query: {rpc_err}")
+        logger.warning(f"[Social] RPC get_feed_for_user failed, using fallback query: {rpc_err}", exc_info=True)
         try:
             feed_result = _fallback_feed_query(
                 supabase, user_id, activity_type, page_size, offset, sort_by,
             )
         except Exception as fallback_err:
-            logger.error(f"[Social] Fallback feed query also failed: {fallback_err}")
+            logger.error(f"[Social] Fallback feed query also failed: {fallback_err}", exc_info=True)
             raise safe_internal_error(fallback_err, "feed_fetch")
 
     # Extract total_count from the window function (same on every row)
@@ -304,7 +304,7 @@ async def get_activity_feed(
                 activity.is_support_user = users_data.get("is_support_user", False)
             activities.append(activity)
         except Exception as parse_error:
-            logger.error(f"[Social] Error parsing activity row: {parse_error}, row: {row}")
+            logger.error(f"[Social] Error parsing activity row: {parse_error}, row: {row}", exc_info=True)
             continue
 
     return {
@@ -335,7 +335,7 @@ def _bg_link_hashtags(activity_id: str, hashtags: list):
                 ).execute()
         logger.info(f"[Social] Linked {len(hashtags)} hashtags to activity {activity_id}")
     except Exception as e:
-        logger.error(f"[Social] Failed to link hashtags: {e}")
+        logger.error(f"[Social] Failed to link hashtags: {e}", exc_info=True)
 
 
 async def _bg_link_mentions(activity_id: str, author_user_id: str, usernames: list):
@@ -383,7 +383,7 @@ async def _bg_link_mentions(activity_id: str, author_user_id: str, usernames: li
                     body=f"@{author_name} mentioned you in a post",
                 )
             except Exception as notify_err:
-                logger.warning(f"[Social] Failed to notify mention for {username}: {notify_err}")
+                logger.warning(f"[Social] Failed to notify mention for {username}: {notify_err}", exc_info=True)
 
             # Send FCM push (best-effort)
             try:
@@ -402,7 +402,7 @@ async def _bg_link_mentions(activity_id: str, author_user_id: str, usernames: li
 
         logger.info(f"[Social] Linked {len(usernames)} mentions to activity {activity_id}")
     except Exception as e:
-        logger.error(f"[Social] Failed to link mentions: {e}")
+        logger.error(f"[Social] Failed to link mentions: {e}", exc_info=True)
 
 
 async def _bg_notify_workout_shared(activity_id: str, user_id: str):
@@ -452,7 +452,7 @@ async def _bg_notify_workout_shared(activity_id: str, user_id: str):
                     body=f"{author_name} just shared a workout to the feed",
                 )
             except Exception as notify_err:
-                logger.warning(f"[Social] Failed to notify friend {friend_id} of workout share: {notify_err}")
+                logger.warning(f"[Social] Failed to notify friend {friend_id} of workout share: {notify_err}", exc_info=True)
                 continue
 
             # FCM push (best-effort)
@@ -473,7 +473,7 @@ async def _bg_notify_workout_shared(activity_id: str, user_id: str):
 
         logger.info(f"[Social] Notified {len(notified_ids)} friends of workout share: {activity_id}")
     except Exception as e:
-        logger.error(f"[Social] Failed to notify workout share: {e}")
+        logger.error(f"[Social] Failed to notify workout share: {e}", exc_info=True)
 
 
 def _bg_index_activity(activity_id: str, user_id: str, activity_type: str, activity_data: dict, visibility: str, created_at):
@@ -495,7 +495,7 @@ def _bg_index_activity(activity_id: str, user_id: str, activity_type: str, activ
         )
         logger.info(f"[Social] Activity {activity_id} indexed in ChromaDB")
     except Exception as e:
-        logger.error(f"[Social] Failed to index activity in ChromaDB: {e}")
+        logger.error(f"[Social] Failed to index activity in ChromaDB: {e}", exc_info=True)
 
 
 def _bg_remove_activity(activity_id: str):
@@ -504,7 +504,7 @@ def _bg_remove_activity(activity_id: str):
         social_rag = get_social_rag_service()
         social_rag.delete_activity_from_rag(activity_id)
     except Exception as e:
-        logger.error(f"[Social] Failed to remove activity from ChromaDB: {e}")
+        logger.error(f"[Social] Failed to remove activity from ChromaDB: {e}", exc_info=True)
 
 
 @router.post("/feed", response_model=ActivityFeedItem)

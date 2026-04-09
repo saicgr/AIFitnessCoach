@@ -84,7 +84,7 @@ async def create_user(request, user: UserCreate,
         return row_to_user(created)
 
     except Exception as e:
-        logger.error(f"Failed to create user: {e}")
+        logger.error(f"Failed to create user: {e}", exc_info=True)
         raise safe_internal_error(e, "users")
 
 
@@ -99,7 +99,7 @@ async def get_all_users(
         rows = db.get_all_users()
         return [row_to_user(row) for row in rows]
     except Exception as e:
-        logger.error(f"Failed to get users: {e}")
+        logger.error(f"Failed to get users: {e}", exc_info=True)
         raise safe_internal_error(e, "users")
 
 
@@ -135,7 +135,7 @@ async def get_user_by_auth(auth_id: str,
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to get user by auth_id: {e}")
+        logger.error(f"Failed to get user by auth_id: {e}", exc_info=True)
         raise safe_internal_error(e, "users")
 
 
@@ -160,7 +160,7 @@ async def get_user(user_id: str,
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to get user: {e}")
+        logger.error(f"Failed to get user: {e}", exc_info=True)
         raise safe_internal_error(e, "users")
 
 
@@ -253,7 +253,7 @@ async def get_program_preferences(user_id: str,
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to get program preferences: {e}")
+        logger.error(f"Failed to get program preferences: {e}", exc_info=True)
         raise safe_internal_error(e, "users")
 
 
@@ -534,9 +534,9 @@ async def update_user(user_id: str, user: UserUpdate,
                     )
                     logger.info(f"🏋️ [GymProfile] ✅ Created gym profile(s) for user {user_id} during onboarding")
                 except Exception as gym_error:
-                    logger.error(f"⚠️ [GymProfile] Failed to create gym profiles during onboarding: {gym_error}")
+                    logger.error(f"⚠️ [GymProfile] Failed to create gym profiles during onboarding: {gym_error}", exc_info=True)
                     import traceback
-                    logger.error(f"⚠️ [GymProfile] Traceback: {traceback.format_exc()}")
+                    logger.error(f"⚠️ [GymProfile] Traceback: {traceback.format_exc()}", exc_info=True)
                     # Don't fail onboarding if gym profile creation fails
 
                 # Index preferences to ChromaDB for AI
@@ -574,7 +574,7 @@ async def update_user(user_id: str, user: UserUpdate,
                     )
                     logger.info(f"📊 Indexed onboarding preferences to ChromaDB for user {user_id}")
                 except Exception as rag_error:
-                    logger.warning(f"⚠️ Could not index preferences to ChromaDB: {rag_error}")
+                    logger.warning(f"⚠️ Could not index preferences to ChromaDB: {rag_error}", exc_info=True)
 
             # Index training settings changes to ChromaDB for AI context
             has_training_settings = any([
@@ -597,7 +597,7 @@ async def update_user(user_id: str, user: UserUpdate,
                     )
                     logger.info(f"📊 Indexed training settings to ChromaDB for user {user_id}")
                 except Exception as rag_error:
-                    logger.warning(f"⚠️ Could not index training settings to ChromaDB: {rag_error}")
+                    logger.warning(f"⚠️ Could not index training settings to ChromaDB: {rag_error}", exc_info=True)
 
             # Index exercise variety/consistency settings to ChromaDB for AI context
             prefs = update_data.get("preferences", {})
@@ -625,7 +625,7 @@ async def update_user(user_id: str, user: UserUpdate,
                     )
                     logger.info(f"📊 Indexed exercise variety settings to ChromaDB for user {user_id}")
                 except Exception as rag_error:
-                    logger.warning(f"⚠️ Could not index exercise variety settings to ChromaDB: {rag_error}")
+                    logger.warning(f"⚠️ Could not index exercise variety settings to ChromaDB: {rag_error}", exc_info=True)
         else:
             updated = existing
 
@@ -646,7 +646,7 @@ async def update_user(user_id: str, user: UserUpdate,
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to update user: {e}")
+        logger.error(f"Failed to update user: {e}", exc_info=True)
         await log_user_error(
             user_id=user_id,
             action="user_updated",
@@ -702,7 +702,7 @@ async def delete_user(user_id: str,
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to delete user: {e}")
+        logger.error(f"Failed to delete user: {e}", exc_info=True)
         await log_user_error(
             user_id=user_id,
             action="user_deleted",
@@ -772,7 +772,7 @@ async def reset_onboarding(user_id: str,
             db.client.table("user_achievements").delete().eq("user_id", user_id).execute()
             db.client.table("user_streaks").delete().eq("user_id", user_id).execute()
         except Exception as e:
-            logger.warning(f"Could not delete achievements/streaks: {e}")
+            logger.warning(f"Could not delete achievements/streaks: {e}", exc_info=True)
 
         # Reset onboarding status
         db.update_user(user_id, {
@@ -790,7 +790,7 @@ async def reset_onboarding(user_id: str,
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to reset onboarding: {e}")
+        logger.error(f"Failed to reset onboarding: {e}", exc_info=True)
         raise safe_internal_error(e, "users")
 
 
@@ -856,5 +856,5 @@ async def full_reset(user_id: str,
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to reset user: {e}")
+        logger.error(f"Failed to reset user: {e}", exc_info=True)
         raise safe_internal_error(e, "users")

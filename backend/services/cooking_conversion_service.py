@@ -184,7 +184,7 @@ class CookingConversionService:
             cat = FoodCategory(category.lower())
             return [f.to_dict() for f in self._by_category.get(cat, [])]
         except ValueError:
-            logger.warning(f"Unknown food category: {category}")
+            logger.warning(f"Unknown food category: {category}", exc_info=True)
             return []
 
     def get_conversion_factor(
@@ -207,7 +207,7 @@ class CookingConversionService:
                     if f.cooking_method == method:
                         return f
             except ValueError:
-                logger.warning(f"Unknown cooking method: {cooking_method}")
+                logger.warning(f"Unknown cooking method: {cooking_method}", exc_info=True)
         return factors[0]
 
     def convert_weight(

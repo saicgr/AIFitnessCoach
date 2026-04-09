@@ -10,6 +10,63 @@ echo "Installing dependencies..."
 echo "============================================"
 pip install -r requirements.txt
 
+# Always validate critical imports (catches NameError before deploy)
+echo ""
+echo "============================================"
+echo "Validating critical Python imports..."
+echo "============================================"
+python -c "
+import sys, importlib, warnings, logging
+warnings.filterwarnings('ignore')
+logging.disable(logging.CRITICAL)
+
+modules = [
+    'api.v1.workouts.generation_endpoints',
+    'api.v1.workouts.generation_streaming',
+    'api.v1.workouts.generation',
+    'api.v1.workouts.mood_generation',
+    'api.v1.workouts.quick',
+    'api.v1.workouts.workout_operations',
+    'api.v1.workouts.set_adjustments_endpoints',
+    'api.v1.cardio_endpoints',
+    'api.v1.consistency_endpoints',
+    'api.v1.habits_endpoints',
+    'api.v1.notifications_endpoints',
+    'api.v1.scores_endpoints',
+    'api.v1.gym_profiles_endpoints',
+    'api.v1.personal_goals_endpoints',
+    'api.v1.exercise_preferences',
+    'api.v1.admin.live_chat_endpoints',
+    'api.v1.live_chat_endpoints',
+    'api.v1.nutrition.food_logging',
+    'api.v1.nutrition.food_logs',
+    'api.v1.nutrition.streaks',
+    'api.v1.nutrition.summaries',
+    'api.v1.nutrition.cooking_conversions',
+    'api.v1.nutrition.tdee_adherence',
+    'services.food_analysis.cache_service_helpers',
+    'services.food_analysis.cache_service_helpers_part2',
+    'services.gemini.nutrition',
+]
+
+errors = []
+for mod in modules:
+    try:
+        importlib.import_module(mod)
+    except NameError as e:
+        errors.append(f'{mod}: {e}')
+    except Exception:
+        pass  # Other errors (missing env vars, DB connections) are OK at build time
+
+if errors:
+    print('IMPORT VALIDATION FAILED:')
+    for e in errors:
+        print(f'  NameError in {e}')
+    sys.exit(1)
+else:
+    print(f'All {len(modules)} critical modules passed import validation')
+"
+
 # Skip tests if SKIP_TESTS=true (for faster iteration)
 if [ "$SKIP_TESTS" = "true" ]; then
     echo ""

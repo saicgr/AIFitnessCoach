@@ -142,7 +142,7 @@ async def get_recently_used_exercises(user_id: str, days: int = 7) -> List[str]:
         return list(recent_exercises)
 
     except Exception as e:
-        logger.error(f"Error getting recently used exercises: {e}")
+        logger.error(f"Error getting recently used exercises: {e}", exc_info=True)
         return []
 
 
@@ -166,7 +166,7 @@ async def index_workout_to_rag(workout: Workout):
             generation_method=workout.generation_method,
         )
     except Exception as e:
-        logger.error(f"Failed to index workout to RAG: {e}")
+        logger.error(f"Failed to index workout to RAG: {e}", exc_info=True)
 
 
 def log_workout_change(
@@ -195,7 +195,7 @@ def log_workout_change(
         db.create_workout_change(change_data)
         logger.debug(f"Logged workout change: workout_id={workout_id}, type={change_type}")
     except Exception as e:
-        logger.error(f"Failed to log workout change: {e}")
+        logger.error(f"Failed to log workout change: {e}", exc_info=True)
 
 
 def row_to_workout(row: dict) -> Workout:

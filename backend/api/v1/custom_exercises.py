@@ -199,7 +199,7 @@ async def get_user_custom_exercises(
         return [CustomExerciseResponse(**ex) for ex in result.data] if result.data else []
 
     except Exception as e:
-        logger.error(f"❌ Failed to get custom exercises for {user_id}: {e}")
+        logger.error(f"❌ Failed to get custom exercises for {user_id}: {e}", exc_info=True)
         raise safe_internal_error(e, "custom_exercises")
 
 
@@ -229,7 +229,7 @@ async def get_custom_exercise(user_id: str, exercise_id: str, current_user: dict
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"❌ Failed to get custom exercise {exercise_id}: {e}")
+        logger.error(f"❌ Failed to get custom exercise {exercise_id}: {e}", exc_info=True)
         raise safe_internal_error(e, "custom_exercises")
 
 
@@ -275,7 +275,7 @@ async def create_custom_exercise(user_id: str, request: CustomExerciseCreate, cu
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"❌ Failed to create custom exercise: {e}")
+        logger.error(f"❌ Failed to create custom exercise: {e}", exc_info=True)
         # Check for unique constraint violation
         if "duplicate key" in str(e).lower() or "unique" in str(e).lower():
             raise HTTPException(status_code=400, detail="Exercise with this name already exists")
@@ -323,7 +323,7 @@ async def update_custom_exercise(user_id: str, exercise_id: str, request: Custom
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"❌ Failed to update custom exercise {exercise_id}: {e}")
+        logger.error(f"❌ Failed to update custom exercise {exercise_id}: {e}", exc_info=True)
         raise safe_internal_error(e, "custom_exercises")
 
 
@@ -361,7 +361,7 @@ async def delete_custom_exercise(user_id: str, exercise_id: str, current_user: d
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"❌ Failed to delete custom exercise {exercise_id}: {e}")
+        logger.error(f"❌ Failed to delete custom exercise {exercise_id}: {e}", exc_info=True)
         raise safe_internal_error(e, "custom_exercises")
 
 
@@ -437,7 +437,7 @@ async def search_combined_exercises(
         return results[:limit]
 
     except Exception as e:
-        logger.error(f"❌ Failed to search exercises: {e}")
+        logger.error(f"❌ Failed to search exercises: {e}", exc_info=True)
         raise safe_internal_error(e, "custom_exercises")
 
 
@@ -466,7 +466,7 @@ async def list_equipment_with_exercises(current_user: dict = Depends(get_current
         }
 
     except Exception as e:
-        logger.error(f"❌ Failed to list equipment: {e}")
+        logger.error(f"❌ Failed to list equipment: {e}", exc_info=True)
         raise safe_internal_error(e, "custom_exercises")
 
 
@@ -556,8 +556,8 @@ Rules:
         try:
             result = json.loads(content)
         except json.JSONDecodeError as e:
-            logger.error(f"❌ Failed to parse Gemini response as JSON: {e}")
-            logger.error(f"Raw response: {content[:500]}")
+            logger.error(f"❌ Failed to parse Gemini response as JSON: {e}", exc_info=True)
+            logger.error(f"Raw response: {content[:500]}", exc_info=True)
             raise HTTPException(status_code=502, detail="AI returned invalid response format")
 
         # Validate and normalize primary_muscle
@@ -594,7 +594,7 @@ Rules:
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"❌ Failed to analyze exercise photo: {e}")
+        logger.error(f"❌ Failed to analyze exercise photo: {e}", exc_info=True)
         raise safe_internal_error(e, "custom_exercises")
 
 
@@ -653,7 +653,7 @@ async def get_presigned_upload_url(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"❌ Failed to generate presigned URL: {e}")
+        logger.error(f"❌ Failed to generate presigned URL: {e}", exc_info=True)
         raise safe_internal_error(e, "custom_exercises")
 
 
@@ -718,7 +718,7 @@ async def upload_exercise_image(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"❌ Failed to upload image: {e}")
+        logger.error(f"❌ Failed to upload image: {e}", exc_info=True)
         raise safe_internal_error(e, "custom_exercises")
 
 
@@ -783,7 +783,7 @@ async def upload_exercise_video(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"❌ Failed to upload video: {e}")
+        logger.error(f"❌ Failed to upload video: {e}", exc_info=True)
         raise safe_internal_error(e, "custom_exercises")
 
 
@@ -824,7 +824,7 @@ async def delete_exercise_media(user_id: str, exercise_id: str, current_user: di
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"❌ Failed to delete media: {e}")
+        logger.error(f"❌ Failed to delete media: {e}", exc_info=True)
         raise safe_internal_error(e, "custom_exercises")
 
 
@@ -882,5 +882,5 @@ async def confirm_presigned_upload(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"❌ Failed to confirm upload: {e}")
+        logger.error(f"❌ Failed to confirm upload: {e}", exc_info=True)
         raise safe_internal_error(e, "custom_exercises")

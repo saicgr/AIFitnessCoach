@@ -69,7 +69,7 @@ class BaseDB:
                 return result.data[0] if result.data else None
             return result.data or []
         except Exception as e:
-            logger.error(f"[{table}] Query error: {e}")
+            logger.error(f"[{table}] Query error: {e}", exc_info=True)
             raise
 
     def _build_filtered_query(

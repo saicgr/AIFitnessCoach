@@ -61,7 +61,7 @@ class QuickActionsExpandedNotifier extends StateNotifier<bool> {
 
   Future<void> _load() async {
     final prefs = await SharedPreferences.getInstance();
-    state = prefs.getBool(_quickActionExpandedKey) ?? false;
+    state = prefs.getBool(_quickActionExpandedKey) ?? true;
   }
 
   Future<void> toggle() async {

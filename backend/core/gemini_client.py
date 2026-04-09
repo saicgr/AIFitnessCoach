@@ -60,7 +60,7 @@ def _setup_credentials() -> None:
         logger.info("Vertex AI credentials written to temp file")
     except Exception as e:
         _credentials_file = "env_only"
-        logger.error(f"Failed to write service account credentials: {e}")
+        logger.error(f"Failed to write service account credentials: {e}", exc_info=True)
 
 
 def get_genai_client() -> genai.Client:

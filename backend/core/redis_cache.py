@@ -41,7 +41,7 @@ async def init_redis() -> bool:
         logger.info("Redis connected — shared cache active across all workers")
         return True
     except Exception as e:
-        logger.warning(f"Redis connection failed ({e}) — falling back to in-memory cache")
+        logger.warning(f"Redis connection failed ({e}) — falling back to in-memory cache", exc_info=True)
         _redis_client = None
         _redis_available = False
         return False

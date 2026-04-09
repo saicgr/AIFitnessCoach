@@ -218,6 +218,6 @@ Return a JSON object with:
             }
 
         except Exception as e:
-            logger.error(f"Error generating workout name: {e}")
+            logger.error(f"Error generating workout name: {e}", exc_info=True)
             raise  # No fallback - let errors propagate
 

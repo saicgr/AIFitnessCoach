@@ -166,10 +166,10 @@ class FoodDatabaseLookupService(FoodDatabaseLookupServicePart2):
             return [self._override_row_to_search_result(row) for row in rows]
 
         except asyncio.TimeoutError:
-            logger.warning(f"[FoodDB] Override search timed out for '{query}'")
+            logger.warning(f"[FoodDB] Override search timed out for '{query}'", exc_info=True)
             return []
         except Exception as e:
-            logger.warning(f"[FoodDB] Override DB search failed: {e}")
+            logger.warning(f"[FoodDB] Override DB search failed: {e}", exc_info=True)
             return []
 
     def _override_row_to_search_result(self, row: Dict) -> Dict:
@@ -290,7 +290,7 @@ class FoodDatabaseLookupService(FoodDatabaseLookupServicePart2):
             logger.info(f"[FoodDB] Loaded {len(rows)} overrides ({len(new_overrides)} keys, {len(word_index)} index terms)")
 
         except Exception as e:
-            logger.warning(f"[FoodDB] Failed to load overrides: {e}")
+            logger.warning(f"[FoodDB] Failed to load overrides: {e}", exc_info=True)
             # Keep stale data if available; if first load failed, retry once with sync client
             if not self._overrides:
                 try:
@@ -345,7 +345,7 @@ class FoodDatabaseLookupService(FoodDatabaseLookupServicePart2):
                         self._overrides_word_index = word_index
                         self._overrides_loaded_at = time.time()
                 except Exception as retry_err:
-                    logger.warning(f"[FoodDB] Retry also failed: {retry_err}")
+                    logger.warning(f"[FoodDB] Retry also failed: {retry_err}", exc_info=True)
                     self._overrides = {}
 
     def _check_override(self, food_name: str) -> Optional[Dict]:

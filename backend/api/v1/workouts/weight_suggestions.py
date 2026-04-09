@@ -240,7 +240,7 @@ async def get_exercise_history(
         return history
 
     except Exception as e:
-        logger.warning(f"Failed to fetch exercise history: {e}")
+        logger.warning(f"Failed to fetch exercise history: {e}", exc_info=True)
         return []
 
 
@@ -581,7 +581,7 @@ CRITICAL RULES FOR SET-TO-SET SUGGESTIONS:
         )
 
     except Exception as e:
-        logger.error(f"AI suggestion generation failed: {e}")
+        logger.error(f"AI suggestion generation failed: {e}", exc_info=True)
         raise
 
 
@@ -662,11 +662,11 @@ async def get_weight_suggestion(body: WeightSuggestionRequest,
             return suggestion
 
         except Exception as ai_error:
-            logger.warning(f"AI suggestion failed, falling back to rules: {ai_error}")
+            logger.warning(f"AI suggestion failed, falling back to rules: {ai_error}", exc_info=True)
             return generate_rule_based_suggestion(body, equipment_increment)
 
     except Exception as e:
-        logger.error(f"Weight suggestion failed: {e}")
+        logger.error(f"Weight suggestion failed: {e}", exc_info=True)
         raise safe_internal_error(e, "weight_suggestions")
 
 
@@ -695,5 +695,5 @@ async def get_weight_history(user_id: str, exercise_name: str, limit: int = 10,
         }
 
     except Exception as e:
-        logger.error(f"Failed to get weight history: {e}")
+        logger.error(f"Failed to get weight history: {e}", exc_info=True)
         raise safe_internal_error(e, "weight_suggestions")

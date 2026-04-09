@@ -65,7 +65,7 @@ class WarmupStretchService:
             return list(exercise_names)
 
         except Exception as e:
-            logger.error(f"❌ Failed to get recent warmups: {e}")
+            logger.error(f"❌ Failed to get recent warmups: {e}", exc_info=True)
             return []
 
     async def get_recently_used_stretches(self, user_id: str, days: int = 30) -> List[str]:
@@ -108,7 +108,7 @@ class WarmupStretchService:
             return list(exercise_names)
 
         except Exception as e:
-            logger.error(f"❌ Failed to get recent stretches: {e}")
+            logger.error(f"❌ Failed to get recent stretches: {e}", exc_info=True)
             return []
 
     async def get_warmup_exercises_from_library(
@@ -189,7 +189,7 @@ class WarmupStretchService:
             return result
 
         except Exception as e:
-            logger.error(f"❌ Failed to get warmup exercises from library: {e}")
+            logger.error(f"❌ Failed to get warmup exercises from library: {e}", exc_info=True)
             return []
 
     async def get_stretch_exercises_from_library(
@@ -270,7 +270,7 @@ class WarmupStretchService:
             return result
 
         except Exception as e:
-            logger.error(f"❌ Failed to get stretch exercises from library: {e}")
+            logger.error(f"❌ Failed to get stretch exercises from library: {e}", exc_info=True)
             return []
 
     def get_target_muscles(self, exercises: List[Dict]) -> List[str]:
@@ -367,7 +367,7 @@ class WarmupStretchService:
                 if warmup_staples:
                     logger.info(f"⭐ Injected {len(warmup_staples)} warmup staples for user {user_id}")
             except Exception as e:
-                logger.warning(f"⚠️ Could not inject warmup staples: {e}")
+                logger.warning(f"⚠️ Could not inject warmup staples: {e}", exc_info=True)
 
         # Combine pre-workout and dynamic warmups
         all_warmups = []
@@ -456,11 +456,11 @@ class WarmupStretchService:
                                 if not ex.get("equipment") or ex["equipment"] == "none":
                                     ex["equipment"] = meta.get("equipment") or "none"
             except Exception as e:
-                logger.warning(f"⚠️ Could not enrich with cardio metadata: {e}")
+                logger.warning(f"⚠️ Could not enrich with cardio metadata: {e}", exc_info=True)
 
             return exercises
         except Exception as e:
-            logger.warning(f"⚠️ Could not enrich exercises with library data: {e}")
+            logger.warning(f"⚠️ Could not enrich exercises with library data: {e}", exc_info=True)
             return exercises
 
     async def generate_stretches(
@@ -537,7 +537,7 @@ class WarmupStretchService:
                 if stretch_staples:
                     logger.info(f"⭐ Injected {len(stretch_staples)} stretch staples for user {user_id}")
             except Exception as e:
-                logger.warning(f"⚠️ Could not inject stretch staples: {e}")
+                logger.warning(f"⚠️ Could not inject stretch staples: {e}", exc_info=True)
 
         # Combine post-exercise and stretches
         all_stretches = []
@@ -611,7 +611,7 @@ class WarmupStretchService:
             logger.info(f"✅ Created warmup for workout {workout_id} targeting: {target_muscles}")
             return result.data[0] if result.data else None
         except Exception as e:
-            logger.error(f"❌ Failed to save warmup: {e}")
+            logger.error(f"❌ Failed to save warmup: {e}", exc_info=True)
             return None
 
     async def create_stretches_for_workout(
@@ -655,7 +655,7 @@ class WarmupStretchService:
             logger.info(f"✅ Created stretches for workout {workout_id} targeting: {target_muscles}")
             return result.data[0] if result.data else None
         except Exception as e:
-            logger.error(f"❌ Failed to save stretches: {e}")
+            logger.error(f"❌ Failed to save stretches: {e}", exc_info=True)
             return None
 
     def get_warmup_for_workout(self, workout_id: str) -> Optional[Dict[str, Any]]:
@@ -667,7 +667,7 @@ class WarmupStretchService:
 
             return result.data[0] if result.data else None
         except Exception as e:
-            logger.error(f"❌ Failed to get warmup: {e}")
+            logger.error(f"❌ Failed to get warmup: {e}", exc_info=True)
             return None
 
     def get_stretches_for_workout(self, workout_id: str) -> Optional[Dict[str, Any]]:
@@ -679,7 +679,7 @@ class WarmupStretchService:
 
             return result.data[0] if result.data else None
         except Exception as e:
-            logger.error(f"❌ Failed to get stretches: {e}")
+            logger.error(f"❌ Failed to get stretches: {e}", exc_info=True)
             return None
 
     def get_warmup_version_history(self, workout_id: str) -> List[Dict[str, Any]]:
@@ -691,7 +691,7 @@ class WarmupStretchService:
 
             return result.data if result.data else []
         except Exception as e:
-            logger.error(f"❌ Failed to get warmup history: {e}")
+            logger.error(f"❌ Failed to get warmup history: {e}", exc_info=True)
             return []
 
     def get_stretch_version_history(self, workout_id: str) -> List[Dict[str, Any]]:
@@ -703,7 +703,7 @@ class WarmupStretchService:
 
             return result.data if result.data else []
         except Exception as e:
-            logger.error(f"❌ Failed to get stretch history: {e}")
+            logger.error(f"❌ Failed to get stretch history: {e}", exc_info=True)
             return []
 
     async def regenerate_warmup(
@@ -731,7 +731,7 @@ class WarmupStretchService:
             old_version = old_warmup.get("version_number", 1)
             parent_id = old_warmup.get("parent_warmup_id") or warmup_id
         except Exception as e:
-            logger.error(f"❌ Failed to get current warmup: {e}")
+            logger.error(f"❌ Failed to get current warmup: {e}", exc_info=True)
             return None
 
         # Generate new warmup exercises
@@ -769,7 +769,7 @@ class WarmupStretchService:
             logger.info(f"✅ Regenerated warmup: old_id={warmup_id}, new_id={new_warmup_id}, version={old_version + 1}")
             return new_warmup.data[0]
         except Exception as e:
-            logger.error(f"❌ Failed to regenerate warmup: {e}")
+            logger.error(f"❌ Failed to regenerate warmup: {e}", exc_info=True)
             return None
 
     async def regenerate_stretches(
@@ -797,7 +797,7 @@ class WarmupStretchService:
             old_version = old_stretch.get("version_number", 1)
             parent_id = old_stretch.get("parent_stretch_id") or stretch_id
         except Exception as e:
-            logger.error(f"❌ Failed to get current stretch: {e}")
+            logger.error(f"❌ Failed to get current stretch: {e}", exc_info=True)
             return None
 
         # Generate new stretch exercises
@@ -835,7 +835,7 @@ class WarmupStretchService:
             logger.info(f"✅ Regenerated stretch: old_id={stretch_id}, new_id={new_stretch_id}, version={old_version + 1}")
             return new_stretch.data[0]
         except Exception as e:
-            logger.error(f"❌ Failed to regenerate stretches: {e}")
+            logger.error(f"❌ Failed to regenerate stretches: {e}", exc_info=True)
             return None
 
     def soft_delete_warmup(self, warmup_id: str) -> bool:
@@ -849,7 +849,7 @@ class WarmupStretchService:
             logger.info(f"✅ Soft deleted warmup {warmup_id}")
             return True
         except Exception as e:
-            logger.error(f"❌ Failed to soft delete warmup: {e}")
+            logger.error(f"❌ Failed to soft delete warmup: {e}", exc_info=True)
             return False
 
     def soft_delete_stretches(self, stretch_id: str) -> bool:
@@ -863,7 +863,7 @@ class WarmupStretchService:
             logger.info(f"✅ Soft deleted stretch {stretch_id}")
             return True
         except Exception as e:
-            logger.error(f"❌ Failed to soft delete stretch: {e}")
+            logger.error(f"❌ Failed to soft delete stretch: {e}", exc_info=True)
             return False
 
     async def generate_warmup_and_stretches_for_workout(

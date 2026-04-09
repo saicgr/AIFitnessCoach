@@ -463,7 +463,7 @@ class UserDB(BaseDB):
             ).eq("id", message_id).eq("user_id", user_id).execute()
             return len(result.data) > 0
         except Exception as e:
-            logger.warning(f"Failed to toggle pin for message {message_id}: {e}")
+            logger.warning(f"Failed to toggle pin for message {message_id}: {e}", exc_info=True)
             return False
 
     def clear_chat_history(self, user_id: str) -> None:
@@ -482,7 +482,7 @@ class UserDB(BaseDB):
             self.client.table("chat_history").delete().eq("user_id", user_id).execute()
             logger.info(f"Cleared chat history for user {user_id}")
         except Exception as e:
-            logger.warning(f"Failed to clear chat history for user {user_id}: {e}")
+            logger.warning(f"Failed to clear chat history for user {user_id}: {e}", exc_info=True)
             raise
 
     def delete_chat_history_by_user(self, user_id: str) -> bool:

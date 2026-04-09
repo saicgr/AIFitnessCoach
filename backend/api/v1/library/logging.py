@@ -130,7 +130,7 @@ async def log_exercise_view(
             message="Exercise view logged successfully"
         )
     except Exception as e:
-        logger.error(f"Failed to log exercise view: {e}")
+        logger.error(f"Failed to log exercise view: {e}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to log exercise view"
@@ -171,7 +171,7 @@ async def log_program_view(
             message="Program view logged successfully"
         )
     except Exception as e:
-        logger.error(f"Failed to log program view: {e}")
+        logger.error(f"Failed to log program view: {e}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to log program view"
@@ -211,7 +211,7 @@ async def log_library_search(
             message="Library search logged successfully"
         )
     except Exception as e:
-        logger.error(f"Failed to log library search: {e}")
+        logger.error(f"Failed to log library search: {e}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to log library search"
@@ -250,7 +250,7 @@ async def log_exercise_filter(
             message="Filter usage logged successfully"
         )
     except Exception as e:
-        logger.error(f"Failed to log filter usage: {e}")
+        logger.error(f"Failed to log filter usage: {e}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to log filter usage"
@@ -297,7 +297,7 @@ async def get_library_preferences(
             ai_context=ai_context if ai_context else None,
         )
     except Exception as e:
-        logger.error(f"Failed to get library preferences: {e}")
+        logger.error(f"Failed to get library preferences: {e}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to get library preferences"

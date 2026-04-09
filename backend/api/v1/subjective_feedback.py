@@ -248,7 +248,7 @@ async def create_pre_workout_checkin(checkin: PreWorkoutCheckinCreate,
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to create pre-workout check-in: {e}")
+        logger.error(f"Failed to create pre-workout check-in: {e}", exc_info=True)
         await log_user_error(
             user_id=checkin.user_id,
             action="pre_workout_checkin",
@@ -389,7 +389,7 @@ async def create_post_workout_checkin(workout_id: str, checkin: PostWorkoutCheck
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to create post-workout check-in: {e}")
+        logger.error(f"Failed to create post-workout check-in: {e}", exc_info=True)
         await log_user_error(
             user_id=checkin.user_id,
             action="post_workout_checkin",
@@ -553,7 +553,7 @@ async def get_subjective_trends(
         )
 
     except Exception as e:
-        logger.error(f"Failed to get subjective trends: {e}")
+        logger.error(f"Failed to get subjective trends: {e}", exc_info=True)
         raise safe_internal_error(e, "subjective_feedback")
 
 
@@ -665,7 +665,7 @@ async def get_feel_results_summary(user_id: str,
         )
 
     except Exception as e:
-        logger.error(f"Failed to get feel results summary: {e}")
+        logger.error(f"Failed to get feel results summary: {e}", exc_info=True)
         raise safe_internal_error(e, "subjective_feedback")
 
 
@@ -716,7 +716,7 @@ async def get_subjective_history(
         ]
 
     except Exception as e:
-        logger.error(f"Failed to get subjective history: {e}")
+        logger.error(f"Failed to get subjective history: {e}", exc_info=True)
         raise safe_internal_error(e, "subjective_feedback")
 
 
@@ -760,7 +760,7 @@ async def get_workout_subjective_feedback(workout_id: str, user_id: str,
         )
 
     except Exception as e:
-        logger.error(f"Failed to get workout subjective feedback: {e}")
+        logger.error(f"Failed to get workout subjective feedback: {e}", exc_info=True)
         raise safe_internal_error(e, "subjective_feedback")
 
 
@@ -826,5 +826,5 @@ async def get_quick_subjective_stats(user_id: str,
         }
 
     except Exception as e:
-        logger.error(f"Failed to get quick subjective stats: {e}")
+        logger.error(f"Failed to get quick subjective stats: {e}", exc_info=True)
         raise safe_internal_error(e, "subjective_feedback")

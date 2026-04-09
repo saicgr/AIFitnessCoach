@@ -727,13 +727,21 @@ class LayoutPreset {
     required this.tiles,
   });
 
+  /// Active tiles = only those in defaultVisibleTiles or defaultHiddenTiles
+  List<TileType> get activeTiles {
+    final activeSet = {...defaultVisibleTiles, ...defaultHiddenTiles};
+    return tiles.where((t) => activeSet.contains(t)).toList();
+  }
+
   /// Convert to HomeTile list (visible preset tiles + remaining as hidden)
   List<HomeTile> toHomeTiles() {
     final result = <HomeTile>[];
     int order = 0;
+    final activeSet = {...defaultVisibleTiles, ...defaultHiddenTiles};
 
-    // Add preset tiles as visible
+    // Add preset tiles as visible (only active ones)
     for (final type in tiles) {
+      if (!activeSet.contains(type)) continue;
       result.add(HomeTile(
         id: 'tile_${DateTime.now().millisecondsSinceEpoch}_$order',
         type: type,
@@ -744,7 +752,7 @@ class LayoutPreset {
       order++;
     }
 
-    // Add all other non-deprecated tile types as hidden
+    // Add all other active non-deprecated tile types as hidden
     final presetTypeSet = tiles.toSet();
     final allTypes = [...defaultVisibleTiles, ...defaultHiddenTiles];
     for (final type in allTypes) {

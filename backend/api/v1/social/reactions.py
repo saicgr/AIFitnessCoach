@@ -51,7 +51,7 @@ def _bg_index_reaction(reaction_id: str, activity_id: str, user_id: str, reactio
             )
             logger.info(f"[Social] Reaction {reaction_id} indexed in ChromaDB")
     except Exception as e:
-        logger.error(f"[Social] Failed to index reaction in ChromaDB: {e}")
+        logger.error(f"[Social] Failed to index reaction in ChromaDB: {e}", exc_info=True)
 
 
 def _bg_remove_reaction(reaction_id: str):
@@ -60,7 +60,7 @@ def _bg_remove_reaction(reaction_id: str):
         social_rag = get_social_rag_service()
         social_rag.remove_reaction_from_rag(reaction_id)
     except Exception as e:
-        logger.error(f"[Social] Failed to remove reaction from ChromaDB: {e}")
+        logger.error(f"[Social] Failed to remove reaction from ChromaDB: {e}", exc_info=True)
 
 
 def _bg_notify_reaction(activity_id: str, user_id: str, reaction_type: str):
@@ -119,7 +119,7 @@ def _bg_notify_reaction(activity_id: str, user_id: str, reaction_type: str):
             pass  # Push notification is best-effort
 
     except Exception as e:
-        logger.error(f"[Social] Failed to notify reaction: {e}")
+        logger.error(f"[Social] Failed to notify reaction: {e}", exc_info=True)
 
 
 @router.post("/reactions", response_model=ActivityReaction)

@@ -285,7 +285,7 @@ async def recalculate_user_strength_scores(user_id: str, supabase):
         logger.info(f"Background: Updated strength scores for {len(muscle_scores)} muscle groups")
 
     except Exception as e:
-        logger.error(f"Background: Failed to recalculate strength scores: {e}")
+        logger.error(f"Background: Failed to recalculate strength scores: {e}", exc_info=True)
 
 
 async def recalculate_user_fitness_score(user_id: str, supabase):
@@ -427,7 +427,7 @@ async def recalculate_user_fitness_score(user_id: str, supabase):
         logger.info(f"Background: Updated fitness score for user {user_id}: {score.overall_fitness_score} ({score.fitness_level.value})")
 
     except Exception as e:
-        logger.error(f"Background: Failed to recalculate fitness score: {e}")
+        logger.error(f"Background: Failed to recalculate fitness score: {e}", exc_info=True)
 
 
 async def populate_performance_logs(
@@ -531,7 +531,7 @@ async def populate_performance_logs(
             logger.info(f"Background: No performance_log records to insert for workout_log {workout_log_id}")
 
     except Exception as e:
-        logger.error(f"Background: Failed to populate performance_logs for workout_log {workout_log_id}: {e}")
+        logger.error(f"Background: Failed to populate performance_logs for workout_log {workout_log_id}: {e}", exc_info=True)
 
 
 async def _send_post_workout_nutrition_nudge(user_id: str, workout_name: str):
@@ -632,7 +632,7 @@ async def _send_post_workout_nutrition_nudge(user_id: str, workout_name: str):
                 }
             }).execute()
         except Exception as e:
-            logger.warning(f"[Nudge] chat_history insert failed: {e}")
+            logger.warning(f"[Nudge] chat_history insert failed: {e}", exc_info=True)
 
         # Send push notification
         fcm_token = user.get("fcm_token")
@@ -652,7 +652,7 @@ async def _send_post_workout_nutrition_nudge(user_id: str, workout_name: str):
             logger.info(f"[Nudge] Post-workout nutrition sent to {user_id}")
 
     except Exception as e:
-        logger.error(f"[Nudge] Post-workout nutrition nudge failed for {user_id}: {e}")
+        logger.error(f"[Nudge] Post-workout nutrition nudge failed for {user_id}: {e}", exc_info=True)
 
 
 async def _send_streak_celebration_if_milestone(user_id: str):
@@ -713,4 +713,4 @@ async def _send_streak_celebration_if_milestone(user_id: str):
             logger.info(f"[Nudge] Streak celebration ({current_streak} days) sent to {user_id}")
 
     except Exception as e:
-        logger.error(f"[Nudge] Streak celebration failed for {user_id}: {e}")
+        logger.error(f"[Nudge] Streak celebration failed for {user_id}: {e}", exc_info=True)

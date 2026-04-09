@@ -33,6 +33,7 @@ from core.supabase_client import get_supabase
 from services.gemini_service import GeminiService
 from services.food_database_lookup_service import get_food_db_lookup_service
 from services.food_analysis.cache_service_helpers_part2 import FoodAnalysisCacheServicePart2
+from services.food_analysis.modifiers_helpers import _build_default_modifiers
 
 logger = logging.getLogger(__name__)
 
@@ -190,7 +191,7 @@ class FoodAnalysisCacheService(FoodAnalysisCacheServicePart2):
                                 coaching_style = coach_row._mapping.get("coaching_style")
                                 communication_tone = coach_row._mapping.get("communication_tone")
                         except Exception as e:
-                            logger.warning(f"[EnrichTips] Failed to fetch coach persona: {e}")
+                            logger.warning(f"[EnrichTips] Failed to fetch coach persona: {e}", exc_info=True)
 
                 # Get daily nutrition summary for calorie budget
                 try:
@@ -205,10 +206,10 @@ class FoodAnalysisCacheService(FoodAnalysisCacheServicePart2):
                     if target_cal:
                         calories_remaining = max(0, int(target_cal) - calories_consumed_today)
                 except Exception as e:
-                    logger.warning(f"[EnrichTips] Failed to get daily summary: {e}")
+                    logger.warning(f"[EnrichTips] Failed to get daily summary: {e}", exc_info=True)
 
             except Exception as e:
-                logger.warning(f"[EnrichTips] Failed to fetch user data: {e}")
+                logger.warning(f"[EnrichTips] Failed to fetch user data: {e}", exc_info=True)
 
         # Call Gemini for contextual tips
         try:
@@ -238,7 +239,7 @@ class FoodAnalysisCacheService(FoodAnalysisCacheServicePart2):
                     "health_score": health_score,
                 }
         except Exception as e:
-            logger.error(f"[EnrichTips] Gemini call failed: {e}")
+            logger.error(f"[EnrichTips] Gemini call failed: {e}", exc_info=True)
 
         # Fallback: return just the computed health_score with no tips
         return {
@@ -430,7 +431,7 @@ class FoodAnalysisCacheService(FoodAnalysisCacheServicePart2):
                     result["health_score"] = tips["health_score"]
                 logger.info(f"[EnrichTips] Enriched cache hit with tips for {len(food_items)} items")
         except Exception as e:
-            logger.warning(f"[EnrichTips] Failed to enrich cache hit: {e}")
+            logger.warning(f"[EnrichTips] Failed to enrich cache hit: {e}", exc_info=True)
 
     async def _try_common_food(self, description: str) -> Optional[Dict[str, Any]]:
         """
@@ -453,7 +454,7 @@ class FoodAnalysisCacheService(FoodAnalysisCacheServicePart2):
             return None
 
         except Exception as e:
-            logger.warning(f"Common food lookup failed: {e}")
+            logger.warning(f"Common food lookup failed: {e}", exc_info=True)
             return None
 
     async def _try_saved_food(
@@ -490,7 +491,7 @@ class FoodAnalysisCacheService(FoodAnalysisCacheServicePart2):
             return self._saved_food_to_analysis(saved)
 
         except Exception as e:
-            logger.warning(f"Saved food lookup failed: {e}")
+            logger.warning(f"Saved food lookup failed: {e}", exc_info=True)
             return None
 
     def _saved_food_to_analysis(self, saved: Dict[str, Any]) -> Dict[str, Any]:
@@ -626,7 +627,7 @@ class FoodAnalysisCacheService(FoodAnalysisCacheServicePart2):
             return result
 
         except Exception as e:
-            logger.warning(f"Override lookup failed: {e}")
+            logger.warning(f"Override lookup failed: {e}", exc_info=True)
             return None
 
     def _override_to_analysis(self, override: Dict[str, Any]) -> Dict[str, Any]:
@@ -996,7 +997,7 @@ class FoodAnalysisCacheService(FoodAnalysisCacheServicePart2):
                 )
                 logger.info(f"✅ Auto-learned food: {name}")
             except Exception as e:
-                logger.error(f"❌ Failed to auto-learn food '{item.get('name')}': {e}")
+                logger.error(f"❌ Failed to auto-learn food '{item.get('name')}': {e}", exc_info=True)
 
     @staticmethod
     def _infer_food_category(name: str) -> str:

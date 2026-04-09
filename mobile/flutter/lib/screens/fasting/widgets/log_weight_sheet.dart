@@ -442,7 +442,7 @@ class _LogWeightSheetState extends ConsumerState<_LogWeightSheet>
           IconButton(
             onPressed: () {
               Navigator.pop(context);
-              context.push('/measurements');
+              context.push('/measurements/weight');
             },
             icon: Icon(Icons.history_rounded, color: colors.textSecondary, size: 22),
             tooltip: 'Weight History',

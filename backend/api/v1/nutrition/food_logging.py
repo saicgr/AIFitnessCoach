@@ -9,11 +9,12 @@ import time
 import asyncio
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, UploadFile, File, Form, Request
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
 from core.timezone_utils import resolve_timezone, local_date_to_utc_range, get_user_today, get_user_now_iso, target_date_to_utc_iso
 from core.rate_limiter import limiter
-from core.auth import get_current_user
+from core.auth import get_current_user, verify_user_ownership
 from core.exceptions import safe_internal_error
 from core.supabase_db import get_supabase_db
 from core.logger import get_logger
@@ -216,7 +217,7 @@ async def log_food_from_image(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to log food from image: {e}")
+        logger.error(f"Failed to log food from image: {e}", exc_info=True)
         # Background: Log error analytics (non-critical)
         background_tasks.add_task(
             log_user_error,
@@ -279,7 +280,7 @@ async def log_food_from_text(body: LogTextRequest, background_tasks: BackgroundT
                 }
                 logger.info(f"User goals: {user_goals}, targets: {nutrition_targets}")
         except Exception as e:
-            logger.warning(f"Could not fetch user goals/targets: {e}")
+            logger.warning(f"Could not fetch user goals/targets: {e}", exc_info=True)
 
         # Get RAG context from nutrition knowledge base (if user has goals)
         rag_context = None
@@ -294,7 +295,7 @@ async def log_food_from_text(body: LogTextRequest, background_tasks: BackgroundT
                 if rag_context:
                     logger.info(f"Retrieved RAG context ({len(rag_context)} chars) for goals: {user_goals}")
             except Exception as e:
-                logger.warning(f"Could not fetch RAG context: {e}")
+                logger.warning(f"Could not fetch RAG context: {e}", exc_info=True)
 
         # Parse description through cache service (DB-first, then Gemini)
         cache_service = get_food_analysis_cache_service()
@@ -436,7 +437,7 @@ async def log_food_from_text(body: LogTextRequest, background_tasks: BackgroundT
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to log food from text: {e}")
+        logger.error(f"Failed to log food from text: {e}", exc_info=True)
         # Background: Log error analytics (non-critical)
         background_tasks.add_task(
             log_user_error,
@@ -554,7 +555,7 @@ async def log_food_direct(body: LogDirectRequest, request: Request, current_user
             source_type=body.source_type,
         )
     except Exception as e:
-        logger.error(f"Error logging food directly: {e}")
+        logger.error(f"Error logging food directly: {e}", exc_info=True)
         raise safe_internal_error(e, "nutrition")
 
 
@@ -628,7 +629,7 @@ async def log_food_from_text_streaming(request: Request, body: LogTextRequest, c
                         'daily_fat_target_g': user.get('daily_fat_target_g'),
                     }
             except Exception as e:
-                logger.warning(f"[STREAM] Could not fetch user goals: {e}")
+                logger.warning(f"[STREAM] Could not fetch user goals: {e}", exc_info=True)
 
             # Step 2: Check cache and analyze with AI
             yield send_progress(2, 4, "Analyzing your food...", "Checking food database")
@@ -670,7 +671,7 @@ async def log_food_from_text_streaming(request: Request, body: LogTextRequest, c
                             n_results=3,  # Reduced from 5 for speed
                         )
                     except Exception as e:
-                        logger.warning(f"[STREAM] Could not fetch RAG context: {e}")
+                        logger.warning(f"[STREAM] Could not fetch RAG context: {e}", exc_info=True)
 
                 # Re-analyze with RAG context (cache will save for next time)
                 analysis_task = asyncio.create_task(cache_service.analyze_food(
@@ -787,7 +788,7 @@ async def log_food_from_text_streaming(request: Request, body: LogTextRequest, c
             yield f"event: done\ndata: {json.dumps(response_data)}\n\n"
 
         except Exception as e:
-            logger.error(f"[STREAM] Food logging error: {e}")
+            logger.error(f"[STREAM] Food logging error: {e}", exc_info=True)
             yield send_error(str(e))
 
     return StreamingResponse(
@@ -833,12 +834,12 @@ async def analyze_food_text(
             return result
         raise HTTPException(status_code=422, detail="Could not analyze food")
     except asyncio.TimeoutError:
-        logger.warning(f"[ANALYZE-TEXT] Timed out for: {body.description[:80]}")
+        logger.warning(f"[ANALYZE-TEXT] Timed out for: {body.description[:80]}", exc_info=True)
         raise HTTPException(status_code=504, detail="Analysis timed out")
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"[ANALYZE-TEXT] Error: {e}")
+        logger.error(f"[ANALYZE-TEXT] Error: {e}", exc_info=True)
         raise safe_internal_error(e, "nutrition")
 
 
@@ -871,12 +872,12 @@ async def review_food(
         )
         return result
     except asyncio.TimeoutError:
-        logger.warning(f"[FOOD-REVIEW] Timed out for: {body.food_name}")
+        logger.warning(f"[FOOD-REVIEW] Timed out for: {body.food_name}", exc_info=True)
         raise HTTPException(status_code=504, detail="Food review timed out")
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"[FOOD-REVIEW] Error: {e}")
+        logger.error(f"[FOOD-REVIEW] Error: {e}", exc_info=True)
         raise safe_internal_error(e, "nutrition")
 
 

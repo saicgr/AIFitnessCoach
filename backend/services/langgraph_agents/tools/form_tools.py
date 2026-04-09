@@ -69,7 +69,7 @@ def _dispatch_async_form_job(
             "message": "Analyzing your form in the background. Results will be ready shortly. You can check the status with the job ID.",
         }
     except Exception as e:
-        logger.error(f"Failed to dispatch async {job_type} job for user {user_id}: {e}")
+        logger.error(f"Failed to dispatch async {job_type} job for user {user_id}: {e}", exc_info=True)
         return {
             "success": False,
             "action": "check_exercise_form",
@@ -262,7 +262,7 @@ def check_exercise_form(
         }
 
     except TimeoutError:
-        logger.error(f"Form analysis timed out for user {user_id}")
+        logger.error(f"Form analysis timed out for user {user_id}", exc_info=True)
         return {
             "success": False,
             "action": "check_exercise_form",
@@ -270,7 +270,7 @@ def check_exercise_form(
             "message": "Form analysis timed out. The video may be too long or the server is busy. Please try again with a shorter clip.",
         }
     except Exception as e:
-        logger.error(f"Check exercise form failed for user {user_id}: {e}")
+        logger.error(f"Check exercise form failed for user {user_id}: {e}", exc_info=True)
         return {
             "success": False,
             "action": "check_exercise_form",

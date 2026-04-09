@@ -342,7 +342,7 @@ def is_lifetime_member(supabase, user_id: str) -> bool:
         return result.data.get("is_lifetime", False) or result.data.get("tier") == "lifetime"
 
     except Exception as e:
-        logger.warning(f"Error checking lifetime status: {e}")
+        logger.warning(f"Error checking lifetime status: {e}", exc_info=True)
         return False
 
 

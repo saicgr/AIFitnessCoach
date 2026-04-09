@@ -161,7 +161,7 @@ class TrelloService:
                 return card
 
         except Exception as e:
-            logger.error(f"Failed to create Trello card for ticket {ticket_id}: {e}")
+            logger.error(f"Failed to create Trello card for ticket {ticket_id}: {e}", exc_info=True)
             return None
 
     async def _attach_screenshots(
@@ -198,10 +198,10 @@ class TrelloService:
                     )
                     logger.info(f"Attached {filename} to Trello card {card_id}")
                 except Exception as e:
-                    logger.warning(f"Failed to attach {s3_key} to Trello card {card_id}: {e}")
+                    logger.warning(f"Failed to attach {s3_key} to Trello card {card_id}: {e}", exc_info=True)
 
         except Exception as e:
-            logger.warning(f"Failed to attach screenshots to Trello card {card_id}: {e}")
+            logger.warning(f"Failed to attach screenshots to Trello card {card_id}: {e}", exc_info=True)
 
     async def add_comment(self, card_id: str, text: str) -> bool:
         """Add a comment to an existing Trello card (e.g., new reply on ticket)."""
@@ -217,7 +217,7 @@ class TrelloService:
                 response.raise_for_status()
                 return True
         except Exception as e:
-            logger.error(f"Failed to add Trello comment to card {card_id}: {e}")
+            logger.error(f"Failed to add Trello comment to card {card_id}: {e}", exc_info=True)
             return False
 
     async def close_card(self, card_id: str) -> bool:
@@ -235,7 +235,7 @@ class TrelloService:
                 logger.info(f"Trello card archived: {card_id}")
                 return True
         except Exception as e:
-            logger.error(f"Failed to archive Trello card {card_id}: {e}")
+            logger.error(f"Failed to archive Trello card {card_id}: {e}", exc_info=True)
             return False
 
 

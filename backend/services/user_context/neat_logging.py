@@ -572,7 +572,7 @@ class NeatLoggingMixin:
             return patterns
 
         except Exception as e:
-            logger.error(f"Failed to get NEAT patterns: {e}")
+            logger.error(f"Failed to get NEAT patterns: {e}", exc_info=True)
             return NeatPatterns()
 
     async def get_neat_context_for_ai(

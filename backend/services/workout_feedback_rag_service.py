@@ -55,7 +55,7 @@ class WorkoutFeedbackRAGService:
         try:
             _count = self.collection.count()
         except Exception as e:
-            logger.warning(f"Failed to get collection count: {e}")
+            logger.warning(f"Failed to get collection count: {e}", exc_info=True)
             _count = "unknown"
         logger.info(f"Workout Feedback RAG initialized: {_count} sessions")
 
@@ -761,7 +761,7 @@ WORKOUT COMPLETION ANALYSIS:
             c = self.collection.count()
             total = c if c >= 0 else -1
         except Exception as e:
-            logger.warning(f"Failed to get feedback count: {e}")
+            logger.warning(f"Failed to get feedback count: {e}", exc_info=True)
             total = -1
         return {
             "total_sessions": total,

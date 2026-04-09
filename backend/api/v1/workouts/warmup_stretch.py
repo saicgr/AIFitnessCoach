@@ -60,7 +60,7 @@ def get_user_warmup_stretch_preferences(user_id: str) -> tuple[int, int]:
         return warmup_duration, stretch_duration
 
     except Exception as e:
-        logger.warning(f"Error reading user preferences for warmup/stretch duration: {e}")
+        logger.warning(f"Error reading user preferences for warmup/stretch duration: {e}", exc_info=True)
         return DEFAULT_WARMUP_DURATION, DEFAULT_STRETCH_DURATION
 
 
@@ -82,7 +82,7 @@ async def get_workout_warmup(workout_id: str,
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to get warmup: {e}")
+        logger.error(f"Failed to get warmup: {e}", exc_info=True)
         raise safe_internal_error(e, "warmup_stretch")
 
 
@@ -104,7 +104,7 @@ async def get_workout_stretches(workout_id: str,
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to get stretches: {e}")
+        logger.error(f"Failed to get stretches: {e}", exc_info=True)
         raise safe_internal_error(e, "warmup_stretch")
 
 
@@ -148,7 +148,7 @@ async def create_workout_warmup(workout_id: str, duration_minutes: Optional[int]
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to create warmup: {e}")
+        logger.error(f"Failed to create warmup: {e}", exc_info=True)
         raise safe_internal_error(e, "warmup_stretch")
 
 
@@ -192,7 +192,7 @@ async def create_workout_stretches(workout_id: str, duration_minutes: Optional[i
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to create stretches: {e}")
+        logger.error(f"Failed to create stretches: {e}", exc_info=True)
         raise safe_internal_error(e, "warmup_stretch")
 
 
@@ -243,7 +243,7 @@ async def create_workout_warmup_and_stretches(
                 if injuries:
                     logger.info(f"🩹 User has active injuries: {injuries}")
             except Exception as e:
-                logger.warning(f"⚠️ Could not fetch injuries: {e}")
+                logger.warning(f"⚠️ Could not fetch injuries: {e}", exc_info=True)
 
         service = get_warmup_stretch_service()
         result = await service.generate_warmup_and_stretches_for_workout(
@@ -256,7 +256,7 @@ async def create_workout_warmup_and_stretches(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to create warmup and stretches: {e}")
+        logger.error(f"Failed to create warmup and stretches: {e}", exc_info=True)
         raise safe_internal_error(e, "warmup_stretch")
 
 
@@ -299,5 +299,5 @@ async def save_warmup_logs(
         return {"status": "ok", "exercises_logged": len(intervals)}
 
     except Exception as e:
-        logger.error(f"Failed to save warmup logs: {e}")
+        logger.error(f"Failed to save warmup logs: {e}", exc_info=True)
         raise safe_internal_error(e, "warmup_logs")

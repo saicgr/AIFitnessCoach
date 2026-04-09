@@ -189,7 +189,7 @@ async def list_branded_programs(
         return programs
 
     except Exception as e:
-        logger.error(f"Failed to list branded programs: {e}")
+        logger.error(f"Failed to list branded programs: {e}", exc_info=True)
         raise safe_internal_error(e, "programs")
 
 
@@ -247,7 +247,7 @@ async def get_branded_program(program_id: str,
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to get branded program: {e}")
+        logger.error(f"Failed to get branded program: {e}", exc_info=True)
         raise safe_internal_error(e, "programs")
 
 
@@ -320,7 +320,7 @@ async def get_featured_programs(
         )
 
     except Exception as e:
-        logger.error(f"Failed to get featured programs: {e}")
+        logger.error(f"Failed to get featured programs: {e}", exc_info=True)
         raise safe_internal_error(e, "programs")
 
 
@@ -455,7 +455,7 @@ async def assign_program_to_user(user_id: str, request: ProgramAssignRequest,
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to assign program: {e}")
+        logger.error(f"Failed to assign program: {e}", exc_info=True)
         raise safe_internal_error(e, "programs")
 
 
@@ -503,7 +503,7 @@ async def get_current_program(user_id: str,
         # If no record found, return None instead of error
         if "0 rows" in str(e).lower() or "no rows" in str(e).lower():
             return None
-        logger.error(f"Failed to get current program: {e}")
+        logger.error(f"Failed to get current program: {e}", exc_info=True)
         raise safe_internal_error(e, "programs")
 
 
@@ -556,7 +556,7 @@ async def get_program_history(
         return assignments
 
     except Exception as e:
-        logger.error(f"Failed to get program history: {e}")
+        logger.error(f"Failed to get program history: {e}", exc_info=True)
         raise safe_internal_error(e, "programs")
 
 
@@ -642,7 +642,7 @@ async def rename_current_program(user_id: str, request: ProgramRenameRequest,
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to rename program: {e}")
+        logger.error(f"Failed to rename program: {e}", exc_info=True)
         raise safe_internal_error(e, "programs")
 
 
@@ -727,7 +727,7 @@ async def complete_current_program(user_id: str,
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to complete program: {e}")
+        logger.error(f"Failed to complete program: {e}", exc_info=True)
         raise safe_internal_error(e, "programs")
 
 
@@ -764,7 +764,7 @@ async def list_program_categories(
         return sorted(categories)
 
     except Exception as e:
-        logger.error(f"Failed to get categories: {e}")
+        logger.error(f"Failed to get categories: {e}", exc_info=True)
         raise safe_internal_error(e, "programs")
 
 
@@ -829,5 +829,5 @@ async def update_program_week(user_id: str, week_number: int = Query(..., ge=1, 
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to update program week: {e}")
+        logger.error(f"Failed to update program week: {e}", exc_info=True)
         raise safe_internal_error(e, "programs")

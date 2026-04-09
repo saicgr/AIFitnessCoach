@@ -222,7 +222,7 @@ async def get_exercise_tip(
         )
 
     except Exception as e:
-        logger.warning(f"Exercise tip generation failed: {e}")
+        logger.warning(f"Exercise tip generation failed: {e}", exc_info=True)
         # Return a fallback tip based on coaching style
         fallback = _get_fallback_tip(body)
         return ExerciseTipResponse(

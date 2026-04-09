@@ -80,7 +80,7 @@ async def submit_report(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"[Reports] Error submitting report: {e}")
+        logger.error(f"[Reports] Error submitting report: {e}", exc_info=True)
         raise safe_internal_error(e, "reports")
 
 
@@ -118,5 +118,5 @@ async def get_my_reports(
         }
 
     except Exception as e:
-        logger.error(f"[Reports] Error getting reports: {e}")
+        logger.error(f"[Reports] Error getting reports: {e}", exc_info=True)
         raise safe_internal_error(e, "reports")

@@ -182,7 +182,7 @@ async def generate_next_day_background(user_id: str, target_date: str):
                     logger.info(f"[NEXT-DAY] Workout already being generated for {user_id} on {target_date}, skipping")
                     return
             except Exception as e:
-                logger.warning(f"Dedup check for pre-cache failed: {e}")
+                logger.warning(f"Dedup check for pre-cache failed: {e}", exc_info=True)
 
             # Use the existing generate_workout function
             from models.schemas import GenerateWorkoutRequest
@@ -200,7 +200,7 @@ async def generate_next_day_background(user_id: str, target_date: str):
                 if active_result.data:
                     gym_profile_id = active_result.data.get("id")
             except Exception as e:
-                logger.warning(f"Failed to get active gym profile: {e}")
+                logger.warning(f"Failed to get active gym profile: {e}", exc_info=True)
 
             gen_body = GenerateWorkoutRequest(
                 user_id=user_id,
@@ -224,7 +224,7 @@ async def generate_next_day_background(user_id: str, target_date: str):
                         f"{result.name if result else 'unknown'}")
 
         except Exception as e:
-            logger.error(f"[NEXT-DAY] Failed to pre-cache workout for {user_id} on {target_date}: {e}")
+            logger.error(f"[NEXT-DAY] Failed to pre-cache workout for {user_id} on {target_date}: {e}", exc_info=True)
 
 
 # =============================================================================

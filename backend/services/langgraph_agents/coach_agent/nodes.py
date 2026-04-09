@@ -459,7 +459,7 @@ Respond naturally as a coach who can see the image."""
                     vision_svc = get_vision_service()
                     image_bytes = await vision_svc._download_image_from_s3(s3_key)
         except Exception as e:
-            logger.warning(f"[Coach Response] Failed to resolve image: {e}")
+            logger.warning(f"[Coach Response] Failed to resolve image: {e}", exc_info=True)
 
         if image_bytes:
             # Build multimodal content

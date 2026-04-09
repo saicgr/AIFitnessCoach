@@ -51,7 +51,7 @@ class EmailLifecycleMixin:
             logger.info(f"Cancellation retention email sent to {to_email}: {response}")
             return {"success": True, "id": response.get("id")}
         except Exception as e:
-            logger.error(f"Failed to send cancellation retention email to {to_email}: {e}")
+            logger.error(f"Failed to send cancellation retention email to {to_email}: {e}", exc_info=True)
             return {"error": str(e)}
 
     async def send_trial_expired(
@@ -87,7 +87,7 @@ class EmailLifecycleMixin:
             logger.info(f"Trial expired email sent to {to_email}: {response}")
             return {"success": True, "id": response.get("id")}
         except Exception as e:
-            logger.error(f"Failed to send trial expired email to {to_email}: {e}")
+            logger.error(f"Failed to send trial expired email to {to_email}: {e}", exc_info=True)
             return {"error": str(e)}
 
     async def send_trial_ending(
@@ -124,7 +124,7 @@ class EmailLifecycleMixin:
             logger.info(f"Trial ending email sent to {to_email}: {response}")
             return {"success": True, "id": response.get("id")}
         except Exception as e:
-            logger.error(f"Failed to send trial ending email to {to_email}: {e}")
+            logger.error(f"Failed to send trial ending email to {to_email}: {e}", exc_info=True)
             return {"error": str(e)}
 
     async def send_streak_at_risk(
@@ -160,7 +160,7 @@ class EmailLifecycleMixin:
             logger.info(f"Streak at risk email sent to {to_email}: {response}")
             return {"success": True, "id": response.get("id")}
         except Exception as e:
-            logger.error(f"Failed to send streak at risk email to {to_email}: {e}")
+            logger.error(f"Failed to send streak at risk email to {to_email}: {e}", exc_info=True)
             return {"error": str(e)}
 
     async def send_day3_activation(
@@ -197,7 +197,7 @@ class EmailLifecycleMixin:
             logger.info(f"Day-3 activation email sent to {to_email}: {response}")
             return {"success": True, "id": response.get("id")}
         except Exception as e:
-            logger.error(f"Failed to send day-3 activation email to {to_email}: {e}")
+            logger.error(f"Failed to send day-3 activation email to {to_email}: {e}", exc_info=True)
             return {"error": str(e)}
 
     async def send_onboarding_incomplete(
@@ -232,5 +232,5 @@ class EmailLifecycleMixin:
             logger.info(f"Onboarding incomplete email sent to {to_email}: {response}")
             return {"success": True, "id": response.get("id")}
         except Exception as e:
-            logger.error(f"Failed to send onboarding incomplete email to {to_email}: {e}")
+            logger.error(f"Failed to send onboarding incomplete email to {to_email}: {e}", exc_info=True)
             return {"error": str(e)}

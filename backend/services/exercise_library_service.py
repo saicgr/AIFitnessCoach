@@ -70,7 +70,7 @@ class ExerciseLibraryService:
             return exercises
 
         except Exception as e:
-            logger.error(f"Error fetching exercises: {e}")
+            logger.error(f"Error fetching exercises: {e}", exc_info=True)
             return []
 
     def get_exercises_by_muscle(
@@ -99,7 +99,7 @@ class ExerciseLibraryService:
             return exercises
 
         except Exception as e:
-            logger.error(f"Error fetching exercises by muscle: {e}")
+            logger.error(f"Error fetching exercises by muscle: {e}", exc_info=True)
             return []
 
     def get_exercises_for_workout(
@@ -242,7 +242,7 @@ class ExerciseLibraryService:
 
             return normalized
         except Exception as e:
-            logger.error(f"Error searching exercises: {e}")
+            logger.error(f"Error searching exercises: {e}", exc_info=True)
             return []
 
     def get_exercise_by_id(self, exercise_id: str) -> Optional[Dict[str, Any]]:
@@ -267,7 +267,7 @@ class ExerciseLibraryService:
                 'muscle_group': ex.get('target_muscle', ex.get('body_part', 'unknown')),
             }
         except Exception as e:
-            logger.error(f"Error getting exercise by ID {exercise_id}: {e}")
+            logger.error(f"Error getting exercise by ID {exercise_id}: {e}", exc_info=True)
             return None
 
 

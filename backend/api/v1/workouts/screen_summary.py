@@ -117,7 +117,7 @@ def _get_active_gym_profile_id(db, user_id: str) -> Optional[str]:
         if result.data:
             return result.data.get("id")
     except Exception as e:
-        logger.warning(f"Failed to get active gym profile: {e}")
+        logger.warning(f"Failed to get active gym profile: {e}", exc_info=True)
     return None
 
 
@@ -195,5 +195,5 @@ async def get_workout_screen_summary(
         )
 
     except Exception as e:
-        logger.error(f"Failed to get workout screen summary: {e}")
+        logger.error(f"Failed to get workout screen summary: {e}", exc_info=True)
         raise safe_internal_error(e, "screen_summary")

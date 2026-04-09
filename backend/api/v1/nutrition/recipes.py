@@ -178,7 +178,7 @@ async def create_recipe(request: RecipeCreate, user_id: str = Query(...), curren
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to create recipe: {e}")
+        logger.error(f"Failed to create recipe: {e}", exc_info=True)
         raise safe_internal_error(e, "nutrition")
 
 
@@ -259,7 +259,7 @@ async def list_recipes(
         return RecipesResponse(items=items, total_count=total_count)
 
     except Exception as e:
-        logger.error(f"Failed to list recipes: {e}")
+        logger.error(f"Failed to list recipes: {e}", exc_info=True)
         raise safe_internal_error(e, "nutrition")
 
 
@@ -365,7 +365,7 @@ async def get_recipe(recipe_id: str, user_id: str = Query(...), current_user: di
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to get recipe: {e}")
+        logger.error(f"Failed to get recipe: {e}", exc_info=True)
         raise safe_internal_error(e, "nutrition")
 
 
@@ -393,7 +393,7 @@ async def delete_recipe(recipe_id: str, user_id: str = Query(...), current_user:
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to delete recipe: {e}")
+        logger.error(f"Failed to delete recipe: {e}", exc_info=True)
         raise safe_internal_error(e, "nutrition")
 
 
@@ -494,7 +494,7 @@ async def log_recipe(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to log recipe: {e}")
+        logger.error(f"Failed to log recipe: {e}", exc_info=True)
         raise safe_internal_error(e, "nutrition")
 
 
@@ -591,7 +591,7 @@ async def add_ingredient(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to add ingredient: {e}")
+        logger.error(f"Failed to add ingredient: {e}", exc_info=True)
         raise safe_internal_error(e, "nutrition")
 
 
@@ -637,7 +637,7 @@ async def remove_ingredient(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to remove ingredient: {e}")
+        logger.error(f"Failed to remove ingredient: {e}", exc_info=True)
         raise safe_internal_error(e, "nutrition")
 
 

@@ -498,7 +498,7 @@ async def get_user_set_type_preferences(user_id: str, supabase_client=None, days
         return set_type_data
 
     except Exception as e:
-        logger.error(f"[SetTypePrefs] Error fetching set type preferences: {e}")
+        logger.error(f"[SetTypePrefs] Error fetching set type preferences: {e}", exc_info=True)
         return {}
 
 

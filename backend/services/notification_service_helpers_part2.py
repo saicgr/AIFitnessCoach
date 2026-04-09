@@ -157,18 +157,18 @@ class NotificationServicePart2:
             return True
 
         except messaging.UnregisteredError:
-            logger.warning(f"⚠️ FCM token is no longer valid: {fcm_token[:20]}...")
+            logger.warning(f"⚠️ FCM token is no longer valid: {fcm_token[:20]}...", exc_info=True)
             return False
         except messaging.SenderIdMismatchError:
-            logger.error(f"❌ Sender ID mismatch - FCM token belongs to different Firebase project")
+            logger.error(f"❌ Sender ID mismatch - FCM token belongs to different Firebase project", exc_info=True)
             return False
         except messaging.InvalidArgumentError as e:
-            logger.error(f"❌ Invalid argument error: {e}")
+            logger.error(f"❌ Invalid argument error: {e}", exc_info=True)
             return False
         except Exception as e:
-            logger.error(f"❌ Failed to send notification: {type(e).__name__}: {e}")
+            logger.error(f"❌ Failed to send notification: {type(e).__name__}: {e}", exc_info=True)
             import traceback
-            logger.error(f"Traceback: {traceback.format_exc()}")
+            logger.error(f"Traceback: {traceback.format_exc()}", exc_info=True)
             return False
 
     async def send_multicast(
@@ -238,7 +238,7 @@ class NotificationServicePart2:
             }
 
         except Exception as e:
-            logger.error(f"❌ Failed to send multicast notification: {e}")
+            logger.error(f"❌ Failed to send multicast notification: {e}", exc_info=True)
             return {"success_count": 0, "failure_count": len(fcm_tokens)}
 
     # ─────────────────────────────────────────────────────────────────
@@ -587,7 +587,7 @@ class NotificationServicePart2:
             )
 
         except Exception as e:
-            logger.error(f"❌ [Movement] Error sending reminder to user {user_id}: {e}")
+            logger.error(f"❌ [Movement] Error sending reminder to user {user_id}: {e}", exc_info=True)
             return False
 
     # ─────────────────────────────────────────────────────────────────
@@ -647,7 +647,7 @@ class NotificationServicePart2:
             )
 
         except Exception as e:
-            logger.error(f"❌ [LiveChat] Error sending message notification to user {user_id}: {e}")
+            logger.error(f"❌ [LiveChat] Error sending message notification to user {user_id}: {e}", exc_info=True)
             return False
 
     async def send_live_chat_connected_notification(
@@ -698,7 +698,7 @@ class NotificationServicePart2:
             )
 
         except Exception as e:
-            logger.error(f"❌ [LiveChat] Error sending connected notification to user {user_id}: {e}")
+            logger.error(f"❌ [LiveChat] Error sending connected notification to user {user_id}: {e}", exc_info=True)
             return False
 
     async def send_live_chat_ended_notification(
@@ -751,7 +751,7 @@ class NotificationServicePart2:
             )
 
         except Exception as e:
-            logger.error(f"❌ [LiveChat] Error sending ended notification to user {user_id}: {e}")
+            logger.error(f"❌ [LiveChat] Error sending ended notification to user {user_id}: {e}", exc_info=True)
             return False
 
 

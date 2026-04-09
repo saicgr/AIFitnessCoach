@@ -274,7 +274,7 @@ async def generate_preview_plan(request: Request, body: PreviewPlanRequest):
                 }
             }).execute()
         except Exception as e:
-            logger.warning(f"Failed to log demo interaction: {e}")
+            logger.warning(f"Failed to log demo interaction: {e}", exc_info=True)
 
         return {
             "session_id": session_id,
@@ -300,7 +300,7 @@ async def generate_preview_plan(request: Request, body: PreviewPlanRequest):
         }
 
     except Exception as e:
-        logger.error(f"Failed to generate preview plan: {e}")
+        logger.error(f"Failed to generate preview plan: {e}", exc_info=True)
         raise safe_internal_error(e, "demo")
 
 
@@ -344,7 +344,7 @@ async def start_demo_session(request: Request, body: DemoSession):
             }
 
     except Exception as e:
-        logger.error(f"Failed to start demo session: {e}")
+        logger.error(f"Failed to start demo session: {e}", exc_info=True)
         raise safe_internal_error(e, "demo")
 
 
@@ -367,7 +367,7 @@ async def log_demo_interaction(request: Request, body: DemoInteraction):
         return {"status": "logged"}
 
     except Exception as e:
-        logger.error(f"Failed to log demo interaction: {e}")
+        logger.error(f"Failed to log demo interaction: {e}", exc_info=True)
         # Don't fail the request for logging failures
         return {"status": "error", "message": str(e)}
 
@@ -471,7 +471,7 @@ async def generate_personalized_sample_workout(request: Request, body: Personali
                 }
             }).execute()
         except Exception as e:
-            logger.warning(f"Failed to log demo interaction: {e}")
+            logger.warning(f"Failed to log demo interaction: {e}", exc_info=True)
 
         return {
             "session_id": session_id,
@@ -509,7 +509,7 @@ async def generate_personalized_sample_workout(request: Request, body: Personali
         }
 
     except Exception as e:
-        logger.error(f"Failed to generate personalized sample workout: {e}")
+        logger.error(f"Failed to generate personalized sample workout: {e}", exc_info=True)
         raise safe_internal_error(e, "demo")
 
 
@@ -668,7 +668,7 @@ async def convert_demo_session(request: Request, body: SessionConvertRequest):
                         "duration_seconds": duration_seconds,
                     }).eq("session_id", body.session_id).execute()
                 except Exception as e:
-                    logger.warning(f"Failed to calculate duration: {e}")
+                    logger.warning(f"Failed to calculate duration: {e}", exc_info=True)
 
         logger.info(f"Demo session {body.session_id} converted to user {body.user_id} via {body.trigger}")
 
@@ -678,7 +678,7 @@ async def convert_demo_session(request: Request, body: SessionConvertRequest):
         }
 
     except Exception as e:
-        logger.error(f"Failed to convert demo session: {e}")
+        logger.error(f"Failed to convert demo session: {e}", exc_info=True)
         raise safe_internal_error(e, "demo")
 
 
@@ -710,7 +710,7 @@ async def get_demo_session(session_id: str):
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to get demo session: {e}")
+        logger.error(f"Failed to get demo session: {e}", exc_info=True)
         raise safe_internal_error(e, "demo")
 
 
@@ -729,7 +729,7 @@ async def get_conversion_analytics(days: int = Query(30, ge=1, le=90), admin: di
         }
 
     except Exception as e:
-        logger.error(f"Failed to get conversion analytics: {e}")
+        logger.error(f"Failed to get conversion analytics: {e}", exc_info=True)
         raise safe_internal_error(e, "demo")
 
 
@@ -746,7 +746,7 @@ async def get_feature_analytics(admin: dict = Depends(get_admin_user)):
         }
 
     except Exception as e:
-        logger.error(f"Failed to get feature analytics: {e}")
+        logger.error(f"Failed to get feature analytics: {e}", exc_info=True)
         raise safe_internal_error(e, "demo")
 
 

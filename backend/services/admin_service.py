@@ -41,7 +41,7 @@ class AdminService:
                 return result.data[0].get("role") == "admin"
             return False
         except Exception as e:
-            logger.error(f"Error checking admin status for user {user_id}: {e}")
+            logger.error(f"Error checking admin status for user {user_id}: {e}", exc_info=True)
             return False
 
     async def is_support_user(self, user_id: str) -> bool:
@@ -60,7 +60,7 @@ class AdminService:
                 return result.data[0].get("is_support_user", False)
             return False
         except Exception as e:
-            logger.error(f"Error checking support user status for {user_id}: {e}")
+            logger.error(f"Error checking support user status for {user_id}: {e}", exc_info=True)
             return False
 
     async def get_support_user(self) -> Optional[dict]:
@@ -76,7 +76,7 @@ class AdminService:
                 return result.data[0]
             return None
         except Exception as e:
-            logger.error(f"Error getting support user: {e}")
+            logger.error(f"Error getting support user: {e}", exc_info=True)
             return None
 
     async def get_support_user_by_email(self) -> Optional[dict]:
@@ -92,7 +92,7 @@ class AdminService:
                 return result.data[0]
             return None
         except Exception as e:
-            logger.error(f"Error getting support user by email: {e}")
+            logger.error(f"Error getting support user by email: {e}", exc_info=True)
             return None
 
     async def add_support_friend_to_user(self, user_id: str) -> bool:
@@ -161,7 +161,7 @@ class AdminService:
             return True
 
         except Exception as e:
-            logger.error(f"Error adding support friend to user {user_id}: {e}")
+            logger.error(f"Error adding support friend to user {user_id}: {e}", exc_info=True)
             return False
 
     async def add_support_friend_to_all_existing_users(self) -> int:
@@ -196,7 +196,7 @@ class AdminService:
             return count
 
         except Exception as e:
-            logger.error(f"Error backfilling support friends: {e}")
+            logger.error(f"Error backfilling support friends: {e}", exc_info=True)
             return 0
 
     def should_be_admin(self, email: str) -> bool:
@@ -300,7 +300,7 @@ class AdminService:
             return True
 
         except Exception as e:
-            logger.error(f"Error sending welcome message to user {user_id}: {e}")
+            logger.error(f"Error sending welcome message to user {user_id}: {e}", exc_info=True)
             return False
 
 

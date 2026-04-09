@@ -79,7 +79,7 @@ class InflammationService:
                 product_name=product_name,
             )
         except Exception as e:
-            logger.error(f"Ingredient analysis failed for {barcode}: {e}")
+            logger.error(f"Ingredient analysis failed for {barcode}: {e}", exc_info=True)
             raise
 
         if not analysis:
@@ -139,7 +139,7 @@ class InflammationService:
                 return result.data[0]
             return None
         except Exception as e:
-            logger.error(f"Error fetching cached analysis: {e}")
+            logger.error(f"Error fetching cached analysis: {e}", exc_info=True)
             return None
 
     async def _store_analysis(
@@ -189,7 +189,7 @@ class InflammationService:
             }).execute()
         except Exception as e:
             # Don't fail the whole request if scan recording fails
-            logger.error(f"Failed to record user scan: {e}")
+            logger.error(f"Failed to record user scan: {e}", exc_info=True)
 
     async def _log_scan_event(
         self,
@@ -216,7 +216,7 @@ class InflammationService:
             )
         except Exception as e:
             # Don't fail the whole request if context logging fails
-            logger.error(f"Failed to log scan event: {e}")
+            logger.error(f"Failed to log scan event: {e}", exc_info=True)
 
     def _build_response(self, data: Dict, from_cache: bool) -> InflammationAnalysisResponse:
         """Build response model from database row."""
@@ -246,7 +246,7 @@ class InflammationService:
                     scientific_notes=ia.get("scientific_notes"),
                 ))
             except Exception as e:
-                logger.warning(f"Failed to parse ingredient analysis: {e}")
+                logger.warning(f"Failed to parse ingredient analysis: {e}", exc_info=True)
                 continue
 
         # Count ingredients by type
@@ -333,12 +333,12 @@ class InflammationService:
                         is_favorited=row.get("is_favorited", False),
                     ))
                 except Exception as e:
-                    logger.warning(f"Failed to parse scan history entry: {e}")
+                    logger.warning(f"Failed to parse scan history entry: {e}", exc_info=True)
                     continue
 
             return scans
         except Exception as e:
-            logger.error(f"Error fetching user history: {e}")
+            logger.error(f"Error fetching user history: {e}", exc_info=True)
             return []
 
     async def get_user_stats(self, user_id: str) -> UserInflammationStatsResponse:
@@ -372,7 +372,7 @@ class InflammationService:
                 last_scan_at=last_scan_at,
             )
         except Exception as e:
-            logger.error(f"Error fetching user stats: {e}")
+            logger.error(f"Error fetching user stats: {e}", exc_info=True)
             return UserInflammationStatsResponse(user_id=user_id)
 
     async def update_scan_notes(
@@ -391,7 +391,7 @@ class InflammationService:
                 .execute()
             return len(result.data) > 0
         except Exception as e:
-            logger.error(f"Error updating scan notes: {e}")
+            logger.error(f"Error updating scan notes: {e}", exc_info=True)
             return False
 
     async def toggle_favorite(
@@ -410,7 +410,7 @@ class InflammationService:
                 .execute()
             return len(result.data) > 0
         except Exception as e:
-            logger.error(f"Error toggling favorite: {e}")
+            logger.error(f"Error toggling favorite: {e}", exc_info=True)
             return False
 
 

@@ -219,7 +219,7 @@ async def complete_nutrition_onboarding(request: NutritionOnboardingRequest, cur
                 "daily_fat_target_g": final_fat,
             }).eq("id", request.user_id).execute()
         except Exception as sync_err:
-            logger.warning(f"Failed to sync onboarding targets to users table: {sync_err}")
+            logger.warning(f"Failed to sync onboarding targets to users table: {sync_err}", exc_info=True)
 
         # Initialize nutrition streak
         streak_exists = db.client.table("nutrition_streaks")\
@@ -239,7 +239,7 @@ async def complete_nutrition_onboarding(request: NutritionOnboardingRequest, cur
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to complete nutrition onboarding: {e}")
+        logger.error(f"Failed to complete nutrition onboarding: {e}", exc_info=True)
         raise safe_internal_error(e, "nutrition")
 
 
@@ -295,7 +295,7 @@ async def skip_nutrition_onboarding(request: SkipOnboardingRequest, current_user
         return {"success": True, "message": "Nutrition onboarding skipped"}
 
     except Exception as e:
-        logger.error(f"Failed to skip nutrition onboarding: {e}")
+        logger.error(f"Failed to skip nutrition onboarding: {e}", exc_info=True)
         raise safe_internal_error(e, "nutrition")
 
 
@@ -325,7 +325,7 @@ async def reset_nutrition_onboarding(user_id: str, current_user: dict = Depends(
         return {"success": True, "message": "Nutrition onboarding reset successfully"}
 
     except Exception as e:
-        logger.error(f"Failed to reset nutrition onboarding: {e}")
+        logger.error(f"Failed to reset nutrition onboarding: {e}", exc_info=True)
         raise safe_internal_error(e, "nutrition")
 
 
@@ -478,13 +478,13 @@ async def recalculate_nutrition_targets(user_id: str, current_user: dict = Depen
                 "daily_fat_target_g": target_fat,
             }).eq("id", user_id).execute()
         except Exception as sync_err:
-            logger.warning(f"Failed to sync recalculated targets to users table: {sync_err}")
+            logger.warning(f"Failed to sync recalculated targets to users table: {sync_err}", exc_info=True)
 
         return await get_nutrition_preferences(user_id)
 
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to recalculate nutrition targets: {e}")
+        logger.error(f"Failed to recalculate nutrition targets: {e}", exc_info=True)
         raise safe_internal_error(e, "nutrition")
 

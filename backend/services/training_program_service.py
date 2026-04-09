@@ -208,7 +208,7 @@ async def _refresh_cache():
         logger.info(f"[TrainingProgramService] Built {len(_training_program_keywords)} keyword entries and {len(_training_program_map)} detection entries")
 
     except Exception as e:
-        logger.error(f"[TrainingProgramService] Error loading programs: {e}")
+        logger.error(f"[TrainingProgramService] Error loading programs: {e}", exc_info=True)
         # Keep existing cache on error
 
 

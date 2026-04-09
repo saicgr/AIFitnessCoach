@@ -508,11 +508,7 @@ class _WrappedSection extends ConsumerWidget {
                 borderRadius: BorderRadius.circular(11),
               ),
               child: const Center(
-                child: Text('?', style: TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.w800,
-                  color: Colors.white,
-                )),
+                child: Icon(Icons.auto_awesome, size: 22, color: Colors.white),
               ),
             ),
             const SizedBox(width: 12),

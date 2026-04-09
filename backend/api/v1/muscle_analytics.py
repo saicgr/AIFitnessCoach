@@ -290,7 +290,7 @@ async def get_muscle_heatmap_data(
                 )
 
         except Exception as rpc_error:
-            logger.warning(f"RPC failed, using fallback query: {rpc_error}")
+            logger.warning(f"RPC failed, using fallback query: {rpc_error}", exc_info=True)
 
         # Fallback: Query muscle_training_frequency view
         query = db.client.from_("muscle_training_frequency") \
@@ -340,7 +340,7 @@ async def get_muscle_heatmap_data(
         )
 
     except Exception as e:
-        logger.error(f"Error getting muscle heatmap: {e}")
+        logger.error(f"Error getting muscle heatmap: {e}", exc_info=True)
         raise safe_internal_error(e, "muscle_heatmap")
 
 
@@ -449,7 +449,7 @@ async def get_muscle_training_frequency(
         )
 
     except Exception as e:
-        logger.error(f"Error getting muscle frequency: {e}")
+        logger.error(f"Error getting muscle frequency: {e}", exc_info=True)
         raise safe_internal_error(e, "muscle_frequency")
 
 
@@ -567,7 +567,7 @@ async def get_muscle_balance(
         )
 
     except Exception as e:
-        logger.error(f"Error getting muscle balance: {e}")
+        logger.error(f"Error getting muscle balance: {e}", exc_info=True)
         raise safe_internal_error(e, "muscle_balance")
 
 
@@ -623,7 +623,7 @@ async def get_exercises_for_muscle(
                 )
 
         except Exception as rpc_error:
-            logger.warning(f"RPC failed, using fallback: {rpc_error}")
+            logger.warning(f"RPC failed, using fallback: {rpc_error}", exc_info=True)
 
         # Fallback query
         query = db.client.from_("exercise_workout_history") \
@@ -677,7 +677,7 @@ async def get_exercises_for_muscle(
         )
 
     except Exception as e:
-        logger.error(f"Error getting exercises for muscle: {e}")
+        logger.error(f"Error getting exercises for muscle: {e}", exc_info=True)
         raise safe_internal_error(e, "muscle_exercises")
 
 
@@ -761,7 +761,7 @@ async def get_muscle_history(
         )
 
     except Exception as e:
-        logger.error(f"Error getting muscle history: {e}")
+        logger.error(f"Error getting muscle history: {e}", exc_info=True)
         raise safe_internal_error(e, "muscle_history")
 
 
@@ -789,5 +789,5 @@ async def log_muscle_analytics_view(request: ViewLogRequest,
         return {"status": "logged"}
 
     except Exception as e:
-        logger.warning(f"Failed to log muscle analytics view: {e}")
+        logger.warning(f"Failed to log muscle analytics view: {e}", exc_info=True)
         return {"status": "error", "message": "Failed to log view"}

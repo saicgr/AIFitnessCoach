@@ -61,7 +61,7 @@ async def get_suggestions_summary(user_id: str,
         )
 
     except Exception as e:
-        logger.error(f"Failed to get suggestions summary: {e}")
+        logger.error(f"Failed to get suggestions summary: {e}", exc_info=True)
         raise safe_internal_error(e, "personal_goals")
 
 
@@ -154,7 +154,7 @@ async def _generate_performance_suggestions(db, user_id: str, week_start: date) 
                 })
 
     except Exception as e:
-        logger.error(f"Error generating performance suggestions: {e}")
+        logger.error(f"Error generating performance suggestions: {e}", exc_info=True)
 
     return suggestions[:4]
 
@@ -227,7 +227,7 @@ async def _generate_friends_suggestions(db, user_id: str, week_start: date) -> l
             })
 
     except Exception as e:
-        logger.error(f"Error generating friends suggestions: {e}")
+        logger.error(f"Error generating friends suggestions: {e}", exc_info=True)
 
     return suggestions
 
@@ -295,7 +295,7 @@ async def _generate_new_challenge_suggestions(db, user_id: str, week_start: date
                 })
 
     except Exception as e:
-        logger.error(f"Error generating new challenge suggestions: {e}")
+        logger.error(f"Error generating new challenge suggestions: {e}", exc_info=True)
 
     return suggestions[:4]
 
@@ -552,7 +552,7 @@ async def sync_workout_with_goals(user_id: str, request: WorkoutSyncRequest,
         )
 
     except Exception as e:
-        logger.error(f"Failed to sync workout with goals: {e}")
+        logger.error(f"Failed to sync workout with goals: {e}", exc_info=True)
         await log_user_error(
             user_id=user_id,
             action="goals_workout_sync",

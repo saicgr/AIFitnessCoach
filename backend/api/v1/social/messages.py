@@ -166,7 +166,7 @@ async def get_conversations(
         )
 
     except Exception as e:
-        logger.error(f"[Messages] Failed to get conversations: {e}")
+        logger.error(f"[Messages] Failed to get conversations: {e}", exc_info=True)
         raise safe_internal_error(e, "messages")
 
 
@@ -272,7 +272,7 @@ async def get_messages(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"[Messages] Failed to get messages: {e}")
+        logger.error(f"[Messages] Failed to get messages: {e}", exc_info=True)
         raise safe_internal_error(e, "messages")
 
 
@@ -418,7 +418,7 @@ async def send_message(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"[Messages] Failed to send message: {e}")
+        logger.error(f"[Messages] Failed to send message: {e}", exc_info=True)
         await log_user_error(
             user_id=user_id,
             action="direct_message_sent",
@@ -470,7 +470,7 @@ async def mark_as_read(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"[Messages] Failed to mark as read: {e}")
+        logger.error(f"[Messages] Failed to mark as read: {e}", exc_info=True)
         raise safe_internal_error(e, "messages")
 
 
@@ -546,7 +546,7 @@ async def get_conversation_with_user(
         )
 
     except Exception as e:
-        logger.error(f"[Messages] Failed to get conversation: {e}")
+        logger.error(f"[Messages] Failed to get conversation: {e}", exc_info=True)
         raise safe_internal_error(e, "messages")
 
 
@@ -625,7 +625,7 @@ async def create_group_conversation(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"[Messages] Failed to create group: {e}")
+        logger.error(f"[Messages] Failed to create group: {e}", exc_info=True)
         raise safe_internal_error(e, "messages")
 
 
@@ -696,7 +696,7 @@ async def update_group_members(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"[Messages] Failed to update group members: {e}")
+        logger.error(f"[Messages] Failed to update group members: {e}", exc_info=True)
         raise safe_internal_error(e, "messages")
 
 
@@ -748,7 +748,7 @@ async def update_group_settings(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"[Messages] Failed to update group settings: {e}")
+        logger.error(f"[Messages] Failed to update group settings: {e}", exc_info=True)
         raise safe_internal_error(e, "messages")
 
 
@@ -803,5 +803,5 @@ async def leave_group(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"[Messages] Failed to leave group: {e}")
+        logger.error(f"[Messages] Failed to leave group: {e}", exc_info=True)
         raise safe_internal_error(e, "messages")

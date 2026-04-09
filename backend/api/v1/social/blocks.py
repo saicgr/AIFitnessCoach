@@ -69,7 +69,7 @@ async def block_user(
                 "follower_id", blocked_id
             ).eq("following_id", user_id).execute()
         except Exception as e:
-            logger.warning(f"[Blocks] Failed to remove connections on block: {e}")
+            logger.warning(f"[Blocks] Failed to remove connections on block: {e}", exc_info=True)
 
         # Remove pending friend requests (both directions)
         try:
@@ -81,7 +81,7 @@ async def block_user(
                 "from_user_id", blocked_id
             ).eq("to_user_id", user_id).eq("status", "pending").execute()
         except Exception as e:
-            logger.warning(f"[Blocks] Failed to remove friend requests on block: {e}")
+            logger.warning(f"[Blocks] Failed to remove friend requests on block: {e}", exc_info=True)
 
         logger.info(f"[Blocks] User {user_id} blocked user {blocked_id}")
 
@@ -90,7 +90,7 @@ async def block_user(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"[Blocks] Error blocking user: {e}")
+        logger.error(f"[Blocks] Error blocking user: {e}", exc_info=True)
         raise safe_internal_error(e, "blocks")
 
 
@@ -127,7 +127,7 @@ async def unblock_user(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"[Blocks] Error unblocking user: {e}")
+        logger.error(f"[Blocks] Error unblocking user: {e}", exc_info=True)
         raise safe_internal_error(e, "blocks")
 
 
@@ -178,5 +178,5 @@ async def get_blocked_users(
         return {"blocked_users": blocked_users}
 
     except Exception as e:
-        logger.error(f"[Blocks] Error getting blocked users: {e}")
+        logger.error(f"[Blocks] Error getting blocked users: {e}", exc_info=True)
         raise safe_internal_error(e, "blocks")

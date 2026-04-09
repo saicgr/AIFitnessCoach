@@ -221,7 +221,7 @@ async def create_default_profile_if_needed(user_id: str) -> Optional[GymProfile]
         return profile
 
     except Exception as e:
-        logger.error(f"Failed to create default profile for user {user_id}: {e}")
+        logger.error(f"Failed to create default profile for user {user_id}: {e}", exc_info=True)
         return None
 
 
@@ -295,7 +295,7 @@ async def list_gym_profiles(
         )
 
     except Exception as e:
-        logger.error(f"❌ [GymProfile] Failed to list profiles: {e}")
+        logger.error(f"❌ [GymProfile] Failed to list profiles: {e}", exc_info=True)
         raise safe_internal_error(e, "endpoint")
 
 
@@ -397,7 +397,7 @@ async def get_active_profile(
             # Try to create default profile
             default_profile = await create_default_profile_if_needed(user_id)
             return default_profile
-        logger.error(f"❌ [GymProfile] Failed to get active profile: {e}")
+        logger.error(f"❌ [GymProfile] Failed to get active profile: {e}", exc_info=True)
         raise safe_internal_error(e, "endpoint")
 
 
@@ -518,7 +518,7 @@ async def create_gym_profile(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"❌ [GymProfile] Failed to create profile: {e}")
+        logger.error(f"❌ [GymProfile] Failed to create profile: {e}", exc_info=True)
         raise safe_internal_error(e, "endpoint")
 
 
@@ -554,7 +554,7 @@ async def get_gym_profile(
     except Exception as e:
         if "0 rows" in str(e).lower() or "no rows" in str(e).lower():
             raise HTTPException(status_code=404, detail="Profile not found")
-        logger.error(f"❌ [GymProfile] Failed to get profile: {e}")
+        logger.error(f"❌ [GymProfile] Failed to get profile: {e}", exc_info=True)
         raise safe_internal_error(e, "endpoint")
 
 

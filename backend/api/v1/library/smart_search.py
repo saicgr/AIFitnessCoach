@@ -208,7 +208,7 @@ async def _run_semantic_search(
         return ordered_rows
 
     except Exception as e:
-        logger.warning(f"Semantic search failed (falling back to fuzzy-only): {e}")
+        logger.warning(f"Semantic search failed (falling back to fuzzy-only): {e}", exc_info=True)
         return []
 
 
@@ -232,7 +232,7 @@ async def _write_cache_to_db(
             },
         ).execute()
     except Exception as e:
-        logger.warning(f"Failed to write exercise search cache: {e}")
+        logger.warning(f"Failed to write exercise search cache: {e}", exc_info=True)
 
 
 @router.get("/exercises/smart-search")
@@ -309,7 +309,7 @@ async def smart_search_exercises(
                 limit=limit * 2,
             )
         except Exception as e:
-            logger.warning(f"Fuzzy search failed: {e}")
+            logger.warning(f"Fuzzy search failed: {e}", exc_info=True)
             return []
 
     async def run_semantic():

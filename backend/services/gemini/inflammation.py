@@ -133,7 +133,7 @@ IMPORTANT RULES:
                     timeout=30,  # 30s for inflammation analysis
                 )
             except asyncio.TimeoutError:
-                logger.error("[Inflammation] Gemini API timed out after 30s")
+                logger.error("[Inflammation] Gemini API timed out after 30s", exc_info=True)
                 return None
 
             # Use response.parsed for structured output - SDK handles JSON parsing
@@ -176,6 +176,6 @@ IMPORTANT RULES:
             return result
 
         except Exception as e:
-            logger.error(f"[Gemini] Ingredient inflammation analysis failed: {e}")
+            logger.error(f"[Gemini] Ingredient inflammation analysis failed: {e}", exc_info=True)
             logger.exception("Full traceback:")
             return None

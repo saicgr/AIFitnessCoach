@@ -393,7 +393,7 @@ async def accept_retention_offer(user_id: str, request: AcceptOfferRequest, curr
                         .eq("user_id", user_id)\
                         .execute()
                 except (ValueError, TypeError) as e:
-                    logger.warning(f"Failed to extend subscription: {e}")
+                    logger.warning(f"Failed to extend subscription: {e}", exc_info=True)
 
             message = f"{extension_days} free days have been added to your subscription."
 

@@ -34,11 +34,11 @@ def _check_table_exists() -> bool:
     except Exception as e:
         if "PGRST205" in str(e) or "Could not find" in str(e):
             _table_available = False
-            logger.warning("⚠️ workout_generation_jobs table not found - using in-memory fallback")
-            logger.warning("Run migrations/003_workout_generation_jobs.sql to enable persistence")
+            logger.warning("⚠️ workout_generation_jobs table not found - using in-memory fallback", exc_info=True)
+            logger.warning("Run migrations/003_workout_generation_jobs.sql to enable persistence", exc_info=True)
         else:
             _table_available = False
-            logger.error(f"Error checking table: {e}")
+            logger.error(f"Error checking table: {e}", exc_info=True)
 
     return _table_available
 
@@ -78,7 +78,7 @@ class JobQueueService:
                 logger.info(f"📝 Created job {job_id} for user {user_id}")
                 return job_id
             except Exception as e:
-                logger.error(f"Failed to create job in DB: {e}")
+                logger.error(f"Failed to create job in DB: {e}", exc_info=True)
                 # Fall through to memory storage
 
         # In-memory fallback (capped at 100 jobs)
@@ -120,7 +120,7 @@ class JobQueueService:
                 result = db.client.table("workout_generation_jobs").select("*").eq("id", job_id).limit(1).execute()
                 return result.data[0] if result.data else None
             except Exception as e:
-                logger.error(f"Failed to get job from DB: {e}")
+                logger.error(f"Failed to get job from DB: {e}", exc_info=True)
 
         return _memory_jobs.get(job_id)
 
@@ -138,7 +138,7 @@ class JobQueueService:
                     .execute()
                 return result.data[0] if result.data else None
             except Exception as e:
-                logger.error(f"Failed to get pending job from DB: {e}")
+                logger.error(f"Failed to get pending job from DB: {e}", exc_info=True)
 
         # In-memory fallback
         user_jobs = [j for j in _memory_jobs.values()
@@ -158,7 +158,7 @@ class JobQueueService:
                     .execute()
                 return result.data[0] if result.data else None
             except Exception as e:
-                logger.error(f"Failed to get latest job from DB: {e}")
+                logger.error(f"Failed to get latest job from DB: {e}", exc_info=True)
 
         # In-memory fallback
         user_jobs = [j for j in _memory_jobs.values() if j["user_id"] == user_id]
@@ -198,7 +198,7 @@ class JobQueueService:
                 logger.info(f"📝 Updated job {job_id} status to {status}")
                 return
             except Exception as e:
-                logger.error(f"Failed to update job in DB: {e}")
+                logger.error(f"Failed to update job in DB: {e}", exc_info=True)
 
         # In-memory fallback
         if job_id in _memory_jobs:
@@ -216,7 +216,7 @@ class JobQueueService:
                     .execute()
                 return result.data if result.data else []
             except Exception as e:
-                logger.error(f"Failed to get pending jobs from DB: {e}")
+                logger.error(f"Failed to get pending jobs from DB: {e}", exc_info=True)
 
         # In-memory fallback
         return [j for j in _memory_jobs.values() if j["status"] in ["pending", "in_progress"]]
@@ -238,7 +238,7 @@ class JobQueueService:
                 if result.data:
                     logger.info(f"🧹 Cancelled {len(result.data)} stale jobs")
             except Exception as e:
-                logger.error(f"Failed to cancel stale jobs: {e}")
+                logger.error(f"Failed to cancel stale jobs: {e}", exc_info=True)
 
     def get_recent_job(self, user_id: str, within_seconds: int = 60) -> Optional[Dict[str, Any]]:
         """
@@ -275,7 +275,7 @@ class JobQueueService:
                     return job
                 return None
             except Exception as e:
-                logger.error(f"Failed to get recent job from DB: {e}")
+                logger.error(f"Failed to get recent job from DB: {e}", exc_info=True)
 
         # In-memory fallback
         cutoff_dt = datetime.now() - timedelta(seconds=within_seconds)

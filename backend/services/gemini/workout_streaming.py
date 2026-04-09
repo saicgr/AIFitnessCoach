@@ -306,8 +306,8 @@ If user has gym equipment (full_gym, barbell, dumbbells, cable_machine, machines
 
         except Exception as e:
             import traceback
-            logger.error(f"Streaming workout generation failed: {e}")
-            logger.error(f"Traceback: {traceback.format_exc()}")
+            logger.error(f"Streaming workout generation failed: {e}", exc_info=True)
+            logger.error(f"Traceback: {traceback.format_exc()}", exc_info=True)
             raise
 
     async def generate_workout_plan_streaming_cached(
@@ -469,11 +469,11 @@ If user has gym equipment (full_gym, barbell, dumbbells, cable_machine, machines
 
         except Exception as e:
             import traceback
-            logger.error(f"[CachedStreaming] Failed: {e}")
-            logger.error(f"Traceback: {traceback.format_exc()}")
+            logger.error(f"[CachedStreaming] Failed: {e}", exc_info=True)
+            logger.error(f"Traceback: {traceback.format_exc()}", exc_info=True)
 
             # Fallback to non-cached generation
-            logger.warning("[CachedStreaming] Falling back to non-cached generation")
+            logger.warning("[CachedStreaming] Falling back to non-cached generation", exc_info=True)
             async for chunk in self.generate_workout_plan_streaming(
                 fitness_level=fitness_level,
                 goals=goals,

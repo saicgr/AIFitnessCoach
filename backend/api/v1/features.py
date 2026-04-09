@@ -82,7 +82,7 @@ def row_to_feature_response(
             ).eq("feature_id", row["id"]).execute()
             user_has_voted = len(vote_result.data) > 0
         except Exception as e:
-            logger.error(f"Error checking user vote: {e}")
+            logger.error(f"Error checking user vote: {e}", exc_info=True)
 
     return FeatureRequestResponse(
         id=row["id"],
@@ -146,7 +146,7 @@ async def get_feature_requests(
         return features
 
     except Exception as e:
-        logger.error(f"Error fetching feature requests: {e}")
+        logger.error(f"Error fetching feature requests: {e}", exc_info=True)
         raise safe_internal_error(e, "features")
 
 
@@ -241,7 +241,7 @@ async def create_feature_request(
                 status_code=429,
                 detail="You have reached the maximum of 2 feature suggestions"
             )
-        logger.error(f"Error creating feature request: {e}")
+        logger.error(f"Error creating feature request: {e}", exc_info=True)
         await log_user_error(
             user_id=feature.user_id,
             action="feature_created",
@@ -319,7 +319,7 @@ async def vote_for_feature(request: Request, vote: VoteRequest, current_user: di
         }
 
     except Exception as e:
-        logger.error(f"Error toggling vote: {e}")
+        logger.error(f"Error toggling vote: {e}", exc_info=True)
         await log_user_error(
             user_id=vote.user_id,
             action="feature_vote",
@@ -357,7 +357,7 @@ async def get_feature_details(feature_id: str, user_id: Optional[str] = None, cu
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error fetching feature {feature_id}: {e}")
+        logger.error(f"Error fetching feature {feature_id}: {e}", exc_info=True)
         raise safe_internal_error(e, "features")
 
 
@@ -392,5 +392,5 @@ async def get_remaining_submissions(user_id: str, current_user: dict = Depends(g
         }
 
     except Exception as e:
-        logger.error(f"Error checking remaining submissions for user {user_id}: {e}")
+        logger.error(f"Error checking remaining submissions for user {user_id}: {e}", exc_info=True)
         raise safe_internal_error(e, "features")

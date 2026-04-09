@@ -197,7 +197,7 @@ async def delete_photo_from_s3(storage_key: str) -> bool:
         )
         return True
     except Exception as e:
-        logger.error(f"Error deleting from S3: {e}")
+        logger.error(f"Error deleting from S3: {e}", exc_info=True)
         return False
 
 

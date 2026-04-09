@@ -110,5 +110,5 @@ async def get_user_calorie_bias(user_id: str) -> int:
                 return bias
         return 0
     except Exception as e:
-        logger.warning(f"Could not fetch calorie_estimate_bias for user {user_id}: {e}")
+        logger.warning(f"Could not fetch calorie_estimate_bias for user {user_id}: {e}", exc_info=True)
         return 0
