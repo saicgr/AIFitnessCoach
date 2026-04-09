@@ -18,6 +18,10 @@ export function LandingFlux({
     return containerRef.current?.clientWidth ?? window.innerWidth;
   }, []);
 
+  const getContainerHeight = useCallback(() => {
+    return containerRef.current?.clientHeight ?? window.innerHeight;
+  }, []);
+
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
@@ -40,6 +44,7 @@ export function LandingFlux({
         color,
         disableMarquee,
         getContainerWidth,
+        getContainerHeight,
       );
 
       p5Instance = new p5(sketch, containerRef.current);
@@ -85,7 +90,7 @@ export function LandingFlux({
       const handleResize = () => {
         if (!p5Instance || !containerRef.current) return;
         const w = containerRef.current.clientWidth;
-        const h = rows * barHeight + (rows - 1) * gap + 40;
+        const h = containerRef.current.clientHeight;
         p5Instance.resizeCanvas(w, h);
       };
       window.addEventListener('resize', handleResize);
@@ -113,9 +118,7 @@ export function LandingFlux({
         p5Ref.current = null;
       }
     };
-  }, [rows, barHeight, gap, color, disableMarquee, getContainerWidth]);
-
-  const canvasHeight = rows * barHeight + (rows - 1) * gap + 40;
+  }, [rows, barHeight, gap, color, disableMarquee, getContainerWidth, getContainerHeight]);
 
   return (
     <div
@@ -123,7 +126,7 @@ export function LandingFlux({
       className={className}
       style={{
         width: '100%',
-        height: canvasHeight,
+        height: '100%',
         opacity: mounted ? 1 : 0,
         transition: 'opacity 0.3s ease-in-out',
         maskImage:

@@ -1,6 +1,6 @@
 // src/components/ui/cinematic-landing-hero.tsx
 
-import React, { useEffect, useRef, useState, useCallback, lazy, Suspense } from "react";
+import React, { useEffect, useRef, lazy, Suspense } from "react";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { cn } from "@/lib/utils";
@@ -211,21 +211,9 @@ export function CinematicHero({
   const mainCardRef = useRef<HTMLDivElement>(null);
   const mockupRef = useRef<HTMLDivElement>(null);
   const requestRef = useRef<number>(0);
-  const [activeSlide, setActiveSlide] = useState(0);
 
-  // Compute current slide data
   const slides = cardSlides && cardSlides.length > 0 ? cardSlides : null;
-  const currentSlide = slides ? slides[activeSlide] : null;
-  const activeScreenshot = currentSlide?.screenshot ?? phoneScreenshot;
-  const activeSides = currentSlide?.sideScreenshots ?? sideScreenshots;
-  const activeBadges = currentSlide?.badges ?? badges;
-  const activeHeading = currentSlide?.heading ?? cardHeading;
-  const activeDescription = currentSlide?.description ?? (typeof cardDescription === 'string' ? cardDescription : null);
-
-  // Slide cycling callback for GSAP
-  const handleSlideChange = useCallback((index: number) => {
-    setActiveSlide(index);
-  }, []);
+  const slideCount = slides ? slides.length : 0;
 
   // Preload all slide images to prevent flash during transitions
   useEffect(() => {
@@ -284,6 +272,14 @@ export function CinematicHero({
       gsap.set([".card-left-text", ".card-right-text", ".mockup-scroll-wrapper", ".floating-badge"], { autoAlpha: 0 });
       gsap.set(".cta-wrapper", { autoAlpha: 0, scale: 0.8 });
 
+      // Hide all pre-rendered slide layers except the first
+      for (let i = 1; i < slideCount; i++) {
+        gsap.set([
+          `.slide-phone-${i}`, `.slide-side-left-${i}`, `.slide-side-right-${i}`,
+          `.slide-badge-0-${i}`, `.slide-badge-1-${i}`, `.slide-text-${i}`,
+        ], { autoAlpha: 0 });
+      }
+
       const introTl = gsap.timeline({ delay: 0.1 });
       introTl
         .to(".text-track", { duration: 0.8, autoAlpha: 1, y: 0, scale: 1, rotationX: 0, ease: "expo.out" })
@@ -333,26 +329,26 @@ export function CinematicHero({
         )
         .to({}, { duration: d.hold });
 
-      // Slide cycling during the card hold phase — fluid crossfade
-      // Side phones excluded from slideTargets to avoid overwriting their inline rotateY transform
-      const slideCount = slides ? slides.length : 0;
-      const slideTargets = [".card-left-text", ".phone-screen-img", ".floating-badge"];
+      // Slide cycling — direct DOM crossfade between pre-rendered layers (no React state)
+      const slideClasses = (idx: number) => [
+        `.slide-phone-${idx}`, `.slide-side-left-${idx}`, `.slide-side-right-${idx}`,
+        `.slide-badge-0-${idx}`, `.slide-badge-1-${idx}`, `.slide-text-${idx}`,
+      ];
       if (slideCount > 1) {
         for (let i = 1; i < slideCount; i++) {
-          const slideIdx = i;
+          const prev = i - 1;
           scrollTl
-            // Slide out: gentle drift up + fade (side phones fade via opacity only)
-            .to(slideTargets, {
+            // Fade out previous slide elements
+            .to(slideClasses(prev), {
               autoAlpha: 0, y: -20, scale: 0.97, duration: d.fadeOut, ease: "power3.inOut", stagger: 0.02,
             })
             .to([".side-phone-left", ".side-phone-right"], {
               opacity: 0, duration: d.fadeOut, ease: "power3.inOut",
             }, "<")
-            .call(() => handleSlideChange(slideIdx))
-            // Reset position below for entrance
-            .set(slideTargets, { y: 25, scale: 0.97 })
-            // Slide in: drift up into place + fade in
-            .to(slideTargets, {
+            // Reset next slide position for entrance
+            .set(slideClasses(i), { y: 25, scale: 0.97 })
+            // Fade in next slide elements
+            .to(slideClasses(i), {
               autoAlpha: 1, y: 0, scale: 1, duration: d.fadeIn, ease: "expo.out", stagger: 0.02,
             })
             .to([".side-phone-left", ".side-phone-right"], {
@@ -414,7 +410,7 @@ export function CinematicHero({
       <div className="bg-grid-theme absolute inset-0 z-0 pointer-events-none opacity-50" aria-hidden="true" />
 
       {/* BACKGROUND LAYER: Hero Texts */}
-      <div className="hero-text-wrapper absolute z-10 flex flex-col items-center justify-center text-center w-screen px-4 will-change-transform transform-style-3d">
+      <div className="hero-text-wrapper absolute inset-0 z-10 flex flex-col items-center justify-center text-center px-4 will-change-transform transform-style-3d">
         <h1 className="text-track gsap-reveal text-3d-matte text-5xl md:text-7xl lg:text-[6rem] font-bold tracking-tight mb-2">
           {tagline1}
         </h1>
@@ -495,7 +491,7 @@ export function CinematicHero({
               <div className="relative w-full h-full flex items-center justify-center transform scale-[0.65] md:scale-85 lg:scale-100">
 
                 {/* Side phone - left */}
-                {activeSides && activeSides[0] && (
+                {(slides || sideScreenshots?.[0]) && (
                   <div
                     className="side-phone-left absolute w-[200px] h-[415px] rounded-[2.2rem] overflow-hidden opacity-40 -left-[140px] lg:-left-[180px] top-1/2 -translate-y-1/2 z-0 hidden md:block"
                     style={{
@@ -505,13 +501,19 @@ export function CinematicHero({
                     }}
                   >
                     <div className="absolute inset-[5px] rounded-[1.8rem] overflow-hidden bg-black">
-                      <img src={activeSides[0]} alt="App preview" className="absolute inset-0 w-full h-full object-cover" />
+                      {slides ? slides.map((slide, idx) => (
+                        <img key={idx} src={slide.sideScreenshots[0]} alt="App preview"
+                          className={`slide-side-left-${idx} absolute inset-0 w-full h-full object-cover`} />
+                      )) : sideScreenshots?.[0] && (
+                        <img src={sideScreenshots[0]} alt="App preview"
+                          className="slide-side-left-0 absolute inset-0 w-full h-full object-cover" />
+                      )}
                     </div>
                   </div>
                 )}
 
                 {/* Side phone - right */}
-                {activeSides && activeSides[1] && (
+                {(slides || sideScreenshots?.[1]) && (
                   <div
                     className="side-phone-right absolute w-[200px] h-[415px] rounded-[2.2rem] overflow-hidden opacity-40 -right-[140px] lg:-right-[180px] top-1/2 -translate-y-1/2 z-0 hidden md:block"
                     style={{
@@ -521,7 +523,13 @@ export function CinematicHero({
                     }}
                   >
                     <div className="absolute inset-[5px] rounded-[1.8rem] overflow-hidden bg-black">
-                      <img src={activeSides[1]} alt="App preview" className="absolute inset-0 w-full h-full object-cover" />
+                      {slides ? slides.map((slide, idx) => (
+                        <img key={idx} src={slide.sideScreenshots[1]} alt="App preview"
+                          className={`slide-side-right-${idx} absolute inset-0 w-full h-full object-cover`} />
+                      )) : sideScreenshots?.[1] && (
+                        <img src={sideScreenshots[1]} alt="App preview"
+                          className="slide-side-right-0 absolute inset-0 w-full h-full object-cover" />
+                      )}
                     </div>
                   </div>
                 )}
@@ -541,12 +549,19 @@ export function CinematicHero({
                   <div className="absolute inset-[7px] bg-[#050914] rounded-[2.5rem] overflow-hidden shadow-[inset_0_0_15px_rgba(0,0,0,1)] text-white z-10">
                     <div className="absolute inset-0 screen-glare z-40 pointer-events-none" aria-hidden="true" />
 
-                    {/* Real app screenshot */}
-                    {activeScreenshot ? (
+                    {/* Pre-rendered slide screenshots (stacked, GSAP controls visibility) */}
+                    {slides ? slides.map((slide, idx) => (
                       <img
-                        src={activeScreenshot}
+                        key={idx}
+                        src={slide.screenshot}
+                        alt={`${brandName} app screenshot ${idx + 1}`}
+                        className={`slide-phone-${idx} absolute inset-0 w-full h-full object-cover`}
+                      />
+                    )) : phoneScreenshot ? (
+                      <img
+                        src={phoneScreenshot}
                         alt={`${brandName} app screenshot`}
-                        className="phone-screen-img absolute inset-0 w-full h-full object-cover transition-opacity duration-300"
+                        className="slide-phone-0 absolute inset-0 w-full h-full object-cover"
                       />
                     ) : (
                       <div className="absolute inset-0 bg-gradient-to-b from-[#0a0a0a] to-[#1a1a1a] flex items-center justify-center">
@@ -559,28 +574,56 @@ export function CinematicHero({
                   </div>
                 </div>
 
-                {/* Floating Glass Badges */}
-                {activeBadges && activeBadges[0] && (
-                  <div className="floating-badge absolute flex top-6 lg:top-12 left-[-15px] lg:left-[-80px] floating-ui-badge rounded-xl lg:rounded-2xl p-3 lg:p-4 items-center gap-3 lg:gap-4 z-30">
-                    <div className={`w-8 h-8 lg:w-10 lg:h-10 rounded-full bg-gradient-to-b ${activeBadges[0].color} flex items-center justify-center border ${activeBadges[0].borderColor} shadow-inner`}>
-                      <span className="text-base lg:text-xl drop-shadow-lg" aria-hidden="true">{activeBadges[0].emoji}</span>
-                    </div>
-                    <div>
-                      <p className="text-white text-xs lg:text-sm font-bold tracking-tight">{activeBadges[0].title}</p>
-                      <p className="text-blue-200/50 text-[10px] lg:text-xs font-medium">{activeBadges[0].subtitle}</p>
-                    </div>
+                {/* Floating Glass Badges — pre-rendered per slide */}
+                {(slides || badges?.[0]) && (
+                  <div className="floating-badge absolute top-6 lg:top-12 left-[-15px] lg:left-[-80px] z-30 relative">
+                    {slides ? slides.map((slide, idx) => (
+                      <div key={idx} className={`slide-badge-0-${idx} ${idx > 0 ? 'absolute inset-0' : ''} flex floating-ui-badge rounded-xl lg:rounded-2xl p-3 lg:p-4 items-center gap-3 lg:gap-4`}>
+                        <div className={`w-8 h-8 lg:w-10 lg:h-10 rounded-full bg-gradient-to-b ${slide.badges[0].color} flex items-center justify-center border ${slide.badges[0].borderColor} shadow-inner`}>
+                          <span className="text-base lg:text-xl drop-shadow-lg" aria-hidden="true">{slide.badges[0].emoji}</span>
+                        </div>
+                        <div>
+                          <p className="text-white text-xs lg:text-sm font-bold tracking-tight">{slide.badges[0].title}</p>
+                          <p className="text-blue-200/50 text-[10px] lg:text-xs font-medium">{slide.badges[0].subtitle}</p>
+                        </div>
+                      </div>
+                    )) : badges?.[0] && (
+                      <div className="slide-badge-0-0 flex floating-ui-badge rounded-xl lg:rounded-2xl p-3 lg:p-4 items-center gap-3 lg:gap-4">
+                        <div className={`w-8 h-8 lg:w-10 lg:h-10 rounded-full bg-gradient-to-b ${badges[0].color} flex items-center justify-center border ${badges[0].borderColor} shadow-inner`}>
+                          <span className="text-base lg:text-xl drop-shadow-lg" aria-hidden="true">{badges[0].emoji}</span>
+                        </div>
+                        <div>
+                          <p className="text-white text-xs lg:text-sm font-bold tracking-tight">{badges[0].title}</p>
+                          <p className="text-blue-200/50 text-[10px] lg:text-xs font-medium">{badges[0].subtitle}</p>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
 
-                {activeBadges && activeBadges[1] && (
-                  <div className="floating-badge absolute flex bottom-12 lg:bottom-20 right-[-15px] lg:right-[-80px] floating-ui-badge rounded-xl lg:rounded-2xl p-3 lg:p-4 items-center gap-3 lg:gap-4 z-30">
-                    <div className={`w-8 h-8 lg:w-10 lg:h-10 rounded-full bg-gradient-to-b ${activeBadges[1].color} flex items-center justify-center border ${activeBadges[1].borderColor} shadow-inner`}>
-                      <span className="text-base lg:text-lg drop-shadow-lg" aria-hidden="true">{activeBadges[1].emoji}</span>
-                    </div>
-                    <div>
-                      <p className="text-white text-xs lg:text-sm font-bold tracking-tight">{activeBadges[1].title}</p>
-                      <p className="text-blue-200/50 text-[10px] lg:text-xs font-medium">{activeBadges[1].subtitle}</p>
-                    </div>
+                {(slides || badges?.[1]) && (
+                  <div className="floating-badge absolute bottom-12 lg:bottom-20 right-[-15px] lg:right-[-80px] z-30 relative">
+                    {slides ? slides.map((slide, idx) => (
+                      <div key={idx} className={`slide-badge-1-${idx} ${idx > 0 ? 'absolute inset-0' : ''} flex floating-ui-badge rounded-xl lg:rounded-2xl p-3 lg:p-4 items-center gap-3 lg:gap-4`}>
+                        <div className={`w-8 h-8 lg:w-10 lg:h-10 rounded-full bg-gradient-to-b ${slide.badges[1].color} flex items-center justify-center border ${slide.badges[1].borderColor} shadow-inner`}>
+                          <span className="text-base lg:text-lg drop-shadow-lg" aria-hidden="true">{slide.badges[1].emoji}</span>
+                        </div>
+                        <div>
+                          <p className="text-white text-xs lg:text-sm font-bold tracking-tight">{slide.badges[1].title}</p>
+                          <p className="text-blue-200/50 text-[10px] lg:text-xs font-medium">{slide.badges[1].subtitle}</p>
+                        </div>
+                      </div>
+                    )) : badges?.[1] && (
+                      <div className="slide-badge-1-0 flex floating-ui-badge rounded-xl lg:rounded-2xl p-3 lg:p-4 items-center gap-3 lg:gap-4">
+                        <div className={`w-8 h-8 lg:w-10 lg:h-10 rounded-full bg-gradient-to-b ${badges[1].color} flex items-center justify-center border ${badges[1].borderColor} shadow-inner`}>
+                          <span className="text-base lg:text-lg drop-shadow-lg" aria-hidden="true">{badges[1].emoji}</span>
+                        </div>
+                        <div>
+                          <p className="text-white text-xs lg:text-sm font-bold tracking-tight">{badges[1].title}</p>
+                          <p className="text-blue-200/50 text-[10px] lg:text-xs font-medium">{badges[1].subtitle}</p>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
 
@@ -591,13 +634,25 @@ export function CinematicHero({
             <div className="card-left-text gsap-reveal order-3 lg:order-1 flex flex-col justify-center text-center lg:text-left z-20 w-full lg:max-w-none px-4 lg:px-0 relative">
               {/* Dark gradient behind text for readability when phones overlap */}
               <div className="absolute inset-0 -mx-4 lg:-mx-8 bg-gradient-to-r from-[#0A101D] via-[#0A101D]/90 to-transparent rounded-2xl pointer-events-none" />
-              <h3 className="relative text-white text-2xl md:text-3xl lg:text-4xl font-bold mb-0 lg:mb-5 tracking-tight">
-                {activeHeading}
-              </h3>
-              {/* HIDDEN ON MOBILE */}
-              <p className="relative hidden md:block text-blue-100/70 text-sm md:text-base lg:text-lg font-normal leading-relaxed mx-auto lg:mx-0 max-w-sm lg:max-w-none">
-                {activeDescription ?? cardDescription}
-              </p>
+              {slides ? slides.map((slide, idx) => (
+                <div key={idx} className={`slide-text-${idx} ${idx > 0 ? 'absolute inset-0 flex flex-col justify-center text-center lg:text-left px-4 lg:px-0' : 'relative'}`}>
+                  <h3 className="relative text-white text-2xl md:text-3xl lg:text-4xl font-bold mb-0 lg:mb-5 tracking-tight">
+                    {slide.heading}
+                  </h3>
+                  <p className="relative hidden md:block text-blue-100/70 text-sm md:text-base lg:text-lg font-normal leading-relaxed mx-auto lg:mx-0 max-w-sm lg:max-w-none">
+                    {slide.description}
+                  </p>
+                </div>
+              )) : (
+                <div className="slide-text-0 relative">
+                  <h3 className="relative text-white text-2xl md:text-3xl lg:text-4xl font-bold mb-0 lg:mb-5 tracking-tight">
+                    {cardHeading}
+                  </h3>
+                  <p className="relative hidden md:block text-blue-100/70 text-sm md:text-base lg:text-lg font-normal leading-relaxed mx-auto lg:mx-0 max-w-sm lg:max-w-none">
+                    {cardDescription}
+                  </p>
+                </div>
+              )}
             </div>
 
           </div>
