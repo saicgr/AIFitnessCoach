@@ -329,7 +329,7 @@ export function CinematicHero({
         )
         .to({}, { duration: d.hold });
 
-      // Slide cycling — direct DOM crossfade between pre-rendered layers (no React state)
+      // Slide cycling — overlapping crossfade between pre-rendered layers (no blank frames)
       const slideClasses = (idx: number) => [
         `.slide-phone-${idx}`, `.slide-side-left-${idx}`, `.slide-side-right-${idx}`,
         `.slide-badge-0-${idx}`, `.slide-badge-1-${idx}`, `.slide-text-${idx}`,
@@ -337,22 +337,14 @@ export function CinematicHero({
       if (slideCount > 1) {
         for (let i = 1; i < slideCount; i++) {
           const prev = i - 1;
+          const crossfadeDur = d.fadeOut + d.fadeIn;
           scrollTl
-            // Fade out previous slide elements
+            // Crossfade: fade out previous and fade in next simultaneously
             .to(slideClasses(prev), {
-              autoAlpha: 0, y: -20, scale: 0.97, duration: d.fadeOut, ease: "power3.inOut", stagger: 0.02,
+              autoAlpha: 0, duration: crossfadeDur, ease: "power2.inOut",
             })
-            .to([".side-phone-left", ".side-phone-right"], {
-              opacity: 0, duration: d.fadeOut, ease: "power3.inOut",
-            }, "<")
-            // Reset next slide position for entrance
-            .set(slideClasses(i), { y: 25, scale: 0.97 })
-            // Fade in next slide elements
             .to(slideClasses(i), {
-              autoAlpha: 1, y: 0, scale: 1, duration: d.fadeIn, ease: "expo.out", stagger: 0.02,
-            })
-            .to([".side-phone-left", ".side-phone-right"], {
-              opacity: 0.4, duration: d.fadeIn, ease: "expo.out",
+              autoAlpha: 1, duration: crossfadeDur, ease: "power2.inOut",
             }, "<")
             .to({}, { duration: d.slideHold });
         }
@@ -392,7 +384,7 @@ export function CinematicHero({
       <style dangerouslySetInnerHTML={{ __html: INJECTED_STYLES }} />
 
       {/* BACKGROUND LAYER 0: Animated flux marquee — centered behind hero text */}
-      <div className="flux-bg absolute left-0 right-0 top-1/2 -translate-y-1/2 z-0 pointer-events-auto" aria-hidden="true">
+      <div className="flux-bg absolute inset-0 z-0 pointer-events-auto flex items-center" aria-hidden="true">
         <Suspense fallback={null}>
           <LandingFlux
             className="w-full"
