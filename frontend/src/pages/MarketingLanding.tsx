@@ -17,25 +17,22 @@ const stagger = {
 
 const PLAY_STORE = 'https://play.google.com/store/apps/details?id=com.aifitnesscoach.app';
 
-const freeFeatures = [
-  '1,722 exercises with videos',
-  'Unlimited workout logging',
-  'Manual food logging & barcode scanner',
-  'Habit tracking & streaks',
-  'Progress photos & measurements',
-  '5 AI chat messages/day',
-  'No ads, ever',
-];
-
 const premiumFeatures = [
-  'Everything in Free, plus:',
+  '1,722 exercises with video demos',
   'Unlimited AI coach chat',
   'AI workout generation',
   'AI photo food logging',
+  'Unlimited workout logging',
+  'Manual food logging & barcode scanner',
+  'Environment aware (gym, home, hotel, outdoors)',
   'Adaptive TDEE & smart suggestions',
   'Advanced charts (all-time history)',
   'Muscle heatmap & balance analysis',
-  'Voice guidance & coach personas',
+  'Skill progressions (52+ exercises)',
+  'Injury tracking & body part exclusion',
+  'Coach personas (5+ AI personalities)',
+  'Hell Mode — max intensity',
+  'No ads, ever',
 ];
 
 export default function MarketingLanding() {
@@ -129,47 +126,19 @@ export default function MarketingLanding() {
               className="text-[32px] sm:text-[48px] font-semibold tracking-[-0.02em]"
               style={{ fontFamily: 'var(--font-heading)' }}
             >
-              Free forever. Premium for power.
+              One plan. Everything included.
             </motion.h2>
+            <motion.p variants={fadeUp} className="text-[17px] text-[var(--color-text-secondary)] mt-4 max-w-[500px] mx-auto">
+              Try every feature free for 7 days. No credit card required.
+            </motion.p>
           </motion.div>
 
           <motion.div
             initial="hidden"
             animate={pricingInView ? 'visible' : 'hidden'}
             variants={stagger}
-            className="grid grid-cols-1 md:grid-cols-3 gap-6"
+            className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-[700px] mx-auto"
           >
-            {/* Free Plan */}
-            <motion.div
-              variants={fadeUp}
-              className="p-8 rounded-3xl bg-[var(--color-surface)] border border-[var(--color-border)]"
-            >
-              <h3 className="text-2xl font-semibold mb-1">Free</h3>
-              <p className="text-[var(--color-text-secondary)] text-sm mb-6">Everything to get started</p>
-              <div className="flex items-baseline gap-1 mb-8">
-                <span className="text-[48px] font-bold tracking-tight">$0</span>
-                <span className="text-[var(--color-text-secondary)] text-sm">/forever</span>
-              </div>
-              <ul className="space-y-3 mb-8">
-                {freeFeatures.map((f) => (
-                  <li key={f} className="flex items-start gap-3 text-[15px]">
-                    <svg className="w-5 h-5 text-emerald-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
-                    </svg>
-                    <span className="text-[var(--color-text)]">{f}</span>
-                  </li>
-                ))}
-              </ul>
-              <a
-                href={PLAY_STORE}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="block w-full text-center py-3 rounded-full border border-[var(--color-border)] hover:border-emerald-500/50 text-[var(--color-text)] font-medium transition-colors"
-              >
-                Download Free
-              </a>
-            </motion.div>
-
             {/* Premium Yearly — Best Value */}
             <motion.div
               variants={fadeUp}
@@ -178,7 +147,7 @@ export default function MarketingLanding() {
               <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1 bg-emerald-500 text-white text-xs font-bold uppercase tracking-wider rounded-full">
                 Best Value
               </div>
-              <h3 className="text-2xl font-semibold mb-1">Premium Yearly</h3>
+              <h3 className="text-2xl font-semibold mb-1">Yearly</h3>
               <p className="text-[var(--color-text-secondary)] text-sm mb-6">Full AI-powered fitness</p>
               <div className="flex items-baseline gap-1 mb-1">
                 <span className="text-[48px] font-bold tracking-tight bg-gradient-to-r from-emerald-400 to-green-400 bg-clip-text text-transparent">$4.17</span>
@@ -202,7 +171,7 @@ export default function MarketingLanding() {
                 rel="noopener noreferrer"
                 className="block w-full text-center py-3 rounded-full bg-emerald-500 hover:bg-emerald-400 text-white font-medium transition-colors"
               >
-                Try Premium Free for 7 Days
+                Start 7-Day Free Trial
               </a>
             </motion.div>
 
@@ -211,7 +180,7 @@ export default function MarketingLanding() {
               variants={fadeUp}
               className="p-8 rounded-3xl bg-[var(--color-surface)] border border-[var(--color-border)]"
             >
-              <h3 className="text-2xl font-semibold mb-1">Premium Monthly</h3>
+              <h3 className="text-2xl font-semibold mb-1">Monthly</h3>
               <p className="text-[var(--color-text-secondary)] text-sm mb-6">Pay as you go</p>
               <div className="flex items-baseline gap-1 mb-2">
                 <span className="text-[48px] font-bold tracking-tight">$4.99</span>
@@ -234,7 +203,7 @@ export default function MarketingLanding() {
                 rel="noopener noreferrer"
                 className="block w-full text-center py-3 rounded-full border border-[var(--color-border)] hover:border-emerald-500/50 text-[var(--color-text)] font-medium transition-colors"
               >
-                Subscribe Now
+                Start 7-Day Free Trial
               </a>
             </motion.div>
           </motion.div>

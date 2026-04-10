@@ -466,7 +466,7 @@ export function CinematicHero({
           <div className="card-sheen" aria-hidden="true" />
 
           {/* DYNAMIC RESPONSIVE GRID: Flex-col on mobile to force order, Grid on desktop */}
-          <div className="relative w-full h-full max-w-7xl mx-auto px-4 lg:px-12 flex flex-col justify-evenly lg:grid lg:grid-cols-3 items-center lg:gap-8 z-10 py-6 lg:py-0">
+          <div className="relative w-full h-full max-w-7xl mx-auto px-4 lg:px-12 flex flex-col justify-evenly lg:grid lg:grid-cols-[1.3fr_1fr_1fr] items-center lg:gap-8 z-10 py-6 lg:py-0">
 
             {/* 1. TOP (Mobile) / RIGHT (Desktop): BRAND NAME */}
             <div className="card-right-text gsap-reveal order-1 lg:order-3 flex justify-center lg:justify-end z-20 w-full">
@@ -627,10 +627,10 @@ export function CinematicHero({
               <div className="absolute inset-0 -mx-4 lg:-mx-8 bg-gradient-to-r from-[#0A101D] via-[#0A101D]/90 to-transparent rounded-2xl pointer-events-none" />
               {slides ? slides.map((slide, idx) => (
                 <div key={idx} className={`slide-text-${idx} ${idx > 0 ? 'absolute inset-0 flex flex-col justify-center text-center lg:text-left px-4 lg:px-0' : 'relative'}`}>
-                  <h3 className="relative text-white text-2xl md:text-3xl lg:text-4xl font-bold mb-0 lg:mb-5 tracking-tight">
+                  <h3 className="relative text-white text-2xl md:text-4xl lg:text-5xl font-bold mb-0 lg:mb-5 tracking-tight">
                     {slide.heading}
                   </h3>
-                  <p className="relative hidden md:block text-blue-100/70 text-sm md:text-base lg:text-lg font-normal leading-relaxed mx-auto lg:mx-0 max-w-sm lg:max-w-none">
+                  <p className="relative hidden md:block text-blue-100/70 text-sm md:text-lg lg:text-xl font-normal leading-relaxed mx-auto lg:mx-0 max-w-md lg:max-w-none">
                     {slide.description}
                   </p>
                 </div>

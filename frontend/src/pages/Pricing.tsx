@@ -48,71 +48,81 @@ interface PricingPlan {
 
 const plans: PricingPlan[] = [
   {
-    name: 'Free',
-    description: 'Everything you need to get started',
-    monthlyPrice: '$0',
-    yearlyPrice: '$0',
-    yearlyTotal: '$0',
+    name: 'Premium Yearly',
+    description: 'Full AI-powered fitness & nutrition',
+    monthlyPrice: '$4.99',
+    yearlyPrice: '$4.17',
+    yearlyTotal: '$49.99',
+    savings: 'Save 17%',
     features: [
       '1,722 exercises with video demos',
+      'Unlimited AI coach chat',
+      'AI workout generation (monthly/weekly/quick)',
+      'AI photo food logging (Vision)',
       'Unlimited workout logging',
       'Manual food logging & barcode scanner',
       'Fasting timer (3 protocols)',
-      'Habit tracking & streaks',
-      'Progress photos & 15 body measurements',
-      'Social feed, leaderboards & challenges',
-      '5 AI chat messages/day',
-      'Achievement badges & XP system',
-      'Apple Health & Google Fit sync',
+      'Workout environment aware (gym, home, hotel, outdoors)',
+      'Adaptive TDEE & smart weight suggestions',
+      'Advanced charts (all-time history)',
+      'Muscle group heatmap & balance analysis',
+      'Skill progressions (7 chains, 52+ exercises)',
+      'Injury tracking & body part exclusion',
+      'Coach personas (5+ AI personalities)',
+      'Hell Mode — max intensity regeneration',
       'No ads, ever',
     ],
-    cta: 'Get Started Free',
+    highlight: true,
+    badge: 'Best Value',
+    cta: 'Start 7-Day Free Trial',
   },
   {
-    name: 'Premium',
-    description: 'Full AI-powered fitness & nutrition',
+    name: 'Premium Monthly',
+    description: 'Pay as you go, cancel anytime',
     monthlyPrice: '$4.99',
     yearlyPrice: '$4.99',
     yearlyTotal: '$59.88',
     features: [
-      'Everything in Free, plus:',
+      '1,722 exercises with video demos',
       'Unlimited AI coach chat',
       'AI workout generation (monthly/weekly/quick)',
       'AI photo food logging (Vision)',
+      'Unlimited workout logging',
+      'Manual food logging & barcode scanner',
+      'Fasting timer (3 protocols)',
+      'Workout environment aware (gym, home, hotel, outdoors)',
       'Adaptive TDEE & smart weight suggestions',
-      'All 10 fasting protocols + AI insights',
       'Advanced charts (all-time history)',
       'Muscle group heatmap & balance analysis',
       'Skill progressions (7 chains, 52+ exercises)',
-      'Hormonal health & diabetes tracking',
-      'Voice guidance & coach personas',
-      'Priority support',
+      'Injury tracking & body part exclusion',
+      'Coach personas (5+ AI personalities)',
+      'Hell Mode — max intensity regeneration',
+      'No ads, ever',
     ],
-    highlight: true,
-    badge: 'Most Popular',
     cta: 'Start 7-Day Free Trial',
   },
 ];
 
-const comparisonFeatures = [
-  { feature: 'Exercise Library', free: '1,722 with videos', premium: '1,722 with videos' },
-  { feature: 'Workout Logging', free: 'Unlimited', premium: 'Unlimited' },
-  { feature: 'AI Chat Messages', free: '5/day', premium: 'Unlimited' },
-  { feature: 'AI Workout Generation', free: '-', premium: 'Monthly/Weekly/Quick' },
-  { feature: 'AI Food Photo Scanning', free: '-', premium: 'Yes (Gemini Vision)' },
-  { feature: 'Manual Food Logging', free: 'Yes', premium: 'Yes' },
-  { feature: 'Barcode Scanner', free: 'Yes', premium: 'Yes' },
-  { feature: 'Macro Tracking', free: 'Full (P/C/F)', premium: 'Full + Micronutrients' },
-  { feature: 'Adaptive TDEE', free: '-', premium: 'Research-grade' },
-  { feature: 'Fasting Protocols', free: '3 (16:8, 18:6, 20:4)', premium: 'All 10 + Custom' },
-  { feature: 'Charts & Analytics', free: '3-month history', premium: 'All-time history' },
-  { feature: 'Muscle Heatmap', free: '-', premium: 'Yes' },
-  { feature: 'Skill Progressions', free: '-', premium: '7 chains (52+ exercises)' },
-  { feature: 'Coach Personas', free: '-', premium: '5+ personalities' },
-  { feature: 'Voice Guidance (TTS)', free: '-', premium: 'Yes' },
-  { feature: 'Hormonal Health', free: '-', premium: 'Cycle-aware workouts' },
-  { feature: 'Social Feed & Leaderboards', free: 'Yes', premium: 'Yes' },
-  { feature: 'Ads', free: 'None', premium: 'None' },
+const premiumFeaturesList = [
+  { feature: 'Exercise Library', detail: '1,722 with video demos' },
+  { feature: 'Workout Logging', detail: 'Unlimited' },
+  { feature: 'AI Chat Messages', detail: 'Unlimited' },
+  { feature: 'AI Workout Generation', detail: 'Monthly / Weekly / Quick' },
+  { feature: 'AI Food Photo Scanning', detail: 'Gemini Vision' },
+  { feature: 'Manual Food Logging', detail: 'Yes' },
+  { feature: 'Barcode Scanner', detail: 'Yes' },
+  { feature: 'Macro Tracking', detail: 'Full + Micronutrients' },
+  { feature: 'Adaptive TDEE', detail: 'Research-grade' },
+  { feature: 'Charts & Analytics', detail: 'All-time history' },
+  { feature: 'Muscle Heatmap', detail: 'Yes' },
+  { feature: 'Skill Progressions', detail: '7 chains (52+ exercises)' },
+  { feature: 'Injury Tracking', detail: 'Auto-adapt workouts' },
+  { feature: 'Coach Personas', detail: '5+ personalities' },
+  { feature: 'Environment Aware', detail: 'Gym, home, hotel, outdoors' },
+  { feature: 'Hell Mode', detail: 'Max intensity regeneration' },
+  { feature: 'Social Feed & Leaderboards', detail: 'Yes' },
+  { feature: 'Ads', detail: 'None' },
 ];
 
 // What FitWiz includes in one app
@@ -125,33 +135,29 @@ const fitwizIncludes = [
   { category: 'Adaptive TDEE', icon: '📊' },
   { category: 'Habit Tracking', icon: '✅' },
   { category: 'Hormonal Health', icon: '🧬' },
-  { category: 'Free Barcode Scanner', icon: '📷' },
-  { category: 'No Ads (Free Tier)', icon: '🚫' },
+  { category: 'Barcode Scanner', icon: '📷' },
+  { category: 'No Ads, Ever', icon: '🚫' },
 ];
 
 const faqs = [
   {
-    question: 'What do I get for free?',
-    answer: 'Plenty — unlimited workout logging, 1,722 exercises with videos, barcode food scanning, fasting timer, habit tracking, social features, and 5 AI coach messages a day. No credit card needed.',
-  },
-  {
-    question: 'How does the free trial work?',
-    answer: 'You get 7 days of full Premium access — no payment upfront. After the trial you can subscribe or just keep using the free plan.',
+    question: 'How does the 7-day free trial work?',
+    answer: 'You get 7 days of full access to every feature — no payment upfront. After the trial, choose monthly ($4.99/mo) or yearly ($49.99/yr) to keep going.',
   },
   {
     question: 'Can I cancel whenever I want?',
-    answer: "Yes, cancel anytime through Google Play. No fees, no questions. You keep Premium until the end of your billing period.",
+    answer: "Yes, cancel anytime through Google Play. No fees, no questions. You keep access until the end of your billing period.",
   },
   {
     question: 'What payment methods are accepted?',
     answer: 'Everything supported by Google Play — credit cards, debit cards, Google Pay, and carrier billing in supported regions.',
   },
   {
-    question: 'Can I upgrade or downgrade my plan?',
-    answer: 'Yes, you can change your plan anytime. When upgrading, you get immediate access to new features. When downgrading, the change takes effect at the end of your billing period.',
+    question: 'Can I switch between monthly and yearly?',
+    answer: 'Yes, you can switch anytime. When moving to yearly, the change takes effect at the end of your current billing period and you start saving immediately.',
   },
   {
-    question: 'How can FitWiz offer so much for $5.99/month?',
+    question: 'How can FitWiz offer so much for $4.99/month?',
     answer: "We believe premium fitness coaching shouldn't cost $20/month. By leveraging cutting-edge AI efficiently, we deliver workouts + nutrition + fasting + AI coaching all in one app at a price that's accessible to everyone.",
   },
 ];
@@ -201,7 +207,7 @@ export default function Pricing() {
             transition={{ delay: 0.1 }}
             className="text-[17px] sm:text-[21px] text-[var(--color-text-secondary)] max-w-[600px] mx-auto mb-8"
           >
-            Start free, upgrade when you're ready. No hidden fees.
+            Try everything free for 7 days. No credit card required.
           </motion.p>
 
           {/* Billing Toggle */}
@@ -320,7 +326,7 @@ export default function Pricing() {
             className="text-[32px] sm:text-[40px] font-semibold tracking-[-0.02em] text-center mb-12"
             style={{ fontFamily: 'var(--font-heading)' }}
           >
-            Compare plans
+            Everything included
           </motion.h2>
 
           <div className="overflow-x-auto">
@@ -328,19 +334,15 @@ export default function Pricing() {
               <thead>
                 <tr className="border-b border-[var(--color-border)]">
                   <th className="text-left py-4 px-4 text-[15px] font-semibold text-[var(--color-text)]">Feature</th>
-                  <th className="text-center py-4 px-4 text-[15px] font-semibold text-[var(--color-text)] w-[140px]">Free</th>
-                  <th className="text-center py-4 px-4 text-[15px] font-semibold text-emerald-400 w-[180px]">Premium</th>
+                  <th className="text-center py-4 px-4 text-[15px] font-semibold text-emerald-400 w-[220px]">Included</th>
                 </tr>
               </thead>
               <tbody>
-                {comparisonFeatures.map((row, index) => (
+                {premiumFeaturesList.map((row, index) => (
                   <tr key={index} className="border-b border-[var(--color-border)]">
                     <td className="py-4 px-4 text-[14px] text-[var(--color-text)]">{row.feature}</td>
-                    <td className="py-4 px-4 text-center text-[14px] text-[var(--color-text-secondary)]">
-                      {row.free === '-' ? <XIcon /> : row.free === 'Yes' ? <CheckIcon /> : row.free}
-                    </td>
                     <td className="py-4 px-4 text-center text-[14px] text-[var(--color-text)] bg-emerald-500/5">
-                      {row.premium === 'Yes' ? <CheckIcon /> : row.premium}
+                      {row.detail === 'Yes' ? <CheckIcon /> : row.detail}
                     </td>
                   </tr>
                 ))}
@@ -446,7 +448,7 @@ export default function Pricing() {
               </div>
               <div className="space-y-3">
                 {[
-                  'Workouts + nutrition + fasting + coaching in one $5.99/mo app',
+                  'Workouts + nutrition + fasting + coaching in one $4.99/mo app',
                   'AI generates plans around your goals, equipment, and injuries',
                   '5 specialist AI agents for coaching, nutrition, and recovery',
                   'Track every rep and see clear progress analytics',
@@ -538,7 +540,7 @@ export default function Pricing() {
             transition={{ delay: 0.2 }}
             className="text-center text-[15px] text-[var(--color-text-secondary)] mt-8"
           >
-            Most fitness apps charge $10-20/month for a single feature. FitWiz delivers everything at $5.99.
+            Most fitness apps charge $10-20/month for a single feature. FitWiz delivers everything starting at $4.17/month.
           </motion.p>
         </div>
       </section>
@@ -601,7 +603,7 @@ export default function Pricing() {
             Ready to transform your fitness?
           </h2>
           <p className="text-[17px] text-[var(--color-text-secondary)] mb-8">
-            Start free today. No credit card required.
+            Try every feature free for 7 days. No credit card required.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <a
@@ -610,7 +612,7 @@ export default function Pricing() {
               rel="noopener noreferrer"
               className="px-8 py-3.5 bg-emerald-500 text-white text-[17px] rounded-full hover:bg-emerald-400 transition-colors"
             >
-              Get started free
+              Start 7-Day Free Trial
             </a>
             <Link
               to="/features"

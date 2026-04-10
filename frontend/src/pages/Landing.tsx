@@ -1177,9 +1177,9 @@ export default function Landing() {
               rel="noopener noreferrer"
               className="inline-flex px-8 py-3.5 bg-[#0071e3] text-white text-[17px] rounded-full hover:bg-[#0077ed] transition-colors"
             >
-              Get started free
+              Start 7-Day Free Trial
             </a>
-            <p className="mt-5 text-[13px] text-[#86868b]">No credit card required.</p>
+            <p className="mt-5 text-[13px] text-[#86868b]">No credit card required. Cancel anytime.</p>
           </motion.div>
         </motion.div>
       </section>

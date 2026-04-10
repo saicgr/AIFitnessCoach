@@ -24,7 +24,7 @@ const faqData: FAQCategory[] = [
       {
         question: 'How much does it cost?',
         answer:
-          'The core app is completely free — you get 1,722 exercises with videos, unlimited workout logging, barcode food scanning, habit tracking, and 5 AI messages a day. Premium is $4.99/month (or $4.17/month billed yearly) and unlocks unlimited AI coaching, photo food logging, AI-generated workouts, and advanced analytics.',
+          'FitWiz is $4.99/month or $4.17/month billed yearly ($49.99/year). Every new user gets a 7-day free trial with full access to all features — no credit card required to start.',
       },
       {
         question: 'Which devices does it work on?',
@@ -107,19 +107,19 @@ const faqData: FAQCategory[] = [
     title: 'Subscription',
     items: [
       {
-        question: 'What do I get with Premium?',
+        question: 'What\'s included in my subscription?',
         answer:
-          'Unlimited AI-generated workouts, unlimited photo food logging, full macro tracking, advanced progress charts, muscle heatmaps, voice coaching, and priority AI responses.',
+          'Everything — unlimited AI-generated workouts, unlimited AI coach chat, photo food logging, full macro tracking, advanced progress charts, muscle heatmaps, 1,722 exercises with video demos, skill progressions, injury tracking, coach personas, and more. There are no feature tiers — you get it all.',
       },
       {
         question: 'Can I cancel whenever I want?',
         answer:
-          'Yes, cancel anytime through Google Play. No fees, no hoops. You keep Premium access until the end of your current billing period.',
+          'Yes, cancel anytime through Google Play. No fees, no hoops. You keep access until the end of your current billing period.',
       },
       {
-        question: 'Is there a way to try Premium first?',
+        question: 'How does the 7-day free trial work?',
         answer:
-          'New users get a 7-day free trial with full access to every Premium feature. No payment is required to start — you only get charged if you decide to keep it.',
+          'New users get 7 days of full access to every feature. No payment required to start — you only get charged if you decide to keep it after the trial ends.',
       },
     ],
   },
