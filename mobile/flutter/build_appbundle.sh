@@ -43,7 +43,7 @@ echo -e "${YELLOW}Building app bundle (${BUILD_MODE})...${NC}"
 # export REVENUECAT_GOOGLE_KEY=goog_YourKeyHere
 if [ -z "$REVENUECAT_GOOGLE_KEY" ]; then
     echo -e "${RED}ERROR: REVENUECAT_GOOGLE_KEY env var not set${NC}"
-    echo -e "${YELLOW}Run: export REVENUECAT_GOOGLE_KEY=goog_YourKeyHere${NC}"
+    echo -e "${YELLOW}Run: export REVENUECAT_GOOGLE_KEY=goog_oWxJnYQrUSCtIxMqTPcEPfWgBxq${NC}"
     exit 1
 fi
 
