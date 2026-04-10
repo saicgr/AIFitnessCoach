@@ -402,10 +402,10 @@ export function CinematicHero({
 
       {/* BACKGROUND LAYER: Hero Texts */}
       <div className="hero-text-wrapper absolute inset-0 z-10 flex flex-col items-center justify-center text-center px-4 will-change-transform transform-style-3d">
-        <h1 className="text-track text-3d-matte text-5xl md:text-7xl lg:text-[6rem] font-bold tracking-tight mb-2">
+        <h1 className="text-track text-3d-matte text-5xl md:text-7xl lg:text-[6rem] font-bold tracking-tight mb-2 leading-[1.1]">
           {tagline1}
         </h1>
-        <h1 className="text-days text-silver-matte text-5xl md:text-7xl lg:text-[6rem] font-extrabold tracking-tighter">
+        <h1 className="text-days text-silver-matte text-5xl md:text-7xl lg:text-[6rem] font-extrabold tracking-tighter leading-[1.15] pb-2">
           {tagline2}
         </h1>
       </div>
