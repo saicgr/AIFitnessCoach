@@ -1,24 +1,18 @@
+import '../config/environment_config.dart';
+
 /// API configuration constants
 class ApiConstants {
   ApiConstants._();
 
-  /// Base URL for the backend API
-  // Development: Use localhost:8000 for local testing
-  // Production: Use https://fitwiz-zqi3.onrender.com
-  static const String baseUrl = 'https://aifitnesscoach-zqi3.onrender.com'; // Production
+  /// Base URL for the backend API — driven by EnvironmentConfig
+  static String get baseUrl => EnvironmentConfig.backendBaseUrl;
 
   /// API version prefix
   static const String apiVersion = '/api/v1';
 
-  /// Supabase configuration
-  static const String supabaseUrl = String.fromEnvironment(
-    'SUPABASE_URL',
-    defaultValue: 'https://hpbzfahijszqmgsybuor.supabase.co',
-  );
-  static const String supabaseAnonKey = String.fromEnvironment(
-    'SUPABASE_ANON_KEY',
-    defaultValue: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhwYnpmYWhpanN6cW1nc3lidW9yIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQyNjEzOTYsImV4cCI6MjA3OTgzNzM5Nn0.udv4b7UPhLLEfiWo7qd5ezqNTZ7KBXqzW_CwroNowAM',
-  );
+  /// Supabase configuration — driven by EnvironmentConfig
+  static String get supabaseUrl => EnvironmentConfig.supabaseUrl;
+  static String get supabaseAnonKey => EnvironmentConfig.supabaseAnonKey;
 
   /// Full API base URL
   static String get apiBaseUrl => '$baseUrl$apiVersion';
@@ -35,21 +29,12 @@ class ApiConstants {
   /// AI-specific receive timeout (longer for AI responses)
   static const Duration aiReceiveTimeout = Duration(minutes: 2);
 
-  /// Google OAuth Web Client ID — injected via --dart-define at build time
-  static const String googleWebClientId = String.fromEnvironment(
-    'GOOGLE_WEB_CLIENT_ID',
-    defaultValue: '843677137160-h1jh9t4d0s6mui2eqsek2h0rnq27n19o.apps.googleusercontent.com',
-  );
+  /// Google OAuth Web Client ID — driven by EnvironmentConfig
+  static const String googleWebClientId = EnvironmentConfig.googleWebClientId;
 
-  /// RevenueCat API Keys - supplied via --dart-define at build time
-  static const String revenueCatAppleApiKey = String.fromEnvironment(
-    'REVENUECAT_APPLE_KEY',
-    defaultValue: 'test_key_placeholder',
-  );
-  static const String revenueCatGoogleApiKey = String.fromEnvironment(
-    'REVENUECAT_GOOGLE_KEY',
-    defaultValue: 'test_key_placeholder',
-  );
+  /// RevenueCat API Keys — driven by EnvironmentConfig
+  static const String revenueCatAppleApiKey = EnvironmentConfig.revenueCatAppleApiKey;
+  static const String revenueCatGoogleApiKey = EnvironmentConfig.revenueCatGoogleApiKey;
 
   /// Google Maps API Key (for gym location picker)
   /// To set up:

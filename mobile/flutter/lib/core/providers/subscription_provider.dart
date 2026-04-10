@@ -200,7 +200,6 @@ class FeatureAccessResult {
 class SubscriptionNotifier extends StateNotifier<SubscriptionState> {
   final ApiClient? _apiClient;
   String? _userId;
-  Timer? _trialExpirationTimer;
   static bool _revenueCatInitialized = false;
   PosthogService? _posthog;
 
@@ -208,38 +207,19 @@ class SubscriptionNotifier extends StateNotifier<SubscriptionState> {
 
   void setPosthog(PosthogService posthog) { _posthog = posthog; }
 
-  @override
-  void dispose() {
-    _trialExpirationTimer?.cancel();
-    super.dispose();
+  /// Whether the app should show the hard paywall (user had trial/sub that lapsed).
+  /// True when tier is free AND user has already completed the paywall flow previously.
+  bool get isHardLocked {
+    final paywallCompleted = state.features['paywall_completed'] == true;
+    return state.tier == SubscriptionTier.free && !state.isTrialActive && paywallCompleted;
   }
 
-  /// Schedule a timer that fires when the 24h trial expires.
-  /// Downgrades to free and sets [trialJustExpired] so the UI can show a prompt.
-  void _scheduleTrialExpiration(DateTime trialEnd) {
-    _trialExpirationTimer?.cancel();
-    final remaining = trialEnd.difference(DateTime.now());
-    if (remaining.isNegative) return;
-    _trialExpirationTimer = Timer(remaining, () async {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.remove('free_trial_end_date');
-      await prefs.setString('subscription_tier', 'free');
-      if (mounted) {
-        state = state.copyWith(
-          tier: SubscriptionTier.free,
-          isTrialActive: false,
-          trialJustExpired: true,
-        );
-        _posthog?.capture(eventName: 'trial_expired', properties: {});
-        debugPrint('⏰ 24h trial expired — downgraded to free');
-      }
-    });
-    debugPrint('⏰ Trial expiration timer set for ${remaining.inMinutes}m from now');
-  }
-
-  /// Clear the trialJustExpired flag after the UI has shown the prompt.
-  void clearTrialExpiredFlag() {
-    state = state.copyWith(trialJustExpired: false);
+  /// Check hard-lock status using SharedPreferences (sync, for route guards).
+  Future<bool> checkIsHardLocked() async {
+    final prefs = await SharedPreferences.getInstance();
+    final paywallCompleted = prefs.getBool('paywall_completed') ?? false;
+    final tier = prefs.getString('subscription_tier') ?? 'free';
+    return tier == 'free' && paywallCompleted;
   }
 
   // RevenueCat product IDs - must match App Store Connect / Google Play Console
@@ -326,27 +306,6 @@ class SubscriptionNotifier extends StateNotifier<SubscriptionState> {
       // Fall back to local storage if nothing worked
       if (state.tier == SubscriptionTier.free && !state.isRevenueCatConfigured) {
         await checkSubscriptionStatus();
-      }
-
-      // Check for active 24-hour free trial (persists through restarts)
-      if (state.tier == SubscriptionTier.free) {
-        final prefs = await SharedPreferences.getInstance();
-        final trialEndStr = prefs.getString('free_trial_end_date');
-        if (trialEndStr != null) {
-          final trialEnd = DateTime.tryParse(trialEndStr);
-          if (trialEnd != null && trialEnd.isAfter(DateTime.now())) {
-            state = state.copyWith(
-              tier: SubscriptionTier.premium,
-              isTrialActive: true,
-              trialEndDate: trialEnd,
-            );
-            _scheduleTrialExpiration(trialEnd);
-            debugPrint('✅ Active 24h trial found, expires: $trialEnd');
-          } else {
-            await prefs.remove('free_trial_end_date');
-            await prefs.setString('subscription_tier', 'free');
-          }
-        }
       }
 
       state = state.copyWith(isLoading: false);
@@ -538,28 +497,6 @@ class SubscriptionNotifier extends StateNotifier<SubscriptionState> {
         orElse: () => SubscriptionTier.free,
       );
 
-      // Check for active 24-hour free trial
-      final trialEndStr = prefs.getString('free_trial_end_date');
-      if (trialEndStr != null) {
-        final trialEnd = DateTime.tryParse(trialEndStr);
-        if (trialEnd != null && trialEnd.isAfter(DateTime.now())) {
-          state = state.copyWith(
-            tier: SubscriptionTier.premium,
-            isTrialActive: true,
-            trialEndDate: trialEnd,
-          );
-          _scheduleTrialExpiration(trialEnd);
-          return;
-        } else {
-          // Trial expired — clean up
-          await prefs.remove('free_trial_end_date');
-          if (tier == SubscriptionTier.premium) {
-            tier = SubscriptionTier.free;
-            await prefs.setString('subscription_tier', 'free');
-          }
-        }
-      }
-
       state = state.copyWith(tier: tier);
     } catch (e) {
       state = state.copyWith(error: 'Failed to check subscription: $e');
@@ -741,32 +678,6 @@ class SubscriptionNotifier extends StateNotifier<SubscriptionState> {
       );
       return false;
     }
-  }
-
-  /// Skip paywall and use free tier
-  Future<void> skipToFree() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('subscription_tier', 'free');
-    await prefs.setBool('paywall_seen', true);
-    state = state.copyWith(tier: SubscriptionTier.free);
-    _posthog?.capture(eventName: 'subscription_skipped_to_free', properties: {});
-  }
-
-  /// Grant a 24-hour free premium trial (used after declining paywall + discount)
-  Future<void> grant24HourTrial() async {
-    final prefs = await SharedPreferences.getInstance();
-    final trialEnd = DateTime.now().add(const Duration(hours: 24));
-    await prefs.setString('free_trial_end_date', trialEnd.toIso8601String());
-    await prefs.setString('subscription_tier', 'premium');
-    await prefs.setBool('paywall_seen', true);
-    state = state.copyWith(
-      tier: SubscriptionTier.premium,
-      isTrialActive: true,
-      trialEndDate: trialEnd,
-    );
-    _scheduleTrialExpiration(trialEnd);
-    _posthog?.capture(eventName: 'trial_started', properties: {});
-    debugPrint('✅ 24-hour free trial granted, expires: $trialEnd');
   }
 
   /// Check if paywall has been seen

@@ -543,6 +543,12 @@ List<RouteBase> _preAuthRoutes() => [
         builder: (context, state) => const SeniorOnboardingScreen(),
       ),
 
+      // Hard paywall — shown after trial/subscription expires
+      GoRoute(
+        path: '/hard-paywall',
+        builder: (context, state) => const HardPaywallScreen(),
+      ),
+
       // Paywall Screen 1: Feature highlights
       GoRoute(
         path: '/paywall-features',

@@ -508,3 +508,64 @@ async def get_feature_limits(user_id: str, current_user: dict = Depends(get_curr
         raise
     except Exception as e:
         raise safe_internal_error(e, "get_feature_limits")
+
+
+@router.get("/{user_id}/progress-summary")
+async def get_progress_summary(user_id: str):
+    """Lightweight progress summary for hard paywall screen. No auth gate needed."""
+    try:
+        supabase = get_supabase()
+
+        # Get workout count
+        workouts_result = supabase.client.table("workout_logs").select("id", count="exact").eq("user_id", user_id).execute()
+        workouts_completed = workouts_result.count or 0
+
+        # Get total volume (sum of weight * reps across all sets)
+        sets_result = supabase.client.table("workout_sets").select("weight_lbs, reps").eq("user_id", user_id).execute()
+        total_volume = 0.0
+        if sets_result.data:
+            for s in sets_result.data:
+                w = s.get("weight_lbs") or 0
+                r = s.get("reps") or 0
+                total_volume += float(w) * float(r)
+
+        # Get best streak from user_streaks table
+        best_streak = 0
+        streak_result = supabase.client.table("user_streaks").select(
+            "longest_streak"
+        ).eq("user_id", user_id).eq("streak_type", "workout").execute()
+        if streak_result.data:
+            best_streak = streak_result.data[0].get("longest_streak") or 0
+
+        # Get days since signup
+        days_since_signup = 0
+        user_result = supabase.client.table("users").select("created_at").eq("id", user_id).single().execute()
+        if user_result.data:
+            created_at = user_result.data.get("created_at")
+            if created_at:
+                from datetime import timezone
+                signup_date = datetime.fromisoformat(created_at.replace("Z", "+00:00"))
+                days_since_signup = (datetime.now(timezone.utc) - signup_date).days
+
+        # Get last workout date
+        last_workout = supabase.client.table("workout_logs").select("completed_at").eq("user_id", user_id).order("completed_at", desc=True).limit(1).execute()
+        last_workout_date = None
+        if last_workout.data:
+            last_workout_date = last_workout.data[0].get("completed_at")
+
+        return {
+            "workouts_completed": workouts_completed,
+            "total_volume_lbs": round(total_volume, 1),
+            "best_streak": best_streak,
+            "days_since_signup": days_since_signup,
+            "last_workout_date": last_workout_date,
+        }
+    except Exception as e:
+        logger.error(f"Failed to fetch progress summary for {user_id}: {e}", exc_info=True)
+        return {
+            "workouts_completed": 0,
+            "total_volume_lbs": 0,
+            "best_streak": 0,
+            "days_since_signup": 0,
+            "last_workout_date": None,
+        }

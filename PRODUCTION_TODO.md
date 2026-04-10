@@ -18,22 +18,34 @@ Google will reject or the app will break in production without these. Everything
 
 ### Payments & Subscriptions
 - [ ] RevenueCat integration working end-to-end
-- [ ] Subscription plans configured (monthly $4.99)
+- [ ] Subscription plans configured (monthly $4.99, yearly $49.99)
 - [ ] Purchase flow tested (subscribe, restore, cancel)
 - [ ] Paywall UI working correctly
-- [ ] Free trial flow working
-- [ ] Receipt validation on backend
-- [ ] Handle subscription expiry gracefully (lock premium features, don't crash)
+- [ ] 7-day free trial flow working (no credit card required)
+- [ ] Receipt validation on backend (RevenueCat webhooks)
+- [x] Handle trial expiry — paywall blocks app (hard_paywall_screen.dart)
 - [ ] Google Play Billing integration tested in sandbox mode
+- [ ] Billing grace period enabled (3-7 days for failed payments)
+- [x] Win-back offers configured for lapsed subscribers (email_marketing.py, hard_paywall_screen.dart)
+- [x] Discount popup if user taps "Maybe later" on paywall (25% off)
+- [x] Remove free tier from Vercel Pricing page
+- [x] Remove free tier from Vercel MarketingLanding page
+- [x] Remove free tier from Vercel FAQ page
+- [x] Update Landing page CTAs to trial-focused
+- [x] Remove free_tier_provider.dart and dead trial code from Flutter
+- [x] Push notification reminders before trial expires (Day 5 and Day 7)
+- [x] Email reminders with 25% discount before trial expires (Day 5 and Day 7)
+- [ ] Create premium_yearly_25off product in Google Play Console + RevenueCat
+- [ ] Ensure 7-day free trial attached to premium_yearly in Google Play Console
 
 ### Prod vs Dev Environment
-- [ ] Separate prod and dev backend URLs (Render)
-- [ ] Separate Supabase projects or environment flags
-- [ ] Separate Gemini API keys (prod vs dev quotas)
-- [ ] Separate Firebase projects (prod vs dev crashlytics)
-- [ ] Environment switching in Flutter (--dart-define or .env)
-- [ ] No debug logs in release builds
-- [ ] No hardcoded dev URLs in production code
+- [x] Separate prod and dev backend URLs (Render)
+- [ ] Separate Supabase projects or environment flags (same project for now — no users yet)
+- [ ] Separate Gemini API keys (prod vs dev quotas) (same key for now — no users yet)
+- [ ] Separate Firebase projects (prod vs dev crashlytics) (same project for now — no users yet)
+- [x] Environment switching in Flutter (--dart-define or .env)
+- [x] No debug logs in release builds
+- [x] No hardcoded dev URLs in production code
 - [ ] API rate limits configured for production traffic
 
 ### Notifications

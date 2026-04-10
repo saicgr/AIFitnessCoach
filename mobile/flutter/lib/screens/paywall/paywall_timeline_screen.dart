@@ -113,7 +113,7 @@ class PaywallTimelineScreen extends ConsumerWidget {
               ),
               const SizedBox(height: 10),
 
-              // Free tier note
+              // Cancel anytime reassurance
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
@@ -130,7 +130,7 @@ class PaywallTimelineScreen extends ConsumerWidget {
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        'Even without premium, you can use FitWiz completely free for workout tracking, logging sets & reps, and monitoring your progress.',
+                        'Cancel anytime during or after your trial. No charge until the trial ends, and you can manage your subscription from Google Play.',
                         style: TextStyle(
                           fontSize: 12,
                           color: colors.textSecondary,

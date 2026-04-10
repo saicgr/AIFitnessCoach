@@ -299,9 +299,9 @@ async def _job_day3_activation(supabase, email_svc) -> int:
 
 async def _job_trial_ending(supabase, email_svc) -> int:
     """
-    Send trial-ending warning to users whose trial expires in exactly 3 or 1 days.
-    Gate: product_updates preference.
-    Cooldown: 2 days (so 3d and 1d both trigger).
+    Send trial-ending warning to users whose trial expires in exactly 2 or 0 days (Day 5 and Day 7).
+    Includes 25% discount offer. Gate: product_updates preference.
+    Cooldown: 1 day (so Day 5 and Day 7 both trigger).
     """
     email_type = "trial_ending"
     sent = 0
@@ -309,8 +309,8 @@ async def _job_trial_ending(supabase, email_svc) -> int:
     try:
         today = date.today()
         target_dates = [
-            (today + timedelta(days=3)).isoformat(),
-            (today + timedelta(days=1)).isoformat(),
+            (today + timedelta(days=2)).isoformat(),  # Day 5 of trial (2 days left)
+            today.isoformat(),                         # Day 7 of trial (expires today)
         ]
 
         for target_date in target_dates:
@@ -346,7 +346,7 @@ async def _job_trial_ending(supabase, email_svc) -> int:
                 pref = prefs_map.get(uid, {})
                 if pref.get("product_updates") is False:
                     continue
-                if _was_recently_sent(supabase, uid, email_type, cooldown_days=2):
+                if _was_recently_sent(supabase, uid, email_type, cooldown_days=1):
                     continue
 
                 # Count workouts during trial
@@ -364,6 +364,7 @@ async def _job_trial_ending(supabase, email_svc) -> int:
                     tier=sub.get("tier", "premium"),
                     workouts_during_trial=workout_count,
                     trial_end_date=trial_end_str,
+                    discount_percent=25,
                 )
                 if result.get("success"):
                     _log_email_sent(supabase, uid, email_type)
@@ -434,7 +435,7 @@ async def _job_win_back_30(supabase, email_svc) -> int:
                 user_name=user.get("name", ""),
                 days_since_expiry=30,
                 workouts_completed=workout_count,
-                discount_percent=20,
+                discount_percent=25,
             )
             if result.get("success"):
                 _log_email_sent(supabase, uid, email_type)

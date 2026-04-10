@@ -70,6 +70,7 @@ import '../screens/measurements/measurement_detail_screen.dart';
 import '../screens/measurements/derived_metric_detail_screen.dart';
 import '../screens/glossary/glossary_screen.dart';
 import '../screens/personal_goals/personal_goals_screen.dart';
+import '../screens/paywall/hard_paywall_screen.dart';
 import '../screens/paywall/paywall_features_screen.dart';
 import '../screens/paywall/paywall_timeline_screen.dart';
 import '../screens/paywall/paywall_pricing_screen.dart';
@@ -415,12 +416,18 @@ String? _handleAuthRedirect(
     return isLoggedIn ? null : '/intro';
   }
 
+  // Hard paywall — allow for logged-in users with expired trial/sub
+  if (loc == '/hard-paywall') {
+    return isLoggedIn ? null : '/intro';
+  }
+
   const paywallScreens = {'/paywall-features', '/paywall-timeline', '/paywall-pricing'};
   if (paywallScreens.contains(loc)) {
     if (isLoggedIn) {
       final user = authState.user;
       if (user != null && !user.isPaywallComplete) return null;
-      return homeRoute;
+      // Allow re-visiting paywall pricing from hard-paywall or settings
+      return null;
     }
     return '/intro';
   }

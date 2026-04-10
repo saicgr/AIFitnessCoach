@@ -93,8 +93,9 @@ class EmailLifecycleMixin:
     async def send_trial_ending(
         self, to_email: str, user_name: str, days_remaining: int,
         tier: str, workouts_during_trial: int, trial_end_date: str,
+        discount_percent: int = 25,
     ) -> Dict[str, Any]:
-        """Send a trial ending soon reminder email."""
+        """Send a trial ending soon reminder email with discount offer."""
         if not self.is_configured():
             return {"error": "Email service not configured"}
 
@@ -105,21 +106,26 @@ class EmailLifecycleMixin:
         display_name = user_name.split()[0] if user_name else "there"
         days_word = "days" if days_remaining != 1 else "day"
 
+        discount_price = f"${49.99 * (1 - discount_percent / 100):.2f}"
+        discount_text = f"Subscribe now and save {discount_percent}% -- just {discount_price}/year."
+
+        features = [
+            ("&#9200;", "Trial expires soon", f"After {trial_end_date}, you'll lose access to AI workouts, coaching, and all premium features."),
+            ("&#127947;", f"{workouts_during_trial} workouts logged", "All your progress is saved. Subscribe to keep generating new AI plans and coaching."),
+            ("&#127873;", f"Special offer: {discount_percent}% off", f"{discount_text} That's less than $0.11/day for a full AI fitness coach."),
+        ]
+
         html_content = self._build_standard_email(
             logo_url=logo_url, open_url=open_url,
             title=f"{days_remaining} {days_word} left, {display_name}",
             subtitle=f"Your trial ends on {trial_end_date}. You've done {workouts_during_trial} workouts -- don't lose your momentum.",
-            cta_text="Keep Premium Access",
-            features=[
-                ("&#9200;", "Trial expires soon", f"After {trial_end_date}, you'll drop to the free plan with limited AI coach access."),
-                ("&#127947;", f"{workouts_during_trial} workouts logged", "All your history is safe. But generating new AI plans requires Premium."),
-                ("&#128161;", "Subscribe now, same day", "Upgrading takes 30 seconds via the app. Cancel anytime."),
-            ],
+            cta_text=f"Subscribe Now -- {discount_percent}% Off",
+            features=features,
             footer_text="You received this because your FitWiz trial is ending soon.",
         )
 
         try:
-            params = {"from": self.from_email, "to": [to_email], "subject": f"Your free trial ends in {days_remaining} {days_word} -- here's what you'll lose", "html": html_content}
+            params = {"from": self.from_email, "to": [to_email], "subject": f"Your free trial ends in {days_remaining} {days_word} -- save {discount_percent}% today", "html": html_content}
             response = resend.Emails.send(params)
             logger.info(f"Trial ending email sent to {to_email}: {response}")
             return {"success": True, "id": response.get("id")}

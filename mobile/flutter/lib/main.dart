@@ -9,6 +9,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'app.dart';
+import 'core/config/environment_config.dart';
 import 'core/constants/api_constants.dart';
 import 'core/accessibility/accessibility_provider.dart';
 import 'core/providers/subscription_provider.dart';
@@ -26,6 +27,11 @@ import 'core/services/posthog_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  if (kDebugMode) {
+    debugPrint('🔧 [Environment] ENV=${EnvironmentConfig.isDev ? "dev" : "prod"}');
+    debugPrint('🔧 [Environment] Backend URL: ${ApiConstants.baseUrl}');
+  }
 
   // --- Critical blocking initializations (must complete before runApp) ---
   // Run all three in parallel since they're independent of each other.

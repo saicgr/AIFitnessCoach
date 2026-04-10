@@ -85,7 +85,7 @@ Future<bool> _processBackgroundSync() async {
 
     // Create a basic Dio client with auth header
     final dio = Dio(BaseOptions(
-      baseUrl: 'https://aifitnesscoach-zqi3.onrender.com/api/v1',
+      baseUrl: ApiConstants.apiBaseUrl,
       connectTimeout: const Duration(seconds: 15),
       receiveTimeout: const Duration(seconds: 30),
       headers: {

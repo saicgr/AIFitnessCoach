@@ -327,6 +327,9 @@ class _FitWizAppState extends ConsumerState<FitWizApp> {
         case 'test':
           router.push('/notifications');
           break;
+        case 'trial_reminder':
+          router.push('/paywall-pricing');
+          break;
         case 'live_chat_message':
         case 'live_chat_connected':
         case 'live_chat_ended':

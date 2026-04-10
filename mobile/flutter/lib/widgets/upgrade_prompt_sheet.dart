@@ -228,7 +228,7 @@ class _UpgradePromptContentState extends ConsumerState<_UpgradePromptContent> {
                     child: ElevatedButton(
                       onPressed: () {
                         Navigator.of(context).pop();
-                        context.push('/paywall');
+                        context.push('/hard-paywall');
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor:

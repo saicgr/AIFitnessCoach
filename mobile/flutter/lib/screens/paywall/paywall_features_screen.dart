@@ -82,18 +82,28 @@ class PaywallFeaturesScreen extends ConsumerWidget {
 
                 const Spacer(),
 
-                // Feature list - trimmed to key highlights
+                // Feature list
                 _FeatureItem(icon: Icons.auto_fix_high, iconColor: colors.purple, title: 'Unlimited AI workout generation', subtitle: '23+ equipment types with personalized weights', colors: colors),
                 const SizedBox(height: 12),
-                _FeatureItem(icon: Icons.local_fire_department, iconColor: const Color(0xFFE74C3C), title: 'Hell Mode', subtitle: 'Regenerate with max intensity', colors: colors),
-                const SizedBox(height: 12),
-                _FeatureItem(icon: Icons.location_on_outlined, iconColor: colors.electricBlue, title: 'Workout environment aware', subtitle: 'Gym, home, hotel, outdoors - adapts to your space', colors: colors),
+                _FeatureItem(icon: Icons.chat_bubble_outline, iconColor: colors.electricBlue, title: 'Unlimited AI coach chat', subtitle: 'Ask anything — nutrition, form, recovery, motivation', colors: colors),
                 const SizedBox(height: 12),
                 _FeatureItem(icon: Icons.camera_alt_outlined, iconColor: colors.orange, title: 'Unlimited food photo scanning', subtitle: 'Snap a photo, get instant calories & macros', colors: colors),
                 const SizedBox(height: 12),
-                _FeatureItem(icon: Icons.videocam_outlined, iconColor: colors.coral, title: 'AI form video analysis', subtitle: 'Upload exercise videos for AI form scoring & corrections', colors: colors),
+                _FeatureItem(icon: Icons.location_on_outlined, iconColor: colors.electricBlue, title: 'Workout environment aware', subtitle: 'Gym, home, hotel, outdoors — adapts to your space', colors: colors),
+                const SizedBox(height: 12),
+                _FeatureItem(icon: Icons.show_chart_rounded, iconColor: Colors.greenAccent, title: 'Adaptive TDEE & smart suggestions', subtitle: 'Research-grade metabolism tracking that adapts weekly', colors: colors),
+                const SizedBox(height: 12),
+                _FeatureItem(icon: Icons.fitness_center, iconColor: colors.purple, title: 'Skill progressions', subtitle: '7 chains with 52+ exercises to master', colors: colors),
                 const SizedBox(height: 12),
                 _FeatureItem(icon: Icons.healing_outlined, iconColor: colors.coral, title: 'Injury tracking & body part exclusion', subtitle: 'Report injuries, auto-adapt workouts safely', colors: colors),
+                const SizedBox(height: 12),
+                _FeatureItem(icon: Icons.grid_view_rounded, iconColor: Colors.tealAccent, title: 'Muscle heatmap & balance analysis', subtitle: 'Visualize which muscles you train most', colors: colors),
+                const SizedBox(height: 12),
+                _FeatureItem(icon: Icons.bar_chart_rounded, iconColor: colors.orange, title: 'Advanced charts & analytics', subtitle: 'All-time history with detailed progress trends', colors: colors),
+                const SizedBox(height: 12),
+                _FeatureItem(icon: Icons.person_outline_rounded, iconColor: colors.purple, title: 'Coach personas', subtitle: '5+ AI personality styles to match your vibe', colors: colors),
+                const SizedBox(height: 12),
+                _FeatureItem(icon: Icons.local_fire_department, iconColor: const Color(0xFFE74C3C), title: 'Hell Mode', subtitle: 'Regenerate with max intensity — not for the faint-hearted', colors: colors),
 
                 const Spacer(),
               ],

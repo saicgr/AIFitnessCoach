@@ -22,7 +22,7 @@ import '../../screens/onboarding/pre_auth_quiz_data.dart';
 import '../../widgets/glass_back_button.dart';
 import '../onboarding/widgets/foldable_quiz_scaffold.dart';
 import '../settings/subscription/subscription_history_screen.dart';
-import 'free_trial_screen.dart';
+
 
 part 'paywall_pricing_screen_part_accent_border_card.dart';
 part 'paywall_pricing_screen_part_plan_change_confirmation_dialog.dart';
@@ -395,7 +395,7 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
                   const SizedBox(height: 12),
                   Center(
                     child: GestureDetector(
-                      onTap: () => _skipToFree(context, ref),
+                      onTap: () => _handleMaybeLater(context, ref),
                       child: Padding(
                         padding: const EdgeInsets.symmetric(vertical: 4),
                         child: Text(
@@ -465,60 +465,50 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
     return 'Change Plan';
   }
 
-  void _skipToFree(BuildContext context, WidgetRef ref) async {
+  void _handleMaybeLater(BuildContext context, WidgetRef ref) async {
     ref.read(posthogServiceProvider).capture(
       eventName: 'paywall_skip_tapped',
       properties: {'has_shown_discount': _hasShownDiscount},
     );
-    // Show discount popup the first time user tries to leave
+
+    // Show 25% discount popup the first time user tries to leave
     if (!_hasShownDiscount) {
       _hasShownDiscount = true;
       ref.read(posthogServiceProvider).capture(
         eventName: 'paywall_discount_shown',
-        properties: {},
+        properties: {'discount_percent': 25},
       );
       final accepted = await _showDiscountPopup(context);
       if (accepted == true) {
         ref.read(posthogServiceProvider).capture(
           eventName: 'paywall_discount_accepted',
-          properties: {},
+          properties: {'discount_percent': 25},
         );
-        // User accepted the discount - purchase yearly at discounted price
-        final success = await ref.read(subscriptionProvider.notifier).purchase('premium_yearly_discount');
+        // User accepted the 25% discount — purchase discounted yearly
+        final success = await ref.read(subscriptionProvider.notifier).purchase('premium_yearly_25off');
         if (success && context.mounted) {
           await _markPaywallComplete(ref);
           await _navigateAfterPaywall(context, ref);
         }
         return;
       }
-      // User declined discount — show 24-hour free trial screen
-      ref.read(posthogServiceProvider).capture(
-        eventName: 'paywall_discount_declined',
-        properties: {},
-      );
-      if (context.mounted) {
-        final trialAccepted = await Navigator.push<bool>(
-          context,
-          MaterialPageRoute(builder: (_) => const FreeTrialScreen()),
-        );
-        if (trialAccepted == true) {
-          ref.read(posthogServiceProvider).capture(
-            eventName: 'paywall_trial_accepted',
-            properties: {},
-          );
-          await ref.read(subscriptionProvider.notifier).grant24HourTrial();
-          await _markPaywallComplete(ref);
-          if (context.mounted) {
-            await _navigateAfterPaywall(context, ref);
-          }
-          return;
-        }
-      }
     }
 
-    await ref.read(subscriptionProvider.notifier).skipToFree();
-    await _markPaywallComplete(ref);
-    if (context.mounted) {
+    // User declined discount (or second tap) — start 7-day RevenueCat trial
+    // by purchasing yearly plan (which has a 7-day free trial attached)
+    ref.read(posthogServiceProvider).capture(
+      eventName: 'paywall_trial_auto_started',
+      properties: {},
+    );
+
+    final trialSuccess = await ref.read(subscriptionProvider.notifier).purchase('premium_yearly');
+    if (trialSuccess && context.mounted) {
+      await _markPaywallComplete(ref);
+      await _navigateAfterPaywall(context, ref);
+    } else if (context.mounted) {
+      // Purchase was cancelled or failed (user cancelled Google Play dialog)
+      // Mark paywall complete and navigate — they'll hit the hard paywall when trial/sub check fails
+      await _markPaywallComplete(ref);
       await _navigateAfterPaywall(context, ref);
     }
   }
@@ -823,7 +813,7 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
         _LeftPaneFeature(icon: Icons.fitness_center, text: '52 skill progressions', colors: colors),
         const SizedBox(height: 14),
 
-        // Free tier note
+        // Trial reassurance
         Container(
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
@@ -840,7 +830,7 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  'Even without premium, you can track workouts, log sets & reps, and monitor progress completely free.',
+                  'Start with a 7-day free trial. Cancel anytime — no charge until the trial ends.',
                   style: TextStyle(
                     fontSize: 12,
                     color: colors.textSecondary,

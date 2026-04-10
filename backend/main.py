@@ -42,6 +42,11 @@ from services.job_queue_service import get_job_queue_service
 settings = get_settings()
 logger = get_logger(__name__)
 
+# Dev log dashboard — only available when debug=True
+_dev_log_push = None
+if settings.debug:
+    from api.dev_logs import push_log_entry as _dev_log_push
+
 # Lazy-initialized service holders for non-critical services
 _langgraph_service = None
 
@@ -145,9 +150,23 @@ class LoggingMiddleware:
                 logger.error(f"Response: {status_code} ({duration:.0f}ms)")
             else:
                 logger.warning(f"Response: {status_code} ({duration:.0f}ms)")
+            # Push to dev log dashboard (no-op if not imported)
+            if _dev_log_push is not None and not path.startswith("/dev/"):
+                _dev_log_push(
+                    method=method, path=path, status_code=status_code,
+                    duration_ms=duration, user_id=user_id,
+                    request_id=request_id, query=query,
+                )
         except Exception as e:
             duration = (time.time() - start_time) * 1000
             logger.error(f"Request failed: {type(e).__name__}: {str(e)} ({duration:.0f}ms)", exc_info=True)
+            if _dev_log_push is not None and not path.startswith("/dev/"):
+                _dev_log_push(
+                    method=method, path=path, status_code=500,
+                    duration_ms=duration, user_id=user_id,
+                    request_id=request_id, query=query,
+                    error=f"{type(e).__name__}: {str(e)}",
+                )
             raise
         finally:
             clear_log_context()
@@ -556,6 +575,11 @@ app.add_middleware(RateLimitCacheCleanupMiddleware)
 
 # Include API routes
 app.include_router(v1_router, prefix="/api")
+
+# Dev log dashboard (only in debug mode)
+if settings.debug:
+    from api.dev_logs import router as dev_logs_router
+    app.include_router(dev_logs_router)
 
 # Serve static assets (logo used in emails, etc.)
 app.mount("/static", StaticFiles(directory="static"), name="static")

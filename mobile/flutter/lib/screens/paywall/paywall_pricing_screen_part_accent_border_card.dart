@@ -786,7 +786,7 @@ class _DiscountPopupState extends State<_DiscountPopup> with TickerProviderState
                         FittedBox(
                           fit: BoxFit.scaleDown,
                           child: Text(
-                            '\$39.99',
+                            '\$37.49',
                             style: TextStyle(
                               fontSize: 28,
                               fontWeight: FontWeight.bold,
@@ -814,7 +814,7 @@ class _DiscountPopupState extends State<_DiscountPopup> with TickerProviderState
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
-                  'SAVE \$10 (20% OFF)',
+                  'SAVE \$12.50 (25% OFF)',
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.bold,
@@ -824,7 +824,7 @@ class _DiscountPopupState extends State<_DiscountPopup> with TickerProviderState
               ),
               const SizedBox(height: 8),
               Text(
-                'Just \$3.33/month',
+                'Just \$3.12/month',
                 style: TextStyle(
                   fontSize: 13,
                   color: colors.textSecondary,
@@ -832,7 +832,7 @@ class _DiscountPopupState extends State<_DiscountPopup> with TickerProviderState
               ),
               const SizedBox(height: 4),
               Text(
-                "That's just \$0.11/day — less than a coffee",
+                "That's just \$0.10/day — less than a coffee",
                 style: TextStyle(
                   fontSize: 12,
                   color: colors.textSecondary.withOpacity(0.8),
@@ -871,7 +871,7 @@ class _DiscountPopupState extends State<_DiscountPopup> with TickerProviderState
               elevation: 0,
             ),
             child: const Text(
-              'Get Yearly for \$39.99',
+              'Get Yearly for \$37.49',
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,

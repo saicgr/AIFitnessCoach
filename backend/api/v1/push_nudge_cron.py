@@ -828,6 +828,87 @@ async def _job_guilt_escalation(supabase, notif_svc, users: List[dict]) -> int:
     return sent
 
 
+async def _job_trial_reminder(supabase, notif_svc) -> int:
+    """Send push notifications to users whose trial expires in 2 days (Day 5) or today (Day 7).
+
+    Unlike other nudge jobs, this queries user_subscriptions directly (not user-batch).
+    Includes 25% discount messaging on expiry day.
+    """
+    from datetime import date, timedelta
+
+    sent = 0
+    today = date.today()
+
+    # Day 5 (2 days left) and Day 7 (expires today)
+    targets = [
+        (2, today + timedelta(days=2)),
+        (0, today),
+    ]
+
+    for days_left, target_date in targets:
+        try:
+            subs = supabase.client.table("user_subscriptions") \
+                .select("user_id") \
+                .eq("is_trial", True) \
+                .eq("status", "trial") \
+                .gte("trial_end_date", f"{target_date.isoformat()}T00:00:00") \
+                .lt("trial_end_date", f"{target_date.isoformat()}T23:59:59") \
+                .execute()
+
+            if not subs.data:
+                continue
+
+            user_ids = [s["user_id"] for s in subs.data]
+
+            users_result = supabase.client.table("users") \
+                .select("id, name, fcm_token, timezone, notification_preferences") \
+                .in_("id", user_ids) \
+                .execute()
+
+            for user in (users_result.data or []):
+                fcm_token = user.get("fcm_token")
+                if not fcm_token:
+                    continue
+
+                user_id = str(user["id"])
+                tz_str = user.get("timezone") or "UTC"
+                local_date = _get_user_local_date(tz_str)
+
+                # Dedup: one trial_reminder per user per day
+                if not _try_dedup_insert(supabase, user_id, "trial_reminder", local_date):
+                    continue
+
+                display_name = (user.get("name") or "").split()[0] if user.get("name") else "there"
+
+                if days_left == 0:
+                    title = "Your trial ends today"
+                    body = f"Hey {display_name}, subscribe now and save 25% — just $37.49/year for your AI fitness coach."
+                else:
+                    title = f"Your trial ends in {days_left} days"
+                    body = f"Hey {display_name}, you still have {days_left} days left. Don't lose access to your AI workouts and coaching!"
+
+                try:
+                    await notif_svc.send_push_notification(
+                        token=fcm_token,
+                        title=title,
+                        body=body,
+                        data={
+                            "type": "trial_reminder",
+                            "days_left": str(days_left),
+                            "route": "/paywall-pricing" if days_left > 0 else "/hard-paywall",
+                        },
+                    )
+                    sent += 1
+                except Exception as e:
+                    logger.warning(f"Failed to send trial reminder push to {user_id}: {e}")
+
+        except Exception as e:
+            logger.error(f"❌ trial_reminder job (days_left={days_left}) failed: {e}", exc_info=True)
+
+    logger.info(f"🎯 trial_reminder: {sent} push notifications sent")
+    return sent
+
+
 # ─── Main Cron Endpoint ─────────────────────────────────────────────────────
 
 @router.post("/cron")
@@ -876,6 +957,7 @@ async def run_push_nudge_cron(
         ("weekly_checkin", _job_weekly_checkin(supabase, notif_svc, users)),
         ("habit_reminder", _job_habit_reminder(supabase, notif_svc, users)),
         ("guilt_escalation", _job_guilt_escalation(supabase, notif_svc, users)),
+        ("trial_reminder", _job_trial_reminder(supabase, notif_svc)),
     ]
 
     job_names = [j[0] for j in jobs]

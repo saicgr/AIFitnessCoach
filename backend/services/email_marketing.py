@@ -20,7 +20,7 @@ class EmailMarketingMixin:
 
     async def send_win_back(
         self, to_email: str, user_name: str, days_since_expiry: int,
-        workouts_completed: int, discount_percent: int = 20,
+        workouts_completed: int, discount_percent: int = 25,
     ) -> Dict[str, Any]:
         """Send a win-back email to lapsed Premium users with a discount offer."""
         if not self.is_configured():

@@ -39,7 +39,15 @@ $FLUTTER_PATH pub get
 
 # Build the app bundle
 echo -e "${YELLOW}Building app bundle (${BUILD_MODE})...${NC}"
-$FLUTTER_PATH build appbundle --${BUILD_MODE}
+# REVENUECAT_GOOGLE_KEY must be set as env var before running this script
+# export REVENUECAT_GOOGLE_KEY=goog_YourKeyHere
+if [ -z "$REVENUECAT_GOOGLE_KEY" ]; then
+    echo -e "${RED}ERROR: REVENUECAT_GOOGLE_KEY env var not set${NC}"
+    echo -e "${YELLOW}Run: export REVENUECAT_GOOGLE_KEY=goog_YourKeyHere${NC}"
+    exit 1
+fi
+
+$FLUTTER_PATH build appbundle --${BUILD_MODE} --dart-define=ENV=prod --dart-define=REVENUECAT_GOOGLE_KEY=$REVENUECAT_GOOGLE_KEY
 
 # Locate the output
 if [ "$BUILD_MODE" = "release" ]; then

@@ -45,6 +45,7 @@ class Settings(BaseSettings):
     host: str = "0.0.0.0"
     port: int = 8000
     debug: bool = False
+    environment: str = "development"  # "development" or "production"
 
     # Supabase Configuration
     supabase_url: str
@@ -128,6 +129,8 @@ class Settings(BaseSettings):
     # Specific allowed origins - do not use ["*"] with allow_credentials=True
     cors_origins: list[str] = [
         "https://fitwiz-zqi3.onrender.com",
+        "http://localhost:8000",
+        "http://10.0.2.2:8000",
     ]
 
     def get_form_cache_enabled(self) -> bool:
