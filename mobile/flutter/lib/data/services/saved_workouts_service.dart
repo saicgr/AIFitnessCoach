@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import '../../utils/tz.dart';
 import 'api_client.dart';
 
 /// Badge types for popular workouts
@@ -219,7 +220,7 @@ class SavedWorkoutsService {
         data: {
           'status': status.value,
           if (status == ScheduledWorkoutStatus.completed)
-            'completed_at': DateTime.now().toIso8601String(),
+            'completed_at': Tz.timestamp(),
         },
       );
 

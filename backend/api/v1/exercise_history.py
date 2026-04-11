@@ -10,9 +10,10 @@ Provides endpoints for:
 """
 from core.db import get_supabase_db
 
-from fastapi import APIRouter, HTTPException, Query, Depends
+from fastapi import APIRouter, HTTPException, Query, Depends, Request
 from core.auth import get_current_user
 from core.exceptions import safe_internal_error
+from core.timezone_utils import user_today_date
 from typing import List, Optional, Dict, Any
 from datetime import datetime, date, timedelta
 from pydantic import BaseModel, Field
@@ -196,6 +197,7 @@ def get_days_for_time_range(time_range: TimeRange) -> int:
 
 @router.get("/{exercise_name}", response_model=ExerciseHistoryResponse)
 async def get_exercise_history(
+    request: Request,
     exercise_name: str,
     user_id: str = Query(..., description="User ID"),
     time_range: TimeRange = Query(TimeRange.TWELVE_WEEKS, description="Time range for data"),
@@ -219,7 +221,7 @@ async def get_exercise_history(
         logger.info(f"Getting exercise history for user {user_id}, exercise: {exercise_name}")
 
         # Query exercise_workout_history view
-        start_date = (date.today() - timedelta(days=days_back)).isoformat()
+        start_date = (user_today_date(request, db, user_id) - timedelta(days=days_back)).isoformat()
 
         # Get total count
         count_query = db.client.from_("exercise_workout_history") \
@@ -337,6 +339,7 @@ async def get_exercise_history(
 
 @router.get("/{exercise_name}/chart", response_model=ExerciseChartDataResponse)
 async def get_exercise_chart_data(
+    request: Request,
     exercise_name: str,
     user_id: str = Query(..., description="User ID"),
     time_range: TimeRange = Query(TimeRange.TWELVE_WEEKS, description="Time range for chart"),
@@ -353,7 +356,7 @@ async def get_exercise_chart_data(
     try:
         db = get_supabase_db()
         days_back = get_days_for_time_range(time_range)
-        start_date = (date.today() - timedelta(days=days_back)).isoformat()
+        start_date = (user_today_date(request, db, user_id) - timedelta(days=days_back)).isoformat()
 
         logger.info(f"Getting exercise chart data for user {user_id}, exercise: {exercise_name}")
 

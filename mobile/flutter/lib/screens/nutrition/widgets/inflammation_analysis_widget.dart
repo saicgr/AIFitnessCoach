@@ -259,14 +259,14 @@ class _InflammationErrorCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: elevated,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.error.withValues(alpha: 0.3)),
+        border: Border.all(color: isDark ? AppColors.cardBorder : AppColorsLight.cardBorder),
       ),
       child: Column(
         children: [
-          Icon(Icons.error_outline, color: AppColors.error, size: 24),
+          Icon(Icons.info_outline, color: textMuted, size: 24),
           const SizedBox(height: 8),
           Text(
-            'Could not analyze ingredients',
+            'Ingredient analysis unavailable',
             style: TextStyle(fontSize: 13, color: textMuted),
           ),
           const SizedBox(height: 8),

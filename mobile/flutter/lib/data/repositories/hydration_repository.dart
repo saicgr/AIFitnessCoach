@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/hydration.dart';
 import '../services/api_client.dart';
+import '../../utils/tz.dart';
 import '../services/health_service.dart';
 
 /// In-memory cache for instant display on provider recreation
@@ -79,7 +80,7 @@ class HydrationNotifier extends StateNotifier<HydrationState> {
     }
     try {
       // Pass local date to avoid UTC mismatch on server (Render runs in UTC)
-      final localDate = DateTime.now().toIso8601String().substring(0, 10);
+      final localDate = Tz.localDate();
       final summary = await _repository.getDailySummary(userId, date: localDate);
       // Only apply if no newer load was started while we were awaiting
       if (_loadEpoch != epoch) return;
@@ -132,7 +133,7 @@ class HydrationNotifier extends StateNotifier<HydrationState> {
         amountMl: amountMl,
         workoutId: workoutId,
         notes: notes,
-        localDate: DateTime.now().toIso8601String().substring(0, 10),
+        localDate: Tz.localDate(),
       );
 
       // Fire-and-forget: sync hydration to Health Connect / HealthKit
@@ -180,7 +181,7 @@ class HydrationNotifier extends StateNotifier<HydrationState> {
         userId: userId,
         drinkType: drinkType,
         amountMl: amountMl,
-        localDate: DateTime.now().toIso8601String().substring(0, 10),
+        localDate: Tz.localDate(),
       );
 
       // Fire-and-forget: sync hydration to Health Connect / HealthKit

@@ -55,6 +55,8 @@ import '../../widgets/health_connect_sheet.dart';
 import '../../data/providers/health_import_provider.dart';
 import '../../data/repositories/nutrition_repository.dart';
 import '../../data/repositories/hydration_repository.dart';
+import '../../data/providers/nutrition_preferences_provider.dart';
+import '../settings/sections/nutrition_fasting_section.dart';
 import '../../widgets/usage_counter_strip.dart';
 import '../../widgets/app_tour/app_tour_controller.dart';
 import '../../core/services/posthog_service.dart';
@@ -619,14 +621,19 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     }
   }
 
-  /// Load nutrition & hydration data so TodayStatsRow shows on first launch
+  /// Load nutrition & hydration data so TodayStatsRow shows on first launch.
+  /// Also pre-warms nutrition preferences so Profile tab loads instantly.
   Future<void> _initializeNutritionAndHydration() async {
     final authState = ref.read(authStateProvider);
     final userId = authState.user?.id;
     if (userId == null) return;
+    // Pre-warm fasting provider (loads in constructor, no await needed)
+    ref.read(fastingSettingsProvider);
+
     await Future.wait([
       ref.read(nutritionProvider.notifier).loadTodaySummary(userId),
       ref.read(hydrationProvider.notifier).loadTodaySummary(userId),
+      ref.read(nutritionPreferencesProvider.notifier).initialize(userId),
     ]);
   }
 

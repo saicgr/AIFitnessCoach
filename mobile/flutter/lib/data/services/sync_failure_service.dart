@@ -4,6 +4,7 @@ import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import '../../utils/tz.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
@@ -86,7 +87,7 @@ class SyncFailureService {
   Future<File> exportDeadLetterItems() async {
     final items = await _db.syncQueueDao.getDeadLetterItems();
     final export = {
-      'exported_at': DateTime.now().toIso8601String(),
+      'exported_at': Tz.timestamp(),
       'item_count': items.length,
       'items': items
           .map((item) => {

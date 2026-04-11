@@ -26,17 +26,36 @@ class FoodLogResponse(BaseModel):
     fiber_g: Optional[float] = None
     health_score: Optional[int] = None
     ai_feedback: Optional[str] = None
+    notes: Optional[str] = None
+    mood_before: Optional[str] = None
+    mood_after: Optional[str] = None
+    energy_level: Optional[int] = None
+    # Key micronutrients
+    sodium_mg: Optional[float] = None
+    sugar_g: Optional[float] = None
+    saturated_fat_g: Optional[float] = None
+    cholesterol_mg: Optional[float] = None
+    potassium_mg: Optional[float] = None
+    calcium_mg: Optional[float] = None
+    iron_mg: Optional[float] = None
+    vitamin_a_ug: Optional[float] = None
+    vitamin_c_mg: Optional[float] = None
+    vitamin_d_iu: Optional[float] = None
     created_at: str
 
 
 class UpdateFoodLogRequest(BaseModel):
-    total_calories: int
-    protein_g: float
-    carbs_g: float
-    fat_g: float
+    total_calories: Optional[int] = None
+    protein_g: Optional[float] = None
+    carbs_g: Optional[float] = None
+    fat_g: Optional[float] = None
     fiber_g: Optional[float] = None
     weight_g: Optional[float] = None
     portion_multiplier: Optional[float] = None
+    meal_type: Optional[str] = None
+    logged_at: Optional[str] = None
+    notes: Optional[str] = None
+    food_items: Optional[List[dict]] = None
 
 
 class UpdateMoodRequest(BaseModel):
@@ -666,6 +685,11 @@ class FoodReportRequest(BaseModel):
     corrected_fat: Optional[float] = None
     data_source: Optional[str] = None
     food_log_id: Optional[str] = None
+    # Traceability fields for debugging bad analyses
+    report_type: Optional[str] = None       # "wrong_nutrition" | "wrong_food" | "other"
+    original_query: Optional[str] = None    # what the user originally typed
+    analysis_response: Optional[dict] = None  # full Gemini/cache response JSON
+    all_food_items: Optional[list] = None   # all food items returned by analysis
 
 
 class FoodReportResponse(BaseModel):

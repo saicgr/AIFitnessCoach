@@ -8,7 +8,6 @@ import '../../../../data/providers/nutrition_preferences_provider.dart';
 import '../../../../data/repositories/nutrition_repository.dart';
 import '../../../../data/services/health_service.dart';
 import '../../../../data/services/haptic_service.dart';
-import '../../../../data/services/api_client.dart';
 
 /// Daily Stats Tile - Shows steps and calorie deficit
 /// Steps from HealthKit/Google Fit
@@ -28,25 +27,6 @@ class DailyStatsCard extends ConsumerStatefulWidget {
 }
 
 class _DailyStatsCardState extends ConsumerState<DailyStatsCard> {
-  bool _hasTriggeredLoad = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _loadTargetsIfNeeded();
-  }
-
-  Future<void> _loadTargetsIfNeeded() async {
-    if (_hasTriggeredLoad) return;
-    _hasTriggeredLoad = true;
-
-    final apiClient = ref.read(apiClientProvider);
-    final userId = await apiClient.getUserId();
-    if (userId != null && mounted) {
-      await ref.read(nutritionProvider.notifier).loadTargets(userId);
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final isDark = widget.isDark;

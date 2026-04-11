@@ -90,7 +90,15 @@ class _AddMeasurementSheetState extends State<_AddMeasurementSheet> {
                 ),
                 // Unit toggle
                 GestureDetector(
-                  onTap: () => setState(() => _isMetric = !_isMetric),
+                  onTap: () {
+                    if (_selectedType != MeasurementType.bodyFat) {
+                      final val = double.tryParse(_valueController.text);
+                      if (val != null) {
+                        _valueController.text = (_isMetric ? val / 2.54 : val * 2.54).toStringAsFixed(1);
+                      }
+                    }
+                    setState(() => _isMetric = !_isMetric);
+                  },
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                     decoration: BoxDecoration(
@@ -208,7 +216,33 @@ class _AddMeasurementSheetState extends State<_AddMeasurementSheet> {
               style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
               decoration: InputDecoration(
                 hintText: '0.0',
-                suffixText: unit,
+                suffix: _selectedType == MeasurementType.bodyFat
+                    ? Text('%', style: TextStyle(color: textMuted))
+                    : GestureDetector(
+                        onTap: () {
+                          final val = double.tryParse(_valueController.text);
+                          if (val != null) {
+                            _valueController.text = (_isMetric ? val / 2.54 : val * 2.54).toStringAsFixed(1);
+                          }
+                          setState(() => _isMetric = !_isMetric);
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: cyan.withOpacity(0.15),
+                            borderRadius: BorderRadius.circular(6),
+                            border: Border.all(color: cyan.withOpacity(0.3)),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(unit, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: cyan)),
+                              const SizedBox(width: 3),
+                              Icon(Icons.swap_horiz, size: 14, color: cyan.withOpacity(0.7)),
+                            ],
+                          ),
+                        ),
+                      ),
                 filled: true,
                 fillColor: elevated,
                 border: OutlineInputBorder(

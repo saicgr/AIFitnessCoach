@@ -699,8 +699,8 @@ async def update_program(request: Request, body: UpdateProgramRequest,
 
         db.update_user(body.user_id, update_data)
 
-        from datetime import date
-        today = date.today().isoformat()
+        from core.timezone_utils import user_today_date
+        today = user_today_date(request, db, body.user_id).isoformat()
         all_workouts = db.list_workouts(body.user_id, limit=1000)
 
         workouts_to_delete = []

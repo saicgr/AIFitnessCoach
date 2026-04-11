@@ -5,6 +5,7 @@ from typing import Any, Dict, Optional
 from datetime import datetime, timedelta, date
 import logging
 from core.db import get_supabase_db
+from core.timezone_utils import get_user_today
 from services.user_context.models import EventType, HormonalHealthContext
 from services.user_context.models_helpers import DiabetesPatterns
 
@@ -293,6 +294,7 @@ class HealthLoggingMixinPart2:
     async def get_hormonal_health_context(
         self,
         user_id: str,
+        timezone_str: str,
         days: int = 7,
     ) -> HormonalHealthContext:
         """Get hormonal health context for AI personalization."""
@@ -325,7 +327,7 @@ class HealthLoggingMixinPart2:
                 if profile.get("last_period_date"):
                     try:
                         context.last_period_date = date.fromisoformat(profile["last_period_date"])
-                        today = date.today()
+                        today = date.fromisoformat(get_user_today(timezone_str))
                         days_since_period = (today - context.last_period_date).days
                         cycle_day = (days_since_period % context.avg_cycle_length) + 1
                         context.cycle_day = cycle_day
@@ -388,7 +390,7 @@ class HealthLoggingMixinPart2:
                 context.kegel_target_sessions = prefs.get("target_sessions_per_day", 3)
 
             # Get kegel stats for streak and today's sessions
-            today_str = date.today().isoformat()
+            today_str = get_user_today(timezone_str)
             sessions_response = db.client.table("kegel_sessions").select(
                 "id"
             ).eq("user_id", user_id).eq(
@@ -415,19 +417,21 @@ class HealthLoggingMixinPart2:
     async def get_hormonal_context_for_ai(
         self,
         user_id: str,
+        timezone_str: str,
         days: int = 7,
     ) -> str:
         """Get formatted hormonal health context string for AI prompts."""
-        context = await self.get_hormonal_health_context(user_id, days)
+        context = await self.get_hormonal_health_context(user_id, timezone_str, days)
         return context.get_ai_context()
 
     async def get_hormonal_health_analytics(
         self,
         user_id: str,
+        timezone_str: str,
         days: int = 30,
     ) -> Dict[str, Any]:
         """Get comprehensive hormonal health analytics for a user."""
-        context = await self.get_hormonal_health_context(user_id, days)
+        context = await self.get_hormonal_health_context(user_id, timezone_str, days)
 
         return {
             **context.to_dict(),

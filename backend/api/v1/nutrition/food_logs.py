@@ -89,6 +89,20 @@ async def list_food_logs(
                 fiber_g=log.get("fiber_g"),
                 health_score=log.get("health_score"),
                 ai_feedback=log.get("ai_feedback"),
+                notes=log.get("notes"),
+                mood_before=log.get("mood_before"),
+                mood_after=log.get("mood_after"),
+                energy_level=log.get("energy_level"),
+                sodium_mg=log.get("sodium_mg"),
+                sugar_g=log.get("sugar_g"),
+                saturated_fat_g=log.get("saturated_fat_g"),
+                cholesterol_mg=log.get("cholesterol_mg"),
+                potassium_mg=log.get("potassium_mg"),
+                calcium_mg=log.get("calcium_mg"),
+                iron_mg=log.get("iron_mg"),
+                vitamin_a_ug=log.get("vitamin_a_ug"),
+                vitamin_c_mg=log.get("vitamin_c_mg"),
+                vitamin_d_iu=log.get("vitamin_d_iu"),
                 created_at=str(log.get("created_at") or log.get("logged_at") or ""),
             ))
 
@@ -131,6 +145,20 @@ async def get_food_log(user_id: str, log_id: str, current_user: dict = Depends(g
             fiber_g=log.get("fiber_g"),
             health_score=log.get("health_score"),
             ai_feedback=log.get("ai_feedback"),
+            notes=log.get("notes"),
+            mood_before=log.get("mood_before"),
+            mood_after=log.get("mood_after"),
+            energy_level=log.get("energy_level"),
+            sodium_mg=log.get("sodium_mg"),
+            sugar_g=log.get("sugar_g"),
+            saturated_fat_g=log.get("saturated_fat_g"),
+            cholesterol_mg=log.get("cholesterol_mg"),
+            potassium_mg=log.get("potassium_mg"),
+            calcium_mg=log.get("calcium_mg"),
+            iron_mg=log.get("iron_mg"),
+            vitamin_a_ug=log.get("vitamin_a_ug"),
+            vitamin_c_mg=log.get("vitamin_c_mg"),
+            vitamin_d_iu=log.get("vitamin_d_iu"),
             created_at=str(log.get("created_at") or log.get("logged_at") or ""),
         )
 
@@ -166,7 +194,7 @@ async def delete_food_log(log_id: str, current_user: dict = Depends(get_current_
 
 @router.put("/food-logs/{log_id}")
 async def update_food_log(log_id: str, body: UpdateFoodLogRequest, current_user: dict = Depends(get_current_user)):
-    """Update macros/weight on an existing food log (e.g. after portion adjustment)."""
+    """Update fields on an existing food log. All fields are optional for partial updates."""
     user_id = current_user.get("id") or current_user.get("sub")
     logger.info(f"Updating food log {log_id} for user {user_id}")
 
@@ -181,6 +209,10 @@ async def update_food_log(log_id: str, body: UpdateFoodLogRequest, current_user:
             fat_g=body.fat_g,
             fiber_g=body.fiber_g,
             weight_g=body.weight_g,
+            meal_type=body.meal_type,
+            logged_at=body.logged_at,
+            notes=body.notes,
+            food_items=body.food_items,
         )
 
         if not updated:
@@ -193,6 +225,7 @@ async def update_food_log(log_id: str, body: UpdateFoodLogRequest, current_user:
             "protein_g": updated.get("protein_g"),
             "carbs_g": updated.get("carbs_g"),
             "fat_g": updated.get("fat_g"),
+            "meal_type": updated.get("meal_type"),
         }
 
     except HTTPException:

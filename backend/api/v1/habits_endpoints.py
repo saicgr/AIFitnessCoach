@@ -463,13 +463,27 @@ async def create_habit_from_template(
         verify_user_ownership(current_user, user_id)
         db = get_supabase_db()
 
-        # Get template
-        template = db.client.table("habit_templates").select("*").eq(
-            "id", template_id
-        ).execute()
+        # Get template - try by UUID id first, fall back to name search for slug-style IDs
+        import uuid as _uuid
+        try:
+            _uuid.UUID(template_id)
+            is_uuid = True
+        except ValueError:
+            is_uuid = False
+
+        if is_uuid:
+            template = db.client.table("habit_templates").select("*").eq(
+                "id", template_id
+            ).execute()
+        else:
+            # Slug-style ID (e.g. 'weigh_in') — search by name case-insensitively
+            search_name = template_id.replace("_", " ")
+            template = db.client.table("habit_templates").select("*").ilike(
+                "name", f"%{search_name}%"
+            ).limit(1).execute()
 
         if not template.data:
-            raise HTTPException(status_code=404, detail="Template not found")
+            raise HTTPException(status_code=404, detail=f"Template not found: {template_id}")
 
         t = template.data[0]
 
@@ -643,4 +657,49 @@ async def get_habit_insights(
     except Exception as e:
         logger.error(f"❌ Error getting insights: {e}", exc_info=True)
         await log_user_error(user_id, "get_habit_insights", str(e))
+        raise safe_internal_error(e, "endpoint")
+
+
+# ============================================================================
+# REORDERING
+# ============================================================================
+
+@router.post("/{user_id}/reorder")
+async def reorder_habits(
+    user_id: str,
+    request: Request,
+    current_user: dict = Depends(get_current_user),
+):
+    """
+    Reorder habits by updating their sort_order values.
+
+    Expects JSON body: {"order": {"habit_id": sort_order, ...}}
+    """
+    logger.info(f"🔄 Reordering habits for user={user_id}")
+
+    try:
+        verify_user_ownership(current_user, user_id)
+        db = get_supabase_db()
+
+        body = await request.json()
+        order_map = body.get("order", {})
+
+        if not order_map:
+            raise HTTPException(status_code=400, detail="No order map provided")
+
+        for habit_id, sort_order in order_map.items():
+            db.client.table("habits") \
+                .update({"sort_order": sort_order}) \
+                .eq("id", habit_id) \
+                .eq("user_id", user_id) \
+                .execute()
+
+        logger.info(f"✅ Reordered {len(order_map)} habits for user={user_id}")
+        return {"success": True, "message": f"Reordered {len(order_map)} habits"}
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ Error reordering habits: {e}", exc_info=True)
+        await log_user_error(user_id, "reorder_habits", str(e))
         raise safe_internal_error(e, "endpoint")

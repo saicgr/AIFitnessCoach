@@ -1,12 +1,13 @@
 """Secondary endpoints for personal_goals.  Sub-router included by main module."""
 from typing import Optional
 from datetime import datetime, timedelta, date
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 import logging
 logger = logging.getLogger(__name__)
 from core.auth import get_current_user
 from core.db import get_supabase_db
 from core.exceptions import safe_internal_error
+from core.timezone_utils import user_today_date
 from models.weekly_personal_goals import (
     PersonalRecordsResponse, GoalSummary, WeeklyPersonalGoal,
     WorkoutSyncRequest, WorkoutSyncResponse, SyncedGoalUpdate,
@@ -66,6 +67,7 @@ async def get_personal_records(user_id: str,
 
 @router.get("/summary", response_model=GoalSummary)
 async def get_goals_summary(user_id: str,
+    http_request: Request,
     current_user: dict = Depends(get_current_user),
 ):
     """Get a quick summary of current week's goals."""
@@ -78,7 +80,7 @@ async def get_goals_summary(user_id: str,
         db = get_supabase_db()
 
         # Get current week boundaries
-        today = date.today()
+        today = user_today_date(http_request)
         week_start, _ = get_iso_week_boundaries(today)
 
         result = db.client.table("weekly_personal_goals").select("*").eq(
@@ -132,6 +134,7 @@ async def get_goals_summary(user_id: str,
 
 @router.post("/workout-sync", response_model=WorkoutSyncResponse)
 async def sync_workout_with_goals(user_id: str, request: WorkoutSyncRequest,
+    http_request: Request,
     current_user: dict = Depends(get_current_user),
 ):
     """
@@ -154,7 +157,7 @@ async def sync_workout_with_goals(user_id: str, request: WorkoutSyncRequest,
 
     try:
         db = get_supabase_db()
-        today = date.today()
+        today = user_today_date(http_request)
         week_start, _ = get_iso_week_boundaries(today)
 
         # Get all active weekly_volume goals for this user in current week
@@ -351,6 +354,7 @@ def _build_goal_response(row: dict, today: date) -> WeeklyPersonalGoal:
 @router.get("/goals/suggestions", response_model=GoalSuggestionsResponse)
 async def get_goal_suggestions(
     user_id: str,
+    http_request: Request,
     force_refresh: bool = Query(False, description="Force regenerate suggestions"),
     current_user: dict = Depends(get_current_user),
 ):
@@ -372,7 +376,7 @@ async def get_goal_suggestions(
     try:
         db = get_supabase_db()
         now = datetime.now(timezone.utc)
-        today = date.today()
+        today = user_today_date(http_request)
         week_start, _ = get_iso_week_boundaries(today)
 
         # Check for fresh cached suggestions
@@ -509,6 +513,7 @@ async def dismiss_suggestion(
 async def accept_suggestion(
     user_id: str,
     suggestion_id: str,
+    http_request: Request,
     request: Optional[AcceptSuggestionRequest] = None,
     current_user: dict = Depends(get_current_user),
 ):
@@ -532,7 +537,7 @@ async def accept_suggestion(
         suggestion = suggestion_result.data[0]
 
         # Get week boundaries
-        today = date.today()
+        today = user_today_date(http_request)
         week_start, week_end = get_iso_week_boundaries(today)
 
         # Check for existing goal

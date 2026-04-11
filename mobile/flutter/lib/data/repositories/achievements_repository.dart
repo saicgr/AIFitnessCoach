@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/achievement.dart';
+import '../../utils/tz.dart';
 import '../services/api_client.dart';
 
 /// Achievements repository provider
@@ -130,7 +131,9 @@ class AchievementsRepository {
   /// Get user streaks
   Future<List<UserStreak>> getUserStreaks(String userId) async {
     try {
-      final response = await _client.get('/achievements/user/$userId/streaks');
+      final response = await _client.get('/achievements/user/$userId/streaks',
+        queryParameters: {'date': Tz.localDate()},
+      );
       final data = response.data as List;
       return data.map((json) => UserStreak.fromJson(json)).toList();
     } catch (e) {

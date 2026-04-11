@@ -12,6 +12,7 @@ import '../../../data/providers/scores_provider.dart';
 import '../../../data/repositories/workout_repository.dart';
 import '../../../data/services/haptic_service.dart';
 import '../../../data/services/pdf_export_service.dart';
+import '../../../utils/tz.dart';
 import '../../../widgets/glass_sheet.dart';
 import '../../settings/dialogs/export_dialog.dart';
 
@@ -168,7 +169,7 @@ class _ExportStatsSheetState extends ConsumerState<ExportStatsSheet> {
 
       // Save to temp file
       final tempDir = await getTemporaryDirectory();
-      final timestamp = DateTime.now().toIso8601String().split('T')[0];
+      final timestamp = Tz.localDate();
       final filePath = '${tempDir.path}/FitWiz_Stats_$timestamp.pdf';
       final file = File(filePath);
       await file.writeAsBytes(pdfBytes);

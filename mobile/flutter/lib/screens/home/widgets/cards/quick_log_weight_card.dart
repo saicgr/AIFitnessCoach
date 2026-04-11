@@ -201,36 +201,13 @@ class _QuickLogWeightCardState extends ConsumerState<QuickLogWeightCard> {
         margin: widget.size == TileSize.full
             ? const EdgeInsets.symmetric(horizontal: 16, vertical: 4)
             : null,
+        padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
+          color: elevatedColor,
           borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: accentColor.withValues(alpha: 0.15),
-              blurRadius: 16,
-              offset: const Offset(0, 6),
-              spreadRadius: 1,
-            ),
-            BoxShadow(
-              color: Colors.black.withValues(alpha: widget.isDark ? 0.2 : 0.08),
-              blurRadius: 12,
-              offset: const Offset(0, 4),
-            ),
-          ],
+          border: Border.all(color: cardBorder),
         ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(16),
-          child: Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: elevatedColor,
-              border: Border(
-                left: BorderSide(color: accentColor, width: 4),
-                top: BorderSide(color: cardBorder),
-                right: BorderSide(color: cardBorder),
-                bottom: BorderSide(color: cardBorder),
-              ),
-            ),
-            child: Column(
+        child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
@@ -311,7 +288,7 @@ class _QuickLogWeightCardState extends ConsumerState<QuickLogWeightCard> {
                   child: Container(
                     height: 40,
                     decoration: BoxDecoration(
-                      color: textMuted.withValues(alpha: 0.08),
+                      color: textMuted.withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(10),
                       border: Border.all(
                         color: _errorMessage != null
@@ -357,8 +334,9 @@ class _QuickLogWeightCardState extends ConsumerState<QuickLogWeightCard> {
                     height: 40,
                     padding: const EdgeInsets.symmetric(horizontal: 10),
                     decoration: BoxDecoration(
-                      color: accentColor.withValues(alpha: 0.15),
+                      color: textMuted.withValues(alpha: 0.12),
                       borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: cardBorder),
                     ),
                     alignment: Alignment.center,
                     child: Text(
@@ -366,7 +344,7 @@ class _QuickLogWeightCardState extends ConsumerState<QuickLogWeightCard> {
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
-                        color: accentColor,
+                        color: textColor,
                       ),
                     ),
                   ),
@@ -379,23 +357,24 @@ class _QuickLogWeightCardState extends ConsumerState<QuickLogWeightCard> {
                     height: 40,
                     width: 40,
                     decoration: BoxDecoration(
-                      color: accentColor,
+                      color: accentColor.withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: accentColor.withValues(alpha: 0.3)),
                     ),
                     alignment: Alignment.center,
                     child: _isSubmitting
-                        ? const SizedBox(
+                        ? SizedBox(
                             width: 16,
                             height: 16,
                             child: CircularProgressIndicator(
-                              color: Colors.white,
+                              color: accentColor,
                               strokeWidth: 2,
                             ),
                           )
                         : Icon(
                             Icons.check,
                             size: 20,
-                            color: widget.isDark ? Colors.black : Colors.white,
+                            color: accentColor,
                           ),
                   ),
                 ),
@@ -425,8 +404,6 @@ class _QuickLogWeightCardState extends ConsumerState<QuickLogWeightCard> {
             _buildTrendInfo(textMuted, ref),
           ],
         ],
-            ),
-          ),
         ),
       ),
     );
@@ -454,42 +431,30 @@ class _QuickLogWeightCardState extends ConsumerState<QuickLogWeightCard> {
     return GestureDetector(
       onTap: _openFullSheet,
       child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: BoxDecoration(
+          color: elevatedColor,
           borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: cardBorder),
         ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(12),
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            decoration: BoxDecoration(
-              color: elevatedColor,
-              border: Border(
-                left: BorderSide(color: accentColor, width: 4),
-                top: BorderSide(color: cardBorder),
-                right: BorderSide(color: cardBorder),
-                bottom: BorderSide(color: cardBorder),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.monitor_weight_outlined,
+              color: accentColor,
+              size: 16,
+            ),
+            const SizedBox(width: 6),
+            Text(
+              weightDisplay,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: textColor,
               ),
             ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  Icons.monitor_weight_outlined,
-                  color: accentColor,
-                  size: 16,
-                ),
-                const SizedBox(width: 6),
-                Text(
-                  weightDisplay,
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: textColor,
-                  ),
-                ),
-              ],
-            ),
-          ),
+          ],
         ),
       ),
     );

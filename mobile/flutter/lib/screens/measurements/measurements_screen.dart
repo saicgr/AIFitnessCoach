@@ -36,7 +36,7 @@ class _MeasurementsScreenState extends ConsumerState<MeasurementsScreen> {
   MeasurementType _selectedType = MeasurementType.weight;
   String _selectedGroup = 'Body Composition';
   String _selectedPeriod = '30d';
-  bool _isMetric = true;
+  late bool _isMetric;
   bool _loadingTimedOut = false;
   DateTimeRange? _customDateRange;
 
@@ -84,6 +84,8 @@ class _MeasurementsScreenState extends ConsumerState<MeasurementsScreen> {
   @override
   void initState() {
     super.initState();
+    final auth = ref.read(authStateProvider);
+    _isMetric = auth.user?.usesMetricMeasurements ?? true;
     _loadMeasurements();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(posthogServiceProvider).capture(eventName: 'measurements_viewed');
@@ -169,7 +171,12 @@ class _MeasurementsScreenState extends ConsumerState<MeasurementsScreen> {
                           const SizedBox(width: 8),
                           // Unit toggle
                           GestureDetector(
-                            onTap: () => setState(() => _isMetric = !_isMetric),
+                            onTap: () {
+                              setState(() => _isMetric = !_isMetric);
+                              ref.read(authStateProvider.notifier).updateUserProfile({
+                                'measurement_unit': _isMetric ? 'cm' : 'in',
+                              });
+                            },
                             child: Container(
                               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                               decoration: BoxDecoration(

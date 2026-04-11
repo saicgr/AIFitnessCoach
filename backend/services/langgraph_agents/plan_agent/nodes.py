@@ -12,6 +12,7 @@ from typing import Dict, Any, Literal
 from datetime import datetime, date, timedelta
 
 from core.logger import get_logger
+from core.timezone_utils import get_user_today
 from services.gemini_service import gemini_service
 from services.holistic_plan_service import HolisticPlanService
 from models.chat import CoachIntent
@@ -105,7 +106,8 @@ async def plan_generate_node(state: PlanAgentState) -> Dict[str, Any]:
     }
 
     # Calculate week start (next Monday)
-    today = date.today()
+    timezone_str = (user_profile.get("timezone") or "UTC")
+    today = date.fromisoformat(get_user_today(timezone_str))
     days_until_monday = (7 - today.weekday()) % 7
     if days_until_monday == 0:
         days_until_monday = 7  # If today is Monday, use next Monday
@@ -199,7 +201,9 @@ async def plan_query_node(state: PlanAgentState) -> Dict[str, Any]:
 
     try:
         # Get current week's plan
-        current_plan = await plan_service.get_current_week_plan(str(user_id))
+        user_profile = state.get("user_profile", {})
+        timezone_str = (user_profile.get("timezone") or "UTC")
+        current_plan = await plan_service.get_current_week_plan(str(user_id), timezone_str=timezone_str)
 
         if not current_plan:
             response = """You don't have an active weekly plan yet!
@@ -212,7 +216,7 @@ Would you like me to create one for you? Just say "Create my weekly plan" and I'
             }
 
         # Determine what they're asking about
-        today = date.today()
+        today = date.fromisoformat(get_user_today(timezone_str))
 
         if "today" in user_message:
             # Find today's entry

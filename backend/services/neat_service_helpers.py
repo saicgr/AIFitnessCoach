@@ -30,6 +30,7 @@ from datetime import datetime, timedelta, date
 import logging
 import time
 from core.db import get_supabase_db
+from core.timezone_utils import get_user_today
 from models.neat import NEATGoal
 from services.neat_service_helpers_part2 import NEATServicePart2
 
@@ -61,7 +62,7 @@ class NEATService(NEATServicePart2):
     # 1. Progressive Step Goal Management
     # =========================================================================
 
-    async def get_user_neat_goal(self, user_id: str) -> NEATGoal:
+    async def get_user_neat_goal(self, user_id: str, timezone_str: str) -> NEATGoal:
         """
         Get the user's current NEAT step goal with today's progress.
 
@@ -73,7 +74,7 @@ class NEATService(NEATServicePart2):
         """
         try:
             db = get_supabase_db()
-            today = date.today().isoformat()
+            today = get_user_today(timezone_str)
 
             # Get user's NEAT settings
             result = db.client.table("user_neat_settings").select("*").eq(
@@ -82,7 +83,7 @@ class NEATService(NEATServicePart2):
 
             if not result.data:
                 # Create default settings
-                baseline = await self._calculate_baseline_steps(user_id)
+                baseline = await self._calculate_baseline_steps(user_id, timezone_str)
                 initial_goal = baseline + 500 if baseline > 0 else 5000
 
                 db.client.table("user_neat_settings").insert({
@@ -161,7 +162,7 @@ class NEATService(NEATServicePart2):
             logger.error(f"Error updating step goal: {e}", exc_info=True)
             return False
 
-    async def calculate_progressive_goal(self, user_id: str) -> int:
+    async def calculate_progressive_goal(self, user_id: str, timezone_str: str) -> int:
         """
         Calculate the next progressive step goal based on user history.
 
@@ -193,7 +194,8 @@ class NEATService(NEATServicePart2):
                 week_number = settings_result.data[0].get("week_number", 1)
 
             # Get last 7 days of step data
-            seven_days_ago = (date.today() - timedelta(days=7)).isoformat()
+            user_today = date.fromisoformat(get_user_today(timezone_str))
+            seven_days_ago = (user_today - timedelta(days=7)).isoformat()
             daily_result = db.client.table("daily_neat_activity").select(
                 "total_steps, goal_met"
             ).eq("user_id", user_id).gte(
@@ -253,11 +255,12 @@ class NEATService(NEATServicePart2):
             logger.error(f"Error calculating progressive goal: {e}", exc_info=True)
             return 5000
 
-    async def _calculate_baseline_steps(self, user_id: str) -> int:
+    async def _calculate_baseline_steps(self, user_id: str, timezone_str: str) -> int:
         """Calculate baseline steps from last 7 days of data."""
         try:
             db = get_supabase_db()
-            seven_days_ago = (date.today() - timedelta(days=7)).isoformat()
+            user_today = date.fromisoformat(get_user_today(timezone_str))
+            seven_days_ago = (user_today - timedelta(days=7)).isoformat()
 
             result = db.client.table("daily_neat_activity").select("total_steps").eq(
                 "user_id", user_id
@@ -299,6 +302,7 @@ class NEATService(NEATServicePart2):
         user_id: str,
         hour: int,
         steps: int,
+        timezone_str: str,
         source: str = "apple_health",
         activity_date: Optional[str] = None,
     ) -> bool:
@@ -322,7 +326,7 @@ class NEATService(NEATServicePart2):
 
             from services.neat_service import SEDENTARY_THRESHOLD_STEPS  # lazy
             db = get_supabase_db()
-            act_date = activity_date or date.today().isoformat()
+            act_date = activity_date or get_user_today(timezone_str)
             is_active = steps >= SEDENTARY_THRESHOLD_STEPS
 
             # Upsert hourly data
@@ -419,7 +423,7 @@ class NEATService(NEATServicePart2):
             logger.error(f"Error detecting sedentary hours: {e}", exc_info=True)
             return []
 
-    async def get_current_hour_status(self, user_id: str) -> Dict[str, Any]:
+    async def get_current_hour_status(self, user_id: str, timezone_str: str) -> Dict[str, Any]:
         """
         Get the user's activity status for the current hour.
 
@@ -430,8 +434,11 @@ class NEATService(NEATServicePart2):
             Dict with current hour status and recommendations
         """
         try:
-            current_hour = datetime.now().hour
-            today = date.today().isoformat()
+            from core.timezone_utils import _safe_zone
+            from zoneinfo import ZoneInfo
+            user_now = datetime.now(_safe_zone(timezone_str))
+            current_hour = user_now.hour
+            today = get_user_today(timezone_str)
 
             hourly_data = await self.get_hourly_breakdown(user_id, today)
 
@@ -465,8 +472,9 @@ class NEATService(NEATServicePart2):
 
         except Exception as e:
             logger.error(f"Error getting current hour status: {e}", exc_info=True)
+            from core.timezone_utils import _safe_zone
             return {
-                "current_hour": datetime.now().hour,
+                "current_hour": datetime.now(_safe_zone(timezone_str)).hour,
                 "steps_this_hour": 0,
                 "is_sedentary": True,
                 "sedentary_streak_hours": 0,
@@ -656,6 +664,7 @@ class NEATService(NEATServicePart2):
     async def get_neat_score_trend(
         self,
         user_id: str,
+        timezone_str: str,
         days: int = 7,
     ) -> List[Dict[str, Any]]:
         """
@@ -670,7 +679,8 @@ class NEATService(NEATServicePart2):
         """
         try:
             db = get_supabase_db()
-            start_date = (date.today() - timedelta(days=days - 1)).isoformat()
+            user_today = date.fromisoformat(get_user_today(timezone_str))
+            start_date = (user_today - timedelta(days=days - 1)).isoformat()
 
             result = db.client.table("daily_neat_activity").select(
                 "activity_date, neat_score, total_steps, active_hours, goal_met"
@@ -730,7 +740,7 @@ class NEATService(NEATServicePart2):
     # 4. Streak Management
     # =========================================================================
 
-    async def update_streak(self, user_id: str, streak_type: StreakType) -> int:
+    async def update_streak(self, user_id: str, streak_type: StreakType, timezone_str: str) -> int:
         """
         Update the specified streak for a user.
 
@@ -744,7 +754,7 @@ class NEATService(NEATServicePart2):
         NEATScore, StreakType, DEFAULT_WAKING_HOURS, GOAL_INCREASE_MAX, GOAL_INCREASE_MIN = _neat_svc_parent()
         try:
             db = get_supabase_db()
-            today = date.today()
+            today = date.fromisoformat(get_user_today(timezone_str))
             yesterday = (today - timedelta(days=1)).isoformat()
 
             # Get yesterday's data to check continuity

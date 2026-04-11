@@ -141,6 +141,9 @@ class FoodDatabaseLookupService(FoodDatabaseLookupServicePart2):
             seen_ids: set = set()
             deadline = time.monotonic() + 3.0
 
+            # Skip expensive fuzzy phases for very short queries (trigrams need ≥3 chars)
+            skip_fuzzy = len(q) < 3
+
             # --- Phase 1: Exact match (BTREE + GIN array indexes, ~1ms) ---
             try:
                 remaining = deadline - time.monotonic()
@@ -149,7 +152,7 @@ class FoodDatabaseLookupService(FoodDatabaseLookupServicePart2):
                         phase1 = await asyncio.wait_for(
                             session.execute(text(f"""
                                 SELECT *,
-                                    similarity(food_name_normalized, :q) AS sim_score,
+                                    CASE WHEN food_name_normalized = :q THEN 1.0 ELSE 0.9 END AS sim_score,
                                     CASE WHEN food_name_normalized = :q THEN 0 ELSE 1 END AS match_rank
                                 FROM food_nutrition_overrides
                                 WHERE is_active = TRUE
@@ -174,26 +177,31 @@ class FoodDatabaseLookupService(FoodDatabaseLookupServicePart2):
                 return [self._override_row_to_search_result(r) for r in results[:limit]]
 
             # --- Phase 2: Trigram similarity (GIN trigram indexes, ~50-200ms) ---
-            try:
-                remaining = deadline - time.monotonic()
-                if remaining > 0.1:
-                    p2_params = {**params, "lim": limit - len(results)}
-                    async with sb.get_managed_session() as session:
-                        await session.execute(text("SET LOCAL pg_trgm.similarity_threshold = 0.35"))
+            if not skip_fuzzy:
+                try:
+                    remaining = deadline - time.monotonic()
+                    if remaining > 0.1:
+                        p2_params = {**params, "lim": limit - len(results)}
+
+                        async def _phase2():
+                            async with sb.get_managed_session() as sess:
+                                await sess.execute(text("SET LOCAL pg_trgm.similarity_threshold = 0.35"))
+                                return await sess.execute(text(f"""
+                                    SELECT *,
+                                        similarity(food_name_normalized, :q) AS sim_score,
+                                        2 AS match_rank
+                                    FROM food_nutrition_overrides
+                                    WHERE is_active = TRUE
+                                    AND (food_name_normalized % :q OR display_name % :q)
+                                    AND food_name_normalized != :q
+                                    AND NOT (:q = ANY(COALESCE(variant_names, '{{}}')))
+                                    {filter_clause}
+                                    ORDER BY sim_score DESC
+                                    LIMIT :lim
+                                """), p2_params)
+
                         phase2 = await asyncio.wait_for(
-                            session.execute(text(f"""
-                                SELECT *,
-                                    similarity(food_name_normalized, :q) AS sim_score,
-                                    2 AS match_rank
-                                FROM food_nutrition_overrides
-                                WHERE is_active = TRUE
-                                AND (food_name_normalized % :q OR display_name % :q)
-                                AND food_name_normalized != :q
-                                AND NOT (:q = ANY(COALESCE(variant_names, '{{}}')))
-                                {filter_clause}
-                                ORDER BY sim_score DESC
-                                LIMIT :lim
-                            """), p2_params),
+                            _phase2(),
                             timeout=min(1.5, remaining),
                         )
                         for row in phase2.fetchall():
@@ -201,36 +209,41 @@ class FoodDatabaseLookupService(FoodDatabaseLookupServicePart2):
                             if rd['id'] not in seen_ids:
                                 seen_ids.add(rd['id'])
                                 results.append(rd)
-            except asyncio.TimeoutError:
-                logger.warning(f"[FoodDB] Phase 2 (trigram) timed out for '{query}'")
-            except Exception as e:
-                logger.warning(f"[FoodDB] Phase 2 failed for '{query}': {e}")
+                except asyncio.TimeoutError:
+                    logger.warning(f"[FoodDB] Phase 2 (trigram) timed out for '{query}'")
+                except Exception as e:
+                    logger.warning(f"[FoodDB] Phase 2 failed for '{query}': {e}")
 
             if len(results) >= limit:
                 return [self._override_row_to_search_result(r) for r in results[:limit]]
 
             # --- Phase 3: Substring ILIKE (slower, only if still under limit) ---
-            try:
-                remaining = deadline - time.monotonic()
-                if remaining > 0.1:
-                    p3_params = {**params, "lim": limit - len(results)}
-                    async with sb.get_managed_session() as session:
-                        await session.execute(text("SET LOCAL pg_trgm.similarity_threshold = 0.35"))
+            if not skip_fuzzy:
+                try:
+                    remaining = deadline - time.monotonic()
+                    if remaining > 0.1:
+                        p3_params = {**params, "lim": limit - len(results)}
+
+                        async def _phase3():
+                            async with sb.get_managed_session() as sess:
+                                await sess.execute(text("SET LOCAL pg_trgm.similarity_threshold = 0.35"))
+                                return await sess.execute(text(f"""
+                                    SELECT *,
+                                        similarity(food_name_normalized, :q) AS sim_score,
+                                        3 AS match_rank
+                                    FROM food_nutrition_overrides
+                                    WHERE is_active = TRUE
+                                    AND food_name_normalized ILIKE '%' || :q || '%'
+                                    AND NOT (food_name_normalized % :q OR display_name % :q)
+                                    AND food_name_normalized != :q
+                                    AND NOT (:q = ANY(COALESCE(variant_names, '{{}}')))
+                                    {filter_clause}
+                                    ORDER BY length(food_name_normalized), sim_score DESC
+                                    LIMIT :lim
+                                """), p3_params)
+
                         phase3 = await asyncio.wait_for(
-                            session.execute(text(f"""
-                                SELECT *,
-                                    similarity(food_name_normalized, :q) AS sim_score,
-                                    3 AS match_rank
-                                FROM food_nutrition_overrides
-                                WHERE is_active = TRUE
-                                AND food_name_normalized ILIKE '%' || :q || '%'
-                                AND NOT (food_name_normalized % :q OR display_name % :q)
-                                AND food_name_normalized != :q
-                                AND NOT (:q = ANY(COALESCE(variant_names, '{{}}')))
-                                {filter_clause}
-                                ORDER BY length(food_name_normalized), sim_score DESC
-                                LIMIT :lim
-                            """), p3_params),
+                            _phase3(),
                             timeout=min(1.0, remaining),
                         )
                         for row in phase3.fetchall():
@@ -238,10 +251,10 @@ class FoodDatabaseLookupService(FoodDatabaseLookupServicePart2):
                             if rd['id'] not in seen_ids:
                                 seen_ids.add(rd['id'])
                                 results.append(rd)
-            except asyncio.TimeoutError:
-                logger.warning(f"[FoodDB] Phase 3 (ILIKE) timed out for '{query}'")
-            except Exception as e:
-                logger.warning(f"[FoodDB] Phase 3 failed for '{query}': {e}")
+                except asyncio.TimeoutError:
+                    logger.warning(f"[FoodDB] Phase 3 (ILIKE) timed out for '{query}'")
+                except Exception as e:
+                    logger.warning(f"[FoodDB] Phase 3 failed for '{query}': {e}")
 
             return [self._override_row_to_search_result(r) for r in results[:limit]]
 

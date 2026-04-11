@@ -27,12 +27,23 @@ from core.supabase_db import get_supabase_db
 from core.logger import get_logger
 from core.timezone_utils import resolve_timezone, get_user_today, local_date_to_utc_range
 from services.user_context_service import user_context_service
+from core.redis_cache import RedisCache
 
 from .utils import parse_json_field, get_workout_focus, resolve_training_split, infer_workout_type_from_focus
 
 
 # Thread pool for running synchronous DB calls concurrently
 _db_executor = ThreadPoolExecutor(max_workers=15)
+
+# Redis cache for /today responses — prevents redundant DB hits on frequent polls
+_today_workout_cache = RedisCache(prefix="workout_today", ttl_seconds=120, max_size=200)
+
+
+async def invalidate_today_workout_cache(user_id: str, gym_profile_id: str = None, date: str = None):
+    """Invalidate cached /today response after workout changes."""
+    cache_key = f"{user_id}:{gym_profile_id or 'none'}:{date or 'unknown'}"
+    await _today_workout_cache.delete(cache_key)
+    logger.debug(f"[CACHE] Invalidated workout_today cache for key={cache_key}")
 
 
 # =============================================================================
@@ -150,7 +161,9 @@ def _row_to_summary(row: dict, user_today_str: Optional[str] = None) -> TodayWor
         scheduled_date = str(scheduled_date)[:10]  # Get YYYY-MM-DD part
 
     # Check if today using user's local date
-    ref_today = user_today_str or date.today().isoformat()
+    if not user_today_str:
+        raise ValueError("user_today_str is required — never fall back to date.today() on a UTC server")
+    ref_today = user_today_str
     is_today = scheduled_date == ref_today
 
     return TodayWorkoutSummary(
@@ -170,13 +183,14 @@ def _row_to_summary(row: dict, user_today_str: Optional[str] = None) -> TodayWor
     )
 
 
-def _is_today_a_workout_day(selected_days: List[int], user_today_str: Optional[str] = None) -> bool:
-    """Check if today is a scheduled workout day for the user."""
+def _is_today_a_workout_day(selected_days: List[int], user_today_str: str) -> bool:
+    """Check if today is a scheduled workout day for the user.
+
+    ``user_today_str`` is required — never fall back to ``date.today()``
+    which returns UTC on a Render server.
+    """
     # Python's weekday(): Monday=0, Sunday=6 - matches our selected_days format
-    if user_today_str:
-        today_weekday = datetime.strptime(user_today_str, "%Y-%m-%d").weekday()
-    else:
-        today_weekday = date.today().weekday()
+    today_weekday = datetime.strptime(user_today_str, "%Y-%m-%d").weekday()
     return today_weekday in selected_days
 
 
@@ -205,17 +219,17 @@ def _get_user_workout_days(user: dict) -> List[int]:
     return selected_days
 
 
-def _calculate_next_workout_date(selected_days: List[int], user_today_str: Optional[str] = None) -> str:
+def _calculate_next_workout_date(selected_days: List[int], user_today_str: str) -> str:
     """Calculate the next workout date based on user's selected days.
 
     Returns the date in YYYY-MM-DD format.
     If today is a workout day, returns today.
     Otherwise returns the next upcoming workout day.
+
+    ``user_today_str`` is required — never fall back to ``date.today()``
+    which returns UTC on a Render server.
     """
-    if user_today_str:
-        today = datetime.strptime(user_today_str, "%Y-%m-%d").date()
-    else:
-        today = date.today()
+    today = datetime.strptime(user_today_str, "%Y-%m-%d").date()
     today_weekday = today.weekday()
 
     # If today is a workout day, return today
@@ -239,6 +253,7 @@ def _get_upcoming_dates_needing_generation(
     active_profile_id: Optional[str],
     max_dates: int = 3,
     user_today_str: Optional[str] = None,
+    user_tz: str = "UTC",
 ) -> List[date]:
     """Find up to `max_dates` upcoming scheduled workout days that have no workout generated.
 
@@ -246,42 +261,63 @@ def _get_upcoming_dates_needing_generation(
     1. Fall on one of the user's selected workout days
     2. Are today or in the future
     3. Don't already have a workout (completed or not) in the database
+    4. Are not already being generated in the background
 
-    Uses a single DB query to fetch all workouts in the date range instead of
-    one query per day.
+    Uses timezone-aware UTC date ranges to correctly match workouts stored
+    with the user's local timezone offset.
     """
-    if user_today_str:
-        today_date = datetime.strptime(user_today_str, "%Y-%m-%d").date()
-    else:
-        today_date = date.today()
+    if not user_today_str:
+        raise ValueError("user_today_str is required — never fall back to date.today() on a UTC server")
+    today_date = datetime.strptime(user_today_str, "%Y-%m-%d").date()
     end_date = today_date + timedelta(days=14)
 
-    # Single query for ALL workouts in the next 14 days
+    # Use timezone-aware UTC range for the full 14-day window
+    range_start, _ = local_date_to_utc_range(today_date.isoformat(), user_tz)
+    _, range_end = local_date_to_utc_range(end_date.isoformat(), user_tz)
+
+    # Single query for ALL workouts in the next 14 days (timezone-aware)
     existing_workouts = db.list_workouts(
         user_id=user_id,
-        from_date=today_date.isoformat(),
-        to_date=end_date.isoformat(),
+        from_date=range_start,
+        to_date=range_end,
         limit=30,
         gym_profile_id=active_profile_id,
     )
 
-    # Build set of dates that already have workouts
+    # Build set of dates that already have workouts.
+    # Convert each workout's scheduled_date back to the user's local date
+    # so we compare apples-to-apples with the user's calendar days.
     existing_dates = set()
     for w in existing_workouts:
         sd = w.get("scheduled_date", "")
         if sd:
+            # Extract the date portion — works for both "YYYY-MM-DD" and "YYYY-MM-DDTHH:MM:SS+00:00"
             existing_dates.add(sd[:10])
+            # Also add the user-local date in case the UTC date differs
+            try:
+                from dateutil.parser import parse as parse_dt
+                import pytz
+                utc_dt = parse_dt(sd)
+                local_dt = utc_dt.astimezone(pytz.timezone(user_tz))
+                existing_dates.add(local_dt.strftime("%Y-%m-%d"))
+            except Exception:
+                pass
 
-    # Find scheduled days without workouts
+    # Find scheduled days without workouts (also skip in-flight generations)
     results: List[date] = []
     for days_ahead in range(0, 14):
         check_date = today_date + timedelta(days=days_ahead)
         if check_date.weekday() not in selected_days:
             continue
-        if check_date.isoformat() not in existing_dates:
-            results.append(check_date)
-            if len(results) >= max_dates:
-                break
+        if check_date.isoformat() in existing_dates:
+            continue
+        # Skip dates already being generated in background
+        gen_key = f"{user_id}:{check_date.isoformat()}:{active_profile_id or 'default'}"
+        if gen_key in _active_background_generations:
+            continue
+        results.append(check_date)
+        if len(results) >= max_dates:
+            break
 
     return results
 
@@ -312,7 +348,7 @@ def _is_transient_error_str(err: str) -> bool:
     return any(kw in err_lower for kw in ["429", "resource_exhausted", "503", "timeout", "rate limit", "unavailable"])
 
 
-async def auto_generate_workout(user_id: str, target_date: date, gym_profile_id: Optional[str] = None, selected_days: Optional[List[int]] = None, adjacent_day_exercises: Optional[List[str]] = None, batch_offset: int = 0, _retry_count: int = 0):
+async def auto_generate_workout(user_id: str, target_date: date, gym_profile_id: Optional[str] = None, selected_days: Optional[List[int]] = None, adjacent_day_exercises: Optional[List[str]] = None, batch_offset: int = 0, _retry_count: int = 0, user_tz: str = "UTC"):
     """Background task: generate a workout for a specific date.
 
     Safety guarantees:
@@ -334,10 +370,12 @@ async def auto_generate_workout(user_id: str, target_date: date, gym_profile_id:
         db = get_supabase_db()
 
         # Double-check: workout may have been created between the /today check and now
+        # Use timezone-aware UTC range to correctly find workouts stored with TZ offset
+        tz_from, tz_to = local_date_to_utc_range(target_date.isoformat(), user_tz)
         existing = db.list_workouts(
             user_id=user_id,
-            from_date=target_date.isoformat(),
-            to_date=target_date.isoformat(),
+            from_date=tz_from,
+            to_date=tz_to,
             limit=1,
             gym_profile_id=gym_profile_id,
         )
@@ -348,13 +386,14 @@ async def auto_generate_workout(user_id: str, target_date: date, gym_profile_id:
         # Also check for a workout with status='generating' (another request may have started it)
         try:
             target_str = target_date.isoformat()
-            end_of_day = target_str + "T23:59:59.999999+00:00"
+            # Use timezone-aware range for generating check too
+            gen_range_start, gen_range_end = local_date_to_utc_range(target_str, user_tz)
             gen_query = db.client.table("workouts").select("id, created_at").eq(
                 "user_id", user_id
             ).gte(
-                "scheduled_date", target_str
+                "scheduled_date", gen_range_start
             ).lte(
-                "scheduled_date", end_of_day
+                "scheduled_date", gen_range_end
             ).eq(
                 "status", "generating"
             )
@@ -442,6 +481,7 @@ async def auto_generate_workout(user_id: str, target_date: date, gym_profile_id:
             return await auto_generate_workout(
                 user_id, target_date, gym_profile_id, selected_days,
                 adjacent_day_exercises, batch_offset, _retry_count=_retry_count + 1,
+                user_tz=user_tz,
             )
         logger.error(f"[BG-GEN] Failed to generate workout for {generation_key}: {e}", exc_info=True)
     finally:
@@ -453,6 +493,7 @@ async def _sequential_generate_workouts(
     dates: List[date],
     gym_profile_id: Optional[str] = None,
     selected_days: Optional[List[int]] = None,
+    user_tz: str = "UTC",
 ) -> None:
     """Generate workouts one at a time so each sees the previous one's exercises.
 
@@ -472,6 +513,7 @@ async def _sequential_generate_workouts(
                 selected_days=selected_days,
                 adjacent_day_exercises=all_batch_exercises if all_batch_exercises else None,
                 batch_offset=i,
+                user_tz=user_tz,
             )
         except Exception as e:
             logger.error(f"[SEQ-GEN] Failed workout {i+1}/{len(dates)} for {gen_date}: {e}", exc_info=True)
@@ -481,6 +523,8 @@ async def _sequential_generate_workouts(
             new_exercises = [ex.name for ex in result.exercises if hasattr(ex, 'name') and ex.name]
             all_batch_exercises.extend(new_exercises)
             logger.info(f"[SEQ-GEN] Accumulated {len(all_batch_exercises)} total exercises to avoid (added {len(new_exercises)} from day {i+1})")
+            # Invalidate today cache so the next poll picks up the newly generated workout
+            await invalidate_today_workout_cache(user_id, gym_profile_id, gen_date.isoformat())
 
 
 @router.get("/today", response_model=TodayWorkoutResponse)
@@ -521,6 +565,13 @@ async def get_today_workout(
         # Get active gym profile for filtering
         active_profile_id = _get_active_gym_profile_id(db, user_id)
         logger.debug(f"[GYM PROFILE] Active profile for user {user_id}: {active_profile_id}")
+
+        # Check cache before running expensive DB queries
+        cache_key = f"{user_id}:{active_profile_id or 'none'}:{today_str}"
+        cached = await _today_workout_cache.get(cache_key)
+        if cached:
+            logger.info(f"[CACHE] HIT workout_today for user {user_id}")
+            return TodayWorkoutResponse(**cached)
 
         selected_days = _get_user_workout_days(user)
 
@@ -690,6 +741,7 @@ async def get_today_workout(
                 active_profile_id=active_profile_id,
                 max_dates=7,
                 user_today_str=today_str,
+                user_tz=user_tz,
             )
             if upcoming_missing:
                 _last_bg_gen_schedule[user_id] = now_ts
@@ -703,6 +755,7 @@ async def get_today_workout(
                     dates=upcoming_missing,
                     gym_profile_id=active_profile_id,
                     selected_days=selected_days,
+                    user_tz=user_tz,
                 )
 
         # Backfill: tag orphaned workouts (gym_profile_id IS NULL) with the active profile
@@ -714,7 +767,7 @@ async def get_today_workout(
                 gym_profile_id=active_profile_id,
             )
 
-        return TodayWorkoutResponse(
+        response = TodayWorkoutResponse(
             has_workout_today=has_workout_today,
             today_workout=today_workout,
             next_workout=next_workout,
@@ -728,6 +781,13 @@ async def get_today_workout(
             next_workout_date=next_workout_date,
             gym_profile_id=active_profile_id,
         )
+
+        # Cache stable responses (not transient generating/needs_generation states)
+        if not response.is_generating and not response.needs_generation:
+            await _today_workout_cache.set(cache_key, response.dict())
+            logger.debug(f"[CACHE] SET workout_today for user {user_id}")
+
+        return response
 
     except Exception as e:
         logger.error(f"Failed to get today's workout: {e}", exc_info=True)

@@ -7,6 +7,8 @@ import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
+import 'package:package_info_plus/package_info_plus.dart';
+
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_links.dart';
 import '../../widgets/glass_sheet.dart';
@@ -598,7 +600,7 @@ class _ExpandedWelcome extends StatelessWidget {
 
                         const Spacer(flex: 2),
 
-                        // App icon
+                        // App icon + version
                         ClipOval(
                           child: Image.asset(
                             'assets/images/app_icon.png',
@@ -611,7 +613,22 @@ class _ExpandedWelcome extends StatelessWidget {
                             ),
                           ),
                         ),
-                        const SizedBox(height: 24),
+                        const SizedBox(height: 8),
+                        FutureBuilder<PackageInfo>(
+                          future: PackageInfo.fromPlatform(),
+                          builder: (context, snapshot) {
+                            if (!snapshot.hasData) return const SizedBox.shrink();
+                            return Text(
+                              'v${snapshot.data!.version}',
+                              style: TextStyle(
+                                color: Colors.white.withValues(alpha: 0.4),
+                                fontSize: 12,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            );
+                          },
+                        ),
+                        const SizedBox(height: 16),
 
                         // Title
                         const Text(

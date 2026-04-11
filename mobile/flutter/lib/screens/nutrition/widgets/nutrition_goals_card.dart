@@ -86,38 +86,37 @@ class NutritionGoalsCard extends ConsumerWidget {
         border: Border.all(color: cardBorder),
         boxShadow: [
           BoxShadow(
-            color: teal.withValues(alpha: 0.15),
-            blurRadius: 16,
-            offset: const Offset(0, 8),
-            spreadRadius: 1,
+            color: teal.withValues(alpha: 0.10),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
           ),
           BoxShadow(
-            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.08),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
+            color: Colors.black.withValues(alpha: isDark ? 0.15 : 0.06),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
           ),
         ],
       ),
       child: Row(
         children: [
           // Green accent bar
-          Container(width: 4, color: green),
+          Container(width: 3, color: green),
           // Card content
           Expanded(
             child: Padding(
-              padding: const EdgeInsets.all(12),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Header row: title + training badge + water + edit/refresh
           Row(
             children: [
-              Icon(Icons.track_changes, color: teal, size: 18),
-              const SizedBox(width: 6),
+              Icon(Icons.track_changes, color: teal, size: 16),
+              const SizedBox(width: 5),
               Text(
                 'Daily Goals',
                 style: TextStyle(
-                  fontSize: 15,
+                  fontSize: 14,
                   fontWeight: FontWeight.bold,
                   color: textPrimary,
                 ),
@@ -184,7 +183,7 @@ class NutritionGoalsCard extends ConsumerWidget {
             ],
           ),
 
-          const SizedBox(height: 10),
+          const SizedBox(height: 6),
 
           // Macro progress rings in a row (colors match home screen tile)
           Row(
@@ -239,7 +238,7 @@ class NutritionGoalsCard extends ConsumerWidget {
               (prefs.rateOfChange != null &&
                (prefs.primaryGoalEnum == NutritionGoal.loseFat ||
                 prefs.primaryGoalEnum == NutritionGoal.buildMuscle)))) ...[
-            const SizedBox(height: 8),
+            const SizedBox(height: 6),
             Builder(builder: (_) {
               final chips = <Widget>[
                 if (hasGoal)
@@ -280,7 +279,7 @@ class NutritionGoalsCard extends ConsumerWidget {
 
           // Bottom info line: calories burned
           if (hasCaloriesBurned) ...[
-            const SizedBox(height: 8),
+            const SizedBox(height: 4),
             GestureDetector(
               onTap: () => showCaloriesBurnedSheet(context, caloriesBurned),
               behavior: HitTestBehavior.opaque,

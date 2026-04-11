@@ -38,6 +38,7 @@ from core.activity_logger import log_user_activity, log_user_error
 from core.auth import get_current_user
 from core.rate_limiter import limiter
 from core.exceptions import safe_internal_error
+from core.timezone_utils import user_today_date
 
 router = APIRouter()
 logger = get_logger(__name__)
@@ -485,6 +486,7 @@ async def log_weight_with_fasting(
 
 @router.get("/weight-correlation/{user_id}", response_model=FastingWeightCorrelationResponse)
 async def get_weight_correlation(
+    request: Request,
     user_id: str,
     days: int = Query(default=30, ge=7, le=365, description="Number of days to analyze"),
     include_non_fasting: bool = Query(default=True, description="Include non-fasting days in response"),
@@ -504,7 +506,7 @@ async def get_weight_correlation(
         db = get_supabase_db()
 
         # Calculate date range
-        end_date = date.today()
+        end_date = user_today_date(request, db, user_id)
         start_date = end_date - timedelta(days=days)
 
         # Get weight correlation data from fasting_weight_correlation table
@@ -600,6 +602,7 @@ async def get_weight_correlation(
 
 @router.get("/analysis/{user_id}", response_model=FastingGoalImpactResponse)
 async def get_fasting_impact_analysis(
+    request: Request,
     user_id: str,
     period: str = Query(default="month", description="Period: 'week', 'month', '3months', 'all'"),
     current_user: dict = Depends(get_current_user),
@@ -621,7 +624,7 @@ async def get_fasting_impact_analysis(
         db = get_supabase_db()
 
         # Calculate date range
-        today = date.today()
+        today = user_today_date(request, db, user_id)
         if period == "week":
             start_date = today - timedelta(days=7)
         elif period == "month":

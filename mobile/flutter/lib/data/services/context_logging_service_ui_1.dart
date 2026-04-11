@@ -530,7 +530,7 @@ extension ContextLoggingServiceExt1 on ContextLoggingService {
           'description': description,
           'exercises_to_avoid': exercisesToAvoid ?? [],
           'expected_recovery_days': expectedRecoveryDays,
-          'reported_at': DateTime.now().toIso8601String(),
+          'reported_at': Tz.timestamp(),
         },
         context: {
           'time_of_day': _getTimeOfDay(),
@@ -561,7 +561,7 @@ extension ContextLoggingServiceExt1 on ContextLoggingService {
           'mobility_level': mobilityLevel,
           'improvement_since_last': improvementSinceLast,
           'notes': notes,
-          'checked_in_at': DateTime.now().toIso8601String(),
+          'checked_in_at': Tz.timestamp(),
         },
         context: {
           'time_of_day': _getTimeOfDay(),
@@ -596,7 +596,7 @@ extension ContextLoggingServiceExt1 on ContextLoggingService {
           'volume_weekly': volumeWeekly,
           'intensity_level': intensityLevel,
           'fatigue_score': fatigueScore,
-          'recorded_at': DateTime.now().toIso8601String(),
+          'recorded_at': Tz.timestamp(),
         },
         context: {
           'time_of_day': _getTimeOfDay(),
@@ -629,7 +629,7 @@ extension ContextLoggingServiceExt1 on ContextLoggingService {
           'recommendation': recommendation,
           'volume_threshold_exceeded': volumeThresholdExceeded,
           'days_without_rest': daysWithoutRest,
-          'alert_created_at': DateTime.now().toIso8601String(),
+          'alert_created_at': Tz.timestamp(),
         },
         context: {
           'time_of_day': _getTimeOfDay(),
@@ -668,7 +668,7 @@ extension ContextLoggingServiceExt1 on ContextLoggingService {
           'balance_exercises_enabled': balanceExercisesEnabled,
           'mobility_focus': mobilityFocus,
           'previous_settings': previousSettings,
-          'updated_at': DateTime.now().toIso8601String(),
+          'updated_at': Tz.timestamp(),
         },
         context: {
           'time_of_day': _getTimeOfDay(),
@@ -699,7 +699,7 @@ extension ContextLoggingServiceExt1 on ContextLoggingService {
           'energy_level': energyLevel,
           'soreness_level': sorenessLevel,
           'recommended_intensity': recommendedIntensity,
-          'checked_at': DateTime.now().toIso8601String(),
+          'checked_at': Tz.timestamp(),
         },
         context: {
           'time_of_day': _getTimeOfDay(),
@@ -736,7 +736,7 @@ extension ContextLoggingServiceExt1 on ContextLoggingService {
           'fasting_duration_minutes': fastingDurationMinutes,
           'completed_goal': completedGoal,
           'notes': notes,
-          'logged_at': DateTime.now().toIso8601String(),
+          'logged_at': Tz.timestamp(),
         },
         context: {
           'time_of_day': _getTimeOfDay(),
@@ -767,7 +767,7 @@ extension ContextLoggingServiceExt1 on ContextLoggingService {
           'insight_type': insightType,
           'fasting_days_analyzed': fastingDaysAnalyzed,
           'non_fasting_days_analyzed': nonFastingDaysAnalyzed,
-          'viewed_at': DateTime.now().toIso8601String(),
+          'viewed_at': Tz.timestamp(),
         },
         context: {
           'time_of_day': _getTimeOfDay(),
@@ -798,7 +798,7 @@ extension ContextLoggingServiceExt1 on ContextLoggingService {
           'recommendation': recommendation,
           'correlation_score': correlationScore,
           'was_ai_generated': wasAIGenerated,
-          'received_at': DateTime.now().toIso8601String(),
+          'received_at': Tz.timestamp(),
         },
         context: {
           'time_of_day': _getTimeOfDay(),
@@ -837,7 +837,7 @@ extension ContextLoggingServiceExt1 on ContextLoggingService {
           'workout_performance_non_fasting': workoutPerformanceNonFasting,
           'goals_achieved_fasting': goalsAchievedFasting,
           'goals_achieved_non_fasting': goalsAchievedNonFasting,
-          'analyzed_at': DateTime.now().toIso8601String(),
+          'analyzed_at': Tz.timestamp(),
         },
         context: {
           'time_of_day': _getTimeOfDay(),
@@ -870,7 +870,7 @@ extension ContextLoggingServiceExt1 on ContextLoggingService {
           'new_pace': newPace,
           'reason': reason,
           'triggered_by': triggeredBy,
-          'changed_at': DateTime.now().toIso8601String(),
+          'changed_at': Tz.timestamp(),
         },
         context: {
           'time_of_day': _getTimeOfDay(),
@@ -905,7 +905,7 @@ extension ContextLoggingServiceExt1 on ContextLoggingService {
           'intensity_reduced': intensityReduced,
           'volume_reduced': volumeReduced,
           'reduction_percentage': reductionPercentage,
-          'modified_at': DateTime.now().toIso8601String(),
+          'modified_at': Tz.timestamp(),
         },
         context: {
           'time_of_day': _getTimeOfDay(),
@@ -945,7 +945,7 @@ extension ContextLoggingServiceExt1 on ContextLoggingService {
           'total_sets': totalSets,
           'max_weight': maxWeight,
           'progression_trend': progressionTrend,
-          'viewed_at': DateTime.now().toIso8601String(),
+          'viewed_at': Tz.timestamp(),
         },
         context: {
           'time_of_day': _getTimeOfDay(),

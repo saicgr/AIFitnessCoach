@@ -115,7 +115,7 @@ class NutritionNotifier extends StateNotifier<NutritionState> {
     state = state.copyWith(isLoading: true, error: null);
     try {
       // Pass local date to avoid UTC mismatch on server (Render runs in UTC)
-      final localDate = DateTime.now().toIso8601String().substring(0, 10);
+      final localDate = Tz.localDate();
       final summary = await _repository.getDailySummary(userId, date: localDate);
       state = state.copyWith(isLoading: false, todaySummary: summary);
       _lastLoadedUserId = userId;

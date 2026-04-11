@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
 import '../../core/constants/app_colors.dart';
+import '../../core/theme/theme_colors.dart';
 import '../../data/models/nutrition.dart';
 import '../../data/models/fasting.dart';
 import '../../data/providers/fasting_provider.dart';
@@ -213,6 +214,8 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet> {
       _previousResponse = _analyzedResponse;
       _analyzedResponse = null;
       _analysisElapsedMs = null;
+      _capturedImagePath = null;
+      _sourceType = 'text';
     });
   }
 
@@ -525,7 +528,7 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet> {
     final nearBlack = isDark ? AppColors.nearBlack : AppColorsLight.nearWhite;
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final teal = isDark ? AppColors.teal : AppColorsLight.teal;
+    final accentColor = ref.colors(context).accent;
     final cardBg = isDark
         ? Colors.white.withValues(alpha: 0.05)
         : Colors.black.withValues(alpha: 0.04);
@@ -604,18 +607,40 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet> {
                   ],
                 ),
 
-                // Nutri-Score and NOVA badges
-                if (product.nutriscoreGrade != null || product.novaGroup != null) ...[
+                // Food quality badges
+                if (product.nutriscoreGrade != null || product.novaGroup != null ||
+                    product.ecoscoreGrade != null || (product.additivesTags?.isNotEmpty ?? false) ||
+                    (product.labelsTags?.isNotEmpty ?? false)) ...[
                   const SizedBox(height: 12),
                   Wrap(
-                    spacing: 8,
+                    spacing: 6,
+                    runSpacing: 6,
                     children: [
                       if (product.nutriscoreGrade != null)
                         NutriscoreBadge(
                             grade: product.nutriscoreGrade!, isDark: isDark),
                       if (product.novaGroup != null)
                         NovaBadge(group: product.novaGroup!, isDark: isDark),
+                      if (product.ecoscoreGrade != null)
+                        EcoscoreBadge(
+                            grade: product.ecoscoreGrade!, isDark: isDark),
+                      if (product.additivesTags != null && product.additivesTags!.isNotEmpty)
+                        AdditivesCountBadge(
+                            count: product.additivesTags!.length, isDark: isDark),
+                      if (product.labelsTags != null)
+                        ...product.labelsTags!.take(5).map((label) =>
+                            FoodLabelChip(label: label, isDark: isDark)),
                     ],
+                  ),
+                ],
+
+                // NOVA processing breakdown (expandable)
+                if (product.novaGroup != null && product.ingredientsText != null) ...[
+                  const SizedBox(height: 8),
+                  NovaDetailSection(
+                    novaGroup: product.novaGroup!,
+                    ingredientsText: product.ingredientsText,
+                    isDark: isDark,
                   ),
                 ],
 
@@ -672,9 +697,14 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet> {
                     isDark: isDark,
                   ),
 
+                // Micronutrients (collapsible)
+                if (product.hasMicronutrients) ...[
+                  const SizedBox(height: 8),
+                  _BarcodeMicronutrientsSection(product: product, isDark: isDark),
+                ],
+
                 // Allergens
-                if (product.allergens != null &&
-                    product.allergens!.isNotEmpty) ...[
+                if (product.allergensList.isNotEmpty) ...[
                   const SizedBox(height: 12),
                   Divider(color: textMuted.withValues(alpha: 0.2)),
                   const SizedBox(height: 8),
@@ -690,10 +720,24 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet> {
                               color: Colors.orange)),
                     ],
                   ),
-                  const SizedBox(height: 4),
-                  Text(
-                    product.allergens!,
-                    style: TextStyle(fontSize: 12, color: textMuted),
+                  const SizedBox(height: 6),
+                  Wrap(
+                    spacing: 6,
+                    runSpacing: 6,
+                    children: product.allergensList.map((allergen) =>
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: Colors.orange.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(6),
+                          border: Border.all(color: Colors.orange.withValues(alpha: 0.3)),
+                        ),
+                        child: Text(
+                          allergen,
+                          style: const TextStyle(fontSize: 11, color: Colors.orange, fontWeight: FontWeight.w500),
+                        ),
+                      ),
+                    ).toList(),
                   ),
                 ],
 
@@ -737,7 +781,7 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet> {
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
-            style: ElevatedButton.styleFrom(backgroundColor: teal),
+            style: ElevatedButton.styleFrom(backgroundColor: accentColor),
             child: const Text('Log This'),
           ),
         ],
@@ -861,7 +905,7 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet> {
   /// Dismiss confirmation dialog when user has unlogged analysis results.
   /// Returns true = discard, false = log the meal, null = cancel (stay).
   Future<bool?> _showDiscardAnalysisDialog(bool isDark) {
-    final teal = isDark ? AppColors.teal : AppColorsLight.teal;
+    final accentColor = ref.colors(context).accent;
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final nearBlack = isDark ? AppColors.nearBlack : AppColorsLight.nearWhite;
@@ -889,7 +933,7 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet> {
           ElevatedButton(
             onPressed: () => Navigator.pop(ctx, false), // Log This Meal
             style: ElevatedButton.styleFrom(
-              backgroundColor: teal,
+              backgroundColor: accentColor,
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
             ),
@@ -898,5 +942,97 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet> {
         ],
       ),
     );
+  }
+}
+
+
+/// Collapsible micronutrients section for barcode products
+class _BarcodeMicronutrientsSection extends StatefulWidget {
+  final BarcodeProduct product;
+  final bool isDark;
+
+  const _BarcodeMicronutrientsSection({required this.product, required this.isDark});
+
+  @override
+  State<_BarcodeMicronutrientsSection> createState() => _BarcodeMicronutrientsSectionState();
+}
+
+class _BarcodeMicronutrientsSectionState extends State<_BarcodeMicronutrientsSection> {
+  bool _isExpanded = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final elevated = widget.isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final textPrimary = widget.isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textMuted = widget.isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final cardBorder = widget.isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: elevated,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: cardBorder),
+      ),
+      child: Column(
+        children: [
+          InkWell(
+            onTap: () => setState(() => _isExpanded = !_isExpanded),
+            borderRadius: BorderRadius.circular(12),
+            child: Padding(
+              padding: const EdgeInsets.all(10),
+              child: Row(
+                children: [
+                  Icon(Icons.science_outlined, size: 16, color: AppColors.purple),
+                  const SizedBox(width: 8),
+                  Expanded(child: Text('Vitamins & Minerals', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: textPrimary))),
+                  Icon(_isExpanded ? Icons.expand_less : Icons.expand_more, size: 18, color: textMuted),
+                ],
+              ),
+            ),
+          ),
+          if (_isExpanded) ...[
+            Divider(height: 1, color: cardBorder),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(12, 6, 12, 10),
+              child: Column(
+                children: _buildMicronutrientRows(),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  List<Widget> _buildMicronutrientRows() {
+    final p = widget.product;
+    final rows = <Widget>[];
+
+    if (p.vitaminA100g > 0) {
+      rows.add(NutritionInfoRow(label: 'Vitamin A', value: '${p.vitaminA100g.toStringAsFixed(1)} µg', isDark: widget.isDark));
+    }
+    if (p.vitaminC100g > 0) {
+      rows.add(NutritionInfoRow(label: 'Vitamin C', value: '${p.vitaminC100g.toStringAsFixed(1)} mg', isDark: widget.isDark));
+    }
+    if (p.vitaminD100g > 0) {
+      rows.add(NutritionInfoRow(label: 'Vitamin D', value: '${p.vitaminD100g.toStringAsFixed(2)} µg', isDark: widget.isDark));
+    }
+    if (p.calcium100g > 0) {
+      rows.add(NutritionInfoRow(label: 'Calcium', value: '${p.calcium100g.toStringAsFixed(1)} mg', isDark: widget.isDark));
+    }
+    if (p.iron100g > 0) {
+      rows.add(NutritionInfoRow(label: 'Iron', value: '${p.iron100g.toStringAsFixed(2)} mg', isDark: widget.isDark));
+    }
+    if (p.potassium100g > 0) {
+      rows.add(NutritionInfoRow(label: 'Potassium', value: '${p.potassium100g.toStringAsFixed(1)} mg', isDark: widget.isDark));
+    }
+    if (p.magnesium100g > 0) {
+      rows.add(NutritionInfoRow(label: 'Magnesium', value: '${p.magnesium100g.toStringAsFixed(1)} mg', isDark: widget.isDark));
+    }
+    if (p.zinc100g > 0) {
+      rows.add(NutritionInfoRow(label: 'Zinc', value: '${p.zinc100g.toStringAsFixed(2)} mg', isDark: widget.isDark));
+    }
+
+    return rows;
   }
 }

@@ -23,6 +23,7 @@ from enum import Enum
 import logging
 
 from core.db import get_supabase_db
+from core.timezone_utils import get_user_today
 
 logger = logging.getLogger(__name__)
 
@@ -557,7 +558,7 @@ class ComebackService:
     # Comeback Mode Management
     # -------------------------------------------------------------------------
 
-    async def start_comeback_mode(self, user_id: str) -> Optional[str]:
+    async def start_comeback_mode(self, user_id: str, timezone_str: str) -> Optional[str]:
         """
         Start comeback mode for a user.
 
@@ -606,20 +607,22 @@ class ComebackService:
                 logger.warning(f"RPC start_comeback_mode failed: {rpc_error}, using fallback", exc_info=True)
 
             # Fallback: manual update
+            from zoneinfo import ZoneInfo
+            _tz_now = datetime.now(ZoneInfo(timezone_str) if timezone_str != "UTC" else ZoneInfo("UTC"))
             db.client.table("users").update({
                 "in_comeback_mode": True,
-                "comeback_started_at": datetime.now().isoformat(),
+                "comeback_started_at": _tz_now.isoformat(),
                 "comeback_week": 1
             }).eq("id", user_id).execute()
 
             # Create history record
             history_result = db.client.table("comeback_history").insert({
                 "user_id": user_id,
-                "break_start_date": (datetime.now() - timedelta(days=status.days_since_last_workout)).isoformat(),
-                "break_end_date": datetime.now().isoformat(),
+                "break_start_date": (_tz_now - timedelta(days=status.days_since_last_workout)).isoformat(),
+                "break_end_date": _tz_now.isoformat(),
                 "days_off": status.days_since_last_workout,
                 "break_type": status.break_type.value,
-                "comeback_started_at": datetime.now().isoformat(),
+                "comeback_started_at": _tz_now.isoformat(),
                 "target_comeback_weeks": target_weeks,
                 "initial_volume_reduction": 1.0 - adjustments.volume_multiplier,
                 "initial_intensity_reduction": 1.0 - adjustments.intensity_multiplier,
@@ -684,7 +687,7 @@ class ComebackService:
             logger.error(f"Failed to progress comeback week: {e}", exc_info=True)
             return 0
 
-    async def end_comeback_mode(self, user_id: str, successful: bool = True) -> bool:
+    async def end_comeback_mode(self, user_id: str, timezone_str: str, successful: bool = True) -> bool:
         """
         End comeback mode for a user.
 
@@ -709,8 +712,10 @@ class ComebackService:
             user = db.get_user(user_id)
             comeback_week = user.get("comeback_week", 0) if user else 0
 
+            from zoneinfo import ZoneInfo
+            _tz_now = datetime.now(ZoneInfo(timezone_str) if timezone_str != "UTC" else ZoneInfo("UTC"))
             db.client.table("comeback_history").update({
-                "comeback_completed_at": datetime.now().isoformat(),
+                "comeback_completed_at": _tz_now.isoformat(),
                 "actual_comeback_weeks": comeback_week,
                 "successfully_completed": successful
             }).eq("user_id", user_id).is_("comeback_completed_at", "null").execute()
@@ -801,7 +806,8 @@ class ComebackService:
         self,
         user_id: str,
         event_type: str,
-        event_data: Dict[str, Any]
+        event_data: Dict[str, Any],
+        timezone_str: str,
     ) -> None:
         """
         Log a comeback-related event for analytics.
@@ -810,17 +816,20 @@ class ComebackService:
             user_id: User ID
             event_type: Type of event (e.g., "comeback_started", "workout_completed")
             event_data: Additional event data
+            timezone_str: User's IANA timezone string
         """
         try:
+            from zoneinfo import ZoneInfo
             db = get_supabase_db()
+            user_now = datetime.now(ZoneInfo(timezone_str) if timezone_str != "UTC" else ZoneInfo("UTC"))
 
             db.client.table("user_context_logs").insert({
                 "user_id": user_id,
                 "event_type": f"comeback_{event_type}",
                 "event_data": event_data,
                 "context": {
-                    "time_of_day": datetime.now().strftime("%H:00"),
-                    "day_of_week": datetime.now().strftime("%A").lower()
+                    "time_of_day": user_now.strftime("%H:00"),
+                    "day_of_week": user_now.strftime("%A").lower()
                 }
             }).execute()
 

@@ -187,6 +187,9 @@ async def nutrition_agent_node(state: NutritionAgentState) -> Dict[str, Any]:
     llm = get_langchain_llm(temperature=0.7)
     llm_with_tools = llm.bind_tools(NUTRITION_TOOLS)
 
+    # Resolve user timezone from profile
+    _tz = (state.get("user_profile") or {}).get("timezone") or "UTC"
+
     # Build system message
     tool_prompt = f"""{base_system_prompt}
 
@@ -194,25 +197,32 @@ CONTEXT:
 {context}
 
 AVAILABLE TOOLS:
-- log_food_from_text(user_id, food_description, meal_type) - Log food from text description
+- log_food_from_text(user_id, food_description, meal_type, timezone_str) - Log food from text description
   * IMPORTANT: When user describes food they ate (e.g., "I ate biryani", "had eggs for breakfast"), call this tool
   * food_description: the food the user mentioned
   * meal_type: optional (breakfast/lunch/dinner/snack), auto-detected if not provided
+  * timezone_str: ALWAYS pass "{_tz}"
 - analyze_food_image(user_id, image_base64, user_message) - Analyze a single food image to log calories and macros
-- analyze_multi_food_images(user_id, s3_keys, mime_types, user_message, analysis_mode) - Analyze multiple food images (plates, buffets, menus)
+- analyze_multi_food_images(user_id, s3_keys, mime_types, user_message, analysis_mode, timezone_str) - Analyze multiple food images (plates, buffets, menus)
   * s3_keys: list of S3 object keys from media_refs
   * mime_types: list of MIME types from media_refs
   * analysis_mode: "auto" (let AI detect), "plate", "buffet", or "menu"
-- parse_app_screenshot(user_id, s3_keys, mime_types, image_base64, user_message)
+  * timezone_str: ALWAYS pass "{_tz}"
+- parse_app_screenshot(user_id, s3_keys, mime_types, image_base64, user_message, timezone_str)
   * Parse a nutrition app screenshot to extract and log food entries
-- parse_nutrition_label(user_id, s3_keys, mime_types, image_base64, servings_consumed, user_message)
+  * timezone_str: ALWAYS pass "{_tz}"
+- parse_nutrition_label(user_id, s3_keys, mime_types, image_base64, servings_consumed, user_message, timezone_str)
   * Read a nutrition facts label and log the food entry
-- get_nutrition_summary(user_id, date, period) - Get nutrition totals for a day or week
+  * timezone_str: ALWAYS pass "{_tz}"
+- get_nutrition_summary(user_id, date, period, timezone_str) - Get nutrition totals for a day or week
+  * timezone_str: ALWAYS pass "{_tz}"
 - get_recent_meals(user_id, limit) - Get recent meal logs
 
+IMPORTANT: For ALL tool calls that accept timezone_str, you MUST pass timezone_str="{_tz}".
+
 EXAMPLES:
-- "I ate thalapakattu mutton biryani" → Call log_food_from_text(user_id="{state['user_id']}", food_description="thalapakattu mutton biryani")
-- "Had 2 eggs for breakfast" → Call log_food_from_text(user_id="{state['user_id']}", food_description="2 eggs", meal_type="breakfast")
+- "I ate thalapakattu mutton biryani" → Call log_food_from_text(user_id="{state['user_id']}", food_description="thalapakattu mutton biryani", timezone_str="{_tz}")
+- "Had 2 eggs for breakfast" → Call log_food_from_text(user_id="{state['user_id']}", food_description="2 eggs", meal_type="breakfast", timezone_str="{_tz}")
 
 {f'HAS_MULTI_IMAGES: true - User sent multiple food images via media_refs. Call analyze_multi_food_images with the s3_keys and mime_types from the media_refs.' if state.get('media_refs') else ''}
 {f'MEDIA_REFS: {json.dumps([{"s3_key": r.get("s3_key"), "mime_type": r.get("mime_type"), "media_type": r.get("media_type")} for r in state.get("media_refs", [])])}' if state.get('media_refs') else ''}
@@ -227,7 +237,8 @@ EXAMPLES:
 {f'ACTION REQUIRED: This is a buffet spread. Call analyze_multi_food_images with s3_keys and mime_types from media_refs and analysis_mode="buffet".' if state.get('media_content_type') == 'food_buffet' and state.get('media_refs') else ''}
 {f'ACTION REQUIRED: This is a buffet spread image. Call analyze_food_image with the image_base64. Set user_message to "Analyze this buffet and identify all visible dishes with estimated nutrition".' if state.get('media_content_type') == 'food_buffet' and not state.get('media_refs') and state.get('image_base64') else ''}
 
-USER_ID: {state['user_id']}"""
+USER_ID: {state['user_id']}
+USER_TIMEZONE: {_tz}"""
 
     system_message = SystemMessage(content=tool_prompt)
 
@@ -293,6 +304,11 @@ async def nutrition_tool_executor_node(state: NutritionAgentState) -> Dict[str, 
         # Inject user_id if not provided
         if "user_id" not in tool_args:
             tool_args["user_id"] = state["user_id"]
+
+        # Inject timezone_str from user profile if not provided by LLM
+        if "timezone_str" not in tool_args:
+            _tz = (state.get("user_profile") or {}).get("timezone") or "UTC"
+            tool_args["timezone_str"] = _tz
 
         # Inject image if analyzing food
         if tool_name == "analyze_food_image" and state.get("image_base64"):

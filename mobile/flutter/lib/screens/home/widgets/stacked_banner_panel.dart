@@ -83,6 +83,9 @@ class _StackedBannerPanelState extends ConsumerState<StackedBannerPanel>
   // the widget is remounted (e.g. user navigates away and back).
   bool _allBannersDismissed = false;
 
+  // Guard flag to prevent double-tap on crate claim
+  bool _isClaimingCrate = false;
+
   @override
   void initState() {
     super.initState();
@@ -608,6 +611,8 @@ class _StackedBannerPanelState extends ConsumerState<StackedBannerPanel>
   }
 
   void _showOpenAllCratesSheet() {
+    if (_isClaimingCrate) return;
+
     var unclaimed = ref.read(unclaimedCratesProvider).valueOrNull ?? [];
 
     // If no accumulated unclaimed crates, build from today's daily crate state
@@ -625,9 +630,18 @@ class _StackedBannerPanelState extends ConsumerState<StackedBannerPanel>
       }
     }
 
-    if (unclaimed.isEmpty) return;
+    if (unclaimed.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('No crates available right now'),
+          behavior: SnackBarBehavior.floating,
+          duration: Duration(seconds: 2),
+        ),
+      );
+      return;
+    }
 
-    // Single crate with only one option → auto-claim instantly
+    // Single crate with only one option → auto-claim instantly with feedback
     if (unclaimed.length == 1) {
       final crate = unclaimed.first;
       final availableTypes = <String>[];
@@ -636,6 +650,30 @@ class _StackedBannerPanelState extends ConsumerState<StackedBannerPanel>
       if (crate.activityCrateAvailable) availableTypes.add('activity');
 
       if (availableTypes.length == 1) {
+        _isClaimingCrate = true;
+
+        // Dismiss banner immediately for instant feedback
+        ref.read(stackedBannerControllerProvider.notifier).dismiss('daily_crate');
+
+        // Show loading snackbar
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: const [
+                SizedBox(
+                  width: 20, height: 20,
+                  child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                ),
+                SizedBox(width: 12),
+                Text('Opening crate...'),
+              ],
+            ),
+            backgroundColor: const Color(0xFFFFB300),
+            behavior: SnackBarBehavior.floating,
+            duration: const Duration(seconds: 30),
+          ),
+        );
+
         _autoClaimSingleCrate(availableTypes.first, crate.crateDate);
         return;
       }
@@ -658,35 +696,63 @@ class _StackedBannerPanelState extends ConsumerState<StackedBannerPanel>
 
   Future<void> _autoClaimSingleCrate(String crateType, DateTime crateDate) async {
     final dateStr = '${crateDate.year}-${crateDate.month.toString().padLeft(2, '0')}-${crateDate.day.toString().padLeft(2, '0')}';
-    final result = await ref.read(xpProvider.notifier).claimDailyCrate(
-      crateType,
-      crateDate: dateStr,
-    );
 
-    if (!mounted) return;
-
-    if (result.success) {
-      HapticService.success();
-      ref.read(stackedBannerControllerProvider.notifier).dismiss('daily_crate');
-      ref.invalidate(unclaimedCratesProvider);
-
-      final rewardName = result.reward?.displayName ?? 'a reward';
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('🎁 Crate opened! You got $rewardName'),
-          backgroundColor: const Color(0xFFFFB300),
-          behavior: SnackBarBehavior.floating,
-          duration: const Duration(seconds: 3),
-        ),
+    try {
+      final result = await ref.read(xpProvider.notifier).claimDailyCrate(
+        crateType,
+        crateDate: dateStr,
       );
-    } else {
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).hideCurrentSnackBar();
+
+      if (result.success) {
+        HapticService.success();
+        ref.invalidate(unclaimedCratesProvider);
+
+        final rewardName = result.reward?.displayName ?? 'a reward';
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('🎁 Crate opened! You got $rewardName'),
+            backgroundColor: const Color(0xFFFFB300),
+            behavior: SnackBarBehavior.floating,
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      } else {
+        // "Already claimed" from another device — not really an error
+        final msg = result.message ?? '';
+        if (msg.contains('already claimed')) {
+          ref.invalidate(unclaimedCratesProvider);
+        } else {
+          // Real failure: re-show the banner so user can retry
+          HapticService.error();
+          ref.read(stackedBannerControllerProvider.notifier).undismiss('daily_crate');
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(result.message ?? 'Failed to claim crate'),
+              backgroundColor: Colors.red,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).hideCurrentSnackBar();
       HapticService.error();
+      // Re-show banner for retry
+      ref.read(stackedBannerControllerProvider.notifier).undismiss('daily_crate');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(result.message ?? 'Failed to claim crate'),
+          content: Text('Error: $e'),
           backgroundColor: Colors.red,
+          behavior: SnackBarBehavior.floating,
         ),
       );
+    } finally {
+      _isClaimingCrate = false;
     }
   }
 

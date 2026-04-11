@@ -37,6 +37,7 @@ const INJECTED_STYLES = `
   /* OUTSIDE THE CARD: Theme-aware text (Shadow in Light Mode, Glow in Dark Mode) */
   .text-3d-matte {
       color: var(--color-foreground);
+      padding-bottom: 0.15em; /* Prevent descender/shadow clipping */
       text-shadow:
           0 10px 30px color-mix(in srgb, var(--color-foreground) 20%, transparent),
           0 2px 4px color-mix(in srgb, var(--color-foreground) 10%, transparent);
@@ -47,6 +48,7 @@ const INJECTED_STYLES = `
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
+      padding-bottom: 0.15em; /* Prevent descender clipping with background-clip: text */
       transform: translateZ(0); /* Hardware acceleration to prevent WebKit clipping bug */
       filter:
           drop-shadow(0px 10px 20px color-mix(in srgb, var(--color-foreground) 15%, transparent))
@@ -402,10 +404,10 @@ export function CinematicHero({
 
       {/* BACKGROUND LAYER: Hero Texts */}
       <div className="hero-text-wrapper absolute inset-0 z-10 flex flex-col items-center justify-center text-center px-4 will-change-transform transform-style-3d">
-        <h1 className="text-track text-3d-matte text-5xl md:text-7xl lg:text-[6rem] font-bold tracking-tight mb-2 leading-[1.1]">
+        <h1 className="text-track text-3d-matte text-[2.6rem] md:text-7xl lg:text-[6rem] font-bold tracking-tight mb-2 leading-[1.2]">
           {tagline1}
         </h1>
-        <h1 className="text-days text-silver-matte text-5xl md:text-7xl lg:text-[6rem] font-extrabold tracking-tighter leading-[1.15] pb-2">
+        <h1 className="text-days text-silver-matte text-[2.6rem] md:text-7xl lg:text-[6rem] font-extrabold tracking-tight leading-[1.25] pb-4">
           {tagline2}
         </h1>
       </div>

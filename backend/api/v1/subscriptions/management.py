@@ -2,7 +2,7 @@
 Subscription management: get subscription, check access, track usage, feature limits, paywall.
 """
 from datetime import datetime, date, timedelta
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from typing import Optional, List
 
 from core.supabase_client import get_supabase
@@ -11,6 +11,7 @@ from core.config import get_settings
 from core.activity_logger import log_user_activity
 from core.auth import get_current_user
 from core.exceptions import safe_internal_error
+from core.timezone_utils import user_today_date
 
 from api.v1.subscriptions.models import (
     SubscriptionTier,
@@ -83,7 +84,7 @@ async def get_subscription(user_id: str, current_user: dict = Depends(get_curren
 
 
 @router.post("/{user_id}/check-access", response_model=FeatureAccessResponse)
-async def check_feature_access(user_id: str, request: FeatureAccessRequest, current_user: dict = Depends(get_current_user)):
+async def check_feature_access(user_id: str, request: FeatureAccessRequest, http_request: Request, current_user: dict = Depends(get_current_user)):
     """
     Check if user has access to a specific feature.
 
@@ -154,7 +155,7 @@ async def check_feature_access(user_id: str, request: FeatureAccessRequest, curr
 
         if limit is not None:
             # Get today's usage
-            today = date.today().isoformat()
+            today = user_today_date(http_request, None, user_id).isoformat()
             usage_result = supabase.client.table("feature_usage")\
                 .select("usage_count")\
                 .eq("user_id", user_id)\
@@ -197,7 +198,7 @@ async def check_feature_access(user_id: str, request: FeatureAccessRequest, curr
 
 
 @router.post("/{user_id}/track-usage")
-async def track_feature_usage(user_id: str, request: FeatureUsageRequest, current_user: dict = Depends(get_current_user)):
+async def track_feature_usage(user_id: str, request: FeatureUsageRequest, http_request: Request, current_user: dict = Depends(get_current_user)):
     """
     Track usage of a feature for rate limiting.
 
@@ -209,7 +210,7 @@ async def track_feature_usage(user_id: str, request: FeatureUsageRequest, curren
 
     try:
         supabase = get_supabase()
-        today = date.today().isoformat()
+        today = user_today_date(http_request, None, user_id).isoformat()
 
         # Try to upsert usage record
         result = supabase.client.rpc(
@@ -309,7 +310,7 @@ async def track_paywall_impression(user_id: str, request: PaywallImpressionReque
 
 
 @router.get("/{user_id}/usage-stats", response_model=List[UsageStatsResponse])
-async def get_usage_stats(user_id: str, feature_key: Optional[str] = None, current_user: dict = Depends(get_current_user)):
+async def get_usage_stats(user_id: str, http_request: Request, feature_key: Optional[str] = None, current_user: dict = Depends(get_current_user)):
     """Get feature usage statistics for a user."""
     if str(current_user["id"]) != str(user_id):
         raise HTTPException(status_code=403, detail="Access denied")
@@ -317,7 +318,7 @@ async def get_usage_stats(user_id: str, feature_key: Optional[str] = None, curre
 
     try:
         supabase = get_supabase()
-        today = date.today()
+        today = user_today_date(http_request, None, user_id)
 
         # Build query
         query = supabase.client.table("feature_usage")\
@@ -404,7 +405,7 @@ _PREMIUM_FEATURE_KEYS = [
 
 
 @router.get("/{user_id}/feature-limits")
-async def get_feature_limits(user_id: str, current_user: dict = Depends(get_current_user)):
+async def get_feature_limits(user_id: str, http_request: Request, current_user: dict = Depends(get_current_user)):
     """
     Return all 5 AI feature gates with current usage computed.
 
@@ -443,7 +444,7 @@ async def get_feature_limits(user_id: str, current_user: dict = Depends(get_curr
         gates_by_key = {g["feature_key"]: g for g in (gates_result.data or [])}
 
         # 3. Fetch all usage records for this user for relevant feature keys this month
-        today = date.today()
+        today = user_today_date(http_request, None, user_id)
         first_of_month = today.replace(day=1).isoformat()
         usage_result = supabase.client.table("feature_usage")\
             .select("feature_key, usage_date, usage_count")\

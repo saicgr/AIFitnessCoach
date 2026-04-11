@@ -83,11 +83,13 @@ async def analyze_food_from_text_streaming(request: Request, body: LogTextReques
             from core.db.nutrition_db import NutritionDB
 
             contextual_db = NutritionDB()
+            _ctx_tz = resolve_timezone(request, None, body.user_id)
             contextual_result = await detect_contextual(
                 description=body.description,
                 user_id=body.user_id,
                 current_meal_type=body.meal_type,
                 nutrition_db=contextual_db,
+                timezone_str=_ctx_tz,
             )
 
             if contextual_result is not None:

@@ -854,11 +854,9 @@ void _showAllLevelsSheet(BuildContext context, int currentLevel, Color accentCol
   HapticFeedback.lightImpact();
   showGlassSheet(
     context: context,
-    builder: (context) => GlassSheet(
-      child: _AllLevelsSheet(
-        currentLevel: currentLevel,
-        accentColor: accentColor,
-      ),
+    builder: (context) => _AllLevelsSheet(
+      currentLevel: currentLevel,
+      accentColor: accentColor,
     ),
   );
 }

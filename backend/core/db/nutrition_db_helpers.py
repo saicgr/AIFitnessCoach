@@ -199,7 +199,9 @@ class NutritionDB(NutritionDBPart2, BaseDB):
         query = self.client.table("food_logs").select(
             "id, user_id, meal_type, food_items, total_calories, protein_g, "
             "carbs_g, fat_g, fiber_g, ai_feedback, health_score, logged_at, "
-            "source_type, image_url"
+            "source_type, image_url, notes, mood_before, mood_after, energy_level, "
+            "sodium_mg, sugar_g, saturated_fat_g, cholesterol_mg, potassium_mg, "
+            "calcium_mg, iron_mg, vitamin_a_ug, vitamin_c_mg, vitamin_d_iu"
         ).eq("user_id", user_id).is_("deleted_at", "null")
 
         if from_date:
@@ -216,15 +218,20 @@ class NutritionDB(NutritionDBPart2, BaseDB):
         self,
         log_id: str,
         user_id: str,
-        total_calories: int,
-        protein_g: float,
-        carbs_g: float,
-        fat_g: float,
+        total_calories: Optional[int] = None,
+        protein_g: Optional[float] = None,
+        carbs_g: Optional[float] = None,
+        fat_g: Optional[float] = None,
         fiber_g: Optional[float] = None,
         weight_g: Optional[float] = None,
+        meal_type: Optional[str] = None,
+        logged_at: Optional[str] = None,
+        notes: Optional[str] = None,
+        food_items: Optional[list] = None,
     ) -> Optional[Dict[str, Any]]:
         """
-        Update macros on an existing food log.
+        Update fields on an existing food log. All fields are optional
+        to support partial updates (e.g. move-only, time-only, notes-only).
 
         Args:
             log_id: Food log UUID
@@ -233,23 +240,43 @@ class NutritionDB(NutritionDBPart2, BaseDB):
             protein_g: Updated protein grams
             carbs_g: Updated carb grams
             fat_g: Updated fat grams
-            fiber_g: Updated fiber grams (optional)
-            weight_g: Updated weight grams (optional)
+            fiber_g: Updated fiber grams
+            weight_g: Updated weight grams
+            meal_type: Updated meal type (for move between meals)
+            logged_at: Updated timestamp (for time edits)
+            notes: Updated notes text
+            food_items: Updated food items JSONB
 
         Returns:
             Updated food log record, or None if not found / not owned
         """
         update_data: Dict[str, Any] = {
-            "total_calories": total_calories,
-            "protein_g": protein_g,
-            "carbs_g": carbs_g,
-            "fat_g": fat_g,
             "updated_at": datetime.utcnow().isoformat(),
         }
+        if total_calories is not None:
+            update_data["total_calories"] = total_calories
+        if protein_g is not None:
+            update_data["protein_g"] = protein_g
+        if carbs_g is not None:
+            update_data["carbs_g"] = carbs_g
+        if fat_g is not None:
+            update_data["fat_g"] = fat_g
         if fiber_g is not None:
             update_data["fiber_g"] = fiber_g
         if weight_g is not None:
             update_data["weight_g"] = weight_g
+        if meal_type is not None:
+            update_data["meal_type"] = meal_type
+        if logged_at is not None:
+            update_data["logged_at"] = logged_at
+        if notes is not None:
+            update_data["notes"] = notes
+        if food_items is not None:
+            update_data["food_items"] = food_items
+
+        # Only updated_at means nothing to change
+        if len(update_data) <= 1:
+            return None
 
         result = (
             self.client.table("food_logs")
@@ -451,23 +478,6 @@ class NutritionDB(NutritionDBPart2, BaseDB):
                 }
         except Exception as e:
             logger.warning(f"Error fetching nutrition_preferences for {user_id}: {e}", exc_info=True)
-
-        try:
-            # Fallback to users table for legacy data
-            result = (
-                self.client.table("users")
-                .select(
-                    "daily_calorie_target, daily_protein_target_g, "
-                    "daily_carbs_target_g, daily_fat_target_g"
-                )
-                .eq("id", user_id)
-                .maybe_single()
-                .execute()
-            )
-            if result and result.data:
-                return result.data
-        except Exception as e:
-            logger.warning(f"Error fetching user nutrition targets for {user_id}: {e}", exc_info=True)
 
         return empty_response
 

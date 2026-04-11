@@ -125,18 +125,24 @@ class _FoodItemRankingCard extends StatefulWidget {
 enum _PortionDisplayMode { weight, count, both }
 
 class _FoodItemRankingCardState extends State<_FoodItemRankingCard> {
+  static const _presetMultipliers = {'S': 0.5, 'M': 1.0, 'L': 1.5, 'XL': 2.0};
+
   late TextEditingController _weightController;
   late TextEditingController _countController;
   late double _currentWeight;
   late int _currentCount;
   int? _displayCalories;
   _PortionDisplayMode _displayMode = _PortionDisplayMode.weight;
+  late double _baselineWeight;
+  String? _activePreset;
 
   @override
   void initState() {
     super.initState();
     _currentWeight = widget.item.weightG ?? 100.0;
     _currentCount = widget.item.count ?? 1;
+    _baselineWeight = _currentWeight;
+    _activePreset = 'M';
     _weightController = TextEditingController(text: _currentWeight.round().toString());
     _countController = TextEditingController(text: _currentCount.toString());
     _displayMode = _PortionDisplayMode.weight;
@@ -152,6 +158,10 @@ class _FoodItemRankingCardState extends State<_FoodItemRankingCard> {
   @override
   void didUpdateWidget(_FoodItemRankingCard oldWidget) {
     super.didUpdateWidget(oldWidget);
+    if (oldWidget.item.name != widget.item.name) {
+      _baselineWeight = widget.item.weightG ?? 100.0;
+      _activePreset = 'M';
+    }
     if (oldWidget.item.weightG != widget.item.weightG) {
       _currentWeight = widget.item.weightG ?? 100.0;
       _weightController.text = _currentWeight.round().toString();
@@ -169,9 +179,10 @@ class _FoodItemRankingCardState extends State<_FoodItemRankingCard> {
     return AppColors.textPrimary;
   }
 
-  void _updateWeight(double newWeight) {
+  void _updateWeight(double newWeight, {bool fromPreset = false}) {
     if (newWeight <= 0 || newWeight > 5000) return;
     setState(() {
+      if (!fromPreset) _activePreset = null;
       _currentWeight = newWeight;
       _weightController.text = newWeight.round().toString();
       if (widget.item.weightPerUnitG != null && widget.item.weightPerUnitG! > 0) {
@@ -219,16 +230,14 @@ class _FoodItemRankingCardState extends State<_FoodItemRankingCard> {
   void _updateCount(int newCount) {
     if (newCount <= 0 || newCount > 1000) return;
     setState(() {
+      _activePreset = null;
       _currentCount = newCount;
       _countController.text = newCount.toString();
-      if (widget.item.weightPerUnitG != null) {
-        _currentWeight = newCount * widget.item.weightPerUnitG!;
-        _weightController.text = _currentWeight.round().toString();
-      }
+      final effectiveWeightPerUnit = widget.item.weightPerUnitG ?? _baselineWeight;
+      _currentWeight = newCount * effectiveWeightPerUnit;
+      _weightController.text = _currentWeight.round().toString();
       final originalWeight = widget.item.weightG ?? 100.0;
-      final newWeight = widget.item.weightPerUnitG != null
-          ? newCount * widget.item.weightPerUnitG!
-          : _currentWeight;
+      final newWeight = _currentWeight;
       if (originalWeight > 0) {
         _displayCalories = ((widget.item.calories ?? 0) * (newWeight / originalWeight)).round();
       }
@@ -237,14 +246,15 @@ class _FoodItemRankingCardState extends State<_FoodItemRankingCard> {
       if (widget.item.canScaleByCount) {
         final updatedItem = widget.item.withCount(newCount);
         widget.onWeightChanged!(updatedItem);
-      } else if (widget.item.weightPerUnitG != null) {
-        final newWeight = newCount * widget.item.weightPerUnitG!;
+      } else {
+        final effectiveWPU = widget.item.weightPerUnitG ?? _baselineWeight;
+        final newWeight = newCount * effectiveWPU;
         final originalWeight = widget.item.weightG ?? 100.0;
         if (originalWeight > 0) {
           final ratio = newWeight / originalWeight;
           final scaled = FoodItemRanking(
             name: widget.item.name,
-            amount: '$newCount pieces (${newWeight.round()} ${widget.item.unit ?? "g"})',
+            amount: '$newCount x ${effectiveWPU.round()}${widget.item.unit ?? "g"}',
             calories: ((widget.item.calories ?? 0) * ratio).round(),
             proteinG: (widget.item.proteinG ?? 0) * ratio,
             carbsG: (widget.item.carbsG ?? 0) * ratio,
@@ -258,7 +268,7 @@ class _FoodItemRankingCardState extends State<_FoodItemRankingCard> {
             usdaData: widget.item.usdaData,
             aiPerGram: widget.item.aiPerGram,
             count: newCount,
-            weightPerUnitG: widget.item.weightPerUnitG,
+            weightPerUnitG: effectiveWPU,
             unit: widget.item.unit,
           );
           widget.onWeightChanged!(scaled);
@@ -352,6 +362,45 @@ class _FoodItemRankingCardState extends State<_FoodItemRankingCard> {
           ),
         ],
       ),
+    );
+  }
+
+  void _onPresetTapped(String preset) {
+    final multiplier = _presetMultipliers[preset]!;
+    final newWeight = (_baselineWeight * multiplier).roundToDouble();
+    setState(() => _activePreset = preset);
+    _updateWeight(newWeight, fromPreset: true);
+  }
+
+  Widget _buildPortionPresets(Color teal, Color glassSurface, Color textMuted) {
+    return Row(
+      children: _presetMultipliers.keys.map((preset) {
+        final isSelected = _activePreset == preset;
+        return Padding(
+          padding: const EdgeInsets.only(right: 4),
+          child: GestureDetector(
+            onTap: () => _onPresetTapped(preset),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(
+                color: isSelected ? teal.withValues(alpha: 0.2) : glassSurface,
+                borderRadius: BorderRadius.circular(6),
+                border: Border.all(
+                  color: isSelected ? teal.withValues(alpha: 0.5) : glassSurface,
+                ),
+              ),
+              child: Text(
+                preset,
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                  color: isSelected ? teal : textMuted,
+                ),
+              ),
+            ),
+          ),
+        );
+      }).toList(),
     );
   }
 
@@ -476,11 +525,14 @@ class _FoodItemRankingCardState extends State<_FoodItemRankingCard> {
             ],
           ],
         ),
-        if (widget.item.canScaleByCount)
-          Padding(
-            padding: const EdgeInsets.only(top: 6),
-            child: _buildModeToggle(teal, glassSurface, textMuted),
-          ),
+        Padding(
+          padding: const EdgeInsets.only(top: 6),
+          child: _buildPortionPresets(teal, glassSurface, textMuted),
+        ),
+        Padding(
+          padding: const EdgeInsets.only(top: 6),
+          child: _buildModeToggle(teal, glassSurface, textMuted),
+        ),
       ],
     );
   }

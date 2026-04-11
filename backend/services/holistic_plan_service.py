@@ -14,7 +14,7 @@ Usage:
     service = HolisticPlanService()
     plan = await service.generate_weekly_plan(
         user_id="...",
-        week_start=date.today(),
+        week_start=date.fromisoformat(get_user_today(timezone_str)),
         workout_days=[0, 1, 3, 4],  # Mon, Tue, Thu, Fri
         fasting_protocol="16:8",
         nutrition_strategy="workout_aware",
@@ -31,6 +31,7 @@ from enum import Enum
 
 from core.supabase_db import get_supabase_db
 from core.logger import get_logger
+from core.timezone_utils import get_user_today
 
 logger = get_logger(__name__)
 
@@ -371,10 +372,10 @@ class HolisticPlanService:
             logger.error(f"Failed to save weekly plan: {e}", exc_info=True)
             raise
 
-    async def get_current_week_plan(self, user_id: str) -> Optional[WeeklyPlan]:
+    async def get_current_week_plan(self, user_id: str, timezone_str: str) -> Optional[WeeklyPlan]:
         """Get the current week's plan for a user."""
         # Calculate Monday of current week
-        today = date.today()
+        today = date.fromisoformat(get_user_today(timezone_str))
         monday = today - timedelta(days=today.weekday())
 
         return await self.get_week_plan(user_id, monday)

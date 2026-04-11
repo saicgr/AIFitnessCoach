@@ -472,17 +472,30 @@ class HabitRepository {
       String userId, String templateId) async {
     try {
       debugPrint('📋 [HabitRepo] Creating from template: $templateId');
-      final response = await _apiClient.post(
-        '/habits/$userId/from-template',
-        queryParameters: {'template_id': templateId},
+
+      // Resolve template locally — frontend templates use slug IDs (e.g. 'weigh_in')
+      // which are not valid UUIDs for the server's habit_templates table.
+      final template = HabitTemplate.defaults.cast<HabitTemplate?>().firstWhere(
+            (t) => t!.id == templateId,
+            orElse: () => null,
+          );
+
+      if (template == null) {
+        throw Exception('Template not found: $templateId');
+      }
+
+      final habitCreate = HabitCreate(
+        name: template.name,
+        description: template.description,
+        category: template.category,
+        habitType: template.habitType,
+        targetCount: template.suggestedTargetCount,
+        unit: template.unit,
+        icon: template.icon,
+        color: template.color,
       );
 
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        final created = Habit.fromJson(response.data as Map<String, dynamic>);
-        debugPrint('✅ [HabitRepo] Created from template: ${created.id}');
-        return created;
-      }
-      throw Exception('Failed to create from template: ${response.statusCode}');
+      return await createHabit(userId, habitCreate);
     } catch (e) {
       debugPrint('❌ [HabitRepo] Error creating from template: $e');
       rethrow;

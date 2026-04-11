@@ -8,6 +8,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
 
 import '../data/models/workout.dart';
+import '../utils/tz.dart';
 import 'device_capability_service.dart';
 import 'workout_prompt_builder.dart';
 
@@ -319,7 +320,7 @@ class OnDeviceGemmaService {
     }
 
     final workoutId = const Uuid().v4();
-    final now = DateTime.now().toIso8601String();
+    final now = Tz.timestamp();
 
     return Workout(
       id: workoutId,

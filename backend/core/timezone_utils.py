@@ -57,6 +57,29 @@ def target_date_to_utc_iso(date_str: str, timezone_str: str) -> str:
     return datetime(y, m, d, 12, 0, 0, tzinfo=tz).astimezone(ZoneInfo("UTC")).isoformat()
 
 
+def user_today_date(request, db=None, user_id: Optional[str] = None):
+    """
+    Drop-in replacement for ``date.today()`` that respects the user's timezone.
+
+    Returns a ``date`` object for "today" in the user's local timezone,
+    resolved from the X-User-Timezone header or DB.
+
+    Usage in any endpoint::
+
+        from core.timezone_utils import user_today_date
+        today = user_today_date(request, db, user_id)
+        # now use `today` exactly as you would `date.today()`
+    """
+    tz_str = resolve_timezone(request, db, user_id)
+    user_date = datetime.now(_safe_zone(tz_str)).date()
+    utc_date = datetime.now(ZoneInfo("UTC")).date()
+    if user_date != utc_date:
+        logger.info(f"🕐 [TZ] user={user_id} tz={tz_str} user_today={user_date} utc_today={utc_date} (differ!)")
+    else:
+        logger.debug(f"🕐 [TZ] user={user_id} tz={tz_str} today={user_date}")
+    return user_date
+
+
 def resolve_timezone(request, db=None, user_id: Optional[str] = None) -> str:
     """
     Determine the user's IANA timezone.
@@ -70,12 +93,14 @@ def resolve_timezone(request, db=None, user_id: Optional[str] = None) -> str:
     header_tz = request.headers.get("x-user-timezone") if request is not None else None
     if header_tz:
         if _is_valid_tz(header_tz):
+            logger.debug(f"🕐 [TZ] Resolved timezone from header: {header_tz} (user={user_id})")
             return header_tz
         # Flutter fallback sends abbreviations like "IST" — map to IANA
         mapped = _TZ_ABBREVIATION_MAP.get(header_tz.upper())
         if mapped:
-            logger.debug(f"Mapped timezone abbreviation '{header_tz}' -> '{mapped}'")
+            logger.info(f"🕐 [TZ] Mapped abbreviation '{header_tz}' -> '{mapped}' (user={user_id})")
             return mapped
+        logger.warning(f"🕐 [TZ] Unknown timezone header '{header_tz}', trying DB (user={user_id})")
 
     # 2. DB lookup
     if db is not None and user_id:
@@ -83,10 +108,12 @@ def resolve_timezone(request, db=None, user_id: Optional[str] = None) -> str:
             user = db.get_user(user_id)
             db_tz = (user or {}).get("timezone")
             if db_tz and _is_valid_tz(db_tz):
+                logger.debug(f"🕐 [TZ] Resolved timezone from DB: {db_tz} (user={user_id})")
                 return db_tz
         except Exception as e:
-            logger.warning(f"Could not read user timezone from DB: {e}", exc_info=True)
+            logger.warning(f"🕐 [TZ] Could not read user timezone from DB: {e}", exc_info=True)
 
+    logger.warning(f"🕐 [TZ] Falling back to UTC — no timezone found (user={user_id}, header={header_tz})")
     return "UTC"
 
 
@@ -102,36 +129,67 @@ def _is_valid_tz(tz_str: str) -> bool:
         return False
 
 
-# Map common timezone abbreviations to IANA identifiers.
-# Flutter's DateTime.now().timeZoneName returns these abbreviations,
-# which are NOT valid IANA identifiers.
+# Last-resort map: abbreviation → IANA.
+# The Flutter app now sends proper IANA identifiers via flutter_timezone,
+# so this map should rarely be hit (only old app versions or fallback paths).
+# Abbreviations are inherently ambiguous (e.g. "CST" = US Central / China / Cuba),
+# so we pick the most likely match for a fitness app's user base.
 _TZ_ABBREVIATION_MAP = {
+    # Americas
+    "EST": "America/New_York",    "EDT": "America/New_York",
+    "CST": "America/Chicago",     "CDT": "America/Chicago",
+    "MST": "America/Denver",      "MDT": "America/Denver",
+    "PST": "America/Los_Angeles", "PDT": "America/Los_Angeles",
+    "AKST": "America/Anchorage",  "AKDT": "America/Anchorage",
+    "HST": "Pacific/Honolulu",
+    "AST": "America/Halifax",     "ADT": "America/Halifax",
+    "NST": "America/St_Johns",    "NDT": "America/St_Johns",
+    "ART": "America/Argentina/Buenos_Aires",
+    "BRT": "America/Sao_Paulo",   "BRST": "America/Sao_Paulo",
+    "CLT": "America/Santiago",    "CLST": "America/Santiago",
+    "COT": "America/Bogota",
+    "PET": "America/Lima",
+    "VET": "America/Caracas",
+    # Europe
+    "GMT": "Europe/London",       "BST": "Europe/London",
+    "CET": "Europe/Paris",        "CEST": "Europe/Paris",
+    "EET": "Europe/Athens",       "EEST": "Europe/Athens",
+    "WET": "Europe/Lisbon",       "WEST": "Europe/Lisbon",
+    "MSK": "Europe/Moscow",
+    "TRT": "Europe/Istanbul",
+    # Asia
     "IST": "Asia/Kolkata",
-    "EST": "America/New_York",
-    "EDT": "America/New_York",
-    "CST": "America/Chicago",
-    "CDT": "America/Chicago",
-    "MST": "America/Denver",
-    "MDT": "America/Denver",
-    "PST": "America/Los_Angeles",
-    "PDT": "America/Los_Angeles",
-    "GMT": "Europe/London",
-    "BST": "Europe/London",
-    "CET": "Europe/Paris",
-    "CEST": "Europe/Paris",
-    "JST": "Asia/Tokyo",
-    "KST": "Asia/Seoul",
-    "CST+8": "Asia/Shanghai",
-    "SGT": "Asia/Singapore",
-    "AEST": "Australia/Sydney",
-    "AEDT": "Australia/Sydney",
-    "NZST": "Pacific/Auckland",
-    "NZDT": "Pacific/Auckland",
-    "GST": "Asia/Dubai",
     "PKT": "Asia/Karachi",
+    "NPT": "Asia/Kathmandu",
+    "BDT": "Asia/Dhaka",
+    "MMT": "Asia/Yangon",
     "ICT": "Asia/Bangkok",
     "WIB": "Asia/Jakarta",
-    "MSK": "Europe/Moscow",
+    "WITA": "Asia/Makassar",
+    "WIT": "Asia/Jayapura",
+    "SGT": "Asia/Singapore",
+    "MYT": "Asia/Kuala_Lumpur",
+    "PHT": "Asia/Manila",
+    "CST+8": "Asia/Shanghai",
+    "HKT": "Asia/Hong_Kong",
+    "TWT": "Asia/Taipei",
+    "JST": "Asia/Tokyo",
+    "KST": "Asia/Seoul",
+    "GST": "Asia/Dubai",
+    "IRST": "Asia/Tehran",
+    "AFT": "Asia/Kabul",
+    "UZT": "Asia/Tashkent",
+    # Oceania
+    "AEST": "Australia/Sydney",   "AEDT": "Australia/Sydney",
+    "ACST": "Australia/Adelaide", "ACDT": "Australia/Adelaide",
+    "AWST": "Australia/Perth",
+    "NZST": "Pacific/Auckland",   "NZDT": "Pacific/Auckland",
+    "FJT": "Pacific/Fiji",
+    # Africa
+    "CAT": "Africa/Johannesburg",
+    "EAT": "Africa/Nairobi",
+    "WAT": "Africa/Lagos",
+    "SAST": "Africa/Johannesburg",
 }
 
 

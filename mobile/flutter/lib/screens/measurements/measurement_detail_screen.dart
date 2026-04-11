@@ -33,7 +33,7 @@ class MeasurementDetailScreen extends ConsumerStatefulWidget {
 class _MeasurementDetailScreenState
     extends ConsumerState<MeasurementDetailScreen> {
   String _selectedPeriod = '30d';
-  bool _isMetric = true;
+  late bool _isMetric;
   late MeasurementType _type;
   String? _userGender;
 
@@ -47,6 +47,8 @@ class _MeasurementDetailScreenState
   @override
   void initState() {
     super.initState();
+    final auth = ref.read(authStateProvider);
+    _isMetric = auth.user?.usesMetricMeasurements ?? true;
     _type = MeasurementType.values.firstWhere(
       (t) => t.name == widget.measurementType,
       orElse: () => MeasurementType.weight,
@@ -111,7 +113,12 @@ class _MeasurementDetailScreenState
                           ),
                           // Unit toggle
                           GestureDetector(
-                            onTap: () => setState(() => _isMetric = !_isMetric),
+                            onTap: () {
+                              setState(() => _isMetric = !_isMetric);
+                              ref.read(authStateProvider.notifier).updateUserProfile({
+                                'measurement_unit': _isMetric ? 'cm' : 'in',
+                              });
+                            },
                             child: Container(
                               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                               decoration: BoxDecoration(

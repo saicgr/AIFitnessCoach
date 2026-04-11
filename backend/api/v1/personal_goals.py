@@ -23,9 +23,10 @@ from core.db import get_supabase_db
 from .personal_goals_endpoints import router as _endpoints_router
 
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from core.auth import get_current_user
 from core.exceptions import safe_internal_error
+from core.timezone_utils import user_today_date
 from datetime import datetime, date, timedelta, timezone
 from typing import Optional
 
@@ -64,6 +65,7 @@ def get_iso_week_boundaries(for_date: date) -> tuple[date, date]:
 
 @router.post("/goals", response_model=WeeklyPersonalGoal)
 async def create_goal(user_id: str, request: CreateGoalRequest,
+    http_request: Request,
     current_user: dict = Depends(get_current_user),
 ):
     """
@@ -84,7 +86,7 @@ async def create_goal(user_id: str, request: CreateGoalRequest,
         if request.week_start:
             week_start = request.week_start
         else:
-            week_start, _ = get_iso_week_boundaries(date.today())
+            week_start, _ = get_iso_week_boundaries(user_today_date(http_request))
 
         week_end = week_start + timedelta(days=6)
 
@@ -149,7 +151,7 @@ async def create_goal(user_id: str, request: CreateGoalRequest,
         )
 
         from .personal_goals_endpoints import _build_goal_response
-        return _build_goal_response(goal, date.today())
+        return _build_goal_response(goal, user_today_date(http_request))
 
     except HTTPException:
         raise
@@ -171,6 +173,7 @@ async def create_goal(user_id: str, request: CreateGoalRequest,
 
 @router.get("/goals/current", response_model=GoalsResponse)
 async def get_current_goals(user_id: str,
+    http_request: Request,
     current_user: dict = Depends(get_current_user),
 ):
     """Get all goals for the current week."""
@@ -183,7 +186,7 @@ async def get_current_goals(user_id: str,
         db = get_supabase_db()
 
         # Get current week boundaries
-        today = date.today()
+        today = user_today_date(http_request)
         week_start, week_end = get_iso_week_boundaries(today)
 
         result = db.client.table("weekly_personal_goals").select("*").eq(
@@ -251,6 +254,7 @@ async def get_current_goals(user_id: str,
 
 @router.post("/goals/{goal_id}/attempt", response_model=WeeklyPersonalGoal)
 async def record_attempt(user_id: str, goal_id: str, request: RecordAttemptRequest,
+    http_request: Request,
     current_user: dict = Depends(get_current_user),
 ):
     """
@@ -316,7 +320,7 @@ async def record_attempt(user_id: str, goal_id: str, request: RecordAttemptReque
         attempts = db.client.table("goal_attempts").select("*").eq("goal_id", goal_id).order("attempted_at", desc=True).execute()
 
         from .personal_goals_endpoints import _build_goal_response
-        goal_response = _build_goal_response(updated.data[0], date.today())
+        goal_response = _build_goal_response(updated.data[0], user_today_date(http_request))
         goal_response.attempts = [GoalAttempt(**a) for a in attempts.data]
 
         logger.info(f"✅ Recorded attempt: {request.attempt_value} reps (new max: {updates.get('current_value', 'no')})")
@@ -336,6 +340,7 @@ async def record_attempt(user_id: str, goal_id: str, request: RecordAttemptReque
 
 @router.post("/goals/{goal_id}/volume", response_model=WeeklyPersonalGoal)
 async def add_volume(user_id: str, goal_id: str, request: AddVolumeRequest,
+    http_request: Request,
     current_user: dict = Depends(get_current_user),
 ):
     """
@@ -393,7 +398,7 @@ async def add_volume(user_id: str, goal_id: str, request: AddVolumeRequest,
         logger.info(f"✅ Added {request.volume_to_add} volume. New total: {new_value}")
 
         from .personal_goals_endpoints import _build_goal_response
-        return _build_goal_response(updated.data[0], date.today())
+        return _build_goal_response(updated.data[0], user_today_date(http_request))
 
     except HTTPException:
         raise
@@ -408,6 +413,7 @@ async def add_volume(user_id: str, goal_id: str, request: AddVolumeRequest,
 
 @router.post("/goals/{goal_id}/complete", response_model=WeeklyPersonalGoal)
 async def complete_goal(user_id: str, goal_id: str,
+    http_request: Request,
     current_user: dict = Depends(get_current_user),
 ):
     """Manually mark a goal as completed."""
@@ -447,7 +453,7 @@ async def complete_goal(user_id: str, goal_id: str,
         logger.info(f"✅ Goal completed: {goal_id}")
 
         from .personal_goals_endpoints import _build_goal_response
-        return _build_goal_response(updated.data[0], date.today())
+        return _build_goal_response(updated.data[0], user_today_date(http_request))
 
     except HTTPException:
         raise
@@ -462,6 +468,7 @@ async def complete_goal(user_id: str, goal_id: str,
 
 @router.post("/goals/{goal_id}/abandon", response_model=WeeklyPersonalGoal)
 async def abandon_goal(user_id: str, goal_id: str,
+    http_request: Request,
     current_user: dict = Depends(get_current_user),
 ):
     """Abandon a goal (mark as abandoned)."""
@@ -494,7 +501,7 @@ async def abandon_goal(user_id: str, goal_id: str,
         logger.info(f"✅ Goal abandoned: {goal_id}")
 
         from .personal_goals_endpoints import _build_goal_response
-        return _build_goal_response(updated.data[0], date.today())
+        return _build_goal_response(updated.data[0], user_today_date(http_request))
 
     except HTTPException:
         raise
@@ -549,6 +556,7 @@ async def get_goal_history(
     user_id: str,
     exercise_name: str,
     goal_type: GoalType,
+    http_request: Request,
     limit: int = Query(12, ge=1, le=52),
     current_user: dict = Depends(get_current_user),
 ):
@@ -577,7 +585,7 @@ async def get_goal_history(
         all_time_best = record_result.data[0]["record_value"] if record_result.data else None
 
         from .personal_goals_endpoints import _build_goal_response
-        today = date.today()
+        today = user_today_date(http_request)
         weeks = [_build_goal_response(w, today) for w in result.data]
 
         return GoalHistoryResponse(

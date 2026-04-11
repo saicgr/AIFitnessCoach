@@ -91,6 +91,7 @@ class FoodAnalysisCacheService(FoodAnalysisCacheServicePart2):
         coach_name: Optional[str] = None,
         coaching_style: Optional[str] = None,
         communication_tone: Optional[str] = None,
+        timezone_str: str = "",  # REQUIRED: caller must pass user's IANA timezone
     ) -> Dict[str, Any]:
         """
         Generate contextual coach tips for food items using full user context.
@@ -195,8 +196,8 @@ class FoodAnalysisCacheService(FoodAnalysisCacheServicePart2):
 
                 # Get daily nutrition summary for calorie budget
                 try:
-                    from datetime import date as date_type
-                    today_str = date_type.today().isoformat()
+                    from core.timezone_utils import get_user_today
+                    today_str = get_user_today(timezone_str or "UTC")
                     nutrition_db = NutritionDB()
                     daily_summary = nutrition_db.get_daily_nutrition_summary(user_id, today_str)
                     calories_consumed_today = daily_summary.get("total_calories", 0)
@@ -395,6 +396,7 @@ class FoodAnalysisCacheService(FoodAnalysisCacheServicePart2):
         meal_type: Optional[str],
         mood_before: Optional[str],
         user_id: Optional[str],
+        timezone_str: str = "",
     ) -> None:
         """
         Enrich a cache-hit result with contextual coach tips if missing.
@@ -421,6 +423,7 @@ class FoodAnalysisCacheService(FoodAnalysisCacheServicePart2):
                 meal_type=meal_type,
                 mood_before=mood_before,
                 user_id=user_id,
+                timezone_str=timezone_str,
             )
             if tips:
                 result["encouragements"] = tips.get("encouragements", [])

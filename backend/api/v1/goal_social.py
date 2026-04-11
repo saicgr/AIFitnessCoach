@@ -18,7 +18,7 @@ Endpoints:
 """
 from core.db import get_supabase_db
 
-from fastapi import APIRouter, HTTPException, Query, Depends
+from fastapi import APIRouter, HTTPException, Query, Depends, Request
 from datetime import datetime, date, timedelta, timezone
 from typing import Optional, List
 
@@ -27,6 +27,7 @@ from core.logger import get_logger
 from core.activity_logger import log_user_activity, log_user_error
 from core.auth import get_current_user
 from core.exceptions import safe_internal_error
+from core.timezone_utils import user_today_date
 from models.goal_suggestions import (
     GoalFriendsResponse, GoalLeaderboardEntry, FriendGoalProgress,
     GoalInvite, GoalInviteCreate, GoalInviteWithDetails,
@@ -55,6 +56,7 @@ def get_iso_week_boundaries(for_date: date) -> tuple[date, date]:
 @router.get("/goals/{goal_id}/friends", response_model=GoalFriendsResponse)
 async def get_goal_friends(
     goal_id: str,
+    http_request: Request,
     user_id: str = Query(..., description="User ID"),
     current_user: dict = Depends(get_current_user),
 ):
@@ -68,7 +70,7 @@ async def get_goal_friends(
 
     try:
         db = get_supabase_db()
-        today = date.today()
+        today = user_today_date(http_request)
         week_start, _ = get_iso_week_boundaries(today)
 
         # Get the user's goal to get exercise/type
@@ -186,6 +188,7 @@ async def get_goal_friends(
 @router.post("/goals/{goal_id}/join", response_model=WeeklyPersonalGoal)
 async def join_goal(
     goal_id: str,
+    http_request: Request,
     user_id: str = Query(..., description="User ID"),
     current_user: dict = Depends(get_current_user),
 ):
@@ -199,7 +202,7 @@ async def join_goal(
 
     try:
         db = get_supabase_db()
-        today = date.today()
+        today = user_today_date(http_request)
         week_start, week_end = get_iso_week_boundaries(today)
 
         # Get the friend's goal
@@ -508,6 +511,7 @@ async def get_goal_invites(
 async def respond_to_invite(
     invite_id: str,
     request: InviteResponseRequest,
+    http_request: Request,
     user_id: str = Query(..., description="User ID"),
     current_user: dict = Depends(get_current_user),
 ):
@@ -518,7 +522,7 @@ async def respond_to_invite(
 
     try:
         db = get_supabase_db()
-        today = date.today()
+        today = user_today_date(http_request)
         week_start, week_end = get_iso_week_boundaries(today)
         now = datetime.now(timezone.utc)
 

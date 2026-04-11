@@ -234,6 +234,42 @@ async def calculate_nutrition_targets(user_id: str, request: NutritionCalculatio
         if not user:
             raise HTTPException(status_code=404, detail="User not found")
 
+        # Guard: if nutrition targets already exist (from onboarding), don't overwrite
+        # This prevents the Home screen's automatic fallback from silently corrupting
+        # the user's onboarding-calculated targets with a different calculation
+        existing_prefs = db.client.table("nutrition_preferences") \
+            .select("target_calories, target_protein_g, target_carbs_g, target_fat_g, "
+                    "calculated_bmr, calculated_tdee, metabolic_age, max_safe_deficit, "
+                    "estimated_body_fat_percent, lean_mass_kg, fat_mass_kg, protein_per_kg, "
+                    "ideal_weight_min_kg, ideal_weight_max_kg, goal_date, weeks_to_goal, "
+                    "water_intake_liters") \
+            .eq("user_id", user_id) \
+            .maybe_single() \
+            .execute()
+
+        if existing_prefs and existing_prefs.data and existing_prefs.data.get("target_calories"):
+            p = existing_prefs.data
+            logger.info(f"Nutrition targets already exist for user {user_id} ({p.get('target_calories')} cal), skipping recalculation")
+            return NutritionMetricsResponse(
+                calories=p["target_calories"],
+                protein=p.get("target_protein_g", 150),
+                carbs=p.get("target_carbs_g", 200),
+                fat=p.get("target_fat_g", 65),
+                water_liters=p.get("water_intake_liters", 2.5),
+                metabolic_age=p.get("metabolic_age", 0),
+                max_safe_deficit=p.get("max_safe_deficit", 500),
+                body_fat_percent=p.get("estimated_body_fat_percent", 20.0),
+                lean_mass=p.get("lean_mass_kg", 0),
+                fat_mass=p.get("fat_mass_kg", 0),
+                protein_per_kg=p.get("protein_per_kg", 1.6),
+                ideal_weight_min=p.get("ideal_weight_min_kg", 0),
+                ideal_weight_max=p.get("ideal_weight_max_kg", 0),
+                goal_date=str(p["goal_date"]) if p.get("goal_date") else None,
+                weeks_to_goal=p.get("weeks_to_goal"),
+                bmr=p.get("calculated_bmr", 0),
+                tdee=p.get("calculated_tdee", 0),
+            )
+
         # Derive nutrition_goals from weight_direction if client sent stale default
         nutrition_goals = request.nutrition_goals
         if (not nutrition_goals or nutrition_goals == ['maintain']) and request.weight_direction:
@@ -601,7 +637,7 @@ async def create_gym_profiles_from_onboarding(
                 is_active=True,
                 display_order=0
             )
-            result_home = supabase.client.table("gym_profiles").insert(home_profile).execute()
+            result_home = supabase.client.table("gym_profiles").upsert(home_profile, on_conflict="user_id,name").execute()
             if result_home.data:
                 profiles_created.append(result_home.data[0])
                 logger.info(f"✅ [GymProfile] Created Home Gym profile (active)")
@@ -614,7 +650,7 @@ async def create_gym_profiles_from_onboarding(
                 is_active=False,
                 display_order=1
             )
-            result_commercial = supabase.client.table("gym_profiles").insert(commercial_profile).execute()
+            result_commercial = supabase.client.table("gym_profiles").upsert(commercial_profile, on_conflict="user_id,name").execute()
             if result_commercial.data:
                 profiles_created.append(result_commercial.data[0])
                 logger.info(f"✅ [GymProfile] Created {gym_profile_name} profile (inactive)")
@@ -636,7 +672,7 @@ async def create_gym_profiles_from_onboarding(
                 is_active=True,
                 display_order=0
             )
-            result = supabase.client.table("gym_profiles").insert(profile_data).execute()
+            result = supabase.client.table("gym_profiles").upsert(profile_data, on_conflict="user_id,name").execute()
 
             if result.data:
                 profiles_created.append(result.data[0])

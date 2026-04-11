@@ -24,6 +24,8 @@ from typing import Optional, List, Dict, Any
 from datetime import date, datetime, timedelta
 import logging
 
+from core.timezone_utils import get_user_today
+
 logger = logging.getLogger(__name__)
 
 
@@ -394,17 +396,17 @@ class NutritionCalculatorService:
         return tips[:4]  # Return max 4 tips
 
     @staticmethod
-    def get_current_week_range() -> tuple:
+    def get_current_week_range(timezone_str: str) -> tuple:
         """Get start and end dates for current week (Monday-Sunday)."""
-        today = date.today()
+        today = date.fromisoformat(get_user_today(timezone_str))
         week_start = today - timedelta(days=today.weekday())  # Monday
         week_end = week_start + timedelta(days=6)  # Sunday
         return week_start, week_end
 
     @staticmethod
-    def get_previous_week_range() -> tuple:
+    def get_previous_week_range(timezone_str: str) -> tuple:
         """Get start and end dates for previous week."""
-        today = date.today()
+        today = date.fromisoformat(get_user_today(timezone_str))
         current_week_start = today - timedelta(days=today.weekday())
         previous_week_start = current_week_start - timedelta(days=7)
         previous_week_end = current_week_start - timedelta(days=1)

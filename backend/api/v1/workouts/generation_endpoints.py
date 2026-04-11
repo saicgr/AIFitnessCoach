@@ -56,7 +56,7 @@ async def generate_workout(request: Request, *, body: GenerateWorkoutRequest, ba
                 active_result = db.client.table("gym_profiles").select("id").eq(
                     "user_id", body.user_id
                 ).eq("is_active", True).maybe_single().execute()
-                if active_result.data:
+                if active_result and active_result.data:
                     dedup_gym_profile_id = active_result.data.get("id")
             except Exception as e:
                 logger.warning(f"Failed to get active gym profile: {e}", exc_info=True)
@@ -252,7 +252,7 @@ async def generate_workout(request: Request, *, body: GenerateWorkoutRequest, ba
             get_user_rep_preferences(body.user_id),
             get_user_progression_context(body.user_id),
             get_user_workout_patterns(body.user_id),
-            get_user_hormonal_context(body.user_id),
+            get_user_hormonal_context(body.user_id, timezone_str=resolve_timezone(request, db, body.user_id)),
             get_user_set_type_preferences(body.user_id, supabase_client=db.client),
             get_active_injuries_with_muscles(body.user_id),
             get_user_consistency_mode(body.user_id),
@@ -543,6 +543,14 @@ async def generate_workout(request: Request, *, body: GenerateWorkoutRequest, ba
 
             exercises = workout_data.get("exercises", [])
             exercises = normalize_exercise_numeric_fields(exercises)
+
+            # Normalize equipment values — Gemini may echo snake_case from user profile
+            from services.exercise_rag.utils import normalize_equipment_value
+            for ex in exercises:
+                raw_eq = ex.get("equipment", "")
+                if raw_eq and "_" in raw_eq:
+                    ex["equipment"] = normalize_equipment_value(raw_eq, ex.get("name", ""))
+
             workout_name = workout_data.get("name", "Generated Workout")
             difficulty = workout_data.get("difficulty", intensity_preference)
             workout_description = workout_data.get("description")

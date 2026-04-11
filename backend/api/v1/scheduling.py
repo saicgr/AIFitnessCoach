@@ -20,6 +20,7 @@ from core.db import get_supabase_db
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from core.auth import get_current_user
 from core.exceptions import safe_internal_error
+from core.timezone_utils import user_today_date
 from typing import List, Optional
 from datetime import datetime, date, timedelta
 from pydantic import BaseModel, Field
@@ -277,6 +278,7 @@ async def get_missed_workouts(
 
 @router.post("/reschedule", response_model=RescheduleResponse)
 async def reschedule_workout(request: RescheduleRequest,
+    http_request: Request,
     current_user: dict = Depends(get_current_user),
 ):
     """
@@ -296,7 +298,7 @@ async def reschedule_workout(request: RescheduleRequest,
             raise HTTPException(status_code=400, detail="Invalid date format. Use YYYY-MM-DD")
 
         # New date must be today or in the future
-        if new_date < date.today():
+        if new_date < user_today_date(http_request):
             raise HTTPException(status_code=400, detail="Cannot reschedule to a past date")
 
         # Get the workout

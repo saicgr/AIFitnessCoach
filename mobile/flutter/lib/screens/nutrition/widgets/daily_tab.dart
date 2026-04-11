@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../data/models/nutrition.dart';
 import '../../../data/models/micronutrients.dart';
+import '../../../data/services/api_client.dart';
 import '../../../data/providers/nutrition_preferences_provider.dart';
 import '../../../data/repositories/nutrition_repository.dart';
 import '../../../widgets/glass_sheet.dart';
@@ -22,6 +23,13 @@ class DailyTab extends ConsumerStatefulWidget {
   final void Function(String? mealType) onLogMeal;
   final void Function(String) onDeleteMeal;
   final void Function(String mealId, String targetMealType) onCopyMeal;
+  final void Function(String mealId, String targetMealType) onMoveMeal;
+  final void Function(String logId, int calories, double proteinG, double carbsG, double fatG, {double? weightG}) onUpdateMeal;
+  final void Function(String logId, DateTime newTime) onUpdateMealTime;
+  final void Function(String logId, String notes) onUpdateMealNotes;
+  final void Function(String logId, {String? moodBefore, String? moodAfter, int? energyLevel}) onUpdateMealMood;
+  final void Function(FoodLog meal) onSaveFoodToFavorites;
+  final ApiClient? apiClient;
   final VoidCallback? onSwitchToNutrientsTab;
   final VoidCallback? onSwitchToHydrationTab;
   final bool isDark;
@@ -37,6 +45,13 @@ class DailyTab extends ConsumerStatefulWidget {
     required this.onLogMeal,
     required this.onDeleteMeal,
     required this.onCopyMeal,
+    required this.onMoveMeal,
+    required this.onUpdateMeal,
+    required this.onUpdateMealTime,
+    required this.onUpdateMealNotes,
+    required this.onUpdateMealMood,
+    required this.onSaveFoodToFavorites,
+    this.apiClient,
     this.onSwitchToNutrientsTab,
     this.onSwitchToHydrationTab,
     required this.isDark,
@@ -129,7 +144,7 @@ class _DailyTabState extends ConsumerState<DailyTab> {
   }
 
   void _showGoalsInfo() {
-    final targets = widget.targets;
+    final prefsState = ref.read(nutritionPreferencesProvider);
     final elevated =
         widget.isDark ? AppColors.elevated : AppColorsLight.elevated;
     final textPrimary =
@@ -193,7 +208,7 @@ class _DailyTabState extends ConsumerState<DailyTab> {
                       GoalRow(
                         icon: Icons.local_fire_department,
                         label: 'Calories',
-                        value: '${targets?.dailyCalorieTarget ?? 2000}',
+                        value: '${prefsState.currentCalorieTarget}',
                         unit: 'kcal',
                         color: teal,
                         isDark: widget.isDark,
@@ -202,7 +217,7 @@ class _DailyTabState extends ConsumerState<DailyTab> {
                       GoalRow(
                         icon: Icons.egg_outlined,
                         label: 'Protein',
-                        value: '${(targets?.dailyProteinTargetG ?? 150).toInt()}',
+                        value: '${prefsState.currentProteinTarget}',
                         unit: 'g',
                         color: purple,
                         isDark: widget.isDark,
@@ -211,7 +226,7 @@ class _DailyTabState extends ConsumerState<DailyTab> {
                       GoalRow(
                         icon: Icons.grain,
                         label: 'Carbohydrates',
-                        value: '${(targets?.dailyCarbsTargetG ?? 250).toInt()}',
+                        value: '${prefsState.currentCarbsTarget}',
                         unit: 'g',
                         color: orange,
                         isDark: widget.isDark,
@@ -220,7 +235,7 @@ class _DailyTabState extends ConsumerState<DailyTab> {
                       GoalRow(
                         icon: Icons.water_drop_outlined,
                         label: 'Fat',
-                        value: '${(targets?.dailyFatTargetG ?? 70).toInt()}',
+                        value: '${prefsState.currentFatTarget}',
                         unit: 'g',
                         color: coral,
                         isDark: widget.isDark,
@@ -382,11 +397,18 @@ class _DailyTabState extends ConsumerState<DailyTab> {
                   meals: widget.summary?.meals ?? [],
                   onDeleteMeal: widget.onDeleteMeal,
                   onCopyMeal: widget.onCopyMeal,
+                  onMoveMeal: widget.onMoveMeal,
+                  onUpdateMeal: widget.onUpdateMeal,
+                  onUpdateMealTime: widget.onUpdateMealTime,
+                  onUpdateMealNotes: widget.onUpdateMealNotes,
+                  onUpdateMealMood: widget.onUpdateMealMood,
+                  onSaveFoodToFavorites: widget.onSaveFoodToFavorites,
                   onLogMeal: widget.onLogMeal,
+                  apiClient: widget.apiClient,
                   isDark: widget.isDark,
                   userId: widget.userId,
                   onFoodSaved: _loadFavorites,
-                  calorieTarget: widget.targets?.dailyCalorieTarget,
+                  calorieTarget: ref.read(nutritionPreferencesProvider).currentCalorieTarget,
                   totalCaloriesEaten: widget.summary?.totalCalories ?? 0,
                 ),
                 const SizedBox(height: 12),

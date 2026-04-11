@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:timezone/timezone.dart' as tz;
 import '../../data/repositories/auth_repository.dart';
@@ -160,7 +161,7 @@ class TimezoneNotifier extends StateNotifier<TimezoneState> {
       }
 
       // Finally, detect from device and auto-sync to backend
-      final deviceTimezone = _detectDeviceTimezone();
+      final deviceTimezone = await _detectDeviceTimezone();
       state = TimezoneState(timezone: deviceTimezone);
       debugPrint('🕐 [Timezone] Detected from device: ${state.timezone}');
 
@@ -216,63 +217,42 @@ class TimezoneNotifier extends StateNotifier<TimezoneState> {
     });
   }
 
-  /// Detect timezone from device
-  String _detectDeviceTimezone() {
+  /// Detect timezone from device using the OS-level IANA identifier.
+  /// Returns a proper IANA timezone like "America/Chicago", never an abbreviation.
+  Future<String> _detectDeviceTimezone() async {
     try {
-      // Get device's current timezone offset
+      // flutter_timezone reads the device's OS-level IANA timezone directly
+      // (e.g., "America/Chicago", "Asia/Kolkata") — no guessing from offsets
+      final deviceTzInfo = await FlutterTimezone.getLocalTimezone();
+      final deviceTz = deviceTzInfo.identifier;
+      if (deviceTz.isNotEmpty && deviceTz != 'Etc/UTC') {
+        debugPrint('🕐 [Timezone] Device IANA timezone: $deviceTz');
+        return deviceTz;
+      }
+    } catch (e) {
+      debugPrint('⚠️ [Timezone] FlutterTimezone.getLocalTimezone() failed: $e');
+    }
+
+    // Last resort: try offset-based matching against known IANA zones
+    try {
       final now = DateTime.now();
       final offset = now.timeZoneOffset;
-
-      // Try to match with common timezones
       for (final tzData in commonTimezones) {
         try {
           final location = tz.getLocation(tzData.id);
           final tzNow = tz.TZDateTime.now(location);
           if (tzNow.timeZoneOffset == offset) {
+            debugPrint('🕐 [Timezone] Matched from offset ${offset.inHours}h: ${tzData.id}');
             return tzData.id;
           }
         } catch (_) {}
       }
-
-      // Fallback based on offset
-      final hours = offset.inHours;
-      switch (hours) {
-        case -5:
-          return 'America/New_York';
-        case -6:
-          return 'America/Chicago';
-        case -7:
-          return 'America/Denver';
-        case -8:
-          return 'America/Los_Angeles';
-        case 0:
-          return 'Europe/London';
-        case 1:
-          return 'Europe/Paris';
-        case 2:
-          return 'Europe/Berlin';
-        case 3:
-          return 'Europe/Moscow';
-        case 4:
-          return 'Asia/Dubai';
-        case 5:
-          if (offset.inMinutes % 60 == 30) return 'Asia/Kolkata';
-          return 'Asia/Karachi';
-        case 8:
-          return 'Asia/Singapore';
-        case 9:
-          return 'Asia/Tokyo';
-        case 10:
-          return 'Australia/Sydney';
-        case 12:
-          return 'Pacific/Auckland';
-        default:
-          return 'UTC';
-      }
     } catch (e) {
-      debugPrint('❌ [Timezone] Detection error: $e');
-      return 'UTC';
+      debugPrint('❌ [Timezone] Offset matching error: $e');
     }
+
+    debugPrint('⚠️ [Timezone] Could not detect — falling back to UTC');
+    return 'UTC';
   }
 
   /// Set timezone and sync to backend

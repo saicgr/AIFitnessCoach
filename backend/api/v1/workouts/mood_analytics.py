@@ -15,12 +15,13 @@ import calendar
 from datetime import datetime, date as date_type, timedelta
 from typing import List, Dict, Any, Optional
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel
 from core.auth import get_current_user
 from core.exceptions import safe_internal_error
 from core.supabase_db import get_supabase_db
 from core.logger import get_logger
+from core.timezone_utils import user_today_date
 from services.mood_workout_service import mood_workout_service
 
 router = APIRouter()
@@ -195,6 +196,7 @@ async def get_mood_history(
 
 @router.get("/{user_id}/mood-analytics", response_model=MoodAnalyticsResponse)
 async def get_mood_analytics(
+    request: Request,
     user_id: str,
     days: int = 30,
     current_user: dict = Depends(get_current_user),
@@ -303,7 +305,7 @@ async def get_mood_analytics(
         current_streak = 0
         longest_streak = 0
         temp_streak = 0
-        today = date_type.today()
+        today = user_today_date(request, db, user_id)
 
         if sorted_dates:
             # Calculate current streak
@@ -521,6 +523,7 @@ async def get_today_mood(user_id: str,
 
 @router.get("/{user_id}/mood-weekly", response_model=MoodWeeklyResponse)
 async def get_mood_weekly(user_id: str,
+    request: Request,
     current_user: dict = Depends(get_current_user),
 ):
     """
@@ -534,7 +537,7 @@ async def get_mood_weekly(user_id: str,
         db = get_supabase_db()
 
         # Calculate date range (last 7 days)
-        today = datetime.now().date()
+        today = user_today_date(request, db, user_id)
         week_ago = today - timedelta(days=6)  # Include today, so 7 days total
 
         # Fetch check-ins for the week

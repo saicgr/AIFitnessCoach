@@ -644,35 +644,46 @@ class ExerciseRAGService:
         apply_favorites_boost(candidates, favorite_exercises)
         apply_consistency_mode(candidates, recently_used_exercises, consistency_mode, variation_percentage)
 
+        # Save a snapshot before hard-removal so backfill (line 776) and
+        # post-selection swap (line 829) can fall back to the full pool
+        candidates_before_removal = list(candidates)
+
         # Hard-remove very recently used exercises from candidate pool
         # This ensures they cannot be selected by AI, backfill, or any other path
-        candidates_before_removal = list(candidates)
         if very_recently_used_exercises and consistency_mode != "consistent":
             very_recent_lower = {e.lower() for e in very_recently_used_exercises}
             staple_lower = {s.lower() for s in staple_names}
-            before_count = len(candidates)
-            candidates = [
+            min_pool = count * 2
+
+            # Count how many would survive hard-removal
+            surviving = [
                 c for c in candidates
                 if c["name"].lower() not in very_recent_lower
                 or c["name"].lower() in staple_lower
             ]
-            removed = before_count - len(candidates)
-            if removed > 0:
-                logger.info(
-                    f"🔄 [Variety] Hard-removed {removed} recently used exercises from pool "
-                    f"(variation={variation_percentage}%, pool: {before_count} -> {len(candidates)})"
-                )
-            # Safety: if pool too small after removal, restore with heavy penalty
-            if len(candidates) < count * 2 and removed > 0:
-                logger.warning(
-                    f"⚠️ [Variety] Pool too small after removal ({len(candidates)} < {count * 2}), "
-                    f"restoring with 0.05x penalty"
-                )
-                candidates = list(candidates_before_removal)
+
+            if len(surviving) >= min_pool:
+                # Pool is large enough — hard-remove safely
+                removed = len(candidates) - len(surviving)
+                candidates = surviving
+                if removed > 0:
+                    logger.info(
+                        f"🔄 [Variety] Hard-removed {removed} recently used exercises from pool "
+                        f"(variation={variation_percentage}%, pool: {len(candidates) + removed} -> {len(candidates)})"
+                    )
+            else:
+                # Pool too small for hard-removal — apply 0.05x penalty instead
+                penalized = 0
                 for c in candidates:
                     if c["name"].lower() in very_recent_lower and c["name"].lower() not in staple_lower:
                         c["similarity"] = c["similarity"] * 0.05
+                        penalized += 1
                 candidates.sort(key=lambda x: x.get("similarity", 0), reverse=True)
+                if penalized > 0:
+                    logger.info(
+                        f"🔄 [Variety] Pool too small for hard-removal ({len(candidates)} < {min_pool}), "
+                        f"applied 0.05x penalty to {penalized} recently used exercises instead"
+                    )
 
         # Process STAPLE exercises
         staple_included, staple_names_used, candidates = extract_staple_exercises(

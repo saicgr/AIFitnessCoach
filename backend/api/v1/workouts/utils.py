@@ -21,6 +21,7 @@ from typing import List, Optional, Dict, Any
 
 from core.supabase_db import get_supabase_db
 from core.logger import get_logger
+from core.timezone_utils import get_user_today
 from models.schemas import Workout
 from services.gemini_service import GeminiService
 from services.rag_service import WorkoutRAGService
@@ -48,11 +49,21 @@ def invalidate_upcoming_workouts(
     user_id: str,
     reason: str,
     only_next: bool = False,
+    timezone_str: str = None,
 ) -> int:
-    """Delete upcoming non-completed workouts so the next /today call regenerates them."""
+    """Delete upcoming non-completed workouts so the next /today call regenerates them.
+
+    ``timezone_str`` should be passed from the caller (resolved via
+    ``resolve_timezone``).  When *None* the function falls back to UTC
+    which may be wrong near midnight for non-UTC users.
+    """
     try:
         db = get_supabase_db()
-        today_str = date.today().isoformat()
+        if timezone_str:
+            today_str = get_user_today(timezone_str)
+        else:
+            # Last-resort fallback — callers should always supply timezone_str
+            today_str = get_user_today("UTC")
 
         query = db.client.table("workouts").select("id, scheduled_date, status").eq(
             "user_id", user_id

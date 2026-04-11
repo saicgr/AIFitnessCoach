@@ -22,7 +22,8 @@ Endpoints:
 import asyncio
 from typing import Any, Dict, List, Optional
 from datetime import datetime, timedelta, date
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, Request
+from core.timezone_utils import user_today_date, resolve_timezone
 from pydantic import BaseModel
 import logging
 logger = logging.getLogger(__name__)
@@ -491,6 +492,7 @@ async def get_fitness_score(
 async def calculate_fitness_score(
     request: FitnessCalculateRequest,
     background_tasks: BackgroundTasks,
+    http_request: Request,
     current_user: dict = Depends(get_current_user),
 ):
     """
@@ -503,6 +505,7 @@ async def calculate_fitness_score(
     strength_service = StrengthCalculatorService()
 
     user_id = request.user_id
+    today = user_today_date(http_request, db, user_id)
 
     # 1. Get strength score (overall)
     strength_response = db.client.table("latest_strength_scores").select(
@@ -519,7 +522,8 @@ async def calculate_fitness_score(
         strength_score = 0
 
     # 2. Get consistency score (workout completion rate for last 30 days)
-    thirty_days_ago = (date.today() - timedelta(days=30)).isoformat()
+    today = user_today_date(http_request, db, user_id)
+    thirty_days_ago = (today - timedelta(days=30)).isoformat()
 
     # Count scheduled workouts
     scheduled_response = db.client.table("workouts").select(
@@ -563,7 +567,7 @@ async def calculate_fitness_score(
     nutrition_score = nutrition_response.data.get("nutrition_score", 0) if nutrition_response and nutrition_response.data else 0
 
     # 4. Get readiness score (7-day average)
-    seven_days_ago = (date.today() - timedelta(days=7)).isoformat()
+    seven_days_ago = (today - timedelta(days=7)).isoformat()
     readiness_response = db.client.table("readiness_scores").select(
         "readiness_score"
     ).eq(
@@ -587,19 +591,21 @@ async def calculate_fitness_score(
     previous_score = previous_response.data.get("overall_fitness_score") if previous_response and previous_response.data else None
 
     # 6. Calculate overall fitness score
+    tz_str = resolve_timezone(http_request, db, user_id)
     score = fitness_service.calculate_fitness_score(
         user_id=user_id,
         strength_score=strength_score,
         readiness_score=readiness_score,
         consistency_score=consistency_score,
         nutrition_score=nutrition_score,
+        timezone_str=tz_str,
         previous_score=previous_score,
     )
 
     # 7. Save to database
     record_data = {
         "user_id": user_id,
-        "calculated_date": date.today().isoformat(),
+        "calculated_date": today.isoformat(),
         "strength_score": score.strength_score,
         "readiness_score": score.readiness_score,
         "consistency_score": score.consistency_score,
@@ -672,6 +678,7 @@ async def calculate_fitness_score(
 
 @router.get("/overview", response_model=ScoresOverviewResponse, tags=["Overview"])
 async def get_scores_overview(
+    http_request: Request,
     user_id: str = Query(...),
     current_user: dict = Depends(get_current_user),
 ):
@@ -685,9 +692,10 @@ async def get_scores_overview(
     _scores_pool = ThreadPoolExecutor(max_workers=6)
     loop = asyncio.get_event_loop()
 
-    today = date.today().isoformat()
-    thirty_days_ago = (date.today() - timedelta(days=30)).isoformat()
-    seven_days_ago = (date.today() - timedelta(days=7)).isoformat()
+    _today = user_today_date(http_request, db, user_id)
+    today = _today.isoformat()
+    thirty_days_ago = (_today - timedelta(days=30)).isoformat()
+    seven_days_ago = (_today - timedelta(days=7)).isoformat()
 
     def _q_readiness():
         try:
@@ -877,6 +885,7 @@ async def generate_ai_readiness_insight(
     record_id: str,
     readiness_data: Dict[str, Any],
     db,
+    timezone_str: str,
 ):
     """
     Background task to generate AI-powered readiness recommendations.
@@ -886,7 +895,8 @@ async def generate_ai_readiness_insight(
         logger.info(f"Generating AI readiness insight for user {user_id}")
 
         # Get today's scheduled workout if any
-        today = date.today().isoformat()
+        from core.timezone_utils import get_user_today
+        today = get_user_today(timezone_str)
         workout_response = db.client.table("workouts").select(
             "name, type, duration_minutes"
         ).eq(

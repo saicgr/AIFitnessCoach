@@ -11,7 +11,7 @@ This module integrates with the user_context_logs for AI personalization
 and provides workout modification recommendations based on injury status.
 """
 
-from fastapi import APIRouter, HTTPException, Query, Depends
+from fastapi import APIRouter, HTTPException, Query, Depends, Request
 from pydantic import BaseModel, Field
 from typing import Optional, List
 from datetime import datetime, date, timedelta
@@ -388,6 +388,7 @@ async def get_active_injuries(
 
 @router.post("/{user_id}/report", response_model=InjuryReportResponse)
 async def report_injury(
+    http_request: Request,
     user_id: str, request: InjuryReportRequest,
     current_user: dict = Depends(get_current_user),
 ):
@@ -432,7 +433,9 @@ async def report_injury(
 
         # Invalidate upcoming workouts so they regenerate without the injured area
         from api.v1.workouts.utils import invalidate_upcoming_workouts
-        invalidate_upcoming_workouts(user_id, reason=f"injury reported: {request.body_part}")
+        from core.timezone_utils import resolve_timezone
+        tz_str = resolve_timezone(http_request, supabase, user_id)
+        invalidate_upcoming_workouts(user_id, reason=f"injury reported: {request.body_part}", timezone_str=tz_str)
 
         logger.info(f"Injury reported: {result.data[0]['id']}")
 

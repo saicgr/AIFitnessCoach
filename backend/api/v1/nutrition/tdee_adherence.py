@@ -5,7 +5,7 @@ from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 
-from core.timezone_utils import resolve_timezone, local_date_to_utc_range, get_user_today
+from core.timezone_utils import resolve_timezone, local_date_to_utc_range, get_user_today, user_today_date
 from core.auth import get_current_user
 from core.exceptions import safe_internal_error
 from core.supabase_db import get_supabase_db
@@ -325,7 +325,7 @@ async def get_adherence_summary(request: Request, user_id: str, weeks: int = Que
 
 
 @router.get("/recommendations/{user_id}/options", response_model=RecommendationOptionsResponse)
-async def get_recommendation_options(user_id: str, current_user: dict = Depends(get_current_user)):
+async def get_recommendation_options(request: Request, user_id: str, current_user: dict = Depends(get_current_user)):
     """
     Get multiple recommendation options for user to choose from.
 
@@ -396,7 +396,7 @@ async def get_recommendation_options(user_id: str, current_user: dict = Depends(
                 carbs_g=adh_prefs.get("target_carbs_g", 200),
                 fat_g=adh_prefs.get("target_fat_g", 65),
             )
-            end_date = datetime.now().date()
+            end_date = user_today_date(request)
             start_date = end_date - timedelta(weeks=4)
             food_logs_result = db.client.table("food_logs")\
                 .select("logged_at, total_calories, protein_g, carbs_g, fat_g")\
@@ -592,7 +592,7 @@ def _generate_recommendation_options(
 
 
 @router.post("/recommendations/{user_id}/select")
-async def select_recommendation(user_id: str, request: SelectRecommendationRequest, current_user: dict = Depends(get_current_user)):
+async def select_recommendation(user_id: str, request: SelectRecommendationRequest, http_request: Request, current_user: dict = Depends(get_current_user)):
     """
     User selects a recommendation option to apply.
 
@@ -605,7 +605,7 @@ async def select_recommendation(user_id: str, request: SelectRecommendationReque
 
     try:
         # Get available options
-        options_response = await get_recommendation_options(user_id, current_user=current_user)
+        options_response = await get_recommendation_options(http_request, user_id, current_user=current_user)
 
         # Find selected option
         selected = None

@@ -8,6 +8,7 @@ Handles:
 - Error handling
 """
 
+import asyncio
 from typing import Optional, Dict, List
 from datetime import datetime, timedelta
 import logging
@@ -74,16 +75,22 @@ class InflammationService:
         logger.info(f"Cache miss for barcode {barcode}, running ingredient analysis")
 
         try:
-            analysis = await self._analyze_with_retry(
-                ingredients_text=ingredients_text,
-                product_name=product_name,
+            analysis = await asyncio.wait_for(
+                self._analyze_with_retry(
+                    ingredients_text=ingredients_text,
+                    product_name=product_name,
+                ),
+                timeout=15.0,
             )
+        except asyncio.TimeoutError:
+            logger.warning(f"Ingredient analysis timed out for {barcode}, returning neutral fallback")
+            analysis = self.db_analyzer._neutral_fallback(ingredients_text, product_name)
         except Exception as e:
-            logger.error(f"Ingredient analysis failed for {barcode}: {e}", exc_info=True)
-            raise
+            logger.warning(f"Ingredient analysis failed for {barcode}: {e}, returning neutral fallback")
+            analysis = self.db_analyzer._neutral_fallback(ingredients_text, product_name)
 
         if not analysis:
-            raise ValueError("Failed to analyze ingredients")
+            analysis = self.db_analyzer._neutral_fallback(ingredients_text, product_name)
 
         # 3. Store in cache
         analysis_id = await self._store_analysis(

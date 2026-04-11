@@ -19,6 +19,8 @@ import json
 import asyncio
 from google.genai import types
 
+from core.timezone_utils import get_user_today
+
 from core.logger import get_logger
 from core.config import get_settings
 from core.supabase_db import get_supabase_db
@@ -350,6 +352,7 @@ Guidelines:
     async def calculate_correlation_score(
         self,
         user_id: str,
+        timezone_str: str,
         days: int = 30,
     ) -> float:
         """
@@ -365,7 +368,7 @@ Guidelines:
         db = get_supabase_db()
 
         # Get daily data with fasting status and goal achievement
-        end_date = date.today()
+        end_date = datetime.strptime(get_user_today(timezone_str), "%Y-%m-%d").date()
         start_date = end_date - timedelta(days=days)
 
         try:
@@ -417,6 +420,7 @@ Guidelines:
     async def get_fasting_summary_for_insight(
         self,
         user_id: str,
+        timezone_str: str,
         days: int = 30,
     ) -> Dict[str, Any]:
         """
@@ -427,7 +431,7 @@ Guidelines:
         logger.info(f"Getting fasting summary for user {user_id}")
 
         db = get_supabase_db()
-        end_date = date.today()
+        end_date = datetime.strptime(get_user_today(timezone_str), "%Y-%m-%d").date()
         start_date = end_date - timedelta(days=days)
 
         try:
@@ -467,7 +471,7 @@ Guidelines:
             avg_duration_hours = (sum(durations) / len(durations) / 60) if durations else 0
 
             # Calculate correlation
-            correlation = await self.calculate_correlation_score(user_id, days)
+            correlation = await self.calculate_correlation_score(user_id, days, timezone_str)
 
             return {
                 "total_fasting_days": total_fasting_days,

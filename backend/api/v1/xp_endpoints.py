@@ -458,6 +458,12 @@ async def claim_daily_crate(
                     )
             except Exception as parse_error:
                 logger.error(f"[XP] Failed to parse RPC response: {parse_error}", exc_info=True)
+                # RPC likely succeeded but response couldn't be serialized —
+                # return a soft error instead of 500 so the client can refresh.
+                return ClaimDailyCrateResponse(
+                    success=False,
+                    message="Crate may have been claimed. Please refresh."
+                )
 
         logger.error(f"[XP] Error claiming daily crate: {e}", exc_info=True)
         raise safe_internal_error(e, "xp")
@@ -1000,6 +1006,86 @@ def _get_xp_for_level(level: int) -> int:
         return 100000
 
 
+def _roman(n: int) -> str:
+    """Convert 1-25 to Roman numerals."""
+    vals = [(10, "X"), (9, "IX"), (5, "V"), (4, "IV"), (1, "I")]
+    result = ""
+    for v, s in vals:
+        while n >= v:
+            result += s
+            n -= v
+    return result
+
+
+_LEVEL_NAMES = {
+    # Beginner (1-10)
+    1: "First Steps", 2: "Awakening", 3: "Foundation", 4: "Momentum",
+    5: "Rising Star", 6: "Steadfast", 7: "Determined", 8: "Resilient",
+    9: "Breakthrough", 10: "Iron Will",
+    # Novice (11-25)
+    11: "Pathfinder", 12: "Trailblazer", 13: "Forged", 14: "Unyielding",
+    15: "Disciplined", 16: "Focused", 17: "Driven", 18: "Relentless",
+    19: "Unstoppable", 20: "Silver Strength", 21: "Tempered", 22: "Hardened",
+    23: "Unbreakable", 24: "Tenacious", 25: "Dedicated",
+    # Apprentice (26-50)
+    26: "Competitor", 27: "Challenger", 28: "Fierce", 29: "Powerhouse",
+    30: "Gold Standard", 31: "Peak Form", 32: "Dynamo", 33: "Juggernaut",
+    34: "Titan", 35: "Colossus", 36: "Champion", 37: "Conqueror",
+    38: "Dominator", 39: "Crusher", 40: "Diamond Core", 41: "Invincible",
+    42: "Supreme", 43: "Almighty", 44: "Ascendant", 45: "Mythic Rise",
+    46: "Ascended", 47: "Paragon", 48: "Zenith", 49: "Pinnacle", 50: "Veteran",
+    # Athlete (51-75)
+    51: "Elite Guard", 52: "Vanguard", 53: "Sentinel", 54: "Warden",
+    55: "Gladiator", 56: "Spartan", 57: "Berserker", 58: "Valkyrie",
+    59: "Phoenix", 60: "Elite Force", 61: "Apex", 62: "Sovereign",
+    63: "Overlord", 64: "Commander", 65: "General", 66: "Warlord",
+    67: "Conqueror II", 68: "Destroyer", 69: "Annihilator", 70: "Purple Heart",
+    71: "Harbinger", 72: "Omega", 73: "Absolute", 74: "Supreme II", 75: "Triumph",
+    # Elite (76-100)
+    76: "Grandmaster", 77: "Sage", 78: "Oracle", 79: "Prophet", 80: "Visionary",
+    81: "Virtuoso", 82: "Prodigy", 83: "Genius", 84: "Mastermind",
+    85: "Legendary Rise", 86: "Architect", 87: "Creator", 88: "Worldbreaker",
+    89: "Godslayer", 90: "Cosmic", 91: "Celestial", 92: "Divine",
+    93: "Eternal", 94: "Infinite", 95: "Ultimate", 96: "Omega II",
+    97: "Alpha", 98: "Primordial", 99: "Apex Predator", 100: "Centurion",
+    # Master (101-125)
+    101: "True Master", 102: "Sage II", 103: "Warmaster", 104: "Iron Sage",
+    105: "Stormcaller", 106: "Flamebringer", 107: "Thunderlord", 108: "Frostborn",
+    109: "Earthshaker", 110: "Windwalker", 111: "Shadowblade", 112: "Lightbringer",
+    113: "Starforger", 114: "Moonstrider", 115: "Sunkeeper", 116: "Voidwalker",
+    117: "Runemaster", 118: "Spellweaver", 119: "Battlemage", 120: "Warbringer",
+    121: "Dawnblade", 122: "Nightfall", 123: "Stormbringer", 124: "Ironheart",
+    125: "Grand Master",
+    # Champion (126-150)
+    126: "True Champion", 127: "Siegebreaker", 128: "Warhammer", 129: "Soulforge",
+    130: "Titanborn", 131: "Dragonslayer", 132: "Leviathan", 133: "Behemoth",
+    134: "Colossus II", 135: "Juggernaut II", 136: "Thundergod", 137: "Firelord",
+    138: "Icewarden", 139: "Earthlord", 140: "Skywarden", 141: "Abyssal",
+    142: "Celestial II", 143: "Nebula", 144: "Supernova", 145: "Pulsar",
+    146: "Quasar", 147: "Galaxy", 148: "Universe", 149: "Multiverse",
+    150: "Grand Champion",
+    # Legend (151-175)
+    151: "Living Legend", 152: "Mythmaker", 153: "Storyweaver", 154: "Fatewriter",
+    155: "Destiny", 156: "Prophecy", 157: "Revelation", 158: "Ascension",
+    159: "Enlightened", 160: "Awakened", 161: "Transcended", 162: "Reborn",
+    163: "Evolved", 164: "Perfected", 165: "Exalted", 166: "Glorified",
+    167: "Sanctified", 168: "Hallowed", 169: "Blessed", 170: "Anointed",
+    171: "Chosen", 172: "Ordained", 173: "Destined", 174: "Fated",
+    175: "Grand Legend",
+    # Mythic (176-200)
+    **{i: f"Mythic {_roman(i - 175)}" for i in range(176, 201)},
+    # Immortal (201-225)
+    **{i: f"Immortal {_roman(i - 200)}" for i in range(201, 226)},
+    # Transcendent (226-250)
+    **{i: f"Transcendent {_roman(i - 225)}" for i in range(226, 251)},
+}
+
+
+def _get_level_name(level: int) -> str:
+    """Get individual level name."""
+    return _LEVEL_NAMES.get(level, f"Level {level}")
+
+
 def _get_xp_title(level: int) -> str:
     """Get XP title based on level (11 tiers)."""
     if level <= 10:
@@ -1079,8 +1165,57 @@ async def get_level_info(
 
     return {
         "level": level,
+        "name": _get_level_name(level),
         "title": title,
         "xp_to_next_level": xp_needed,
         "total_xp_to_reach": total_xp,
         "milestone_reward": milestone_rewards.get(level)
     }
+
+
+@router.get("/all-levels")
+async def get_all_levels(
+    current_user: dict = Depends(get_current_user),
+):
+    """
+    Get all 250 levels with names, titles, XP requirements, and milestone rewards.
+    Static data — frontend should cache this for the session.
+    """
+    milestone_rewards = {
+        5: "Streak Shield x1",
+        10: "2x XP Token",
+        15: "Fitness Crate x2",
+        20: "Streak Shield x2",
+        25: "2x XP Token x2",
+        30: "Premium Crate",
+        40: "Streak Shield x3",
+        50: "2x XP Token x3 + Premium Crate",
+        60: "Fitness Crate x5",
+        75: "Premium Crate x2",
+        100: "Elite Badge + Premium Crate x3",
+        125: "Master Badge + Master Crate",
+        150: "Champion Badge + Champion Crate x2",
+        175: "Legend Badge + Legend Crate x3",
+        200: "Mythic Badge + Mythic Crate x5",
+        225: "Immortal Badge + Immortal Crate x7",
+        250: "Transcendent Badge + Legendary Crate x10",
+    }
+    milestone_icons = {
+        5: "🛡️", 10: "⚡", 15: "📦", 20: "🛡️", 25: "⚡",
+        30: "🎁", 40: "🛡️", 50: "🎁", 60: "📦", 75: "🎁",
+        100: "🎖️", 125: "🎖️", 150: "🎖️", 175: "🎖️",
+        200: "🎖️", 225: "🎖️", 250: "🏆",
+    }
+
+    levels = []
+    for level in range(1, 251):
+        levels.append({
+            "level": level,
+            "name": _get_level_name(level),
+            "title": _get_xp_title(level),
+            "xp_required": _get_xp_for_level(level),
+            "milestone_reward": milestone_rewards.get(level),
+            "milestone_icon": milestone_icons.get(level),
+        })
+
+    return levels

@@ -82,6 +82,85 @@ extension NutritionRepositoryExt on NutritionRepository {
   }
 
 
+  /// Move a food log to a different meal type
+  Future<Map<String, dynamic>> moveFoodLog({
+    required String logId,
+    required String mealType,
+  }) async {
+    try {
+      final response = await _client.put(
+        '/nutrition/food-logs/$logId',
+        data: {'meal_type': mealType},
+      );
+      return response.data as Map<String, dynamic>;
+    } catch (e) {
+      debugPrint('Error moving food log: $e');
+      rethrow;
+    }
+  }
+
+
+  /// Update the logged_at time on a food log
+  Future<Map<String, dynamic>> updateFoodLogTime({
+    required String logId,
+    required String loggedAt,
+  }) async {
+    try {
+      final response = await _client.put(
+        '/nutrition/food-logs/$logId',
+        data: {'logged_at': loggedAt},
+      );
+      return response.data as Map<String, dynamic>;
+    } catch (e) {
+      debugPrint('Error updating food log time: $e');
+      rethrow;
+    }
+  }
+
+
+  /// Update notes on a food log
+  Future<Map<String, dynamic>> updateFoodLogNotes({
+    required String logId,
+    required String notes,
+  }) async {
+    try {
+      final response = await _client.put(
+        '/nutrition/food-logs/$logId',
+        data: {'notes': notes},
+      );
+      return response.data as Map<String, dynamic>;
+    } catch (e) {
+      debugPrint('Error updating food log notes: $e');
+      rethrow;
+    }
+  }
+
+
+  /// Update mood/energy on a food log
+  Future<Map<String, dynamic>> updateFoodLogMood({
+    required String logId,
+    String? moodBefore,
+    String? moodAfter,
+    int? energyLevel,
+  }) async {
+    try {
+      final body = <String, dynamic>{};
+      if (moodBefore != null) body['mood_before'] = moodBefore;
+      if (moodAfter != null) body['mood_after'] = moodAfter;
+      if (energyLevel != null) body['energy_level'] = energyLevel;
+
+      final response = await _client.patch(
+        '/nutrition/food-logs/$logId/mood',
+        data: body,
+      );
+      return response.data as Map<String, dynamic>;
+    } catch (e) {
+      debugPrint('Error updating food log mood: $e');
+      rethrow;
+    }
+  }
+
+
   /// Copy a food log to a different meal type, optionally on a specific date
   Future<Map<String, dynamic>> copyFoodLog({
     required String logId,

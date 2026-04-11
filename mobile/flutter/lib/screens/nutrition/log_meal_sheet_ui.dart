@@ -504,6 +504,8 @@ extension _LogMealSheetStateUI on _LogMealSheetState {
                           originalCarbs: response.carbsG,
                           originalFat: response.fatG,
                           dataSource: 'ai_analysis',
+                          originalQuery: description,
+                          allFoodItems: items.map((f) => f.toJson()).toList(),
                         );
                       },
                       child: Row(

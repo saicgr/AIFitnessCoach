@@ -382,6 +382,7 @@ extension _SettingsCardExt on SettingsCard {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final bodyUnit = ref.read(weightUnitProvider);
     final workoutUnit = ref.read(workoutWeightUnitProvider);
+    final measurementUnit = ref.read(authStateProvider).user?.preferredMeasurementUnit ?? 'cm';
     final textPrimary = isDark ? Colors.white : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final accent = isDark ? AppColors.orange : AppColorsLight.orange;
@@ -398,7 +399,7 @@ extension _SettingsCardExt on SettingsCard {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Text(
-                'Weight Units',
+                'Units',
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w600,
@@ -410,7 +411,7 @@ extension _SettingsCardExt on SettingsCard {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Text(
-                'Body weight and workout weight can use different units',
+                'Weight, workout, and body measurement units',
                 style: TextStyle(fontSize: 13, color: textMuted),
               ),
             ),
@@ -433,7 +434,7 @@ extension _SettingsCardExt on SettingsCard {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Text(
-                'For weighing yourself, BMI, body measurements',
+                'For weighing yourself, BMI calculations',
                 style: TextStyle(fontSize: 12, color: textMuted),
               ),
             ),
@@ -515,6 +516,59 @@ extension _SettingsCardExt on SettingsCard {
                     HapticFeedback.selectionClick();
                     Navigator.pop(context);
                     await _updateWorkoutWeightUnit(context, ref, 'lbs');
+                  },
+                ),
+                const SizedBox(width: 16),
+              ],
+            ),
+            const SizedBox(height: 24),
+
+            // Body Measurements Unit
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Text(
+                'BODY MEASUREMENTS',
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                  color: textMuted,
+                  letterSpacing: 1,
+                ),
+              ),
+            ),
+            const SizedBox(height: 8),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Text(
+                'For waist, chest, hips, arms, legs',
+                style: TextStyle(fontSize: 12, color: textMuted),
+              ),
+            ),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                const SizedBox(width: 16),
+                _UnitChip(
+                  label: 'cm',
+                  isSelected: measurementUnit == 'cm',
+                  accent: accent,
+                  isDark: isDark,
+                  onTap: () async {
+                    HapticFeedback.selectionClick();
+                    Navigator.pop(context);
+                    await _updateMeasurementUnit(context, ref, 'cm');
+                  },
+                ),
+                const SizedBox(width: 10),
+                _UnitChip(
+                  label: 'in',
+                  isSelected: measurementUnit == 'in',
+                  accent: accent,
+                  isDark: isDark,
+                  onTap: () async {
+                    HapticFeedback.selectionClick();
+                    Navigator.pop(context);
+                    await _updateMeasurementUnit(context, ref, 'in');
                   },
                 ),
                 const SizedBox(width: 16),

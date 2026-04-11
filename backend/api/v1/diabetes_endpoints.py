@@ -8,10 +8,11 @@ counting, and Health Connect integration.
 from typing import Optional
 from datetime import datetime, timedelta, date
 import uuid
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from core.auth import get_current_user
 from core.db import get_supabase_db
 from core.exceptions import safe_internal_error
+from core.timezone_utils import user_today_date
 
 
 def _diabetes_parent():
@@ -105,7 +106,7 @@ async def calculate_estimated_a1c(user_id: str, days: int = 90, current_user: di
 # ============================================================
 
 @router.post("/medications", response_model=MedicationResponse)
-async def add_medication(request: AddMedicationRequest, current_user: dict = Depends(get_current_user)):
+async def add_medication(request: AddMedicationRequest, http_request: Request, current_user: dict = Depends(get_current_user)):
     """Add a diabetes medication."""
     if str(current_user["id"]) != str(request.user_id):
         raise HTTPException(status_code=403, detail="Access denied")
@@ -119,7 +120,7 @@ async def add_medication(request: AddMedicationRequest, current_user: dict = Dep
         "frequency": request.frequency,
         "times_of_day": request.times_of_day,
         "with_food": request.with_food,
-        "start_date": request.start_date or date.today().isoformat(),
+        "start_date": request.start_date or user_today_date(http_request).isoformat(),
         "is_active": True,
         "medication_type": request.medication_type,
         "notes": request.notes,
@@ -150,7 +151,7 @@ async def get_active_medications(user_id: str, current_user: dict = Depends(get_
 
 
 @router.patch("/medications/{user_id}/{medication_id}/deactivate", response_model=MedicationResponse)
-async def deactivate_medication(user_id: str, medication_id: str, current_user: dict = Depends(get_current_user)):
+async def deactivate_medication(user_id: str, medication_id: str, http_request: Request, current_user: dict = Depends(get_current_user)):
     """Deactivate a medication."""
     if str(current_user["id"]) != str(user_id):
         raise HTTPException(status_code=403, detail="Access denied")
@@ -158,7 +159,7 @@ async def deactivate_medication(user_id: str, medication_id: str, current_user: 
 
     result = db.client.table("diabetes_medications").update({
         "is_active": False,
-        "end_date": date.today().isoformat(),
+        "end_date": user_today_date(http_request).isoformat(),
         "updated_at": datetime.utcnow().isoformat()
     }).eq("id", medication_id).eq("user_id", user_id).execute()
 

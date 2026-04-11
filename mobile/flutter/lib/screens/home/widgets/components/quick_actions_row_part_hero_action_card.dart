@@ -22,13 +22,71 @@ class _HeroActionCard extends ConsumerWidget {
 
 
 /// Hero card prompting to take progress photo
-class _PhotoHeroCard extends StatelessWidget {
+class _PhotoHeroCard extends ConsumerWidget {
   final bool isDark;
 
   const _PhotoHeroCard({required this.isDark});
 
+  Future<void> _handleTap(BuildContext context, WidgetRef ref) async {
+    HapticService.light();
+
+    // Run the capture flow directly (angle → camera/gallery → editor)
+    final result = await ProgressPhotoCaptureFlow.run(context);
+    if (result == null) return; // User cancelled
+    if (!context.mounted) return;
+
+    final (editedFile, viewType) = result;
+
+    // Upload the photo
+    final userId = await ref.read(apiClientProvider).getUserId();
+    if (userId == null || !context.mounted) return;
+
+    // Show loading
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const AlertDialog(
+        content: Row(
+          children: [
+            CircularProgressIndicator(),
+            SizedBox(width: 16),
+            Text('Uploading photo...'),
+          ],
+        ),
+      ),
+    );
+
+    try {
+      await ref
+          .read(progressPhotosNotifierProvider(userId).notifier)
+          .uploadPhoto(imageFile: editedFile, viewType: viewType);
+
+      if (context.mounted) {
+        Navigator.pop(context); // Close loading dialog
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('${viewType.displayName} photo saved!'),
+            backgroundColor: Colors.green,
+          ),
+        );
+        // Navigate to Stats Photos tab after successful upload
+        context.push('/stats?tab=1');
+      }
+    } catch (e) {
+      if (context.mounted) {
+        Navigator.pop(context); // Close loading dialog
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to upload photo: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final textColor = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final cardBg = isDark
@@ -44,10 +102,7 @@ class _PhotoHeroCard extends StatelessWidget {
     return Material(
       color: Colors.transparent,
       child: InkWell(
-        onTap: () {
-          HapticService.light();
-          context.push('/stats?openPhoto=true');
-        },
+        onTap: () => _handleTap(context, ref),
         borderRadius: BorderRadius.circular(14),
         child: Container(
           padding: const EdgeInsets.all(10),

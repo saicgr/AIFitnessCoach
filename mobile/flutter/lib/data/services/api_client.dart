@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' hide MultipartFile;
 import '../../core/constants/api_constants.dart';
@@ -190,19 +191,33 @@ class ApiClient with WidgetsBindingObserver {
       ),
     );
 
-    // Timezone interceptor — attaches X-User-Timezone header to every request
+    // Timezone interceptor — attaches X-User-Timezone header to every request.
+    // Always sends a proper IANA identifier (e.g. "America/Chicago"), never
+    // an abbreviation like "CST" which is ambiguous.
     _dio.interceptors.add(
       InterceptorsWrapper(
         onRequest: (options, handler) async {
           try {
             final prefs = await SharedPreferences.getInstance();
             final tz = prefs.getString('user_timezone');
-            if (tz != null && tz.isNotEmpty) {
+            if (tz != null && tz.isNotEmpty && tz.contains('/')) {
+              // Stored IANA timezone (e.g. "America/Chicago")
               options.headers['X-User-Timezone'] = tz;
             } else {
-              // Fallback: send device timezone abbreviation (e.g. "IST").
-              // Backend maps common abbreviations to IANA identifiers.
-              options.headers['X-User-Timezone'] = DateTime.now().timeZoneName;
+              // Fallback: detect IANA timezone from device OS
+              try {
+                final deviceTzInfo = await FlutterTimezone.getLocalTimezone();
+                final deviceTz = deviceTzInfo.identifier;
+                if (deviceTz.isNotEmpty) {
+                  options.headers['X-User-Timezone'] = deviceTz;
+                  // Cache it for next time
+                  await prefs.setString('user_timezone', deviceTz);
+                } else {
+                  options.headers['X-User-Timezone'] = DateTime.now().timeZoneName;
+                }
+              } catch (_) {
+                options.headers['X-User-Timezone'] = DateTime.now().timeZoneName;
+              }
             }
           } catch (e) {
             debugPrint('⚠️ [API] Could not attach timezone header: $e');

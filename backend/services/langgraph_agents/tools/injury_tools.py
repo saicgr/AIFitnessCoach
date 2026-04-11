@@ -13,6 +13,7 @@ from langchain_core.tools import tool
 from services.injury_service import get_injury_service, Injury
 from core.supabase_db import get_supabase_db
 from core.logger import get_logger
+from core.timezone_utils import get_user_today
 
 logger = get_logger(__name__)
 
@@ -431,7 +432,8 @@ def update_injury_status(
     injury_id: str = None,
     body_part: str = None,
     pain_level: int = None,
-    improvement_notes: str = None
+    improvement_notes: str = None,
+    timezone_str: str = "UTC"
 ) -> Dict[str, Any]:
     """
     Update the status of an active injury.
@@ -442,6 +444,7 @@ def update_injury_status(
         body_part: Body part to update (use this OR injury_id)
         pain_level: New pain level (1-10)
         improvement_notes: Notes about improvement
+        timezone_str: User's IANA timezone string (e.g. "America/New_York")
 
     Returns:
         Result dict with updated injury status
@@ -491,7 +494,7 @@ def update_injury_status(
             update_data["pain_level_current"] = pain_level
 
         if improvement_notes:
-            new_notes = f"{old_notes or ''}\n[{datetime.now().strftime('%Y-%m-%d')}] {improvement_notes}".strip()
+            new_notes = f"{old_notes or ''}\n[{get_user_today(timezone_str)}] {improvement_notes}".strip()
             update_data["improvement_notes"] = new_notes
 
         if not update_data:

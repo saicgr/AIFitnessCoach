@@ -13,6 +13,7 @@ Handles:
 - Set/rep limit enforcement
 - Duration truncation
 """
+import re
 from typing import List, Dict, Any, Optional
 
 from core.logger import get_logger
@@ -157,9 +158,9 @@ def is_advanced_exercise(exercise_name: str) -> bool:
     if name_lower in ADVANCED_EXERCISES_BLOCKLIST:
         return True
 
-    # Partial match
+    # Word-boundary partial match (prevents "l sit" matching inside "kettlebell situp")
     for blocked_term in ADVANCED_EXERCISES_BLOCKLIST:
-        if blocked_term in name_lower:
+        if re.search(r'\b' + re.escape(blocked_term) + r'\b', name_lower):
             return True
 
     return False

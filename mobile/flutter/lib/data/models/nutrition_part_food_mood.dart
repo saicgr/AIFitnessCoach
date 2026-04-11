@@ -55,12 +55,34 @@ class FoodLog {
   final int? healthScore;
   @JsonKey(name: 'ai_feedback')
   final String? aiFeedback;
+  final String? notes;
   @JsonKey(name: 'mood_before')
   final String? moodBefore;
   @JsonKey(name: 'mood_after')
   final String? moodAfter;
   @JsonKey(name: 'energy_level')
   final int? energyLevel;
+  // Key micronutrients
+  @JsonKey(name: 'sodium_mg')
+  final double? sodiumMg;
+  @JsonKey(name: 'sugar_g')
+  final double? sugarG;
+  @JsonKey(name: 'saturated_fat_g')
+  final double? saturatedFatG;
+  @JsonKey(name: 'cholesterol_mg')
+  final double? cholesterolMg;
+  @JsonKey(name: 'potassium_mg')
+  final double? potassiumMg;
+  @JsonKey(name: 'calcium_mg')
+  final double? calciumMg;
+  @JsonKey(name: 'iron_mg')
+  final double? ironMg;
+  @JsonKey(name: 'vitamin_a_ug')
+  final double? vitaminAUg;
+  @JsonKey(name: 'vitamin_c_mg')
+  final double? vitaminCMg;
+  @JsonKey(name: 'vitamin_d_iu')
+  final double? vitaminDIu;
   @JsonKey(name: 'created_at', fromJson: _parseDateTimeOrNow)
   final DateTime createdAt;
 
@@ -77,9 +99,20 @@ class FoodLog {
     this.fiberG,
     this.healthScore,
     this.aiFeedback,
+    this.notes,
     this.moodBefore,
     this.moodAfter,
     this.energyLevel,
+    this.sodiumMg,
+    this.sugarG,
+    this.saturatedFatG,
+    this.cholesterolMg,
+    this.potassiumMg,
+    this.calciumMg,
+    this.ironMg,
+    this.vitaminAUg,
+    this.vitaminCMg,
+    this.vitaminDIu,
     required this.createdAt,
   });
 
@@ -88,6 +121,19 @@ class FoodLog {
 
   /// Get mood after as enum
   FoodMood? get moodAfterEnum => FoodMood.fromString(moodAfter);
+
+  /// Whether any micronutrient data is available
+  bool get hasMicronutrients =>
+      sodiumMg != null || sugarG != null || saturatedFatG != null ||
+      cholesterolMg != null || potassiumMg != null || calciumMg != null ||
+      ironMg != null || vitaminAUg != null || vitaminCMg != null ||
+      vitaminDIu != null;
+
+  /// Whether any food item has weight data for scaling
+  bool get hasWeightData => foodItems.any((item) => item.hasWeightData);
+
+  /// Whether any food item has count data for scaling
+  bool get hasCountData => foodItems.any((item) => item.hasCountData);
 
   factory FoodLog.fromJson(Map<String, dynamic> json) =>
       _$FoodLogFromJson(json);
@@ -232,6 +278,12 @@ class BarcodeProduct {
   @JsonKey(name: 'ingredients_text')
   final String? ingredientsText;
   final String? allergens;
+  @JsonKey(name: 'ecoscore_grade')
+  final String? ecoscoreGrade;
+  @JsonKey(name: 'labels_tags')
+  final List<String>? labelsTags;
+  @JsonKey(name: 'additives_tags')
+  final List<String>? additivesTags;
 
   const BarcodeProduct({
     required this.barcode,
@@ -245,6 +297,9 @@ class BarcodeProduct {
     this.novaGroup,
     this.ingredientsText,
     this.allergens,
+    this.ecoscoreGrade,
+    this.labelsTags,
+    this.additivesTags,
   });
 
   factory BarcodeProduct.fromJson(Map<String, dynamic> json) =>
@@ -281,6 +336,59 @@ class BarcodeProduct {
 
   /// Get serving size description
   String? get servingSize => nutrients['serving_size'] as String?;
+
+  // Micronutrient getters
+  double get vitaminA100g =>
+      (nutrients['vitamin_a_100g'] as num?)?.toDouble() ?? 0;
+  double get vitaminC100g =>
+      (nutrients['vitamin_c_100g'] as num?)?.toDouble() ?? 0;
+  double get vitaminD100g =>
+      (nutrients['vitamin_d_100g'] as num?)?.toDouble() ?? 0;
+  double get calcium100g =>
+      (nutrients['calcium_100g'] as num?)?.toDouble() ?? 0;
+  double get iron100g =>
+      (nutrients['iron_100g'] as num?)?.toDouble() ?? 0;
+  double get potassium100g =>
+      (nutrients['potassium_100g'] as num?)?.toDouble() ?? 0;
+  double get magnesium100g =>
+      (nutrients['magnesium_100g'] as num?)?.toDouble() ?? 0;
+  double get zinc100g =>
+      (nutrients['zinc_100g'] as num?)?.toDouble() ?? 0;
+
+  bool get hasMicronutrients =>
+      vitaminA100g > 0 || vitaminC100g > 0 || vitaminD100g > 0 ||
+      calcium100g > 0 || iron100g > 0 || potassium100g > 0 ||
+      magnesium100g > 0 || zinc100g > 0;
+
+  /// Get formatted allergens with language prefixes stripped
+  /// Raw format from Open Food Facts: "en:eggs,en:gluten,en:milk"
+  /// Returns: "Eggs, Gluten, Milk"
+  String? get formattedAllergens {
+    if (allergens == null || allergens!.isEmpty) return null;
+    final formatted = allergens!
+        .split(',')
+        .map((a) => a.trim())
+        .map((a) => a.contains(':') ? a.split(':').last : a)
+        .map((a) => a.trim())
+        .where((a) => a.isNotEmpty)
+        .map((a) => a[0].toUpperCase() + a.substring(1))
+        .toList();
+    if (formatted.isEmpty) return null;
+    return formatted.join(', ');
+  }
+
+  /// Get allergens as a list (cleaned)
+  List<String> get allergensList {
+    if (allergens == null || allergens!.isEmpty) return [];
+    return allergens!
+        .split(',')
+        .map((a) => a.trim())
+        .map((a) => a.contains(':') ? a.split(':').last : a)
+        .map((a) => a.trim())
+        .where((a) => a.isNotEmpty)
+        .map((a) => a[0].toUpperCase() + a.substring(1))
+        .toList();
+  }
 }
 
 @JsonSerializable()

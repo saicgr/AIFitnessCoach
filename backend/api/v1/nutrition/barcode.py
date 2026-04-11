@@ -83,7 +83,7 @@ async def lookup_barcode(barcode: str, current_user: dict = Depends(get_current_
 
 
 @router.post("/log-barcode", response_model=LogBarcodeResponse)
-async def log_food_from_barcode(request: LogBarcodeRequest, http_request: Request = None, current_user: dict = Depends(get_current_user)):
+async def log_food_from_barcode(request: LogBarcodeRequest, http_request: Request, current_user: dict = Depends(get_current_user)):
     """
     Log food to meal diary from barcode scan.
 
@@ -120,7 +120,7 @@ async def log_food_from_barcode(request: LogBarcodeRequest, http_request: Reques
         fat_g = round(product.nutrients.fat_per_100g * multiplier, 1)
         fiber_g = round(product.nutrients.fiber_per_100g * multiplier, 1)
         
-        # Create food item
+        # Create food item with quality metadata
         food_item = {
             "name": product.product_name,
             "amount": f"{total_grams:.0f}g ({request.servings} serving{'s' if request.servings != 1 else ''})",
@@ -131,6 +131,38 @@ async def log_food_from_barcode(request: LogBarcodeRequest, http_request: Reques
             "barcode": request.barcode,
             "brand": product.brand,
         }
+
+        # Store food quality metadata in food_item
+        if product.nutriscore_grade:
+            food_item["nutriscore_grade"] = product.nutriscore_grade
+        if product.nova_group is not None:
+            food_item["nova_group"] = product.nova_group
+        if product.ecoscore_grade:
+            food_item["ecoscore_grade"] = product.ecoscore_grade
+        if product.allergens:
+            food_item["allergens"] = product.allergens
+        if product.labels_tags:
+            food_item["labels_tags"] = product.labels_tags
+        if product.additives_tags:
+            food_item["additives_tags"] = product.additives_tags
+        if product.ingredients_text:
+            food_item["ingredients_text"] = product.ingredients_text
+
+        # Calculate micronutrients based on serving multiplier
+        sugar_g = round(product.nutrients.sugar_per_100g * multiplier, 1) if product.nutrients.sugar_per_100g else None
+        sodium_mg = round(product.nutrients.sodium_per_100g * multiplier, 1) if product.nutrients.sodium_per_100g else None
+        saturated_fat_g = round(product.nutrients.saturated_fat_per_100g * multiplier, 1) if product.nutrients.saturated_fat_per_100g else None
+
+        vitamin_a_ug = round(product.nutrients.vitamin_a_100g * multiplier, 2) if product.nutrients.vitamin_a_100g else None
+        vitamin_c_mg = round(product.nutrients.vitamin_c_100g * multiplier, 2) if product.nutrients.vitamin_c_100g else None
+        vitamin_d_iu = None  # OFF gives µg, conversion to IU = µg * 40
+        if product.nutrients.vitamin_d_100g:
+            vitamin_d_iu = round(product.nutrients.vitamin_d_100g * multiplier * 40, 1)
+        calcium_mg = round(product.nutrients.calcium_100g * multiplier, 1) if product.nutrients.calcium_100g else None
+        iron_mg = round(product.nutrients.iron_100g * multiplier, 2) if product.nutrients.iron_100g else None
+        potassium_mg = round(product.nutrients.potassium_100g * multiplier, 1) if product.nutrients.potassium_100g else None
+        magnesium_mg = round(product.nutrients.magnesium_100g * multiplier, 1) if product.nutrients.magnesium_100g else None
+        zinc_mg = round(product.nutrients.zinc_100g * multiplier, 2) if product.nutrients.zinc_100g else None
         
         # Create food log
         db = get_supabase_db()
@@ -141,7 +173,7 @@ async def log_food_from_barcode(request: LogBarcodeRequest, http_request: Reques
             user_tz = resolve_timezone(http_request, db, request.user_id)
             user_tz_logged_at = get_user_now_iso(user_tz)
 
-        # Save to database using positional arguments
+        # Save to database with micronutrients
         created_log = db.create_food_log(
             user_id=request.user_id,
             meal_type=request.meal_type,
@@ -154,6 +186,18 @@ async def log_food_from_barcode(request: LogBarcodeRequest, http_request: Reques
             ai_feedback=None,
             health_score=None,
             logged_at=user_tz_logged_at,
+            source_type="barcode",
+            sugar_g=sugar_g,
+            sodium_mg=sodium_mg,
+            saturated_fat_g=saturated_fat_g,
+            vitamin_a_ug=vitamin_a_ug,
+            vitamin_c_mg=vitamin_c_mg,
+            vitamin_d_iu=vitamin_d_iu,
+            calcium_mg=calcium_mg,
+            iron_mg=iron_mg,
+            potassium_mg=potassium_mg,
+            magnesium_mg=magnesium_mg,
+            zinc_mg=zinc_mg,
         )
 
         food_log_id = created_log.get('id') if created_log else "unknown"

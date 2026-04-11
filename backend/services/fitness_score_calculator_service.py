@@ -21,6 +21,7 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Optional, List, Dict, Any
 from datetime import date, datetime, timedelta
+from core.timezone_utils import get_user_today
 import logging
 
 logger = logging.getLogger(__name__)
@@ -162,6 +163,7 @@ class FitnessScoreCalculatorService:
         readiness_score: int,
         consistency_score: int,
         nutrition_score: int,
+        timezone_str: str,
         previous_score: Optional[int] = None,
         custom_weights: Optional[Dict[str, float]] = None,
     ) -> FitnessScore:
@@ -221,7 +223,7 @@ class FitnessScoreCalculatorService:
 
         return FitnessScore(
             user_id=user_id,
-            calculated_date=date.today(),
+            calculated_date=date.fromisoformat(get_user_today(timezone_str)),
             strength_score=strength_score,
             readiness_score=readiness_score,
             consistency_score=consistency_score,

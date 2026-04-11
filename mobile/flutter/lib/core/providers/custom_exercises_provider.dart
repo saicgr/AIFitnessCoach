@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/models/custom_exercise.dart';
 import '../../data/repositories/custom_exercise_repository.dart';
 import '../../data/services/api_client.dart';
+import '../../utils/tz.dart';
 
 /// State for custom exercises
 class CustomExercisesState {
@@ -377,7 +378,7 @@ class CustomExercisesNotifier extends StateNotifier<CustomExercisesState> {
         if (e.id == exerciseId) {
           return e.copyWith(
             usageCount: e.usageCount + 1,
-            lastUsed: DateTime.now().toIso8601String(),
+            lastUsed: Tz.timestamp(),
           );
         }
         return e;

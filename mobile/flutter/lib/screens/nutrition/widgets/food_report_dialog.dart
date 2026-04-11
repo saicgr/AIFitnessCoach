@@ -23,6 +23,9 @@ Future<void> showFoodReportDialog(
   // Extra context fields
   String? dataSource,
   String? foodLogId,
+  // Traceability fields
+  String? originalQuery,
+  List<Map<String, dynamic>>? allFoodItems,
 }) {
   assert(food != null || foodName != null, 'Either food or foodName must be provided');
   return showGlassSheet(
@@ -38,6 +41,8 @@ Future<void> showFoodReportDialog(
         dataSource: dataSource,
         foodLogId: foodLogId,
         apiClient: apiClient,
+        originalQuery: originalQuery,
+        allFoodItems: allFoodItems,
       ),
     ),
   );
@@ -53,6 +58,8 @@ class _FoodReportSheet extends StatefulWidget {
   final String? dataSource;
   final String? foodLogId;
   final ApiClient apiClient;
+  final String? originalQuery;
+  final List<Map<String, dynamic>>? allFoodItems;
 
   const _FoodReportSheet({
     this.food,
@@ -64,6 +71,8 @@ class _FoodReportSheet extends StatefulWidget {
     this.dataSource,
     this.foodLogId,
     required this.apiClient,
+    this.originalQuery,
+    this.allFoodItems,
   });
 
   @override
@@ -77,6 +86,7 @@ class _FoodReportSheetState extends State<_FoodReportSheet> {
   late final TextEditingController _fatController;
   late final TextEditingController _notesController;
   bool _isSubmitting = false;
+  String _reportType = 'wrong_nutrition'; // 'wrong_nutrition' | 'wrong_food'
 
   @override
   void initState() {
@@ -117,11 +127,16 @@ class _FoodReportSheetState extends State<_FoodReportSheet> {
         'original_protein': widget.initialProtein,
         'original_carbs': widget.initialCarbs,
         'original_fat': widget.initialFat,
-        'corrected_calories': double.tryParse(_caloriesController.text),
-        'corrected_protein': double.tryParse(_proteinController.text),
-        'corrected_carbs': double.tryParse(_carbsController.text),
-        'corrected_fat': double.tryParse(_fatController.text),
+        'report_type': _reportType,
       };
+
+      // Only include corrected macros for nutrition reports
+      if (_reportType == 'wrong_nutrition') {
+        data['corrected_calories'] = double.tryParse(_caloriesController.text);
+        data['corrected_protein'] = double.tryParse(_proteinController.text);
+        data['corrected_carbs'] = double.tryParse(_carbsController.text);
+        data['corrected_fat'] = double.tryParse(_fatController.text);
+      }
 
       // Include food_database_id if from a FoodSearchResult
       if (widget.food != null) {
@@ -134,6 +149,14 @@ class _FoodReportSheetState extends State<_FoodReportSheet> {
       }
       if (widget.foodLogId != null) {
         data['food_log_id'] = widget.foodLogId;
+      }
+
+      // Traceability fields
+      if (widget.originalQuery != null) {
+        data['original_query'] = widget.originalQuery;
+      }
+      if (widget.allFoodItems != null) {
+        data['all_food_items'] = widget.allFoodItems;
       }
 
       await widget.apiClient.post('/nutrition/food-report', data: data);
@@ -200,7 +223,7 @@ class _FoodReportSheetState extends State<_FoodReportSheet> {
 
             // Title
             Text(
-              'Report Incorrect Data',
+              'Report Issue',
               style: TextStyle(
                 color: textPrimary,
                 fontSize: 18,
@@ -212,81 +235,111 @@ class _FoodReportSheetState extends State<_FoodReportSheet> {
               widget.foodName,
               style: TextStyle(color: textMuted, fontSize: 14),
             ),
+            const SizedBox(height: 16),
+
+            // Report type toggle
+            Row(
+              children: [
+                _ReportTypeChip(
+                  label: 'Wrong nutrition',
+                  isSelected: _reportType == 'wrong_nutrition',
+                  onTap: () => setState(() => _reportType = 'wrong_nutrition'),
+                  accent: accent,
+                  textPrimary: textPrimary,
+                  textMuted: textMuted,
+                  surfaceColor: surfaceColor,
+                ),
+                const SizedBox(width: 8),
+                _ReportTypeChip(
+                  label: 'Wrong food',
+                  isSelected: _reportType == 'wrong_food',
+                  onTap: () => setState(() => _reportType = 'wrong_food'),
+                  accent: accent,
+                  textPrimary: textPrimary,
+                  textMuted: textMuted,
+                  surfaceColor: surfaceColor,
+                ),
+              ],
+            ),
             const SizedBox(height: 20),
 
-            // Corrected values
-            Text(
-              'Corrected Values',
-              style: TextStyle(
-                color: textPrimary,
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
+            // Corrected values (only for wrong nutrition)
+            if (_reportType == 'wrong_nutrition') ...[
+              Text(
+                'Corrected Values',
+                style: TextStyle(
+                  color: textPrimary,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
-            ),
-            const SizedBox(height: 12),
+              const SizedBox(height: 12),
 
-            // Nutrient fields in a 2x2 grid
-            Row(
-              children: [
-                Expanded(
-                  child: _NutrientField(
-                    label: 'Calories',
-                    controller: _caloriesController,
-                    suffix: 'kcal',
-                    isDark: isDark,
-                    surfaceColor: surfaceColor,
-                    textPrimary: textPrimary,
-                    textMuted: textMuted,
-                    isInteger: true,
+              // Nutrient fields in a 2x2 grid
+              Row(
+                children: [
+                  Expanded(
+                    child: _NutrientField(
+                      label: 'Calories',
+                      controller: _caloriesController,
+                      suffix: 'kcal',
+                      isDark: isDark,
+                      surfaceColor: surfaceColor,
+                      textPrimary: textPrimary,
+                      textMuted: textMuted,
+                      isInteger: true,
+                    ),
                   ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: _NutrientField(
-                    label: 'Protein',
-                    controller: _proteinController,
-                    suffix: 'g',
-                    isDark: isDark,
-                    surfaceColor: surfaceColor,
-                    textPrimary: textPrimary,
-                    textMuted: textMuted,
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: _NutrientField(
+                      label: 'Protein',
+                      controller: _proteinController,
+                      suffix: 'g',
+                      isDark: isDark,
+                      surfaceColor: surfaceColor,
+                      textPrimary: textPrimary,
+                      textMuted: textMuted,
+                    ),
                   ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(
-                  child: _NutrientField(
-                    label: 'Carbs',
-                    controller: _carbsController,
-                    suffix: 'g',
-                    isDark: isDark,
-                    surfaceColor: surfaceColor,
-                    textPrimary: textPrimary,
-                    textMuted: textMuted,
+                ],
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(
+                    child: _NutrientField(
+                      label: 'Carbs',
+                      controller: _carbsController,
+                      suffix: 'g',
+                      isDark: isDark,
+                      surfaceColor: surfaceColor,
+                      textPrimary: textPrimary,
+                      textMuted: textMuted,
+                    ),
                   ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: _NutrientField(
-                    label: 'Fat',
-                    controller: _fatController,
-                    suffix: 'g',
-                    isDark: isDark,
-                    surfaceColor: surfaceColor,
-                    textPrimary: textPrimary,
-                    textMuted: textMuted,
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: _NutrientField(
+                      label: 'Fat',
+                      controller: _fatController,
+                      suffix: 'g',
+                      isDark: isDark,
+                      surfaceColor: surfaceColor,
+                      textPrimary: textPrimary,
+                      textMuted: textMuted,
+                    ),
                   ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
+                ],
+              ),
+              const SizedBox(height: 16),
+            ],
 
             // Notes field
             Text(
-              'Additional Notes (optional)',
+              _reportType == 'wrong_food'
+                  ? 'What food did you actually mean?'
+                  : 'Additional Notes (optional)',
               style: TextStyle(
                 color: textPrimary,
                 fontSize: 14,
@@ -296,10 +349,12 @@ class _FoodReportSheetState extends State<_FoodReportSheet> {
             const SizedBox(height: 8),
             TextField(
               controller: _notesController,
-              maxLines: 2,
+              maxLines: _reportType == 'wrong_food' ? 3 : 2,
               style: TextStyle(color: textPrimary, fontSize: 14),
               decoration: InputDecoration(
-                hintText: 'e.g. Serving size seems off...',
+                hintText: _reportType == 'wrong_food'
+                    ? 'e.g. I searched for mexican coke, not a burrito bowl'
+                    : 'e.g. Serving size seems off...',
                 hintStyle: TextStyle(color: textMuted, fontSize: 14),
                 filled: true,
                 fillColor: surfaceColor,
@@ -437,6 +492,53 @@ class _NutrientField extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+class _ReportTypeChip extends StatelessWidget {
+  final String label;
+  final bool isSelected;
+  final VoidCallback onTap;
+  final Color accent;
+  final Color textPrimary;
+  final Color textMuted;
+  final Color surfaceColor;
+
+  const _ReportTypeChip({
+    required this.label,
+    required this.isSelected,
+    required this.onTap,
+    required this.accent,
+    required this.textPrimary,
+    required this.textMuted,
+    required this.surfaceColor,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        decoration: BoxDecoration(
+          color: isSelected ? accent.withOpacity(0.15) : surfaceColor,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: isSelected ? accent : textMuted.withOpacity(0.2),
+            width: 1.5,
+          ),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            color: isSelected ? accent : textMuted,
+            fontSize: 13,
+            fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+          ),
+        ),
+      ),
     );
   }
 }

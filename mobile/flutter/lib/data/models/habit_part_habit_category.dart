@@ -351,6 +351,16 @@ class HabitTemplate {
       color: '#22C55E',
     ),
     HabitTemplate(
+      id: 'walk_after_eating',
+      name: 'Walk After Eating',
+      description: 'Take a 10-15 min walk after meals to aid digestion',
+      category: HabitCategory.activity,
+      icon: 'directions_walk',
+      color: '#10B981',
+      suggestedTargetCount: 15,
+      unit: 'minutes',
+    ),
+    HabitTemplate(
       id: 'no_sitting',
       name: 'Break Up Sitting',
       description: 'Stand or walk every 60 minutes',

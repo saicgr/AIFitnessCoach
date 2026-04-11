@@ -23,9 +23,10 @@ from .performance_db_models import *  # noqa: F401, F403
 from .performance_db_endpoints import router as _endpoints_router
 
 import json
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from core.auth import get_current_user
 from core.exceptions import safe_internal_error
+from core.timezone_utils import user_today_date
 from pydantic import BaseModel
 from typing import List, Optional
 from datetime import datetime, date, timedelta
@@ -450,6 +451,7 @@ class StreakResponse(BaseModel):
 
 @router.get("/streak/{user_id}", response_model=StreakResponse)
 async def get_user_streak(user_id: str,
+    http_request: Request,
     current_user: dict = Depends(get_current_user),
 ):
     """
@@ -497,7 +499,7 @@ async def get_user_streak(user_id: str,
         # Sort dates in descending order (most recent first)
         sorted_dates = sorted(workout_dates, reverse=True)
         last_workout = sorted_dates[0]
-        today = date.today()
+        today = user_today_date(http_request)
         yesterday = today - timedelta(days=1)
 
         # Calculate current streak

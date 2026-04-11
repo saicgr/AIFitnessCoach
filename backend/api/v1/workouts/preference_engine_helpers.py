@@ -12,6 +12,7 @@ from __future__ import annotations
 from datetime import datetime, timedelta, date
 import json
 import logging
+from core.timezone_utils import get_user_today
 logger = logging.getLogger(__name__)
 
 
@@ -455,7 +456,7 @@ async def _create_staple_workout_for_date(
     return None
 
 
-async def apply_staple_to_workouts(db, user_id: str, staple: dict) -> dict:
+async def apply_staple_to_workouts(db, user_id: str, staple: dict, timezone_str: str = None) -> dict:
     """
     Apply a new staple exercise to all matching upcoming workouts.
 
@@ -517,7 +518,7 @@ async def apply_staple_to_workouts(db, user_id: str, staple: dict) -> dict:
             all_staples = context.get("staples", [])
 
             # Create workouts for the next 2 weeks of non-workout target days
-            today = date.today()
+            today = date.fromisoformat(get_user_today(timezone_str)) if timezone_str else date.fromisoformat(get_user_today("UTC"))
             for day_offset in range(1, 15):  # Tomorrow through 14 days out
                 target_date = today + timedelta(days=day_offset)
                 if target_date.weekday() not in non_workout_target_days:

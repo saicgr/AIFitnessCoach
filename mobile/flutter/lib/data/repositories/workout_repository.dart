@@ -14,6 +14,7 @@ import '../models/parsed_exercise.dart';
 import '../models/workout_screen_summary.dart';
 import '../services/api_client.dart';
 import 'auth_repository.dart';
+import '../../utils/tz.dart';
 
 export '../models/today_workout.dart';
 

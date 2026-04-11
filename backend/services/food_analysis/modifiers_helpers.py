@@ -29,6 +29,7 @@ class ModifierMeta(NamedTuple):
     unit_name: Optional[str] = None
     group: Optional[str] = None
     display_label: Optional[str] = None
+    scale_factor: Optional[float] = None  # Multiplicative portion scaling (0.35 = 35% of regular serving weight)
 
 
 # Parallel metadata dict — only entries that need explicit metadata.
@@ -86,15 +87,127 @@ _MODIFIER_METADATA: Dict[str, ModifierMeta] = {
     "seared":           ModifierMeta(ModifierType.COOKING_METHOD, group="cook_saute", display_label="Seared"),
     "pan seared":       ModifierMeta(ModifierType.COOKING_METHOD, group="cook_saute", display_label="Pan Seared"),
 
-    # ── Size / portion ──
-    "mini":             ModifierMeta(ModifierType.SIZE_PORTION, group="size", display_label="Mini"),
-    "small":            ModifierMeta(ModifierType.SIZE_PORTION, group="size", display_label="Small"),
-    "make it small":    ModifierMeta(ModifierType.SIZE_PORTION, group="size", display_label="Small"),
-    "half portion":     ModifierMeta(ModifierType.SIZE_PORTION, group="size", display_label="Half Portion"),
-    "large":            ModifierMeta(ModifierType.SIZE_PORTION, group="size", display_label="Large"),
-    "make it large":    ModifierMeta(ModifierType.SIZE_PORTION, group="size", display_label="Large"),
-    "extra large":      ModifierMeta(ModifierType.SIZE_PORTION, group="size", display_label="Extra Large"),
-    "supersize":        ModifierMeta(ModifierType.SIZE_PORTION, group="size", display_label="Supersize"),
+    # ── Size / portion (with multiplicative scale_factor) ──
+    "mini":             ModifierMeta(ModifierType.SIZE_PORTION, group="size", display_label="Mini", scale_factor=0.5),
+    "small":            ModifierMeta(ModifierType.SIZE_PORTION, group="size", display_label="Small", scale_factor=0.7),
+    "make it small":    ModifierMeta(ModifierType.SIZE_PORTION, group="size", display_label="Small", scale_factor=0.7),
+    "half portion":     ModifierMeta(ModifierType.SIZE_PORTION, group="size", display_label="Half Portion", scale_factor=0.5),
+    "large":            ModifierMeta(ModifierType.SIZE_PORTION, group="size", display_label="Large", scale_factor=1.5),
+    "make it large":    ModifierMeta(ModifierType.SIZE_PORTION, group="size", display_label="Large", scale_factor=1.5),
+    "extra large":      ModifierMeta(ModifierType.SIZE_PORTION, group="size", display_label="Extra Large", scale_factor=2.0),
+    "supersize":        ModifierMeta(ModifierType.SIZE_PORTION, group="size", display_label="Supersize", scale_factor=2.5),
+
+    # ── Side / restaurant portion sizes ──
+    "side":             ModifierMeta(ModifierType.SIZE_PORTION, group="size", display_label="Side", scale_factor=0.35),
+    "side of":          ModifierMeta(ModifierType.SIZE_PORTION, group="size", display_label="Side", scale_factor=0.35),
+    "side order":       ModifierMeta(ModifierType.SIZE_PORTION, group="size", display_label="Side Order", scale_factor=0.35),
+    "side order of":    ModifierMeta(ModifierType.SIZE_PORTION, group="size", display_label="Side Order", scale_factor=0.35),
+    "as a side":        ModifierMeta(ModifierType.SIZE_PORTION, group="size", display_label="Side", scale_factor=0.35),
+    "just a side":      ModifierMeta(ModifierType.SIZE_PORTION, group="size", display_label="Side", scale_factor=0.35),
+    "just a side of":   ModifierMeta(ModifierType.SIZE_PORTION, group="size", display_label="Side", scale_factor=0.35),
+    "for a side":       ModifierMeta(ModifierType.SIZE_PORTION, group="size", display_label="Side", scale_factor=0.35),
+
+    # ── Kids / junior / petite ──
+    "kids":             ModifierMeta(ModifierType.SIZE_PORTION, group="size", display_label="Kids", scale_factor=0.5),
+    "kid's":            ModifierMeta(ModifierType.SIZE_PORTION, group="size", display_label="Kids", scale_factor=0.5),
+    "kiddie":           ModifierMeta(ModifierType.SIZE_PORTION, group="size", display_label="Kids", scale_factor=0.5),
+    "children's":       ModifierMeta(ModifierType.SIZE_PORTION, group="size", display_label="Kids", scale_factor=0.5),
+    "kids size":        ModifierMeta(ModifierType.SIZE_PORTION, group="size", display_label="Kids Size", scale_factor=0.5),
+    "kids meal":        ModifierMeta(ModifierType.SIZE_PORTION, group="size", display_label="Kids Meal", scale_factor=0.5),
+    "junior":           ModifierMeta(ModifierType.SIZE_PORTION, group="size", display_label="Junior", scale_factor=0.6),
+    "jr":               ModifierMeta(ModifierType.SIZE_PORTION, group="size", display_label="Junior", scale_factor=0.6),
+    "petite":           ModifierMeta(ModifierType.SIZE_PORTION, group="size", display_label="Petite", scale_factor=0.5),
+    "personal":         ModifierMeta(ModifierType.SIZE_PORTION, group="size", display_label="Personal", scale_factor=0.5),
+
+    # ── Appetizer / starter / tasting ──
+    "appetizer portion": ModifierMeta(ModifierType.SIZE_PORTION, group="size", display_label="Appetizer Portion", scale_factor=0.4),
+    "appetizer size":   ModifierMeta(ModifierType.SIZE_PORTION, group="size", display_label="Appetizer Size", scale_factor=0.4),
+    "starter portion":  ModifierMeta(ModifierType.SIZE_PORTION, group="size", display_label="Starter Portion", scale_factor=0.4),
+    "tasting":          ModifierMeta(ModifierType.SIZE_PORTION, group="size", display_label="Tasting", scale_factor=0.15),
+    "tasting portion":  ModifierMeta(ModifierType.SIZE_PORTION, group="size", display_label="Tasting Portion", scale_factor=0.15),
+    "sample":           ModifierMeta(ModifierType.SIZE_PORTION, group="size", display_label="Sample", scale_factor=0.15),
+    "taster":           ModifierMeta(ModifierType.SIZE_PORTION, group="size", display_label="Taster", scale_factor=0.15),
+
+    # ── Shared / split ──
+    "shared":           ModifierMeta(ModifierType.SIZE_PORTION, group="size", display_label="Shared", scale_factor=0.5),
+    "split":            ModifierMeta(ModifierType.SIZE_PORTION, group="size", display_label="Split", scale_factor=0.5),
+    "split with":       ModifierMeta(ModifierType.SIZE_PORTION, group="size", display_label="Split", scale_factor=0.5),
+
+    # ── Existing zero-delta entries — now with scale_factor ──
+    "bite size":        ModifierMeta(ModifierType.SIZE_PORTION, group="size", display_label="Bite Size", scale_factor=0.15),
+    "bite-size":        ModifierMeta(ModifierType.SIZE_PORTION, group="size", display_label="Bite Size", scale_factor=0.15),
+    "snack size":       ModifierMeta(ModifierType.SIZE_PORTION, group="size", display_label="Snack Size", scale_factor=0.4),
+    "fun size":         ModifierMeta(ModifierType.SIZE_PORTION, group="size", display_label="Fun Size", scale_factor=0.3),
+    "king size":        ModifierMeta(ModifierType.SIZE_PORTION, group="size", display_label="King Size", scale_factor=2.0),
+    "family size":      ModifierMeta(ModifierType.SIZE_PORTION, group="size", display_label="Family Size", scale_factor=3.5),
+    "sharing size":     ModifierMeta(ModifierType.SIZE_PORTION, group="size", display_label="Sharing Size", scale_factor=2.5),
+    "single":           ModifierMeta(ModifierType.SIZE_PORTION, group="size", display_label="Single", scale_factor=1.0),
+    "double":           ModifierMeta(ModifierType.SIZE_PORTION, group="size", display_label="Double", scale_factor=2.0),
+    "triple":           ModifierMeta(ModifierType.SIZE_PORTION, group="size", display_label="Triple", scale_factor=3.0),
+
+    # ── Informal portion language (scale_factor) ──
+    "a bite of":        ModifierMeta(ModifierType.SIZE_PORTION, group="size", display_label="A Bite", scale_factor=0.1),
+    "just a bite":      ModifierMeta(ModifierType.SIZE_PORTION, group="size", display_label="A Bite", scale_factor=0.1),
+    "just a bite of":   ModifierMeta(ModifierType.SIZE_PORTION, group="size", display_label="A Bite", scale_factor=0.1),
+    "a few bites of":   ModifierMeta(ModifierType.SIZE_PORTION, group="size", display_label="A Few Bites", scale_factor=0.15),
+    "a taste of":       ModifierMeta(ModifierType.SIZE_PORTION, group="size", display_label="A Taste", scale_factor=0.1),
+    "just a taste":     ModifierMeta(ModifierType.SIZE_PORTION, group="size", display_label="A Taste", scale_factor=0.1),
+    "just a taste of":  ModifierMeta(ModifierType.SIZE_PORTION, group="size", display_label="A Taste", scale_factor=0.1),
+    "a sliver of":      ModifierMeta(ModifierType.SIZE_PORTION, group="size", display_label="A Sliver", scale_factor=0.1),
+    "a little":         ModifierMeta(ModifierType.SIZE_PORTION, group="size", display_label="A Little", scale_factor=0.3),
+    "a little bit of":  ModifierMeta(ModifierType.SIZE_PORTION, group="size", display_label="A Little", scale_factor=0.3),
+    "just a little":    ModifierMeta(ModifierType.SIZE_PORTION, group="size", display_label="A Little", scale_factor=0.3),
+    "just a little of": ModifierMeta(ModifierType.SIZE_PORTION, group="size", display_label="A Little", scale_factor=0.3),
+    "a bit of":         ModifierMeta(ModifierType.SIZE_PORTION, group="size", display_label="A Bit", scale_factor=0.35),
+    "just a bit":       ModifierMeta(ModifierType.SIZE_PORTION, group="size", display_label="A Bit", scale_factor=0.35),
+    "just a bit of":    ModifierMeta(ModifierType.SIZE_PORTION, group="size", display_label="A Bit", scale_factor=0.35),
+    "nibbled":          ModifierMeta(ModifierType.SIZE_PORTION, group="size", display_label="Nibbled", scale_factor=0.15),
+    "nibbled on":       ModifierMeta(ModifierType.SIZE_PORTION, group="size", display_label="Nibbled", scale_factor=0.15),
+    "picked at":        ModifierMeta(ModifierType.SIZE_PORTION, group="size", display_label="Picked At", scale_factor=0.2),
+
+    # ── Vague quantity modifiers ──
+    "just some":        ModifierMeta(ModifierType.SIZE_PORTION, group="size", display_label="Just Some", scale_factor=0.5),
+    "just some of":     ModifierMeta(ModifierType.SIZE_PORTION, group="size", display_label="Just Some", scale_factor=0.5),
+    "only some":        ModifierMeta(ModifierType.SIZE_PORTION, group="size", display_label="Only Some", scale_factor=0.5),
+    "only some of":     ModifierMeta(ModifierType.SIZE_PORTION, group="size", display_label="Only Some", scale_factor=0.5),
+    "some of the":      ModifierMeta(ModifierType.SIZE_PORTION, group="size", display_label="Some Of", scale_factor=0.5),
+    "some of":          ModifierMeta(ModifierType.SIZE_PORTION, group="size", display_label="Some Of", scale_factor=0.5),
+    "a lot of":         ModifierMeta(ModifierType.SIZE_PORTION, group="size", display_label="A Lot", scale_factor=1.5),
+    "lots of":          ModifierMeta(ModifierType.SIZE_PORTION, group="size", display_label="Lots", scale_factor=1.5),
+    "plenty of":        ModifierMeta(ModifierType.SIZE_PORTION, group="size", display_label="Plenty", scale_factor=1.5),
+    "a bunch of":       ModifierMeta(ModifierType.SIZE_PORTION, group="size", display_label="A Bunch", scale_factor=1.5),
+    "a ton of":         ModifierMeta(ModifierType.SIZE_PORTION, group="size", display_label="A Ton", scale_factor=2.0),
+    "tons of":          ModifierMeta(ModifierType.SIZE_PORTION, group="size", display_label="Tons", scale_factor=2.0),
+    "hardly any":       ModifierMeta(ModifierType.SIZE_PORTION, group="size", display_label="Hardly Any", scale_factor=0.1),
+    "barely any":       ModifierMeta(ModifierType.SIZE_PORTION, group="size", display_label="Barely Any", scale_factor=0.1),
+    "not much":         ModifierMeta(ModifierType.SIZE_PORTION, group="size", display_label="Not Much", scale_factor=0.4),
+    "not a lot of":     ModifierMeta(ModifierType.SIZE_PORTION, group="size", display_label="Not A Lot", scale_factor=0.4),
+
+    # ── Fixed-weight application descriptors (use default_weight_g, NOT scale_factor) ──
+    "a pinch of":       ModifierMeta(ModifierType.SIZE_PORTION, default_weight_g=1.0, display_label="A Pinch"),
+    "a dash of":        ModifierMeta(ModifierType.SIZE_PORTION, default_weight_g=1.0, display_label="A Dash"),
+    "a smidge of":      ModifierMeta(ModifierType.SIZE_PORTION, default_weight_g=2.0, display_label="A Smidge"),
+    "a smidgen of":     ModifierMeta(ModifierType.SIZE_PORTION, default_weight_g=2.0, display_label="A Smidgen"),
+    "a hint of":        ModifierMeta(ModifierType.SIZE_PORTION, default_weight_g=2.0, display_label="A Hint"),
+    "a dusting of":     ModifierMeta(ModifierType.SIZE_PORTION, default_weight_g=3.0, display_label="A Dusting"),
+    "dusted with":      ModifierMeta(ModifierType.SIZE_PORTION, default_weight_g=3.0, display_label="Dusted With"),
+    "a sprinkle of":    ModifierMeta(ModifierType.SIZE_PORTION, default_weight_g=4.0, display_label="A Sprinkle"),
+    "sprinkled with":   ModifierMeta(ModifierType.SIZE_PORTION, default_weight_g=4.0, display_label="Sprinkled With"),
+    "a touch of":       ModifierMeta(ModifierType.SIZE_PORTION, default_weight_g=4.0, display_label="A Touch"),
+    "a garnish of":     ModifierMeta(ModifierType.SIZE_PORTION, default_weight_g=5.0, display_label="A Garnish"),
+    "garnished with":   ModifierMeta(ModifierType.SIZE_PORTION, default_weight_g=5.0, display_label="Garnished With"),
+    "a smattering of":  ModifierMeta(ModifierType.SIZE_PORTION, default_weight_g=4.0, display_label="A Smattering"),
+    "a dab of":         ModifierMeta(ModifierType.SIZE_PORTION, default_weight_g=5.0, display_label="A Dab"),
+    "a squirt of":      ModifierMeta(ModifierType.SIZE_PORTION, default_weight_g=8.0, display_label="A Squirt"),
+    "a squeeze of":     ModifierMeta(ModifierType.SIZE_PORTION, default_weight_g=8.0, display_label="A Squeeze"),
+    "a drizzle of":     ModifierMeta(ModifierType.SIZE_PORTION, default_weight_g=8.0, display_label="A Drizzle"),
+    "drizzled with":    ModifierMeta(ModifierType.SIZE_PORTION, default_weight_g=8.0, display_label="Drizzled With"),
+    "a swirl of":       ModifierMeta(ModifierType.SIZE_PORTION, default_weight_g=12.0, display_label="A Swirl"),
+    "a smear of":       ModifierMeta(ModifierType.SIZE_PORTION, default_weight_g=12.0, display_label="A Smear"),
+    "a splash of":      ModifierMeta(ModifierType.SIZE_PORTION, default_weight_g=15.0, display_label="A Splash"),
+    "a dollop of":      ModifierMeta(ModifierType.SIZE_PORTION, default_weight_g=15.0, display_label="A Dollop"),
+    "a spread of":      ModifierMeta(ModifierType.SIZE_PORTION, default_weight_g=20.0, display_label="A Spread"),
+    "a glob of":        ModifierMeta(ModifierType.SIZE_PORTION, default_weight_g=25.0, display_label="A Glob"),
 
     # ── State / temperature (zero cal, recognized for parsing) ──
     "leftover":         ModifierMeta(ModifierType.STATE_TEMP),
@@ -331,7 +444,10 @@ _MODIFIER_GROUPS: Dict[str, List[str]] = {
         "sauteed", "stir fried", "seared", "pan seared",
     ],
     "size": [
-        "mini", "small", "half portion", "large", "extra large", "supersize",
+        "mini", "small", "half portion", "side", "side of", "kids", "junior",
+        "petite", "personal", "snack size", "fun size", "large", "extra large",
+        "supersize", "king size", "family size", "sharing size",
+        "single", "double", "triple",
     ],
     "cooking_method": [
         "grilled", "baked", "pan fried", "deep fried",
@@ -457,11 +573,11 @@ def _init_modifier_patterns(food_modifiers=None):
     from services.food_analysis.constants import _COUNT_UNITS, _WORD_NUMBERS
 
     # Pre-sorted by phrase length (longest first) to avoid partial matches
-    _MODIFIER_PHRASES_SORTED = sorted(food_modifiers.keys(), key=len, reverse=True)
+    phrases_sorted = sorted(food_modifiers.keys(), key=len, reverse=True)
 
     # Regex to extract modifier phrases from text
     _MODIFIER_REGEX = re.compile(
-        r'\b(' + '|'.join(re.escape(p) for p in _MODIFIER_PHRASES_SORTED) + r')\b',
+        r'\b(' + '|'.join(re.escape(p) for p in phrases_sorted) + r')\b',
         re.IGNORECASE,
     )
 
@@ -492,4 +608,8 @@ def _init_modifier_patterns(food_modifiers=None):
 
     # Fraction prefix: "1/2 pizza"
     _FRACTION_REGEX = re.compile(r'^(\d+)/(\d+)\s+(.+)$')
+
+    # Set the sentinel LAST so concurrent callers don't see early return
+    # before all other globals are initialized
+    _MODIFIER_PHRASES_SORTED = phrases_sorted
 

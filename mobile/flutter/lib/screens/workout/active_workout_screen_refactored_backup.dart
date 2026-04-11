@@ -34,6 +34,7 @@ import '../../data/models/workout.dart';
 import '../../data/models/exercise.dart';
 import '../../data/repositories/workout_repository.dart';
 import '../../data/services/api_client.dart';
+import '../../utils/tz.dart';
 import '../../data/rest_messages.dart';
 import '../../models/equipment_item.dart';
 import 'widgets/edit_workout_equipment_sheet.dart';
@@ -1985,7 +1986,7 @@ class _ActiveWorkoutScreenState
       'exercise_name': _exercises[_currentExerciseIndex].name,
       'rest_seconds': restSeconds,
       'rest_type': betweenExercises ? 'between_exercises' : 'between_sets',
-      'recorded_at': DateTime.now().toIso8601String(),
+      'recorded_at': Tz.timestamp(),
     });
   }
 

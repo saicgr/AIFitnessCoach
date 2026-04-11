@@ -1,4 +1,5 @@
 import 'package:json_annotation/json_annotation.dart';
+import '../../utils/tz.dart';
 
 part 'xp_event.g.dart';
 
@@ -310,8 +311,8 @@ class CheckpointProgress {
 
   factory CheckpointProgress.empty(String type) => CheckpointProgress(
     checkpointType: type,
-    periodStart: DateTime.now().toIso8601String(),
-    periodEnd: DateTime.now().toIso8601String(),
+    periodStart: Tz.timestamp(),
+    periodEnd: Tz.timestamp(),
     checkpointsEarned: [],
     totalXpEarned: 0,
   );

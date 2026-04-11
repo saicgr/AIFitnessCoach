@@ -5,7 +5,7 @@ from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 
-from core.timezone_utils import resolve_timezone, local_date_to_utc_range, get_user_today
+from core.timezone_utils import resolve_timezone, get_user_today
 from core.auth import get_current_user, verify_user_ownership
 from core.exceptions import safe_internal_error
 from core.supabase_db import get_supabase_db
@@ -20,8 +20,25 @@ from api.v1.nutrition.models import (
     NutritionTargetsResponse,
 )
 
+from core.redis_cache import RedisCache
+
 router = APIRouter()
 logger = get_logger(__name__)
+
+# 60s cache for daily summaries — prevents redundant DB hits on tab switches
+_daily_summary_cache = RedisCache(prefix="nutrition_daily", ttl_seconds=60, max_size=100)
+
+
+async def invalidate_daily_summary_cache(user_id: str, date: str = None):
+    """Invalidate cached daily summary after a meal is logged/deleted.
+    If date is None, clears all dates for the user (uses prefix delete)."""
+    if date:
+        await _daily_summary_cache.delete(f"{user_id}:{date}")
+    else:
+        # Best-effort: clear today's cache at minimum
+        from core.timezone_utils import get_user_today
+        today = get_user_today("UTC")
+        await _daily_summary_cache.delete(f"{user_id}:{today}")
 
 @router.get("/summary/daily/{user_id}", response_model=DailyNutritionResponse)
 async def get_daily_summary(
@@ -42,22 +59,20 @@ async def get_daily_summary(
         if date is None:
             date = get_user_today(user_tz)
 
+        # Check cache first (60s TTL)
+        cache_key = f"{user_id}:{date}"
+        cached = await _daily_summary_cache.get(cache_key)
+        if cached:
+            logger.debug(f"Cache hit for daily summary {cache_key}")
+            return DailyNutritionResponse(**cached)
+
         logger.info(f"Getting daily nutrition summary for user {user_id}, date={date}, tz={user_tz}")
 
-        # Get summary (timezone-aware)
+        # Get summary (timezone-aware) — includes meals, no need to query again
         summary = db.get_daily_nutrition_summary(user_id, date, timezone_str=user_tz)
 
-        # Get meals for the day using timezone-aware UTC range
-        start_of_day, end_of_day = local_date_to_utc_range(date, user_tz)
-        meals = db.list_food_logs(
-            user_id=user_id,
-            from_date=start_of_day,
-            to_date=end_of_day,
-            limit=20
-        )
-
         meal_responses = []
-        for log in meals:
+        for log in (summary.get("meals") or [])[:20]:
             meal_responses.append(FoodLogResponse(
                 id=log.get("id"),
                 user_id=log.get("user_id"),
@@ -74,7 +89,7 @@ async def get_daily_summary(
                 created_at=str(log.get("created_at") or log.get("logged_at") or ""),
             ))
 
-        return DailyNutritionResponse(
+        response = DailyNutritionResponse(
             date=date,
             total_calories=summary.get("total_calories", 0) or 0,
             total_protein_g=summary.get("total_protein_g", 0) or 0,
@@ -85,6 +100,11 @@ async def get_daily_summary(
             avg_health_score=summary.get("avg_health_score"),
             meals=meal_responses,
         )
+
+        # Cache the response
+        await _daily_summary_cache.set(cache_key, response.dict())
+
+        return response
 
     except Exception as e:
         logger.error(f"Failed to get daily summary: {e}", exc_info=True)

@@ -13,6 +13,7 @@ import '../../../data/models/exercise.dart';
 import '../../../data/models/workout.dart';
 import '../../../data/repositories/workout_repository.dart';
 import '../../../data/services/haptic_service.dart';
+import '../../../utils/tz.dart';
 import 'info_badge.dart';
 import '../../../widgets/glass_sheet.dart';
 import '../components/exercise_detail_sheet.dart';
@@ -616,7 +617,7 @@ class _AddToWorkoutSheetState extends ConsumerState<_AddToWorkoutSheet> {
               ),
               data: (workouts) {
                 // Filter to upcoming/today's incomplete workouts
-                final today = DateTime.now().toIso8601String().split('T')[0];
+                final today = Tz.localDate();
                 final upcomingWorkouts = workouts.where((w) {
                   final date = w.scheduledDate?.split('T')[0] ?? '';
                   return !(w.isCompleted ?? false) && date.compareTo(today) >= 0;

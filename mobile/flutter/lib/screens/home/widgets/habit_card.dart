@@ -7,6 +7,7 @@ import '../../../data/services/haptic_service.dart';
 /// Data model for a single habit
 class HabitData {
   final String name;
+  final String? id;
   final IconData icon;
   final List<bool> last30Days;
   final int currentStreak;
@@ -15,6 +16,7 @@ class HabitData {
 
   const HabitData({
     required this.name,
+    this.id,
     required this.icon,
     required this.last30Days,
     this.currentStreak = 0,

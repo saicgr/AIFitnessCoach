@@ -133,3 +133,53 @@ def infer_equipment_from_name(exercise_name: str) -> str:
 
     # If no equipment matched, default to Bodyweight
     return "Bodyweight"
+
+
+# Known snake_case equipment identifiers → proper display names
+_EQUIPMENT_DISPLAY_MAP = {
+    "full_gym": "Full Gym",
+    "cable_machine": "Cable Machine",
+    "resistance_bands": "Resistance Bands",
+    "pull_up_bar": "Pull-Up Bar",
+    "no_equipment": "Bodyweight",
+    "body_weight": "Bodyweight",
+    "smith_machine": "Smith Machine",
+    "leg_press": "Leg Press Machine",
+    "lat_pulldown": "Lat Pulldown Machine",
+    "leg_extension": "Leg Extension Machine",
+    "leg_curl": "Leg Curl Machine",
+    "hack_squat": "Hack Squat Machine",
+    "ez_bar": "EZ Bar",
+    "trap_bar": "Trap Bar",
+    "pec_deck": "Pec Fly Machine",
+    "medicine_ball": "Medicine Ball",
+    "exercise_ball": "Exercise Ball",
+}
+
+
+def normalize_equipment_value(raw_equipment: str, exercise_name: str = "") -> str:
+    """Normalize equipment value for display.
+
+    Converts snake_case identifiers (e.g. 'leg_press') that Gemini echoes
+    from the user's equipment profile into proper display names
+    (e.g. 'Leg Press Machine').
+    """
+    if not raw_equipment:
+        return infer_equipment_from_name(exercise_name) if exercise_name else "Bodyweight"
+
+    lower = raw_equipment.strip().lower()
+
+    if lower in ("bodyweight", "body weight", "body_weight", "none", "no_equipment", ""):
+        return "Bodyweight"
+
+    if lower in _EQUIPMENT_DISPLAY_MAP:
+        return _EQUIPMENT_DISPLAY_MAP[lower]
+
+    if "_" in raw_equipment:
+        if exercise_name:
+            inferred = infer_equipment_from_name(exercise_name)
+            if inferred != "Bodyweight":
+                return inferred
+        return raw_equipment.replace("_", " ").title()
+
+    return raw_equipment

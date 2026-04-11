@@ -274,7 +274,7 @@ extension WorkoutRepositoryModifications on WorkoutRepository {
           'original_sets': originalSets,
           'new_sets': newSets,
           'exercise_index': exerciseIndex,
-          'adjusted_at': DateTime.now().toIso8601String(),
+          'adjusted_at': Tz.timestamp(),
         },
       );
       if (response.statusCode == 200) {
@@ -312,7 +312,7 @@ extension WorkoutRepositoryModifications on WorkoutRepository {
           'new_weight_kg': newWeightKg,
           'original_reps': originalReps,
           'original_weight_kg': originalWeightKg,
-          'edited_at': DateTime.now().toIso8601String(),
+          'edited_at': Tz.timestamp(),
         },
       );
       if (response.statusCode == 200) {
@@ -403,7 +403,7 @@ extension WorkoutRepositoryModifications on WorkoutRepository {
           'notes': notes,
           'workout_id': workoutId,
           'exercise_index': exerciseIndex,
-          'recorded_at': DateTime.now().toIso8601String(),
+          'recorded_at': Tz.timestamp(),
         },
       );
 

@@ -12,9 +12,10 @@ import json
 from datetime import datetime, date, timedelta
 from typing import List, Optional, Dict, Any
 
-from fastapi import APIRouter, Depends, HTTPException, Query, BackgroundTasks
+from fastapi import APIRouter, Depends, HTTPException, Query, BackgroundTasks, Request
 from core.auth import get_current_user, verify_resource_ownership
 from core.exceptions import safe_internal_error
+from core.timezone_utils import resolve_timezone
 
 from core.supabase_db import get_supabase_db
 from core.db import get_supabase_db as get_db
@@ -50,6 +51,7 @@ from .crud_background_tasks import (
     _send_post_workout_nutrition_nudge,
     _send_streak_celebration_if_milestone,
 )
+from .today import invalidate_today_workout_cache
 
 router = APIRouter()
 logger = get_logger(__name__)
@@ -57,6 +59,7 @@ logger = get_logger(__name__)
 
 @router.post("/{workout_id}/complete", response_model=WorkoutCompletionResponse)
 async def complete_workout(
+    request: Request,
     workout_id: str,
     background_tasks: BackgroundTasks,
     completion_method: str = Query(default="tracked", description="How the workout was completed: 'tracked' or 'marked_done'"),
@@ -222,8 +225,9 @@ async def complete_workout(
             )
 
         # Background: Recalculate Strength Scores and Fitness Score
-        background_tasks.add_task(recalculate_user_strength_scores, user_id=user_id, supabase=supabase)
-        background_tasks.add_task(recalculate_user_fitness_score, user_id=user_id, supabase=supabase)
+        tz_str = resolve_timezone(request, db, user_id)
+        background_tasks.add_task(recalculate_user_strength_scores, user_id=user_id, supabase=supabase, timezone_str=tz_str)
+        background_tasks.add_task(recalculate_user_fitness_score, user_id=user_id, supabase=supabase, timezone_str=tz_str)
 
         await index_workout_to_rag(workout)
 
@@ -421,6 +425,11 @@ async def complete_workout(
         else:
             message = "Workout completed successfully!"
 
+        # Invalidate /today cache so next poll reflects the completed state
+        scheduled_date = str(existing.get("scheduled_date", ""))[:10] or None
+        gym_profile_id = existing.get("gym_profile_id")
+        await invalidate_today_workout_cache(user_id, gym_profile_id, scheduled_date)
+
         return WorkoutCompletionResponse(
             workout=workout, personal_records=detected_prs,
             performance_comparison=performance_comparison,
@@ -472,6 +481,12 @@ async def uncomplete_workout(workout_id: str,
         )
 
         logger.info(f"Workout uncompleted: id={workout_id}")
+
+        # Invalidate /today cache so next poll reflects the uncompleted state
+        scheduled_date = str(existing.get("scheduled_date", ""))[:10] or None
+        gym_profile_id = existing.get("gym_profile_id")
+        await invalidate_today_workout_cache(existing.get("user_id"), gym_profile_id, scheduled_date)
+
         return workout
 
     except HTTPException:

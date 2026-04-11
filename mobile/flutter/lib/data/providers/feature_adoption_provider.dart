@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../utils/tz.dart';
 import '../services/api_client.dart';
 import 'milestones_provider.dart';
 
@@ -163,7 +164,7 @@ class FeatureAdoptionNotifier extends StateNotifier<FeatureAdoptionState> {
 
       // Update local state
       final existing = state.features[key];
-      final now = DateTime.now().toIso8601String();
+      final now = Tz.timestamp();
       final updated = FeatureAdoption(
         id: existing?.id ?? '',
         featureKey: key,

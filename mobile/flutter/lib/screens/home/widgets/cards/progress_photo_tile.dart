@@ -40,7 +40,7 @@ class ProgressPhotoCard extends ConsumerWidget {
     return GestureDetector(
       onTap: () {
         HapticService.light();
-        context.push('/progress-photos');
+        context.push('/stats?tab=1');
       },
       child: Container(
         margin: size == TileSize.full

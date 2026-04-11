@@ -407,6 +407,11 @@ async def update_user(user_id: str, user: UserUpdate,
             update_data["weight_unit"] = user.weight_unit
             logger.info(f"Updating weight_unit for user {user_id}: {user.weight_unit}")
 
+        # Handle body measurement unit preference (cm or in)
+        if user.measurement_unit is not None:
+            update_data["measurement_unit"] = user.measurement_unit
+            logger.info(f"Updating measurement_unit for user {user_id}: {user.measurement_unit}")
+
         # Handle FCM token and device platform for push notifications
         if user.fcm_token is not None:
             update_data["fcm_token"] = user.fcm_token

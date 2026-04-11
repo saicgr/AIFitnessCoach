@@ -53,96 +53,24 @@ class _LevelInfo {
     this.isMilestone = false,
   });
 
-  static String getLevelName(int level) {
-    const levelNames = <int, String>{
-      // Beginner (1-10)
-      1: 'First Steps', 2: 'Awakening', 3: 'Foundation', 4: 'Momentum',
-      5: 'Rising Star', 6: 'Steadfast', 7: 'Determined', 8: 'Resilient',
-      9: 'Breakthrough', 10: 'Iron Will',
-      // Novice (11-25)
-      11: 'Pathfinder', 12: 'Trailblazer', 13: 'Forged', 14: 'Unyielding',
-      15: 'Disciplined', 16: 'Focused', 17: 'Driven', 18: 'Relentless',
-      19: 'Unstoppable', 20: 'Silver Strength', 21: 'Tempered', 22: 'Hardened',
-      23: 'Unbreakable', 24: 'Tenacious', 25: 'Dedicated',
-      // Apprentice (26-50)
-      26: 'Competitor', 27: 'Challenger', 28: 'Fierce', 29: 'Powerhouse',
-      30: 'Gold Standard', 31: 'Peak Form', 32: 'Dynamo', 33: 'Juggernaut',
-      34: 'Titan', 35: 'Colossus', 36: 'Champion', 37: 'Conqueror',
-      38: 'Dominator', 39: 'Crusher', 40: 'Diamond Core', 41: 'Invincible',
-      42: 'Supreme', 43: 'Almighty', 44: 'Ascendant', 45: 'Mythic Rise',
-      46: 'Ascended', 47: 'Paragon', 48: 'Zenith', 49: 'Pinnacle', 50: 'Veteran',
-      // Athlete (51-75)
-      51: 'Elite Guard', 52: 'Vanguard', 53: 'Sentinel', 54: 'Warden',
-      55: 'Gladiator', 56: 'Spartan', 57: 'Berserker', 58: 'Valkyrie',
-      59: 'Phoenix', 60: 'Elite Force', 61: 'Apex', 62: 'Sovereign',
-      63: 'Overlord', 64: 'Commander', 65: 'General', 66: 'Warlord',
-      67: 'Conqueror II', 68: 'Destroyer', 69: 'Annihilator', 70: 'Purple Heart',
-      71: 'Harbinger', 72: 'Omega', 73: 'Absolute', 74: 'Supreme II', 75: 'Triumph',
-      // Elite (76-100)
-      76: 'Grandmaster', 77: 'Sage', 78: 'Oracle', 79: 'Prophet', 80: 'Visionary',
-      81: 'Virtuoso', 82: 'Prodigy', 83: 'Genius', 84: 'Mastermind',
-      85: 'Legendary Rise', 86: 'Architect', 87: 'Creator', 88: 'Worldbreaker',
-      89: 'Godslayer', 90: 'Cosmic', 91: 'Celestial', 92: 'Divine',
-      93: 'Eternal', 94: 'Infinite', 95: 'Ultimate', 96: 'Omega II',
-      97: 'Alpha', 98: 'Primordial', 99: 'Apex Predator', 100: 'Centurion',
-      // Master (101-125)
-      101: 'True Master', 102: 'Sage II', 103: 'Warmaster', 104: 'Iron Sage',
-      105: 'Stormcaller', 106: 'Flamebringer', 107: 'Thunderlord', 108: 'Frostborn',
-      109: 'Earthshaker', 110: 'Windwalker', 111: 'Shadowblade', 112: 'Lightbringer',
-      113: 'Starforger', 114: 'Moonstrider', 115: 'Sunkeeper', 116: 'Voidwalker',
-      117: 'Runemaster', 118: 'Spellweaver', 119: 'Battlemage', 120: 'Warbringer',
-      121: 'Dawnblade', 122: 'Nightfall', 123: 'Stormbringer', 124: 'Ironheart',
-      125: 'Grand Master',
-      // Champion (126-150)
-      126: 'True Champion', 127: 'Siegebreaker', 128: 'Warhammer', 129: 'Soulforge',
-      130: 'Titanborn', 131: 'Dragonslayer', 132: 'Leviathan', 133: 'Behemoth',
-      134: 'Colossus II', 135: 'Juggernaut II', 136: 'Thundergod', 137: 'Firelord',
-      138: 'Icewarden', 139: 'Earthlord', 140: 'Skywarden', 141: 'Abyssal',
-      142: 'Celestial II', 143: 'Nebula', 144: 'Supernova', 145: 'Pulsar',
-      146: 'Quasar', 147: 'Galaxy', 148: 'Universe', 149: 'Multiverse',
-      150: 'Grand Champion',
-      // Legend (151-175)
-      151: 'Living Legend', 152: 'Mythmaker', 153: 'Storyweaver', 154: 'Fatewriter',
-      155: 'Destiny', 156: 'Prophecy', 157: 'Revelation', 158: 'Ascension',
-      159: 'Enlightened', 160: 'Awakened', 161: 'Transcended', 162: 'Reborn',
-      163: 'Evolved', 164: 'Perfected', 165: 'Exalted', 166: 'Glorified',
-      167: 'Sanctified', 168: 'Hallowed', 169: 'Blessed', 170: 'Anointed',
-      171: 'Chosen', 172: 'Ordained', 173: 'Destined', 174: 'Fated',
-      175: 'Grand Legend',
-      // Mythic (176-200)
-      176: 'Mythic I', 177: 'Mythic II', 178: 'Mythic III', 179: 'Mythic IV',
-      180: 'Mythic V', 181: 'Mythic VI', 182: 'Mythic VII', 183: 'Mythic VIII',
-      184: 'Mythic IX', 185: 'Mythic X', 186: 'Mythic XI', 187: 'Mythic XII',
-      188: 'Mythic XIII', 189: 'Mythic XIV', 190: 'Mythic XV', 191: 'Mythic XVI',
-      192: 'Mythic XVII', 193: 'Mythic XVIII', 194: 'Mythic XIX', 195: 'Mythic XX',
-      196: 'Mythic XXI', 197: 'Mythic XXII', 198: 'Mythic XXIII', 199: 'Mythic XXIV',
-      200: 'Mythic XXV',
-      // Immortal (201-225)
-      201: 'Immortal I', 202: 'Immortal II', 203: 'Immortal III', 204: 'Immortal IV',
-      205: 'Immortal V', 206: 'Immortal VI', 207: 'Immortal VII', 208: 'Immortal VIII',
-      209: 'Immortal IX', 210: 'Immortal X', 211: 'Immortal XI', 212: 'Immortal XII',
-      213: 'Immortal XIII', 214: 'Immortal XIV', 215: 'Immortal XV', 216: 'Immortal XVI',
-      217: 'Immortal XVII', 218: 'Immortal XVIII', 219: 'Immortal XIX', 220: 'Immortal XX',
-      221: 'Immortal XXI', 222: 'Immortal XXII', 223: 'Immortal XXIII', 224: 'Immortal XXIV',
-      225: 'Immortal XXV',
-      // Transcendent (226-250)
-      226: 'Transcendent I', 227: 'Transcendent II', 228: 'Transcendent III',
-      229: 'Transcendent IV', 230: 'Transcendent V', 231: 'Transcendent VI',
-      232: 'Transcendent VII', 233: 'Transcendent VIII', 234: 'Transcendent IX',
-      235: 'Transcendent X', 236: 'Transcendent XI', 237: 'Transcendent XII',
-      238: 'Transcendent XIII', 239: 'Transcendent XIV', 240: 'Transcendent XV',
-      241: 'Transcendent XVI', 242: 'Transcendent XVII', 243: 'Transcendent XVIII',
-      244: 'Transcendent XIX', 245: 'Transcendent XX', 246: 'Transcendent XXI',
-      247: 'Transcendent XXII', 248: 'Transcendent XXIII', 249: 'Transcendent XXIV',
-      250: 'Transcendent XXV',
-    };
-    return levelNames[level] ?? 'Level $level';
+  /// Build from backend response map
+  factory _LevelInfo.fromJson(Map<String, dynamic> json) {
+    final reward = json['milestone_reward'] as String?;
+    return _LevelInfo(
+      level: json['level'] as int,
+      xpRequired: json['xp_required'] as int? ?? 0,
+      title: json['title'] as String? ?? 'Beginner',
+      levelName: json['name'] as String? ?? 'Level ${json['level']}',
+      reward: reward,
+      rewardIcon: json['milestone_icon'] as String?,
+      isMilestone: reward != null,
+    );
   }
 }
 
 
-/// All Levels Sheet
-class _AllLevelsSheet extends StatelessWidget {
+/// All Levels Sheet — fetches level data from backend
+class _AllLevelsSheet extends ConsumerWidget {
   final int currentLevel;
   final Color accentColor;
 
@@ -151,100 +79,8 @@ class _AllLevelsSheet extends StatelessWidget {
     required this.accentColor,
   });
 
-  /// XP required per level, matching backend _XP_TABLE (Migration 227)
-  static const _xpTable = [
-    // Levels 1-10 (Beginner): Quick early wins
-    25, 30, 40, 50, 65, 80, 100, 120, 150, 180,
-    // Levels 11-25 (Novice)
-    200, 220, 240, 260, 280, 300, 320, 340, 360, 380, 400, 420, 440, 460, 500,
-    // Levels 26-50 (Apprentice)
-    550, 600, 650, 700, 750, 800, 850, 900, 950, 1000, 1050, 1100, 1150, 1200, 1250, 1300, 1350, 1400, 1450, 1500, 1550, 1600, 1650, 1700, 1800,
-    // Levels 51-75 (Athlete)
-    1900, 2000, 2100, 2200, 2300, 2400, 2500, 2600, 2700, 2800, 2900, 3000, 3100, 3200, 3300, 3400, 3500, 3600, 3700, 3800, 3900, 4000, 4100, 4200, 4500,
-    // Levels 76-100 (Elite)
-    4800, 5000, 5200, 5400, 5600, 5800, 6000, 6200, 6400, 6600, 6800, 7000, 7200, 7400, 7600, 7800, 8000, 8200, 8400, 8600, 8800, 9000, 9200, 9400, 10000,
-    // Levels 101-125 (Master)
-    10500, 11000, 11500, 12000, 12500, 13000, 13500, 14000, 14500, 15000, 15500, 16000, 16500, 17000, 17500, 18000, 18500, 19000, 19500, 20000, 20500, 21000, 21500, 22000, 23000,
-    // Levels 126-150 (Champion)
-    24000, 25000, 26000, 27000, 28000, 29000, 30000, 31000, 32000, 33000, 34000, 35000, 36000, 37000, 38000, 39000, 40000, 41000, 42000, 43000, 44000, 45000, 46000, 47000, 50000,
-    // Levels 151-175 (Legend)
-    52000, 54000, 56000, 58000, 60000, 62000, 64000, 66000, 68000, 70000, 72000, 74000, 76000, 78000, 80000, 82000, 84000, 86000, 88000, 90000, 92000, 94000, 96000, 98000, 100000,
-  ];
-
-  static int _getXpForLevel(int level) {
-    if (level >= 250) return 0;
-    if (level <= 175) return _xpTable[level - 1];
-    return 100000; // Levels 176-250 flat
-  }
-
-  static String _getTitleForLevel(int level) {
-    if (level <= 10) return 'Beginner';
-    if (level <= 25) return 'Novice';
-    if (level <= 50) return 'Apprentice';
-    if (level <= 75) return 'Athlete';
-    if (level <= 100) return 'Elite';
-    if (level <= 125) return 'Master';
-    if (level <= 150) return 'Champion';
-    if (level <= 175) return 'Legend';
-    if (level <= 200) return 'Mythic';
-    if (level <= 225) return 'Immortal';
-    return 'Transcendent';
-  }
-
-  /// Milestone rewards matching backend xp_endpoints.py
-  static const _milestoneRewards = <int, String>{
-    5: 'Streak Shield x1',
-    10: '2x XP Token',
-    15: 'Fitness Crate x2',
-    20: 'Streak Shield x2',
-    25: '2x XP Token x2',
-    30: 'Premium Crate',
-    40: 'Streak Shield x3',
-    50: '2x XP Token x3 + Premium Crate',
-    60: 'Fitness Crate x5',
-    75: 'Premium Crate x2',
-    100: 'Elite Badge + Premium Crate x3',
-    125: 'Master Badge + Master Crate',
-    150: 'Champion Badge + Champion Crate x2',
-    175: 'Legend Badge + Legend Crate x3',
-    200: 'Mythic Badge + Mythic Crate x5',
-    225: 'Immortal Badge + Immortal Crate x7',
-    250: 'Transcendent Badge + Legendary Crate x10',
-  };
-
-  static const _milestoneIcons = <int, String>{
-    5: '🛡️', 10: '⚡', 15: '📦', 20: '🛡️', 25: '⚡',
-    30: '🎁', 40: '🛡️', 50: '🎁', 60: '📦', 75: '🎁',
-    100: '🎖️', 125: '🎖️', 150: '🎖️', 175: '🎖️',
-    200: '🎖️', 225: '🎖️', 250: '🏆',
-  };
-
-  static List<_LevelInfo> getAllLevels() {
-    final levels = <_LevelInfo>[];
-
-    for (int level = 2; level <= 250; level++) {
-      final xpRequired = _getXpForLevel(level);
-      final title = _getTitleForLevel(level);
-      final reward = _milestoneRewards[level];
-      final rewardIcon = _milestoneIcons[level];
-      final isMilestone = _milestoneRewards.containsKey(level);
-
-      levels.add(_LevelInfo(
-        level: level,
-        xpRequired: xpRequired,
-        title: title,
-        levelName: _LevelInfo.getLevelName(level),
-        reward: reward,
-        rewardIcon: rewardIcon,
-        isMilestone: isMilestone,
-      ));
-    }
-
-    return levels;
-  }
-
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final textColor = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
@@ -253,7 +89,7 @@ class _AllLevelsSheet extends StatelessWidget {
     final cardBg = isDark ? Colors.white.withValues(alpha: 0.08) : Colors.black.withValues(alpha: 0.08);
     final borderColor = isDark ? Colors.white.withValues(alpha: 0.12) : Colors.black.withValues(alpha: 0.15);
 
-    final levels = getAllLevels();
+    final allLevelsAsync = ref.watch(allLevelsProvider);
 
     return DraggableScrollableSheet(
       initialChildSize: 0.75,
@@ -292,7 +128,7 @@ class _AllLevelsSheet extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text('All Levels', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: textColorStrong)),
-                            Text('Level $currentLevel • ${levels.length} levels total', style: TextStyle(fontSize: 12, color: textMutedStrong)),
+                            Text('Level $currentLevel • 249 levels total', style: TextStyle(fontSize: 12, color: textMutedStrong)),
                           ],
                         ),
                       ),
@@ -314,13 +150,58 @@ class _AllLevelsSheet extends StatelessWidget {
                 ),
                 const SizedBox(height: 8),
                 Expanded(
-                  child: ListView.builder(
-                    controller: dragScrollController,
-                    padding: EdgeInsets.fromLTRB(16, 0, 16, MediaQuery.of(context).padding.bottom + 16),
-                    itemCount: levels.length,
-                    itemBuilder: (context, index) {
-                      final level = levels[index];
-                      return _buildLevelRow(level, level.level == currentLevel, level.level < currentLevel, textColorStrong, textMutedStrong, cardBg, borderColor, accentColor, isDark);
+                  child: allLevelsAsync.when(
+                    loading: () => const Center(child: CircularProgressIndicator()),
+                    error: (error, _) => Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(32),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.error_outline, size: 48, color: textMutedStrong),
+                            const SizedBox(height: 12),
+                            Text(
+                              'Failed to load levels',
+                              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: textColorStrong),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              'Check your connection and try again',
+                              style: TextStyle(fontSize: 13, color: textMutedStrong),
+                              textAlign: TextAlign.center,
+                            ),
+                            const SizedBox(height: 16),
+                            TextButton.icon(
+                              onPressed: () => ref.invalidate(allLevelsProvider),
+                              icon: const Icon(Icons.refresh, size: 18),
+                              label: const Text('Retry'),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    data: (rawLevels) {
+                      // Skip level 1 (starts at level 2) to match previous behavior
+                      final levels = rawLevels
+                          .where((l) => (l['level'] as int) >= 2)
+                          .map((l) => _LevelInfo.fromJson(l))
+                          .toList();
+
+                      if (levels.isEmpty) {
+                        return Center(
+                          child: Text('No levels available', style: TextStyle(color: textMutedStrong)),
+                        );
+                      }
+
+                      return ListView.builder(
+                        controller: dragScrollController,
+                        padding: EdgeInsets.fromLTRB(16, 0, 16, MediaQuery.of(context).padding.bottom + 16),
+                        itemCount: levels.length,
+                        itemBuilder: (context, index) {
+                          final level = levels[index];
+                          return _buildLevelRow(level, level.level == currentLevel, level.level < currentLevel, textColorStrong, textMutedStrong, cardBg, borderColor, accentColor, isDark);
+                        },
+                      );
                     },
                   ),
                 ),

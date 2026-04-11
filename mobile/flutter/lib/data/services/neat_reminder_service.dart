@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../utils/tz.dart';
 import 'health_service.dart';
 import 'notification_service.dart';
 
@@ -105,7 +106,7 @@ class NeatReminderNotifier extends StateNotifier<NeatReminderState> {
       final lastReminderDate = prefs.getString(_lastReminderDateKey);
 
       // Reset daily counter if it's a new day
-      final today = DateTime.now().toIso8601String().split('T')[0];
+      final today = Tz.localDate();
       final actualRemindersToday = lastReminderDate == today ? remindersToday : 0;
 
       state = state.copyWith(
@@ -133,7 +134,7 @@ class NeatReminderNotifier extends StateNotifier<NeatReminderState> {
       }
       await prefs.setInt(_remindersTodayKey, state.remindersToday);
       await prefs.setString(_lastReminderDateKey,
-          DateTime.now().toIso8601String().split('T')[0]);
+          Tz.localDate());
     } catch (e) {
       debugPrint('❌ [NEAT] Error saving persisted state: $e');
     }

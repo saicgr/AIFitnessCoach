@@ -1,19 +1,53 @@
 -- Migration: Atomic SCD2 Versioning via DB Triggers
 -- Purpose: Prevent orphaned workouts (is_current=FALSE with no replacement)
 --
--- Two triggers:
---   1. BEFORE INSERT: Auto-supersede existing current workout for same date
---   2. BEFORE UPDATE: Refuse to mark workout as not-current if no replacement exists
+-- Three triggers:
+--   1. BEFORE INSERT: Default is_current to TRUE for real workouts
+--   2. AFTER INSERT: Auto-supersede existing current workout for same date
+--   3. BEFORE UPDATE: Refuse to mark workout as not-current if no replacement exists
 --
 -- This makes SCD2 versioning atomic at the DB level, eliminating race conditions
 -- and error-interrupted flows that previously left workouts invisible.
+--
+-- NOTE: The supersede UPDATE must run AFTER INSERT (not BEFORE) because
+-- setting superseded_by = NEW.id requires the new row to already exist
+-- in the table for the FK constraint (workouts_superseded_by_fkey) to pass.
 
 -- ============================================================================
--- TRIGGER 1: ensure_single_current_workout (BEFORE INSERT)
+-- TRIGGER 1a: default_workout_is_current (BEFORE INSERT)
+-- ============================================================================
+-- Ensure is_current defaults to TRUE for real workouts.
+-- This must be BEFORE INSERT because it modifies NEW.
+
+CREATE OR REPLACE FUNCTION default_workout_is_current()
+RETURNS TRIGGER AS $$
+BEGIN
+    -- Safety: ensure is_current defaults to TRUE for real workouts
+    IF NEW.is_current IS NULL THEN
+        NEW.is_current := TRUE;
+    END IF;
+
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Drop the old combined trigger
+DROP TRIGGER IF EXISTS trg_ensure_single_current_workout ON workouts;
+
+DROP TRIGGER IF EXISTS trg_default_workout_is_current ON workouts;
+CREATE TRIGGER trg_default_workout_is_current
+    BEFORE INSERT ON workouts
+    FOR EACH ROW
+    EXECUTE FUNCTION default_workout_is_current();
+
+-- ============================================================================
+-- TRIGGER 1b: ensure_single_current_workout (AFTER INSERT)
 -- ============================================================================
 -- When a new real workout (not a placeholder) is inserted with is_current=TRUE,
 -- automatically mark any existing current workout for the same
 -- (user_id, scheduled_date, gym_profile_id) as superseded.
+--
+-- Runs AFTER INSERT so the new row exists and can be referenced by the FK.
 
 CREATE OR REPLACE FUNCTION ensure_single_current_workout()
 RETURNS TRIGGER AS $$
@@ -36,18 +70,13 @@ BEGIN
           );
     END IF;
 
-    -- Safety: ensure is_current defaults to TRUE for real workouts
-    IF NEW.is_current IS NULL THEN
-        NEW.is_current := TRUE;
-    END IF;
-
-    RETURN NEW;
+    RETURN NULL;  -- AFTER triggers must return NULL
 END;
 $$ LANGUAGE plpgsql;
 
-DROP TRIGGER IF EXISTS trg_ensure_single_current_workout ON workouts;
-CREATE TRIGGER trg_ensure_single_current_workout
-    BEFORE INSERT ON workouts
+DROP TRIGGER IF EXISTS trg_ensure_single_current_after ON workouts;
+CREATE TRIGGER trg_ensure_single_current_after
+    AFTER INSERT ON workouts
     FOR EACH ROW
     EXECUTE FUNCTION ensure_single_current_workout();
 

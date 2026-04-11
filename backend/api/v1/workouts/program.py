@@ -10,9 +10,10 @@ import json
 from datetime import date, datetime
 from typing import Optional
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from core.auth import get_current_user
 from core.exceptions import safe_internal_error
+from core.timezone_utils import user_today_date
 from pydantic import BaseModel
 
 from core.supabase_db import get_supabase_db
@@ -40,7 +41,7 @@ class QuickRegenerateResponse(BaseModel):
 
 
 @router.post("/update-program", response_model=UpdateProgramResponse)
-async def update_program(request: UpdateProgramRequest,
+async def update_program(http_request: Request, request: UpdateProgramRequest,
     current_user: dict = Depends(get_current_user),
 ):
     """
@@ -111,7 +112,7 @@ async def update_program(request: UpdateProgramRequest,
 
         # Delete only future incomplete workouts
         # CRITICAL: Never delete completed workouts or past workouts
-        today = date.today().isoformat()
+        today = user_today_date(http_request, db, request.user_id).isoformat()
 
         # Get all workouts for user
         all_workouts = db.list_workouts(request.user_id, limit=1000)
@@ -180,7 +181,7 @@ async def update_program(request: UpdateProgramRequest,
                 "injuries": request.injuries or [],
                 "focus_areas": request.focus_areas or [],
                 "program_name": None,  # Auto-generated name could be added
-                "description": f"Updated via Customize Program on {date.today().isoformat()}",
+                "description": f"Updated via Customize Program on {user_today_date(http_request, db, request.user_id).isoformat()}",
                 "is_current": True,
                 "applied_at": datetime.now().isoformat(),
             }
@@ -211,7 +212,7 @@ async def update_program(request: UpdateProgramRequest,
 
 
 @router.post("/quick-regenerate", response_model=QuickRegenerateResponse)
-async def quick_regenerate_workouts(request: QuickRegenerateRequest,
+async def quick_regenerate_workouts(http_request: Request, request: QuickRegenerateRequest,
     current_user: dict = Depends(get_current_user),
 ):
     """
@@ -240,7 +241,7 @@ async def quick_regenerate_workouts(request: QuickRegenerateRequest,
             raise HTTPException(status_code=404, detail="User not found")
 
         # Delete only future incomplete workouts (same logic as update-program)
-        today = date.today().isoformat()
+        today = user_today_date(http_request, db, request.user_id).isoformat()
         all_workouts = db.list_workouts(request.user_id, limit=1000)
 
         workouts_to_delete = []

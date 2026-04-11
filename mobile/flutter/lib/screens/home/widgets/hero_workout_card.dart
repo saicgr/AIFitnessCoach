@@ -98,6 +98,22 @@ class _HeroWorkoutCardState extends ConsumerState<HeroWorkoutCard> {
     if (mounted) setState(() => _isLoadingImage = false);
   }
 
+  /// Check if a workout is "missed" — scheduled for a past date and not completed
+  bool _isMissedWorkout(Workout w) {
+    if (w.scheduledDate == null) return false;
+    try {
+      final dateStr = w.scheduledDate!.split('T')[0];
+      final parts = dateStr.split('-');
+      if (parts.length != 3) return false;
+      final scheduledDate = DateTime(int.parse(parts[0]), int.parse(parts[1]), int.parse(parts[2]));
+      final now = DateTime.now();
+      final today = DateTime(now.year, now.month, now.day);
+      return scheduledDate.isBefore(today);
+    } catch (_) {
+      return false;
+    }
+  }
+
   bool _isQuickWorkout(Workout w) {
     final method = w.generationMethod?.toLowerCase() ?? '';
     if (method == 'quick_rule_based' || method == 'ai_quick_workout') {
@@ -137,11 +153,18 @@ class _HeroWorkoutCardState extends ConsumerState<HeroWorkoutCard> {
       final now = DateTime.now();
       final today = DateTime(now.year, now.month, now.day);
       final tomorrow = today.add(const Duration(days: 1));
+      final yesterday = today.subtract(const Duration(days: 1));
 
       if (date == today) {
         return 'TODAY';
       } else if (date == tomorrow) {
         return 'TOMORROW';
+      } else if (date == yesterday) {
+        return 'YESTERDAY';
+      } else if (date.isBefore(today)) {
+        // Past dates: show day name for missed workouts
+        final weekdays = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
+        return weekdays[date.weekday - 1];
       } else {
         final weekdays = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
         return weekdays[date.weekday - 1];
@@ -829,6 +852,74 @@ class _HeroWorkoutCardState extends ConsumerState<HeroWorkoutCard> {
                               ],
                               const SizedBox(width: 12),
                               _buildOverlayButton(icon: Icons.bar_chart, label: 'Summary', onTap: _viewSummary, isDark: isDark),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+
+            // Missed workout overlay (past date, not completed)
+            if (widget.workout.isCompleted != true && _isMissedWorkout(workout))
+              Positioned.fill(
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(22),
+                  child: BackdropFilter(
+                    filter: ImageFilter.blur(sigmaX: 4, sigmaY: 4),
+                    child: Container(
+                      color: AppColors.error.withValues(alpha: isDark ? 0.2 : 0.15),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Container(
+                            width: 60,
+                            height: 60,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              border: Border.all(color: AppColors.error, width: 3),
+                              color: AppColors.error.withValues(alpha: 0.2),
+                            ),
+                            child: const Icon(Icons.close, color: AppColors.error, size: 34),
+                          ),
+                          const SizedBox(height: 12),
+                          Text(
+                            'Missed Workout',
+                            style: TextStyle(
+                              color: isDark ? Colors.white : Colors.black87,
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            workout.name ?? '',
+                            style: TextStyle(
+                              color: isDark ? Colors.white70 : Colors.black54,
+                              fontSize: 14,
+                            ),
+                          ),
+                          const SizedBox(height: 24),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              _buildOverlayButton(
+                                icon: Icons.visibility,
+                                label: 'View Details',
+                                onTap: () {
+                                  HapticService.selection();
+                                  context.push('/workout/${workout.id}', extra: workout);
+                                },
+                                isDark: isDark,
+                              ),
+                              const SizedBox(width: 12),
+                              _buildOverlayButton(
+                                icon: Icons.replay,
+                                label: 'Do Today',
+                                onTap: _repeatWorkout,
+                                isDark: isDark,
+                              ),
                             ],
                           ),
                         ],

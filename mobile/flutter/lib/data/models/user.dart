@@ -51,6 +51,8 @@ class User extends Equatable {
   final String? weightUnit; // 'kg' or 'lbs' - user's preferred body weight unit
   @JsonKey(name: 'workout_weight_unit')
   final String? workoutWeightUnit; // 'kg' or 'lbs' - user's preferred workout weight unit (separate from body weight)
+  @JsonKey(name: 'measurement_unit')
+  final String? measurementUnit; // 'cm' or 'in' - user's preferred body measurement unit
   @JsonKey(name: 'primary_goal')
   final String? primaryGoal; // 'muscle_hypertrophy', 'muscle_strength', or 'strength_hypertrophy'
   @JsonKey(name: 'muscle_focus_points')
@@ -87,6 +89,7 @@ class User extends Equatable {
     this.supportFriendAdded,
     this.weightUnit,
     this.workoutWeightUnit,
+    this.measurementUnit,
     this.primaryGoal,
     this.muscleFocusPoints,
     this.photoUrl,
@@ -221,6 +224,20 @@ class User extends Equatable {
 
   /// Check if user prefers imperial (lbs) for workouts
   bool get usesImperialWorkoutWeight => preferredWorkoutWeightUnit == 'lbs';
+
+  /// Get body measurement unit preference with fallback to 'cm'
+  String get preferredMeasurementUnit {
+    if (measurementUnit != null && measurementUnit!.isNotEmpty) {
+      return measurementUnit!;
+    }
+    return 'cm';
+  }
+
+  /// Check if user prefers metric (cm) for body measurements
+  bool get usesMetricMeasurements => preferredMeasurementUnit == 'cm';
+
+  /// Check if user prefers imperial (in) for body measurements
+  bool get usesImperialMeasurements => preferredMeasurementUnit == 'in';
 
   /// Get fitness goal (first goal from goals list, formatted for display)
   String? get fitnessGoal {
@@ -657,6 +674,7 @@ class User extends Equatable {
         isNewUser,
         supportFriendAdded,
         weightUnit,
+        measurementUnit,
         primaryGoal,
         muscleFocusPoints,
         photoUrl,
@@ -690,6 +708,7 @@ class User extends Equatable {
     bool? isNewUser,
     bool? supportFriendAdded,
     String? weightUnit,
+    String? measurementUnit,
     String? primaryGoal,
     Map<String, int>? muscleFocusPoints,
     String? photoUrl,
@@ -722,6 +741,7 @@ class User extends Equatable {
       isNewUser: isNewUser ?? this.isNewUser,
       supportFriendAdded: supportFriendAdded ?? this.supportFriendAdded,
       weightUnit: weightUnit ?? this.weightUnit,
+      measurementUnit: measurementUnit ?? this.measurementUnit,
       primaryGoal: primaryGoal ?? this.primaryGoal,
       muscleFocusPoints: muscleFocusPoints ?? this.muscleFocusPoints,
       photoUrl: photoUrl ?? this.photoUrl,

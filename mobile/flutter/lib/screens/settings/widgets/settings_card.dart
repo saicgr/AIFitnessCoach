@@ -214,6 +214,27 @@ class SettingsCard extends ConsumerWidget {
     }
   }
 
+  Future<void> _updateMeasurementUnit(BuildContext context, WidgetRef ref, String unit) async {
+    try {
+      await ref.read(authStateProvider.notifier).updateUserProfile({'measurement_unit': unit});
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Body measurement unit → ${unit == 'cm' ? 'centimeters' : 'inches'}'),
+            backgroundColor: AppColors.cyan,
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: const Text('Failed to update'), backgroundColor: AppColors.error),
+        );
+      }
+    }
+  }
+
   Future<void> _updateWorkoutWeightUnit(BuildContext context, WidgetRef ref, String unit) async {
     try {
       await ref.read(authStateProvider.notifier).updateUserProfile({'workout_weight_unit': unit});

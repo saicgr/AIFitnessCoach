@@ -7,6 +7,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Request
 
 from core.auth import get_current_user
 from core.exceptions import safe_internal_error
+from core.timezone_utils import resolve_timezone, local_date_to_utc_range, user_today_date
 from core.supabase_db import get_supabase_db
 from core.logger import get_logger
 
@@ -158,6 +159,7 @@ async def update_nutrition_preferences(user_id: str, request: NutritionPreferenc
 
 @router.get("/dynamic-targets/{user_id}", response_model=DynamicTargetsResponse)
 async def get_dynamic_nutrition_targets(
+    request: Request,
     user_id: str,
     date: Optional[str] = Query(None, description="Date in YYYY-MM-DD format, defaults to today"),
     current_user: dict = Depends(get_current_user),
@@ -170,18 +172,17 @@ async def get_dynamic_nutrition_targets(
     - Whether it's a fasting day (for 5:2, ADF protocols)
     - User's preferences for training/rest day adjustments
     """
-    from datetime import date as date_type
-
     logger.info(f"Getting dynamic nutrition targets for user {user_id}")
 
     try:
         db = get_supabase_db()
+        user_tz = resolve_timezone(request, db, user_id)
 
         # Parse target date
         if date:
             target_date = datetime.fromisoformat(date).date()
         else:
-            target_date = date_type.today()
+            target_date = user_today_date(request, db, user_id)
 
         target_date_str = target_date.isoformat()
 
@@ -217,12 +218,13 @@ async def get_dynamic_nutrition_targets(
             workout_days = gym_profile_result.data.get("workout_days") or []
             is_scheduled_training_day = target_date.weekday() in workout_days
 
-        # Check if there's a workout logged today
+        # Check if there's a workout logged today (timezone-aware UTC range)
+        utc_start, utc_end = local_date_to_utc_range(target_date_str, user_tz)
         workout_result = db.client.table("workout_logs")\
             .select("id")\
             .eq("user_id", user_id)\
-            .gte("completed_at", f"{target_date_str}T00:00:00")\
-            .lt("completed_at", f"{target_date_str}T23:59:59")\
+            .gte("completed_at", utc_start)\
+            .lt("completed_at", utc_end)\
             .execute()
 
         has_workout_log = bool(workout_result and workout_result.data)

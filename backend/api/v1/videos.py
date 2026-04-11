@@ -252,6 +252,11 @@ def score_exercise_match(search_name: str, db_name: str) -> int:
     if len(search_words) == len(db_words):
         score += 5
 
+    # Bonus when search is a prefix of db name (e.g., "Leg Press" → "Leg press machine normal stance")
+    # This prefers the base exercise variant over modifier-prefixed names like "Band Leg Press"
+    if db_name.lower().startswith(search_name.lower()):
+        score += 8
+
     return score
 
 

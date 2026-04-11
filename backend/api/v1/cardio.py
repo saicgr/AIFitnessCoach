@@ -24,7 +24,8 @@ from .cardio_endpoints import router as _endpoints_router
 
 from datetime import datetime, date, timedelta
 from typing import Optional, List, Dict, Any
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
+from core.timezone_utils import resolve_timezone
 from pydantic import BaseModel, Field
 from decimal import Decimal
 
@@ -134,6 +135,7 @@ class CardioMetricsHistoryResponse(BaseModel):
 @router.get("/hr-zones/{user_id}", response_model=HRZonesResponse, tags=["Cardio"])
 async def get_hr_zones(
     user_id: str,
+    http_request: Request,
     use_resting_hr: bool = Query(True, description="Use Karvonen formula if resting HR available"),
     current_user: dict = Depends(get_current_user),
 ):
@@ -157,6 +159,7 @@ async def get_hr_zones(
     if str(current_user["id"]) != str(user_id):
         raise HTTPException(status_code=403, detail="Access denied")
     db = get_supabase_db()
+    tz_str = resolve_timezone(http_request, db, user_id)
 
     # Get user data including DOB and resting HR
     user_response = db.client.table("users").select(
@@ -177,7 +180,7 @@ async def get_hr_zones(
 
     # Calculate age from DOB
     dob = date.fromisoformat(dob_str) if isinstance(dob_str, str) else dob_str
-    age = calculate_age_from_dob(dob)
+    age = calculate_age_from_dob(dob, tz_str)
 
     # Calculate max HR
     max_hr = calculate_max_hr(age, method="tanaka")
@@ -238,6 +241,7 @@ async def get_hr_zones(
 @router.get("/metrics/{user_id}", response_model=CardioMetricsResponse, tags=["Cardio"])
 async def get_cardio_metrics_endpoint(
     user_id: str,
+    http_request: Request,
     current_user: dict = Depends(get_current_user),
 ):
     """
@@ -259,6 +263,7 @@ async def get_cardio_metrics_endpoint(
     if str(current_user["id"]) != str(user_id):
         raise HTTPException(status_code=403, detail="Access denied")
     db = get_supabase_db()
+    tz_str = resolve_timezone(http_request, db, user_id)
 
     # Get user data
     user_response = db.client.table("users").select(
@@ -278,7 +283,7 @@ async def get_cardio_metrics_endpoint(
         )
 
     dob = date.fromisoformat(dob_str) if isinstance(dob_str, str) else dob_str
-    age = calculate_age_from_dob(dob)
+    age = calculate_age_from_dob(dob, tz_str)
     gender = user.get("gender", "male")
 
     # Get stored cardio metrics
@@ -339,6 +344,7 @@ async def get_cardio_metrics_endpoint(
 @router.post("/metrics", response_model=CardioMetricsResponse, tags=["Cardio"])
 async def save_cardio_metrics(
     request: SaveCardioMetricsRequest,
+    http_request: Request,
     current_user: dict = Depends(get_current_user),
 ):
     """
@@ -354,6 +360,7 @@ async def save_cardio_metrics(
     if str(current_user["id"]) != str(request.user_id):
         raise HTTPException(status_code=403, detail="Access denied")
     db = get_supabase_db()
+    tz_str = resolve_timezone(http_request, db, request.user_id)
 
     # Verify user exists and get their data
     user_response = db.client.table("users").select(
@@ -373,7 +380,7 @@ async def save_cardio_metrics(
         )
 
     dob = date.fromisoformat(dob_str) if isinstance(dob_str, str) else dob_str
-    age = calculate_age_from_dob(dob)
+    age = calculate_age_from_dob(dob, tz_str)
     gender = user.get("gender", "male")
 
     # Calculate VO2 max and fitness age if possible

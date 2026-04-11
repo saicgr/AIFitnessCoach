@@ -1087,3 +1087,156 @@ class _PhotosTabState extends ConsumerState<PhotosTab>
     }
   }
 }
+
+/// Standalone helper to run the progress photo capture flow from anywhere.
+/// Returns the captured [File] and selected [PhotoViewType] if successful, or null if cancelled.
+class ProgressPhotoCaptureFlow {
+  static IconData _getViewTypeIcon(PhotoViewType type) {
+    switch (type) {
+      case PhotoViewType.front:
+        return Icons.person;
+      case PhotoViewType.sideLeft:
+        return Icons.arrow_back;
+      case PhotoViewType.sideRight:
+        return Icons.arrow_forward;
+      case PhotoViewType.back:
+        return Icons.person_outline;
+      case PhotoViewType.legs:
+        return Icons.directions_walk;
+      case PhotoViewType.glutes:
+        return Icons.airline_seat_legroom_normal;
+      case PhotoViewType.arms:
+        return Icons.fitness_center;
+      case PhotoViewType.abs:
+        return Icons.grid_on;
+      case PhotoViewType.chest:
+        return Icons.shield;
+      case PhotoViewType.custom:
+        return Icons.photo_camera;
+    }
+  }
+
+  static String _getViewTypeDescription(PhotoViewType type) {
+    switch (type) {
+      case PhotoViewType.front:
+        return 'Face the camera directly';
+      case PhotoViewType.sideLeft:
+        return 'Turn your left side to camera';
+      case PhotoViewType.sideRight:
+        return 'Turn your right side to camera';
+      case PhotoViewType.back:
+        return 'Turn your back to camera';
+      case PhotoViewType.legs:
+        return 'Show your leg muscles';
+      case PhotoViewType.glutes:
+        return 'Show your glute progress';
+      case PhotoViewType.arms:
+        return 'Flex your arms for the camera';
+      case PhotoViewType.abs:
+        return 'Show your core/abs';
+      case PhotoViewType.chest:
+        return 'Show your chest progress';
+      case PhotoViewType.custom:
+        return 'Any other angle or pose';
+    }
+  }
+
+  /// Runs the full capture flow: angle selection → camera/gallery → photo editor.
+  /// Returns a record of (File, PhotoViewType) if a photo was captured, or null if cancelled.
+  static Future<(File, PhotoViewType)?> run(BuildContext context) async {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    // Step 1: Pick a view type
+    final selectedType = await showGlassSheet<PhotoViewType>(
+      context: context,
+      useRootNavigator: true,
+      builder: (context) => GlassSheet(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Select View Type',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: colorScheme.onSurface,
+                ),
+              ),
+              const SizedBox(height: 16),
+              Flexible(
+                child: ListView(
+                  shrinkWrap: true,
+                  children: PhotoViewType.values.map((type) => ListTile(
+                        leading: Icon(_getViewTypeIcon(type)),
+                        title: Text(type.displayName),
+                        subtitle: Text(_getViewTypeDescription(type)),
+                        onTap: () => Navigator.pop(context, type),
+                      )).toList(),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    if (selectedType == null) return null;
+    if (!context.mounted) return null;
+
+    // Step 2: Pick image source
+    final source = await showGlassSheet<ImageSource>(
+      context: context,
+      useRootNavigator: true,
+      builder: (context) => GlassSheet(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: const Icon(Icons.camera_alt),
+                title: const Text('Take Photo'),
+                subtitle: const Text('Use camera'),
+                onTap: () => Navigator.pop(context, ImageSource.camera),
+              ),
+              ListTile(
+                leading: const Icon(Icons.photo_library),
+                title: const Text('Choose from Gallery'),
+                subtitle: const Text('Select existing photo'),
+                onTap: () => Navigator.pop(context, ImageSource.gallery),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    if (source == null) return null;
+    if (!context.mounted) return null;
+
+    // Step 3: Pick the image
+    final picker = ImagePicker();
+    final pickedFile = await picker.pickImage(source: source);
+
+    if (pickedFile == null) return null;
+    if (!context.mounted) return null;
+
+    // Step 4: Open photo editor
+    final editedFile = await Navigator.push<File>(
+      context,
+      AppPageRoute(
+        builder: (context) => PhotoEditorScreen(
+          imageFile: File(pickedFile.path),
+          viewTypeName: selectedType.displayName,
+        ),
+      ),
+    );
+
+    if (editedFile == null) return null;
+
+    return (editedFile, selectedType);
+  }
+}

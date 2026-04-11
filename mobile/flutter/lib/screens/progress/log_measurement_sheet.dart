@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../../data/providers/xp_provider.dart';
+import '../../data/repositories/auth_repository.dart';
 import '../../data/services/api_client.dart';
 
 /// Model for body measurement entry
@@ -113,6 +114,10 @@ class _LogMeasurementSheetState extends ConsumerState<LogMeasurementSheet> {
   final _formKey = GlobalKey<FormState>();
   DateTime _selectedDate = DateTime.now();
   bool _isSaving = false;
+  late bool _isMetric;
+
+  // All circumference controllers for batch conversion on unit toggle
+  late final List<TextEditingController> _circumferenceControllers;
 
   // Controllers for each measurement
   final _waistController = TextEditingController();
@@ -134,28 +139,60 @@ class _LogMeasurementSheetState extends ConsumerState<LogMeasurementSheet> {
   @override
   void initState() {
     super.initState();
+    final auth = ref.read(authStateProvider);
+    _isMetric = auth.user?.usesMetricMeasurements ?? true;
+    _circumferenceControllers = [
+      _waistController, _chestController, _hipsController, _neckController,
+      _leftBicepController, _rightBicepController, _leftForearmController,
+      _rightForearmController, _leftThighController, _rightThighController,
+      _leftCalfController, _rightCalfController, _shouldersController,
+    ];
     if (widget.existingMeasurement != null) {
       _populateExisting(widget.existingMeasurement!);
     }
   }
 
+  String _displayValue(double? cmValue) {
+    if (cmValue == null) return '';
+    final v = _isMetric ? cmValue : cmValue / 2.54;
+    return v.toStringAsFixed(1);
+  }
+
   void _populateExisting(BodyMeasurement m) {
     _selectedDate = m.measuredAt;
-    if (m.waistCm != null) _waistController.text = m.waistCm!.toString();
-    if (m.chestCm != null) _chestController.text = m.chestCm!.toString();
-    if (m.hipsCm != null) _hipsController.text = m.hipsCm!.toString();
-    if (m.neckCm != null) _neckController.text = m.neckCm!.toString();
-    if (m.leftBicepCm != null) _leftBicepController.text = m.leftBicepCm!.toString();
-    if (m.rightBicepCm != null) _rightBicepController.text = m.rightBicepCm!.toString();
-    if (m.leftForearmCm != null) _leftForearmController.text = m.leftForearmCm!.toString();
-    if (m.rightForearmCm != null) _rightForearmController.text = m.rightForearmCm!.toString();
-    if (m.leftThighCm != null) _leftThighController.text = m.leftThighCm!.toString();
-    if (m.rightThighCm != null) _rightThighController.text = m.rightThighCm!.toString();
-    if (m.leftCalfCm != null) _leftCalfController.text = m.leftCalfCm!.toString();
-    if (m.rightCalfCm != null) _rightCalfController.text = m.rightCalfCm!.toString();
-    if (m.shouldersCm != null) _shouldersController.text = m.shouldersCm!.toString();
+    if (m.waistCm != null) _waistController.text = _displayValue(m.waistCm);
+    if (m.chestCm != null) _chestController.text = _displayValue(m.chestCm);
+    if (m.hipsCm != null) _hipsController.text = _displayValue(m.hipsCm);
+    if (m.neckCm != null) _neckController.text = _displayValue(m.neckCm);
+    if (m.leftBicepCm != null) _leftBicepController.text = _displayValue(m.leftBicepCm);
+    if (m.rightBicepCm != null) _rightBicepController.text = _displayValue(m.rightBicepCm);
+    if (m.leftForearmCm != null) _leftForearmController.text = _displayValue(m.leftForearmCm);
+    if (m.rightForearmCm != null) _rightForearmController.text = _displayValue(m.rightForearmCm);
+    if (m.leftThighCm != null) _leftThighController.text = _displayValue(m.leftThighCm);
+    if (m.rightThighCm != null) _rightThighController.text = _displayValue(m.rightThighCm);
+    if (m.leftCalfCm != null) _leftCalfController.text = _displayValue(m.leftCalfCm);
+    if (m.rightCalfCm != null) _rightCalfController.text = _displayValue(m.rightCalfCm);
+    if (m.shouldersCm != null) _shouldersController.text = _displayValue(m.shouldersCm);
     if (m.bodyFatPercentage != null) _bodyFatController.text = m.bodyFatPercentage!.toString();
     if (m.notes != null) _notesController.text = m.notes!;
+  }
+
+  void _toggleUnit() {
+    for (final ctrl in _circumferenceControllers) {
+      final val = double.tryParse(ctrl.text);
+      if (val != null) {
+        // If currently metric, convert cm→in; if imperial, convert in→cm
+        final converted = _isMetric ? val / 2.54 : val * 2.54;
+        ctrl.text = converted.toStringAsFixed(1);
+      }
+    }
+    setState(() => _isMetric = !_isMetric);
+  }
+
+  /// Convert user-entered value to cm for storage
+  double? _toMetricCm(double? v) {
+    if (v == null || _isMetric) return v;
+    return v * 2.54; // inches → cm
   }
 
   @override
@@ -230,13 +267,44 @@ class _LogMeasurementSheetState extends ConsumerState<LogMeasurementSheet> {
                     onPressed: () => Navigator.pop(context),
                     child: const Text('Cancel'),
                   ),
-                  Text(
-                    'Log Measurements',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: colorScheme.onSurface,
-                    ),
+                  Column(
+                    children: [
+                      Text(
+                        'Log Measurements',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: colorScheme.onSurface,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      GestureDetector(
+                        onTap: _toggleUnit,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: colorScheme.primary.withOpacity(0.12),
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: colorScheme.primary.withOpacity(0.3)),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                _isMetric ? 'cm' : 'in',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                  color: colorScheme.primary,
+                                ),
+                              ),
+                              const SizedBox(width: 4),
+                              Icon(Icons.swap_horiz, size: 14, color: colorScheme.primary.withOpacity(0.7)),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                   TextButton(
                     onPressed: _isSaving ? null : _saveMeasurement,
@@ -354,7 +422,7 @@ class _LogMeasurementSheetState extends ConsumerState<LogMeasurementSheet> {
                       'Body Fat %',
                       _bodyFatController,
                       'If known',
-                      suffix: '%',
+                      isBodyFat: true,
                     ),
 
                     const SizedBox(height: 24),
@@ -455,9 +523,10 @@ class _LogMeasurementSheetState extends ConsumerState<LogMeasurementSheet> {
     String label,
     TextEditingController controller,
     String hint, {
-    String suffix = 'cm',
+    bool isBodyFat = false,
   }) {
     final colorScheme = Theme.of(context).colorScheme;
+    final unitText = isBodyFat ? '%' : (_isMetric ? 'cm' : 'in');
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Row(
@@ -494,7 +563,34 @@ class _LogMeasurementSheetState extends ConsumerState<LogMeasurementSheet> {
               ],
               textAlign: TextAlign.center,
               decoration: InputDecoration(
-                suffixText: suffix,
+                suffix: isBodyFat
+                    ? Text('%', style: TextStyle(color: colorScheme.onSurfaceVariant))
+                    : GestureDetector(
+                        onTap: _toggleUnit,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: colorScheme.primary.withOpacity(0.12),
+                            borderRadius: BorderRadius.circular(6),
+                            border: Border.all(color: colorScheme.primary.withOpacity(0.3)),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                unitText,
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                  color: colorScheme.primary,
+                                ),
+                              ),
+                              const SizedBox(width: 2),
+                              Icon(Icons.swap_horiz, size: 10, color: colorScheme.primary.withOpacity(0.7)),
+                            ],
+                          ),
+                        ),
+                      ),
                 contentPadding: const EdgeInsets.symmetric(
                   horizontal: 12,
                   vertical: 8,
@@ -557,19 +653,19 @@ class _LogMeasurementSheetState extends ConsumerState<LogMeasurementSheet> {
       final measurement = BodyMeasurement(
         userId: widget.userId,
         measuredAt: _selectedDate,
-        waistCm: _parseDouble(_waistController.text),
-        chestCm: _parseDouble(_chestController.text),
-        hipsCm: _parseDouble(_hipsController.text),
-        neckCm: _parseDouble(_neckController.text),
-        leftBicepCm: _parseDouble(_leftBicepController.text),
-        rightBicepCm: _parseDouble(_rightBicepController.text),
-        leftForearmCm: _parseDouble(_leftForearmController.text),
-        rightForearmCm: _parseDouble(_rightForearmController.text),
-        leftThighCm: _parseDouble(_leftThighController.text),
-        rightThighCm: _parseDouble(_rightThighController.text),
-        leftCalfCm: _parseDouble(_leftCalfController.text),
-        rightCalfCm: _parseDouble(_rightCalfController.text),
-        shouldersCm: _parseDouble(_shouldersController.text),
+        waistCm: _toMetricCm(_parseDouble(_waistController.text)),
+        chestCm: _toMetricCm(_parseDouble(_chestController.text)),
+        hipsCm: _toMetricCm(_parseDouble(_hipsController.text)),
+        neckCm: _toMetricCm(_parseDouble(_neckController.text)),
+        leftBicepCm: _toMetricCm(_parseDouble(_leftBicepController.text)),
+        rightBicepCm: _toMetricCm(_parseDouble(_rightBicepController.text)),
+        leftForearmCm: _toMetricCm(_parseDouble(_leftForearmController.text)),
+        rightForearmCm: _toMetricCm(_parseDouble(_rightForearmController.text)),
+        leftThighCm: _toMetricCm(_parseDouble(_leftThighController.text)),
+        rightThighCm: _toMetricCm(_parseDouble(_rightThighController.text)),
+        leftCalfCm: _toMetricCm(_parseDouble(_leftCalfController.text)),
+        rightCalfCm: _toMetricCm(_parseDouble(_rightCalfController.text)),
+        shouldersCm: _toMetricCm(_parseDouble(_shouldersController.text)),
         bodyFatPercentage: _parseDouble(_bodyFatController.text),
         notes: _notesController.text.isEmpty ? null : _notesController.text,
       );

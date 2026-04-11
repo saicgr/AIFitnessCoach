@@ -587,6 +587,11 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
         await _markPaywallComplete(ref);
         await _navigateAfterPaywall(context, ref);
       }
+    } else if (!success && context.mounted) {
+      // Purchase failed or was cancelled — still let user through.
+      // The hard paywall will gate premium features if they're not subscribed.
+      await _markPaywallComplete(ref);
+      await _navigateAfterPaywall(context, ref);
     }
   }
 

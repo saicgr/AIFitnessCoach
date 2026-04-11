@@ -12,9 +12,10 @@ import asyncio
 import json
 from concurrent.futures import ThreadPoolExecutor
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from core.auth import get_current_user
 from core.exceptions import safe_internal_error
+from core.timezone_utils import user_today_date
 from pydantic import BaseModel
 
 from core.supabase_db import get_supabase_db
@@ -123,6 +124,7 @@ def _get_active_gym_profile_id(db, user_id: str) -> Optional[str]:
 
 @router.get("/screen-summary", response_model=WorkoutScreenSummary)
 async def get_workout_screen_summary(
+    request: Request,
     user_id: str = Query(..., description="User ID"),
     current_user: dict = Depends(get_current_user),
 ) -> WorkoutScreenSummary:
@@ -141,7 +143,7 @@ async def get_workout_screen_summary(
         active_profile_id = _get_active_gym_profile_id(db, user_id)
 
         # Calculate week boundaries (Monday to Sunday)
-        today = date.today()
+        today = user_today_date(request, db, user_id)
         start_of_week = today - timedelta(days=today.weekday())
         end_of_week = start_of_week + timedelta(days=6)
 

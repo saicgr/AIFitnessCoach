@@ -489,3 +489,14 @@ final dailyXPStripVisibleProvider = Provider<bool>((ref) {
   final dismissedToday = ref.watch(dailyXPStripDismissedTodayProvider);
   return enabled && !dismissedToday;
 });
+
+// ============================================
+// All Levels (Backend-Driven)
+// ============================================
+
+/// All 250 levels with names, titles, XP, and milestones from backend.
+/// Not autoDispose — level data is static, cached for the session.
+final allLevelsProvider = FutureProvider<List<Map<String, dynamic>>>((ref) async {
+  final repository = ref.watch(xpRepositoryProvider);
+  return repository.getAllLevels();
+});

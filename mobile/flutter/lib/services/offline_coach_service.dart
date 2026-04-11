@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../data/models/chat_message.dart';
+import '../utils/tz.dart';
 import 'device_capability_service.dart';
 import 'on_device_gemma_service.dart';
 import 'workout_prompt_builder.dart';
@@ -85,7 +86,7 @@ class OfflineCoachService {
         role: 'assistant',
         content: response.trim(),
         agentType: AgentType.coach,
-        createdAt: DateTime.now().toIso8601String(),
+        createdAt: Tz.timestamp(),
         actionData: {
           'offline': true,
           'model': _gemmaService.loadedModelType?.name ?? 'unknown',

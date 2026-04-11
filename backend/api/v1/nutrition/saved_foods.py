@@ -486,7 +486,7 @@ async def delete_saved_food(saved_food_id: str, user_id: str = Query(...), curre
 async def relog_saved_food(
     saved_food_id: str,
     request: RelogSavedFoodRequest,
-    http_request: Request = None,
+    http_request: Request,
     user_id: str = Query(...),
     target_date: Optional[str] = Query(None, description="Target date YYYY-MM-DD; defaults to now"),
     current_user: dict = Depends(get_current_user),

@@ -32,6 +32,7 @@ from typing import Optional
 DAY_NAMES = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
 
 from core.supabase_db import get_supabase_db
+from core.timezone_utils import get_user_today
 
 logger = logging.getLogger(__name__)
 
@@ -478,9 +479,16 @@ async def _fetch_preference_context(db, user_id: str) -> dict:
     return context
 
 
-def _get_upcoming_workouts(db, user_id: str) -> list[dict]:
-    """Get all upcoming incomplete workouts (tomorrow+)."""
-    tomorrow_str = (date.today()).isoformat()
+def _get_upcoming_workouts(db, user_id: str, timezone_str: str = None) -> list[dict]:
+    """Get all upcoming incomplete workouts (tomorrow+).
+
+    ``timezone_str`` should be passed from the caller so "today" is
+    resolved in the user's local timezone.
+    """
+    if timezone_str:
+        tomorrow_str = get_user_today(timezone_str)
+    else:
+        tomorrow_str = get_user_today("UTC")
     try:
         result = db.client.table("workouts").select(
             "id, scheduled_date, exercises_json, workout_name, status, is_completed, gym_profile_id"

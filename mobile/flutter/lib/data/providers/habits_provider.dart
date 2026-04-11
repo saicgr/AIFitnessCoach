@@ -31,6 +31,7 @@ final habitsProvider = Provider<List<HabitData>>((ref) {
   return [
     HabitData(
       name: 'Workouts',
+      id: 'auto_workouts',
       icon: Icons.fitness_center,
       last30Days: workoutDays,
       currentStreak: workoutStreak,
@@ -39,6 +40,7 @@ final habitsProvider = Provider<List<HabitData>>((ref) {
     ),
     HabitData(
       name: 'Food Log',
+      id: 'auto_food_log',
       icon: Icons.restaurant_menu,
       last30Days: foodLogDays,
       currentStreak: foodStreak,
@@ -47,6 +49,7 @@ final habitsProvider = Provider<List<HabitData>>((ref) {
     ),
     HabitData(
       name: 'Water',
+      id: 'auto_water',
       icon: Icons.water_drop,
       last30Days: waterDays,
       currentStreak: waterStreak,

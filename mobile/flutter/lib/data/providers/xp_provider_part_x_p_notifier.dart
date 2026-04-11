@@ -67,10 +67,30 @@ class XPNotifier extends StateNotifier<XPState> {
     }
 
     try {
+      // Capture old level/title before fetching to detect level-ups
+      final oldLevel = state.userXp?.currentLevel;
+      final oldTitle = state.userXp?.title;
+
       final userXp = await _repository.getUserXP(uid);
+
+      // Detect level-up by comparing old vs new level
+      LevelUpEvent? levelUp;
+      if (oldLevel != null && userXp.currentLevel > oldLevel) {
+        levelUp = LevelUpEvent(
+          oldLevel: oldLevel,
+          newLevel: userXp.currentLevel,
+          oldTitle: oldTitle,
+          newTitle: userXp.title != oldTitle ? userXp.title : null,
+          totalXp: userXp.totalXp,
+        );
+        debugPrint(
+            '🎯 [XPProvider] Level-up detected! $oldLevel → ${userXp.currentLevel}');
+      }
+
       state = state.copyWith(
         userXp: userXp,
         isLoading: false,
+        lastLevelUp: levelUp,
       );
 
       // Save to cache for next app open

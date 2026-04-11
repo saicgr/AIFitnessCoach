@@ -187,7 +187,7 @@ RULES:
                     temperature=0.7,
                     max_output_tokens=4000,  # Increased to prevent truncation
                 ),
-                timeout=30,
+                timeout=20,
                 method_name="exercise_reasoning",
             )
 

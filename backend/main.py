@@ -320,6 +320,16 @@ async def _resume_pending_media_jobs():
         logger.error(f"Failed to resume pending media jobs: {e}", exc_info=True)
 
 
+async def _prewarm_inflammation_cache():
+    """Pre-warm the ingredient inflammation food_database cache on startup."""
+    try:
+        from services.ingredient_inflammation.lookup import _ensure_food_db_cache
+        cache = await _ensure_food_db_cache()
+        logger.info(f"Pre-warmed inflammation cache with {len(cache)} entries")
+    except Exception as e:
+        logger.error(f"Failed to pre-warm inflammation cache: {e}", exc_info=True)
+
+
 async def get_langgraph_service() -> LangGraphCoachService:
     """
     Lazy getter for LangGraph service.
@@ -432,6 +442,7 @@ async def lifespan(app: FastAPI):
     _create_safe_task(_check_chromadb_dimensions(), name="check-chromadb-dimensions")
     _create_safe_task(_resume_pending_jobs(), name="resume-pending-jobs")
     _create_safe_task(_resume_pending_media_jobs(), name="resume-pending-media-jobs")
+    _create_safe_task(_prewarm_inflammation_cache(), name="prewarm-inflammation-cache")
 
     total_startup = time.time() - startup_start
     logger.info(f"Startup complete in {total_startup:.2f}s (server ready, background tasks running)")

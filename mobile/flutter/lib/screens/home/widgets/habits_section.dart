@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/theme/accent_color_provider.dart';
 import '../../../data/models/habit.dart';
@@ -27,6 +28,19 @@ final customHabitsHomeProvider = FutureProvider.autoDispose<List<HabitWithStatus
   }
 });
 
+/// Provider to load saved habit order from SharedPreferences
+final _savedHabitOrderProvider = FutureProvider.autoDispose<List<String>>((ref) async {
+  final authState = ref.watch(authStateProvider);
+  final userId = authState.user?.id;
+  if (userId == null || userId.isEmpty) return [];
+  try {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getStringList('habit_order_$userId') ?? [];
+  } catch (_) {
+    return [];
+  }
+});
+
 /// Habits section with horizontally scrollable square cards
 /// Includes auto-tracked habits (Workouts, Food Log, Water) and custom habits from API
 class HabitsSection extends ConsumerWidget {
@@ -38,8 +52,12 @@ class HabitsSection extends ConsumerWidget {
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
 
-    // Auto-tracked habits (Workouts, Food Log, Water)
-    final autoTrackedHabits = ref.watch(habitsProvider);
+    // Auto-tracked habits (Workouts, Food Log, Water) — tag with stable IDs
+    final autoTrackedHabits = ref.watch(habitsProvider).map((h) {
+      final id = 'auto_${h.name.toLowerCase().replaceAll(' ', '_')}';
+      return HabitData(name: h.name, id: id, icon: h.icon, last30Days: h.last30Days,
+          currentStreak: h.currentStreak, route: h.route, todayCompleted: h.todayCompleted);
+    }).toList();
 
     // Custom habits from API
     final customHabitsAsync = ref.watch(customHabitsHomeProvider);
@@ -51,8 +69,30 @@ class HabitsSection extends ConsumerWidget {
       error: (_, __) => <HabitData>[],
     );
 
-    // Combine auto-tracked + custom habits
-    final allHabits = [...autoTrackedHabits, ...customHabitCards];
+    // Saved habit order from SharedPreferences
+    final savedOrder = ref.watch(_savedHabitOrderProvider).valueOrNull ?? [];
+
+    // Combine auto-tracked + custom habits, then sort by saved order
+    List<HabitData> allHabits;
+    if (savedOrder.isNotEmpty) {
+      final habitsById = <String, HabitData>{};
+      for (final h in autoTrackedHabits) {
+        habitsById[h.id ?? h.name] = h;
+      }
+      for (final h in customHabitCards) {
+        habitsById[h.id ?? h.name] = h;
+      }
+      final ordered = <HabitData>[];
+      for (final id in savedOrder) {
+        if (habitsById.containsKey(id)) {
+          ordered.add(habitsById.remove(id)!);
+        }
+      }
+      ordered.addAll(habitsById.values);
+      allHabits = ordered;
+    } else {
+      allHabits = [...autoTrackedHabits, ...customHabitCards];
+    }
 
     return Padding(
       padding: const EdgeInsets.only(top: 24),
@@ -172,6 +212,7 @@ class HabitsSection extends ConsumerWidget {
 
     return HabitData(
       name: habit.name,
+      id: habit.id,
       icon: _getIconData(habit.icon),
       last30Days: last30Days,
       currentStreak: habit.currentStreak,
@@ -302,23 +343,12 @@ class _AddHabitBottomSheetState extends ConsumerState<_AddHabitBottomSheet> {
   }
 
   Future<void> _loadTemplates() async {
-    try {
-      final repository = ref.read(habitRepositoryProvider);
-      final templates = await repository.getHabitTemplates();
-      if (mounted) {
-        setState(() {
-          _templates = templates;
-          _isLoading = false;
-        });
-      }
-    } catch (e) {
-      debugPrint('❌ Error loading templates: $e');
-      if (mounted) {
-        setState(() {
-          _templates = HabitTemplate.defaults;
-          _isLoading = false;
-        });
-      }
+    // Use hardcoded defaults — API templates have duplicates
+    if (mounted) {
+      setState(() {
+        _templates = HabitTemplate.defaults;
+        _isLoading = false;
+      });
     }
   }
 

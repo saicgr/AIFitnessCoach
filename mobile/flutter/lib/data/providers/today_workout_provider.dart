@@ -1,11 +1,14 @@
 import 'dart:async';
-import 'dart:convert' show jsonEncode;
+import 'dart:convert' show jsonDecode, jsonEncode;
 import 'dart:io' show Platform;
 import 'dart:math' show min, pow;
+import 'package:drift/drift.dart' show Value;
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/providers/wearable_provider.dart';
+import '../local/database.dart';
+import '../local/database_provider.dart';
 import '../repositories/workout_repository.dart';
 import '../services/data_cache_service.dart';
 import '../services/wearable_service.dart';
@@ -115,32 +118,94 @@ class TodayWorkoutNotifier extends StateNotifier<AsyncValue<TodayWorkoutResponse
   }
 
   /// Load cached workout data from persistent storage
+  /// Tries SharedPreferences first, then falls back to Drift local DB
   /// Also updates in-memory cache for future instant access
   Future<TodayWorkoutResponse?> _loadFromCache() async {
+    // Layer 1: Try SharedPreferences (fastest, has full TodayWorkoutResponse)
     try {
       final cached = await DataCacheService.instance.getCached(
         DataCacheService.todayWorkoutKey,
       );
       if (cached != null) {
         final response = TodayWorkoutResponse.fromJson(cached);
-        // Update in-memory cache for instant access on provider recreation
         _inMemoryCache = response;
+        debugPrint('⚡ [TodayWorkout] Loaded from SharedPreferences cache');
         return response;
       }
     } catch (e) {
-      debugPrint('⚠️ [TodayWorkout] Cache parse error: $e');
+      debugPrint('⚠️ [TodayWorkout] SharedPreferences cache parse error: $e');
     }
+
+    // Layer 2: Fallback to Drift local DB (has individual workouts)
+    try {
+      final db = _ref.read(appDatabaseProvider);
+      final repository = _ref.read(workoutRepositoryProvider);
+      final userId = await repository.getCurrentUserId();
+      if (userId != null) {
+        final todayStr = _todayDateString();
+        final localWorkouts = await db.workoutDao.getWorkoutsForDateRange(
+          userId, todayStr, todayStr,
+        );
+        if (localWorkouts.isNotEmpty) {
+          final summary = _cachedWorkoutToSummary(localWorkouts.first);
+          final response = TodayWorkoutResponse(
+            hasWorkoutToday: true,
+            todayWorkout: summary,
+          );
+          _inMemoryCache = response;
+          debugPrint('⚡ [TodayWorkout] Loaded from Drift local DB fallback');
+          return response;
+        }
+      }
+    } catch (e) {
+      debugPrint('⚠️ [TodayWorkout] Drift cache fallback error: $e');
+    }
+
     return null;
   }
 
-  /// Save workout data to cache (both in-memory and persistent)
+  /// Normalize response: clear isGenerating when real displayable content exists.
+  /// Prevents stale isGenerating flag from blocking cache writes or UI updates.
+  /// Extracted for reuse in both _fetchFromApi and background polling paths.
+  TodayWorkoutResponse _normalizeResponse(TodayWorkoutResponse response) {
+    if (response.hasDisplayableContent && response.isGenerating) {
+      // Safety: if the workout is a generation placeholder (name="Generating...",
+      // 0 exercises), do NOT treat it as real content — let isGenerating stay true
+      // so polling continues until the real workout is ready.
+      final isPlaceholder = response.todayWorkout?.name == 'Generating...' &&
+          (response.todayWorkout?.exerciseCount ?? 0) == 0;
+      if (!isPlaceholder) {
+        debugPrint('🔄 [TodayWorkout] Normalized: cleared isGenerating (real content exists)');
+        return TodayWorkoutResponse(
+          hasWorkoutToday: response.hasWorkoutToday,
+          todayWorkout: response.todayWorkout,
+          nextWorkout: response.nextWorkout,
+          daysUntilNext: response.daysUntilNext,
+          restDayMessage: response.restDayMessage,
+          completedToday: response.completedToday,
+          completedWorkout: response.completedWorkout,
+          extraTodayWorkouts: response.extraTodayWorkouts,
+          isGenerating: false,
+          generationMessage: null,
+          needsGeneration: response.needsGeneration,
+          nextWorkoutDate: response.nextWorkoutDate,
+          gymProfileId: response.gymProfileId,
+        );
+      }
+    }
+    return response;
+  }
+
+  /// Save workout data to cache (in-memory, SharedPreferences, and Drift)
   Future<void> _saveToCache(TodayWorkoutResponse response) async {
-    // Don't cache if workout is generating (transient state)
-    if (response.isGenerating) return;
+    // Don't cache if generating AND there's no real displayable content
+    // (placeholder-only transient state shouldn't be persisted)
+    if (response.isGenerating && !response.hasDisplayableContent) return;
 
     // Update in-memory cache FIRST (instant for next provider recreation)
     _inMemoryCache = response;
 
+    // Save to SharedPreferences (full response with TTL)
     try {
       await DataCacheService.instance.cache(
         DataCacheService.todayWorkoutKey,
@@ -149,6 +214,81 @@ class TodayWorkoutNotifier extends StateNotifier<AsyncValue<TodayWorkoutResponse
     } catch (e) {
       debugPrint('⚠️ [TodayWorkout] Cache save error: $e');
     }
+
+    // Save individual workouts to Drift for offline/restart fallback
+    try {
+      final db = _ref.read(appDatabaseProvider);
+      final repository = _ref.read(workoutRepositoryProvider);
+      final userId = await repository.getCurrentUserId();
+      if (userId != null) {
+        if (response.todayWorkout != null) {
+          await db.workoutDao.upsertWorkout(
+            _summaryToCompanion(response.todayWorkout!, userId),
+          );
+        }
+        if (response.nextWorkout != null) {
+          await db.workoutDao.upsertWorkout(
+            _summaryToCompanion(response.nextWorkout!, userId),
+          );
+        }
+        for (final extra in response.extraTodayWorkouts) {
+          await db.workoutDao.upsertWorkout(
+            _summaryToCompanion(extra, userId),
+          );
+        }
+      }
+    } catch (e) {
+      debugPrint('⚠️ [TodayWorkout] Drift cache save error: $e');
+    }
+  }
+
+  /// Convert TodayWorkoutSummary to CachedWorkoutsCompanion for Drift upsert
+  CachedWorkoutsCompanion _summaryToCompanion(TodayWorkoutSummary summary, String userId) {
+    return CachedWorkoutsCompanion(
+      id: Value(summary.id),
+      userId: Value(userId),
+      name: Value(summary.name),
+      type: Value(summary.type),
+      difficulty: Value(summary.difficulty),
+      scheduledDate: Value(summary.scheduledDate),
+      isCompleted: Value(summary.isCompleted),
+      exercisesJson: Value(jsonEncode(summary.exercises.map((e) => e.toJson()).toList())),
+      durationMinutes: Value(summary.durationMinutes),
+      generationMethod: Value(summary.generationMethod),
+      cachedAt: Value(DateTime.now()),
+      syncStatus: const Value('synced'),
+    );
+  }
+
+  /// Convert CachedWorkout (Drift row) to TodayWorkoutSummary
+  TodayWorkoutSummary _cachedWorkoutToSummary(CachedWorkout cached) {
+    final now = DateTime.now();
+    final todayStr = '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
+    List<dynamic> exercisesList = [];
+    try {
+      exercisesList = (jsonDecode(cached.exercisesJson) as List<dynamic>?) ?? [];
+    } catch (_) {}
+
+    return TodayWorkoutSummary.fromJson({
+      'id': cached.id,
+      'name': cached.name ?? 'Workout',
+      'type': cached.type ?? 'strength',
+      'difficulty': cached.difficulty ?? 'medium',
+      'duration_minutes': cached.durationMinutes ?? 45,
+      'exercise_count': exercisesList.length,
+      'primary_muscles': <String>[],
+      'scheduled_date': cached.scheduledDate ?? todayStr,
+      'is_today': cached.scheduledDate == todayStr,
+      'is_completed': cached.isCompleted,
+      'exercises': exercisesList,
+      'generation_method': cached.generationMethod,
+    });
+  }
+
+  /// Get today's date string in YYYY-MM-DD format
+  String _todayDateString() {
+    final now = DateTime.now();
+    return '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
   }
 
   /// Fetch fresh data from API
@@ -234,37 +374,9 @@ class TodayWorkoutNotifier extends StateNotifier<AsyncValue<TodayWorkoutResponse
         }
       }
 
-      // Normalize: guarantee isGenerating=false when displayable content exists.
-      // This is the canonical fix — all UI code can trust isGenerating without
-      // also needing to check for existing workouts. Fixes the caching bug too
-      // (_saveToCache skips when isGenerating=true, losing valid workout data).
-      //
-      // Safety: if the workout is a generation placeholder (name="Generating...",
-      // 0 exercises), do NOT treat it as real content — let isGenerating stay true
-      // so polling continues until the real workout is ready.
-      if (response != null && response.hasDisplayableContent && response.isGenerating) {
-        final isPlaceholder = response.todayWorkout?.name == 'Generating...' &&
-            (response.todayWorkout?.exerciseCount ?? 0) == 0;
-        if (!isPlaceholder) {
-          debugPrint('🔄 [TodayWorkout] Normalized: cleared isGenerating (real content exists)');
-          response = TodayWorkoutResponse(
-            hasWorkoutToday: response.hasWorkoutToday,
-            todayWorkout: response.todayWorkout,
-            nextWorkout: response.nextWorkout,
-            daysUntilNext: response.daysUntilNext,
-            restDayMessage: response.restDayMessage,
-            completedToday: response.completedToday,
-            completedWorkout: response.completedWorkout,
-            extraTodayWorkouts: response.extraTodayWorkouts,
-            isGenerating: false,
-            generationMessage: null,
-            needsGeneration: response.needsGeneration,
-            nextWorkoutDate: response.nextWorkoutDate,
-            gymProfileId: response.gymProfileId,
-          );
-        } else {
-          debugPrint('⚠️ [TodayWorkout] Placeholder workout detected, keeping isGenerating=true');
-        }
+      // Normalize: clear isGenerating when real displayable content exists
+      if (response != null) {
+        response = _normalizeResponse(response);
       }
 
       // Handle empty state polling
@@ -376,8 +488,10 @@ class TodayWorkoutNotifier extends StateNotifier<AsyncValue<TodayWorkoutResponse
             _stopBackgroundGenerationPolling();
             _hasTriggeredGeneration = false;
             _generationTimedOut = false;
-            _safeSetState(AsyncValue.data(response));
-            await _saveToCache(response);
+            // Normalize before caching (clears stale isGenerating flag)
+            final normalized = _normalizeResponse(response);
+            _safeSetState(AsyncValue.data(normalized));
+            await _saveToCache(normalized);
           }
           // If no workout yet, the streaming auto-retry is still running — just wait
         }

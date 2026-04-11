@@ -191,6 +191,16 @@ class HabitsScreenNotifier extends StateNotifier<HabitsScreenState> {
     // Add custom habits
     for (int i = 0; i < customHabits.length; i++) {
       final custom = customHabits[i];
+      // Generate approximate 30-day history from completion rate + today status
+      final last30Days = List<bool>.filled(30, false);
+      if (custom.todayCompleted) {
+        last30Days[29] = true;
+      }
+      final completedDays = (custom.completionRate7d * 7).round();
+      for (int j = 0; j < completedDays && j < 7; j++) {
+        last30Days[28 - j] = true;
+      }
+
       habitsById[custom.id] = UnifiedHabitItem(
         id: custom.id,
         name: custom.name,
@@ -199,7 +209,7 @@ class HabitsScreenNotifier extends StateNotifier<HabitsScreenState> {
         isAutoTracked: false,
         todayCompleted: custom.todayCompleted,
         currentStreak: custom.currentStreak,
-        last30Days: [], // Custom habits don't have 30-day history
+        last30Days: last30Days,
         description: custom.description,
         sortOrder: autoHabits.length + i,
       );

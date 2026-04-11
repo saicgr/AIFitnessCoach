@@ -220,7 +220,7 @@ extension WorkoutRepositoryPerformance on WorkoutRepository {
           'user_id': userId,
           'amount_ml': amountMl,
           'drink_type': drinkType,
-          'logged_at': DateTime.now().toIso8601String(),
+          'logged_at': Tz.timestamp(),
         },
       );
       if (response.statusCode == 200) {
@@ -255,7 +255,7 @@ extension WorkoutRepositoryPerformance on WorkoutRepository {
           'exercise_id': exerciseId,
           'set_number': setNumber,
           'rest_type': restType,
-          'logged_at': DateTime.now().toIso8601String(),
+          'logged_at': Tz.timestamp(),
         },
       );
       if (response.statusCode == 200) {

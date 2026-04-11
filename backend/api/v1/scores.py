@@ -26,8 +26,9 @@ from .scores_endpoints import router as _endpoints_router
 
 from datetime import datetime, date, timedelta
 from typing import Optional, List, Dict, Any
-from fastapi import APIRouter, HTTPException, Query, Depends, BackgroundTasks
+from fastapi import APIRouter, HTTPException, Query, Depends, BackgroundTasks, Request
 from core.auth import get_current_user, verify_user_ownership
+from core.timezone_utils import user_today_date, resolve_timezone
 from core.exceptions import safe_internal_error
 from pydantic import BaseModel, Field
 
@@ -345,6 +346,7 @@ class ScoresOverviewResponse(BaseModel):
 async def submit_readiness_checkin(
     request: ReadinessCheckInRequest,
     background_tasks: BackgroundTasks,
+    http_request: Request,
     current_user: dict = Depends(get_current_user),
 ):
     """
@@ -357,7 +359,7 @@ async def submit_readiness_checkin(
     readiness_service = ReadinessService()
 
     # Determine date
-    check_date = request.score_date or date.today()
+    check_date = request.score_date or user_today_date(http_request, db, request.user_id)
 
     # Create check-in object
     check_in = ReadinessCheckIn(
@@ -411,6 +413,7 @@ async def submit_readiness_checkin(
     record = response.data[0]
 
     # Generate AI recommendation in background and update record
+    tz_str = resolve_timezone(http_request, db, request.user_id)
     background_tasks.add_task(
         generate_ai_readiness_insight,
         user_id=request.user_id,
@@ -424,6 +427,7 @@ async def submit_readiness_checkin(
             "readiness_level": result.readiness_level.value,
         },
         db=db,
+        timezone_str=tz_str,
     )
 
     return ReadinessResponse(
@@ -490,6 +494,7 @@ async def get_readiness_for_date(
 
 @router.get("/readiness/history", response_model=ReadinessHistoryResponse, tags=["Readiness"])
 async def get_readiness_history(
+    http_request: Request,
     user_id: str = Query(...),
     days: int = Query(30, ge=1, le=365),
     current_user: dict = Depends(get_current_user),
@@ -499,7 +504,7 @@ async def get_readiness_history(
     db = get_supabase_db()
     readiness_service = ReadinessService()
 
-    start_date = (date.today() - timedelta(days=days)).isoformat()
+    start_date = (user_today_date(http_request, db, user_id) - timedelta(days=days)).isoformat()
 
     response = db.client.table("readiness_scores").select("*").eq(
         "user_id", user_id
@@ -700,6 +705,7 @@ async def get_strength_detail(
 
 @router.post("/strength/calculate", tags=["Strength"])
 async def calculate_strength_scores(
+    http_request: Request,
     user_id: str = Query(...),
     background_tasks: BackgroundTasks = None,
     current_user: dict = Depends(get_current_user),
@@ -711,6 +717,7 @@ async def calculate_strength_scores(
     """
     db = get_supabase_db()
     strength_service = StrengthCalculatorService()
+    today = user_today_date(http_request, db, user_id)
 
     # Get user info (check column first, then preferences JSON)
     user_response = db.client.table("users").select("weight_kg, gender, preferences").eq(
@@ -723,7 +730,7 @@ async def calculate_strength_scores(
     bodyweight, gender = get_user_body_info(user_response.data)
 
     # Get workout data from last 90 days
-    start_date = (date.today() - timedelta(days=90)).isoformat()
+    start_date = (today - timedelta(days=90)).isoformat()
 
     workouts_response = db.client.table("workouts").select(
         "id, exercises, completed_at"
@@ -774,7 +781,7 @@ async def calculate_strength_scores(
 
     # Save new scores
     now = datetime.now()
-    period_end = date.today()
+    period_end = today
     period_start = period_end - timedelta(days=7)
 
     for mg, score in muscle_scores.items():

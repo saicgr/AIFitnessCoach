@@ -1,3 +1,4 @@
+import '../../utils/tz.dart';
 import '../models/exercise.dart';
 import '../models/workout.dart';
 import '../../screens/onboarding/pre_auth_quiz_screen.dart';
@@ -37,10 +38,10 @@ class TemplateWorkoutGenerator {
       type: _getWorkoutType(primaryGoal),
       exercisesJson: exercisesJson,
       estimatedDurationMinutes: estimatedDuration,
-      scheduledDate: DateTime.now().toIso8601String(),
+      scheduledDate: Tz.timestamp(),
       isCompleted: false,
-      createdAt: DateTime.now().toIso8601String(),
-      updatedAt: DateTime.now().toIso8601String(),
+      createdAt: Tz.timestamp(),
+      updatedAt: Tz.timestamp(),
     );
   }
 

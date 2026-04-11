@@ -436,30 +436,30 @@ class _MacroProgressRing extends StatelessWidget {
     return Column(
       children: [
         SizedBox(
-          width: 56,
-          height: 56,
+          width: 44,
+          height: 44,
           child: Stack(
             alignment: Alignment.center,
             clipBehavior: Clip.none,
             children: [
               // Background ring - tinted with macro color
               SizedBox(
-                width: 56,
-                height: 56,
+                width: 44,
+                height: 44,
                 child: CircularProgressIndicator(
                   value: 1.0,
-                  strokeWidth: 5,
+                  strokeWidth: 4,
                   backgroundColor: color.withValues(alpha: 0.25),
                   color: color.withValues(alpha: 0.25),
                 ),
               ),
               // Progress ring
               SizedBox(
-                width: 56,
-                height: 56,
+                width: 44,
+                height: 44,
                 child: CircularProgressIndicator(
                   value: percentage,
-                  strokeWidth: 5,
+                  strokeWidth: 4,
                   backgroundColor: Colors.transparent,
                   color: color,
                   strokeCap: StrokeCap.round,
@@ -472,7 +472,7 @@ class _MacroProgressRing extends StatelessWidget {
                   Text(
                     '${current.toInt()}',
                     style: TextStyle(
-                      fontSize: 18,
+                      fontSize: 14,
                       fontWeight: FontWeight.w800,
                       color: textPrimary,
                     ),
@@ -481,7 +481,7 @@ class _MacroProgressRing extends StatelessWidget {
                     Text(
                       'kcal',
                       style: TextStyle(
-                        fontSize: 9,
+                        fontSize: 8,
                         fontWeight: FontWeight.w500,
                         color: textMuted,
                       ),
@@ -491,11 +491,11 @@ class _MacroProgressRing extends StatelessWidget {
             ],
           ),
         ),
-        const SizedBox(height: 6),
+        const SizedBox(height: 4),
         Text(
           label,
           style: TextStyle(
-            fontSize: 13,
+            fontSize: 11,
             fontWeight: FontWeight.w700,
             color: color,
           ),
@@ -505,7 +505,7 @@ class _MacroProgressRing extends StatelessWidget {
         Text(
           '/${target.toInt()}$unit',
           style: TextStyle(
-            fontSize: 11,
+            fontSize: 10,
             fontWeight: FontWeight.w500,
             color: textPrimary.withValues(alpha: 0.5),
           ),

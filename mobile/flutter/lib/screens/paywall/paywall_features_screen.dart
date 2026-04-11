@@ -30,7 +30,7 @@ class PaywallFeaturesScreen extends ConsumerWidget {
         child: FoldableQuizScaffold(
           headerTitle: '',
           headerExtra: _buildPremiumSummary(colors),
-          content: Padding(
+          content: SingleChildScrollView(
             padding: const EdgeInsets.symmetric(horizontal: 24),
             child: Column(
               children: [
@@ -80,32 +80,20 @@ class PaywallFeaturesScreen extends ConsumerWidget {
 
                 if (isFoldable) const SizedBox(height: 8),
 
-                const Spacer(),
-
                 // Feature list
-                _FeatureItem(icon: Icons.auto_fix_high, iconColor: colors.purple, title: 'Unlimited AI workout generation', subtitle: '23+ equipment types with personalized weights', colors: colors),
-                const SizedBox(height: 12),
-                _FeatureItem(icon: Icons.chat_bubble_outline, iconColor: colors.electricBlue, title: 'Unlimited AI coach chat', subtitle: 'Ask anything — nutrition, form, recovery, motivation', colors: colors),
-                const SizedBox(height: 12),
-                _FeatureItem(icon: Icons.camera_alt_outlined, iconColor: colors.orange, title: 'Unlimited food photo scanning', subtitle: 'Snap a photo, get instant calories & macros', colors: colors),
-                const SizedBox(height: 12),
-                _FeatureItem(icon: Icons.location_on_outlined, iconColor: colors.electricBlue, title: 'Workout environment aware', subtitle: 'Gym, home, hotel, outdoors — adapts to your space', colors: colors),
-                const SizedBox(height: 12),
-                _FeatureItem(icon: Icons.show_chart_rounded, iconColor: Colors.greenAccent, title: 'Adaptive TDEE & smart suggestions', subtitle: 'Research-grade metabolism tracking that adapts weekly', colors: colors),
-                const SizedBox(height: 12),
-                _FeatureItem(icon: Icons.fitness_center, iconColor: colors.purple, title: 'Skill progressions', subtitle: '7 chains with 52+ exercises to master', colors: colors),
-                const SizedBox(height: 12),
-                _FeatureItem(icon: Icons.healing_outlined, iconColor: colors.coral, title: 'Injury tracking & body part exclusion', subtitle: 'Report injuries, auto-adapt workouts safely', colors: colors),
-                const SizedBox(height: 12),
-                _FeatureItem(icon: Icons.grid_view_rounded, iconColor: Colors.tealAccent, title: 'Muscle heatmap & balance analysis', subtitle: 'Visualize which muscles you train most', colors: colors),
-                const SizedBox(height: 12),
-                _FeatureItem(icon: Icons.bar_chart_rounded, iconColor: colors.orange, title: 'Advanced charts & analytics', subtitle: 'All-time history with detailed progress trends', colors: colors),
-                const SizedBox(height: 12),
-                _FeatureItem(icon: Icons.person_outline_rounded, iconColor: colors.purple, title: 'Coach personas', subtitle: '5+ AI personality styles to match your vibe', colors: colors),
-                const SizedBox(height: 12),
-                _FeatureItem(icon: Icons.local_fire_department, iconColor: const Color(0xFFE74C3C), title: 'Hell Mode', subtitle: 'Regenerate with max intensity — not for the faint-hearted', colors: colors),
+                _FeatureItem(icon: Icons.auto_fix_high, iconColor: colors.purple, title: 'Unlimited AI workouts', subtitle: 'Personalized plans for any equipment & goal', colors: colors),
+                const SizedBox(height: 14),
+                _FeatureItem(icon: Icons.chat_bubble_outline, iconColor: colors.electricBlue, title: 'AI coach chat', subtitle: 'Nutrition, form, recovery — ask anything', colors: colors),
+                const SizedBox(height: 14),
+                _FeatureItem(icon: Icons.camera_alt_outlined, iconColor: colors.orange, title: 'Food photo scanning', subtitle: 'Snap a photo, get instant calories & macros', colors: colors),
+                const SizedBox(height: 14),
+                _FeatureItem(icon: Icons.healing_outlined, iconColor: colors.coral, title: 'Injury-aware training', subtitle: 'Auto-adapt workouts around your injuries', colors: colors),
+                const SizedBox(height: 14),
+                _FeatureItem(icon: Icons.bar_chart_rounded, iconColor: Colors.greenAccent, title: 'Progress tracking & analytics', subtitle: 'Charts, heatmaps, and detailed trends', colors: colors),
+                const SizedBox(height: 14),
+                _FeatureItem(icon: Icons.local_fire_department, iconColor: const Color(0xFFE74C3C), title: 'Hell Mode & skill progressions', subtitle: 'Push past every plateau', colors: colors),
 
-                const Spacer(),
+                const SizedBox(height: 24),
               ],
             ),
           ),

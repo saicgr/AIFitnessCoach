@@ -469,7 +469,7 @@ class HabitsScreen extends ConsumerWidget {
                                   ),
                               ],
                             ),
-                            if (habit.isAutoTracked && habit.last30Days.isNotEmpty)
+                            if (habit.last30Days.isNotEmpty)
                               Text(
                                 '${habit.last30Days.where((d) => d).length} of 30 days',
                                 style: TextStyle(
@@ -523,7 +523,7 @@ class HabitsScreen extends ConsumerWidget {
                     ],
                   ),
                   // Mini grid for auto-tracked habits
-                  if (habit.isAutoTracked && habit.last30Days.isNotEmpty) ...[
+                  if (habit.last30Days.isNotEmpty) ...[
                     const SizedBox(height: 12),
                     _buildMiniGrid(habit.last30Days, effectiveColor, emptyColor),
                   ],

@@ -7,6 +7,7 @@ import '../../../data/models/hormonal_health.dart';
 import '../../../data/providers/hormonal_health_provider.dart';
 import '../../../data/repositories/hormonal_health_repository.dart';
 import '../../../core/providers/user_provider.dart';
+import '../../../utils/tz.dart';
 
 /// Bottom sheet for logging daily hormone-related metrics
 class HormoneLogSheet extends ConsumerStatefulWidget {
@@ -292,7 +293,7 @@ class _HormoneLogSheetState extends ConsumerState<HormoneLogSheet> {
 
     try {
       final logData = <String, dynamic>{
-        'log_date': DateTime.now().toIso8601String().split('T')[0],
+        'log_date': Tz.localDate(),
         if (_energyLevel != null) 'energy_level': _energyLevel,
         if (_sleepQuality != null) 'sleep_quality': _sleepQuality,
         if (_stressLevel != null) 'stress_level': _stressLevel,

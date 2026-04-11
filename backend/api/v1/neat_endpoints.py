@@ -18,7 +18,7 @@ Endpoints:
 import asyncio
 from typing import Any, Dict
 from datetime import datetime, timedelta, date, time
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request
 import logging
 logger = logging.getLogger(__name__)
 import random
@@ -26,6 +26,7 @@ from core.auth import get_current_user
 from core.db import get_supabase_db
 from core.exceptions import safe_internal_error
 from core.activity_logger import log_user_activity
+from core.timezone_utils import user_today_date
 from services.user_context_service import UserContextService, EventType
 
 
@@ -191,6 +192,7 @@ async def get_neat_achievements(user_id: str,
 
 @router.get("/achievements/{user_id}/available", response_model=AvailableAchievementsResponse, tags=["NEAT Achievements"])
 async def get_available_achievements(user_id: str,
+    request: Request,
     current_user: dict = Depends(get_current_user),
 ):
     """
@@ -215,10 +217,10 @@ async def get_available_achievements(user_id: str,
         earned_ids = {r.get("achievement_id") for r in (earned_response.data or [])}
 
         # Get user's current metrics for progress calculation
-        today = date.today().isoformat()
+        today = user_today_date(request, db, user_id).isoformat()
 
         # Get total steps this month
-        month_start = date.today().replace(day=1).isoformat()
+        month_start = user_today_date(request, db, user_id).replace(day=1).isoformat()
         steps_response = db.client.table("daily_activity").select(
             "steps"
         ).eq("user_id", user_id).gte("activity_date", month_start).execute()
@@ -516,6 +518,7 @@ async def update_reminder_preferences(
 
 @router.get("/reminders/{user_id}/should-remind", response_model=ShouldRemindResponse, tags=["NEAT Reminders"])
 async def should_send_reminder(user_id: str,
+    request: Request,
     current_user: dict = Depends(get_current_user),
 ):
     """
@@ -527,7 +530,10 @@ async def should_send_reminder(user_id: str,
     db = get_supabase_db()
 
     try:
-        now = datetime.now()
+        from core.timezone_utils import resolve_timezone, _safe_zone
+        tz_str = resolve_timezone(request, db, user_id)
+        from zoneinfo import ZoneInfo
+        now = datetime.now(_safe_zone(tz_str))
         current_time = now.time()
         current_day = DayOfWeek(now.strftime("%A").lower())
 
@@ -573,7 +579,7 @@ async def should_send_reminder(user_id: str,
         # Check recent activity if skip_if_active is enabled
         if prefs.skip_if_active:
             # Get activity for current hour
-            today = now.date().isoformat()
+            today = user_today_date(request, db, user_id).isoformat()
             current_hour = now.hour
 
             hourly_response = db.client.table("neat_hourly_activity").select(
@@ -646,6 +652,7 @@ async def should_send_reminder(user_id: str,
 @router.get("/dashboard/{user_id}", response_model=NEATDashboard, tags=["NEAT Dashboard"])
 async def get_neat_dashboard(
     user_id: str,
+    request: Request,
     background_tasks: BackgroundTasks,
     current_user: dict = Depends(get_current_user),
 ):
@@ -664,12 +671,13 @@ async def get_neat_dashboard(
      get_neat_goals, get_today_neat_score, get_hourly_breakdown,
      get_neat_score_history, calculate_neat_score,
      calculate_progressive_goal, update_neat_goals) = _neat_parent()
+    db = get_supabase_db()
     try:
         logger.info(f"Fetching NEAT dashboard for user {user_id}")
 
         # Fetch all data concurrently (in production, use asyncio.gather)
-        goal_progress = await get_neat_goals(user_id, background_tasks)
-        today_score = await get_today_neat_score(user_id)
+        goal_progress = await get_neat_goals(user_id, request, background_tasks)
+        today_score = await get_today_neat_score(user_id, request)
         streak_summary = await get_streak_summary(user_id)
 
         # Get recent achievements
@@ -678,7 +686,7 @@ async def get_neat_dashboard(
         uncelebrated = [a for a in achievements_response.earned if not a.is_celebrated]
 
         # Get today's hourly breakdown
-        hourly_breakdown = await get_hourly_breakdown(user_id, date.today())
+        hourly_breakdown = await get_hourly_breakdown(user_id, user_today_date(request, db, user_id))
 
         # Get weekly average and trend
         history = await get_neat_score_history(user_id, limit=7)
@@ -738,6 +746,7 @@ async def get_neat_dashboard(
 
 @router.post("/scheduler/send-movement-reminders", response_model=SendRemindersResponse, tags=["NEAT Scheduler"])
 async def send_movement_reminders(request: SendRemindersRequest,
+    http_request: Request,
     current_user: dict = Depends(get_current_user),
 ):
     """
@@ -751,6 +760,8 @@ async def send_movement_reminders(request: SendRemindersRequest,
     try:
         logger.info(f"Running movement reminder scheduler (dry_run={request.dry_run})")
 
+        # NOTE: This cron pre-filter uses UTC intentionally for broad matching.
+        # Per-user timezone resolution happens inside should_send_reminder().
         now = datetime.now()
         current_hour = now.hour
         current_day = now.strftime("%A").lower()
@@ -771,7 +782,7 @@ async def send_movement_reminders(request: SendRemindersRequest,
             users_checked += 1
 
             try:
-                should_remind = await should_send_reminder(user_id)
+                should_remind = await should_send_reminder(user_id, http_request)
 
                 if not should_remind.should_remind:
                     if "active" in should_remind.reason.lower():
@@ -807,6 +818,7 @@ async def send_movement_reminders(request: SendRemindersRequest,
 
 @router.post("/scheduler/calculate-daily-scores", response_model=CalculateDailyScoresResponse, tags=["NEAT Scheduler"])
 async def calculate_daily_scores(request: CalculateDailyScoresRequest,
+    http_request: Request,
     current_user: dict = Depends(get_current_user),
 ):
     """
@@ -822,7 +834,7 @@ async def calculate_daily_scores(request: CalculateDailyScoresRequest,
     db = get_supabase_db()
 
     try:
-        target_date = request.target_date or (date.today() - timedelta(days=1))
+        target_date = request.target_date or (user_today_date(http_request) - timedelta(days=1))
         logger.info(f"Calculating daily NEAT scores for {target_date}")
 
         # Get all users with hourly activity for the target date
@@ -870,6 +882,7 @@ async def calculate_daily_scores(request: CalculateDailyScoresRequest,
 
 @router.post("/scheduler/adjust-weekly-goals", response_model=AdjustWeeklyGoalsResponse, tags=["NEAT Scheduler"])
 async def adjust_weekly_goals(request: AdjustWeeklyGoalsRequest,
+    http_request: Request,
     current_user: dict = Depends(get_current_user),
 ):
     """
@@ -921,7 +934,7 @@ async def adjust_weekly_goals(request: AdjustWeeklyGoalsRequest,
 
                         # Update last adjustment date
                         db.client.table("neat_goals").update({
-                            "last_adjustment_date": date.today().isoformat()
+                            "last_adjustment_date": user_today_date(http_request, db, user_id).isoformat()
                         }).eq("user_id", user_id).execute()
 
                     goals_adjusted += 1

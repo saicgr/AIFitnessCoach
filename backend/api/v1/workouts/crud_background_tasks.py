@@ -16,6 +16,7 @@ from datetime import datetime, date, timedelta
 from typing import List, Dict
 
 from core.logger import get_logger
+from core.timezone_utils import get_user_today
 
 # Import services for background tasks
 from services.strength_calculator_service import StrengthCalculatorService
@@ -162,7 +163,7 @@ def _calculate_completion_calories(
     return calories
 
 
-async def recalculate_user_strength_scores(user_id: str, supabase):
+async def recalculate_user_strength_scores(user_id: str, supabase, timezone_str: str):
     """
     Background task to recalculate strength scores after workout completion.
     """
@@ -185,7 +186,7 @@ async def recalculate_user_strength_scores(user_id: str, supabase):
         gender = user.get("gender", "male")
 
         # Get workout data from last 90 days
-        start_date = (date.today() - timedelta(days=90)).isoformat()
+        start_date = (date.fromisoformat(get_user_today(timezone_str)) - timedelta(days=90)).isoformat()
 
         workouts_response = supabase.table("workouts").select(
             "id, exercises_json, completed_at"
@@ -240,7 +241,7 @@ async def recalculate_user_strength_scores(user_id: str, supabase):
 
         # Save new scores
         now = datetime.now()
-        period_end = date.today()
+        period_end = date.fromisoformat(get_user_today(timezone_str))
         period_start = period_end - timedelta(days=7)
 
         for mg, score in muscle_scores.items():
@@ -288,7 +289,7 @@ async def recalculate_user_strength_scores(user_id: str, supabase):
         logger.error(f"Background: Failed to recalculate strength scores: {e}", exc_info=True)
 
 
-async def recalculate_user_fitness_score(user_id: str, supabase):
+async def recalculate_user_fitness_score(user_id: str, supabase, timezone_str: str):
     """
     Background task to recalculate overall fitness score after workout completion.
 
@@ -320,7 +321,7 @@ async def recalculate_user_fitness_score(user_id: str, supabase):
             strength_score = 0
 
         # 2. Get consistency score (workout completion rate for last 30 days)
-        thirty_days_ago = (date.today() - timedelta(days=30)).isoformat()
+        thirty_days_ago = (date.fromisoformat(get_user_today(timezone_str)) - timedelta(days=30)).isoformat()
 
         # Count scheduled workouts
         scheduled_response = supabase.table("workouts").select(
@@ -364,7 +365,7 @@ async def recalculate_user_fitness_score(user_id: str, supabase):
         nutrition_score = nutrition_rows[0].get("nutrition_score", 0) if nutrition_rows else 0
 
         # 4. Get readiness score (7-day average)
-        seven_days_ago = (date.today() - timedelta(days=7)).isoformat()
+        seven_days_ago = (date.fromisoformat(get_user_today(timezone_str)) - timedelta(days=7)).isoformat()
         readiness_response = supabase.table("readiness_scores").select(
             "readiness_score"
         ).eq(
@@ -395,13 +396,14 @@ async def recalculate_user_fitness_score(user_id: str, supabase):
             readiness_score=readiness_score,
             consistency_score=consistency_score,
             nutrition_score=nutrition_score,
+            timezone_str=timezone_str,
             previous_score=previous_score,
         )
 
         # 7. Save to database
         record_data = {
             "user_id": user_id,
-            "calculated_date": date.today().isoformat(),
+            "calculated_date": get_user_today(timezone_str),
             "strength_score": score.strength_score,
             "readiness_score": score.readiness_score,
             "consistency_score": score.consistency_score,

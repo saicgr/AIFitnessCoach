@@ -21,6 +21,7 @@ from typing import Optional, List, Dict, Any
 from decimal import Decimal
 from core.logger import get_logger
 from core.supabase_db import get_supabase_db
+from core.timezone_utils import get_user_today
 
 logger = get_logger(__name__)
 
@@ -79,10 +80,8 @@ class StrainPreventionService:
     def __init__(self):
         self.db = get_supabase_db()
 
-    def _get_week_start(self, target_date: date = None) -> date:
+    def _get_week_start(self, target_date: date) -> date:
         """Get the Monday of the week containing target_date."""
-        if target_date is None:
-            target_date = date.today()
         # weekday() returns 0 for Monday, 6 for Sunday
         return target_date - timedelta(days=target_date.weekday())
 
@@ -90,7 +89,8 @@ class StrainPreventionService:
         self,
         user_id: str,
         exercises: List[dict],
-        workout_date: date = None
+        timezone_str: str,
+        workout_date: date = None,
     ) -> VolumeTrackingResult:
         """
         Track volume from a completed workout.
@@ -99,13 +99,14 @@ class StrainPreventionService:
             user_id: User identifier
             exercises: List of exercise dicts with sets_completed, reps_completed,
                       weight_kg, and primary_muscle
-            workout_date: Date of the workout (defaults to today)
+            timezone_str: IANA timezone string for the user
+            workout_date: Date of the workout (defaults to user's today)
 
         Returns:
             VolumeTrackingResult with muscle volumes tracked
         """
         if workout_date is None:
-            workout_date = date.today()
+            workout_date = date.fromisoformat(get_user_today(timezone_str))
 
         week_start = self._get_week_start(workout_date)
 
@@ -178,7 +179,7 @@ class StrainPreventionService:
             total_volume_kg=total_volume
         )
 
-    async def assess_strain_risk(self, user_id: str) -> List[StrainRiskAssessment]:
+    async def assess_strain_risk(self, user_id: str, timezone_str: str) -> List[StrainRiskAssessment]:
         """
         Assess current strain risk for all muscle groups.
 
@@ -187,11 +188,12 @@ class StrainPreventionService:
 
         Args:
             user_id: User identifier
+            timezone_str: IANA timezone string for the user
 
         Returns:
             List of StrainRiskAssessment for each muscle group
         """
-        today = date.today()
+        today = date.fromisoformat(get_user_today(timezone_str))
         current_week = self._get_week_start(today)
         previous_week = current_week - timedelta(days=7)
 
@@ -315,8 +317,9 @@ class StrainPreventionService:
         user_id: str,
         body_part: str,
         severity: str,
+        timezone_str: str,
         activity_type: str = None,
-        notes: str = None
+        notes: str = None,
     ) -> dict:
         """
         Record a strain incident for learning.
@@ -330,13 +333,14 @@ class StrainPreventionService:
             user_id: User identifier
             body_part: Body part that was strained
             severity: 'mild', 'moderate', or 'severe'
+            timezone_str: IANA timezone string for the user
             activity_type: 'strength', 'cardio', or 'both'
             notes: Optional notes about the strain
 
         Returns:
             Dict with recording status and any cap adjustments
         """
-        today = date.today()
+        today = date.fromisoformat(get_user_today(timezone_str))
         week_start = self._get_week_start(today)
 
         try:
@@ -401,7 +405,8 @@ class StrainPreventionService:
     async def get_safe_volume_for_workout(
         self,
         user_id: str,
-        planned_exercises: List[dict]
+        planned_exercises: List[dict],
+        timezone_str: str,
     ) -> List[dict]:
         """
         Adjust workout to stay within safe volume limits.
@@ -412,11 +417,12 @@ class StrainPreventionService:
         Args:
             user_id: User identifier
             planned_exercises: List of planned exercise dicts
+            timezone_str: IANA timezone string for the user
 
         Returns:
             Adjusted exercises with volume modifications
         """
-        assessments = await self.assess_strain_risk(user_id)
+        assessments = await self.assess_strain_risk(user_id, timezone_str)
         risk_map = {a.muscle_group: a for a in assessments}
 
         adjusted_exercises = []
@@ -449,19 +455,21 @@ class StrainPreventionService:
     async def get_volume_history(
         self,
         user_id: str,
-        weeks: int = 8
+        timezone_str: str,
+        weeks: int = 8,
     ) -> List[dict]:
         """
         Get volume history for the past N weeks.
 
         Args:
             user_id: User identifier
+            timezone_str: IANA timezone string for the user
             weeks: Number of weeks of history to retrieve
 
         Returns:
             List of weekly volume records
         """
-        today = date.today()
+        today = date.fromisoformat(get_user_today(timezone_str))
         start_date = today - timedelta(weeks=weeks)
 
         try:

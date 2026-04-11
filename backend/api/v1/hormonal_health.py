@@ -3,7 +3,7 @@ Hormonal Health API Endpoints
 API routes for hormonal health tracking, cycle management, and personalized recommendations.
 """
 
-from fastapi import APIRouter, HTTPException, Query, Depends
+from fastapi import APIRouter, HTTPException, Query, Depends, Request
 from typing import Optional, List
 from datetime import date, datetime, timedelta
 from uuid import UUID
@@ -19,6 +19,7 @@ from models.hormonal_health import (
 from core.supabase_client import get_supabase
 from core.auth import get_current_user
 from core.logger import get_logger
+from core.timezone_utils import user_today_date
 
 logger = get_logger(__name__)
 from core.exceptions import safe_internal_error
@@ -30,12 +31,14 @@ router = APIRouter(prefix="/hormonal-health", tags=["Hormonal Health"])
 # HELPER FUNCTIONS
 # ============================================================================
 
-def calculate_cycle_phase(last_period_date: date, cycle_length: int = 28) -> tuple:
+def calculate_cycle_phase(last_period_date: date, cycle_length: int = 28, today: date = None) -> tuple:
     """Calculate current cycle day and phase."""
     if not last_period_date:
         return None, None
 
-    days_since_period = (date.today() - last_period_date).days
+    if today is None:
+        today = date.today()  # fallback for non-endpoint callers; endpoints should always pass today
+    days_since_period = (today - last_period_date).days
     current_cycle_day = (days_since_period % cycle_length) + 1
 
     if current_cycle_day <= 5:
@@ -237,6 +240,7 @@ async def delete_hormonal_profile(
 @router.post("/logs/{user_id}", response_model=HormoneLog)
 async def create_hormone_log(
     user_id: UUID, log: HormoneLogCreate,
+    request: Request,
     current_user: dict = Depends(get_current_user),
 ):
     """Create a hormone log entry."""
@@ -265,7 +269,8 @@ async def create_hormone_log(
                 if p.get("last_period_start_date"):
                     cycle_day, phase = calculate_cycle_phase(
                         date.fromisoformat(p["last_period_start_date"]),
-                        p.get("cycle_length_days", 28)
+                        p.get("cycle_length_days", 28),
+                        today=user_today_date(request, None, str(user_id)),
                     )
                     if not log_data.get("cycle_day"):
                         log_data["cycle_day"] = cycle_day
@@ -320,16 +325,18 @@ async def get_hormone_logs(
 @router.get("/logs/{user_id}/today", response_model=Optional[HormoneLog])
 async def get_today_hormone_log(
     user_id: UUID,
+    request: Request,
     current_user: dict = Depends(get_current_user),
 ):
     """Get today's hormone log if it exists."""
     logger.info(f"[Hormonal] Fetching today's log for user {user_id}")
 
     try:
+        today = user_today_date(request, None, str(user_id))
         supabase = get_supabase().client
         result = supabase.table("hormone_logs").select("*").eq(
             "user_id", str(user_id)
-        ).eq("log_date", date.today().isoformat()).execute()
+        ).eq("log_date", today.isoformat()).execute()
 
         if result.data:
             return result.data[0]
@@ -347,6 +354,7 @@ async def get_today_hormone_log(
 @router.get("/cycle-phase/{user_id}", response_model=CyclePhaseInfo)
 async def get_cycle_phase(
     user_id: UUID,
+    request: Request,
     current_user: dict = Depends(get_current_user),
 ):
     """Get current cycle phase information for a user."""
@@ -372,7 +380,7 @@ async def get_cycle_phase(
 
         last_period = date.fromisoformat(profile["last_period_start_date"])
         cycle_length = profile.get("cycle_length_days", 28)
-        current_day, current_phase = calculate_cycle_phase(last_period, cycle_length)
+        current_day, current_phase = calculate_cycle_phase(last_period, cycle_length, today=user_today_date(request, None, str(user_id)))
 
         # Calculate days until next phase
         phase_boundaries = {
@@ -428,7 +436,7 @@ async def get_phase_recommendation(
 
 @router.post("/cycle-phase/{user_id}/log-period")
 async def log_period_start(
-    user_id: UUID, period_date: date = Query(default=None),
+    user_id: UUID, request: Request, period_date: date = Query(default=None),
     current_user: dict = Depends(get_current_user),
 ):
     """Log the start of a new menstrual period."""
@@ -437,7 +445,7 @@ async def log_period_start(
     try:
         supabase = get_supabase().client
 
-        period_start = period_date or date.today()
+        period_start = period_date or user_today_date(request, None, str(user_id))
 
         # Update profile with new period start date
         result = supabase.table("hormonal_profiles").update({
@@ -519,6 +527,7 @@ async def get_hormone_supportive_foods(
 @router.get("/foods/recommendations/{user_id}", response_model=HormonalFoodRecommendation)
 async def get_food_recommendations(
     user_id: UUID,
+    request: Request,
     current_user: dict = Depends(get_current_user),
 ):
     """Get personalized hormone-supportive food recommendations."""
@@ -540,7 +549,8 @@ async def get_food_recommendations(
             if profile.get("menstrual_tracking_enabled") and profile.get("last_period_start_date"):
                 _, current_phase = calculate_cycle_phase(
                     date.fromisoformat(profile["last_period_start_date"]),
-                    profile.get("cycle_length_days", 28)
+                    profile.get("cycle_length_days", 28),
+                    today=user_today_date(request, None, str(user_id)),
                 )
 
         # Get recommended foods
@@ -625,6 +635,7 @@ async def get_food_recommendations(
 @router.get("/insights/{user_id}", response_model=HormonalInsights)
 async def get_hormonal_insights(
     user_id: UUID,
+    request: Request,
     current_user: dict = Depends(get_current_user),
 ):
     """Get comprehensive hormonal health insights for a user."""
@@ -638,13 +649,13 @@ async def get_hormonal_insights(
         profile = profile_result.data[0] if profile_result.data else None
 
         # Get cycle phase info
-        cycle_info = await get_cycle_phase(user_id)
+        cycle_info = await get_cycle_phase(user_id, request)
 
         # Get recent logs (last 7 days)
         logs_result = supabase.table("hormone_logs").select("*").eq(
             "user_id", str(user_id)
         ).gte(
-            "log_date", (date.today() - timedelta(days=7)).isoformat()
+            "log_date", (user_today_date(request, None, str(user_id)) - timedelta(days=7)).isoformat()
         ).order("log_date", desc=True).execute()
 
         # Summarize recent logs
@@ -668,7 +679,7 @@ async def get_hormonal_insights(
             logs_summary["mood_trend"] = [l.get("mood") for l in logs if l.get("mood")]
 
         # Get food recommendations
-        food_recommendations = await get_food_recommendations(user_id)
+        food_recommendations = await get_food_recommendations(user_id, request)
 
         # Build recommendations
         recommendations = []

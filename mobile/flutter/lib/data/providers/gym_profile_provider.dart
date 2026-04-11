@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/theme/accent_color_provider.dart';
+import '../../utils/tz.dart';
 import '../models/gym_profile.dart';
 import '../repositories/gym_profile_repository.dart';
 import '../repositories/auth_repository.dart';
@@ -158,7 +159,7 @@ class GymProfilesNotifier extends StateNotifier<AsyncValue<List<GymProfile>>> {
         DataCacheService.gymProfilesKey,
         {
           'profiles': profiles.map((p) => p.toJson()).toList(),
-          'cached_at': DateTime.now().toIso8601String(),
+          'cached_at': Tz.timestamp(),
         },
       );
     } catch (e) {

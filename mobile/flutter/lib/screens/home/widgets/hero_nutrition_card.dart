@@ -3,9 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
-import '../../../core/constants/api_constants.dart';
 import '../../../data/repositories/nutrition_repository.dart';
-import '../../../data/repositories/auth_repository.dart';
 import '../../../data/services/api_client.dart';
 import '../../../data/services/haptic_service.dart';
 import '../../../data/providers/nutrition_preferences_provider.dart';
@@ -53,21 +51,12 @@ class _HeroNutritionCardState extends ConsumerState<HeroNutritionCard>
     final apiClient = ref.read(apiClientProvider);
     final userId = await apiClient.getUserId();
     if (userId != null && mounted) {
-      await ref.read(nutritionProvider.notifier).loadTodaySummary(userId);
-      await ref.read(nutritionProvider.notifier).loadTargets(userId);
-
-      // Load hydration data
-      ref.read(hydrationProvider.notifier).loadTodaySummary(userId);
-
-      // Load dynamic targets (training/rest day adjustments)
-      ref.read(nutritionPreferencesProvider.notifier).initialize(userId);
-
-      // Check if targets are null - if so, try to calculate them from user profile
-      final prefsStateCheck = ref.read(nutritionPreferencesProvider);
-      if (prefsStateCheck.preferences?.targetCalories == null) {
-        await _calculateTargetsFromProfile(userId, apiClient);
-        await ref.read(nutritionProvider.notifier).loadTargets(userId);
-      }
+      // Load all data in parallel instead of sequentially
+      await Future.wait([
+        ref.read(nutritionProvider.notifier).loadTodaySummary(userId),
+        ref.read(hydrationProvider.notifier).loadTodaySummary(userId),
+        ref.read(nutritionPreferencesProvider.notifier).initialize(userId),
+      ]);
 
       if (mounted) {
         setState(() => _isLoading = false);
@@ -89,59 +78,6 @@ class _HeroNutritionCardState extends ConsumerState<HeroNutritionCard>
     }
   }
 
-  Future<void> _calculateTargetsFromProfile(String userId, ApiClient apiClient) async {
-    try {
-      final authState = ref.read(authStateProvider);
-      final user = authState.user;
-      if (user == null) return;
-
-      if (user.weightKg == null || user.heightCm == null ||
-          user.age == null || user.gender == null) {
-        return;
-      }
-
-      String weightDirection = 'maintain';
-      if (user.targetWeightKg != null && user.weightKg != null) {
-        final diff = user.targetWeightKg! - user.weightKg!;
-        if (diff < -2) {
-          weightDirection = 'lose';
-        } else if (diff > 2) {
-          weightDirection = 'gain';
-        }
-      }
-
-      final nutritionGoals = user.goalsList.map((goal) {
-        switch (goal) {
-          case 'lose_weight':
-          case 'lose_fat':
-            return 'lose_fat';
-          case 'build_muscle':
-          case 'gain_muscle':
-            return 'build_muscle';
-          default:
-            return 'maintain';
-        }
-      }).toList();
-
-      await apiClient.post(
-        '${ApiConstants.users}/$userId/calculate-nutrition-targets',
-        data: {
-          'weight_kg': user.weightKg,
-          'height_cm': user.heightCm,
-          'age': user.age,
-          'gender': user.gender,
-          'activity_level': user.activityLevel ?? 'lightly_active',
-          'weight_direction': weightDirection,
-          'weight_change_rate': 'moderate',
-          'goal_weight_kg': user.targetWeightKg,
-          'nutrition_goals': nutritionGoals.isNotEmpty ? nutritionGoals : ['maintain'],
-          'workout_days_per_week': user.workoutsPerWeek ?? 3,
-        },
-      );
-    } catch (e) {
-      debugPrint('❌ [HeroNutritionCard] Failed to calculate nutrition targets: $e');
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -152,7 +88,6 @@ class _HeroNutritionCardState extends ConsumerState<HeroNutritionCard>
 
     final nutritionState = ref.watch(nutritionProvider);
     final summary = nutritionState.todaySummary;
-    final targets = nutritionState.targets;
     final prefsState = ref.watch(nutritionPreferencesProvider);
     final dynamicTargets = prefsState.dynamicTargets;
     final hydrationState = ref.watch(hydrationProvider);

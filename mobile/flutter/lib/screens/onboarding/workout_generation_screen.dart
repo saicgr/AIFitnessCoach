@@ -8,6 +8,7 @@ import '../../core/theme/accent_color_provider.dart';
 import '../../data/models/workout.dart';
 import '../../data/repositories/workout_repository.dart';
 import '../../data/services/api_client.dart';
+import '../../utils/tz.dart';
 import '../../widgets/glass_back_button.dart';
 import '../../widgets/gradient_circular_progress_indicator.dart';
 import 'pre_auth_quiz_screen.dart';
@@ -143,7 +144,7 @@ class _WorkoutGenerationScreenState extends ConsumerState<WorkoutGenerationScree
       final repository = ref.read(workoutRepositoryProvider);
       // Pass the client's local date so the workout is scheduled for "today"
       // in the user's timezone, not the server's UTC date
-      final todayLocal = DateTime.now().toIso8601String().substring(0, 10);
+      final todayLocal = Tz.localDate();
       final stream = repository.generateWorkoutStreaming(
         userId: userId,
         durationMinutes: workoutDuration,

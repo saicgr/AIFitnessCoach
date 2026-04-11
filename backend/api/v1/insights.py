@@ -23,6 +23,7 @@ from services.gemini_service import gemini_service
 from core.auth import get_current_user
 from core.exceptions import safe_internal_error
 from core.rate_limiter import limiter
+from core.timezone_utils import user_today_date, resolve_timezone
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/insights", tags=["insights"])
@@ -62,6 +63,7 @@ class InsightsResponse(BaseModel):
 
 @router.get("/{user_id}")
 async def get_user_insights(
+    request: Request,
     user_id: str,
     limit: int = Query(default=5, ge=1, le=20),
     include_expired: bool = False,
@@ -88,7 +90,7 @@ async def get_user_insights(
         insights = result.data if result.data else []
 
         # Get current week's progress
-        today = datetime.now().date()
+        today = user_today_date(request, db, user_id)
         week_start = today - timedelta(days=today.weekday())  # Monday
 
         progress_result = db.client.table("weekly_program_progress").select("*").eq(
@@ -109,6 +111,7 @@ async def get_user_insights(
 
 @router.post("/{user_id}/generate")
 async def generate_insights(
+    request: Request,
     user_id: str, force_refresh: bool = False,
     current_user: dict = Depends(get_current_user),
 ):
@@ -140,7 +143,8 @@ async def generate_insights(
         user = user_result.data[0]
 
         # Get workout history (last 30 days)
-        thirty_days_ago = (datetime.now() - timedelta(days=30)).strftime("%Y-%m-%d")
+        today = user_today_date(request, db, user_id)
+        thirty_days_ago = (today - timedelta(days=30)).isoformat()
         workouts_result = db.client.table("workouts").select("*").eq(
             "user_id", user_id
         ).gte("scheduled_date", thirty_days_ago).execute()
@@ -159,7 +163,6 @@ async def generate_insights(
             if w.get("scheduled_date"):
                 completed_dates.add(w["scheduled_date"][:10])
 
-        today = datetime.now().date()
         streak = 0
         check_date = today
         while check_date.isoformat() in completed_dates or (check_date == today and len(completed_dates) > 0):
@@ -309,6 +312,7 @@ async def get_weekly_progress(
 
 @router.post("/{user_id}/update-weekly-progress")
 async def update_weekly_progress(
+    request: Request,
     user_id: str,
     current_user: dict = Depends(get_current_user),
 ):
@@ -320,7 +324,7 @@ async def update_weekly_progress(
         db = get_supabase_db()
 
         # Get current week bounds
-        today = datetime.now().date()
+        today = user_today_date(request, db, user_id)
         week_start = today - timedelta(days=today.weekday())  # Monday
         week_end = week_start + timedelta(days=6)  # Sunday
 
@@ -484,6 +488,7 @@ Response (JSON only):"""
 
 @router.get("/{user_id}/weight-insight")
 async def get_weight_insight(
+    request: Request,
     user_id: str, force_refresh: bool = False,
     current_user: dict = Depends(get_current_user),
 ):
@@ -514,7 +519,8 @@ async def get_weight_insight(
         user = user_result.data[0]
 
         # Get weight history (last 14 days)
-        fourteen_days_ago = (datetime.now() - timedelta(days=14)).strftime("%Y-%m-%d")
+        today = user_today_date(request, db, user_id)
+        fourteen_days_ago = (today - timedelta(days=14)).isoformat()
         weight_result = db.client.table("weight_logs").select("*").eq(
             "user_id", user_id
         ).gte("logged_at", fourteen_days_ago).order("logged_at", desc=True).execute()
@@ -591,8 +597,9 @@ async def get_daily_tip(
         db = get_supabase_db()
 
         # Check cache first
-        today = datetime.now().strftime("%Y-%m-%d")
-        cache_key = f"daily_tip_{user_id}_{today}"
+        today = user_today_date(request, db, user_id)
+        today_str = today.isoformat()
+        cache_key = f"daily_tip_{user_id}_{today_str}"
 
         if not force_refresh:
             cached = db.client.table("ai_insight_cache").select("*").eq(
@@ -610,7 +617,7 @@ async def get_daily_tip(
         user = user_result.data[0]
 
         # Get recent workout data
-        seven_days_ago = (datetime.now() - timedelta(days=7)).strftime("%Y-%m-%d")
+        seven_days_ago = (today - timedelta(days=7)).isoformat()
         workouts_result = db.client.table("workouts").select("*").eq(
             "user_id", user_id
         ).gte("scheduled_date", seven_days_ago).order("scheduled_date", desc=True).execute()
@@ -622,15 +629,17 @@ async def get_daily_tip(
         last_workout = completed[0] if completed else None
         days_since = 0
         if last_workout:
-            last_date = datetime.strptime(last_workout.get("scheduled_date", today)[:10], "%Y-%m-%d")
-            days_since = (datetime.now() - last_date).days
+            last_date = datetime.strptime(last_workout.get("scheduled_date", today_str)[:10], "%Y-%m-%d").date()
+            days_since = (today - last_date).days
 
-        # Time of day
-        hour = datetime.now().hour
+        # Time of day (in user's timezone)
+        from zoneinfo import ZoneInfo
+        user_tz = resolve_timezone(request, db, user_id)
+        hour = datetime.now(ZoneInfo(user_tz)).hour
         time_of_day = "morning" if hour < 12 else "afternoon" if hour < 17 else "evening"
 
         # Get streak
-        streak = _calculate_streak(workouts)
+        streak = _calculate_streak(workouts, today)
 
         # Favorite muscles (from workout types)
         muscle_counts: Dict[str, int] = {}
@@ -778,14 +787,16 @@ def _cache_insight(db, cache_key: str, insight: str, hours: int = 24):
         logger.warning(f"Failed to cache insight: {e}", exc_info=True)
 
 
-def _calculate_streak(workouts: List[Dict]) -> int:
+def _calculate_streak(workouts: List[Dict], today=None) -> int:
     """Calculate workout streak from workout list."""
+    from datetime import date as _date
     completed_dates = set()
     for w in workouts:
         if w.get("is_completed") and w.get("scheduled_date"):
             completed_dates.add(w["scheduled_date"][:10])
 
-    today = datetime.now().date()
+    if today is None:
+        today = _date.today()
     streak = 0
     check_date = today
 

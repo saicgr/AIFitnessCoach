@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/nutrition_preferences.dart';
+import '../../utils/tz.dart';
 import '../services/api_client.dart';
 
 /// Nutrition preferences repository provider
@@ -188,7 +189,7 @@ class NutritionPreferencesRepository {
         data: {
           'user_id': userId,
           'weight_kg': weightKg,
-          'logged_at': (loggedAt ?? DateTime.now()).toIso8601String(),
+          'logged_at': Tz.timestamp(loggedAt),
           'source': source,
           if (notes != null) 'notes': notes,
         },

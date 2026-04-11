@@ -4,6 +4,7 @@ from typing import Any, Dict, List, Optional
 from datetime import datetime, timedelta, date, time
 import logging
 from core.db import get_supabase_db
+from core.timezone_utils import get_user_today
 
 
 def _neat_part2_parent():
@@ -124,7 +125,7 @@ class NEATServicePart2:
     # 5. Achievement System
     # =========================================================================
 
-    async def check_and_award_achievements(self, user_id: str) -> List[Achievement]:
+    async def check_and_award_achievements(self, user_id: str, timezone_str: str) -> List[Achievement]:
         """
         Check all achievement conditions and award any earned.
 
@@ -139,7 +140,7 @@ class NEATServicePart2:
             new_achievements = []
 
             # Get today's data
-            today = date.today().isoformat()
+            today = get_user_today(timezone_str)
             score = await self.calculate_neat_score(user_id, today)
             streaks = await self.get_user_streaks(user_id)
 
@@ -199,7 +200,7 @@ class NEATServicePart2:
                         new_achievements.append(self._get_achievement(ach_id, True))
 
             # Check weekly achievements
-            week_achievements = await self._check_weekly_achievements(user_id)
+            week_achievements = await self._check_weekly_achievements(user_id, timezone_str)
             new_achievements.extend(week_achievements)
 
             if new_achievements:
@@ -256,7 +257,7 @@ class NEATServicePart2:
             logger.error(f"Error getting user achievements: {e}", exc_info=True)
             return []
 
-    async def get_available_achievements(self, user_id: str) -> List[Achievement]:
+    async def get_available_achievements(self, user_id: str, timezone_str: str) -> List[Achievement]:
         """
         Get all unearned achievements with progress.
 
@@ -273,10 +274,10 @@ class NEATServicePart2:
             earned_ids = {a.id for a in earned}
 
             # Get current stats for progress calculation
-            today = date.today().isoformat()
+            today = get_user_today(timezone_str)
             score = await self.calculate_neat_score(user_id, today)
             streaks = await self.get_user_streaks(user_id)
-            week_days_met = await self._get_week_days_met(user_id)
+            week_days_met = await self._get_week_days_met(user_id, timezone_str)
 
             available = []
 
@@ -377,11 +378,11 @@ class NEATServicePart2:
             achieved_at=datetime.now() if achieved else None,
         )
 
-    async def _check_weekly_achievements(self, user_id: str) -> List[Achievement]:
+    async def _check_weekly_achievements(self, user_id: str, timezone_str: str) -> List[Achievement]:
         """Check and award weekly achievements."""
         Achievement, _, _, _, _ = _get_neat_types()
         try:
-            days_met = await self._get_week_days_met(user_id)
+            days_met = await self._get_week_days_met(user_id, timezone_str)
             new_achievements = []
 
             if days_met >= 5:
@@ -400,11 +401,11 @@ class NEATServicePart2:
             logger.error(f"Error checking weekly achievements: {e}", exc_info=True)
             return []
 
-    async def _get_week_days_met(self, user_id: str) -> int:
+    async def _get_week_days_met(self, user_id: str, timezone_str: str) -> int:
         """Get number of days goal was met this week."""
         try:
             db = get_supabase_db()
-            today = date.today()
+            today = date.fromisoformat(get_user_today(timezone_str))
             week_start = today - timedelta(days=today.weekday())
 
             result = db.client.table("daily_neat_activity").select(
@@ -423,7 +424,7 @@ class NEATServicePart2:
     # 6. Movement Reminder Logic
     # =========================================================================
 
-    async def should_send_reminder(self, user_id: str) -> bool:
+    async def should_send_reminder(self, user_id: str, timezone_str: str) -> bool:
         """
         Determine if a movement reminder should be sent now.
 
@@ -445,7 +446,8 @@ class NEATServicePart2:
             if not prefs.enabled:
                 return False
 
-            now = datetime.now()
+            from core.timezone_utils import _safe_zone
+            now = datetime.now(_safe_zone(timezone_str))
             current_time = now.time()
 
             # Check quiet hours
@@ -468,7 +470,7 @@ class NEATServicePart2:
                 return False
 
             # Get current hour status
-            status = await self.get_current_hour_status(user_id)
+            status = await self.get_current_hour_status(user_id, timezone_str)
 
             # Send reminder if sedentary for min_sedentary_hours
             if status["sedentary_streak_hours"] >= prefs.min_sedentary_hours:
@@ -611,7 +613,7 @@ class NEATServicePart2:
     # 7. AI Context for Gemini
     # =========================================================================
 
-    async def get_neat_context_for_ai(self, user_id: str) -> str:
+    async def get_neat_context_for_ai(self, user_id: str, timezone_str: str) -> str:
         """
         Generate a context string for AI/Gemini prompts about user's NEAT activity.
 
@@ -625,10 +627,10 @@ class NEATServicePart2:
         """
         try:
             # Gather all relevant data
-            goal = await self.get_user_neat_goal(user_id)
-            today = date.today().isoformat()
+            goal = await self.get_user_neat_goal(user_id, timezone_str)
+            today = get_user_today(timezone_str)
             score = await self.calculate_neat_score(user_id, today)
-            trend = await self.get_neat_score_trend(user_id, 7)
+            trend = await self.get_neat_score_trend(user_id, timezone_str, 7)
             streaks = await self.get_user_streaks(user_id)
             achievements = await self.get_user_achievements(user_id)
             sedentary_hours = await self.detect_sedentary_hours(user_id, today)

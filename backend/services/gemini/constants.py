@@ -156,6 +156,8 @@ cost_tracker = _CostTracker()
 
 def _is_transient_gemini_error(e: Exception) -> bool:
     """Check if a Gemini API error is transient and worth retrying."""
+    if isinstance(e, (TimeoutError, asyncio.TimeoutError)):
+        return True
     error_str = str(e).lower()
     return any(kw in error_str for kw in [
         "429", "resource_exhausted", "503", "rate limit",

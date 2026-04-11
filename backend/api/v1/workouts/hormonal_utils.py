@@ -14,11 +14,12 @@ from typing import List, Dict, Any, Optional
 
 from core.supabase_db import get_supabase_db
 from core.logger import get_logger
+from core.timezone_utils import get_user_today
 
 logger = get_logger(__name__)
 
 
-async def get_user_hormonal_context(user_id: str) -> dict:
+async def get_user_hormonal_context(user_id: str, timezone_str: str) -> dict:
     """Get user's hormonal health context for workout generation."""
     try:
         db = get_supabase_db()
@@ -46,7 +47,7 @@ async def get_user_hormonal_context(user_id: str) -> dict:
                 try:
                     last_period = date.fromisoformat(profile["last_period_date"])
                     avg_cycle_length = profile.get("avg_cycle_length", 28)
-                    today = date.today()
+                    today = date.fromisoformat(get_user_today(timezone_str))
                     days_since_period = (today - last_period).days
                     cycle_day = (days_since_period % avg_cycle_length) + 1
                     context["cycle_day"] = cycle_day

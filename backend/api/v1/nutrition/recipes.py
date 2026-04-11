@@ -401,7 +401,7 @@ async def delete_recipe(recipe_id: str, user_id: str = Query(...), current_user:
 async def log_recipe(
     recipe_id: str,
     request: LogRecipeRequest,
-    http_request: Request = None,
+    http_request: Request,
     user_id: str = Query(...),
     current_user: dict = Depends(get_current_user),
 ):

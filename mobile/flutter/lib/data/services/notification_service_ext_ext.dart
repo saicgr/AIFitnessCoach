@@ -92,7 +92,7 @@ extension NotificationServiceScheduled on NotificationService {
         ? List<String>.from(jsonDecode(raw) as List)
         : <String>[];
 
-    timestamps.add(DateTime.now().toIso8601String());
+    timestamps.add(Tz.timestamp());
 
     // Trim to 14 days
     final cutoff = DateTime.now().subtract(const Duration(days: 14));

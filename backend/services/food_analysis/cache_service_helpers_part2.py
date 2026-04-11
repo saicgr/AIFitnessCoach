@@ -9,16 +9,15 @@ from core.supabase_client import get_supabase
 from services.food_analysis.parser import ParsedFoodItem
 from services.food_analysis.constants import (
     _WEIGHT_REGEX, _WEIGHT_AFTER_REGEX, _VOLUME_REGEX, _VOLUME_AFTER_REGEX,
-    _FILLER_REGEX, _WORD_NUMBERS,
+    _FILLER_REGEX, _WORD_NUMBERS, strip_restaurant_qualifier,
 )
 from services.food_analysis.parser import _weight_unit_to_grams, _volume_unit_to_ml
 from services.food_database_lookup_service import get_food_db_lookup_service
-from services.food_analysis.modifiers_helpers import _classify_modifier
+from services.food_analysis.modifiers_helpers import _classify_modifier, _init_modifier_patterns
+from services.food_analysis import modifiers_helpers as _mh
 from services.food_analysis.modifiers import (
     _FOOD_MODIFIERS, _MODIFIER_METADATA, _MODIFIER_GROUPS,
-    ModifierType, _MODIFIER_PHRASES_SORTED,
-    _BULLET_REGEX, _NUM_UNIT_REGEX, _WORD_NUM_UNIT_REGEX,
-    _BARE_NUM_REGEX, _FRACTION_REGEX,
+    ModifierType,
 )
 from core.db.nutrition_db import NutritionDB
 from core.redis_cache import RedisCache
@@ -26,6 +25,15 @@ from core.redis_cache import RedisCache
 logger = logging.getLogger(__name__)
 
 _food_analysis_cache = RedisCache(prefix="food_analysis", ttl_seconds=86400, max_size=200)
+
+
+def _get_regex(name: str):
+    """Get a lazy-initialized regex from modifiers_helpers, ensuring init has run."""
+    val = getattr(_mh, name, None)
+    if val is None:
+        _init_modifier_patterns()
+        val = getattr(_mh, name)
+    return val
 
 
 class FoodAnalysisCacheServicePart2:
@@ -250,7 +258,7 @@ class FoodAnalysisCacheServicePart2:
         # Strip fillers: "I had", "I ate", "about", etc.
         text = _FILLER_REGEX.sub('', text).strip()
         # Strip bullets: "- ", "• ", "1. ", "breakfast: "
-        text = _BULLET_REGEX.sub('', text).strip()
+        text = _get_regex('_BULLET_REGEX').sub('', text).strip()
         # Strip leading "and " / "or "
         text = re.sub(r'^(?:and|or)\s+', '', text, flags=re.IGNORECASE).strip()
 
@@ -296,7 +304,7 @@ class FoodAnalysisCacheServicePart2:
             return ParsedFoodItem(food_name=food, weight_g=ml, volume_ml=ml, raw_text=raw)
 
         # Try numeric + count-unit: "6 slices pizza", "2 cups rice"
-        m = _NUM_UNIT_REGEX.match(text)
+        m = _get_regex('_NUM_UNIT_REGEX').match(text)
         if m:
             qty = float(m.group(1))
             unit = m.group(2).lower()
@@ -304,7 +312,7 @@ class FoodAnalysisCacheServicePart2:
             return ParsedFoodItem(food_name=food, quantity=qty, unit=unit, raw_text=raw)
 
         # Try word number + optional unit: "one plate biryani", "half a pizza", "a bowl of soup"
-        m = _WORD_NUM_UNIT_REGEX.match(text)
+        m = _get_regex('_WORD_NUM_UNIT_REGEX').match(text)
         if m:
             word = m.group(1).lower()
             qty = _WORD_NUMBERS.get(word, 1.0)
@@ -315,14 +323,14 @@ class FoodAnalysisCacheServicePart2:
             return ParsedFoodItem(food_name=food, quantity=qty, unit=unit, raw_text=raw)
 
         # Try fraction: "1/2 pizza"
-        m = _FRACTION_REGEX.match(text)
+        m = _get_regex('_FRACTION_REGEX').match(text)
         if m:
             qty = float(m.group(1)) / float(m.group(2))
             food = m.group(3).strip()
             return ParsedFoodItem(food_name=food, quantity=qty, raw_text=raw)
 
         # Try bare number: "2 dosa", "100 rice"
-        m = _BARE_NUM_REGEX.match(text)
+        m = _get_regex('_BARE_NUM_REGEX').match(text)
         if m:
             qty = float(m.group(1))
             food = m.group(2).strip()
@@ -360,6 +368,9 @@ class FoodAnalysisCacheServicePart2:
             Combined analysis dict if all items found, None otherwise
         """
         try:
+            # Strip trailing restaurant names before parsing
+            description = strip_restaurant_qualifier(description)
+
             items = self._split_food_description(description)
             if not items:
                 return None
@@ -440,7 +451,7 @@ class FoodAnalysisCacheServicePart2:
 
             # Step 1: Strip NL filler phrases
             text = _FILLER_REGEX.sub('', text).strip()
-            text = _BULLET_REGEX.sub('', text).strip()
+            text = _get_regex('_BULLET_REGEX').sub('', text).strip()
             if not text:
                 return None
 
@@ -449,7 +460,7 @@ class FoodAnalysisCacheServicePart2:
             # Step 2: Find all modifiers in the text
             found_modifiers = []
             remaining = text_lower
-            for phrase in _MODIFIER_PHRASES_SORTED:
+            for phrase in _get_regex('_MODIFIER_PHRASES_SORTED'):
                 # Use word boundary matching
                 pattern = re.compile(r'\b' + re.escape(phrase) + r'\b', re.IGNORECASE)
                 if pattern.search(remaining):
@@ -504,8 +515,37 @@ class FoodAnalysisCacheServicePart2:
             if not override:
                 return None
 
-            # Step 5: Get base analysis
-            if parsed and parsed.weight_g:
+            # Step 5: Determine portion via scale_factor or fixed-weight modifiers
+            # Fixed-weight modifiers (e.g., "a sprinkle of" = 4g) take absolute precedence
+            fixed_weight_g = None
+            combined_scale = 1.0
+            for mod_phrase in found_modifiers:
+                meta = _MODIFIER_METADATA.get(mod_phrase)
+                if not meta:
+                    continue
+                if meta.default_weight_g is not None and meta.scale_factor is None:
+                    # Fixed-weight modifier — use this weight directly
+                    fixed_weight_g = meta.default_weight_g
+                    break
+                if meta.scale_factor is not None:
+                    combined_scale *= meta.scale_factor
+
+            # Clamp scale: floor 0.15 (15%), ceiling 5.0 (500%)
+            combined_scale = min(5.0, max(0.15, combined_scale))
+
+            # Build base analysis with appropriate weight
+            if fixed_weight_g is not None:
+                base_analysis = self._override_to_analysis_by_weight(override, fixed_weight_g)
+            elif combined_scale != 1.0:
+                serving_g = (
+                    override.get("override_serving_g")
+                    or override.get("override_weight_per_piece_g")
+                    or 100.0
+                )
+                base_analysis = self._override_to_analysis_by_weight(
+                    override, serving_g * combined_scale
+                )
+            elif parsed and parsed.weight_g:
                 base_analysis = self._override_to_analysis_by_weight(override, parsed.weight_g)
             elif parsed and parsed.quantity != 1.0:
                 qty = self._apply_countability_heuristic(override, parsed.quantity) if not parsed.unit else parsed.quantity

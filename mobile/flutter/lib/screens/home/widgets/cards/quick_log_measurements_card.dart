@@ -32,6 +32,7 @@ class QuickLogMeasurementsCard extends ConsumerWidget {
     final measurementsState = ref.watch(measurementsProvider);
     final summary = measurementsState.summary;
     final isLoading = measurementsState.isLoading;
+    final isMetric = ref.watch(authStateProvider).user?.usesMetricMeasurements ?? true;
 
     // Get key measurements
     final waist = summary?.latestByType[MeasurementType.waist];
@@ -100,6 +101,7 @@ class QuickLogMeasurementsCard extends ConsumerWidget {
                     chest: chest,
                     hips: hips,
                     lastUpdatedText: lastUpdatedText,
+                    isMetric: isMetric,
                   ),
       ),
     );
@@ -226,6 +228,7 @@ class QuickLogMeasurementsCard extends ConsumerWidget {
     required MeasurementEntry? chest,
     required MeasurementEntry? hips,
     required String lastUpdatedText,
+    required bool isMetric,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -261,7 +264,7 @@ class QuickLogMeasurementsCard extends ConsumerWidget {
               Expanded(
                 child: _MeasurementItem(
                   label: 'Waist',
-                  value: '${waist.getValueInUnit(false).toStringAsFixed(1)}"',
+                  value: '${waist.getValueInUnit(isMetric).toStringAsFixed(1)} ${isMetric ? 'cm' : 'in'}',
                   color: accentColor,
                   textColor: textColor,
                   textMuted: textMuted,
@@ -277,7 +280,7 @@ class QuickLogMeasurementsCard extends ConsumerWidget {
               Expanded(
                 child: _MeasurementItem(
                   label: 'Chest',
-                  value: '${chest.getValueInUnit(false).toStringAsFixed(1)}"',
+                  value: '${chest.getValueInUnit(isMetric).toStringAsFixed(1)} ${isMetric ? 'cm' : 'in'}',
                   color: accentColor,
                   textColor: textColor,
                   textMuted: textMuted,
@@ -293,7 +296,7 @@ class QuickLogMeasurementsCard extends ConsumerWidget {
               Expanded(
                 child: _MeasurementItem(
                   label: 'Hips',
-                  value: '${hips.getValueInUnit(false).toStringAsFixed(1)}"',
+                  value: '${hips.getValueInUnit(isMetric).toStringAsFixed(1)} ${isMetric ? 'cm' : 'in'}',
                   color: accentColor,
                   textColor: textColor,
                   textMuted: textMuted,

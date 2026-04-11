@@ -71,8 +71,7 @@ class HeroWorkoutCarousel extends ConsumerStatefulWidget {
     _HeroWorkoutCarouselState.resetAutoGeneration();
   }
 
-  /// Get remaining workout dates for this week (today through end of display week).
-  /// Past days are skipped — no wrapping to next week.
+  /// Get workout dates for this week (including past days for missed workout viewing).
   /// Uses [weekConfig] to respect the user's Sunday/Monday week-start preference.
   static List<DateTime> getWorkoutDatesForWeek(List<int> workoutDays, WeekDisplayConfig weekConfig) {
     final now = DateTime.now();
@@ -82,9 +81,7 @@ class HeroWorkoutCarousel extends ConsumerStatefulWidget {
     final dates = <DateTime>[];
     for (final day in workoutDays) {
       final thisWeekDate = weekConfig.dateForDataIndex(weekStart, day);
-      if (!thisWeekDate.isBefore(today)) {
-        dates.add(thisWeekDate);
-      }
+      dates.add(thisWeekDate);
     }
     dates.sort((a, b) => a.compareTo(b));
     return dates;
@@ -133,9 +130,10 @@ class _HeroWorkoutCarouselState extends ConsumerState<HeroWorkoutCarousel> {
   String _dateKey(DateTime date) =>
       '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
 
-  /// Get remaining workout dates for this week (today through end of display week).
-  /// Past days are skipped — no wrapping to next week.
+  /// Get workout dates for this week (including past days for missed workout viewing).
   /// Uses [weekConfig] to respect the user's Sunday/Monday week-start preference.
+  /// Past dates are included so users can tap missed dates in the week strip
+  /// and see the missed workout in the carousel.
   List<DateTime> _getWorkoutDatesForWeek(List<int> workoutDays, WeekDisplayConfig weekConfig) {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
@@ -144,10 +142,7 @@ class _HeroWorkoutCarouselState extends ConsumerState<HeroWorkoutCarousel> {
     final dates = <DateTime>[];
     for (final day in workoutDays) {
       final thisWeekDate = weekConfig.dateForDataIndex(weekStart, day);
-      // Only include today or future dates this week
-      if (!thisWeekDate.isBefore(today)) {
-        dates.add(thisWeekDate);
-      }
+      dates.add(thisWeekDate);
     }
     dates.sort((a, b) => a.compareTo(b));
     return dates;
@@ -238,9 +233,46 @@ class _HeroWorkoutCarouselState extends ConsumerState<HeroWorkoutCarousel> {
         );
         mergedWorkouts.removeWhere((w) => w.generationMethod == 'health_connect_import');
 
+        // Safety net: deduplicate by scheduled_date — keep only the newest
+        // non-quick workout per date. Quick workouts intentionally coexist.
+        {
+          final dateGroups = <String, List<Workout>>{};
+          for (final w in mergedWorkouts) {
+            if (w.scheduledDate == null) continue;
+            final dateKey = w.scheduledDate!.length >= 10
+                ? w.scheduledDate!.substring(0, 10)
+                : w.scheduledDate!;
+            dateGroups.putIfAbsent(dateKey, () => []).add(w);
+          }
+          final idsToRemove = <String>{};
+          for (final entry in dateGroups.entries) {
+            final workouts = entry.value;
+            if (workouts.length <= 1) continue;
+            // Separate quick workouts from scheduled ones
+            final scheduled = workouts.where((w) => w.generationMethod != 'quick_workout').toList();
+            if (scheduled.length <= 1) continue;
+            // Keep the newest scheduled workout, remove the rest
+            scheduled.sort((a, b) {
+              final aDate = a.createdAt ?? '';
+              final bDate = b.createdAt ?? '';
+              return bDate.compareTo(aDate); // newest first
+            });
+            for (int i = 1; i < scheduled.length; i++) {
+              if (scheduled[i].id != null) {
+                idsToRemove.add(scheduled[i].id!);
+              }
+            }
+          }
+          if (idsToRemove.isNotEmpty) {
+            mergedWorkouts.removeWhere((w) => w.id != null && idsToRemove.contains(w.id));
+          }
+        }
+
         // Build carousel items: one per workout day (workout card or pending card)
         // Multiple workouts on the same day each get their own carousel card.
         List<CarouselItem> carouselItems = [];
+        final now = DateTime.now();
+        final today = DateTime(now.year, now.month, now.day);
 
         if (workoutDays.isNotEmpty) {
           final weekConfig = ref.watch(weekDisplayConfigProvider);
@@ -257,17 +289,16 @@ class _HeroWorkoutCarouselState extends ConsumerState<HeroWorkoutCarousel> {
                   carouselItems.add(CarouselItem.workout(workout));
                 }
               }
-            } else {
-              // Check if generation is actively in progress for this date
+            } else if (!date.isBefore(today)) {
+              // Only show placeholders for today/future dates — can't generate for past dates
               final isGeneratingForDate = todayWorkoutResponse?.isGenerating == true;
               carouselItems.add(CarouselItem.placeholder(date, isAutoGenerating: isGeneratingForDate));
             }
+            // Past dates with no workout are simply skipped (no card to show)
           }
 
           // Handle workouts on non-workout days (staple-only workouts, quick workouts)
           // Check all days this week for workouts that exist in DB but aren't workout days
-          final now = DateTime.now();
-          final today = DateTime(now.year, now.month, now.day);
           final workoutDateKeys = workoutDates.map(_dateKey).toSet();
 
           // Scan ONLY remaining days in the current display week for non-workout-day workouts
@@ -297,7 +328,8 @@ class _HeroWorkoutCarouselState extends ConsumerState<HeroWorkoutCarousel> {
           }
         }
 
-        // Auto-scroll to the first non-completed workout on first data load.
+        // Auto-scroll to the first actionable (today/future, non-completed) workout
+        // on first data load. Skips past missed workouts.
         // Recreates the PageController with the correct initialPage so there's
         // no visible flicker from jumping after render.
         if (!_hasScrolledToInitial && carouselItems.length > 1 && _ownsController) {
@@ -305,10 +337,18 @@ class _HeroWorkoutCarouselState extends ConsumerState<HeroWorkoutCarousel> {
           int targetIndex = 0;
           for (int i = 0; i < carouselItems.length; i++) {
             final item = carouselItems[i];
-            // A non-completed workout or a placeholder (not yet generated)
-            if (item.isPlaceholder || (item.isWorkout && item.workout!.isCompleted == false)) {
+            // A placeholder (not yet generated) is always actionable
+            if (item.isPlaceholder) {
               targetIndex = i;
               break;
+            }
+            // A non-completed workout that's today or future (skip missed past workouts)
+            if (item.isWorkout && item.workout!.isCompleted == false) {
+              final itemDate = item.date;
+              if (itemDate != null && !itemDate.isBefore(today)) {
+                targetIndex = i;
+                break;
+              }
             }
             // If we've checked all and none matched, default to last item
             if (i == carouselItems.length - 1) {
@@ -331,17 +371,25 @@ class _HeroWorkoutCarouselState extends ConsumerState<HeroWorkoutCarousel> {
           }
         }
 
-        // Auto-scroll to next incomplete workout when a workout is newly completed
+        // Auto-scroll to next actionable (today/future) workout when a workout is newly completed
         final completedCount = carouselItems.where((item) => item.isWorkout && item.workout!.isCompleted == true).length;
         if (_hasScrolledToInitial && _lastCompletedCount >= 0 && completedCount > _lastCompletedCount && carouselItems.length > 1 && _ownsController) {
           int targetIndex = 0;
           bool found = false;
           for (int i = 0; i < carouselItems.length; i++) {
             final item = carouselItems[i];
-            if (item.isPlaceholder || (item.isWorkout && item.workout!.isCompleted == false)) {
+            if (item.isPlaceholder) {
               targetIndex = i;
               found = true;
               break;
+            }
+            if (item.isWorkout && item.workout!.isCompleted == false) {
+              final itemDate = item.date;
+              if (itemDate != null && !itemDate.isBefore(today)) {
+                targetIndex = i;
+                found = true;
+                break;
+              }
             }
           }
           if (!found) targetIndex = carouselItems.length - 1;

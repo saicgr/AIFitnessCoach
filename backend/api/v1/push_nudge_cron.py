@@ -834,15 +834,16 @@ async def _job_trial_reminder(supabase, notif_svc) -> int:
     Unlike other nudge jobs, this queries user_subscriptions directly (not user-batch).
     Includes 25% discount messaging on expiry day.
     """
-    from datetime import date, timedelta
+    from datetime import date as date_cls, timedelta
 
     sent = 0
-    today = date.today()
+    # Use UTC as cron reference for trial date queries
+    utc_today = date_cls.fromisoformat(_get_user_local_date("UTC"))
 
     # Day 5 (2 days left) and Day 7 (expires today)
     targets = [
-        (2, today + timedelta(days=2)),
-        (0, today),
+        (2, utc_today + timedelta(days=2)),
+        (0, utc_today),
     ]
 
     for days_left, target_date in targets:

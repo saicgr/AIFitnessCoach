@@ -138,13 +138,18 @@ extension XPNotifierExt on XPNotifier {
         }
 
         if (!skipReload) {
-          // Single-crate path: reload everything now
-          await Future.wait([
+          // Fire-and-forget: refresh in background, don't block the UI.
+          // The optimistic state update above already hides the banner and
+          // triggers the XP animation, so returning immediately feels instant.
+          Future.wait([
             loadDailyCrates(),
             loadConsumables(),
             if (result.reward != null && result.reward!.isXP)
               loadUserXP(userId: _currentUserId, showLoading: false),
-          ]);
+          ]).catchError((e) {
+            debugPrint('[XPProvider] Background reload after crate claim failed: $e');
+            return <void>[];
+          });
         }
 
         debugPrint('[XPProvider] Daily crate claimed! Reward: ${result.reward?.displayName}');

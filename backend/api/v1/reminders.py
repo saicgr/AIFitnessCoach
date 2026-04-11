@@ -11,9 +11,10 @@ from core.db import get_supabase_db
 import json
 from datetime import date, datetime
 from typing import List, Optional
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from core.auth import get_current_user
 from core.exceptions import safe_internal_error
+from core.timezone_utils import user_today_date
 from pydantic import BaseModel
 
 from core.supabase_db import get_supabase_db
@@ -58,7 +59,7 @@ async def get_email_status(
 
 
 @router.post("/send-daily", response_model=ReminderResponse)
-async def send_daily_reminders(target_date: Optional[str] = None,
+async def send_daily_reminders(http_request: Request, target_date: Optional[str] = None,
     current_user: dict = Depends(get_current_user),
 ):
     """
@@ -92,7 +93,7 @@ async def send_daily_reminders(target_date: Optional[str] = None,
         except ValueError:
             raise HTTPException(status_code=400, detail="Invalid date format. Use YYYY-MM-DD.")
     else:
-        reminder_date = date.today()
+        reminder_date = user_today_date(http_request)
 
     date_str = reminder_date.isoformat()
     logger.info(f"Sending reminders for date: {date_str}")
@@ -215,7 +216,7 @@ async def send_daily_reminders(target_date: Optional[str] = None,
 
 
 @router.post("/send-user/{user_id}", response_model=SingleReminderResponse)
-async def send_user_reminder(user_id: str, target_date: Optional[str] = None,
+async def send_user_reminder(user_id: str, http_request: Request, target_date: Optional[str] = None,
     current_user: dict = Depends(get_current_user),
 ):
     """
@@ -252,7 +253,7 @@ async def send_user_reminder(user_id: str, target_date: Optional[str] = None,
         except ValueError:
             raise HTTPException(status_code=400, detail="Invalid date format. Use YYYY-MM-DD.")
     else:
-        reminder_date = date.today()
+        reminder_date = user_today_date(http_request)
 
     date_str = reminder_date.isoformat()
 
@@ -343,6 +344,7 @@ async def send_user_reminder(user_id: str, target_date: Optional[str] = None,
 
 @router.post("/test")
 async def send_test_reminder(to_email: str,
+    http_request: Request,
     current_user: dict = Depends(get_current_user),
 ):
     """
@@ -370,7 +372,7 @@ async def send_test_reminder(to_email: str,
         user_name="Test User",
         workout_name="Test Workout - Upper Body",
         workout_type="upper_body",
-        scheduled_date=date.today(),
+        scheduled_date=user_today_date(http_request),
         exercises=[
             {"name": "Bench Press", "sets": 4, "reps": 8},
             {"name": "Shoulder Press", "sets": 3, "reps": 10},

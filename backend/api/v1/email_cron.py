@@ -22,6 +22,7 @@ from core.supabase_client import get_supabase
 from core.config import get_settings
 from core.logger import get_logger
 from core.rate_limiter import limiter
+from core.timezone_utils import get_user_today
 from services.email_service import get_email_service
 
 logger = get_logger(__name__)
@@ -101,13 +102,13 @@ async def run_email_cron(
 
     supabase = get_supabase()
     email_svc = get_email_service()
-    today = date.today()
-    is_monday = today.weekday() == 0
 
     results: Dict[str, int] = {}
     total_sent = 0
 
-    # Run all daily jobs
+    # Run all daily jobs.
+    # weekly_summary is always scheduled — the job itself filters per-user
+    # based on whether it's Monday in their timezone.
     jobs = [
         ("streak_at_risk", _job_streak_at_risk(supabase, email_svc)),
         ("day3_activation", _job_day3_activation(supabase, email_svc)),
@@ -115,10 +116,8 @@ async def run_email_cron(
         ("win_back_30", _job_win_back_30(supabase, email_svc)),
         ("14day_upsell", _job_14day_upsell(supabase, email_svc)),
         ("onboarding_incomplete", _job_onboarding_incomplete(supabase, email_svc)),
+        ("weekly_summary", _job_weekly_summary(supabase, email_svc)),
     ]
-
-    if is_monday:
-        jobs.append(("weekly_summary", _job_weekly_summary(supabase, email_svc)))
 
     # Run all jobs concurrently
     job_names = [j[0] for j in jobs]
@@ -236,8 +235,8 @@ async def _job_day3_activation(supabase, email_svc) -> int:
     sent = 0
 
     try:
-        # Users created exactly 3 days ago (same calendar date)
-        target_date = (date.today() - timedelta(days=3)).isoformat()
+        # Users created exactly 3 days ago (same calendar date, UTC reference for cron)
+        target_date = (date.fromisoformat(get_user_today("UTC")) - timedelta(days=3)).isoformat()
         users_result = supabase.client.table("users") \
             .select("id, email, name") \
             .gte("created_at", f"{target_date}T00:00:00") \
@@ -307,7 +306,7 @@ async def _job_trial_ending(supabase, email_svc) -> int:
     sent = 0
 
     try:
-        today = date.today()
+        today = date.fromisoformat(get_user_today("UTC"))
         target_dates = [
             (today + timedelta(days=2)).isoformat(),  # Day 5 of trial (2 days left)
             today.isoformat(),                         # Day 7 of trial (expires today)
@@ -462,7 +461,7 @@ async def _job_14day_upsell(supabase, email_svc) -> int:
     sent = 0
 
     try:
-        target_date = (date.today() - timedelta(days=14)).isoformat()
+        target_date = (date.fromisoformat(get_user_today("UTC")) - timedelta(days=14)).isoformat()
         users_result = supabase.client.table("users") \
             .select("id, email, name") \
             .gte("created_at", f"{target_date}T00:00:00") \
@@ -593,6 +592,7 @@ async def _job_onboarding_incomplete(supabase, email_svc) -> int:
 async def _job_weekly_summary(supabase, email_svc) -> int:
     """
     Send weekly summary to users who completed at least 1 workout in the past 7 days.
+    Only sends if it's Monday in the user's timezone.
     Gate: weekly_summary preference.
     Cooldown: 7 days.
     """
@@ -620,7 +620,7 @@ async def _job_weekly_summary(supabase, email_svc) -> int:
             return 0
 
         users_result = supabase.client.table("users") \
-            .select("id, email, name") \
+            .select("id, email, name, timezone") \
             .in_("id", active_user_ids) \
             .execute()
         users_map = {u["id"]: u for u in (users_result.data or [])}
@@ -635,6 +635,13 @@ async def _job_weekly_summary(supabase, email_svc) -> int:
             user = users_map.get(uid)
             if not user:
                 continue
+
+            # Only send if it's Monday in the user's timezone
+            user_tz = user.get("timezone") or "UTC"
+            user_today = date.fromisoformat(get_user_today(user_tz))
+            if user_today.weekday() != 0:  # 0 = Monday
+                continue
+
             pref = prefs_map.get(uid, {})
             if pref.get("weekly_summary") is False:
                 continue
@@ -663,7 +670,7 @@ async def _job_weekly_summary(supabase, email_svc) -> int:
 
 # ─── Helpers ────────────────────────────────────────────────────────────────
 
-def _get_user_streak(supabase, user_id: str) -> int:
+def _get_user_streak(supabase, user_id: str, user_tz: str = "UTC") -> int:
     """Compute current workout streak (consecutive calendar days with a log)."""
     try:
         result = supabase.client.table("workout_logs") \
@@ -684,7 +691,7 @@ def _get_user_streak(supabase, user_id: str) -> int:
                 pass
 
         streak = 0
-        check_date = date.today()
+        check_date = date.fromisoformat(get_user_today(user_tz))
         while check_date in days_with_workout:
             streak += 1
             check_date -= timedelta(days=1)
@@ -693,10 +700,10 @@ def _get_user_streak(supabase, user_id: str) -> int:
         return 0
 
 
-def _get_next_workout_name(supabase, user_id: str) -> str:
+def _get_next_workout_name(supabase, user_id: str, user_tz: str = "UTC") -> str:
     """Get the name of the user's next scheduled workout."""
     try:
-        today = date.today().isoformat()
+        today = get_user_today(user_tz)
         result = supabase.client.table("workouts") \
             .select("name") \
             .eq("user_id", user_id) \
@@ -711,13 +718,13 @@ def _get_next_workout_name(supabase, user_id: str) -> str:
     return "Your Next Workout"
 
 
-def _get_first_workout(supabase, user_id: str):
+def _get_first_workout(supabase, user_id: str, user_tz: str = "UTC"):
     """Get name, exercise list, and goal for user's first upcoming workout."""
     workout_name = "Your First Workout"
     exercises = ["Warm-up", "Main workout", "Cool-down"]
     goal = "fitness"
     try:
-        today = date.today().isoformat()
+        today = get_user_today(user_tz)
         result = supabase.client.table("workouts") \
             .select("name, workout_type") \
             .eq("user_id", user_id) \

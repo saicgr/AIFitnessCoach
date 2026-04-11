@@ -166,6 +166,8 @@ class UserUpdate(BaseModel):
     coach_id: Optional[str] = Field(default=None, max_length=50)  # Selected coach ID
     # Weight unit preference - 'kg' or 'lbs'
     weight_unit: Optional[str] = Field(default=None, max_length=5)
+    # Body measurement unit preference - 'cm' or 'in'
+    measurement_unit: Optional[str] = Field(default=None, max_length=5)
     # Primary training goal: muscle_hypertrophy, muscle_strength, or strength_hypertrophy
     primary_goal: Optional[str] = Field(default=None, max_length=50)
     # Muscle focus points allocation (max 5 total)
@@ -214,6 +216,8 @@ class User(BaseModel):
     activity_level: Optional[str] = Field(default=None, max_length=50)
     # Weight unit preference - syncs across app
     weight_unit: str = Field(default="kg", max_length=5)  # 'kg' or 'lbs'
+    # Body measurement unit preference - 'cm' or 'in'
+    measurement_unit: str = Field(default="cm", max_length=5)  # 'cm' or 'in'
     # Accessibility settings
     accessibility_mode: Optional[str] = Field(default="standard", max_length=20)  # 'standard', 'senior', 'kids'
     accessibility_settings: Optional[dict] = None  # Detailed settings

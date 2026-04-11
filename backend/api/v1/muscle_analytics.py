@@ -10,9 +10,10 @@ Provides endpoints for:
 """
 from core.db import get_supabase_db
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from core.auth import get_current_user, verify_user_ownership
 from core.exceptions import safe_internal_error
+from core.timezone_utils import user_today_date
 from typing import List, Optional, Dict, Any
 from datetime import datetime, date, timedelta
 from pydantic import BaseModel, Field
@@ -684,6 +685,7 @@ async def get_exercises_for_muscle(
 @router.get("/muscle/{muscle_group}/history", response_model=MuscleHistoryResponse)
 async def get_muscle_history(
     muscle_group: str,
+    request: Request,
     user_id: str = Query(..., description="User ID"),
     time_range: TimeRange = Query(TimeRange.TWELVE_WEEKS, description="Time range for history"),
     current_user: dict = Depends(get_current_user),
@@ -697,7 +699,7 @@ async def get_muscle_history(
     try:
         db = get_supabase_db()
         days_back = get_days_for_time_range(time_range)
-        start_date = (date.today() - timedelta(days=days_back)).isoformat()
+        start_date = (user_today_date(request) - timedelta(days=days_back)).isoformat()
 
         logger.info(f"Getting muscle history for {muscle_group}, user {user_id}")
 

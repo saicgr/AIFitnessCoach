@@ -12,6 +12,7 @@ from fastapi import HTTPException
 
 from core.supabase_client import get_supabase
 from core.logger import get_logger
+from core.timezone_utils import get_user_today
 
 logger = get_logger(__name__)
 
@@ -27,7 +28,7 @@ PREMIUM_FEATURE_KEYS = [
 ]
 
 
-async def check_premium_gate(user_id: str, feature_key: str) -> Tuple[bool, Optional[int]]:
+async def check_premium_gate(user_id: str, feature_key: str, timezone_str: str) -> Tuple[bool, Optional[int]]:
     """
     Check if a user has access to a premium-gated feature.
 
@@ -108,7 +109,7 @@ async def check_premium_gate(user_id: str, feature_key: str) -> Tuple[bool, Opti
 
     # Compute current usage based on reset_period
     reset_period = gate.get("reset_period")
-    current_usage = _get_current_usage(supabase, user_id, feature_key, reset_period)
+    current_usage = _get_current_usage(supabase, user_id, feature_key, reset_period, timezone_str)
 
     remaining = max(0, free_limit - current_usage)
     if current_usage >= free_limit:
@@ -138,10 +139,10 @@ def _get_fallback_gate(feature_key: str) -> dict:
     return fallbacks.get(feature_key, {"free_limit": None, "reset_period": None, "minimum_tier": "free", "is_enabled": True})
 
 
-async def track_premium_usage(user_id: str, feature_key: str):
+async def track_premium_usage(user_id: str, feature_key: str, timezone_str: str):
     """Increment usage counter for a feature after successful use."""
     supabase = get_supabase()
-    today = date.today().isoformat()
+    today = get_user_today(timezone_str)
 
     try:
         # Try RPC first
@@ -182,9 +183,9 @@ async def track_premium_usage(user_id: str, feature_key: str):
             logger.error(f"Failed to track usage for {feature_key}: {e}", exc_info=True)
 
 
-def _get_current_usage(supabase, user_id: str, feature_key: str, reset_period: Optional[str]) -> int:
+def _get_current_usage(supabase, user_id: str, feature_key: str, reset_period: Optional[str], timezone_str: str) -> int:
     """Get current usage count respecting the reset period."""
-    today = date.today()
+    today = date.fromisoformat(get_user_today(timezone_str))
 
     try:
         if reset_period == "daily":

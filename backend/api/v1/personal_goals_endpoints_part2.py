@@ -1,12 +1,13 @@
 """Second part of personal_goals_endpoints.py (auto-split for size)."""
 from typing import List
 from datetime import datetime, timedelta, date, timezone
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 import logging
 logger = logging.getLogger(__name__)
 from core.auth import get_current_user
 from core.db import get_supabase_db
 from core.exceptions import safe_internal_error
+from core.timezone_utils import user_today_date
 from models.goal_suggestions import (
     GoalSuggestionsResponse, GoalSuggestionItem, SuggestionCategoryGroup,
     SuggestionType, SuggestionCategory, GoalVisibility,
@@ -382,6 +383,7 @@ def _extract_friends_preview(source_data: dict) -> list:
 
 @router.post("/workout-sync", response_model=WorkoutSyncResponse)
 async def sync_workout_with_goals(user_id: str, request: WorkoutSyncRequest,
+    http_request: Request,
     current_user: dict = Depends(get_current_user),
 ):
     """
@@ -412,7 +414,7 @@ async def sync_workout_with_goals(user_id: str, request: WorkoutSyncRequest,
         db = get_supabase_db()
 
         # Get current week boundaries
-        today = date.today()
+        today = user_today_date(http_request)
         week_start, _ = get_iso_week_boundaries(today)
 
         # Get user's active weekly_volume goals for this week

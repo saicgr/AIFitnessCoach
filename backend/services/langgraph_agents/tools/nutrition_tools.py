@@ -15,6 +15,7 @@ from langchain_core.tools import tool
 from core.supabase_db import get_supabase_db
 from core.logger import get_logger
 from core.nutrition_bias import apply_calorie_bias, get_user_calorie_bias
+from core.timezone_utils import get_user_today
 from .base import get_vision_service, run_async_in_sync
 
 logger = get_logger(__name__)
@@ -162,6 +163,7 @@ async def analyze_multi_food_images(
     mime_types: List[str],
     user_message: Optional[str] = None,
     analysis_mode: str = "auto",
+    timezone_str: str = "UTC",
 ) -> Dict[str, Any]:
     """
     Analyze multiple food images for nutrition estimation.
@@ -173,6 +175,7 @@ async def analyze_multi_food_images(
         mime_types: List of MIME types for each image
         user_message: Optional user context
         analysis_mode: "auto", "plate", "buffet", or "menu"
+        timezone_str: IANA timezone string for resolving "today" (e.g. "Asia/Kolkata")
 
     Returns:
         Nutrition analysis with food items, recommendations, and traffic-light ratings
@@ -202,7 +205,7 @@ async def analyze_multi_food_images(
             targets = {k: v for k, v in targets.items() if v is not None}
 
             # Get today's nutrition summary for remaining budget
-            today = datetime.now().strftime("%Y-%m-%d")
+            today = get_user_today(timezone_str)
             daily_summary = db.get_daily_nutrition_summary(user_id, today)
 
             if targets:
@@ -356,6 +359,7 @@ async def parse_app_screenshot(
     mime_types: List[str] = None,
     image_base64: str = None,
     user_message: str = None,
+    timezone_str: str = "UTC",
 ) -> Dict[str, Any]:
     """
     Parse a screenshot from a nutrition app (MyFitnessPal, Cronometer, etc.).
@@ -435,7 +439,7 @@ async def parse_app_screenshot(
         food_log_id = food_log.get("id") if food_log else None
 
         # Get daily summary
-        today = datetime.now().strftime("%Y-%m-%d")
+        today = get_user_today(timezone_str)
         daily_summary = db.get_daily_nutrition_summary(user_id, today)
 
         # Format response
@@ -502,6 +506,7 @@ async def parse_nutrition_label(
     image_base64: str = None,
     servings_consumed: float = 1.0,
     user_message: str = None,
+    timezone_str: str = "UTC",
 ) -> Dict[str, Any]:
     """
     Parse a nutrition facts label from food packaging.
@@ -584,7 +589,7 @@ async def parse_nutrition_label(
         food_log_id = food_log.get("id") if food_log else None
 
         # Get daily summary
-        today = datetime.now().strftime("%Y-%m-%d")
+        today = get_user_today(timezone_str)
         daily_summary = db.get_daily_nutrition_summary(user_id, today)
 
         # Format response
@@ -644,7 +649,8 @@ async def parse_nutrition_label(
 def get_nutrition_summary(
     user_id: str,
     date: str = None,
-    period: str = "day"
+    period: str = "day",
+    timezone_str: str = "UTC",
 ) -> Dict[str, Any]:
     """
     Get a nutrition summary for a user for a specific day or week.
@@ -653,6 +659,7 @@ def get_nutrition_summary(
         user_id: The user's ID (UUID string)
         date: Date to get summary for (YYYY-MM-DD format). Defaults to today.
         period: "day" for daily summary, "week" for weekly summary
+        timezone_str: IANA timezone string for resolving "today" (e.g. "Asia/Kolkata")
 
     Returns:
         Result dict with nutrition totals and meal breakdown
@@ -663,7 +670,7 @@ def get_nutrition_summary(
         db = get_supabase_db()
 
         if date is None:
-            date = datetime.now().strftime("%Y-%m-%d")
+            date = get_user_today(timezone_str)
 
         if period == "week":
             summary = db.get_weekly_nutrition_summary(user_id, date)
@@ -830,7 +837,8 @@ def get_recent_meals(
 async def log_food_from_text(
     user_id: str,
     food_description: str,
-    meal_type: str = None
+    meal_type: str = None,
+    timezone_str: str = "UTC",
 ) -> Dict[str, Any]:
     """
     Log food from a text description. Use this when the user describes what they ate.
@@ -843,6 +851,7 @@ async def log_food_from_text(
         food_description: Natural language description of the food eaten
                          (e.g., "I ate thalapakattu mutton biryani" or "2 eggs and toast")
         meal_type: Optional meal type (breakfast, lunch, dinner, snack). Auto-detected if not provided.
+        timezone_str: IANA timezone string for resolving "today" and meal-type auto-detection (e.g. "Asia/Kolkata")
 
     Returns:
         Result dict with nutrition analysis, saved food log, and coaching feedback
@@ -907,9 +916,14 @@ async def log_food_from_text(
         health_score = analysis_result.get("overall_meal_score") or analysis_result.get("health_score", 5)
         ai_feedback = analysis_result.get("ai_suggestion", "")
 
-        # Auto-detect meal type based on time if not provided
+        # Auto-detect meal type based on user's local time if not provided
         if not meal_type:
-            hour = datetime.now().hour
+            from zoneinfo import ZoneInfo
+            try:
+                user_tz = ZoneInfo(timezone_str)
+            except Exception:
+                user_tz = ZoneInfo("UTC")
+            hour = datetime.now(user_tz).hour
             if 5 <= hour < 11:
                 meal_type = "breakfast"
             elif 11 <= hour < 15:
@@ -936,7 +950,7 @@ async def log_food_from_text(
         food_log_id = food_log.get("id") if food_log else None
 
         # Get today's nutrition summary
-        today = datetime.now().strftime("%Y-%m-%d")
+        today = get_user_today(timezone_str)
         daily_summary = db.get_daily_nutrition_summary(user_id, today)
 
         # Format food items for response

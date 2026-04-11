@@ -13,6 +13,7 @@ import '../../../core/providers/sound_preferences_provider.dart';
 import '../../../core/providers/tts_provider.dart';
 import '../../../core/services/posthog_service.dart';
 import '../../../data/services/api_client.dart';
+import '../../../utils/tz.dart';
 import '../../../widgets/glass_sheet.dart';
 import '../controllers/workout_timer_controller.dart';
 import '../models/workout_state.dart';
@@ -207,7 +208,7 @@ mixin TimerRestMixin<T extends StatefulWidget> on State<T> {
       'prescribed_rest_seconds': restSeconds,
       'rest_seconds': restSeconds, // Updated to actual rest in handleRestComplete
       'rest_type': betweenExercises ? 'between_exercises' : 'between_sets',
-      'recorded_at': DateTime.now().toIso8601String(),
+      'recorded_at': Tz.timestamp(),
     });
   }
 

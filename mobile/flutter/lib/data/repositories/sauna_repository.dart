@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/sauna_log.dart';
+import '../../utils/tz.dart';
 import '../services/api_client.dart';
 
 /// Sauna repository provider
@@ -40,7 +41,7 @@ class SaunaRepository {
           'duration_minutes': durationMinutes,
           if (workoutId != null) 'workout_id': workoutId,
           if (notes != null) 'notes': notes,
-          'local_date': DateTime.now().toIso8601String().substring(0, 10),
+          'local_date': Tz.localDate(),
         },
       );
       return SaunaLog.fromJson(response.data);

@@ -692,14 +692,116 @@ _FOOD_MODIFIERS = {
 
     # ═══════════════════════════════════════════════════════════════
     # SIZE / PREPARATION MODIFIERS
+    # Entries with scale_factor in _MODIFIER_METADATA use zero deltas
+    # (scaling is handled multiplicatively on serving weight).
     # ═══════════════════════════════════════════════════════════════
-    "large":                (150, 2.0, 20.0, 6.0, 0.0, 250, 5, 2.0, 0.0),
-    "make it large":        (150, 2.0, 20.0, 6.0, 0.0, 250, 5, 2.0, 0.0),
-    "supersize":            (250, 3.0, 35.0, 10.0, 0.0, 400, 10, 3.5, 0.0),
-    "extra large":          (250, 3.0, 35.0, 10.0, 0.0, 400, 10, 3.5, 0.0),
-    "small":                (-80, -1.0, -10.0, -3.0, 0.0, -120, -3, -1.0, 0.0),
-    "make it small":        (-80, -1.0, -10.0, -3.0, 0.0, -120, -3, -1.0, 0.0),
-    "half portion":         (-150, -5.0, -15.0, -7.0, -1.0, -200, -10, -2.0, 0.0),
+    "large":                (0, 0.0, 0.0, 0.0, 0.0, 0, 0, 0.0, 0.0),
+    "make it large":        (0, 0.0, 0.0, 0.0, 0.0, 0, 0, 0.0, 0.0),
+    "supersize":            (0, 0.0, 0.0, 0.0, 0.0, 0, 0, 0.0, 0.0),
+    "extra large":          (0, 0.0, 0.0, 0.0, 0.0, 0, 0, 0.0, 0.0),
+    "small":                (0, 0.0, 0.0, 0.0, 0.0, 0, 0, 0.0, 0.0),
+    "make it small":        (0, 0.0, 0.0, 0.0, 0.0, 0, 0, 0.0, 0.0),
+    "half portion":         (0, 0.0, 0.0, 0.0, 0.0, 0, 0, 0.0, 0.0),
+
+    # ── Side / restaurant portion sizes ──
+    "side":                 (0, 0.0, 0.0, 0.0, 0.0, 0, 0, 0.0, 0.0),
+    "side of":              (0, 0.0, 0.0, 0.0, 0.0, 0, 0, 0.0, 0.0),
+    "side order":           (0, 0.0, 0.0, 0.0, 0.0, 0, 0, 0.0, 0.0),
+    "side order of":        (0, 0.0, 0.0, 0.0, 0.0, 0, 0, 0.0, 0.0),
+    "as a side":            (0, 0.0, 0.0, 0.0, 0.0, 0, 0, 0.0, 0.0),
+    "just a side":          (0, 0.0, 0.0, 0.0, 0.0, 0, 0, 0.0, 0.0),
+    "just a side of":       (0, 0.0, 0.0, 0.0, 0.0, 0, 0, 0.0, 0.0),
+    "for a side":           (0, 0.0, 0.0, 0.0, 0.0, 0, 0, 0.0, 0.0),
+
+    # ── Kids / junior / petite / personal ──
+    "kids":                 (0, 0.0, 0.0, 0.0, 0.0, 0, 0, 0.0, 0.0),
+    "kid's":                (0, 0.0, 0.0, 0.0, 0.0, 0, 0, 0.0, 0.0),
+    "kiddie":               (0, 0.0, 0.0, 0.0, 0.0, 0, 0, 0.0, 0.0),
+    "children's":           (0, 0.0, 0.0, 0.0, 0.0, 0, 0, 0.0, 0.0),
+    "kids size":            (0, 0.0, 0.0, 0.0, 0.0, 0, 0, 0.0, 0.0),
+    "kids meal":            (0, 0.0, 0.0, 0.0, 0.0, 0, 0, 0.0, 0.0),
+    "junior":               (0, 0.0, 0.0, 0.0, 0.0, 0, 0, 0.0, 0.0),
+    "jr":                   (0, 0.0, 0.0, 0.0, 0.0, 0, 0, 0.0, 0.0),
+    "petite":               (0, 0.0, 0.0, 0.0, 0.0, 0, 0, 0.0, 0.0),
+    "personal":             (0, 0.0, 0.0, 0.0, 0.0, 0, 0, 0.0, 0.0),
+
+    # ── Appetizer / starter / tasting ──
+    "appetizer portion":    (0, 0.0, 0.0, 0.0, 0.0, 0, 0, 0.0, 0.0),
+    "appetizer size":       (0, 0.0, 0.0, 0.0, 0.0, 0, 0, 0.0, 0.0),
+    "starter portion":      (0, 0.0, 0.0, 0.0, 0.0, 0, 0, 0.0, 0.0),
+    "tasting":              (0, 0.0, 0.0, 0.0, 0.0, 0, 0, 0.0, 0.0),
+    "tasting portion":      (0, 0.0, 0.0, 0.0, 0.0, 0, 0, 0.0, 0.0),
+    "sample":               (0, 0.0, 0.0, 0.0, 0.0, 0, 0, 0.0, 0.0),
+    "taster":               (0, 0.0, 0.0, 0.0, 0.0, 0, 0, 0.0, 0.0),
+
+    # ── Shared / split ──
+    "shared":               (0, 0.0, 0.0, 0.0, 0.0, 0, 0, 0.0, 0.0),
+    "split":                (0, 0.0, 0.0, 0.0, 0.0, 0, 0, 0.0, 0.0),
+    "split with":           (0, 0.0, 0.0, 0.0, 0.0, 0, 0, 0.0, 0.0),
+
+    # ── Informal portion language ──
+    "a bite of":            (0, 0.0, 0.0, 0.0, 0.0, 0, 0, 0.0, 0.0),
+    "just a bite":          (0, 0.0, 0.0, 0.0, 0.0, 0, 0, 0.0, 0.0),
+    "just a bite of":       (0, 0.0, 0.0, 0.0, 0.0, 0, 0, 0.0, 0.0),
+    "a few bites of":       (0, 0.0, 0.0, 0.0, 0.0, 0, 0, 0.0, 0.0),
+    "a taste of":           (0, 0.0, 0.0, 0.0, 0.0, 0, 0, 0.0, 0.0),
+    "just a taste":         (0, 0.0, 0.0, 0.0, 0.0, 0, 0, 0.0, 0.0),
+    "just a taste of":      (0, 0.0, 0.0, 0.0, 0.0, 0, 0, 0.0, 0.0),
+    "a sliver of":          (0, 0.0, 0.0, 0.0, 0.0, 0, 0, 0.0, 0.0),
+    "a little":             (0, 0.0, 0.0, 0.0, 0.0, 0, 0, 0.0, 0.0),
+    "a little bit of":      (0, 0.0, 0.0, 0.0, 0.0, 0, 0, 0.0, 0.0),
+    "just a little":        (0, 0.0, 0.0, 0.0, 0.0, 0, 0, 0.0, 0.0),
+    "just a little of":     (0, 0.0, 0.0, 0.0, 0.0, 0, 0, 0.0, 0.0),
+    "a bit of":             (0, 0.0, 0.0, 0.0, 0.0, 0, 0, 0.0, 0.0),
+    "just a bit":           (0, 0.0, 0.0, 0.0, 0.0, 0, 0, 0.0, 0.0),
+    "just a bit of":        (0, 0.0, 0.0, 0.0, 0.0, 0, 0, 0.0, 0.0),
+    "nibbled":              (0, 0.0, 0.0, 0.0, 0.0, 0, 0, 0.0, 0.0),
+    "nibbled on":           (0, 0.0, 0.0, 0.0, 0.0, 0, 0, 0.0, 0.0),
+    "picked at":            (0, 0.0, 0.0, 0.0, 0.0, 0, 0, 0.0, 0.0),
+
+    # ── Vague quantity modifiers ──
+    "just some":            (0, 0.0, 0.0, 0.0, 0.0, 0, 0, 0.0, 0.0),
+    "just some of":         (0, 0.0, 0.0, 0.0, 0.0, 0, 0, 0.0, 0.0),
+    "only some":            (0, 0.0, 0.0, 0.0, 0.0, 0, 0, 0.0, 0.0),
+    "only some of":         (0, 0.0, 0.0, 0.0, 0.0, 0, 0, 0.0, 0.0),
+    "some of the":          (0, 0.0, 0.0, 0.0, 0.0, 0, 0, 0.0, 0.0),
+    "some of":              (0, 0.0, 0.0, 0.0, 0.0, 0, 0, 0.0, 0.0),
+    "a lot of":             (0, 0.0, 0.0, 0.0, 0.0, 0, 0, 0.0, 0.0),
+    "lots of":              (0, 0.0, 0.0, 0.0, 0.0, 0, 0, 0.0, 0.0),
+    "plenty of":            (0, 0.0, 0.0, 0.0, 0.0, 0, 0, 0.0, 0.0),
+    "a bunch of":           (0, 0.0, 0.0, 0.0, 0.0, 0, 0, 0.0, 0.0),
+    "a ton of":             (0, 0.0, 0.0, 0.0, 0.0, 0, 0, 0.0, 0.0),
+    "tons of":              (0, 0.0, 0.0, 0.0, 0.0, 0, 0, 0.0, 0.0),
+    "hardly any":           (0, 0.0, 0.0, 0.0, 0.0, 0, 0, 0.0, 0.0),
+    "barely any":           (0, 0.0, 0.0, 0.0, 0.0, 0, 0, 0.0, 0.0),
+    "not much":             (0, 0.0, 0.0, 0.0, 0.0, 0, 0, 0.0, 0.0),
+    "not a lot of":         (0, 0.0, 0.0, 0.0, 0.0, 0, 0, 0.0, 0.0),
+
+    # ── Fixed-weight application descriptors ──
+    "a pinch of":           (0, 0.0, 0.0, 0.0, 0.0, 0, 0, 0.0, 0.0),
+    "a dash of":            (0, 0.0, 0.0, 0.0, 0.0, 0, 0, 0.0, 0.0),
+    "a smidge of":          (0, 0.0, 0.0, 0.0, 0.0, 0, 0, 0.0, 0.0),
+    "a smidgen of":         (0, 0.0, 0.0, 0.0, 0.0, 0, 0, 0.0, 0.0),
+    "a hint of":            (0, 0.0, 0.0, 0.0, 0.0, 0, 0, 0.0, 0.0),
+    "a dusting of":         (0, 0.0, 0.0, 0.0, 0.0, 0, 0, 0.0, 0.0),
+    "dusted with":          (0, 0.0, 0.0, 0.0, 0.0, 0, 0, 0.0, 0.0),
+    "a sprinkle of":        (0, 0.0, 0.0, 0.0, 0.0, 0, 0, 0.0, 0.0),
+    "sprinkled with":       (0, 0.0, 0.0, 0.0, 0.0, 0, 0, 0.0, 0.0),
+    "a touch of":           (0, 0.0, 0.0, 0.0, 0.0, 0, 0, 0.0, 0.0),
+    "a garnish of":         (0, 0.0, 0.0, 0.0, 0.0, 0, 0, 0.0, 0.0),
+    "garnished with":       (0, 0.0, 0.0, 0.0, 0.0, 0, 0, 0.0, 0.0),
+    "a smattering of":      (0, 0.0, 0.0, 0.0, 0.0, 0, 0, 0.0, 0.0),
+    "a dab of":             (0, 0.0, 0.0, 0.0, 0.0, 0, 0, 0.0, 0.0),
+    "a squirt of":          (0, 0.0, 0.0, 0.0, 0.0, 0, 0, 0.0, 0.0),
+    "a squeeze of":         (0, 0.0, 0.0, 0.0, 0.0, 0, 0, 0.0, 0.0),
+    "a drizzle of":         (0, 0.0, 0.0, 0.0, 0.0, 0, 0, 0.0, 0.0),
+    "drizzled with":        (0, 0.0, 0.0, 0.0, 0.0, 0, 0, 0.0, 0.0),
+    "a swirl of":           (0, 0.0, 0.0, 0.0, 0.0, 0, 0, 0.0, 0.0),
+    "a smear of":           (0, 0.0, 0.0, 0.0, 0.0, 0, 0, 0.0, 0.0),
+    "a splash of":          (0, 0.0, 0.0, 0.0, 0.0, 0, 0, 0.0, 0.0),
+    "a dollop of":          (0, 0.0, 0.0, 0.0, 0.0, 0, 0, 0.0, 0.0),
+    "a spread of":          (0, 0.0, 0.0, 0.0, 0.0, 0, 0, 0.0, 0.0),
+    "a glob of":            (0, 0.0, 0.0, 0.0, 0.0, 0, 0, 0.0, 0.0),
     "loaded":               (200, 5.0, 10.0, 15.0, 0.0, 500, 25, 6.0, 0.0),
     "fully loaded":         (250, 6.0, 12.0, 18.0, 0.0, 600, 30, 7.0, 0.0),
     "deep fried":           (100, 0.0, 8.0, 8.0, 0.0, 200, 0, 1.5, 0.2),
@@ -1059,5 +1161,19 @@ _FOOD_MODIFIERS = {
 
 # Initialize regex patterns that depend on _FOOD_MODIFIERS
 _init_modifier_patterns(_FOOD_MODIFIERS)
+
+# Re-bind regex names after initialization.
+# `from .modifiers_helpers import _BULLET_REGEX` captured None at import time
+# because _init_modifier_patterns hadn't run yet. Re-import the now-initialized values
+# so that downstream `from .modifiers import _BULLET_REGEX` gets the compiled regex.
+from .modifiers_helpers import (  # noqa: F811, E402
+    _MODIFIER_PHRASES_SORTED as _MODIFIER_PHRASES_SORTED,
+    _MODIFIER_REGEX as _MODIFIER_REGEX,
+    _BULLET_REGEX as _BULLET_REGEX,
+    _NUM_UNIT_REGEX as _NUM_UNIT_REGEX,
+    _WORD_NUM_UNIT_REGEX as _WORD_NUM_UNIT_REGEX,
+    _BARE_NUM_REGEX as _BARE_NUM_REGEX,
+    _FRACTION_REGEX as _FRACTION_REGEX,
+)
 
 # ── Modifier type classification & metadata ───────────────────────

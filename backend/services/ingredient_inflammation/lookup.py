@@ -99,12 +99,19 @@ async def _ensure_food_db_cache() -> Dict[str, Tuple[int, str]]:
             batch_size = 1000
 
             while True:
-                result = supabase.client.table("food_database") \
-                    .select("name, inflammatory_score, inflammatory_category") \
-                    .not_.is_("inflammatory_score", "null") \
-                    .eq("is_primary", True) \
-                    .range(offset, offset + batch_size - 1) \
-                    .execute()
+                try:
+                    result = supabase.client.table("food_database") \
+                        .select("name, inflammatory_score, inflammatory_category") \
+                        .not_.is_("inflammatory_score", "null") \
+                        .eq("is_primary", True) \
+                        .range(offset, offset + batch_size - 1) \
+                        .execute()
+                except Exception as batch_err:
+                    logger.info(
+                        f"🔄 [food_db_cache] Batch at offset={offset} failed ({batch_err}), "
+                        f"using {len(cache)} entries loaded so far"
+                    )
+                    break
 
                 if not result.data:
                     break
@@ -128,7 +135,7 @@ async def _ensure_food_db_cache() -> Dict[str, Tuple[int, str]]:
             return cache
 
         except Exception as e:
-            logger.warning(f"Failed to load food_database cache: {e}", exc_info=True)
+            logger.info(f"🔄 [food_db_cache] Failed to load: {e}")
             if _food_db_cache is not None:
                 return _food_db_cache
             _food_db_cache = {}

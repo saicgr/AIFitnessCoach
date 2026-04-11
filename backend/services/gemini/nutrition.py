@@ -447,6 +447,56 @@ CRITICAL PORTION SIZE RULES:
 - Fast food without size = regular/medium combo
 - Pizza without count = assume 2 slices
 
+PORTION SIZE KEYWORDS — when these modify the food (no explicit weight given):
+- "side of [food]" / "a side of [food]" (standalone, NOT within a composite meal): SIDE PORTION — 30-35% of regular serving
+  - "side of chicken al pastor from chipotle" → ~110-120g (~210-250 cal), NOT a full 300g+ serving
+  - "side of rice" → ~75-85g (~100 cal), "side of fries" → ~80g (~130 cal), "side of guacamole" → ~40g (~60 cal)
+  - NOTE: "bowl with a side of chips" is different — that's a SEPARATE ITEM signal (see KEEP SEPARATE rules below)
+- "kids [food]" / "kid's [food]" / "children's [food]": ~50% of regular adult serving
+- "appetizer portion" / "starter portion": ~40% of entrée size
+- "personal [food]" (e.g., personal pizza): ~50% of regular
+- "junior [food]" / "jr [food]": ~60% of regular
+- "petite [food]": ~50% of regular
+- "mini [food]": ~50% of regular
+- "fun size [food]": ~30% of regular (candy bars)
+- "snack size [food]": ~40% of regular
+- "king size [food]": ~200% of regular (candy bars)
+- "family size [food]": ~350% of regular
+- "shared [food]" / "split [food]": ~50% (split between two)
+- "a bite of [food]" / "just a bite": ~10% of regular
+- "a taste of [food]": ~10% of regular
+- "a little [food]" / "just a little": ~30% of regular
+
+FIXED-WEIGHT DESCRIPTORS — these specify a fixed amount regardless of food:
+- "a sprinkle of [food]" / "sprinkled with [food]": ~4g
+- "a drizzle of [food]" / "drizzled with [food]": ~8g
+- "a dollop of [food]": ~15g
+- "a splash of [food]": ~15ml
+- "a pinch of [food]": ~1g
+- "a dash of [food]": ~1g
+- "a touch of [food]": ~4g
+- "a hint of [food]": ~2g
+- "a dusting of [food]": ~3g
+- "a squirt of [food]": ~8g (condiment/sauce)
+- "a squeeze of [food]": ~8g (lemon, sauce)
+- "a smear of [food]": ~12g (cream cheese, butter)
+- "a swirl of [food]": ~12g (sauce, cream)
+- "a glob of [food]": ~25g
+
+VAGUE QUANTITY LANGUAGE:
+- "some [food]" (standalone, no verb prefix): Moderate/regular serving — do NOT increase or decrease
+- "just some [food]" / "only some [food]": ~50% of regular serving
+- "some of the [food]" / "some of [food]": ~50% of regular (partial)
+- "a little [food]" / "a little bit of [food]": ~30% of regular
+- "a bit of [food]": ~35% of regular
+- "a lot of [food]" / "lots of [food]" / "plenty of [food]": ~150% of regular
+- "a ton of [food]" / "tons of [food]": ~200% of regular
+- "a bunch of [food]": ~150% of regular
+- "hardly any [food]" / "barely any [food]": ~10% of regular
+- "not much [food]": ~40% of regular
+- "a few [food]": 3-4 pieces/items of that food
+- "several [food]": 4-5 pieces/items
+
 COUNTABLE ITEMS - For foods naturally counted as pieces/units (NOT by weight):
 - ALWAYS include "count" (number of pieces) and "weight_per_unit_g" (weight of ONE piece)
 - Examples: tater tots (~8g each), cookies (~15g each), chicken nuggets (~18g each), eggs (~50g each), slices of pizza (~100g each), meatballs (~30g each)
@@ -506,7 +556,8 @@ KEEP SEPARATE — these signal a separate dish alongside the composite:
 - "and a [different dish]": "Chipotle bowl with chicken and a cookie" → bowl ingredients + "Cookie" as separate item
 - "and [ice cream/dessert/drink]": "Chipotle bowl with chicken and ice cream" → bowl ingredients + "Ice Cream"
 - "plus": "burrito bowl plus chips and salsa" → bowl ingredients + "Chips and Salsa"
-- "side of": "Chipotle bowl with a side of chips" → bowl ingredients + "Tortilla Chips"
+- "side of" (WITH a base composite like bowl/burrito/plate): "Chipotle bowl with a side of chips" → bowl ingredients + "Tortilla Chips"
+  IMPORTANT: "side of [food]" WITHOUT a base composite (e.g., "side of chicken al pastor") is NOT a separate item — it means a SMALL SIDE PORTION (~30-35% of regular). See PORTION SIZE KEYWORDS above.
 - "also"/"also got": "Chipotle bowl also got a drink" → bowl ingredients + the drink
 - Multi-person: "Chipotle bowl for me, chicken tacos for my wife" → bowl ingredients + taco ingredients
 
@@ -545,7 +596,30 @@ IMPORTANT - ALWAYS identify foods:
 - For ANY food description, ALWAYS return valid food items with estimated nutrition
 - If you don't recognize the exact item (e.g., "Cinnamon Delights from Taco Bell"), estimate based on similar foods (e.g., fried dough with cinnamon sugar)
 - Fast food items without exact data: estimate based on ingredients and similar menu items
-- NEVER return empty food_items - always make your best estimate'''
+- NEVER return empty food_items - always make your best estimate
+
+RESTAURANT/LOCATION QUALIFIERS — DO NOT create food items from restaurant names:
+- When input ends with (or contains "from"/"at") a restaurant name, that name is LOCATION CONTEXT
+- Use the restaurant name ONLY to inform portion sizes and menu accuracy — do NOT generate a separate food item from it
+- The restaurant name tells you WHERE the food is from, not WHAT food to add
+- Examples:
+  - "mexican coke chipotle" → 1 item: "Mexican Coke" (chipotle = restaurant, NOT a burrito bowl)
+  - "coke zero taco bell" → 1 item: "Coke Zero" (taco bell = restaurant context)
+  - "chicken nuggets mcdonalds" → 1 item: "Chicken McNuggets" (use McDonald's 10-piece portion)
+  - "iced coffee dunkin" → 1 item: "Iced Coffee" (Dunkin' medium portion)
+  - "fries and a coke burger king" → 2 items: "French Fries" + "Coca-Cola" (BK portions)
+  - "side of chips chipotle" → 1 item: "Tortilla Chips" (Chipotle side portion)
+  - "latte from starbucks" → 1 item: "Latte" (Starbucks grande)
+  - "wings at wingstop" → 1 item: "Chicken Wings" (Wingstop portion)
+  - "pizza pizza hut" → 1 item: "Pizza" (Pizza Hut medium, 2 slices)
+  - "coke from chipotle and a burrito" → 2 items: "Mexican Coke" + "Burrito" (both Chipotle portions)
+- DISTINGUISH from chipotle the INGREDIENT/FLAVOR:
+  - "chipotle chicken sandwich" → 1 item (chipotle-FLAVORED chicken sandwich — chipotle is an adjective describing the food)
+  - "chipotle mayo" → 1 item (the condiment made with chipotle peppers)
+  - "chipotle sauce" → 1 item (the sauce)
+  - "chicken with chipotle" → 1 item (chicken with chipotle sauce/peppers as ingredient)
+  - "chicken chipotle" → ambiguous — if no other context, interpret as "chicken from Chipotle" (1 item: Chicken)
+- HOW TO TELL: If removing the restaurant name leaves a complete food description, it is location context. If removing it changes the food itself, it is an ingredient/flavor.'''
 
         # Timeout for food analysis
         FOOD_ANALYSIS_TIMEOUT = 25

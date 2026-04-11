@@ -168,7 +168,7 @@ class WorkoutsNotifier extends StateNotifier<AsyncValue<List<Workout>>> {
   /// Get next workout (closest upcoming incomplete)
   Workout? get nextWorkout {
     final workouts = state.valueOrNull ?? [];
-    final today = DateTime.now().toIso8601String().split('T')[0];
+    final today = Tz.localDate();
 
     final upcoming = workouts.where((w) {
       final date = w.scheduledDate?.split('T')[0] ?? '';
@@ -182,7 +182,7 @@ class WorkoutsNotifier extends StateNotifier<AsyncValue<List<Workout>>> {
   /// Get upcoming workouts (excluding next)
   List<Workout> get upcomingWorkouts {
     final workouts = state.valueOrNull ?? [];
-    final today = DateTime.now().toIso8601String().split('T')[0];
+    final today = Tz.localDate();
     final next = nextWorkout;
 
     return workouts.where((w) {

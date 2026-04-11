@@ -25,7 +25,7 @@ extension ContextLoggingServiceExt2 on ContextLoggingService {
           'top_muscles_trained': topMusclesTrained ?? [],
           'neglected_muscles': neglectedMuscles ?? [],
           'balance_score': balanceScore,
-          'viewed_at': DateTime.now().toIso8601String(),
+          'viewed_at': Tz.timestamp(),
         },
         context: {
           'time_of_day': _getTimeOfDay(),
@@ -61,7 +61,7 @@ extension ContextLoggingServiceExt2 on ContextLoggingService {
           'last_trained_date': lastTrainedDate,
           'sets_this_week': setsThisWeek,
           'exercises_for_muscle': exercisesForMuscle ?? [],
-          'interacted_at': DateTime.now().toIso8601String(),
+          'interacted_at': Tz.timestamp(),
         },
         context: {
           'time_of_day': _getTimeOfDay(),
@@ -100,7 +100,7 @@ extension ContextLoggingServiceExt2 on ContextLoggingService {
           'a1c_goal': a1cGoal,
           'uses_insulin': usesInsulin,
           'uses_cgm': usesCgm,
-          'created_at': DateTime.now().toIso8601String(),
+          'created_at': Tz.timestamp(),
         },
         context: {
           'time_of_day': _getTimeOfDay(),
@@ -131,7 +131,7 @@ extension ContextLoggingServiceExt2 on ContextLoggingService {
           'meal_context': mealContext,
           'source': source,
           'notes': notes,
-          'logged_at': DateTime.now().toIso8601String(),
+          'logged_at': Tz.timestamp(),
         },
         context: {
           'time_of_day': _getTimeOfDay(),
@@ -170,7 +170,7 @@ extension ContextLoggingServiceExt2 on ContextLoggingService {
           'change_from_previous': change,
           'goal_met': goalMet,
           'is_lab_result': isLabResult,
-          'logged_at': DateTime.now().toIso8601String(),
+          'logged_at': Tz.timestamp(),
         },
         context: {
           'time_of_day': _getTimeOfDay(),
@@ -202,7 +202,7 @@ extension ContextLoggingServiceExt2 on ContextLoggingService {
           'target_date': targetDate,
           'previous_goal': previousGoal,
           'gap_to_goal': currentValue != null ? (targetValue - currentValue) : null,
-          'set_at': DateTime.now().toIso8601String(),
+          'set_at': Tz.timestamp(),
         },
         context: {
           'time_of_day': _getTimeOfDay(),
@@ -243,7 +243,7 @@ extension ContextLoggingServiceExt2 on ContextLoggingService {
           'target_count': targetCount,
           'unit': unit,
           'source': source ?? 'manual',
-          'created_at': DateTime.now().toIso8601String(),
+          'created_at': Tz.timestamp(),
         },
         context: {
           'time_of_day': _getTimeOfDay(),
@@ -283,7 +283,7 @@ extension ContextLoggingServiceExt2 on ContextLoggingService {
           'completion_percentage': targetCount != null && value != null
               ? ((value / targetCount) * 100).clamp(0, 100)
               : 100.0,
-          'completed_at': DateTime.now().toIso8601String(),
+          'completed_at': Tz.timestamp(),
         },
         context: {
           'time_of_day': _getTimeOfDay(),
@@ -316,7 +316,7 @@ extension ContextLoggingServiceExt2 on ContextLoggingService {
           'total_completions': totalCompletions,
           'longest_streak': longestStreak,
           'days_active': daysActive,
-          'deleted_at': DateTime.now().toIso8601String(),
+          'deleted_at': Tz.timestamp(),
         },
         context: {
           'time_of_day': _getTimeOfDay(),
@@ -351,7 +351,7 @@ extension ContextLoggingServiceExt2 on ContextLoggingService {
           'negative_habits_avoided': negativeHabitsAvoided,
           'longest_active_streak': longestActiveStreak,
           'categories_completed': categoriesCompleted ?? [],
-          'summary_date': DateTime.now().toIso8601String(),
+          'summary_date': Tz.timestamp(),
         },
         context: {
           'time_of_day': _getTimeOfDay(),
@@ -391,7 +391,7 @@ extension ContextLoggingServiceExt2 on ContextLoggingService {
           'context': {
             ...?context,
             'platform': defaultTargetPlatform.name,
-            'timestamp': DateTime.now().toIso8601String(),
+            'timestamp': Tz.timestamp(),
           },
         },
       );

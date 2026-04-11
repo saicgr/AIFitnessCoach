@@ -11,9 +11,11 @@ Resolution queries the user's food_logs table.
 import asyncio
 import re
 import logging
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
 from enum import Enum
 from typing import Optional, List, Dict, Any, Tuple
+
+from core.timezone_utils import get_user_today
 
 logger = logging.getLogger(__name__)
 
@@ -298,6 +300,7 @@ def _find_day_names(text: str) -> List[str]:
 
 def detect_contextual_reference(
     text: str,
+    timezone_str: str,
     current_meal_type: Optional[str] = None,
 ) -> Optional[ContextualRef]:
     """
@@ -405,7 +408,7 @@ def detect_contextual_reference(
             break
 
     # Step 11: Parse target date
-    target_date = _parse_date(all_time)
+    target_date = _parse_date(all_time, timezone_str)
 
     # Step 12: Parse meal type
     meal_type = None
@@ -478,9 +481,9 @@ def _classify_type(
     return ReferenceType.REPEAT  # Safest default
 
 
-def _parse_date(time_words: List[str]) -> Optional[date]:
+def _parse_date(time_words: List[str], timezone_str: str) -> Optional[date]:
     """Parse target date from time words."""
-    today = date.today()
+    today = datetime.strptime(get_user_today(timezone_str), "%Y-%m-%d").date()
 
     if not time_words:
         return today - timedelta(days=1)  # Default: yesterday
@@ -574,9 +577,10 @@ async def resolve_contextual_reference(
         return ResolvedMeal(found=False, message="Something went wrong looking up your meal history.")
 
 
-async def _resolve_temporal(ref, user_id, db, loop) -> ResolvedMeal:
+async def _resolve_temporal(ref, user_id, db, loop, timezone_str: str) -> ResolvedMeal:
     """Resolve temporal references: "yesterday's lunch", "leftovers", etc."""
-    target = ref.target_date or (date.today() - timedelta(days=1))
+    _today = date.fromisoformat(get_user_today(timezone_str))
+    target = ref.target_date or (_today - timedelta(days=1))
     target_str = target.isoformat()
     # Query for the full day, add 1 day for end range
     end_str = (target + timedelta(days=1)).isoformat()
@@ -627,9 +631,10 @@ async def _resolve_repeat(ref, user_id, db, loop) -> ResolvedMeal:
     return _build_resolved(logs, ref, source_date)
 
 
-async def _resolve_usual(ref, user_id, db, loop) -> ResolvedMeal:
+async def _resolve_usual(ref, user_id, db, loop, timezone_str: str) -> ResolvedMeal:
     """Resolve "my usual" — find most frequently logged meal combo in last 30 days."""
-    since = (date.today() - timedelta(days=30)).isoformat()
+    _today = date.fromisoformat(get_user_today(timezone_str))
+    since = (_today - timedelta(days=30)).isoformat()
 
     logs = await loop.run_in_executor(
         None, lambda: db.list_food_logs(
@@ -677,16 +682,17 @@ async def _resolve_usual(ref, user_id, db, loop) -> ResolvedMeal:
     return result
 
 
-async def _resolve_keyword(ref, user_id, db, loop) -> ResolvedMeal:
+async def _resolve_keyword(ref, user_id, db, loop, timezone_str: str) -> ResolvedMeal:
     """Resolve keyword searches: "the chicken from last week", etc."""
     days_back = 14
+    _today = date.fromisoformat(get_user_today(timezone_str))
     if ref.target_date:
         # Search around the target date (±1 day)
         from_date = (ref.target_date - timedelta(days=1)).isoformat()
         to_date = (ref.target_date + timedelta(days=2)).isoformat()
     else:
-        from_date = (date.today() - timedelta(days=days_back)).isoformat()
-        to_date = (date.today() + timedelta(days=1)).isoformat()
+        from_date = (_today - timedelta(days=days_back)).isoformat()
+        to_date = (_today + timedelta(days=1)).isoformat()
 
     logs = await loop.run_in_executor(
         None, lambda: db.list_food_logs(
@@ -863,6 +869,7 @@ async def detect_and_resolve(
     user_id: str,
     current_meal_type: Optional[str],
     nutrition_db,
+    timezone_str: str,
 ) -> Optional[ResolvedMeal]:
     """
     Main entry point: detect contextual reference and resolve it.
@@ -871,7 +878,7 @@ async def detect_and_resolve(
         ResolvedMeal if reference detected and resolved (or fallback message).
         None if input is not a contextual reference (caller should proceed with normal analysis).
     """
-    ref = detect_contextual_reference(description, current_meal_type)
+    ref = detect_contextual_reference(description, current_meal_type, timezone_str)
     if ref is None:
         return None
 

@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../data/services/health_service.dart';
+import '../utils/tz.dart';
 
 /// Recovery readiness levels based on combined HRV/sleep/HR data.
 enum ReadinessLevel { low, moderate, high, peak }
@@ -252,7 +253,7 @@ class HrvRecoveryService {
     }
 
     // Add today's value
-    final today = DateTime.now().toIso8601String().substring(0, 10);
+    final today = Tz.localDate();
 
     // Don't add duplicate for same day
     if (history.isEmpty || history.last['date'] != today) {

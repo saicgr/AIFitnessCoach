@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../utils/tz.dart';
 import 'api_client.dart';
 
 /// Service for detecting and logging split screen usage.
@@ -168,11 +169,11 @@ class SplitScreenService with WidgetsBindingObserver {
             'app_height': windowSize.height.toInt(),
             'current_screen': _currentScreen,
             'partner_app': null, // Cannot detect partner app from Flutter
-            'entered_at': DateTime.now().toIso8601String(),
+            'entered_at': Tz.timestamp(),
           },
           'context': {
             'platform': defaultTargetPlatform.name,
-            'timestamp': DateTime.now().toIso8601String(),
+            'timestamp': Tz.timestamp(),
             'is_split_screen': true,
           },
         },
@@ -205,11 +206,11 @@ class SplitScreenService with WidgetsBindingObserver {
             'workout_active_during_split': _workoutActiveDuringSplit,
             'partner_app': null, // Cannot detect partner app from Flutter
             'exit_reason': 'window_restored',
-            'exited_at': DateTime.now().toIso8601String(),
+            'exited_at': Tz.timestamp(),
           },
           'context': {
             'platform': defaultTargetPlatform.name,
-            'timestamp': DateTime.now().toIso8601String(),
+            'timestamp': Tz.timestamp(),
             'is_split_screen_exit': true,
           },
         },

@@ -10,6 +10,7 @@ from typing import Optional, List, Dict, Any
 import logging
 
 from core.db import get_supabase_db
+from core.timezone_utils import get_user_today
 from services.user_context.models import EventType, NeatPatterns
 
 logger = logging.getLogger(__name__)
@@ -179,6 +180,7 @@ class NeatLoggingMixin:
         sedentary_breaks: int,
         bonus_activities: Optional[List[str]] = None,
         device: Optional[str] = None,
+        timezone_str: str = "UTC",
     ) -> Optional[str]:
         """Log daily NEAT score calculation."""
         event_data = {
@@ -188,7 +190,7 @@ class NeatLoggingMixin:
             "sedentary_breaks": sedentary_breaks,
             "bonus_activities": bonus_activities or [],
             "calculated_at": datetime.now().isoformat(),
-            "date": datetime.now().date().isoformat(),
+            "date": get_user_today(timezone_str),
         }
 
         logger.info(
@@ -400,6 +402,7 @@ class NeatLoggingMixin:
         self,
         user_id: str,
         days: int = 30,
+        timezone_str: str = "UTC",
     ) -> NeatPatterns:
         """Analyze user's NEAT activity patterns from context logs."""
         try:
@@ -490,7 +493,7 @@ class NeatLoggingMixin:
             ][:7]
 
             # Get today's data
-            today = datetime.now().date().isoformat()
+            today = get_user_today(timezone_str)
             today_scores = [
                 e for e in score_events
                 if e["event_data"].get("date") == today
@@ -579,18 +582,20 @@ class NeatLoggingMixin:
         self,
         user_id: str,
         days: int = 30,
+        timezone_str: str = "UTC",
     ) -> str:
         """Get formatted NEAT context string for AI prompts."""
-        patterns = await self.get_neat_patterns(user_id, days)
+        patterns = await self.get_neat_patterns(user_id, days, timezone_str)
         return patterns.get_ai_context()
 
     async def get_neat_analytics(
         self,
         user_id: str,
         days: int = 30,
+        timezone_str: str = "UTC",
     ) -> Dict[str, Any]:
         """Get comprehensive NEAT analytics for a user."""
-        patterns = await self.get_neat_patterns(user_id, days)
+        patterns = await self.get_neat_patterns(user_id, days, timezone_str)
 
         return {
             "user_id": user_id,

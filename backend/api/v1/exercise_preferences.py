@@ -3,7 +3,7 @@ Exercise Preferences API - Staple exercises, variation control, and avoidance li
 """
 from pydantic import BaseModel, Field, field_validator
 from core.db import get_supabase_db
-from fastapi import APIRouter, HTTPException, Query, Depends
+from fastapi import APIRouter, HTTPException, Query, Depends, Request
 from typing import List, Optional
 from datetime import datetime, date, timedelta
 import logging
@@ -12,6 +12,7 @@ import json
 from core.supabase_db import get_supabase_db
 from core.auth import get_current_user
 from core.exceptions import safe_internal_error
+from core.timezone_utils import user_today_date
 
 # Models and constants
 from .exercise_preferences_models import *  # noqa: F401, F403
@@ -284,7 +285,7 @@ async def get_user_staples(user_id: str, current_user: dict = Depends(get_curren
 
 
 @router.post("/staples")
-async def add_staple_exercise(request: StapleExerciseCreate, current_user: dict = Depends(get_current_user)):
+async def add_staple_exercise(http_request: Request, request: StapleExerciseCreate, current_user: dict = Depends(get_current_user)):
     """
     Add an exercise to user's staples.
 
@@ -420,7 +421,9 @@ async def add_staple_exercise(request: StapleExerciseCreate, current_user: dict 
             "default_duration_seconds": default_duration_seconds,
             "target_days": request.target_days,
         }
-        engine_result = await apply_staple_to_workouts(db, request.user_id, staple_data)
+        from core.timezone_utils import resolve_timezone
+        tz_str = resolve_timezone(http_request, db, request.user_id)
+        engine_result = await apply_staple_to_workouts(db, request.user_id, staple_data, timezone_str=tz_str)
 
         response = StapleExerciseResponse(
             id=row["id"],
@@ -906,6 +909,7 @@ async def update_sets_limits(request: SetsLimitsUpdate, current_user: dict = Dep
 
 @router.get("/week-comparison/{user_id}", response_model=WeekComparisonResponse)
 async def get_week_comparison(
+    request: Request,
     user_id: str,
     current_week_start: Optional[date] = None,
     current_user: dict = Depends(get_current_user),
@@ -927,7 +931,7 @@ async def get_week_comparison(
 
         # Default to current week's Monday
         if current_week_start is None:
-            today = date.today()
+            today = user_today_date(request, db, user_id)
             current_week_start = today - timedelta(days=today.weekday())
 
         previous_week_start = current_week_start - timedelta(days=7)
@@ -990,6 +994,7 @@ async def get_week_comparison(
 
 @router.get("/rotations/{user_id}", response_model=List[ExerciseRotationResponse])
 async def get_exercise_rotations(
+    request: Request,
     user_id: str,
     weeks: int = Query(default=4, ge=1, le=12),
     current_user: dict = Depends(get_current_user),
@@ -1008,7 +1013,7 @@ async def get_exercise_rotations(
         db = get_supabase_db()
 
         # Calculate date range
-        today = date.today()
+        today = user_today_date(request, db, user_id)
         start_date = today - timedelta(weeks=weeks)
 
         result = db.client.table("exercise_rotations").select("*").eq("user_id", user_id).gte("week_start_date", start_date.isoformat()).order("created_at", desc=True).execute()
@@ -1116,7 +1121,7 @@ async def log_exercise_rotation(
 # =============================================================================
 
 @router.get("/avoided-exercises/{user_id}", response_model=List[AvoidedExerciseResponse])
-async def get_avoided_exercises(user_id: str, include_expired: bool = False, current_user: dict = Depends(get_current_user)):
+async def get_avoided_exercises(request: Request, user_id: str, include_expired: bool = False, current_user: dict = Depends(get_current_user)):
     """
     Get all exercises the user wants to avoid.
 
@@ -1134,7 +1139,7 @@ async def get_avoided_exercises(user_id: str, include_expired: bool = False, cur
 
         if not include_expired:
             # Filter out expired temporary avoidances
-            today = date.today().isoformat()
+            today = user_today_date(request, db, user_id).isoformat()
             # Get non-temporary OR temporary with no end_date OR temporary with future end_date
             query = query.or_(
                 f"is_temporary.eq.false,end_date.is.null,end_date.gt.{today}"

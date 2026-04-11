@@ -371,6 +371,8 @@ def row_to_user(row: dict, is_new_user: bool = False, support_friend_added: bool
         equipment_details=row.get("equipment_details"),
         # Weight unit preference (kg or lbs)
         weight_unit=row.get("weight_unit") or "kg",
+        # Body measurement unit preference (cm or in)
+        measurement_unit=row.get("measurement_unit") or "cm",
         # Profile photo URL and bio
         photo_url=row.get("photo_url"),
         bio=row.get("bio"),

@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import '../models/user_xp.dart';
 import '../models/trophy.dart';
 import '../models/xp_event.dart';
+import '../../utils/tz.dart';
 import '../services/api_client.dart';
 
 part 'xp_repository_part_daily_goals_status.dart';
@@ -447,7 +448,9 @@ class XPRepository {
   /// Get today's daily crate availability and status
   Future<DailyCratesState> getDailyCrates() async {
     try {
-      final response = await _client.get('/xp/daily-crates');
+      final response = await _client.get('/xp/daily-crates',
+        queryParameters: {'date': Tz.localDate()},
+      );
       return DailyCratesState.fromJson(response.data);
     } catch (e) {
       debugPrint('Error getting daily crates: $e');
@@ -562,7 +565,9 @@ class XPRepository {
   /// Returns which goals have been completed today
   Future<DailyGoalsStatus> getDailyGoalsStatus() async {
     try {
-      final response = await _client.get('/xp/daily-goals-status');
+      final response = await _client.get('/xp/daily-goals-status',
+        queryParameters: {'date': Tz.localDate()},
+      );
       return DailyGoalsStatus.fromJson(response.data);
     } catch (e) {
       debugPrint('Error getting daily goals status: $e');
@@ -689,5 +694,11 @@ class XPRepository {
       debugPrint('Error awarding social XP: $e');
       return SocialXPResult.empty();
     }
+  }
+
+  /// Get all 250 levels with names, titles, XP requirements, and milestones
+  Future<List<Map<String, dynamic>>> getAllLevels() async {
+    final response = await _client.get('/xp/all-levels');
+    return (response.data as List).cast<Map<String, dynamic>>();
   }
 }

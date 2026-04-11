@@ -30,9 +30,18 @@ class ProductNutrients:
     protein_per_serving: Optional[float]
     carbs_per_serving: Optional[float]
     fat_per_serving: Optional[float]
+    # Micronutrients (from Open Food Facts)
+    vitamin_a_100g: Optional[float] = None
+    vitamin_c_100g: Optional[float] = None
+    vitamin_d_100g: Optional[float] = None
+    calcium_100g: Optional[float] = None
+    iron_100g: Optional[float] = None
+    potassium_100g: Optional[float] = None
+    magnesium_100g: Optional[float] = None
+    zinc_100g: Optional[float] = None
 
     def to_dict(self) -> Dict[str, Any]:
-        return {
+        d = {
             "calories_per_100g": self.calories_per_100g,
             "protein_per_100g": self.protein_per_100g,
             "carbs_per_100g": self.carbs_per_100g,
@@ -48,6 +57,14 @@ class ProductNutrients:
             "carbs_per_serving": self.carbs_per_serving,
             "fat_per_serving": self.fat_per_serving,
         }
+        # Only include micronutrients that have values
+        for key in ("vitamin_a_100g", "vitamin_c_100g", "vitamin_d_100g",
+                     "calcium_100g", "iron_100g", "potassium_100g",
+                     "magnesium_100g", "zinc_100g"):
+            val = getattr(self, key)
+            if val is not None and val > 0:
+                d[key] = val
+        return d
 
 
 @dataclass
@@ -63,9 +80,12 @@ class BarcodeProduct:
     nova_group: Optional[int]
     ingredients_text: Optional[str]
     allergens: Optional[str]
+    ecoscore_grade: Optional[str] = None
+    labels_tags: Optional[list] = None
+    additives_tags: Optional[list] = None
 
     def to_dict(self) -> Dict[str, Any]:
-        return {
+        d = {
             "barcode": self.barcode,
             "product_name": self.product_name,
             "brand": self.brand,
@@ -78,6 +98,13 @@ class BarcodeProduct:
             "ingredients_text": self.ingredients_text,
             "allergens": self.allergens,
         }
+        if self.ecoscore_grade:
+            d["ecoscore_grade"] = self.ecoscore_grade
+        if self.labels_tags:
+            d["labels_tags"] = self.labels_tags
+        if self.additives_tags:
+            d["additives_tags"] = self.additives_tags
+        return d
 
 
 class FoodDatabaseService:
@@ -119,6 +146,16 @@ class FoodDatabaseService:
         sodium = self._parse_float(nutriments.get("sodium_100g"))
         saturated_fat = self._parse_float(nutriments.get("saturated-fat_100g"))
 
+        # Micronutrients from Open Food Facts
+        vitamin_a = self._parse_float(nutriments.get("vitamin-a_100g"))
+        vitamin_c = self._parse_float(nutriments.get("vitamin-c_100g"))
+        vitamin_d = self._parse_float(nutriments.get("vitamin-d_100g"))
+        calcium = self._parse_float(nutriments.get("calcium_100g"))
+        iron = self._parse_float(nutriments.get("iron_100g"))
+        potassium = self._parse_float(nutriments.get("potassium_100g"))
+        magnesium = self._parse_float(nutriments.get("magnesium_100g"))
+        zinc = self._parse_float(nutriments.get("zinc_100g"))
+
         serving_size = product.get("serving_size")
         serving_quantity = self._parse_float(product.get("serving_quantity"))
 
@@ -145,6 +182,14 @@ class FoodDatabaseService:
             protein_per_serving=prot_srv,
             carbs_per_serving=carbs_srv,
             fat_per_serving=fat_srv,
+            vitamin_a_100g=round(vitamin_a, 2) if vitamin_a > 0 else None,
+            vitamin_c_100g=round(vitamin_c, 2) if vitamin_c > 0 else None,
+            vitamin_d_100g=round(vitamin_d, 2) if vitamin_d > 0 else None,
+            calcium_100g=round(calcium, 1) if calcium > 0 else None,
+            iron_100g=round(iron, 2) if iron > 0 else None,
+            potassium_100g=round(potassium, 1) if potassium > 0 else None,
+            magnesium_100g=round(magnesium, 1) if magnesium > 0 else None,
+            zinc_100g=round(zinc, 2) if zinc > 0 else None,
         )
 
     def _is_valid_barcode(self, barcode: str) -> bool:
@@ -279,7 +324,8 @@ class FoodDatabaseService:
             params = {
                 "fields": "code,product_name,brands,categories,image_url,image_small_url,"
                          "nutriments,serving_size,serving_quantity,nutriscore_grade,"
-                         "nova_group,ingredients_text,allergens"
+                         "nova_group,ingredients_text,allergens,"
+                         "ecoscore_grade,labels_tags,additives_tags"
             }
 
             response = await client.get(url, params=params)
@@ -311,6 +357,28 @@ class FoodDatabaseService:
                 except (ValueError, TypeError):
                     nova_group = None
 
+            # Parse labels tags — strip language prefixes like "en:"
+            raw_labels = product.get("labels_tags")
+            labels_tags = None
+            if raw_labels and isinstance(raw_labels, list):
+                labels_tags = [
+                    tag.split(":")[-1].replace("-", " ").title()
+                    for tag in raw_labels
+                    if isinstance(tag, str) and tag.strip()
+                ]
+                labels_tags = labels_tags if labels_tags else None
+
+            # Parse additives tags — strip language prefixes
+            raw_additives = product.get("additives_tags")
+            additives_tags = None
+            if raw_additives and isinstance(raw_additives, list):
+                additives_tags = [
+                    tag.split(":")[-1].upper()
+                    for tag in raw_additives
+                    if isinstance(tag, str) and tag.strip()
+                ]
+                additives_tags = additives_tags if additives_tags else None
+
             result = BarcodeProduct(
                 barcode=barcode,
                 product_name=product_name,
@@ -323,6 +391,9 @@ class FoodDatabaseService:
                 nova_group=nova_group,
                 ingredients_text=product.get("ingredients_text"),
                 allergens=product.get("allergens"),
+                ecoscore_grade=product.get("ecoscore_grade"),
+                labels_tags=labels_tags,
+                additives_tags=additives_tags,
             )
 
             logger.info(f"Found product in OFF: {product_name} (barcode: {barcode})")

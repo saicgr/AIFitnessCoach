@@ -30,6 +30,7 @@ from core.db import get_supabase_db
 from core.exceptions import safe_internal_error
 from core.rate_limiter import limiter
 from core.activity_logger import log_user_activity, log_user_error
+from core.timezone_utils import user_today_date, get_user_today, resolve_timezone
 
 
 def _fasting_parent():
@@ -285,14 +286,14 @@ def interpret_ai_correlation(score: float) -> str:
     else:
         return "Strong negative correlation - fasting may be impacting goals negatively"
 
-async def get_weight_data_for_ai(user_id: str, days: int = 30) -> List[Dict[str, Any]]:
+async def get_weight_data_for_ai(user_id: str, days: int = 30, *, timezone_str: str) -> List[Dict[str, Any]]:
     """
     Get weight logs with fasting day correlation for AI analysis.
     """
     logger.info(f"Getting weight data for AI analysis for user {user_id}")
 
     db = get_supabase_db()
-    end_date = date.today()
+    end_date = date.fromisoformat(get_user_today(timezone_str))
     start_date = end_date - timedelta(days=days)
 
     try:
@@ -337,14 +338,14 @@ async def get_weight_data_for_ai(user_id: str, days: int = 30) -> List[Dict[str,
         logger.error(f"Error getting weight data for AI: {e}", exc_info=True)
         return []
 
-async def get_goal_data_for_ai(user_id: str, days: int = 30) -> Dict[str, Any]:
+async def get_goal_data_for_ai(user_id: str, days: int = 30, *, timezone_str: str) -> Dict[str, Any]:
     """
     Get goal achievement data for AI analysis.
     """
     logger.info(f"Getting goal data for AI analysis for user {user_id}")
 
     db = get_supabase_db()
-    end_date = date.today()
+    end_date = date.fromisoformat(get_user_today(timezone_str))
     start_date = end_date - timedelta(days=days)
 
     try:
@@ -443,9 +444,10 @@ async def get_ai_fasting_insight(
         service = get_fasting_insight_service()
 
         # Gather data for insight generation
+        tz_str = resolve_timezone(request, None, user_id)
         fasting_data = await service.get_fasting_summary_for_insight(user_id, days)
-        weight_data = await get_weight_data_for_ai(user_id, days)
-        goal_data = await get_goal_data_for_ai(user_id, days)
+        weight_data = await get_weight_data_for_ai(user_id, days, timezone_str=tz_str)
+        goal_data = await get_goal_data_for_ai(user_id, days, timezone_str=tz_str)
 
         # Generate AI insight
         insight = await service.generate_fasting_impact_insight(
@@ -510,9 +512,10 @@ async def refresh_ai_fasting_insight(
         service = get_fasting_insight_service()
 
         # Gather fresh data
+        tz_str = resolve_timezone(request, None, user_id)
         fasting_data = await service.get_fasting_summary_for_insight(user_id, days)
-        weight_data = await get_weight_data_for_ai(user_id, days)
-        goal_data = await get_goal_data_for_ai(user_id, days)
+        weight_data = await get_weight_data_for_ai(user_id, days, timezone_str=tz_str)
+        goal_data = await get_goal_data_for_ai(user_id, days, timezone_str=tz_str)
 
         # Generate fresh AI insight (will overwrite cache)
         insight = await service.generate_fasting_impact_insight(
@@ -646,6 +649,7 @@ class MarkFastingDayResponse(BaseModel):
 
 @router.post("/mark-fasting-day", response_model=MarkFastingDayResponse)
 async def mark_historical_fasting_day(
+    request: Request,
     data: MarkFastingDayRequest,
     current_user: dict = Depends(get_current_user),
 ):
@@ -674,7 +678,7 @@ async def mark_historical_fasting_day(
         except ValueError:
             raise HTTPException(status_code=400, detail="Invalid date format. Use YYYY-MM-DD.")
 
-        today = date.today()
+        today = user_today_date(request, db, data.user_id)
 
         # Validate date is in the past
         if target_date >= today:

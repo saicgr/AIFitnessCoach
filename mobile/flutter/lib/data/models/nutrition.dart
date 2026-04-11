@@ -23,6 +23,15 @@ class FoodItem {
   final double? carbsG;
   @JsonKey(name: 'fat_g')
   final double? fatG;
+  @JsonKey(name: 'fiber_g')
+  final double? fiberG;
+  // Scaling fields from JSONB
+  @JsonKey(name: 'weight_g')
+  final double? weightG;
+  final String? unit;
+  final int? count;
+  @JsonKey(name: 'weight_per_unit_g')
+  final double? weightPerUnitG;
 
   const FoodItem({
     required this.name,
@@ -31,10 +40,21 @@ class FoodItem {
     this.proteinG,
     this.carbsG,
     this.fatG,
+    this.fiberG,
+    this.weightG,
+    this.unit,
+    this.count,
+    this.weightPerUnitG,
   });
 
   factory FoodItem.fromJson(Map<String, dynamic> json) =>
       _$FoodItemFromJson(json);
   Map<String, dynamic> toJson() => _$FoodItemToJson(this);
+
+  /// Whether this item has weight data for scaling
+  bool get hasWeightData => weightG != null && weightG! > 0;
+
+  /// Whether this item has count data for scaling
+  bool get hasCountData => count != null && count! > 0 && weightPerUnitG != null;
 }
 

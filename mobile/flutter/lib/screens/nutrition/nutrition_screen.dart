@@ -27,6 +27,7 @@ import 'widgets/daily_tab.dart';
 import 'widgets/nutrition_loading_skeleton.dart';
 import 'widgets/nutrition_error_state.dart';
 import 'widgets/my_foods_sheet.dart';
+import 'widgets/share_nutrition_sheet.dart';
 import 'tabs/hydration_tab.dart';
 // COMING SOON: Fasting tab — uncomment when fasting feature launches
 // import 'tabs/fasting_tab.dart';
@@ -58,6 +59,12 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
   // PillSwipeNavigationMixin: Nutrition is index 2
   @override
   int get currentPillIndex => 2;
+
+  // In-memory cache for micronutrient data — survives widget rebuilds
+  static DailyMicronutrientSummary? _cachedMicronutrients;
+  static String? _cachedMicronutrientsKey; // "userId:date"
+  static DateTime? _cachedMicronutrientsTime;
+  static const _micronutrientCacheTtl = Duration(minutes: 5);
 
   String? _userId;
   DateTime _selectedDate = DateTime.now();
@@ -116,7 +123,6 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
 
       _loadRecipes(userId);
       ref.read(nutritionProvider.notifier).loadTodaySummary(userId);
-      ref.read(nutritionProvider.notifier).loadTargets(userId);
       _loadMicronutrients(userId, dateStr);
       ref.read(nutritionPreferencesProvider.notifier).initialize(userId);
       ref.read(nutritionProvider.notifier).loadRecentLogs(userId);
@@ -154,6 +160,25 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
   }
 
   Future<void> _loadMicronutrients(String userId, String date) async {
+    final cacheKey = '$userId:$date';
+
+    // Serve cached data instantly if available and fresh
+    if (_cachedMicronutrientsKey == cacheKey &&
+        _cachedMicronutrients != null &&
+        _cachedMicronutrientsTime != null &&
+        DateTime.now().difference(_cachedMicronutrientsTime!) < _micronutrientCacheTtl) {
+      setState(() {
+        _micronutrientSummary = _cachedMicronutrients;
+        _isLoadingMicronutrients = false;
+      });
+      return;
+    }
+
+    // Show stale cache while fetching (if same key)
+    if (_cachedMicronutrientsKey == cacheKey && _cachedMicronutrients != null) {
+      _micronutrientSummary = _cachedMicronutrients;
+    }
+
     setState(() => _isLoadingMicronutrients = true);
     try {
       final repository = ref.read(nutritionRepositoryProvider);
@@ -161,6 +186,10 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
         userId: userId,
         date: date,
       );
+      // Update cache
+      _cachedMicronutrients = summary;
+      _cachedMicronutrientsKey = cacheKey;
+      _cachedMicronutrientsTime = DateTime.now();
       if (mounted) {
         setState(() {
           _micronutrientSummary = summary;
@@ -249,7 +278,7 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
             // Tab Bar with colored tabs
             SegmentedTabBar(
               controller: _tabController,
-              showIcons: true,
+              showIcons: false,
               showBorder: true,
               tabs: const [
                 SegmentedTabItem(label: 'Daily', icon: Icons.restaurant_menu_rounded),
@@ -258,7 +287,7 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
                 // COMING SOON: Fasting tab — uncomment when fasting feature launches
                 // SegmentedTabItem(label: 'Fast', icon: Icons.timer_outlined),
               ],
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
             ),
 
           // Tab Content
@@ -284,6 +313,13 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
                             onLogMeal: (mealType) => _showLogMealSheet(isDark, mealType: mealType),
                             onDeleteMeal: (id) => _deleteMeal(id),
                             onCopyMeal: (id, mealType) => _copyMeal(id, mealType),
+                            onMoveMeal: (id, mealType) => _moveMeal(id, mealType),
+                            onUpdateMeal: (logId, cal, p, c, f, {double? weightG}) => _updateMeal(logId, cal, p, c, f, weightG: weightG),
+                            onUpdateMealTime: (logId, newTime) => _updateMealTime(logId, newTime),
+                            onUpdateMealNotes: (logId, notes) => _updateMealNotes(logId, notes),
+                            onUpdateMealMood: (logId, {String? moodBefore, String? moodAfter, int? energyLevel}) => _updateMealMood(logId, moodBefore: moodBefore, moodAfter: moodAfter, energyLevel: energyLevel),
+                            onSaveFoodToFavorites: (meal) => _saveFoodToFavorites(meal),
+                            apiClient: ref.read(apiClientProvider),
                             onSwitchToNutrientsTab: () => _tabController.animateTo(1),
                             onSwitchToHydrationTab: () => _tabController.animateTo(2),
                             isDark: isDark,
@@ -439,6 +475,31 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
             ),
           ),
           const SizedBox(width: 6),
+          // Share
+          GestureDetector(
+            onTap: () {
+              final state = ref.read(nutritionProvider);
+              ShareNutritionSheet.show(
+                context,
+                ref,
+                summary: state.todaySummary,
+                targets: state.targets,
+              );
+            },
+            child: Tooltip(
+              message: 'Share',
+              child: Container(
+                width: 32,
+                height: 32,
+                decoration: BoxDecoration(
+                  color: glassSurface,
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Icon(Icons.share_outlined, size: 18, color: textSecondary),
+              ),
+            ),
+          ),
+          const SizedBox(width: 6),
           // Stats
           GestureDetector(
             onTap: () => context.push('/stats?tab=4'),
@@ -480,6 +541,7 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
 
   Future<void> _showLogMealSheet(bool isDark, {String? mealType, bool autoOpenCamera = false, bool autoOpenBarcode = false}) async {
     await showLogMealSheet(context, ref, initialMealType: mealType, autoOpenCamera: autoOpenCamera, autoOpenBarcode: autoOpenBarcode, selectedDate: _selectedDate);
+    _cachedMicronutrientsTime = null; // Invalidate — food was logged
     _loadData();
   }
 
@@ -619,6 +681,7 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
 
   Future<void> _deleteMeal(String mealId) async {
     if (_userId == null) return;
+    _cachedMicronutrientsTime = null; // Invalidate cache — nutrients changed
     await ref.read(nutritionProvider.notifier).deleteLog(_userId!, mealId);
   }
 
@@ -627,7 +690,8 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
     try {
       final repository = ref.read(nutritionRepositoryProvider);
       await repository.copyFoodLog(logId: mealId, mealType: targetMealType);
-      _loadData();
+      _cachedMicronutrientsTime = null;
+      await ref.read(nutritionProvider.notifier).refreshAll(_userId!);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -645,6 +709,131 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
             content: Text('Failed to copy meal'),
             behavior: SnackBarBehavior.floating,
           ),
+        );
+      }
+    }
+  }
+
+  Future<void> _moveMeal(String mealId, String targetMealType) async {
+    if (_userId == null) return;
+    try {
+      final repository = ref.read(nutritionRepositoryProvider);
+      await repository.moveFoodLog(logId: mealId, mealType: targetMealType);
+      _cachedMicronutrientsTime = null;
+      await ref.read(nutritionProvider.notifier).refreshAll(_userId!);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Moved to ${targetMealType[0].toUpperCase()}${targetMealType.substring(1)}'),
+            behavior: SnackBarBehavior.floating,
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+    } catch (e) {
+      debugPrint('Error moving meal: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Failed to move meal'),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _updateMeal(String logId, int calories, double proteinG, double carbsG, double fatG, {double? weightG}) async {
+    if (_userId == null) return;
+    try {
+      final repository = ref.read(nutritionRepositoryProvider);
+      await repository.updateFoodLog(
+        logId: logId,
+        totalCalories: calories,
+        proteinG: proteinG,
+        carbsG: carbsG,
+        fatG: fatG,
+        weightG: weightG,
+      );
+      _cachedMicronutrientsTime = null;
+      await ref.read(nutritionProvider.notifier).refreshAll(_userId!);
+    } catch (e) {
+      debugPrint('Error updating meal: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Failed to update meal'), behavior: SnackBarBehavior.floating),
+        );
+      }
+    }
+  }
+
+  Future<void> _updateMealTime(String logId, DateTime newTime) async {
+    if (_userId == null) return;
+    try {
+      final repository = ref.read(nutritionRepositoryProvider);
+      await repository.updateFoodLogTime(logId: logId, loggedAt: newTime.toIso8601String());
+      _cachedMicronutrientsTime = null;
+      await ref.read(nutritionProvider.notifier).refreshAll(_userId!);
+    } catch (e) {
+      debugPrint('Error updating meal time: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Failed to update time'), behavior: SnackBarBehavior.floating),
+        );
+      }
+    }
+  }
+
+  Future<void> _updateMealNotes(String logId, String notes) async {
+    if (_userId == null) return;
+    try {
+      final repository = ref.read(nutritionRepositoryProvider);
+      await repository.updateFoodLogNotes(logId: logId, notes: notes);
+      _cachedMicronutrientsTime = null;
+      await ref.read(nutritionProvider.notifier).refreshAll(_userId!);
+    } catch (e) {
+      debugPrint('Error updating notes: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Failed to update notes'), behavior: SnackBarBehavior.floating),
+        );
+      }
+    }
+  }
+
+  Future<void> _updateMealMood(String logId, {String? moodBefore, String? moodAfter, int? energyLevel}) async {
+    if (_userId == null) return;
+    try {
+      final repository = ref.read(nutritionRepositoryProvider);
+      await repository.updateFoodLogMood(logId: logId, moodBefore: moodBefore, moodAfter: moodAfter, energyLevel: energyLevel);
+      _cachedMicronutrientsTime = null;
+      await ref.read(nutritionProvider.notifier).refreshAll(_userId!);
+    } catch (e) {
+      debugPrint('Error updating mood: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Failed to update mood'), behavior: SnackBarBehavior.floating),
+        );
+      }
+    }
+  }
+
+  Future<void> _saveFoodToFavorites(FoodLog meal) async {
+    if (_userId == null) return;
+    try {
+      final repository = ref.read(nutritionRepositoryProvider);
+      final request = SaveFoodRequest.fromFoodLog(meal);
+      await repository.saveFood(userId: _userId!, request: request);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Saved to My Foods'), behavior: SnackBarBehavior.floating, duration: Duration(seconds: 2)),
+        );
+      }
+    } catch (e) {
+      debugPrint('Error saving food: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(e.toString().contains('duplicate') ? 'Already in My Foods' : 'Failed to save food'), behavior: SnackBarBehavior.floating),
         );
       }
     }

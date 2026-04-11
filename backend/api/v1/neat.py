@@ -20,9 +20,10 @@ from .neat_endpoints import router as _endpoints_router
 
 from datetime import datetime, date, time, timedelta
 from typing import Optional, List, Dict, Any
-from fastapi import APIRouter, Depends, HTTPException, Query, BackgroundTasks
+from fastapi import APIRouter, Depends, HTTPException, Query, BackgroundTasks, Request
 from core.auth import get_current_user
 from core.exceptions import safe_internal_error
+from core.timezone_utils import user_today_date
 from collections import defaultdict
 import logging
 import random
@@ -289,6 +290,7 @@ def get_motivation_message_for_dashboard(
 @router.get("/goals/{user_id}", response_model=NEATGoalProgress, tags=["NEAT Goals"])
 async def get_neat_goals(
     user_id: str,
+    request: Request,
     background_tasks: BackgroundTasks,
     current_user: dict = Depends(get_current_user),
 ):
@@ -326,7 +328,7 @@ async def get_neat_goals(
             goal = NEATGoal(**insert_response.data[0])
 
         # Get today's activity
-        today = date.today().isoformat()
+        today = user_today_date(request).isoformat()
         activity_response = db.client.table("daily_activity").select(
             "steps"
         ).eq("user_id", user_id).eq("activity_date", today).maybe_single().execute()
@@ -469,6 +471,7 @@ async def update_neat_goals(
 async def calculate_progressive_goal(
     user_id: str,
     request: ProgressiveGoalRequest,
+    http_request: Request,
     current_user: dict = Depends(get_current_user),
 ):
     """
@@ -490,7 +493,7 @@ async def calculate_progressive_goal(
         current_goal = goal_response.data.get("daily_step_goal", 8000) if goal_response.data else 8000
 
         # Get historical step data
-        start_date = (date.today() - timedelta(days=request.look_back_days)).isoformat()
+        start_date = (user_today_date(http_request) - timedelta(days=request.look_back_days)).isoformat()
         history_response = db.client.table("daily_activity").select(
             "steps, activity_date"
         ).eq("user_id", user_id).gte("activity_date", start_date).execute()
@@ -781,6 +784,7 @@ async def batch_sync_hourly_activity(
 
 @router.get("/score/{user_id}/today", response_model=Optional[NEATScore], tags=["NEAT Score"])
 async def get_today_neat_score(user_id: str,
+    request: Request,
     current_user: dict = Depends(get_current_user),
 ):
     """
@@ -792,7 +796,7 @@ async def get_today_neat_score(user_id: str,
     db = get_supabase_db()
 
     try:
-        today = date.today().isoformat()
+        today = user_today_date(request).isoformat()
 
         response = db.client.table("neat_scores").select("*").eq(
             "user_id", user_id
@@ -929,6 +933,7 @@ async def get_neat_score_history(
 async def calculate_neat_score(
     user_id: str,
     request: CalculateScoreRequest,
+    http_request: Request,
     current_user: dict = Depends(get_current_user),
 ):
     """
@@ -940,7 +945,7 @@ async def calculate_neat_score(
     db = get_supabase_db()
 
     try:
-        today = date.today()
+        today = user_today_date(http_request)
         today_str = today.isoformat()
 
         # Check if already calculated today (unless force recalculate)
@@ -951,7 +956,7 @@ async def calculate_neat_score(
 
             if existing.data:
                 # Return existing score
-                return await get_today_neat_score(user_id)
+                return await get_today_neat_score(user_id, http_request)
 
         # Get goals
         goal_response = db.client.table("neat_goals").select("*").eq(

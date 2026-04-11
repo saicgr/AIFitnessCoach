@@ -25,7 +25,7 @@ ENDPOINTS:
 - GET  /api/v1/strain-prevention/{user_id}/volume-caps - Get muscle volume caps
 """
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from core.auth import get_current_user
 from core.exceptions import safe_internal_error
 from pydantic import BaseModel, Field
@@ -36,6 +36,7 @@ import logging
 
 from core.supabase_client import get_supabase
 from core.logger import get_logger
+from core.timezone_utils import user_today_date
 
 router = APIRouter()
 logger = get_logger(__name__)
@@ -223,6 +224,7 @@ def get_default_volume_caps() -> Dict[str, int]:
 
 @router.get("/{user_id}/risk-assessment", response_model=RiskAssessmentResponse)
 async def get_risk_assessment(user_id: str,
+    request: Request,
     current_user: dict = Depends(get_current_user),
 ):
     """
@@ -238,7 +240,7 @@ async def get_risk_assessment(user_id: str,
         supabase = get_supabase()
 
         # Get current week start
-        today = date.today()
+        today = user_today_date(request, None, user_id)
         week_start = today - timedelta(days=today.weekday())
         prev_week_start = week_start - timedelta(days=7)
 
@@ -333,6 +335,7 @@ async def get_risk_assessment(user_id: str,
 @router.get("/{user_id}/volume-history", response_model=VolumeHistoryResponse)
 async def get_volume_history(
     user_id: str,
+    request: Request,
     weeks: int = Query(default=8, ge=1, le=52, description="Number of weeks to include"),
     muscle_group: Optional[str] = Query(default=None, description="Filter by muscle group"),
     current_user: dict = Depends(get_current_user),
@@ -349,7 +352,7 @@ async def get_volume_history(
         supabase = get_supabase()
 
         # Calculate date range
-        today = date.today()
+        today = user_today_date(request, None, user_id)
         start_date = today - timedelta(weeks=weeks)
 
         # Build query
@@ -385,7 +388,8 @@ async def get_volume_history(
 
 
 @router.post("/record-strain", response_model=RecordStrainResponse)
-async def record_strain(request: RecordStrainRequest,
+async def record_strain(request_body: RecordStrainRequest,
+    request: Request,
     current_user: dict = Depends(get_current_user),
 ):
     """
@@ -394,21 +398,22 @@ async def record_strain(request: RecordStrainRequest,
     Records the strain in the database for historical analysis and
     adjusts future workout recommendations based on the injury.
     """
-    logger.info(f"Recording strain for user {request.user_id}: {request.body_part}")
+    logger.info(f"Recording strain for user {request_body.user_id}: {request_body.body_part}")
 
     try:
         supabase = get_supabase()
 
         now = datetime.utcnow().isoformat()
+        today = user_today_date(request, None, request_body.user_id)
         strain_data = {
-            "user_id": request.user_id,
-            "body_part": request.body_part,
-            "muscle_group": request.muscle_group,
-            "severity": request.severity,
-            "occurred_during": request.occurred_during,
-            "pain_level": request.pain_level,
-            "notes": request.notes,
-            "strain_date": date.today().isoformat(),
+            "user_id": request_body.user_id,
+            "body_part": request_body.body_part,
+            "muscle_group": request_body.muscle_group,
+            "severity": request_body.severity,
+            "occurred_during": request_body.occurred_during,
+            "pain_level": request_body.pain_level,
+            "notes": request_body.notes,
+            "strain_date": today.isoformat(),
             "created_at": now,
         }
 
@@ -421,11 +426,11 @@ async def record_strain(request: RecordStrainRequest,
 
         # Generate recommendations based on severity
         recommendations = []
-        if request.severity == "mild":
+        if request_body.severity == "mild":
             recommendations.append("Rest the affected area for 24-48 hours")
             recommendations.append("Apply ice to reduce inflammation")
             recommendations.append("Light stretching may help recovery")
-        elif request.severity == "moderate":
+        elif request_body.severity == "moderate":
             recommendations.append("Rest for 3-5 days before resuming exercise")
             recommendations.append("Avoid exercises targeting this muscle group")
             recommendations.append("Consider consulting a healthcare professional")
@@ -437,7 +442,7 @@ async def record_strain(request: RecordStrainRequest,
         return RecordStrainResponse(
             success=True,
             strain_id=strain_id,
-            message=f"Strain recorded for {request.body_part}. Take care of yourself.",
+            message=f"Strain recorded for {request_body.body_part}. Take care of yourself.",
             recommendations=recommendations,
         )
 
@@ -449,7 +454,8 @@ async def record_strain(request: RecordStrainRequest,
 
 
 @router.post("/adjust-workout", response_model=AdjustWorkoutResponse)
-async def adjust_workout(request: AdjustWorkoutRequest,
+async def adjust_workout(request_body: AdjustWorkoutRequest,
+    request: Request,
     current_user: dict = Depends(get_current_user),
 ):
     """
@@ -458,15 +464,15 @@ async def adjust_workout(request: AdjustWorkoutRequest,
     Reduces sets for specified muscle groups or high-risk muscles
     to prevent overtraining.
     """
-    logger.info(f"Adjusting workout for user {request.user_id}")
+    logger.info(f"Adjusting workout for user {request_body.user_id}")
 
     try:
         # Get risk assessment to find high-risk muscles if not specified
-        if not request.muscle_groups_to_reduce:
-            risk_assessment = await get_risk_assessment(request.user_id)
+        if not request_body.muscle_groups_to_reduce:
+            risk_assessment = await get_risk_assessment(request_body.user_id, request)
             muscles_to_reduce = risk_assessment.high_risk_muscles
         else:
-            muscles_to_reduce = request.muscle_groups_to_reduce
+            muscles_to_reduce = request_body.muscle_groups_to_reduce
 
         if not muscles_to_reduce:
             return AdjustWorkoutResponse(
@@ -478,7 +484,7 @@ async def adjust_workout(request: AdjustWorkoutRequest,
 
         adjustments = []
         for muscle in muscles_to_reduce:
-            adjustments.append(f"Reduced {muscle} volume by {request.reduction_percent}%")
+            adjustments.append(f"Reduced {muscle} volume by {request_body.reduction_percent}%")
 
         return AdjustWorkoutResponse(
             success=True,
@@ -577,6 +583,7 @@ async def acknowledge_alert(alert_id: str,
 
 @router.get("/{user_id}/volume-caps", response_model=VolumeCapResponse)
 async def get_volume_caps(user_id: str,
+    request: Request,
     current_user: dict = Depends(get_current_user),
 ):
     """
@@ -591,7 +598,7 @@ async def get_volume_caps(user_id: str,
         supabase = get_supabase()
 
         # Get current week volume
-        today = date.today()
+        today = user_today_date(request, None, user_id)
         week_start = today - timedelta(days=today.weekday())
 
         current_result = supabase.client.table("weekly_volume_tracking").select(

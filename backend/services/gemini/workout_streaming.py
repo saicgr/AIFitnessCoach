@@ -218,7 +218,7 @@ Return ONLY valid JSON (no markdown):
   "exercises": [
     {{
       "name": "Exercise Name",
-      "sets": 3,
+      "sets": 4,
       "reps": 10,
       "rest_seconds": 60,
       "equipment": "equipment used",
@@ -227,7 +227,8 @@ Return ONLY valid JSON (no markdown):
       "set_targets": [
         {{"set_number": 1, "set_type": "warmup", "target_reps": 12, "target_weight_kg": 10, "target_rpe": 5}},
         {{"set_number": 2, "set_type": "working", "target_reps": 10, "target_weight_kg": 20, "target_rpe": 7}},
-        {{"set_number": 3, "set_type": "working", "target_reps": 10, "target_weight_kg": 20, "target_rpe": 8}}
+        {{"set_number": 3, "set_type": "working", "target_reps": 10, "target_weight_kg": 20, "target_rpe": 7}},
+        {{"set_number": 4, "set_type": "working", "target_reps": 10, "target_weight_kg": 20, "target_rpe": 8}}
       ]
     }}
   ],
@@ -239,6 +240,7 @@ Calculate "estimated_duration_minutes" = SUM of (sets × (reps × 3s + rest)) / 
 MUST be ≤ duration_minutes_max if provided. Adjust exercises/sets to fit time constraint!
 
 CRITICAL: Every exercise MUST include "set_targets" array with set_number, set_type (warmup/working/drop/failure/amrap), target_reps, target_weight_kg, and target_rpe for each set.
+MINIMUM SETS: Each exercise MUST have at least 3 working sets (set_type "working", "drop", "failure", or "amrap"). Warmup sets do NOT count toward this minimum. Typically generate 1 warmup + 3 working = 4 total sets per exercise.
 
 PER-SET REP CEILINGS (MANDATORY):
 - Compound exercises (squat, deadlift, press, row, pull-up, lunge, dip, pulldown): MAX 12 target_reps per set

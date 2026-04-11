@@ -152,7 +152,7 @@ class InflammationByIngredientsNotifier extends StateNotifier<InflammationAnalys
         barcode: _barcode!,
         ingredientsText: _ingredientsText,
         productName: _productName,
-      );
+      ).timeout(const Duration(seconds: 20));
 
       if (kDebugMode) {
         debugPrint('✅ [Inflammation] Analysis complete: score=${analysis.overallScore}');

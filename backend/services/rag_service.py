@@ -644,7 +644,7 @@ class WorkoutRAGService:
         if workout_type:
             pref_parts.append(f"Workout Type: {workout_type}")
         if workout_days:
-            pref_parts.append(f"Workout Days: {', '.join(workout_days)}")
+            pref_parts.append(f"Workout Days: {', '.join(str(d) for d in workout_days)}")
         if equipment:
             pref_parts.append(f"Equipment: {', '.join(equipment)}")
         if dumbbell_count is not None:

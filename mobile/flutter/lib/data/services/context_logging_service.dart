@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../utils/tz.dart';
 import '../models/mood.dart';
 import 'api_client.dart';
 
@@ -237,7 +238,7 @@ class ContextLoggingService {
           'injury_type': injuryType,
           'recovery_days': recoveryDays,
           'exercises_resumed': exercisesResumed ?? [],
-          'healed_at': DateTime.now().toIso8601String(),
+          'healed_at': Tz.timestamp(),
         },
         context: {
           'time_of_day': _getTimeOfDay(),
@@ -265,7 +266,7 @@ class ContextLoggingService {
           'risk_level': riskLevel,
           'action_taken': actionTaken,
           'notes': notes,
-          'acknowledged_at': DateTime.now().toIso8601String(),
+          'acknowledged_at': Tz.timestamp(),
         },
         context: {
           'time_of_day': _getTimeOfDay(),
@@ -293,7 +294,7 @@ class ContextLoggingService {
           'year': year,
           'fasting_days_in_month': fastingDaysInMonth,
           'weight_logs_in_month': weightLogsInMonth,
-          'viewed_at': DateTime.now().toIso8601String(),
+          'viewed_at': Tz.timestamp(),
         },
         context: {
           'time_of_day': _getTimeOfDay(),
@@ -319,7 +320,7 @@ class ContextLoggingService {
           'insight_type': insightType,
           'action_taken': actionTaken,
           'insight_id': insightId,
-          'action_at': DateTime.now().toIso8601String(),
+          'action_at': Tz.timestamp(),
         },
         context: {
           'time_of_day': _getTimeOfDay(),
@@ -349,7 +350,7 @@ class ContextLoggingService {
           'dose_context': doseContext,
           'glucose_at_dose': glucoseAtDose,
           'notes': notes,
-          'logged_at': DateTime.now().toIso8601String(),
+          'logged_at': Tz.timestamp(),
         },
         context: {
           'time_of_day': _getTimeOfDay(),
@@ -379,7 +380,7 @@ class ContextLoggingService {
           'threshold': threshold,
           'source': source,
           'action_suggested': actionSuggested,
-          'triggered_at': DateTime.now().toIso8601String(),
+          'triggered_at': Tz.timestamp(),
         },
         context: {
           'time_of_day': _getTimeOfDay(),
@@ -409,7 +410,7 @@ class ContextLoggingService {
           'sync_range_hours': syncRangeHours,
           'sync_status': syncStatus,
           'error_message': errorMessage,
-          'synced_at': DateTime.now().toIso8601String(),
+          'synced_at': Tz.timestamp(),
         },
         context: {
           'time_of_day': _getTimeOfDay(),
@@ -439,7 +440,7 @@ class ContextLoggingService {
           'workout_id': workoutId,
           'action_taken': actionTaken,
           'recommendation': recommendation,
-          'checked_at': DateTime.now().toIso8601String(),
+          'checked_at': Tz.timestamp(),
         },
         context: {
           'time_of_day': _getTimeOfDay(),
@@ -469,7 +470,7 @@ class ContextLoggingService {
           'disable_ai_tips': disableAiTips,
           'quick_log_mode': quickLogMode,
           'compact_tracker_view': compactTrackerView,
-          'updated_at': DateTime.now().toIso8601String(),
+          'updated_at': Tz.timestamp(),
         },
         context: {
           'time_of_day': _getTimeOfDay(),
@@ -488,7 +489,7 @@ class ContextLoggingService {
       await _logEvent(
         eventType: 'nutrition_preferences_reset',
         eventData: {
-          'reset_at': DateTime.now().toIso8601String(),
+          'reset_at': Tz.timestamp(),
         },
         context: {
           'time_of_day': _getTimeOfDay(),
@@ -516,7 +517,7 @@ class ContextLoggingService {
           'meal_type': mealType,
           'calories': calories,
           'servings': servings,
-          'logged_at': DateTime.now().toIso8601String(),
+          'logged_at': Tz.timestamp(),
         },
         context: {
           'time_of_day': _getTimeOfDay(),
@@ -542,7 +543,7 @@ class ContextLoggingService {
           'template_name': templateName,
           'total_calories': totalCalories,
           'food_count': foodCount,
-          'created_at': DateTime.now().toIso8601String(),
+          'created_at': Tz.timestamp(),
         },
         context: {
           'time_of_day': _getTimeOfDay(),
@@ -570,7 +571,7 @@ class ContextLoggingService {
           'template_name': templateName,
           'meal_type': mealType,
           'total_calories': totalCalories,
-          'logged_at': DateTime.now().toIso8601String(),
+          'logged_at': Tz.timestamp(),
         },
         context: {
           'time_of_day': _getTimeOfDay(),
@@ -594,7 +595,7 @@ class ContextLoggingService {
         eventData: {
           'template_id': templateId,
           'template_name': templateName,
-          'deleted_at': DateTime.now().toIso8601String(),
+          'deleted_at': Tz.timestamp(),
         },
         context: {
           'time_of_day': _getTimeOfDay(),
@@ -623,7 +624,7 @@ class ContextLoggingService {
           'cache_hit': cacheHit,
           'source': source,
           'has_results': resultCount > 0,
-          'searched_at': DateTime.now().toIso8601String(),
+          'searched_at': Tz.timestamp(),
         },
         context: {
           'time_of_day': _getTimeOfDay(),
@@ -644,7 +645,7 @@ class ContextLoggingService {
         eventType: eventType,
         eventData: {
           'disabled': disabled,
-          'toggled_at': DateTime.now().toIso8601String(),
+          'toggled_at': Tz.timestamp(),
         },
         context: {
           'time_of_day': _getTimeOfDay(),
@@ -665,7 +666,7 @@ class ContextLoggingService {
         eventType: eventType,
         eventData: {
           'enabled': enabled,
-          'toggled_at': DateTime.now().toIso8601String(),
+          'toggled_at': Tz.timestamp(),
         },
         context: {
           'time_of_day': _getTimeOfDay(),
@@ -693,7 +694,7 @@ class ContextLoggingService {
           'habit_name': habitName,
           'category': category,
           'previous_streak': previousStreak,
-          'uncompleted_at': DateTime.now().toIso8601String(),
+          'uncompleted_at': Tz.timestamp(),
         },
         context: {
           'time_of_day': _getTimeOfDay(),
@@ -719,7 +720,7 @@ class ContextLoggingService {
           'habit_id': habitId,
           'habit_name': habitName,
           'changed_fields': changedFields ?? {},
-          'updated_at': DateTime.now().toIso8601String(),
+          'updated_at': Tz.timestamp(),
         },
         context: {
           'time_of_day': _getTimeOfDay(),
@@ -745,7 +746,7 @@ class ContextLoggingService {
           'total_habits': totalHabits,
           'completed_today': completedToday,
           'completion_percentage': completionPercentage,
-          'viewed_at': DateTime.now().toIso8601String(),
+          'viewed_at': Tz.timestamp(),
         },
         context: {
           'time_of_day': _getTimeOfDay(),
@@ -773,7 +774,7 @@ class ContextLoggingService {
           'habit_name': habitName,
           'streak_days': streakDays,
           'milestone_type': milestoneType,
-          'achieved_at': DateTime.now().toIso8601String(),
+          'achieved_at': Tz.timestamp(),
         },
         context: {
           'time_of_day': _getTimeOfDay(),
@@ -801,7 +802,7 @@ class ContextLoggingService {
           'category': category,
           'habit_type': habitType,
           'customized': customized,
-          'used_at': DateTime.now().toIso8601String(),
+          'used_at': Tz.timestamp(),
         },
         context: {
           'time_of_day': _getTimeOfDay(),
@@ -827,7 +828,7 @@ class ContextLoggingService {
           'suggestions_count': suggestionsCount,
           'suggested_habits': suggestedHabits ?? [],
           'generation_time_ms': generationTimeMs,
-          'requested_at': DateTime.now().toIso8601String(),
+          'requested_at': Tz.timestamp(),
         },
         context: {
           'time_of_day': _getTimeOfDay(),
@@ -855,7 +856,7 @@ class ContextLoggingService {
           'category': category,
           'habit_type': habitType,
           'suggestion_reason': suggestionReason,
-          'accepted_at': DateTime.now().toIso8601String(),
+          'accepted_at': Tz.timestamp(),
         },
         context: {
           'time_of_day': _getTimeOfDay(),

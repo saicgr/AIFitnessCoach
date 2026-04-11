@@ -376,6 +376,10 @@ class FoodDatabaseLookupServicePart2:
         # Load overrides (TTL-gated, no-op if fresh)
         await self._load_overrides()
 
+        # Strip trailing restaurant names (e.g., "mexican coke chipotle" → "mexican coke")
+        from services.food_analysis.constants import strip_restaurant_qualifier
+        query = strip_restaurant_qualifier(query)
+
         # Handle multi-food queries (e.g., "coke and biryani and ice cream")
         query_parts = self._split_multi_query(query)
         if len(query_parts) > 1:
@@ -463,6 +467,10 @@ class FoodDatabaseLookupServicePart2:
 
         # Load overrides (TTL-gated, no-op if fresh)
         await self._load_overrides()
+
+        # Strip trailing restaurant names (e.g., "mexican coke chipotle" → "mexican coke")
+        from services.food_analysis.constants import strip_restaurant_qualifier
+        query = strip_restaurant_qualifier(query)
 
         # Handle multi-food queries (e.g., "coke and biryani and ice cream")
         query_parts = self._split_multi_query(query)

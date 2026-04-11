@@ -16,6 +16,8 @@ import '../../../fasting/widgets/log_weight_sheet.dart';
 import '../../../nutrition/log_meal_sheet.dart';
 import '../../../workout/widgets/quick_workout_sheet.dart';
 import '../../../../widgets/app_tour/app_tour_controller.dart';
+import '../../../../data/repositories/progress_photos_repository.dart';
+import '../../../stats/widgets/photos_tab.dart';
 
 part 'quick_actions_row_part_hero_action_card.dart';
 part 'quick_actions_row_part_more_actions_button.dart';

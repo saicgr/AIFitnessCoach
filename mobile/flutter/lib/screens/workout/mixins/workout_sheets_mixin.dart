@@ -13,6 +13,7 @@ import '../../../core/providers/exercise_progression_provider.dart';
 import '../../../core/providers/user_provider.dart';
 import '../../../core/theme/accent_color_provider.dart';
 import '../../../data/models/exercise.dart';
+import '../../../utils/tz.dart';
 import '../../../data/models/hydration.dart';
 import '../../../data/models/smart_weight_suggestion.dart';
 import '../../../data/providers/gym_profile_provider.dart';
@@ -115,7 +116,7 @@ mixin WorkoutSheetsMixin<T extends StatefulWidget> on State<T> {
         'exercise_name': exerciseName,
         'exercise_index': exerciseIdx,
         'after_set': afterSet,
-        'logged_at': DateTime.now().toIso8601String(),
+        'logged_at': Tz.timestamp(),
       });
 
       // Update local workout state

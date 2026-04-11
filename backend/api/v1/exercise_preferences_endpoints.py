@@ -15,13 +15,14 @@ Avoided exercises/muscles are excluded from AI-generated workouts entirely.
 """
 from typing import List, Optional
 from datetime import datetime, date
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from pydantic import BaseModel, Field
 import logging
 logger = logging.getLogger(__name__)
 from core.auth import get_current_user
 from core.db import get_supabase_db
 from core.exceptions import safe_internal_error
+from core.timezone_utils import user_today_date, get_user_today
 
 from .exercise_preferences_models import (
     StapleExerciseCreate,
@@ -200,7 +201,7 @@ async def remove_avoided_exercise(user_id: str, exercise_id: str, current_user: 
 # =============================================================================
 
 @router.get("/avoided-muscles/{user_id}", response_model=List[AvoidedMuscleResponse])
-async def get_avoided_muscles(user_id: str, include_expired: bool = False, current_user: dict = Depends(get_current_user)):
+async def get_avoided_muscles(request: Request, user_id: str, include_expired: bool = False, current_user: dict = Depends(get_current_user)):
     """
     Get all muscle groups the user wants to avoid.
 
@@ -217,7 +218,7 @@ async def get_avoided_muscles(user_id: str, include_expired: bool = False, curre
         query = db.client.table("avoided_muscles").select("*").eq("user_id", user_id)
 
         if not include_expired:
-            today = date.today().isoformat()
+            today = user_today_date(request, db, user_id).isoformat()
             query = query.or_(
                 f"is_temporary.eq.false,end_date.is.null,end_date.gt.{today}"
             )
@@ -712,7 +713,7 @@ async def get_exercises_to_avoid_for_injury(injury_type: str, current_user: dict
 # Helper Functions for Avoidance Lists (for use by other modules)
 # =============================================================================
 
-async def get_user_avoided_exercises(user_id: str) -> List[str]:
+async def get_user_avoided_exercises(user_id: str, timezone_str: str) -> List[str]:
     """
     Get list of exercise names to avoid for a user.
     Used by RAG service and workout generation.
@@ -720,7 +721,7 @@ async def get_user_avoided_exercises(user_id: str) -> List[str]:
     """
     try:
         db = get_supabase_db()
-        today = date.today().isoformat()
+        today = date.fromisoformat(get_user_today(timezone_str)).isoformat()
 
         result = db.client.table("avoided_exercises").select("exercise_name").eq(
             "user_id", user_id
@@ -734,7 +735,7 @@ async def get_user_avoided_exercises(user_id: str) -> List[str]:
         return []
 
 
-async def get_user_avoided_muscles(user_id: str) -> List[dict]:
+async def get_user_avoided_muscles(user_id: str, timezone_str: str) -> List[dict]:
     """
     Get list of muscle groups to avoid for a user with severity.
     Used by RAG service and workout generation.
@@ -744,7 +745,7 @@ async def get_user_avoided_muscles(user_id: str) -> List[dict]:
     """
     try:
         db = get_supabase_db()
-        today = date.today().isoformat()
+        today = date.fromisoformat(get_user_today(timezone_str)).isoformat()
 
         result = db.client.table("avoided_muscles").select(
             "muscle_group", "severity"

@@ -540,8 +540,8 @@ extension _MeasurementDetailScreenStateUI on _MeasurementDetailScreenState {
                 child: Row(
                   children: [
                     Container(
-                      width: 44,
-                      height: 44,
+                      width: 52,
+                      padding: const EdgeInsets.symmetric(vertical: 6),
                       decoration: BoxDecoration(
                         color: cyan.withOpacity(0.15),
                         borderRadius: BorderRadius.circular(10),
@@ -552,16 +552,24 @@ extension _MeasurementDetailScreenStateUI on _MeasurementDetailScreenState {
                           Text(
                             DateFormat('d').format(entry.recordedAt),
                             style: TextStyle(
-                              fontSize: 16,
+                              fontSize: 15,
                               fontWeight: FontWeight.bold,
                               color: cyan,
                             ),
                           ),
                           Text(
-                            DateFormat('MMM').format(entry.recordedAt),
+                            DateFormat('MMM yy').format(entry.recordedAt),
                             style: TextStyle(
-                              fontSize: 10,
+                              fontSize: 9,
                               color: cyan,
+                            ),
+                          ),
+                          const SizedBox(height: 1),
+                          Text(
+                            DateFormat('h:mm a').format(entry.recordedAt),
+                            style: TextStyle(
+                              fontSize: 8,
+                              color: cyan.withOpacity(0.7),
                             ),
                           ),
                         ],

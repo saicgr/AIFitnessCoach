@@ -236,7 +236,7 @@ async def generate_workout_streaming(request: Request, body: GenerateWorkoutRequ
                 get_user_staple_exercises(body.user_id, gym_profile_id=gym_profile_id, scheduled_date=getattr(body, 'scheduled_date', None)),
                 get_user_rep_preferences(body.user_id),
                 get_user_progression_context(body.user_id),
-                get_user_hormonal_context(body.user_id),
+                get_user_hormonal_context(body.user_id, timezone_str=resolve_timezone(request, db, body.user_id)),
                 fetch_ai_coach_settings(),
                 get_user_strength_history(body.user_id),
                 get_user_favorite_exercises(body.user_id),
@@ -423,6 +423,13 @@ async def generate_workout_streaming(request: Request, body: GenerateWorkoutRequ
 
                 exercises = workout_data.get("exercises", [])
                 exercises = normalize_exercise_numeric_fields(exercises)
+
+                # Normalize equipment values — Gemini echoes snake_case from user profile
+                from services.exercise_rag.utils import normalize_equipment_value
+                for ex in exercises:
+                    raw_eq = ex.get("equipment", "")
+                    if raw_eq and "_" in raw_eq:
+                        ex["equipment"] = normalize_equipment_value(raw_eq, ex.get("name", ""))
 
                 workout_name = workout_data.get("name", "Generated Workout")
                 workout_type = workout_data.get("type", body.workout_type or "strength")

@@ -13,6 +13,11 @@ FoodItem _$FoodItemFromJson(Map<String, dynamic> json) => FoodItem(
   proteinG: (json['protein_g'] as num?)?.toDouble(),
   carbsG: (json['carbs_g'] as num?)?.toDouble(),
   fatG: (json['fat_g'] as num?)?.toDouble(),
+  fiberG: (json['fiber_g'] as num?)?.toDouble(),
+  weightG: (json['weight_g'] as num?)?.toDouble(),
+  unit: json['unit'] as String?,
+  count: (json['count'] as num?)?.toInt(),
+  weightPerUnitG: (json['weight_per_unit_g'] as num?)?.toDouble(),
 );
 
 Map<String, dynamic> _$FoodItemToJson(FoodItem instance) => <String, dynamic>{
@@ -22,6 +27,11 @@ Map<String, dynamic> _$FoodItemToJson(FoodItem instance) => <String, dynamic>{
   'protein_g': instance.proteinG,
   'carbs_g': instance.carbsG,
   'fat_g': instance.fatG,
+  'fiber_g': instance.fiberG,
+  'weight_g': instance.weightG,
+  'unit': instance.unit,
+  'count': instance.count,
+  'weight_per_unit_g': instance.weightPerUnitG,
 };
 
 FoodLog _$FoodLogFromJson(Map<String, dynamic> json) => FoodLog(
@@ -41,9 +51,20 @@ FoodLog _$FoodLogFromJson(Map<String, dynamic> json) => FoodLog(
   fiberG: (json['fiber_g'] as num?)?.toDouble(),
   healthScore: (json['health_score'] as num?)?.toInt(),
   aiFeedback: json['ai_feedback'] as String?,
+  notes: json['notes'] as String?,
   moodBefore: json['mood_before'] as String?,
   moodAfter: json['mood_after'] as String?,
   energyLevel: (json['energy_level'] as num?)?.toInt(),
+  sodiumMg: (json['sodium_mg'] as num?)?.toDouble(),
+  sugarG: (json['sugar_g'] as num?)?.toDouble(),
+  saturatedFatG: (json['saturated_fat_g'] as num?)?.toDouble(),
+  cholesterolMg: (json['cholesterol_mg'] as num?)?.toDouble(),
+  potassiumMg: (json['potassium_mg'] as num?)?.toDouble(),
+  calciumMg: (json['calcium_mg'] as num?)?.toDouble(),
+  ironMg: (json['iron_mg'] as num?)?.toDouble(),
+  vitaminAUg: (json['vitamin_a_ug'] as num?)?.toDouble(),
+  vitaminCMg: (json['vitamin_c_mg'] as num?)?.toDouble(),
+  vitaminDIu: (json['vitamin_d_iu'] as num?)?.toDouble(),
   createdAt: _parseDateTimeOrNow(json['created_at'] as String?),
 );
 
@@ -60,9 +81,20 @@ Map<String, dynamic> _$FoodLogToJson(FoodLog instance) => <String, dynamic>{
   'fiber_g': instance.fiberG,
   'health_score': instance.healthScore,
   'ai_feedback': instance.aiFeedback,
+  'notes': instance.notes,
   'mood_before': instance.moodBefore,
   'mood_after': instance.moodAfter,
   'energy_level': instance.energyLevel,
+  'sodium_mg': instance.sodiumMg,
+  'sugar_g': instance.sugarG,
+  'saturated_fat_g': instance.saturatedFatG,
+  'cholesterol_mg': instance.cholesterolMg,
+  'potassium_mg': instance.potassiumMg,
+  'calcium_mg': instance.calciumMg,
+  'iron_mg': instance.ironMg,
+  'vitamin_a_ug': instance.vitaminAUg,
+  'vitamin_c_mg': instance.vitaminCMg,
+  'vitamin_d_iu': instance.vitaminDIu,
   'created_at': instance.createdAt.toIso8601String(),
 };
 
@@ -153,6 +185,13 @@ BarcodeProduct _$BarcodeProductFromJson(Map<String, dynamic> json) =>
       novaGroup: (json['nova_group'] as num?)?.toInt(),
       ingredientsText: json['ingredients_text'] as String?,
       allergens: json['allergens'] as String?,
+      ecoscoreGrade: json['ecoscore_grade'] as String?,
+      labelsTags: (json['labels_tags'] as List<dynamic>?)
+          ?.map((e) => e as String)
+          .toList(),
+      additivesTags: (json['additives_tags'] as List<dynamic>?)
+          ?.map((e) => e as String)
+          .toList(),
     );
 
 Map<String, dynamic> _$BarcodeProductToJson(BarcodeProduct instance) =>
@@ -168,6 +207,9 @@ Map<String, dynamic> _$BarcodeProductToJson(BarcodeProduct instance) =>
       'nova_group': instance.novaGroup,
       'ingredients_text': instance.ingredientsText,
       'allergens': instance.allergens,
+      'ecoscore_grade': instance.ecoscoreGrade,
+      'labels_tags': instance.labelsTags,
+      'additives_tags': instance.additivesTags,
     };
 
 LogBarcodeResponse _$LogBarcodeResponseFromJson(Map<String, dynamic> json) =>

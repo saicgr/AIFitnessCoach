@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:home_widget/home_widget.dart';
 import 'package:flutter/foundation.dart';
+import '../../utils/tz.dart';
 
 /// Service to bridge Flutter app data to native iOS/Android home screen widgets.
 /// Uses the home_widget package to communicate with WidgetKit (iOS) and App Widgets (Android).
@@ -42,7 +43,7 @@ class WidgetService {
         'exercises': exerciseCount ?? 0,
         'muscle': muscleGroup ?? '',
         'isRestDay': isRestDay ?? false,
-        'updatedAt': DateTime.now().toIso8601String(),
+        'updatedAt': Tz.timestamp(),
       };
       await HomeWidget.saveWidgetData(keyWorkout, jsonEncode(data));
       await _updateWidgets();
@@ -65,7 +66,7 @@ class WidgetService {
         'longest': longestStreak ?? currentStreak,
         'message': motivationalMessage ?? _getMotivationalMessage(currentStreak),
         'weekly': weeklyConsistency ?? [],
-        'updatedAt': DateTime.now().toIso8601String(),
+        'updatedAt': Tz.timestamp(),
       };
       await HomeWidget.saveWidgetData(keyStreak, jsonEncode(data));
       await _updateWidgets();
@@ -87,7 +88,7 @@ class WidgetService {
         'goal': goalMl,
         'percent': goalMl > 0 ? (currentMl / goalMl * 100).round() : 0,
         'logs': todayLogs?.map((e) => e.toJson()).toList() ?? [],
-        'updatedAt': DateTime.now().toIso8601String(),
+        'updatedAt': Tz.timestamp(),
       };
       await HomeWidget.saveWidgetData(keyWater, jsonEncode(data));
       await _updateWidgets();
@@ -114,7 +115,7 @@ class WidgetService {
         'carbs': carbsGrams ?? 0,
         'fat': fatGrams ?? 0,
         'meals': recentMeals?.map((e) => e.toJson()).toList() ?? [],
-        'updatedAt': DateTime.now().toIso8601String(),
+        'updatedAt': Tz.timestamp(),
       };
       await HomeWidget.saveWidgetData(keyFood, jsonEncode(data));
       await _updateWidgets();
@@ -143,7 +144,7 @@ class WidgetService {
         'streak': currentStreak ?? 0,
         'prs': prsThisWeek ?? 0,
         'weightChange': weightChange ?? 0.0,
-        'updatedAt': DateTime.now().toIso8601String(),
+        'updatedAt': Tz.timestamp(),
       };
       await HomeWidget.saveWidgetData(keyStats, jsonEncode(data));
       await _updateWidgets();
@@ -161,7 +162,7 @@ class WidgetService {
       final data = {
         'count': challenges.length,
         'challenges': challenges.map((e) => e.toJson()).toList(),
-        'updatedAt': DateTime.now().toIso8601String(),
+        'updatedAt': Tz.timestamp(),
       };
       await HomeWidget.saveWidgetData(keyChallenges, jsonEncode(data));
       await _updateWidgets();
@@ -184,7 +185,7 @@ class WidgetService {
         'points': totalPoints ?? 0,
         'nextMilestone': nextMilestone ?? '',
         'progress': progressToNext ?? 0,
-        'updatedAt': DateTime.now().toIso8601String(),
+        'updatedAt': Tz.timestamp(),
       };
       await HomeWidget.saveWidgetData(keyAchievements, jsonEncode(data));
       await _updateWidgets();
@@ -201,7 +202,7 @@ class WidgetService {
     try {
       final data = {
         'goals': goals.map((e) => e.toJson()).toList(),
-        'updatedAt': DateTime.now().toIso8601String(),
+        'updatedAt': Tz.timestamp(),
       };
       await HomeWidget.saveWidgetData(keyGoals, jsonEncode(data));
       await _updateWidgets();
@@ -220,7 +221,7 @@ class WidgetService {
       final data = {
         'days': weekDays.map((e) => e.toJson()).toList(),
         'todayIndex': todayIndex,
-        'updatedAt': DateTime.now().toIso8601String(),
+        'updatedAt': Tz.timestamp(),
       };
       await HomeWidget.saveWidgetData(keyCalendar, jsonEncode(data));
       await _updateWidgets();
@@ -247,7 +248,7 @@ class WidgetService {
           'Modify my workout',
           'I\'m feeling tired',
         ],
-        'updatedAt': DateTime.now().toIso8601String(),
+        'updatedAt': Tz.timestamp(),
       };
       await HomeWidget.saveWidgetData(keyAICoach, jsonEncode(data));
       await _updateWidgets();

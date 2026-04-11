@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/constants/app_colors.dart';
+import '../../utils/tz.dart';
 import '../../core/providers/window_mode_provider.dart';
 import '../../core/services/posthog_service.dart';
 import '../../widgets/press_and_hold_button.dart';
@@ -33,7 +34,7 @@ class HealthDisclaimerNotifier extends StateNotifier<bool> {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(kHealthDisclaimerAcceptedKey, true);
     await prefs.setString(
-        kHealthDisclaimerTimestampKey, DateTime.now().toIso8601String());
+        kHealthDisclaimerTimestampKey, Tz.timestamp());
     state = true;
   }
 }

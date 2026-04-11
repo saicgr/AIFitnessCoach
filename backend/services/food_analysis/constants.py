@@ -13,6 +13,7 @@ _WORD_NUMBERS = {
     "a": 1, "an": 1, "one": 1, "two": 2, "three": 3, "four": 4,
     "five": 5, "six": 6, "seven": 7, "eight": 8, "nine": 9, "ten": 10,
     "half": 0.5, "quarter": 0.25, "dozen": 12, "couple": 2,
+    "few": 3, "several": 4,
 }
 
 # Units that indicate "how many" (not weight/volume)
@@ -160,3 +161,93 @@ _FILLER_REGEX = re.compile(
     r')',
     re.IGNORECASE,
 )
+
+
+# ── Restaurant name stripping ──────────────────────────────────────
+# Known restaurant/chain names used to strip trailing location qualifiers
+# from food queries. E.g., "mexican coke chipotle" → "mexican coke"
+RESTAURANT_NAMES = frozenset([
+    # Fast food / QSR
+    'chipotle', 'taco bell', 'mcdonalds', "mcdonald's", 'burger king',
+    "wendy's", 'wendys', 'chick-fil-a', 'chickfila', 'chick fil a',
+    'subway', 'qdoba', 'kfc', 'popeyes', 'five guys', 'in-n-out',
+    'shake shack', 'panda express', 'jack in the box', 'sonic',
+    'whataburger', "culver's", "carl's jr", 'carls jr',
+    "hardee's", 'hardees', "arby's", 'arbys', "zaxby's",
+    "raising cane's", 'raising canes', 'del taco', 'el pollo loco',
+    'wingstop', 'checkers', "rally's",
+    # Pizza
+    "domino's", 'dominos', 'pizza hut', "papa john's", 'papa johns',
+    'little caesars', "papa murphy's",
+    # Coffee / drinks
+    'dunkin', "dunkin'", 'starbucks', 'dutch bros',
+    'jamba juice', 'smoothie king',
+    # Subs / delis
+    "jersey mike's", "jimmy john's", 'firehouse subs',
+    "jason's deli", 'potbelly', 'quiznos',
+    # Casual dining
+    "chili's", "applebee's", 'olive garden', "denny's", 'ihop',
+    'cracker barrel', 'cheesecake factory', 'red lobster',
+    'outback steakhouse', 'texas roadhouse', 'buffalo wild wings',
+    'panera', 'panera bread', "nando's", 'wawa',
+    # Health-focused
+    'sweetgreen', 'cava', 'just salad', 'chipotle mexican grill',
+    # Grocery / stores
+    "trader joe's", 'trader joes', 'costco', 'whole foods',
+    # Delivery
+    'swiggy', 'zomato',
+    # Mexican
+    "moe's", 'baja fresh', 'taco cabana', "taco john's",
+])
+
+# Pre-sorted longest-first for greedy matching
+_RESTAURANT_NAMES_SORTED = sorted(RESTAURANT_NAMES, key=len, reverse=True)
+
+
+def strip_restaurant_qualifier(query: str) -> str:
+    """Strip trailing restaurant names and 'from/at <restaurant>' patterns.
+
+    Only strips when the restaurant name is CONTEXT, not the food itself.
+    Never strips if the result would be empty or < 2 chars.
+
+    Examples:
+        "mexican coke chipotle"          → "mexican coke"
+        "chicken from chipotle"          → "chicken"
+        "chicken at chipotle"            → "chicken"
+        "chipotle"                       → "chipotle"  (entire query = restaurant, keep)
+        "chipotle chicken"               → "chipotle chicken"  (leading, not trailing)
+        "chipotle mayo"                  → "chipotle mayo"  (leading, not trailing)
+        "fries and a coke burger king"   → "fries and a coke"
+        "chicken nuggets taco bell"      → "chicken nuggets"
+        "pizza pizza hut"                → "pizza"
+    """
+    q = query.strip()
+    q_lower = q.lower()
+
+    # Don't strip if the entire query IS a restaurant name (user browsing menu)
+    if q_lower in RESTAURANT_NAMES:
+        return q
+
+    # Strip "from <restaurant>" / "at <restaurant>" at end
+    for r in _RESTAURANT_NAMES_SORTED:
+        for prep in ('from ', 'at '):
+            pattern = prep + r
+            if q_lower.endswith(pattern):
+                candidate = q[:-(len(pattern))].strip()
+                if len(candidate) >= 2:
+                    return candidate
+
+    # Strip trailing restaurant name (e.g., "mexican coke chipotle")
+    # BUT NOT when preceded by "with" (ingredient modifier: "chicken with chipotle")
+    _INGREDIENT_PREPS = {'with', 'in', 'and'}
+    for r in _RESTAURANT_NAMES_SORTED:
+        if q_lower.endswith(' ' + r):
+            candidate = q[:-(len(r) + 1)].strip()
+            if len(candidate) >= 2:
+                # Check if the word before the restaurant name is an ingredient preposition
+                last_word = candidate.split()[-1].lower() if candidate.split() else ''
+                if last_word in _INGREDIENT_PREPS:
+                    continue  # "chicken with chipotle" = ingredient, don't strip
+                return candidate
+
+    return q

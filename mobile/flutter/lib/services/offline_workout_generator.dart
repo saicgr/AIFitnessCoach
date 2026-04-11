@@ -1,6 +1,7 @@
 import 'package:uuid/uuid.dart';
 
 import '../data/models/exercise.dart';
+import '../utils/tz.dart';
 import '../data/models/workout.dart';
 import 'exercise_selector.dart' as selector;
 import 'injury_muscle_mapping.dart';
@@ -243,7 +244,7 @@ class OfflineWorkoutGenerator {
         'exercise_count': selectedExercises.length,
         'had_1rm_data': oneRepMaxes.isNotEmpty,
       },
-      createdAt: DateTime.now().toIso8601String(),
+      createdAt: Tz.timestamp(),
     );
   }
 }

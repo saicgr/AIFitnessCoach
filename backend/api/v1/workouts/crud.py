@@ -19,9 +19,10 @@ import json
 from datetime import datetime, date, timedelta
 from typing import List, Optional, Dict, Any
 
-from fastapi import APIRouter, Depends, HTTPException, Query, BackgroundTasks
+from fastapi import APIRouter, Depends, HTTPException, Query, BackgroundTasks, Request
 from core.auth import get_current_user, verify_user_ownership, verify_resource_ownership
 from core.exceptions import safe_internal_error
+from core.timezone_utils import user_today_date
 
 from core.supabase_db import get_supabase_db
 from core.db import get_supabase_db as get_db
@@ -33,6 +34,7 @@ from .utils import (
     log_workout_change,
     index_workout_to_rag,
 )
+from .today import invalidate_today_workout_cache
 
 # Re-export models for backward compatibility
 from .crud_models import (
@@ -267,9 +269,17 @@ async def delete_workout(workout_id: str,
         existing = db.get_workout(workout_id)
         verify_resource_ownership(current_user, existing, "Workout")
 
+        # Extract info for cache invalidation before deleting
+        scheduled_date = str(existing.get("scheduled_date", ""))[:10] or None
+        gym_profile_id = existing.get("gym_profile_id")
+        del_user_id = existing.get("user_id")
+
         db.delete_workout_changes_by_workout(workout_id)
         db.delete_workout_logs_by_workout(workout_id)
         db.delete_workout(workout_id)
+
+        # Invalidate /today cache so next poll reflects the deletion
+        await invalidate_today_workout_cache(del_user_id, gym_profile_id, scheduled_date)
 
         logger.info(f"Workout deleted: id={workout_id}")
         return {"message": "Workout deleted successfully"}
@@ -283,6 +293,7 @@ async def delete_workout(workout_id: str,
 
 @router.delete("/cleanup/{user_id}")
 async def cleanup_old_workouts(
+    request: Request,
     user_id: str,
     keep_count: int = Query(default=1, ge=1, le=10, description="Number of future workouts to keep"),
     current_user: dict = Depends(get_current_user),
@@ -294,7 +305,7 @@ async def cleanup_old_workouts(
     try:
         db = get_supabase_db()
 
-        today = date.today().isoformat()
+        today = user_today_date(request, db, user_id).isoformat()
         all_workouts = db.client.table("workouts") \
             .select("id, scheduled_date, is_completed, name") \
             .eq("user_id", user_id) \

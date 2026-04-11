@@ -132,7 +132,7 @@ async def get_today_habits(
         # Get habits with today's status from view
         result = db.client.table("today_habits_view").select("*").eq(
             "user_id", user_id
-        ).execute()
+        ).order("sort_order", desc=False).execute()
 
         if not result.data:
             return TodayHabitsResponse(

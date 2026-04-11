@@ -17,6 +17,8 @@ from typing import Dict, Optional, TypedDict
 from datetime import date, datetime
 from dataclasses import dataclass
 
+from core.timezone_utils import get_user_today
+
 
 class HRZone(TypedDict):
     """Heart rate zone definition."""
@@ -47,17 +49,18 @@ class CardioMetrics:
     source: str = "calculated"
 
 
-def calculate_age_from_dob(date_of_birth: date) -> int:
+def calculate_age_from_dob(date_of_birth: date, timezone_str: str) -> int:
     """
     Calculate age from date of birth.
 
     Args:
         date_of_birth: User's date of birth
+        timezone_str: IANA timezone string for the user
 
     Returns:
         Age in years
     """
-    today = date.today()
+    today = date.fromisoformat(get_user_today(timezone_str))
     age = today.year - date_of_birth.year
 
     # Adjust if birthday hasn't occurred this year

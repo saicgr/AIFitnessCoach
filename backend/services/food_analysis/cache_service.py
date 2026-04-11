@@ -62,13 +62,6 @@ from services.food_analysis.modifiers import (
     ModifierMeta,
     _classify_modifier,
     _build_default_modifiers,
-    _MODIFIER_PHRASES_SORTED,
-    _MODIFIER_REGEX,
-    _BULLET_REGEX,
-    _NUM_UNIT_REGEX,
-    _WORD_NUM_UNIT_REGEX,
-    _BARE_NUM_REGEX,
-    _FRACTION_REGEX,
 )
 
 logger = logging.getLogger(__name__)

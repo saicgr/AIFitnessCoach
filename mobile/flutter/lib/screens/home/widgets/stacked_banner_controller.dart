@@ -21,6 +21,10 @@ class StackedBannerController extends StateNotifier<Set<String>> {
     state = {...state, ...bannerIds};
   }
 
+  void undismiss(String bannerId) {
+    state = {...state}..remove(bannerId);
+  }
+
   bool isDismissed(String bannerId) => state.contains(bannerId);
 }
 

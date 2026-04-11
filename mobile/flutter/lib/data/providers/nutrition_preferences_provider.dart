@@ -146,7 +146,7 @@ class NutritionPreferencesNotifier extends StateNotifier<NutritionPreferencesSta
               daysLoggedThisWeek: 0,
             )),
         _repository.getWeightLogs(userId: userId, limit: 30).catchError((_) => <WeightLog>[]),
-        _repository.getDynamicTargets(userId: userId).catchError((_) => const DynamicNutritionTargets()),
+        _repository.getDynamicTargets(userId: userId, date: DateTime.now()).catchError((_) => const DynamicNutritionTargets()),
       ]);
 
       final preferences = results[0] as NutritionPreferences?;
@@ -243,9 +243,9 @@ class NutritionPreferencesNotifier extends StateNotifier<NutritionPreferencesSta
         targetFatG: targetFatG,
       );
 
-      // Also get dynamic targets
+      // Also get dynamic targets (pass local date to avoid timezone mismatch with server UTC)
       final dynamicTargets =
-          await _repository.getDynamicTargets(userId: userId);
+          await _repository.getDynamicTargets(userId: userId, date: DateTime.now());
 
       state = state.copyWith(
         preferences: preferences,
@@ -360,7 +360,7 @@ class NutritionPreferencesNotifier extends StateNotifier<NutritionPreferencesSta
       debugPrint('🔄 [NutritionPrefsProvider] Force-refreshing preferences for $userId');
       final results = await Future.wait([
         _repository.getPreferences(userId),
-        _repository.getDynamicTargets(userId: userId).catchError((_) => const DynamicNutritionTargets()),
+        _repository.getDynamicTargets(userId: userId, date: DateTime.now()).catchError((_) => const DynamicNutritionTargets()),
       ]);
       final preferences = results[0] as NutritionPreferences?;
       final dynamicTargets = results[1] as DynamicNutritionTargets?;
@@ -378,7 +378,7 @@ class NutritionPreferencesNotifier extends StateNotifier<NutritionPreferencesSta
   /// Refresh dynamic targets
   Future<void> refreshDynamicTargets(String userId) async {
     try {
-      final targets = await _repository.getDynamicTargets(userId: userId);
+      final targets = await _repository.getDynamicTargets(userId: userId, date: DateTime.now());
       state = state.copyWith(dynamicTargets: targets);
     } catch (e) {
       debugPrint('❌ [NutritionPrefsProvider] Refresh targets error: $e');
@@ -405,7 +405,7 @@ class NutritionPreferencesNotifier extends StateNotifier<NutritionPreferencesSta
       debugPrint('🔄 [NutritionPrefsProvider] Recalculating targets');
       final preferences = await _repository.recalculateTargets(userId);
       final dynamicTargets =
-          await _repository.getDynamicTargets(userId: userId);
+          await _repository.getDynamicTargets(userId: userId, date: DateTime.now());
       state = state.copyWith(
         preferences: preferences,
         dynamicTargets: dynamicTargets,
@@ -501,8 +501,8 @@ class NutritionPreferencesNotifier extends StateNotifier<NutritionPreferencesSta
         preferences: updatedPreferences,
       );
 
-      // Refresh dynamic targets as well
-      final dynamicTargets = await _repository.getDynamicTargets(userId: userId);
+      // Refresh dynamic targets as well (pass local date to avoid timezone mismatch)
+      final dynamicTargets = await _repository.getDynamicTargets(userId: userId, date: DateTime.now());
 
       state = state.copyWith(
         preferences: saved,

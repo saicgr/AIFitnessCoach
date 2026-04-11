@@ -585,6 +585,13 @@ class _ExpandedExerciseCardState extends ConsumerState<ExpandedExerciseCard> {
     if (lower.contains('machine')) return 'Machine';
     if (lower.contains('kettlebell')) return 'Kettlebell';
     if (lower.contains('stability')) return 'Stability Ball';
+    // Convert snake_case identifiers to Title Case (e.g., "leg_press" → "Leg Press")
+    if (equipment.contains('_')) {
+      final formatted = equipment.split('_').map((w) =>
+        w.isEmpty ? '' : '${w[0].toUpperCase()}${w.substring(1).toLowerCase()}'
+      ).join(' ');
+      return formatted.length > 14 ? '${formatted.substring(0, 14)}...' : formatted;
+    }
     // Limit length
     return equipment.length > 12 ? '${equipment.substring(0, 12)}...' : equipment;
   }

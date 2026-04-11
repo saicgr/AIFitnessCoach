@@ -10,6 +10,7 @@ import '../local/database_provider.dart';
 import '../models/workout.dart';
 import '../models/today_workout.dart';
 import '../services/connectivity_service.dart';
+import '../../utils/tz.dart';
 import 'workout_repository.dart';
 
 const _uuid = Uuid();
@@ -216,7 +217,7 @@ class OfflineWorkoutRepository {
         'rpe': rpe,
         'rir': rir,
         'notes': notes,
-        'completed_at': now.toIso8601String(),
+        'completed_at': Tz.timestamp(now),
       })),
       httpMethod: const Value('POST'),
       endpoint: const Value('/api/v1/workouts/performance'),

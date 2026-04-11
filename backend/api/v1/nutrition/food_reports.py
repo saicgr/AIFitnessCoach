@@ -52,6 +52,16 @@ async def report_food(request: FoodReportRequest, current_user: dict = Depends(g
             "status": "pending",
         }
 
+        # Traceability fields (only include if provided to avoid null JSONB issues)
+        if request.report_type:
+            report_data["report_type"] = request.report_type
+        if request.original_query:
+            report_data["original_query"] = request.original_query
+        if request.analysis_response is not None:
+            report_data["analysis_response"] = request.analysis_response
+        if request.all_food_items is not None:
+            report_data["all_food_items"] = request.all_food_items
+
         if request.food_database_id:
             report_data["food_database_id"] = request.food_database_id
 
