@@ -15,7 +15,7 @@ class SummaryFloatingPill extends StatelessWidget {
     super.key,
     required this.selectedIndex,
     required this.onChanged,
-    this.labels = const ['Detail', 'General', 'Advanced'],
+    this.labels = const ['Detail', 'Summary', 'Advanced'],
   });
 
   static const double _pillHeight = 48;

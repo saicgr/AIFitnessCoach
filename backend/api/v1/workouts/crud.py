@@ -24,7 +24,6 @@ from core.auth import get_current_user, verify_user_ownership, verify_resource_o
 from core.exceptions import safe_internal_error
 from core.timezone_utils import user_today_date
 
-from core.supabase_db import get_supabase_db
 from core.db import get_supabase_db as get_db
 from core.logger import get_logger
 from models.schemas import Workout, WorkoutCreate, WorkoutUpdate

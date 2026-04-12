@@ -148,7 +148,7 @@ async def create_story(
         result = supabase.table("stories").insert(story_data).execute()
 
         if not result.data:
-            raise HTTPException(status_code=500, detail="Failed to create story")
+            raise safe_internal_error(ValueError("Failed to create story"), "social")
 
         logger.info(f"[Stories] Story created by user {user_id}: {result.data[0]['id']}")
 

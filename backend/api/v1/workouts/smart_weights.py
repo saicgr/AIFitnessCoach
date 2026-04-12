@@ -20,7 +20,6 @@ from datetime import datetime, timedelta
 from pydantic import BaseModel
 from enum import Enum
 
-from core.supabase_db import get_supabase_db
 from core.logger import get_logger
 from services.strength_calculator_service import StrengthCalculatorService
 

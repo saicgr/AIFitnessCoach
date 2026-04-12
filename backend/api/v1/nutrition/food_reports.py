@@ -29,14 +29,16 @@ async def report_food(request: FoodReportRequest, current_user: dict = Depends(g
     Users can flag foods with wrong data and optionally provide corrected values.
     Corrected values will be used for that user's future lookups.
     """
-    logger.info(f"Food report from user {request.user_id} for '{request.food_name}'")
+    # Always use authenticated user's ID, not client-provided value
+    user_id = current_user.get("id") or current_user.get("sub") or request.user_id
+    logger.info(f"Food report from user {user_id} for '{request.food_name}'")
 
     try:
         from core.db import get_supabase_db
         db = get_supabase_db()
 
         report_data = {
-            "user_id": request.user_id,
+            "user_id": user_id,
             "food_name": request.food_name,
             "reported_issue": request.reported_issue,
             "original_calories": request.original_calories,

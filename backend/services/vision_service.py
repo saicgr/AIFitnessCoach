@@ -100,7 +100,7 @@ Current time suggests this is likely {suggested_meal}, but override based on the
 
 {f'User says: "{user_context}"' if user_context else ''}
 
-Use the plate analysis JSON schema from your cached reference. Return valid JSON."""
+Estimate all micronutrients (vitamins A/C/D/E/K/B1-B12, minerals like calcium/iron/magnesium/zinc/potassium/sodium, omega-3/6) based on the identified foods. Use the plate analysis JSON schema from your cached reference. Return valid JSON."""
         else:
             # Full prompt (no cache available — include everything inline)
             prompt = f"""Analyze this food or beverage image and provide detailed nutrition estimates. Include drinks (cocktails, smoothies, juices, coffee, protein shakes), beverages, and any consumable items.
@@ -139,7 +139,8 @@ Guidelines:
 - If you can't identify something clearly, make a reasonable guess
 - Health score: 1-3 (poor), 4-6 (average), 7-8 (good), 9-10 (excellent)
 - Feedback should be constructive and encouraging, mentioning positives first
-- Include fiber estimate if vegetables/whole grains are present"""
+- Include fiber estimate if vegetables/whole grains are present
+- Estimate all micronutrients (vitamins, minerals, fatty acids) based on the identified foods"""
 
         try:
             logger.info(f"🍽️ Analyzing food image with Gemini (cache={'yes' if cache_name else 'no'})")

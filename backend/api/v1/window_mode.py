@@ -173,38 +173,41 @@ async def log_window_mode(user_id: str, request: WindowModeLogRequest,
         result = supabase.client.table("window_mode_logs").insert(log_entry).execute()
 
         if not result.data or len(result.data) == 0:
-            raise HTTPException(status_code=500, detail="Failed to insert window mode log")
+            raise safe_internal_error(ValueError("Failed to insert window mode log"), "window_mode")
 
         log_data = result.data[0]
         logger.info(f"Successfully logged window mode for user {user_id}: {request.mode}")
 
         # Log to user activity for analytics
-        if request.mode == "split_screen":
-            await log_user_activity(
-                user_id=user_id,
-                action="window_mode_split_screen",
-                endpoint=f"/api/v1/window-mode/{user_id}/log",
-                message=f"Entered split screen mode ({request.width}x{request.height})",
-                metadata={
-                    "mode": request.mode,
-                    "width": request.width,
-                    "height": request.height,
-                },
-                status_code=200
-            )
-        elif request.mode == "split_screen_session" and request.duration_seconds:
-            await log_user_activity(
-                user_id=user_id,
-                action="window_mode_split_screen_session",
-                endpoint=f"/api/v1/window-mode/{user_id}/log",
-                message=f"Split screen session: {request.duration_seconds}s",
-                metadata={
-                    "duration_seconds": request.duration_seconds,
-                    "width": request.width,
-                    "height": request.height,
-                },
-                status_code=200
-            )
+        try:
+            if request.mode == "split_screen":
+                await log_user_activity(
+                    user_id=user_id,
+                    action="window_mode_split_screen",
+                    endpoint=f"/api/v1/window-mode/{user_id}/log",
+                    message=f"Entered split screen mode ({request.width}x{request.height})",
+                    metadata={
+                        "mode": request.mode,
+                        "width": request.width,
+                        "height": request.height,
+                    },
+                    status_code=200
+                )
+            elif request.mode == "split_screen_session" and request.duration_seconds:
+                await log_user_activity(
+                    user_id=user_id,
+                    action="window_mode_split_screen_session",
+                    endpoint=f"/api/v1/window-mode/{user_id}/log",
+                    message=f"Split screen session: {request.duration_seconds}s",
+                    metadata={
+                        "duration_seconds": request.duration_seconds,
+                        "width": request.width,
+                        "height": request.height,
+                    },
+                    status_code=200
+                )
+        except Exception as e:
+            logger.error(f"Activity logging failed: {e}", exc_info=True, extra={"user_id_full": user_id, "failed_action": "window_mode"})
 
         return WindowModeLogResponse(
             id=log_data["id"],
@@ -238,13 +241,16 @@ async def log_window_mode(user_id: str, request: WindowModeLogRequest,
                 success=False,  # Indicate it wasn't actually saved
             )
 
-        await log_user_error(
-            user_id=user_id,
-            action="window_mode_log",
-            error=e,
-            endpoint=f"/api/v1/window-mode/{user_id}/log",
-            status_code=500
-        )
+        try:
+            await log_user_error(
+                user_id=user_id,
+                action="window_mode_log",
+                error=e,
+                endpoint=f"/api/v1/window-mode/{user_id}/log",
+                status_code=500
+            )
+        except Exception as e:
+            logger.error(f"Error logging failed: {e}", exc_info=True, extra={"user_id_full": user_id, "failed_action": "window_mode_log"})
         raise safe_internal_error(e, "window_mode")
 
 

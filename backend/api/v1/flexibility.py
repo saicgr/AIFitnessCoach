@@ -11,7 +11,6 @@ from typing import List, Optional
 from datetime import datetime
 import uuid
 
-from core.supabase_db import get_supabase_db
 from core.logger import get_logger
 from core.activity_logger import log_user_activity, log_user_error
 from core.auth import get_current_user
@@ -285,7 +284,7 @@ async def record_flexibility_assessment(
         result = db.client.table("flexibility_assessments").insert(assessment_data).execute()
 
         if not result.data:
-            raise HTTPException(status_code=500, detail="Failed to save assessment")
+            raise safe_internal_error(ValueError("Failed to save assessment"), "flexibility")
 
         assessment = _parse_assessment(result.data[0])
 
@@ -319,19 +318,22 @@ async def record_flexibility_assessment(
             message = f"Assessment recorded. Your rating is '{evaluation.get('rating')}' (top {100 - evaluation.get('percentile', 50)}% of your demographic)."
 
         # Log activity
-        await log_user_activity(
-            user_id=user_id,
-            action="flexibility_assessment_recorded",
-            endpoint=f"/api/v1/flexibility/user/{user_id}/assessment",
-            message=f"Recorded {request.test_type} assessment: {request.measurement} {unit}",
-            metadata={
-                "test_type": request.test_type,
-                "measurement": request.measurement,
-                "rating": evaluation.get("rating"),
-                "percentile": evaluation.get("percentile"),
-            },
-            status_code=200
-        )
+        try:
+            await log_user_activity(
+                user_id=user_id,
+                action="flexibility_assessment_recorded",
+                endpoint=f"/api/v1/flexibility/user/{user_id}/assessment",
+                message=f"Recorded {request.test_type} assessment: {request.measurement} {unit}",
+                metadata={
+                    "test_type": request.test_type,
+                    "measurement": request.measurement,
+                    "rating": evaluation.get("rating"),
+                    "percentile": evaluation.get("percentile"),
+                },
+                status_code=200
+            )
+        except Exception as e:
+            logger.error(f"Activity logging failed: {e}", exc_info=True, extra={"user_id_full": user_id, "failed_action": "flexibility_assessment_recorded"})
 
         return RecordAssessmentResponse(
             success=True,

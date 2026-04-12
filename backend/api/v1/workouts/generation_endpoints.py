@@ -61,6 +61,9 @@ async def generate_workout(request: Request, *, body: GenerateWorkoutRequest, ba
             except Exception as e:
                 logger.warning(f"Failed to get active gym profile: {e}", exc_info=True)
 
+        # Resolve timezone for premium gate checks
+        _gen_tz = resolve_timezone(request, db, body.user_id)
+
         # Duplicate check: return existing workout if one already exists for this date+profile
         placeholder_id = None
         if body.scheduled_date:
@@ -85,7 +88,7 @@ async def generate_workout(request: Request, *, body: GenerateWorkoutRequest, ba
 
             # Premium gate check: enforce free-tier workout generation limits
             from core.premium_gate import check_premium_gate
-            await check_premium_gate(body.user_id, "ai_workout_generation")
+            await check_premium_gate(body.user_id, "ai_workout_generation", _gen_tz)
 
             # Insert placeholder with status='generating' to prevent concurrent generation
             # This lets the streaming endpoint detect generation is already in progress
@@ -1024,7 +1027,7 @@ async def generate_workout(request: Request, *, body: GenerateWorkoutRequest, ba
 
         # Track premium gate usage after successful generation
         from core.premium_gate import track_premium_usage
-        background_tasks.add_task(track_premium_usage, body.user_id, "ai_workout_generation")
+        background_tasks.add_task(track_premium_usage, body.user_id, "ai_workout_generation", _gen_tz)
 
         return generated_workout
 

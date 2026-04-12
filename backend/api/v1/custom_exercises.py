@@ -20,7 +20,6 @@ import uuid
 
 from google.genai import types
 
-from core.supabase_db import get_supabase_db
 from core.auth import get_current_user
 from core.config import get_settings
 from core.exceptions import safe_internal_error
@@ -270,7 +269,7 @@ async def create_custom_exercise(user_id: str, request: CustomExerciseCreate, cu
             logger.info(f"✅ Created custom exercise '{request.name}' for user {user_id}")
             return CustomExerciseResponse(**result.data[0])
         else:
-            raise HTTPException(status_code=500, detail="Failed to create exercise")
+            raise safe_internal_error(ValueError("Failed to create exercise"), "custom_exercises")
 
     except HTTPException:
         raise
@@ -318,7 +317,7 @@ async def update_custom_exercise(user_id: str, exercise_id: str, request: Custom
             logger.info(f"✅ Updated custom exercise {exercise_id}")
             return CustomExerciseResponse(**result.data[0])
         else:
-            raise HTTPException(status_code=500, detail="Failed to update exercise")
+            raise safe_internal_error(ValueError("Failed to update exercise"), "custom_exercises")
 
     except HTTPException:
         raise

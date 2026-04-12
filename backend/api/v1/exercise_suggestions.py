@@ -198,7 +198,6 @@ async def get_fast_exercise_suggestions(body: FastSuggestionRequest, current_use
     """
     if str(current_user["id"]) != str(body.user_id):
         raise HTTPException(status_code=403, detail="Access denied")
-    from core.supabase_db import get_supabase_db
     import random
 
     logger.info(f"Fast suggestion request for: {body.exercise_name}")

@@ -49,6 +49,7 @@ from fastapi.responses import JSONResponse
 from core.supabase_client import get_supabase
 from core.config import get_settings
 from core.logger import get_logger
+from core.exceptions import safe_internal_error
 from core.rate_limiter import limiter
 from services.notification_service import get_notification_service
 
@@ -306,7 +307,7 @@ async def _send_nudge(
     prefs = user.get("notification_preferences") or {}
 
     # 1. Daily cap check (BEFORE dedup insert)
-    daily_limit = prefs.get("daily_nudge_limit", 4)
+    daily_limit = prefs.get("daily_nudge_limit", 2)
     if _count_nudges_today(supabase, user_id, local_date) >= daily_limit:
         return False
 
@@ -407,6 +408,11 @@ async def _job_morning_workout_reminder(supabase, notif_svc, users: List[dict]) 
     for user in users:
         prefs = user.get("notification_preferences") or {}
         if not prefs.get("workout_reminders", True):
+            continue
+
+        # PRESET GATE: minimal/balanced presets use frontend bundles for morning workout
+        preset = prefs.get("frequency_preset", "balanced")
+        if preset in ("minimal", "balanced"):
             continue
 
         tz_str = user.get("timezone") or "UTC"
@@ -515,6 +521,11 @@ async def _job_meal_reminders(supabase, notif_svc, users: List[dict]) -> int:
     for user in users:
         prefs = user.get("notification_preferences") or {}
         if not prefs.get("nutrition_reminders", True):
+            continue
+
+        # PRESET GATE: minimal preset uses frontend bundles for meal reminders
+        preset = prefs.get("frequency_preset", "balanced")
+        if preset == "minimal":
             continue
 
         # EDGE CASE: Gradual onboarding — no meal nudges for first 4 days
@@ -646,6 +657,11 @@ async def _job_weekly_checkin(supabase, notif_svc, users: List[dict]) -> int:
         if not prefs.get("weekly_checkin_reminder", True):
             continue
 
+        # PRESET GATE: minimal preset skips weekly check-in (frontend bundles cover this)
+        preset = prefs.get("frequency_preset", "balanced")
+        if preset == "minimal":
+            continue
+
         tz_str = user.get("timezone") or "UTC"
         local_now = datetime.now(_safe_zone(tz_str))
         local_hour = local_now.hour
@@ -683,6 +699,11 @@ async def _job_habit_reminder(supabase, notif_svc, users: List[dict]) -> int:
     for user in users:
         prefs = user.get("notification_preferences") or {}
         if not prefs.get("habit_reminders", True):
+            continue
+
+        # PRESET GATE: minimal preset skips habit reminders
+        preset = prefs.get("frequency_preset", "balanced")
+        if preset == "minimal":
             continue
 
         # EDGE CASE: Gradual onboarding — no habit nudges for first 7 days
@@ -910,6 +931,482 @@ async def _job_trial_reminder(supabase, notif_svc) -> int:
     return sent
 
 
+# ─── Smart App-Open Hook Jobs ──────────────────────────────────────────────
+
+
+async def _job_streak_countdown_urgency(supabase, notif_svc, users: List[dict]) -> int:
+    """URGENT: Streak expires tonight. Fires 2h before quiet hours start."""
+    sent = 0
+    for user in users:
+        prefs = user.get("notification_preferences") or {}
+        if not prefs.get("streak_alerts", True):
+            continue
+        if _user_account_age_days(user) < 3:
+            continue
+
+        tz_str = user.get("timezone") or "UTC"
+        local_hour = _get_user_local_hour(tz_str)
+        quiet_start = _parse_time_hour(prefs.get("quiet_hours_start", "22:00"))
+        trigger_hour = (quiet_start - 2) % 24
+        if local_hour != trigger_hour:
+            continue
+        if _is_in_quiet_hours(prefs, local_hour):
+            continue
+
+        user_id = str(user["id"])
+        user_today = _get_user_local_date(tz_str)
+
+        try:
+            streak_data = supabase.client.table("user_login_streaks") \
+                .select("current_streak") \
+                .eq("user_id", user_id).limit(1).execute()
+            if not streak_data.data:
+                continue
+            current_streak = streak_data.data[0].get("current_streak", 0)
+            if current_streak < 2:
+                continue
+        except Exception:
+            continue
+
+        try:
+            completed = supabase.client.table("workouts") \
+                .select("id").eq("user_id", user_id) \
+                .eq("scheduled_date", user_today).eq("is_completed", True) \
+                .limit(1).execute()
+            if completed.data:
+                continue
+        except Exception:
+            continue
+
+        success = await _send_nudge(supabase, notif_svc, user, "streak_countdown", {
+            "streak": current_streak,
+        })
+        if success:
+            sent += 1
+    return sent
+
+
+async def _job_progress_milestone_teaser(supabase, notif_svc, users: List[dict]) -> int:
+    """User is 1 workout away from a milestone (10, 25, 50, 100, etc.)."""
+    milestones = {10, 25, 50, 75, 100, 150, 200, 250, 365}
+    sent = 0
+    for user in users:
+        prefs = user.get("notification_preferences") or {}
+        if _user_account_age_days(user) < 7:
+            continue
+
+        tz_str = user.get("timezone") or "UTC"
+        local_hour = _get_user_local_hour(tz_str)
+        pref_hour = _parse_time_hour(prefs.get("workout_reminder_time", "08:00"))
+        optimal_hour = _get_optimal_hour(user, "progress_milestone", pref_hour)
+        if local_hour != optimal_hour:
+            continue
+        if _is_in_quiet_hours(prefs, local_hour):
+            continue
+
+        user_id = str(user["id"])
+        try:
+            result = supabase.client.table("workout_logs") \
+                .select("id", count="exact") \
+                .eq("user_id", user_id).execute()
+            total = result.count or 0
+            if (total + 1) not in milestones:
+                continue
+        except Exception:
+            continue
+
+        success = await _send_nudge(supabase, notif_svc, user, "progress_milestone", {
+            "milestone": total + 1,
+            "current_count": total,
+        })
+        if success:
+            sent += 1
+    return sent
+
+
+async def _job_post_workout_nutrition(supabase, notif_svc, users: List[dict]) -> int:
+    """Remind user to eat 30-60 min after completing a workout."""
+    sent = 0
+    now_utc = datetime.utcnow()
+    window_start = (now_utc - timedelta(minutes=60)).isoformat()
+    window_end = (now_utc - timedelta(minutes=30)).isoformat()
+
+    for user in users:
+        prefs = user.get("notification_preferences") or {}
+        if not prefs.get("nutrition_reminders", True):
+            continue
+        if _is_in_quiet_hours(prefs, _get_user_local_hour(user.get("timezone") or "UTC")):
+            continue
+
+        user_id = str(user["id"])
+        try:
+            logs = supabase.client.table("workout_logs") \
+                .select("id, completed_at, workout_id") \
+                .eq("user_id", user_id) \
+                .gte("completed_at", window_start) \
+                .lte("completed_at", window_end) \
+                .limit(1).execute()
+            if not logs.data:
+                continue
+            completed_at = logs.data[0]["completed_at"]
+        except Exception:
+            continue
+
+        # Check if user already logged food after workout
+        try:
+            food = supabase.client.table("food_logs") \
+                .select("id").eq("user_id", user_id) \
+                .gte("created_at", completed_at) \
+                .limit(1).execute()
+            if food.data:
+                continue  # Already logged food
+        except Exception:
+            continue
+
+        # Get workout name
+        workout_name = "your workout"
+        try:
+            workout_id = logs.data[0].get("workout_id")
+            if workout_id:
+                w = supabase.client.table("workouts") \
+                    .select("name").eq("id", workout_id).limit(1).execute()
+                if w.data:
+                    workout_name = w.data[0].get("name", workout_name)
+        except Exception:
+            pass
+
+        success = await _send_nudge(supabase, notif_svc, user, "post_workout_nutrition", {
+            "workout_name": workout_name,
+        })
+        if success:
+            sent += 1
+    return sent
+
+
+async def _job_coach_insight(supabase, notif_svc, users: List[dict]) -> int:
+    """Weekly 'Your coach noticed something' teaser, distributed across days."""
+    sent = 0
+    day_of_year = datetime.utcnow().timetuple().tm_yday
+    for user in users:
+        prefs = user.get("notification_preferences") or {}
+        if _user_account_age_days(user) < 7:
+            continue
+
+        # Distribute across week: each user fires on their "assigned" day
+        user_day = hash(str(user["id"])) % 7
+        if day_of_year % 7 != user_day:
+            continue
+
+        tz_str = user.get("timezone") or "UTC"
+        local_hour = _get_user_local_hour(tz_str)
+        optimal_hour = _get_optimal_hour(user, "coach_insight", 10)
+        if local_hour != optimal_hour:
+            continue
+        if _is_in_quiet_hours(prefs, local_hour):
+            continue
+
+        success = await _send_nudge(supabase, notif_svc, user, "coach_insight", {
+            "insight_type": "progress",
+        })
+        if success:
+            sent += 1
+    return sent
+
+
+async def _job_habit_streak_reward(supabase, notif_svc, users: List[dict]) -> int:
+    """Celebrate consecutive days of meal logging (7, 14, 21, 30 days)."""
+    reward_milestones = [30, 21, 14, 7]  # Check highest first
+    sent = 0
+    for user in users:
+        prefs = user.get("notification_preferences") or {}
+        if _user_account_age_days(user) < 7:
+            continue
+
+        tz_str = user.get("timezone") or "UTC"
+        local_hour = _get_user_local_hour(tz_str)
+        optimal_hour = _get_optimal_hour(user, "habit_streak_reward", 10)
+        if local_hour != optimal_hour:
+            continue
+        if _is_in_quiet_hours(prefs, local_hour):
+            continue
+
+        user_id = str(user["id"])
+        try:
+            cutoff = (datetime.utcnow() - timedelta(days=31)).isoformat()
+            logs = supabase.client.table("food_logs") \
+                .select("created_at") \
+                .eq("user_id", user_id) \
+                .gte("created_at", cutoff) \
+                .execute()
+            if not logs.data:
+                continue
+
+            # Extract unique dates and count consecutive days from today backward
+            dates = set()
+            for log in logs.data:
+                d = log.get("created_at", "")[:10]
+                if d:
+                    dates.add(d)
+
+            today = _get_user_local_date(tz_str)
+            consecutive = 0
+            check = datetime.strptime(today, "%Y-%m-%d")
+            while check.strftime("%Y-%m-%d") in dates:
+                consecutive += 1
+                check -= timedelta(days=1)
+
+            # Match against milestones
+            matched = None
+            for m in reward_milestones:
+                if consecutive == m:
+                    matched = m
+                    break
+            if not matched:
+                continue
+        except Exception:
+            continue
+
+        success = await _send_nudge(supabase, notif_svc, user, "habit_streak_reward", {
+            "habit_type": "meal_logging",
+            "consecutive_days": matched,
+        })
+        if success:
+            sent += 1
+    return sent
+
+
+async def _job_rest_day_engagement(supabase, notif_svc, users: List[dict]) -> int:
+    """Rest day tip when user hasn't opened the app."""
+    sent = 0
+    for user in users:
+        prefs = user.get("notification_preferences") or {}
+        if _user_account_age_days(user) < 7:
+            continue
+
+        tz_str = user.get("timezone") or "UTC"
+        local_hour = _get_user_local_hour(tz_str)
+        optimal_hour = _get_optimal_hour(user, "rest_day_tip", 10)
+        if local_hour != optimal_hour:
+            continue
+        if _is_in_quiet_hours(prefs, local_hour):
+            continue
+
+        user_id = str(user["id"])
+        user_today = _get_user_local_date(tz_str)
+
+        # Check no workout scheduled today (rest day)
+        try:
+            workouts = supabase.client.table("workouts") \
+                .select("id").eq("user_id", user_id) \
+                .eq("scheduled_date", user_today).limit(1).execute()
+            if workouts.data:
+                continue  # Not a rest day
+        except Exception:
+            continue
+
+        # Check no food_logs today (user hasn't opened app)
+        try:
+            today_start = f"{user_today}T00:00:00"
+            food = supabase.client.table("food_logs") \
+                .select("id").eq("user_id", user_id) \
+                .gte("created_at", today_start).limit(1).execute()
+            if food.data:
+                continue  # User has been active
+        except Exception:
+            continue
+
+        success = await _send_nudge(supabase, notif_svc, user, "rest_day_tip", {})
+        if success:
+            sent += 1
+    return sent
+
+
+async def _job_progress_comparison(supabase, notif_svc, users: List[dict]) -> int:
+    """Monthly: compare this month vs last month workouts (fires on 1st)."""
+    sent = 0
+    for user in users:
+        prefs = user.get("notification_preferences") or {}
+        if _user_account_age_days(user) < 30:
+            continue
+
+        tz_str = user.get("timezone") or "UTC"
+        local_now = datetime.now(_safe_zone(tz_str))
+        if local_now.day != 1:
+            continue
+
+        local_hour = local_now.hour
+        optimal_hour = _get_optimal_hour(user, "progress_comparison", 10)
+        if local_hour != optimal_hour:
+            continue
+        if _is_in_quiet_hours(prefs, local_hour):
+            continue
+
+        user_id = str(user["id"])
+        try:
+            this_month_start = local_now.replace(day=1).strftime("%Y-%m-%d")
+            last_month_end = local_now.replace(day=1) - timedelta(days=1)
+            last_month_start = last_month_end.replace(day=1).strftime("%Y-%m-%d")
+            last_month_end_str = last_month_end.strftime("%Y-%m-%d")
+
+            this_month = supabase.client.table("workout_logs") \
+                .select("id", count="exact") \
+                .eq("user_id", user_id) \
+                .gte("completed_at", this_month_start).execute()
+            last_month = supabase.client.table("workout_logs") \
+                .select("id", count="exact") \
+                .eq("user_id", user_id) \
+                .gte("completed_at", last_month_start) \
+                .lte("completed_at", last_month_end_str).execute()
+
+            this_count = this_month.count or 0
+            last_count = last_month.count or 0
+            if last_count == 0:
+                continue
+        except Exception:
+            continue
+
+        success = await _send_nudge(supabase, notif_svc, user, "progress_comparison", {
+            "this_month": this_count,
+            "last_month": last_count,
+        })
+        if success:
+            sent += 1
+    return sent
+
+
+async def _job_time_capsule(supabase, notif_svc, users: List[dict]) -> int:
+    """Celebrate account age milestones: 30, 60, 90, 180, 365 days."""
+    capsule_days = {30, 60, 90, 180, 365}
+    sent = 0
+    for user in users:
+        prefs = user.get("notification_preferences") or {}
+        age = _user_account_age_days(user)
+        if age not in capsule_days:
+            continue
+
+        tz_str = user.get("timezone") or "UTC"
+        local_hour = _get_user_local_hour(tz_str)
+        optimal_hour = _get_optimal_hour(user, "time_capsule", 10)
+        if local_hour != optimal_hour:
+            continue
+        if _is_in_quiet_hours(prefs, local_hour):
+            continue
+
+        success = await _send_nudge(supabase, notif_svc, user, "time_capsule", {
+            "days_active": age,
+        })
+        if success:
+            sent += 1
+    return sent
+
+
+async def _job_chain_visual(supabase, notif_svc, users: List[dict]) -> int:
+    """'Don't break the chain' — fires at 4pm for streaks >= 5, workout not done."""
+    sent = 0
+    for user in users:
+        prefs = user.get("notification_preferences") or {}
+        if not prefs.get("streak_alerts", True):
+            continue
+
+        tz_str = user.get("timezone") or "UTC"
+        local_hour = _get_user_local_hour(tz_str)
+        if local_hour != 16:  # 4pm
+            continue
+        if _is_in_quiet_hours(prefs, local_hour):
+            continue
+
+        user_id = str(user["id"])
+        user_today = _get_user_local_date(tz_str)
+
+        try:
+            streak_data = supabase.client.table("user_login_streaks") \
+                .select("current_streak").eq("user_id", user_id).limit(1).execute()
+            if not streak_data.data:
+                continue
+            current_streak = streak_data.data[0].get("current_streak", 0)
+            if current_streak < 5:
+                continue
+        except Exception:
+            continue
+
+        try:
+            completed = supabase.client.table("workouts") \
+                .select("id").eq("user_id", user_id) \
+                .eq("scheduled_date", user_today).eq("is_completed", True) \
+                .limit(1).execute()
+            if completed.data:
+                continue
+        except Exception:
+            continue
+
+        success = await _send_nudge(supabase, notif_svc, user, "chain_visual", {
+            "streak": current_streak,
+        })
+        if success:
+            sent += 1
+    return sent
+
+
+async def _job_recovery_complete(supabase, notif_svc, users: List[dict]) -> int:
+    """Notify when target muscle group is fully recovered (48h+)."""
+    sent = 0
+    for user in users:
+        prefs = user.get("notification_preferences") or {}
+        if not prefs.get("workout_reminders", True):
+            continue
+        if _user_account_age_days(user) < 7:
+            continue
+
+        tz_str = user.get("timezone") or "UTC"
+        local_hour = _get_user_local_hour(tz_str)
+        pref_hour = _parse_time_hour(prefs.get("workout_reminder_time", "08:00"))
+        optimal_hour = _get_optimal_hour(user, "recovery_complete", pref_hour)
+        if local_hour != optimal_hour:
+            continue
+        if _is_in_quiet_hours(prefs, local_hour):
+            continue
+
+        user_id = str(user["id"])
+        user_today = _get_user_local_date(tz_str)
+
+        # Get today's workout and its muscle groups
+        try:
+            workout = supabase.client.table("workouts") \
+                .select("id, name, muscle_groups") \
+                .eq("user_id", user_id).eq("scheduled_date", user_today) \
+                .eq("is_completed", False).limit(1).execute()
+            if not workout.data:
+                continue
+            muscle_groups = workout.data[0].get("muscle_groups") or []
+            if not muscle_groups:
+                continue
+            primary_group = muscle_groups[0] if isinstance(muscle_groups, list) else str(muscle_groups)
+        except Exception:
+            continue
+
+        # Check last time this muscle group was trained
+        try:
+            cutoff_48h = (datetime.utcnow() - timedelta(hours=48)).isoformat()
+            recent = supabase.client.table("workout_logs") \
+                .select("completed_at").eq("user_id", user_id) \
+                .lte("completed_at", cutoff_48h) \
+                .order("completed_at", desc=True).limit(1).execute()
+            if not recent.data:
+                continue  # No previous workout to compare
+            last_completed = recent.data[0].get("completed_at", "")
+            hours_ago = int((datetime.utcnow() - datetime.fromisoformat(last_completed.replace("Z", "+00:00").replace("+00:00", ""))).total_seconds() / 3600)
+        except Exception:
+            continue
+
+        success = await _send_nudge(supabase, notif_svc, user, "recovery_complete", {
+            "muscle_group": primary_group,
+            "hours_recovered": hours_ago,
+        })
+        if success:
+            sent += 1
+    return sent
+
+
 # ─── Main Cron Endpoint ─────────────────────────────────────────────────────
 
 @router.post("/cron")
@@ -951,6 +1448,7 @@ async def run_push_nudge_cron(
 
     # Run all nudge jobs concurrently
     jobs = [
+        # ── Core accountability jobs ──
         ("morning_workout", _job_morning_workout_reminder(supabase, notif_svc, users)),
         ("missed_workout", _job_missed_workout_nudge(supabase, notif_svc, users)),
         ("meal_reminders", _job_meal_reminders(supabase, notif_svc, users)),
@@ -959,6 +1457,17 @@ async def run_push_nudge_cron(
         ("habit_reminder", _job_habit_reminder(supabase, notif_svc, users)),
         ("guilt_escalation", _job_guilt_escalation(supabase, notif_svc, users)),
         ("trial_reminder", _job_trial_reminder(supabase, notif_svc)),
+        # ── Smart app-open hooks ──
+        ("streak_countdown", _job_streak_countdown_urgency(supabase, notif_svc, users)),
+        ("progress_milestone", _job_progress_milestone_teaser(supabase, notif_svc, users)),
+        ("post_workout_nutrition", _job_post_workout_nutrition(supabase, notif_svc, users)),
+        ("coach_insight", _job_coach_insight(supabase, notif_svc, users)),
+        ("habit_streak_reward", _job_habit_streak_reward(supabase, notif_svc, users)),
+        ("rest_day_tip", _job_rest_day_engagement(supabase, notif_svc, users)),
+        ("progress_comparison", _job_progress_comparison(supabase, notif_svc, users)),
+        ("time_capsule", _job_time_capsule(supabase, notif_svc, users)),
+        ("chain_visual", _job_chain_visual(supabase, notif_svc, users)),
+        ("recovery_complete", _job_recovery_complete(supabase, notif_svc, users)),
     ]
 
     job_names = [j[0] for j in jobs]
@@ -1023,6 +1532,10 @@ async def test_nudge(
         "morning_workout", "missed_workout", "meal_breakfast", "meal_lunch", "meal_dinner",
         "streak_at_risk", "weekly_checkin", "habit_reminder", "post_workout_meal",
         "guilt_day1", "guilt_day2", "guilt_day3", "guilt_day5", "guilt_day7", "guilt_day14",
+        # Smart app-open hooks
+        "streak_countdown", "progress_milestone", "post_workout_nutrition", "coach_insight",
+        "habit_streak_reward", "rest_day_tip", "progress_comparison", "time_capsule",
+        "chain_visual", "recovery_complete",
     }
     if nudge_type not in allowed_nudge_types:
         raise HTTPException(status_code=400, detail=f"Invalid nudge_type. Allowed: {sorted(allowed_nudge_types)}")
@@ -1045,7 +1558,7 @@ async def test_nudge(
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail="Failed to fetch user")
+        raise safe_internal_error(e, "push_nudge_cron")
 
     # Fetch ai_settings
     ai_map = _fetch_ai_settings_batch(supabase, [user_id])

@@ -1179,6 +1179,7 @@ async def get_all_levels(
 ):
     """
     Get all 250 levels with names, titles, XP requirements, and milestone rewards.
+    XP thresholds are read from the DB's calculate_level_from_xp function (single source of truth).
     Static data — frontend should cache this for the session.
     """
     milestone_rewards = {
@@ -1207,13 +1208,22 @@ async def get_all_levels(
         200: "🎖️", 225: "🎖️", 250: "🏆",
     }
 
+    # Query XP thresholds from DB function (single source of truth)
+    try:
+        db = get_supabase_db()
+        result = db.client.rpc("get_all_level_xp_thresholds").execute()
+        db_levels = {row["lvl"]: row["xp_required"] for row in (result.data or [])}
+    except Exception as e:
+        logger.warning(f"[XP] Failed to fetch level thresholds from DB, using Python fallback: {e}")
+        db_levels = {}
+
     levels = []
     for level in range(1, 251):
         levels.append({
             "level": level,
             "name": _get_level_name(level),
             "title": _get_xp_title(level),
-            "xp_required": _get_xp_for_level(level),
+            "xp_required": db_levels.get(level, _get_xp_for_level(level)),
             "milestone_reward": milestone_rewards.get(level),
             "milestone_icon": milestone_icons.get(level),
         })

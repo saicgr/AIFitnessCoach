@@ -12,7 +12,6 @@ from core.auth import get_current_user, verify_user_ownership
 from core.exceptions import safe_internal_error
 from datetime import datetime
 
-from core.supabase_db import get_supabase_db
 from core.logger import get_logger
 from models.social import PublicKeyUpload, PublicKeyResponse
 
@@ -63,7 +62,7 @@ async def upload_public_key(
         }).execute()
 
         if not result.data:
-            raise HTTPException(status_code=500, detail="Failed to store public key")
+            raise safe_internal_error(ValueError("Failed to store public key"), "social")
 
         row = result.data[0]
 

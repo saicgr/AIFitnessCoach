@@ -8,7 +8,6 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from core.timezone_utils import resolve_timezone, local_date_to_utc_range, get_user_today
 from core.auth import get_current_user
 from core.exceptions import safe_internal_error
-from core.supabase_db import get_supabase_db
 from core.logger import get_logger
 from core.activity_logger import log_user_activity
 from services.gemini_service import GeminiService
@@ -153,29 +152,37 @@ async def get_checkin_weekly_summary(request: Request, user_id: str, current_use
         from_date_obj = datetime.strptime(today_str, "%Y-%m-%d") - timedelta(days=7)
         from_date_str = from_date_obj.strftime("%Y-%m-%d")
 
-        # Get food logs for the past week
+        # Convert local date boundaries to UTC for querying
+        from_utc_start, _ = local_date_to_utc_range(from_date_str, user_tz)
+        _, to_utc_end = local_date_to_utc_range(today_str, user_tz)
+
+        # Get food logs for the past week (UTC-aware boundaries)
         food_result = db.client.table("food_logs")\
             .select("logged_at, total_calories, protein_g")\
             .eq("user_id", user_id)\
             .is_("deleted_at", "null")\
-            .gte("logged_at", f"{from_date_str}T00:00:00")\
+            .gte("logged_at", from_utc_start)\
+            .lte("logged_at", to_utc_end)\
             .execute()
 
         food_logs = food_result.data or []
 
-        # Get weight logs for the past week
+        # Get weight logs for the past week (UTC-aware boundaries)
         weight_result = db.client.table("weight_logs")\
             .select("weight_kg, logged_at")\
             .eq("user_id", user_id)\
-            .gte("logged_at", f"{from_date_str}T00:00:00")\
+            .gte("logged_at", from_utc_start)\
+            .lte("logged_at", to_utc_end)\
             .order("logged_at", desc=False)\
             .execute()
 
         weight_logs = weight_result.data or []
 
-        # Calculate days logged
+        # Calculate days logged (convert UTC timestamps to user's local date)
+        from zoneinfo import ZoneInfo
+        tz = ZoneInfo(user_tz) if user_tz and user_tz != "UTC" else ZoneInfo("UTC")
         logged_dates = set(
-            datetime.fromisoformat(str(log["logged_at"]).replace("Z", "+00:00")).date()
+            datetime.fromisoformat(str(log["logged_at"]).replace("Z", "+00:00")).astimezone(tz).date()
             for log in food_logs
         )
         days_logged = len(logged_dates)
@@ -321,7 +328,7 @@ async def generate_weekly_recommendation(request: Request, user_id: str, current
             .execute()
 
         if not result.data:
-            raise HTTPException(status_code=500, detail="Failed to create weekly nutrition recommendation")
+            raise safe_internal_error(ValueError("Failed to create weekly nutrition recommendation"), "nutrition")
 
         data = result.data[0]
         return WeeklyRecommendationResponse(

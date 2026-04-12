@@ -9,7 +9,6 @@ from core.auth import get_current_user, get_verified_auth_token, verify_user_own
 from core.exceptions import safe_internal_error
 from typing import Optional, List
 
-from core.supabase_db import get_supabase_db
 from core.supabase_client import get_supabase
 from core.logger import get_logger
 from core.rate_limiter import limiter

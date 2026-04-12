@@ -19,7 +19,6 @@ from core.exceptions import safe_internal_error
 from typing import Optional, List, Any
 from pydantic import BaseModel
 
-from core.supabase_db import get_supabase_db
 from core.logger import get_logger
 from core.activity_logger import log_user_activity, log_user_error
 
@@ -216,7 +215,7 @@ async def get_active_layout(user_id: str,
         }).execute()
 
         if not rpc_result.data:
-            raise HTTPException(status_code=500, detail="Failed to create default layout")
+            raise safe_internal_error(ValueError("Failed to create default layout"), "layouts")
 
         # Fetch the created layout
         layout_id = rpc_result.data
@@ -225,7 +224,7 @@ async def get_active_layout(user_id: str,
         ).single().execute()
 
         if not fetch_result.data:
-            raise HTTPException(status_code=500, detail="Failed to fetch created layout")
+            raise safe_internal_error(ValueError("Failed to fetch created layout"), "layouts")
 
         # Log activity
         await log_user_activity(
@@ -278,7 +277,7 @@ async def create_layout(user_id: str, layout: CreateLayoutRequest,
         }).execute()
 
         if not insert_result.data:
-            raise HTTPException(status_code=500, detail="Failed to create layout")
+            raise safe_internal_error(ValueError("Failed to create layout"), "layouts")
 
         created_layout = insert_result.data[0]
         logger.info(f"Created layout {created_layout['id']} for user {user_id}")
@@ -360,7 +359,7 @@ async def update_layout(
         ).execute()
 
         if not update_result.data:
-            raise HTTPException(status_code=500, detail="Failed to update layout")
+            raise safe_internal_error(ValueError("Failed to update layout"), "layouts")
 
         updated_layout = update_result.data[0]
         logger.info(f"Updated layout {layout_id}")
@@ -502,7 +501,7 @@ async def activate_layout(layout_id: str, user_id: str,
         ).single().execute()
 
         if not result.data:
-            raise HTTPException(status_code=500, detail="Failed to fetch activated layout")
+            raise safe_internal_error(ValueError("Failed to fetch activated layout"), "layouts")
 
         logger.info(f"Activated layout {layout_id} for user {user_id}")
 
@@ -574,7 +573,7 @@ async def create_from_template(
         ).single().execute()
 
         if not result.data:
-            raise HTTPException(status_code=500, detail="Failed to fetch created layout")
+            raise safe_internal_error(ValueError("Failed to fetch created layout"), "layouts")
 
         logger.info(f"Created layout from template {template_id} for user {user_id}")
 

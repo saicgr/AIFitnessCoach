@@ -23,7 +23,6 @@ from datetime import datetime
 import asyncio
 import httpx
 
-from core.supabase_db import get_supabase_db
 from core.config import get_settings
 from core.logger import get_logger
 from core.activity_logger import log_user_activity, log_user_error
@@ -296,7 +295,7 @@ async def start_live_chat(request: LiveChatStartRequest,
         ticket_result = db.client.table("support_tickets").insert(ticket_record).execute()
 
         if not ticket_result.data:
-            raise HTTPException(status_code=500, detail="Failed to create live chat session")
+            raise safe_internal_error(ValueError("Failed to create live chat session"), "live_chat")
 
         ticket_data = ticket_result.data[0]
         ticket_id = str(ticket_data["id"])
@@ -315,7 +314,7 @@ async def start_live_chat(request: LiveChatStartRequest,
         if not message_result.data:
             # Rollback ticket creation
             db.client.table("support_tickets").delete().eq("id", ticket_id).execute()
-            raise HTTPException(status_code=500, detail="Failed to add initial message")
+            raise safe_internal_error(ValueError("Failed to add initial message"), "live_chat")
 
         # Add to live chat queue
         queue_record = {
@@ -662,7 +661,7 @@ async def send_message(ticket_id: str, request: LiveChatMessageRequest,
         message_result = db.client.table("live_chat_messages").insert(message_record).execute()
 
         if not message_result.data:
-            raise HTTPException(status_code=500, detail="Failed to send message")
+            raise safe_internal_error(ValueError("Failed to send message"), "live_chat")
 
         message_data = message_result.data[0]
 

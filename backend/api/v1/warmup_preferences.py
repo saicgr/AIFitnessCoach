@@ -18,7 +18,6 @@ from typing import List, Optional, Dict, Any
 from datetime import datetime
 import logging
 
-from core.supabase_db import get_supabase_db
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/warmup-preferences", tags=["Warmup Preferences"])
@@ -152,7 +151,7 @@ async def update_warmup_preferences(user_id: str, request: WarmupPreferencesUpda
                 updated_at=prefs.get("updated_at"),
             )
         else:
-            raise HTTPException(status_code=500, detail="Failed to save preferences")
+            raise safe_internal_error(ValueError("Failed to save preferences"), "warmup_preferences")
 
     except HTTPException:
         raise
@@ -201,7 +200,7 @@ async def add_pre_workout_exercise(user_id: str, exercise: ExerciseRoutineItem,
                 avoided_stretches=prefs.get("avoided_stretches", []),
             )
         else:
-            raise HTTPException(status_code=500, detail="Failed to add exercise")
+            raise safe_internal_error(ValueError("Failed to add exercise"), "warmup_preferences")
 
     except HTTPException:
         raise
@@ -250,7 +249,7 @@ async def add_post_exercise(user_id: str, exercise: ExerciseRoutineItem,
                 avoided_stretches=prefs.get("avoided_stretches", []),
             )
         else:
-            raise HTTPException(status_code=500, detail="Failed to add exercise")
+            raise safe_internal_error(ValueError("Failed to add exercise"), "warmup_preferences")
 
     except HTTPException:
         raise

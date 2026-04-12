@@ -18,6 +18,8 @@ FoodItem _$FoodItemFromJson(Map<String, dynamic> json) => FoodItem(
   unit: json['unit'] as String?,
   count: (json['count'] as num?)?.toInt(),
   weightPerUnitG: (json['weight_per_unit_g'] as num?)?.toDouble(),
+  inflammationScore: (json['inflammation_score'] as num?)?.toInt(),
+  isUltraProcessed: json['is_ultra_processed'] as bool?,
 );
 
 Map<String, dynamic> _$FoodItemToJson(FoodItem instance) => <String, dynamic>{
@@ -32,6 +34,8 @@ Map<String, dynamic> _$FoodItemToJson(FoodItem instance) => <String, dynamic>{
   'unit': instance.unit,
   'count': instance.count,
   'weight_per_unit_g': instance.weightPerUnitG,
+  'inflammation_score': instance.inflammationScore,
+  'is_ultra_processed': instance.isUltraProcessed,
 };
 
 FoodLog _$FoodLogFromJson(Map<String, dynamic> json) => FoodLog(
@@ -65,6 +69,9 @@ FoodLog _$FoodLogFromJson(Map<String, dynamic> json) => FoodLog(
   vitaminAUg: (json['vitamin_a_ug'] as num?)?.toDouble(),
   vitaminCMg: (json['vitamin_c_mg'] as num?)?.toDouble(),
   vitaminDIu: (json['vitamin_d_iu'] as num?)?.toDouble(),
+  inflammationScore: (json['inflammation_score'] as num?)?.toInt(),
+  isUltraProcessed: json['is_ultra_processed'] as bool?,
+  imageUrl: json['image_url'] as String?,
   createdAt: _parseDateTimeOrNow(json['created_at'] as String?),
 );
 
@@ -95,6 +102,9 @@ Map<String, dynamic> _$FoodLogToJson(FoodLog instance) => <String, dynamic>{
   'vitamin_a_ug': instance.vitaminAUg,
   'vitamin_c_mg': instance.vitaminCMg,
   'vitamin_d_iu': instance.vitaminDIu,
+  'inflammation_score': instance.inflammationScore,
+  'is_ultra_processed': instance.isUltraProcessed,
+  'image_url': instance.imageUrl,
   'created_at': instance.createdAt.toIso8601String(),
 };
 
@@ -217,10 +227,10 @@ LogBarcodeResponse _$LogBarcodeResponseFromJson(Map<String, dynamic> json) =>
       success: json['success'] as bool,
       foodLogId: json['food_log_id'] as String,
       productName: json['product_name'] as String,
-      totalCalories: (json['total_calories'] as num).toInt(),
-      proteinG: (json['protein_g'] as num).toDouble(),
-      carbsG: (json['carbs_g'] as num).toDouble(),
-      fatG: (json['fat_g'] as num).toDouble(),
+      totalCalories: (json['total_calories'] as num?)?.toInt() ?? 0,
+      proteinG: (json['protein_g'] as num?)?.toDouble() ?? 0.0,
+      carbsG: (json['carbs_g'] as num?)?.toDouble() ?? 0.0,
+      fatG: (json['fat_g'] as num?)?.toDouble() ?? 0.0,
     );
 
 Map<String, dynamic> _$LogBarcodeResponseToJson(LogBarcodeResponse instance) =>
@@ -329,10 +339,10 @@ LogFoodResponse _$LogFoodResponseFromJson(Map<String, dynamic> json) =>
               ?.map((e) => e as Map<String, dynamic>)
               .toList() ??
           const [],
-      totalCalories: (json['total_calories'] as num).toInt(),
-      proteinG: (json['protein_g'] as num).toDouble(),
-      carbsG: (json['carbs_g'] as num).toDouble(),
-      fatG: (json['fat_g'] as num).toDouble(),
+      totalCalories: (json['total_calories'] as num?)?.toInt() ?? 0,
+      proteinG: (json['protein_g'] as num?)?.toDouble() ?? 0.0,
+      carbsG: (json['carbs_g'] as num?)?.toDouble() ?? 0.0,
+      fatG: (json['fat_g'] as num?)?.toDouble() ?? 0.0,
       fiberG: (json['fiber_g'] as num?)?.toDouble(),
       overallMealScore: (json['overall_meal_score'] as num?)?.toInt(),
       healthScore: (json['health_score'] as num?)?.toInt(),
@@ -364,6 +374,8 @@ LogFoodResponse _$LogFoodResponseFromJson(Map<String, dynamic> json) =>
       imageUrl: json['image_url'] as String?,
       imageStorageKey: json['image_storage_key'] as String?,
       plateDescription: json['plate_description'] as String?,
+      inflammationScore: (json['inflammation_score'] as num?)?.toInt(),
+      isUltraProcessed: json['is_ultra_processed'] as bool?,
     );
 
 Map<String, dynamic> _$LogFoodResponseToJson(LogFoodResponse instance) =>
@@ -401,6 +413,8 @@ Map<String, dynamic> _$LogFoodResponseToJson(LogFoodResponse instance) =>
       'image_url': instance.imageUrl,
       'image_storage_key': instance.imageStorageKey,
       'plate_description': instance.plateDescription,
+      'inflammation_score': instance.inflammationScore,
+      'is_ultra_processed': instance.isUltraProcessed,
     };
 
 SavedFoodItem _$SavedFoodItemFromJson(Map<String, dynamic> json) =>

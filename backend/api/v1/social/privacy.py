@@ -85,6 +85,6 @@ async def update_privacy_settings(
     }).execute()
 
     if not result.data:
-        raise HTTPException(status_code=500, detail="Failed to update privacy settings")
+        raise safe_internal_error(ValueError("Failed to update privacy settings"), "social")
 
     return UserPrivacySettings(**result.data[0])

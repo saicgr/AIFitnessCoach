@@ -31,7 +31,6 @@ from pydantic import BaseModel
 from typing import List, Optional
 from datetime import datetime, date, timedelta
 
-from core.supabase_db import get_supabase_db
 from core.logger import get_logger
 from models.schemas import (
     PerformanceLog, PerformanceLogCreate,
@@ -298,7 +297,7 @@ async def create_workout_log(log: WorkoutLogCreate,
 
         if created is None:
             logger.error(f"Failed to create workout log - db returned None: workout_id={log.workout_id}")
-            raise HTTPException(status_code=500, detail="Failed to create workout log in database")
+            raise safe_internal_error(ValueError("Failed to create workout log in database"), "performance_db")
 
         logger.info(f"Workout log created: id={created['id']}, user_id={log.user_id}")
         return row_to_workout_log(created)

@@ -101,7 +101,7 @@ async def save_favorite_superset_pair(user_id: str = Query(...), request: Favori
         result = db.client.table("favorite_superset_pairs").insert(insert_data).execute()
 
         if not result.data:
-            raise HTTPException(status_code=500, detail="Failed to save favorite pair")
+            raise safe_internal_error(ValueError("Failed to save favorite pair"), "supersets_endpoints")
 
         row = result.data[0]
         logger.info(f"Saved favorite superset pair {pair_id} for user {user_id}")
@@ -448,7 +448,7 @@ async def log_superset_usage(request: SupersetLogRequest,
         result = db.client.table("user_superset_logs").insert(insert_data).execute()
 
         if not result.data:
-            raise HTTPException(status_code=500, detail="Failed to log superset")
+            raise safe_internal_error(ValueError("Failed to log superset"), "supersets_endpoints")
 
         logger.info(f"Logged superset pair for user {request.user_id}")
 

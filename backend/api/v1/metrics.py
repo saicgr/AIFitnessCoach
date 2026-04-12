@@ -16,7 +16,6 @@ from typing import Optional, List
 from datetime import datetime
 
 from services.metrics_calculator import MetricsCalculator, HealthMetrics
-from core.supabase_db import get_supabase_db
 from core.logger import get_logger
 
 router = APIRouter(prefix="/metrics", tags=["metrics"])
@@ -485,7 +484,7 @@ async def record_simple_metric(input: SimpleMetricInput,
         result = db.client.table("body_measurements").insert(data).execute()
 
         if not result.data:
-            raise HTTPException(status_code=500, detail="Failed to record measurement")
+            raise safe_internal_error(ValueError("Failed to record measurement"), "metrics")
 
         row = result.data[0]
 

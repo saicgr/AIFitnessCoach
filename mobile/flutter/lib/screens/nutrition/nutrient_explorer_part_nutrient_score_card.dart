@@ -29,16 +29,16 @@ class _NutrientScoreCard extends StatelessWidget {
     Color scoreColor;
     String scoreLabel;
     if (score >= 80) {
-      scoreColor = AppColors.textPrimary;
+      scoreColor = const Color(0xFF4CAF50); // Green
       scoreLabel = 'Excellent';
     } else if (score >= 60) {
-      scoreColor = AppColors.textPrimary;
+      scoreColor = const Color(0xFF8BC34A); // Light green
       scoreLabel = 'Good';
     } else if (score >= 40) {
-      scoreColor = AppColors.textSecondary;
+      scoreColor = const Color(0xFFFFC107); // Amber
       scoreLabel = 'Needs Attention';
     } else {
-      scoreColor = AppColors.textSecondary;
+      scoreColor = const Color(0xFFFF9800); // Orange
       scoreLabel = 'Low';
     }
 
@@ -113,19 +113,19 @@ class _NutrientScoreCard extends StatelessWidget {
                         _StatChip(
                           label: 'Optimal',
                           count: optimalCount,
-                          color: AppColors.textPrimary,
+                          color: const Color(0xFF4CAF50), // Green
                         ),
                         const SizedBox(width: 8),
                         _StatChip(
                           label: 'Low',
                           count: lowCount,
-                          color: AppColors.textSecondary,
+                          color: const Color(0xFFFFC107), // Amber
                         ),
                         const SizedBox(width: 8),
                         _StatChip(
                           label: 'High',
                           count: overCount,
-                          color: AppColors.textSecondary,
+                          color: const Color(0xFFFF9800), // Orange
                         ),
                       ],
                     ),
@@ -514,13 +514,13 @@ class _NutrientRow extends StatelessWidget {
   Color _getStatusColor(NutrientStatus status) {
     switch (status) {
       case NutrientStatus.low:
-        return AppColors.textSecondary;
+        return const Color(0xFFFFC107); // Amber - below target
       case NutrientStatus.optimal:
-        return AppColors.textPrimary;
+        return const Color(0xFF4CAF50); // Green - on target
       case NutrientStatus.high:
-        return AppColors.textSecondary;
+        return const Color(0xFFFF9800); // Orange - above target
       case NutrientStatus.overCeiling:
-        return AppColors.textMuted;
+        return const Color(0xFFF44336); // Red - over limit
     }
   }
 }

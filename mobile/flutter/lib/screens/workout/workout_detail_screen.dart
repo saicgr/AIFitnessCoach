@@ -54,8 +54,10 @@ class WorkoutDetailScreen extends ConsumerStatefulWidget {
   final String workoutId;
   /// Optional pre-loaded workout to display immediately while refreshing.
   final Workout? initialWorkout;
+  /// When true, hides the coach avatar + "Let's Go" FAB (used inside summary).
+  final bool isSummaryMode;
 
-  const WorkoutDetailScreen({super.key, required this.workoutId, this.initialWorkout});
+  const WorkoutDetailScreen({super.key, required this.workoutId, this.initialWorkout, this.isSummaryMode = false});
 
   @override
   ConsumerState<WorkoutDetailScreen> createState() => _WorkoutDetailScreenState();
@@ -977,8 +979,8 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen>
       ],
       ),
 
-      // Custom floating buttons: AI + Play
-      floatingActionButton: _buildFloatingButtons(context, ref, workout),
+      // Custom floating buttons: AI + Play (hidden in summary mode)
+      floatingActionButton: widget.isSummaryMode ? null : _buildFloatingButtons(context, ref, workout),
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
     );
   }

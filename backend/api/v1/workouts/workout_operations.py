@@ -18,7 +18,6 @@ from typing import List, Dict, Any, Optional
 from fastapi import APIRouter, Depends, BackgroundTasks, HTTPException, Request
 from core.auth import get_current_user
 from core.exceptions import safe_internal_error
-from core.supabase_db import get_supabase_db
 from core.logger import get_logger
 from core.rate_limiter import limiter
 from models.schemas import (
@@ -194,7 +193,7 @@ async def swap_exercise_in_workout(request: Request, payload: SwapExerciseReques
 
         updated = db.update_workout(payload.workout_id, update_data)
         if not updated:
-            raise HTTPException(status_code=500, detail="Failed to update workout")
+            raise safe_internal_error(ValueError("Failed to update workout"), "workout_operations")
 
         log_workout_change(
             payload.workout_id,
@@ -316,7 +315,7 @@ async def add_exercise_to_workout(request: Request, payload: AddExerciseRequest,
 
             updated = db.update_workout(payload.workout_id, update_data)
             if not updated:
-                raise HTTPException(status_code=500, detail="Failed to update workout")
+                raise safe_internal_error(ValueError("Failed to update workout"), "workout_operations")
 
             log_workout_change(
                 payload.workout_id,
@@ -595,7 +594,7 @@ Generate exactly {payload.additional_exercises} exercises that complement the ex
             ]
 
             if not new_exercises:
-                raise HTTPException(status_code=500, detail="Failed to generate valid extension exercises")
+                raise safe_internal_error(ValueError("Failed to generate valid extension exercises"), "workout_operations")
 
             logger.info(f"✅ Generated {len(new_exercises)} extension exercises")
 
@@ -619,7 +618,7 @@ Generate exactly {payload.additional_exercises} exercises that complement the ex
         ).eq("id", payload.workout_id).execute()
 
         if not updated_result.data:
-            raise HTTPException(status_code=500, detail="Failed to update workout")
+            raise safe_internal_error(ValueError("Failed to update workout"), "workout_operations")
 
         log_workout_change(
             workout_id=payload.workout_id,

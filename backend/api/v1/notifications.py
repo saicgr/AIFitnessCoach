@@ -24,7 +24,6 @@ from core.exceptions import safe_internal_error
 from pydantic import BaseModel
 from typing import Optional, List
 
-from core.supabase_db import get_supabase_db
 from core.supabase_client import get_supabase
 from core.logger import get_logger
 from services.notification_service import get_notification_service
@@ -283,6 +282,14 @@ async def send_guilt_notification(user_id: str, days_missed: int = 1,
 ):
     """
     Send a guilt notification for missed workouts (Duolingo-style).
+
+    Tiers based on days_missed:
+    - 1 day: gentle check-in
+    - 2 days: rested and ready
+    - 3-4 days: welcome back
+    - 5-6 days: stronger emotional appeal
+    - 7-13 days: warm welcome-back
+    - 14+ days: no judgment, gentle pull
     """
     logger.info(f"Sending guilt notification to user {user_id} (missed {days_missed} days)")
 

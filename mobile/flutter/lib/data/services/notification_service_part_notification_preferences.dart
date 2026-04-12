@@ -49,6 +49,31 @@ class NotificationPreferences {
   final bool aiPersonalizedNudges;
   final bool guiltNotifications;
 
+  // Frequency preset
+  final String frequencyPreset; // 'minimal', 'balanced', 'full_coach'
+  // Bundle times
+  final String morningBundleTime;
+  final String middayBundleTime;
+  final String afternoonNudgeTime;
+  final String eveningBundleTime;
+  // Weekend scheduling
+  final bool weekendTimesEnabled;
+  final String morningBundleTimeWeekend;
+  final String middayBundleTimeWeekend;
+  final String eveningBundleTimeWeekend;
+  // Bundle content toggles
+  final bool morningIncludeWorkout;
+  final bool morningIncludeBreakfast;
+  final bool morningIncludeMotivation;
+  final bool middayIncludeLunch;
+  final bool middayIncludeHydration;
+  final bool eveningIncludeDinner;
+  final bool eveningIncludeStreak;
+  final bool eveningIncludeProgress;
+  // Style preferences
+  final bool notificationEmoji;
+  final bool notificationVibration;
+
   const NotificationPreferences({
     this.workoutReminders = true,
     this.nutritionReminders = true,
@@ -94,6 +119,30 @@ class NotificationPreferences {
     this.accountabilityIntensity = 'balanced',
     this.aiPersonalizedNudges = true,
     this.guiltNotifications = true,
+    // Frequency preset
+    this.frequencyPreset = 'balanced',
+    // Bundle times
+    this.morningBundleTime = '07:30',
+    this.middayBundleTime = '12:30',
+    this.afternoonNudgeTime = '15:00',
+    this.eveningBundleTime = '19:00',
+    // Weekend scheduling
+    this.weekendTimesEnabled = false,
+    this.morningBundleTimeWeekend = '09:30',
+    this.middayBundleTimeWeekend = '13:00',
+    this.eveningBundleTimeWeekend = '20:00',
+    // Bundle content toggles
+    this.morningIncludeWorkout = true,
+    this.morningIncludeBreakfast = true,
+    this.morningIncludeMotivation = true,
+    this.middayIncludeLunch = true,
+    this.middayIncludeHydration = true,
+    this.eveningIncludeDinner = true,
+    this.eveningIncludeStreak = true,
+    this.eveningIncludeProgress = true,
+    // Style preferences
+    this.notificationEmoji = true,
+    this.notificationVibration = true,
   });
 
   NotificationPreferences copyWith({
@@ -138,6 +187,30 @@ class NotificationPreferences {
     String? accountabilityIntensity,
     bool? aiPersonalizedNudges,
     bool? guiltNotifications,
+    // Frequency preset
+    String? frequencyPreset,
+    // Bundle times
+    String? morningBundleTime,
+    String? middayBundleTime,
+    String? afternoonNudgeTime,
+    String? eveningBundleTime,
+    // Weekend scheduling
+    bool? weekendTimesEnabled,
+    String? morningBundleTimeWeekend,
+    String? middayBundleTimeWeekend,
+    String? eveningBundleTimeWeekend,
+    // Bundle content toggles
+    bool? morningIncludeWorkout,
+    bool? morningIncludeBreakfast,
+    bool? morningIncludeMotivation,
+    bool? middayIncludeLunch,
+    bool? middayIncludeHydration,
+    bool? eveningIncludeDinner,
+    bool? eveningIncludeStreak,
+    bool? eveningIncludeProgress,
+    // Style preferences
+    bool? notificationEmoji,
+    bool? notificationVibration,
   }) {
     return NotificationPreferences(
       workoutReminders: workoutReminders ?? this.workoutReminders,
@@ -181,6 +254,30 @@ class NotificationPreferences {
       accountabilityIntensity: accountabilityIntensity ?? this.accountabilityIntensity,
       aiPersonalizedNudges: aiPersonalizedNudges ?? this.aiPersonalizedNudges,
       guiltNotifications: guiltNotifications ?? this.guiltNotifications,
+      // Frequency preset
+      frequencyPreset: frequencyPreset ?? this.frequencyPreset,
+      // Bundle times
+      morningBundleTime: morningBundleTime ?? this.morningBundleTime,
+      middayBundleTime: middayBundleTime ?? this.middayBundleTime,
+      afternoonNudgeTime: afternoonNudgeTime ?? this.afternoonNudgeTime,
+      eveningBundleTime: eveningBundleTime ?? this.eveningBundleTime,
+      // Weekend scheduling
+      weekendTimesEnabled: weekendTimesEnabled ?? this.weekendTimesEnabled,
+      morningBundleTimeWeekend: morningBundleTimeWeekend ?? this.morningBundleTimeWeekend,
+      middayBundleTimeWeekend: middayBundleTimeWeekend ?? this.middayBundleTimeWeekend,
+      eveningBundleTimeWeekend: eveningBundleTimeWeekend ?? this.eveningBundleTimeWeekend,
+      // Bundle content toggles
+      morningIncludeWorkout: morningIncludeWorkout ?? this.morningIncludeWorkout,
+      morningIncludeBreakfast: morningIncludeBreakfast ?? this.morningIncludeBreakfast,
+      morningIncludeMotivation: morningIncludeMotivation ?? this.morningIncludeMotivation,
+      middayIncludeLunch: middayIncludeLunch ?? this.middayIncludeLunch,
+      middayIncludeHydration: middayIncludeHydration ?? this.middayIncludeHydration,
+      eveningIncludeDinner: eveningIncludeDinner ?? this.eveningIncludeDinner,
+      eveningIncludeStreak: eveningIncludeStreak ?? this.eveningIncludeStreak,
+      eveningIncludeProgress: eveningIncludeProgress ?? this.eveningIncludeProgress,
+      // Style preferences
+      notificationEmoji: notificationEmoji ?? this.notificationEmoji,
+      notificationVibration: notificationVibration ?? this.notificationVibration,
     );
   }
 
@@ -226,6 +323,30 @@ class NotificationPreferences {
         'accountability_intensity': accountabilityIntensity,
         'ai_personalized_nudges': aiPersonalizedNudges,
         'guilt_notifications': guiltNotifications,
+        // Frequency preset
+        'frequency_preset': frequencyPreset,
+        // Bundle times
+        'morning_bundle_time': morningBundleTime,
+        'midday_bundle_time': middayBundleTime,
+        'afternoon_nudge_time': afternoonNudgeTime,
+        'evening_bundle_time': eveningBundleTime,
+        // Weekend scheduling
+        'weekend_times_enabled': weekendTimesEnabled,
+        'morning_bundle_time_weekend': morningBundleTimeWeekend,
+        'midday_bundle_time_weekend': middayBundleTimeWeekend,
+        'evening_bundle_time_weekend': eveningBundleTimeWeekend,
+        // Bundle content toggles
+        'morning_include_workout': morningIncludeWorkout,
+        'morning_include_breakfast': morningIncludeBreakfast,
+        'morning_include_motivation': morningIncludeMotivation,
+        'midday_include_lunch': middayIncludeLunch,
+        'midday_include_hydration': middayIncludeHydration,
+        'evening_include_dinner': eveningIncludeDinner,
+        'evening_include_streak': eveningIncludeStreak,
+        'evening_include_progress': eveningIncludeProgress,
+        // Style preferences
+        'notification_emoji': notificationEmoji,
+        'notification_vibration': notificationVibration,
       };
 }
 

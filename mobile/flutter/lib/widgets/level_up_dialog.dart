@@ -574,14 +574,14 @@ class _LevelUpDialogState extends ConsumerState<LevelUpDialog>
                           child: ElevatedButton(
                             onPressed: _carouselDone ? _dismiss : null,
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: titleColor,
+                              backgroundColor: accentColor,
                               foregroundColor: Colors.white,
                               padding: EdgeInsets.symmetric(vertical: compact ? 10 : 14),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               elevation: 4,
-                              shadowColor: titleColor.withValues(alpha: 0.5),
+                              shadowColor: accentColor.withValues(alpha: 0.5),
                             ),
                             child: const Text(
                               'CONTINUE',

@@ -136,7 +136,8 @@ extension _LogMealSheetStateUI on _LogMealSheetState {
   // ─── Bottom Bar ───────────────────────────────────────────────
 
   Widget _buildBottomBar(bool isDark) {
-    const orange = Color(0xFFF97316);
+    final accentEnum = AccentColorScope.of(context);
+    final orange = accentEnum.getColor(isDark);
     final hasText = _descriptionController.text.trim().isNotEmpty;
 
     return Padding(
@@ -240,9 +241,9 @@ extension _LogMealSheetStateUI on _LogMealSheetState {
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
 
-    const amber = Color(0xFFFFB300);
-    const purple = Color(0xFFAB47BC);
-    const coral = Color(0xFFFF7043);
+    final amber = isDark ? AppColors.macroCarbs : AppColorsLight.macroCarbs;
+    final purple = isDark ? AppColors.macroProtein : AppColorsLight.macroProtein;
+    final coral = isDark ? AppColors.macroFat : AppColorsLight.macroFat;
 
     Widget macroSegment(String label, int value, int target, Color color) {
       return Row(
@@ -301,7 +302,8 @@ extension _LogMealSheetStateUI on _LogMealSheetState {
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
     final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
-    const orange = Color(0xFFF97316);
+    final accentEnumPreview = AccentColorScope.of(context);
+    final orange = accentEnumPreview.getColor(isDark);
 
     final response = _analyzedResponse!;
     final description = _descriptionController.text.trim();

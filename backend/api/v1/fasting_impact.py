@@ -32,7 +32,6 @@ import statistics
 
 from pydantic import BaseModel, Field
 
-from core.supabase_db import get_supabase_db
 from core.logger import get_logger
 from core.activity_logger import log_user_activity, log_user_error
 from core.auth import get_current_user
@@ -431,7 +430,7 @@ async def log_weight_with_fasting(
         result = db.client.table("body_measurements").insert(measurement_data).execute()
 
         if not result.data:
-            raise HTTPException(status_code=500, detail="Failed to log weight")
+            raise safe_internal_error(ValueError("Failed to log weight"), "fasting_impact")
 
         # Re-fetch to get trigger-populated fasting fields
         row = result.data[0]

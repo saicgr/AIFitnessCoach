@@ -17,7 +17,6 @@ from datetime import datetime, timedelta, date
 from pydantic import BaseModel, Field
 from enum import Enum
 
-from core.supabase_db import get_supabase_db
 from core.logger import get_logger
 from core.activity_logger import log_user_activity, log_user_error
 from services.user_context_service import UserContextService, EventType
@@ -200,7 +199,7 @@ async def create_pre_workout_checkin(checkin: PreWorkoutCheckinCreate,
         result = db.client.table("workout_subjective_feedback").insert(record).execute()
 
         if not result.data:
-            raise HTTPException(status_code=500, detail="Failed to create pre-workout check-in")
+            raise safe_internal_error(ValueError("Failed to create pre-workout check-in"), "subjective_feedback")
 
         data = result.data[0]
 
@@ -318,7 +317,7 @@ async def create_post_workout_checkin(workout_id: str, checkin: PostWorkoutCheck
             result = db.client.table("workout_subjective_feedback").insert(record).execute()
 
         if not result.data:
-            raise HTTPException(status_code=500, detail="Failed to create post-workout check-in")
+            raise safe_internal_error(ValueError("Failed to create post-workout check-in"), "subjective_feedback")
 
         data = result.data[0]
         mood_change = _compute_mood_change(data)

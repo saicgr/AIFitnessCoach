@@ -1,5 +1,5 @@
 # Uncomment this line to define a global platform for your project
-platform :ios, '15.0'
+platform :ios, '16.0'
 
 # CocoaPods analytics sends network stats synchronously affecting flutter build latency.
 ENV['COCOAPODS_DISABLE_STATS'] = 'true'
@@ -27,6 +27,22 @@ require File.expand_path(File.join('packages', 'flutter_tools', 'bin', 'podhelpe
 
 flutter_ios_podfile_setup
 
+# flutter_gemma ships device-only xcframeworks (no arm64 simulator slices).
+# We temporarily remove it from the plugins JSON before flutter_install_all_ios_pods
+# reads it, then restore it afterwards so Flutter's own checks still pass.
+require 'json'
+
+SKIP_IOS_PLUGINS = %w[flutter_gemma]
+
+plugins_file = File.expand_path(File.join('..', '.flutter-plugins-dependencies'), __dir__)
+original_content = nil
+if File.exist?(plugins_file)
+  original_content = File.read(plugins_file)
+  data = JSON.parse(original_content)
+  data['plugins']['ios'] = data['plugins']['ios'].reject { |p| SKIP_IOS_PLUGINS.include?(p['name']) }
+  File.write(plugins_file, JSON.generate(data))
+end
+
 target 'Runner' do
   use_frameworks!
 
@@ -36,8 +52,24 @@ target 'Runner' do
   end
 end
 
+# Restore original plugins file so Flutter doesn't get confused
+if original_content
+  File.write(plugins_file, original_content)
+end
+
 post_install do |installer|
   installer.pods_project.targets.each do |target|
     flutter_additional_ios_build_settings(target)
+  end
+
+  # Strip flutter_gemma from GeneratedPluginRegistrant.m since the pod isn't installed
+  registrant = File.join(__dir__, 'Runner', 'GeneratedPluginRegistrant.m')
+  if File.exist?(registrant)
+    content = File.read(registrant)
+    # Remove the #if/__has_include block for flutter_gemma
+    content.gsub!(/^#if __has_include\(<flutter_gemma.*?\n.*?\n.*?@import flutter_gemma;\n#endif\n/m, '')
+    # Remove the registration call
+    content.gsub!(/.*FlutterGemmaPlugin.*\n/, '')
+    File.write(registrant, content)
   end
 end

@@ -342,7 +342,9 @@ List<RouteBase> _utilityRoutes() => [
         path: '/habits',
         pageBuilder: (context, state) => CustomTransitionPage(
           key: state.pageKey,
-          child: const HabitsScreen(),
+          child: HabitsScreen(
+            autoOpenAddSheet: state.uri.queryParameters['addHabit'] == 'true',
+          ),
           transitionDuration: const Duration(milliseconds: 400),
           reverseTransitionDuration: const Duration(milliseconds: 300),
           transitionsBuilder: (context, animation, secondaryAnimation, child) {

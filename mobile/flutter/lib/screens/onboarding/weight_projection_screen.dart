@@ -487,11 +487,28 @@ class _WeightProjectionScreenState
   ) {
     final minWeight = isLosingWeight ? goalWeight : currentWeight;
     final maxWeight = isLosingWeight ? currentWeight : goalWeight;
-    final padding = (maxWeight - minWeight) * 0.15;
+    final weightRange = maxWeight - minWeight;
+    final padding = weightRange * 0.15;
+    final chartMinY = minWeight - padding;
+    final chartMaxY = maxWeight + padding;
 
     // Convert weight for display if using imperial
     double displayWeight(double kg) => useMetric ? kg : kg * 2.20462;
     String weightUnit = useMetric ? 'kg' : 'lbs';
+
+    // Calculate sensible Y-axis interval (3-5 labels)
+    final displayRange = displayWeight(chartMaxY) - displayWeight(chartMinY);
+    final rawInterval = displayRange / 4;
+    // Round to nice numbers (5, 10, 20, 25, 50, etc.)
+    final niceInterval = rawInterval <= 5
+        ? 5.0
+        : rawInterval <= 10
+            ? 10.0
+            : rawInterval <= 25
+                ? 25.0
+                : 50.0;
+    // Convert nice interval back to kg for the chart
+    final yInterval = useMetric ? niceInterval : niceInterval / 2.20462;
 
     return AnimatedBuilder(
       animation: _lineAnimation,
@@ -501,207 +518,192 @@ class _WeightProjectionScreenState
             (_lineAnimation.value * data.length).ceil().clamp(1, data.length);
         final visibleData = data.sublist(0, visiblePointCount);
 
-        return SizedBox.expand(
-          child: Stack(
-            children: [
-              // Gradient background
-              Positioned.fill(
-                child: Container(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: [
-                        AppColors.orange.withValues(alpha: 0.05),
-                        Colors.transparent,
-                      ],
-                    ),
-                    borderRadius: BorderRadius.circular(20),
+        return Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [
+                AppColors.orange.withValues(alpha: 0.05),
+                Colors.transparent,
+              ],
+            ),
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.only(top: 12, right: 8, bottom: 4),
+            child: LineChart(
+              LineChartData(
+                lineTouchData: LineTouchData(
+                  enabled: true,
+                  handleBuiltInTouches: true,
+                  touchTooltipData: LineTouchTooltipData(
+                    tooltipRoundedRadius: 12,
+                    getTooltipColor: (_) =>
+                        (isDark ? AppColors.elevated : AppColorsLight.elevated)
+                            .withValues(alpha: 0.95),
+                    tooltipPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    tooltipMargin: 12,
+                    fitInsideHorizontally: true,
+                    fitInsideVertically: true,
+                    getTooltipItems: (touchedSpots) {
+                      return touchedSpots.map((spot) {
+                        final pointIndex = spot.spotIndex.clamp(0, data.length - 1);
+                        final date = data[pointIndex].date;
+                        final weight = displayWeight(spot.y);
+                        final isStart = pointIndex == 0;
+                        final isEnd = pointIndex == data.length - 1;
+                        final label = isStart
+                            ? 'Today'
+                            : isEnd
+                                ? 'Goal'
+                                : DateFormat('MMM yyyy').format(date);
+                        return LineTooltipItem(
+                          '$label\n${weight.toStringAsFixed(1)} $weightUnit',
+                          TextStyle(
+                            color: textPrimary,
+                            fontWeight: FontWeight.w600,
+                            fontSize: 13,
+                            height: 1.4,
+                          ),
+                        );
+                      }).toList();
+                    },
                   ),
                 ),
-              ),
-
-              // Chart
-              LineChart(
-                LineChartData(
-                  lineTouchData: LineTouchData(
-                    enabled: true,
-                    touchTooltipData: LineTouchTooltipData(
-                      getTooltipColor: (_) =>
-                          (isDark ? AppColors.elevated : AppColorsLight.elevated)
-                              .withValues(alpha: 0.95),
-                      tooltipPadding: const EdgeInsets.all(8),
-                      getTooltipItems: (touchedSpots) {
-                        return touchedSpots.map((spot) {
-                          final date = data[spot.spotIndex].date;
-                          final weight = displayWeight(spot.y);
-                          return LineTooltipItem(
-                            '${DateFormat('MMM d').format(date)}\n${weight.toStringAsFixed(1)} $weightUnit',
-                            TextStyle(
-                              color: textPrimary,
-                              fontWeight: FontWeight.w600,
-                              fontSize: 12,
+                gridData: FlGridData(
+                  show: true,
+                  drawVerticalLine: false,
+                  horizontalInterval: yInterval,
+                  getDrawingHorizontalLine: (value) => FlLine(
+                    color: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.06),
+                    strokeWidth: 1,
+                    dashArray: [6, 4],
+                  ),
+                ),
+                titlesData: FlTitlesData(
+                  show: true,
+                  topTitles: const AxisTitles(
+                    sideTitles: SideTitles(showTitles: false),
+                  ),
+                  rightTitles: const AxisTitles(
+                    sideTitles: SideTitles(showTitles: false),
+                  ),
+                  leftTitles: AxisTitles(
+                    sideTitles: SideTitles(
+                      showTitles: true,
+                      reservedSize: 48,
+                      interval: yInterval,
+                      getTitlesWidget: (value, meta) {
+                        // Hide labels at the very edges to avoid clipping
+                        if (value <= chartMinY || value >= chartMaxY) {
+                          return const SizedBox.shrink();
+                        }
+                        final display = displayWeight(value).round();
+                        return Padding(
+                          padding: const EdgeInsets.only(right: 8),
+                          child: Text(
+                            '$display',
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w500,
+                              color: textSecondary.withValues(alpha: 0.7),
                             ),
-                          );
-                        }).toList();
+                            textAlign: TextAlign.right,
+                          ),
+                        );
                       },
                     ),
                   ),
-                  gridData: FlGridData(
-                    show: true,
-                    drawVerticalLine: false,
-                    horizontalInterval: (maxWeight - minWeight + padding * 2) / 4,
-                    getDrawingHorizontalLine: (value) => FlLine(
-                      color: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.05),
-                      strokeWidth: 1,
-                    ),
-                  ),
-                  titlesData: const FlTitlesData(
-                    show: true,
-                    bottomTitles: AxisTitles(
-                      sideTitles: SideTitles(showTitles: false),
-                    ),
-                    leftTitles: AxisTitles(
-                      sideTitles: SideTitles(showTitles: false),
-                    ),
-                    topTitles: AxisTitles(
-                      sideTitles: SideTitles(showTitles: false),
-                    ),
-                    rightTitles: AxisTitles(
-                      sideTitles: SideTitles(showTitles: false),
-                    ),
-                  ),
-                  borderData: FlBorderData(show: false),
-                  minX: 0,
-                  maxX: (data.length - 1).toDouble(),
-                  minY: minWeight - padding,
-                  maxY: maxWeight + padding,
-                  lineBarsData: [
-                    LineChartBarData(
-                      spots: visibleData.asMap().entries.map((entry) {
-                        return FlSpot(
-                          entry.key.toDouble(),
-                          entry.value.weight,
+                  bottomTitles: AxisTitles(
+                    sideTitles: SideTitles(
+                      showTitles: true,
+                      reservedSize: 32,
+                      interval: 1,
+                      getTitlesWidget: (value, meta) {
+                        final index = value.toInt();
+                        if (index < 0 || index >= data.length) {
+                          return const SizedBox.shrink();
+                        }
+                        // Show first, last, and middle labels
+                        final isFirst = index == 0;
+                        final isLast = index == data.length - 1;
+                        final isMid = index == (data.length ~/ 2);
+                        if (!isFirst && !isLast && !isMid) {
+                          return const SizedBox.shrink();
+                        }
+                        final date = data[index].date;
+                        final label = isFirst
+                            ? 'Today'
+                            : DateFormat('MMM yy').format(date);
+                        return Padding(
+                          padding: const EdgeInsets.only(top: 8),
+                          child: Text(
+                            label,
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: isFirst || isLast
+                                  ? FontWeight.w600
+                                  : FontWeight.w400,
+                              color: isFirst || isLast
+                                  ? textSecondary
+                                  : textSecondary.withValues(alpha: 0.6),
+                            ),
+                          ),
                         );
-                      }).toList(),
-                      isCurved: true,
-                      curveSmoothness: 0.35,
-                      color: AppColors.orange,
-                      barWidth: 3,
-                      isStrokeCapRound: true,
-                      dotData: FlDotData(
-                        show: true,
-                        getDotPainter: (spot, percent, barData, index) {
-                          // Larger dots for first and last points
-                          final isEndpoint =
-                              index == 0 || index == visibleData.length - 1;
-                          return FlDotCirclePainter(
-                            radius: isEndpoint ? 6 : 4,
-                            color: AppColors.orange,
-                            strokeWidth: 2,
-                            strokeColor: Colors.white,
-                          );
-                        },
-                      ),
-                      belowBarData: BarAreaData(
-                        show: true,
-                        gradient: LinearGradient(
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
-                          colors: [
-                            AppColors.orange.withValues(alpha: 0.3),
-                            AppColors.orange.withValues(alpha: 0.05),
-                          ],
-                        ),
+                      },
+                    ),
+                  ),
+                ),
+                borderData: FlBorderData(show: false),
+                minX: 0,
+                maxX: (data.length - 1).toDouble(),
+                minY: chartMinY,
+                maxY: chartMaxY,
+                lineBarsData: [
+                  LineChartBarData(
+                    spots: visibleData.asMap().entries.map((entry) {
+                      return FlSpot(
+                        entry.key.toDouble(),
+                        entry.value.weight,
+                      );
+                    }).toList(),
+                    isCurved: true,
+                    curveSmoothness: 0.35,
+                    color: AppColors.orange,
+                    barWidth: 3,
+                    isStrokeCapRound: true,
+                    dotData: FlDotData(
+                      show: true,
+                      getDotPainter: (spot, percent, barData, index) {
+                        final isEndpoint =
+                            index == 0 || index == visibleData.length - 1;
+                        return FlDotCirclePainter(
+                          radius: isEndpoint ? 6 : 4,
+                          color: AppColors.orange,
+                          strokeWidth: 2,
+                          strokeColor: Colors.white,
+                        );
+                      },
+                    ),
+                    belowBarData: BarAreaData(
+                      show: true,
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          AppColors.orange.withValues(alpha: 0.3),
+                          AppColors.orange.withValues(alpha: 0.05),
+                        ],
                       ),
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
-
-              // "Today" label at start
-              Positioned(
-                left: 8,
-                top: isLosingWeight ? 40 : 200,
-                child: _buildPointLabel(
-                  'Today',
-                  textSecondary,
-                  isDark,
-                ).animate().fadeIn(delay: 500.ms),
-              ),
-
-              // Goal Weight label at end (only show when animation is complete)
-              if (_lineAnimation.value > 0.9)
-                Positioned(
-                  right: 8,
-                  top: isLosingWeight ? 180 : 40,
-                  child: _buildGoalLabel(
-                    'Goal Weight',
-                    isDark,
-                    textPrimary,
-                  ).animate().fadeIn().scale(begin: const Offset(0.8, 0.8)),
-                ),
-            ],
+            ),
           ),
         );
       },
-    );
-  }
-
-  Widget _buildPointLabel(String label, Color textColor, bool isDark) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.glassSurface : AppColorsLight.glassSurface,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(
-          fontSize: 12,
-          fontWeight: FontWeight.w600,
-          color: textColor,
-        ),
-      ),
-    );
-  }
-
-  Widget _buildGoalLabel(String label, bool isDark, Color textPrimary) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [AppColors.orange, Color(0xFFEA580C)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.orange.withValues(alpha: 0.3),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: const Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            '🏆',
-            style: TextStyle(fontSize: 14),
-          ),
-          SizedBox(width: 6),
-          Text(
-            'Goal Weight',
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w700,
-              color: Colors.white,
-            ),
-          ),
-        ],
-      ),
     );
   }
 

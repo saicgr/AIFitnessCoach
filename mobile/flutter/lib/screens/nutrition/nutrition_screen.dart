@@ -224,13 +224,21 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
     setState(() {
       _selectedDate = _selectedDate.add(Duration(days: days));
     });
-    if (_userId != null) {
-      final dateStr = DateFormat('yyyy-MM-dd').format(_selectedDate);
-      ref
-          .read(nutritionProvider.notifier)
-          .loadTodaySummary(_userId!);
-      _loadMicronutrients(_userId!, dateStr);
+    _loadDataForSelectedDate();
+  }
+
+  void _loadDataForSelectedDate() {
+    if (_userId == null) return;
+    final dateStr = DateFormat('yyyy-MM-dd').format(_selectedDate);
+    final notifier = ref.read(nutritionProvider.notifier);
+    if (_isToday) {
+      notifier.loadTodaySummary(_userId!);
+      notifier.loadRecentLogs(_userId!);
+    } else {
+      notifier.loadSummaryForDate(_userId!, _selectedDate);
+      notifier.loadLogsForDate(_userId!, _selectedDate);
     }
+    _loadMicronutrients(_userId!, dateStr);
   }
 
   bool get _isToday {
@@ -391,11 +399,7 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
               );
               if (picked != null) {
                 setState(() => _selectedDate = picked);
-                if (_userId != null) {
-                  final dateStr = DateFormat('yyyy-MM-dd').format(picked);
-                  ref.read(nutritionProvider.notifier).loadTodaySummary(_userId!);
-                  _loadMicronutrients(_userId!, dateStr);
-                }
+                _loadDataForSelectedDate();
               }
             },
             child: Container(

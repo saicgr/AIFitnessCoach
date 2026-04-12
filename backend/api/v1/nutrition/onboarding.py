@@ -7,7 +7,6 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 
 from core.auth import get_current_user
 from core.exceptions import safe_internal_error
-from core.supabase_db import get_supabase_db
 from core.logger import get_logger
 
 from api.v1.nutrition.models import (
@@ -208,7 +207,7 @@ async def complete_nutrition_onboarding(request: NutritionOnboardingRequest, cur
                 .execute()
 
         if not result.data:
-            raise HTTPException(status_code=500, detail="Failed to save preferences")
+            raise safe_internal_error(ValueError("Failed to save preferences"), "nutrition")
 
         # Sync targets to users table for consistency
         try:

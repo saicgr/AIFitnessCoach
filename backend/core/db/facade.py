@@ -169,9 +169,9 @@ class SupabaseDB:
         """Delete a single chat message by ID."""
         return self._user_db.delete_chat_message(message_id, user_id)
 
-    def search_chat_history(self, user_id: str, query: str, limit: int = 20) -> List[Dict[str, Any]]:
+    def search_chat_history(self, user_id: str, query: str, limit: int = 20, offset: int = 0) -> List[Dict[str, Any]]:
         """Search chat history for a user by keyword."""
-        return self._user_db.search_chat_history(user_id, query, limit)
+        return self._user_db.search_chat_history(user_id, query, limit, offset=offset)
 
     def toggle_chat_message_pin(self, message_id: str, user_id: str, is_pinned: bool) -> bool:
         """Toggle pin status on a chat message."""
@@ -294,8 +294,8 @@ class SupabaseDB:
     # Workout Changes
     def list_workout_changes(
         self,
-        workout_id: Optional[int] = None,
-        user_id: Optional[int] = None,
+        workout_id: Optional[str] = None,
+        user_id: Optional[str] = None,
         limit: int = 50,
     ) -> List[Dict[str, Any]]:
         """List workout changes."""
@@ -556,6 +556,10 @@ class SupabaseDB:
         fiber_g: float = 0,
         ai_feedback: Optional[str] = None,
         health_score: Optional[int] = None,
+        logged_at: Optional[str] = None,
+        image_url: Optional[str] = None,
+        image_storage_key: Optional[str] = None,
+        source_type: str = "text",
         **micronutrients,
     ) -> Optional[Dict[str, Any]]:
         """Create a food log entry from AI analysis."""
@@ -570,6 +574,10 @@ class SupabaseDB:
             fiber_g=fiber_g,
             ai_feedback=ai_feedback,
             health_score=health_score,
+            logged_at=logged_at,
+            image_url=image_url,
+            image_storage_key=image_storage_key,
+            source_type=source_type,
             **micronutrients,
         )
 
@@ -606,17 +614,25 @@ class SupabaseDB:
         self,
         log_id: str,
         user_id: str,
-        total_calories: int,
-        protein_g: float,
-        carbs_g: float,
-        fat_g: float,
+        total_calories: Optional[int] = None,
+        protein_g: Optional[float] = None,
+        carbs_g: Optional[float] = None,
+        fat_g: Optional[float] = None,
         fiber_g: Optional[float] = None,
         weight_g: Optional[float] = None,
+        meal_type: Optional[str] = None,
+        logged_at: Optional[str] = None,
+        notes: Optional[str] = None,
+        food_items: Optional[list] = None,
     ) -> Optional[Dict[str, Any]]:
         """Update macros on an existing food log."""
         return self._nutrition_db.update_food_log(
-            log_id, user_id, total_calories, protein_g, carbs_g, fat_g,
+            log_id, user_id,
+            total_calories=total_calories, protein_g=protein_g,
+            carbs_g=carbs_g, fat_g=fat_g,
             fiber_g=fiber_g, weight_g=weight_g,
+            meal_type=meal_type, logged_at=logged_at,
+            notes=notes, food_items=food_items,
         )
 
     def delete_food_log(self, log_id: str) -> bool:

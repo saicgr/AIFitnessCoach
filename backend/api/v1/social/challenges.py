@@ -66,7 +66,7 @@ async def create_challenge(
     }).execute()
 
     if not result.data:
-        raise HTTPException(status_code=500, detail="Failed to create challenge")
+        raise safe_internal_error(ValueError("Failed to create challenge"), "social")
 
     return Challenge(**result.data[0])
 
@@ -193,7 +193,7 @@ async def join_challenge(
     }).execute()
 
     if not result.data:
-        raise HTTPException(status_code=500, detail="Failed to join challenge")
+        raise safe_internal_error(ValueError("Failed to join challenge"), "social")
 
     return ChallengeParticipant(**result.data[0])
 

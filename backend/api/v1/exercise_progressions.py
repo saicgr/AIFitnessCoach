@@ -29,7 +29,6 @@ from enum import Enum
 import uuid
 import logging
 
-from core.supabase_db import get_supabase_db
 from core.logger import get_logger
 from core.activity_logger import log_user_activity, log_user_error
 from core.auth import get_current_user

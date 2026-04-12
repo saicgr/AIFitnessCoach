@@ -39,7 +39,7 @@ void main() async {
 
   late final SharedPreferences sharedPreferences;
   await Future.wait([
-    Firebase.initializeApp().catchError((e) {
+    Firebase.initializeApp().then<void>((_) {}).catchError((e) {
       debugPrint('⚠️ Firebase initialization failed: $e');
     }),
     SharedPreferences.getInstance().then((prefs) => sharedPreferences = prefs),
@@ -140,13 +140,13 @@ Future<void> _initNonCriticalServices(
 ) async {
   // Phase 1: Lightweight Dart-only initializations (minimal platform channels)
   await Future.wait([
-    ImageUrlCache.initialize().catchError((e) {
+    ImageUrlCache.initialize().then<void>((_) {}).catchError((e) {
       debugPrint('⚠️ ImageUrlCache initialization failed: $e');
     }),
-    DataCacheService.initialize().catchError((e) {
+    DataCacheService.initialize().then<void>((_) {}).catchError((e) {
       debugPrint('⚠️ DataCacheService initialization failed: $e');
     }),
-    HapticService.initialize().catchError((e) {
+    HapticService.initialize().then<void>((_) {}).catchError((e) {
       debugPrint('⚠️ HapticService initialization failed: $e');
     }),
   ]);
@@ -155,15 +155,15 @@ Future<void> _initNonCriticalServices(
   // serializing too many platform channel calls on Android's main thread.
   // These run sequentially so each SDK gets dedicated main-thread time
   // without competing with the others.
-  await notificationService.initialize().catchError((e) {
+  await notificationService.initialize().then<void>((_) {}).catchError((e) {
     debugPrint('⚠️ Notification service initialization failed: $e');
   });
 
-  await SubscriptionNotifier.configureRevenueCat().catchError((e) {
+  await SubscriptionNotifier.configureRevenueCat().then<void>((_) {}).catchError((e) {
     debugPrint('⚠️ RevenueCat initialization failed: $e');
   });
 
-  await BackgroundSyncService.initialize().catchError((e) {
+  await BackgroundSyncService.initialize().then<void>((_) {}).catchError((e) {
     debugPrint('⚠️ BackgroundSyncService initialization failed: $e');
   });
 

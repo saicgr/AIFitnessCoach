@@ -275,7 +275,8 @@ extension __ChatScreenStateExt on _ChatScreenState {
 
 
   void _showUsageInfoSheet(BuildContext context) {
-    final usageState = ref.read(usageTrackingProvider);
+    // Refresh usage data before showing
+    ref.read(usageTrackingProvider.notifier).fetchLimits();
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     showModalBottomSheet(
@@ -285,145 +286,156 @@ extension __ChatScreenStateExt on _ChatScreenState {
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (ctx) {
-        final features = usageState.limits.entries.toList()
-          ..sort((a, b) => a.key.compareTo(b.key));
+        // Use Consumer so the sheet rebuilds when fetchLimits() completes
+        return Consumer(
+          builder: (ctx, sheetRef, _) {
+            final usageState = sheetRef.watch(usageTrackingProvider);
+            final features = usageState.limits.entries.toList()
+              ..sort((a, b) => a.key.compareTo(b.key));
 
-        return Padding(
-          padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: isDark ? Colors.white24 : Colors.grey.shade300,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              Text(
-                "Today's Usage",
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w700,
-                  color: isDark ? Colors.white : Colors.black,
-                ),
-              ),
-              const SizedBox(height: 16),
-              if (usageState.isPremium)
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 16),
-                  child: Text(
-                    'Unlimited access with Premium',
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: AppColors.success,
-                      fontWeight: FontWeight.w500,
+            return Padding(
+              padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Center(
+                    child: Container(
+                      width: 40,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: isDark ? Colors.white24 : Colors.grey.shade300,
+                        borderRadius: BorderRadius.circular(2),
+                      ),
                     ),
                   ),
-                )
-              else ...[
-                ...features.map((entry) {
-                  final feature = entry.value;
-                  final used = feature.used;
-                  final limit = feature.limit ?? 0;
-                  if (limit == 0) return const SizedBox.shrink();
-                  final remaining = feature.remaining ?? (limit - used);
-                  final progress = limit > 0 ? (used / limit).clamp(0.0, 1.0) : 0.0;
-                  final isLow = remaining <= (limit * 0.25).ceil() && remaining > 0;
-                  final isExhausted = remaining <= 0;
+                  const SizedBox(height: 16),
+                  Text(
+                    "Today's Usage",
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w700,
+                      color: isDark ? Colors.white : Colors.black,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  if (usageState.isLoading && features.isEmpty)
+                    const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 24),
+                      child: Center(child: CircularProgressIndicator()),
+                    )
+                  else if (usageState.isPremium)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 16),
+                      child: Text(
+                        'Unlimited access with Premium',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: AppColors.success,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    )
+                  else ...[
+                    ...features.map((entry) {
+                      final feature = entry.value;
+                      final used = feature.used;
+                      final limit = feature.limit ?? 0;
+                      if (limit == 0) return const SizedBox.shrink();
+                      final remaining = feature.remaining ?? (limit - used);
+                      final progress = limit > 0 ? (used / limit).clamp(0.0, 1.0) : 0.0;
+                      final isLow = remaining <= (limit * 0.25).ceil() && remaining > 0;
+                      final isExhausted = remaining <= 0;
 
-                  const displayNames = {
-                    'ai_chat_messages': 'Messages',
-                    'food_scanning': 'Food Scans',
-                    'form_video_analysis': 'Form Checks',
-                    'text_to_calories': 'Text Logging',
-                    'ai_workout_generation': 'Workout Gen',
-                    'ai_meal_plan': 'Meal Plans',
-                  };
+                      const displayNames = {
+                        'ai_chat_messages': 'Messages',
+                        'food_scanning': 'Food Scans',
+                        'form_video_analysis': 'Form Checks',
+                        'text_to_calories': 'Text Logging',
+                        'ai_workout_generation': 'Workout Gen',
+                        'ai_meal_plan': 'Meal Plans',
+                      };
 
-                  Color barColor = AppColors.cyan;
-                  if (isExhausted) barColor = AppColors.error;
-                  else if (isLow) barColor = AppColors.warning;
+                      Color barColor = AppColors.cyan;
+                      if (isExhausted) barColor = AppColors.error;
+                      else if (isLow) barColor = AppColors.warning;
 
-                  return Padding(
-                    padding: const EdgeInsets.only(bottom: 12),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 12),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
-                              displayNames[entry.key] ?? entry.key.replaceAll('_', ' '),
-                              style: TextStyle(
-                                fontSize: 14,
-                                color: isDark ? Colors.white70 : Colors.black87,
-                              ),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  displayNames[entry.key] ?? entry.key.replaceAll('_', ' '),
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    color: isDark ? Colors.white70 : Colors.black87,
+                                  ),
+                                ),
+                                Text(
+                                  '$used/$limit',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                    color: isExhausted
+                                        ? AppColors.error
+                                        : isLow
+                                            ? AppColors.warning
+                                            : (isDark ? Colors.white : Colors.black),
+                                  ),
+                                ),
+                              ],
                             ),
-                            Text(
-                              '$used/$limit',
-                              style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w600,
-                                color: isExhausted
-                                    ? AppColors.error
-                                    : isLow
-                                        ? AppColors.warning
-                                        : (isDark ? Colors.white : Colors.black),
+                            const SizedBox(height: 6),
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(4),
+                              child: LinearProgressIndicator(
+                                value: progress,
+                                backgroundColor: isDark ? Colors.white10 : Colors.grey.shade200,
+                                valueColor: AlwaysStoppedAnimation<Color>(barColor),
+                                minHeight: 6,
                               ),
                             ),
                           ],
                         ),
-                        const SizedBox(height: 6),
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(4),
-                          child: LinearProgressIndicator(
-                            value: progress,
-                            backgroundColor: isDark ? Colors.white10 : Colors.grey.shade200,
-                            valueColor: AlwaysStoppedAnimation<Color>(barColor),
-                            minHeight: 6,
-                          ),
+                      );
+                    }),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Resets at midnight',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: isDark ? Colors.white38 : Colors.grey.shade500,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton(
+                        onPressed: () {
+                          Navigator.pop(ctx);
+                          showUpgradePromptSheet(context,
+                              featureKey: _kAiChatMessages, featureName: 'AI Coach');
+                        },
+                        style: OutlinedButton.styleFrom(
+                          side: const BorderSide(color: AppColors.cyan),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          padding: const EdgeInsets.symmetric(vertical: 12),
                         ),
-                      ],
+                        child: const Text(
+                          'Upgrade for Unlimited',
+                          style: TextStyle(color: AppColors.cyan, fontWeight: FontWeight.w600),
+                        ),
+                      ),
                     ),
-                  );
-                }),
-                const SizedBox(height: 8),
-                Text(
-                  'Resets at midnight',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: isDark ? Colors.white38 : Colors.grey.shade500,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                SizedBox(
-                  width: double.infinity,
-                  child: OutlinedButton(
-                    onPressed: () {
-                      Navigator.pop(ctx);
-                      showUpgradePromptSheet(context,
-                          featureKey: _kAiChatMessages, featureName: 'AI Coach');
-                    },
-                    style: OutlinedButton.styleFrom(
-                      side: const BorderSide(color: AppColors.cyan),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                    ),
-                    child: const Text(
-                      'Upgrade for Unlimited',
-                      style: TextStyle(color: AppColors.cyan, fontWeight: FontWeight.w600),
-                    ),
-                  ),
-                ),
-              ],
-            ],
-          ),
+                  ],
+                ],
+              ),
+            );
+          },
         );
       },
     );

@@ -68,7 +68,7 @@ async def create_connection(
     }).execute()
 
     if not result.data:
-        raise HTTPException(status_code=500, detail="Failed to create connection")
+        raise safe_internal_error(ValueError("Failed to create connection"), "social")
 
     return UserConnection(**result.data[0])
 

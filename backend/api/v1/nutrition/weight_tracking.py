@@ -8,7 +8,6 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from core.timezone_utils import resolve_timezone, get_user_today
 from core.auth import get_current_user
 from core.exceptions import safe_internal_error
-from core.supabase_db import get_supabase_db
 from core.logger import get_logger
 
 from api.v1.nutrition.models import (
@@ -46,7 +45,7 @@ async def create_weight_log(request: WeightLogCreate, current_user: dict = Depen
             .execute()
 
         if not result.data:
-            raise HTTPException(status_code=500, detail="Failed to create weight log")
+            raise safe_internal_error(ValueError("Failed to create weight log"), "nutrition")
 
         data = result.data[0]
         return WeightLogResponse(

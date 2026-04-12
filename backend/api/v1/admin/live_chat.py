@@ -18,7 +18,6 @@ from fastapi import APIRouter, HTTPException, Depends, Header, Request
 from typing import Optional, List
 from datetime import datetime, timedelta
 
-from core.supabase_db import get_supabase_db
 from core.supabase_client import get_supabase
 from core.logger import get_logger
 from core.exceptions import safe_internal_error
@@ -625,7 +624,7 @@ async def reply_to_live_chat(
         message_result = db.client.table("live_chat_messages").insert(message_record).execute()
 
         if not message_result.data:
-            raise HTTPException(status_code=500, detail="Failed to send message")
+            raise safe_internal_error(ValueError("Failed to send message"), "admin")
 
         message_data = message_result.data[0]
 

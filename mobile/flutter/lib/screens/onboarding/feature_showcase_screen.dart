@@ -98,7 +98,7 @@ class FeatureShowcaseScreen extends ConsumerWidget {
                     ref.read(posthogServiceProvider).capture(
                       eventName: 'onboarding_feature_showcase_completed',
                     );
-                    context.go('/paywall-features');
+                    context.go('/paywall-pricing');
                   },
                   child: Container(
                     width: double.infinity,

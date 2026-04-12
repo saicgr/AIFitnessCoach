@@ -17,7 +17,6 @@ from datetime import datetime
 from pydantic import BaseModel, Field
 from enum import Enum
 
-from core.supabase_db import get_supabase_db
 from core.logger import get_logger
 from core.activity_logger import log_user_activity, log_user_error
 from core.auth import get_current_user
@@ -263,7 +262,7 @@ async def submit_chat_report(
         result = db.client.table("chat_message_reports").insert(report_record).execute()
 
         if not result.data:
-            raise HTTPException(status_code=500, detail="Failed to create chat message report")
+            raise safe_internal_error(ValueError("Failed to create chat message report"), "chat_reports")
 
         report_data = result.data[0]
         report_id = str(report_data["id"])

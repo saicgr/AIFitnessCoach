@@ -42,7 +42,6 @@ import uuid
 
 from pydantic import BaseModel, Field
 
-from core.supabase_db import get_supabase_db
 from core.logger import get_logger
 from core.activity_logger import log_user_activity, log_user_error
 from core.timezone_utils import resolve_timezone, get_user_today
@@ -485,7 +484,7 @@ async def start_fast(data: StartFastRequest, current_user: dict = Depends(get_cu
         result = db.client.table("fasting_records").insert(fast_data).execute()
 
         if not result.data:
-            raise HTTPException(status_code=500, detail="Failed to create fasting record")
+            raise safe_internal_error(ValueError("Failed to create fasting record"), "fasting")
 
         # Log activity
         await log_user_activity(
@@ -567,6 +566,8 @@ async def end_fast(fast_id: str, data: EndFastRequest, http_request: Request, cu
 
         # Get updated record
         updated = db.client.table("fasting_records").select("*").eq("id", fast_id).execute()
+        if not updated.data:
+            raise HTTPException(status_code=404, detail="Fasting record not found after update")
         record = row_to_fasting_record(updated.data[0])
 
         # Log activity
@@ -795,7 +796,7 @@ async def update_preferences(user_id: str, data: FastingPreferencesRequest, curr
             result = db.client.table("fasting_preferences").insert(prefs_data).execute()
 
         if not result.data:
-            raise HTTPException(status_code=500, detail="Failed to save preferences")
+            raise safe_internal_error(ValueError("Failed to save preferences"), "fasting")
 
         return row_to_preferences(result.data[0])
 

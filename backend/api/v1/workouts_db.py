@@ -24,7 +24,6 @@ from typing import List, Optional
 from datetime import datetime
 import json
 
-from core.supabase_db import get_supabase_db
 from core.logger import get_logger
 from core.activity_logger import log_user_activity
 from models.schemas import (
@@ -407,7 +406,7 @@ async def swap_exercise_in_workout(request: SwapExerciseRequest,
 
         updated = db.update_workout(request.workout_id, update_data)
         if not updated:
-            raise HTTPException(status_code=500, detail="Failed to update workout")
+            raise safe_internal_error(ValueError("Failed to update workout"), "workouts_db")
 
         log_workout_change(
             request.workout_id,

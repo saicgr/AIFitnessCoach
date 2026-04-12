@@ -75,6 +75,32 @@ class NotificationPrefsKeys {
   static const accountabilityIntensity = 'notif_accountability_intensity';
   static const aiPersonalizedNudges = 'notif_ai_personalized_nudges';
   static const guiltNotifications = 'notif_guilt_notifications';
+  // Frequency preset
+  static const frequencyPreset = 'notif_frequency_preset';
+  // Bundle times
+  static const morningBundleTime = 'notif_morning_bundle_time';
+  static const middayBundleTime = 'notif_midday_bundle_time';
+  static const afternoonNudgeTime = 'notif_afternoon_nudge_time';
+  static const eveningBundleTime = 'notif_evening_bundle_time';
+  // Weekend scheduling
+  static const weekendTimesEnabled = 'notif_weekend_times_enabled';
+  static const morningBundleTimeWeekend = 'notif_morning_bundle_time_weekend';
+  static const middayBundleTimeWeekend = 'notif_midday_bundle_time_weekend';
+  static const eveningBundleTimeWeekend = 'notif_evening_bundle_time_weekend';
+  // Bundle content toggles
+  static const morningIncludeWorkout = 'notif_morning_include_workout';
+  static const morningIncludeBreakfast = 'notif_morning_include_breakfast';
+  static const morningIncludeMotivation = 'notif_morning_include_motivation';
+  static const middayIncludeLunch = 'notif_midday_include_lunch';
+  static const middayIncludeHydration = 'notif_midday_include_hydration';
+  static const eveningIncludeDinner = 'notif_evening_include_dinner';
+  static const eveningIncludeStreak = 'notif_evening_include_streak';
+  static const eveningIncludeProgress = 'notif_evening_include_progress';
+  // Style preferences
+  static const notificationEmoji = 'notif_emoji_enabled';
+  static const notificationVibration = 'notif_vibration_enabled';
+  // Cached workout name for bundle templates
+  static const cachedWorkoutName = 'notif_cached_workout_name';
   // Cached user context
   static const cachedUserName = 'notif_cached_user_name';
   static const cachedStreak = 'notif_cached_streak';
@@ -197,6 +223,12 @@ class NotificationService {
       id: 'live_chat',
       name: 'Live Chat Support',
       description: 'Messages from support agents',
+      color: Color(0xFF00D9FF), // Cyan
+    ),
+    'daily_bundle': _ChannelConfig(
+      id: 'daily_bundle',
+      name: 'Daily Check-ins',
+      description: 'Morning, midday, and evening check-in notifications',
       color: Color(0xFF00D9FF), // Cyan
     ),
     'schedule_reminder': _ChannelConfig(
@@ -434,6 +466,30 @@ class NotificationPreferencesNotifier extends StateNotifier<NotificationPreferen
       accountabilityIntensity: _prefs.getString(NotificationPrefsKeys.accountabilityIntensity) ?? 'balanced',
       aiPersonalizedNudges: _prefs.getBool(NotificationPrefsKeys.aiPersonalizedNudges) ?? true,
       guiltNotifications: _prefs.getBool(NotificationPrefsKeys.guiltNotifications) ?? true,
+      // Frequency preset
+      frequencyPreset: _prefs.getString(NotificationPrefsKeys.frequencyPreset) ?? 'balanced',
+      // Bundle times
+      morningBundleTime: _prefs.getString(NotificationPrefsKeys.morningBundleTime) ?? '07:30',
+      middayBundleTime: _prefs.getString(NotificationPrefsKeys.middayBundleTime) ?? '12:30',
+      afternoonNudgeTime: _prefs.getString(NotificationPrefsKeys.afternoonNudgeTime) ?? '15:00',
+      eveningBundleTime: _prefs.getString(NotificationPrefsKeys.eveningBundleTime) ?? '19:00',
+      // Weekend scheduling
+      weekendTimesEnabled: _prefs.getBool(NotificationPrefsKeys.weekendTimesEnabled) ?? false,
+      morningBundleTimeWeekend: _prefs.getString(NotificationPrefsKeys.morningBundleTimeWeekend) ?? '09:30',
+      middayBundleTimeWeekend: _prefs.getString(NotificationPrefsKeys.middayBundleTimeWeekend) ?? '13:00',
+      eveningBundleTimeWeekend: _prefs.getString(NotificationPrefsKeys.eveningBundleTimeWeekend) ?? '20:00',
+      // Bundle content toggles
+      morningIncludeWorkout: _prefs.getBool(NotificationPrefsKeys.morningIncludeWorkout) ?? true,
+      morningIncludeBreakfast: _prefs.getBool(NotificationPrefsKeys.morningIncludeBreakfast) ?? true,
+      morningIncludeMotivation: _prefs.getBool(NotificationPrefsKeys.morningIncludeMotivation) ?? true,
+      middayIncludeLunch: _prefs.getBool(NotificationPrefsKeys.middayIncludeLunch) ?? true,
+      middayIncludeHydration: _prefs.getBool(NotificationPrefsKeys.middayIncludeHydration) ?? true,
+      eveningIncludeDinner: _prefs.getBool(NotificationPrefsKeys.eveningIncludeDinner) ?? true,
+      eveningIncludeStreak: _prefs.getBool(NotificationPrefsKeys.eveningIncludeStreak) ?? true,
+      eveningIncludeProgress: _prefs.getBool(NotificationPrefsKeys.eveningIncludeProgress) ?? true,
+      // Style preferences
+      notificationEmoji: _prefs.getBool(NotificationPrefsKeys.notificationEmoji) ?? true,
+      notificationVibration: _prefs.getBool(NotificationPrefsKeys.notificationVibration) ?? true,
     );
     // Schedule notifications on load
     _rescheduleNotifications();
@@ -688,6 +744,145 @@ class NotificationPreferencesNotifier extends StateNotifier<NotificationPreferen
     state = state.copyWith(guiltNotifications: value);
     await _syncPreferencesToBackend();
   }
+
+  // ─── Frequency Preset & Bundle Setters ──────────────────────────
+
+  Future<void> setFrequencyPreset(String preset) async {
+    await _prefs.setString(NotificationPrefsKeys.frequencyPreset, preset);
+
+    // Derive preset-specific settings
+    switch (preset) {
+      case 'minimal':
+        await _prefs.setInt(NotificationPrefsKeys.dailyNudgeLimit, 2);
+        state = state.copyWith(
+          frequencyPreset: preset,
+          dailyNudgeLimit: 2,
+          // Disable individual notifications (bundles handle everything)
+          workoutReminders: false,
+          nutritionReminders: false,
+          hydrationReminders: false,
+          movementReminders: false,
+        );
+        break;
+      case 'balanced':
+        await _prefs.setInt(NotificationPrefsKeys.dailyNudgeLimit, 3);
+        state = state.copyWith(
+          frequencyPreset: preset,
+          dailyNudgeLimit: 3,
+          workoutReminders: false,
+          nutritionReminders: false,
+          hydrationReminders: false,
+          movementReminders: false,
+        );
+        break;
+      case 'full_coach':
+        await _prefs.setInt(NotificationPrefsKeys.dailyNudgeLimit, 8);
+        state = state.copyWith(
+          frequencyPreset: preset,
+          dailyNudgeLimit: 8,
+          workoutReminders: true,
+          nutritionReminders: true,
+          hydrationReminders: true,
+          movementReminders: true,
+        );
+        break;
+    }
+
+    // Persist derived boolean settings
+    await _prefs.setBool(NotificationPrefsKeys.workoutReminders, state.workoutReminders);
+    await _prefs.setBool(NotificationPrefsKeys.nutritionReminders, state.nutritionReminders);
+    await _prefs.setBool(NotificationPrefsKeys.hydrationReminders, state.hydrationReminders);
+    await _prefs.setBool(NotificationPrefsKeys.movementReminders, state.movementReminders);
+
+    await _rescheduleNotifications();
+    await _syncPreferencesToBackend();
+  }
+
+  Future<void> setMorningBundleTime(String time) async {
+    await _prefs.setString(NotificationPrefsKeys.morningBundleTime, time);
+    state = state.copyWith(morningBundleTime: time);
+    await _rescheduleNotifications();
+  }
+
+  Future<void> setMiddayBundleTime(String time) async {
+    await _prefs.setString(NotificationPrefsKeys.middayBundleTime, time);
+    state = state.copyWith(middayBundleTime: time);
+    await _rescheduleNotifications();
+  }
+
+  Future<void> setAfternoonNudgeTime(String time) async {
+    await _prefs.setString(NotificationPrefsKeys.afternoonNudgeTime, time);
+    state = state.copyWith(afternoonNudgeTime: time);
+    await _rescheduleNotifications();
+  }
+
+  Future<void> setEveningBundleTime(String time) async {
+    await _prefs.setString(NotificationPrefsKeys.eveningBundleTime, time);
+    state = state.copyWith(eveningBundleTime: time);
+    await _rescheduleNotifications();
+  }
+
+  Future<void> setWeekendTimesEnabled(bool value) async {
+    await _prefs.setBool(NotificationPrefsKeys.weekendTimesEnabled, value);
+    state = state.copyWith(weekendTimesEnabled: value);
+    await _rescheduleNotifications();
+  }
+
+  Future<void> setWeekendBundleTimes(String morning, String midday, String evening) async {
+    await _prefs.setString(NotificationPrefsKeys.morningBundleTimeWeekend, morning);
+    await _prefs.setString(NotificationPrefsKeys.middayBundleTimeWeekend, midday);
+    await _prefs.setString(NotificationPrefsKeys.eveningBundleTimeWeekend, evening);
+    state = state.copyWith(
+      morningBundleTimeWeekend: morning,
+      middayBundleTimeWeekend: midday,
+      eveningBundleTimeWeekend: evening,
+    );
+    await _rescheduleNotifications();
+  }
+
+  Future<void> setMorningBundleContent(bool workout, bool breakfast, bool motivation) async {
+    await _prefs.setBool(NotificationPrefsKeys.morningIncludeWorkout, workout);
+    await _prefs.setBool(NotificationPrefsKeys.morningIncludeBreakfast, breakfast);
+    await _prefs.setBool(NotificationPrefsKeys.morningIncludeMotivation, motivation);
+    state = state.copyWith(
+      morningIncludeWorkout: workout,
+      morningIncludeBreakfast: breakfast,
+      morningIncludeMotivation: motivation,
+    );
+    await _rescheduleNotifications();
+  }
+
+  Future<void> setMiddayBundleContent(bool lunch, bool hydration) async {
+    await _prefs.setBool(NotificationPrefsKeys.middayIncludeLunch, lunch);
+    await _prefs.setBool(NotificationPrefsKeys.middayIncludeHydration, hydration);
+    state = state.copyWith(
+      middayIncludeLunch: lunch,
+      middayIncludeHydration: hydration,
+    );
+    await _rescheduleNotifications();
+  }
+
+  Future<void> setEveningBundleContent(bool dinner, bool streak, bool progress) async {
+    await _prefs.setBool(NotificationPrefsKeys.eveningIncludeDinner, dinner);
+    await _prefs.setBool(NotificationPrefsKeys.eveningIncludeStreak, streak);
+    await _prefs.setBool(NotificationPrefsKeys.eveningIncludeProgress, progress);
+    state = state.copyWith(
+      eveningIncludeDinner: dinner,
+      eveningIncludeStreak: streak,
+      eveningIncludeProgress: progress,
+    );
+    await _rescheduleNotifications();
+  }
+
+  Future<void> setNotificationEmoji(bool value) async {
+    await _prefs.setBool(NotificationPrefsKeys.notificationEmoji, value);
+    state = state.copyWith(notificationEmoji: value);
+  }
+
+  Future<void> setNotificationVibration(bool value) async {
+    await _prefs.setBool(NotificationPrefsKeys.notificationVibration, value);
+    state = state.copyWith(notificationVibration: value);
+  }
 }
 
 /// Providers
@@ -739,6 +934,7 @@ class NotificationPrefsSync {
         'quiet_hours_start': prefs.quietHoursStart,
         'quiet_hours_end': prefs.quietHoursEnd,
         'timezone': tz.local.name,
+        'frequency_preset': prefs.frequencyPreset,
       };
 
       await _apiClient.put(

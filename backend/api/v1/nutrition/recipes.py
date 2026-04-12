@@ -9,7 +9,6 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from core.timezone_utils import resolve_timezone, get_user_now_iso
 from core.auth import get_current_user
 from core.exceptions import safe_internal_error
-from core.supabase_db import get_supabase_db
 from core.logger import get_logger
 from core.activity_logger import log_user_activity
 
@@ -76,7 +75,7 @@ async def create_recipe(request: RecipeCreate, user_id: str = Query(...), curren
         result = db.client.table("user_recipes").insert(recipe_data).execute()
 
         if not result.data:
-            raise HTTPException(status_code=500, detail="Failed to create recipe")
+            raise safe_internal_error(ValueError("Failed to create recipe"), "nutrition")
 
         # Add ingredients
         ingredients = []
@@ -479,6 +478,10 @@ async def log_recipe(
 
         logger.info(f"Successfully logged recipe {recipe_id} as {food_log_id}")
 
+        # Invalidate daily summary cache so the next fetch returns fresh data
+        from api.v1.nutrition.summaries import invalidate_daily_summary_cache
+        await invalidate_daily_summary_cache(user_id)
+
         return LogRecipeResponse(
             success=True,
             food_log_id=food_log_id,
@@ -559,7 +562,7 @@ async def add_ingredient(
         result = db.client.table("recipe_ingredients").insert(ing_data).execute()
 
         if not result.data:
-            raise HTTPException(status_code=500, detail="Failed to add ingredient")
+            raise safe_internal_error(ValueError("Failed to add ingredient"), "nutrition")
 
         return RecipeIngredient(
             id=ing_id,

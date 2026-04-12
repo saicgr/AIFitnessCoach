@@ -149,7 +149,7 @@ async def create_custom_exercise(user_id: str, exercise: CustomExerciseCreate, c
 
         if not result.data:
             logger.error(f"❌ [Custom Exercises] Database insert returned no data")
-            raise HTTPException(status_code=500, detail="Failed to create exercise")
+            raise safe_internal_error(ValueError("Failed to create exercise"), "exercises_endpoints")
 
         created = result.data[0]
         logger.info(f"✅ [Custom Exercises] Created custom exercise '{exercise.name}' (ID: {created['id']}) for user {user_id}")
@@ -524,7 +524,7 @@ async def create_composite_exercise(user_id: str, exercise: CompositeExerciseCre
         result = db.client.table("exercises").insert(exercise_data).execute()
 
         if not result.data:
-            raise HTTPException(status_code=500, detail="Failed to create composite exercise")
+            raise safe_internal_error(ValueError("Failed to create composite exercise"), "exercises_endpoints")
 
         created = result.data[0]
         logger.info(f"✅ [Composite Exercise] Created '{exercise.name}' (ID: {created['id']})")
@@ -617,7 +617,7 @@ async def update_custom_exercise(user_id: str, exercise_id: str, updates: dict, 
         result = db.client.table("exercises").update(update_data).eq("id", exercise_id).execute()
 
         if not result.data:
-            raise HTTPException(status_code=500, detail="Failed to update exercise")
+            raise safe_internal_error(ValueError("Failed to update exercise"), "exercises_endpoints")
 
         row = result.data[0]
 

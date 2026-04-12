@@ -414,7 +414,7 @@ async def assign_program_to_user(user_id: str, request: ProgramAssignRequest,
             .execute()
 
         if not result.data:
-            raise HTTPException(status_code=500, detail="Failed to create program assignment")
+            raise safe_internal_error(ValueError("Failed to create program assignment"), "programs")
 
         assignment = result.data[0]
 
@@ -603,7 +603,7 @@ async def rename_current_program(user_id: str, request: ProgramRenameRequest,
             .execute()
 
         if not update_result.data:
-            raise HTTPException(status_code=500, detail="Failed to rename program")
+            raise safe_internal_error(ValueError("Failed to rename program"), "programs")
 
         assignment = update_result.data[0]
 
@@ -686,7 +686,7 @@ async def complete_current_program(user_id: str,
             .execute()
 
         if not update_result.data:
-            raise HTTPException(status_code=500, detail="Failed to complete program")
+            raise safe_internal_error(ValueError("Failed to complete program"), "programs")
 
         assignment = update_result.data[0]
 
@@ -806,7 +806,7 @@ async def update_program_week(user_id: str, week_number: int = Query(..., ge=1, 
             .execute()
 
         if not update_result.data:
-            raise HTTPException(status_code=500, detail="Failed to update week number")
+            raise safe_internal_error(ValueError("Failed to update week number"), "programs")
 
         assignment = update_result.data[0]
 

@@ -189,6 +189,8 @@ class FoodItemSchema(BaseModel):
     count: Optional[int] = Field(default=None, description="Count for countable items")
     weight_per_unit_g: Optional[float] = Field(default=None, description="Weight per unit for countable items")
     goal_score: Optional[int] = Field(default=None, description="Score 1-10 based on user goals")
+    inflammation_score: Optional[int] = Field(default=None, description="Inflammation score 1-10, 10 = most inflammatory")
+    is_ultra_processed: Optional[bool] = Field(default=None, description="True if NOVA Group 4 ultra-processed food")
 
 
 class FoodAnalysisResponse(BaseModel):
@@ -199,16 +201,37 @@ class FoodAnalysisResponse(BaseModel):
     carbs_g: float = Field(..., description="Total carbs")
     fat_g: float = Field(..., description="Total fat")
     fiber_g: float = Field(default=0, description="Total fiber")
-    # Micronutrients
-    sugar_g: Optional[float] = Field(default=None, description="Total sugar in grams")
-    sodium_mg: Optional[float] = Field(default=None, description="Sodium in mg")
-    cholesterol_mg: Optional[float] = Field(default=None, description="Cholesterol in mg")
+    # Micronutrients — Vitamins
     vitamin_a_ug: Optional[float] = Field(default=None, description="Vitamin A in micrograms")
     vitamin_c_mg: Optional[float] = Field(default=None, description="Vitamin C in mg")
     vitamin_d_iu: Optional[float] = Field(default=None, description="Vitamin D in IU")
+    vitamin_e_mg: Optional[float] = Field(default=None, description="Vitamin E in mg")
+    vitamin_k_ug: Optional[float] = Field(default=None, description="Vitamin K in micrograms")
+    vitamin_b1_mg: Optional[float] = Field(default=None, description="Thiamine B1 in mg")
+    vitamin_b2_mg: Optional[float] = Field(default=None, description="Riboflavin B2 in mg")
+    vitamin_b3_mg: Optional[float] = Field(default=None, description="Niacin B3 in mg")
+    vitamin_b6_mg: Optional[float] = Field(default=None, description="Vitamin B6 in mg")
+    vitamin_b9_ug: Optional[float] = Field(default=None, description="Folate B9 in micrograms")
+    vitamin_b12_ug: Optional[float] = Field(default=None, description="Vitamin B12 in micrograms")
+    choline_mg: Optional[float] = Field(default=None, description="Choline in mg")
+    # Micronutrients — Minerals
     calcium_mg: Optional[float] = Field(default=None, description="Calcium in mg")
     iron_mg: Optional[float] = Field(default=None, description="Iron in mg")
+    magnesium_mg: Optional[float] = Field(default=None, description="Magnesium in mg")
+    zinc_mg: Optional[float] = Field(default=None, description="Zinc in mg")
+    selenium_ug: Optional[float] = Field(default=None, description="Selenium in micrograms")
     potassium_mg: Optional[float] = Field(default=None, description="Potassium in mg")
+    sodium_mg: Optional[float] = Field(default=None, description="Sodium in mg")
+    phosphorus_mg: Optional[float] = Field(default=None, description="Phosphorus in mg")
+    copper_mg: Optional[float] = Field(default=None, description="Copper in mg")
+    manganese_mg: Optional[float] = Field(default=None, description="Manganese in mg")
+    iodine_ug: Optional[float] = Field(default=None, description="Iodine in micrograms")
+    # Micronutrients — Fatty Acids & Other
+    omega3_g: Optional[float] = Field(default=None, description="Omega-3 fatty acids in grams")
+    omega6_g: Optional[float] = Field(default=None, description="Omega-6 fatty acids in grams")
+    sugar_g: Optional[float] = Field(default=None, description="Total sugar in grams")
+    cholesterol_mg: Optional[float] = Field(default=None, description="Cholesterol in mg")
+    caffeine_mg: Optional[float] = Field(default=None, description="Caffeine in mg")
     # Spelling correction
     corrected_query: Optional[str] = Field(default=None, description="Corrected food description if user had typos/misspellings, null if no correction needed")
     # Feedback fields
@@ -219,6 +242,8 @@ class FoodAnalysisResponse(BaseModel):
     ai_suggestion: Optional[str] = Field(default=None, description="Actionable tip starting with 'Next time:'")
     recommended_swap: Optional[str] = Field(default=None, description="Concrete healthier swap with benefit, e.g. 'Swap white rice for brown rice: +3g fiber'")
     plate_description: Optional[str] = Field(default=None, description="Brief visual description of the plate/scene for image analysis, max 100 chars. e.g. 'A South Indian breakfast with steamed idlis, sambar, and chutneys'")
+    inflammation_score: Optional[int] = Field(default=None, description="Meal-level inflammation score 1-10, calorie-weighted average of items")
+    is_ultra_processed: Optional[bool] = Field(default=None, description="True if meal contains predominantly NOVA Group 4 ultra-processed foods")
 
 
 # =============================================================================

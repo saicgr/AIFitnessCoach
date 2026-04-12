@@ -68,7 +68,7 @@ async def submit_report(
         result = supabase.table("content_reports").insert(report_data).execute()
 
         if not result.data:
-            raise HTTPException(status_code=500, detail="Failed to submit report")
+            raise safe_internal_error(ValueError("Failed to submit report"), "social")
 
         logger.info(f"[Reports] Report submitted by {user_id}: {report.content_type}/{report.content_id}")
 

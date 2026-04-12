@@ -237,7 +237,7 @@ async def request_refund(user_id: str, request: RefundRequest, current_user: dic
             .execute()
 
         if not result.data:
-            raise HTTPException(status_code=500, detail="Failed to create refund request")
+            raise safe_internal_error(ValueError("Failed to create refund request"), "subscriptions")
 
         refund = result.data[0]
 

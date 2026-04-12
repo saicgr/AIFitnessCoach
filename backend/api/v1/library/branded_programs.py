@@ -19,7 +19,6 @@ from datetime import datetime
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel
 
-from core.supabase_db import get_supabase_db
 from core.logger import get_logger
 from core.exceptions import safe_internal_error
 
@@ -257,7 +256,7 @@ async def assign_program(request: AssignProgramRequest):
         result = db.client.table("user_program_assignments").insert(assignment_data).execute()
 
         if not result.data:
-            raise HTTPException(status_code=500, detail="Failed to assign program")
+            raise safe_internal_error(ValueError("Failed to assign program"), "library")
 
         assignment = result.data[0]
         program_data = row_to_branded_program(program)

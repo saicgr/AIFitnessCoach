@@ -18,7 +18,6 @@ from core.exceptions import safe_internal_error
 from core.timezone_utils import user_today_date
 from pydantic import BaseModel
 
-from core.supabase_db import get_supabase_db
 from core.logger import get_logger
 
 logger = get_logger(__name__)

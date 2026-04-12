@@ -12,7 +12,6 @@ from typing import List, Dict, Any, Optional
 
 from fastapi import APIRouter, HTTPException, Query
 
-from core.supabase_db import get_supabase_db
 from core.logger import get_logger
 from core.exceptions import safe_internal_error
 

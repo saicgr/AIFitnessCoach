@@ -8,7 +8,6 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from core.timezone_utils import resolve_timezone, get_user_today
 from core.auth import get_current_user
 from core.exceptions import safe_internal_error
-from core.supabase_db import get_supabase_db
 from core.logger import get_logger
 
 from api.v1.nutrition.models import NutritionStreakResponse

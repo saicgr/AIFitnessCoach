@@ -27,6 +27,7 @@ RATE LIMITS:
 - /history DELETE: 3 requests/minute
 """
 from core.db import get_supabase_db
+from core.timezone_utils import resolve_timezone
 
 from .chat_models import *  # noqa: F401, F403
 from .chat_endpoints import router as _endpoints_router
@@ -43,7 +44,6 @@ from services.gemini_service import GeminiService
 from services.rag_service import RAGService
 from services.langgraph_service import LangGraphCoachService
 from core.logger import get_logger, set_log_context
-from core.supabase_db import get_supabase_db
 from core.supabase_client import get_supabase
 from core.rate_limiter import limiter
 from core.activity_logger import log_user_activity, log_user_error
@@ -210,9 +210,12 @@ async def send_message(
     if chat_request.workout_schedule:
         logger.debug(f"Workout schedule: yesterday={chat_request.workout_schedule.yesterday is not None}, today={chat_request.workout_schedule.today is not None}, tomorrow={chat_request.workout_schedule.tomorrow is not None}, thisWeek={len(chat_request.workout_schedule.thisWeek)}")
 
+    # Resolve timezone once for all premium gate calls in this request
+    _chat_tz = resolve_timezone(request, get_supabase_db(), chat_request.user_id)
+
     # Per-user daily AI chat budget (free: 10/day, premium: unlimited)
     from core.premium_gate import check_premium_gate, track_premium_usage
-    await check_premium_gate(chat_request.user_id, "ai_chat")
+    await check_premium_gate(chat_request.user_id, "ai_chat", _chat_tz)
 
     # Premium gate checks for food scanning and text-to-calories
     # Only check gates when the request actually involves these features
@@ -225,14 +228,14 @@ async def send_message(
     )
 
     if has_image_media:
-        await check_premium_gate(chat_request.user_id, "food_scanning")
+        await check_premium_gate(chat_request.user_id, "food_scanning", _chat_tz)
         _chat_gate_feature = "food_scanning"
     else:
         # Check for text-to-calories intent (calorie/nutrition text queries without images)
         msg_lower = chat_request.message.lower()
         calorie_keywords = ["calorie", "calories", "kcal", "how many cal", "nutrition info", "macros for", "macros in", "how much protein"]
         if any(kw in msg_lower for kw in calorie_keywords):
-            await check_premium_gate(chat_request.user_id, "text_to_calories")
+            await check_premium_gate(chat_request.user_id, "text_to_calories", _chat_tz)
             _chat_gate_feature = "text_to_calories"
 
     # Track response time for analytics
@@ -244,9 +247,9 @@ async def send_message(
         logger.info(f"Chat response sent: intent={response.intent}, rag_used={response.rag_context_used}, time={response_time_ms}ms")
 
         # Track premium gate usage after successful processing
-        background_tasks.add_task(track_premium_usage, chat_request.user_id, "ai_chat")
+        background_tasks.add_task(track_premium_usage, chat_request.user_id, "ai_chat", _chat_tz)
         if _chat_gate_feature:
-            background_tasks.add_task(track_premium_usage, chat_request.user_id, _chat_gate_feature)
+            background_tasks.add_task(track_premium_usage, chat_request.user_id, _chat_gate_feature, _chat_tz)
 
         # Move DB writes to background tasks with retry - these don't block the response.
         # Chat history is only read on subsequent requests (GET /history), not in this flow.
@@ -570,9 +573,12 @@ async def send_message_stream(
     if str(current_user["id"]) != str(chat_request.user_id):
         raise HTTPException(status_code=403, detail="Access denied")
 
+    # Resolve timezone once for all premium gate calls in this request
+    _stream_tz = resolve_timezone(request, get_supabase_db(), chat_request.user_id)
+
     # Per-user daily AI chat budget (free: 10/day, premium: unlimited)
     from core.premium_gate import check_premium_gate, track_premium_usage
-    await check_premium_gate(chat_request.user_id, "ai_chat")
+    await check_premium_gate(chat_request.user_id, "ai_chat", _stream_tz)
 
     from starlette.responses import StreamingResponse
 
@@ -593,7 +599,7 @@ async def send_message_stream(
             yield f"data: {json.dumps({'event': 'done', 'action_data': response.action_data})}\n\n"
 
             # Track AI chat usage for daily budget
-            background_tasks.add_task(track_premium_usage, chat_request.user_id, "ai_chat")
+            background_tasks.add_task(track_premium_usage, chat_request.user_id, "ai_chat", _stream_tz)
 
             # Schedule background tasks for DB persistence
             _stream_coach_persona_id = chat_request.ai_settings.coach_persona_id if chat_request.ai_settings else None

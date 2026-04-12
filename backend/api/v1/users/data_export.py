@@ -10,7 +10,6 @@ from core.exceptions import safe_internal_error
 from fastapi.responses import StreamingResponse
 from typing import Optional
 
-from core.supabase_db import get_supabase_db
 from core.logger import get_logger
 
 router = APIRouter()

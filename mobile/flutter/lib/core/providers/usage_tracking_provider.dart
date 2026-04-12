@@ -86,6 +86,7 @@ class UsageTrackingNotifier extends StateNotifier<UsageLimitsState> {
 
   UsageTrackingNotifier(this._apiClient, this._ref)
       : super(const UsageLimitsState()) {
+    fetchLimits();
     _startAutoRefresh();
   }
 

@@ -19,7 +19,6 @@ from fastapi import APIRouter, HTTPException, Request, Depends
 from typing import Optional, List
 from pydantic import BaseModel
 
-from core.supabase_db import get_supabase_db
 from core.logger import get_logger
 from core.rate_limiter import limiter
 from core.activity_logger import log_user_activity, log_user_error
@@ -209,7 +208,7 @@ async def create_feature_request(
         }).execute()
 
         if not insert_result.data:
-            raise HTTPException(status_code=500, detail="Failed to create feature request")
+            raise safe_internal_error(ValueError("Failed to create feature request"), "features")
 
         created_feature = insert_result.data[0]
 

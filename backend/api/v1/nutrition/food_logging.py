@@ -16,11 +16,34 @@ from core.timezone_utils import resolve_timezone, local_date_to_utc_range, get_u
 from core.rate_limiter import limiter
 from core.auth import get_current_user, verify_user_ownership
 from core.exceptions import safe_internal_error
-from core.supabase_db import get_supabase_db
 from core.logger import get_logger
 from core.activity_logger import log_user_activity, log_user_error
 from core.nutrition_bias import apply_calorie_bias, get_user_calorie_bias
 from models.schemas import FoodLog, FoodItem
+
+# All micronutrient keys that Gemini can return and food_logs stores
+_MICRONUTRIENT_KEYS = [
+    # Vitamins
+    'vitamin_a_ug', 'vitamin_c_mg', 'vitamin_d_iu', 'vitamin_e_mg', 'vitamin_k_ug',
+    'vitamin_b1_mg', 'vitamin_b2_mg', 'vitamin_b3_mg', 'vitamin_b6_mg',
+    'vitamin_b9_ug', 'vitamin_b12_ug', 'choline_mg',
+    # Minerals
+    'calcium_mg', 'iron_mg', 'magnesium_mg', 'zinc_mg', 'selenium_ug',
+    'potassium_mg', 'sodium_mg', 'phosphorus_mg', 'copper_mg', 'manganese_mg', 'iodine_ug',
+    # Fatty acids & other
+    'omega3_g', 'omega6_g', 'sugar_g', 'cholesterol_mg', 'caffeine_mg',
+]
+
+
+def _extract_micronutrients(food_analysis: dict) -> dict:
+    """Extract all micronutrient values from a Gemini food analysis response."""
+    micros = {}
+    for key in _MICRONUTRIENT_KEYS:
+        value = food_analysis.get(key)
+        if value is not None:
+            micros[key] = value
+    return micros
+
 
 from services.gemini_service import GeminiService
 from services.nutrition_rag_service import get_nutrition_rag_service
@@ -126,16 +149,8 @@ async def log_food_from_image(
         fat_g = food_analysis.get('fat_g', 0.0)
         fiber_g = food_analysis.get('fiber_g', 0.0)
 
-        # Extract micronutrients from Gemini analysis
-        sugar_g = food_analysis.get('sugar_g')
-        sodium_mg = food_analysis.get('sodium_mg')
-        cholesterol_mg = food_analysis.get('cholesterol_mg')
-        potassium_mg = food_analysis.get('potassium_mg')
-        vitamin_a_ug = food_analysis.get('vitamin_a_ug')
-        vitamin_c_mg = food_analysis.get('vitamin_c_mg')
-        vitamin_d_iu = food_analysis.get('vitamin_d_iu')
-        calcium_mg = food_analysis.get('calcium_mg')
-        iron_mg = food_analysis.get('iron_mg')
+        # Extract all micronutrients from Gemini analysis
+        micronutrients = _extract_micronutrients(food_analysis)
 
         # Create food log with image URL
         db = get_supabase_db()
@@ -159,20 +174,15 @@ async def log_food_from_image(
             image_url=image_url,
             image_storage_key=storage_key,
             source_type="image",
-            # Micronutrients from Gemini analysis
-            sugar_g=sugar_g,
-            sodium_mg=sodium_mg,
-            cholesterol_mg=cholesterol_mg,
-            potassium_mg=potassium_mg,
-            vitamin_a_ug=vitamin_a_ug,
-            vitamin_c_mg=vitamin_c_mg,
-            vitamin_d_iu=vitamin_d_iu,
-            calcium_mg=calcium_mg,
-            iron_mg=iron_mg,
+            **micronutrients,
         )
 
         food_log_id = created_log.get('id') if created_log else "unknown"
         logger.info(f"Successfully logged food from image as {food_log_id}")
+
+        # Invalidate daily summary cache so the next fetch returns fresh data
+        from api.v1.nutrition.summaries import invalidate_daily_summary_cache
+        await invalidate_daily_summary_cache(user_id)
 
         # Background: Log activity analytics (non-critical, don't block response)
         background_tasks.add_task(
@@ -340,16 +350,8 @@ async def log_food_from_text(body: LogTextRequest, background_tasks: BackgroundT
         warnings = food_analysis.get('warnings', [])
         recommended_swap = food_analysis.get('recommended_swap')
 
-        # Extract micronutrients from Gemini analysis
-        sugar_g = food_analysis.get('sugar_g')
-        sodium_mg = food_analysis.get('sodium_mg')
-        cholesterol_mg = food_analysis.get('cholesterol_mg')
-        potassium_mg = food_analysis.get('potassium_mg')
-        vitamin_a_ug = food_analysis.get('vitamin_a_ug')
-        vitamin_c_mg = food_analysis.get('vitamin_c_mg')
-        vitamin_d_iu = food_analysis.get('vitamin_d_iu')
-        calcium_mg = food_analysis.get('calcium_mg')
-        iron_mg = food_analysis.get('iron_mg')
+        # Extract all micronutrients from Gemini analysis
+        micronutrients = _extract_micronutrients(food_analysis)
 
         # Resolve timezone for logged_at timestamp
         user_tz_logged_at = None
@@ -370,22 +372,17 @@ async def log_food_from_text(body: LogTextRequest, background_tasks: BackgroundT
             ai_feedback=ai_suggestion,
             health_score=health_score,
             logged_at=user_tz_logged_at,
-            # Micronutrients from Gemini analysis
-            sugar_g=sugar_g,
-            sodium_mg=sodium_mg,
-            cholesterol_mg=cholesterol_mg,
-            potassium_mg=potassium_mg,
-            vitamin_a_ug=vitamin_a_ug,
-            vitamin_c_mg=vitamin_c_mg,
-            vitamin_d_iu=vitamin_d_iu,
-            calcium_mg=calcium_mg,
-            iron_mg=iron_mg,
+            **micronutrients,
         )
 
         # Get the food log ID from the created record
         food_log_id = created_log.get('id') if created_log else "unknown"
 
         logger.info(f"Successfully logged food from text as {food_log_id}")
+
+        # Invalidate daily summary cache so the next fetch returns fresh data
+        from api.v1.nutrition.summaries import invalidate_daily_summary_cache
+        await invalidate_daily_summary_cache(body.user_id)
 
         # Background: Log activity analytics (non-critical, don't block response)
         background_tasks.add_task(
@@ -528,11 +525,17 @@ async def log_food_direct(body: LogDirectRequest, request: Request, current_user
             image_url=body.image_url,
             image_storage_key=body.image_storage_key,
             source_type=body.source_type,
+            inflammation_score=body.inflammation_score,
+            is_ultra_processed=body.is_ultra_processed,
             **micronutrients,
         )
 
         food_log_id = created_log.get('id') if created_log else "unknown"
         logger.info(f"Successfully logged food directly as {food_log_id}")
+
+        # Invalidate daily summary cache so the next fetch returns fresh data
+        from api.v1.nutrition.summaries import invalidate_daily_summary_cache
+        await invalidate_daily_summary_cache(body.user_id)
 
         # Restaurant mode has lower confidence due to portion estimation
         confidence_score = 0.6 if body.source_type == "restaurant" else 0.9
@@ -553,6 +556,8 @@ async def log_food_direct(body: LogDirectRequest, request: Request, current_user
             confidence_score=confidence_score,
             confidence_level=confidence_level,
             source_type=body.source_type,
+            inflammation_score=body.inflammation_score,
+            is_ultra_processed=body.is_ultra_processed,
         )
     except Exception as e:
         logger.error(f"Error logging food directly: {e}", exc_info=True)
@@ -760,6 +765,10 @@ async def log_food_from_text_streaming(request: Request, body: LogTextRequest, c
 
             food_log_id = created_log.get('id') if created_log else "unknown"
             logger.info(f"[STREAM] Successfully logged food from text as {food_log_id}")
+
+            # Invalidate daily summary cache so the next fetch returns fresh data
+            from api.v1.nutrition.summaries import invalidate_daily_summary_cache
+            await invalidate_daily_summary_cache(body.user_id)
 
             # Send the completed food log
             cache_hit = food_analysis.get("cache_hit", False) if food_analysis else False

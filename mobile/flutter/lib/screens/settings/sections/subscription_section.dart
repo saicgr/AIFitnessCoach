@@ -145,7 +145,7 @@ class SubscriptionSection extends ConsumerWidget {
     return GestureDetector(
       onTap: () {
         HapticFeedback.lightImpact();
-        context.push('/paywall-features');
+        context.push('/paywall-pricing');
       },
       child: Container(
         width: double.infinity,

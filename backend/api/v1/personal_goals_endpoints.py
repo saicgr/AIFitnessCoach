@@ -592,7 +592,7 @@ async def accept_suggestion(
         result = db.client.table("weekly_personal_goals").insert(goal_data).execute()
 
         if not result.data:
-            raise HTTPException(status_code=500, detail="Failed to create goal")
+            raise safe_internal_error(ValueError("Failed to create goal"), "personal_goals_endpoints")
 
         # Mark suggestion as used (dismissed)
         db.client.table("goal_suggestions").update({

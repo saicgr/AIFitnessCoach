@@ -19,6 +19,12 @@ extension NotificationServiceScheduled on NotificationService {
   /// Base notification ID for schedule reminders (7000-7999 range)
   static const int _scheduleReminderBaseId = 7000;
 
+  /// Bundle notification IDs (8000-8003)
+  static const int _morningBundleId = 8000;
+  static const int _middayBundleId = 8001;
+  static const int _afternoonNudgeId = 8002;
+  static const int _eveningBundleId = 8003;
+
   // ─────────────────────────────────────────────────────────────────
   // Template Rotation
   // ─────────────────────────────────────────────────────────────────
@@ -57,6 +63,21 @@ extension NotificationServiceScheduled on NotificationService {
   static Future<int?> _getCachedStreak() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getInt(NotificationPrefsKeys.cachedStreak);
+  }
+
+  /// Cache today's workout name for bundle notification templates
+  static Future<void> cacheWorkoutName(String? workoutName) async {
+    final prefs = await SharedPreferences.getInstance();
+    if (workoutName != null) {
+      await prefs.setString(NotificationPrefsKeys.cachedWorkoutName, workoutName);
+    }
+    debugPrint('🔔 [Cache] Workout name cached: $workoutName');
+  }
+
+  /// Get cached workout name (returns 'your workout' if not cached)
+  static Future<String> _getCachedWorkoutName() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(NotificationPrefsKeys.cachedWorkoutName) ?? 'your workout';
   }
 
   /// Cache the user's selected coach ID for personalized notifications.
@@ -188,30 +209,65 @@ extension NotificationServiceScheduled on NotificationService {
       return;
     }
 
-    // Schedule each type if enabled
-    if (prefs.workoutReminders) {
-      await scheduleWorkoutReminder(
-        prefs.workoutReminderTime,
-        smartTimingEnabled: prefs.smartTimingEnabled,
-      );
+    // Branch scheduling based on frequency preset
+    final preset = prefs.frequencyPreset;
+
+    if (preset == 'minimal' || preset == 'balanced') {
+      // ── Bundle Mode: Smart bundled notifications ──
+      debugPrint('🔔 [Schedule] Using $preset preset (bundled mode)');
+
+      // Morning bundle (workout + breakfast)
+      if (prefs.morningIncludeWorkout || prefs.morningIncludeBreakfast || prefs.morningIncludeMotivation) {
+        await _scheduleMorningBundle(prefs);
+      }
+
+      // Midday bundle (lunch + hydration)
+      if (prefs.middayIncludeLunch || prefs.middayIncludeHydration) {
+        await _scheduleMiddayBundle(prefs);
+      }
+
+      // Afternoon nudge (movement + hydration) — Balanced only
+      if (preset == 'balanced') {
+        await _scheduleAfternoonNudge(prefs);
+      }
+
+      // Evening bundle (dinner + streak)
+      if (prefs.eveningIncludeDinner || prefs.eveningIncludeStreak || prefs.eveningIncludeProgress) {
+        await _scheduleEveningBundle(prefs);
+      }
+    } else {
+      // ── Full Coach Mode: Individual notifications (legacy behavior) ──
+      debugPrint('🔔 [Schedule] Using full_coach preset (individual mode)');
+
+      if (prefs.workoutReminders) {
+        await scheduleWorkoutReminder(
+          prefs.workoutReminderTime,
+          smartTimingEnabled: prefs.smartTimingEnabled,
+        );
+      }
+
+      if (prefs.nutritionReminders) {
+        await scheduleNutritionReminders(
+          prefs.nutritionBreakfastTime,
+          prefs.nutritionLunchTime,
+          prefs.nutritionDinnerTime,
+        );
+      }
+
+      if (prefs.hydrationReminders) {
+        await scheduleHydrationReminders(
+          prefs.hydrationStartTime,
+          prefs.hydrationEndTime,
+          prefs.hydrationIntervalMinutes,
+        );
+      }
+
+      if (prefs.movementReminders) {
+        await scheduleMovementReminders(prefs);
+      }
     }
 
-    if (prefs.nutritionReminders) {
-      await scheduleNutritionReminders(
-        prefs.nutritionBreakfastTime,
-        prefs.nutritionLunchTime,
-        prefs.nutritionDinnerTime,
-      );
-    }
-
-    if (prefs.hydrationReminders) {
-      await scheduleHydrationReminders(
-        prefs.hydrationStartTime,
-        prefs.hydrationEndTime,
-        prefs.hydrationIntervalMinutes,
-      );
-    }
-
+    // Always schedule these regardless of preset
     if (prefs.streakAlerts) {
       await scheduleStreakAlert(prefs.streakAlertTime);
     }
@@ -220,11 +276,7 @@ extension NotificationServiceScheduled on NotificationService {
       await scheduleWeeklySummary(prefs.weeklySummaryDay, prefs.weeklySummaryTime);
     }
 
-    if (prefs.movementReminders) {
-      await scheduleMovementReminders(prefs);
-    }
-
-    debugPrint('✅ [Schedule] All notifications scheduled');
+    debugPrint('✅ [Schedule] All notifications scheduled (preset: $preset)');
   }
 
   /// Cancel all scheduled notifications
@@ -492,6 +544,202 @@ extension NotificationServiceScheduled on NotificationService {
 
     final dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
     debugPrint('🔔 [Schedule] Weekly summary scheduled for ${dayNames[day]} at $time');
+  }
+
+  // ─────────────────────────────────────────────────────────────────
+  // Bundle Notification Methods
+  // ─────────────────────────────────────────────────────────────────
+
+  /// Helper to get the bundle channel's AndroidNotificationDetails
+  AndroidNotificationDetails _bundleAndroidDetails(NotificationPreferences prefs) {
+    final channelConfig = NotificationService._channelConfigs['daily_bundle']!;
+    return AndroidNotificationDetails(
+      channelConfig.id,
+      channelConfig.name,
+      channelDescription: channelConfig.description,
+      importance: Importance.high,
+      priority: Priority.high,
+      icon: '@drawable/ic_launcher_monochrome',
+      color: channelConfig.color,
+      enableVibration: prefs.notificationVibration,
+    );
+  }
+
+  /// Helper to resolve a bundle template with cached user context
+  Future<NotificationTemplate> _resolveBundleTemplate(NotificationType type) async {
+    final dayIndex = _getDayOfYear();
+    final coachId = await _getCachedCoachId();
+    final template = CoachNotificationTemplates.get(coachId, type, dayIndex);
+    final userName = await _getCachedUserName() ?? '';
+    final streak = await _getCachedStreak() ?? 0;
+    final workoutName = await _getCachedWorkoutName();
+
+    return template.resolve({
+      'workoutName': workoutName,
+      'userName': userName,
+      'streak': streak.toString(),
+    });
+  }
+
+  /// Strip emoji from notification text if user has disabled emoji
+  String _applyEmojiPref(String text, bool emojiEnabled) {
+    if (emojiEnabled) return text;
+    // Remove common emoji ranges
+    return text.replaceAll(RegExp(
+      r'[\u{1F300}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}\u{FE00}-\u{FE0F}\u{1F000}-\u{1FFFF}]',
+      unicode: true,
+    ), '').trim();
+  }
+
+  /// Determine the correct time for a bundle based on weekday/weekend
+  String _getBundleTime(String weekdayTime, String weekendTime, bool weekendEnabled) {
+    if (!weekendEnabled) return weekdayTime;
+    final now = DateTime.now();
+    final isWeekend = now.weekday == DateTime.saturday || now.weekday == DateTime.sunday;
+    return isWeekend ? weekendTime : weekdayTime;
+  }
+
+  /// Schedule the morning bundle (workout + breakfast + motivation)
+  Future<void> _scheduleMorningBundle(NotificationPreferences prefs) async {
+    final time = _getBundleTime(
+      prefs.morningBundleTime,
+      prefs.morningBundleTimeWeekend,
+      prefs.weekendTimesEnabled,
+    );
+    final (hour, minute) = _parseTime(time);
+    final scheduledDate = _nextInstanceOfTime(hour, minute);
+
+    final resolved = await _resolveBundleTemplate(NotificationType.morningBundle);
+    final title = _applyEmojiPref(resolved.title, prefs.notificationEmoji);
+    final body = _applyEmojiPref(resolved.body, prefs.notificationEmoji);
+
+    await _localNotifications.zonedSchedule(
+      _morningBundleId,
+      title,
+      body,
+      scheduledDate,
+      NotificationDetails(
+        android: _bundleAndroidDetails(prefs),
+        iOS: const DarwinNotificationDetails(
+          presentAlert: true,
+          presentBadge: true,
+          presentSound: true,
+          threadIdentifier: 'daily_bundle',
+        ),
+      ),
+      androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+      matchDateTimeComponents: DateTimeComponents.time,
+      uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
+      payload: _richPayload('daily_bundle', title, body),
+    );
+
+    debugPrint('🔔 [Bundle] Morning bundle scheduled for $time');
+  }
+
+  /// Schedule the midday bundle (lunch + hydration hint)
+  Future<void> _scheduleMiddayBundle(NotificationPreferences prefs) async {
+    final time = _getBundleTime(
+      prefs.middayBundleTime,
+      prefs.middayBundleTimeWeekend,
+      prefs.weekendTimesEnabled,
+    );
+    final (hour, minute) = _parseTime(time);
+    final scheduledDate = _nextInstanceOfTime(hour, minute);
+
+    final resolved = await _resolveBundleTemplate(NotificationType.middayBundle);
+    final title = _applyEmojiPref(resolved.title, prefs.notificationEmoji);
+    final body = _applyEmojiPref(resolved.body, prefs.notificationEmoji);
+
+    await _localNotifications.zonedSchedule(
+      _middayBundleId,
+      title,
+      body,
+      scheduledDate,
+      NotificationDetails(
+        android: _bundleAndroidDetails(prefs),
+        iOS: const DarwinNotificationDetails(
+          presentAlert: true,
+          presentBadge: true,
+          presentSound: true,
+          threadIdentifier: 'daily_bundle',
+        ),
+      ),
+      androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+      matchDateTimeComponents: DateTimeComponents.time,
+      uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
+      payload: _richPayload('daily_bundle', title, body),
+    );
+
+    debugPrint('🔔 [Bundle] Midday bundle scheduled for $time');
+  }
+
+  /// Schedule the afternoon nudge (movement + hydration) — Balanced preset only
+  Future<void> _scheduleAfternoonNudge(NotificationPreferences prefs) async {
+    final (hour, minute) = _parseTime(prefs.afternoonNudgeTime);
+    final scheduledDate = _nextInstanceOfTime(hour, minute);
+
+    final resolved = await _resolveBundleTemplate(NotificationType.afternoonNudge);
+    final title = _applyEmojiPref(resolved.title, prefs.notificationEmoji);
+    final body = _applyEmojiPref(resolved.body, prefs.notificationEmoji);
+
+    await _localNotifications.zonedSchedule(
+      _afternoonNudgeId,
+      title,
+      body,
+      scheduledDate,
+      NotificationDetails(
+        android: _bundleAndroidDetails(prefs),
+        iOS: const DarwinNotificationDetails(
+          presentAlert: true,
+          presentBadge: true,
+          presentSound: true,
+          threadIdentifier: 'daily_bundle',
+        ),
+      ),
+      androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+      matchDateTimeComponents: DateTimeComponents.time,
+      uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
+      payload: _richPayload('daily_bundle', title, body),
+    );
+
+    debugPrint('🔔 [Bundle] Afternoon nudge scheduled for ${prefs.afternoonNudgeTime}');
+  }
+
+  /// Schedule the evening bundle (dinner + streak + progress)
+  Future<void> _scheduleEveningBundle(NotificationPreferences prefs) async {
+    final time = _getBundleTime(
+      prefs.eveningBundleTime,
+      prefs.eveningBundleTimeWeekend,
+      prefs.weekendTimesEnabled,
+    );
+    final (hour, minute) = _parseTime(time);
+    final scheduledDate = _nextInstanceOfTime(hour, minute);
+
+    final resolved = await _resolveBundleTemplate(NotificationType.eveningBundle);
+    final title = _applyEmojiPref(resolved.title, prefs.notificationEmoji);
+    final body = _applyEmojiPref(resolved.body, prefs.notificationEmoji);
+
+    await _localNotifications.zonedSchedule(
+      _eveningBundleId,
+      title,
+      body,
+      scheduledDate,
+      NotificationDetails(
+        android: _bundleAndroidDetails(prefs),
+        iOS: const DarwinNotificationDetails(
+          presentAlert: true,
+          presentBadge: true,
+          presentSound: true,
+          threadIdentifier: 'daily_bundle',
+        ),
+      ),
+      androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+      matchDateTimeComponents: DateTimeComponents.time,
+      uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
+      payload: _richPayload('daily_bundle', title, body),
+    );
+
+    debugPrint('🔔 [Bundle] Evening bundle scheduled for $time');
   }
 
   // ─────────────────────────────────────────────────────────────────
@@ -835,6 +1083,8 @@ extension NotificationServiceScheduled on NotificationService {
         return '/home';
       case 'schedule_reminder':
         return '/schedule';
+      case 'daily_bundle':
+        return '/home';
       default:
         return null;
     }

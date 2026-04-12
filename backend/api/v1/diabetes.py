@@ -19,7 +19,6 @@ from core.exceptions import safe_internal_error
 from pydantic import BaseModel, Field, validator
 import uuid
 
-from core.supabase_db import get_supabase_db
 from core.activity_logger import log_user_activity, log_user_error
 
 router = APIRouter(prefix="/diabetes", tags=["Diabetes Tracking"])

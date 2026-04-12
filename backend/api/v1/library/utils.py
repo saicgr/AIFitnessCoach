@@ -70,7 +70,7 @@ def _get_exercise_simplified_name(name_lower: str) -> Optional[str]:
     return None
 
 # S3 prefixes that are publicly readable (no presigning needed)
-_STATIC_PREFIXES = ("ILLUSTRATIONS/", "Ultimate-Muscle-Visuals/")
+_STATIC_PREFIXES = ("ILLUSTRATIONS/", "ILLUSTRATIONS ALL/", "Ultimate-Muscle-Visuals/")
 
 
 def presign_s3_path(s3_path: Optional[str]) -> Optional[str]:
@@ -359,11 +359,13 @@ def row_to_library_exercise(row: dict, from_cleaned_view: bool = True) -> Librar
     """
     if from_cleaned_view:
         # From cleaned view - uses 'name' and 'original_name' columns
+        # display_body_part is computed by the view with correct SQL-based muscle mapping
+        # (fixes ordering bugs that existed in normalize_body_part — tricep/bicep and biceps femoris)
         return LibraryExercise(
             id=row.get("id"),
             name=row.get("name", ""),
             original_name=row.get("original_name", ""),
-            body_part=normalize_body_part(row.get("target_muscle") or row.get("body_part", "")),
+            body_part=row.get("display_body_part") or normalize_body_part(row.get("target_muscle") or row.get("body_part", "")),
             equipment=row.get("equipment", ""),
             target_muscle=row.get("target_muscle"),
             secondary_muscles=row.get("secondary_muscles"),

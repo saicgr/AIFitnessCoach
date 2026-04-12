@@ -30,7 +30,6 @@ from core.timezone_utils import user_today_date
 from datetime import datetime, date, timedelta, timezone
 from typing import Optional
 
-from core.supabase_db import get_supabase_db
 from core.logger import get_logger
 from core.activity_logger import log_user_activity, log_user_error
 from models.weekly_personal_goals import (
@@ -130,25 +129,28 @@ async def create_goal(user_id: str, request: CreateGoalRequest,
         result = db.client.table("weekly_personal_goals").insert(goal_data).execute()
 
         if not result.data:
-            raise HTTPException(status_code=500, detail="Failed to create goal")
+            raise safe_internal_error(ValueError("Failed to create goal"), "personal_goals")
 
         goal = result.data[0]
         logger.info(f"✅ Created goal: {goal['id']} - {request.exercise_name} ({request.goal_type.value})")
 
         # Log goal creation
-        await log_user_activity(
-            user_id=user_id,
-            action="goal_created",
-            endpoint="/api/v1/personal-goals/goals",
-            message=f"Created goal: {request.exercise_name} ({request.goal_type.value})",
-            metadata={
-                "goal_id": goal['id'],
-                "exercise_name": request.exercise_name,
-                "goal_type": request.goal_type.value,
-                "target_value": request.target_value,
-            },
-            status_code=200
-        )
+        try:
+            await log_user_activity(
+                user_id=user_id,
+                action="goal_created",
+                endpoint="/api/v1/personal-goals/goals",
+                message=f"Created goal: {request.exercise_name} ({request.goal_type.value})",
+                metadata={
+                    "goal_id": goal['id'],
+                    "exercise_name": request.exercise_name,
+                    "goal_type": request.goal_type.value,
+                    "target_value": request.target_value,
+                },
+                status_code=200
+            )
+        except Exception as e:
+            logger.error(f"Activity logging failed: {e}", exc_info=True, extra={"user_id_full": user_id, "failed_action": "goal_created"})
 
         from .personal_goals_endpoints import _build_goal_response
         return _build_goal_response(goal, user_today_date(http_request))
@@ -317,6 +319,8 @@ async def record_attempt(user_id: str, goal_id: str, request: RecordAttemptReque
 
         # Fetch updated goal with attempts
         updated = db.client.table("weekly_personal_goals").select("*").eq("id", goal_id).execute()
+        if not updated.data:
+            raise HTTPException(status_code=404, detail="Goal not found after update")
         attempts = db.client.table("goal_attempts").select("*").eq("goal_id", goal_id).order("attempted_at", desc=True).execute()
 
         from .personal_goals_endpoints import _build_goal_response
@@ -394,6 +398,8 @@ async def add_volume(user_id: str, goal_id: str, request: AddVolumeRequest,
 
         # Fetch updated goal
         updated = db.client.table("weekly_personal_goals").select("*").eq("id", goal_id).execute()
+        if not updated.data:
+            raise HTTPException(status_code=404, detail="Goal not found after update")
 
         logger.info(f"✅ Added {request.volume_to_add} volume. New total: {new_value}")
 
@@ -449,6 +455,8 @@ async def complete_goal(user_id: str, goal_id: str,
         db.client.table("weekly_personal_goals").update(updates).eq("id", goal_id).execute()
 
         updated = db.client.table("weekly_personal_goals").select("*").eq("id", goal_id).execute()
+        if not updated.data:
+            raise HTTPException(status_code=404, detail="Goal not found after update")
 
         logger.info(f"✅ Goal completed: {goal_id}")
 
@@ -497,6 +505,8 @@ async def abandon_goal(user_id: str, goal_id: str,
         }).eq("id", goal_id).execute()
 
         updated = db.client.table("weekly_personal_goals").select("*").eq("id", goal_id).execute()
+        if not updated.data:
+            raise HTTPException(status_code=404, detail="Goal not found after update")
 
         logger.info(f"✅ Goal abandoned: {goal_id}")
 

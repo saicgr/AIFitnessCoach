@@ -1,0 +1,297 @@
+- generic [ref=e3]:
+  - navigation [ref=e4]:
+    - generic [ref=e6]:
+      - link "FitWiz FitWiz" [ref=e7] [cursor=pointer]:
+        - /url: /
+        - img "FitWiz" [ref=e8]
+        - text: FitWiz
+      - generic [ref=e9]:
+        - button "Switch to dark mode" [ref=e10]:
+          - img [ref=e11]
+        - button "Menu" [ref=e13]:
+          - img [ref=e14]
+  - generic [ref=e17]:
+    - heading "not just harder." [level=1] [ref=e20]
+    - generic:
+      - generic: Scroll
+      - img
+    - img "FitWiz app screenshot 1" [ref=e31]
+  - generic [ref=e33]:
+    - generic [ref=e35]:
+      - generic [ref=e36]:
+        - heading "Everything you need. One app." [level=3] [ref=e37]
+        - paragraph [ref=e38]: Real screenshots. No mockups.
+      - generic [ref=e39]:
+        - button [ref=e40]:
+          - img [ref=e41]
+        - button [ref=e43]:
+          - img [ref=e44]
+    - generic [ref=e46]:
+      - link "AI Coach AI Coach Real-time coaching mid-workout. Ask about form, get exercise swaps, and motivation from Coach Mike. Learn more AI Coach" [ref=e47] [cursor=pointer]:
+        - /url: /features
+        - generic [ref=e49]:
+          - img "AI Coach" [ref=e50]
+          - generic [ref=e52]:
+            - heading "AI Coach" [level=4] [ref=e53]
+            - paragraph [ref=e54]: Real-time coaching mid-workout. Ask about form, get exercise swaps, and motivation from Coach Mike.
+            - generic [ref=e55]:
+              - text: Learn more
+              - img [ref=e56]
+        - paragraph [ref=e59]: AI Coach
+      - link "Smart Nutrition Smart Nutrition Snap a photo and get instant macro breakdowns, nutrition scores, and personalized tips. Learn more Smart Nutrition" [ref=e60] [cursor=pointer]:
+        - /url: /features
+        - generic [ref=e62]:
+          - img "Smart Nutrition" [ref=e63]
+          - generic [ref=e65]:
+            - heading "Smart Nutrition" [level=4] [ref=e66]
+            - paragraph [ref=e67]: Snap a photo and get instant macro breakdowns, nutrition scores, and personalized tips.
+            - generic [ref=e68]:
+              - text: Learn more
+              - img [ref=e69]
+        - paragraph [ref=e72]: Smart Nutrition
+      - link "AI Workout Plans AI Workout Plans AI-designed workouts for your goals, equipment, and experience level with full exercise reasoning. Learn more AI Workout Plans" [ref=e73] [cursor=pointer]:
+        - /url: /features
+        - generic [ref=e75]:
+          - img "AI Workout Plans" [ref=e76]
+          - generic [ref=e78]:
+            - heading "AI Workout Plans" [level=4] [ref=e79]
+            - paragraph [ref=e80]: AI-designed workouts for your goals, equipment, and experience level with full exercise reasoning.
+            - generic [ref=e81]:
+              - text: Learn more
+              - img [ref=e82]
+        - paragraph [ref=e85]: AI Workout Plans
+      - link "Exercise Tracking Exercise Tracking Log sets, reps, and weight in real time. Track RIR, pyramids, supersets, and breathing cues. Learn more Exercise Tracking" [ref=e86] [cursor=pointer]:
+        - /url: /features
+        - generic [ref=e88]:
+          - img "Exercise Tracking" [ref=e89]
+          - generic [ref=e91]:
+            - heading "Exercise Tracking" [level=4] [ref=e92]
+            - paragraph [ref=e93]: Log sets, reps, and weight in real time. Track RIR, pyramids, supersets, and breathing cues.
+            - generic [ref=e94]:
+              - text: Learn more
+              - img [ref=e95]
+        - paragraph [ref=e98]: Exercise Tracking
+      - link "Progress Photos Progress Photos Side-by-side transformation photos with customizable layouts, overlays, and sharing. Learn more Progress Photos" [ref=e99] [cursor=pointer]:
+        - /url: /features
+        - generic [ref=e101]:
+          - img "Progress Photos" [ref=e102]
+          - generic [ref=e104]:
+            - heading "Progress Photos" [level=4] [ref=e105]
+            - paragraph [ref=e106]: Side-by-side transformation photos with customizable layouts, overlays, and sharing.
+            - generic [ref=e107]:
+              - text: Learn more
+              - img [ref=e108]
+        - paragraph [ref=e111]: Progress Photos
+      - link "Stats & Scores Stats & Scores Heatmaps, streaks, achievements, body measurements, weekly summaries, and 1RM tracking. Learn more Stats & Scores" [ref=e112] [cursor=pointer]:
+        - /url: /features
+        - generic [ref=e114]:
+          - img "Stats & Scores" [ref=e115]
+          - generic [ref=e117]:
+            - heading "Stats & Scores" [level=4] [ref=e118]
+            - paragraph [ref=e119]: Heatmaps, streaks, achievements, body measurements, weekly summaries, and 1RM tracking.
+            - generic [ref=e120]:
+              - text: Learn more
+              - img [ref=e121]
+        - paragraph [ref=e124]: Stats & Scores
+      - link "Exercise Library Exercise Library Browse 1,722 exercises. Set favorites, staples, avoids, queue exercises, and weight increments. Learn more Exercise Library" [ref=e125] [cursor=pointer]:
+        - /url: /features
+        - generic [ref=e127]:
+          - img "Exercise Library" [ref=e128]
+          - generic [ref=e130]:
+            - heading "Exercise Library" [level=4] [ref=e131]
+            - paragraph [ref=e132]: Browse 1,722 exercises. Set favorites, staples, avoids, queue exercises, and weight increments.
+            - generic [ref=e133]:
+              - text: Learn more
+              - img [ref=e134]
+        - paragraph [ref=e137]: Exercise Library
+  - generic [ref=e139]:
+    - generic [ref=e140]:
+      - paragraph [ref=e141]: Simple pricing
+      - heading "One plan. Everything included." [level=2] [ref=e142]
+      - paragraph [ref=e143]: Try every feature free for 7 days. No credit card required.
+    - generic [ref=e144]:
+      - generic [ref=e145]:
+        - generic [ref=e146]: Best Value
+        - heading "Yearly" [level=3] [ref=e147]
+        - paragraph [ref=e148]: Full AI-powered fitness
+        - generic [ref=e149]:
+          - generic [ref=e150]: $4.17
+          - generic [ref=e151]: /month
+        - paragraph [ref=e152]: Billed as $49.99/year
+        - paragraph [ref=e153]: 7-day free trial included
+        - list [ref=e154]:
+          - listitem [ref=e155]:
+            - img [ref=e156]
+            - generic [ref=e158]: 1,722 exercises with video demos
+          - listitem [ref=e159]:
+            - img [ref=e160]
+            - generic [ref=e162]: Unlimited AI coach chat
+          - listitem [ref=e163]:
+            - img [ref=e164]
+            - generic [ref=e166]: AI workout generation
+          - listitem [ref=e167]:
+            - img [ref=e168]
+            - generic [ref=e170]: AI photo food logging
+          - listitem [ref=e171]:
+            - img [ref=e172]
+            - generic [ref=e174]: Unlimited workout logging
+          - listitem [ref=e175]:
+            - img [ref=e176]
+            - generic [ref=e178]: Manual food logging & barcode scanner
+          - listitem [ref=e179]:
+            - img [ref=e180]
+            - generic [ref=e182]: Environment aware (gym, home, hotel, outdoors)
+          - listitem [ref=e183]:
+            - img [ref=e184]
+            - generic [ref=e186]: Adaptive TDEE & smart suggestions
+          - listitem [ref=e187]:
+            - img [ref=e188]
+            - generic [ref=e190]: Advanced charts (all-time history)
+          - listitem [ref=e191]:
+            - img [ref=e192]
+            - generic [ref=e194]: Muscle heatmap & balance analysis
+          - listitem [ref=e195]:
+            - img [ref=e196]
+            - generic [ref=e198]: Skill progressions (52+ exercises)
+          - listitem [ref=e199]:
+            - img [ref=e200]
+            - generic [ref=e202]: Injury tracking & body part exclusion
+          - listitem [ref=e203]:
+            - img [ref=e204]
+            - generic [ref=e206]: Coach personas (5+ AI personalities)
+          - listitem [ref=e207]:
+            - img [ref=e208]
+            - generic [ref=e210]: Hell Mode — max intensity
+          - listitem [ref=e211]:
+            - img [ref=e212]
+            - generic [ref=e214]: No ads, ever
+        - link "Start 7-Day Free Trial" [ref=e215] [cursor=pointer]:
+          - /url: https://play.google.com/store/apps/details?id=com.aifitnesscoach.app
+      - generic [ref=e216]:
+        - heading "Monthly" [level=3] [ref=e217]
+        - paragraph [ref=e218]: Pay as you go
+        - generic [ref=e219]:
+          - generic [ref=e220]: $4.99
+          - generic [ref=e221]: /month
+        - paragraph [ref=e222]: Billed monthly, cancel anytime
+        - list [ref=e223]:
+          - listitem [ref=e224]:
+            - img [ref=e225]
+            - generic [ref=e227]: 1,722 exercises with video demos
+          - listitem [ref=e228]:
+            - img [ref=e229]
+            - generic [ref=e231]: Unlimited AI coach chat
+          - listitem [ref=e232]:
+            - img [ref=e233]
+            - generic [ref=e235]: AI workout generation
+          - listitem [ref=e236]:
+            - img [ref=e237]
+            - generic [ref=e239]: AI photo food logging
+          - listitem [ref=e240]:
+            - img [ref=e241]
+            - generic [ref=e243]: Unlimited workout logging
+          - listitem [ref=e244]:
+            - img [ref=e245]
+            - generic [ref=e247]: Manual food logging & barcode scanner
+          - listitem [ref=e248]:
+            - img [ref=e249]
+            - generic [ref=e251]: Environment aware (gym, home, hotel, outdoors)
+          - listitem [ref=e252]:
+            - img [ref=e253]
+            - generic [ref=e255]: Adaptive TDEE & smart suggestions
+          - listitem [ref=e256]:
+            - img [ref=e257]
+            - generic [ref=e259]: Advanced charts (all-time history)
+          - listitem [ref=e260]:
+            - img [ref=e261]
+            - generic [ref=e263]: Muscle heatmap & balance analysis
+          - listitem [ref=e264]:
+            - img [ref=e265]
+            - generic [ref=e267]: Skill progressions (52+ exercises)
+          - listitem [ref=e268]:
+            - img [ref=e269]
+            - generic [ref=e271]: Injury tracking & body part exclusion
+          - listitem [ref=e272]:
+            - img [ref=e273]
+            - generic [ref=e275]: Coach personas (5+ AI personalities)
+          - listitem [ref=e276]:
+            - img [ref=e277]
+            - generic [ref=e279]: Hell Mode — max intensity
+          - listitem [ref=e280]:
+            - img [ref=e281]
+            - generic [ref=e283]: No ads, ever
+        - link "Start 7-Day Free Trial" [ref=e284] [cursor=pointer]:
+          - /url: https://play.google.com/store/apps/details?id=com.aifitnesscoach.app
+    - link "See full feature comparison →" [ref=e286] [cursor=pointer]:
+      - /url: /pricing
+  - contentinfo [ref=e287]:
+    - generic [ref=e288]:
+      - generic [ref=e289]:
+        - generic [ref=e290]:
+          - link "FitWiz" [ref=e291] [cursor=pointer]:
+            - /url: /
+          - paragraph [ref=e292]: Your AI-powered fitness coach. Personalized workouts, nutrition tracking, and real-time guidance.
+        - generic [ref=e293]:
+          - heading "Product" [level=4] [ref=e294]
+          - list [ref=e295]:
+            - listitem [ref=e296]:
+              - link "Features" [ref=e297] [cursor=pointer]:
+                - /url: /features
+            - listitem [ref=e298]:
+              - link "Pricing" [ref=e299] [cursor=pointer]:
+                - /url: /pricing
+            - listitem [ref=e300]:
+              - link "Get Started" [ref=e301] [cursor=pointer]:
+                - /url: https://play.google.com/store/apps/details?id=com.aifitnesscoach.app
+        - generic [ref=e302]:
+          - heading "Company" [level=4] [ref=e303]
+          - list [ref=e304]:
+            - listitem [ref=e305]:
+              - link "About" [ref=e306] [cursor=pointer]:
+                - /url: /about
+            - listitem [ref=e307]:
+              - link "FAQ" [ref=e308] [cursor=pointer]:
+                - /url: /faq
+            - listitem [ref=e309]:
+              - link "Contact" [ref=e310] [cursor=pointer]:
+                - /url: /contact
+            - listitem [ref=e311]:
+              - link "Changelog" [ref=e312] [cursor=pointer]:
+                - /url: /changelog
+            - listitem [ref=e313]:
+              - link "Discord" [ref=e314] [cursor=pointer]:
+                - /url: https://discord.gg/WAYNZpVgsK
+            - listitem [ref=e315]:
+              - link "Instagram" [ref=e316] [cursor=pointer]:
+                - /url: https://instagram.com/fitwiz.us
+        - generic [ref=e317]:
+          - heading "Legal" [level=4] [ref=e318]
+          - list [ref=e319]:
+            - listitem [ref=e320]:
+              - link "Terms of Service" [ref=e321] [cursor=pointer]:
+                - /url: /terms
+            - listitem [ref=e322]:
+              - link "Privacy Policy" [ref=e323] [cursor=pointer]:
+                - /url: /privacy
+            - listitem [ref=e324]:
+              - link "Health Disclaimer" [ref=e325] [cursor=pointer]:
+                - /url: /health-disclaimer
+            - listitem [ref=e326]:
+              - link "Refund Policy" [ref=e327] [cursor=pointer]:
+                - /url: /refunds
+            - listitem [ref=e328]:
+              - link "Delete Account" [ref=e329] [cursor=pointer]:
+                - /url: /delete-account
+      - generic [ref=e331]:
+        - paragraph [ref=e332]: Copyright 2026 FitWiz. All rights reserved.
+        - generic [ref=e333]:
+          - link "Discord" [ref=e334] [cursor=pointer]:
+            - /url: https://discord.gg/WAYNZpVgsK
+            - img [ref=e335]
+          - link "Instagram" [ref=e337] [cursor=pointer]:
+            - /url: https://instagram.com/fitwiz.us
+            - img [ref=e338]
+          - link "Terms" [ref=e340] [cursor=pointer]:
+            - /url: /terms
+          - link "Privacy" [ref=e341] [cursor=pointer]:
+            - /url: /privacy

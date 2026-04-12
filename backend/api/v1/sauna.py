@@ -13,7 +13,6 @@ from typing import List, Optional
 from datetime import datetime, date, timedelta
 import uuid
 
-from core.supabase_db import get_supabase_db
 from core.logger import get_logger
 from core.activity_logger import log_user_activity, log_user_error
 from core.timezone_utils import resolve_timezone, get_user_today
@@ -108,7 +107,7 @@ async def log_sauna(
         result = db.client.table("sauna_logs").insert(log_data).execute()
 
         if not result.data:
-            raise HTTPException(status_code=500, detail="Failed to log sauna session")
+            raise safe_internal_error(ValueError("Failed to log sauna session"), "sauna")
 
         await log_user_activity(
             user_id=data.user_id,

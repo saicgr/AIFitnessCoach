@@ -15,7 +15,6 @@ from fastapi import APIRouter, Depends, Request
 from core.auth import get_current_user
 from fastapi.responses import StreamingResponse
 
-from core.supabase_db import get_supabase_db
 from core.logger import get_logger
 from core.config import get_settings
 from models.schemas import GenerateWorkoutRequest
@@ -146,7 +145,7 @@ async def generate_workout_streaming(request: Request, body: GenerateWorkoutRequ
 
     # Premium gate check: enforce free-tier workout generation limits
     from core.premium_gate import check_premium_gate
-    await check_premium_gate(body.user_id, "ai_workout_generation")
+    await check_premium_gate(body.user_id, "ai_workout_generation", _user_tz)
 
     async def generate_sse() -> AsyncGenerator[str, None]:
         start_time = datetime.now()
@@ -694,7 +693,7 @@ async def generate_workout_streaming(request: Request, body: GenerateWorkoutRequ
             # Track premium gate usage after successful streaming generation
             try:
                 from core.premium_gate import track_premium_usage
-                await track_premium_usage(body.user_id, "ai_workout_generation")
+                await track_premium_usage(body.user_id, "ai_workout_generation", _user_tz)
             except Exception as usage_err:
                 logger.warning(f"Failed to track workout generation usage: {usage_err}", exc_info=True)
 

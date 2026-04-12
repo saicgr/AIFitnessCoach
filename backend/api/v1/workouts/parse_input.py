@@ -16,7 +16,6 @@ from core.auth import get_current_user
 from core.exceptions import safe_internal_error
 from pydantic import BaseModel, Field
 
-from core.supabase_db import get_supabase_db
 from core.logger import get_logger
 from models.schemas import Workout
 from services.gemini_service import GeminiService
@@ -422,7 +421,7 @@ async def add_exercises_batch(request: Request, body: BatchAddExercisesRequest,
         )
 
         if not updated_row:
-            raise HTTPException(status_code=500, detail="Failed to update workout")
+            raise safe_internal_error(ValueError("Failed to update workout"), "workouts")
 
         logger.info(f"✅ [BatchAdd] Successfully added {len(body.exercises)} exercises to workout {body.workout_id}")
 

@@ -9,7 +9,6 @@ from datetime import datetime, date, timedelta
 import logging
 import json
 
-from core.supabase_db import get_supabase_db
 from core.auth import get_current_user
 from core.exceptions import safe_internal_error
 from core.timezone_utils import user_today_date
@@ -340,7 +339,7 @@ async def add_staple_exercise(http_request: Request, request: StapleExerciseCrea
         result = db.client.table("staple_exercises").insert(insert_data).execute()
 
         if not result.data:
-            raise HTTPException(status_code=500, detail="Failed to add staple exercise")
+            raise safe_internal_error(ValueError("Failed to add staple exercise"), "exercise_preferences")
 
         row = result.data[0]
 
@@ -881,7 +880,7 @@ async def update_sets_limits(request: SetsLimitsUpdate, current_user: dict = Dep
         }).eq("id", request.user_id).execute()
 
         if not update_result.data:
-            raise HTTPException(status_code=500, detail="Failed to update preferences")
+            raise safe_internal_error(ValueError("Failed to update preferences"), "exercise_preferences")
 
         # Generate description
         description = f"{request.min_sets_per_exercise}-{request.max_sets_per_exercise} sets per exercise"

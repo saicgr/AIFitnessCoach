@@ -18,7 +18,6 @@ from core.auth import get_current_user
 from core.exceptions import safe_internal_error
 from pydantic import BaseModel, Field
 
-from core.supabase_db import get_supabase_db
 from core.logger import get_logger
 from core.rate_limiter import limiter
 from models.schemas import Workout
@@ -327,7 +326,7 @@ async def generate_quick_workout(request: Request, body: QuickWorkoutRequest, ba
 
             content = response.text.strip() if response.text else ""
             if not content:
-                raise HTTPException(status_code=500, detail="Empty response from AI")
+                raise safe_internal_error(ValueError("Empty response from AI"), "workouts")
 
             # Parse the response - try direct parse first, then extract JSON
             workout_data = None
@@ -384,11 +383,11 @@ async def generate_quick_workout(request: Request, body: QuickWorkoutRequest, ba
             )
 
             if not exercises:
-                raise HTTPException(status_code=500, detail="No valid exercises generated")
+                raise safe_internal_error(ValueError("No valid exercises generated"), "workouts")
 
         except json.JSONDecodeError as e:
             logger.error(f"Failed to parse AI response: {e}", exc_info=True)
-            raise HTTPException(status_code=500, detail="Failed to parse workout data")
+            raise safe_internal_error(ValueError("Failed to parse workout data"), "workouts")
         except HTTPException:
             raise
         except Exception as ai_error:
@@ -588,7 +587,7 @@ async def save_quick_workout(request: Request, body: QuickWorkoutSaveRequest, ba
         raise
     except Exception as e:
         logger.error(f"Failed to save quick workout: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail="Failed to save workout")
+        raise safe_internal_error(ValueError("Failed to save workout"), "workouts")
 
 
 # Circuit breaker: once we know the table/RPC doesn't exist, skip DB calls

@@ -119,7 +119,7 @@ async def add_comment(
     }).execute()
 
     if not result.data:
-        raise HTTPException(status_code=500, detail="Failed to add comment")
+        raise safe_internal_error(ValueError("Failed to add comment"), "social")
 
     # Send push notification for comment (F5)
     background_tasks.add_task(
@@ -168,7 +168,7 @@ async def update_comment(
     }).eq("id", comment_id).execute()
 
     if not result.data:
-        raise HTTPException(status_code=500, detail="Failed to update comment")
+        raise safe_internal_error(ValueError("Failed to update comment"), "social")
 
     return ActivityComment(**result.data[0])
 

@@ -123,7 +123,7 @@ class UserXP {
   final int totalXp;
   @JsonKey(name: 'current_level', defaultValue: 1)
   final int currentLevel;
-  @JsonKey(name: 'xp_to_next_level', defaultValue: 25) // Level 1 -> 2 requires 25 XP (Migration 227)
+  @JsonKey(name: 'xp_to_next_level', defaultValue: 150) // Level 1 -> 2 requires 150 XP (Migration 1901)
   final int xpToNextLevel;
   @JsonKey(name: 'xp_in_current_level', defaultValue: 0)
   final int xpInCurrentLevel;
@@ -143,7 +143,7 @@ class UserXP {
     this.userId = '',
     this.totalXp = 0,
     this.currentLevel = 1,
-    this.xpToNextLevel = 25, // Level 1 -> 2 requires 25 XP (Migration 227)
+    this.xpToNextLevel = 150, // Level 1 -> 2 requires 150 XP (Migration 1901)
     this.xpInCurrentLevel = 0,
     this.prestigeLevel = 0,
     this.title = 'Beginner',
@@ -223,7 +223,7 @@ class UserXP {
         userId: userId,
         totalXp: 0,
         currentLevel: 1,
-        xpToNextLevel: 25, // Level 1 -> 2 requires 25 XP
+        xpToNextLevel: 150, // Level 1 -> 2 requires 150 XP (Migration 1901)
         xpInCurrentLevel: 0,
         prestigeLevel: 0,
         title: 'Beginner',
@@ -313,7 +313,7 @@ class XPSummary {
     this.totalXp = 0,
     this.currentLevel = 1,
     this.title = 'Beginner',
-    this.xpToNextLevel = 25, // Level 1 -> 2 requires 25 XP (Migration 227)
+    this.xpToNextLevel = 150, // Level 1 -> 2 requires 150 XP (Migration 1901)
     this.xpInCurrentLevel = 0,
     this.progressPercent = 0,
     this.prestigeLevel = 0,

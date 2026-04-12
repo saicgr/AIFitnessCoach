@@ -8,7 +8,6 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from core.timezone_utils import resolve_timezone, local_date_to_utc_range, get_user_today, user_today_date
 from core.auth import get_current_user
 from core.exceptions import safe_internal_error
-from core.supabase_db import get_supabase_db
 from core.logger import get_logger
 from core.activity_logger import log_user_activity
 from services.adaptive_tdee_service import get_adaptive_tdee_service, FoodLogSummary, WeightLog as ServiceWeightLog

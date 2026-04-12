@@ -16,7 +16,6 @@ from typing import List, Optional
 from datetime import datetime
 import uuid
 
-from core.supabase_db import get_supabase_db
 from core.logger import get_logger
 from core.activity_logger import log_user_activity, log_user_error
 from models.skill_progression import (
@@ -530,7 +529,7 @@ async def start_progression_chain(user_id: str, chain_id: str,
         result = db.client.table("user_skill_progress").insert(progress_data).execute()
 
         if not result.data:
-            raise HTTPException(status_code=500, detail="Failed to create progress record")
+            raise safe_internal_error(ValueError("Failed to create progress record"), "skill_progressions")
 
         progress = _parse_progress(result.data[0])
 

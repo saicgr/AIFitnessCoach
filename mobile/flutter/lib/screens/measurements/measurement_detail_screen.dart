@@ -41,7 +41,10 @@ class _MeasurementDetailScreenState
     {'label': '7D', 'value': '7d', 'days': 7},
     {'label': '30D', 'value': '30d', 'days': 30},
     {'label': '90D', 'value': '90d', 'days': 90},
-    {'label': 'All', 'value': 'all', 'days': 365},
+    {'label': '6M', 'value': '6m', 'days': 182},
+    {'label': 'YTD', 'value': 'ytd', 'days': -1},
+    {'label': '1Y', 'value': '1y', 'days': 365},
+    {'label': 'All', 'value': 'all', 'days': 0},
   ];
 
   @override
@@ -155,44 +158,46 @@ class _MeasurementDetailScreenState
                 ).animate().fadeIn(delay: 100.ms),
               ),
 
-              // Period selector
+              // Period selector — scrollable pills
               SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Row(
-                    children: _periods.map((period) {
+                child: SizedBox(
+                  height: 48,
+                  child: ListView.separated(
+                    scrollDirection: Axis.horizontal,
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    itemCount: _periods.length,
+                    separatorBuilder: (_, __) => const SizedBox(width: 8),
+                    itemBuilder: (context, index) {
+                      final period = _periods[index];
                       final isSelected = _selectedPeriod == period['value'];
-                      return Expanded(
-                        child: GestureDetector(
-                          onTap: () => setState(
-                              () => _selectedPeriod = period['value'] as String),
-                          child: Container(
-                            margin: const EdgeInsets.symmetric(horizontal: 4),
-                            padding: const EdgeInsets.symmetric(vertical: 10),
-                            decoration: BoxDecoration(
-                              color:
-                                  isSelected ? cyan.withOpacity(0.2) : elevated,
-                              borderRadius: BorderRadius.circular(8),
-                              border: Border.all(
-                                color: isSelected ? cyan : cardBorder,
-                              ),
+                      return GestureDetector(
+                        onTap: () {
+                          HapticService.light();
+                          setState(() => _selectedPeriod = period['value'] as String);
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                          decoration: BoxDecoration(
+                            color: isSelected ? cyan.withOpacity(0.2) : elevated,
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(
+                              color: isSelected ? cyan : cardBorder,
+                              width: isSelected ? 1.5 : 1,
                             ),
-                            child: Center(
-                              child: Text(
-                                period['label'] as String,
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: isSelected
-                                      ? FontWeight.bold
-                                      : FontWeight.normal,
-                                  color: isSelected ? cyan : textMuted,
-                                ),
+                          ),
+                          child: Center(
+                            child: Text(
+                              period['label'] as String,
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                                color: isSelected ? cyan : textMuted,
                               ),
                             ),
                           ),
                         ),
                       );
-                    }).toList(),
+                    },
                   ),
                 ).animate().fadeIn(delay: 150.ms),
               ),
@@ -468,7 +473,7 @@ class _MeasurementDetailScreenState
           ),
           const SizedBox(height: 16),
           SizedBox(
-            height: 200,
+            height: 220,
             child: history.isEmpty
                 ? Center(
                     child: Column(
@@ -477,8 +482,14 @@ class _MeasurementDetailScreenState
                         Icon(Icons.show_chart, size: 40, color: textMuted),
                         const SizedBox(height: 8),
                         Text(
-                          'No data yet',
+                          'No data in this range',
                           style: TextStyle(color: textMuted),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Try selecting a wider time range or log a new entry',
+                          style: TextStyle(color: textMuted.withValues(alpha: 0.6), fontSize: 12),
+                          textAlign: TextAlign.center,
                         ),
                         const SizedBox(height: 8),
                         TextButton(
@@ -675,12 +686,31 @@ class _MeasurementDetailScreenState
     return false;
   }
 
+  /// Returns the start date for the currently selected period.
+  /// Used by both filtering and chart X-axis range.
+  DateTime _periodStartDate() {
+    final now = DateTime.now();
+    switch (_selectedPeriod) {
+      case '7d':
+        return now.subtract(const Duration(days: 7));
+      case '30d':
+        return now.subtract(const Duration(days: 30));
+      case '90d':
+        return now.subtract(const Duration(days: 90));
+      case '6m':
+        return now.subtract(const Duration(days: 182));
+      case 'ytd':
+        return DateTime(now.year, 1, 1);
+      case '1y':
+        return now.subtract(const Duration(days: 365));
+      default:
+        return now.subtract(const Duration(days: 30));
+    }
+  }
+
   List<MeasurementEntry> _filterByPeriod(List<MeasurementEntry> history) {
     if (_selectedPeriod == 'all') return history;
-
-    final days =
-        (_periods.firstWhere((p) => p['value'] == _selectedPeriod)['days'] as num).toInt();
-    final cutoff = DateTime.now().subtract(Duration(days: days));
+    final cutoff = _periodStartDate();
     return history.where((e) => e.recordedAt.isAfter(cutoff)).toList();
   }
 

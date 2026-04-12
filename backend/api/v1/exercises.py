@@ -25,7 +25,6 @@ from typing import List, Optional
 from pydantic import BaseModel, Field
 import uuid
 
-from core.supabase_db import get_supabase_db
 from core.logger import get_logger
 from core.auth import get_current_user
 from core.exceptions import safe_internal_error

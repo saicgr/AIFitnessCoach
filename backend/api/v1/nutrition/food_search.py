@@ -10,7 +10,6 @@ from pydantic import BaseModel
 from core.rate_limiter import limiter
 from core.auth import get_current_user
 from core.exceptions import safe_internal_error
-from core.supabase_db import get_supabase_db
 from core.logger import get_logger
 from services.food_database_service import get_food_database_service
 from services.nutrition_rag_service import get_nutrition_rag_service

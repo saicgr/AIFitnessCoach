@@ -83,6 +83,12 @@ class FoodLog {
   final double? vitaminCMg;
   @JsonKey(name: 'vitamin_d_iu')
   final double? vitaminDIu;
+  @JsonKey(name: 'inflammation_score')
+  final int? inflammationScore;
+  @JsonKey(name: 'is_ultra_processed')
+  final bool? isUltraProcessed;
+  @JsonKey(name: 'image_url')
+  final String? imageUrl;
   @JsonKey(name: 'created_at', fromJson: _parseDateTimeOrNow)
   final DateTime createdAt;
 
@@ -113,6 +119,9 @@ class FoodLog {
     this.vitaminAUg,
     this.vitaminCMg,
     this.vitaminDIu,
+    this.inflammationScore,
+    this.isUltraProcessed,
+    this.imageUrl,
     required this.createdAt,
   });
 
@@ -398,13 +407,13 @@ class LogBarcodeResponse {
   final String foodLogId;
   @JsonKey(name: 'product_name')
   final String productName;
-  @JsonKey(name: 'total_calories')
+  @JsonKey(name: 'total_calories', defaultValue: 0)
   final int totalCalories;
-  @JsonKey(name: 'protein_g')
+  @JsonKey(name: 'protein_g', defaultValue: 0.0)
   final double proteinG;
-  @JsonKey(name: 'carbs_g')
+  @JsonKey(name: 'carbs_g', defaultValue: 0.0)
   final double carbsG;
-  @JsonKey(name: 'fat_g')
+  @JsonKey(name: 'fat_g', defaultValue: 0.0)
   final double fatG;
 
   const LogBarcodeResponse({
@@ -654,13 +663,13 @@ class LogFoodResponse {
   final String? foodLogId;  // Nullable for analyze-only responses (not yet saved)
   @JsonKey(name: 'food_items')
   final List<Map<String, dynamic>> foodItems;
-  @JsonKey(name: 'total_calories')
+  @JsonKey(name: 'total_calories', defaultValue: 0)
   final int totalCalories;
-  @JsonKey(name: 'protein_g')
+  @JsonKey(name: 'protein_g', defaultValue: 0.0)
   final double proteinG;
-  @JsonKey(name: 'carbs_g')
+  @JsonKey(name: 'carbs_g', defaultValue: 0.0)
   final double carbsG;
-  @JsonKey(name: 'fat_g')
+  @JsonKey(name: 'fat_g', defaultValue: 0.0)
   final double fatG;
   @JsonKey(name: 'fiber_g')
   final double? fiberG;
@@ -724,6 +733,12 @@ class LogFoodResponse {
   @JsonKey(name: 'plate_description')
   final String? plateDescription;
 
+  // Inflammation tracking
+  @JsonKey(name: 'inflammation_score')
+  final int? inflammationScore;
+  @JsonKey(name: 'is_ultra_processed')
+  final bool? isUltraProcessed;
+
   const LogFoodResponse({
     required this.success,
     this.foodLogId,  // Optional for analyze-only responses
@@ -758,6 +773,8 @@ class LogFoodResponse {
     this.imageUrl,
     this.imageStorageKey,
     this.plateDescription,
+    this.inflammationScore,
+    this.isUltraProcessed,
   });
 
   factory LogFoodResponse.fromJson(Map<String, dynamic> json) =>
@@ -857,6 +874,8 @@ class LogFoodResponse {
       imageUrl: imageUrl,
       imageStorageKey: imageStorageKey,
       plateDescription: plateDescription,
+      inflammationScore: inflammationScore,
+      isUltraProcessed: isUltraProcessed,
     );
   }
 }

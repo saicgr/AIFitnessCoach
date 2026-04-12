@@ -29,6 +29,7 @@ import logging
 logger = logging.getLogger(__name__)
 from core.auth import get_current_user
 from core.db import get_supabase_db
+from core.exceptions import safe_internal_error
 from services.strength_calculator_service import StrengthCalculatorService, StrengthLevel
 from services.personal_records_service import PersonalRecordsService
 from services.nutrition_calculator_service import NutritionCalculatorService, NutritionTargets, DailyNutrition
@@ -383,7 +384,7 @@ async def calculate_nutrition_score(
     ).execute()
 
     if not response.data:
-        raise HTTPException(status_code=500, detail="Failed to save nutrition score")
+        raise safe_internal_error(ValueError("Failed to save nutrition score"), "scores_endpoints")
 
     record = response.data[0]
 
@@ -626,7 +627,7 @@ async def calculate_fitness_score(
     response = db.client.table("fitness_scores").insert(record_data).execute()
 
     if not response.data:
-        raise HTTPException(status_code=500, detail="Failed to save fitness score")
+        raise safe_internal_error(ValueError("Failed to save fitness score"), "scores_endpoints")
 
     record = response.data[0]
 

@@ -22,7 +22,6 @@ from fastapi import APIRouter, HTTPException, Query, Depends, Request
 from datetime import datetime, date, timedelta, timezone
 from typing import Optional, List
 
-from core.supabase_db import get_supabase_db
 from core.logger import get_logger
 from core.activity_logger import log_user_activity, log_user_error
 from core.auth import get_current_user
@@ -264,7 +263,7 @@ async def join_goal(
         result = db.client.table("weekly_personal_goals").insert(goal_data).execute()
 
         if not result.data:
-            raise HTTPException(status_code=500, detail="Failed to create goal")
+            raise safe_internal_error(ValueError("Failed to create goal"), "goal_social")
 
         new_goal = result.data[0]
 
@@ -287,18 +286,21 @@ async def join_goal(
         logger.info(f"✅ User {user_id} joined goal {goal_id}")
 
         # Log goal join
-        await log_user_activity(
-            user_id=user_id,
-            action="goal_joined",
-            endpoint=f"/api/v1/goal-social/goals/{goal_id}/join",
-            message=f"Joined goal for {friend_goal['exercise_name']}",
-            metadata={
-                "goal_id": goal_id,
-                "new_goal_id": new_goal["id"],
-                "exercise_name": friend_goal["exercise_name"]
-            },
-            status_code=200
-        )
+        try:
+            await log_user_activity(
+                user_id=user_id,
+                action="goal_joined",
+                endpoint=f"/api/v1/goal-social/goals/{goal_id}/join",
+                message=f"Joined goal for {friend_goal['exercise_name']}",
+                metadata={
+                    "goal_id": goal_id,
+                    "new_goal_id": new_goal["id"],
+                    "exercise_name": friend_goal["exercise_name"]
+                },
+                status_code=200
+            )
+        except Exception as e:
+            logger.error(f"Activity logging failed: {e}", exc_info=True, extra={"user_id_full": user_id, "failed_action": "goal_joined"})
 
         return _build_goal_response(new_goal, today)
 
@@ -394,25 +396,28 @@ async def invite_to_goal(
         result = db.client.table("goal_invites").insert(invite_data).execute()
 
         if not result.data:
-            raise HTTPException(status_code=500, detail="Failed to create invite")
+            raise safe_internal_error(ValueError("Failed to create invite"), "goal_social")
 
         logger.info("Push notification not implemented: goal invite from %s to %s for goal %s", user_id, request.invitee_id, goal_id)
 
         logger.info(f"✅ Created invite for goal {goal_id} to user {request.invitee_id}")
 
         # Log invite creation
-        await log_user_activity(
-            user_id=user_id,
-            action="goal_invite_sent",
-            endpoint=f"/api/v1/goal-social/goals/{goal_id}/invite",
-            message=f"Invited {request.invitee_id} to goal",
-            metadata={
-                "goal_id": goal_id,
-                "invitee_id": request.invitee_id,
-                "exercise_name": goal["exercise_name"]
-            },
-            status_code=200
-        )
+        try:
+            await log_user_activity(
+                user_id=user_id,
+                action="goal_invite_sent",
+                endpoint=f"/api/v1/goal-social/goals/{goal_id}/invite",
+                message=f"Invited {request.invitee_id} to goal",
+                metadata={
+                    "goal_id": goal_id,
+                    "invitee_id": request.invitee_id,
+                    "exercise_name": goal["exercise_name"]
+                },
+                status_code=200
+            )
+        except Exception as e:
+            logger.error(f"Activity logging failed: {e}", exc_info=True, extra={"user_id_full": user_id, "failed_action": "goal_invite_sent"})
 
         return GoalInvite(**result.data[0])
 
@@ -594,7 +599,7 @@ async def respond_to_invite(
             new_goal_result = db.client.table("weekly_personal_goals").insert(new_goal_data).execute()
 
             if not new_goal_result.data:
-                raise HTTPException(status_code=500, detail="Failed to create goal")
+                raise safe_internal_error(ValueError("Failed to create goal"), "goal_social")
 
             new_goal = new_goal_result.data[0]
             created_goal_id = new_goal["id"]
@@ -624,18 +629,21 @@ async def respond_to_invite(
             logger.info(f"✅ User {user_id} accepted invite, created goal {created_goal_id}")
 
             # Log invite acceptance
-            await log_user_activity(
-                user_id=user_id,
-                action="goal_invite_accepted",
-                endpoint=f"/api/v1/goal-social/goals/invites/{invite_id}/respond",
-                message=f"Accepted goal invite for {goal_data['exercise_name']}",
-                metadata={
-                    "invite_id": invite_id,
-                    "created_goal_id": created_goal_id,
-                    "exercise_name": goal_data["exercise_name"]
-                },
-                status_code=200
-            )
+            try:
+                await log_user_activity(
+                    user_id=user_id,
+                    action="goal_invite_accepted",
+                    endpoint=f"/api/v1/goal-social/goals/invites/{invite_id}/respond",
+                    message=f"Accepted goal invite for {goal_data['exercise_name']}",
+                    metadata={
+                        "invite_id": invite_id,
+                        "created_goal_id": created_goal_id,
+                        "exercise_name": goal_data["exercise_name"]
+                    },
+                    status_code=200
+                )
+            except Exception as e:
+                logger.error(f"Activity logging failed: {e}", exc_info=True, extra={"user_id_full": user_id, "failed_action": "goal_invite_accepted"})
 
         else:
             # Decline
@@ -647,14 +655,17 @@ async def respond_to_invite(
             logger.info(f"✅ User {user_id} declined invite {invite_id}")
 
             # Log invite decline
-            await log_user_activity(
-                user_id=user_id,
-                action="goal_invite_declined",
-                endpoint=f"/api/v1/goal-social/goals/invites/{invite_id}/respond",
-                message="Declined goal invite",
-                metadata={"invite_id": invite_id},
-                status_code=200
-            )
+            try:
+                await log_user_activity(
+                    user_id=user_id,
+                    action="goal_invite_declined",
+                    endpoint=f"/api/v1/goal-social/goals/invites/{invite_id}/respond",
+                    message="Declined goal invite",
+                    metadata={"invite_id": invite_id},
+                    status_code=200
+                )
+            except Exception as e:
+                logger.error(f"Activity logging failed: {e}", exc_info=True, extra={"user_id_full": user_id, "failed_action": "goal_invite_declined"})
 
         # Fetch updated invite
         updated = db.client.table("goal_invites").select("*").eq("id", invite_id).execute()
@@ -702,14 +713,17 @@ async def cancel_invite(
         logger.info(f"✅ Canceled invite {invite_id}")
 
         # Log invite cancellation
-        await log_user_activity(
-            user_id=user_id,
-            action="goal_invite_canceled",
-            endpoint=f"/api/v1/goal-social/goals/invites/{invite_id}",
-            message="Canceled goal invite",
-            metadata={"invite_id": invite_id},
-            status_code=200
-        )
+        try:
+            await log_user_activity(
+                user_id=user_id,
+                action="goal_invite_canceled",
+                endpoint=f"/api/v1/goal-social/goals/invites/{invite_id}",
+                message="Canceled goal invite",
+                metadata={"invite_id": invite_id},
+                status_code=200
+            )
+        except Exception as e:
+            logger.error(f"Activity logging failed: {e}", exc_info=True, extra={"user_id_full": user_id, "failed_action": "goal_invite_canceled"})
 
         return {"status": "deleted", "invite_id": invite_id}
 

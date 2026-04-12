@@ -760,7 +760,7 @@ class _SubscriptionManagementScreenState
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(
-              onPressed: () => context.push('/paywall-features'),
+              onPressed: () => context.push('/paywall-pricing'),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.cyan,
                 foregroundColor: Colors.white,

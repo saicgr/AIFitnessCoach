@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/accent_color_provider.dart';
 import '../../../data/models/nutrition.dart';
 import '../../../data/services/api_client.dart';
 
@@ -67,8 +68,9 @@ class _PostMealReviewSheetState extends ConsumerState<_PostMealReviewSheet> {
     final isDark = widget.isDark;
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final teal = isDark ? AppColors.teal : AppColorsLight.teal;
-    const orange = Color(0xFFF97316);
+    final accentEnum = AccentColorScope.of(context);
+    final accent = accentEnum.getColor(isDark);
+    final teal = accent;
 
     final foodSummary = widget.foodNames.take(3).join(', ');
     final extraCount = widget.foodNames.length > 3 ? ' +${widget.foodNames.length - 3} more' : '';
@@ -234,7 +236,7 @@ class _PostMealReviewSheetState extends ConsumerState<_PostMealReviewSheet> {
                   const Spacer(),
                   Text(
                     _energyLabel(_energyLevel),
-                    style: TextStyle(fontSize: 12, color: orange, fontWeight: FontWeight.w500),
+                    style: TextStyle(fontSize: 12, color: accent, fontWeight: FontWeight.w500),
                   ),
                 ],
               ),
@@ -253,13 +255,13 @@ class _PostMealReviewSheetState extends ConsumerState<_PostMealReviewSheet> {
                         min: 1,
                         max: 5,
                         divisions: 4,
-                        activeColor: orange,
-                        inactiveColor: orange.withValues(alpha: 0.15),
+                        activeColor: accent,
+                        inactiveColor: accent.withValues(alpha: 0.15),
                         onChanged: (v) => setState(() => _energyLevel = v.round()),
                       ),
                     ),
                   ),
-                  Icon(Icons.battery_full, size: 16, color: orange),
+                  Icon(Icons.battery_full, size: 16, color: accent),
                 ],
               ),
               const SizedBox(height: 16),
@@ -272,9 +274,9 @@ class _PostMealReviewSheetState extends ConsumerState<_PostMealReviewSheet> {
                       ? () => _saveMoodReview(teal)
                       : null,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: orange,
+                    backgroundColor: accent,
                     foregroundColor: Colors.white,
-                    disabledBackgroundColor: orange.withValues(alpha: 0.3),
+                    disabledBackgroundColor: accent.withValues(alpha: 0.3),
                     disabledForegroundColor: Colors.white54,
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
@@ -367,6 +369,7 @@ class _PostMealReviewSheetState extends ConsumerState<_PostMealReviewSheet> {
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
     final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final accent = AccentColorScope.of(context).getColor(isDark);
 
     return GestureDetector(
       onTap: () {
@@ -383,11 +386,11 @@ class _PostMealReviewSheetState extends ConsumerState<_PostMealReviewSheet> {
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: BoxDecoration(
           color: isSelected
-              ? const Color(0xFFF97316).withValues(alpha: 0.12)
+              ? accent.withValues(alpha: 0.12)
               : elevated,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: isSelected ? const Color(0xFFF97316).withValues(alpha: 0.4) : cardBorder,
+            color: isSelected ? accent.withValues(alpha: 0.4) : cardBorder,
             width: isSelected ? 1.5 : 1.0,
           ),
         ),
@@ -401,7 +404,7 @@ class _PostMealReviewSheetState extends ConsumerState<_PostMealReviewSheet> {
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                color: isSelected ? const Color(0xFFF97316) : textMuted,
+                color: isSelected ? accent : textMuted,
               ),
             ),
           ],

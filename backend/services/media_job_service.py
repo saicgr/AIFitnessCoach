@@ -65,12 +65,12 @@ class MediaJobService:
                 # Use a thread to run the coroutine to avoid "cannot be called from a running event loop".
                 import concurrent.futures
                 with concurrent.futures.ThreadPoolExecutor() as pool:
-                    future = pool.submit(asyncio.run, check_premium_gate(user_id, "form_video_analysis"))
+                    future = pool.submit(asyncio.run, check_premium_gate(user_id, "form_video_analysis", "UTC"))
                     future.result(timeout=10)
             else:
-                loop.run_until_complete(check_premium_gate(user_id, "form_video_analysis"))
+                loop.run_until_complete(check_premium_gate(user_id, "form_video_analysis", "UTC"))
         except RuntimeError:
-            asyncio.run(check_premium_gate(user_id, "form_video_analysis"))
+            asyncio.run(check_premium_gate(user_id, "form_video_analysis", "UTC"))
 
     def track_form_analysis_usage(self, user_id: str):
         """Track form video analysis usage after successful completion (sync wrapper)."""
@@ -82,10 +82,10 @@ class MediaJobService:
             if loop.is_running():
                 import concurrent.futures
                 with concurrent.futures.ThreadPoolExecutor() as pool:
-                    future = pool.submit(asyncio.run, track_premium_usage(user_id, "form_video_analysis"))
+                    future = pool.submit(asyncio.run, track_premium_usage(user_id, "form_video_analysis", "UTC"))
                     future.result(timeout=10)
             else:
-                loop.run_until_complete(track_premium_usage(user_id, "form_video_analysis"))
+                loop.run_until_complete(track_premium_usage(user_id, "form_video_analysis", "UTC"))
         except Exception as e:
             logger.warning(f"Failed to track form_video_analysis usage: {e}", exc_info=True)
 

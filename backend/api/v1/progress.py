@@ -20,7 +20,6 @@ from datetime import datetime, date, timedelta
 from pydantic import BaseModel, Field
 from enum import Enum
 
-from core.supabase_db import get_supabase_db
 from core.logger import get_logger
 
 router = APIRouter(prefix="/progress", tags=["Progress"])

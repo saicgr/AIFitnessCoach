@@ -14,22 +14,42 @@ extension _MeasurementDetailScreenStateUI on _MeasurementDetailScreenState {
     // Reverse to show oldest first (left to right)
     final reversedHistory = history.reversed.toList();
 
-    final spots = reversedHistory.asMap().entries.map((entry) {
+    // Use time-based X coordinates (milliseconds since epoch) so the chart
+    // correctly represents the time range of the selected period.
+    final now = DateTime.now();
+    final double maxX = now.millisecondsSinceEpoch.toDouble();
+    final double minX;
+    if (_selectedPeriod == 'all' && reversedHistory.isNotEmpty) {
+      // For "All", start from the oldest entry (with a small left padding)
+      final oldest = reversedHistory.first.recordedAt;
+      final rangePadding = now.difference(oldest).inMilliseconds * 0.05;
+      minX = oldest.millisecondsSinceEpoch.toDouble() - rangePadding;
+    } else {
+      minX = _periodStartDate().millisecondsSinceEpoch.toDouble();
+    }
+
+    final spots = reversedHistory.map((entry) {
       return FlSpot(
-          entry.key.toDouble(), entry.value.getValueInUnit(_isMetric));
+        entry.recordedAt.millisecondsSinceEpoch.toDouble(),
+        entry.getValueInUnit(_isMetric),
+      );
     }).toList();
 
     if (spots.isEmpty) return const SizedBox.shrink();
 
     final values = spots.map((s) => s.y).toList();
-    var minY = values.reduce((a, b) => a < b ? a : b) * 0.95;
-    var maxY = values.reduce((a, b) => a > b ? a : b) * 1.05;
+    final rawMinY = values.reduce((a, b) => a < b ? a : b);
+    final rawMaxY = values.reduce((a, b) => a > b ? a : b);
+    // If all values are the same, add a fixed padding so the chart isn't flat
+    final valuePadding = rawMinY == rawMaxY ? 5.0 : (rawMaxY - rawMinY) * 0.15;
+    var minY = rawMinY - valuePadding;
+    var maxY = rawMaxY + valuePadding;
 
     // Extend minY/maxY to encompass health zone lines
     final zoneLines = _getHealthZoneLines();
     for (final line in zoneLines) {
-      if (line.y < minY) minY = line.y * 0.95;
-      if (line.y > maxY) maxY = line.y * 1.05;
+      if (line.y < minY) minY = line.y - valuePadding * 0.5;
+      if (line.y > maxY) maxY = line.y + valuePadding * 0.5;
     }
 
     // Build line bars - EWMA trend line for weight with 3+ data points
@@ -38,9 +58,13 @@ extension _MeasurementDetailScreenStateUI on _MeasurementDetailScreenState {
 
     if (showEWMA) {
       final ewmaValues = _computeEWMA(values, alpha: 0.3);
-      final ewmaSpots = ewmaValues.asMap().entries.map((entry) {
-        return FlSpot(entry.key.toDouble(), entry.value);
-      }).toList();
+      final ewmaSpots = <FlSpot>[];
+      for (int i = 0; i < ewmaValues.length; i++) {
+        ewmaSpots.add(FlSpot(
+          reversedHistory[i].recordedAt.millisecondsSinceEpoch.toDouble(),
+          ewmaValues[i],
+        ));
+      }
 
       // Raw data line: thin and dotted
       lineBars.add(
@@ -117,8 +141,26 @@ extension _MeasurementDetailScreenStateUI on _MeasurementDetailScreenState {
       );
     }
 
+    // Calculate appropriate date label interval
+    final totalMs = maxX - minX;
+    final totalDays = totalMs / (1000 * 60 * 60 * 24);
+    // Aim for ~4-5 labels on the X axis
+    final intervalDays = (totalDays / 4).ceil().clamp(1, 365);
+    final intervalMs = intervalDays * 24 * 60 * 60 * 1000.0;
+
+    // Pick date format based on range
+    final String datePattern;
+    if (totalDays <= 14) {
+      datePattern = 'M/d';
+    } else if (totalDays <= 180) {
+      datePattern = 'MMM d';
+    } else {
+      datePattern = 'MMM yy';
+    }
+
     return LineChart(
       LineChartData(
+        clipData: const FlClipData.all(),
         gridData: FlGridData(
           show: true,
           drawVerticalLine: false,
@@ -132,32 +174,41 @@ extension _MeasurementDetailScreenStateUI on _MeasurementDetailScreenState {
           leftTitles: AxisTitles(
             sideTitles: SideTitles(
               showTitles: true,
-              reservedSize: 45,
-              getTitlesWidget: (value, meta) => Text(
-                _formatValue(value),
-                style: TextStyle(fontSize: 10, color: textMuted),
-              ),
+              reservedSize: 48,
+              getTitlesWidget: (value, meta) {
+                // Skip edge labels to prevent clipping
+                if (value <= minY || value >= maxY) {
+                  return const SizedBox.shrink();
+                }
+                return Padding(
+                  padding: const EdgeInsets.only(right: 6),
+                  child: Text(
+                    _formatValue(value),
+                    style: TextStyle(fontSize: 10, color: textMuted),
+                    textAlign: TextAlign.right,
+                  ),
+                );
+              },
             ),
           ),
           bottomTitles: AxisTitles(
             sideTitles: SideTitles(
               showTitles: true,
               reservedSize: 30,
-              interval:
-                  (reversedHistory.length / 4).ceil().toDouble().clamp(1, double.infinity),
+              interval: intervalMs,
               getTitlesWidget: (value, meta) {
-                final index = value.toInt();
-                if (index >= 0 && index < reversedHistory.length) {
-                  final date = reversedHistory[index].recordedAt;
-                  return Padding(
-                    padding: const EdgeInsets.only(top: 8),
-                    child: Text(
-                      DateFormat('M/d').format(date),
-                      style: TextStyle(fontSize: 10, color: textMuted),
-                    ),
-                  );
+                // Skip labels outside range
+                if (value < minX || value > maxX) {
+                  return const SizedBox.shrink();
                 }
-                return const SizedBox.shrink();
+                final date = DateTime.fromMillisecondsSinceEpoch(value.toInt());
+                return Padding(
+                  padding: const EdgeInsets.only(top: 8),
+                  child: Text(
+                    DateFormat(datePattern).format(date),
+                    style: TextStyle(fontSize: 10, color: textMuted),
+                  ),
+                );
               },
             ),
           ),
@@ -165,21 +216,23 @@ extension _MeasurementDetailScreenStateUI on _MeasurementDetailScreenState {
           topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
         ),
         borderData: FlBorderData(show: false),
+        minX: minX,
+        maxX: maxX,
         minY: minY,
         maxY: maxY,
         extraLinesData: ExtraLinesData(horizontalLines: zoneLines),
         lineBarsData: lineBars,
         lineTouchData: LineTouchData(
+          handleBuiltInTouches: true,
           touchTooltipData: LineTouchTooltipData(
+            fitInsideHorizontally: true,
+            fitInsideVertically: true,
             getTooltipColor: (spot) =>
                 isDark ? AppColors.nearBlack : Colors.white,
-            tooltipRoundedRadius: 8,
+            tooltipRoundedRadius: 10,
             getTooltipItems: (touchedSpots) {
               return touchedSpots.map((spot) {
-                final index = spot.x.toInt();
-                final date = index < reversedHistory.length
-                    ? reversedHistory[index].recordedAt
-                    : DateTime.now();
+                final date = DateTime.fromMillisecondsSinceEpoch(spot.x.toInt());
                 final unit =
                     _isMetric ? _type.metricUnit : _type.imperialUnit;
                 return LineTooltipItem(

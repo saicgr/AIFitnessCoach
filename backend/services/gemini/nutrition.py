@@ -60,13 +60,15 @@ class NutritionMixin:
 Return ONLY valid JSON (no markdown):
 {
   "food_items": [
-    {"name": "Food name", "amount": "portion size", "calories": 150, "protein_g": 10.0, "carbs_g": 15.0, "fat_g": 5.0, "fiber_g": 2.0, "weight_g": 100, "unit": "g", "count": null, "weight_per_unit_g": null}
+    {"name": "Food name", "amount": "portion size", "calories": 150, "protein_g": 10.0, "carbs_g": 15.0, "fat_g": 5.0, "fiber_g": 2.0, "weight_g": 100, "unit": "g", "count": null, "weight_per_unit_g": null, "inflammation_score": 5, "is_ultra_processed": false}
   ],
   "total_calories": 450,
   "protein_g": 25.0,
   "carbs_g": 40.0,
   "fat_g": 15.0,
   "fiber_g": 5.0,
+  "inflammation_score": 5,
+  "is_ultra_processed": false,
   "feedback": "Brief nutritional feedback",
   "plate_description": "Brief visual description of the plate/scene, max 100 chars (e.g. 'A South Indian breakfast with steamed idlis, sambar, and chutneys')"
 }
@@ -89,7 +91,21 @@ WEIGHT/COUNT FIELDS (required for portion editing):
   - count: Number of pieces visible
   - weight_per_unit_g: Weight of ONE piece (e.g., naan=90g, roti=45g, pakora=45g, samosa=80g)
   - weight_g = count × weight_per_unit_g
-- For non-countable items (curry, rice, dal): count=null, weight_per_unit_g=null'''
+- For non-countable items (curry, rice, dal): count=null, weight_per_unit_g=null
+
+INFLAMMATION SCORE (1-10, 10 = most inflammatory):
+1-2: Strongly anti-inflammatory (wild salmon, turmeric, berries, leafy greens, ginger tea, olive oil)
+3-4: Mildly anti-inflammatory (most vegetables, whole grains, nuts, legumes, plain yogurt)
+5: Neutral (plain eggs, plain rice, plain chicken breast, milk)
+6-7: Mildly inflammatory (white bread, red meat, cheese, fried foods, butter)
+8-9: Moderately inflammatory (processed meats, fast food, sugary drinks, packaged snacks, instant noodles)
+10: Highly inflammatory (deep-fried ultra-processed combos, trans fat items, candy + soda meals)
+
+ULTRA-PROCESSED (is_ultra_processed): true if food would be NOVA Group 4 — contains industrial additives like emulsifiers, hydrogenated oils, artificial sweeteners, protein isolates, modified starches, high-fructose corn syrup. Examples: Coca-Cola=true, instant noodles=true, grilled chicken=false, homemade samosa=false.
+
+Per-item inflammation_score: Rate EACH food item individually. Meal-level inflammation_score: Calorie-weighted average of all items (round to nearest int).
+
+MICRONUTRIENTS: Estimate all vitamins (A, C, D, E, K, B1, B2, B3, B6, B9, B12), minerals (calcium, iron, magnesium, zinc, selenium, potassium, sodium, phosphorus, copper, manganese), and fatty acids (omega-3, omega-6) for the total meal. Use standard USDA values for the identified foods.'''
 
         # Timeout for image analysis - needs to be generous for complex images
         IMAGE_ANALYSIS_TIMEOUT = 30  # 30 seconds — most images analyze in 2-8s, generous buffer for API spikes
@@ -349,14 +365,26 @@ WEIGHT/COUNT FIELDS (required for portion editing):
 SCORING (1-10): Be strict. Restaurant/fast food: 4-6. Whole foods: 7-8. Score 9-10 is rare.
 - Muscle goals: Need >25g protein for score >7
 - Weight loss: Penalize >500 cal, need fiber for score >7
-- Fried foods: -2 points. High sodium/sugar: -1 point each."""
+- Fried foods: -2 points. High sodium/sugar: -1 point each.
+
+INFLAMMATION SCORE (1-10, 10 = most inflammatory):
+1-2: Strongly anti-inflammatory (wild salmon, turmeric, berries, leafy greens, ginger tea, olive oil)
+3-4: Mildly anti-inflammatory (most vegetables, whole grains, nuts, legumes, plain yogurt)
+5: Neutral (plain eggs, plain rice, plain chicken breast, milk)
+6-7: Mildly inflammatory (white bread, red meat, cheese, fried foods, butter)
+8-9: Moderately inflammatory (processed meats, fast food, sugary drinks, packaged snacks, instant noodles)
+10: Highly inflammatory (deep-fried ultra-processed combos, trans fat items, candy + soda meals)
+
+ULTRA-PROCESSED (is_ultra_processed): true if food would be NOVA Group 4 — contains industrial additives like emulsifiers, hydrogenated oils, artificial sweeteners, protein isolates, modified starches, high-fructose corn syrup. Examples: Coca-Cola=true, instant noodles=true, grilled chicken=false, homemade samosa=false.
+
+Per-item inflammation_score: Rate EACH food item individually. Meal-level inflammation_score: Calorie-weighted average of all items (round to nearest int)."""
 
         # Response format with micronutrients for complete nutrient tracking
         # Added count, weight_per_unit_g for countable items, and unit for measurement type
         if user_goals or nutrition_targets:
             response_format = '''{{
   "food_items": [
-    {{"name": "Food name", "amount": "portion", "calories": 150, "protein_g": 10, "carbs_g": 15, "fat_g": 5, "fiber_g": 2, "goal_score": 7, "weight_g": 100, "unit": "g", "count": null, "weight_per_unit_g": null}}
+    {{"name": "Food name", "amount": "portion", "calories": 150, "protein_g": 10, "carbs_g": 15, "fat_g": 5, "fiber_g": 2, "goal_score": 7, "weight_g": 100, "unit": "g", "count": null, "weight_per_unit_g": null, "inflammation_score": 5, "is_ultra_processed": false}}
   ],
   "total_calories": 450,
   "protein_g": 25,
@@ -372,6 +400,8 @@ SCORING (1-10): Be strict. Restaurant/fast food: 4-6. Whole foods: 7-8. Score 9-
   "calcium_mg": 100,
   "iron_mg": 2,
   "potassium_mg": 300,
+  "inflammation_score": 5,
+  "is_ultra_processed": false,
   "corrected_query": "Corrected food description or null if no typos",
   "overall_meal_score": 7,
   "encouragements": ["What's good about this meal for their goals"],
@@ -382,7 +412,7 @@ SCORING (1-10): Be strict. Restaurant/fast food: 4-6. Whole foods: 7-8. Score 9-
         else:
             response_format = '''{{
   "food_items": [
-    {{"name": "Food name", "amount": "portion", "calories": 150, "protein_g": 10, "carbs_g": 15, "fat_g": 5, "fiber_g": 2, "weight_g": 100, "unit": "g", "count": null, "weight_per_unit_g": null}}
+    {{"name": "Food name", "amount": "portion", "calories": 150, "protein_g": 10, "carbs_g": 15, "fat_g": 5, "fiber_g": 2, "weight_g": 100, "unit": "g", "count": null, "weight_per_unit_g": null, "inflammation_score": 5, "is_ultra_processed": false}}
   ],
   "total_calories": 450,
   "protein_g": 25,
@@ -398,6 +428,8 @@ SCORING (1-10): Be strict. Restaurant/fast food: 4-6. Whole foods: 7-8. Score 9-
   "calcium_mg": 100,
   "iron_mg": 2,
   "potassium_mg": 300,
+  "inflammation_score": 5,
+  "is_ultra_processed": false,
   "corrected_query": "Corrected food description or null if no typos",
   "encouragements": ["What's good about this meal"],
   "warnings": ["Any concerns - skip if none"],

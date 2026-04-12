@@ -10,7 +10,6 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from pydantic import BaseModel
 from datetime import date, datetime, timedelta
 from typing import Optional, List
-from core.supabase_db import get_supabase_db
 from core.auth import get_current_user
 from core.exceptions import safe_internal_error
 from core.timezone_utils import resolve_timezone, get_user_today, local_date_to_utc_range
@@ -127,7 +126,7 @@ async def process_daily_login(
                 data["multiplier"] = 1.0
             return DailyLoginResponse(**data)
         else:
-            raise HTTPException(status_code=500, detail="Failed to process daily login")
+            raise safe_internal_error(ValueError("Failed to process daily login"), "xp")
 
     except HTTPException:
         raise

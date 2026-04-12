@@ -119,9 +119,12 @@ class _ExerciseImageThumbnailState
       );
     }
 
-    // If no image URL, return empty - no fallback icons
+    // If no image URL, show FitWiz logo placeholder
     if (_imageUrl == null) {
-      return const SizedBox.shrink();
+      return Image.asset(
+        'assets/icon/app_icon.png',
+        fit: BoxFit.cover,
+      );
     }
 
     return CachedNetworkImage(

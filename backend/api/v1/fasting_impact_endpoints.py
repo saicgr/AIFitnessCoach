@@ -758,7 +758,7 @@ async def mark_historical_fasting_day(
         result = db.client.table("fasting_records").insert(fasting_record).execute()
 
         if not result.data:
-            raise HTTPException(status_code=500, detail="Failed to create fasting record")
+            raise safe_internal_error(ValueError("Failed to create fasting record"), "fasting_impact_endpoints")
 
         # Log the activity
         await log_user_activity(

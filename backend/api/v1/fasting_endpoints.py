@@ -460,7 +460,7 @@ async def save_fasting_score(request: FastingScoreCreateRequest, http_request: R
         ).execute()
 
         if not result.data:
-            raise HTTPException(status_code=500, detail="Failed to save fasting score")
+            raise safe_internal_error(ValueError("Failed to save fasting score"), "fasting_endpoints")
 
         logger.info(f"✅ Fasting score saved for user {request.user_id}")
         return result.data[0]

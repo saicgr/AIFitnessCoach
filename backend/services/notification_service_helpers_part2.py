@@ -315,19 +315,24 @@ class NotificationServicePart2:
                     data={"action": "open_home"},
                 )
 
-        # Template pool fallback - select tier based on days_missed
-        if days_missed == 1:
-            template = random.choice(self.INACTIVITY_NUDGE_1DAY)
-            title = template["title"]
-            body = template["body"]
+        # Template pool fallback - select tier based on days_missed (6 tiers)
+        if days_missed <= 1:
+            templates = self.INACTIVITY_NUDGE_1DAY
         elif days_missed == 2:
-            template = random.choice(self.INACTIVITY_NUDGE_2DAY)
-            title = template["title"]
-            body = template["body"]
+            templates = self.INACTIVITY_NUDGE_2DAY
+        elif days_missed <= 4:
+            templates = self.INACTIVITY_NUDGE_3PLUS_DAY
+        elif days_missed <= 6:
+            templates = self.INACTIVITY_NUDGE_5DAY
+        elif days_missed <= 13:
+            templates = self.INACTIVITY_NUDGE_7DAY
         else:
-            template = random.choice(self.INACTIVITY_NUDGE_3PLUS_DAY)
-            title = template["title"].format(days=days_missed)
-            body = template["body"].format(days=days_missed)
+            templates = self.INACTIVITY_NUDGE_14PLUS_DAY
+
+        template = random.choice(templates)
+        name = user_name or "there"
+        title = template["title"].format(days=days_missed, name=name)
+        body = template["body"].format(days=days_missed, name=name)
 
         return await self.send_notification(
             fcm_token=fcm_token,

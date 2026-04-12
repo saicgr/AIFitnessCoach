@@ -5,7 +5,6 @@ from core.db import get_supabase_db
 from fastapi import APIRouter, Depends, BackgroundTasks, HTTPException, Request
 from core.auth import get_current_user, get_verified_auth_token
 from core.exceptions import safe_internal_error
-from core.supabase_db import get_supabase_db
 from core.supabase_client import get_supabase
 from core.logger import get_logger
 from core.rate_limiter import limiter

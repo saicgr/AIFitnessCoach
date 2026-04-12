@@ -17,7 +17,6 @@ from typing import List, Optional
 from datetime import datetime
 from pydantic import BaseModel
 
-from core.supabase_db import get_supabase_db
 from core.logger import get_logger
 from core.activity_logger import log_user_activity, log_user_error
 from models.schemas import (
@@ -105,7 +104,7 @@ async def submit_workout_feedback(
             ).execute()
             if not result.data:
                 logger.error(f"❌ [Feedback] Failed to insert workout_feedback")
-                raise HTTPException(status_code=500, detail="Failed to insert workout feedback")
+                raise safe_internal_error(ValueError("Failed to insert workout feedback"), "feedback")
             workout_feedback_id = result.data[0]["id"]
             logger.info(f"✅ [Feedback] Inserted new workout_feedback record: {workout_feedback_id}")
 
@@ -206,7 +205,7 @@ async def submit_workout_feedback(
         ).execute()
 
         if not final_result.data:
-            raise HTTPException(status_code=500, detail="Failed to retrieve workout feedback")
+            raise safe_internal_error(ValueError("Failed to retrieve workout feedback"), "feedback")
 
         wf = final_result.data[0]
         logger.info(f"Workout feedback submitted: id={workout_feedback_id}")

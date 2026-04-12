@@ -24,7 +24,6 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from datetime import datetime, date, timezone
 from typing import Optional, List
 
-from core.supabase_db import get_supabase_db
 from core.logger import get_logger
 from core.activity_logger import log_user_activity, log_user_error
 from core.auth import get_current_user
@@ -92,7 +91,7 @@ async def create_schedule_item(user_id: str, item: ScheduleItemCreate, current_u
         result = db.client.table(TABLE).insert(item_data).execute()
 
         if not result.data:
-            raise HTTPException(status_code=500, detail="Failed to create schedule item")
+            raise safe_internal_error(ValueError("Failed to create schedule item"), "daily_schedule")
 
         created = result.data[0]
 
@@ -244,7 +243,7 @@ async def update_schedule_item(user_id: str, item_id: str, item: ScheduleItemUpd
         ).eq("user_id", user_id).execute()
 
         if not result.data:
-            raise HTTPException(status_code=500, detail="Failed to update schedule item")
+            raise safe_internal_error(ValueError("Failed to update schedule item"), "daily_schedule")
 
         logger.info(f"Updated schedule item: id={item_id}")
         return result.data[0]
@@ -459,7 +458,7 @@ async def complete_schedule_item(user_id: str, item_id: str, current_user: dict 
         ).eq("user_id", user_id).execute()
 
         if not result.data:
-            raise HTTPException(status_code=500, detail="Failed to complete schedule item")
+            raise safe_internal_error(ValueError("Failed to complete schedule item"), "daily_schedule")
 
         title = existing.data[0].get("title", "Unknown")
         await log_user_activity(user_id, "schedule_item_completed", metadata={

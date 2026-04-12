@@ -13,7 +13,6 @@ from fastapi import APIRouter, Depends, HTTPException
 from core.auth import get_current_user
 from core.exceptions import safe_internal_error
 
-from core.supabase_db import get_supabase_db
 from core.logger import get_logger
 from models.schemas import WorkoutExit, WorkoutExitCreate
 
@@ -73,7 +72,7 @@ async def log_workout_exit(workout_id: str, exit_data: WorkoutExitCreate,
         result = db.client.table("workout_exits").insert(exit_record).execute()
 
         if not result.data:
-            raise HTTPException(status_code=500, detail="Failed to create workout exit record")
+            raise safe_internal_error(ValueError("Failed to create workout exit record"), "workouts")
 
         created = result.data[0]
         logger.info(f"Workout exit logged: id={created['id']}, reason={exit_data.exit_reason}")

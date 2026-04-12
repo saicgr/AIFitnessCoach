@@ -74,6 +74,9 @@ class NutritionDB(NutritionDBPart2, BaseDB):
         image_url: Optional[str] = None,
         image_storage_key: Optional[str] = None,
         source_type: str = "text",
+        # Inflammation / ultra-processed tracking
+        inflammation_score: Optional[int] = None,
+        is_ultra_processed: Optional[bool] = None,
     ) -> Optional[Dict[str, Any]]:
         """
         Create a food log entry from AI analysis.
@@ -120,6 +123,12 @@ class NutritionDB(NutritionDBPart2, BaseDB):
             data["image_url"] = image_url
         if image_storage_key:
             data["image_storage_key"] = image_storage_key
+
+        # Add inflammation / ultra-processed fields if provided
+        if inflammation_score is not None:
+            data["inflammation_score"] = inflammation_score
+        if is_ultra_processed is not None:
+            data["is_ultra_processed"] = is_ultra_processed
 
         # Add micronutrients if provided (only include non-None values)
         micronutrients = {
@@ -197,11 +206,7 @@ class NutritionDB(NutritionDBPart2, BaseDB):
             List of food log records
         """
         query = self.client.table("food_logs").select(
-            "id, user_id, meal_type, food_items, total_calories, protein_g, "
-            "carbs_g, fat_g, fiber_g, ai_feedback, health_score, logged_at, "
-            "source_type, image_url, notes, mood_before, mood_after, energy_level, "
-            "sodium_mg, sugar_g, saturated_fat_g, cholesterol_mg, potassium_mg, "
-            "calcium_mg, iron_mg, vitamin_a_ug, vitamin_c_mg, vitamin_d_iu"
+            "*"
         ).eq("user_id", user_id).is_("deleted_at", "null")
 
         if from_date:

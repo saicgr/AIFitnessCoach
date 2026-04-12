@@ -487,8 +487,16 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
         // User accepted the 25% discount — purchase discounted yearly
         final success = await ref.read(subscriptionProvider.notifier).purchase('premium_yearly_25off');
         if (success && context.mounted) {
-          await _markPaywallComplete(ref);
-          await _navigateAfterPaywall(context, ref);
+          final isReturning = ref.read(authStateProvider).user?.isPaywallComplete ?? false;
+          if (isReturning) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Welcome to FitWiz Pro! Your subscription is active.'), behavior: SnackBarBehavior.floating),
+            );
+            context.go('/home');
+          } else {
+            await _markPaywallComplete(ref);
+            await _navigateAfterPaywall(context, ref);
+          }
         }
         return;
       }
@@ -501,15 +509,26 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
       properties: {},
     );
 
+    final isReturningUser = ref.read(authStateProvider).user?.isPaywallComplete ?? false;
     final trialSuccess = await ref.read(subscriptionProvider.notifier).purchase('premium_yearly');
     if (trialSuccess && context.mounted) {
-      await _markPaywallComplete(ref);
-      await _navigateAfterPaywall(context, ref);
+      if (isReturningUser) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Welcome to FitWiz Pro! Your subscription is active.'), behavior: SnackBarBehavior.floating),
+        );
+        context.go('/home');
+      } else {
+        await _markPaywallComplete(ref);
+        await _navigateAfterPaywall(context, ref);
+      }
     } else if (context.mounted) {
-      // Purchase was cancelled or failed (user cancelled Google Play dialog)
-      // Mark paywall complete and navigate — they'll hit the hard paywall when trial/sub check fails
-      await _markPaywallComplete(ref);
-      await _navigateAfterPaywall(context, ref);
+      if (isReturningUser) {
+        if (context.canPop()) context.pop();
+      } else {
+        // New user — let them through, hard paywall will gate premium features
+        await _markPaywallComplete(ref);
+        await _navigateAfterPaywall(context, ref);
+      }
     }
   }
 
@@ -572,26 +591,32 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
     );
 
     final success = await ref.read(subscriptionProvider.notifier).purchase(_selectedPlan);
+    final isReturningUser = ref.read(authStateProvider).user?.isPaywallComplete ?? false;
+
     if (success && context.mounted) {
-      if (isSubscribed) {
+      if (isSubscribed || isReturningUser) {
+        // Existing user upgrading — snackbar + go home
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Plan updated successfully!'),
+          SnackBar(
+            content: Text(isSubscribed ? 'Plan updated successfully!' : 'Welcome to FitWiz Pro! Your subscription is active.'),
             behavior: SnackBarBehavior.floating,
           ),
         );
-        // Already subscribed users go directly home
         context.go('/home');
       } else {
-        // New subscribers go to workout loading
+        // Brand new user — full onboarding celebration + workout generation
         await _markPaywallComplete(ref);
         await _navigateAfterPaywall(context, ref);
       }
     } else if (!success && context.mounted) {
-      // Purchase failed or was cancelled — still let user through.
-      // The hard paywall will gate premium features if they're not subscribed.
-      await _markPaywallComplete(ref);
-      await _navigateAfterPaywall(context, ref);
+      if (isReturningUser) {
+        // Returning user cancelled — just go back
+        if (context.canPop()) context.pop();
+      } else {
+        // New user — let them through, hard paywall will gate premium features
+        await _markPaywallComplete(ref);
+        await _navigateAfterPaywall(context, ref);
+      }
     }
   }
 

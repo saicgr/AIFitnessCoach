@@ -319,7 +319,7 @@ async def initiate_streak_recovery(
         ).execute()
 
         if not attempt_response.data:
-            raise HTTPException(status_code=500, detail="Failed to create recovery attempt")
+            raise safe_internal_error(ValueError("Failed to create recovery attempt"), "consistency")
 
         attempt_id = attempt_response.data[0]["id"]
 

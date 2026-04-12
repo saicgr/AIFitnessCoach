@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/accent_color_provider.dart';
 
 /// Available units for portion measurement
 enum PortionUnit {
@@ -103,8 +104,12 @@ class _PortionAmountInputState extends State<PortionAmountInput> {
     final textPrimary = widget.isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = widget.isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final elevated = widget.isDark ? AppColors.elevated : AppColorsLight.elevated;
-    final teal = widget.isDark ? AppColors.teal : AppColorsLight.teal;
+    final accentEnum = AccentColorScope.of(context);
+    final teal = accentEnum.getColor(widget.isDark);
     final glassSurface = widget.isDark ? AppColors.glassSurface : AppColorsLight.glassSurface;
+    final macroProtein = widget.isDark ? AppColors.macroProtein : AppColorsLight.macroProtein;
+    final macroCarbs = widget.isDark ? AppColors.macroCarbs : AppColorsLight.macroCarbs;
+    final macroFat = widget.isDark ? AppColors.macroFat : AppColorsLight.macroFat;
 
     // Calculate current values based on multiplier
     final currentCalories = (widget.baseCalories * _currentMultiplier).round();
@@ -257,9 +262,9 @@ class _PortionAmountInputState extends State<PortionAmountInput> {
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
                 _NutrientPreview(label: 'Cal', value: currentCalories, isDark: widget.isDark),
-                _NutrientPreview(label: 'P', value: currentProtein, unit: 'g', isDark: widget.isDark),
-                _NutrientPreview(label: 'C', value: currentCarbs, unit: 'g', isDark: widget.isDark),
-                _NutrientPreview(label: 'F', value: currentFat, unit: 'g', isDark: widget.isDark),
+                _NutrientPreview(label: 'P', value: currentProtein, unit: 'g', isDark: widget.isDark, color: macroProtein),
+                _NutrientPreview(label: 'C', value: currentCarbs, unit: 'g', isDark: widget.isDark, color: macroCarbs),
+                _NutrientPreview(label: 'F', value: currentFat, unit: 'g', isDark: widget.isDark, color: macroFat),
               ],
             ),
           ),
@@ -352,12 +357,14 @@ class _NutrientPreview extends StatelessWidget {
   final int value;
   final String? unit;
   final bool isDark;
+  final Color? color;
 
   const _NutrientPreview({
     required this.label,
     required this.value,
     this.unit,
     required this.isDark,
+    this.color,
   });
 
   @override
@@ -372,14 +379,14 @@ class _NutrientPreview extends StatelessWidget {
           style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.bold,
-            color: textPrimary,
+            color: color ?? textPrimary,
           ),
         ),
         Text(
           label,
           style: TextStyle(
             fontSize: 11,
-            color: textMuted,
+            color: color?.withValues(alpha: 0.7) ?? textMuted,
           ),
         ),
       ],

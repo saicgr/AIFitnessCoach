@@ -13,7 +13,6 @@ from typing import List, Optional
 from datetime import datetime, date, timedelta
 import json
 
-from core.supabase_db import get_supabase_db
 from core.logger import get_logger
 from core.auth import get_current_user
 from core.rate_limiter import limiter
@@ -112,7 +111,7 @@ async def generate_weekly_summary(user_id: str, request: Request, week_start: Op
         ).execute()
 
         if not result.data:
-            raise HTTPException(status_code=500, detail="Failed to create weekly summary")
+            raise safe_internal_error(ValueError("Failed to create weekly summary"), "summaries")
 
         return _build_weekly_summary_response(result.data[0])
 
@@ -247,7 +246,7 @@ async def update_notification_preferences(user_id: str, prefs: NotificationPrefe
             ).execute()
 
         if not result.data:
-            raise HTTPException(status_code=500, detail="Failed to update preferences")
+            raise safe_internal_error(ValueError("Failed to update preferences"), "summaries")
 
         np = result.data[0]
         return NotificationPreferences(

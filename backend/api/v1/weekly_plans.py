@@ -23,7 +23,6 @@ from core.auth import get_current_user
 from core.exceptions import safe_internal_error
 from pydantic import BaseModel, Field
 
-from core.supabase_db import get_supabase_db
 from core.logger import get_logger
 from core.rate_limiter import limiter
 from core.timezone_utils import user_today_date

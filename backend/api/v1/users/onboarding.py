@@ -10,7 +10,6 @@ from core.auth import get_current_user, get_verified_auth_token, verify_user_own
 from core.exceptions import safe_internal_error
 from typing import Optional, List
 
-from core.supabase_db import get_supabase_db
 from core.supabase_client import get_supabase
 from core.logger import get_logger
 from core.activity_logger import log_user_activity, log_user_error
@@ -308,7 +307,7 @@ async def calculate_nutrition_targets(user_id: str, request: NutritionCalculatio
             raise HTTPException(status_code=504, detail="Calculation timed out. Please try again.")
 
         if not result.data:
-            raise HTTPException(status_code=500, detail="Failed to calculate nutrition metrics")
+            raise safe_internal_error(ValueError("Failed to calculate nutrition metrics"), "users")
 
         metrics = result.data
 

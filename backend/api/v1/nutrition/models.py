@@ -30,6 +30,10 @@ class FoodLogResponse(BaseModel):
     mood_before: Optional[str] = None
     mood_after: Optional[str] = None
     energy_level: Optional[int] = None
+    # Inflammation / ultra-processed tracking
+    inflammation_score: Optional[int] = None
+    is_ultra_processed: Optional[bool] = None
+    image_url: Optional[str] = None
     # Key micronutrients
     sodium_mg: Optional[float] = None
     sugar_g: Optional[float] = None
@@ -252,6 +256,9 @@ class LogDirectRequest(BaseModel):
     # Scores from analysis
     health_score: Optional[int] = None
     overall_meal_score: Optional[int] = None
+    # Inflammation / ultra-processed tracking
+    inflammation_score: Optional[int] = None
+    is_ultra_processed: Optional[bool] = None
 
     @validator('user_id')
     def user_id_must_not_be_empty(cls, v):
@@ -294,6 +301,8 @@ class LogFoodResponse(BaseModel):
     confidence_score: Optional[float] = None
     confidence_level: Optional[str] = None
     source_type: Optional[str] = None
+    inflammation_score: Optional[int] = None
+    is_ultra_processed: Optional[bool] = None
 
 
 class FoodReviewRequest(BaseModel):
@@ -515,8 +524,19 @@ class PinnedNutrientsUpdate(BaseModel):
 
 class AdaptiveCalculationResponse(BaseModel):
     """Adaptive TDEE calculation response."""
+    id: Optional[str] = None
     user_id: str
-    calculated_tdee: int
+    calculated_tdee: int = 0
+    calculated_at: Optional[datetime] = None
+    period_start: Optional[datetime] = None
+    period_end: Optional[datetime] = None
+    avg_daily_intake: Optional[int] = None
+    start_trend_weight_kg: Optional[float] = None
+    end_trend_weight_kg: Optional[float] = None
+    data_quality_score: Optional[float] = None
+    confidence_level: Optional[str] = None
+    days_logged: Optional[int] = None
+    weight_entries: Optional[int] = None
     smoothed_tdee: Optional[int] = None
     confidence_score: float = 0.0
     data_points: int = 0
@@ -609,39 +629,38 @@ class WeeklySummaryResponse(BaseModel):
 
 class DetailedTDEEResponse(BaseModel):
     """Detailed TDEE response with breakdown."""
-    user_id: str
-    estimated_tdee: int
-    confidence: float = 0.0
-    method: str = "insufficient_data"
-    period_days: int = 14
-    data_points: int = 0
+    tdee: int = 0
+    confidence_low: Optional[int] = None
+    confidence_high: Optional[int] = None
+    uncertainty_display: Optional[str] = None
+    uncertainty_calories: Optional[int] = None
+    data_quality_score: Optional[float] = None
+    weight_change_kg: Optional[float] = None
     avg_daily_intake: Optional[int] = None
-    avg_weight_change_kg_per_week: Optional[float] = None
-    bmr_estimate: Optional[int] = None
-    activity_factor: Optional[float] = None
-    weight_start_kg: Optional[float] = None
-    weight_end_kg: Optional[float] = None
-    intake_consistency: Optional[float] = None
-    recommendation: Optional[str] = None
+    start_weight_kg: Optional[float] = None
+    end_weight_kg: Optional[float] = None
+    days_analyzed: Optional[int] = None
+    food_logs_count: Optional[int] = None
+    weight_logs_count: Optional[int] = None
+    weight_trend: Optional[dict] = None
+    metabolic_adaptation: Optional[dict] = None
+    confidence_level: Optional[str] = None
 
 
 class AdherenceSummaryResponse(BaseModel):
     """Adherence summary response."""
-    user_id: str
+    weekly_adherence: List[dict] = []
+    average_adherence: Optional[float] = None
+    sustainability_score: Optional[float] = None
+    sustainability_rating: Optional[str] = None
+    recommendation: Optional[str] = None
     weeks_analyzed: int = 0
-    avg_adherence_percent: float = 0.0
-    calorie_target: int = 2000
-    avg_daily_intake: int = 0
-    best_week_adherence: Optional[float] = None
-    worst_week_adherence: Optional[float] = None
-    trend: str = "stable"
-    weekly_data: List[dict] = []
 
 
 class RecommendationOption(BaseModel):
     """A single recommendation option for the user."""
     option_type: str
-    label: str
+    label: str = ""
     calories: int
     protein_g: int
     carbs_g: int
@@ -654,12 +673,13 @@ class RecommendationOption(BaseModel):
 
 class RecommendationOptionsResponse(BaseModel):
     """Response containing multiple recommendation options."""
-    user_id: str
-    current_calories: int
-    current_weight_kg: Optional[float] = None
-    weight_trend: Optional[str] = None
+    current_tdee: Optional[int] = None
+    current_goal: Optional[str] = None
+    adherence_score: Optional[float] = None
+    has_adaptation: Optional[bool] = None
+    adaptation_details: Optional[dict] = None
     options: List[RecommendationOption] = []
-    generated_at: Optional[datetime] = None
+    recommended_option: Optional[str] = None
 
 
 class SelectRecommendationRequest(BaseModel):

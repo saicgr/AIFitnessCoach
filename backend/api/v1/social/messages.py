@@ -18,7 +18,6 @@ from core.rate_limiter import limiter
 from typing import Optional, List
 from datetime import datetime
 
-from core.supabase_db import get_supabase_db
 from core.logger import get_logger
 from core.activity_logger import log_user_activity, log_user_error
 from services.user_context_service import user_context_service, EventType
@@ -338,7 +337,7 @@ async def send_message(
                 # Fallback: manually create conversation
                 conv_result = db.client.table("conversations").insert({}).execute()
                 if not conv_result.data:
-                    raise HTTPException(status_code=500, detail="Failed to create conversation")
+                    raise safe_internal_error(ValueError("Failed to create conversation"), "social")
 
                 conversation_id = str(conv_result.data[0]["id"])
 
@@ -365,7 +364,7 @@ async def send_message(
         message_result = db.client.table("direct_messages").insert(message_data).execute()
 
         if not message_result.data:
-            raise HTTPException(status_code=500, detail="Failed to send message")
+            raise safe_internal_error(ValueError("Failed to send message"), "social")
 
         msg_row = message_result.data[0]
 
@@ -582,7 +581,7 @@ async def create_group_conversation(
         }).execute()
 
         if not conv_result.data:
-            raise HTTPException(status_code=500, detail="Failed to create group conversation")
+            raise safe_internal_error(ValueError("Failed to create group conversation"), "social")
 
         conversation_id = str(conv_result.data[0]["id"])
 

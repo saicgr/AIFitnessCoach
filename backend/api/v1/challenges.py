@@ -32,6 +32,7 @@ from core.auth import get_current_user
 from core.supabase_client import get_supabase
 from core.logger import get_logger
 from core.activity_logger import log_user_activity, log_user_error
+from core.exceptions import safe_internal_error
 from services.social_rag_service import get_social_rag_service
 
 logger = get_logger(__name__)
@@ -845,7 +846,7 @@ async def accept_challenge_from_feed(
     result = supabase.table("workout_challenges").insert(challenge_data).execute()
 
     if not result.data:
-        raise HTTPException(status_code=500, detail="Failed to create challenge")
+        raise safe_internal_error(ValueError("Failed to create challenge"), "challenges")
 
     challenge_row = result.data[0]
 

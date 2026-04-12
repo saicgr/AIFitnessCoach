@@ -510,7 +510,8 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
         f"Validation error on {request.method} {request.url.path}: "
         f"{json.dumps(exc.errors(), default=str)}"
     )
-    return JSONResponse(status_code=422, content={"detail": exc.errors()})
+    errors = json.loads(json.dumps(exc.errors(), default=str))
+    return JSONResponse(status_code=422, content={"detail": errors})
 
 # Send server errors to Discord #alerts (500, 502, 503, 504 + unhandled exceptions)
 from services.discord_webhooks import notify_error as _discord_notify_error

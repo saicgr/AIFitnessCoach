@@ -21,7 +21,6 @@ from botocore.exceptions import ClientError
 import os
 import re
 from dotenv import load_dotenv
-from core.supabase_db import get_supabase_db
 from core.logger import get_logger
 
 logger = get_logger(__name__)
@@ -43,8 +42,8 @@ s3_client = boto3.client(
 )
 
 BUCKET_NAME = os.getenv('S3_BUCKET_NAME', 'ai-fitness-coach')
-VIDEO_BASE_PREFIX = "VERTICAL VIDEOS/"  # Base folder for all videos
-IMAGE_BASE_PREFIX = "ILLUSTRATIONS/"  # Base folder for all images
+VIDEO_BASE_PREFIX = "VERTICAL VIDEOS ALL/"  # Base folder for all videos
+IMAGE_BASE_PREFIX = "ILLUSTRATIONS ALL/"  # Base folder for all images
 PRESIGNED_URL_EXPIRATION = 3600  # 1 hour
 
 

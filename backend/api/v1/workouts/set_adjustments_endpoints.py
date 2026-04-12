@@ -455,7 +455,7 @@ async def check_fatigue(
         raise
     except Exception as e:
         logger.error(f"Error validating workout: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail="Error validating workout")
+        raise safe_internal_error(ValueError("Error validating workout"), "workouts")
 
     # Convert input to SetPerformance objects
     set_data = [

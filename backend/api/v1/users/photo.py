@@ -9,7 +9,6 @@ from core.auth import get_current_user, verify_user_ownership
 from core.exceptions import safe_internal_error
 import boto3
 
-from core.supabase_db import get_supabase_db
 from core.logger import get_logger
 from core.config import get_settings
 

@@ -158,7 +158,11 @@ class FoodDatabaseLookupService(FoodDatabaseLookupServicePart2):
                                 WHERE is_active = TRUE
                                 AND (food_name_normalized = :q OR :q = ANY(variant_names))
                                 {filter_clause}
-                                ORDER BY match_rank
+                                ORDER BY match_rank,
+                                    CASE WHEN region IS NULL THEN 0 ELSE 1 END,
+                                    CASE WHEN replace(food_name_normalized, '_', ' ') = :q THEN 0 ELSE 1 END,
+                                    CASE WHEN lower(display_name) LIKE '%' || :q || '%' THEN 0 ELSE 1 END,
+                                    length(display_name)
                                 LIMIT :lim
                             """), params),
                             timeout=min(1.0, remaining),
@@ -651,17 +655,30 @@ class FoodDatabaseLookupService(FoodDatabaseLookupServicePart2):
             sb = get_supabase()
 
             # Step 2: Check variant_names array for exact match
-            # Prefer generic entries (region IS NULL) for accuracy
+            # Prefer generic entries (region IS NULL) with display_name matching query
             resp = sb.client.table("food_nutrition_overrides").select("*").eq(
                 "is_active", True
-            ).is_("region", "null").contains("variant_names", [normalized]).limit(1).execute()
+            ).is_("region", "null").contains("variant_names", [normalized]).limit(5).execute()
 
             if not resp.data:
                 resp = sb.client.table("food_nutrition_overrides").select("*").eq(
                     "is_active", True
-                ).contains("variant_names", [normalized]).limit(1).execute()
+                ).contains("variant_names", [normalized]).limit(5).execute()
 
             if resp.data:
+                # Among variant matches, prefer entries whose food_name_normalized
+                # or display_name best matches the query, and shorter (more generic) names
+                query_words = normalized.split()
+                def _display_match_score(r):
+                    fn = (r.get("food_name_normalized") or "").replace("_", " ").lower()
+                    dn = (r.get("display_name") or "").lower()
+                    # Exact food_name_normalized match (underscore-normalized) is best
+                    name_exact = 0 if fn == normalized else 1
+                    # Display name containing query words
+                    word_hits = -sum(1 for w in query_words if w in dn)
+                    # Shorter display names are more generic
+                    return (name_exact, word_hits, len(dn))
+                resp.data.sort(key=_display_match_score)
                 row = resp.data[0]
                 override_data = self._row_to_override_dict(row)
                 # Cache for future exact lookups

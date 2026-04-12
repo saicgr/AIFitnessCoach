@@ -12,6 +12,7 @@ from core.logger import get_logger
 from core.config import get_settings
 from core.exceptions import safe_internal_error
 from services.email_service import get_email_service
+from services.discord_webhooks import notify_subscription
 
 from api.v1.subscriptions.models import _product_to_tier
 
@@ -145,7 +146,7 @@ async def _handle_initial_purchase(supabase, event: dict, background_tasks=None)
             "metadata": event
         }).execute()
 
-    if not is_trial and background_tasks:
+    if background_tasks:
         try:
             user_result = supabase.client.table("users") \
                 .select("email, name") \
@@ -153,16 +154,34 @@ async def _handle_initial_purchase(supabase, event: dict, background_tasks=None)
                 .single() \
                 .execute()
             if user_result.data:
+                user_email = user_result.data["email"]
+                user_name = user_result.data.get("name", "")
+
+                # Purchase confirmation email (skip for trials)
+                if not is_trial:
+                    background_tasks.add_task(
+                        get_email_service().send_purchase_confirmation,
+                        user_email,
+                        user_name,
+                        tier,
+                        price,
+                        currency,
+                    )
+
+                # Discord notification for all purchases (trial and paid)
                 background_tasks.add_task(
-                    get_email_service().send_purchase_confirmation,
-                    user_result.data["email"],
-                    user_result.data.get("name", ""),
-                    tier,
-                    price,
-                    currency,
+                    notify_subscription,
+                    email=user_email,
+                    user_id=user_id,
+                    plan=product_id,
+                    price=price,
+                    currency=currency,
+                    is_trial=is_trial,
+                    store=store,
+                    name=user_name,
                 )
-        except Exception as email_err:
-            logger.error(f"❌ Failed to queue purchase confirmation email: {email_err}", exc_info=True)
+        except Exception as notify_err:
+            logger.error(f"❌ Failed to queue purchase notifications: {notify_err}", exc_info=True)
 
 
 async def _handle_renewal(supabase, event: dict, background_tasks=None):

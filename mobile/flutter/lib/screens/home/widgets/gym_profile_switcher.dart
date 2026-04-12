@@ -114,7 +114,7 @@ class _GymProfileSwitcherState extends ConsumerState<GymProfileSwitcher> {
       error: (error, _) => _buildErrorState(isDark, error),
       data: (profiles) {
         if (profiles.isEmpty) {
-          return const SizedBox.shrink();
+          return _buildEmptyState(context, isDark);
         }
         return _buildProfileStrip(context, profiles, isDark);
       },
@@ -122,13 +122,79 @@ class _GymProfileSwitcherState extends ConsumerState<GymProfileSwitcher> {
   }
 
   Widget _buildLoadingState(bool isDark) {
-    // Hide during loading for cleaner experience
-    return const SizedBox.shrink();
+    final color = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        SizedBox(
+          width: 14,
+          height: 14,
+          child: CircularProgressIndicator(
+            strokeWidth: 1.5,
+            color: color,
+          ),
+        ),
+        const SizedBox(width: 8),
+        Text(
+          'Loading gym...',
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w500,
+            color: color,
+          ),
+        ),
+      ],
+    );
   }
 
   Widget _buildErrorState(bool isDark, Object error) {
-    // Hide on error - don't show failed state to user
-    return const SizedBox.shrink();
+    final color = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+    return GestureDetector(
+      onTap: () => ref.invalidate(gymProfilesProvider),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.refresh_rounded, size: 16, color: color),
+          const SizedBox(width: 6),
+          Text(
+            'Tap to retry',
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w500,
+              color: color,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEmptyState(BuildContext context, bool isDark) {
+    final color = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+    return GestureDetector(
+      onTap: () {
+        HapticService.light();
+        showGlassSheet(
+          context: context,
+          builder: (ctx) => const AddGymProfileSheet(),
+        );
+      },
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.add_circle_outline_rounded, size: 16, color: color),
+          const SizedBox(width: 6),
+          Text(
+            'Add gym',
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w500,
+              color: color,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   Widget _buildProfileStrip(
@@ -805,6 +871,8 @@ class _ProfilePickerSheetState extends ConsumerState<_ProfilePickerSheet> {
     GymProfile profile,
     SheetColors colors,
   ) async {
+    final messenger = ScaffoldMessenger.of(context);
+    final navigator = Navigator.of(context);
     final controller = TextEditingController(text: '${profile.name} (Copy)');
     String? errorText;
 
@@ -910,11 +978,11 @@ class _ProfilePickerSheetState extends ConsumerState<_ProfilePickerSheet> {
         setState(() {
           // Refresh will happen via provider
         });
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Created "$result"')));
+        messenger.showSnackBar(
+          SnackBar(content: Text('Created "$result"')),
+        );
         // Close the sheet after successful duplication
-        Navigator.of(context).pop();
+        navigator.pop();
       }
     }
   }

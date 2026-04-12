@@ -540,7 +540,7 @@ async def create_activity(
     }).execute()
 
     if not result.data:
-        raise HTTPException(status_code=500, detail="Failed to create activity")
+        raise safe_internal_error(ValueError("Failed to create activity"), "social")
 
     activity_item = ActivityFeedItem(**result.data[0])
 
@@ -661,7 +661,7 @@ async def update_activity(
     }).eq("id", activity_id).execute()
 
     if not result.data:
-        raise HTTPException(status_code=500, detail="Failed to update activity")
+        raise safe_internal_error(ValueError("Failed to update activity"), "social")
 
     return result.data[0]
 
@@ -710,7 +710,7 @@ async def pin_activity(
     }).eq("id", activity_id).execute()
 
     if not result.data:
-        raise HTTPException(status_code=500, detail="Failed to pin activity")
+        raise safe_internal_error(ValueError("Failed to pin activity"), "social")
 
     return {"message": "Activity pinned successfully"}
 
@@ -759,6 +759,6 @@ async def unpin_activity(
     }).eq("id", activity_id).execute()
 
     if not result.data:
-        raise HTTPException(status_code=500, detail="Failed to unpin activity")
+        raise safe_internal_error(ValueError("Failed to unpin activity"), "social")
 
     return {"message": "Activity unpinned successfully"}

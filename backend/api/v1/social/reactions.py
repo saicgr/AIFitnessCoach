@@ -164,7 +164,7 @@ async def add_reaction(
         }).execute()
 
     if not result.data:
-        raise HTTPException(status_code=500, detail="Failed to add reaction")
+        raise safe_internal_error(ValueError("Failed to add reaction"), "social")
 
     reaction_obj = ActivityReaction(**result.data[0])
 

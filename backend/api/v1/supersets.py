@@ -35,7 +35,6 @@ import logging
 import json
 import uuid
 
-from core.supabase_db import get_supabase_db
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/supersets", tags=["Supersets"])
@@ -401,7 +400,7 @@ async def update_superset_preferences(user_id: str, request: SupersetPreferences
         }).eq("id", user_id).execute()
 
         if not update_result.data:
-            raise HTTPException(status_code=500, detail="Failed to update preferences")
+            raise safe_internal_error(ValueError("Failed to update preferences"), "supersets")
 
         # Build response
         preferences = SupersetPreferences(
@@ -538,7 +537,7 @@ async def create_superset_pair(request: CreateSupersetPairRequest,
         }).eq("id", request.workout_id).execute()
 
         if not update_result.data:
-            raise HTTPException(status_code=500, detail="Failed to update workout")
+            raise safe_internal_error(ValueError("Failed to update workout"), "supersets")
 
         logger.info(f"Created superset group {new_group} in workout {request.workout_id}")
 
@@ -613,7 +612,7 @@ async def remove_superset_pair(workout_id: str, superset_group: int,
         }).eq("id", workout_id).execute()
 
         if not update_result.data:
-            raise HTTPException(status_code=500, detail="Failed to update workout")
+            raise safe_internal_error(ValueError("Failed to update workout"), "supersets")
 
         logger.info(f"Removed superset group {superset_group} from workout {workout_id}, updated {updated_count} exercises")
 

@@ -95,100 +95,109 @@ async def track_challenge_click(
     Returns:
         Updated challenge count
     """
-    supabase = get_supabase_client()
+    try:
+        supabase = get_supabase_client()
 
-    # Get or create workout_shares entry
-    shares_result = supabase.table("workout_shares").select("*").eq(
-        "activity_id", activity_id
-    ).execute()
-
-    if shares_result.data:
-        # Update existing
-        share_id = shares_result.data[0]["id"]
-        new_count = shares_result.data[0]["challenge_count"] + 1
-
-        supabase.table("workout_shares").update({
-            "challenge_count": new_count,
-            "updated_at": datetime.now(timezone.utc).isoformat(),
-        }).eq("id", share_id).execute()
-
-    else:
-        # Create new workout_shares entry
-        activity_result = supabase.table("activity_feed").select("user_id").eq(
-            "id", activity_id
+        # Get or create workout_shares entry
+        shares_result = supabase.table("workout_shares").select("*").eq(
+            "activity_id", activity_id
         ).execute()
 
-        if not activity_result.data:
-            raise HTTPException(status_code=404, detail="Activity not found")
-
-        new_count = 1
-        supabase.table("workout_shares").insert({
-            "shared_by": activity_result.data[0]["user_id"],
-            "activity_id": activity_id,
-            "challenge_count": new_count,
-            "is_public": True,
-        }).execute()
-
-    # Store challenge in ChromaDB for AI insights
-    try:
-        social_rag = get_social_rag_service()
-        user_result = supabase.table("users").select("name").eq("id", user_id).execute()
-        user_name = user_result.data[0]["name"] if user_result.data else "User"
-
-        # Log challenge acceptance
-        collection = social_rag.get_social_collection()
-        collection.add(
-            documents=[f"{user_name} accepted challenge for activity {activity_id}"],
-            metadatas=[{
-                "user_id": user_id,
-                "activity_id": activity_id,
-                "interaction_type": "challenge",
-                "created_at": datetime.now(timezone.utc).isoformat(),
-            }],
-            ids=[f"challenge_{user_id}_{activity_id}_{datetime.now().timestamp()}"],
-        )
-    except Exception as e:
-        logger.warning(f" [Challenge] Failed to log to ChromaDB: {e}", exc_info=True)
-
-    logger.info(f" [Challenge] User {user_id} challenged activity {activity_id} (count: {new_count})")
-
-    # Notify the workout author
-    try:
-        # Get source user from activity or shares
-        source_user_id = None
         if shares_result.data:
-            source_user_id = shares_result.data[0].get("shared_by")
-        if not source_user_id:
-            act_result = supabase.table("activity_feed").select("user_id").eq("id", activity_id).execute()
-            if act_result.data:
-                source_user_id = act_result.data[0]["user_id"]
-        if source_user_id:
-            # Get actor name for notification body
-            actor_info = supabase.table("users").select("name").eq("id", user_id).execute()
-            actor_display = actor_info.data[0]["name"] if actor_info.data else "Someone"
-            await _notify_workout_interaction(
-                supabase, source_user_id=source_user_id, actor_user_id=user_id,
-                activity_id=activity_id, workout_name="",
-                action="challenge_accepted", title="Challenge Accepted!",
-                body=f"{actor_display} accepted your workout challenge",
+            # Update existing
+            share_id = shares_result.data[0]["id"]
+            new_count = shares_result.data[0]["challenge_count"] + 1
+
+            supabase.table("workout_shares").update({
+                "challenge_count": new_count,
+                "updated_at": datetime.now(timezone.utc).isoformat(),
+            }).eq("id", share_id).execute()
+
+        else:
+            # Create new workout_shares entry
+            activity_result = supabase.table("activity_feed").select("user_id").eq(
+                "id", activity_id
+            ).execute()
+
+            if not activity_result.data:
+                raise HTTPException(status_code=404, detail="Activity not found")
+
+            new_count = 1
+            supabase.table("workout_shares").insert({
+                "shared_by": activity_result.data[0]["user_id"],
+                "activity_id": activity_id,
+                "challenge_count": new_count,
+                "is_public": True,
+            }).execute()
+
+        # Store challenge in ChromaDB for AI insights
+        try:
+            social_rag = get_social_rag_service()
+            user_result = supabase.table("users").select("name").eq("id", user_id).execute()
+            user_name = user_result.data[0]["name"] if user_result.data else "User"
+
+            # Log challenge acceptance
+            collection = social_rag.get_social_collection()
+            collection.add(
+                documents=[f"{user_name} accepted challenge for activity {activity_id}"],
+                metadatas=[{
+                    "user_id": user_id,
+                    "activity_id": activity_id,
+                    "interaction_type": "challenge",
+                    "created_at": datetime.now(timezone.utc).isoformat(),
+                }],
+                ids=[f"challenge_{user_id}_{activity_id}_{datetime.now().timestamp()}"],
             )
+        except Exception as e:
+            logger.warning(f" [Challenge] Failed to log to ChromaDB: {e}", exc_info=True)
+
+        logger.info(f" [Challenge] User {user_id} challenged activity {activity_id} (count: {new_count})")
+
+        # Notify the workout author
+        try:
+            # Get source user from activity or shares
+            source_user_id = None
+            if shares_result.data:
+                source_user_id = shares_result.data[0].get("shared_by")
+            if not source_user_id:
+                act_result = supabase.table("activity_feed").select("user_id").eq("id", activity_id).execute()
+                if act_result.data:
+                    source_user_id = act_result.data[0]["user_id"]
+            if source_user_id:
+                # Get actor name for notification body
+                actor_info = supabase.table("users").select("name").eq("id", user_id).execute()
+                actor_display = actor_info.data[0]["name"] if actor_info.data else "Someone"
+                await _notify_workout_interaction(
+                    supabase, source_user_id=source_user_id, actor_user_id=user_id,
+                    activity_id=activity_id, workout_name="",
+                    action="challenge_accepted", title="Challenge Accepted!",
+                    body=f"{actor_display} accepted your workout challenge",
+                )
+        except Exception as e:
+            logger.warning(f" [Challenge] Failed to send notification: {e}", exc_info=True)
+
+        # Log challenge click
+        try:
+            await log_user_activity(
+                user_id=user_id,
+                action="challenge_accepted",
+                endpoint=f"/api/v1/saved-workouts/challenge/{activity_id}",
+                message=f"Accepted workout challenge",
+                metadata={"activity_id": activity_id, "challenge_count": new_count},
+                status_code=200
+            )
+        except Exception as e:
+            logger.error(f"Activity logging failed: {e}", exc_info=True, extra={"user_id_full": user_id, "failed_action": "challenge_accepted"})
+
+        return {
+            "challenge_count": new_count,
+            "message": "Challenge tracked successfully"
+        }
+    except HTTPException:
+        raise
     except Exception as e:
-        logger.warning(f" [Challenge] Failed to send notification: {e}", exc_info=True)
-
-    # Log challenge click
-    await log_user_activity(
-        user_id=user_id,
-        action="challenge_accepted",
-        endpoint=f"/api/v1/saved-workouts/challenge/{activity_id}",
-        message=f"Accepted workout challenge",
-        metadata={"activity_id": activity_id, "challenge_count": new_count},
-        status_code=200
-    )
-
-    return {
-        "challenge_count": new_count,
-        "message": "Challenge tracked successfully"
-    }
+        logger.error(f"Error in track_challenge_click: {e}", exc_info=True)
+        raise safe_internal_error(e, "saved_workouts")
 
 
 # ============================================================
@@ -210,61 +219,67 @@ async def get_workout_badges(activity_id: str,
     Returns:
         List of badges with metadata
     """
-    supabase = get_supabase_client()
+    try:
+        supabase = get_supabase_client()
 
-    # Get workout_shares data
-    shares_result = supabase.table("workout_shares").select("*").eq(
-        "activity_id", activity_id
-    ).execute()
+        # Get workout_shares data
+        shares_result = supabase.table("workout_shares").select("*").eq(
+            "activity_id", activity_id
+        ).execute()
 
-    badges = []
+        badges = []
 
-    if shares_result.data:
-        share = shares_result.data[0]
+        if shares_result.data:
+            share = shares_result.data[0]
 
-        # TRENDING badge
-        if share.get("is_trending"):
-            badges.append({
-                "type": "trending",
-                "label": "🔥 TRENDING",
-                "color": "orange",
-                "description": f"{share['share_count']} saves in last 7 days"
-            })
+            # TRENDING badge
+            if share.get("is_trending"):
+                badges.append({
+                    "type": "trending",
+                    "label": "🔥 TRENDING",
+                    "color": "orange",
+                    "description": f"{share['share_count']} saves in last 7 days"
+                })
 
-        # HALL OF FAME badge
-        if share.get("is_hall_of_fame") or share.get("share_count", 0) >= 100:
-            badges.append({
-                "type": "hall_of_fame",
-                "label": "👑 HALL OF FAME",
-                "color": "gold",
-                "description": f"{share['share_count']} total saves"
-            })
+            # HALL OF FAME badge
+            if share.get("is_hall_of_fame") or share.get("share_count", 0) >= 100:
+                badges.append({
+                    "type": "hall_of_fame",
+                    "label": "👑 HALL OF FAME",
+                    "color": "gold",
+                    "description": f"{share['share_count']} total saves"
+                })
 
-        # MOST COPIED badge
-        if share.get("is_most_copied"):
-            badges.append({
-                "type": "most_copied",
-                "label": "⭐ MOST COPIED",
-                "color": "cyan",
-                "description": "Top 10 this week"
-            })
+            # MOST COPIED badge
+            if share.get("is_most_copied"):
+                badges.append({
+                    "type": "most_copied",
+                    "label": "⭐ MOST COPIED",
+                    "color": "cyan",
+                    "description": "Top 10 this week"
+                })
 
-        # BEAST MODE badge
-        if share.get("is_beast_mode") or share.get("challenge_count", 0) >= 50:
-            badges.append({
-                "type": "beast_mode",
-                "label": "💀 BEAST MODE",
-                "color": "red",
-                "description": f"{share['challenge_count']} challenges accepted"
-            })
+            # BEAST MODE badge
+            if share.get("is_beast_mode") or share.get("challenge_count", 0) >= 50:
+                badges.append({
+                    "type": "beast_mode",
+                    "label": "💀 BEAST MODE",
+                    "color": "red",
+                    "description": f"{share['challenge_count']} challenges accepted"
+                })
 
-    return {
-        "activity_id": activity_id,
-        "badges": badges,
-        "share_count": shares_result.data[0]["share_count"] if shares_result.data else 0,
-        "challenge_count": shares_result.data[0]["challenge_count"] if shares_result.data else 0,
-        "completion_count": shares_result.data[0]["completion_count"] if shares_result.data else 0,
-    }
+        return {
+            "activity_id": activity_id,
+            "badges": badges,
+            "share_count": shares_result.data[0]["share_count"] if shares_result.data else 0,
+            "challenge_count": shares_result.data[0]["challenge_count"] if shares_result.data else 0,
+            "completion_count": shares_result.data[0]["completion_count"] if shares_result.data else 0,
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error in get_workout_badges: {e}", exc_info=True)
+        raise safe_internal_error(e, "saved_workouts")
 
 
 # ============================================================
@@ -291,125 +306,134 @@ async def save_workout_from_activity(
         404: Activity not found
         400: Activity has no workout data
     """
-    supabase = get_supabase_client()
-
-    # Get activity data
-    activity_result = supabase.table("activity_feed").select(
-        "*, users(name, avatar_url)"
-    ).eq("id", request.activity_id).execute()
-
-    if not activity_result.data:
-        raise HTTPException(status_code=404, detail="Activity not found")
-
-    activity = activity_result.data[0]
-    activity_data = activity.get("activity_data", {})
-
-    # Extract workout information
-    workout_name = activity_data.get("workout_name")
-    if not workout_name:
-        raise HTTPException(status_code=400, detail="Activity does not contain workout data")
-
-    exercises_performance = activity_data.get("exercises_performance", [])
-    if not exercises_performance:
-        raise HTTPException(status_code=400, detail="Activity has no exercise data")
-
-    # Convert to exercise templates
-    exercises = []
-    for ex in exercises_performance:
-        exercises.append({
-            "name": ex.get("name", ""),
-            "sets": ex.get("sets", 3),
-            "reps": ex.get("reps", 10),
-            "weight_kg": ex.get("weight_kg", 0),
-            "rest_seconds": 60,
-        })
-
-    # Calculate metadata
-    total_exercises = len(exercises)
-    duration = activity_data.get("duration_minutes", total_exercises * 5)
-
-    # Check if already saved
-    existing = supabase.table("saved_workouts").select("id").eq(
-        "user_id", user_id
-    ).eq("source_activity_id", request.activity_id).execute()
-
-    if existing.data:
-        raise HTTPException(status_code=400, detail="Workout already saved")
-
-    # Create saved workout
-    result = supabase.table("saved_workouts").insert({
-        "user_id": user_id,
-        "source_activity_id": request.activity_id,
-        "source_user_id": activity["user_id"],
-        "workout_name": workout_name,
-        "workout_description": f"Saved from {activity.get('users', {}).get('name', 'a friend')}'s workout",
-        "exercises": exercises,
-        "total_exercises": total_exercises,
-        "estimated_duration_minutes": duration,
-        "folder": request.folder or "From Friends",
-        "tags": ["friend-workout", "social"],
-        "notes": request.notes,
-    }).execute()
-
-    if not result.data:
-        raise HTTPException(status_code=500, detail="Failed to save workout")
-
-    saved_workout = SavedWorkout(**result.data[0])
-
-    # Add source user info
-    if activity.get("users"):
-        saved_workout.source_user_name = activity["users"].get("name")
-        saved_workout.source_user_avatar = activity["users"].get("avatar_url")
-
-    # Store in ChromaDB for recommendations
     try:
-        social_rag = get_social_rag_service()
-        user_result = supabase.table("users").select("name").eq("id", user_id).execute()
-        user_name = user_result.data[0]["name"] if user_result.data else "User"
+        supabase = get_supabase_client()
 
-        collection = social_rag.get_social_collection()
-        collection.add(
-            documents=[f"{user_name} saved {workout_name} from {saved_workout.source_user_name}"],
-            metadatas=[{
-                "user_id": user_id,
-                "saved_workout_id": saved_workout.id,
-                "source_activity_id": request.activity_id,
-                "interaction_type": "save",
-                "workout_name": workout_name,
-                "created_at": datetime.now(timezone.utc).isoformat(),
-            }],
-            ids=[f"save_{saved_workout.id}"],
-        )
-        logger.info(f" [Saved Workouts] Logged save to ChromaDB")
+        # Get activity data
+        activity_result = supabase.table("activity_feed").select(
+            "*, users(name, avatar_url)"
+        ).eq("id", request.activity_id).execute()
+
+        if not activity_result.data:
+            raise HTTPException(status_code=404, detail="Activity not found")
+
+        activity = activity_result.data[0]
+        activity_data = activity.get("activity_data", {})
+
+        # Extract workout information
+        workout_name = activity_data.get("workout_name")
+        if not workout_name:
+            raise HTTPException(status_code=400, detail="Activity does not contain workout data")
+
+        exercises_performance = activity_data.get("exercises_performance", [])
+        if not exercises_performance:
+            raise HTTPException(status_code=400, detail="Activity has no exercise data")
+
+        # Convert to exercise templates
+        exercises = []
+        for ex in exercises_performance:
+            exercises.append({
+                "name": ex.get("name", ""),
+                "sets": ex.get("sets", 3),
+                "reps": ex.get("reps", 10),
+                "weight_kg": ex.get("weight_kg", 0),
+                "rest_seconds": 60,
+            })
+
+        # Calculate metadata
+        total_exercises = len(exercises)
+        duration = activity_data.get("duration_minutes", total_exercises * 5)
+
+        # Check if already saved
+        existing = supabase.table("saved_workouts").select("id").eq(
+            "user_id", user_id
+        ).eq("source_activity_id", request.activity_id).execute()
+
+        if existing.data:
+            raise HTTPException(status_code=400, detail="Workout already saved")
+
+        # Create saved workout
+        result = supabase.table("saved_workouts").insert({
+            "user_id": user_id,
+            "source_activity_id": request.activity_id,
+            "source_user_id": activity["user_id"],
+            "workout_name": workout_name,
+            "workout_description": f"Saved from {activity.get('users', {}).get('name', 'a friend')}'s workout",
+            "exercises": exercises,
+            "total_exercises": total_exercises,
+            "estimated_duration_minutes": duration,
+            "folder": request.folder or "From Friends",
+            "tags": ["friend-workout", "social"],
+            "notes": request.notes,
+        }).execute()
+
+        if not result.data:
+            raise safe_internal_error(Exception("Failed to save workout"), "saved_workouts")
+
+        saved_workout = SavedWorkout(**result.data[0])
+
+        # Add source user info
+        if activity.get("users"):
+            saved_workout.source_user_name = activity["users"].get("name")
+            saved_workout.source_user_avatar = activity["users"].get("avatar_url")
+
+        # Store in ChromaDB for recommendations
+        try:
+            social_rag = get_social_rag_service()
+            user_result = supabase.table("users").select("name").eq("id", user_id).execute()
+            user_name = user_result.data[0]["name"] if user_result.data else "User"
+
+            collection = social_rag.get_social_collection()
+            collection.add(
+                documents=[f"{user_name} saved {workout_name} from {saved_workout.source_user_name}"],
+                metadatas=[{
+                    "user_id": user_id,
+                    "saved_workout_id": saved_workout.id,
+                    "source_activity_id": request.activity_id,
+                    "interaction_type": "save",
+                    "workout_name": workout_name,
+                    "created_at": datetime.now(timezone.utc).isoformat(),
+                }],
+                ids=[f"save_{saved_workout.id}"],
+            )
+            logger.info(f" [Saved Workouts] Logged save to ChromaDB")
+        except Exception as e:
+            logger.warning(f" [Saved Workouts] Failed to log to ChromaDB: {e}", exc_info=True)
+
+        logger.info(f" [Saved Workouts] User {user_id} saved workout from activity {request.activity_id}")
+
+        # Notify the workout author
+        try:
+            actor_info = supabase.table("users").select("name").eq("id", user_id).execute()
+            actor_display = actor_info.data[0]["name"] if actor_info.data else "Someone"
+            await _notify_workout_interaction(
+                supabase, source_user_id=activity["user_id"], actor_user_id=user_id,
+                activity_id=request.activity_id, workout_name=workout_name,
+                action="saved", title="Workout Saved",
+                body=f'{actor_display} saved your workout "{workout_name}"',
+            )
+        except Exception as e:
+            logger.warning(f" [Saved Workouts] Failed to send notification: {e}", exc_info=True)
+
+        # Log workout save
+        try:
+            await log_user_activity(
+                user_id=user_id,
+                action="workout_saved",
+                endpoint="/api/v1/saved-workouts/save-from-activity",
+                message=f"Saved workout: {workout_name}",
+                metadata={"saved_workout_id": saved_workout.id, "source_activity_id": request.activity_id, "workout_name": workout_name},
+                status_code=200
+            )
+        except Exception as e:
+            logger.error(f"Activity logging failed: {e}", exc_info=True, extra={"user_id_full": user_id, "failed_action": "workout_saved"})
+
+        return saved_workout
+    except HTTPException:
+        raise
     except Exception as e:
-        logger.warning(f" [Saved Workouts] Failed to log to ChromaDB: {e}", exc_info=True)
-
-    logger.info(f" [Saved Workouts] User {user_id} saved workout from activity {request.activity_id}")
-
-    # Notify the workout author
-    try:
-        actor_info = supabase.table("users").select("name").eq("id", user_id).execute()
-        actor_display = actor_info.data[0]["name"] if actor_info.data else "Someone"
-        await _notify_workout_interaction(
-            supabase, source_user_id=activity["user_id"], actor_user_id=user_id,
-            activity_id=request.activity_id, workout_name=workout_name,
-            action="saved", title="Workout Saved",
-            body=f'{actor_display} saved your workout "{workout_name}"',
-        )
-    except Exception as e:
-        logger.warning(f" [Saved Workouts] Failed to send notification: {e}", exc_info=True)
-
-    # Log workout save
-    await log_user_activity(
-        user_id=user_id,
-        action="workout_saved",
-        endpoint="/api/v1/saved-workouts/save-from-activity",
-        message=f"Saved workout: {workout_name}",
-        metadata={"saved_workout_id": saved_workout.id, "source_activity_id": request.activity_id, "workout_name": workout_name},
-        status_code=200
-    )
-
-    return saved_workout
+        logger.error(f"Error in save_workout_from_activity: {e}", exc_info=True)
+        raise safe_internal_error(e, "saved_workouts")
 
 
 @router.get("/", response_model=SavedWorkoutsResponse)
@@ -434,37 +458,43 @@ async def get_saved_workouts(
     Returns:
         Paginated saved workouts
     """
-    supabase = get_supabase_client()
+    try:
+        supabase = get_supabase_client()
 
-    query = supabase.table("saved_workouts_with_source").select(
-        "*", count="exact"
-    ).eq("user_id", user_id).order("saved_at", desc=True)
+        query = supabase.table("saved_workouts_with_source").select(
+            "*", count="exact"
+        ).eq("user_id", user_id).order("saved_at", desc=True)
 
-    if folder:
-        query = query.eq("folder", folder)
-    if tag:
-        query = query.contains("tags", [tag])
+        if folder:
+            query = query.eq("folder", folder)
+        if tag:
+            query = query.contains("tags", [tag])
 
-    # Pagination
-    offset = (page - 1) * page_size
-    query = query.range(offset, offset + page_size - 1)
+        # Pagination
+        offset = (page - 1) * page_size
+        query = query.range(offset, offset + page_size - 1)
 
-    result = query.execute()
+        result = query.execute()
 
-    workouts = [SavedWorkout(**row) for row in result.data]
+        workouts = [SavedWorkout(**row) for row in result.data]
 
-    # Get unique folders
-    folders_result = supabase.table("saved_workouts").select("folder").eq(
-        "user_id", user_id
-    ).execute()
+        # Get unique folders
+        folders_result = supabase.table("saved_workouts").select("folder").eq(
+            "user_id", user_id
+        ).execute()
 
-    folders = list(set(row["folder"] for row in folders_result.data if row.get("folder")))
+        folders = list(set(row["folder"] for row in folders_result.data if row.get("folder")))
 
-    return SavedWorkoutsResponse(
-        workouts=workouts,
-        total_count=result.count or 0,
-        folders=sorted(folders),
-    )
+        return SavedWorkoutsResponse(
+            workouts=workouts,
+            total_count=result.count or 0,
+            folders=sorted(folders),
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error in get_saved_workouts: {e}", exc_info=True)
+        raise safe_internal_error(e, "saved_workouts")
 
 
 @router.get("/{workout_id}", response_model=SavedWorkout)
@@ -474,16 +504,22 @@ async def get_saved_workout(
     current_user: dict = Depends(get_current_user),
 ):
     """Get a specific saved workout."""
-    supabase = get_supabase_client()
+    try:
+        supabase = get_supabase_client()
 
-    result = supabase.table("saved_workouts_with_source").select("*").eq(
-        "id", workout_id
-    ).eq("user_id", user_id).execute()
+        result = supabase.table("saved_workouts_with_source").select("*").eq(
+            "id", workout_id
+        ).eq("user_id", user_id).execute()
 
-    if not result.data:
-        raise HTTPException(status_code=404, detail="Saved workout not found")
+        if not result.data:
+            raise HTTPException(status_code=404, detail="Saved workout not found")
 
-    return SavedWorkout(**result.data[0])
+        return SavedWorkout(**result.data[0])
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error in get_saved_workout: {e}", exc_info=True)
+        raise safe_internal_error(e, "saved_workouts")
 
 
 @router.put("/{workout_id}", response_model=SavedWorkout)
@@ -494,25 +530,31 @@ async def update_saved_workout(
     current_user: dict = Depends(get_current_user),
 ):
     """Update a saved workout."""
-    supabase = get_supabase_client()
+    try:
+        supabase = get_supabase_client()
 
-    # Verify ownership
-    check = supabase.table("saved_workouts").select("user_id").eq("id", workout_id).execute()
-    if not check.data:
-        raise HTTPException(status_code=404, detail="Saved workout not found")
-    if check.data[0]["user_id"] != user_id:
-        raise HTTPException(status_code=403, detail="Not authorized")
+        # Verify ownership
+        check = supabase.table("saved_workouts").select("user_id").eq("id", workout_id).execute()
+        if not check.data:
+            raise HTTPException(status_code=404, detail="Saved workout not found")
+        if check.data[0]["user_id"] != user_id:
+            raise HTTPException(status_code=403, detail="Not authorized")
 
-    # Build update dict
-    update_data = {k: v for k, v in update.dict(exclude_unset=True).items() if v is not None}
-    update_data["updated_at"] = datetime.now(timezone.utc).isoformat()
+        # Build update dict
+        update_data = {k: v for k, v in update.dict(exclude_unset=True).items() if v is not None}
+        update_data["updated_at"] = datetime.now(timezone.utc).isoformat()
 
-    result = supabase.table("saved_workouts").update(update_data).eq("id", workout_id).execute()
+        result = supabase.table("saved_workouts").update(update_data).eq("id", workout_id).execute()
 
-    if not result.data:
-        raise HTTPException(status_code=500, detail="Failed to update workout")
+        if not result.data:
+            raise safe_internal_error(Exception("Failed to update workout"), "saved_workouts")
 
-    return SavedWorkout(**result.data[0])
+        return SavedWorkout(**result.data[0])
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error in update_saved_workout: {e}", exc_info=True)
+        raise safe_internal_error(e, "saved_workouts")
 
 
 @router.delete("/{workout_id}")
@@ -522,28 +564,37 @@ async def delete_saved_workout(
     current_user: dict = Depends(get_current_user),
 ):
     """Delete a saved workout."""
-    supabase = get_supabase_client()
+    try:
+        supabase = get_supabase_client()
 
-    # Verify ownership
-    check = supabase.table("saved_workouts").select("user_id").eq("id", workout_id).execute()
-    if not check.data:
-        raise HTTPException(status_code=404, detail="Saved workout not found")
-    if check.data[0]["user_id"] != user_id:
-        raise HTTPException(status_code=403, detail="Not authorized")
+        # Verify ownership
+        check = supabase.table("saved_workouts").select("user_id").eq("id", workout_id).execute()
+        if not check.data:
+            raise HTTPException(status_code=404, detail="Saved workout not found")
+        if check.data[0]["user_id"] != user_id:
+            raise HTTPException(status_code=403, detail="Not authorized")
 
-    supabase.table("saved_workouts").delete().eq("id", workout_id).execute()
+        supabase.table("saved_workouts").delete().eq("id", workout_id).execute()
 
-    # Log workout deletion
-    await log_user_activity(
-        user_id=user_id,
-        action="workout_deleted",
-        endpoint=f"/api/v1/saved-workouts/{workout_id}",
-        message=f"Deleted saved workout",
-        metadata={"workout_id": workout_id},
-        status_code=200
-    )
+        # Log workout deletion
+        try:
+            await log_user_activity(
+                user_id=user_id,
+                action="workout_deleted",
+                endpoint=f"/api/v1/saved-workouts/{workout_id}",
+                message=f"Deleted saved workout",
+                metadata={"workout_id": workout_id},
+                status_code=200
+            )
+        except Exception as e:
+            logger.error(f"Activity logging failed: {e}", exc_info=True, extra={"user_id_full": user_id, "failed_action": "workout_deleted"})
 
-    return {"message": "Saved workout deleted successfully"}
+        return {"message": "Saved workout deleted successfully"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error in delete_saved_workout: {e}", exc_info=True)
+        raise safe_internal_error(e, "saved_workouts")
 
 
 # ============================================================
@@ -568,43 +619,52 @@ async def do_workout_now(
     Returns:
         Workout data ready for workout session
     """
-    supabase = get_supabase_client()
+    try:
+        supabase = get_supabase_client()
 
-    # Get saved workout
-    result = supabase.table("saved_workouts").select("*").eq(
-        "id", saved_workout_id
-    ).eq("user_id", user_id).execute()
+        # Get saved workout
+        result = supabase.table("saved_workouts").select("*").eq(
+            "id", saved_workout_id
+        ).eq("user_id", user_id).execute()
 
-    if not result.data:
-        raise HTTPException(status_code=404, detail="Saved workout not found")
+        if not result.data:
+            raise HTTPException(status_code=404, detail="Saved workout not found")
 
-    saved_workout = result.data[0]
+        saved_workout = result.data[0]
 
-    # Format for workout screen
-    workout_data = {
-        "id": saved_workout["id"],
-        "name": saved_workout["workout_name"],
-        "description": saved_workout.get("workout_description"),
-        "exercises": saved_workout["exercises"],
-        "total_exercises": saved_workout["total_exercises"],
-        "estimated_duration_minutes": saved_workout.get("estimated_duration_minutes"),
-        "source": "saved_workout",
-        "source_id": saved_workout_id,
-    }
+        # Format for workout screen
+        workout_data = {
+            "id": saved_workout["id"],
+            "name": saved_workout["workout_name"],
+            "description": saved_workout.get("workout_description"),
+            "exercises": saved_workout["exercises"],
+            "total_exercises": saved_workout["total_exercises"],
+            "estimated_duration_minutes": saved_workout.get("estimated_duration_minutes"),
+            "source": "saved_workout",
+            "source_id": saved_workout_id,
+        }
 
-    logger.info(f" [Saved Workouts] User {user_id} starting workout {saved_workout_id}")
+        logger.info(f" [Saved Workouts] User {user_id} starting workout {saved_workout_id}")
 
-    # Log workout start
-    await log_user_activity(
-        user_id=user_id,
-        action="saved_workout_started",
-        endpoint=f"/api/v1/saved-workouts/do-now/{saved_workout_id}",
-        message=f"Started saved workout: {saved_workout['workout_name']}",
-        metadata={"saved_workout_id": saved_workout_id, "workout_name": saved_workout["workout_name"]},
-        status_code=200
-    )
+        # Log workout start
+        try:
+            await log_user_activity(
+                user_id=user_id,
+                action="saved_workout_started",
+                endpoint=f"/api/v1/saved-workouts/do-now/{saved_workout_id}",
+                message=f"Started saved workout: {saved_workout['workout_name']}",
+                metadata={"saved_workout_id": saved_workout_id, "workout_name": saved_workout["workout_name"]},
+                status_code=200
+            )
+        except Exception as e:
+            logger.error(f"Activity logging failed: {e}", exc_info=True, extra={"user_id_full": user_id, "failed_action": "saved_workout_started"})
 
-    return workout_data
+        return workout_data
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error in do_workout_now: {e}", exc_info=True)
+        raise safe_internal_error(e, "saved_workouts")
 
 
 # ============================================================
@@ -631,101 +691,110 @@ async def schedule_workout(
     Returns:
         Scheduled workout
     """
-    supabase = get_supabase_client()
+    try:
+        supabase = get_supabase_client()
 
-    workout_name = None
-    exercises = []
+        workout_name = None
+        exercises = []
 
-    if request.saved_workout_id:
-        # Schedule from saved workout
-        saved_result = supabase.table("saved_workouts").select("*").eq(
-            "id", request.saved_workout_id
-        ).eq("user_id", user_id).execute()
+        if request.saved_workout_id:
+            # Schedule from saved workout
+            saved_result = supabase.table("saved_workouts").select("*").eq(
+                "id", request.saved_workout_id
+            ).eq("user_id", user_id).execute()
 
-        if not saved_result.data:
-            raise HTTPException(status_code=404, detail="Saved workout not found")
+            if not saved_result.data:
+                raise HTTPException(status_code=404, detail="Saved workout not found")
 
-        saved = saved_result.data[0]
-        workout_name = saved["workout_name"]
-        exercises = saved["exercises"]
+            saved = saved_result.data[0]
+            workout_name = saved["workout_name"]
+            exercises = saved["exercises"]
 
-    elif request.activity_id:
-        # Schedule directly from activity
-        activity_result = supabase.table("activity_feed").select("*").eq(
-            "id", request.activity_id
-        ).execute()
-
-        if not activity_result.data:
-            raise HTTPException(status_code=404, detail="Activity not found")
-
-        activity_data = activity_result.data[0].get("activity_data", {})
-        workout_name = activity_data.get("workout_name")
-        exercises_perf = activity_data.get("exercises_performance", [])
-
-        for ex in exercises_perf:
-            exercises.append({
-                "name": ex.get("name", ""),
-                "sets": ex.get("sets", 3),
-                "reps": ex.get("reps", 10),
-                "weight_kg": ex.get("weight_kg", 0),
-                "rest_seconds": 60,
-            })
-    else:
-        raise HTTPException(status_code=400, detail="Must provide saved_workout_id or activity_id")
-
-    if not workout_name or not exercises:
-        raise HTTPException(status_code=400, detail="Invalid workout data")
-
-    # Create scheduled workout
-    result = supabase.table("scheduled_workouts").insert({
-        "user_id": user_id,
-        "saved_workout_id": request.saved_workout_id,
-        "scheduled_date": request.scheduled_date.isoformat(),
-        "scheduled_time": request.scheduled_time.isoformat() if request.scheduled_time else None,
-        "workout_name": workout_name,
-        "exercises": exercises,
-        "reminder_enabled": request.reminder_enabled,
-        "reminder_minutes_before": request.reminder_minutes_before,
-        "notes": request.notes,
-        "status": "scheduled",
-    }).execute()
-
-    if not result.data:
-        raise HTTPException(status_code=500, detail="Failed to schedule workout")
-
-    logger.info(f" [Scheduled Workouts] User {user_id} scheduled workout for {request.scheduled_date}")
-
-    # Notify the workout author (only when scheduling from an activity)
-    if request.activity_id:
-        try:
-            activity_for_notify = supabase.table("activity_feed").select("user_id").eq(
+        elif request.activity_id:
+            # Schedule directly from activity
+            activity_result = supabase.table("activity_feed").select("*").eq(
                 "id", request.activity_id
             ).execute()
-            if activity_for_notify.data:
-                source_uid = activity_for_notify.data[0]["user_id"]
-                actor_info = supabase.table("users").select("name").eq("id", user_id).execute()
-                actor_display = actor_info.data[0]["name"] if actor_info.data else "Someone"
-                await _notify_workout_interaction(
-                    supabase, source_user_id=source_uid, actor_user_id=user_id,
-                    activity_id=request.activity_id, workout_name=workout_name,
-                    action="scheduled", title="Workout Scheduled",
-                    body=f'{actor_display} scheduled your workout "{workout_name}" for {request.scheduled_date}',
-                    extra_data={"scheduled_date": str(request.scheduled_date)},
-                )
+
+            if not activity_result.data:
+                raise HTTPException(status_code=404, detail="Activity not found")
+
+            activity_data = activity_result.data[0].get("activity_data", {})
+            workout_name = activity_data.get("workout_name")
+            exercises_perf = activity_data.get("exercises_performance", [])
+
+            for ex in exercises_perf:
+                exercises.append({
+                    "name": ex.get("name", ""),
+                    "sets": ex.get("sets", 3),
+                    "reps": ex.get("reps", 10),
+                    "weight_kg": ex.get("weight_kg", 0),
+                    "rest_seconds": 60,
+                })
+        else:
+            raise HTTPException(status_code=400, detail="Must provide saved_workout_id or activity_id")
+
+        if not workout_name or not exercises:
+            raise HTTPException(status_code=400, detail="Invalid workout data")
+
+        # Create scheduled workout
+        result = supabase.table("scheduled_workouts").insert({
+            "user_id": user_id,
+            "saved_workout_id": request.saved_workout_id,
+            "scheduled_date": request.scheduled_date.isoformat(),
+            "scheduled_time": request.scheduled_time.isoformat() if request.scheduled_time else None,
+            "workout_name": workout_name,
+            "exercises": exercises,
+            "reminder_enabled": request.reminder_enabled,
+            "reminder_minutes_before": request.reminder_minutes_before,
+            "notes": request.notes,
+            "status": "scheduled",
+        }).execute()
+
+        if not result.data:
+            raise safe_internal_error(Exception("Failed to schedule workout"), "saved_workouts")
+
+        logger.info(f" [Scheduled Workouts] User {user_id} scheduled workout for {request.scheduled_date}")
+
+        # Notify the workout author (only when scheduling from an activity)
+        if request.activity_id:
+            try:
+                activity_for_notify = supabase.table("activity_feed").select("user_id").eq(
+                    "id", request.activity_id
+                ).execute()
+                if activity_for_notify.data:
+                    source_uid = activity_for_notify.data[0]["user_id"]
+                    actor_info = supabase.table("users").select("name").eq("id", user_id).execute()
+                    actor_display = actor_info.data[0]["name"] if actor_info.data else "Someone"
+                    await _notify_workout_interaction(
+                        supabase, source_user_id=source_uid, actor_user_id=user_id,
+                        activity_id=request.activity_id, workout_name=workout_name,
+                        action="scheduled", title="Workout Scheduled",
+                        body=f'{actor_display} scheduled your workout "{workout_name}" for {request.scheduled_date}',
+                        extra_data={"scheduled_date": str(request.scheduled_date)},
+                    )
+            except Exception as e:
+                logger.warning(f" [Scheduled Workouts] Failed to send notification: {e}", exc_info=True)
+
+        # Log workout scheduling
+        try:
+            await log_user_activity(
+                user_id=user_id,
+                action="workout_scheduled",
+                endpoint="/api/v1/saved-workouts/schedule",
+                message=f"Scheduled workout: {workout_name} for {request.scheduled_date}",
+                metadata={"scheduled_workout_id": result.data[0]["id"], "workout_name": workout_name, "scheduled_date": str(request.scheduled_date)},
+                status_code=200
+            )
         except Exception as e:
-            logger.warning(f" [Scheduled Workouts] Failed to send notification: {e}", exc_info=True)
+            logger.error(f"Activity logging failed: {e}", exc_info=True, extra={"user_id_full": user_id, "failed_action": "workout_scheduled"})
 
-    # Log workout scheduling
-    await log_user_activity(
-        user_id=user_id,
-        action="workout_scheduled",
-        endpoint="/api/v1/saved-workouts/schedule",
-        message=f"Scheduled workout: {workout_name} for {request.scheduled_date}",
-        metadata={"scheduled_workout_id": result.data[0]["id"], "workout_name": workout_name, "scheduled_date": str(request.scheduled_date)},
-        status_code=200
-    )
-
-    return ScheduledWorkout(**result.data[0])
+        return ScheduledWorkout(**result.data[0])
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error in schedule_workout: {e}", exc_info=True)
+        raise safe_internal_error(e, "saved_workouts")
 
 
 @router.get("/scheduled/by-date")
@@ -735,29 +804,35 @@ async def get_scheduled_by_date(
     current_user: dict = Depends(get_current_user),
 ):
     """Check for existing workouts scheduled on a specific date."""
-    supabase = get_supabase_client()
+    try:
+        supabase = get_supabase_client()
 
-    # Check scheduled_workouts table
-    scheduled = supabase.table("scheduled_workouts").select(
-        "id, workout_name, scheduled_time, status"
-    ).eq("user_id", user_id).eq(
-        "scheduled_date", date
-    ).eq("status", "scheduled").execute()
+        # Check scheduled_workouts table
+        scheduled = supabase.table("scheduled_workouts").select(
+            "id, workout_name, scheduled_time, status"
+        ).eq("user_id", user_id).eq(
+            "scheduled_date", date
+        ).eq("status", "scheduled").execute()
 
-    # Also check regular workouts table for that date
-    workouts = supabase.table("workouts").select(
-        "id, name"
-    ).eq("user_id", user_id).eq(
-        "scheduled_date", date
-    ).execute()
+        # Also check regular workouts table for that date
+        workouts = supabase.table("workouts").select(
+            "id, name"
+        ).eq("user_id", user_id).eq(
+            "scheduled_date", date
+        ).execute()
 
-    results = []
-    for s in (scheduled.data or []):
-        results.append({"workout_name": s["workout_name"], "source": "scheduled"})
-    for w in (workouts.data or []):
-        results.append({"workout_name": w["name"], "source": "plan"})
+        results = []
+        for s in (scheduled.data or []):
+            results.append({"workout_name": s["workout_name"], "source": "scheduled"})
+        for w in (workouts.data or []):
+            results.append({"workout_name": w["name"], "source": "plan"})
 
-    return results
+        return results
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error in get_scheduled_by_date: {e}", exc_info=True)
+        raise safe_internal_error(e, "saved_workouts")
 
 
 @router.get("/scheduled/upcoming", response_model=ScheduledWorkoutsResponse)
@@ -774,24 +849,30 @@ async def get_upcoming_scheduled_workouts(
         days_ahead: Number of days to look ahead (default 30)
         limit: Maximum number of workouts to return (default unlimited)
     """
-    supabase = get_supabase_client()
+    try:
+        supabase = get_supabase_client()
 
-    query = supabase.table("upcoming_scheduled_workouts").select(
-        "*", count="exact"
-    ).eq("user_id", user_id)
+        query = supabase.table("upcoming_scheduled_workouts").select(
+            "*", count="exact"
+        ).eq("user_id", user_id)
 
-    # Apply limit if specified
-    if limit:
-        query = query.limit(limit)
+        # Apply limit if specified
+        if limit:
+            query = query.limit(limit)
 
-    result = query.execute()
+        result = query.execute()
 
-    workouts = [ScheduledWorkout(**row) for row in result.data]
+        workouts = [ScheduledWorkout(**row) for row in result.data]
 
-    return ScheduledWorkoutsResponse(
-        scheduled=workouts,
-        total_count=result.count or 0,
-    )
+        return ScheduledWorkoutsResponse(
+            scheduled=workouts,
+            total_count=result.count or 0,
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error in get_upcoming_scheduled_workouts: {e}", exc_info=True)
+        raise safe_internal_error(e, "saved_workouts")
 
 
 @router.get("/scheduled/month/{year}/{month}", response_model=MonthlyCalendar)
@@ -802,48 +883,54 @@ async def get_monthly_calendar(
     current_user: dict = Depends(get_current_user),
 ):
     """Get calendar view for a specific month."""
-    supabase = get_supabase_client()
+    try:
+        supabase = get_supabase_client()
 
-    # Get all workouts for the month
-    start_date = date(year, month, 1)
-    if month == 12:
-        end_date = date(year + 1, 1, 1)
-    else:
-        end_date = date(year, month + 1, 1)
+        # Get all workouts for the month
+        start_date = date(year, month, 1)
+        if month == 12:
+            end_date = date(year + 1, 1, 1)
+        else:
+            end_date = date(year, month + 1, 1)
 
-    result = supabase.table("scheduled_workouts").select("*").eq(
-        "user_id", user_id
-    ).gte("scheduled_date", start_date.isoformat()).lt(
-        "scheduled_date", end_date.isoformat()
-    ).order("scheduled_date").execute()
+        result = supabase.table("scheduled_workouts").select("*").eq(
+            "user_id", user_id
+        ).gte("scheduled_date", start_date.isoformat()).lt(
+            "scheduled_date", end_date.isoformat()
+        ).order("scheduled_date").execute()
 
-    workouts = []
-    total_scheduled = 0
-    total_completed = 0
+        workouts = []
+        total_scheduled = 0
+        total_completed = 0
 
-    for row in result.data:
-        workouts.append(CalendarWorkout(
-            id=row["id"],
-            date=row["scheduled_date"],
-            time=row.get("scheduled_time"),
-            name=row["workout_name"],
-            status=ScheduledWorkoutStatus(row["status"]),
-            exercise_count=len(row.get("exercises", [])),
-            estimated_duration=sum(ex.get("sets", 3) * 2 for ex in row.get("exercises", [])),
-        ))
+        for row in result.data:
+            workouts.append(CalendarWorkout(
+                id=row["id"],
+                date=row["scheduled_date"],
+                time=row.get("scheduled_time"),
+                name=row["workout_name"],
+                status=ScheduledWorkoutStatus(row["status"]),
+                exercise_count=len(row.get("exercises", [])),
+                estimated_duration=sum(ex.get("sets", 3) * 2 for ex in row.get("exercises", [])),
+            ))
 
-        if row["status"] == "scheduled":
-            total_scheduled += 1
-        elif row["status"] == "completed":
-            total_completed += 1
+            if row["status"] == "scheduled":
+                total_scheduled += 1
+            elif row["status"] == "completed":
+                total_completed += 1
 
-    return MonthlyCalendar(
-        year=year,
-        month=month,
-        workouts=workouts,
-        total_scheduled=total_scheduled,
-        total_completed=total_completed,
-    )
+        return MonthlyCalendar(
+            year=year,
+            month=month,
+            workouts=workouts,
+            total_scheduled=total_scheduled,
+            total_completed=total_completed,
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error in get_monthly_calendar: {e}", exc_info=True)
+        raise safe_internal_error(e, "saved_workouts")
 
 
 @router.put("/scheduled/{scheduled_id}", response_model=ScheduledWorkout)
@@ -854,38 +941,44 @@ async def update_scheduled_workout(
     current_user: dict = Depends(get_current_user),
 ):
     """Update a scheduled workout."""
-    supabase = get_supabase_client()
+    try:
+        supabase = get_supabase_client()
 
-    # Verify ownership
-    check = supabase.table("scheduled_workouts").select("user_id").eq("id", scheduled_id).execute()
-    if not check.data:
-        raise HTTPException(status_code=404, detail="Scheduled workout not found")
-    if check.data[0]["user_id"] != user_id:
-        raise HTTPException(status_code=403, detail="Not authorized")
+        # Verify ownership
+        check = supabase.table("scheduled_workouts").select("user_id").eq("id", scheduled_id).execute()
+        if not check.data:
+            raise HTTPException(status_code=404, detail="Scheduled workout not found")
+        if check.data[0]["user_id"] != user_id:
+            raise HTTPException(status_code=403, detail="Not authorized")
 
-    # Build update dict
-    update_data = {}
-    for key, value in update.dict(exclude_unset=True).items():
-        if value is not None:
-            if isinstance(value, (date, datetime)):
-                update_data[key] = value.isoformat()
-            elif isinstance(value, ScheduledWorkoutStatus):
-                update_data[key] = value.value
-            else:
-                update_data[key] = value
+        # Build update dict
+        update_data = {}
+        for key, value in update.dict(exclude_unset=True).items():
+            if value is not None:
+                if isinstance(value, (date, datetime)):
+                    update_data[key] = value.isoformat()
+                elif isinstance(value, ScheduledWorkoutStatus):
+                    update_data[key] = value.value
+                else:
+                    update_data[key] = value
 
-    update_data["updated_at"] = datetime.now(timezone.utc).isoformat()
+        update_data["updated_at"] = datetime.now(timezone.utc).isoformat()
 
-    # If marking as completed, set completed_at
-    if update.status == ScheduledWorkoutStatus.COMPLETED:
-        update_data["completed_at"] = datetime.now(timezone.utc).isoformat()
+        # If marking as completed, set completed_at
+        if update.status == ScheduledWorkoutStatus.COMPLETED:
+            update_data["completed_at"] = datetime.now(timezone.utc).isoformat()
 
-    result = supabase.table("scheduled_workouts").update(update_data).eq("id", scheduled_id).execute()
+        result = supabase.table("scheduled_workouts").update(update_data).eq("id", scheduled_id).execute()
 
-    if not result.data:
-        raise HTTPException(status_code=500, detail="Failed to update scheduled workout")
+        if not result.data:
+            raise safe_internal_error(Exception("Failed to update scheduled workout"), "saved_workouts")
 
-    return ScheduledWorkout(**result.data[0])
+        return ScheduledWorkout(**result.data[0])
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error in update_scheduled_workout: {e}", exc_info=True)
+        raise safe_internal_error(e, "saved_workouts")
 
 
 @router.delete("/scheduled/{scheduled_id}")
@@ -895,15 +988,21 @@ async def delete_scheduled_workout(
     current_user: dict = Depends(get_current_user),
 ):
     """Delete a scheduled workout."""
-    supabase = get_supabase_client()
+    try:
+        supabase = get_supabase_client()
 
-    # Verify ownership
-    check = supabase.table("scheduled_workouts").select("user_id").eq("id", scheduled_id).execute()
-    if not check.data:
-        raise HTTPException(status_code=404, detail="Scheduled workout not found")
-    if check.data[0]["user_id"] != user_id:
-        raise HTTPException(status_code=403, detail="Not authorized")
+        # Verify ownership
+        check = supabase.table("scheduled_workouts").select("user_id").eq("id", scheduled_id).execute()
+        if not check.data:
+            raise HTTPException(status_code=404, detail="Scheduled workout not found")
+        if check.data[0]["user_id"] != user_id:
+            raise HTTPException(status_code=403, detail="Not authorized")
 
-    supabase.table("scheduled_workouts").delete().eq("id", scheduled_id).execute()
+        supabase.table("scheduled_workouts").delete().eq("id", scheduled_id).execute()
 
-    return {"message": "Scheduled workout deleted successfully"}
+        return {"message": "Scheduled workout deleted successfully"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error in delete_scheduled_workout: {e}", exc_info=True)
+        raise safe_internal_error(e, "saved_workouts")

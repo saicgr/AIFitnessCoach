@@ -144,7 +144,7 @@ async def send_friend_request(
     }).execute()
 
     if not result.data:
-        raise HTTPException(status_code=500, detail="Failed to create friend request")
+        raise safe_internal_error(ValueError("Failed to create friend request"), "social")
 
     friend_request = result.data[0]
 

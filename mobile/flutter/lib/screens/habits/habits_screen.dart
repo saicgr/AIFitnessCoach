@@ -41,13 +41,31 @@ final habitsScreenProvider = StateNotifierProvider.autoDispose<HabitsScreenNotif
   );
 });
 
+/// One-shot guard so autoOpenAddSheet doesn't re-fire on rebuilds
+final _autoOpenFiredProvider = StateProvider.autoDispose<bool>((_) => false);
+
 /// Full-screen habits page showing all tracked habits in detail
 class HabitsScreen extends ConsumerWidget {
-  const HabitsScreen({super.key});
+  /// If true, auto-opens the Add Habit sheet on load
+  final bool autoOpenAddSheet;
+
+  const HabitsScreen({super.key, this.autoOpenAddSheet = false});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     ref.read(posthogServiceProvider).capture(eventName: 'habits_viewed');
+
+    // Auto-open add sheet if requested (e.g. from home screen) — one-shot
+    if (autoOpenAddSheet && !ref.read(_autoOpenFiredProvider)) {
+      ref.read(_autoOpenFiredProvider.notifier).state = true;
+      final habitsState = ref.read(habitsScreenProvider);
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (context.mounted) {
+          _showAddHabitSheet(context, ref, habitsState.templates);
+        }
+      });
+    }
+
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final backgroundColor = isDark ? AppColors.pureBlack : AppColorsLight.pureWhite;
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;

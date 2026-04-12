@@ -11,7 +11,6 @@ from pydantic import BaseModel
 from core.timezone_utils import resolve_timezone, local_date_to_utc_range, get_user_today, get_user_now_iso, target_date_to_utc_iso
 from core.auth import get_current_user, verify_resource_ownership
 from core.exceptions import safe_internal_error
-from core.supabase_db import get_supabase_db
 from core.logger import get_logger
 from core.activity_logger import log_user_activity
 from core.supabase_client import get_supabase
@@ -103,6 +102,9 @@ async def list_food_logs(
                 vitamin_a_ug=log.get("vitamin_a_ug"),
                 vitamin_c_mg=log.get("vitamin_c_mg"),
                 vitamin_d_iu=log.get("vitamin_d_iu"),
+                inflammation_score=log.get("inflammation_score"),
+                is_ultra_processed=log.get("is_ultra_processed"),
+                image_url=log.get("image_url"),
                 created_at=str(log.get("created_at") or log.get("logged_at") or ""),
             ))
 
@@ -159,6 +161,9 @@ async def get_food_log(user_id: str, log_id: str, current_user: dict = Depends(g
             vitamin_a_ug=log.get("vitamin_a_ug"),
             vitamin_c_mg=log.get("vitamin_c_mg"),
             vitamin_d_iu=log.get("vitamin_d_iu"),
+            inflammation_score=log.get("inflammation_score"),
+            is_ultra_processed=log.get("is_ultra_processed"),
+            image_url=log.get("image_url"),
             created_at=str(log.get("created_at") or log.get("logged_at") or ""),
         )
 
@@ -182,6 +187,11 @@ async def delete_food_log(log_id: str, current_user: dict = Depends(get_current_
 
         if not success:
             raise HTTPException(status_code=404, detail="Food log not found")
+
+        # Invalidate daily summary cache so the next fetch returns fresh data
+        from api.v1.nutrition.summaries import invalidate_daily_summary_cache
+        user_id = log.get("user_id") or current_user.get("id") or current_user.get("sub")
+        await invalidate_daily_summary_cache(user_id)
 
         return {"status": "deleted", "id": log_id, "soft_deleted": True}
 
@@ -217,6 +227,10 @@ async def update_food_log(log_id: str, body: UpdateFoodLogRequest, current_user:
 
         if not updated:
             raise HTTPException(status_code=404, detail="Food log not found or not owned by user")
+
+        # Invalidate daily summary cache so the next fetch returns fresh data
+        from api.v1.nutrition.summaries import invalidate_daily_summary_cache
+        await invalidate_daily_summary_cache(user_id)
 
         return {
             "status": "updated",
@@ -305,10 +319,16 @@ async def copy_food_log(log_id: str, http_request: Request, meal_type: str = Que
             health_score=source.get("health_score"),
             logged_at=user_tz_logged_at,
             source_type=source.get("source_type", "text"),
+            inflammation_score=source.get("inflammation_score"),
+            is_ultra_processed=source.get("is_ultra_processed"),
         )
 
         food_log_id = created_log.get("id") if created_log else "unknown"
         logger.info(f"Copied food log {log_id} -> {food_log_id} as {meal_type}")
+
+        # Invalidate daily summary cache so the next fetch returns fresh data
+        from api.v1.nutrition.summaries import invalidate_daily_summary_cache
+        await invalidate_daily_summary_cache(source["user_id"])
 
         return {
             "status": "copied",

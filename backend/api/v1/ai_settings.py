@@ -140,7 +140,7 @@ async def get_ai_settings(user_id: str, current_user: dict = Depends(get_current
             logger.info(f"Created default AI settings for user {user_id}")
             return AISettingsResponse(**insert_result.data[0])
 
-        raise HTTPException(status_code=500, detail="Failed to create default settings")
+        raise safe_internal_error(ValueError("Failed to create default settings"), "ai_settings")
 
     except HTTPException:
         raise
@@ -240,7 +240,7 @@ async def update_ai_settings(user_id: str, settings: AISettingsUpdate, current_u
             )
             return AISettingsResponse(**result.data[0])
 
-        raise HTTPException(status_code=500, detail="Failed to update settings")
+        raise safe_internal_error(ValueError("Failed to update settings"), "ai_settings")
 
     except HTTPException:
         raise

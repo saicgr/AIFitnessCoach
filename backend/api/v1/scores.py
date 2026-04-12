@@ -408,7 +408,7 @@ async def submit_readiness_checkin(
     ).execute()
 
     if not response.data:
-        raise HTTPException(status_code=500, detail="Failed to save readiness check-in")
+        raise safe_internal_error(ValueError("Failed to save readiness check-in"), "scores")
 
     record = response.data[0]
 

@@ -8,7 +8,6 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from core.timezone_utils import resolve_timezone, get_user_now_iso
 from core.auth import get_current_user
 from core.exceptions import safe_internal_error
-from core.supabase_db import get_supabase_db
 from core.logger import get_logger
 from core.activity_logger import log_user_activity
 from services.food_database_service import get_food_database_service
@@ -148,6 +147,22 @@ async def log_food_from_barcode(request: LogBarcodeRequest, http_request: Reques
         if product.ingredients_text:
             food_item["ingredients_text"] = product.ingredients_text
 
+        # Derive inflammation score from NOVA group
+        nova_group = product.nova_group
+        inflammation_score = None
+        is_ultra_processed = False
+        if nova_group:
+            nova_group = int(nova_group)
+            is_ultra_processed = nova_group == 4
+            # Map NOVA to inflammation score
+            nova_to_inflammation = {1: 3, 2: 4, 3: 6, 4: 8}
+            inflammation_score = nova_to_inflammation.get(nova_group, 5)
+
+        # Store inflammation data in food_item
+        if inflammation_score is not None:
+            food_item["inflammation_score"] = inflammation_score
+        food_item["is_ultra_processed"] = is_ultra_processed
+
         # Calculate micronutrients based on serving multiplier
         sugar_g = round(product.nutrients.sugar_per_100g * multiplier, 1) if product.nutrients.sugar_per_100g else None
         sodium_mg = round(product.nutrients.sodium_per_100g * multiplier, 1) if product.nutrients.sodium_per_100g else None
@@ -198,11 +213,17 @@ async def log_food_from_barcode(request: LogBarcodeRequest, http_request: Reques
             potassium_mg=potassium_mg,
             magnesium_mg=magnesium_mg,
             zinc_mg=zinc_mg,
+            inflammation_score=inflammation_score,
+            is_ultra_processed=is_ultra_processed,
         )
 
         food_log_id = created_log.get('id') if created_log else "unknown"
         logger.info(f"Successfully logged barcode {request.barcode} as {food_log_id}")
-        
+
+        # Invalidate daily summary cache so the next fetch returns fresh data
+        from api.v1.nutrition.summaries import invalidate_daily_summary_cache
+        await invalidate_daily_summary_cache(request.user_id)
+
         return LogBarcodeResponse(
             success=True,
             food_log_id=food_log_id,

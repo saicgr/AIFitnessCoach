@@ -254,6 +254,8 @@ async def analyze_food_from_text_streaming(request: Request, body: LogTextReques
             encouragements = food_analysis.get('encouragements', [])
             warnings = food_analysis.get('warnings', [])
             recommended_swap = food_analysis.get('recommended_swap')
+            text_inflammation_score = food_analysis.get('inflammation_score')
+            text_is_ultra_processed = food_analysis.get('is_ultra_processed')
 
             # Micronutrients
             sodium_mg = food_analysis.get('sodium_mg')
@@ -304,6 +306,9 @@ async def analyze_food_from_text_streaming(request: Request, body: LogTextReques
                 "vitamin_d_iu": vitamin_d_iu,
                 "calcium_mg": calcium_mg,
                 "iron_mg": iron_mg,
+                # Inflammation / ultra-processed tracking
+                "inflammation_score": text_inflammation_score,
+                "is_ultra_processed": text_is_ultra_processed,
             }
             yield f"event: done\ndata: {json.dumps(response_data)}\n\n"
 
@@ -453,8 +458,15 @@ async def log_food_from_image_streaming(
                     else:
                         micronutrients[key] = float(value) if value else None
 
+            # Extract inflammation fields from analysis
+            inflammation_score = food_analysis.get('inflammation_score')
+            is_ultra_processed = food_analysis.get('is_ultra_processed')
+
             # Enrich image analysis with contextual coach tips
             ai_suggestion = food_analysis.get('feedback')
+            encouragements = []
+            warnings = []
+            recommended_swap = None
             health_score = None
             try:
                 cache_service = get_food_analysis_cache_service()
@@ -464,10 +476,25 @@ async def log_food_from_image_streaming(
                     user_id=user_id,
                 )
                 if tips:
+                    encouragements = tips.get("encouragements", [])
+                    warnings = tips.get("warnings", [])
                     ai_suggestion = tips.get("ai_suggestion") or ai_suggestion
+                    recommended_swap = tips.get("recommended_swap")
                     health_score = tips.get("health_score")
             except Exception as tip_err:
                 logger.warning(f"[STREAM] Tip enrichment failed for image log: {tip_err}", exc_info=True)
+
+            # Compose ai_feedback from coach tip fields
+            ai_feedback_parts = []
+            if encouragements:
+                ai_feedback_parts.extend(encouragements)
+            if warnings:
+                ai_feedback_parts.append("\u26a0\ufe0f " + "; ".join(warnings))
+            if ai_suggestion:
+                ai_feedback_parts.append("\U0001f4a1 " + ai_suggestion)
+            if recommended_swap:
+                ai_feedback_parts.append("\U0001f504 " + recommended_swap)
+            ai_feedback = " | ".join(ai_feedback_parts) if ai_feedback_parts else ai_suggestion
 
             # Step 4: Save to database
             yield send_progress(4, 4, "Saving your meal...", "Almost done!")
@@ -487,17 +514,23 @@ async def log_food_from_image_streaming(
                 carbs_g=carbs_g,
                 fat_g=fat_g,
                 fiber_g=fiber_g,
-                ai_feedback=ai_suggestion,
+                ai_feedback=ai_feedback,
                 health_score=health_score,
                 logged_at=stream_logged_at,
                 image_url=image_url,
                 image_storage_key=storage_key,
                 source_type="image",
+                inflammation_score=inflammation_score,
+                is_ultra_processed=is_ultra_processed,
                 **micronutrients,
             )
 
             food_log_id = created_log.get('id') if created_log else "unknown"
             logger.info(f"[STREAM] Successfully logged food from image as {food_log_id}")
+
+            # Invalidate daily summary cache so the next fetch returns fresh data
+            from api.v1.nutrition.summaries import invalidate_daily_summary_cache
+            await invalidate_daily_summary_cache(user_id)
 
             # Send the completed food log
             response_data = {
@@ -704,6 +737,10 @@ async def analyze_food_from_image_streaming(
 
             plate_description = food_analysis.get('plate_description')
 
+            # Extract inflammation fields from analysis
+            analyze_inflammation_score = food_analysis.get('inflammation_score')
+            analyze_is_ultra_processed = food_analysis.get('is_ultra_processed')
+
             # Enrich image analysis with contextual coach tips
             ai_suggestion = food_analysis.get('feedback')
             encouragements = []
@@ -773,6 +810,9 @@ async def analyze_food_from_image_streaming(
                 "image_storage_key": image_storage_key,
                 # Visual description of what AI sees
                 "plate_description": plate_description,
+                # Inflammation / ultra-processed tracking
+                "inflammation_score": analyze_inflammation_score,
+                "is_ultra_processed": analyze_is_ultra_processed,
             }
             yield f"event: done\ndata: {json.dumps(response_data)}\n\n"
 

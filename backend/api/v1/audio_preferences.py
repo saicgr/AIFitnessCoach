@@ -211,7 +211,7 @@ async def update_audio_preferences(user_id: str, update: AudioPreferencesUpdate,
             ).execute()
 
         if not result.data:
-            raise HTTPException(status_code=500, detail="Failed to update audio preferences")
+            raise safe_internal_error(ValueError("Failed to update audio preferences"), "audio_preferences")
 
         prefs = result.data[0]
         logger.info(f"Updated audio preferences for user {user_id}")
@@ -325,7 +325,7 @@ async def create_audio_preferences(user_id: str, preferences: Optional[AudioPref
         ).execute()
 
         if not result.data:
-            raise HTTPException(status_code=500, detail="Failed to create audio preferences")
+            raise safe_internal_error(ValueError("Failed to create audio preferences"), "audio_preferences")
 
         prefs = result.data[0]
         logger.info(f"Created audio preferences for user {user_id}")

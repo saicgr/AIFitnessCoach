@@ -302,7 +302,7 @@ async def upload_progress_photo(
         }).execute()
 
         if not result.data:
-            raise HTTPException(status_code=500, detail="Failed to save photo record")
+            raise safe_internal_error(ValueError("Failed to save photo record"), "progress_photos")
 
         return ProgressPhotoResponse(**_presign_photo(result.data[0]))
 
@@ -470,7 +470,7 @@ async def update_progress_photo(
             .execute()
 
         if not result.data:
-            raise HTTPException(status_code=500, detail="Failed to update photo")
+            raise safe_internal_error(ValueError("Failed to update photo"), "progress_photos")
 
         return ProgressPhotoResponse(**_presign_photo(result.data[0]))
 
@@ -581,7 +581,7 @@ async def create_photo_comparison(data: PhotoComparisonCreate, current_user: dic
         }).execute()
 
         if not result.data:
-            raise HTTPException(status_code=500, detail="Failed to create comparison")
+            raise safe_internal_error(ValueError("Failed to create comparison"), "progress_photos")
 
         comparison = result.data[0]
 
@@ -654,7 +654,7 @@ async def update_photo_comparison(
             .execute()
 
         if not result.data:
-            raise HTTPException(status_code=500, detail="Failed to update comparison")
+            raise safe_internal_error(ValueError("Failed to update comparison"), "progress_photos")
 
         comp = existing.data  # Use existing data for joined photo fields
         comp.update(result.data[0])  # Merge updated fields

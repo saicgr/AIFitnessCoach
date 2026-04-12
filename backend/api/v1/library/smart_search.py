@@ -20,7 +20,6 @@ from typing import Any, Dict, List, Optional
 from fastapi import APIRouter, BackgroundTasks, Query
 
 from core.logger import get_logger
-from core.supabase_db import get_supabase_db
 from services.gemini_service import ResponseCache
 
 from .exercises import _extract_best_correction

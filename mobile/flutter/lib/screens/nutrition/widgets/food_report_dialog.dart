@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../data/services/api_client.dart';
 import '../../../data/services/food_search_service.dart';
@@ -117,8 +118,12 @@ class _FoodReportSheetState extends State<_FoodReportSheet> {
     setState(() => _isSubmitting = true);
 
     try {
+      final userId = Supabase.instance.client.auth.currentSession?.user.id ?? '';
+      if (userId.isEmpty) {
+        throw Exception('Not authenticated. Please log in and try again.');
+      }
       final data = <String, dynamic>{
-        'user_id': '', // Will be set from auth context
+        'user_id': userId,
         'food_name': widget.foodName,
         'reported_issue': _notesController.text.trim().isEmpty
             ? null
@@ -184,56 +189,68 @@ class _FoodReportSheetState extends State<_FoodReportSheet> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final backgroundColor =
-        isDark ? AppColors.nearBlack : AppColorsLight.nearWhite;
     final textPrimary =
         isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final surfaceColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
-    final accent = isDark ? AppColors.accent : AppColorsLight.accent;
-    final accentContrast =
-        isDark ? AppColors.accentContrast : AppColorsLight.accentContrast;
+    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
 
-    final bottomPadding = MediaQuery.of(context).viewInsets.bottom;
+    // Colorful accents for the report sheet
+    const wrongNutritionColor = AppColors.orange;
+    const wrongFoodColor = AppColors.coral;
+    final activeChipColor = _reportType == 'wrong_nutrition'
+        ? wrongNutritionColor
+        : wrongFoodColor;
 
-    return Container(
-      decoration: BoxDecoration(
-        color: backgroundColor,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+    return Padding(
+      padding: EdgeInsets.only(
+        bottom: MediaQuery.of(context).viewInsets.bottom,
       ),
-      padding: EdgeInsets.only(bottom: bottomPadding),
       child: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
+        padding: const EdgeInsets.fromLTRB(20, 4, 20, 24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Handle bar
-            Center(
-              child: Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: textMuted.withOpacity(0.3),
-                  borderRadius: BorderRadius.circular(2),
+            // Title with icon
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: activeChipColor.withOpacity(0.15),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Icon(
+                    Icons.flag_rounded,
+                    color: activeChipColor,
+                    size: 20,
+                  ),
                 ),
-              ),
-            ),
-            const SizedBox(height: 16),
-
-            // Title
-            Text(
-              'Report Issue',
-              style: TextStyle(
-                color: textPrimary,
-                fontSize: 18,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              widget.foodName,
-              style: TextStyle(color: textMuted, fontSize: 14),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Report Issue',
+                        style: TextStyle(
+                          color: textPrimary,
+                          fontSize: 18,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        widget.foodName,
+                        style: TextStyle(color: textMuted, fontSize: 14),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
             const SizedBox(height: 16),
 
@@ -244,8 +261,7 @@ class _FoodReportSheetState extends State<_FoodReportSheet> {
                   label: 'Wrong nutrition',
                   isSelected: _reportType == 'wrong_nutrition',
                   onTap: () => setState(() => _reportType = 'wrong_nutrition'),
-                  accent: accent,
-                  textPrimary: textPrimary,
+                  activeColor: wrongNutritionColor,
                   textMuted: textMuted,
                   surfaceColor: surfaceColor,
                 ),
@@ -254,8 +270,7 @@ class _FoodReportSheetState extends State<_FoodReportSheet> {
                   label: 'Wrong food',
                   isSelected: _reportType == 'wrong_food',
                   onTap: () => setState(() => _reportType = 'wrong_food'),
-                  accent: accent,
-                  textPrimary: textPrimary,
+                  activeColor: wrongFoodColor,
                   textMuted: textMuted,
                   surfaceColor: surfaceColor,
                 ),
@@ -287,6 +302,7 @@ class _FoodReportSheetState extends State<_FoodReportSheet> {
                       surfaceColor: surfaceColor,
                       textPrimary: textPrimary,
                       textMuted: textMuted,
+                      accentColor: activeChipColor,
                       isInteger: true,
                     ),
                   ),
@@ -300,6 +316,7 @@ class _FoodReportSheetState extends State<_FoodReportSheet> {
                       surfaceColor: surfaceColor,
                       textPrimary: textPrimary,
                       textMuted: textMuted,
+                      accentColor: AppColors.macroProtein,
                     ),
                   ),
                 ],
@@ -316,6 +333,7 @@ class _FoodReportSheetState extends State<_FoodReportSheet> {
                       surfaceColor: surfaceColor,
                       textPrimary: textPrimary,
                       textMuted: textMuted,
+                      accentColor: AppColors.macroCarbs,
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -328,6 +346,7 @@ class _FoodReportSheetState extends State<_FoodReportSheet> {
                       surfaceColor: surfaceColor,
                       textPrimary: textPrimary,
                       textMuted: textMuted,
+                      accentColor: AppColors.macroFat,
                     ),
                   ),
                 ],
@@ -360,21 +379,15 @@ class _FoodReportSheetState extends State<_FoodReportSheet> {
                 fillColor: surfaceColor,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(
-                    color:
-                        isDark ? AppColors.cardBorder : AppColorsLight.cardBorder,
-                  ),
+                  borderSide: BorderSide(color: cardBorder),
                 ),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(
-                    color:
-                        isDark ? AppColors.cardBorder : AppColorsLight.cardBorder,
-                  ),
+                  borderSide: BorderSide(color: cardBorder),
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: accent),
+                  borderSide: BorderSide(color: activeChipColor),
                 ),
                 contentPadding:
                     const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
@@ -382,36 +395,52 @@ class _FoodReportSheetState extends State<_FoodReportSheet> {
             ),
             const SizedBox(height: 24),
 
-            // Submit button
+            // Submit button - colorful with gradient
             SizedBox(
               width: double.infinity,
               height: 48,
-              child: ElevatedButton(
-                onPressed: _isSubmitting ? null : _submit,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: accent,
-                  foregroundColor: accentContrast,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  disabledBackgroundColor: accent.withOpacity(0.5),
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: _isSubmitting
+                      ? null
+                      : LinearGradient(
+                          colors: [
+                            activeChipColor,
+                            activeChipColor.withOpacity(0.8),
+                          ],
+                        ),
+                  color: _isSubmitting ? activeChipColor.withOpacity(0.4) : null,
+                  borderRadius: BorderRadius.circular(12),
                 ),
-                child: _isSubmitting
-                    ? SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: accentContrast,
+                child: ElevatedButton(
+                  onPressed: _isSubmitting ? null : _submit,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.transparent,
+                    shadowColor: Colors.transparent,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    disabledBackgroundColor: Colors.transparent,
+                    disabledForegroundColor: Colors.white70,
+                  ),
+                  child: _isSubmitting
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                      : const Text(
+                          'Submit Report',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
-                      )
-                    : const Text(
-                        'Submit Report',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
+                ),
               ),
             ),
           ],
@@ -429,6 +458,7 @@ class _NutrientField extends StatelessWidget {
   final Color surfaceColor;
   final Color textPrimary;
   final Color textMuted;
+  final Color accentColor;
   final bool isInteger;
 
   const _NutrientField({
@@ -439,17 +469,32 @@ class _NutrientField extends StatelessWidget {
     required this.surfaceColor,
     required this.textPrimary,
     required this.textMuted,
+    required this.accentColor,
     this.isInteger = false,
   });
 
   @override
   Widget build(BuildContext context) {
+    final borderColor = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          label,
-          style: TextStyle(color: textMuted, fontSize: 12),
+        Row(
+          children: [
+            Container(
+              width: 4,
+              height: 4,
+              decoration: BoxDecoration(
+                color: accentColor,
+                shape: BoxShape.circle,
+              ),
+            ),
+            const SizedBox(width: 6),
+            Text(
+              label,
+              style: TextStyle(color: accentColor, fontSize: 12, fontWeight: FontWeight.w600),
+            ),
+          ],
         ),
         const SizedBox(height: 4),
         TextField(
@@ -468,23 +513,15 @@ class _NutrientField extends StatelessWidget {
             fillColor: surfaceColor,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
-              borderSide: BorderSide(
-                color:
-                    isDark ? AppColors.cardBorder : AppColorsLight.cardBorder,
-              ),
+              borderSide: BorderSide(color: borderColor),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
-              borderSide: BorderSide(
-                color:
-                    isDark ? AppColors.cardBorder : AppColorsLight.cardBorder,
-              ),
+              borderSide: BorderSide(color: borderColor),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
-              borderSide: BorderSide(
-                color: isDark ? AppColors.accent : AppColorsLight.accent,
-              ),
+              borderSide: BorderSide(color: accentColor),
             ),
             contentPadding:
                 const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
@@ -500,8 +537,7 @@ class _ReportTypeChip extends StatelessWidget {
   final String label;
   final bool isSelected;
   final VoidCallback onTap;
-  final Color accent;
-  final Color textPrimary;
+  final Color activeColor;
   final Color textMuted;
   final Color surfaceColor;
 
@@ -509,8 +545,7 @@ class _ReportTypeChip extends StatelessWidget {
     required this.label,
     required this.isSelected,
     required this.onTap,
-    required this.accent,
-    required this.textPrimary,
+    required this.activeColor,
     required this.textMuted,
     required this.surfaceColor,
   });
@@ -523,17 +558,17 @@ class _ReportTypeChip extends StatelessWidget {
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
         decoration: BoxDecoration(
-          color: isSelected ? accent.withOpacity(0.15) : surfaceColor,
+          color: isSelected ? activeColor.withOpacity(0.15) : surfaceColor,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: isSelected ? accent : textMuted.withOpacity(0.2),
+            color: isSelected ? activeColor : textMuted.withOpacity(0.2),
             width: 1.5,
           ),
         ),
         child: Text(
           label,
           style: TextStyle(
-            color: isSelected ? accent : textMuted,
+            color: isSelected ? activeColor : textMuted,
             fontSize: 13,
             fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
           ),

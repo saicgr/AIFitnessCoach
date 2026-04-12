@@ -182,10 +182,17 @@ class ExerciseCard extends ConsumerWidget {
                         ),
                       )
                     else
-                      Icon(
-                        _getBodyPartIcon(exercise.bodyPart),
-                        size: 36,
-                        color: purple.withOpacity(0.8),
+                      ClipRRect(
+                        borderRadius: const BorderRadius.only(
+                          topLeft: Radius.circular(16),
+                          bottomLeft: Radius.circular(16),
+                        ),
+                        child: Image.asset(
+                          'assets/icon/app_icon.png',
+                          width: 90,
+                          height: 90,
+                          fit: BoxFit.cover,
+                        ),
                       ),
                     // Video play indicator
                     if (hasVideo)

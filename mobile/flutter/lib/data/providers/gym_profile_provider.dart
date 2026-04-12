@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/theme/accent_color_provider.dart';
@@ -77,6 +76,7 @@ class GymProfilesNotifier extends StateNotifier<AsyncValue<List<GymProfile>>> {
   final String? _userId;
   final Ref _ref;
   bool _disposed = false;
+  bool _hasAutoRetried = false;
 
   @override
   void dispose() {
@@ -180,7 +180,7 @@ class GymProfilesNotifier extends StateNotifier<AsyncValue<List<GymProfile>>> {
       }
       debugPrint('🔄 [GymProfileProvider] Loading profiles for user: $_userId');
 
-      final response = await _repository.getProfiles(_userId!);
+      final response = await _repository.getProfiles(_userId);
       if (_disposed) return;
       state = AsyncValue.data(response.profiles);
 
@@ -203,6 +203,13 @@ class GymProfilesNotifier extends StateNotifier<AsyncValue<List<GymProfile>>> {
       // Only set error state if we don't have cached data
       if (!state.hasValue) {
         state = AsyncValue.error(e, stack);
+        // Auto-retry once after 3 seconds (handles cold-start failures)
+        if (!_disposed && !_hasAutoRetried) {
+          _hasAutoRetried = true;
+          Future.delayed(const Duration(seconds: 3), () {
+            if (!_disposed) _fetchFromApi(showLoading: false);
+          });
+        }
       }
     }
   }
@@ -224,7 +231,7 @@ class GymProfilesNotifier extends StateNotifier<AsyncValue<List<GymProfile>>> {
     try {
       debugPrint('➕ [GymProfileProvider] Creating profile: ${profile.name}');
 
-      final created = await _repository.createProfile(_userId!, profile);
+      final created = await _repository.createProfile(_userId, profile);
 
       // Add to local state and cache
       state.whenData((profiles) {
@@ -340,7 +347,7 @@ class GymProfilesNotifier extends StateNotifier<AsyncValue<List<GymProfile>>> {
     try {
       debugPrint('↕️ [GymProfileProvider] Reordering profiles');
 
-      await _repository.reorderProfiles(_userId!, orderedIds);
+      await _repository.reorderProfiles(_userId, orderedIds);
 
       // Update local state with new order and cache
       state.whenData((profiles) {

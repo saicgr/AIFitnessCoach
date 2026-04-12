@@ -41,7 +41,6 @@ import logging
 from fastapi import APIRouter, HTTPException, Query, Depends
 from pydantic import BaseModel, Field
 
-from core.supabase_db import get_supabase_db
 from core.auth import get_current_user
 from core.exceptions import safe_internal_error
 from core.activity_logger import log_user_activity, log_user_error
@@ -395,7 +394,7 @@ async def update_nutrition_preferences(
         }, on_conflict="user_id").execute()
 
         if not result.data:
-            raise HTTPException(status_code=500, detail="Failed to update preferences")
+            raise safe_internal_error(ValueError("Failed to update preferences"), "nutrition_preferences")
 
         prefs_data = result.data[0]
 
@@ -494,7 +493,7 @@ async def reset_nutrition_preferences(current_user: dict = Depends(get_current_u
         ).execute()
 
         if not result.data:
-            raise HTTPException(status_code=500, detail="Failed to reset preferences")
+            raise safe_internal_error(ValueError("Failed to reset preferences"), "nutrition_preferences")
 
         # Log activity
         await log_user_activity(

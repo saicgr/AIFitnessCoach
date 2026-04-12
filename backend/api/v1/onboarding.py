@@ -26,7 +26,6 @@ from datetime import datetime
 import json
 
 from services.langgraph_onboarding_service import LangGraphOnboardingService
-from core.supabase_db import get_supabase_db
 from core.logger import get_logger
 from core.rate_limiter import limiter
 from core.activity_logger import log_user_activity, log_user_error

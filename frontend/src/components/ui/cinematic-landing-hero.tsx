@@ -472,16 +472,16 @@ export function CinematicHero({
 
             {/* 1. TOP (Mobile) / RIGHT (Desktop): BRAND NAME */}
             <div className="card-right-text gsap-reveal order-1 lg:order-3 flex justify-center lg:justify-end z-20 w-full">
-              <h2 className="text-6xl md:text-[6rem] lg:text-[8rem] font-black tracking-tighter text-card-silver-matte lg:mt-0">
+              <h2 className="text-5xl md:text-[6rem] lg:text-[8rem] font-black tracking-tighter text-card-silver-matte lg:mt-0">
                 {brandName}
               </h2>
             </div>
 
             {/* 2. MIDDLE (Mobile) / CENTER (Desktop): IPHONE MOCKUP */}
-            <div className="mockup-scroll-wrapper order-2 lg:order-2 relative w-full h-[380px] lg:h-[600px] flex items-center justify-center z-10" style={{ perspective: "1000px" }}>
+            <div className="mockup-scroll-wrapper order-2 lg:order-2 relative w-full h-[320px] md:h-[380px] lg:h-[600px] flex items-center justify-center z-10" style={{ perspective: "1000px" }}>
 
               {/* Inner wrapper for safe CSS scaling that doesn't conflict with GSAP */}
-              <div className="relative w-full h-full flex items-center justify-center transform scale-[0.65] md:scale-85 lg:scale-100">
+              <div className="relative w-full h-full flex items-center justify-center transform scale-[0.55] md:scale-85 lg:scale-100">
 
                 {/* Side phone - left */}
                 {(slides || sideScreenshots?.[0]) && (
@@ -632,7 +632,7 @@ export function CinematicHero({
                   <h3 className="relative text-white text-2xl md:text-4xl lg:text-5xl font-bold mb-0 lg:mb-5 tracking-tight">
                     {slide.heading}
                   </h3>
-                  <p className="relative hidden md:block text-blue-100/70 text-sm md:text-lg lg:text-xl font-normal leading-relaxed mx-auto lg:mx-0 max-w-md lg:max-w-none">
+                  <p className="relative text-blue-100/70 text-xs md:text-lg lg:text-xl font-normal leading-relaxed mx-auto lg:mx-0 max-w-md lg:max-w-none mt-2 lg:mt-0">
                     {slide.description}
                   </p>
                 </div>
@@ -641,7 +641,7 @@ export function CinematicHero({
                   <h3 className="relative text-white text-2xl md:text-3xl lg:text-4xl font-bold mb-0 lg:mb-5 tracking-tight">
                     {cardHeading}
                   </h3>
-                  <p className="relative hidden md:block text-blue-100/70 text-sm md:text-base lg:text-lg font-normal leading-relaxed mx-auto lg:mx-0 max-w-sm lg:max-w-none">
+                  <p className="relative text-blue-100/70 text-xs md:text-base lg:text-lg font-normal leading-relaxed mx-auto lg:mx-0 max-w-sm lg:max-w-none mt-2 lg:mt-0">
                     {cardDescription}
                   </p>
                 </div>

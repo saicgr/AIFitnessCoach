@@ -7,7 +7,6 @@ from core.auth import get_current_user, verify_user_ownership
 from core.exceptions import safe_internal_error
 from typing import List
 
-from core.supabase_db import get_supabase_db
 from core.logger import get_logger
 
 from api.v1.users.models import (
@@ -105,7 +104,7 @@ async def add_favorite_exercise(user_id: str, request: FavoriteExerciseRequest,
         }).execute()
 
         if not result.data:
-            raise HTTPException(status_code=500, detail="Failed to add favorite")
+            raise safe_internal_error(ValueError("Failed to add favorite"), "users")
 
         row = result.data[0]
         logger.info(f"Added favorite exercise: {request.exercise_name} for user {user_id}")
@@ -263,7 +262,7 @@ async def add_to_exercise_queue(user_id: str, request: QueueExerciseRequest,
         }).execute()
 
         if not result.data:
-            raise HTTPException(status_code=500, detail="Failed to add to queue")
+            raise safe_internal_error(ValueError("Failed to add to queue"), "users")
 
         row = result.data[0]
         logger.info(f"Added to queue: {request.exercise_name} for user {user_id}")

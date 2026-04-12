@@ -48,7 +48,7 @@ async def run_media_job(job_id: str):
             if job_type in ("form_analysis", "form_comparison"):
                 try:
                     from core.premium_gate import track_premium_usage
-                    await track_premium_usage(job["user_id"], "form_video_analysis")
+                    await track_premium_usage(job["user_id"], "form_video_analysis", "UTC")
                 except Exception as usage_err:
                     logger.warning(f"Failed to track form_video_analysis usage for job {job_id}: {usage_err}", exc_info=True)
         except Exception as e:

@@ -87,7 +87,7 @@ class _NutrientExplorerTabState extends State<NutrientExplorerTab> {
                 title: 'VITAMINS',
                 icon: Icons.wb_sunny_outlined,
                 nutrients: summary.vitamins,
-                categoryColor: AppColors.textPrimary,
+                categoryColor: const Color(0xFFFF9F43), // Warm orange
                 isDark: widget.isDark,
                 onNutrientTap: (nutrient) => _showNutrientDetail(nutrient),
               ).animate().fadeIn(delay: 150.ms),
@@ -97,7 +97,7 @@ class _NutrientExplorerTabState extends State<NutrientExplorerTab> {
                 title: 'MINERALS',
                 icon: Icons.diamond_outlined,
                 nutrients: summary.minerals,
-                categoryColor: AppColors.textSecondary,
+                categoryColor: const Color(0xFF00D9C0), // Teal
                 isDark: widget.isDark,
                 onNutrientTap: (nutrient) => _showNutrientDetail(nutrient),
               ).animate().fadeIn(delay: 200.ms),
@@ -107,7 +107,7 @@ class _NutrientExplorerTabState extends State<NutrientExplorerTab> {
                 title: 'FATTY ACIDS',
                 icon: Icons.water_drop_outlined,
                 nutrients: summary.fattyAcids,
-                categoryColor: AppColors.textSecondary,
+                categoryColor: const Color(0xFF4D96FF), // Blue
                 isDark: widget.isDark,
                 onNutrientTap: (nutrient) => _showNutrientDetail(nutrient),
               ).animate().fadeIn(delay: 250.ms),
@@ -117,7 +117,7 @@ class _NutrientExplorerTabState extends State<NutrientExplorerTab> {
                 title: 'OTHER',
                 icon: Icons.more_horiz,
                 nutrients: summary.other,
-                categoryColor: AppColors.textMuted,
+                categoryColor: const Color(0xFF9B59B6), // Purple
                 isDark: widget.isDark,
                 onNutrientTap: (nutrient) => _showNutrientDetail(nutrient),
               ).animate().fadeIn(delay: 300.ms),
@@ -493,13 +493,13 @@ class _NutrientDetailSheetState extends ConsumerState<NutrientDetailSheet> {
   Color _getStatusColor(NutrientStatus status) {
     switch (status) {
       case NutrientStatus.low:
-        return AppColors.textSecondary;
+        return const Color(0xFFFFC107); // Amber - below target
       case NutrientStatus.optimal:
-        return AppColors.textPrimary;
+        return const Color(0xFF4CAF50); // Green - on target
       case NutrientStatus.high:
-        return AppColors.textSecondary;
+        return const Color(0xFFFF9800); // Orange - above target
       case NutrientStatus.overCeiling:
-        return AppColors.textMuted;
+        return const Color(0xFFF44336); // Red - over limit
     }
   }
 

@@ -32,6 +32,10 @@ class FoodItem {
   final int? count;
   @JsonKey(name: 'weight_per_unit_g')
   final double? weightPerUnitG;
+  @JsonKey(name: 'inflammation_score')
+  final int? inflammationScore;
+  @JsonKey(name: 'is_ultra_processed')
+  final bool? isUltraProcessed;
 
   const FoodItem({
     required this.name,
@@ -45,6 +49,8 @@ class FoodItem {
     this.unit,
     this.count,
     this.weightPerUnitG,
+    this.inflammationScore,
+    this.isUltraProcessed,
   });
 
   factory FoodItem.fromJson(Map<String, dynamic> json) =>

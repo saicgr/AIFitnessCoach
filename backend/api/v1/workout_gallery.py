@@ -13,7 +13,6 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from core.auth import get_current_user, verify_user_ownership, verify_resource_ownership
 from core.exceptions import safe_internal_error
 
-from core.supabase_db import get_supabase_db
 from core.logger import get_logger
 
 logger = get_logger(__name__)
@@ -88,7 +87,7 @@ async def upload_gallery_image(
         result = supabase.client.table("workout_gallery_images").insert(gallery_data).execute()
 
         if not result.data:
-            raise HTTPException(status_code=500, detail="Failed to save gallery image")
+            raise safe_internal_error(ValueError("Failed to save gallery image"), "workout_gallery")
 
         image = WorkoutGalleryImage(**result.data[0])
 
@@ -217,7 +216,7 @@ async def delete_gallery_image(
             .execute()
 
         if not result.data:
-            raise HTTPException(status_code=500, detail="Failed to delete image")
+            raise safe_internal_error(ValueError("Failed to delete image"), "workout_gallery")
 
         return DeleteImageResponse(
             success=True,
@@ -286,7 +285,7 @@ async def share_image_to_feed(
         activity_result = supabase.client.table("activity_feed").insert(activity_data).execute()
 
         if not activity_result.data:
-            raise HTTPException(status_code=500, detail="Failed to create social activity")
+            raise safe_internal_error(ValueError("Failed to create social activity"), "workout_gallery")
 
         # Update gallery image to mark as shared
         supabase.client.table("workout_gallery_images") \

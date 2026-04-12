@@ -17,7 +17,6 @@ from datetime import datetime, timedelta
 from pydantic import BaseModel, Field
 from enum import Enum
 
-from core.supabase_db import get_supabase_db
 from core.logger import get_logger
 
 router = APIRouter(tags=["Trophies"])
@@ -576,7 +575,7 @@ class UserXPResponse(BaseModel):
     total_xp: int = 0
     current_level: int = 1
     xp_in_current_level: int = 0
-    xp_to_next_level: int = 25  # Level 1 -> 2 requires 25 XP (migration 227)
+    xp_to_next_level: int = 150  # Level 1 -> 2 requires 150 XP (migration 1901)
     xp_title: str = "Beginner"
     progress_fraction: float = 0.0
 
@@ -606,20 +605,12 @@ async def get_user_xp(user_id: str,
             data = xp_result.data
             total_xp = data.get("total_xp", 0)
             current_level = data.get("current_level", 1)
-
-            # Calculate XP within current level and XP to next level
-            # Using unified 250-level progressive system (migration 227)
-            xp_for_current_level = _calculate_total_xp_for_level(current_level)
-            xp_needed = _get_xp_for_level(current_level)
-
-            xp_in_current = total_xp - xp_for_current_level
-            # Ensure xp_in_current is not negative (can happen if level was manually set)
-            xp_in_current = max(0, xp_in_current)
+            # Use DB-computed values directly (single source of truth from calculate_level_from_xp)
+            xp_in_current = max(0, data.get("xp_in_current_level", 0))
+            xp_needed = data.get("xp_to_next_level", 150)
+            xp_title = data.get("title", "Beginner")
 
             progress = xp_in_current / xp_needed if xp_needed > 0 else 0
-
-            # Determine title based on level
-            xp_title = _get_xp_title(current_level)
 
             return UserXPResponse(
                 user_id=user_id,
@@ -631,13 +622,13 @@ async def get_user_xp(user_id: str,
                 progress_fraction=min(progress, 1.0)
             )
         else:
-            # Return default for new users (migration 227 values)
+            # Return default for new users (migration 1901 values)
             return UserXPResponse(
                 user_id=user_id,
                 total_xp=0,
                 current_level=1,
                 xp_in_current_level=0,
-                xp_to_next_level=25,  # Level 1 -> 2 requires 25 XP
+                xp_to_next_level=150,  # Level 1 -> 2 requires 150 XP
                 xp_title="Beginner",
                 progress_fraction=0.0
             )

@@ -8,7 +8,6 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from core.auth import get_current_user
 from core.exceptions import safe_internal_error
 from core.timezone_utils import resolve_timezone, local_date_to_utc_range, user_today_date
-from core.supabase_db import get_supabase_db
 from core.logger import get_logger
 
 from api.v1.nutrition.models import (
@@ -145,7 +144,7 @@ async def update_nutrition_preferences(user_id: str, request: NutritionPreferenc
                 .execute()
 
         if not result.data:
-            raise HTTPException(status_code=500, detail="Failed to update preferences")
+            raise safe_internal_error(ValueError("Failed to update preferences"), "nutrition")
 
         # Return the updated preferences
         return await get_nutrition_preferences(user_id)

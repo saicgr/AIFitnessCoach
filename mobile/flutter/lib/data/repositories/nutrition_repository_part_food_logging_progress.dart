@@ -143,6 +143,31 @@ class NutritionNotifier extends StateNotifier<NutritionState> {
     }
   }
 
+  /// Load nutrition summary for a specific date (used when navigating dates)
+  Future<void> loadSummaryForDate(String userId, DateTime date) async {
+    state = state.copyWith(isLoading: true, error: null);
+    try {
+      final dateStr = '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+      final summary = await _repository.getDailySummary(userId, date: dateStr);
+      state = state.copyWith(isLoading: false, todaySummary: summary);
+      _lastLoadedUserId = userId;
+      _lastLoadTime = DateTime.now();
+    } catch (e) {
+      state = state.copyWith(isLoading: false, error: e.toString());
+    }
+  }
+
+  /// Load food logs for a specific date
+  Future<void> loadLogsForDate(String userId, DateTime date) async {
+    try {
+      final dateStr = '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+      final logs = await _repository.getFoodLogs(userId, fromDate: dateStr, toDate: dateStr);
+      state = state.copyWith(recentLogs: logs);
+    } catch (e) {
+      debugPrint('Error loading food logs for date: $e');
+    }
+  }
+
   /// Load nutrition targets
   Future<void> loadTargets(String userId, {bool forceRefresh = false}) async {
     // Skip if data is fresh

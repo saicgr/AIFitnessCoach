@@ -325,6 +325,8 @@ async def get_neat_goals(
                 "created_at": datetime.now().isoformat(),
             }
             insert_response = db.client.table("neat_goals").insert(default_goal).execute()
+            if not insert_response.data:
+                raise safe_internal_error(ValueError("Failed to create default NEAT goals"), "neat")
             goal = NEATGoal(**insert_response.data[0])
 
         # Get today's activity
@@ -449,14 +451,17 @@ async def update_neat_goals(
             raise HTTPException(status_code=404, detail="NEAT goals not found for user")
 
         # Log goal update
-        await log_user_activity(
-            user_id=user_id,
-            action="neat_goals_updated",
-            endpoint=f"/api/v1/neat/goals/{user_id}",
-            message="Updated NEAT goals",
-            metadata=update_data,
-            status_code=200,
-        )
+        try:
+            await log_user_activity(
+                user_id=user_id,
+                action="neat_goals_updated",
+                endpoint=f"/api/v1/neat/goals/{user_id}",
+                message="Updated NEAT goals",
+                metadata=update_data,
+                status_code=200,
+            )
+        except Exception as e:
+            logger.error(f"Activity logging failed: {e}", exc_info=True, extra={"user_id_full": user_id, "failed_action": "neat_goals_updated"})
 
         return NEATGoal(**response.data[0])
 
@@ -624,7 +629,7 @@ async def record_hourly_activity(
         ).execute()
 
         if not response.data:
-            raise HTTPException(status_code=500, detail="Failed to record hourly activity")
+            raise safe_internal_error(ValueError("Failed to record hourly activity"), "neat")
 
         return HourlyActivityRecord(**response.data[0])
 
@@ -1029,7 +1034,7 @@ async def calculate_neat_score(
         ).execute()
 
         if not response.data:
-            raise HTTPException(status_code=500, detail="Failed to save NEAT score")
+            raise safe_internal_error(ValueError("Failed to save NEAT score"), "neat")
 
         return NEATScore(
             id=response.data[0].get("id"),

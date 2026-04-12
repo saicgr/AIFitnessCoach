@@ -13,7 +13,6 @@ from pydantic import BaseModel, Field
 from typing import Optional, Literal
 from datetime import datetime
 
-from core.supabase_db import get_supabase_db
 from core.activity_logger import log_user_activity
 
 router = APIRouter()
@@ -110,7 +109,7 @@ async def update_weight_increments(user_id: str, update: WeightIncrementsUpdate,
         db_data = {k: v for k, v in result.data[0].items() if k != 'user_id'}
         return WeightIncrementsResponse(user_id=user_id, **db_data)
 
-    raise HTTPException(status_code=500, detail="Failed to update weight increments")
+    raise safe_internal_error(ValueError("Failed to update weight increments"), "weight_increments")
 
 
 @router.delete("/{user_id}")

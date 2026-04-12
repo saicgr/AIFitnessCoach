@@ -22,7 +22,6 @@ from core.config import get_settings
 from typing import Dict, List, Optional
 from datetime import datetime
 
-from core.supabase_db import get_supabase_db
 from core.logger import get_logger
 from core.activity_logger import log_user_activity, log_user_error
 from models.support import (
@@ -226,7 +225,7 @@ async def create_support_ticket(ticket: SupportTicketCreate,
         result = db.client.table("support_tickets").insert(ticket_record).execute()
 
         if not result.data:
-            raise HTTPException(status_code=500, detail="Failed to create support ticket")
+            raise safe_internal_error(ValueError("Failed to create support ticket"), "support")
 
         ticket_data = result.data[0]
         ticket_id = str(ticket_data["id"])
@@ -243,7 +242,7 @@ async def create_support_ticket(ticket: SupportTicketCreate,
         if not message_result.data:
             # Rollback ticket creation on message failure
             db.client.table("support_tickets").delete().eq("id", ticket_id).execute()
-            raise HTTPException(status_code=500, detail="Failed to add initial message to ticket")
+            raise safe_internal_error(ValueError("Failed to add initial message to ticket"), "support")
 
         message_data = message_result.data[0]
 
@@ -264,18 +263,21 @@ async def create_support_ticket(ticket: SupportTicketCreate,
         )
 
         # Log activity
-        await log_user_activity(
-            user_id=ticket.user_id,
-            action="support_ticket_created",
-            endpoint="/api/v1/support/tickets",
-            message=f"Created support ticket: {ticket.subject}",
-            metadata={
-                "ticket_id": ticket_id,
-                "category": ticket.category.value,
-                "priority": ticket.priority.value,
-            },
-            status_code=200
-        )
+        try:
+            await log_user_activity(
+                user_id=ticket.user_id,
+                action="support_ticket_created",
+                endpoint="/api/v1/support/tickets",
+                message=f"Created support ticket: {ticket.subject}",
+                metadata={
+                    "ticket_id": ticket_id,
+                    "category": ticket.category.value,
+                    "priority": ticket.priority.value,
+                },
+                status_code=200
+            )
+        except Exception as e:
+            logger.error(f"Activity logging failed: {e}", exc_info=True, extra={"user_id_full": ticket.user_id, "failed_action": "support_ticket_created"})
 
         logger.info(f"Support ticket created: {ticket_id}")
 
@@ -497,7 +499,7 @@ async def add_ticket_reply(ticket_id: str, user_id: str, reply: SupportTicketMes
         message_result = db.client.table("support_ticket_messages").insert(message_record).execute()
 
         if not message_result.data:
-            raise HTTPException(status_code=500, detail="Failed to add reply")
+            raise safe_internal_error(ValueError("Failed to add reply"), "support")
 
         message_data = message_result.data[0]
 
@@ -516,17 +518,20 @@ async def add_ticket_reply(ticket_id: str, user_id: str, reply: SupportTicketMes
         db.client.table("support_tickets").update(update_data).eq("id", ticket_id).execute()
 
         # Log activity
-        await log_user_activity(
-            user_id=user_id,
-            action="support_ticket_reply",
-            endpoint=f"/api/v1/support/tickets/{ticket_id}/reply",
-            message="Added reply to support ticket",
-            metadata={
-                "ticket_id": ticket_id,
-                "sender": reply.sender.value,
-            },
-            status_code=200
-        )
+        try:
+            await log_user_activity(
+                user_id=user_id,
+                action="support_ticket_reply",
+                endpoint=f"/api/v1/support/tickets/{ticket_id}/reply",
+                message="Added reply to support ticket",
+                metadata={
+                    "ticket_id": ticket_id,
+                    "sender": reply.sender.value,
+                },
+                status_code=200
+            )
+        except Exception as e:
+            logger.error(f"Activity logging failed: {e}", exc_info=True, extra={"user_id_full": user_id, "failed_action": "support_ticket_reply"})
 
         logger.info(f"Reply added to ticket {ticket_id}")
 
@@ -638,17 +643,20 @@ async def close_ticket(ticket_id: str, user_id: str,
         )
 
         # Log activity
-        await log_user_activity(
-            user_id=user_id,
-            action="support_ticket_closed",
-            endpoint=f"/api/v1/support/tickets/{ticket_id}/close",
-            message="Closed support ticket",
-            metadata={
-                "ticket_id": ticket_id,
-                "previous_status": current_status.value,
-            },
-            status_code=200
-        )
+        try:
+            await log_user_activity(
+                user_id=user_id,
+                action="support_ticket_closed",
+                endpoint=f"/api/v1/support/tickets/{ticket_id}/close",
+                message="Closed support ticket",
+                metadata={
+                    "ticket_id": ticket_id,
+                    "previous_status": current_status.value,
+                },
+                status_code=200
+            )
+        except Exception as e:
+            logger.error(f"Activity logging failed: {e}", exc_info=True, extra={"user_id_full": user_id, "failed_action": "support_ticket_closed"})
 
         logger.info(f"Ticket {ticket_id} closed")
 

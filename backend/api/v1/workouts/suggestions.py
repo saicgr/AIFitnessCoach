@@ -16,7 +16,6 @@ from core.auth import get_current_user
 from core.exceptions import safe_internal_error
 from pydantic import BaseModel
 
-from core.supabase_db import get_supabase_db
 from core.logger import get_logger
 from services.langgraph_agents.workout_insights.graph import generate_workout_insights
 from models.gemini_schemas import WorkoutSuggestionsResponse

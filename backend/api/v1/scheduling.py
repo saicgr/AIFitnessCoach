@@ -26,7 +26,6 @@ from datetime import datetime, date, timedelta
 from pydantic import BaseModel, Field
 import json
 
-from core.supabase_db import get_supabase_db
 from core.logger import get_logger
 from core.activity_logger import log_user_activity, log_user_error
 

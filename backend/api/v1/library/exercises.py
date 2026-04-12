@@ -18,7 +18,6 @@ import difflib
 
 from fastapi import APIRouter, HTTPException, Query, Response
 
-from core.supabase_db import get_supabase_db
 from core.logger import get_logger
 from core.exceptions import safe_internal_error
 
@@ -49,7 +48,7 @@ async def get_filter_options():
         # Get all exercises from cleaned view with all needed fields including new columns
         all_rows = await fetch_all_rows(
             db, "exercise_library_cleaned",
-            "name, target_muscle, body_part, equipment, video_url, goals, suitable_for, avoid_if"
+            "name, target_muscle, body_part, display_body_part, equipment, video_url, goals, suitable_for, avoid_if"
         )
 
         # Count dictionaries
@@ -61,7 +60,7 @@ async def get_filter_options():
         avoid_counts: Dict[str, int] = {}
 
         for row in all_rows:
-            bp = normalize_body_part(row.get("target_muscle") or row.get("body_part", ""))
+            bp = row.get("display_body_part") or normalize_body_part(row.get("target_muscle") or row.get("body_part", ""))
             eq = row.get("equipment", "")
             video_url = row.get("video_url", "")
 
@@ -167,12 +166,12 @@ async def get_exercise_types():
         db = get_supabase_db()
 
         # Get all exercises from cleaned view
-        all_rows = await fetch_all_rows(db, "exercise_library_cleaned", "video_url, body_part, target_muscle")
+        all_rows = await fetch_all_rows(db, "exercise_library_cleaned", "video_url, body_part, display_body_part, target_muscle")
 
         # Count by derived exercise type
         type_counts: Dict[str, int] = {}
         for row in all_rows:
-            bp = normalize_body_part(row.get("target_muscle") or row.get("body_part", ""))
+            bp = row.get("display_body_part") or normalize_body_part(row.get("target_muscle") or row.get("body_part", ""))
             et = derive_exercise_type(row.get("video_url", ""), bp)
             type_counts[et] = type_counts.get(et, 0) + 1
 
@@ -202,12 +201,12 @@ async def get_body_parts():
         db = get_supabase_db()
 
         # Get all exercises from cleaned view (deduplicated) using pagination
-        all_rows = await fetch_all_rows(db, "exercise_library_cleaned", "target_muscle, body_part")
+        all_rows = await fetch_all_rows(db, "exercise_library_cleaned", "target_muscle, body_part, display_body_part")
 
         # Count by normalized body part
         body_part_counts: Dict[str, int] = {}
         for row in all_rows:
-            bp = normalize_body_part(row.get("target_muscle") or row.get("body_part", ""))
+            bp = row.get("display_body_part") or normalize_body_part(row.get("target_muscle") or row.get("body_part", ""))
             body_part_counts[bp] = body_part_counts.get(bp, 0) + 1
 
         # Sort by count descending

@@ -13,7 +13,6 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from typing import List, Optional
 from datetime import datetime, date, timedelta
 
-from core.supabase_db import get_supabase_db
 from core.timezone_utils import resolve_timezone, get_user_today
 from core.logger import get_logger
 from core.activity_logger import log_user_activity, log_user_error

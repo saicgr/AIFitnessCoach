@@ -252,7 +252,7 @@ class _SeniorOnboardingScreenState
 
         if (mounted) {
           // Navigate to paywall after onboarding
-          context.go('/paywall-features');
+          context.go('/paywall-pricing');
         }
       }
     } catch (e) {

@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../core/constants/app_colors.dart';
@@ -25,8 +27,10 @@ class WorkoutSummaryAdvanced extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    // If no metadata at all, show info banner
-    if (!_hasMetadata && data?.performanceComparison == null) {
+    final hasSetLogs = data != null && data!.setLogs.isNotEmpty;
+
+    // If no metadata, no comparison, and no set logs, show info banner
+    if (!_hasMetadata && data?.performanceComparison == null && !hasSetLogs) {
       return Center(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 32),
@@ -38,8 +42,9 @@ class WorkoutSummaryAdvanced extends StatelessWidget {
     final sections = <Widget>[];
     int delay = 0;
 
-    // 1. Performance comparison
-    if (data?.performanceComparison != null) {
+    // 1. Performance comparison (only if there's a previous workout to compare)
+    if (data?.performanceComparison != null &&
+        data!.performanceComparison!.workoutComparison.hasPrevious) {
       sections.add(
         _PerformanceComparisonSection(
           comparison: data!.performanceComparison!,
@@ -52,8 +57,13 @@ class WorkoutSummaryAdvanced extends StatelessWidget {
     if (_hasMetadata) {
       final meta = metadata!;
 
-      // 1b. Per-Exercise Deep Dive
-      final setsJson = _castList(meta['sets_json']);
+      // 1b. Per-Exercise Deep Dive (skip sets with no real exercise name)
+      final setsJson = _castList(meta['sets_json'])
+          .where((s) {
+            final name = s['exercise_name'] as String?;
+            return name != null && name.isNotEmpty && name != 'Unknown';
+          })
+          .toList();
       if (setsJson.isNotEmpty) {
         sections.add(
           _PerExerciseDeepDiveSection(
@@ -179,6 +189,58 @@ class WorkoutSummaryAdvanced extends StatelessWidget {
         sections.add(
           _SettingsUsedSection(
             settings: incrementSettings,
+            isDark: isDark,
+          ).animate().fadeIn(duration: 400.ms, delay: Duration(milliseconds: delay)),
+        );
+        delay += 80;
+      }
+    }
+
+    // ── Sections derived from setLogs (always available if tracked) ──
+    if (hasSetLogs) {
+      final logs = data!.setLogs;
+      final workingSets = logs.where((l) => l.setType == 'working').toList();
+
+      // Volume Breakdown per exercise
+      if (workingSets.isNotEmpty) {
+        sections.add(
+          _VolumeBreakdownSection(
+            setLogs: workingSets,
+            isDark: isDark,
+          ).animate().fadeIn(duration: 400.ms, delay: Duration(milliseconds: delay)),
+        );
+        delay += 80;
+      }
+
+      // Intensity Analysis (RPE / RIR)
+      final logsWithRpe = workingSets.where((l) => l.rpe != null).toList();
+      final logsWithRir = workingSets.where((l) => l.rir != null).toList();
+      if (logsWithRpe.isNotEmpty || logsWithRir.isNotEmpty) {
+        sections.add(
+          _IntensityAnalysisSection(
+            setLogs: workingSets,
+            isDark: isDark,
+          ).animate().fadeIn(duration: 400.ms, delay: Duration(milliseconds: delay)),
+        );
+        delay += 80;
+      }
+
+      // Estimated 1RM per exercise
+      if (workingSets.any((l) => l.weightKg > 0 && l.repsCompleted > 0)) {
+        sections.add(
+          _Estimated1RMSection(
+            setLogs: workingSets,
+            isDark: isDark,
+          ).animate().fadeIn(duration: 400.ms, delay: Duration(milliseconds: delay)),
+        );
+        delay += 80;
+      }
+
+      // Set Type Distribution
+      if (logs.length > 1) {
+        sections.add(
+          _SetTypeDistributionSection(
+            setLogs: logs,
             isDark: isDark,
           ).animate().fadeIn(duration: 400.ms, delay: Duration(milliseconds: delay)),
         );
@@ -2011,6 +2073,572 @@ class _WorkoutExitStatsSection extends StatelessWidget {
     if (m > 0 && s > 0) return '${m}m ${s}s';
     if (m > 0) return '${m}m';
     return '${s}s';
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// A. Volume Breakdown (from setLogs)
+// ═══════════════════════════════════════════════════════════════════
+
+class _VolumeBreakdownSection extends StatelessWidget {
+  final List<SetLogInfo> setLogs;
+  final bool isDark;
+
+  const _VolumeBreakdownSection({
+    required this.setLogs,
+    required this.isDark,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    // Group by exercise, calculate total volume (weight_kg * reps) in lbs
+    final volumes = <String, double>{};
+    final setsByExercise = <String, int>{};
+    for (final s in setLogs) {
+      if (s.exerciseName.isEmpty) continue;
+      final volLb = s.weightKg * 2.20462 * s.repsCompleted;
+      volumes[s.exerciseName] = (volumes[s.exerciseName] ?? 0) + volLb;
+      setsByExercise[s.exerciseName] = (setsByExercise[s.exerciseName] ?? 0) + 1;
+    }
+    if (volumes.isEmpty) return const SizedBox.shrink();
+
+    // Sort by volume descending
+    final sorted = volumes.entries.toList()
+      ..sort((a, b) => b.value.compareTo(a.value));
+    final maxVol = sorted.first.value;
+    final totalVol = sorted.fold<double>(0, (sum, e) => sum + e.value);
+
+    return _SectionCard(
+      isDark: isDark,
+      icon: Icons.bar_chart_rounded,
+      title: 'Volume Breakdown',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Total volume header
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(10),
+            margin: const EdgeInsets.only(bottom: 12),
+            decoration: BoxDecoration(
+              color: AppColors.orange.withValues(alpha: isDark ? 0.12 : 0.08),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  'Total Volume: ',
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: isDark ? AppColors.textSecondary : AppColorsLight.textSecondary,
+                  ),
+                ),
+                Text(
+                  '${totalVol.toStringAsFixed(0)} lb',
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.orange,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          // Per-exercise bars
+          ...sorted.map((entry) {
+            final pct = maxVol > 0 ? entry.value / maxVol : 0.0;
+            final sets = setsByExercise[entry.key] ?? 0;
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          entry.key,
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                            color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      Text(
+                        '${entry.value.toStringAsFixed(0)} lb  ($sets sets)',
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(3),
+                    child: LinearProgressIndicator(
+                      value: pct,
+                      minHeight: 6,
+                      backgroundColor: isDark
+                          ? AppColors.cardBorder
+                          : AppColorsLight.cardBorder,
+                      valueColor: AlwaysStoppedAnimation(
+                        AppColors.orange.withValues(alpha: 0.8),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }),
+        ],
+      ),
+    );
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// B. Intensity Analysis (RPE / RIR from setLogs)
+// ═══════════════════════════════════════════════════════════════════
+
+class _IntensityAnalysisSection extends StatelessWidget {
+  final List<SetLogInfo> setLogs;
+  final bool isDark;
+
+  const _IntensityAnalysisSection({
+    required this.setLogs,
+    required this.isDark,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final withRpe = setLogs.where((l) => l.rpe != null).toList();
+    final withRir = setLogs.where((l) => l.rir != null).toList();
+
+    final avgRpe = withRpe.isNotEmpty
+        ? withRpe.map((l) => l.rpe!).reduce((a, b) => a + b) / withRpe.length
+        : null;
+    final maxRpe = withRpe.isNotEmpty
+        ? withRpe.map((l) => l.rpe!).reduce(math.max)
+        : null;
+    final avgRir = withRir.isNotEmpty
+        ? withRir.map((l) => l.rir!.toDouble()).reduce((a, b) => a + b) / withRir.length
+        : null;
+
+    // RPE distribution buckets: Easy (<6), Moderate (6-7), Hard (8-9), Max (10)
+    final rpeBuckets = <String, int>{'Easy (<6)': 0, 'Moderate (6-7)': 0, 'Hard (8-9)': 0, 'Max (10)': 0};
+    for (final l in withRpe) {
+      final r = l.rpe!;
+      if (r < 6) {
+        rpeBuckets['Easy (<6)'] = rpeBuckets['Easy (<6)']! + 1;
+      } else if (r < 8) {
+        rpeBuckets['Moderate (6-7)'] = rpeBuckets['Moderate (6-7)']! + 1;
+      } else if (r < 10) {
+        rpeBuckets['Hard (8-9)'] = rpeBuckets['Hard (8-9)']! + 1;
+      } else {
+        rpeBuckets['Max (10)'] = rpeBuckets['Max (10)']! + 1;
+      }
+    }
+
+    // Color for RPE level
+    Color rpeColor(double rpe) {
+      if (rpe < 6) return AppColors.success;
+      if (rpe < 8) return AppColors.orange;
+      if (rpe < 10) return AppColors.error.withValues(alpha: 0.8);
+      return AppColors.error;
+    }
+
+    // RPE intensity label
+    String rpeLabel(double rpe) {
+      if (rpe < 6) return 'Easy';
+      if (rpe < 7) return 'Moderate';
+      if (rpe < 8.5) return 'Hard';
+      if (rpe < 10) return 'Very Hard';
+      return 'Maximal';
+    }
+
+    return _SectionCard(
+      isDark: isDark,
+      icon: Icons.speed_rounded,
+      title: 'Intensity Analysis',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Summary stats row
+          Row(
+            children: [
+              if (avgRpe != null)
+                Expanded(
+                  child: _IntensityStat(
+                    label: 'Avg RPE',
+                    value: avgRpe.toStringAsFixed(1),
+                    subLabel: rpeLabel(avgRpe),
+                    color: rpeColor(avgRpe),
+                    isDark: isDark,
+                  ),
+                ),
+              if (maxRpe != null)
+                Expanded(
+                  child: _IntensityStat(
+                    label: 'Peak RPE',
+                    value: maxRpe.toStringAsFixed(1),
+                    subLabel: rpeLabel(maxRpe),
+                    color: rpeColor(maxRpe),
+                    isDark: isDark,
+                  ),
+                ),
+              if (avgRir != null)
+                Expanded(
+                  child: _IntensityStat(
+                    label: 'Avg RIR',
+                    value: avgRir.toStringAsFixed(1),
+                    subLabel: '${avgRir.toStringAsFixed(0)} reps left',
+                    color: avgRir <= 1 ? AppColors.error : avgRir <= 2 ? AppColors.orange : AppColors.success,
+                    isDark: isDark,
+                  ),
+                ),
+            ],
+          ),
+          // RPE distribution
+          if (withRpe.length >= 3) ...[
+            const SizedBox(height: 14),
+            Text(
+              'RPE Distribution',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: isDark ? AppColors.textSecondary : AppColorsLight.textSecondary,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Row(
+              children: rpeBuckets.entries.where((e) => e.value > 0).map((e) {
+                final bucketColors = {
+                  'Easy (<6)': AppColors.success,
+                  'Moderate (6-7)': AppColors.orange,
+                  'Hard (8-9)': AppColors.error.withValues(alpha: 0.8),
+                  'Max (10)': AppColors.error,
+                };
+                final color = bucketColors[e.key] ?? AppColors.textMuted;
+                return Expanded(
+                  flex: e.value,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 2),
+                    child: Column(
+                      children: [
+                        Container(
+                          height: 24,
+                          decoration: BoxDecoration(
+                            color: color.withValues(alpha: isDark ? 0.25 : 0.15),
+                            borderRadius: BorderRadius.circular(6),
+                            border: Border.all(color: color.withValues(alpha: 0.4), width: 0.5),
+                          ),
+                          child: Center(
+                            child: Text(
+                              '${e.value}',
+                              style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: color),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 3),
+                        Text(
+                          e.key.replaceAll(RegExp(r'\s*\(.*\)'), ''),
+                          style: TextStyle(fontSize: 9, color: isDark ? AppColors.textMuted : AppColorsLight.textMuted),
+                          textAlign: TextAlign.center,
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              }).toList(),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _IntensityStat extends StatelessWidget {
+  final String label;
+  final String value;
+  final String subLabel;
+  final Color color;
+  final bool isDark;
+
+  const _IntensityStat({
+    required this.label,
+    required this.value,
+    required this.subLabel,
+    required this.color,
+    required this.isDark,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 11,
+            color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: 22,
+            fontWeight: FontWeight.w700,
+            color: color,
+          ),
+        ),
+        const SizedBox(height: 2),
+        Text(
+          subLabel,
+          style: TextStyle(
+            fontSize: 10,
+            fontWeight: FontWeight.w500,
+            color: color.withValues(alpha: 0.7),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// C. Estimated 1RM (from setLogs, Epley formula)
+// ═══════════════════════════════════════════════════════════════════
+
+class _Estimated1RMSection extends StatelessWidget {
+  final List<SetLogInfo> setLogs;
+  final bool isDark;
+
+  const _Estimated1RMSection({
+    required this.setLogs,
+    required this.isDark,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    // Calculate best estimated 1RM per exercise (Epley formula)
+    final best1RMs = <String, double>{};
+    final bestSets = <String, SetLogInfo>{};
+    for (final s in setLogs) {
+      if (s.exerciseName.isEmpty || s.weightKg <= 0 || s.repsCompleted <= 0) continue;
+      final lbWeight = s.weightKg * 2.20462;
+      final estimate = s.repsCompleted == 1
+          ? lbWeight
+          : lbWeight * (1 + s.repsCompleted / 30.0);
+      if (!best1RMs.containsKey(s.exerciseName) || estimate > best1RMs[s.exerciseName]!) {
+        best1RMs[s.exerciseName] = estimate;
+        bestSets[s.exerciseName] = s;
+      }
+    }
+    if (best1RMs.isEmpty) return const SizedBox.shrink();
+
+    final sorted = best1RMs.entries.toList()
+      ..sort((a, b) => b.value.compareTo(a.value));
+
+    return _SectionCard(
+      isDark: isDark,
+      icon: Icons.emoji_events_rounded,
+      title: 'Estimated 1RM',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(bottom: 10),
+            child: Text(
+              'Based on Epley formula from your best sets',
+              style: TextStyle(
+                fontSize: 11,
+                fontStyle: FontStyle.italic,
+                color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
+              ),
+            ),
+          ),
+          ...sorted.map((entry) {
+            final set = bestSets[entry.key]!;
+            final weightLb = set.weightKg * 2.20462;
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                decoration: BoxDecoration(
+                  color: isDark ? AppColors.glassSurface : AppColorsLight.glassSurface,
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(
+                    color: isDark ? AppColors.cardBorder : AppColorsLight.cardBorder,
+                    width: 0.5,
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            entry.key,
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            'Best set: ${weightLb.toStringAsFixed(1)} lb x ${set.repsCompleted}',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: AppColors.orange.withValues(alpha: isDark ? 0.15 : 0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        '${entry.value.toStringAsFixed(0)} lb',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.orange,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }),
+        ],
+      ),
+    );
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// D. Set Type Distribution (from setLogs)
+// ═══════════════════════════════════════════════════════════════════
+
+class _SetTypeDistributionSection extends StatelessWidget {
+  final List<SetLogInfo> setLogs;
+  final bool isDark;
+
+  const _SetTypeDistributionSection({
+    required this.setLogs,
+    required this.isDark,
+  });
+
+  static const _typeLabels = {
+    'working': 'Working',
+    'warmup': 'Warm-up',
+    'drop': 'Drop Set',
+    'failure': 'Failure',
+    'backoff': 'Back-off',
+    'rest_pause': 'Rest-Pause',
+    'myo_rep': 'Myo-Rep',
+  };
+
+  static const _typeColors = {
+    'working': AppColors.orange,
+    'warmup': AppColors.success,
+    'drop': Color(0xFF8E44AD),
+    'failure': AppColors.error,
+    'backoff': Color(0xFF3498DB),
+    'rest_pause': Color(0xFFE67E22),
+    'myo_rep': Color(0xFF1ABC9C),
+  };
+
+  @override
+  Widget build(BuildContext context) {
+    final counts = <String, int>{};
+    for (final s in setLogs) {
+      final type = s.setType.isNotEmpty ? s.setType : 'working';
+      counts[type] = (counts[type] ?? 0) + 1;
+    }
+    final total = setLogs.length;
+
+    // Sort: working first, then by count descending
+    final sorted = counts.entries.toList()
+      ..sort((a, b) {
+        if (a.key == 'working') return -1;
+        if (b.key == 'working') return 1;
+        return b.value.compareTo(a.value);
+      });
+
+    return _SectionCard(
+      isDark: isDark,
+      icon: Icons.donut_small_rounded,
+      title: 'Set Type Distribution',
+      child: Column(
+        children: [
+          // Stacked bar
+          ClipRRect(
+            borderRadius: BorderRadius.circular(6),
+            child: SizedBox(
+              height: 20,
+              child: Row(
+                children: sorted.map((e) {
+                  final color = _typeColors[e.key] ?? AppColors.textMuted;
+                  return Expanded(
+                    flex: e.value,
+                    child: Container(
+                      color: color.withValues(alpha: isDark ? 0.6 : 0.5),
+                    ),
+                  );
+                }).toList(),
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+          // Legend
+          Wrap(
+            spacing: 12,
+            runSpacing: 6,
+            children: sorted.map((e) {
+              final color = _typeColors[e.key] ?? AppColors.textMuted;
+              final label = _typeLabels[e.key] ?? e.key;
+              final pct = (e.value / total * 100).toStringAsFixed(0);
+              return Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 10,
+                    height: 10,
+                    decoration: BoxDecoration(
+                      color: color,
+                      borderRadius: BorderRadius.circular(3),
+                    ),
+                  ),
+                  const SizedBox(width: 5),
+                  Text(
+                    '$label: ${e.value} ($pct%)',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: isDark ? AppColors.textSecondary : AppColorsLight.textSecondary,
+                    ),
+                  ),
+                ],
+              );
+            }).toList(),
+          ),
+        ],
+      ),
+    );
   }
 }
 

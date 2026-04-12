@@ -292,7 +292,7 @@ String? _getNextOnboardingStep(app_user.User user, Ref ref) {
 
   // Step 4: Paywall (after coach selection)
   if (!user.isPaywallComplete) {
-    return '/paywall-features';
+    return '/paywall-pricing';
   }
 
   // All steps complete

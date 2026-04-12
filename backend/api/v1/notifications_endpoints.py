@@ -154,13 +154,16 @@ async def update_billing_preferences(user_id: str, request: BillingPreferencesRe
             "billing_notifications_enabled": request.billing_notifications_enabled
         }).eq("id", user_id).execute()
 
-        await log_user_activity(
-            user_id=user_id,
-            action="billing_preferences_updated",
-            endpoint="/api/v1/notifications/billing/preferences",
-            message=f"Billing notifications {'enabled' if request.billing_notifications_enabled else 'disabled'}",
-            status_code=200
-        )
+        try:
+            await log_user_activity(
+                user_id=user_id,
+                action="billing_preferences_updated",
+                endpoint="/api/v1/notifications/billing/preferences",
+                message=f"Billing notifications {'enabled' if request.billing_notifications_enabled else 'disabled'}",
+                status_code=200
+            )
+        except Exception as e:
+            logger.error(f"Activity logging failed: {e}", exc_info=True, extra={"user_id_full": user_id, "failed_action": "billing_preferences_updated"})
 
         return {
             "success": True,
@@ -838,18 +841,21 @@ async def send_movement_reminders(
                     })
 
                     # Log the reminder
-                    await log_user_activity(
-                        user_id=user_id,
-                        action="movement_reminder_sent",
-                        endpoint="/api/v1/notifications/scheduler/send-movement-reminders",
-                        message=f"Movement reminder sent: {current_steps}/{threshold} steps",
-                        metadata={
-                            "current_steps": current_steps,
-                            "threshold": threshold,
-                            "user_hour": user_hour,
-                        },
-                        status_code=200
-                    )
+                    try:
+                        await log_user_activity(
+                            user_id=user_id,
+                            action="movement_reminder_sent",
+                            endpoint="/api/v1/notifications/scheduler/send-movement-reminders",
+                            message=f"Movement reminder sent: {current_steps}/{threshold} steps",
+                            metadata={
+                                "current_steps": current_steps,
+                                "threshold": threshold,
+                                "user_hour": user_hour,
+                            },
+                            status_code=200
+                        )
+                    except Exception as e:
+                        logger.error(f"Activity logging failed: {e}", exc_info=True, extra={"user_id_full": user_id, "failed_action": "movement_reminder_sent"})
                 else:
                     results["errors"] += 1
                     results["details"].append({

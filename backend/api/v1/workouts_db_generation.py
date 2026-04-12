@@ -13,7 +13,6 @@ from datetime import datetime
 import json
 import asyncio
 
-from core.supabase_db import get_supabase_db
 from core.logger import get_logger, set_log_context
 from core.rate_limiter import limiter
 from core.timezone_utils import resolve_timezone, get_user_today, target_date_to_utc_iso

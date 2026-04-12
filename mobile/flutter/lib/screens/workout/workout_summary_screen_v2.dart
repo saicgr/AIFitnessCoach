@@ -120,6 +120,7 @@ class _WorkoutSummaryScreenV2State
             key: const ValueKey('detail'),
             workoutId: widget.workoutId,
             initialWorkout: _parsedWorkout,
+            isSummaryMode: true,
           ),
 
           // Floating pill at bottom
@@ -133,6 +134,9 @@ class _WorkoutSummaryScreenV2State
 
     return Stack(
       children: [
+        // Force Stack to fill the screen so the pill anchors to the real bottom
+        const SizedBox.expand(),
+
         // General or Advanced view
         AnimatedSwitcher(
           duration: const Duration(milliseconds: 300),

@@ -13,7 +13,6 @@ from datetime import datetime
 import json
 import time
 
-from core.supabase_db import get_supabase_db
 from core.logger import get_logger
 from core.rate_limiter import limiter
 from core.timezone_utils import resolve_timezone
@@ -546,7 +545,7 @@ async def create_workout_warmup(workout_id: str, duration_minutes: int = 5,
             workout_id, exercises, duration_minutes, user_id=user_id
         )
         if not warmup:
-            raise HTTPException(status_code=500, detail="Failed to create warmup")
+            raise safe_internal_error(ValueError("Failed to create warmup"), "workouts_db_versioning")
         return warmup
 
     except HTTPException:
@@ -575,7 +574,7 @@ async def create_workout_stretches(workout_id: str, duration_minutes: int = 5,
             workout_id, exercises, duration_minutes, user_id=user_id
         )
         if not stretches:
-            raise HTTPException(status_code=500, detail="Failed to create stretches")
+            raise safe_internal_error(ValueError("Failed to create stretches"), "workouts_db_versioning")
         return stretches
 
     except HTTPException:

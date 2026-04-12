@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/accent_color_provider.dart';
 import '../../../data/models/nutrition.dart';
 import '../../../data/services/api_client.dart';
 import '../../../widgets/glass_sheet.dart';
@@ -377,7 +378,8 @@ class LoggedMealsSection extends StatelessWidget {
     final isDarkTheme = Theme.of(context).brightness == Brightness.dark;
     final textPrimary = isDarkTheme ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDarkTheme ? AppColors.textMuted : AppColorsLight.textMuted;
-    final teal = isDarkTheme ? AppColors.teal : AppColorsLight.teal;
+    final accentEnum = AccentColorScope.of(context);
+    final teal = accentEnum.getColor(isDarkTheme);
     final cardBorder = isDarkTheme ? AppColors.cardBorder : AppColorsLight.cardBorder;
 
     showGlassSheet(
@@ -430,7 +432,10 @@ class LoggedMealsSection extends StatelessWidget {
                     tooltip: 'Edit portion',
                   ),
                   IconButton(
-                    onPressed: () => _copyMealTo(ctx, meal),
+                    onPressed: () {
+                      Navigator.pop(ctx);
+                      _copyMealTo(context, meal);
+                    },
                     icon: Icon(Icons.content_copy, color: teal, size: 20),
                     tooltip: 'Copy to...',
                   ),
@@ -460,6 +465,20 @@ class LoggedMealsSection extends StatelessWidget {
                 shrinkWrap: true,
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 children: [
+                  // Photo thumbnail (for photo-logged meals)
+                  if (meal.imageUrl != null) ...[
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(12),
+                      child: Image.network(
+                        meal.imageUrl!,
+                        height: 180,
+                        width: double.infinity,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                  ],
                   // Food items
                   ...meal.foodItems.asMap().entries.map((entry) {
                     final food = entry.value;
@@ -501,6 +520,44 @@ class LoggedMealsSection extends StatelessWidget {
                                 fontSize: 11,
                                 color: textMuted,
                               ),
+                            ),
+                          ],
+                          // Per-item inflammation score & UPF tag
+                          if (food.inflammationScore != null || food.isUltraProcessed == true) ...[
+                            const SizedBox(height: 6),
+                            Row(
+                              children: [
+                                if (food.inflammationScore != null) ...[
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                    decoration: BoxDecoration(
+                                      color: _inflammationColor(food.inflammationScore!).withValues(alpha: 0.15),
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Icon(Icons.local_fire_department, size: 12,
+                                          color: _inflammationColor(food.inflammationScore!)),
+                                        const SizedBox(width: 2),
+                                        Text('${food.inflammationScore}',
+                                          style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600,
+                                            color: _inflammationColor(food.inflammationScore!))),
+                                      ],
+                                    ),
+                                  ),
+                                  const SizedBox(width: 6),
+                                ],
+                                if (food.isUltraProcessed == true)
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                    decoration: BoxDecoration(
+                                      color: Colors.red.withValues(alpha: 0.15),
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: const Text('UPF', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: Colors.red)),
+                                  ),
+                              ],
                             ),
                           ],
                         ],
@@ -559,6 +616,103 @@ class LoggedMealsSection extends StatelessWidget {
                                 ),
                               ],
                             ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+
+                  // Meal-level Inflammation Score
+                  if (meal.inflammationScore != null) ...[
+                    const SizedBox(height: 4),
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: _inflammationColor(meal.inflammationScore!).withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: _inflammationColor(meal.inflammationScore!).withValues(alpha: 0.3)),
+                      ),
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 40,
+                            height: 40,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: _inflammationColor(meal.inflammationScore!).withValues(alpha: 0.2),
+                            ),
+                            alignment: Alignment.center,
+                            child: Text(
+                              '${meal.inflammationScore}',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: _inflammationColor(meal.inflammationScore!),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    Text('Inflammation Score',
+                                      style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: textPrimary)),
+                                    const SizedBox(width: 4),
+                                    GestureDetector(
+                                      onTap: () => _showInflammationInfo(context),
+                                      child: Icon(Icons.info_outline, size: 16, color: textMuted),
+                                    ),
+                                  ],
+                                ),
+                                Text(
+                                  _inflammationLabel(meal.inflammationScore!),
+                                  style: TextStyle(fontSize: 11, color: _inflammationColor(meal.inflammationScore!)),
+                                ),
+                              ],
+                            ),
+                          ),
+                          // Progress bar
+                          SizedBox(
+                            width: 80,
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(4),
+                              child: LinearProgressIndicator(
+                                value: meal.inflammationScore! / 10.0,
+                                backgroundColor: cardBorder.withValues(alpha: 0.3),
+                                valueColor: AlwaysStoppedAnimation<Color>(_inflammationColor(meal.inflammationScore!)),
+                                minHeight: 6,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+
+                  // Ultra-processed meal-level badge
+                  if (meal.isUltraProcessed == true) ...[
+                    const SizedBox(height: 4),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: Colors.red.withValues(alpha: 0.08),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Colors.red.withValues(alpha: 0.2)),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(Icons.warning_amber_rounded, size: 18, color: Colors.red),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text('Contains ultra-processed items',
+                              style: TextStyle(fontSize: 12, color: Colors.red, fontWeight: FontWeight.w500)),
+                          ),
+                          GestureDetector(
+                            onTap: () => _showUltraProcessedInfo(context),
+                            child: Icon(Icons.info_outline, size: 16, color: Colors.red.withValues(alpha: 0.7)),
                           ),
                         ],
                       ),
@@ -706,7 +860,8 @@ class LoggedMealsSection extends StatelessWidget {
     final isDarkTheme = Theme.of(context).brightness == Brightness.dark;
     final textPrimary = isDarkTheme ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDarkTheme ? AppColors.textMuted : AppColorsLight.textMuted;
-    final teal = isDarkTheme ? AppColors.teal : AppColorsLight.teal;
+    final accentEnum = AccentColorScope.of(context);
+    final teal = accentEnum.getColor(isDarkTheme);
     final cardBorder = isDarkTheme ? AppColors.cardBorder : AppColorsLight.cardBorder;
 
     final foodName = meal.foodItems.isNotEmpty
@@ -873,16 +1028,65 @@ class LoggedMealsSection extends StatelessWidget {
     final isDarkTheme = Theme.of(context).brightness == Brightness.dark;
     final textPrimary = isDarkTheme ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDarkTheme ? AppColors.textMuted : AppColorsLight.textMuted;
-    final teal = isDarkTheme ? AppColors.teal : AppColorsLight.teal;
+    final accentEnum = AccentColorScope.of(context);
+    final accent = accentEnum.getColor(isDarkTheme);
     final glassSurface = isDarkTheme ? AppColors.glassSurface : AppColorsLight.glassSurface;
+    final macroProtein = isDarkTheme ? AppColors.macroProtein : AppColorsLight.macroProtein;
+    final macroCarbs = isDarkTheme ? AppColors.macroCarbs : AppColorsLight.macroCarbs;
+    final macroFat = isDarkTheme ? AppColors.macroFat : AppColorsLight.macroFat;
 
     double multiplier = 1.0;
+
+    // Weight unit toggle state
+    const weightUnits = ['g', 'oz', 'lb', 'kg', 'ml', 'mg'];
+    int selectedUnitIndex = 0;
 
     // Determine available edit modes
     final hasWeight = meal.hasWeightData;
     final hasCount = meal.hasCountData;
     final firstItemWithWeight = hasWeight ? meal.foodItems.firstWhere((i) => i.hasWeightData) : null;
     final firstItemWithCount = hasCount ? meal.foodItems.firstWhere((i) => i.hasCountData) : null;
+
+    // Initialize unit index from the item's unit
+    if (firstItemWithWeight != null) {
+      final itemUnit = (firstItemWithWeight.unit ?? 'g').toLowerCase();
+      final idx = weightUnits.indexOf(itemUnit);
+      if (idx >= 0) selectedUnitIndex = idx;
+    }
+
+    // Serving presets with size labels
+    const servingPresets = [
+      (label: '\u00BD', multiplier: 0.5, size: 'Small'),
+      (label: '\u00BE', multiplier: 0.75, size: 'Medium'),
+      (label: '1x', multiplier: 1.0, size: 'Standard'),
+      (label: '1\u00BC', multiplier: 1.25, size: 'Large'),
+      (label: '1\u00BD', multiplier: 1.5, size: 'X-Large'),
+      (label: '2x', multiplier: 2.0, size: 'Double'),
+      (label: '3x', multiplier: 3.0, size: 'Triple'),
+    ];
+
+    // Unit conversion factors from grams
+    double convertFromGrams(double grams, String unit) {
+      switch (unit) {
+        case 'oz': return grams / 28.3495;
+        case 'lb': return grams / 453.592;
+        case 'kg': return grams / 1000.0;
+        case 'ml': return grams; // 1:1 for water-density approximation
+        case 'mg': return grams * 1000.0;
+        default: return grams;
+      }
+    }
+
+    double convertToGrams(double value, String unit) {
+      switch (unit) {
+        case 'oz': return value * 28.3495;
+        case 'lb': return value * 453.592;
+        case 'kg': return value * 1000.0;
+        case 'ml': return value;
+        case 'mg': return value / 1000.0;
+        default: return value;
+      }
+    }
 
     showGlassSheet(
       context: context,
@@ -893,6 +1097,7 @@ class LoggedMealsSection extends StatelessWidget {
             final adjProtein = (meal.proteinG * multiplier);
             final adjCarbs = (meal.carbsG * multiplier);
             final adjFat = (meal.fatG * multiplier);
+            final currentUnit = weightUnits[selectedUnitIndex];
 
             return Padding(
               padding: EdgeInsets.only(
@@ -906,112 +1111,163 @@ class LoggedMealsSection extends StatelessWidget {
                   // Header
                   Row(
                     children: [
-                      Icon(Icons.tune, color: teal, size: 20),
+                      Icon(Icons.tune, color: accent, size: 20),
                       const SizedBox(width: 8),
                       Text('Adjust Portion', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: textPrimary)),
                       const Spacer(),
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                         decoration: BoxDecoration(
-                          color: teal.withValues(alpha: 0.15),
+                          color: accent.withValues(alpha: 0.15),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Text(
                           '${(multiplier * 100).round()}%',
-                          style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: teal),
+                          style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: accent),
                         ),
                       ),
                     ],
                   ),
                   const SizedBox(height: 16),
 
-                  // Serving presets
+                  // Serving presets with size labels
                   Text('Servings', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: textMuted)),
                   const SizedBox(height: 8),
                   Wrap(
                     spacing: 8,
                     runSpacing: 8,
-                    children: [0.5, 0.75, 1.0, 1.25, 1.5, 2.0, 3.0].map((preset) {
-                      final isSelected = (multiplier - preset).abs() < 0.01;
-                      final label = preset == 0.5 ? '\u00BD' : preset == 0.75 ? '\u00BE' : preset == 1.25 ? '1\u00BC' : preset == 1.5 ? '1\u00BD' : '${preset.toStringAsFixed(preset == preset.roundToDouble() ? 0 : 1)}x';
+                    children: servingPresets.map((preset) {
+                      final isSelected = (multiplier - preset.multiplier).abs() < 0.01;
                       return GestureDetector(
-                        onTap: () => setState(() => multiplier = preset),
+                        onTap: () => setState(() => multiplier = preset.multiplier),
                         child: Container(
                           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                           decoration: BoxDecoration(
-                            color: isSelected ? teal : glassSurface,
+                            color: isSelected ? accent : glassSurface,
                             borderRadius: BorderRadius.circular(20),
                           ),
-                          child: Text(
-                            label,
-                            style: TextStyle(
-                              fontSize: 13,
-                              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                              color: isSelected ? Colors.white : textPrimary,
-                            ),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                preset.label,
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                                  color: isSelected ? Colors.white : textPrimary,
+                                ),
+                              ),
+                              Text(
+                                preset.size,
+                                style: TextStyle(
+                                  fontSize: 9,
+                                  color: isSelected ? Colors.white70 : textMuted,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       );
                     }).toList(),
                   ),
 
-                  // Weight input
-                  if (hasWeight && firstItemWithWeight != null) ...[
+                  // Weight + Quantity on same row
+                  if (hasWeight || hasCount) ...[
                     const SizedBox(height: 16),
-                    Text('Weight', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: textMuted)),
-                    const SizedBox(height: 8),
                     Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Expanded(
-                          child: TextField(
-                            keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                            style: TextStyle(color: textPrimary, fontSize: 14),
-                            decoration: InputDecoration(
-                              hintText: '${firstItemWithWeight.weightG?.round() ?? 0}',
-                              hintStyle: TextStyle(color: textMuted),
-                              suffixText: firstItemWithWeight.unit ?? 'g',
-                              suffixStyle: TextStyle(color: textMuted),
-                              filled: true,
-                              fillColor: glassSurface,
-                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
-                              contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                              isDense: true,
+                        // Weight input with unit toggle
+                        if (hasWeight && firstItemWithWeight != null)
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text('Weight', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: textMuted)),
+                                const SizedBox(height: 8),
+                                TextField(
+                                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                                  style: TextStyle(color: textPrimary, fontSize: 14),
+                                  decoration: InputDecoration(
+                                    hintText: '${convertFromGrams((firstItemWithWeight.weightG ?? 0) * multiplier, currentUnit).round()}',
+                                    hintStyle: TextStyle(color: textMuted),
+                                    suffixIcon: GestureDetector(
+                                      onTap: () {
+                                        setState(() {
+                                          selectedUnitIndex = (selectedUnitIndex + 1) % weightUnits.length;
+                                        });
+                                      },
+                                      child: Container(
+                                        width: 44,
+                                        alignment: Alignment.center,
+                                        child: Container(
+                                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                          decoration: BoxDecoration(
+                                            color: accent.withValues(alpha: 0.15),
+                                            borderRadius: BorderRadius.circular(8),
+                                          ),
+                                          child: Text(
+                                            currentUnit,
+                                            style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: accent),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                    filled: true,
+                                    fillColor: glassSurface,
+                                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                                    contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                                    isDense: true,
+                                  ),
+                                  onChanged: (value) {
+                                    final newValue = double.tryParse(value);
+                                    if (newValue != null && newValue > 0 && firstItemWithWeight.weightG != null && firstItemWithWeight.weightG! > 0) {
+                                      final newWeightG = convertToGrams(newValue, currentUnit);
+                                      setState(() => multiplier = (newWeightG / firstItemWithWeight.weightG!).clamp(0.1, 10.0));
+                                    }
+                                  },
+                                ),
+                              ],
                             ),
-                            onChanged: (value) {
-                              final newWeight = double.tryParse(value);
-                              if (newWeight != null && newWeight > 0 && firstItemWithWeight.weightG != null && firstItemWithWeight.weightG! > 0) {
-                                setState(() => multiplier = (newWeight / firstItemWithWeight.weightG!).clamp(0.1, 10.0));
-                              }
-                            },
                           ),
-                        ),
-                      ],
-                    ),
-                  ],
 
-                  // Quantity input
-                  if (hasCount && firstItemWithCount != null) ...[
-                    const SizedBox(height: 16),
-                    Text('Quantity', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: textMuted)),
-                    const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        _AdjustBtn(icon: Icons.remove, color: teal, onTap: () {
-                          final currentCount = (firstItemWithCount.count! * multiplier).round();
-                          if (currentCount > 1) {
-                            setState(() => multiplier = ((currentCount - 1) / firstItemWithCount.count!).clamp(0.1, 10.0));
-                          }
-                        }),
-                        const SizedBox(width: 16),
-                        Text(
-                          '${(firstItemWithCount.count! * multiplier).round()}',
-                          style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: textPrimary),
-                        ),
-                        const SizedBox(width: 16),
-                        _AdjustBtn(icon: Icons.add, color: teal, onTap: () {
-                          final currentCount = (firstItemWithCount.count! * multiplier).round();
-                          setState(() => multiplier = ((currentCount + 1) / firstItemWithCount.count!).clamp(0.1, 10.0));
-                        }),
+                        // Spacer between weight and quantity
+                        if (hasWeight && firstItemWithWeight != null && hasCount && firstItemWithCount != null)
+                          const SizedBox(width: 16),
+
+                        // Quantity input
+                        if (hasCount && firstItemWithCount != null)
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text('Quantity', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: textMuted)),
+                                const SizedBox(height: 8),
+                                Row(
+                                  children: [
+                                    _AdjustBtn(icon: Icons.remove, color: accent, onTap: () {
+                                      final currentCount = (firstItemWithCount.count! * multiplier).round();
+                                      if (currentCount > 1) {
+                                        setState(() => multiplier = ((currentCount - 1) / firstItemWithCount.count!).clamp(0.1, 10.0));
+                                      }
+                                    }),
+                                    Expanded(
+                                      child: Center(
+                                        child: Text(
+                                          '${(firstItemWithCount.count! * multiplier).round()}',
+                                          style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: textPrimary),
+                                        ),
+                                      ),
+                                    ),
+                                    _AdjustBtn(icon: Icons.add, color: accent, onTap: () {
+                                      final currentCount = (firstItemWithCount.count! * multiplier).round();
+                                      setState(() => multiplier = ((currentCount + 1) / firstItemWithCount.count!).clamp(0.1, 10.0));
+                                    }),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
                       ],
                     ),
                   ],
@@ -1029,9 +1285,9 @@ class LoggedMealsSection extends StatelessWidget {
                       mainAxisAlignment: MainAxisAlignment.spaceAround,
                       children: [
                         _NutrientPreviewItem(label: 'Cal', value: '$adjCalories', isDark: isDarkTheme),
-                        _NutrientPreviewItem(label: 'P', value: '${adjProtein.round()}g', isDark: isDarkTheme),
-                        _NutrientPreviewItem(label: 'C', value: '${adjCarbs.round()}g', isDark: isDarkTheme),
-                        _NutrientPreviewItem(label: 'F', value: '${adjFat.round()}g', isDark: isDarkTheme),
+                        _NutrientPreviewItem(label: 'P', value: '${adjProtein.round()}g', isDark: isDarkTheme, color: macroProtein),
+                        _NutrientPreviewItem(label: 'C', value: '${adjCarbs.round()}g', isDark: isDarkTheme, color: macroCarbs),
+                        _NutrientPreviewItem(label: 'F', value: '${adjFat.round()}g', isDark: isDarkTheme, color: macroFat),
                       ],
                     ),
                   ),
@@ -1053,7 +1309,7 @@ class LoggedMealsSection extends StatelessWidget {
                         );
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: teal,
+                        backgroundColor: accent,
                         foregroundColor: Colors.white,
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                       ),
@@ -1073,24 +1329,23 @@ class LoggedMealsSection extends StatelessWidget {
   // Copy / Move Meal Pickers
   // ============================================
 
-  void _copyMealTo(BuildContext sheetContext, FoodLog meal) {
-    _showMealTypePicker(sheetContext, meal, 'Copy to...', (type) {
-      Navigator.pop(sheetContext);
+  void _copyMealTo(BuildContext parentContext, FoodLog meal) {
+    _showMealTypePicker(parentContext, meal, 'Copy to...', (type) {
       onCopyMeal(meal.id, type);
     });
   }
 
-  void _moveMealTo(BuildContext sheetContext, FoodLog meal) {
-    _showMealTypePicker(sheetContext, meal, 'Move to...', (type) {
-      Navigator.pop(sheetContext);
+  void _moveMealTo(BuildContext parentContext, FoodLog meal) {
+    _showMealTypePicker(parentContext, meal, 'Move to...', (type) {
       onMoveMeal(meal.id, type);
     });
   }
 
-  void _showMealTypePicker(BuildContext sheetContext, FoodLog meal, String title, void Function(String type) onSelect) {
-    final isDarkTheme = Theme.of(sheetContext).brightness == Brightness.dark;
+  void _showMealTypePicker(BuildContext parentContext, FoodLog meal, String title, void Function(String type) onSelect) {
+    final isDarkTheme = Theme.of(parentContext).brightness == Brightness.dark;
     final textPrimary = isDarkTheme ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final teal = isDarkTheme ? AppColors.teal : AppColorsLight.teal;
+    final accentEnum = AccentColorScope.of(parentContext);
+    final accent = accentEnum.getColor(isDarkTheme);
 
     final mealTypes = [
       {'id': 'breakfast', 'label': 'Breakfast', 'emoji': '\u{1F373}'},
@@ -1100,7 +1355,7 @@ class LoggedMealsSection extends StatelessWidget {
     ];
 
     showGlassSheet(
-      context: sheetContext,
+      context: parentContext,
       builder: (ctx) => GlassSheet(
         child: Padding(
           padding: EdgeInsets.only(
@@ -1123,9 +1378,9 @@ class LoggedMealsSection extends StatelessWidget {
                   style: TextStyle(color: textPrimary, fontWeight: FontWeight.w500),
                 ),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                tileColor: meal.mealType == type['id'] ? teal.withValues(alpha: 0.1) : null,
+                tileColor: meal.mealType == type['id'] ? accent.withValues(alpha: 0.1) : null,
                 trailing: meal.mealType == type['id']
-                    ? Text('Current', style: TextStyle(fontSize: 12, color: teal))
+                    ? Text('Current', style: TextStyle(fontSize: 12, color: accent))
                     : null,
                 onTap: () {
                   Navigator.pop(ctx);
@@ -1168,7 +1423,8 @@ class LoggedMealsSection extends StatelessWidget {
     final isDarkTheme = Theme.of(context).brightness == Brightness.dark;
     final textPrimary = isDarkTheme ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDarkTheme ? AppColors.textMuted : AppColorsLight.textMuted;
-    final teal = isDarkTheme ? AppColors.teal : AppColorsLight.teal;
+    final accentEnum = AccentColorScope.of(context);
+    final accent = accentEnum.getColor(isDarkTheme);
     final glassSurface = isDarkTheme ? AppColors.glassSurface : AppColorsLight.glassSurface;
 
     final controller = TextEditingController(text: meal.notes ?? '');
@@ -1212,7 +1468,7 @@ class LoggedMealsSection extends StatelessWidget {
                     onUpdateMealNotes(meal.id, controller.text.trim());
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: teal,
+                    backgroundColor: accent,
                     foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   ),
@@ -1223,7 +1479,7 @@ class LoggedMealsSection extends StatelessWidget {
           ),
         ),
       ),
-    );
+    ).then((_) => controller.dispose());
   }
 
   // ============================================
@@ -1234,7 +1490,8 @@ class LoggedMealsSection extends StatelessWidget {
     final isDarkTheme = Theme.of(context).brightness == Brightness.dark;
     final textPrimary = isDarkTheme ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDarkTheme ? AppColors.textMuted : AppColorsLight.textMuted;
-    final teal = isDarkTheme ? AppColors.teal : AppColorsLight.teal;
+    final accentEnum = AccentColorScope.of(context);
+    final accent = accentEnum.getColor(isDarkTheme);
     final glassSurface = isDarkTheme ? AppColors.glassSurface : AppColorsLight.glassSurface;
 
     FoodMood? moodBefore = meal.moodBeforeEnum;
@@ -1245,10 +1502,10 @@ class LoggedMealsSection extends StatelessWidget {
       context: context,
       builder: (ctx) => GlassSheet(
         child: StatefulBuilder(
-          builder: (context, setState) => Padding(
+          builder: (_, setState) => Padding(
             padding: EdgeInsets.only(
               left: 16, right: 16, top: 16,
-              bottom: MediaQuery.of(context).padding.bottom + 16,
+              bottom: MediaQuery.of(ctx).padding.bottom + 16,
             ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -1270,7 +1527,7 @@ class LoggedMealsSection extends StatelessWidget {
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                         decoration: BoxDecoration(
-                          color: isSelected ? teal : glassSurface,
+                          color: isSelected ? accent : glassSurface,
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: Text(
@@ -1296,7 +1553,7 @@ class LoggedMealsSection extends StatelessWidget {
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                         decoration: BoxDecoration(
-                          color: isSelected ? teal : glassSurface,
+                          color: isSelected ? accent : glassSurface,
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: Text(
@@ -1314,16 +1571,16 @@ class LoggedMealsSection extends StatelessWidget {
                   children: [
                     Text('Energy level', style: TextStyle(fontSize: 13, color: textMuted)),
                     const Spacer(),
-                    Text('$energyLevel/5', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: teal)),
+                    Text('$energyLevel/5', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: accent)),
                   ],
                 ),
                 const SizedBox(height: 8),
                 SliderTheme(
                   data: SliderThemeData(
-                    activeTrackColor: teal,
+                    activeTrackColor: accent,
                     inactiveTrackColor: glassSurface,
-                    thumbColor: teal,
-                    overlayColor: teal.withValues(alpha: 0.2),
+                    thumbColor: accent,
+                    overlayColor: accent.withValues(alpha: 0.2),
                   ),
                   child: Slider(
                     value: energyLevel.toDouble(),
@@ -1341,7 +1598,7 @@ class LoggedMealsSection extends StatelessWidget {
                   height: 44,
                   child: ElevatedButton(
                     onPressed: () {
-                      Navigator.pop(context);
+                      Navigator.pop(ctx);
                       onUpdateMealMood(
                         meal.id,
                         moodBefore: moodBefore?.value,
@@ -1350,7 +1607,7 @@ class LoggedMealsSection extends StatelessWidget {
                       );
                     },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: teal,
+                      backgroundColor: accent,
                       foregroundColor: Colors.white,
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     ),
@@ -1463,6 +1720,122 @@ class LoggedMealsSection extends StatelessWidget {
     if (score >= 3) return 'Below average';
     return 'Poor';
   }
+
+  Color _inflammationColor(int score) {
+    if (score <= 3) return Colors.green;
+    if (score <= 5) return Colors.teal;
+    if (score <= 7) return Colors.orange;
+    return Colors.red;
+  }
+
+  String _inflammationLabel(int score) {
+    if (score <= 2) return 'Anti-inflammatory';
+    if (score <= 4) return 'Mildly anti-inflammatory';
+    if (score == 5) return 'Neutral';
+    if (score <= 7) return 'Mildly inflammatory';
+    if (score <= 9) return 'Inflammatory';
+    return 'Highly inflammatory';
+  }
+
+  void _showInflammationInfo(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: isDark ? const Color(0xFF1A1A1A) : Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.local_fire_department, color: Colors.orange),
+                const SizedBox(width: 8),
+                Text('Inflammation Score', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold,
+                  color: isDark ? Colors.white : Colors.black)),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Text('Rates how inflammatory a food is based on processing level, fat profile, sugar content, fiber, and antioxidant properties.',
+              style: TextStyle(fontSize: 14, color: isDark ? Colors.white70 : Colors.black87, height: 1.5)),
+            const SizedBox(height: 16),
+            _buildInfoRow('1-3', 'Anti-inflammatory', Colors.green),
+            _buildInfoRow('4-5', 'Neutral', Colors.teal),
+            _buildInfoRow('6-7', 'Mildly inflammatory', Colors.orange),
+            _buildInfoRow('8-10', 'Inflammatory', Colors.red),
+            const SizedBox(height: 16),
+            Text('Lower is better for reducing body inflammation and gut health.',
+              style: TextStyle(fontSize: 13, color: isDark ? Colors.white54 : Colors.black54, fontStyle: FontStyle.italic)),
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildInfoRow(String range, String label, Color color) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        children: [
+          Container(
+            width: 40,
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(6),
+            ),
+            child: Text(range, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: color),
+              textAlign: TextAlign.center),
+          ),
+          const SizedBox(width: 12),
+          Text(label, style: TextStyle(fontSize: 14, color: color)),
+        ],
+      ),
+    );
+  }
+
+  void _showUltraProcessedInfo(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: isDark ? const Color(0xFF1A1A1A) : Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.warning_amber_rounded, color: Colors.red),
+                const SizedBox(width: 8),
+                Text('Ultra-Processed Foods', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold,
+                  color: isDark ? Colors.white : Colors.black)),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Text('Ultra-processed foods (NOVA Group 4) contain industrial additives like emulsifiers, hydrogenated oils, artificial sweeteners, and protein isolates — substances not found in home cooking.',
+              style: TextStyle(fontSize: 14, color: isDark ? Colors.white70 : Colors.black87, height: 1.5)),
+            const SizedBox(height: 12),
+            Text('Research links regular consumption to increased inflammation, obesity, heart disease, and digestive issues.',
+              style: TextStyle(fontSize: 14, color: isDark ? Colors.white70 : Colors.black87, height: 1.5)),
+            const SizedBox(height: 12),
+            Text('Examples: soft drinks, instant noodles, packaged snacks, chicken nuggets, most breakfast cereals.',
+              style: TextStyle(fontSize: 13, color: isDark ? Colors.white54 : Colors.black54, fontStyle: FontStyle.italic)),
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
+    );
+  }
 }
 
 // ============================================
@@ -1531,8 +1904,9 @@ class _NutrientPreviewItem extends StatelessWidget {
   final String label;
   final String value;
   final bool isDark;
+  final Color? color;
 
-  const _NutrientPreviewItem({required this.label, required this.value, required this.isDark});
+  const _NutrientPreviewItem({required this.label, required this.value, required this.isDark, this.color});
 
   @override
   Widget build(BuildContext context) {
@@ -1540,8 +1914,8 @@ class _NutrientPreviewItem extends StatelessWidget {
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     return Column(
       children: [
-        Text(value, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: textPrimary)),
-        Text(label, style: TextStyle(fontSize: 11, color: textMuted)),
+        Text(value, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: color ?? textPrimary)),
+        Text(label, style: TextStyle(fontSize: 11, color: color?.withValues(alpha: 0.7) ?? textMuted)),
       ],
     );
   }

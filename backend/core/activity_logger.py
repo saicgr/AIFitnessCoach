@@ -173,15 +173,15 @@ async def log_user_error(
         status_code: HTTP status code (defaults to 500)
         send_alert: Whether to send webhook alert (default: True)
     """
-    # Get error details
-    error_type = type(error).__name__
-    error_message = str(error)
-
-    # Get request_id from logging context if available
-    ctx = get_log_context()
-    request_id = ctx.get("request_id")
-
     try:
+        # Get error details
+        error_type = type(error).__name__
+        error_message = str(error)
+
+        # Get request_id from logging context if available
+        ctx = get_log_context()
+        request_id = ctx.get("request_id")
+
         db = get_supabase_db()
         client = db.client
 

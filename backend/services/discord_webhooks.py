@@ -2,7 +2,7 @@
 Discord webhook notifications for FitWiz.
 
 Channels:
-  #growth  — new user signups
+  #growth  — new user signups + subscription events
   #reviews — Play Store reviews (called from cron)
   #alerts  — backend errors / crashes
 """
@@ -67,6 +67,48 @@ async def notify_signup(
                 {"name": "User", "value": display, "inline": True},
                 {"name": "Email", "value": email, "inline": True},
                 {"name": "Provider", "value": provider, "inline": True},
+                {"name": "ID", "value": f"`{user_id[:12]}...`", "inline": True},
+            ],
+            "footer": {"text": now},
+        }],
+    }
+    return await _post_webhook(settings.discord_growth_webhook, payload)
+
+
+# ── #growth: Subscription events ────────────────────────────────
+
+async def notify_subscription(
+    email: str,
+    user_id: str,
+    plan: str,
+    price: float,
+    currency: str = "USD",
+    is_trial: bool = False,
+    store: str = "",
+    name: Optional[str] = None,
+) -> bool:
+    """Post a new subscription notification to #growth."""
+    settings = get_settings()
+    now = datetime.now(timezone.utc).strftime("%b %d, %Y %H:%M UTC")
+    display = name or email.split("@")[0]
+
+    status_text = "Free Trial Started" if is_trial else "New Subscription"
+    color = 0xF59E0B if is_trial else 0x10B981  # amber for trial, green for paid
+
+    price_display = "Trial" if is_trial and price == 0 else f"${price:.2f} {currency}"
+
+    payload = {
+        "username": "Revenue Tracker",
+        "avatar_url": "https://cdn.jsdelivr.net/gh/twitter/twemoji@latest/assets/72x72/1f4b0.png",
+        "embeds": [{
+            "title": status_text,
+            "color": color,
+            "fields": [
+                {"name": "User", "value": display, "inline": True},
+                {"name": "Email", "value": email, "inline": True},
+                {"name": "Plan", "value": plan, "inline": True},
+                {"name": "Price", "value": price_display, "inline": True},
+                {"name": "Store", "value": store or "Unknown", "inline": True},
                 {"name": "ID", "value": f"`{user_id[:12]}...`", "inline": True},
             ],
             "footer": {"text": now},

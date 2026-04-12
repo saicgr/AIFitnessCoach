@@ -16,7 +16,6 @@ from fastapi import APIRouter, Body, Depends, HTTPException
 from core.auth import get_current_user
 from core.exceptions import safe_internal_error
 
-from core.supabase_db import get_supabase_db
 from core.logger import get_logger
 from services.warmup_stretch_service import get_warmup_stretch_service
 
@@ -141,7 +140,7 @@ async def create_workout_warmup(workout_id: str, duration_minutes: Optional[int]
         )
 
         if not warmup:
-            raise HTTPException(status_code=500, detail="Failed to create warmup")
+            raise safe_internal_error(ValueError("Failed to create warmup"), "workouts")
 
         return warmup
 
@@ -185,7 +184,7 @@ async def create_workout_stretches(workout_id: str, duration_minutes: Optional[i
         )
 
         if not stretches:
-            raise HTTPException(status_code=500, detail="Failed to create stretches")
+            raise safe_internal_error(ValueError("Failed to create stretches"), "workouts")
 
         return stretches
 

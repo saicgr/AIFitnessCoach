@@ -420,7 +420,7 @@ async def record_strain(request_body: RecordStrainRequest,
         result = supabase.client.table("strain_history").insert(strain_data).execute()
 
         if not result.data:
-            raise HTTPException(status_code=500, detail="Failed to record strain")
+            raise safe_internal_error(ValueError("Failed to record strain"), "strain_prevention")
 
         strain_id = str(result.data[0]["id"])
 

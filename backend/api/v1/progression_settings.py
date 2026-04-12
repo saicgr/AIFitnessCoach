@@ -497,7 +497,7 @@ async def update_progression_preferences(user_id: str, update: ProgressionPrefer
             ).execute()
 
         if not result.data:
-            raise HTTPException(status_code=500, detail="Failed to update preferences")
+            raise safe_internal_error(ValueError("Failed to update preferences"), "progression_settings")
 
         return await get_progression_preferences(user_id)
 

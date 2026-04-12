@@ -35,7 +35,6 @@ from datetime import datetime, date, timedelta, timezone
 from typing import Optional, List
 from uuid import UUID
 
-from core.supabase_db import get_supabase_db
 from core.logger import get_logger
 from core.activity_logger import log_user_activity, log_user_error
 from core.timezone_utils import resolve_timezone, get_user_today
@@ -132,7 +131,7 @@ async def get_today_habits(
         # Get habits with today's status from view
         result = db.client.table("today_habits_view").select("*").eq(
             "user_id", user_id
-        ).order("sort_order", desc=False).execute()
+        ).order("habit_created_at", desc=False).execute()
 
         if not result.data:
             return TodayHabitsResponse(

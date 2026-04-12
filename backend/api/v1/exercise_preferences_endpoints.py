@@ -88,7 +88,7 @@ async def add_avoided_exercise(user_id: str, request: AvoidedExerciseCreate, cur
         result = db.client.table("avoided_exercises").insert(insert_data).execute()
 
         if not result.data:
-            raise HTTPException(status_code=500, detail="Failed to add avoided exercise")
+            raise safe_internal_error(ValueError("Failed to add avoided exercise"), "exercise_preferences")
 
         row = result.data[0]
 
@@ -283,7 +283,7 @@ async def add_avoided_muscle(user_id: str, request: AvoidedMuscleCreate, current
         result = db.client.table("avoided_muscles").insert(insert_data).execute()
 
         if not result.data:
-            raise HTTPException(status_code=500, detail="Failed to add avoided muscle")
+            raise safe_internal_error(ValueError("Failed to add avoided muscle"), "exercise_preferences")
 
         row = result.data[0]
 

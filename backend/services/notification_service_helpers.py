@@ -25,6 +25,7 @@ class NotificationService(NotificationServicePart2):
     TYPE_LIVE_CHAT_CONNECTED = "live_chat_connected"
     TYPE_LIVE_CHAT_ENDED = "live_chat_ended"
     TYPE_TEST = "test"
+    TYPE_DAILY_BUNDLE = "daily_bundle"
 
     # Android notification channel IDs (must match Flutter side)
     CHANNEL_IDS = {
@@ -40,6 +41,7 @@ class NotificationService(NotificationServicePart2):
         TYPE_LIVE_CHAT_CONNECTED: "live_chat",
         TYPE_LIVE_CHAT_ENDED: "live_chat",
         TYPE_TEST: "test_notifications",
+        TYPE_DAILY_BUNDLE: "daily_bundle",
     }
 
     # Movement reminder message templates (variety to avoid notification fatigue)
@@ -114,6 +116,30 @@ class NotificationService(NotificationServicePart2):
         {"title": "We saved your spot!", "body": "{days} days away, but your plan is still here. Start small."},
         {"title": "Every comeback starts with one rep!", "body": "It's been {days} days. A 10-minute session is all it takes."},
         {"title": "No judgment, just progress!", "body": "{days} days off? That's okay. Today is a great day to start fresh."},
+    ]
+
+    # Tier 4: 5 days missed - stronger emotional appeal
+    INACTIVITY_NUDGE_5DAY = [
+        {"title": "Your dumbbells miss you!", "body": "5 days, {name}. Your equipment is gathering dust. One session changes everything!"},
+        {"title": "5 days off...", "body": "Your workout plan is still here, waiting like a loyal friend. Just one session?"},
+        {"title": "Remember your goals?", "body": "5 days off. That fire is still in you. Light it up with one session, {name}."},
+        {"title": "We're still here!", "body": "5 days is just a pause, not a stop. Come crush one workout!"},
+    ]
+
+    # Tier 5: 7 days missed - warm welcome-back
+    INACTIVITY_NUDGE_7DAY = [
+        {"title": "A whole week!", "body": "We kept your plan warm for you, {name}. Remember why you started. One rep is all it takes."},
+        {"title": "7 days...", "body": "Your workout hasn't given up on you. Don't give up on it."},
+        {"title": "Miss the grind?", "body": "It's been a week. Even champions take breaks. But now? It's time, {name}."},
+        {"title": "Your comeback starts now!", "body": "7 days off means you're fully rested. Let's use that energy!"},
+    ]
+
+    # Tier 6: 14+ days missed - no judgment, gentle pull
+    INACTIVITY_NUDGE_14PLUS_DAY = [
+        {"title": "We haven't given up on you!", "body": "It's been {days} days, but your plan is still here. One small step back, {name}."},
+        {"title": "Still in your corner!", "body": "{days} days away? That's OK. One rep. One walk. Just start."},
+        {"title": "Remember day 1?", "body": "You started for a reason {days} days ago. That reason hasn't changed, {name}."},
+        {"title": "It's time.", "body": "It's been {days} days. No judgment — just open the app and let's talk."},
     ]
 
     # 1c. Streak celebration templates with {streak} placeholder
@@ -397,6 +423,160 @@ class NotificationService(NotificationServicePart2):
             {"title": "{coach_name}", "body": "{name}! {incomplete_count} habits hanging? That's not discipline!"},
             {"title": "{coach_name}", "body": "CHECK. OFF. YOUR. HABITS. {incomplete_count} left. Handle it!"},
             {"title": "{coach_name}", "body": "Champions complete their habits EVERY day. {incomplete_count} to go. FINISH!"},
+        ],
+
+        # ─── Smart App-Open Hook Templates ──────────────────────────────
+
+        # --- Streak Countdown Urgency ---
+        ("streak_countdown", "gentle"): [
+            {"title": "{coach_name}", "body": "Hey {name}, your {streak}-day streak expires tonight. Even a quick session saves it!"},
+            {"title": "{coach_name}", "body": "{name}, just a heads up — your {streak}-day streak is at risk tonight. A short workout keeps it alive."},
+            {"title": "{coach_name}", "body": "Your {streak}-day streak is counting on you tonight. No pressure — just 10 minutes!"},
+            {"title": "{coach_name}", "body": "Friendly reminder: your {streak}-day streak ends tonight without a workout. You've got this!"},
+        ],
+        ("streak_countdown", "balanced"): [
+            {"title": "{coach_name}", "body": "2 hours left! Your {streak}-day streak expires tonight, {name}. Even 10 min saves it!"},
+            {"title": "{coach_name}", "body": "{name}, your {streak}-day streak is on life support! Quick workout to save it?"},
+            {"title": "{coach_name}", "body": "Clock's ticking! {streak} days on the line tonight. One session keeps it alive, {name}!"},
+            {"title": "{coach_name}", "body": "Don't let {streak} days go to waste! A quick workout tonight saves your streak."},
+        ],
+        ("streak_countdown", "tough_love"): [
+            {"title": "{coach_name}", "body": "{streak} DAYS on the line, {name}! You didn't come this far to quit now. MOVE!"},
+            {"title": "{coach_name}", "body": "Your {streak}-day streak DIES tonight unless you act. No excuses!"},
+            {"title": "{coach_name}", "body": "{name}! {streak} days of discipline about to vanish. 10 minutes. That's ALL it takes!"},
+            {"title": "{coach_name}", "body": "FINAL CALL: {streak}-day streak expires tonight. Are you a quitter or a fighter?"},
+        ],
+
+        # --- Progress Milestone Teaser ---
+        ("progress_milestone", "gentle"): [
+            {"title": "{coach_name}", "body": "You're so close! One more workout hits {milestone} total, {name}. That's amazing."},
+            {"title": "{coach_name}", "body": "{name}, you're 1 workout away from {milestone} total. What a milestone!"},
+            {"title": "{coach_name}", "body": "Just 1 more session to reach {milestone} workouts, {name}. You're almost there!"},
+            {"title": "{coach_name}", "body": "Milestone incoming! {current_count} workouts done, {milestone} is next. Go for it!"},
+        ],
+        ("progress_milestone", "balanced"): [
+            {"title": "{coach_name}", "body": "One more workout and you hit {milestone} total, {name}! History in the making!"},
+            {"title": "{coach_name}", "body": "{name}, you're 1 session from {milestone} lifetime workouts! Let's make it happen!"},
+            {"title": "{coach_name}", "body": "{milestone} workouts is RIGHT THERE! One session today and you've done it, {name}!"},
+            {"title": "{coach_name}", "body": "SO CLOSE! {current_count} done, {milestone} is next. Today's the day, {name}!"},
+        ],
+        ("progress_milestone", "tough_love"): [
+            {"title": "{coach_name}", "body": "ONE workout from {milestone}! Don't you DARE stop now, {name}!"},
+            {"title": "{coach_name}", "body": "{milestone} is RIGHT THERE. One session. No excuses. EARN IT!"},
+            {"title": "{coach_name}", "body": "{name}! {current_count} down, 1 to go for {milestone}. FINISH what you started!"},
+            {"title": "{coach_name}", "body": "You're 1 rep away from {milestone} workouts. GET IN THERE!"},
+        ],
+
+        # --- Post-Workout Nutrition ---
+        ("post_workout_nutrition", "gentle"): [
+            {"title": "{coach_name}", "body": "Great workout, {name}! Your body needs fuel. Log your post-workout meal when you can."},
+            {"title": "{coach_name}", "body": "Nice session! A meal within 30-60 min helps recovery. Log it when ready!"},
+            {"title": "{coach_name}", "body": "{name}, your muscles are hungry after {workout_name}! Log your post-workout meal."},
+            {"title": "{coach_name}", "body": "Awesome work on {workout_name}! Don't forget to refuel and log your meal."},
+        ],
+        ("post_workout_nutrition", "balanced"): [
+            {"title": "{coach_name}", "body": "Refuel window open! Log your post-workout meal within 30 min for best recovery, {name}!"},
+            {"title": "{coach_name}", "body": "{name}, {workout_name} crushed! Now feed those muscles — log your meal!"},
+            {"title": "{coach_name}", "body": "Your muscles are hungry after {workout_name}! Post-workout nutrition is key. Log it!"},
+            {"title": "{coach_name}", "body": "Great {workout_name}! Protein within 60 min = faster recovery. Log your meal now!"},
+        ],
+        ("post_workout_nutrition", "tough_love"): [
+            {"title": "{coach_name}", "body": "You just CRUSHED {workout_name}! Don't waste it — EAT and LOG it NOW, {name}!"},
+            {"title": "{coach_name}", "body": "Your workout means NOTHING without nutrition! Log that post-workout meal!"},
+            {"title": "{coach_name}", "body": "{name}! Muscles don't grow on air. Eat. Log. Recover. NOW!"},
+            {"title": "{coach_name}", "body": "30-min anabolic window is TICKING! Log your post-workout meal, {name}!"},
+        ],
+
+        # --- Coach Insight (curiosity trigger) ---
+        ("coach_insight", "gentle"): [
+            {"title": "{coach_name}", "body": "I noticed something in your recent workouts, {name}. Tap when you have a moment!"},
+            {"title": "{coach_name}", "body": "{name}, I have an observation about your progress. Check it out when you can."},
+            {"title": "{coach_name}", "body": "Something caught my eye in your training data. Want to hear about it?"},
+            {"title": "{coach_name}", "body": "I've been looking at your patterns, {name}. I have a tip for you!"},
+        ],
+        ("coach_insight", "balanced"): [
+            {"title": "{coach_name}", "body": "I analyzed your recent workouts and found something interesting, {name}! Tap to see."},
+            {"title": "{coach_name}", "body": "{name}, I've got a personalized insight from your training data. Check it out!"},
+            {"title": "{coach_name}", "body": "Your data tells a story! I noticed a trend in your workouts. Tap to learn more."},
+            {"title": "{coach_name}", "body": "Coach's eye: I spotted something in your progress, {name}. Worth a look!"},
+        ],
+        ("coach_insight", "tough_love"): [
+            {"title": "{coach_name}", "body": "I found something in your data, {name}. You NEED to see this. Tap now!"},
+            {"title": "{coach_name}", "body": "{name}! Your training data revealed something critical. Open the app!"},
+            {"title": "{coach_name}", "body": "I've been watching your numbers. There's something you should know. TAP."},
+            {"title": "{coach_name}", "body": "Important insight about your training, {name}. Don't ignore this one!"},
+        ],
+
+        # --- Habit Streak Reward ---
+        ("habit_streak_reward", "gentle"): [
+            {"title": "{coach_name}", "body": "Amazing, {name}! {consecutive_days} days of meal logging in a row. Tap to see your insights!"},
+            {"title": "{coach_name}", "body": "You've logged meals {consecutive_days} days straight! That's real consistency."},
+            {"title": "{coach_name}", "body": "{consecutive_days}-day logging streak, {name}! Your nutrition data is getting valuable."},
+            {"title": "{coach_name}", "body": "Wow — {consecutive_days} consecutive days of tracking! You're building a great habit."},
+        ],
+        ("habit_streak_reward", "balanced"): [
+            {"title": "{coach_name}", "body": "{consecutive_days}-day meal logging streak! You're on fire, {name}! Tap for insights!"},
+            {"title": "{coach_name}", "body": "{name}, {consecutive_days} days of food tracking! Achievement unlocked! See your stats!"},
+            {"title": "{coach_name}", "body": "STREAK ALERT: {consecutive_days} days of logging! Your nutrition game is STRONG!"},
+            {"title": "{coach_name}", "body": "{consecutive_days} days straight! Your consistency is paying off, {name}. Check your progress!"},
+        ],
+        ("habit_streak_reward", "tough_love"): [
+            {"title": "{coach_name}", "body": "{consecutive_days} DAYS of tracking! That's DISCIPLINE, {name}! See your reward!"},
+            {"title": "{coach_name}", "body": "{name}! {consecutive_days}-day logging streak! THIS is what commitment looks like!"},
+            {"title": "{coach_name}", "body": "{consecutive_days} consecutive days! You're in ELITE company now. Keep it going!"},
+            {"title": "{coach_name}", "body": "RESPECT! {consecutive_days} days of meal tracking. You're not messing around!"},
+        ],
+
+        # --- Rest Day Tip ---
+        ("rest_day_tip", "gentle"): [
+            {"title": "{coach_name}", "body": "Rest day! I have a recovery tip that'll help tomorrow's workout, {name}."},
+            {"title": "{coach_name}", "body": "No workout today, but I've got something helpful for you. Tap when you can!"},
+            {"title": "{coach_name}", "body": "{name}, even rest days matter. I've got a tip to boost your recovery."},
+            {"title": "{coach_name}", "body": "Taking it easy today? Great! Here's a rest day pro tip for you."},
+        ],
+        ("rest_day_tip", "balanced"): [
+            {"title": "{coach_name}", "body": "Rest day, {name}! Got a recovery tip that'll boost tomorrow's performance. Tap!"},
+            {"title": "{coach_name}", "body": "No workout today, but don't disappear! I've got a tip for you, {name}."},
+            {"title": "{coach_name}", "body": "{name}, rest days are growth days! I have an insight to share. Check it out!"},
+            {"title": "{coach_name}", "body": "Rest day tip incoming! Your recovery matters as much as your training."},
+        ],
+        ("rest_day_tip", "tough_love"): [
+            {"title": "{coach_name}", "body": "Rest day doesn't mean LAZY day! I've got a recovery mission for you, {name}!"},
+            {"title": "{coach_name}", "body": "{name}! Rest days are for ACTIVE recovery. Open the app for your tip!"},
+            {"title": "{coach_name}", "body": "The work doesn't stop on rest days! Check in for a recovery briefing."},
+            {"title": "{coach_name}", "body": "Champions recover STRATEGICALLY. I have a rest day tip for you. TAP!"},
+        ],
+
+        # --- Progress Comparison (monthly) ---
+        ("progress_comparison", "balanced"): [
+            {"title": "{coach_name}", "body": "Month in review! Last month: {last_month} workouts. This month: {this_month}. Tap to see the full picture, {name}!"},
+            {"title": "{coach_name}", "body": "{name}, your monthly stats are in! {this_month} vs {last_month} workouts. How do you compare?"},
+            {"title": "{coach_name}", "body": "New month, new data! You did {this_month} workouts vs {last_month} last month. Check your progress!"},
+            {"title": "{coach_name}", "body": "Monthly progress report ready! {this_month} workouts this month vs {last_month} last month. Tap to review!"},
+        ],
+
+        # --- Time Capsule ---
+        ("time_capsule", "balanced"): [
+            {"title": "{coach_name}", "body": "It's been {days_active} days since you started, {name}! Tap to see how far you've come."},
+            {"title": "{coach_name}", "body": "{days_active} days ago you began your journey. Look at you now! Tap for your before & after."},
+            {"title": "{coach_name}", "body": "Day {days_active} milestone! {name}, your transformation story is being written. See your progress!"},
+            {"title": "{coach_name}", "body": "{days_active} days of dedication! Remember where you started? Tap to compare!"},
+        ],
+
+        # --- Chain Visual ---
+        ("chain_visual", "balanced"): [
+            {"title": "{coach_name}", "body": "{streak} green days in a row, {name}! Don't let today turn red. A quick workout keeps the chain alive."},
+            {"title": "{coach_name}", "body": "Your activity grid is looking clean — {streak} days! Keep it green today, {name}!"},
+            {"title": "{coach_name}", "body": "{streak}-day chain is beautiful! One workout keeps it unbroken. Don't stop now, {name}!"},
+            {"title": "{coach_name}", "body": "Look at that streak: {streak} days! Today decides if it stays green or turns red."},
+        ],
+
+        # --- Recovery Complete ---
+        ("recovery_complete", "balanced"): [
+            {"title": "{coach_name}", "body": "Your {muscle_group} is fully recovered and primed for growth, {name}! Perfect day to train."},
+            {"title": "{coach_name}", "body": "{muscle_group} recovery complete! {hours_recovered}h of rest means you're ready to push harder."},
+            {"title": "{coach_name}", "body": "{name}, your {muscle_group} has had {hours_recovered}h to recover. It's ready for today's workout!"},
+            {"title": "{coach_name}", "body": "Science says your {muscle_group} is primed! {hours_recovered}h recovery = peak performance window."},
         ],
     }
 

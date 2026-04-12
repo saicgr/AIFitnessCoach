@@ -10,7 +10,6 @@ from pydantic import BaseModel, Field
 from typing import Optional, List
 from datetime import date, datetime
 
-from core.supabase_db import get_supabase_db
 from core.logger import get_logger
 from core.activity_logger import log_user_activity, log_user_error
 from core.timezone_utils import resolve_timezone, get_user_today
@@ -165,24 +164,27 @@ async def sync_daily_activity(input: DailyActivityInput, current_user: dict = De
     result = db.upsert_daily_activity(data)
 
     if not result:
-        raise HTTPException(status_code=500, detail="Failed to sync activity data")
+        raise safe_internal_error(ValueError("Failed to sync activity data"), "activity")
 
     logger.info(f"Successfully synced activity for {input.activity_date}")
 
-    # Log activity sync
-    await log_user_activity(
-        user_id=input.user_id,
-        action="activity_synced",
-        endpoint="/api/v1/activity/sync",
-        message=f"Synced activity for {input.activity_date}",
-        metadata={
-            "date": str(input.activity_date),
-            "steps": input.steps,
-            "calories": input.calories_burned,
-            "source": input.source
-        },
-        status_code=200
-    )
+    # Log activity sync (wrapped to never prevent response delivery)
+    try:
+        await log_user_activity(
+            user_id=input.user_id,
+            action="activity_synced",
+            endpoint="/api/v1/activity/sync",
+            message=f"Synced activity for {input.activity_date}",
+            metadata={
+                "date": str(input.activity_date),
+                "steps": input.steps,
+                "calories": input.calories_burned,
+                "source": input.source
+            },
+            status_code=200
+        )
+    except Exception as e:
+        logger.error(f"Activity logging failed: {e}", exc_info=True, extra={"user_id_full": input.user_id, "failed_action": "activity_synced"})
 
     return row_to_activity_response(result)
 
@@ -288,15 +290,18 @@ async def delete_activity(user_id: str, activity_date: date, current_user: dict 
     if not deleted:
         raise HTTPException(status_code=404, detail="Activity record not found")
 
-    # Log activity deletion
-    await log_user_activity(
-        user_id=user_id,
-        action="activity_deleted",
-        endpoint=f"/api/v1/activity/{user_id}/{activity_date}",
-        message=f"Deleted activity for {activity_date}",
-        metadata={"date": str(activity_date)},
-        status_code=200
-    )
+    # Log activity deletion (wrapped to never prevent response delivery)
+    try:
+        await log_user_activity(
+            user_id=user_id,
+            action="activity_deleted",
+            endpoint=f"/api/v1/activity/{user_id}/{activity_date}",
+            message=f"Deleted activity for {activity_date}",
+            metadata={"date": str(activity_date)},
+            status_code=200
+        )
+    except Exception as e:
+        logger.error(f"Activity logging failed: {e}", exc_info=True, extra={"user_id_full": user_id, "failed_action": "activity_deleted"})
 
     return {"message": "Activity deleted successfully"}
 
@@ -368,14 +373,17 @@ async def sync_batch_activity(activities: List[DailyActivityInput], current_user
     synced = len([r for r in results if r["status"] == "success"])
     logger.info(f"Batch sync complete: {synced}/{len(activities)} records synced")
 
-    # Log batch sync
-    await log_user_activity(
-        user_id=user_id,
-        action="activity_batch_synced",
-        endpoint="/api/v1/activity/sync-batch",
-        message=f"Batch synced {synced}/{len(activities)} activity records",
-        metadata={"synced": synced, "total": len(activities)},
-        status_code=200
-    )
+    # Log batch sync (wrapped to never prevent response delivery)
+    try:
+        await log_user_activity(
+            user_id=user_id,
+            action="activity_batch_synced",
+            endpoint="/api/v1/activity/sync-batch",
+            message=f"Batch synced {synced}/{len(activities)} activity records",
+            metadata={"synced": synced, "total": len(activities)},
+            status_code=200
+        )
+    except Exception as e:
+        logger.error(f"Activity logging failed: {e}", exc_info=True, extra={"user_id_full": user_id, "failed_action": "activity_batch_synced"})
 
     return {"synced": synced, "total": len(activities), "results": results}

@@ -17,7 +17,6 @@ from core.exceptions import safe_internal_error
 from core.timezone_utils import user_today_date
 from pydantic import BaseModel
 
-from core.supabase_db import get_supabase_db
 from core.logger import get_logger
 from core.activity_logger import log_user_activity, log_user_error
 from services.email_service import get_email_service

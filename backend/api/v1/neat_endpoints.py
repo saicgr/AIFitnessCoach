@@ -495,7 +495,7 @@ async def update_reminder_preferences(
         ).execute()
 
         if not response.data:
-            raise HTTPException(status_code=500, detail="Failed to update reminder preferences")
+            raise safe_internal_error(ValueError("Failed to update reminder preferences"), "neat_endpoints")
 
         # Log preference update
         await log_user_activity(

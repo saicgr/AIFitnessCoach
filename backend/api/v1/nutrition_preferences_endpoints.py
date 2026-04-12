@@ -180,7 +180,7 @@ async def create_meal_template(
         }).execute()
 
         if not result.data:
-            raise HTTPException(status_code=500, detail="Failed to create template")
+            raise safe_internal_error(ValueError("Failed to create template"), "nutrition_preferences_endpoints")
 
         row = result.data[0]
 
@@ -288,7 +288,7 @@ async def update_meal_template(
         result = db.client.table("meal_templates").update(update_data).eq("id", template_id).execute()
 
         if not result.data:
-            raise HTTPException(status_code=500, detail="Failed to update template")
+            raise safe_internal_error(ValueError("Failed to update template"), "nutrition_preferences_endpoints")
 
         row = result.data[0]
 

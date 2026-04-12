@@ -10,7 +10,6 @@ from core.timezone_utils import resolve_timezone, get_user_now_iso, target_date_
 from core.rate_limiter import limiter
 from core.auth import get_current_user
 from core.exceptions import safe_internal_error
-from core.supabase_db import get_supabase_db
 from core.logger import get_logger
 from core.activity_logger import log_user_activity
 from services.saved_foods_rag_service import get_saved_foods_rag_service
@@ -101,7 +100,7 @@ async def save_food(user_id: str = Form(...), request: SaveFoodFromLogRequest = 
         result = db.client.table("saved_foods").insert(saved_food_data).execute()
 
         if not result.data:
-            raise HTTPException(status_code=500, detail="Failed to save food to database")
+            raise safe_internal_error(ValueError("Failed to save food to database"), "nutrition")
 
         # Save to ChromaDB for semantic search
         try:
@@ -221,7 +220,7 @@ async def save_food_json(request: SaveFoodFromLogRequest, user_id: str = Query(.
         result = db.client.table("saved_foods").insert(saved_food_data).execute()
 
         if not result.data:
-            raise HTTPException(status_code=500, detail="Failed to save food to database")
+            raise safe_internal_error(ValueError("Failed to save food to database"), "nutrition")
 
         # Save to ChromaDB for semantic search
         try:
@@ -538,6 +537,10 @@ async def relog_saved_food(
         )
 
         food_log_id = created_log.get('id') if created_log else "unknown"
+
+        # Invalidate daily summary cache so the next fetch returns fresh data
+        from api.v1.nutrition.summaries import invalidate_daily_summary_cache
+        await invalidate_daily_summary_cache(user_id)
 
         # Update times_logged
         db.client.table("saved_foods")\

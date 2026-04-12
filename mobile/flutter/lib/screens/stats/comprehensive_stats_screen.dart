@@ -43,6 +43,7 @@ class ComprehensiveStatsScreen extends ConsumerStatefulWidget {
 class _ComprehensiveStatsScreenState extends ConsumerState<ComprehensiveStatsScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
+  final ScrollController _pillScrollController = ScrollController();
   String? _userId;
   int _currentTabIndex = 0;
 
@@ -54,15 +55,32 @@ class _ComprehensiveStatsScreenState extends ConsumerState<ComprehensiveStatsScr
       if (!_tabController.indexIsChanging) {
         setState(() => _currentTabIndex = _tabController.index);
         _loadTabData(_tabController.index);
+        _scrollToSelectedPill(_tabController.index);
       }
     });
     if (widget.initialTab != null && widget.initialTab! >= 0 && widget.initialTab! < 6) {
       _tabController.index = widget.initialTab!;
+      _currentTabIndex = widget.initialTab!;
     }
     _loadData();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(posthogServiceProvider).capture(eventName: 'comprehensive_stats_viewed');
+      _scrollToSelectedPill(_tabController.index);
     });
+  }
+
+  void _scrollToSelectedPill(int index) {
+    if (!_pillScrollController.hasClients) return;
+    // Each pill is roughly 120px wide (padding + icon + text + gap)
+    const estimatedPillWidth = 120.0;
+    final viewportWidth = _pillScrollController.position.viewportDimension;
+    final targetOffset = (index * estimatedPillWidth - viewportWidth / 2 + estimatedPillWidth / 2)
+        .clamp(0.0, _pillScrollController.position.maxScrollExtent);
+    _pillScrollController.animateTo(
+      targetOffset,
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeOutCubic,
+    );
   }
 
   final Set<int> _loadedTabs = {};
@@ -134,6 +152,7 @@ class _ComprehensiveStatsScreenState extends ConsumerState<ComprehensiveStatsScr
       animation: _tabController,
       builder: (context, _) {
         return SingleChildScrollView(
+          controller: _pillScrollController,
           scrollDirection: Axis.horizontal,
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           child: Row(
@@ -202,6 +221,7 @@ class _ComprehensiveStatsScreenState extends ConsumerState<ComprehensiveStatsScr
   @override
   void dispose() {
     _tabController.dispose();
+    _pillScrollController.dispose();
     super.dispose();
   }
 

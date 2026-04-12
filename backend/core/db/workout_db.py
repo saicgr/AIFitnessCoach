@@ -542,8 +542,8 @@ class WorkoutDB(BaseDB):
 
     def list_workout_changes(
         self,
-        workout_id: Optional[int] = None,
-        user_id: Optional[int] = None,
+        workout_id: Optional[str] = None,
+        user_id: Optional[str] = None,
         limit: int = 50,
     ) -> List[Dict[str, Any]]:
         """
