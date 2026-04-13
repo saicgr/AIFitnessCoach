@@ -20,7 +20,12 @@ import '../onboarding/widgets/onboarding_theme.dart';
 
 /// Glassmorphic sign-in screen shown after quiz and preview
 class SignInScreen extends ConsumerStatefulWidget {
-  const SignInScreen({super.key});
+  /// When true, renders in returning-user mode regardless of any lingering
+  /// pre-auth quiz data in SharedPreferences. Set from the "Already have an
+  /// account? Sign In" entry on the intro screen.
+  final bool forceReturning;
+
+  const SignInScreen({super.key, this.forceReturning = false});
 
   @override
   ConsumerState<SignInScreen> createState() => _SignInScreenState();
@@ -220,13 +225,25 @@ class _SignInScreenState extends ConsumerState<SignInScreen>
   }
 
   Widget _buildHeader(OnboardingTheme t) {
+    // Progress reflects pre-auth quiz completion. Users who come directly to
+    // sign-in from /intro (without doing the quiz) shouldn't see "90% done".
+    final quizData = ref.watch(preAuthQuizProvider);
+    final quizStarted = !widget.forceReturning && (quizData.goals != null ||
+        quizData.fitnessLevel != null ||
+        quizData.daysPerWeek != null ||
+        (quizData.equipment?.isNotEmpty ?? false));
+    final showProgressPill = quizStarted;
+    final progressFraction = quizData.isComplete ? 0.9 : 0.5;
+    final progressPercent = (progressFraction * 100).round();
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 12),
       child: Row(
         children: [
-          // Glassmorphic back button
+          // Glassmorphic back button — only jump back to quiz if user actually started it
           GestureDetector(
-            onTap: () => context.go('/pre-auth-quiz'),
+            onTap: () => context.go(
+              (!widget.forceReturning && quizStarted) ? '/pre-auth-quiz' : '/intro',
+            ),
             child: ClipRRect(
               borderRadius: BorderRadius.circular(22),
               child: BackdropFilter(
@@ -235,9 +252,15 @@ class _SignInScreenState extends ConsumerState<SignInScreen>
                   width: 44,
                   height: 44,
                   decoration: BoxDecoration(
-                    color: t.cardFill,
+                    color: t.isDark
+                        ? Colors.white.withValues(alpha: 0.10)
+                        : Colors.black.withValues(alpha: 0.06),
                     borderRadius: BorderRadius.circular(22),
-                    border: Border.all(color: t.borderDefault),
+                    border: Border.all(
+                      color: t.isDark
+                          ? Colors.white.withValues(alpha: 0.18)
+                          : Colors.black.withValues(alpha: 0.15),
+                    ),
                   ),
                   child: Icon(Icons.arrow_back_ios_rounded, color: t.textPrimary, size: 18),
                 ),
@@ -245,63 +268,64 @@ class _SignInScreenState extends ConsumerState<SignInScreen>
             ),
           ),
           const Spacer(),
-          // Glassmorphic progress pill
-          ClipRRect(
-            borderRadius: BorderRadius.circular(20),
-            child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                decoration: BoxDecoration(
-                  color: t.cardFill,
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: t.borderDefault),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    SizedBox(
-                      width: 60,
-                      height: 6,
-                      child: Stack(
-                        children: [
-                          Container(
-                            decoration: BoxDecoration(
-                              color: t.borderDefault,
-                              borderRadius: BorderRadius.circular(3),
-                            ),
-                          ),
-                          FractionallySizedBox(
-                            widthFactor: 0.9,
-                            child: Container(
+          // Glassmorphic progress pill — only shown if the user has started the quiz
+          if (showProgressPill)
+            ClipRRect(
+              borderRadius: BorderRadius.circular(20),
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: t.cardFill,
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: t.borderDefault),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      SizedBox(
+                        width: 60,
+                        height: 6,
+                        child: Stack(
+                          children: [
+                            Container(
                               decoration: BoxDecoration(
-                                gradient: LinearGradient(
-                                  colors: [
-                                    t.textPrimary.withValues(alpha: 0.9),
-                                    t.textPrimary.withValues(alpha: 0.6),
-                                  ],
-                                ),
+                                color: t.borderDefault,
                                 borderRadius: BorderRadius.circular(3),
                               ),
                             ),
-                          ),
-                        ],
+                            FractionallySizedBox(
+                              widthFactor: progressFraction,
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  gradient: LinearGradient(
+                                    colors: [
+                                      t.textPrimary.withValues(alpha: 0.9),
+                                      t.textPrimary.withValues(alpha: 0.6),
+                                    ],
+                                  ),
+                                  borderRadius: BorderRadius.circular(3),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      '90%',
-                      style: TextStyle(
-                        color: t.textPrimary.withValues(alpha: 0.9),
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
+                      const SizedBox(width: 8),
+                      Text(
+                        '$progressPercent%',
+                        style: TextStyle(
+                          color: t.textPrimary.withValues(alpha: 0.9),
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             ),
-          ),
           const Spacer(),
           const SizedBox(width: 44),
         ],
@@ -311,6 +335,14 @@ class _SignInScreenState extends ConsumerState<SignInScreen>
 
   Widget _buildMainContent(OnboardingTheme t) {
     final quizData = ref.watch(preAuthQuizProvider);
+    final quizStarted = !widget.forceReturning && (quizData.goals != null ||
+        quizData.fitnessLevel != null ||
+        quizData.daysPerWeek != null ||
+        (quizData.equipment?.isNotEmpty ?? false));
+    final title = quizStarted ? 'Almost There!' : 'Welcome Back';
+    final subtitle = quizStarted
+        ? 'Sign in to save your personalized plan and start your fitness journey'
+        : 'Sign in to continue your fitness journey';
     return Column(
       children: [
         // Pulsing app icon
@@ -366,7 +398,7 @@ class _SignInScreenState extends ConsumerState<SignInScreen>
 
         // Title
         Text(
-          'Almost There!',
+          title,
           style: TextStyle(
             fontSize: 32,
             fontWeight: FontWeight.bold,
@@ -379,7 +411,7 @@ class _SignInScreenState extends ConsumerState<SignInScreen>
 
         // Subtitle
         Text(
-          'Sign in to save your personalized plan and start your fitness journey',
+          subtitle,
           style: TextStyle(
             fontSize: 16,
             color: t.textSecondary,
@@ -388,13 +420,14 @@ class _SignInScreenState extends ConsumerState<SignInScreen>
           textAlign: TextAlign.center,
         ).animate().fadeIn(delay: 400.ms),
 
-        const SizedBox(height: 32),
-
-        // Value reminder card — glassmorphic
-        _buildValueReminderCard(quizData, t)
-            .animate()
-            .fadeIn(delay: 500.ms)
-            .slideY(begin: 0.1),
+        if (quizStarted) ...[
+          const SizedBox(height: 32),
+          // Value reminder card — only meaningful if user actually did the quiz
+          _buildValueReminderCard(quizData, t)
+              .animate()
+              .fadeIn(delay: 500.ms)
+              .slideY(begin: 0.1),
+        ],
       ],
     );
   }

@@ -87,6 +87,8 @@ class _AiTextInputBarState extends ConsumerState<AiTextInputBar>
   late AnimationController _animationController;
   late Animation<double> _heightAnimation;
 
+  bool _speechInitialized = false;
+
   @override
   void initState() {
     super.initState();
@@ -98,7 +100,9 @@ class _AiTextInputBarState extends ConsumerState<AiTextInputBar>
       parent: _animationController,
       curve: Curves.easeInOut,
     );
-    _initSpeech();
+    // Speech init is deferred until the user taps the mic. Calling
+    // _speechToText.initialize() is what triggers the OS microphone prompt,
+    // and we don't want that dialog popping up on workout start.
   }
 
   @override
@@ -109,12 +113,14 @@ class _AiTextInputBarState extends ConsumerState<AiTextInputBar>
     super.dispose();
   }
 
-  Future<void> _initSpeech() async {
+  Future<void> _ensureSpeechInitialized() async {
+    if (_speechInitialized) return;
     try {
       await _speechToText.initialize();
     } catch (e) {
       debugPrint('Speech recognition not available: $e');
     }
+    _speechInitialized = true;
   }
 
   void _expand() {
@@ -461,6 +467,10 @@ class _AiTextInputBarState extends ConsumerState<AiTextInputBar>
         await _parseInput();
       }
     } else {
+      // First-tap initialization — this triggers the OS microphone permission
+      // prompt the first time. Deferred from initState so the prompt only
+      // appears when the user has explicitly chosen to use voice input.
+      await _ensureSpeechInitialized();
       if (!_speechToText.isAvailable) {
         setState(() => _errorMessage = 'Voice input not available');
         return;

@@ -346,7 +346,11 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
                           )
                         : Text(
                             _getButtonText(isSubscribed, currentTier),
-                            style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w600),
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w500,
+                              letterSpacing: 0.3,
+                            ),
                           ),
                     ),
                   ),

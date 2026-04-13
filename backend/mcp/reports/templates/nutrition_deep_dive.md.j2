@@ -1,0 +1,80 @@
+# 🍎 Nutrition Deep Dive
+
+**Period:** {{ start_date }} → {{ end_date }} ({{ date_range.days }} days)
+**Athlete:** {{ user.name }}
+
+---
+
+## Daily Averages
+
+| Metric | Value |
+|--------|-------|
+| 🔥 Calories | **{{ nutrition.avg_calories }}** kcal |
+| 🥩 Protein | **{{ nutrition.avg_protein_g }}** g |
+| 🍞 Carbs | **{{ nutrition.avg_carbs_g }}** g |
+| 🥑 Fat | **{{ nutrition.avg_fat_g }}** g |
+| 🌾 Fiber | **{{ nutrition.avg_fiber_g }}** g |
+{% if nutrition.avg_water_ml %}| 💧 Water | **{{ nutrition.avg_water_ml }}** ml |{% endif %}
+
+**Logging consistency:** {{ nutrition.days_logged }} / {{ nutrition.days_span }} days ({{ nutrition.log_rate_pct }}%)
+
+{% if nutrition.days_logged == 0 %}
+> ⚠️ No meals logged in this period. All sections below will be empty.
+{% endif %}
+
+---
+
+## 🍽️ Meal Timing Distribution
+
+{% if nutrition.meal_distribution %}
+| Meal | Avg calories/day | Share |
+|------|------------------|-------|
+{% for m in nutrition.meal_distribution %}| {{ m.meal_type|capitalize }} | {{ m.calories }} kcal | {{ m.pct }}% |
+{% endfor %}
+{% else %}
+_No meal-type data available._
+{% endif %}
+
+---
+
+## 🏆 Top 10 Most-Logged Foods
+
+{% if nutrition.top_foods %}
+{% for f in nutrition.top_foods %}
+{{ loop.index }}. **{{ f.name }}** — logged {{ f.count }}×
+{% endfor %}
+{% else %}
+_No food logs yet._
+{% endif %}
+
+---
+
+## 💧 Water Intake Trend
+
+{% if nutrition.water_trend %}
+Average: **{{ nutrition.avg_water_ml }} ml/day**
+
+| Date | ml |
+|------|-----|
+{% for d in nutrition.water_trend %}| {{ d.date }} | {{ d.ml }} |
+{% endfor %}
+{% else %}
+_No hydration logs in this period._
+{% endif %}
+
+---
+
+## 🧪 Micronutrient Snapshot
+
+{% if nutrition.micro_flags %}
+| Nutrient | Avg |
+|----------|-----|
+{% for m in nutrition.micro_flags %}| {{ m.nutrient }} | {{ m.avg }} |
+{% endfor %}
+{% else %}
+_No micronutrient data tracked in this period._
+{% endif %}
+
+---
+
+_Generated {{ generated_at }} by FitWiz MCP._

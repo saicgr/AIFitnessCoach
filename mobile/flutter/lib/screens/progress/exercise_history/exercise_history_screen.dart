@@ -9,6 +9,7 @@ import '../../../data/providers/exercise_history_provider.dart';
 import '../../../data/providers/scores_provider.dart';
 import '../../../data/repositories/exercise_history_repository.dart';
 import '../../../data/services/api_client.dart';
+import '../../../utils/share_report_helper.dart';
 import '../../../widgets/pill_app_bar.dart';
 
 /// Main screen showing list of most performed exercises and personal records
@@ -23,6 +24,7 @@ class ExerciseHistoryScreen extends ConsumerStatefulWidget {
 class _ExerciseHistoryScreenState extends ConsumerState<ExerciseHistoryScreen>
     with SingleTickerProviderStateMixin {
   final _searchController = TextEditingController();
+  final GlobalKey _reportKey = GlobalKey();
   late final TabController _tabController;
   DateTime? _screenOpenTime;
 
@@ -57,10 +59,25 @@ class _ExerciseHistoryScreenState extends ConsumerState<ExerciseHistoryScreen>
     final theme = Theme.of(context);
 
     return Scaffold(
-      appBar: const PillAppBar(
+      appBar: PillAppBar(
         title: 'Exercises & PRs',
+        actions: [
+          PillAppBarAction(
+            icon: Icons.ios_share_rounded,
+            onTap: () => shareReportScreen(
+              context: context,
+              repaintKey: _reportKey,
+              caption: 'My FitWiz exercise history',
+              subject: 'My Exercise Report',
+            ),
+          ),
+        ],
       ),
-      body: Column(
+      body: RepaintBoundary(
+        key: _reportKey,
+        child: Container(
+          color: Theme.of(context).scaffoldBackgroundColor,
+          child: Column(
         children: [
           TabBar(
             controller: _tabController,
@@ -79,6 +96,8 @@ class _ExerciseHistoryScreenState extends ConsumerState<ExerciseHistoryScreen>
             ),
           ),
         ],
+      ),
+        ),
       ),
     );
   }

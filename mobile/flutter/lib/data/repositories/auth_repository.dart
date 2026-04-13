@@ -13,6 +13,7 @@ import '../providers/nutrition_preferences_provider.dart';
 import '../providers/scores_provider.dart';
 import '../providers/today_workout_provider.dart';
 import '../providers/xp_provider.dart';
+import '../../screens/onboarding/pre_auth_quiz_data.dart';
 import '../repositories/hydration_repository.dart';
 import '../repositories/measurements_repository.dart';
 import '../repositories/workout_repository.dart';
@@ -59,7 +60,7 @@ final authRepositoryProvider = Provider<AuthRepository>((ref) {
 final authStateProvider =
     StateNotifierProvider<AuthNotifier, AuthState>((ref) {
   final repository = ref.watch(authRepositoryProvider);
-  return AuthNotifier(repository);
+  return AuthNotifier(repository, ref);
 });
 
 /// Auth repository for handling authentication
@@ -421,32 +422,53 @@ class AuthRepository {
         final authId = session.user.id;
         debugPrint('🔍 [Auth] Looking up user by auth_id: $authId');
 
-        final response = await _apiClient.get('${ApiConstants.users}/by-auth/$authId');
+        int? lookupStatus;
+        try {
+          final response = await _apiClient.get('${ApiConstants.users}/by-auth/$authId');
+          lookupStatus = response.statusCode;
 
-        if (response.statusCode == 200) {
-          final user = app_user.User.fromJson(response.data as Map<String, dynamic>);
+          if (response.statusCode == 200) {
+            final user = app_user.User.fromJson(response.data as Map<String, dynamic>);
 
-          // NOW set the correct user ID (from users table, not auth)
-          await _apiClient.setUserId(user.id);
-          debugPrint('✅ [Auth] Set correct user ID: ${user.id} (auth_id was: $authId)');
+            // NOW set the correct user ID (from users table, not auth)
+            await _apiClient.setUserId(user.id);
+            debugPrint('✅ [Auth] Set correct user ID: ${user.id} (auth_id was: $authId)');
 
-          // Cache user for faster app startup
-          await _cacheUser(user);
+            // Cache user for faster app startup
+            await _cacheUser(user);
 
-          // Sync credentials to watch on session restore (Android only)
-          if (Platform.isAndroid) {
-            _syncCredentialsToWatch(
-              userId: user.id,
-              authToken: session.accessToken,
-              refreshToken: session.refreshToken,
-            );
+            // Sync credentials to watch on session restore (Android only)
+            if (Platform.isAndroid) {
+              _syncCredentialsToWatch(
+                userId: user.id,
+                authToken: session.accessToken,
+                refreshToken: session.refreshToken,
+              );
+            }
+
+            return user;
           }
+        } catch (e) {
+          // Dio throws on non-2xx by default — extract the status code.
+          final match = RegExp(r'status code of (\d+)').firstMatch(e.toString());
+          if (match != null) lookupStatus = int.tryParse(match.group(1) ?? '');
+          debugPrint('❌ [Auth] by-auth lookup failed (status=$lookupStatus): $e');
+        }
 
-          return user;
-        } else {
-          debugPrint('❌ [Auth] Failed to look up user by auth_id: ${response.statusCode}');
+        // 404 means the Supabase Auth account exists but the backend `users`
+        // row was deleted (or never created — orphan auth user). Clear the
+        // stale session so we don't hit the same 404 on every cold start.
+        if (lookupStatus == 404) {
+          debugPrint('⚠️ [Auth] No backend user for auth_id=$authId — clearing stale Supabase session');
+          try {
+            await _supabase.auth.signOut();
+          } catch (_) {}
+          await _apiClient.clearAuth();
           return null;
         }
+
+        // Any other error (500, network) — leave session alone, caller retries
+        return null;
       }
 
       // Fall back to stored token
@@ -497,9 +519,21 @@ class AuthRepository {
 /// Auth state notifier
 class AuthNotifier extends StateNotifier<AuthState> {
   final AuthRepository _repository;
+  final Ref _ref;
 
-  AuthNotifier(this._repository) : super(const AuthState()) {
+  AuthNotifier(this._repository, this._ref) : super(const AuthState()) {
     _init();
+  }
+
+  /// Clear pre-auth quiz state. Called on sign-out and when a brand-new user
+  /// signs in, so stale device-local quiz answers don't bleed into a different
+  /// account / user's onboarding flow.
+  Future<void> _clearPreAuthQuiz() async {
+    try {
+      await _ref.read(preAuthQuizProvider.notifier).clear();
+    } catch (e) {
+      debugPrint('⚠️ [Auth] Failed to clear pre-auth quiz state: $e');
+    }
   }
 
   /// Fire-and-forget device info update after successful auth
@@ -552,6 +586,9 @@ class AuthNotifier extends StateNotifier<AuthState> {
     state = state.copyWith(status: AuthStatus.loading, errorMessage: null);
     try {
       final user = await _repository.signInWithGoogle();
+      if (user.isNewUser == true) {
+        await _clearPreAuthQuiz();
+      }
       state = AuthState(status: AuthStatus.authenticated, user: user);
       _updateDeviceInfo(user.id);
     } catch (e) {
@@ -567,6 +604,11 @@ class AuthNotifier extends StateNotifier<AuthState> {
     state = state.copyWith(status: AuthStatus.loading, errorMessage: null);
     try {
       final user = await _repository.signInWithEmail(email, password);
+      // Brand-new user: device-local quiz state may belong to a different prior
+      // session — clear it so they're routed through the quiz themselves.
+      if (user.isNewUser == true) {
+        await _clearPreAuthQuiz();
+      }
       state = AuthState(status: AuthStatus.authenticated, user: user);
       _updateDeviceInfo(user.id);
     } catch (e) {
@@ -582,6 +624,9 @@ class AuthNotifier extends StateNotifier<AuthState> {
     state = state.copyWith(status: AuthStatus.loading, errorMessage: null);
     try {
       final user = await _repository.signUpWithEmail(email, password, name: name);
+      if (user.isNewUser == true) {
+        await _clearPreAuthQuiz();
+      }
       state = AuthState(status: AuthStatus.authenticated, user: user);
       _updateDeviceInfo(user.id);
     } catch (e) {
@@ -607,6 +652,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
     state = state.copyWith(status: AuthStatus.loading);
     try {
       await _repository.signOut();
+      await _clearPreAuthQuiz();
       state = const AuthState(status: AuthStatus.unauthenticated);
     } catch (e) {
       state = AuthState(

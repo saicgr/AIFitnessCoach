@@ -4,10 +4,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:intl/intl.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/theme/theme_colors.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../data/repositories/measurements_repository.dart';
 import '../../data/services/haptic_service.dart';
 import '../../widgets/glass_back_button.dart';
+import '../../widgets/glass_circle_fab.dart';
 import '../../widgets/glass_sheet.dart';
 
 part 'measurement_detail_screen_part_stat_item.dart';
@@ -80,7 +82,9 @@ class _MeasurementDetailScreenState
         isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
-    final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
+    // Use the user's selected accent so the chart actually has color in light
+    // mode (AppColorsLight.cyan is monochrome grey).
+    final cyan = ref.colors(context).accent;
 
     final history = measurementsState.historyByType[_type] ?? [];
     final filteredHistory = _filterByPeriod(history);
@@ -108,8 +112,11 @@ class _MeasurementDetailScreenState
                           Expanded(
                             child: Text(
                               _type.displayName,
-                              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                                fontWeight: FontWeight.bold,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.w700,
                                 color: textPrimary,
                               ),
                             ),
@@ -179,7 +186,9 @@ class _MeasurementDetailScreenState
                           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                           decoration: BoxDecoration(
                             color: isSelected ? cyan.withOpacity(0.2) : elevated,
-                            borderRadius: BorderRadius.circular(10),
+                            // Full-pill radius — matches the period row on the main
+                            // measurements screen for a unified look.
+                            borderRadius: BorderRadius.circular(999),
                             border: Border.all(
                               color: isSelected ? cyan : cardBorder,
                               width: isSelected ? 1.5 : 1,
@@ -201,6 +210,9 @@ class _MeasurementDetailScreenState
                   ),
                 ).animate().fadeIn(delay: 150.ms),
               ),
+
+              // Breathing room between the period chip row and the chart.
+              const SliverToBoxAdapter(child: SizedBox(height: 12)),
 
               // Chart
               SliverToBoxAdapter(
@@ -320,12 +332,9 @@ class _MeasurementDetailScreenState
           ],
         ),
       ),
-      floatingActionButton: FloatingActionButton.extended(
+      floatingActionButton: GlassCircleFab(
         onPressed: () => _showAddMeasurementSheet(context),
-        backgroundColor: cyan,
-        foregroundColor: isDark ? AppColors.pureBlack : Colors.white,
-        icon: const Icon(Icons.add),
-        label: Text('Log ${_type.displayName}'),
+        tooltip: 'Log ${_type.displayName}',
       ).animate().fadeIn(delay: 400.ms).slideY(begin: 0.3),
     );
   }
@@ -734,7 +743,7 @@ class _MeasurementDetailScreenState
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
+    final cyan = ref.colors(context).accent;
     final unit = _isMetric ? _type.metricUnit : _type.imperialUnit;
 
     final valueController = TextEditingController();

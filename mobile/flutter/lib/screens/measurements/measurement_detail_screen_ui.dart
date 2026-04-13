@@ -197,9 +197,20 @@ extension _MeasurementDetailScreenStateUI on _MeasurementDetailScreenState {
               reservedSize: 30,
               interval: intervalMs,
               getTitlesWidget: (value, meta) {
-                // Skip labels outside range
+                // Skip labels outside range, and suppress labels that land too
+                // close to the min/max edges — fl_chart anchors interval ticks
+                // to the epoch, which can place a tick a day or two away from
+                // minX/maxX and visually overlap the edge label.
                 if (value < minX || value > maxX) {
                   return const SizedBox.shrink();
+                }
+                final edgeThreshold = intervalMs * 0.5;
+                if ((value - minX).abs() < edgeThreshold ||
+                    (maxX - value).abs() < edgeThreshold) {
+                  // Only keep the label if it IS the exact edge (maxX).
+                  if (value != maxX && value != minX) {
+                    return const SizedBox.shrink();
+                  }
                 }
                 final date = DateTime.fromMillisecondsSinceEpoch(value.toInt());
                 return Padding(

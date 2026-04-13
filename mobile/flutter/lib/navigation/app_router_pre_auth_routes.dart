@@ -195,7 +195,9 @@ List<RouteBase> _preAuthRoutes() => [
         path: '/sign-in',
         pageBuilder: (context, state) => CustomTransitionPage(
           key: state.pageKey,
-          child: const SignInScreen(),
+          child: SignInScreen(
+            forceReturning: state.uri.queryParameters['returning'] == 'true',
+          ),
           transitionDuration: const Duration(milliseconds: 400),
           reverseTransitionDuration: const Duration(milliseconds: 300),
           transitionsBuilder: (context, animation, secondaryAnimation, child) {
@@ -580,6 +582,14 @@ List<RouteBase> _preAuthRoutes() => [
       GoRoute(
         path: '/workout-loading',
         builder: (context, state) => const WorkoutLoadingScreen(),
+      ),
+
+      // Notification pre-permission screen — shown once after onboarding/paywall
+      // before the user lands on /home. The OS notification prompt only fires
+      // if the user opts in here (soft prompt → hard prompt pattern).
+      GoRoute(
+        path: '/notifications-prime',
+        builder: (context, state) => const NotificationPrimeScreen(),
       ),
 
 ];

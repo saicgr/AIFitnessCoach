@@ -135,8 +135,17 @@ async def create_recipe(request: RecipeCreate, user_id: str = Query(...), curren
                 updated_at=datetime.fromisoformat(now),
             ))
 
-        # Fetch the updated recipe (trigger will have calculated nutrition)
-        updated = db.client.table("user_recipes").select("*").eq("id", recipe_id).single().execute()
+        # Fetch the updated recipe (trigger will have calculated nutrition). .single()
+        # raises if the row is missing (RLS or race with delete) — surface a clean 500.
+        try:
+            updated = db.client.table("user_recipes").select("*").eq("id", recipe_id).single().execute()
+        except Exception as e:
+            logger.error(f"Failed to refetch recipe {recipe_id} after insert: {e}")
+            raise HTTPException(status_code=500, detail="Recipe created but could not be loaded.")
+
+        if not updated or not updated.data:
+            logger.error(f"Recipe {recipe_id} returned no data after insert")
+            raise HTTPException(status_code=500, detail="Recipe created but could not be loaded.")
 
         logger.info(f"Successfully created recipe {recipe_id}")
 

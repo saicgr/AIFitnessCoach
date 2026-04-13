@@ -52,6 +52,8 @@ import 'widgets/fatigue_alert_modal.dart';
 import 'widgets/set_tracking_table.dart';
 import 'widgets/stretch_phase_screen.dart';
 import 'widgets/warmup_phase_screen.dart';
+// Prime sheet kept for re-enable when BLE / voice pre-prompt is needed.
+// import 'widgets/workout_permissions_prime_sheet.dart';
 import 'mixins/pr_manager_mixin.dart';
 import 'mixins/timer_rest_mixin.dart';
 import 'mixins/ai_features_mixin.dart';
@@ -480,9 +482,13 @@ class _ActiveWorkoutScreenState
     loadWarmupAndStretches();
     _startWarmupLoadingTimeout();
     checkWarmupEnabled();
-    initBleHrAutoReconnect();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    // BLE heart-rate auto-reconnect is disabled — keep the call commented so
+    // we don't instantiate FlutterReactiveBle and trigger the Android
+    // "Nearby Devices" system prompt. Mic permission now only fires when the
+    // user taps the in-workout mic button, so no pre-prompt sheet is needed.
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
       if (!mounted) return;
+      // initBleHrAutoReconnect();
       triggerWorkoutTour();
     });
   }

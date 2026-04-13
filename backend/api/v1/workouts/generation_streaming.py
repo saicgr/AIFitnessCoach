@@ -18,6 +18,7 @@ from fastapi.responses import StreamingResponse
 from core.logger import get_logger
 from core.config import get_settings
 from models.schemas import GenerateWorkoutRequest
+from ._gym_profile_helpers import get_active_gym_profile_id
 from services.gemini_service import GeminiService, validate_set_targets_strict
 from core.rate_limiter import user_limiter
 from core.timezone_utils import resolve_timezone, get_user_today, target_date_to_utc_iso
@@ -85,17 +86,10 @@ async def generate_workout_streaming(request: Request, body: GenerateWorkoutRequ
     _user_tz = resolve_timezone(request, db, body.user_id)
     scheduled_date = body.scheduled_date or get_user_today(_user_tz)
 
-    # Resolve gym_profile_id early for dedup checks
-    stream_gym_profile_id = body.gym_profile_id or None
-    if not stream_gym_profile_id:
-        try:
-            active_result = db.client.table("gym_profiles").select("id").eq(
-                "user_id", body.user_id
-            ).eq("is_active", True).maybe_single().execute()
-            if active_result.data:
-                stream_gym_profile_id = active_result.data.get("id")
-        except Exception as e:
-            logger.warning(f"Failed to get active gym profile: {e}", exc_info=True)
+    # Resolve gym_profile_id early for dedup checks. None is a valid outcome:
+    # legacy users or users mid-onboarding may not have an active profile yet,
+    # and the generator handles profile_id=None downstream.
+    stream_gym_profile_id = body.gym_profile_id or get_active_gym_profile_id(db, body.user_id)
 
     try:
         generating_query = db.client.table("workouts").select("id").eq(
@@ -133,12 +127,19 @@ async def generate_workout_streaming(request: Request, body: GenerateWorkoutRequ
         if existing_workout.data:
             workout_id = existing_workout.data[0]["id"]
             logger.info(f"[Duplicate] Workout already exists for {body.user_id} on {scheduled_date}: {workout_id}")
-            full_workout = db.client.table("workouts").select("*").eq("id", workout_id).single().execute()
+            try:
+                full_workout = db.client.table("workouts").select("*").eq("id", workout_id).single().execute()
+            except Exception as e:
+                # Row was deleted between the duplicate-check and the refetch, or RLS
+                # blocked the read. Skip the shortcut and fall through to regenerate.
+                logger.warning(f"[Duplicate] Failed to refetch workout {workout_id}: {e}")
+                full_workout = None
 
-            async def existing_sse():
-                yield f"event: done\ndata: {json.dumps(full_workout.data)}\n\n"
+            if full_workout and full_workout.data:
+                async def existing_sse():
+                    yield f"event: done\ndata: {json.dumps(full_workout.data)}\n\n"
 
-            return StreamingResponse(existing_sse(), media_type="text/event-stream")
+                return StreamingResponse(existing_sse(), media_type="text/event-stream")
     except Exception as e:
         # Log but don't fail - idempotency check is a nice-to-have
         logger.warning(f"[Idempotency] Check failed: {e}", exc_info=True)

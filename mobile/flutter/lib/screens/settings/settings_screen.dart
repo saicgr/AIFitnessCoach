@@ -455,6 +455,24 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             route: '/settings/ai-coach',
             sectionKeys: const ['ai_coach', 'ai_privacy'],
           ),
+          // ── AI Integrations (MCP) — HIDDEN for v1.0 Play Store submission ──
+          // The MCP server, OAuth flow, PAT endpoints, and the AiIntegrationsScreen
+          // itself are all live and functional — only this navigation entry is
+          // commented out so reviewers don't trip on the yearly-only paywall or
+          // the unfamiliar third-party connection concept during launch review.
+          //
+          // To re-enable in v1.1: uncomment this block. The screen is still
+          // registered at the route '/settings/ai-integrations' (see
+          // app_router_settings_routes.dart) and reachable via deep link for
+          // beta testing.
+          // _SettingsRow(
+          //   icon: Icons.hub_outlined,
+          //   iconColor: isDark ? AppColors.info : AppColorsLight.info,
+          //   title: 'AI Integrations',
+          //   value: 'Claude, ChatGPT, Cursor',
+          //   route: '/settings/ai-integrations',
+          //   sectionKeys: const ['ai_integrations', 'mcp', 'claude', 'chatgpt', 'cursor'],
+          // ),
           _SettingsRow(
             icon: Icons.palette_outlined,
             iconColor: isDark ? AppColors.cyan : AppColorsLight.cyan,
@@ -629,7 +647,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   ],
 
                   // ── Debug: Test Level-Up Dialog ──
-                  if (true) ...[
+                  // Developer-only test harness for the level-up celebration
+                  // dialog. Hidden from end users; re-enable by flipping the
+                  // guard back to `if (true)` (or wire to a debug build flag).
+                  // ignore: dead_code
+                  if (false) ...[
                     _buildSectionLabel('Developer', textMuted),
                     const SizedBox(height: 8),
                     Container(

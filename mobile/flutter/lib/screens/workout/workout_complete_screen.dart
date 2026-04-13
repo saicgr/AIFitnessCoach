@@ -732,6 +732,20 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
                             foregroundColor: AppColors.orange,
                           ),
                         ),
+                      // Contextual entry to Reports & Insights right after the
+                      // user just completed a workout — this is the moment
+                      // they care most about their weekly progress.
+                      TextButton.icon(
+                        onPressed: () => context.push('/summaries'),
+                        icon: const Icon(Icons.insights_outlined, size: 16),
+                        label: const Text(
+                          'This Week',
+                          style: TextStyle(fontSize: 13),
+                        ),
+                        style: TextButton.styleFrom(
+                          foregroundColor: AppColors.cyan,
+                        ),
+                      ),
                       TextButton.icon(
                         onPressed: () => setState(() => _showDetailedFeedback = !_showDetailedFeedback),
                         icon: Icon(

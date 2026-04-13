@@ -183,6 +183,17 @@ extension _LogMealSheetStateUI on _LogMealSheetState {
                 isDark: isDark,
                 color: const Color(0xFF10B981), // green
               ),
+              const SizedBox(width: 4),
+
+              // AI Coach button — opens a context-aware popup with preset
+              // questions informed by today's logged meals, workout, and
+              // favorites. Does NOT replace the Analyze pill.
+              ActionIconButton(
+                icon: Icons.chat_bubble_outline_rounded,
+                onTap: _openAiCoachSheet,
+                isDark: isDark,
+                color: AccentColorScope.of(context).getColor(isDark),
+              ),
 
               const Spacer(),
 

@@ -216,8 +216,8 @@ class _OverviewTabState extends ConsumerState<OverviewTab> {
           const SizedBox(height: 8),
           QuickActionButton(
             icon: Icons.calendar_month,
-            label: 'Weekly Summaries',
-            onTap: () => context.push('/summaries'),
+            label: 'Reports & Insights',
+            onTap: () => context.push('/reports'),
           ),
           const SizedBox(height: 8),
           QuickActionButton(

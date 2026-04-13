@@ -14,6 +14,7 @@ import '../../core/providers/sound_preferences_provider.dart';
 import '../services/haptic_service.dart';
 import '../../services/offline_coach_service.dart';
 import '../models/chat_message.dart';
+import '../../core/models/meal_context.dart';
 import '../models/user.dart';
 import '../services/api_client.dart';
 import '../services/connectivity_service.dart';
@@ -244,6 +245,27 @@ class ChatRepository {
       debugPrint('❌ [Chat] Error uploading to S3: $e');
       rethrow;
     }
+  }
+
+  /// Fetch the lightweight meal-context summary used by the AI-Coach popup
+  /// on the meal-log sheet. Returns remaining macros, today's workout,
+  /// favorites preview, etc. A failure throws — callers should fall back
+  /// to generic pills with a "partial context" banner.
+  Future<MealContext> fetchMealContext({
+    String? mealType,
+    required String timezone,
+  }) async {
+    final response = await _apiClient.get(
+      '${ApiConstants.chat}/meal-context',
+      queryParameters: {
+        if (mealType != null && mealType.isNotEmpty) 'meal_type': mealType,
+        'tz': timezone,
+      },
+    );
+    if (response.statusCode == 200 && response.data is Map<String, dynamic>) {
+      return MealContext.fromJson(response.data as Map<String, dynamic>);
+    }
+    throw Exception('Failed to load meal context (HTTP ${response.statusCode})');
   }
 
   /// Send a message to the AI coach

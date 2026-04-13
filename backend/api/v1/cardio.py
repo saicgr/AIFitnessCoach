@@ -190,14 +190,18 @@ async def get_hr_zones(
     method = "tanaka"
 
     if use_resting_hr:
-        # Check cardio_metrics table first
-        cardio_response = db.client.table("cardio_metrics").select(
-            "resting_hr, max_hr, source"
-        ).eq("user_id", user_id).order(
-            "measured_at", desc=True
-        ).limit(1).maybe_single().execute()
+        # Check cardio_metrics table first — .maybe_single() can return None on 0 rows
+        # or raise APIError on 204; guard both paths.
+        try:
+            cardio_response = db.client.table("cardio_metrics").select(
+                "resting_hr, max_hr, source"
+            ).eq("user_id", user_id).order(
+                "measured_at", desc=True
+            ).limit(1).maybe_single().execute()
+        except Exception:
+            cardio_response = None
 
-        if cardio_response.data:
+        if cardio_response and cardio_response.data:
             # Use stored max HR if available (measured is more accurate)
             if cardio_response.data.get("max_hr"):
                 max_hr = cardio_response.data["max_hr"]
@@ -205,13 +209,16 @@ async def get_hr_zones(
 
         # Fall back to health metrics if no cardio metrics
         if resting_hr is None:
-            health_response = db.client.table("health_metrics").select(
-                "resting_heart_rate"
-            ).eq("user_id", user_id).order(
-                "recorded_at", desc=True
-            ).limit(1).maybe_single().execute()
+            try:
+                health_response = db.client.table("health_metrics").select(
+                    "resting_heart_rate"
+                ).eq("user_id", user_id).order(
+                    "recorded_at", desc=True
+                ).limit(1).maybe_single().execute()
+            except Exception:
+                health_response = None
 
-            if health_response.data:
+            if health_response and health_response.data:
                 resting_hr = health_response.data.get("resting_heart_rate")
 
         if resting_hr:
@@ -291,26 +298,32 @@ async def get_cardio_metrics_endpoint(
     custom_max_hr = None
     source = "calculated"
 
-    cardio_response = db.client.table("cardio_metrics").select("*").eq(
-        "user_id", user_id
-    ).order(
-        "measured_at", desc=True
-    ).limit(1).maybe_single().execute()
+    try:
+        cardio_response = db.client.table("cardio_metrics").select("*").eq(
+            "user_id", user_id
+        ).order(
+            "measured_at", desc=True
+        ).limit(1).maybe_single().execute()
+    except Exception:
+        cardio_response = None
 
-    if cardio_response.data:
+    if cardio_response and cardio_response.data:
         resting_hr = cardio_response.data.get("resting_hr")
         custom_max_hr = cardio_response.data.get("max_hr")
         source = cardio_response.data.get("source", "calculated")
 
     # Fall back to health metrics for resting HR
     if resting_hr is None:
-        health_response = db.client.table("health_metrics").select(
-            "resting_heart_rate"
-        ).eq("user_id", user_id).order(
-            "recorded_at", desc=True
-        ).limit(1).maybe_single().execute()
+        try:
+            health_response = db.client.table("health_metrics").select(
+                "resting_heart_rate"
+            ).eq("user_id", user_id).order(
+                "recorded_at", desc=True
+            ).limit(1).maybe_single().execute()
+        except Exception:
+            health_response = None
 
-        if health_response.data:
+        if health_response and health_response.data:
             resting_hr = health_response.data.get("resting_heart_rate")
 
     # Calculate all cardio metrics

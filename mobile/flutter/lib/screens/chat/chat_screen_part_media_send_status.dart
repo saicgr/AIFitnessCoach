@@ -357,7 +357,7 @@ class _InputBarState extends State<_InputBar> {
                         ),
                       ),
                     ),
-                    const SizedBox(width: 6),
+                    const SizedBox(width: 4),
 
                     // Video button
                     GestureDetector(
@@ -381,7 +381,7 @@ class _InputBarState extends State<_InputBar> {
                         ),
                       ),
                     ),
-                    const SizedBox(width: 6),
+                    const SizedBox(width: 4),
 
                     // Media picker button (gallery + video)
                     GestureDetector(
@@ -405,7 +405,7 @@ class _InputBarState extends State<_InputBar> {
                         ),
                       ),
                     ),
-                    const SizedBox(width: 8),
+                    const SizedBox(width: 6),
 
                     // Text field
                     Expanded(
@@ -418,8 +418,13 @@ class _InputBarState extends State<_InputBar> {
                         minLines: 1,
                         decoration: InputDecoration(
                           hintText: _selectedMedia.isNotEmpty
-                              ? 'Add a message (optional)...'
-                              : (widget.isLoading ? 'Type your next message...' : 'Ask your AI coach...'),
+                              ? 'Add a message...'
+                              : (widget.isLoading ? 'Type next message...' : 'Ask AI coach...'),
+                          hintMaxLines: 1,
+                          hintStyle: TextStyle(
+                            color: colors.textMuted,
+                            overflow: TextOverflow.ellipsis,
+                          ),
                           filled: true,
                           fillColor: colors.glassSurface,
                           border: OutlineInputBorder(
@@ -427,14 +432,14 @@ class _InputBarState extends State<_InputBar> {
                             borderSide: BorderSide.none,
                           ),
                           contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 20,
+                            horizontal: 14,
                             vertical: 12,
                           ),
                         ),
                         onSubmitted: (_) => _handleSend(),
                       ),
                     ),
-                    const SizedBox(width: 8),
+                    const SizedBox(width: 6),
 
                     // Send or Voice button
                     if (_hasText || _selectedMedia.isNotEmpty || widget.isLoading)

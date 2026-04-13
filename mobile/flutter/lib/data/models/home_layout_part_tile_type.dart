@@ -86,6 +86,8 @@ enum TileType {
   upNext,
   @JsonValue('todayStats')
   todayStats,
+  @JsonValue('stepsCounter')
+  stepsCounter,
 }
 
 
@@ -174,6 +176,8 @@ extension TileTypeExtension on TileType {
         return 'Up Next';
       case TileType.todayStats:
         return 'Today Stats';
+      case TileType.stepsCounter:
+        return 'Steps';
     }
   }
 
@@ -260,6 +264,8 @@ extension TileTypeExtension on TileType {
         return 'Your upcoming schedule items';
       case TileType.todayStats:
         return 'Goals, calories, and hydration at a glance';
+      case TileType.stepsCounter:
+        return 'Today\'s step count and daily goal';
     }
   }
 
@@ -346,6 +352,8 @@ extension TileTypeExtension on TileType {
         return 'schedule';
       case TileType.todayStats:
         return 'bar_chart';
+      case TileType.stepsCounter:
+        return 'directions_walk';
     }
   }
 
@@ -408,6 +416,8 @@ extension TileTypeExtension on TileType {
         return TileCategory.wellness;
       case TileType.todayStats:
         return TileCategory.progress;
+      case TileType.stepsCounter:
+        return TileCategory.wellness;
     }
   }
 
@@ -470,6 +480,8 @@ extension TileTypeExtension on TileType {
         return [TileSize.full, TileSize.half];
       case TileType.todayStats:
         return [TileSize.full];
+      case TileType.stepsCounter:
+        return [TileSize.full, TileSize.half, TileSize.compact];
     }
   }
 

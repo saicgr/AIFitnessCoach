@@ -15,11 +15,26 @@ class WeeklyProgressCard extends ConsumerWidget {
   /// Whether to use dark theme
   final bool isDark;
 
+  /// Indices (0=Mon … 6=Sun) for days this week that have a *completed*
+  /// workout. When provided, only these past days render the filled ring +
+  /// check. Past days without an entry render as a muted "missed" ring so a
+  /// skipped workout no longer looks complete.
+  /// When null, falls back to the legacy "all past days = done" behavior for
+  /// callers that haven't wired up per-day data yet.
+  final Set<int>? completedDayIndices;
+
+  /// Indices (0=Mon … 6=Sun) for days this week that had a workout scheduled.
+  /// Used to distinguish "rest day" (nothing planned, no visual noise) from
+  /// "missed" (was planned, not completed → muted ring).
+  final Set<int>? scheduledDayIndices;
+
   const WeeklyProgressCard({
     super.key,
     required this.completed,
     required this.total,
     this.isDark = true,
+    this.completedDayIndices,
+    this.scheduledDayIndices,
   });
 
   @override
@@ -101,8 +116,30 @@ class WeeklyProgressCard extends ConsumerWidget {
             children: List.generate(7, (displayIndex) {
               final dataIndex = weekConfig.displayOrder[displayIndex];
               final isToday = dataIndex == todayDataIndex;
-              final isPast = dataIndex < todayDataIndex;
-              final dayProgress = isPast ? 1.0 : (isToday && completed > 0 ? 0.5 : 0.0);
+              final isPastDay = dataIndex < todayDataIndex;
+
+              // Prefer authoritative per-day completion data when provided.
+              // Otherwise fall back to the legacy "all past days complete"
+              // rule so existing callers keep working.
+              final bool isCompletedDay;
+              final bool isMissedDay;
+              if (completedDayIndices != null) {
+                isCompletedDay = completedDayIndices!.contains(dataIndex);
+                // "Missed" = past day that was scheduled but not completed.
+                // If scheduledDayIndices is null we can't tell scheduled from
+                // rest, so treat every past uncompleted day as neutral.
+                isMissedDay = isPastDay &&
+                    !isCompletedDay &&
+                    (scheduledDayIndices?.contains(dataIndex) ?? false);
+              } else {
+                isCompletedDay = isPastDay;
+                isMissedDay = false;
+              }
+
+              final dayProgress = isCompletedDay
+                  ? 1.0
+                  : (isToday && completed > 0 ? 0.5 : 0.0);
+              final missedColor = textMuted.withValues(alpha: 0.55);
 
               return Column(
                 children: [
@@ -119,7 +156,7 @@ class WeeklyProgressCard extends ConsumerWidget {
                           strokeWidth: 3,
                           color: glassSurface,
                         ),
-                        // Progress ring
+                        // Progress ring — only drawn for completed or in-progress today
                         TweenAnimationBuilder<double>(
                           tween: Tween(begin: 0, end: dayProgress),
                           duration: Duration(milliseconds: 600 + (displayIndex * 100)),
@@ -128,18 +165,25 @@ class WeeklyProgressCard extends ConsumerWidget {
                             value: value,
                             strokeWidth: 3,
                             backgroundColor: Colors.transparent,
-                            color: isPast || (isToday && value > 0)
+                            color: isCompletedDay || (isToday && value > 0)
                                 ? accentColor
                                 : Colors.transparent,
                             strokeCap: StrokeCap.round,
                           ),
                         ),
-                        // Check icon for completed days
-                        if (isPast)
+                        // Check icon for actually completed days
+                        if (isCompletedDay)
                           Icon(
                             Icons.check,
                             size: 14,
                             color: accentColor,
+                          )
+                        // Missed (past + scheduled + not completed)
+                        else if (isMissedDay)
+                          Icon(
+                            Icons.close_rounded,
+                            size: 14,
+                            color: missedColor,
                           )
                         // Today indicator dot
                         else if (isToday)
@@ -160,7 +204,9 @@ class WeeklyProgressCard extends ConsumerWidget {
                     style: TextStyle(
                       fontSize: 10,
                       fontWeight: isToday ? FontWeight.bold : FontWeight.w500,
-                      color: isToday ? accentColor : textMuted,
+                      color: isToday
+                          ? accentColor
+                          : (isMissedDay ? missedColor : textMuted),
                     ),
                   ),
                 ],

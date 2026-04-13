@@ -74,6 +74,25 @@ class _AddGymProfileSheetState extends ConsumerState<AddGymProfileSheet> {
     ),
   };
 
+  // Per-preset tint so each environment row has its own accent instead of
+  // every icon rendering grey. Mapped from the preset key.
+  Color _presetTint(String key) {
+    switch (key) {
+      case 'commercial_gym':
+        return const Color(0xFFB366FF); // violet — matches existing accent
+      case 'home_gym':
+        return const Color(0xFF22C55E); // green
+      case 'home':
+        return const Color(0xFF0EA5E9); // sky blue
+      case 'hotel':
+        return const Color(0xFFF59E0B); // amber
+      case 'outdoors':
+        return const Color(0xFF10B981); // emerald
+      default:
+        return const Color(0xFF64748B); // slate fallback
+    }
+  }
+
   // Predefined environment presets
   static const Map<String, Map<String, dynamic>> _environmentPresets = {
     'commercial_gym': {
@@ -381,7 +400,10 @@ class _AddGymProfileSheetState extends ConsumerState<AddGymProfileSheet> {
     return GlassSheet(
       showHandle: false,
       child: DraggableScrollableSheet(
-        initialChildSize: 0.85,
+        // Step 1 (environment picker) has ~5 rows of content — an 85% sheet
+        // leaves a big gap above the Next button. Start shorter; users can
+        // drag up to 95% when step 2/3 has more content.
+        initialChildSize: 0.7,
         minChildSize: 0.5,
         maxChildSize: 0.95,
         expand: false,
@@ -617,40 +639,67 @@ class _AddGymProfileSheetState extends ConsumerState<AddGymProfileSheet> {
                 ),
               ),
               child: Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   Container(
                     width: 36,
                     height: 36,
                     decoration: BoxDecoration(
-                      color: isSelected
-                          ? accentColor.withValues(alpha: 0.2)
-                          : (isDark
-                              ? Colors.white.withValues(alpha: 0.1)
-                              : Colors.black.withValues(alpha: 0.06)),
+                      // Per-preset tint so unselected rows aren't all grey.
+                      color: _presetTint(entry.key).withValues(
+                        alpha: isSelected ? 0.22 : 0.14,
+                      ),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Icon(
                       preset['icon'] as IconData,
-                      color: isSelected ? accentColor : textSecondary,
+                      color: _presetTint(entry.key),
                       size: 18,
                     ),
                   ),
                   const SizedBox(width: 12),
+                  // Name + description stack vertically so a long name
+                  // like "Commercial Gym" or "Hotel / Travel" stays on one
+                  // line regardless of description length.
                   Expanded(
-                    child: Text(
-                      preset['name'] as String,
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: isSelected ? accentColor : textPrimary,
-                      ),
-                    ),
-                  ),
-                  Text(
-                    preset['description'] as String,
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: textSecondary,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        // FittedBox.scaleDown keeps the name on one line on
+                        // every screen size — shrinks if the row is narrow,
+                        // never grows past the base 14 sp.
+                        SizedBox(
+                          height: 18,
+                          child: Align(
+                            alignment: Alignment.centerLeft,
+                            child: FittedBox(
+                              fit: BoxFit.scaleDown,
+                              alignment: Alignment.centerLeft,
+                              child: Text(
+                                preset['name'] as String,
+                                maxLines: 1,
+                                softWrap: false,
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                  color: isSelected ? accentColor : textPrimary,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          preset['description'] as String,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: textSecondary,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                   if (isSelected) ...[

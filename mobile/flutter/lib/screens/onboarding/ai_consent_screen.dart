@@ -257,7 +257,7 @@ class _AiConsentScreenState extends ConsumerState<AiConsentScreen> {
                       }, isDark),
                     ],
                   ).animate().fadeIn(delay: 450.ms),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 4),
                 ],
               ),
             ),

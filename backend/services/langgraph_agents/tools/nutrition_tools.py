@@ -1012,3 +1012,152 @@ async def log_food_from_text(
             "user_id": user_id,
             "message": f"Failed to log food: {str(e)}"
         }
+
+
+# ───────────────────────────────────────────────────────────────────────────
+# Context tools for freeform queries (preset pills pre-fetch context via
+# _build_agent_state; these @tool wrappers are for when the agent decides
+# mid-conversation that it needs the same info).
+# ───────────────────────────────────────────────────────────────────────────
+
+@tool
+def get_calorie_remainder(
+    user_id: str,
+    timezone_str: str = "UTC",
+) -> Dict[str, Any]:
+    """
+    Get how many calories and macros the user has left for TODAY.
+
+    Use this tool when the user asks about remaining budget, "can I eat this?",
+    "how much room do I have left?", or "am I over?". Returns the day's total
+    consumed vs. target plus per-macro remainders.
+
+    Args:
+        user_id: User's UUID
+        timezone_str: IANA timezone (e.g., "America/Chicago")
+
+    Returns:
+        Dict with calorie_remainder, macros_remaining, over_budget, and the
+        underlying consumed/target totals.
+    """
+    try:
+        from services.langgraph_agents.tools.nutrition_context_helpers import (
+            fetch_daily_nutrition_context,
+        )
+        ctx = run_async_in_sync(fetch_daily_nutrition_context(user_id, timezone_str))
+        return {
+            "success": True,
+            "action": "get_calorie_remainder",
+            "user_id": user_id,
+            **ctx,
+        }
+    except Exception as e:
+        logger.error(f"get_calorie_remainder failed: {e}", exc_info=True)
+        return {
+            "success": False,
+            "action": "get_calorie_remainder",
+            "user_id": user_id,
+            "message": f"Failed to compute remainder: {str(e)}",
+        }
+
+
+@tool
+def get_favorite_foods(
+    user_id: str,
+    limit: int = 5,
+    exclude_days: int = 0,
+) -> Dict[str, Any]:
+    """
+    Return the user's saved/favorite foods ordered by how often they've logged them.
+
+    Use this tool when the user asks "what should I eat?", "suggest a favorite",
+    or "something I've had before?". Set `exclude_days=7` to bias toward
+    favorites they haven't eaten in the past week.
+
+    Args:
+        user_id: User's UUID
+        limit: Max number of favorites to return (default 5)
+        exclude_days: If >0, skip favorites logged within the last N days
+
+    Returns:
+        Dict with a "favorites" list ordered by times_logged desc.
+    """
+    try:
+        from services.langgraph_agents.tools.nutrition_context_helpers import (
+            fetch_recent_favorites,
+        )
+        favs = run_async_in_sync(fetch_recent_favorites(user_id, limit=limit, exclude_days=exclude_days))
+        return {
+            "success": True,
+            "action": "get_favorite_foods",
+            "user_id": user_id,
+            "favorites": favs,
+            "count": len(favs),
+            "message": (
+                f"User has {len(favs)} saved favorite(s)."
+                if favs else "User has no saved favorites yet."
+            ),
+        }
+    except Exception as e:
+        logger.error(f"get_favorite_foods failed: {e}", exc_info=True)
+        return {
+            "success": False,
+            "action": "get_favorite_foods",
+            "user_id": user_id,
+            "message": f"Failed to load favorites: {str(e)}",
+        }
+
+
+@tool
+def get_todays_workout_for_meal(
+    user_id: str,
+    timezone_str: str = "UTC",
+) -> Dict[str, Any]:
+    """
+    Get today's scheduled workout for meal-timing reasoning.
+
+    Use this tool to answer "what should I eat before/after my workout?" or
+    "is today a workout day?". Returns the workout name, type, scheduled time,
+    and completion status — or a rest-day marker when nothing is scheduled.
+
+    Note: this is the NUTRITION agent's workout-lookup. The workout agent has
+    its own (richer) workout tool; they intentionally have different names to
+    avoid tool-binding conflicts.
+
+    Args:
+        user_id: User's UUID
+        timezone_str: IANA timezone
+
+    Returns:
+        Dict with a "workout" key (or null) plus a "rest_day" bool.
+    """
+    try:
+        from services.langgraph_agents.tools.nutrition_context_helpers import (
+            fetch_todays_workout,
+        )
+        w = run_async_in_sync(fetch_todays_workout(user_id, timezone_str))
+        if w is None:
+            return {
+                "success": True,
+                "action": "get_todays_workout_for_meal",
+                "user_id": user_id,
+                "workout": None,
+                "rest_day": True,
+                "message": "Today is a rest day.",
+            }
+        return {
+            "success": True,
+            "action": "get_todays_workout_for_meal",
+            "user_id": user_id,
+            "workout": w,
+            "rest_day": False,
+            "message": f"Today's workout: {w.get('name')} ({w.get('type')}).",
+        }
+    except Exception as e:
+        logger.error(f"get_todays_workout_for_meal failed: {e}", exc_info=True)
+        return {
+            "success": False,
+            "action": "get_todays_workout_for_meal",
+            "user_id": user_id,
+            "message": f"Failed to load workout: {str(e)}",
+        }

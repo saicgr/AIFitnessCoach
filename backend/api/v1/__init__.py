@@ -1,6 +1,7 @@
 # API v1 module
 from fastapi import APIRouter
 from api.v1 import chat, health
+from api.v1 import chat_meal_context
 from api.v1 import users, exercises, performance_db
 from api.v1 import metrics, videos, onboarding, reminders, nutrition
 from api.v1 import exercise_suggestions
@@ -81,12 +82,14 @@ from api.v1 import plateau  # Plateau detection (exercise + weight stalling)
 from api.v1 import email_cron  # Lifecycle email cron jobs
 from api.v1 import push_nudge_cron  # Hourly accountability push nudge cron jobs
 from api.v1 import dashboard  # Weekly dashboard summary endpoint
+from api.v1.users.mcp_integrations import router as mcp_integrations_router  # MCP connected-client management
 
 # Create v1 router
 router = APIRouter(prefix="/v1")
 
 # Include all v1 routes
 router.include_router(chat.router, prefix="/chat", tags=["Chat"])
+router.include_router(chat_meal_context.router, prefix="/chat", tags=["Chat"])
 router.include_router(health.router, prefix="/health", tags=["Health"])
 
 # Supabase-backed CRUD endpoints
@@ -363,3 +366,10 @@ router.include_router(push_nudge_cron.router, prefix="/nudges", tags=["Push Nudg
 
 # Weekly dashboard summary (workout compliance, nutrition, readiness, measurements, goals)
 router.include_router(dashboard.router, prefix="/dashboard", tags=["Dashboard"])
+
+# MCP integrations — list/revoke external AI assistants connected to this user
+router.include_router(
+    mcp_integrations_router,
+    prefix="/users/me/mcp-integrations",
+    tags=["MCP Integrations"],
+)

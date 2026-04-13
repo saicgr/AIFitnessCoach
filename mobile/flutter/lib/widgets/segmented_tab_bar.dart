@@ -13,6 +13,7 @@ class SegmentedTabBar extends StatelessWidget {
   final EdgeInsets padding;
   final double borderRadius;
   final bool showBorder;
+  final bool compact;
 
   const SegmentedTabBar({
     super.key,
@@ -22,6 +23,7 @@ class SegmentedTabBar extends StatelessWidget {
     this.padding = const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
     this.borderRadius = 12,
     this.showBorder = false,
+    this.compact = false,
   });
 
   @override
@@ -54,7 +56,7 @@ class SegmentedTabBar extends StatelessWidget {
                 ]
               : null,
         ),
-        padding: const EdgeInsets.all(4),
+        padding: EdgeInsets.all(compact ? 3 : 4),
         child: AnimatedBuilder(
           animation: controller,
           builder: (context, _) {
@@ -69,6 +71,7 @@ class SegmentedTabBar extends StatelessWidget {
                   borderRadius: borderRadius,
                   isFirst: index == 0,
                   isLast: index == tabs.length - 1,
+                  compact: compact,
                 );
               }),
             );
@@ -88,6 +91,7 @@ class _SegmentedTabButton extends StatelessWidget {
   final double borderRadius;
   final bool isFirst;
   final bool isLast;
+  final bool compact;
 
   const _SegmentedTabButton({
     required this.index,
@@ -98,6 +102,7 @@ class _SegmentedTabButton extends StatelessWidget {
     required this.borderRadius,
     required this.isFirst,
     required this.isLast,
+    this.compact = false,
   });
 
   @override
@@ -127,7 +132,9 @@ class _SegmentedTabButton extends StatelessWidget {
           duration: const Duration(milliseconds: 200),
           curve: Curves.easeOutCubic,
           padding: EdgeInsets.symmetric(
-            vertical: showIcon && item.icon != null ? 10 : 12,
+            vertical: showIcon && item.icon != null
+                ? (compact ? 6 : 10)
+                : (compact ? 7 : 12),
           ),
           decoration: BoxDecoration(
             color: bgColor,
@@ -179,7 +186,7 @@ class _SegmentedTabButton extends StatelessWidget {
                       child: Text(
                         item.label,
                         style: TextStyle(
-                          fontSize: 14,
+                          fontSize: compact ? 12 : 14,
                           fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
                           color: fgColor,
                         ),

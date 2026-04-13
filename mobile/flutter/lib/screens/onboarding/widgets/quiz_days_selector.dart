@@ -165,12 +165,16 @@ class QuizDaysSelector extends StatelessWidget {
                             ),
                             child: Column(
                               children: [
-                                Text(
-                                  option['label'] as String,
-                                  style: TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.bold,
-                                    color: t.textPrimary,
+                                FittedBox(
+                                  fit: BoxFit.scaleDown,
+                                  child: Text(
+                                    option['label'] as String,
+                                    maxLines: 1,
+                                    style: TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                      color: t.textPrimary,
+                                    ),
                                   ),
                                 ),
                                 Text(

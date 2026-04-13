@@ -147,10 +147,16 @@ async def generate_workout(request: Request, *, body: GenerateWorkoutRequest, ba
             # Check for gym profile - load equipment/environment from profile if available
             gym_profile = None
             if body.gym_profile_id:
-                # Specific profile requested
-                profile_result = db.client.table("gym_profiles").select("*").eq("id", body.gym_profile_id).single().execute()
-                gym_profile = profile_result.data if profile_result.data else None
-                logger.info(f"🏋️ [GymProfile] Using requested profile: {body.gym_profile_id}")
+                # Specific profile requested — .single() raises PGRST116 on 0 rows
+                # (e.g. id doesn't exist or was deleted), so guard with try/except.
+                try:
+                    profile_result = db.client.table("gym_profiles").select("*").eq("id", body.gym_profile_id).single().execute()
+                    gym_profile = profile_result.data if profile_result and profile_result.data else None
+                except Exception as e:
+                    logger.warning(f"🏋️ [GymProfile] Requested profile {body.gym_profile_id} not found: {e}")
+                    gym_profile = None
+                if gym_profile:
+                    logger.info(f"🏋️ [GymProfile] Using requested profile: {body.gym_profile_id}")
             else:
                 # Try to get active profile
                 try:

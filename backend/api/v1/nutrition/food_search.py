@@ -43,6 +43,7 @@ class USDAFoodResponse(BaseModel):
     matched_query: Optional[str] = None  # Which sub-query this result matched (for multi-food queries)
     verification_level: Optional[str] = None  # 'curated', 'lab_verified', 'manufacturer_verified', 'community_verified'
     total_calories: Optional[int] = None  # Total calories for saved foods (per-serving, not per-100g)
+    partial_match: bool = False  # True if food_match_gate only accepted this as a partial (tier-B/C) match; frontend should show "Closest matches" banner
 
 
 class USDASearchResponse(BaseModel):
@@ -215,6 +216,7 @@ async def search_foods(
                 matched_query=item.get("matched_query"),
                 verification_level=v_level,
                 total_calories=total_cal,
+                partial_match=bool(item.get("partial_match", False)),
             ))
 
         total_hits = len(foods)

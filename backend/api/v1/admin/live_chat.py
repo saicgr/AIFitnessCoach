@@ -85,7 +85,7 @@ async def verify_admin_token(authorization: str = Header(...)) -> AdminProfile:
         token = authorization.replace("Bearer ", "")
 
         # Use Supabase to verify the token and get user
-        supabase = get_supabase().client
+        supabase = get_supabase().auth_client
 
         # Get user from token
         user_response = supabase.auth.get_user(token)
@@ -246,7 +246,7 @@ async def admin_login(request: Request, payload: AdminLoginRequest):
     logger.info(f"Admin login attempt for: {payload.email}")
 
     try:
-        supabase = get_supabase().client
+        supabase = get_supabase().auth_client
 
         # Authenticate with Supabase
         auth_response = supabase.auth.sign_in_with_password({

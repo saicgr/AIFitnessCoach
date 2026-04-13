@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -233,9 +234,26 @@ class AISettings {
 class AISettingsNotifier extends StateNotifier<AISettings> {
   final ApiClient _apiClient;
   bool _isLoaded = false;
-  bool _isSaving = false;
+
+  // Debounced save with retry. The previous `_isSaving` drop silently
+  // swallowed concurrent saves, which caused persona picks to never land
+  // server-side (e.g. reviewer account had coach_persona_id=NULL despite
+  // picking a coach in the UI). Now: debounce rapid setter calls into one
+  // PUT, and retry up to [_maxSaveAttempts] on failure.
+  Timer? _saveDebounce;
+  int _saveAttempt = 0;
+  bool _saveInFlight = false;
+  bool _pendingSave = false;
+  static const Duration _saveDebounceDelay = Duration(milliseconds: 350);
+  static const int _maxSaveAttempts = 4;
 
   AISettingsNotifier(this._apiClient) : super(const AISettings());
+
+  @override
+  void dispose() {
+    _saveDebounce?.cancel();
+    super.dispose();
+  }
 
   /// Load settings from API
   Future<void> loadSettings() async {
@@ -263,11 +281,28 @@ class AISettingsNotifier extends StateNotifier<AISettings> {
     }
   }
 
-  /// Save settings to API (debounced)
-  Future<void> _saveSettings() async {
-    if (_isSaving) return;
-    _isSaving = true;
+  /// Schedule a debounced save. Rapid setter calls collapse into one PUT.
+  /// If a save is already in flight, a second save fires after it completes
+  /// so the latest state always reaches the server.
+  void _saveSettings() {
+    _saveDebounce?.cancel();
+    _saveDebounce = Timer(_saveDebounceDelay, () {
+      _saveAttempt = 0;
+      _runSave();
+    });
+  }
 
+  /// Perform the actual PUT. Retries with exponential backoff on failure
+  /// so a transient 5xx (cold start, RLS hiccup) doesn't silently drop
+  /// the user's persona selection.
+  Future<void> _runSave() async {
+    if (_saveInFlight) {
+      // A save is already running; flag a follow-up so we re-sync the
+      // newest state once the current call settles.
+      _pendingSave = true;
+      return;
+    }
+    _saveInFlight = true;
     try {
       final userId = await _apiClient.getUserId();
       if (userId == null) {
@@ -275,11 +310,13 @@ class AISettingsNotifier extends StateNotifier<AISettings> {
         return;
       }
 
-      debugPrint('🤖 [AISettings] Saving settings for user: $userId');
+      final snapshot = state.toJson();
+      debugPrint(
+          '🤖 [AISettings] Saving (attempt ${_saveAttempt + 1}) for user: $userId  style=${state.coachingStyle} persona=${state.coachPersonaId}');
       final response = await _apiClient.put(
         '${ApiConstants.aiSettings}/$userId',
         data: {
-          ...state.toJson(),
+          ...snapshot,
           'change_source': 'app',
           'device_platform': Platform.isIOS ? 'ios' : 'android',
         },
@@ -287,11 +324,33 @@ class AISettingsNotifier extends StateNotifier<AISettings> {
 
       if (response.statusCode == 200) {
         debugPrint('✅ [AISettings] Settings saved successfully');
+        _saveAttempt = 0;
+      } else {
+        throw Exception('Unexpected status ${response.statusCode}');
       }
     } catch (e) {
       debugPrint('❌ [AISettings] Error saving settings: $e');
+      _saveAttempt++;
+      if (_saveAttempt < _maxSaveAttempts) {
+        // Exponential backoff: 500ms, 1s, 2s.
+        final delayMs = 500 * (1 << (_saveAttempt - 1));
+        debugPrint(
+            '🤖 [AISettings] Retrying save in ${delayMs}ms (attempt ${_saveAttempt + 1}/$_maxSaveAttempts)');
+        await Future<void>.delayed(Duration(milliseconds: delayMs));
+        _saveInFlight = false;
+        await _runSave();
+        return;
+      } else {
+        debugPrint('❌ [AISettings] Giving up after $_maxSaveAttempts attempts');
+        _saveAttempt = 0;
+      }
     } finally {
-      _isSaving = false;
+      _saveInFlight = false;
+      if (_pendingSave) {
+        _pendingSave = false;
+        // State mutated while the last save was running — run one more.
+        unawaited(_runSave());
+      }
     }
   }
 

@@ -346,13 +346,16 @@ async def calculate_nutrition_score(
 
     # Get previous week's score for comparison
     previous_week_start, previous_week_end = nutrition_service.get_previous_week_range()
-    previous_response = db.client.table("nutrition_scores").select(
-        "nutrition_score"
-    ).eq(
-        "user_id", request.user_id
-    ).eq(
-        "week_start", previous_week_start.isoformat()
-    ).maybe_single().execute()
+    try:
+        previous_response = db.client.table("nutrition_scores").select(
+            "nutrition_score"
+        ).eq(
+            "user_id", request.user_id
+        ).eq(
+            "week_start", previous_week_start.isoformat()
+        ).maybe_single().execute()
+    except Exception:
+        previous_response = None
 
     previous_score = previous_response.data.get("nutrition_score") if previous_response and previous_response.data else None
 
@@ -557,13 +560,16 @@ async def calculate_fitness_score(
     from services.nutrition_calculator_service import nutrition_calculator_service
     week_start, week_end = nutrition_calculator_service.get_current_week_range()
 
-    nutrition_response = db.client.table("nutrition_scores").select(
-        "nutrition_score"
-    ).eq(
-        "user_id", user_id
-    ).eq(
-        "week_start", week_start.isoformat()
-    ).maybe_single().execute()
+    try:
+        nutrition_response = db.client.table("nutrition_scores").select(
+            "nutrition_score"
+        ).eq(
+            "user_id", user_id
+        ).eq(
+            "week_start", week_start.isoformat()
+        ).maybe_single().execute()
+    except Exception:
+        nutrition_response = None
 
     nutrition_score = nutrition_response.data.get("nutrition_score", 0) if nutrition_response and nutrition_response.data else 0
 
@@ -581,13 +587,16 @@ async def calculate_fitness_score(
     readiness_score = round(sum(readiness_scores) / len(readiness_scores)) if readiness_scores else 50
 
     # 5. Get previous fitness score
-    previous_response = db.client.table("fitness_scores").select(
-        "overall_fitness_score"
-    ).eq(
-        "user_id", user_id
-    ).order(
-        "calculated_at", desc=True
-    ).limit(1).maybe_single().execute()
+    try:
+        previous_response = db.client.table("fitness_scores").select(
+            "overall_fitness_score"
+        ).eq(
+            "user_id", user_id
+        ).order(
+            "calculated_at", desc=True
+        ).limit(1).maybe_single().execute()
+    except Exception:
+        previous_response = None
 
     previous_score = previous_response.data.get("overall_fitness_score") if previous_response and previous_response.data else None
 

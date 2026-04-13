@@ -1,0 +1,74 @@
+# 🏋️ Weekly Summary
+
+**Period:** {{ start_date }} → {{ end_date }} ({{ date_range.days }} days)
+**Athlete:** {{ user.name }}
+**Primary goal:** {{ user.primary_goal }}
+{% if user.bodyweight_lb %}**Body weight:** {{ user.bodyweight_lb }} lb ({{ user.bodyweight_kg }} kg){% endif %}
+
+---
+
+## 💪 Workouts
+
+- **Completed:** {{ workouts.completed_count }} / {{ workouts.planned_count }} planned ({{ workouts.adherence_pct }}% adherence)
+- **Total training time:** {{ workouts.total_minutes }} min
+- **Avg session:** {{ workouts.avg_duration_min }} min
+- **Unique exercises:** {{ workouts.unique_exercises }}
+
+{% if workouts.completed_count == 0 %}
+> ⚠️ No completed workouts logged this week. Consider blocking time on your calendar tomorrow.
+{% endif %}
+
+---
+
+## 📈 Strength
+
+{% if strength.current_score is not none %}
+- **Current strength score:** {{ strength.current_score }}{% if strength.delta is not none %} ({{ "+" if strength.delta >= 0 else "" }}{{ strength.delta }} this period){% endif %}
+{% endif %}
+
+{% if strength.top_lifts %}
+**Major lifts (progression this period):**
+{% for lift in strength.top_lifts %}
+- **{{ lift.name }}**: {{ lift.current }} {{ lift.unit }} ({{ "+" if lift.delta_pct >= 0 else "" }}{{ lift.delta_pct }}% from {{ lift.start }} {{ lift.unit }})
+{% endfor %}
+{% else %}
+> No major-lift progression data yet. Log bench / squat / deadlift / OHP sets to unlock this section.
+{% endif %}
+
+{% if strength.prs %}
+**🏆 PRs achieved ({{ strength.prs|length }}):**
+{% for pr in strength.prs[:5] %}
+- {{ pr.exercise }}: {{ pr.weight }} {{ pr.unit }}{% if pr.reps %} × {{ pr.reps }} reps{% endif %}
+{% endfor %}
+{% endif %}
+
+---
+
+## 🍎 Nutrition
+
+- **Avg calories:** {{ nutrition.avg_calories }} kcal/day
+- **Avg protein:** {{ nutrition.avg_protein_g }} g/day
+- **Avg carbs:** {{ nutrition.avg_carbs_g }} g/day
+- **Avg fat:** {{ nutrition.avg_fat_g }} g/day
+- **Days logged:** {{ nutrition.days_logged }} / {{ nutrition.days_span }} ({{ nutrition.log_rate_pct }}%)
+{% if nutrition.avg_water_ml > 0 %}
+- **Avg water:** {{ nutrition.avg_water_ml }} ml/day
+{% endif %}
+
+{% if nutrition.top_foods %}
+**Top foods:**
+{% for f in nutrition.top_foods[:5] %}
+- {{ f.name }} ({{ f.count }}×)
+{% endfor %}
+{% endif %}
+
+---
+
+## 🔥 Habits
+
+- **Current streak:** {{ habits.current_streak }} days
+- **Longest streak (all time):** {{ habits.longest_streak }} days
+
+---
+
+_Generated {{ generated_at }} by FitWiz MCP._

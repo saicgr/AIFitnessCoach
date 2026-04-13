@@ -582,13 +582,16 @@ async def should_send_reminder(user_id: str,
             today = user_today_date(request, db, user_id).isoformat()
             current_hour = now.hour
 
-            hourly_response = db.client.table("neat_hourly_activity").select(
-                "active_minutes, created_at"
-            ).eq("user_id", user_id).eq("activity_date", today).eq(
-                "hour", current_hour
-            ).maybe_single().execute()
+            try:
+                hourly_response = db.client.table("neat_hourly_activity").select(
+                    "active_minutes, created_at"
+                ).eq("user_id", user_id).eq("activity_date", today).eq(
+                    "hour", current_hour
+                ).maybe_single().execute()
+            except Exception:
+                hourly_response = None
 
-            if hourly_response.data:
+            if hourly_response and hourly_response.data:
                 active_minutes = hourly_response.data.get("active_minutes", 0)
                 if active_minutes >= prefs.active_threshold_minutes:
                     return ShouldRemindResponse(

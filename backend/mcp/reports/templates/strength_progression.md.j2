@@ -1,0 +1,81 @@
+# 💪 Strength Progression Report
+
+**Period:** {{ start_date }} → {{ end_date }} ({{ date_range.days }} days)
+**Athlete:** {{ user.name }}
+{% if user.bodyweight_lb %}**Body weight:** {{ user.bodyweight_lb }} lb ({{ user.bodyweight_kg }} kg){% endif %}
+
+---
+
+## Overall Strength Score
+
+{% if strength.current_score is not none %}
+- **Current:** {{ strength.current_score }}
+{% if strength.start_score is not none %}
+- **At period start:** {{ strength.start_score }}
+- **Change:** {{ "+" if (strength.delta or 0) >= 0 else "" }}{{ strength.delta }}
+{% endif %}
+{% else %}
+_No strength score computed yet._
+{% endif %}
+
+---
+
+## 🏆 Personal Records ({{ strength.prs|length }})
+
+{% if strength.prs %}
+| Date | Exercise | Weight | Reps |
+|------|----------|--------|------|
+{% for pr in strength.prs %}| {{ (pr.achieved_at or '')[:10] }} | {{ pr.exercise }} | {{ pr.weight }} {{ pr.unit }} | {{ pr.reps or '—' }} |
+{% endfor %}
+{% else %}
+_No PRs recorded in this window._
+{% endif %}
+
+---
+
+## 📊 Top 5 Lifts by Volume
+
+{% if strength.top_lifts_by_volume %}
+| Rank | Exercise | Total Volume (reps × weight) |
+|------|----------|------------------------------|
+{% for l in strength.top_lifts_by_volume %}| {{ loop.index }} | {{ l.name }} | {{ l.total_volume }} |
+{% endfor %}
+{% else %}
+_No volume data for this period._
+{% endif %}
+
+---
+
+## 📈 Major Lift Progression Curves
+
+{% if strength.progression_curves %}
+{% for lift_name, curve in strength.progression_curves.items() %}
+### {{ lift_name|title }}
+
+{% if curve %}
+| Date | Max Weight (lb) |
+|------|-----------------|
+{% for p in curve %}| {{ p.date }} | {{ p.weight }} |
+{% endfor %}
+{% else %}
+_No sessions logged for this lift._
+{% endif %}
+
+{% endfor %}
+{% else %}
+_No major lifts (bench / squat / deadlift / OHP) logged in this period._
+{% endif %}
+
+---
+
+## Summary
+
+{% if strength.top_lifts %}
+{% for lift in strength.top_lifts %}
+- **{{ lift.name }}**: {{ lift.start }} → **{{ lift.current }}** {{ lift.unit }} ({{ "+" if lift.delta_pct >= 0 else "" }}{{ lift.delta_pct }}%)
+{% endfor %}
+{% endif %}
+
+---
+
+_Generated {{ generated_at }} by FitWiz MCP._

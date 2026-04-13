@@ -3,7 +3,10 @@ part of 'measurements_screen.dart';
 /// UI builder methods extracted from _MeasurementsScreenState
 extension _MeasurementsScreenStateUI on _MeasurementsScreenState {
 
-  /// Build BMI and Waist-to-Hip Ratio cards
+  /// Build a horizontally-scrolling row of ALL derived metrics (BMI, WHR,
+  /// Waist-to-Height, FFMI, Lean Mass, Shoulder:Waist, Chest:Waist, Arm/Leg
+  /// Symmetry). Cards without data render "—" instead of being hidden, so the
+  /// row is always populated and the user can see at-a-glance what's possible.
   Widget _buildDerivedMetricsSection(
     MeasurementsState state, {
     required bool isDark,
@@ -14,188 +17,38 @@ extension _MeasurementsScreenStateUI on _MeasurementsScreenState {
   }) {
     final auth = ref.watch(authStateProvider);
     final user = auth.user;
-    final latestWeight = state.summary?.latestByType[MeasurementType.weight];
-    final latestWaist = state.summary?.latestByType[MeasurementType.waist];
-    final latestHips = state.summary?.latestByType[MeasurementType.hips];
+    final summary = state.summary;
+    if (summary == null) return const SizedBox.shrink();
 
-    // Calculate BMI if we have height and weight
-    double? bmi;
-    String? bmiCategory;
-    Color? bmiColor;
-    if (user?.heightCm != null && user!.heightCm! > 0 && latestWeight != null) {
-      final heightM = user.heightCm! / 100;
-      // Get weight in kg (always use metric=true for BMI calculation)
-      final weightKg = latestWeight.getValueInUnit(true);
-      bmi = weightKg / (heightM * heightM);
-      final result = _getBmiCategoryAndColor(bmi);
-      bmiCategory = result.$1;
-      bmiColor = result.$2;
-    }
+    final computed = computeDerivedMetrics(
+      summary: summary,
+      heightCm: user?.heightCm,
+      gender: user?.gender,
+    );
 
-    // Calculate Waist-to-Hip Ratio if we have both measurements
-    double? whr;
-    String? whrCategory;
-    Color? whrColor;
-    if (latestWaist != null && latestHips != null) {
-      // Get measurements in metric (cm) for consistent calculation
-      final waistCm = latestWaist.getValueInUnit(true);
-      final hipsCm = latestHips.getValueInUnit(true);
-      if (hipsCm > 0) {
-        whr = waistCm / hipsCm;
-        final isMale = user?.gender?.toLowerCase() == 'male';
-        final result = _getWhrCategoryAndColor(whr, isMale: isMale);
-        whrCategory = result.$1;
-        whrColor = result.$2;
-      }
-    }
+    // Deterministic order — matches the enum declaration so the row reads
+    // like a health-checkup glance (composition first, ratios next,
+    // symmetry last).
+    const ordered = DerivedMetricType.values;
 
-    // Don't show section if no derived metrics available
-    if (bmi == null && whr == null) {
-      return const SizedBox.shrink();
-    }
-
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-      child: Row(
-        children: [
-          // BMI Card
-          if (bmi != null)
-            Expanded(
-              child: Container(
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  color: elevated,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: bmiColor!.withOpacity(0.3)),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(6),
-                          decoration: BoxDecoration(
-                            color: bmiColor.withOpacity(0.15),
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: Icon(
-                            Icons.monitor_weight_outlined,
-                            size: 16,
-                            color: bmiColor,
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          'BMI',
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            color: textMuted,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 10),
-                    Text(
-                      bmi.toStringAsFixed(1),
-                      style: TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                        color: bmiColor,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                      decoration: BoxDecoration(
-                        color: bmiColor.withOpacity(0.15),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Text(
-                        bmiCategory!,
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
-                          color: bmiColor,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-
-          if (bmi != null && whr != null) const SizedBox(width: 12),
-
-          // Waist-to-Hip Ratio Card
-          if (whr != null)
-            Expanded(
-              child: Container(
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  color: elevated,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: whrColor!.withOpacity(0.3)),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(6),
-                          decoration: BoxDecoration(
-                            color: whrColor.withOpacity(0.15),
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: Icon(
-                            Icons.straighten,
-                            size: 16,
-                            color: whrColor,
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          'WHR',
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            color: textMuted,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 10),
-                    Text(
-                      whr.toStringAsFixed(2),
-                      style: TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                        color: whrColor,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                      decoration: BoxDecoration(
-                        color: whrColor.withOpacity(0.15),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Text(
-                        whrCategory!,
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
-                          color: whrColor,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-        ],
+    return SizedBox(
+      height: 130,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+        itemCount: ordered.length,
+        separatorBuilder: (_, __) => const SizedBox(width: 10),
+        itemBuilder: (context, i) {
+          final type = ordered[i];
+          return _DerivedMetricCard(
+            type: type,
+            result: computed[type],
+            elevated: elevated,
+            textMuted: textMuted,
+            mutedBorder: isDark ? AppColors.cardBorder : AppColorsLight.cardBorder,
+            onTap: () => context.push('/measurements/derived/${type.name}'),
+          );
+        },
       ),
     );
   }
@@ -327,139 +180,8 @@ extension _MeasurementsScreenStateUI on _MeasurementsScreenState {
   }
 
 
-  Widget _buildMeasurementGroupCard(
-    MeasurementsState state,
-    List<MeasurementType> types, {
-    required bool isDark,
-    required Color elevated,
-    required Color textPrimary,
-    required Color textSecondary,
-    required Color textMuted,
-    required Color cardBorder,
-    required Color cyan,
-  }) {
-    return Container(
-      decoration: BoxDecoration(
-        color: elevated,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Column(
-        children: types.asMap().entries.map((entry) {
-          final index = entry.key;
-          final type = entry.value;
-          final latest = state.summary?.latestByType[type];
-          final change = state.summary?.changeFromPrevious[type];
-          final unit = _isMetric ? type.metricUnit : type.imperialUnit;
-
-          return Column(
-            children: [
-              InkWell(
-                onTap: () => context.push('/measurements/${type.name}'),
-                borderRadius: index == 0
-                    ? const BorderRadius.vertical(top: Radius.circular(12))
-                    : index == types.length - 1
-                        ? const BorderRadius.vertical(bottom: Radius.circular(12))
-                        : null,
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                  child: Row(
-                    children: [
-                      Container(
-                        width: 36,
-                        height: 36,
-                        decoration: BoxDecoration(
-                          color: (_selectedType == type ? cyan : textMuted).withOpacity(0.15),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Icon(
-                          _getIconForType(type),
-                          size: 18,
-                          color: _selectedType == type ? cyan : textMuted,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              type.displayName,
-                              style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w500,
-                                color: textPrimary,
-                              ),
-                            ),
-                            if (latest != null)
-                              Text(
-                                'Last: ${DateUtils.isSameDay(latest.recordedAt, DateTime.now()) ? DateFormat('h:mm a').format(latest.recordedAt) : DateFormat('MMM d, yy').format(latest.recordedAt)}',
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  color: textMuted,
-                                ),
-                              ),
-                          ],
-                        ),
-                      ),
-                      if (latest != null) ...[
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.end,
-                          children: [
-                            Text(
-                              '${_formatValue(latest.getValueInUnit(_isMetric))} $unit',
-                              style: TextStyle(
-                                fontSize: 15,
-                                fontWeight: FontWeight.bold,
-                                color: cyan,
-                              ),
-                            ),
-                            if (change != null && change.abs() >= 0.1)
-                              Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(
-                                    change > 0 ? Icons.arrow_upward : Icons.arrow_downward,
-                                    size: 10,
-                                    color: _getChangeColor(type, change),
-                                  ),
-                                  Text(
-                                    _formatValue(change.abs()),
-                                    style: TextStyle(
-                                      fontSize: 11,
-                                      color: _getChangeColor(type, change),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                          ],
-                        ),
-                      ] else
-                        Text(
-                          '--',
-                          style: TextStyle(
-                            fontSize: 15,
-                            color: textMuted,
-                          ),
-                        ),
-                      const SizedBox(width: 8),
-                      Icon(
-                        Icons.chevron_right,
-                        size: 18,
-                        color: textMuted,
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              if (index < types.length - 1)
-                Divider(height: 1, color: cardBorder, indent: 62),
-            ],
-          );
-        }).toList(),
-      ),
-    );
-  }
-
+  // _buildMeasurementGroupCard removed — the body view + tile grid fully
+  // replace the old vertical group list.
 
   Widget _buildHistoryList(
     MeasurementsState state, {
@@ -634,4 +356,162 @@ extension _MeasurementsScreenStateUI on _MeasurementsScreenState {
     );
   }
 
+}
+
+
+/// Compact fixed-width card used inside the horizontally-scrolling derived-
+/// metrics row. Renders "—" when [result] is null so every card in the row
+/// is always visible (zero-state communicates "you can log these too").
+class _DerivedMetricCard extends StatelessWidget {
+  final DerivedMetricType type;
+  final DerivedMetricResult? result;
+  final Color elevated;
+  final Color textMuted;
+  final Color mutedBorder;
+  final VoidCallback onTap;
+
+  const _DerivedMetricCard({
+    required this.type,
+    required this.result,
+    required this.elevated,
+    required this.textMuted,
+    required this.mutedBorder,
+    required this.onTap,
+  });
+
+  IconData get _icon {
+    switch (type) {
+      case DerivedMetricType.bmi:
+        return Icons.monitor_weight_outlined;
+      case DerivedMetricType.leanBodyMass:
+        return Icons.fitness_center;
+      case DerivedMetricType.ffmi:
+        return Icons.bolt_outlined;
+      case DerivedMetricType.waistToHipRatio:
+      case DerivedMetricType.waistToHeightRatio:
+      case DerivedMetricType.shoulderToWaistRatio:
+      case DerivedMetricType.chestToWaistRatio:
+        return Icons.straighten;
+      case DerivedMetricType.armSymmetry:
+      case DerivedMetricType.legSymmetry:
+        return Icons.compare_arrows;
+    }
+  }
+
+  String get _shortLabel {
+    switch (type) {
+      case DerivedMetricType.waistToHipRatio:
+        return 'WHR';
+      case DerivedMetricType.waistToHeightRatio:
+        return 'W:Ht';
+      case DerivedMetricType.shoulderToWaistRatio:
+        return 'Sh:W';
+      case DerivedMetricType.chestToWaistRatio:
+        return 'Ch:W';
+      case DerivedMetricType.leanBodyMass:
+        return 'Lean Mass';
+      case DerivedMetricType.armSymmetry:
+        return 'Arm Sym';
+      case DerivedMetricType.legSymmetry:
+        return 'Leg Sym';
+      default:
+        return type.displayName;
+    }
+  }
+
+  String _formatValue(double v) {
+    // Ratios render at 2 decimals, percentages/mass at 1, BMI/FFMI at 1.
+    switch (type) {
+      case DerivedMetricType.waistToHipRatio:
+      case DerivedMetricType.waistToHeightRatio:
+      case DerivedMetricType.shoulderToWaistRatio:
+      case DerivedMetricType.chestToWaistRatio:
+        return v.toStringAsFixed(2);
+      default:
+        return v.toStringAsFixed(1);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final accent = result?.color;
+    final hasData = result != null;
+    final borderColor = hasData ? accent!.withValues(alpha: 0.3) : mutedBorder;
+    final valueColor = hasData ? accent! : textMuted;
+
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 140,
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: elevated,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: borderColor),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(5),
+                  decoration: BoxDecoration(
+                    color: valueColor.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Icon(_icon, size: 14, color: valueColor),
+                ),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    _shortLabel,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: textMuted,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            Text(
+              hasData ? _formatValue(result!.value) : '—',
+              style: TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+                color: valueColor,
+              ),
+            ),
+            if (hasData)
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  color: accent!.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  result!.label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w600,
+                    color: accent,
+                  ),
+                ),
+              )
+            else
+              Text(
+                'No data',
+                style: TextStyle(fontSize: 10, color: textMuted),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
 }

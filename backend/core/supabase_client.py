@@ -28,6 +28,7 @@ class SupabaseManager:
 
     _instance: Optional["SupabaseManager"] = None
     _supabase: Optional[Client] = None
+    _supabase_auth: Optional[Client] = None
     _engine = None
     _session_maker = None
     _db_semaphore: Optional[asyncio.Semaphore] = None
@@ -41,19 +42,34 @@ class SupabaseManager:
         if self._supabase is None:
             settings = get_settings()
 
-            # Initialize Supabase client (for Auth and Realtime)
+            # Main client — used for PostgREST / .table() operations. Its
+            # Authorization header must stay pinned to the service_role key so
+            # RLS policies that check auth.role() = 'service_role' pass.
             self._supabase = create_client(
                 settings.supabase_url,
                 settings.supabase_key,
             )
 
+            # Dedicated client for Supabase Auth operations (sign_in, sign_up,
+            # update_user, get_user, etc). supabase-py's auth listener mutates
+            # the shared Authorization header on SIGNED_IN / TOKEN_REFRESHED,
+            # which would downgrade PostgREST calls from service_role to the
+            # user's JWT and trip RLS. Isolating auth onto a separate client
+            # means those mutations only touch this one — the main client
+            # stays pinned to service_role. See:
+            # .venv/.../supabase/_sync/client.py:_listen_to_auth_events
+            self._supabase_auth = create_client(
+                settings.supabase_url,
+                settings.supabase_key,
+            )
+
             # Configure auth client with longer timeout (10s instead of default 5s)
-            # This prevents ReadTimeout errors on cold starts or slow network
-            auth_http_client = httpx.Client(
+            # This prevents ReadTimeout errors on cold starts or slow network.
+            # Applied to the dedicated auth client since that's where Auth calls run.
+            self._supabase_auth.auth._http_client = httpx.Client(
                 timeout=httpx.Timeout(10.0),
                 follow_redirects=True,
             )
-            self._supabase.auth._http_client = auth_http_client
 
             # Configure PostgREST client with retry-enabled HTTP/1.1 transport.
             # Supabase's edge proxy can close idle HTTP/2 connections, causing
@@ -63,12 +79,30 @@ class SupabaseManager:
             # retries=3 automatically retries on connection-level failures.
             pg = self._supabase.postgrest  # trigger lazy init
             old_session = pg.session
+
+            # Defensive service-role pinning. Even though the main client is
+            # separate from the auth_client, supabase-py's GoTrue layer can
+            # still swap the Authorization/apikey headers on the postgrest
+            # session after any auth event (e.g. auth_client.auth.get_user()
+            # firing TOKEN_REFRESHED). Confirmed in prod: inserts fail with
+            # 42501 because auth.role() returns 'authenticated' instead of
+            # 'service_role'. This event hook force-resets both headers on
+            # EVERY outgoing request from the main client so the main client
+            # is always recognized as service_role by PostgREST, regardless
+            # of any mutation the SDK makes.
+            _service_role_key = settings.supabase_key
+
+            def _pin_service_role(request):
+                request.headers["Authorization"] = f"Bearer {_service_role_key}"
+                request.headers["apikey"] = _service_role_key
+
             pg.session = httpx.Client(
                 base_url=str(old_session.base_url),
                 headers=dict(old_session.headers),
                 timeout=old_session.timeout,
                 transport=httpx.HTTPTransport(retries=3),
                 follow_redirects=True,
+                event_hooks={"request": [_pin_service_role]},
             )
             old_session.close()
 
@@ -100,8 +134,31 @@ class SupabaseManager:
 
     @property
     def client(self) -> Client:
-        """Get Supabase client for Auth operations."""
+        """
+        Main Supabase client for PostgREST / .table() operations.
+
+        Its Authorization header is pinned to the service_role key so that
+        RLS policies with `auth.role() = 'service_role'` bypass work.
+        Do NOT call Supabase Auth methods (sign_in, sign_up, update_user,
+        get_user, refresh_session, reset_password_for_email, sign_out) on
+        this client — use `auth_client` instead. Those methods trigger
+        supabase-py's auth listener which mutates the Authorization header
+        to the user's JWT and breaks service_role RLS bypass.
+        """
         return self._supabase
+
+    @property
+    def auth_client(self) -> Client:
+        """
+        Dedicated Supabase client for Auth operations only.
+
+        Use this for every .auth.* call (sign_in_with_password, sign_up,
+        update_user, get_user, refresh_session, reset_password_for_email,
+        sign_out). Its Authorization header can and will get mutated by
+        the auth listener — that's fine because nothing uses this client's
+        PostgREST.
+        """
+        return self._supabase_auth
 
     @property
     def engine(self):
@@ -165,7 +222,13 @@ async def get_db_session():
 
 
 class SupabaseAuth:
-    """Helper class for Supabase authentication operations."""
+    """
+    Helper class for Supabase authentication operations.
+
+    Always construct with the isolated auth client (see SupabaseManager.auth_client).
+    Never pass the main PostgREST-backing client here — auth listener mutations on
+    that client break service_role RLS bypass.
+    """
 
     def __init__(self, client: Client):
         self.client = client
@@ -255,6 +318,6 @@ class SupabaseAuth:
 
 
 def get_auth() -> SupabaseAuth:
-    """Get Supabase auth helper instance."""
+    """Get Supabase auth helper instance (uses the isolated auth client)."""
     supabase_manager = get_supabase()
-    return SupabaseAuth(supabase_manager.client)
+    return SupabaseAuth(supabase_manager.auth_client)

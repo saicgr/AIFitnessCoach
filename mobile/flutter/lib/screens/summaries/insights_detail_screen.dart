@@ -1,28 +1,98 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import '../../core/constants/app_colors.dart';
+import '../../data/models/insights_report.dart';
 import '../../data/models/weekly_summary.dart';
+import '../../data/repositories/weekly_summary_repository.dart';
+import '../../data/services/api_client.dart';
 import '../../widgets/pill_app_bar.dart';
+import 'widgets/share_weekly_summary_sheet.dart';
 
 /// Full detail screen for a past weekly summary report.
 ///
 /// Receives a [WeeklySummary] via GoRouter's `extra` parameter and
 /// renders the complete breakdown: completion, workout stats, and
 /// AI-generated narrative with highlights, encouragement, and tips.
-class InsightsDetailScreen extends StatelessWidget {
+///
+/// AI regeneration: past reports often have no narrative (backend only
+/// generates one on first request). This screen exposes a "Regenerate AI"
+/// control that calls `/summaries/user/.../generate-insight` with the
+/// summary's week range. The result is held as a local override so the UI
+/// updates without mutating the original [WeeklySummary] model. Backend
+/// caches the response for 24 h so repeat taps are instant.
+class InsightsDetailScreen extends ConsumerStatefulWidget {
   final WeeklySummary summary;
 
   const InsightsDetailScreen({super.key, required this.summary});
+
+  @override
+  ConsumerState<InsightsDetailScreen> createState() =>
+      _InsightsDetailScreenState();
+}
+
+class _InsightsDetailScreenState
+    extends ConsumerState<InsightsDetailScreen> {
+  InsightsAiNarrative? _regenerated;
+  bool _isRegenerating = false;
+
+  WeeklySummary get summary => widget.summary;
+
+  Future<void> _regenerate() async {
+    if (_isRegenerating) return;
+    setState(() {
+      _isRegenerating = true;
+    });
+
+    try {
+      final userId = await ref.read(apiClientProvider).getUserId();
+      if (userId == null) {
+        throw Exception('Not signed in');
+      }
+      final repo = ref.read(weeklySummaryRepositoryProvider);
+      final narrative = await repo.generateInsightNarrative(
+        userId,
+        startDate: summary.weekStart,
+        endDate: summary.weekEnd,
+        periodLabel: 'weekly',
+      );
+      if (!mounted) return;
+      setState(() {
+        _regenerated = narrative;
+        _isRegenerating = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _isRegenerating = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Could not regenerate — $e'),
+          backgroundColor: AppColors.error,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final backgroundColor =
         isDark ? AppColors.pureBlack : AppColorsLight.pureWhite;
+    final weekLabel = _formatWeekRange(summary.weekStart, summary.weekEnd);
 
     return Scaffold(
       backgroundColor: backgroundColor,
       appBar: PillAppBar(
-        title: '${_formatWeekRange(summary.weekStart, summary.weekEnd)} Report',
+        title: '$weekLabel Report',
+        actions: [
+          PillAppBarAction(
+            icon: Icons.ios_share_rounded,
+            onTap: () => ShareWeeklySummarySheet.show(context, summary),
+          ),
+        ],
       ),
       body: ListView(
         padding: const EdgeInsets.all(24),
@@ -31,7 +101,13 @@ class InsightsDetailScreen extends StatelessWidget {
           const SizedBox(height: 16),
           _WorkoutCard(summary: summary, isDark: isDark),
           const SizedBox(height: 16),
-          _AiNarrativeCard(summary: summary, isDark: isDark),
+          _AiNarrativeCard(
+            summary: summary,
+            isDark: isDark,
+            overrideNarrative: _regenerated,
+            isRegenerating: _isRegenerating,
+            onRegenerate: _regenerate,
+          ),
           const SizedBox(height: 40),
         ],
       ),
@@ -456,7 +532,31 @@ class _AiNarrativeCard extends StatelessWidget {
   final WeeklySummary summary;
   final bool isDark;
 
-  const _AiNarrativeCard({required this.summary, required this.isDark});
+  /// When set, prefer this regenerated narrative over the fields stored on
+  /// [summary]. Lets users "Regenerate AI" for past weeks without mutating
+  /// the underlying model. Not named `override` because that collides with
+  /// Dart's `@override` annotation lookup and trips the analyzer.
+  final InsightsAiNarrative? overrideNarrative;
+
+  final bool isRegenerating;
+  final VoidCallback? onRegenerate;
+
+  const _AiNarrativeCard({
+    required this.summary,
+    required this.isDark,
+    this.overrideNarrative,
+    this.isRegenerating = false,
+    this.onRegenerate,
+  });
+
+  String? get _effectiveSummary =>
+      overrideNarrative?.summary ?? summary.aiSummary;
+  List<String> get _effectiveHighlights =>
+      overrideNarrative?.highlights ?? summary.aiHighlights ?? const [];
+  String? get _effectiveEncouragement =>
+      overrideNarrative?.encouragement ?? summary.aiEncouragement;
+  List<String> get _effectiveTips =>
+      overrideNarrative?.tips ?? summary.aiNextWeekTips ?? const [];
 
   @override
   Widget build(BuildContext context) {
@@ -471,12 +571,12 @@ class _AiNarrativeCard extends StatelessWidget {
     final success = isDark ? AppColors.success : AppColorsLight.success;
     final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
 
-    final bool hasAiContent = summary.aiSummary != null ||
-        (summary.aiHighlights != null && summary.aiHighlights!.isNotEmpty) ||
-        summary.aiEncouragement != null ||
-        (summary.aiNextWeekTips != null && summary.aiNextWeekTips!.isNotEmpty);
+    final bool hasAiContent = _effectiveSummary != null ||
+        _effectiveHighlights.isNotEmpty ||
+        _effectiveEncouragement != null ||
+        _effectiveTips.isNotEmpty;
 
-    // Show a fallback message when there is no AI content at all
+    // Show a fallback + regenerate CTA when there is no AI content at all.
     if (!hasAiContent) {
       return Container(
         padding: const EdgeInsets.all(20),
@@ -489,16 +589,43 @@ class _AiNarrativeCard extends StatelessWidget {
                 : AppColorsLight.cardBorder,
           ),
         ),
-        child: Row(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Icon(Icons.auto_awesome, color: textMuted, size: 24),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text(
-                'No AI insights generated for this report',
-                style: TextStyle(
-                  fontSize: 14,
-                  color: textMuted,
+            Row(
+              children: [
+                Icon(Icons.auto_awesome, color: textMuted, size: 24),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    'No AI analysis yet for this report',
+                    style: TextStyle(fontSize: 14, color: textMuted),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: isRegenerating ? null : onRegenerate,
+                icon: isRegenerating
+                    ? SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor: AlwaysStoppedAnimation(cyan),
+                        ),
+                      )
+                    : Icon(Icons.auto_awesome_rounded, color: cyan, size: 18),
+                label: Text(
+                  isRegenerating ? 'Generating...' : 'Generate AI Analysis',
+                ),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: cyan,
+                  side: BorderSide(color: cyan.withValues(alpha: 0.4)),
+                  padding: const EdgeInsets.symmetric(vertical: 14),
                 ),
               ),
             ),
@@ -511,7 +638,7 @@ class _AiNarrativeCard extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // AI Summary
-        if (summary.aiSummary != null) ...[
+        if (_effectiveSummary != null) ...[
           Container(
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
@@ -534,18 +661,38 @@ class _AiNarrativeCard extends StatelessWidget {
                     Icon(Icons.auto_awesome, color: cyan, size: 20),
                     const SizedBox(width: 8),
                     Text(
-                      'AI Summary',
+                      'AI Analysis',
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
                         color: cyan,
                       ),
                     ),
+                    const Spacer(),
+                    // Compact refresh affordance when narrative already exists.
+                    IconButton(
+                      tooltip: 'Regenerate AI analysis',
+                      onPressed: isRegenerating ? null : onRegenerate,
+                      icon: isRegenerating
+                          ? SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                valueColor: AlwaysStoppedAnimation(cyan),
+                              ),
+                            )
+                          : Icon(Icons.refresh_rounded, color: cyan, size: 18),
+                      padding: EdgeInsets.zero,
+                      constraints:
+                          const BoxConstraints(minWidth: 28, minHeight: 28),
+                      visualDensity: VisualDensity.compact,
+                    ),
                   ],
                 ),
                 const SizedBox(height: 12),
                 Text(
-                  summary.aiSummary!,
+                  _effectiveSummary!,
                   style: TextStyle(
                     fontSize: 15,
                     color: textPrimary,
@@ -559,11 +706,10 @@ class _AiNarrativeCard extends StatelessWidget {
         ],
 
         // Highlights
-        if (summary.aiHighlights != null &&
-            summary.aiHighlights!.isNotEmpty) ...[
+        if (_effectiveHighlights.isNotEmpty) ...[
           _SectionTitle(title: 'Highlights', isDark: isDark),
           const SizedBox(height: 12),
-          ...summary.aiHighlights!.map((highlight) {
+          ..._effectiveHighlights.map((highlight) {
             return Padding(
               padding: const EdgeInsets.only(bottom: 8),
               child: Row(
@@ -588,7 +734,7 @@ class _AiNarrativeCard extends StatelessWidget {
         ],
 
         // Encouragement
-        if (summary.aiEncouragement != null) ...[
+        if (_effectiveEncouragement != null) ...[
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
@@ -602,7 +748,7 @@ class _AiNarrativeCard extends StatelessWidget {
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
-                    summary.aiEncouragement!,
+                    _effectiveEncouragement!,
                     style: TextStyle(
                       fontSize: 14,
                       color: textPrimary,
@@ -616,11 +762,10 @@ class _AiNarrativeCard extends StatelessWidget {
         ],
 
         // Tips for next week
-        if (summary.aiNextWeekTips != null &&
-            summary.aiNextWeekTips!.isNotEmpty) ...[
+        if (_effectiveTips.isNotEmpty) ...[
           _SectionTitle(title: 'Tips for Next Week', isDark: isDark),
           const SizedBox(height: 12),
-          ...summary.aiNextWeekTips!.asMap().entries.map((entry) {
+          ..._effectiveTips.asMap().entries.map((entry) {
             return Container(
               margin: const EdgeInsets.only(bottom: 8),
               padding: const EdgeInsets.all(12),

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../data/models/micronutrients.dart';
 
-class PinnedNutrientsCard extends StatelessWidget {
+class PinnedNutrientsCard extends StatefulWidget {
   final List<NutrientProgress> pinned;
   final bool isDark;
   final VoidCallback? onEdit;
@@ -15,7 +15,17 @@ class PinnedNutrientsCard extends StatelessWidget {
   });
 
   @override
+  State<PinnedNutrientsCard> createState() => _PinnedNutrientsCardState();
+}
+
+class _PinnedNutrientsCardState extends State<PinnedNutrientsCard> {
+  // Minimised by default — the card otherwise takes ~90 dp of vertical space
+  // before users ever interact with it. Tap the header to toggle.
+  bool _expanded = false;
+
+  @override
   Widget build(BuildContext context) {
+    final isDark = widget.isDark;
     final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
     final teal = isDark ? AppColors.teal : AppColorsLight.teal;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
@@ -30,52 +40,84 @@ class PinnedNutrientsCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Header row
-          Row(
-            children: [
-              Text(
-                'PINNED NUTRIENTS',
-                style: TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w600,
-                  color: textMuted,
-                  letterSpacing: 0.8,
-                ),
+          // Header row — tap anywhere on the row (outside the edit icon) to
+          // toggle expand/collapse. A chevron hints at the interaction.
+          GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: () => setState(() => _expanded = !_expanded),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 4),
+              child: Row(
+                children: [
+                  Text(
+                    'PINNED NUTRIENTS',
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w600,
+                      color: textMuted,
+                      letterSpacing: 0.8,
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                    decoration: BoxDecoration(
+                      color: teal.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Text(
+                      '${widget.pinned.length}',
+                      style: TextStyle(
+                        fontSize: 9,
+                        fontWeight: FontWeight.w600,
+                        color: teal,
+                      ),
+                    ),
+                  ),
+                  const Spacer(),
+                  GestureDetector(
+                    onTap: widget.onEdit,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 4),
+                      child: Icon(Icons.edit, size: 13, color: textMuted),
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  AnimatedRotation(
+                    duration: const Duration(milliseconds: 200),
+                    turns: _expanded ? 0.5 : 0,
+                    child: Icon(
+                      Icons.keyboard_arrow_down_rounded,
+                      size: 18,
+                      color: textMuted,
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(width: 4),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
-                decoration: BoxDecoration(
-                  color: teal.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: Text(
-                  '${pinned.length}',
-                  style: TextStyle(
-                    fontSize: 9,
-                    fontWeight: FontWeight.w600,
-                    color: teal,
+            ),
+          ),
+          // Chips revealed only when expanded — AnimatedCrossFade gives a
+          // smooth height transition.
+          AnimatedCrossFade(
+            duration: const Duration(milliseconds: 200),
+            crossFadeState: _expanded
+                ? CrossFadeState.showSecond
+                : CrossFadeState.showFirst,
+            firstChild: const SizedBox(width: double.infinity, height: 0),
+            secondChild: Padding(
+              padding: const EdgeInsets.only(top: 6, bottom: 2),
+              child: SizedBox(
+                height: 40,
+                child: ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: widget.pinned.length,
+                  separatorBuilder: (_, __) => const SizedBox(width: 6),
+                  itemBuilder: (_, i) => _CompactNutrientChip(
+                    nutrient: widget.pinned[i],
+                    isDark: isDark,
                   ),
                 ),
-              ),
-              const Spacer(),
-              GestureDetector(
-                onTap: onEdit,
-                child: Icon(Icons.edit, size: 13, color: textMuted),
-              ),
-            ],
-          ),
-          const SizedBox(height: 6),
-          // Horizontal scrollable nutrient chips — always visible
-          SizedBox(
-            height: 40,
-            child: ListView.separated(
-              scrollDirection: Axis.horizontal,
-              itemCount: pinned.length,
-              separatorBuilder: (_, __) => const SizedBox(width: 6),
-              itemBuilder: (_, i) => _CompactNutrientChip(
-                nutrient: pinned[i],
-                isDark: isDark,
               ),
             ),
           ),

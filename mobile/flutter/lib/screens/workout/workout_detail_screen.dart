@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../widgets/app_dialog.dart';
-import '../../widgets/glass_back_button.dart';
 import '../../widgets/glass_sheet.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -146,44 +145,75 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen>
     if (_error != null || _workout == null) {
       return Scaffold(
         backgroundColor: backgroundColor,
-        appBar: AppBar(
-          backgroundColor: backgroundColor,
-          automaticallyImplyLeading: false,
-          leading: const GlassBackButton(),
-        ),
-        body: Center(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 32),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Icon(Icons.error_outline, color: AppColors.error, size: 48),
-                const SizedBox(height: 16),
-                Text(
-                  'Failed to load workout',
-                  style: Theme.of(context).textTheme.titleMedium,
-                ),
-                if (_error != null) ...[
-                  const SizedBox(height: 8),
-                  Text(
-                    _error!,
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: textMuted,
+        body: Stack(
+          children: [
+            Center(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 32),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.error_outline, color: AppColors.error, size: 48),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Failed to load workout',
+                      style: Theme.of(context).textTheme.titleMedium,
                     ),
-                    textAlign: TextAlign.center,
-                    maxLines: 3,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
-                const SizedBox(height: 16),
-                FilledButton.icon(
-                  onPressed: _loadWorkout,
-                  icon: const Icon(Icons.refresh, size: 18),
-                  label: const Text('Try Again'),
+                    if (_error != null) ...[
+                      const SizedBox(height: 8),
+                      Text(
+                        _error!,
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: textMuted,
+                        ),
+                        textAlign: TextAlign.center,
+                        maxLines: 3,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                    const SizedBox(height: 16),
+                    FilledButton.icon(
+                      onPressed: _loadWorkout,
+                      icon: const Icon(Icons.refresh, size: 18),
+                      label: const Text('Try Again'),
+                    ),
+                  ],
                 ),
-              ],
+              ),
             ),
-          ),
+            // Floating pill back button — matches success-state styling
+            Positioned(
+              top: safePadding.top + 8,
+              left: 16,
+              child: GestureDetector(
+                onTap: () {
+                  HapticService.light();
+                  if (context.canPop()) context.pop();
+                },
+                child: Container(
+                  height: 44,
+                  width: 44,
+                  decoration: BoxDecoration(
+                    color: isDark ? const Color(0xFF1C1C1E) : elevatedColor,
+                    borderRadius: BorderRadius.circular(22),
+                    border: isDark ? null : Border.all(color: cardBorder.withValues(alpha: 0.3)),
+                    boxShadow: [
+                      BoxShadow(
+                        color: isDark ? Colors.black.withValues(alpha: 0.4) : Colors.black.withValues(alpha: 0.1),
+                        blurRadius: 12,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: Icon(
+                    Icons.arrow_back_rounded,
+                    color: isDark ? Colors.white : AppColorsLight.textPrimary,
+                    size: 22,
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
       );
     }

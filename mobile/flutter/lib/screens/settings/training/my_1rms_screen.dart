@@ -6,6 +6,7 @@ import '../../../core/providers/training_intensity_provider.dart';
 import '../../../data/models/training_intensity.dart';
 import '../../../widgets/glass_sheet.dart';
 import '../../../core/services/posthog_service.dart';
+import '../../../utils/share_report_helper.dart';
 import '../../../widgets/pill_app_bar.dart';
 
 // Import linked exercises types
@@ -24,6 +25,7 @@ class My1RMsScreen extends ConsumerStatefulWidget {
 
 class _My1RMsScreenState extends ConsumerState<My1RMsScreen> {
   bool _isAutoPopulating = false;
+  final GlobalKey _reportKey = GlobalKey();
 
   @override
   void initState() {
@@ -48,6 +50,16 @@ class _My1RMsScreenState extends ConsumerState<My1RMsScreen> {
       appBar: PillAppBar(
         title: 'My 1RMs',
         actions: [
+          if (!oneRMsState.isLoading && oneRMsState.oneRMs.isNotEmpty)
+            PillAppBarAction(
+              icon: Icons.ios_share_rounded,
+              onTap: () => shareReportScreen(
+                context: context,
+                repaintKey: _reportKey,
+                caption: 'My FitWiz 1-rep max report',
+                subject: 'My 1RMs',
+              ),
+            ),
           if (!oneRMsState.isLoading)
             PillAppBarAction(
               icon: Icons.auto_awesome,
@@ -59,7 +71,16 @@ class _My1RMsScreenState extends ConsumerState<My1RMsScreen> {
           ? const Center(child: CircularProgressIndicator())
           : oneRMsState.oneRMs.isEmpty
               ? _buildEmptyState(context, isDark, textPrimary, textMuted)
-              : _buildList(context, oneRMsState.oneRMs, isDark, textPrimary, textMuted, elevated, cardBorder),
+              : RepaintBoundary(
+                  key: _reportKey,
+                  child: Container(
+                    color: isDark
+                        ? AppColors.pureBlack
+                        : AppColorsLight.background,
+                    child: _buildList(context, oneRMsState.oneRMs, isDark,
+                        textPrimary, textMuted, elevated, cardBorder),
+                  ),
+                ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _showAddOneRMSheet(context),
         backgroundColor: AppColors.cyan,

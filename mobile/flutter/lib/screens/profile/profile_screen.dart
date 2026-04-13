@@ -820,11 +820,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               EditableFitnessCard(key: _fitnessCardKey, user: user),
               const SizedBox(height: 12),
 
-              // View Reports button
+              // Reports & Insights button
               InkWell(
                 onTap: () {
                   HapticService.selection();
-                  context.push('/summaries');
+                  context.push('/reports');
                 },
                 borderRadius: BorderRadius.circular(12),
                 child: Container(
@@ -840,7 +840,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       Icon(Icons.summarize_outlined, color: AppColors.purple, size: 20),
                       const SizedBox(width: 10),
                       Text(
-                        'View Reports',
+                        'Reports & Insights',
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,

@@ -201,11 +201,11 @@ class _EmailPreferencesCardState extends ConsumerState<_EmailPreferencesCard> {
           ),
           Divider(height: 1, color: cardBorder, indent: 50),
 
-          // Weekly Summary
+          // Weekly Report
           SettingSwitchTile(
             icon: Icons.bar_chart,
             iconColor: AppColors.purple,
-            title: 'Weekly Summary',
+            title: 'Weekly Report',
             subtitle: 'Your weekly progress report every Sunday',
             value: prefs?.weeklySummary ?? true,
             onChanged: (value) => _updatePreference(

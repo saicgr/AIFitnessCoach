@@ -604,11 +604,17 @@ class AdaptiveWorkoutService(AdaptiveWorkoutServicePart2):
 _adaptiveworkoutservice_instance: Optional[AdaptiveWorkoutService] = None
 
 
-def get_adaptive_workout_service() -> AdaptiveWorkoutService:
-    """Get or create the singleton AdaptiveWorkoutService instance."""
+def get_adaptive_workout_service(supabase_client=None) -> AdaptiveWorkoutService:
+    """Get or create the singleton AdaptiveWorkoutService instance.
+
+    If ``supabase_client`` is provided, it is bound to the instance. Callers that
+    omit it fall back to whichever client was last bound (or ``None``).
+    """
     global _adaptiveworkoutservice_instance
     if _adaptiveworkoutservice_instance is None:
-        _adaptiveworkoutservice_instance = AdaptiveWorkoutService()
+        _adaptiveworkoutservice_instance = AdaptiveWorkoutService(supabase_client)
+    elif supabase_client is not None:
+        _adaptiveworkoutservice_instance.supabase = supabase_client
     return _adaptiveworkoutservice_instance
 
 

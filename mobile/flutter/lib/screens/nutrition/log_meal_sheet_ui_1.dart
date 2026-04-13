@@ -561,6 +561,61 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
   }
 
 
+  // ─── AI Coach popup ───────────────────────────────────────────
+
+  void _openAiCoachSheet() {
+    // Resolve context needed for the coach. Graceful fallbacks so the
+    // popup always opens even if a provider isn't ready.
+    String tz;
+    try {
+      tz = DateTime.now().timeZoneName; // e.g. "CDT"
+      // Prefer IANA if available from the app's locale/tz helpers.
+      final offsetMinutes = DateTime.now().timeZoneOffset.inMinutes;
+      // Keep it simple — backend accepts IANA names and falls back to UTC.
+      if (tz.length > 6 || RegExp(r'^[A-Z]+$').hasMatch(tz)) {
+        // Common cases ("CDT", "PST") aren't IANA — let backend resolve via
+        // user_profile.timezone instead; pass UTC here to avoid confusion.
+        tz = 'UTC';
+      }
+      debugPrint('[AiCoach] tz=$tz offsetMin=$offsetMinutes');
+    } catch (_) {
+      tz = 'UTC';
+    }
+
+    showGlassSheet(
+      context: context,
+      builder: (_) => AiCoachMealSuggestionSheet(
+        userId: widget.userId,
+        mealType: _selectedMealType.value,
+        timezone: tz,
+        // Pass nothing for current_workout / workout_schedule — backend
+        // pre-fetches today's workout directly (more accurate anyway).
+        onLogSuggestedFood: (food) {
+          // Pre-fill the description box with the suggested food name so the
+          // user can tap Analyze. Future: open a nested LogMealSheet pre-filled.
+          final name = (food['name'] ?? food['food_name'] ?? '').toString();
+          if (name.isNotEmpty) {
+            _descriptionController.text = name;
+            setState(() {});
+          }
+        },
+        onOpenFullChat: ({seededExchange}) {
+          // Close the meal-log sheet (optional — keeps the sheet open if the
+          // user wants to come back) then open the global chat bottom sheet.
+          // Full-chat continuity is Phase-2 (seededExchange is captured by
+          // the caller; wiring it into the chat notifier's cache is a
+          // follow-up since it requires the notifier's internal _saveToCache).
+          Navigator.of(context).pop();
+          // Defer to let the current modal finish dismissing.
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            showChatBottomSheet(context, ref);
+          });
+        },
+      ),
+    );
+  }
+
+
   // ─── Barcode Scanner ──────────────────────────────────────────
 
   void _openBarcodeScanner() {

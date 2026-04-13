@@ -25,7 +25,11 @@ class HealthDevicesPage extends ConsumerWidget {
             children: [
               HealthSyncSection(),
               SizedBox(height: 16),
-              BleHeartRateSection(),
+              // BLE heart-rate monitor support is disabled for now. The
+              // service + section are kept in the tree for easy re-enable;
+              // Android "Nearby Devices" prompts stay suppressed as long as
+              // nothing constructs FlutterReactiveBle.
+              // BleHeartRateSection(),
               SizedBox(height: 32),
             ],
           ),

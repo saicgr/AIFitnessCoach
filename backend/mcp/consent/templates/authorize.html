@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>Authorize Connection · FitWiz</title>
+  <link rel="stylesheet" href="/mcp/consent/static/consent.css" />
+  <!--
+    Supabase JS client — used for browser-native sign-in (email/password +
+    Google/Apple OAuth). Loaded from jsDelivr to avoid bundling. Pinned to
+    a specific minor so a future breaking release can't silently break the
+    consent page.
+  -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.0/dist/umd/supabase.min.js"></script>
+</head>
+<body>
+  <!-- ───────── Top nav ───────── -->
+  <nav class="topnav" aria-label="FitWiz">
+    <a href="https://fitwiz.us" class="topnav-brand" rel="noopener">
+      <span class="topnav-mark" aria-hidden="true">
+        <svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="FitWiz">
+          <defs>
+            <linearGradient id="navg" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stop-color="#06B6D4"/>
+              <stop offset="100%" stop-color="#0891B2"/>
+            </linearGradient>
+          </defs>
+          <rect x="2" y="2" width="44" height="44" rx="11" fill="url(#navg)"/>
+          <path d="M14 20v8M34 20v8M10 22v4M38 22v4M14 24h20" stroke="#fff" stroke-width="3" stroke-linecap="round"/>
+        </svg>
+      </span>
+      <span class="topnav-name">FitWiz</span>
+    </a>
+    <div class="topnav-links" role="navigation">
+      <a href="https://fitwiz.us/about" target="_blank" rel="noopener">About</a>
+      <a href="https://fitwiz.us/mcp/docs" target="_blank" rel="noopener">Docs</a>
+      <a href="https://fitwiz.us/help" target="_blank" rel="noopener">Help</a>
+      <a href="https://fitwiz.us/contact" target="_blank" rel="noopener">Contact</a>
+    </div>
+  </nav>
+
+  <main class="shell">
+    <!-- ───────── Hero ───────── -->
+    <header class="hero">
+      <div class="hero-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none">
+          <path d="M12 1l3 7h7l-5.5 4.5L18.5 21 12 17l-6.5 4 2-8.5L2 8h7l3-7z"
+                stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <div>
+        <div class="hero-eyebrow">SECURE CONNECTION</div>
+        <h1 class="hero-title">Authorize an AI assistant</h1>
+        <p class="hero-sub">
+          Review the permissions below and sign in to grant access. You can
+          revoke this connection anytime in the FitWiz app.
+        </p>
+      </div>
+    </header>
+
+    <!-- ───────── States ───────── -->
+    <section id="stateLoading" class="card" role="status" aria-live="polite">
+      <div class="spinner" aria-hidden="true"></div>
+      <p class="text-center muted">Loading authorization details…</p>
+    </section>
+
+    <section id="stateError" class="card card-error" hidden>
+      <h2>Something's not right</h2>
+      <p id="errorMsg">We couldn't load this authorization request.</p>
+      <p class="muted small">
+        This link may have expired. Return to your AI client and try connecting again.
+        If this keeps happening, <a href="https://fitwiz.us/contact" target="_blank" rel="noopener">contact support</a>.
+      </p>
+    </section>
+
+    <section id="stateForm" class="card" hidden>
+      <p class="lede">
+        <strong id="clientName">A third-party app</strong> wants to connect to your FitWiz account.
+      </p>
+
+      <!-- ── Scope list ── -->
+      <div class="section">
+        <div class="section-title">Requested access</div>
+        <ul id="scopeList" class="scope-list"></ul>
+        <p class="muted tiny scope-foot">
+          Uncheck any permission you don't want this connection to have.
+        </p>
+      </div>
+
+      <!-- ── Sign-in (replaces old paste-token textarea) ── -->
+      <div class="section">
+        <div class="section-title">Sign in to FitWiz</div>
+
+        <!-- Tab strip — Sign in vs Sign up isn't needed; one form. We add
+             OAuth providers above the email form for one-tap convenience. -->
+        <div id="oauthRow" class="oauth-row" hidden>
+          <button type="button" class="btn-oauth btn-oauth-google" data-provider="google">
+            <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+              <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+              <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.99.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+              <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+              <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+            </svg>
+            <span>Continue with Google</span>
+          </button>
+          <button type="button" class="btn-oauth btn-oauth-apple" data-provider="apple">
+            <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="currentColor">
+              <path d="M16.365 1.43c0 1.14-.43 2.21-1.16 3.01-.79.86-2.06 1.51-3.07 1.43-.13-1.11.42-2.27 1.13-3.04.79-.85 2.18-1.51 3.1-1.4zM20.78 17.07c-.34.78-.5 1.13-.94 1.82-.61.96-1.47 2.16-2.54 2.17-.95.01-1.2-.62-2.49-.61-1.29.01-1.56.62-2.51.61-1.07-.01-1.89-1.09-2.5-2.05-1.7-2.66-1.88-5.78-.83-7.44.74-1.18 1.92-1.87 3.02-1.87 1.13 0 1.83.62 2.77.62.91 0 1.46-.62 2.77-.62.99 0 2.04.54 2.79 1.47-2.45 1.34-2.05 4.84.46 5.9z"/>
+            </svg>
+            <span>Continue with Apple</span>
+          </button>
+        </div>
+        <div id="oauthDivider" class="oauth-divider" hidden><span>or</span></div>
+
+        <form id="signinForm" class="signin-form" novalidate>
+          <label class="field">
+            <span class="field-label">Email</span>
+            <input
+              type="email"
+              id="emailInput"
+              autocomplete="username email"
+              spellcheck="false"
+              required
+              placeholder="you@fitwiz.us"
+            />
+          </label>
+          <label class="field">
+            <span class="field-label">
+              Password
+              <a href="https://fitwiz.us/reset-password" target="_blank" rel="noopener" class="field-link">Forgot?</a>
+            </span>
+            <input
+              type="password"
+              id="passwordInput"
+              autocomplete="current-password"
+              required
+              minlength="6"
+              placeholder="••••••••"
+            />
+          </label>
+          <button type="submit" id="signinBtn" class="btn btn-secondary btn-fullwidth">
+            <span class="btn-label">Sign in</span>
+            <span class="btn-spinner" aria-hidden="true" hidden></span>
+          </button>
+        </form>
+
+        <p id="signedInBanner" class="signed-in" hidden>
+          <span class="signed-in-dot" aria-hidden="true"></span>
+          Signed in as <strong id="signedInEmail">you@fitwiz.us</strong>
+          <button type="button" id="signOutBtn" class="link-btn">Sign out</button>
+        </p>
+
+        <!-- Manual paste-token fallback. Hidden by default; only shown when
+             the anon key isn't configured (so the OAuth flow still works
+             during initial rollout). -->
+        <div id="manualTokenFallback" class="manual-fallback" hidden>
+          <p class="muted small">
+            Or paste your FitWiz consent token from
+            <strong>Settings → AI Integrations → Consent token → Get</strong>.
+          </p>
+          <label class="field">
+            <span class="field-label">FitWiz consent token</span>
+            <textarea id="manualToken" rows="3" placeholder="eyJhbGciOi…" autocomplete="off" spellcheck="false"></textarea>
+          </label>
+        </div>
+
+        <p class="muted tiny signin-foot">
+          Your password is sent directly to FitWiz's authentication servers
+          (Supabase) over HTTPS. The third-party app never sees your password.
+        </p>
+      </div>
+
+      <!-- ── Acknowledgement ── -->
+      <label class="ack">
+        <input type="checkbox" id="ackCheckbox" />
+        <span>
+          I understand that <strong id="clientNameAck">this third-party application</strong>
+          will have access to my FitWiz data as listed above, and that I can
+          revoke this access anytime.
+        </span>
+      </label>
+
+      <!-- ── Inline error banner ── -->
+      <div id="submitError" class="inline-error" hidden></div>
+
+      <!-- ── Actions ── -->
+      <div class="actions">
+        <button type="button" id="cancelBtn" class="btn btn-ghost">Cancel</button>
+        <button type="button" id="authorizeBtn" class="btn btn-primary" disabled>
+          <span class="btn-label">Authorize</span>
+          <span class="btn-spinner" aria-hidden="true" hidden></span>
+        </button>
+      </div>
+
+      <p class="footer-note">
+        🔒 You can revoke this access anytime in
+        <strong>FitWiz → Settings → AI Integrations</strong>.
+      </p>
+    </section>
+
+    <!-- ───────── Trust strip ───────── -->
+    <aside class="trust-strip" aria-label="Why this is safe">
+      <div class="trust-item">
+        <strong>Scoped access</strong>
+        <span>Only the permissions you check apply.</span>
+      </div>
+      <div class="trust-item">
+        <strong>Audit logged</strong>
+        <span>Every tool call is recorded and visible to you.</span>
+      </div>
+      <div class="trust-item">
+        <strong>Revoke anytime</strong>
+        <span>One tap in the app kills the connection.</span>
+      </div>
+    </aside>
+  </main>
+
+  <!-- ───────── Page footer ───────── -->
+  <footer class="page-footer">
+    <div class="page-footer-inner">
+      <div class="page-footer-brand">
+        <strong>FitWiz</strong>
+        <span class="muted">· Your AI Fitness Coach</span>
+      </div>
+      <div class="page-footer-links">
+        <a href="https://fitwiz.us" target="_blank" rel="noopener">Home</a>
+        <a href="https://fitwiz.us/about" target="_blank" rel="noopener">About</a>
+        <a href="https://fitwiz.us/mcp/docs" target="_blank" rel="noopener">MCP Docs</a>
+        <a href="https://fitwiz.us/help" target="_blank" rel="noopener">Help</a>
+        <a href="https://fitwiz.us/contact" target="_blank" rel="noopener">Contact</a>
+        <a href="https://fitwiz.us/privacy" target="_blank" rel="noopener">Privacy</a>
+        <a href="https://fitwiz.us/terms" target="_blank" rel="noopener">Terms</a>
+      </div>
+      <div class="page-footer-meta muted tiny">
+        © FitWiz · Securely powered by Supabase Auth
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    // ─── Config injected by FastAPI / Jinja ────────────────────────────────
+    const CONSENT_TOKEN     = {{ consent | tojson }};
+    const PEEK_URL          = {{ peek_url | tojson }};
+    const COMPLETE_URL      = {{ complete_url | tojson }};
+    const UPGRADE_PATH      = {{ upgrade_path | tojson }};
+    const SUPABASE_URL      = {{ supabase_url | tojson }};
+    const SUPABASE_ANON_KEY = {{ supabase_anon_key | tojson }};
+
+    // Per-scope plain-English impact notes. Mirrors backend MCPConfig.SCOPES.
+    const SCOPE_IMPACT = {
+      "read:profile":   "The AI will see your goals, body metrics, and preferences.",
+      "read:workouts":  "The AI will see your workout plan and completed sessions.",
+      "read:nutrition": "The AI will see meals, water, and macros you've logged.",
+      "read:scores":    "The AI will see your readiness and strength scores.",
+      "write:logs":     "The AI can log meals, water, sets, and body weight on your behalf.",
+      "write:workouts": "The AI can generate or modify your workout plans.",
+      "chat:coach":     "The AI can talk to your FitWiz coach and run agent tools.",
+      "export:data":    "The AI can export your data and generate reports (PDF / CSV).",
+    };
+    const WRITE_SCOPES = new Set([
+      "write:logs", "write:workouts", "chat:coach", "export:data",
+    ]);
+
+    // ─── Supabase client (only if env is configured) ───────────────────────
+    // When SUPABASE_ANON_KEY is blank, we silently fall back to the manual
+    // paste-token UI so the OAuth flow keeps working during initial rollout.
+    const HAS_SUPABASE_AUTH =
+      Boolean(SUPABASE_URL) && Boolean(SUPABASE_ANON_KEY) &&
+      typeof window.supabase !== "undefined";
+    const sb = HAS_SUPABASE_AUTH
+      ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+          auth: {
+            persistSession: false, // tab is throwaway; don't pollute other tabs
+            autoRefreshToken: false,
+            // The OAuth provider redirects back to THIS exact URL. We keep
+            // the consent= query param so the page can resume on return.
+            detectSessionInUrl: true,
+          },
+        })
+      : null;
+
+    // ─── DOM shortcuts ─────────────────────────────────────────────────────
+    const $ = (id) => document.getElementById(id);
+    const stateLoading  = $("stateLoading");
+    const stateError    = $("stateError");
+    const stateForm     = $("stateForm");
+    const errorMsg      = $("errorMsg");
+    const clientName    = $("clientName");
+    const clientNameAck = $("clientNameAck");
+    const scopeList     = $("scopeList");
+    const ackCheckbox   = $("ackCheckbox");
+    const authorizeBtn  = $("authorizeBtn");
+    const authBtnLabel  = authorizeBtn.querySelector(".btn-label");
+    const authBtnSpin   = authorizeBtn.querySelector(".btn-spinner");
+    const cancelBtn     = $("cancelBtn");
+    const submitError   = $("submitError");
+    const oauthRow      = $("oauthRow");
+    const oauthDivider  = $("oauthDivider");
+    const signinForm    = $("signinForm");
+    const signinBtn     = $("signinBtn");
+    const signinBtnLbl  = signinBtn.querySelector(".btn-label");
+    const signinBtnSpin = signinBtn.querySelector(".btn-spinner");
+    const emailInput    = $("emailInput");
+    const passwordInput = $("passwordInput");
+    const signedBanner  = $("signedInBanner");
+    const signedEmail   = $("signedInEmail");
+    const signOutBtn    = $("signOutBtn");
+    const manualFallback = $("manualTokenFallback");
+    const manualToken    = $("manualToken");
+
+    // The token we'll pass to /complete. Set after sign-in succeeds OR after
+    // the user pastes one into the manual fallback textarea.
+    let resolvedToken = "";
+
+    // ─── State transitions ────────────────────────────────────────────────
+    function showError(msg) {
+      stateLoading.hidden = true;
+      stateForm.hidden = true;
+      stateError.hidden = false;
+      if (msg) errorMsg.textContent = msg;
+    }
+    function showForm() {
+      stateLoading.hidden = true;
+      stateError.hidden = true;
+      stateForm.hidden = false;
+
+      if (HAS_SUPABASE_AUTH) {
+        // Show OAuth row + sign-in form.
+        oauthRow.hidden = false;
+        oauthDivider.hidden = false;
+        manualFallback.hidden = true;
+
+        // If a Supabase OAuth callback dropped us back here with an active
+        // session in the URL hash, pick it up and skip the password prompt.
+        rehydrateSessionFromUrlIfPresent();
+      } else {
+        // Anon key not configured — fall back to manual paste UI so the
+        // OAuth handshake still works.
+        oauthRow.hidden = true;
+        oauthDivider.hidden = true;
+        signinForm.hidden = true;
+        manualFallback.hidden = false;
+      }
+    }
+
+    // ─── Peek: fetch client + scopes for the consent token ────────────────
+    async function loadConsentDetails() {
+      if (!CONSENT_TOKEN) {
+        showError("Missing consent token. Open this page from your AI client's connection flow.");
+        return;
+      }
+      try {
+        const resp = await fetch(
+          `${PEEK_URL}?consent=${encodeURIComponent(CONSENT_TOKEN)}`,
+          { method: "GET", headers: { "Accept": "application/json" } }
+        );
+        if (!resp.ok) {
+          const body = await resp.json().catch(() => ({}));
+          const desc = (body && body.detail && body.detail.error_description) || "Consent link is invalid or expired.";
+          showError(desc);
+          return;
+        }
+        const data = await resp.json();
+        renderForm(data);
+      } catch (e) {
+        console.error(e);
+        showError("Could not reach FitWiz servers. Check your connection and try again.");
+      }
+    }
+
+    // ─── Render the consent form with scope checkboxes ────────────────────
+    function renderForm(data) {
+      const name = data.client_name || "Unknown app";
+      clientName.textContent = name;
+      clientNameAck.textContent = name;
+
+      scopeList.innerHTML = "";
+      const scopes = data.requested_scopes || [];
+      if (!scopes.length) {
+        showError("This request doesn't ask for any scopes — nothing to approve.");
+        return;
+      }
+      scopes.forEach((s, idx) => {
+        const id = `scope_${idx}`;
+        const isWrite = WRITE_SCOPES.has(s.scope);
+        const impact = SCOPE_IMPACT[s.scope] || "";
+        const li = document.createElement("li");
+        li.className = "scope-item" + (isWrite ? " scope-item-write" : "");
+        li.innerHTML = `
+          <label for="${id}" class="scope-label">
+            <input type="checkbox" id="${id}" class="scope-cb" data-scope="${s.scope}" checked />
+            <div class="scope-text">
+              <div class="scope-head">
+                <code class="scope-key">${escapeHtml(s.scope)}</code>
+                ${isWrite ? '<span class="badge badge-write">write</span>' : '<span class="badge badge-read">read</span>'}
+              </div>
+              <div class="scope-desc">${escapeHtml(s.description || "")}</div>
+              ${impact ? `<div class="scope-impact">${escapeHtml(impact)}</div>` : ""}
+            </div>
+          </label>
+        `;
+        scopeList.appendChild(li);
+      });
+
+      scopeList.querySelectorAll(".scope-cb").forEach((cb) => {
+        cb.addEventListener("change", updateAuthorizeEnabled);
+      });
+      ackCheckbox.addEventListener("change", updateAuthorizeEnabled);
+      manualToken.addEventListener("input", () => {
+        resolvedToken = manualToken.value.trim();
+        updateAuthorizeEnabled();
+      });
+
+      showForm();
+      updateAuthorizeEnabled();
+    }
+
+    function updateAuthorizeEnabled() {
+      const anyScope = Array.from(scopeList.querySelectorAll(".scope-cb")).some((cb) => cb.checked);
+      // JWTs are 200+ chars; 20 is a cheap sanity check.
+      const haveToken = resolvedToken && resolvedToken.length > 20;
+      const acked = ackCheckbox.checked;
+      authorizeBtn.disabled = !(anyScope && haveToken && acked);
+    }
+
+    function escapeHtml(str) {
+      return String(str)
+        .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+    }
+
+    // ─── Email/password sign-in ───────────────────────────────────────────
+    signinForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      if (!sb) return;
+
+      const email = emailInput.value.trim();
+      const password = passwordInput.value;
+      if (!email || !password) return;
+
+      signinBtn.disabled = true;
+      signinBtnLbl.textContent = "Signing in…";
+      signinBtnSpin.hidden = false;
+      submitError.hidden = true;
+
+      try {
+        const { data, error } = await sb.auth.signInWithPassword({ email, password });
+        if (error) throw error;
+        if (!data || !data.session) throw new Error("Sign-in returned no session.");
+        markSignedIn(data.session);
+      } catch (err) {
+        console.error(err);
+        submitError.textContent = err && err.message
+          ? `Sign-in failed: ${err.message}`
+          : "Sign-in failed. Double-check your email and password.";
+        submitError.hidden = false;
+      } finally {
+        signinBtn.disabled = false;
+        signinBtnLbl.textContent = "Sign in";
+        signinBtnSpin.hidden = true;
+      }
+    });
+
+    // ─── OAuth (Google / Apple) ───────────────────────────────────────────
+    document.querySelectorAll(".btn-oauth").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        if (!sb) return;
+        const provider = btn.dataset.provider;
+        submitError.hidden = true;
+        try {
+          // Round-trip: Supabase redirects to the provider, the provider
+          // redirects back to Supabase, Supabase redirects HERE with the
+          // session in the URL hash. We re-render the page on return and
+          // pick up the session via detectSessionInUrl.
+          const back = window.location.href;
+          const { error } = await sb.auth.signInWithOAuth({
+            provider,
+            options: { redirectTo: back },
+          });
+          if (error) throw error;
+        } catch (err) {
+          console.error(err);
+          submitError.textContent =
+            `Could not start ${provider} sign-in. ${err && err.message ? err.message : ""}`;
+          submitError.hidden = false;
+        }
+      });
+    });
+
+    async function rehydrateSessionFromUrlIfPresent() {
+      if (!sb) return;
+      try {
+        const { data } = await sb.auth.getSession();
+        if (data && data.session) {
+          markSignedIn(data.session);
+        }
+      } catch (e) {
+        console.warn("Could not rehydrate Supabase session:", e);
+      }
+    }
+
+    function markSignedIn(session) {
+      resolvedToken = session.access_token || "";
+      const email = (session.user && session.user.email) || "your account";
+      signedEmail.textContent = email;
+      signinForm.hidden = true;
+      oauthRow.hidden = true;
+      oauthDivider.hidden = true;
+      signedBanner.hidden = false;
+      submitError.hidden = true;
+      updateAuthorizeEnabled();
+    }
+
+    signOutBtn.addEventListener("click", async () => {
+      if (sb) {
+        try { await sb.auth.signOut(); } catch (_) { /* ignore */ }
+      }
+      resolvedToken = "";
+      signedBanner.hidden = true;
+      signinForm.hidden = false;
+      oauthRow.hidden = false;
+      oauthDivider.hidden = false;
+      emailInput.value = "";
+      passwordInput.value = "";
+      updateAuthorizeEnabled();
+    });
+
+    // ─── Submit: POST to /complete, handle redirect / 402 upgrade ─────────
+    async function submitAuthorization() {
+      submitError.hidden = true;
+      submitError.textContent = "";
+      authorizeBtn.disabled = true;
+      authBtnLabel.textContent = "Authorizing…";
+      authBtnSpin.hidden = false;
+
+      const approved_scopes = Array.from(scopeList.querySelectorAll(".scope-cb:checked"))
+        .map((cb) => cb.dataset.scope);
+
+      try {
+        const resp = await fetch(COMPLETE_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "Accept": "application/json" },
+          body: JSON.stringify({
+            consent: CONSENT_TOKEN,
+            supabase_access_token: resolvedToken,
+            approved_scopes,
+          }),
+        });
+
+        if (resp.status === 402) {
+          window.location.href = UPGRADE_PATH;
+          return;
+        }
+
+        if (!resp.ok) {
+          const body = await resp.json().catch(() => ({}));
+          const desc =
+            (body && body.detail && body.detail.error_description) ||
+            (body && body.detail && body.detail.error) ||
+            `Authorization failed (HTTP ${resp.status}).`;
+          submitError.textContent = desc;
+          submitError.hidden = false;
+          authBtnLabel.textContent = "Authorize";
+          authBtnSpin.hidden = true;
+          updateAuthorizeEnabled();
+          return;
+        }
+
+        const data = await resp.json();
+        if (data && data.redirect_to) {
+          window.location.href = data.redirect_to;
+        } else {
+          window.location.href = "/mcp/consent/success";
+        }
+      } catch (e) {
+        console.error(e);
+        submitError.textContent = "Network error — please try again.";
+        submitError.hidden = false;
+        authBtnLabel.textContent = "Authorize";
+        authBtnSpin.hidden = true;
+        updateAuthorizeEnabled();
+      }
+    }
+
+    cancelBtn.addEventListener("click", () => {
+      // Best-effort tab close (only works for windows opened via JS).
+      window.close();
+      setTimeout(() => {
+        submitError.textContent = "Authorization cancelled. You can close this tab.";
+        submitError.hidden = false;
+      }, 150);
+    });
+    authorizeBtn.addEventListener("click", submitAuthorization);
+
+    // Kick off.
+    loadConsentDetails();
+  </script>
+</body>
+</html>

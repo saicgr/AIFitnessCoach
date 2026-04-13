@@ -73,7 +73,7 @@ async def get_verified_auth_token(
 
     try:
         supabase = get_supabase()
-        user_response = supabase.client.auth.get_user(token)
+        user_response = supabase.auth_client.auth.get_user(token)
 
         if not user_response or not user_response.user:
             raise HTTPException(
@@ -122,7 +122,7 @@ async def get_current_user(
     try:
         # Verify token with Supabase
         supabase = get_supabase()
-        user_response = supabase.client.auth.get_user(token)
+        user_response = supabase.auth_client.auth.get_user(token)
 
         if not user_response or not user_response.user:
             raise HTTPException(

@@ -399,7 +399,15 @@ List<RouteBase> _workoutRoutes() => [
         builder: (context, state) => const NeatDashboardScreen(),
       ),
 
-      // Insights (formerly Weekly Summaries)
+      // Reports Hub — catalog of every shareable report type
+      GoRoute(
+        path: '/reports',
+        builder: (context, state) => const ReportsHubScreen(),
+      ),
+
+      // Insights (formerly Weekly Summaries) — still lives at /summaries so
+      // deep-links, notifications, and existing pushes keep working. The
+      // hub's "Period Insights" card points here.
       GoRoute(
         path: '/summaries',
         builder: (context, state) => const InsightsScreen(),

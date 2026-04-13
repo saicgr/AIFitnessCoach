@@ -178,7 +178,81 @@ class FoodDatabaseLookupService(FoodDatabaseLookupServicePart2):
                 logger.warning(f"[FoodDB] Phase 1 failed for '{query}': {e}")
 
             if len(results) >= limit:
-                return [self._override_row_to_search_result(r) for r in results[:limit]]
+                return await self._finalize_override_results(results, query, limit, region)
+
+            # --- Phase 1.5: Token-AND ILIKE on display_name ---
+            # For multi-word queries, require EVERY content word to appear as a
+            # substring of display_name. Uses the GIN trigram index
+            # (idx_food_overrides_display_name_trgm) and completes in ~25ms even
+            # on 200K+ rows. Catches rows whose qualifiers are in display_name
+            # but not in variant_names (e.g. "Chowrasta Paneer Dosa", "Paneer
+            # Masala Dosa") that Phase 1 exact would miss.
+            #
+            # Why display_name only (not variant_names): combining with
+            # `OR EXISTS(unnest(variant_names))` forces a seq-scan and takes
+            # 3700ms. Trade-off accepted because (a) qualifiers live in
+            # display_name for the vast majority of rows and (b) typos/
+            # transliteration are Phase 2's job.
+            try:
+                from services.food_match_gate import content_words as _cw
+                _content = _cw(q)
+            except Exception:
+                _content = []
+            if len(_content) >= 2 and not skip_fuzzy:
+                try:
+                    remaining = deadline - time.monotonic()
+                    if remaining > 0.1:
+                        where_parts = []
+                        word_params = {}
+                        for i, w in enumerate(_content):
+                            # Primary pattern
+                            word_params[f"w{i}"] = f"%{w}%"
+                            clauses = [f"display_name ILIKE :w{i}"]
+                            # Possessive expansion: "dominos" → also match "domino's"
+                            # Handles DB rows like "Domino's Pizza" when the user
+                            # types without the apostrophe.
+                            if len(w) >= 4 and w.endswith('s'):
+                                word_params[f"wp{i}"] = f"%{w[:-1]}'s%"
+                                clauses.append(f"display_name ILIKE :wp{i}")
+                            where_parts.append("(" + " OR ".join(clauses) + ")")
+                        and_clause = " AND ".join(where_parts)
+                        p15_params = {
+                            **params,
+                            **word_params,
+                            "lim": limit - len(results),
+                        }
+                        # NOTE: no food_name_normalized != :q OR variant exclusion
+                        # clause here. If Phase 1 timed out, the exact row would
+                        # otherwise be locked out of every subsequent phase. We
+                        # rely on the `seen_ids` set below to dedupe instead.
+                        async with sb.get_managed_session() as session:
+                            phase15 = await asyncio.wait_for(
+                                session.execute(text(f"""
+                                    SELECT *,
+                                        similarity(food_name_normalized, :q) AS sim_score,
+                                        1 AS match_rank
+                                    FROM food_nutrition_overrides
+                                    WHERE is_active = TRUE
+                                    AND {and_clause}
+                                    {filter_clause}
+                                    ORDER BY length(display_name),
+                                             similarity(food_name_normalized, :q) DESC
+                                    LIMIT :lim
+                                """), p15_params),
+                                timeout=min(0.5, remaining),
+                            )
+                            for row in phase15.fetchall():
+                                rd = dict(row._mapping)
+                                if rd['id'] not in seen_ids:
+                                    seen_ids.add(rd['id'])
+                                    results.append(rd)
+                except asyncio.TimeoutError:
+                    logger.warning(f"[FoodDB] Phase 1.5 (token-AND) timed out for '{query}'")
+                except Exception as e:
+                    logger.warning(f"[FoodDB] Phase 1.5 failed for '{query}': {e}")
+
+            if len(results) >= limit:
+                return await self._finalize_override_results(results, query, limit, region)
 
             # --- Phase 2: Trigram similarity (GIN trigram indexes, ~50-200ms) ---
             if not skip_fuzzy:
@@ -190,6 +264,10 @@ class FoodDatabaseLookupService(FoodDatabaseLookupServicePart2):
                         async def _phase2():
                             async with sb.get_managed_session() as sess:
                                 await sess.execute(text("SET LOCAL pg_trgm.similarity_threshold = 0.35"))
+                                # Exclusion clause removed: if Phase 1 timed out
+                                # and didn't retrieve the exact row, we still
+                                # want Phase 2 to pick it up. seen_ids dedupes
+                                # when Phase 1 did succeed.
                                 return await sess.execute(text(f"""
                                     SELECT *,
                                         similarity(food_name_normalized, :q) AS sim_score,
@@ -197,8 +275,6 @@ class FoodDatabaseLookupService(FoodDatabaseLookupServicePart2):
                                     FROM food_nutrition_overrides
                                     WHERE is_active = TRUE
                                     AND (food_name_normalized % :q OR display_name % :q)
-                                    AND food_name_normalized != :q
-                                    AND NOT (:q = ANY(COALESCE(variant_names, '{{}}')))
                                     {filter_clause}
                                     ORDER BY sim_score DESC
                                     LIMIT :lim
@@ -219,7 +295,7 @@ class FoodDatabaseLookupService(FoodDatabaseLookupServicePart2):
                     logger.warning(f"[FoodDB] Phase 2 failed for '{query}': {e}")
 
             if len(results) >= limit:
-                return [self._override_row_to_search_result(r) for r in results[:limit]]
+                return await self._finalize_override_results(results, query, limit, region)
 
             # --- Phase 3: Substring ILIKE (slower, only if still under limit) ---
             if not skip_fuzzy:
@@ -231,6 +307,9 @@ class FoodDatabaseLookupService(FoodDatabaseLookupServicePart2):
                         async def _phase3():
                             async with sb.get_managed_session() as sess:
                                 await sess.execute(text("SET LOCAL pg_trgm.similarity_threshold = 0.35"))
+                                # Exclusion clauses removed for the same reason
+                                # as Phase 2: seen_ids dedupes; we never want
+                                # a Phase-1 timeout to permanently hide a row.
                                 return await sess.execute(text(f"""
                                     SELECT *,
                                         similarity(food_name_normalized, :q) AS sim_score,
@@ -239,8 +318,6 @@ class FoodDatabaseLookupService(FoodDatabaseLookupServicePart2):
                                     WHERE is_active = TRUE
                                     AND food_name_normalized ILIKE '%' || :q || '%'
                                     AND NOT (food_name_normalized % :q OR display_name % :q)
-                                    AND food_name_normalized != :q
-                                    AND NOT (:q = ANY(COALESCE(variant_names, '{{}}')))
                                     {filter_clause}
                                     ORDER BY length(food_name_normalized), sim_score DESC
                                     LIMIT :lim
@@ -260,11 +337,46 @@ class FoodDatabaseLookupService(FoodDatabaseLookupServicePart2):
                 except Exception as e:
                     logger.warning(f"[FoodDB] Phase 3 failed for '{query}': {e}")
 
-            return [self._override_row_to_search_result(r) for r in results[:limit]]
+            return await self._finalize_override_results(results, query, limit, region)
 
         except Exception as e:
             logger.warning(f"[FoodDB] Override DB search failed: {e}", exc_info=True)
             return []
+
+    async def _finalize_override_results(
+        self,
+        rows: List[Dict],
+        query: str,
+        limit: int,
+        region: Optional[str] = None,
+    ) -> List[Dict]:
+        """Gate raw override rows through food_match_gate, transform to search-
+        result format, mark partial_match on demoted rows.
+
+        On gate error, falls back to ungated transformation so a gate bug can't
+        take down search entirely — but logs loudly so the regression surfaces.
+        """
+        if not rows:
+            return []
+        if not query:
+            return [self._override_row_to_search_result(r) for r in rows[:limit]]
+        try:
+            from services.food_match_gate import accept_tier
+            gate = await accept_tier(query, rows, region=region)
+        except Exception as e:
+            logger.warning(
+                f"[FoodDB] match gate failed for '{query}': {e}; returning ungated",
+                exc_info=True,
+            )
+            return [self._override_row_to_search_result(r) for r in rows[:limit]]
+
+        transformed = [
+            self._override_row_to_search_result(r) for r in gate.rows[:limit]
+        ]
+        if gate.partial_match:
+            for t in transformed:
+                t["partial_match"] = True
+        return transformed
 
     def _override_row_to_search_result(self, row: Dict) -> Dict:
         """Convert a raw DB row from food_nutrition_overrides to search result format."""
@@ -579,11 +691,13 @@ class FoodDatabaseLookupService(FoodDatabaseLookupServicePart2):
         for combo in iter_product(*word_variants):
             # Original word order
             candidates.add(' '.join(combo))
-            # Reversed order — only for 2-word queries
-            if len(combo) == 2:
-                candidates.add(' '.join(reversed(combo)))
-            # For 3-word: move first word to end
-            elif len(combo) == 3:
+            # NOTE: 2-word reversal removed — caused "chocolate milk" / "milk chocolate"
+            # and "shrimp tempura" / "tempura shrimp" collisions. Head-noun ordering
+            # matters in English food names; food_match_gate handles fuzzy matches
+            # without needing reversal candidates.
+            # For 3-word: rotate (not reverse). Still catches legitimate variants
+            # like "masala dosa paneer" ↔ "paneer masala dosa" via DB overlap.
+            if len(combo) == 3:
                 candidates.add(f"{combo[1]} {combo[2]} {combo[0]}")
                 candidates.add(f"{combo[2]} {combo[0]} {combo[1]}")
 
@@ -697,23 +811,41 @@ class FoodDatabaseLookupService(FoodDatabaseLookupServicePart2):
                 ).overlaps("variant_names", candidates).limit(3).execute()
 
                 if resp.data:
-                    # Pick the best match: prefer the one with highest word overlap
+                    # Pick the best match: prefer the one with highest gate score
                     best = self._pick_best_fuzzy_match(resp.data, normalized)
-                    override_data = self._row_to_override_dict(best)
-                    matched_candidate = next(
-                        (c for c in candidates if c in [v.lower() for v in (best.get("variant_names") or [])]),
-                        "fuzzy"
-                    )
-                    self._overrides[normalized] = override_data
-                    logger.info(
-                        f"[FoodDB] OVERRIDE HIT (fuzzy): '{food_name}' → "
-                        f"{override_data['display_name']} via '{matched_candidate}' "
-                        f"({override_data['calories_per_100g']} cal/100g)"
-                    )
-                    return override_data
+                    # Semantic gate — drops matches that silently discard query
+                    # qualifiers (e.g. "paneer masala dosa" → "Masala Dosa").
+                    gate_ok = True
+                    try:
+                        from services.food_match_gate import is_valid_single_match
+                        gate_ok = await is_valid_single_match(normalized, best)
+                    except Exception as e:
+                        logger.warning(
+                            f"[FoodDB] gate check errored in Step-3 for '{food_name}': {e}"
+                        )
+                    if not gate_ok:
+                        logger.info(
+                            f"[FoodDB] Gate rejected Step-3 fuzzy: '{food_name}' ≠ "
+                            f"'{best.get('display_name')}' — falling through to Step 4"
+                        )
+                    else:
+                        override_data = self._row_to_override_dict(best)
+                        matched_candidate = next(
+                            (c for c in candidates if c in [v.lower() for v in (best.get("variant_names") or [])]),
+                            "fuzzy"
+                        )
+                        self._overrides[normalized] = override_data
+                        logger.info(
+                            f"[FoodDB] OVERRIDE HIT (fuzzy): '{food_name}' → "
+                            f"{override_data['display_name']} via '{matched_candidate}' "
+                            f"({override_data['calories_per_100g']} cal/100g)"
+                        )
+                        return override_data
 
             # Step 4: Trigram similarity on food_name_normalized (4+ chars only)
-            # Uses % operator with GIN index instead of similarity() in WHERE
+            # Uses % operator with GIN index instead of similarity() in WHERE.
+            # The food_match_gate is the authoritative check for qualifier
+            # preservation (prevents "paneer masala dosa" → "Masala Dosa").
             if len(normalized) >= 4:
                 try:
                     async with sb.get_managed_session() as session:
@@ -735,37 +867,26 @@ class FoodDatabaseLookupService(FoodDatabaseLookupServicePart2):
                             sim_score = float(row_dict.get('sim', 0))
                             matched_name = row_dict.get('display_name', '')
 
-                            # Word-overlap pre-filter: reject if zero shared words (3+ chars)
-                            query_words = {w for w in normalized.split() if len(w) >= 3}
-                            match_words = {w for w in matched_name.lower().split() if len(w) >= 3}
-                            has_word_overlap = bool(query_words & match_words)
+                            # Semantic gate: reject if the match drops qualifier words.
+                            gate_ok = True
+                            try:
+                                from services.food_match_gate import is_valid_single_match
+                                gate_ok = await is_valid_single_match(normalized, row_dict)
+                            except Exception as e:
+                                logger.warning(
+                                    f"[FoodDB] gate check errored in Step-4 for '{food_name}': {e}"
+                                )
 
-                            if not has_word_overlap and sim_score < 0.6:
+                            if not gate_ok:
                                 logger.info(
-                                    f"[FoodDB] Rejected fuzzy match (no word overlap): "
+                                    f"[FoodDB] Gate rejected trigram match: "
                                     f"'{food_name}' ≠ '{matched_name}' (sim={sim_score:.2f})"
                                 )
-                            elif sim_score < 0.6 and not (sim_score >= 0.5 and has_word_overlap):
-                                # Low confidence match without word overlap — AI validation
-                                is_valid = await self._ai_validate_match(normalized, matched_name)
-                                if not is_valid:
-                                    logger.info(
-                                        f"[FoodDB] AI rejected fuzzy match: "
-                                        f"'{food_name}' ≠ '{matched_name}' (sim={sim_score:.2f})"
-                                    )
-                                else:
-                                    override_data = self._row_to_override_dict(row_dict)
-                                    self._overrides[normalized] = override_data
-                                    logger.info(
-                                        f"[FoodDB] OVERRIDE HIT (trigram {sim_score:.2f}, AI validated): "
-                                        f"'{food_name}' → {matched_name}"
-                                    )
-                                    return override_data
                             else:
                                 override_data = self._row_to_override_dict(row_dict)
                                 self._overrides[normalized] = override_data
                                 logger.info(
-                                    f"[FoodDB] OVERRIDE HIT (trigram {sim_score:.2f}): "
+                                    f"[FoodDB] OVERRIDE HIT (trigram {sim_score:.2f}, gated): "
                                     f"'{food_name}' → {matched_name}"
                                 )
                                 return override_data
@@ -797,26 +918,47 @@ class FoodDatabaseLookupService(FoodDatabaseLookupServicePart2):
         }
 
     def _pick_best_fuzzy_match(self, rows: List[Dict], query: str) -> Dict:
-        """Pick the best match from multiple fuzzy results based on word overlap."""
+        """Pick the best match from multiple fuzzy results.
+
+        Uses food_match_gate scoring: coverage (qualifier preservation) is
+        weighted highest, then trigram similarity, then exact-phrase match,
+        then head-preservation. Falls back to legacy word-overlap count if
+        the gate module can't be imported.
+        """
         if len(rows) == 1:
             return rows[0]
 
-        query_words = set(query.lower().split())
-        best_row = rows[0]
-        best_score = 0
-
-        for row in rows:
-            name_words = set((row.get("display_name") or "").lower().split())
-            variant_words = set()
-            for v in (row.get("variant_names") or []):
-                variant_words.update(v.lower().split())
-            all_words = name_words | variant_words
-            overlap = len(query_words & all_words)
-            if overlap > best_score:
-                best_score = overlap
-                best_row = row
-
-        return best_row
+        try:
+            from services.food_match_gate import content_words, score_row
+            content = content_words(query)
+            scored = [(score_row(content, r), r) for r in rows]
+            scored.sort(
+                key=lambda sr: (
+                    -sr[0].coverage,
+                    -sr[0].phrase_bonus,
+                    -sr[0].head_bonus,
+                    -sr[0].trigram_score,
+                    len(sr[1].get("display_name") or ""),
+                )
+            )
+            return scored[0][1]
+        except Exception:
+            # Defensive fallback to the original overlap-count ranking so a
+            # broken gate import can't crash fuzzy lookup entirely.
+            query_words = set(query.lower().split())
+            best_row = rows[0]
+            best_score = 0
+            for row in rows:
+                name_words = set((row.get("display_name") or "").lower().split())
+                variant_words = set()
+                for v in (row.get("variant_names") or []):
+                    variant_words.update(v.lower().split())
+                all_words = name_words | variant_words
+                overlap = len(query_words & all_words)
+                if overlap > best_score:
+                    best_score = overlap
+                    best_row = row
+            return best_row
 
     def _override_to_nutrition(self, override: Dict) -> Dict:
         """Convert an override dict to the standard nutrition dict format."""

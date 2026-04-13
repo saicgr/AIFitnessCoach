@@ -242,7 +242,7 @@ class _IntroScreenState extends State<IntroScreen>
                       borderOpacity: bOpacity,
                       onGetStarted: () => context.push('/pre-auth-quiz'),
                       onBack: _collapseAndGoBack,
-                      onSignIn: () => context.push('/sign-in'),
+                      onSignIn: () => context.push('/sign-in?returning=true'),
                       lastPageImage: _pages[_lastIndex].image,
                     )
                   // Normal carousel state — static frame with crossfading content
@@ -348,7 +348,7 @@ class _IntroScreenState extends State<IntroScreen>
                             ),
                           ),
                           GestureDetector(
-                            onTap: () => context.push('/sign-in'),
+                            onTap: () => context.push('/sign-in?returning=true'),
                             child: Container(
                               decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(24), border: Border.all(color: Colors.white.withValues(alpha: 0.25))),
                               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),

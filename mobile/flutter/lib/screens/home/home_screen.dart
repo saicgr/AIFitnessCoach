@@ -27,6 +27,7 @@ import '../../widgets/responsive_layout.dart';
 import '../../widgets/main_shell.dart';
 import '../../widgets/pill_swipe_navigation.dart';
 import '../nutrition/log_meal_sheet.dart';
+import '../onboarding/notification_prime_screen.dart';
 import 'widgets/components/components.dart';
 import 'widgets/cards/cards.dart';
 import 'widgets/daily_activity_card.dart';
@@ -44,7 +45,10 @@ import 'widgets/body_metrics_section.dart';
 import 'widgets/achievements_section.dart';
 import '../../data/providers/consistency_provider.dart';
 import '../../data/providers/xp_provider.dart' as xp_provider;
-import '../../data/providers/xp_provider.dart' show xpProvider, xpCurrentStreakProvider, streakMilestoneProvider, xpEarnedEventProvider, XPEarnedAnimationEvent;
+import '../../data/providers/xp_provider.dart' show xpProvider, xpCurrentStreakProvider, streakMilestoneProvider, xpEarnedEventProvider, XPEarnedAnimationEvent, coachBannerEventProvider, CoachBannerEvent, CoachBannerKind;
+import '../ai_settings/ai_settings_screen.dart' show aiSettingsProvider;
+import '../../data/models/coach_persona.dart';
+import '../../widgets/coach_banner_overlay.dart';
 import '../../data/models/user_xp.dart';
 import '../../widgets/level_up_dialog.dart';
 import '../../widgets/streak_milestone_dialog.dart';
@@ -322,6 +326,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         return XPGoalType.proteinGoal;
       case xp_provider.XPGoalType.bodyMeasurements:
         return XPGoalType.bodyMeasurements;
+      case xp_provider.XPGoalType.stepsGoal:
+        return XPGoalType.stepsGoal;
     }
   }
 
@@ -760,6 +766,37 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
               ref.read(xpProvider.notifier).clearXPEarnedEvent();
             });
           }
+        });
+      }
+    });
+
+    // Listen for persona-voiced milestone banners (e.g. 10k-steps congrats).
+    // Fires in parallel with the XP earned overlay — the XP toast celebrates
+    // the numeric reward, the coach banner delivers the AI-persona voice.
+    ref.listen<CoachBannerEvent?>(coachBannerEventProvider, (previous, next) {
+      if (next != null && previous == null) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!mounted) return;
+          final aiSettings = ref.read(aiSettingsProvider);
+          final coach = CoachPersona.findById(aiSettings.coachPersonaId) ??
+              CoachPersona.defaultCoach;
+          switch (next.kind) {
+            case CoachBannerKind.stepsGoal:
+              CoachBannerOverlay.show(
+                context,
+                coach: coach,
+                title: 'Daily steps goal',
+                message: buildStepsGoalMessage(coach, next.value),
+                xpAwarded: next.xpAwarded,
+                icon: Icons.directions_walk_rounded,
+              );
+              break;
+          }
+          // Clear after the banner has had time to animate in. The overlay
+          // manages its own auto-dismiss timer.
+          Future.delayed(const Duration(seconds: 5), () {
+            if (mounted) ref.read(xpProvider.notifier).clearCoachBannerEvent();
+          });
         });
       }
     });

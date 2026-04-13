@@ -39,6 +39,8 @@ import 'widgets/food_item_ranking_card.dart';
 import 'widgets/micronutrients_section.dart';
 import 'widgets/portion_amount_input.dart';
 import 'widgets/post_meal_review_sheet.dart';
+import 'widgets/ai_coach_meal_suggestion_sheet.dart';
+import '../../widgets/floating_chat/floating_chat_overlay.dart';
 
 part 'log_meal_sheet_ui.dart';
 

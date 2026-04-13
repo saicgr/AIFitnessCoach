@@ -37,6 +37,11 @@ class EditableFitnessCardState extends ConsumerState<EditableFitnessCard> {
   double _selectedDurationMax = 45; // Duration range max in minutes
   int _selectedWarmupDuration = 5; // Warmup duration in minutes (1-15)
   int _selectedStretchDuration = 5; // Stretch duration in minutes (1-15)
+  int _selectedStepGoal = 10000;   // Daily steps goal (backend-driven)
+
+  /// Common step-goal options — pulled from general activity guidelines
+  /// (WHO: 10k/day, athletic: 12-15k). Users can tap "Custom" for any value.
+  static const _stepGoalOptions = [5000, 7500, 10000, 12500, 15000, 20000];
 
   static const _dayNames = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
   static const _goalOptions = ['Build Muscle', 'Lose Weight', 'Increase Endurance', 'Stay Active'];
@@ -76,6 +81,9 @@ class EditableFitnessCardState extends ConsumerState<EditableFitnessCard> {
     final warmupState = ref.read(warmupDurationProvider);
     _selectedWarmupDuration = warmupState.warmupDurationMinutes;
     _selectedStretchDuration = warmupState.stretchDurationMinutes;
+
+    // Load daily steps goal from NEAT provider (backend-driven).
+    _selectedStepGoal = ref.read(stepGoalProvider);
   }
 
   /// Format duration range for display
@@ -135,6 +143,12 @@ class EditableFitnessCardState extends ConsumerState<EditableFitnessCard> {
           warmupMinutes: _selectedWarmupDuration,
           stretchMinutes: _selectedStretchDuration,
         );
+      }
+
+      // Update daily steps goal if changed.
+      final currentStepGoal = ref.read(stepGoalProvider);
+      if (currentStepGoal != _selectedStepGoal) {
+        await ref.read(neatProvider.notifier).updateStepGoal(_selectedStepGoal);
       }
 
       await ref.read(authStateProvider.notifier).refreshUser();
@@ -278,6 +292,19 @@ class EditableFitnessCardState extends ConsumerState<EditableFitnessCard> {
                 : _selectedDays.map((d) => ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'][d]).join(', '),
             isEditing: _isEditing,
             editWidget: _buildDaysSelector(AppColors.yellow, cardBorder, textSecondary),
+            isDark: isDark,
+            textMuted: textMuted,
+          ),
+          Divider(height: 1, color: cardBorder, indent: 56),
+
+          // Daily Steps Goal
+          _buildEditableRow(
+            icon: Icons.directions_walk,
+            iconColor: AppColors.green,
+            label: 'Daily Steps',
+            value: _formatStepGoal(_selectedStepGoal),
+            isEditing: _isEditing,
+            editWidget: _buildStepGoalSelector(AppColors.green, cardBorder, textSecondary),
             isDark: isDark,
             textMuted: textMuted,
           ),
@@ -431,6 +458,93 @@ class EditableFitnessCardState extends ConsumerState<EditableFitnessCard> {
         );
       }).toList(),
     );
+  }
+
+  /// Format step-goal value for the collapsed display row: "10,000 steps"
+  /// / "7,500 steps". Thousands-separated for readability.
+  String _formatStepGoal(int value) {
+    final withCommas = value.toString().replaceAllMapped(
+          RegExp(r'(\d)(?=(\d{3})+(?!\d))'),
+          (m) => '${m.group(1)},',
+        );
+    return '$withCommas steps';
+  }
+
+  /// Step-goal picker: row of preset chips (5k/7.5k/10k/12.5k/15k/20k) + a
+  /// "Custom" chip that opens a numeric input dialog. Matches the styling
+  /// of the other fitness-card selectors.
+  Widget _buildStepGoalSelector(Color green, Color cardBorder, Color textSecondary) {
+    final isCustom = !_stepGoalOptions.contains(_selectedStepGoal);
+    return Wrap(
+      spacing: 6,
+      runSpacing: 6,
+      children: [
+        for (final goal in _stepGoalOptions)
+          _buildChip(
+            label: _shortStepLabel(goal),
+            isSelected: _selectedStepGoal == goal,
+            color: green,
+            borderColor: cardBorder,
+            textColor: textSecondary,
+            onTap: _isSaving
+                ? null
+                : () => _updateField(() => _selectedStepGoal = goal),
+          ),
+        _buildChip(
+          label: isCustom ? 'Custom · ${_formatStepGoal(_selectedStepGoal)}' : 'Custom',
+          isSelected: isCustom,
+          color: green,
+          borderColor: cardBorder,
+          textColor: textSecondary,
+          onTap: _isSaving ? null : _showCustomStepGoalDialog,
+        ),
+      ],
+    );
+  }
+
+  /// Short label for a preset step goal — "10k" / "12.5k" / "20k".
+  String _shortStepLabel(int goal) {
+    final k = goal / 1000;
+    if (k == k.roundToDouble()) return '${k.toInt()}k';
+    return '${k.toStringAsFixed(1)}k';
+  }
+
+  Future<void> _showCustomStepGoalDialog() async {
+    final controller = TextEditingController(text: _selectedStepGoal.toString());
+    final result = await showDialog<int>(
+      context: context,
+      builder: (dctx) => AlertDialog(
+        title: const Text('Custom daily steps'),
+        content: TextField(
+          controller: controller,
+          keyboardType: TextInputType.number,
+          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+          decoration: const InputDecoration(
+            hintText: 'e.g. 8500',
+            suffixText: 'steps',
+          ),
+          autofocus: true,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dctx).pop(),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              final value = int.tryParse(controller.text.trim());
+              if (value != null && value >= 500 && value <= 60000) {
+                Navigator.of(dctx).pop(value);
+              }
+            },
+            child: const Text('Set'),
+          ),
+        ],
+      ),
+    );
+    if (result != null) {
+      _updateField(() => _selectedStepGoal = result);
+    }
   }
 
   Widget _buildLevelSelector(Color cyan, Color cardBorder, Color textSecondary) {

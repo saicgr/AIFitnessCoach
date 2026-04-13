@@ -129,7 +129,7 @@ extension _QuizBodyMetricsStateUI on _QuizBodyMetricsState {
       children: [
         // Date of Birth input (compact)
         Expanded(
-          flex: 5,
+          flex: 4,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -211,7 +211,7 @@ extension _QuizBodyMetricsStateUI on _QuizBodyMetricsState {
         const SizedBox(width: 8),
         // Gender selection
         Expanded(
-          flex: 3,
+          flex: 4,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -237,33 +237,39 @@ extension _QuizBodyMetricsStateUI on _QuizBodyMetricsState {
                 ],
               ),
               const SizedBox(height: 8),
-              Wrap(
-                spacing: 6,
-                runSpacing: 6,
+              Row(
                 children: [
-                  _buildGenderChip(
-                    isDark: isDark,
-                    textPrimary: textPrimary,
-                    cardBg: cardBg,
-                    cardBorder: cardBorder,
-                    id: 'male',
-                    label: 'M',
+                  Expanded(
+                    child: _buildGenderChip(
+                      isDark: isDark,
+                      textPrimary: textPrimary,
+                      cardBg: cardBg,
+                      cardBorder: cardBorder,
+                      id: 'male',
+                      label: 'M',
+                    ),
                   ),
-                  _buildGenderChip(
-                    isDark: isDark,
-                    textPrimary: textPrimary,
-                    cardBg: cardBg,
-                    cardBorder: cardBorder,
-                    id: 'female',
-                    label: 'F',
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: _buildGenderChip(
+                      isDark: isDark,
+                      textPrimary: textPrimary,
+                      cardBg: cardBg,
+                      cardBorder: cardBorder,
+                      id: 'female',
+                      label: 'F',
+                    ),
                   ),
-                  _buildGenderChip(
-                    isDark: isDark,
-                    textPrimary: textPrimary,
-                    cardBg: cardBg,
-                    cardBorder: cardBorder,
-                    id: 'other',
-                    label: 'Other',
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: _buildGenderChip(
+                      isDark: isDark,
+                      textPrimary: textPrimary,
+                      cardBg: cardBg,
+                      cardBorder: cardBorder,
+                      id: 'other',
+                      label: 'Other',
+                    ),
                   ),
                 ],
               ),
@@ -336,7 +342,7 @@ extension _QuizBodyMetricsStateUI on _QuizBodyMetricsState {
       },
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
         decoration: BoxDecoration(
           gradient: isSelected
                   ? LinearGradient(
@@ -352,12 +358,18 @@ extension _QuizBodyMetricsStateUI on _QuizBodyMetricsState {
             width: isSelected ? 2 : 1,
           ),
         ),
-        child: Text(
-          label,
-          style: TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w600,
-            color: isSelected ? Colors.white : textPrimary,
+        child: FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Text(
+            label,
+            textAlign: TextAlign.center,
+            maxLines: 1,
+            softWrap: false,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: isSelected ? Colors.white : textPrimary,
+            ),
           ),
         ),
       ),

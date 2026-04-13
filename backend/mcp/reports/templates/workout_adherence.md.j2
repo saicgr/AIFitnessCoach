@@ -1,0 +1,56 @@
+# ✅ Workout Adherence Report
+
+**Period:** {{ start_date }} → {{ end_date }} ({{ date_range.days }} days)
+**Athlete:** {{ user.name }}
+
+---
+
+## Headline
+
+- **Planned:** {{ workouts.planned_count }}
+- **Completed:** **{{ workouts.completed_count }}**
+- **Adherence:** **{{ workouts.adherence_pct }}%**
+- **Avg duration:** {{ workouts.avg_duration_min }} min
+{% if adherence.avg_rpe is not none %}
+- **Avg RPE:** {{ adherence.avg_rpe }} / 10 _(n = {{ adherence.rpe_sample_size }} sets)_
+{% endif %}
+
+{% if workouts.adherence_pct >= 85 %}
+> 🎯 Excellent adherence. Keep the momentum.
+{% elif workouts.adherence_pct >= 60 %}
+> 👍 Solid — there's room to push higher.
+{% elif workouts.planned_count > 0 %}
+> ⚠️ Adherence is low. Consider reducing planned volume or reworking your schedule.
+{% else %}
+> ℹ️ No planned sessions in this range.
+{% endif %}
+
+---
+
+## Week-by-Week
+
+{% if workouts.weekly %}
+| Week Starting | Planned | Completed | Adherence |
+|---------------|---------|-----------|-----------|
+{% for w in workouts.weekly %}| {{ w.week_start }} | {{ w.planned }} | {{ w.completed }} | {{ w.adherence_pct }}% |
+{% endfor %}
+{% else %}
+_No weekly data in this period._
+{% endif %}
+
+---
+
+## 📅 Day-of-Week Consistency
+
+{% if workouts.dow_heatmap %}
+| Day | Completed Sessions | |
+|-----|--------------------|----|
+{% for d in workouts.dow_heatmap %}| {{ d.day }} | {{ d.count }} | {{ "🟩" * d.count if d.count <= 10 else ("🟩" * 10 + "+") }} |
+{% endfor %}
+{% else %}
+_No completed sessions._
+{% endif %}
+
+---
+
+_Generated {{ generated_at }} by FitWiz MCP._

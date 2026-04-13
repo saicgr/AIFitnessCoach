@@ -35,7 +35,10 @@
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
 
-    <!-- BLE Heart Rate Monitor permissions -->
+    <!-- BLE Heart Rate Monitor permissions — feature disabled, permissions
+         commented so the app doesn't request "Nearby Devices" access. Keep
+         here for easy re-enable alongside the service/UI. -->
+    <!--
     <uses-permission android:name="android.permission.BLUETOOTH_SCAN"
         android:usesPermissionFlags="neverForLocation" />
     <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
@@ -43,6 +46,7 @@
         android:maxSdkVersion="30" />
     <uses-permission android:name="android.permission.BLUETOOTH_ADMIN"
         android:maxSdkVersion="30" />
+    -->
 
     <!-- Health Connect permissions -->
     <uses-permission android:name="android.permission.health.READ_WEIGHT"/>

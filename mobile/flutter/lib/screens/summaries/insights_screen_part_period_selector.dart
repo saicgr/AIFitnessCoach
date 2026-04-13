@@ -7,13 +7,17 @@ part of 'insights_screen.dart';
 
 class _PeriodSelector extends StatelessWidget {
   final InsightsPeriod selected;
+  final DateTimeRange? customRange;
   final bool isDark;
   final ValueChanged<InsightsPeriod> onSelect;
+  final VoidCallback onPickCustom;
 
   const _PeriodSelector({
     required this.selected,
+    required this.customRange,
     required this.isDark,
     required this.onSelect,
+    required this.onPickCustom,
   });
 
   @override
@@ -21,6 +25,81 @@ class _PeriodSelector extends StatelessWidget {
     final purple = isDark ? AppColors.purple : AppColorsLight.purple;
     final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final cardBorder =
+        isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+
+    final isCustomActive = customRange != null;
+    // A preset pill (1W / 1M / ...) only shows as selected when we aren't in
+    // custom-range mode — otherwise the Custom pill owns the highlight so
+    // the user can tell at a glance which range is live.
+    Widget buildPresetPill(InsightsPeriod period) {
+      final isSelected = !isCustomActive && period == selected;
+      return Padding(
+        padding: const EdgeInsets.only(right: 8),
+        child: GestureDetector(
+          onTap: () => onSelect(period),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+            decoration: BoxDecoration(
+              color: isSelected ? purple : elevated,
+              borderRadius: BorderRadius.circular(20),
+              border: isSelected ? null : Border.all(color: cardBorder),
+            ),
+            child: Text(
+              period.label,
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                color: isSelected ? Colors.white : textMuted,
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
+    final customLabel = isCustomActive
+        ? _formatCustomRange(customRange!)
+        : 'Custom';
+
+    Widget buildCustomPill() {
+      return Padding(
+        padding: const EdgeInsets.only(right: 8),
+        child: GestureDetector(
+          onTap: onPickCustom,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            decoration: BoxDecoration(
+              color: isCustomActive ? purple : elevated,
+              borderRadius: BorderRadius.circular(20),
+              border: isCustomActive ? null : Border.all(color: cardBorder),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.date_range_rounded,
+                  size: 14,
+                  color: isCustomActive ? Colors.white : textMuted,
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  customLabel,
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight:
+                        isCustomActive ? FontWeight.w700 : FontWeight.w500,
+                    color: isCustomActive ? Colors.white : textMuted,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 12),
@@ -28,45 +107,25 @@ class _PeriodSelector extends StatelessWidget {
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 16),
         child: Row(
-          children: InsightsPeriod.values.map((period) {
-            final isSelected = period == selected;
-            return Padding(
-              padding: const EdgeInsets.only(right: 8),
-              child: GestureDetector(
-                onTap: () => onSelect(period),
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 200),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 20,
-                    vertical: 10,
-                  ),
-                  decoration: BoxDecoration(
-                    color: isSelected ? purple : elevated,
-                    borderRadius: BorderRadius.circular(20),
-                    border: isSelected
-                        ? null
-                        : Border.all(
-                            color: isDark
-                                ? AppColors.cardBorder
-                                : AppColorsLight.cardBorder,
-                          ),
-                  ),
-                  child: Text(
-                    period.label,
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight:
-                          isSelected ? FontWeight.w700 : FontWeight.w500,
-                      color: isSelected ? Colors.white : textMuted,
-                    ),
-                  ),
-                ),
-              ),
-            );
-          }).toList(),
+          children: [
+            for (final period in InsightsPeriod.values) buildPresetPill(period),
+            buildCustomPill(),
+          ],
         ),
       ),
     );
+  }
+
+  /// Compact label for the Custom pill when a range is selected.
+  /// Same-year:  "Mar 1 – Apr 12"   Cross-year: "Dec 15 '25 – Jan 10 '26"
+  String _formatCustomRange(DateTimeRange range) {
+    final sameYear = range.start.year == range.end.year;
+    if (sameYear) {
+      return '${DateFormat('MMM d').format(range.start)} – '
+          '${DateFormat('MMM d').format(range.end)}';
+    }
+    return "${DateFormat("MMM d ''yy").format(range.start)} – "
+        "${DateFormat("MMM d ''yy").format(range.end)}";
   }
 }
 

@@ -35,15 +35,10 @@ class _FitWizAppState extends ConsumerState<FitWizApp> {
     super.initState();
     // Set up notification storage callback right away
     _setupNotificationStorageCallback();
-    // Request notification permission now that Activity is ready
-    _requestNotificationPermission();
-  }
-
-  /// Request notification permission after Activity is available
-  /// This is deferred from main.dart to avoid "Unable to detect current Android Activity" error
-  Future<void> _requestNotificationPermission() async {
-    final notificationService = ref.read(notificationServiceProvider);
-    await notificationService.requestPermissionWhenReady();
+    // Notification permission is NOT requested here. Cold-prompting on first
+    // launch (before the user knows what the app does) tanks opt-in rates.
+    // It now fires from NotificationPrimeScreen, gated to run once after
+    // onboarding/paywall via HomeScreen's initState.
   }
 
   @override

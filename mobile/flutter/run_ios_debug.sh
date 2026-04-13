@@ -82,8 +82,25 @@ $FLUTTER_PATH pub get
 
 # flutter_gemma exclusion is handled by the Podfile (strips it from iOS plugins)
 
-echo -e "${YELLOW}Uninstalling existing app...${NC}"
+# Regenerate launcher icons if the source is newer than the generated 1024px icon.
+# Pass REGEN_ICONS=1 to force regeneration.
+ICON_SRC="assets/icon/app_icon.png"
+ICON_OUT="ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-1024x1024@1x.png"
+if [ "${REGEN_ICONS:-0}" = "1" ] || [ "$ICON_SRC" -nt "$ICON_OUT" ]; then
+    echo -e "${YELLOW}Regenerating launcher icons from $ICON_SRC...${NC}"
+    dart run flutter_launcher_icons
+else
+    echo -e "${GREEN}Launcher icons are up to date (set REGEN_ICONS=1 to force).${NC}"
+fi
+
+echo -e "${YELLOW}Fully removing existing app from simulator...${NC}"
+# 1) Terminate the app if running
+xcrun simctl terminate "$DEVICE_ID" com.aifitnesscoach.app 2>/dev/null || true
+# 2) Uninstall bundle + data container
 xcrun simctl uninstall "$DEVICE_ID" com.aifitnesscoach.app 2>/dev/null || echo -e "${YELLOW}App was not installed.${NC}"
+# 3) Kill SpringBoard so iOS flushes the cached launcher icon
+echo -e "${YELLOW}Flushing SpringBoard icon cache...${NC}"
+xcrun simctl spawn "$DEVICE_ID" launchctl stop com.apple.SpringBoard 2>/dev/null || true
 
 echo -e "${GREEN}Building and running app in DEBUG mode on $TARGET_SIM...${NC}"
 $FLUTTER_PATH run --debug -d "$DEVICE_ID"

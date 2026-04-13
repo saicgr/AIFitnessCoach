@@ -67,6 +67,24 @@ else:
     print(f'All {len(modules)} critical modules passed import validation')
 "
 
+# Verify WeasyPrint PDF generation works (needs Aptfile system deps).
+# Non-fatal: if this fails, PDF reports will 500 but HTML/markdown still work.
+echo ""
+echo "============================================"
+echo "Checking WeasyPrint system deps (Aptfile)..."
+echo "============================================"
+python -c "
+try:
+    from weasyprint import HTML
+    HTML(string='<p>ok</p>').write_pdf()
+    print('✅ WeasyPrint PDF generation: OK')
+except Exception as e:
+    print(f'⚠️  WeasyPrint init failed: {e}')
+    print('   → PDF report generation will return 500 at runtime.')
+    print('   → HTML and markdown reports will still work.')
+    print('   → Check that Aptfile was loaded by the build — see docs/MCP_SETUP.md.')
+" || true
+
 # Skip tests if SKIP_TESTS=true (for faster iteration)
 if [ "$SKIP_TESTS" = "true" ]; then
     echo ""

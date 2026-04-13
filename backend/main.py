@@ -588,6 +588,26 @@ app.add_middleware(RateLimitCacheCleanupMiddleware)
 # Include API routes
 app.include_router(v1_router, prefix="/api")
 
+# MCP OAuth 2.1 authorization server. Mounted at /mcp/oauth — paired with the
+# MCP streamable-HTTP server at /mcp (wired separately in mcp/server.py when
+# Phase 2 lands). Gated to yearly subscribers via mcp/subscription.py.
+from mcp.auth.oauth_server import router as mcp_oauth_router  # noqa: E402
+app.include_router(mcp_oauth_router)
+from mcp.consent.router import router as mcp_consent_router  # noqa: E402
+app.include_router(mcp_consent_router)
+
+# MCP streamable-HTTP server (Phase 2+). Hosts the tool + resource surface
+# that Claude Desktop / ChatGPT / Cursor talk to. Bearer tokens issued by
+# the OAuth server above are resolved in mcp/middleware/auth.py.
+try:
+    from mcp.server import streamable_http_app as _mcp_streamable_http_app  # noqa: E402
+    app.mount("/mcp", _mcp_streamable_http_app())
+    logger.info("MCP streamable-HTTP server mounted at /mcp")
+except Exception as _mcp_mount_err:  # pragma: no cover — never block boot
+    logger.error(
+        f"Failed to mount MCP server at /mcp: {_mcp_mount_err}", exc_info=True
+    )
+
 # Dev log dashboard (only in debug mode)
 if settings.debug:
     from api.dev_logs import router as dev_logs_router

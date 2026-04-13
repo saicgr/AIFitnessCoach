@@ -20,6 +20,7 @@ import '../../data/providers/xp_provider.dart';
 import '../../data/repositories/measurements_repository.dart';
 import '../../data/repositories/progress_photos_repository.dart';
 import '../../data/services/api_client.dart';
+import '../../utils/share_report_helper.dart';
 import '../../widgets/glass_sheet.dart';
 import '../../widgets/pill_app_bar.dart';
 import '../../widgets/segmented_tab_bar.dart';
@@ -51,6 +52,7 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen>
   late TabController _tabController;
   bool _isLoading = true;
   PhotoViewType? _selectedViewFilter;
+  final GlobalKey _reportKey = GlobalKey();
 
   @override
   void initState() {
@@ -210,7 +212,19 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen>
         backgroundColor: colorScheme.surface,
         appBar: PillAppBar(
           title: 'Progress',
+          showBack: false,
           actions: [
+            PillAppBarAction(
+              icon: Icons.ios_share_rounded,
+              onTap: _userId == null
+                  ? null
+                  : () => shareReportScreen(
+                        context: context,
+                        repaintKey: _reportKey,
+                        caption: 'Check out my FitWiz progress!',
+                        subject: 'My FitWiz Progress',
+                      ),
+            ),
             PillAppBarAction(
               icon: Icons.compare_arrows,
               onTap: _userId != null ? _showComparisonPicker : null,
@@ -219,28 +233,34 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen>
         ),
         body: _isLoading || _userId == null
             ? AppLoading.fullScreen()
-            : Column(
-                children: [
-                  SegmentedTabBar(
-                    controller: _tabController,
-                    showIcons: true,
-                    tabs: const [
-                      SegmentedTabItem(label: 'Scores', icon: Icons.fitness_center),
-                      SegmentedTabItem(label: 'Photos', icon: Icons.photo_library),
-                      SegmentedTabItem(label: 'Measurements', icon: Icons.straighten),
+            : RepaintBoundary(
+                key: _reportKey,
+                child: Container(
+                  color: colorScheme.surface,
+                  child: Column(
+                    children: [
+                      SegmentedTabBar(
+                        controller: _tabController,
+                        showIcons: true,
+                        tabs: const [
+                          SegmentedTabItem(label: 'Scores', icon: Icons.fitness_center),
+                          SegmentedTabItem(label: 'Photos', icon: Icons.photo_library),
+                          SegmentedTabItem(label: 'Measurements', icon: Icons.straighten),
+                        ],
+                      ),
+                      Expanded(
+                        child: TabBarView(
+                          controller: _tabController,
+                          children: [
+                            _buildScoresTab(),
+                            _buildPhotosTab(),
+                            _buildMeasurementsTab(),
+                          ],
+                        ),
+                      ),
                     ],
                   ),
-                  Expanded(
-                    child: TabBarView(
-                      controller: _tabController,
-                      children: [
-                        _buildScoresTab(),
-                        _buildPhotosTab(),
-                        _buildMeasurementsTab(),
-                      ],
-                    ),
-                  ),
-                ],
+                ),
               ),
         floatingActionButton: _buildFAB(),
       ),

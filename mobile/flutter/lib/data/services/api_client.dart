@@ -145,6 +145,12 @@ class ApiClient with WidgetsBindingObserver {
         },
         onError: (error, handler) async {
           if (error.response?.statusCode == 401) {
+            // A 401 on an auth endpoint means bad credentials, not expired token —
+            // don't try to refresh/retry or we'll nuke the user's existing session.
+            final path = error.requestOptions.path;
+            if (path.contains('/users/auth/') || path.contains('/auth/email') || path.contains('/auth/signup') || path.contains('/auth/password')) {
+              return handler.next(error);
+            }
             final retryCount = error.requestOptions.extra['_retryCount'] as int? ?? 0;
             if (retryCount < 2) {
               try {

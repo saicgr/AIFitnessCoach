@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/theme/accent_color_provider.dart';
 import '../../data/services/haptic_service.dart';
@@ -30,7 +29,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
 
-  static const _tabLabels = ['Discover', 'Exercises', 'Mine'];
+  static const _tabLabels = ['Discover', 'Exercises', 'Saved'];
 
   @override
   void initState() {
@@ -94,11 +93,20 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
           children: [
             Column(
               children: [
-                // Header with title
+                // Header — back button is inline with the title so spacing
+                // between the header row and the search bar is deterministic
+                // across iOS and Android (no overlap with a floating button).
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(56, 12, 16, 0),
+                  padding: const EdgeInsets.fromLTRB(8, 8, 16, 0),
                   child: Row(
                     children: [
+                      GlassBackButton(
+                        onTap: () {
+                          HapticService.light();
+                          Navigator.of(context).pop();
+                        },
+                      ),
+                      const SizedBox(width: 12),
                       Text(
                         'Library',
                         style: Theme.of(context)
@@ -110,7 +118,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
                   ),
                 ),
 
-                const SizedBox(height: 8),
+                const SizedBox(height: 16),
 
                 // Search bar — updates exerciseSearchProvider and auto-switches to Exercises tab
                 Padding(
@@ -159,11 +167,6 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
                               contentPadding: EdgeInsets.zero,
                             ),
                           ),
-                        ),
-                        Icon(
-                          Icons.auto_awesome_rounded,
-                          color: accentColor.withValues(alpha: 0.6),
-                          size: 18,
                         ),
                       ],
                     ),
@@ -238,17 +241,6 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
               ],
             ),
 
-            // Floating back button
-            Positioned(
-              top: 8,
-              left: 8,
-              child: GlassBackButton(
-                onTap: () {
-                  HapticService.light();
-                  Navigator.of(context).pop();
-                },
-              ),
-            ),
           ],
         ),
       ),

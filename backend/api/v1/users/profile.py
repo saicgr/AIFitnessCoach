@@ -674,7 +674,7 @@ async def delete_user(user_id: str,
         # SECURITY: Re-authenticate before destructive action
         supabase = get_supabase()
         try:
-            supabase.client.auth.sign_in_with_password({
+            supabase.auth_client.auth.sign_in_with_password({
                 "email": current_user["email"],
                 "password": body.password,
             })
@@ -733,7 +733,7 @@ async def reset_onboarding(user_id: str,
         # SECURITY: Re-authenticate before destructive action
         supabase = get_supabase()
         try:
-            supabase.client.auth.sign_in_with_password({
+            supabase.auth_client.auth.sign_in_with_password({
                 "email": current_user["email"],
                 "password": body.password,
             })
@@ -832,7 +832,7 @@ async def full_reset(user_id: str,
                 raise HTTPException(status_code=400, detail="Password required for email accounts")
             supabase = get_supabase()
             try:
-                supabase.client.auth.sign_in_with_password({
+                supabase.auth_client.auth.sign_in_with_password({
                     "email": current_user["email"],
                     "password": body.password,
                 })

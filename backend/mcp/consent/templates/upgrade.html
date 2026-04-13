@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>Upgrade Required · FitWiz</title>
+  <link rel="stylesheet" href="/mcp/consent/static/consent.css" />
+</head>
+<body>
+  <main class="shell shell-center">
+    <section class="card card-upgrade">
+      <div class="upgrade-mark" aria-hidden="true">
+        <svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="ug" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stop-color="#F59E0B"/>
+              <stop offset="100%" stop-color="#EF4444"/>
+            </linearGradient>
+          </defs>
+          <circle cx="32" cy="32" r="28" fill="url(#ug)" opacity="0.15"/>
+          <path d="M32 14 L44 40 L20 40 Z" fill="url(#ug)"/>
+          <rect x="30" y="22" width="4" height="10" rx="1.5" fill="#ffffff"/>
+          <circle cx="32" cy="36" r="2" fill="#ffffff"/>
+        </svg>
+      </div>
+      <h1 class="title">Yearly plan required</h1>
+      <p class="lede">
+        Connecting FitWiz to AI assistants is part of our <strong>yearly subscription</strong>.
+        Upgrade to unlock MCP access across Claude, ChatGPT, Cursor, and more.
+      </p>
+
+      <ul class="upgrade-features">
+        <li>Full parity with the in-app AI coach, from any MCP client</li>
+        <li>Unlimited meal / workout / body logs via natural language</li>
+        <li>One-tap export &amp; report generation (PDF, CSV, JSON)</li>
+        <li>Per-client revoke in Settings &amp; full audit log</li>
+      </ul>
+
+      <div class="actions actions-center">
+        <a class="btn btn-primary" href="{{ upgrade_url }}" rel="noopener">
+          Upgrade to Yearly
+        </a>
+        <button type="button" class="btn btn-secondary" id="closeBtn">Not now</button>
+      </div>
+
+      <p class="muted small">
+        Already on yearly? Make sure you're signed into the account with the active subscription.
+      </p>
+    </section>
+
+    <footer class="page-footer">
+      <span>© FitWiz</span>
+      <span class="dot" aria-hidden="true">·</span>
+      <a href="https://fitwiz.us/pricing" target="_blank" rel="noopener">Pricing</a>
+    </footer>
+  </main>
+
+  <script>
+    document.getElementById("closeBtn").addEventListener("click", () => {
+      try { window.close(); } catch (_) { /* ignored */ }
+    });
+  </script>
+</body>
+</html>

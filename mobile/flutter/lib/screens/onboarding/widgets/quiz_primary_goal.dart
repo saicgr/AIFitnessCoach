@@ -146,7 +146,9 @@ class QuizPrimaryGoal extends StatelessWidget {
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24),
-      child: Column(
+      child: SingleChildScrollView(
+        physics: const ClampingScrollPhysics(),
+        child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (showHeader) ...[
@@ -180,28 +182,24 @@ class QuizPrimaryGoal extends StatelessWidget {
             ),
             const SizedBox(height: 24),
           ],
-          Expanded(
-            child: ListView.builder(
-              padding: const EdgeInsets.only(bottom: 16),
-              itemCount: options.length,
-              itemBuilder: (context, index) {
-                final option = options[index];
-                final id = option['id'] as String;
-                final isSelected = selectedValue == id;
+          ...options.asMap().entries.map((entry) {
+            final index = entry.key;
+            final option = entry.value;
+            final id = option['id'] as String;
+            final isSelected = selectedValue == id;
 
-                return _GlassPrimaryGoalCard(
-                  option: option,
-                  isSelected: isSelected,
-                  onTap: () {
-                    HapticFeedback.selectionClick();
-                    onSelect(id);
-                  },
-                  index: index,
-                );
+            return _GlassPrimaryGoalCard(
+              option: option,
+              isSelected: isSelected,
+              onTap: () {
+                HapticFeedback.selectionClick();
+                onSelect(id);
               },
-            ),
-          ),
+              index: index,
+            );
+          }),
         ],
+        ),
       ),
     );
   }

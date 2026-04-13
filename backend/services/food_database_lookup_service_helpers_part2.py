@@ -366,7 +366,7 @@ class FoodDatabaseLookupServicePart2:
         if not query and not restaurant and not food_category and not region:
             return []
 
-        cache_key = f"search:{(query or '').lower()}:{page_size}:{page}:{category}:{source}:{restaurant}:{food_category}:{region}"
+        cache_key = f"search_v2:{(query or '').lower()}:{page_size}:{page}:{category}:{source}:{restaurant}:{food_category}:{region}"
         cached = self._get_cached(cache_key)
         if cached is not None:
             return cached
@@ -458,7 +458,7 @@ class FoodDatabaseLookupServicePart2:
                 restaurant=restaurant, food_category=food_category, region=region,
             )
 
-        cache_key = f"unified_search:{(query or '').lower()}:{user_id}:{page_size}:{page}:{restaurant}:{food_category}:{region}"
+        cache_key = f"unified_search_v2:{(query or '').lower()}:{user_id}:{page_size}:{page}:{restaurant}:{food_category}:{region}"
         cached = self._get_cached(cache_key)
         if cached is not None:
             return cached

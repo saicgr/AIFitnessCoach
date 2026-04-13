@@ -5,6 +5,7 @@ import '../../core/constants/app_colors.dart';
 import '../../data/models/weekly_summary.dart';
 import '../../data/repositories/weekly_summary_repository.dart';
 import '../../data/services/api_client.dart';
+import '../../utils/share_report_helper.dart';
 import '../../widgets/glass_sheet.dart';
 import '../../core/services/posthog_service.dart';
 import '../../widgets/pill_app_bar.dart';
@@ -481,7 +482,7 @@ class _PRBadge extends StatelessWidget {
 // Summary Detail Sheet
 // ─────────────────────────────────────────────────────────────────
 
-class _SummaryDetailSheet extends StatelessWidget {
+class _SummaryDetailSheet extends StatefulWidget {
   final WeeklySummary summary;
   final ScrollController scrollController;
   final bool isDark;
@@ -491,6 +492,17 @@ class _SummaryDetailSheet extends StatelessWidget {
     required this.scrollController,
     required this.isDark,
   });
+
+  @override
+  State<_SummaryDetailSheet> createState() => _SummaryDetailSheetState();
+}
+
+class _SummaryDetailSheetState extends State<_SummaryDetailSheet> {
+  final GlobalKey _reportKey = GlobalKey();
+
+  WeeklySummary get summary => widget.summary;
+  bool get isDark => widget.isDark;
+  ScrollController get scrollController => widget.scrollController;
 
   @override
   Widget build(BuildContext context) {
@@ -504,26 +516,49 @@ class _SummaryDetailSheet extends StatelessWidget {
     final orange = isDark ? AppColors.orange : AppColorsLight.orange;
     final success = isDark ? AppColors.success : AppColorsLight.success;
     final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final sheetBackground =
+        isDark ? AppColors.elevated : AppColorsLight.elevated;
 
     return Column(
       children: [
         Expanded(
-          child: SingleChildScrollView(
-            controller: scrollController,
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Title
-                Text(
-                  'Week of ${_formatDate(summary.weekStart)}',
-                  style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    color: textPrimary,
-                  ),
-                ),
-                const SizedBox(height: 24),
+          child: RepaintBoundary(
+            key: _reportKey,
+            child: Container(
+              color: sheetBackground,
+              child: SingleChildScrollView(
+                controller: scrollController,
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Title + share
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            'Week of ${_formatDate(summary.weekStart)}',
+                            style: TextStyle(
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                              color: textPrimary,
+                            ),
+                          ),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.ios_share_rounded),
+                          tooltip: 'Share report',
+                          onPressed: () => shareReportScreen(
+                            context: context,
+                            repaintKey: _reportKey,
+                            caption:
+                                'My FitWiz report — week of ${_formatDate(summary.weekStart)}',
+                            subject: 'My FitWiz Weekly Report',
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 24),
 
                 // AI Summary
                 if (summary.aiSummary != null) ...[
@@ -695,6 +730,8 @@ class _SummaryDetailSheet extends StatelessWidget {
 
                 const SizedBox(height: 40),
               ],
+            ),
+          ),
             ),
           ),
         ),

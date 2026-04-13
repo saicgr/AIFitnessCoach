@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../data/models/insights_report.dart';
@@ -11,6 +12,8 @@ import '../../data/repositories/weekly_summary_repository.dart';
 import '../../data/services/api_client.dart';
 import '../../core/services/posthog_service.dart';
 import '../../widgets/pill_app_bar.dart';
+import 'widgets/share_insights_sheet.dart';
+import 'widgets/share_weekly_summary_sheet.dart';
 
 part 'insights_screen_part_period_selector.dart';
 part 'insights_screen_part_body_card.dart';
@@ -56,6 +59,33 @@ class _InsightsScreenState extends ConsumerState<InsightsScreen> {
     ]);
   }
 
+  /// Open Material's range picker and apply the result as a custom range.
+  /// Bounds: [today-2 years, today] — matches what Supabase historical data
+  /// realistically covers and avoids the "365-day max range" error on the
+  /// backend by letting the server clamp if needed.
+  Future<void> _pickCustomRange() async {
+    if (_userId == null) return;
+    final now = DateTime.now();
+    final firstDate = DateTime(now.year - 2, 1, 1);
+    final currentRange = ref.read(insightsProvider).customRange;
+    final picked = await showDateRangePicker(
+      context: context,
+      firstDate: firstDate,
+      lastDate: now,
+      initialDateRange: currentRange ??
+          DateTimeRange(
+            start: now.subtract(const Duration(days: 30)),
+            end: now,
+          ),
+      helpText: 'Select report range',
+      saveText: 'Apply',
+    );
+    if (picked == null || !mounted) return;
+    await ref
+        .read(insightsProvider.notifier)
+        .setCustomRange(picked, _userId!);
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -68,12 +98,23 @@ class _InsightsScreenState extends ConsumerState<InsightsScreen> {
 
     return Scaffold(
       backgroundColor: backgroundColor,
-      appBar: const PillAppBar(title: 'Insights'),
+      appBar: PillAppBar(
+        title: 'Reports & Insights',
+        actions: [
+          PillAppBarAction(
+            icon: Icons.ios_share_rounded,
+            onTap: insightsState.report == null
+                ? null
+                : () => ShareInsightsSheet.show(context, ref),
+          ),
+        ],
+      ),
       body: Column(
         children: [
           // Period selector
           _PeriodSelector(
             selected: insightsState.selectedPeriod,
+            customRange: insightsState.customRange,
             isDark: isDark,
             onSelect: (period) {
               if (_userId == null) return;
@@ -81,6 +122,7 @@ class _InsightsScreenState extends ConsumerState<InsightsScreen> {
                   .read(insightsProvider.notifier)
                   .selectPeriod(period, _userId!);
             },
+            onPickCustom: _pickCustomRange,
           ),
 
           // Main content

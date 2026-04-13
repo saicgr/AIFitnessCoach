@@ -467,6 +467,22 @@ Food: "{description}"
 Return ONLY JSON (no markdown):
 {response_format}
 
+FOOD NAMING RULES (CRITICAL — lookup accuracy depends on this):
+- Preserve EVERY qualifier word the user wrote (ingredient, protein, cuisine, brand, modifier).
+- NEVER canonicalize to a shorter or more generic name. The DB has distinct rows
+  for specific variants with very different macros — stripping a qualifier yields
+  the wrong row.
+- Examples of WRONG vs RIGHT extraction:
+  - Input "paneer masala dosa" → WRONG "Masala Dosa" · RIGHT "Paneer Masala Dosa"
+  - Input "chicken tikka masala" → WRONG "Tikka Masala" · RIGHT "Chicken Tikka Masala"
+  - Input "thai green curry" → WRONG "Green Curry" · RIGHT "Thai Green Curry"
+  - Input "chocolate milk" → WRONG "Milk" · RIGHT "Chocolate Milk" (and never "Milk Chocolate" — word order matters)
+  - Input "egg fried rice" → WRONG "Fried Rice" · RIGHT "Egg Fried Rice"
+  - Input "paneer butter masala" → WRONG "Butter Masala" or "Paneer" · RIGHT "Paneer Butter Masala"
+- If the user likely made a typo (e.g. "paner"), correct it to the canonical spelling
+  ("paneer") in corrected_query but KEEP the full multi-word name in food_items[].name.
+- Only drop pure descriptors that never change nutrition (spicy, mild, fresh, my favorite).
+
 CRITICAL PORTION SIZE RULES:
 - HIGHEST PRIORITY: If user specifies an EXACT quantity (e.g., "500g rice", "300ml milk", "2 cups oats", "750g chicken"), ALWAYS use that exact quantity. User-specified amounts override ALL defaults below. Never reduce or round user-specified quantities.
 - If no size/portion specified, ALWAYS assume MEDIUM/REGULAR serving (not large)

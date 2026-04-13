@@ -15,6 +15,22 @@ from services.email_service import get_email_service
 from services.discord_webhooks import notify_subscription
 
 from api.v1.subscriptions.models import _product_to_tier
+from mcp.subscription import revoke_all_mcp_tokens
+from mcp.personal_tokens import revoke_all_personal_tokens
+
+
+async def _revoke_all_mcp_access(user_id: str, reason: str) -> None:
+    """Revoke both OAuth tokens and Personal Access Tokens for a user.
+    Called when a yearly subscription lapses (cancellation, expiration,
+    downgrade) so the user's AI assistants lose access immediately."""
+    try:
+        await revoke_all_mcp_tokens(user_id, reason=reason)
+    except Exception as e:
+        logger.error(f"OAuth token revoke failed for user={user_id}: {e}", exc_info=True)
+    try:
+        await revoke_all_personal_tokens(user_id, reason=reason)
+    except Exception as e:
+        logger.error(f"PAT revoke failed for user={user_id}: {e}", exc_info=True)
 
 router = APIRouter()
 logger = get_logger(__name__)
@@ -234,6 +250,15 @@ async def _handle_cancellation(supabase, event: dict, background_tasks=None):
         "metadata": event
     }).execute()
 
+    # MCP access is yearly-subscription-only — revoke any outstanding tokens
+    # so external AI clients (Claude Desktop, ChatGPT connectors, Cursor) are
+    # immediately kicked out. Non-fatal: failure here just means the next tool
+    # call will see the subscription gate and fail anyway.
+    try:
+        await _revoke_all_mcp_access(user_id, reason="subscription_canceled")
+    except Exception as mcp_err:
+        logger.error(f"MCP revoke on cancellation failed: {mcp_err}", exc_info=True)
+
     if background_tasks:
         try:
             user_result = supabase.client.table("users") \
@@ -306,6 +331,13 @@ async def _handle_expiration(supabase, event: dict, background_tasks=None):
         "metadata": event
     }).execute()
 
+    # Subscription is now INACTIVE → revoke all MCP tokens so external AI
+    # clients can no longer reach the user's data.
+    try:
+        await _revoke_all_mcp_access(user_id, reason="subscription_expired")
+    except Exception as mcp_err:
+        logger.error(f"MCP revoke on expiration failed: {mcp_err}", exc_info=True)
+
     is_trial = event.get("is_trial_period", False)
     if is_trial and background_tasks:
         try:
@@ -362,6 +394,19 @@ async def _handle_product_change(supabase, event: dict, background_tasks=None):
         "revenuecat_event_id": event.get("id"),
         "metadata": event
     }).execute()
+
+    # MCP is yearly-only. If the user moved off a yearly product (e.g. downgraded
+    # to monthly or a lower tier), revoke their MCP tokens. We scope this to
+    # "moved away from yearly" rather than firing on every product change.
+    try:
+        from mcp.config import get_mcp_config
+        yearly_ids = set(get_mcp_config().YEARLY_PRODUCT_IDS)
+        was_yearly = old_product_id in yearly_ids
+        still_yearly = new_product_id in yearly_ids
+        if was_yearly and not still_yearly:
+            await _revoke_all_mcp_access(user_id, reason="subscription_downgraded")
+    except Exception as mcp_err:
+        logger.error(f"MCP revoke on product_change failed: {mcp_err}", exc_info=True)
 
 
 async def _handle_billing_issue(supabase, event: dict, background_tasks=None):

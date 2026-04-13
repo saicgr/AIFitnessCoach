@@ -6,6 +6,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/providers/warmup_duration_provider.dart';
 import '../../../data/models/gym_profile.dart';
 import '../../../data/providers/gym_profile_provider.dart';
+import '../../../data/providers/neat_provider.dart';
 import '../../../data/providers/today_workout_provider.dart';
 import '../../../data/repositories/auth_repository.dart';
 import '../../../data/repositories/workout_repository.dart';

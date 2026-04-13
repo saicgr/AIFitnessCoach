@@ -28,12 +28,15 @@ extension _EditableFitnessCardStateExt on EditableFitnessCardState {
             : '${_selectedInjuries.length} areas';
 
     return GridView.count(
-      crossAxisCount: 4,
+      // 3 columns × 3 rows — fills the 9 fitness tiles without an orphan
+      // row. Dropping from 4 → 3 cols also gives each tile more room so
+      // longer values like "Build Muscle" and "30-45 min" stop stacking.
+      crossAxisCount: 3,
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
       crossAxisSpacing: 8,
       mainAxisSpacing: 8,
-      childAspectRatio: 0.85,
+      childAspectRatio: 1.0,
       children: [
         _FitnessTile(
           icon: gymIcon,
@@ -168,6 +171,24 @@ extension _EditableFitnessCardStateExt on EditableFitnessCardState {
             cardBorder: cardBorder,
             textSecondary: textSecondary,
             builder: () => _buildInjurySelector(cardBorder, textSecondary),
+          ),
+        ),
+        _FitnessTile(
+          icon: Icons.directions_walk,
+          iconColor: AppColors.green,
+          label: 'Steps',
+          value: _shortStepLabel(_selectedStepGoal),
+          backgroundColor: elevated,
+          textMutedColor: textMuted,
+          onTap: () => _showFieldEditor(
+            title: 'Daily Steps Goal',
+            icon: Icons.directions_walk,
+            iconColor: AppColors.green,
+            isDark: isDark,
+            cardBorder: cardBorder,
+            textSecondary: textSecondary,
+            builder: () =>
+                _buildStepGoalSelector(AppColors.green, cardBorder, textSecondary),
           ),
         ),
       ],

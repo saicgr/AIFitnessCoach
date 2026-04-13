@@ -24,9 +24,10 @@ from core.auth import get_current_user, verify_user_ownership, verify_resource_o
 from core.exceptions import safe_internal_error
 from core.timezone_utils import user_today_date
 
-from core.db import get_supabase_db as get_db
+from core.db import get_supabase_db
 from core.logger import get_logger
 from models.schemas import Workout, WorkoutCreate, WorkoutUpdate
+from ._gym_profile_helpers import get_active_gym_profile_id
 
 from .utils import (
     row_to_workout,
@@ -125,18 +126,9 @@ async def list_workouts(
 
         profile_filter = gym_profile_id
         if not profile_filter:
-            try:
-                active_result = db.client.table("gym_profiles") \
-                    .select("id") \
-                    .eq("user_id", user_id) \
-                    .eq("is_active", True) \
-                    .single() \
-                    .execute()
-                if active_result.data:
-                    profile_filter = active_result.data.get("id")
-                    logger.info(f"[GYM PROFILE] Using active profile {profile_filter} for workout list")
-            except Exception:
-                pass
+            profile_filter = get_active_gym_profile_id(db, user_id)
+            if profile_filter:
+                logger.info(f"[GYM PROFILE] Using active profile {profile_filter} for workout list")
 
         rows = db.list_workouts(
             user_id=user_id,

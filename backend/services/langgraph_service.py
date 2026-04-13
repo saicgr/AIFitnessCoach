@@ -605,7 +605,7 @@ class LangGraphCoachService:
                 logger.warning(f"Failed to enrich user profile with nutrition targets: {e}", exc_info=True)
         return user_profile_dict
 
-    def _build_agent_state(
+    async def _build_agent_state(
         self,
         agent_type: AgentType,
         request: ChatRequest,
@@ -653,6 +653,47 @@ class LangGraphCoachService:
         if agent_type == AgentType.NUTRITION:
             base_state["image_base64"] = request.image_base64
             base_state["media_refs"] = media_refs_dicts
+            base_state["current_workout"] = request.current_workout.model_dump() if request.current_workout else None
+            base_state["workout_schedule"] = request.workout_schedule.model_dump() if request.workout_schedule else None
+
+            # Pre-fetch day context in parallel so the agent can reference
+            # calorie remainder, workout, and favorites directly in its
+            # system prompt — no tool round-trip needed for preset queries.
+            # Any individual failure is tolerated via return_exceptions; the
+            # `context_partial` flag downstream softens the prompt.
+            from services.langgraph_agents.tools.nutrition_context_helpers import (
+                fetch_daily_nutrition_context,
+                fetch_recent_favorites,
+                fetch_todays_workout,
+            )
+            user_tz = (
+                (request.user_profile or {}).get("timezone")
+                if request.user_profile else None
+            ) or "UTC"
+            daily_ctx, favs, today_wo = await asyncio.gather(
+                fetch_daily_nutrition_context(str(request.user_id), user_tz),
+                fetch_recent_favorites(str(request.user_id), limit=5, exclude_days=0),
+                fetch_todays_workout(str(request.user_id), user_tz),
+                return_exceptions=True,
+            )
+            base_state["daily_nutrition_context"] = (
+                daily_ctx if not isinstance(daily_ctx, Exception) else None
+            )
+            base_state["recent_favorites"] = (
+                favs if not isinstance(favs, Exception) else []
+            )
+            if base_state["current_workout"] is None and not isinstance(today_wo, Exception):
+                base_state["current_workout"] = today_wo
+            base_state["context_partial"] = any(
+                isinstance(r, Exception) for r in (daily_ctx, favs, today_wo)
+            )
+            if base_state["context_partial"]:
+                for label, val in (("daily_ctx", daily_ctx), ("favs", favs), ("today_wo", today_wo)):
+                    if isinstance(val, Exception):
+                        logger.warning(
+                            f"[NutritionContext] {label} pre-fetch failed: {val}"
+                        )
+
             base_state["tool_calls"] = []
             base_state["tool_results"] = []
             base_state["tool_messages"] = []
@@ -800,7 +841,7 @@ class LangGraphCoachService:
                     logger.warning(f"Failed to fetch beast mode config: {bm_err}", exc_info=True)
 
             # 5. Build agent state
-            agent_state = self._build_agent_state(
+            agent_state = await self._build_agent_state(
                 selected_agent,
                 request,
                 cleaned_message,

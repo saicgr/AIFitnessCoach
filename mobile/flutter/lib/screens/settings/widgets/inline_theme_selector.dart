@@ -109,19 +109,24 @@ class ThemeButton extends StatelessWidget {
                 ]
               : null,
         ),
+        // Only the selected mode shows its label — unselected buttons are
+        // icon-only so the full "Appearance" title fits on one line next to
+        // the selector on narrower devices.
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(icon, size: 16, color: iconColor),
-            const SizedBox(width: 4),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                color: textColor,
+            if (isSelected) ...[
+              const SizedBox(width: 4),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: textColor,
+                ),
               ),
-            ),
+            ],
           ],
         ),
       ),

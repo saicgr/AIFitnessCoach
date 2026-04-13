@@ -26,6 +26,7 @@ import '../screens/fasting/fasting_screen_redesigned.dart';
 import '../screens/stats/comprehensive_stats_screen.dart';
 import '../screens/onboarding/pre_auth_quiz_screen.dart';
 import '../screens/onboarding/senior_onboarding_screen.dart';
+import '../screens/onboarding/notification_prime_screen.dart';
 import '../screens/onboarding/mode_selection_screen.dart';
 import '../screens/onboarding/coach_selection_screen.dart';
 import '../screens/onboarding/fitness_assessment_screen.dart';
@@ -37,6 +38,7 @@ import '../screens/onboarding/training_split_screen.dart';
 import '../screens/onboarding/weight_projection_screen.dart';
 import '../screens/onboarding/workout_generation_screen.dart';
 import '../screens/profile/profile_screen.dart';
+import '../screens/reports/reports_hub_screen.dart';
 import '../screens/summaries/insights_screen.dart';
 import '../screens/summaries/insights_detail_screen.dart';
 import '../data/models/weekly_summary.dart';
@@ -56,6 +58,7 @@ import '../screens/auth/intro_screen.dart';
 import '../screens/settings/settings_screen.dart';
 import '../screens/settings/pages/pages.dart';
 import '../screens/settings/ai_data_usage_screen.dart';
+import '../screens/settings/ai_integrations_screen.dart';
 import '../screens/settings/medical_disclaimer_screen.dart';
 import '../screens/settings/exercise_preferences/my_exercises_screen.dart';
 import '../screens/settings/training_methods_screen.dart';
@@ -435,6 +438,13 @@ String? _handleAuthRedirect(
   // Allow onboarding-related routes
   if (loc == '/senior-onboarding' || loc == '/mode-selection') {
     return null;
+  }
+
+  // Notification pre-permission — reachable only for logged-in users who
+  // completed onboarding. Let it through; the screen writes its own flag
+  // so it never loops.
+  if (loc == '/notifications-prime') {
+    return isLoggedIn ? null : '/intro';
   }
 
   // Not logged in -> redirect to stats-welcome

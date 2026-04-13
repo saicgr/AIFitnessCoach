@@ -10,10 +10,16 @@ class _AddMeasurementSheet extends StatefulWidget {
   final bool isMetric;
   final Future<void> Function(MeasurementType type, double value, String unit, String? notes) onSubmit;
 
+  /// When non-null, the sheet is a "quick log" for exactly this measurement:
+  /// the group+metric dropdowns are hidden and the user can only edit the
+  /// value/notes. Entered from tile tap-to-log / body-view long-press.
+  final MeasurementType? lockedType;
+
   const _AddMeasurementSheet({
     required this.selectedType,
     required this.isMetric,
     required this.onSubmit,
+    this.lockedType,
   });
 
   @override
@@ -45,8 +51,10 @@ class _AddMeasurementSheetState extends State<_AddMeasurementSheet> {
   @override
   void initState() {
     super.initState();
-    _selectedType = widget.selectedType;
-    _selectedGroup = _groupForType(widget.selectedType);
+    // When locked, force the type to the caller's choice so the sheet can't
+    // silently drift to a different metric.
+    _selectedType = widget.lockedType ?? widget.selectedType;
+    _selectedGroup = _groupForType(_selectedType);
     _isMetric = widget.isMetric;
   }
 
@@ -81,9 +89,11 @@ class _AddMeasurementSheetState extends State<_AddMeasurementSheet> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text(
-                  'Add Measurement',
-                  style: TextStyle(
+                Text(
+                  widget.lockedType != null
+                      ? 'Log ${widget.lockedType!.displayName}'
+                      : 'Add Measurement',
+                  style: const TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
                   ),
@@ -120,83 +130,118 @@ class _AddMeasurementSheetState extends State<_AddMeasurementSheet> {
             ),
             const SizedBox(height: 20),
 
-            // Measurement type selector
-            Text(
-              'MEASUREMENT TYPE',
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: textMuted,
-                letterSpacing: 1,
+            // Measurement type selector — hidden in locked mode (quick-log
+            // from a tile or body-view pill already knows the target).
+            if (widget.lockedType == null) ...[
+              Text(
+                'MEASUREMENT TYPE',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: textMuted,
+                  letterSpacing: 1,
+                ),
               ),
-            ),
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                Expanded(
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12),
-                    decoration: BoxDecoration(
-                      color: elevated,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: cardBorder),
-                    ),
-                    child: DropdownButtonHideUnderline(
-                      child: DropdownButton<String>(
-                        value: _selectedGroup,
-                        isExpanded: true,
-                        icon: Icon(Icons.keyboard_arrow_down, color: textMuted, size: 20),
-                        dropdownColor: elevated,
-                        style: TextStyle(fontSize: 13, color: textMuted),
-                        items: _MeasurementsScreenState._measurementGroups.map((group) {
-                          final title = group['title'] as String;
-                          return DropdownMenuItem(value: title, child: Text(title));
-                        }).toList(),
-                        onChanged: (value) {
-                          if (value == null) return;
-                          final types = _typesForGroup(value);
-                          setState(() {
-                            _selectedGroup = value;
-                            _selectedType = types.first;
-                          });
-                        },
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  Expanded(
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      decoration: BoxDecoration(
+                        color: elevated,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: cardBorder),
+                      ),
+                      child: DropdownButtonHideUnderline(
+                        child: DropdownButton<String>(
+                          value: _selectedGroup,
+                          isExpanded: true,
+                          icon: Icon(Icons.keyboard_arrow_down, color: textMuted, size: 20),
+                          dropdownColor: elevated,
+                          style: TextStyle(fontSize: 13, color: textMuted),
+                          items: _MeasurementsScreenState._measurementGroups.map((group) {
+                            final title = group['title'] as String;
+                            return DropdownMenuItem(value: title, child: Text(title));
+                          }).toList(),
+                          onChanged: (value) {
+                            if (value == null) return;
+                            final types = _typesForGroup(value);
+                            setState(() {
+                              _selectedGroup = value;
+                              _selectedType = types.first;
+                            });
+                          },
+                        ),
                       ),
                     ),
                   ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12),
-                    decoration: BoxDecoration(
-                      color: elevated,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: cyan),
-                    ),
-                    child: DropdownButtonHideUnderline(
-                      child: DropdownButton<MeasurementType>(
-                        value: _selectedType,
-                        isExpanded: true,
-                        icon: Icon(Icons.keyboard_arrow_down, color: cyan, size: 20),
-                        dropdownColor: elevated,
-                        style: TextStyle(fontSize: 13, color: cyan, fontWeight: FontWeight.w600),
-                        items: _typesForGroup(_selectedGroup).map((type) {
-                          return DropdownMenuItem(
-                            value: type,
-                            child: Text(type.displayName),
-                          );
-                        }).toList(),
-                        onChanged: (value) {
-                          if (value == null) return;
-                          setState(() => _selectedType = value);
-                        },
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      decoration: BoxDecoration(
+                        color: elevated,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: cyan),
+                      ),
+                      child: DropdownButtonHideUnderline(
+                        child: DropdownButton<MeasurementType>(
+                          value: _selectedType,
+                          isExpanded: true,
+                          icon: Icon(Icons.keyboard_arrow_down, color: cyan, size: 20),
+                          dropdownColor: elevated,
+                          style: TextStyle(fontSize: 13, color: cyan, fontWeight: FontWeight.w600),
+                          items: _typesForGroup(_selectedGroup).map((type) {
+                            return DropdownMenuItem(
+                              value: type,
+                              child: Text(type.displayName),
+                            );
+                          }).toList(),
+                          onChanged: (value) {
+                            if (value == null) return;
+                            setState(() => _selectedType = value);
+                          },
+                        ),
                       ),
                     ),
                   ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 20),
+                ],
+              ),
+              const SizedBox(height: 20),
+            ] else ...[
+              // Locked-mode header row: icon chip + metric name.
+              Row(
+                children: [
+                  Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: cyan.withOpacity(0.15),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Icon(
+                      // _getIconForType is defined on _MeasurementsScreenState,
+                      // same library since this file is `part of`.
+                      _MeasurementsScreenState._iconFor(_selectedType),
+                      color: cyan,
+                      size: 20,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      _selectedType.displayName,
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 20),
+            ],
 
             // Value input
             Text(
@@ -340,28 +385,16 @@ class _AddMeasurementSheetState extends State<_AddMeasurementSheet> {
 
     setState(() => _isSubmitting = true);
 
-    final unit = _isMetric ? _selectedType.metricUnit : _selectedType.imperialUnit;
     final notes = _notesController.text.trim();
 
-    // Convert to metric if imperial was entered
-    double valueToStore = value;
-    String unitToStore = unit;
-
-    if (!_isMetric && _selectedType != MeasurementType.bodyFat) {
-      // Convert to metric for storage
-      if (unit == 'in') {
-        valueToStore = value * 2.54;
-        unitToStore = 'cm';
-      } else if (unit == 'lbs') {
-        valueToStore = value / 2.20462;
-        unitToStore = 'kg';
-      }
-    }
+    // Single source of truth for lbs→kg / in→cm conversion. See
+    // measurement_unit_conversion.dart.
+    final converted = convertToMetric(value, _selectedType, !_isMetric);
 
     await widget.onSubmit(
       _selectedType,
-      valueToStore,
-      unitToStore,
+      converted.value,
+      converted.unit,
       notes.isNotEmpty ? notes : null,
     );
 

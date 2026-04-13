@@ -1,7 +1,7 @@
 name: fitwiz
 description: "AI-powered fitness coaching app with personalized workouts"
 publish_to: 'none'
-version: 1.2.1+107
+version: 1.2.2+108
 
 environment:
   sdk: ^3.10.1
@@ -120,8 +120,13 @@ dependencies:
   # Tutorial/Coach Mark for App Tour
   tutorial_coach_mark: ^1.2.11
 
-  # Muscle Selector (Human Body Diagram)
+  # Muscle Selector (Human Body Diagram) — used by avoided_muscles_screen
   muscle_selector: ^1.0.4
+
+  # High-fidelity anatomical body atlas with L/R muscle IDs + tap callbacks.
+  # Used by the Body Measurements screen (MeasurementBodyView).
+  # SVG art is CC BY 4.0 (Ryan Graves) — attribution required in app credits.
+  flutter_body_atlas: ^0.1.4
 
   # Liquid Progress Indicator (for hydration body animation)
   liquid_progress_indicator_v2: ^0.5.0

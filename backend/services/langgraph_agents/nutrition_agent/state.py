@@ -46,5 +46,17 @@ class NutritionAgentState(TypedDict):
     # Media classification (from media classifier)
     media_content_type: Optional[str]
 
+    # ── Day-context fields (pre-fetched by _build_agent_state) ───────────
+    # These let the nutrition agent reason about today's logged meals,
+    # scheduled workout, and the user's favorites without tool round-trips.
+    # Any field may be None if the user hasn't set targets / logged meals /
+    # has no saved foods / is a rest day. `context_partial=True` when any
+    # pre-fetch helper raised — the prompt will soften its confidence.
+    current_workout: Optional[Dict[str, Any]]
+    workout_schedule: Optional[Dict[str, Any]]
+    daily_nutrition_context: Optional[Dict[str, Any]]
+    recent_favorites: Optional[List[Dict[str, Any]]]
+    context_partial: bool
+
     # Error handling
     error: Optional[str]

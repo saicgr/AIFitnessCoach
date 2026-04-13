@@ -73,14 +73,15 @@
 		<string>FitWiz uses background location to automatically switch to your gym profile when you arrive at a saved gym location.</string>
 		<key>NSLocationAlwaysUsageDescription</key>
 		<string>FitWiz uses background location to automatically switch to your gym profile when you arrive at a saved gym location.</string>
-		<key>NSBluetoothAlwaysUsageDescription</key>
-		<string>FitWiz uses Bluetooth to connect to your heart rate monitor and display live heart rate during workouts.</string>
+		<!-- BLE heart-rate feature disabled. NSBluetoothAlwaysUsageDescription
+		     is omitted so iOS never shows the Bluetooth prompt. If the feature
+		     is re-enabled, restore the key below and the bluetooth-central
+		     background mode. -->
 		<key>UIBackgroundModes</key>
 		<array>
 			<string>location</string>
 			<string>fetch</string>
 			<string>remote-notification</string>
-			<string>bluetooth-central</string>
 		</array>
 		<key>com.posthog.posthog.API_KEY</key>
 		<string>phc_4bE9QftoDcFxLm7xb46uZ8QeB0i9lCZ8YXgBpqm0mAJ</string>

@@ -177,7 +177,7 @@ class _EmailSignInScreenState extends ConsumerState<EmailSignInScreen> {
                   padding: const EdgeInsets.symmetric(vertical: 12),
                   child: Row(
                     children: [
-                      // Glassmorphic back button
+                      // Glassmorphic back button — force readable contrast in light mode
                       GestureDetector(
                         onTap: () => context.pop(),
                         child: ClipRRect(
@@ -188,9 +188,15 @@ class _EmailSignInScreenState extends ConsumerState<EmailSignInScreen> {
                               width: 44,
                               height: 44,
                               decoration: BoxDecoration(
-                                color: t.cardFill,
+                                color: t.isDark
+                                    ? Colors.white.withValues(alpha: 0.10)
+                                    : Colors.black.withValues(alpha: 0.06),
                                 borderRadius: BorderRadius.circular(22),
-                                border: Border.all(color: t.borderDefault),
+                                border: Border.all(
+                                  color: t.isDark
+                                      ? Colors.white.withValues(alpha: 0.18)
+                                      : Colors.black.withValues(alpha: 0.15),
+                                ),
                               ),
                               child: Icon(Icons.arrow_back_ios_rounded, color: t.textPrimary, size: 18),
                             ),

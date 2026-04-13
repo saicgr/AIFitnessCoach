@@ -14,7 +14,7 @@ from core.auth import get_current_user
 from core.exceptions import safe_internal_error
 from pydantic import BaseModel, Field
 
-from core.db import get_supabase_db as get_db
+from core.db import get_supabase_db
 from core.logger import get_logger
 from models.schemas import Workout
 from services.user_context_service import user_context_service
@@ -300,7 +300,7 @@ async def exclude_body_parts_from_workout(
 
         # Log context for AI personalization
         try:
-            supabase = get_db().client
+            supabase = get_supabase_db().client
             supabase.table("user_context_logs").insert({
                 "user_id": request.user_id,
                 "context_type": "body_part_exclusion",
@@ -362,7 +362,7 @@ async def replace_exercise_in_workout(
 
     try:
         db = get_supabase_db()
-        supabase = get_db().client
+        supabase = db.client
 
         # Get workout
         workout_row = db.get_workout(workout_id)

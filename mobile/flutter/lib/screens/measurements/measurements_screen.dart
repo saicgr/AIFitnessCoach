@@ -15,7 +15,12 @@ import '../../data/repositories/auth_repository.dart';
 import '../../data/repositories/measurements_repository.dart';
 import '../../data/services/api_client.dart';
 import '../../data/services/haptic_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../widgets/glass_back_button.dart';
+import '../../widgets/glass_circle_fab.dart';
+import 'measurement_unit_conversion.dart';
+import 'widgets/measurement_body_view.dart';
+import 'widgets/measurement_tile_grid.dart';
 import '../../core/services/posthog_service.dart';
 import '../../widgets/glass_sheet.dart';
 import '../settings/dialogs/export_dialog.dart';
@@ -40,11 +45,20 @@ class _MeasurementsScreenState extends ConsumerState<MeasurementsScreen> {
   bool _loadingTimedOut = false;
   DateTimeRange? _customDateRange;
 
+  _ViewMode _viewMode = _ViewMode.body;
+
+  /// Key the view-mode preference is stored under so it persists across app
+  /// launches.
+  static const _viewModePrefKey = 'measurements_view_mode';
+
   final _periods = [
     {'label': '7D', 'value': '7d', 'days': 7},
     {'label': '30D', 'value': '30d', 'days': 30},
     {'label': '90D', 'value': '90d', 'days': 90},
-    {'label': 'All', 'value': 'all', 'days': 365},
+    {'label': '6M', 'value': '6m', 'days': 182},
+    {'label': 'YTD', 'value': 'ytd', 'days': 0}, // computed at filter time
+    {'label': '1Y', 'value': '1y', 'days': 365},
+    {'label': 'All', 'value': 'all', 'days': 0},
     {'label': 'Custom', 'value': 'custom', 'days': 0},
   ];
 
@@ -87,9 +101,31 @@ class _MeasurementsScreenState extends ConsumerState<MeasurementsScreen> {
     final auth = ref.read(authStateProvider);
     _isMetric = auth.user?.usesMetricMeasurements ?? true;
     _loadMeasurements();
+    _restoreViewMode();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(posthogServiceProvider).capture(eventName: 'measurements_viewed');
     });
+  }
+
+  Future<void> _restoreViewMode() async {
+    final prefs = await SharedPreferences.getInstance();
+    final raw = prefs.getString(_viewModePrefKey);
+    if (raw == null || !mounted) return;
+    final restored = _ViewMode.values.firstWhere(
+      (m) => m.name == raw,
+      orElse: () => _ViewMode.body,
+    );
+    if (restored != _viewMode) {
+      setState(() => _viewMode = restored);
+    }
+  }
+
+  Future<void> _setViewMode(_ViewMode mode) async {
+    if (mode == _viewMode) return;
+    HapticService.light();
+    setState(() => _viewMode = mode);
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_viewModePrefKey, mode.name);
   }
 
   Future<void> _loadMeasurements() async {
@@ -134,11 +170,16 @@ class _MeasurementsScreenState extends ConsumerState<MeasurementsScreen> {
       body: SafeArea(
         child: Stack(
           children: [
-            // Main content
+            // Main content. Body view fits in one viewport (figure + derived
+            // pill row above) — disable scrolling. Tile view scrolls normally
+            // with pull-to-refresh.
             RefreshIndicator(
               onRefresh: _loadMeasurements,
               color: cyan,
               child: CustomScrollView(
+                physics: _viewMode == _ViewMode.body
+                    ? const NeverScrollableScrollPhysics()
+                    : null,
                 slivers: [
                   // Header with title (offset for floating back button)
                   SliverToBoxAdapter(
@@ -148,13 +189,26 @@ class _MeasurementsScreenState extends ConsumerState<MeasurementsScreen> {
                         children: [
                           Expanded(
                             child: Text(
-                              'Body Measurements',
-                              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                                fontWeight: FontWeight.bold,
+                              'Measurements',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: 17,
+                                fontWeight: FontWeight.w700,
                                 color: textPrimary,
                               ),
                             ),
                           ),
+                          // View-mode toggle (Body / Tiles)
+                          _ViewModeToggle(
+                            mode: _viewMode,
+                            accent: cyan,
+                            elevated: elevated,
+                            cardBorder: cardBorder,
+                            textMuted: textMuted,
+                            onChanged: _setViewMode,
+                          ),
+                          const SizedBox(width: 8),
                           // Export button
                           GestureDetector(
                             onTap: () => _showExportSheet(context),
@@ -199,16 +253,25 @@ class _MeasurementsScreenState extends ConsumerState<MeasurementsScreen> {
                     ),
                   ),
 
-                  // Period selector
+                  // Period selector — only relevant to the chart + history
+                  // (trend analysis) which live in Tile view. Hide in Body
+                  // view where the UI is focused on logging current values.
+                  // Horizontally scrollable so 6M / YTD / 1Y / All / Custom
+                  // all fit without squishing.
+                  if (_viewMode == _ViewMode.tiles)
                   SliverToBoxAdapter(
-                    child: Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: Row(
-                        children: _periods.map((period) {
+                    child: SizedBox(
+                      height: 48,
+                      child: ListView.separated(
+                        scrollDirection: Axis.horizontal,
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                        itemCount: _periods.length,
+                        separatorBuilder: (_, __) => const SizedBox(width: 6),
+                        itemBuilder: (context, index) {
+                          final period = _periods[index];
                           final isSelected = _selectedPeriod == period['value'];
                           final isCustom = period['value'] == 'custom';
-                          return Expanded(
-                            child: GestureDetector(
+                          return GestureDetector(
                               onTap: () async {
                                 if (isCustom) {
                                   final picked = await showDateRangePicker(
@@ -228,11 +291,10 @@ class _MeasurementsScreenState extends ConsumerState<MeasurementsScreen> {
                                 }
                               },
                               child: Container(
-                                margin: const EdgeInsets.symmetric(horizontal: 3),
-                                padding: const EdgeInsets.symmetric(vertical: 8),
+                                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                                 decoration: BoxDecoration(
                                   color: isSelected ? cyan.withOpacity(0.2) : elevated,
-                                  borderRadius: BorderRadius.circular(8),
+                                  borderRadius: BorderRadius.circular(999),
                                   border: Border.all(
                                     color: isSelected ? cyan : cardBorder,
                                   ),
@@ -241,6 +303,7 @@ class _MeasurementsScreenState extends ConsumerState<MeasurementsScreen> {
                                   child: isCustom && isSelected && _customDateRange != null
                                       ? Column(
                                           mainAxisSize: MainAxisSize.min,
+                                          mainAxisAlignment: MainAxisAlignment.center,
                                           children: [
                                             Text(
                                               period['label'] as String,
@@ -272,127 +335,138 @@ class _MeasurementsScreenState extends ConsumerState<MeasurementsScreen> {
                                         ),
                                 ),
                               ),
-                            ),
-                          );
-                        }).toList(),
+                            );
+                        },
                       ),
                     ).animate().fadeIn(delay: 100.ms),
                   ),
 
-                  // BMI & WHR Cards
+                  // Breathing room below the period chip row (tiles only —
+                  // body view doesn't render chips at all).
+                  if (_viewMode == _ViewMode.tiles)
+                    const SliverToBoxAdapter(child: SizedBox(height: 8)),
+
+                  // Derived metrics row (BMI, WHR, …) + chart cluster — the
+                  // glance-worthy stats sit directly below the date pills,
+                  // BEFORE the tile grid, so users see trends first and dig
+                  // into individual metrics second.
+                  if (_viewMode == _ViewMode.tiles) ...[
+                    SliverToBoxAdapter(
+                      child: _buildDerivedMetricsSection(
+                        measurementsState,
+                        isDark: isDark,
+                        elevated: elevated,
+                        textPrimary: textPrimary,
+                        textMuted: textMuted,
+                        cyan: cyan,
+                      ).animate().fadeIn(delay: 130.ms),
+                    ),
+                    const SliverToBoxAdapter(child: SizedBox(height: 12)),
+
+                    // Selected measurement chart + type selector — moved
+                    // above the tile grid so the trend graph reads right
+                    // under the BMI / WHR cards.
+                    SliverToBoxAdapter(
+                      child: _buildChartSection(
+                        measurementsState,
+                        isDark: isDark,
+                        elevated: elevated,
+                        textPrimary: textPrimary,
+                        textMuted: textMuted,
+                        cyan: cyan,
+                      ).animate().fadeIn(delay: 150.ms),
+                    ),
+                    const SliverToBoxAdapter(child: SizedBox(height: 8)),
+                    SliverToBoxAdapter(
+                      child: _buildTypeSelector(
+                        measurementsState,
+                        isDark: isDark,
+                        elevated: elevated,
+                        textSecondary: textSecondary,
+                        textMuted: textMuted,
+                        cardBorder: cardBorder,
+                        cyan: cyan,
+                      ).animate().fadeIn(delay: 170.ms),
+                    ),
+                    const SliverToBoxAdapter(child: SizedBox(height: 16)),
+                  ],
+
+                  // Main metric editor — body silhouette or tile grid. In
+                  // tiles view this now sits after the chart cluster.
                   SliverToBoxAdapter(
-                    child: _buildDerivedMetricsSection(
+                    child: AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 200),
+                      switchInCurve: Curves.easeOut,
+                      switchOutCurve: Curves.easeIn,
+                      child: _viewMode == _ViewMode.body
+                          ? KeyedSubtree(
+                              key: const ValueKey('body-view'),
+                              child: MeasurementBodyView(
+                                state: measurementsState,
+                                isMetric: _isMetric,
+                              ),
+                            )
+                          : KeyedSubtree(
+                              key: const ValueKey('tile-view'),
+                              child: MeasurementTileGrid(
+                                state: measurementsState,
+                                isMetric: _isMetric,
+                                onLogRequested: (type) =>
+                                    _showAddMeasurementSheet(context, prefilledType: type),
+                              ),
+                            ),
+                    ).animate().fadeIn(delay: 190.ms),
+                  ),
+
+                  // (Derived metrics in body view now live as pills in the
+                  // top row inside MeasurementBodyView, alongside Weight and
+                  // Body Fat — same height, same interaction model.)
+
+                  // History only shows in tile view (trend analysis). Body
+                  // view stays focused on logging current values.
+                  if (_viewMode == _ViewMode.tiles) ...[
+                    const SliverToBoxAdapter(child: SizedBox(height: 16)),
+
+                    // History list for selected type
+                    SliverToBoxAdapter(
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 24, 16, 8),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              'HISTORY - ${_selectedType.displayName.toUpperCase()}',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                color: textMuted,
+                                letterSpacing: 1.5,
+                              ),
+                            ),
+                            if (measurementsState.historyByType[_selectedType]?.isNotEmpty ?? false)
+                              Text(
+                                '${measurementsState.historyByType[_selectedType]?.length ?? 0} entries',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  color: textMuted,
+                                ),
+                              ),
+                          ],
+                        ),
+                      ).animate().fadeIn(delay: 350.ms),
+                    ),
+
+                    _buildHistoryList(
                       measurementsState,
                       isDark: isDark,
                       elevated: elevated,
                       textPrimary: textPrimary,
-                      textMuted: textMuted,
-                      cyan: cyan,
-                    ).animate().fadeIn(delay: 130.ms),
-                  ),
-
-                  // Selected measurement chart
-                  SliverToBoxAdapter(
-                    child: _buildChartSection(
-                      measurementsState,
-                      isDark: isDark,
-                      elevated: elevated,
-                      textPrimary: textPrimary,
-                      textMuted: textMuted,
-                      cyan: cyan,
-                    ).animate().fadeIn(delay: 150.ms),
-                  ),
-
-                  const SliverToBoxAdapter(child: SizedBox(height: 8)),
-
-                  // Measurement type selector (horizontal scroll)
-                  SliverToBoxAdapter(
-                    child: _buildTypeSelector(
-                      measurementsState,
-                      isDark: isDark,
-                      elevated: elevated,
                       textSecondary: textSecondary,
                       textMuted: textMuted,
                       cardBorder: cardBorder,
                       cyan: cyan,
-                    ).animate().fadeIn(delay: 200.ms),
-                  ),
-
-                  const SliverToBoxAdapter(child: SizedBox(height: 24)),
-
-                  // Measurement summary cards by group
-                  ..._measurementGroups.expand((group) => [
-                    SliverToBoxAdapter(
-                      child: Padding(
-                        padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-                        child: Text(
-                          group['title'] as String,
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            color: textMuted,
-                            letterSpacing: 1.5,
-                          ),
-                        ),
-                      ).animate().fadeIn(delay: 250.ms),
                     ),
-                    SliverToBoxAdapter(
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        child: _buildMeasurementGroupCard(
-                          measurementsState,
-                          group['types'] as List<MeasurementType>,
-                          isDark: isDark,
-                          elevated: elevated,
-                          textPrimary: textPrimary,
-                          textSecondary: textSecondary,
-                          textMuted: textMuted,
-                          cardBorder: cardBorder,
-                          cyan: cyan,
-                        ),
-                      ).animate().fadeIn(delay: 300.ms),
-                    ),
-                  ]),
-
-                  // History list for selected type
-                  SliverToBoxAdapter(
-                    child: Padding(
-                      padding: const EdgeInsets.fromLTRB(16, 24, 16, 8),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            'HISTORY - ${_selectedType.displayName.toUpperCase()}',
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                              color: textMuted,
-                              letterSpacing: 1.5,
-                            ),
-                          ),
-                          if (measurementsState.historyByType[_selectedType]?.isNotEmpty ?? false)
-                            Text(
-                              '${measurementsState.historyByType[_selectedType]?.length ?? 0} entries',
-                              style: TextStyle(
-                                fontSize: 11,
-                                color: textMuted,
-                              ),
-                            ),
-                        ],
-                      ),
-                    ).animate().fadeIn(delay: 350.ms),
-                  ),
-
-                  _buildHistoryList(
-                    measurementsState,
-                    isDark: isDark,
-                    elevated: elevated,
-                    textPrimary: textPrimary,
-                    textSecondary: textSecondary,
-                    textMuted: textMuted,
-                    cardBorder: cardBorder,
-                    cyan: cyan,
-                  ),
+                  ],
 
                   const SliverToBoxAdapter(child: SizedBox(height: 100)),
                 ],
@@ -413,49 +487,15 @@ class _MeasurementsScreenState extends ConsumerState<MeasurementsScreen> {
           ],
         ),
       ),
-      floatingActionButton: FloatingActionButton(
+      floatingActionButton: GlassCircleFab(
         onPressed: () => _showAddMeasurementSheet(context),
-        backgroundColor: cyan,
-        foregroundColor: isDark ? AppColors.pureBlack : Colors.white,
-        child: const Icon(Icons.add),
+        tooltip: 'Add measurement',
       ).animate().fadeIn(delay: 400.ms).slideY(begin: 0.3),
     );
   }
 
-  /// Get BMI category and color based on value
-  (String, Color) _getBmiCategoryAndColor(double bmi) {
-    if (bmi < 18.5) {
-      return ('Underweight', AppColors.orange);
-    } else if (bmi < 25) {
-      return ('Normal', AppColors.success);
-    } else if (bmi < 30) {
-      return ('Overweight', AppColors.orange);
-    } else {
-      return ('Obese', AppColors.error);
-    }
-  }
-
-  /// Get Waist-to-Hip Ratio category and color
-  /// WHO guidelines: Men >0.90, Women >0.85 = increased health risk
-  (String, Color) _getWhrCategoryAndColor(double whr, {bool isMale = true}) {
-    if (isMale) {
-      if (whr < 0.90) {
-        return ('Low Risk', AppColors.success);
-      } else if (whr < 1.0) {
-        return ('Moderate', AppColors.orange);
-      } else {
-        return ('High Risk', AppColors.error);
-      }
-    } else {
-      if (whr < 0.80) {
-        return ('Low Risk', AppColors.success);
-      } else if (whr < 0.85) {
-        return ('Moderate', AppColors.orange);
-      } else {
-        return ('High Risk', AppColors.error);
-      }
-    }
-  }
+  // BMI / WHR categorization now lives in computeDerivedMetrics() in
+  // measurements_repository.dart; removed the duplicate helpers from here.
 
   Widget _buildChartSection(
     MeasurementsState state, {
@@ -776,6 +816,11 @@ class _MeasurementsScreenState extends ConsumerState<MeasurementsScreen> {
         e.recordedAt.isBefore(_customDateRange!.end.add(const Duration(days: 1)))
       ).toList();
     }
+    // YTD = since Jan 1 of current year; can't be a fixed day count.
+    if (_selectedPeriod == 'ytd') {
+      final startOfYear = DateTime(DateTime.now().year, 1, 1);
+      return history.where((e) => e.recordedAt.isAfter(startOfYear)).toList();
+    }
     final days = (_periods.firstWhere((p) => p['value'] == _selectedPeriod)['days'] as num).toInt();
     final cutoff = DateTime.now().subtract(Duration(days: days));
     return history.where((e) => e.recordedAt.isAfter(cutoff)).toList();
@@ -797,7 +842,10 @@ class _MeasurementsScreenState extends ConsumerState<MeasurementsScreen> {
     return change > 0 ? AppColors.success : AppColors.error;
   }
 
-  IconData _getIconForType(MeasurementType type) {
+  /// Canonical icon mapping. Static so callers in part files and widgets
+  /// can reuse it without plumbing a `_MeasurementsScreenState` instance
+  /// through.
+  static IconData _iconFor(MeasurementType type) {
     switch (type) {
       case MeasurementType.weight:
         return Icons.monitor_weight;
@@ -824,7 +872,7 @@ class _MeasurementsScreenState extends ConsumerState<MeasurementsScreen> {
         return Icons.accessibility;
       case MeasurementType.forearmLeft:
       case MeasurementType.forearmRight:
-        return Icons.sports_gymnastics;
+        return Icons.back_hand;
     }
   }
 
@@ -838,14 +886,15 @@ class _MeasurementsScreenState extends ConsumerState<MeasurementsScreen> {
     );
   }
 
-  void _showAddMeasurementSheet(BuildContext context) {
+  void _showAddMeasurementSheet(BuildContext context, {MeasurementType? prefilledType}) {
     showGlassSheet(
       context: context,
       useRootNavigator: true,
       builder: (context) => GlassSheet(
         child: _AddMeasurementSheet(
-          selectedType: _selectedType,
+          selectedType: prefilledType ?? _selectedType,
           isMetric: _isMetric,
+          lockedType: prefilledType,
           onSubmit: (type, value, unit, notes) async {
             final auth = ref.read(authStateProvider);
             if (auth.user != null) {
@@ -872,3 +921,61 @@ class _MeasurementsScreenState extends ConsumerState<MeasurementsScreen> {
     );
   }
 }
+
+/// Body-vs-tile view mode for the measurements screen. Persisted to
+/// SharedPreferences so the user's last choice sticks.
+enum _ViewMode { body, tiles }
+
+/// Two-segment pill toggle rendered in the measurements header row. Uses the
+/// same accent/elevated palette as the other header chips so it visually
+/// belongs with Export + Metric.
+class _ViewModeToggle extends StatelessWidget {
+  final _ViewMode mode;
+  final Color accent;
+  final Color elevated;
+  final Color cardBorder;
+  final Color textMuted;
+  final Future<void> Function(_ViewMode) onChanged;
+
+  const _ViewModeToggle({
+    required this.mode,
+    required this.accent,
+    required this.elevated,
+    required this.cardBorder,
+    required this.textMuted,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: elevated,
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: cardBorder),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _segment(icon: Icons.accessibility_new, selected: mode == _ViewMode.body, value: _ViewMode.body),
+          _segment(icon: Icons.grid_view_rounded, selected: mode == _ViewMode.tiles, value: _ViewMode.tiles),
+        ],
+      ),
+    );
+  }
+
+  Widget _segment({required IconData icon, required bool selected, required _ViewMode value}) {
+    return GestureDetector(
+      onTap: () => onChanged(value),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        decoration: BoxDecoration(
+          color: selected ? accent.withValues(alpha: 0.18) : Colors.transparent,
+          borderRadius: BorderRadius.circular(999),
+        ),
+        child: Icon(icon, size: 16, color: selected ? accent : textMuted),
+      ),
+    );
+  }
+}
+

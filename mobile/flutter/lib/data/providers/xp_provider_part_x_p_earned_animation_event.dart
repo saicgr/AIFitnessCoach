@@ -15,6 +15,36 @@ class XPEarnedAnimationEvent {
 }
 
 
+/// Categories of persona-voiced banners the AI coach can fire when a user
+/// hits a meaningful milestone.
+enum CoachBannerKind {
+  stepsGoal,
+}
+
+/// Event that asks the home screen to render a coach-persona banner for a
+/// just-completed milestone. The home screen picks the right copy based on
+/// the user's selected [CoachPersona].
+class CoachBannerEvent {
+  final CoachBannerKind kind;
+
+  /// Primary numeric value for the milestone (e.g. step count). Used to
+  /// personalise the banner copy.
+  final int value;
+
+  /// How much XP was just awarded, surfaced in the banner sub-line.
+  final int xpAwarded;
+
+  final DateTime timestamp;
+
+  CoachBannerEvent({
+    required this.kind,
+    required this.value,
+    required this.xpAwarded,
+    DateTime? timestamp,
+  }) : timestamp = timestamp ?? DateTime.now();
+}
+
+
 // ============================================
 // Daily Goals Model
 // ============================================
@@ -27,6 +57,7 @@ class DailyGoals {
   final bool loggedWeight;
   final bool hitProteinGoal;
   final bool loggedBodyMeasurements;
+  final bool hitStepsGoal;
   final DateTime date;
 
   const DailyGoals({
@@ -36,6 +67,7 @@ class DailyGoals {
     this.loggedWeight = false,
     this.hitProteinGoal = false,
     this.loggedBodyMeasurements = false,
+    this.hitStepsGoal = false,
     required this.date,
   });
 
@@ -46,6 +78,7 @@ class DailyGoals {
     bool? loggedWeight,
     bool? hitProteinGoal,
     bool? loggedBodyMeasurements,
+    bool? hitStepsGoal,
     DateTime? date,
   }) {
     return DailyGoals(
@@ -55,6 +88,7 @@ class DailyGoals {
       loggedWeight: loggedWeight ?? this.loggedWeight,
       hitProteinGoal: hitProteinGoal ?? this.hitProteinGoal,
       loggedBodyMeasurements: loggedBodyMeasurements ?? this.loggedBodyMeasurements,
+      hitStepsGoal: hitStepsGoal ?? this.hitStepsGoal,
       date: date ?? this.date,
     );
   }
@@ -68,11 +102,12 @@ class DailyGoals {
     if (loggedWeight) count++;
     if (hitProteinGoal) count++;
     if (loggedBodyMeasurements) count++;
+    if (hitStepsGoal) count++;
     return count;
   }
 
   /// Total number of daily goals
-  int get totalCount => 6;
+  int get totalCount => 7;
 
   /// Progress as a fraction (0.0 to 1.0)
   double get progress => completedCount / totalCount;
@@ -88,6 +123,7 @@ class DailyGoals {
     if (loggedWeight) xp += 15;
     if (hitProteinGoal) xp += 50;
     if (loggedBodyMeasurements) xp += 20;
+    if (hitStepsGoal) xp += 30;
     return (xp * multiplier).round();
   }
 
@@ -142,6 +178,9 @@ class XPState {
   // XP earned animation tracking
   final XPEarnedAnimationEvent? lastXPEarnedEvent;
 
+  // Coach-persona banner event (e.g. 10k-steps congrats)
+  final CoachBannerEvent? lastCoachBannerEvent;
+
   // First-time bonuses tracking
   final Set<String> awardedBonuses;
 
@@ -178,6 +217,8 @@ class XPState {
     this.previousStreak,
     // XP earned animation
     this.lastXPEarnedEvent,
+    // Coach banner
+    this.lastCoachBannerEvent,
     // First-time bonuses
     this.awardedBonuses = const {},
     // Consumables
@@ -218,6 +259,9 @@ class XPState {
     // XP earned animation
     XPEarnedAnimationEvent? lastXPEarnedEvent,
     bool clearXPEarnedEvent = false,
+    // Coach banner
+    CoachBannerEvent? lastCoachBannerEvent,
+    bool clearCoachBannerEvent = false,
     // First-time bonuses
     Set<String>? awardedBonuses,
     // Consumables
@@ -254,6 +298,10 @@ class XPState {
       previousStreak: previousStreak ?? this.previousStreak,
       // XP earned animation
       lastXPEarnedEvent: clearXPEarnedEvent ? null : (lastXPEarnedEvent ?? this.lastXPEarnedEvent),
+      // Coach banner
+      lastCoachBannerEvent: clearCoachBannerEvent
+          ? null
+          : (lastCoachBannerEvent ?? this.lastCoachBannerEvent),
       // First-time bonuses
       awardedBonuses: awardedBonuses ?? this.awardedBonuses,
       // Consumables

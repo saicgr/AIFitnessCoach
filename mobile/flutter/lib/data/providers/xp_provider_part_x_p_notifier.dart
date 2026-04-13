@@ -603,6 +603,52 @@ class XPNotifier extends StateNotifier<XPState> {
     }
   }
 
+  /// Mark the daily-steps goal hit (e.g. 10,000 steps reached) and award XP.
+  /// Idempotent per day: repeat calls after the flag is set are no-ops.
+  /// Also emits a [CoachBannerEvent] so the home screen can surface a
+  /// persona-voiced congratulation banner.
+  Future<void> markStepsGoalHit(int steps) async {
+    final goals = _getOrCreateDailyGoals();
+    if (!goals.hitStepsGoal) {
+      state = state.copyWith(
+        dailyGoals: goals.copyWith(hitStepsGoal: true),
+      );
+      debugPrint('[XPProvider] Daily goal: steps goal hit ($steps steps)');
+
+      // Award XP via backend.
+      final xpAwarded = await _repository.awardGoalXP('steps_goal');
+      if (xpAwarded > 0) {
+        state = state.copyWith(
+          lastXPEarnedEvent: XPEarnedAnimationEvent(
+            xpAmount: xpAwarded,
+            goalType: XPGoalType.stepsGoal,
+          ),
+          // Piggy-back a coach-banner event so the home screen can show
+          // a persona-voiced congratulations at the same time.
+          lastCoachBannerEvent: CoachBannerEvent(
+            kind: CoachBannerKind.stepsGoal,
+            value: steps,
+            xpAwarded: xpAwarded,
+          ),
+        );
+        _posthog.capture(
+          eventName: 'xp_earned',
+          properties: <String, Object>{
+            'xp_amount': xpAwarded,
+            'goal_type': 'steps_goal',
+            'steps': steps,
+          },
+        );
+      }
+
+      // Check if all daily goals are complete for activity crate unlock.
+      await checkAndUnlockActivityCrate();
+
+      // Always refresh XP data to keep progress bar in sync.
+      await loadUserXP(userId: _currentUserId, showLoading: false);
+    }
+  }
+
   /// Reset daily goals (for testing or day change)
   void resetDailyGoals() {
     state = state.copyWith(
@@ -653,6 +699,12 @@ class XPNotifier extends StateNotifier<XPState> {
   /// Clear XP earned event (after showing animation)
   void clearXPEarnedEvent() {
     state = state.copyWith(clearXPEarnedEvent: true);
+  }
+
+  /// Clear the coach-banner event (after the banner has been shown +
+  /// auto-dismissed).
+  void clearCoachBannerEvent() {
+    state = state.copyWith(clearCoachBannerEvent: true);
   }
 
   /// Trigger XP earned animation for daily login

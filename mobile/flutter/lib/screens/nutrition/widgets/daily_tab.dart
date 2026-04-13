@@ -290,6 +290,27 @@ class _DailyTabState extends ConsumerState<DailyTab> {
   }
 
   /// Show edit targets bottom sheet
+  void _showPinnedNutrientsEditSheet() {
+    final micro = widget.micronutrients;
+    if (micro == null) return;
+
+    // Hide the floating nav bar while the sheet is open.
+    ref.read(floatingNavBarVisibleProvider.notifier).state = false;
+    showGlassSheet(
+      context: context,
+      builder: (_) => GlassSheet(
+        child: _PinnedNutrientsEditSheet(
+          userId: widget.userId,
+          micronutrients: micro,
+          isDark: widget.isDark,
+          onSaved: () => widget.onRefresh(),
+        ),
+      ),
+    ).whenComplete(() {
+      ref.read(floatingNavBarVisibleProvider.notifier).state = true;
+    });
+  }
+
   void _showEditTargetsSheet(BuildContext context) {
     final prefsState = ref.read(nutritionPreferencesProvider);
     if (prefsState.preferences == null) return;
@@ -371,10 +392,7 @@ class _DailyTabState extends ConsumerState<DailyTab> {
                   PinnedNutrientsCard(
                     pinned: widget.micronutrients!.pinned,
                     isDark: widget.isDark,
-                    onEdit: () {
-                      // Switch to Nutrients tab where users can pin/unpin nutrients
-                      widget.onSwitchToNutrientsTab?.call();
-                    },
+                    onEdit: () => _showPinnedNutrientsEditSheet(),
                   ),
                   const SizedBox(height: 12),
                 ],
@@ -418,6 +436,299 @@ class _DailyTabState extends ConsumerState<DailyTab> {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Bottom sheet that lets users pin/unpin micronutrients directly from the
+/// Pinned Nutrients card's ✏ button. Previously the button just navigated
+/// to the Nutrients tab, which didn't actually edit anything.
+class _PinnedNutrientsEditSheet extends ConsumerStatefulWidget {
+  final String userId;
+  final DailyMicronutrientSummary micronutrients;
+  final bool isDark;
+  final VoidCallback onSaved;
+
+  const _PinnedNutrientsEditSheet({
+    required this.userId,
+    required this.micronutrients,
+    required this.isDark,
+    required this.onSaved,
+  });
+
+  @override
+  ConsumerState<_PinnedNutrientsEditSheet> createState() =>
+      _PinnedNutrientsEditSheetState();
+}
+
+class _PinnedNutrientsEditSheetState
+    extends ConsumerState<_PinnedNutrientsEditSheet> {
+  late Set<String> _pinned;
+  bool _saving = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _pinned = widget.micronutrients.pinned
+        .map((n) => n.nutrientKey)
+        .toSet();
+  }
+
+  Future<void> _save() async {
+    if (_saving) return;
+    setState(() => _saving = true);
+    try {
+      await ref.read(nutritionRepositoryProvider).updatePinnedNutrients(
+            userId: widget.userId,
+            pinnedNutrients: _pinned.toList(),
+          );
+      if (!mounted) return;
+      widget.onSaved();
+      Navigator.of(context).pop();
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Failed to update pinned nutrients')),
+      );
+      setState(() => _saving = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = widget.isDark;
+    final textPrimary =
+        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final cardBorder =
+        isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+    final teal = isDark ? AppColors.teal : AppColorsLight.teal;
+
+    final groups = <String, List<NutrientProgress>>{
+      'Vitamins': widget.micronutrients.vitamins,
+      'Minerals': widget.micronutrients.minerals,
+      'Fatty Acids': widget.micronutrients.fattyAcids,
+      'Other': widget.micronutrients.other,
+    };
+
+    return Padding(
+      padding: EdgeInsets.only(
+        bottom: MediaQuery.of(context).viewInsets.bottom,
+      ),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Text(
+                  'Pin nutrients',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: textPrimary,
+                  ),
+                ),
+                const Spacer(),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: teal.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    '${_pinned.length} pinned',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: teal,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'Pick the nutrients you want to see at the top of the Daily tab.',
+              style: TextStyle(fontSize: 12, color: textMuted),
+            ),
+            const SizedBox(height: 14),
+            Flexible(
+              child: SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    for (final entry in groups.entries) ...[
+                      if (entry.value.isNotEmpty) ...[
+                        Padding(
+                          padding: const EdgeInsets.only(top: 8, bottom: 6),
+                          child: Text(
+                            entry.key.toUpperCase(),
+                            style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: 1.2,
+                              color: textMuted,
+                            ),
+                          ),
+                        ),
+                        Wrap(
+                          spacing: 6,
+                          runSpacing: 6,
+                          children: [
+                            for (final n in entry.value)
+                              _NutrientToggleChip(
+                                label: n.displayName,
+                                selected: _pinned.contains(n.nutrientKey),
+                                // Per-nutrient color sourced from the backend
+                                // (n.progressColor — '#FF0000' etc.). Falls
+                                // back to the teal accent if parsing fails.
+                                accent: _parseHex(n.progressColor) ?? teal,
+                                elevated: isDark
+                                    ? AppColors.elevated
+                                    : AppColorsLight.elevated,
+                                textPrimary: textPrimary,
+                                textMuted: textMuted,
+                                cardBorder: cardBorder,
+                                onTap: () {
+                                  setState(() {
+                                    if (_pinned.contains(n.nutrientKey)) {
+                                      _pinned.remove(n.nutrientKey);
+                                    } else {
+                                      _pinned.add(n.nutrientKey);
+                                    }
+                                  });
+                                },
+                              ),
+                          ],
+                        ),
+                      ],
+                    ],
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: _saving ? null : _save,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: teal,
+                  foregroundColor: isDark ? AppColors.pureBlack : Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: _saving
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                            strokeWidth: 2, color: Colors.white),
+                      )
+                    : const Text('Save',
+                        style: TextStyle(
+                            fontSize: 14, fontWeight: FontWeight.bold)),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Parse a "#RRGGBB" / "RRGGBB" hex string into a Color. Returns null if the
+/// input can't be parsed.
+Color? _parseHex(String hex) {
+  var s = hex.replaceFirst('#', '');
+  if (s.length == 6) s = 'FF$s';
+  if (s.length != 8) return null;
+  final v = int.tryParse(s, radix: 16);
+  if (v == null) return null;
+  return Color(v);
+}
+
+class _NutrientToggleChip extends StatelessWidget {
+  final String label;
+  final bool selected;
+  final Color accent;
+  final Color elevated;
+  final Color textPrimary;
+  final Color textMuted;
+  final Color cardBorder;
+  final VoidCallback onTap;
+
+  const _NutrientToggleChip({
+    required this.label,
+    required this.selected,
+    required this.accent,
+    required this.elevated,
+    required this.textPrimary,
+    required this.textMuted,
+    required this.cardBorder,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(10, 6, 8, 6),
+        decoration: BoxDecoration(
+          // Selected chips fill with the nutrient's accent; unselected get
+          // a faint tint of the same accent so the sheet still reads as a
+          // colourful palette instead of a wall of grey pills.
+          color: selected
+              ? accent.withValues(alpha: 0.22)
+              : accent.withValues(alpha: 0.07),
+          borderRadius: BorderRadius.circular(999),
+          border: Border.all(
+            color: selected
+                ? accent
+                : accent.withValues(alpha: 0.3),
+            width: selected ? 1.5 : 1,
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Leading colour dot so every chip telegraphs its accent even
+            // when the label itself is unselected text.
+            Container(
+              width: 8,
+              height: 8,
+              decoration: BoxDecoration(
+                color: accent,
+                shape: BoxShape.circle,
+              ),
+            ),
+            const SizedBox(width: 6),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                color: selected ? accent : textPrimary,
+              ),
+            ),
+            const SizedBox(width: 6),
+            Icon(
+              selected
+                  ? Icons.push_pin_rounded
+                  : Icons.push_pin_outlined,
+              size: 13,
+              color: selected ? accent : accent.withValues(alpha: 0.6),
+            ),
+          ],
+        ),
       ),
     );
   }

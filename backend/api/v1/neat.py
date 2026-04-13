@@ -329,13 +329,20 @@ async def get_neat_goals(
                 raise safe_internal_error(ValueError("Failed to create default NEAT goals"), "neat")
             goal = NEATGoal(**insert_response.data[0])
 
-        # Get today's activity
+        # Get today's activity — .maybe_single() can return None or raise on 0 rows.
         today = user_today_date(request).isoformat()
-        activity_response = db.client.table("daily_activity").select(
-            "steps"
-        ).eq("user_id", user_id).eq("activity_date", today).maybe_single().execute()
+        try:
+            activity_response = db.client.table("daily_activity").select(
+                "steps"
+            ).eq("user_id", user_id).eq("activity_date", today).maybe_single().execute()
+        except Exception:
+            activity_response = None
 
-        current_steps = activity_response.data.get("steps", 0) if activity_response.data else 0
+        current_steps = (
+            activity_response.data.get("steps", 0)
+            if activity_response and activity_response.data
+            else 0
+        )
 
         # Get today's hourly breakdown for active hours and movement breaks
         hourly_response = db.client.table("neat_hourly_activity").select(
@@ -490,12 +497,19 @@ async def calculate_progressive_goal(
     try:
         logger.info(f"Calculating progressive goal for user {user_id}")
 
-        # Get current goal
-        goal_response = db.client.table("neat_goals").select(
-            "daily_step_goal"
-        ).eq("user_id", user_id).maybe_single().execute()
+        # Get current goal — user may not have a goal yet.
+        try:
+            goal_response = db.client.table("neat_goals").select(
+                "daily_step_goal"
+            ).eq("user_id", user_id).maybe_single().execute()
+        except Exception:
+            goal_response = None
 
-        current_goal = goal_response.data.get("daily_step_goal", 8000) if goal_response.data else 8000
+        current_goal = (
+            goal_response.data.get("daily_step_goal", 8000)
+            if goal_response and goal_response.data
+            else 8000
+        )
 
         # Get historical step data
         start_date = (user_today_date(http_request) - timedelta(days=request.look_back_days)).isoformat()
@@ -597,12 +611,19 @@ async def record_hourly_activity(
     try:
         logger.info(f"Recording hourly activity for user {user_id}, hour {activity.hour}")
 
-        # Get user's min steps per hour setting
-        goal_response = db.client.table("neat_goals").select(
-            "min_steps_per_hour"
-        ).eq("user_id", user_id).maybe_single().execute()
+        # Get user's min steps per hour setting — may not have a goal row yet.
+        try:
+            goal_response = db.client.table("neat_goals").select(
+                "min_steps_per_hour"
+            ).eq("user_id", user_id).maybe_single().execute()
+        except Exception:
+            goal_response = None
 
-        min_steps = goal_response.data.get("min_steps_per_hour", 250) if goal_response.data else 250
+        min_steps = (
+            goal_response.data.get("min_steps_per_hour", 250)
+            if goal_response and goal_response.data
+            else 250
+        )
 
         # Determine if sedentary and if hourly goal was met
         was_sedentary = activity.was_sedentary if activity.was_sedentary is not None else (activity.active_minutes < 5)
@@ -721,12 +742,19 @@ async def batch_sync_hourly_activity(
     try:
         logger.info(f"Batch syncing {len(batch.activities)} hourly records for user {user_id}")
 
-        # Get user's min steps per hour setting
-        goal_response = db.client.table("neat_goals").select(
-            "min_steps_per_hour"
-        ).eq("user_id", user_id).maybe_single().execute()
+        # Get user's min steps per hour setting — may not have a goal row yet.
+        try:
+            goal_response = db.client.table("neat_goals").select(
+                "min_steps_per_hour"
+            ).eq("user_id", user_id).maybe_single().execute()
+        except Exception:
+            goal_response = None
 
-        min_steps = goal_response.data.get("min_steps_per_hour", 250) if goal_response.data else 250
+        min_steps = (
+            goal_response.data.get("min_steps_per_hour", 250)
+            if goal_response and goal_response.data
+            else 250
+        )
 
         results = []
         synced = 0
@@ -955,20 +983,26 @@ async def calculate_neat_score(
 
         # Check if already calculated today (unless force recalculate)
         if not request.force_recalculate:
-            existing = db.client.table("neat_scores").select("id").eq(
-                "user_id", user_id
-            ).eq("score_date", today_str).maybe_single().execute()
+            try:
+                existing = db.client.table("neat_scores").select("id").eq(
+                    "user_id", user_id
+                ).eq("score_date", today_str).maybe_single().execute()
+            except Exception:
+                existing = None
 
-            if existing.data:
+            if existing and existing.data:
                 # Return existing score
                 return await get_today_neat_score(user_id, http_request)
 
-        # Get goals
-        goal_response = db.client.table("neat_goals").select("*").eq(
-            "user_id", user_id
-        ).maybe_single().execute()
+        # Get goals — user may not have a goals row yet.
+        try:
+            goal_response = db.client.table("neat_goals").select("*").eq(
+                "user_id", user_id
+            ).maybe_single().execute()
+        except Exception:
+            goal_response = None
 
-        if goal_response.data:
+        if goal_response and goal_response.data:
             step_goal = goal_response.data.get("daily_step_goal", 8000)
             active_hours_goal = goal_response.data.get("active_hours_goal", 8)
             movement_breaks_goal = goal_response.data.get("movement_breaks_goal", 6)

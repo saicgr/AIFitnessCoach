@@ -6,6 +6,7 @@ import '../../../data/models/muscle_analytics.dart';
 import '../../../widgets/app_loading.dart';
 import '../../../data/providers/muscle_analytics_provider.dart';
 import '../../../data/repositories/muscle_analytics_repository.dart';
+import '../../../utils/share_report_helper.dart';
 import '../../../widgets/pill_app_bar.dart';
 import '../../../widgets/segmented_tab_bar.dart';
 import 'widgets/muscle_heatmap_widget.dart';
@@ -23,6 +24,7 @@ class MuscleAnalyticsScreen extends ConsumerStatefulWidget {
 class _MuscleAnalyticsScreenState extends ConsumerState<MuscleAnalyticsScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
+  final GlobalKey _reportKey = GlobalKey();
   DateTime? _screenOpenTime;
 
   @override
@@ -68,6 +70,15 @@ class _MuscleAnalyticsScreenState extends ConsumerState<MuscleAnalyticsScreen>
         title: 'Muscle Analytics',
         actions: [
           PillAppBarAction(
+            icon: Icons.ios_share_rounded,
+            onTap: () => shareReportScreen(
+              context: context,
+              repaintKey: _reportKey,
+              caption: 'My FitWiz muscle strength report',
+              subject: 'My Muscle Report',
+            ),
+          ),
+          PillAppBarAction(
             icon: Icons.calendar_today,
             onTap: () {
               showMenu(
@@ -89,7 +100,11 @@ class _MuscleAnalyticsScreenState extends ConsumerState<MuscleAnalyticsScreen>
           ),
         ],
       ),
-      body: Column(
+      body: RepaintBoundary(
+        key: _reportKey,
+        child: Container(
+          color: Theme.of(context).scaffoldBackgroundColor,
+          child: Column(
         children: [
           SegmentedTabBar(
             controller: _tabController,
@@ -111,6 +126,8 @@ class _MuscleAnalyticsScreenState extends ConsumerState<MuscleAnalyticsScreen>
             ),
           ),
         ],
+      ),
+        ),
       ),
     );
   }

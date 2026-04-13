@@ -357,11 +357,16 @@ class CategoryExercisesData {
   final Map<String, List<LibraryExercise>> all;
   /// Flat list of every exercise (deduplicated, sorted A-Z) for "All Exercises" section
   final List<LibraryExercise> allExercisesSorted;
+  /// True total count per category from backend (not the capped preview length).
+  /// Nullable so that stale cached instances from hot-reload (before this field
+  /// existed) can't crash field access — consumers must fall back to `all[k].length`.
+  final Map<String, int>? totalCounts;
 
   const CategoryExercisesData({
     required this.preview,
     required this.all,
     this.allExercisesSorted = const [],
+    this.totalCounts,
   });
 }
 
@@ -403,13 +408,16 @@ final categoryExercisesProvider =
     }
 
     // Parse grouped response: [{body_part, count, exercises}, ...]
+    // `count` = true total in DB; `exercises` = capped preview (limit_per_group).
     final Map<String, List<LibraryExercise>> byBodyPart = {};
+    final Map<String, int> bodyPartCounts = {};
     for (final group in data) {
       final bodyPart = group['body_part'] as String;
       final exercises = (group['exercises'] as List)
           .map((e) => LibraryExercise.fromJson(e as Map<String, dynamic>))
           .toList();
       byBodyPart[bodyPart] = exercises;
+      bodyPartCounts[bodyPart] = (group['count'] as num?)?.toInt() ?? exercises.length;
     }
 
     // Popular = first 20 from the largest groups
@@ -426,24 +434,36 @@ final categoryExercisesProvider =
       preview['Popular'] = popularExercises.take(20).toList();
     }
 
+    // Aggregated counts mirror the category composition below.
+    final Map<String, int> totalCounts = {};
+    if (popularExercises.isNotEmpty) {
+      totalCounts['Popular'] = popularExercises.length;
+    }
+
     // Combine arm muscles into "Arms"
     final armExercises = <LibraryExercise>[];
+    var armsTotal = 0;
     for (final key in ['Biceps', 'Triceps', 'Forearms']) {
       armExercises.addAll(byBodyPart[key] ?? []);
+      armsTotal += bodyPartCounts[key] ?? 0;
     }
     if (armExercises.isNotEmpty) {
       all['Arms'] = armExercises;
       preview['Arms'] = armExercises.take(20).toList();
+      totalCounts['Arms'] = armsTotal;
     }
 
     // Combine leg muscles into "Legs"
     final legExercises = <LibraryExercise>[];
+    var legsTotal = 0;
     for (final key in ['Quadriceps', 'Hamstrings', 'Glutes', 'Calves', 'Hips']) {
       legExercises.addAll(byBodyPart[key] ?? []);
+      legsTotal += bodyPartCounts[key] ?? 0;
     }
     if (legExercises.isNotEmpty) {
       all['Legs'] = legExercises;
       preview['Legs'] = legExercises.take(20).toList();
+      totalCounts['Legs'] = legsTotal;
     }
 
     // Direct mappings for other categories
@@ -451,6 +471,7 @@ final categoryExercisesProvider =
       if (byBodyPart[category]?.isNotEmpty == true) {
         all[category] = byBodyPart[category]!;
         preview[category] = byBodyPart[category]!.take(20).toList();
+        totalCounts[category] = bodyPartCounts[category] ?? byBodyPart[category]!.length;
       }
     }
 
@@ -471,6 +492,7 @@ final categoryExercisesProvider =
       preview: preview,
       all: all,
       allExercisesSorted: allFlat,
+      totalCounts: totalCounts,
     );
     _categoryExercisesCache = result;
     _categoryCacheTime = DateTime.now();

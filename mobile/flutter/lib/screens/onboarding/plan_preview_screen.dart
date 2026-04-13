@@ -77,12 +77,18 @@ class PlanPreviewScreen extends ConsumerWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          'Your Personalized Plan',
-                          style: TextStyle(
-                            fontSize: 32,
-                            fontWeight: FontWeight.bold,
-                            color: textPrimary,
+                        FittedBox(
+                          fit: BoxFit.scaleDown,
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            'Your Personalized Plan',
+                            maxLines: 1,
+                            style: TextStyle(
+                              fontSize: 28,
+                              fontWeight: FontWeight.bold,
+                              color: textPrimary,
+                              letterSpacing: -0.5,
+                            ),
                           ),
                         ).animate().fadeIn(delay: 100.ms).slideY(begin: -0.1),
                         const SizedBox(height: 6),

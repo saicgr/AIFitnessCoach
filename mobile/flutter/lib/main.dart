@@ -38,8 +38,11 @@ void main() async {
   // This saves ~500-1000ms vs sequential awaits on slow devices/emulators.
 
   late final SharedPreferences sharedPreferences;
+  var firebaseReady = false;
   await Future.wait([
-    Firebase.initializeApp().then<void>((_) {}).catchError((e) {
+    Firebase.initializeApp().then<void>((_) {
+      firebaseReady = true;
+    }).catchError((e) {
       debugPrint('⚠️ Firebase initialization failed: $e');
     }),
     SharedPreferences.getInstance().then((prefs) => sharedPreferences = prefs),
@@ -59,9 +62,9 @@ void main() async {
         details.library == 'rendering library';
     if (isRenderingError) {
       // Non-fatal: log but don't crash
-      FirebaseCrashlytics.instance.recordFlutterError(details);
+      if (firebaseReady) FirebaseCrashlytics.instance.recordFlutterError(details);
     } else {
-      FirebaseCrashlytics.instance.recordFlutterFatalError(details);
+      if (firebaseReady) FirebaseCrashlytics.instance.recordFlutterFatalError(details);
       // Also capture in PostHog for product analytics
       PosthogService().captureError(
         errorType: 'flutter_fatal',
@@ -71,7 +74,9 @@ void main() async {
     }
   };
   PlatformDispatcher.instance.onError = (error, stack) {
-    FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
+    if (firebaseReady) {
+      FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
+    }
     PosthogService().captureError(
       errorType: 'platform_error',
       message: error.toString(),

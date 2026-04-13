@@ -96,11 +96,71 @@ class WeeklySummaryNotifier extends StateNotifier<WeeklySummaryState> {
   }
 }
 
+/// In-memory insights-report cache entry. Short TTL because the report
+/// changes whenever the user completes a workout, logs readiness, etc. — we
+/// only want to spare repeat renders in the same session.
+class _CachedReport {
+  final InsightsReport report;
+  final DateTime fetchedAt;
+  const _CachedReport(this.report, this.fetchedAt);
+}
+
 /// Weekly summary repository
 class WeeklySummaryRepository {
   final ApiClient _client;
 
   WeeklySummaryRepository(this._client);
+
+  /// In-memory TTL cache keyed on (userId, startDate, endDate, groupBy, include).
+  /// 60 s is short enough to never show stale post-workout numbers but long
+  /// enough to cover the "user tapped back, then back into Insights" pattern.
+  static const Duration _cacheTtl = Duration(seconds: 60);
+  final Map<String, _CachedReport> _reportCache = {};
+
+  String _reportCacheKey(
+    String userId, {
+    required String startDate,
+    required String endDate,
+    required String groupBy,
+    required String include,
+  }) =>
+      '$userId|$startDate|$endDate|$groupBy|$include';
+
+  /// Non-blocking peek at the cache. Returns the last report we fetched for
+  /// this key if it's still within [_cacheTtl], else null.
+  InsightsReport? getCachedInsightsReport(
+    String userId, {
+    required String startDate,
+    required String endDate,
+    String groupBy = 'week',
+    String include = 'all',
+  }) {
+    final key = _reportCacheKey(
+      userId,
+      startDate: startDate,
+      endDate: endDate,
+      groupBy: groupBy,
+      include: include,
+    );
+    final entry = _reportCache[key];
+    if (entry == null) return null;
+    if (DateTime.now().difference(entry.fetchedAt) > _cacheTtl) {
+      _reportCache.remove(key);
+      return null;
+    }
+    return entry.report;
+  }
+
+  /// Invalidate all cached reports for a user. Call after a workout completes
+  /// or the user logs nutrition so the next Insights open refetches.
+  void invalidateInsightsCache({String? userId}) {
+    if (userId == null) {
+      _reportCache.clear();
+      return;
+    }
+    final prefix = '$userId|';
+    _reportCache.removeWhere((k, _) => k.startsWith(prefix));
+  }
 
   /// Generate a new weekly summary
   Future<WeeklySummary> generateSummary(String userId, {String? weekStart}) async {
@@ -146,7 +206,11 @@ class WeeklySummaryRepository {
     }
   }
 
-  /// Get insights report for an arbitrary date range
+  /// Get insights report for an arbitrary date range.
+  ///
+  /// Always hits the network; populates the in-memory cache on success so a
+  /// subsequent [getCachedInsightsReport] call for the same key returns
+  /// instantly within the TTL window.
   Future<InsightsReport> getInsightsReport(
     String userId, {
     required String startDate,
@@ -164,7 +228,16 @@ class WeeklySummaryRepository {
           'include': include,
         },
       );
-      return InsightsReport.fromJson(response.data);
+      final report = InsightsReport.fromJson(response.data);
+      final key = _reportCacheKey(
+        userId,
+        startDate: startDate,
+        endDate: endDate,
+        groupBy: groupBy,
+        include: include,
+      );
+      _reportCache[key] = _CachedReport(report, DateTime.now());
+      return report;
     } catch (e) {
       debugPrint('Error getting insights report: $e');
       rethrow;

@@ -10,6 +10,9 @@ extension __HomeScreenStateExt on _HomeScreenState {
     ref.read(posthogServiceProvider).capture(
       eventName: 'home_screen_viewed',
     );
+    // Gate: route to the notification pre-permission screen once per install
+    // before the user interacts with home. Runs async so it can read prefs.
+    _maybeShowNotificationPrime();
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       // Reset nav bar labels to expanded when on Home screen
       ref.read(navBarLabelsExpandedProvider.notifier).state = true;
@@ -51,6 +54,32 @@ extension __HomeScreenStateExt on _HomeScreenState {
         if (ref.read(isWorkoutMinimizedProvider)) return;
         _triggerNavTour();
       });
+    });
+  }
+
+  /// Routes the user to the notification pre-permission screen once per
+  /// install. The flag is flipped the moment that screen is shown (by the
+  /// screen itself once the user picks Enable or Not now), so returning
+  /// users skip this. Runs off the post-frame callback so navigation
+  /// doesn't collide with this frame's build.
+  Future<void> _maybeShowNotificationPrime() async {
+    // Skip if we're coming back from a minimized workout — user is in-flow.
+    if (ref.read(isWorkoutMinimizedProvider)) return;
+
+    final prefs = await SharedPreferences.getInstance();
+    final alreadyShown =
+        prefs.getBool(NotificationPrimeScreen.prefsKey) ?? false;
+    if (alreadyShown) return;
+    if (!mounted) return;
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      // Belt-and-suspenders: double-check we haven't been pushed somewhere else.
+      final router = GoRouter.of(context);
+      final current =
+          router.routerDelegate.currentConfiguration.uri.toString();
+      if (current != '/home' && current != '/senior-home') return;
+      context.go('/notifications-prime');
     });
   }
 
@@ -329,6 +358,8 @@ extension __HomeScreenStateExt on _HomeScreenState {
         return Icons.schedule;
       case TileType.todayStats:
         return Icons.bar_chart;
+      case TileType.stepsCounter:
+        return Icons.directions_walk;
     }
   }
 

@@ -6557,6 +6557,65 @@ INSERT INTO food_nutrition_overrides (
 | 10706 | Lea & Perrins Worcestershire (per tsp) | Lea & Perrins | US | condiment | M | TODO | 2026-04-07 | |  |
 ---
 
+## Section 148: Indian Home-Cooked Staples Missing India-Country Row (50 items)
+
+> Context: audit 2026-04-12 against `food_nutrition_overrides` found these common Indian dishes exist in the DB only under other countries (Kenya / Pakistan / Oman / UAE / Nepal / etc.) or as restaurant-branded rows (Chowrasta, Desi District, Swadeshi) — but NO plain `*_indian` row. Add one canonical `country_name='India'` entry per dish with home-cooked nutrition values (per 100g) so Indian users see them surface first.
+
+| # | Food Name | Brand | Country | Category | Priority | Status | Date Added | Date Completed | Notes |
+|---|-----------|-------|---------|----------|----------|--------|------------|----------------|-------|
+| 10707 | Paneer Tikka Masala (home) | Various | IN | curry | H | TODO | 2026-04-12 | | classic North Indian restaurant dish; only restaurant-branded rows exist |
+| 10708 | Mysore Masala Dosa (home) | Various | IN | bread | H | TODO | 2026-04-12 | | Karnataka classic; spicy red chutney; missing India row |
+| 10709 | Mutton Biryani (home) | Various | IN | rice_dish | H | TODO | 2026-04-12 | | per 100g cooked with mutton; India row missing |
+| 10710 | Chicken Vindaloo (home) | Various | IN | curry | H | TODO | 2026-04-12 | | Goan classic; vinegar-based |
+| 10711 | Chilli Chicken (Indo-Chinese, dry) | Various | IN | appetizer | H | TODO | 2026-04-12 | | Indo-Chinese; dry variant standard |
+| 10712 | Chilli Chicken (Indo-Chinese, gravy) | Various | IN | curry | H | TODO | 2026-04-12 | | gravy variant for rice pairing |
+| 10713 | Gobi Manchurian (dry) | Various | IN | appetizer | H | TODO | 2026-04-12 | | cauliflower Indo-Chinese; batch-fried |
+| 10714 | Gobi Manchurian (gravy) | Various | IN | curry | H | TODO | 2026-04-12 | | saucy variant |
+| 10715 | Hakka Noodles (veg) | Various | IN | noodles | H | TODO | 2026-04-12 | | Indo-Chinese street classic |
+| 10716 | Hakka Noodles (chicken) | Various | IN | noodles | H | TODO | 2026-04-12 | | non-veg variant |
+| 10717 | Schezwan Fried Rice | Various | IN | rice_dish | H | TODO | 2026-04-12 | | Indo-Chinese; spicy |
+| 10718 | Veg Fried Rice (Indian restaurant) | Various | IN | rice_dish | H | TODO | 2026-04-12 | | distinct from Chinese fried rice |
+| 10719 | Aloo Matar (home) | Various | IN | curry | H | TODO | 2026-04-12 | | potato + peas curry; India row missing |
+| 10720 | Paneer Pakora (fried) | Various | IN | appetizer | H | TODO | 2026-04-12 | | battered, deep-fried; India row missing |
+| 10721 | Dal Baati Churma | Various | IN | thali | M | TODO | 2026-04-12 | | Rajasthani; completely missing from DB |
+| 10722 | Thepla (plural pack of 5) | Various | IN | bread | M | TODO | 2026-04-12 | | Gujarati flatbread; currently only singular exists |
+| 10723 | Malai Kofta | Various | IN | curry | H | TODO | 2026-04-12 | | paneer + potato dumplings in creamy gravy |
+| 10724 | Navratan Korma | Various | IN | curry | M | TODO | 2026-04-12 | | mixed veg + paneer + nuts |
+| 10725 | Kadhi Pakora (Punjabi) | Various | IN | curry | H | TODO | 2026-04-12 | | yogurt-besan curry with fritters |
+| 10726 | Moong Dal Khichdi | Various | IN | rice_dish | H | TODO | 2026-04-12 | | rice + moong dal; staple comfort food |
+| 10727 | Sabudana Khichdi | Various | IN | fasting | H | TODO | 2026-04-12 | | tapioca pearls; Navratri fasting dish |
+| 10728 | Veg Pulao (basic) | Various | IN | rice_dish | H | TODO | 2026-04-12 | | home-style mixed veg rice |
+| 10729 | Egg Biryani (home) | Various | IN | rice_dish | H | TODO | 2026-04-12 | | boiled egg biryani; India row missing |
+| 10730 | Paneer Kathi Roll | Various | IN | street_food | H | TODO | 2026-04-12 | | Kolkata-style wrap |
+| 10731 | Chicken Kathi Roll | Various | IN | street_food | H | TODO | 2026-04-12 | | Kolkata classic |
+| 10732 | Lachha Paratha | Various | IN | bread | M | TODO | 2026-04-12 | | layered Punjabi bread |
+| 10733 | Chole Bhature (combo plate) | Various | IN | combo | H | TODO | 2026-04-12 | | Delhi street classic as a plate |
+| 10734 | Dabeli | Various | IN | street_food | M | TODO | 2026-04-12 | | Gujarati potato-stuffed bun |
+| 10735 | Litti Chokha | Various | IN | regional | M | TODO | 2026-04-12 | | Bihari; wheat ball + mash |
+| 10736 | Raj Kachori | Various | IN | chaat | M | TODO | 2026-04-12 | | large hollow puri chaat |
+| 10737 | Bisi Bele Bath | Various | IN | rice_dish | M | TODO | 2026-04-12 | | Karnataka rice-lentil-veg stew |
+| 10738 | Curd Rice (thayir sadam) | Various | IN | rice_dish | H | TODO | 2026-04-12 | | South Indian staple |
+| 10739 | Lemon Rice (chitranna) | Various | IN | rice_dish | H | TODO | 2026-04-12 | | South Indian tempered rice |
+| 10740 | Tamarind Rice (puliyogare) | Various | IN | rice_dish | M | TODO | 2026-04-12 | | South Indian temple rice |
+| 10741 | Rava Upma | Various | IN | breakfast | H | TODO | 2026-04-12 | | semolina breakfast |
+| 10742 | Kesari Bath (rava kesari) | Various | IN | dessert | M | TODO | 2026-04-12 | | semolina sweet |
+| 10743 | Masala Chai (home, per cup 150ml) | Various | IN | beverage | H | TODO | 2026-04-12 | | with milk + sugar; staple |
+| 10744 | Sweet Lassi (per glass 250ml) | Various | IN | beverage | H | TODO | 2026-04-12 | | yogurt drink |
+| 10745 | Salty Lassi (per glass 250ml) | Various | IN | beverage | M | TODO | 2026-04-12 | | savory variant |
+| 10746 | Chaas / Buttermilk (per glass 200ml) | Various | IN | beverage | M | TODO | 2026-04-12 | | thin yogurt drink, tempered |
+| 10747 | Kulfi (per piece) | Various | IN | dessert | H | TODO | 2026-04-12 | | traditional frozen dessert |
+| 10748 | Falooda (per glass) | Various | IN | dessert | M | TODO | 2026-04-12 | | rose syrup + noodles + basil seeds |
+| 10749 | Coconut Chutney (per tbsp) | Various | IN | condiment | H | TODO | 2026-04-12 | | dosa/idli accompaniment |
+| 10750 | Tomato Chutney (per tbsp) | Various | IN | condiment | M | TODO | 2026-04-12 | | South Indian |
+| 10751 | Mint Chutney (per tbsp) | Various | IN | condiment | H | TODO | 2026-04-12 | | samosa/tikka accompaniment |
+| 10752 | Tamarind Chutney (imli, per tbsp) | Various | IN | condiment | M | TODO | 2026-04-12 | | chaat accompaniment |
+| 10753 | Methi Thepla (per piece) | Various | IN | bread | M | TODO | 2026-04-12 | | fenugreek flatbread |
+| 10754 | Pav (Indian bread roll, per piece) | Various | IN | bread | H | TODO | 2026-04-12 | | for pav bhaji / vada pav |
+| 10755 | Kurkuri Bhindi | Various | IN | vegetable | M | TODO | 2026-04-12 | | crispy fried okra |
+| 10756 | Paneer Chilli (dry) | Various | IN | appetizer | H | TODO | 2026-04-12 | | Indo-Chinese paneer |
+
+---
+
 ## Progress Summary
 
 | Metric | Count |

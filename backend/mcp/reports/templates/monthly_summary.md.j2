@@ -1,0 +1,84 @@
+# 📅 Monthly Summary
+
+**Period:** {{ start_date }} → {{ end_date }} ({{ date_range.days }} days)
+**Athlete:** {{ user.name }}
+**Primary goal:** {{ user.primary_goal }}
+{% if user.bodyweight_lb %}**Body weight:** {{ user.bodyweight_lb }} lb ({{ user.bodyweight_kg }} kg){% endif %}
+
+---
+
+## 💪 Training Volume
+
+- **Completed:** **{{ workouts.completed_count }}** / {{ workouts.planned_count }} planned ({{ workouts.adherence_pct }}% adherence)
+- **Total time:** {{ workouts.total_minutes }} min ({{ (workouts.total_minutes / 60)|round(1) }} hours)
+- **Avg session:** {{ workouts.avg_duration_min }} min
+- **Unique exercises:** {{ workouts.unique_exercises }}
+
+{% if workouts.weekly %}
+**Weekly breakdown:**
+| Week of | Planned | Completed | Adherence |
+|---------|---------|-----------|-----------|
+{% for w in workouts.weekly %}| {{ w.week_start }} | {{ w.planned }} | {{ w.completed }} | {{ w.adherence_pct }}% |
+{% endfor %}
+{% endif %}
+
+---
+
+## 📈 Strength Progression
+
+{% if strength.current_score is not none %}
+- **Current strength score:** {{ strength.current_score }}{% if strength.delta is not none %} ({{ "+" if strength.delta >= 0 else "" }}{{ strength.delta }} this month){% endif %}
+{% endif %}
+
+{% if strength.top_lifts %}
+{% for lift in strength.top_lifts %}
+- **{{ lift.name }}**: {{ lift.start }} → **{{ lift.current }}** {{ lift.unit }} ({{ "+" if lift.delta_pct >= 0 else "" }}{{ lift.delta_pct }}%)
+{% endfor %}
+{% endif %}
+
+{% if strength.prs %}
+### 🏆 Personal Records ({{ strength.prs|length }})
+{% for pr in strength.prs %}
+- **{{ pr.exercise }}**: {{ pr.weight }} {{ pr.unit }}{% if pr.reps %} × {{ pr.reps }} reps{% endif %} _({{ pr.achieved_at[:10] }})_
+{% endfor %}
+{% endif %}
+
+{% if strength.top_lifts_by_volume %}
+### Top 5 lifts by volume
+{% for l in strength.top_lifts_by_volume %}
+- {{ l.name }}: {{ l.total_volume }} total volume
+{% endfor %}
+{% endif %}
+
+---
+
+## 🍎 Nutrition
+
+| Metric | Daily Average |
+|--------|---------------|
+| Calories | {{ nutrition.avg_calories }} kcal |
+| Protein | {{ nutrition.avg_protein_g }} g |
+| Carbs | {{ nutrition.avg_carbs_g }} g |
+| Fat | {{ nutrition.avg_fat_g }} g |
+| Fiber | {{ nutrition.avg_fiber_g }} g |
+{% if nutrition.avg_water_ml %}| Water | {{ nutrition.avg_water_ml }} ml |{% endif %}
+
+**Logging consistency:** {{ nutrition.days_logged }} / {{ nutrition.days_span }} days ({{ nutrition.log_rate_pct }}%)
+
+{% if nutrition.top_foods %}
+**Top 10 most-logged foods:**
+{% for f in nutrition.top_foods %}
+{{ loop.index }}. {{ f.name }} ({{ f.count }}×)
+{% endfor %}
+{% endif %}
+
+---
+
+## 🔥 Habits
+
+- **Current streak:** **{{ habits.current_streak }} days**
+- **Longest streak:** {{ habits.longest_streak }} days
+
+---
+
+_Generated {{ generated_at }} by FitWiz MCP._

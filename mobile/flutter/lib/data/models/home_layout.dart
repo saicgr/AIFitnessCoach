@@ -99,6 +99,7 @@ const List<TileType> defaultHiddenTiles = [
   TileType.personalRecords,
   TileType.achievements,
   TileType.quickLogWeight,
+  TileType.stepsCounter,
 ];
 
 /// Create default tiles for a new user

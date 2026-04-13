@@ -28,6 +28,7 @@ enum XPGoalType {
   workoutComplete,
   proteinGoal,
   bodyMeasurements,
+  stepsGoal,
 }
 
 // ============================================
@@ -268,6 +269,12 @@ final xpEarnedEventProvider = Provider<XPEarnedAnimationEvent?>((ref) {
 /// Whether there's an XP earned event to animate
 final hasXPEarnedEventProvider = Provider<bool>((ref) {
   return ref.watch(xpProvider).hasXPEarnedEvent;
+});
+
+/// Last coach-banner event (persona-voiced milestone congrats — e.g. 10k
+/// steps). Home screen listens and shows a top banner.
+final coachBannerEventProvider = Provider<CoachBannerEvent?>((ref) {
+  return ref.watch(xpProvider).lastCoachBannerEvent;
 });
 
 // ============================================

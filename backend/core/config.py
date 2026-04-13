@@ -50,6 +50,12 @@ class Settings(BaseSettings):
     # Supabase Configuration
     supabase_url: str
     supabase_key: str
+    # Public anon key — safe to expose to browsers. Used by the MCP consent
+    # page (`backend/mcp/consent/templates/authorize.html`) to sign users in
+    # via the Supabase JS client (email/password + Google/Apple OAuth).
+    # Get it from Supabase Dashboard → Project Settings → API → anon/public.
+    # If not set, the consent page falls back to the manual paste-token UI.
+    supabase_anon_key: Optional[str] = None
     supabase_db_password: Optional[str] = None
 
     # Database

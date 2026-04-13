@@ -246,6 +246,13 @@ const _comingSoonFeatures = [
     title: 'Quick Start',
     description: 'One-tap to start today\'s workout',
   ),
+  _ComingSoonFeature(
+    icon: Icons.favorite_rounded,
+    color: AppColors.pink,
+    title: 'Bluetooth Heart Rate Hardware',
+    description:
+        'Pair BLE chest straps & heart rate monitors for live in-workout BPM',
+  ),
 ];
 
 class _FeatureCard extends StatelessWidget {

@@ -351,7 +351,7 @@ extension _HomeScreenStateUI1 on _HomeScreenState {
     const nutritionTileTypes = {TileType.caloriesSummary, TileType.macroRings};
     const insightsTiles = {TileType.aiCoachTip, TileType.personalRecords, TileType.fitnessScore};
     const goalsTiles = {TileType.weeklyGoals, TileType.weekChanges};
-    const trackingTiles = {TileType.habits, TileType.bodyWeight, TileType.achievements, TileType.dailyStats, TileType.quickLogWeight, TileType.quickLogMeasurements, TileType.todayStats};
+    const trackingTiles = {TileType.habits, TileType.bodyWeight, TileType.achievements, TileType.dailyStats, TileType.quickLogWeight, TileType.quickLogMeasurements, TileType.todayStats, TileType.stepsCounter};
     const wellnessTiles = {TileType.moodPicker};
 
     // Group tiles by section
@@ -413,6 +413,10 @@ extension _HomeScreenStateUI1 on _HomeScreenState {
           TileType.personalRecords,
           TileType.fitnessScore,
           TileType.todayStats,
+          // DailyStepsTile has its own margin (16 horizontal) — skip the
+          // outer 16-dp padding wrapper so the card width matches other
+          // full-width tiles like Habits instead of being double-padded.
+          TileType.stepsCounter,
         };
 
         if (tilesWithOwnPadding.contains(tile.type)) {
@@ -470,6 +474,14 @@ extension _HomeScreenStateUI1 on _HomeScreenState {
       renderTileGroup(workoutTiles);
     }
 
+    // Reports & Insights entry — single high-visibility discovery card that
+    // also doubles as a week-in-progress tile. Lives right after the workout
+    // section because that's where the user's eyes already are after tapping
+    // Home, and before the heavier nutrition/insight sections.
+    slivers.add(SliverToBoxAdapter(
+      child: WeeklyReportCard(isDark: isDark),
+    ));
+
     // Render nutrition section (right after workout for prominence)
     if (nutritionTilesList.isNotEmpty) {
       slivers.add(SliverToBoxAdapter(
@@ -510,11 +522,10 @@ extension _HomeScreenStateUI1 on _HomeScreenState {
       renderTileGroup(wellnessTilesList);
     }
 
-    // Render other tiles if any
+    // Render other tiles with no generic header — if tiles belong to a
+    // category, they should have gotten the category's label above. A
+    // catch-all "Other"/"More" label reads as clutter.
     if (otherTiles.isNotEmpty) {
-      slivers.add(SliverToBoxAdapter(
-        child: _buildHomeSectionHeader('More', isDark),
-      ));
       renderTileGroup(otherTiles);
     }
 
@@ -870,6 +881,10 @@ extension _HomeScreenStateUI1 on _HomeScreenState {
     // Get the workout for hero section if needed
     final todayWorkout = _getTodayWorkoutFromState(todayWorkoutState);
     final isGenerating = _isGeneratingFromState(todayWorkoutState);
+
+    // Reports & Insights entry card — placed at the top so it's visible on
+    // every home load regardless of the user's tile layout customization.
+    slivers.add(SliverToBoxAdapter(child: WeeklyReportCard(isDark: isDark)));
 
     while (i < visibleTiles.length) {
       final tile = visibleTiles[i];

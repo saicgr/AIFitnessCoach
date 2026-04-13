@@ -282,7 +282,7 @@ class _AiNarrativeSection extends StatelessWidget {
               ),
               const SizedBox(width: 12),
               Text(
-                'AI Insights',
+                'AI Analysis',
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
@@ -617,7 +617,24 @@ class _PastReportCard extends StatelessWidget {
               ),
             ),
 
-            const SizedBox(width: 6),
+            const SizedBox(width: 2),
+            // Inline share — tap fires ShareWeeklySummarySheet without
+            // navigating into the detail screen. The IconButton consumes the
+            // gesture so the outer GestureDetector's row-tap (navigate) only
+            // fires when the user taps anywhere else on the card.
+            IconButton(
+              icon: Icon(
+                Icons.ios_share_rounded,
+                size: 18,
+                color: textMuted,
+              ),
+              tooltip: 'Share this report',
+              padding: const EdgeInsets.all(6),
+              constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+              visualDensity: VisualDensity.compact,
+              onPressed: () =>
+                  ShareWeeklySummarySheet.show(context, summary),
+            ),
             Icon(
               Icons.chevron_right,
               size: 20,

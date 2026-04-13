@@ -312,6 +312,8 @@ class LayoutPreviewWidget extends StatelessWidget {
         return Icons.schedule;
       case TileType.todayStats:
         return Icons.bar_chart;
+      case TileType.stepsCounter:
+        return Icons.directions_walk;
     }
   }
 

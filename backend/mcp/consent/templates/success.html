@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>Connection Authorized · FitWiz</title>
+  <link rel="stylesheet" href="/mcp/consent/static/consent.css" />
+</head>
+<body>
+  <main class="shell shell-center">
+    <section class="card card-success">
+      <div class="success-mark" aria-hidden="true">
+        <svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="32" cy="32" r="30" fill="#06B6D4" opacity="0.12"/>
+          <circle cx="32" cy="32" r="22" fill="#06B6D4"/>
+          <path d="M22 33 L29 40 L43 25" stroke="#ffffff" stroke-width="4"
+                stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+        </svg>
+      </div>
+      <h1 class="title">You're connected</h1>
+      <p class="lede">
+        Your FitWiz account is now authorized. You can return to Claude Desktop
+        (or whichever AI client you came from) to start using it.
+      </p>
+      <p class="muted">
+        This tab can be closed. You can revoke access anytime in
+        <strong>FitWiz → Settings → AI Integrations</strong>.
+      </p>
+      <div class="actions actions-center">
+        <button type="button" class="btn btn-secondary" id="closeBtn">Close this window</button>
+      </div>
+    </section>
+
+    <footer class="page-footer">
+      <span>© FitWiz</span>
+    </footer>
+  </main>
+
+  <script>
+    // Try to auto-close after a short delay — many AI clients pop the consent
+    // UI in a browser window and want it to go away. Browsers will refuse to
+    // close windows not opened via script, so we fall back to a Close button.
+    document.getElementById("closeBtn").addEventListener("click", () => {
+      window.close();
+    });
+    setTimeout(() => {
+      try { window.close(); } catch (_) { /* ignored */ }
+    }, 2500);
+  </script>
+</body>
+</html>

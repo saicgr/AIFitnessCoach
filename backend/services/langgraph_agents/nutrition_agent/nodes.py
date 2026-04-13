@@ -14,6 +14,7 @@ from langchain_core.messages import HumanMessage, SystemMessage, AIMessage, Tool
 from core.gemini_client import get_langchain_llm, sanitize_messages_for_response
 from .state import NutritionAgentState
 from ..tools import analyze_food_image, analyze_multi_food_images, parse_app_screenshot, parse_nutrition_label, get_nutrition_summary, get_recent_meals, log_food_from_text
+from ..tools.nutrition_tools import get_calorie_remainder, get_favorite_foods, get_todays_workout_for_meal
 from ..personality import build_personality_prompt, sanitize_coach_name
 from models.chat import AISettings
 from services.gemini_service import GeminiService
@@ -32,6 +33,9 @@ NUTRITION_TOOLS = [
     get_nutrition_summary,
     get_recent_meals,
     log_food_from_text,
+    get_calorie_remainder,
+    get_favorite_foods,
+    get_todays_workout_for_meal,
 ]
 
 # Nutrition expertise base prompt template (coach name is inserted dynamically)
@@ -57,6 +61,100 @@ When you DO need tools:
 - User asks about their logged meals
 - User wants a nutrition summary
 """
+
+
+def format_day_context_block(state: Dict[str, Any]) -> str:
+    """Render the pre-fetched day-context fields as a compact prompt block.
+
+    Reads from NutritionAgentState fields populated by _build_agent_state:
+    daily_nutrition_context, current_workout, recent_favorites, context_partial.
+    Returns an empty string when none of those fields are populated, so the
+    prompt stays lean for agents that aren't about "today's meal".
+    """
+    dnc = state.get("daily_nutrition_context") or {}
+    workout = state.get("current_workout") or {}
+    favs = state.get("recent_favorites") or []
+    partial = bool(state.get("context_partial"))
+
+    if not dnc and not workout and not favs:
+        return ""
+
+    lines = ["TODAY'S CONTEXT (use when relevant; do NOT narrate it):"]
+
+    if dnc:
+        cal_target = dnc.get("target_calories")
+        cal_consumed = dnc.get("total_calories", 0)
+        cal_remainder = dnc.get("calorie_remainder")
+        if cal_target:
+            lines.append(
+                f"• Calories: {cal_consumed}/{cal_target} kcal"
+                f" ({cal_remainder:+d} remaining)"
+            )
+        elif cal_consumed:
+            lines.append(f"• Calories today: {cal_consumed} kcal (no daily target set)")
+        else:
+            lines.append("• No calories logged yet today.")
+
+        mr = dnc.get("macros_remaining") or {}
+        macro_parts = []
+        for key, label in (("protein_g", "P"), ("carbs_g", "C"), ("fat_g", "F")):
+            val = mr.get(key)
+            if val is not None:
+                macro_parts.append(f"{label} {val:+.0f}g")
+        if macro_parts:
+            lines.append(f"• Macros remaining: {', '.join(macro_parts)}")
+
+        mtypes = dnc.get("meal_types_logged") or []
+        if mtypes:
+            lines.append(f"• Meals logged today: {', '.join(mtypes)}")
+        else:
+            lines.append("• No meals logged yet today.")
+
+        upc = dnc.get("ultra_processed_count_today")
+        if upc is not None:
+            lines.append(f"• Ultra-processed items today: {upc} (soft cap 2)")
+
+        if dnc.get("over_budget"):
+            lines.append("• ⚠️ User is OVER the calorie budget today — prefer low-cal swaps.")
+
+    if workout:
+        sched = workout.get("scheduled_time_local") or ""
+        muscles = ", ".join(workout.get("primary_muscles") or []) if workout.get("primary_muscles") else ""
+        status = "completed" if workout.get("is_completed") else "not yet done"
+        parts = [f"• Today's workout: {workout.get('name', 'Workout')}"]
+        if workout.get("type"):
+            parts[0] += f" ({workout.get('type')})"
+        if sched:
+            parts[0] += f" at {sched}"
+        parts[0] += f" — {status}"
+        if muscles:
+            parts[0] += f"; muscles: {muscles}"
+        lines.append(parts[0])
+    else:
+        lines.append("• Today is a rest day (no scheduled workout).")
+
+    if favs:
+        fav_names = [f.get("name") for f in favs[:5] if f.get("name")]
+        if fav_names:
+            lines.append(f"• User favorites ({len(fav_names)}): {', '.join(fav_names)}")
+
+    if partial:
+        lines.append(
+            "• PARTIAL CONTEXT: some data couldn't be loaded; prefer general advice."
+        )
+
+    # Style nudge for the "ask from meal-log" popup flow. Keeps the answer
+    # punchy and coach-like instead of a dry macro breakdown.
+    lines.append("")
+    lines.append(
+        "REPLY STYLE (meal-log context): motivating, casual coach tone — short "
+        "punchy sentences, everyday slang (e.g. 'solid', 'let's go', 'quick "
+        "hit'), zero disclaimers. Max ONE emoji if it genuinely fits. NO "
+        "bullet lists unless the user explicitly asks. Open with a verb or "
+        "hook, not 'Sure!'. Under 60 words."
+    )
+
+    return "\n".join(lines)
 
 
 def get_nutrition_system_prompt(ai_settings: Dict[str, Any] = None) -> str:
@@ -163,6 +261,11 @@ async def nutrition_agent_node(state: NutritionAgentState) -> Dict[str, Any]:
         context_parts.append(f"User goals: {', '.join(profile.get('goals', []))}")
         if profile.get("daily_calorie_target"):
             context_parts.append(f"Daily calorie target: {profile['daily_calorie_target']} kcal")
+
+    # Day-context block from pre-fetched state (calorie remainder, workout, favorites)
+    day_ctx = format_day_context_block(state)
+    if day_ctx:
+        context_parts.append("\n" + day_ctx)
 
     # Include calculated nutrition metrics from RAG
     if state.get("nutrition_profile_context"):
@@ -368,6 +471,10 @@ async def nutrition_response_node(state: NutritionAgentState) -> Dict[str, Any]:
         profile = state["user_profile"]
         context_parts.append(f"Goals: {', '.join(profile.get('goals', []))}")
 
+    day_ctx = format_day_context_block(state)
+    if day_ctx:
+        context_parts.append("\n" + day_ctx)
+
     if state.get("tool_results"):
         context_parts.append("\nACTIONS COMPLETED:")
         for result in state.get("tool_results", []):
@@ -446,6 +553,11 @@ async def nutrition_autonomous_node(state: NutritionAgentState) -> Dict[str, Any
         context_parts.append(f"User goals: {', '.join(profile.get('goals', []))}")
         if profile.get("daily_calorie_target"):
             context_parts.append(f"Daily calorie target: {profile['daily_calorie_target']} kcal")
+
+    # Day-context block from pre-fetched state (calorie remainder, workout, favorites)
+    day_ctx = format_day_context_block(state)
+    if day_ctx:
+        context_parts.append("\n" + day_ctx)
 
     # Include calculated nutrition metrics from RAG
     if state.get("nutrition_profile_context"):

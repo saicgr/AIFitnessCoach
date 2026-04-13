@@ -132,13 +132,38 @@ class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen>
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            // Title (left side)
-            Text(
-              'Workouts',
-              style: TextStyle(
-                fontSize: 28,
-                fontWeight: FontWeight.bold,
-                color: textPrimary,
+            // Title pill — matches the Library pill's frosted-glass look
+            // (ClipRRect + BackdropFilter). Same height, padding, border,
+            // and font so the header reads as one consistent row.
+            ClipRRect(
+              borderRadius: BorderRadius.circular(20),
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+                child: Container(
+                  height: 40,
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: isDark
+                        ? Colors.white.withValues(alpha: 0.1)
+                        : Colors.black.withValues(alpha: 0.05),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: isDark
+                          ? Colors.white.withValues(alpha: 0.15)
+                          : Colors.black.withValues(alpha: 0.08),
+                      width: 1,
+                    ),
+                  ),
+                  child: Text(
+                    'Workouts',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      color: accentColor,
+                    ),
+                  ),
+                ),
               ),
             ),
             // Right side buttons
@@ -285,6 +310,29 @@ class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen>
       }).length;
     }
 
+    // Per-day indicators for the ring row. Day indices are 0=Mon … 6=Sun.
+    // startOfWeek is the local Monday midnight for "this week".
+    final startOfWeek = DateTime(now.year, now.month, now.day)
+        .subtract(Duration(days: now.weekday - 1));
+    final endOfWeek = startOfWeek.add(const Duration(days: 7));
+    final completedDayIndices = <int>{};
+    final scheduledDayIndices = <int>{};
+    for (final w in workouts) {
+      if (w.scheduledDate == null) continue;
+      final scheduled = DateTime.tryParse(w.scheduledDate!);
+      if (scheduled == null) continue;
+      // Normalize to local calendar date so UTC-stored noon timestamps map
+      // to the right weekday in the user's zone.
+      final local =
+          DateTime(scheduled.year, scheduled.month, scheduled.day);
+      if (local.isBefore(startOfWeek) || !local.isBefore(endOfWeek)) continue;
+      final dayIdx = local.weekday - 1;
+      scheduledDayIndices.add(dayIdx);
+      if (w.isCompleted == true) {
+        completedDayIndices.add(dayIdx);
+      }
+    }
+
     return SliverList(
       delegate: SliverChildListDelegate([
         const SizedBox(height: 8),
@@ -318,7 +366,15 @@ class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen>
         ),
 
         // Weekly Progress
-        _buildSectionHeader('THIS WEEK', textSecondary),
+        _buildSectionHeader(
+          'THIS WEEK',
+          textSecondary,
+          actionText: 'History',
+          onAction: () {
+            HapticService.light();
+            context.push('/schedule');
+          },
+        ),
         const SizedBox(height: 8),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -326,6 +382,8 @@ class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen>
             completed: completedThisWeek,
             total: plannedThisWeek > 0 ? plannedThisWeek : 5,
             isDark: isDark,
+            completedDayIndices: completedDayIndices,
+            scheduledDayIndices: scheduledDayIndices,
           ),
         ),
         const SizedBox(height: 24),

@@ -141,6 +141,8 @@ class TileFactory {
         return const SizedBox.shrink();
       case TileType.todayStats:
         return const TodayStatsRow();
+      case TileType.stepsCounter:
+        return const DailyStepsTile();
     }
   }
 

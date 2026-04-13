@@ -66,40 +66,23 @@ class _TogglesTabState extends ConsumerState<_TogglesTab> {
 
     return Column(
       children: [
-        // Info banner
-        Container(
-          margin: const EdgeInsets.all(16),
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: (widget.isDark ? AppColors.cyan : _darkenColor(AppColors.cyan))
-                .withOpacity(0.1),
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: (widget.isDark
-                      ? AppColors.cyan
-                      : _darkenColor(AppColors.cyan))
-                  .withOpacity(0.3),
-            ),
-          ),
+        // Compact hint line
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 6, 16, 4),
           child: Row(
             children: [
               Icon(
                 Icons.info_outline,
-                size: 18,
-                color:
-                    widget.isDark ? AppColors.cyan : _darkenColor(AppColors.cyan),
+                size: 12,
+                color: widget.textMuted,
               ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                  'Drag to reorder • Toggle to show/hide',
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: widget.isDark
-                        ? AppColors.cyan
-                        : _darkenColor(AppColors.cyan),
-                    fontWeight: FontWeight.w500,
-                  ),
+              const SizedBox(width: 5),
+              Text(
+                'Drag to reorder • Tap to toggle',
+                style: TextStyle(
+                  fontSize: 11,
+                  color: widget.textMuted,
+                  fontWeight: FontWeight.w500,
                 ),
               ),
             ],
@@ -403,6 +386,8 @@ class _TogglesTabState extends ConsumerState<_TogglesTab> {
         return Icons.schedule;
       case TileType.todayStats:
         return Icons.bar_chart;
+      case TileType.stepsCounter:
+        return Icons.directions_walk;
     }
   }
 }

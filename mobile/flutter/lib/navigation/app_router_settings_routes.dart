@@ -128,4 +128,10 @@ List<RouteBase> _settingsRoutes() => [
         builder: (context, state) => const AISettingsScreen(),
       ),
 
+      // AI Integrations — connected external MCP clients (Claude, ChatGPT, Cursor)
+      GoRoute(
+        path: '/settings/ai-integrations',
+        builder: (context, state) => const AiIntegrationsScreen(),
+      ),
+
 ];

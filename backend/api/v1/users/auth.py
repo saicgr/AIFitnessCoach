@@ -49,7 +49,7 @@ async def google_auth(request: Request, body: GoogleAuthRequest,
     try:
         # Verify token with Supabase and get user info
         supabase_manager = get_supabase()
-        supabase_client = supabase_manager.client
+        supabase_client = supabase_manager.auth_client
 
         # Get user from Supabase using the access token
         user_response = supabase_client.auth.get_user(body.access_token)
@@ -155,13 +155,18 @@ async def email_auth(request: Request, body: EmailAuthRequest,
 
     try:
         supabase_manager = get_supabase()
-        supabase_client = supabase_manager.client
+        supabase_client = supabase_manager.auth_client
 
-        # Sign in with Supabase Auth
-        auth_response = supabase_client.auth.sign_in_with_password({
-            "email": body.email,
-            "password": body.password,
-        })
+        # Sign in with Supabase Auth — only this block should 401 on credential failure.
+        # Downstream failures (user-row creation, DB errors) are 500s, not 401s.
+        try:
+            auth_response = supabase_client.auth.sign_in_with_password({
+                "email": body.email,
+                "password": body.password,
+            })
+        except Exception as auth_err:
+            logger.warning(f"Supabase auth rejected credentials for ...{str(body.email)[-10:]}: {auth_err}")
+            raise HTTPException(status_code=401, detail="Invalid email or password")
 
         if not auth_response or not auth_response.user:
             logger.warning(f"Invalid email or password for: ...{str(body.email)[-10:]}")
@@ -225,9 +230,10 @@ async def email_auth(request: Request, body: EmailAuthRequest,
     except Exception as e:
         import traceback
         full_traceback = traceback.format_exc()
-        logger.error(f"Email auth failed: {e}", exc_info=True)
+        logger.error(f"Email auth failed (post-credential check): {e}", exc_info=True)
         logger.error(f"Full traceback: {full_traceback}", exc_info=True)
-        raise HTTPException(status_code=401, detail="Invalid email or password")
+        # Credentials were valid — this is a server-side failure (DB, RLS, etc.), not a 401.
+        raise HTTPException(status_code=500, detail="Account setup failed. Please try again or contact support.")
 
 
 @router.post("/auth/email/signup", response_model=User)
@@ -250,7 +256,7 @@ async def email_signup(request: Request, body: EmailSignupRequest,
 
     try:
         supabase_manager = get_supabase()
-        supabase_client = supabase_manager.client
+        supabase_client = supabase_manager.auth_client
 
         # Sign up with Supabase Auth
         auth_response = supabase_client.auth.sign_up({
@@ -342,7 +348,7 @@ async def forgot_password(request: Request, body: ForgotPasswordRequest):
 
     try:
         supabase_manager = get_supabase()
-        supabase_client = supabase_manager.client
+        supabase_client = supabase_manager.auth_client
 
         # Request password reset from Supabase
         # Note: Supabase will send an email with a reset link
@@ -374,7 +380,7 @@ async def reset_password(request: Request, body: ResetPasswordRequest,
 
     try:
         supabase_manager = get_supabase()
-        supabase_client = supabase_manager.client
+        supabase_client = supabase_manager.auth_client
 
         # Update the user's password using the access token from the reset link
         # The client should have exchanged the reset link for an access token
@@ -428,7 +434,7 @@ async def change_password(
 
         # Step 1: Verify current password by re-authenticating
         try:
-            supabase.client.auth.sign_in_with_password({
+            supabase.auth_client.auth.sign_in_with_password({
                 "email": current_user["email"],
                 "password": body.current_password,
             })
@@ -436,7 +442,7 @@ async def change_password(
             raise HTTPException(status_code=401, detail="Current password is incorrect")
 
         # Step 2: Update to new password
-        supabase.client.auth.update_user({"password": body.new_password})
+        supabase.auth_client.auth.update_user({"password": body.new_password})
         logger.info(f"Password changed for user: {current_user['id']}")
 
         return {"message": "Password changed successfully."}

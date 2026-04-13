@@ -38,7 +38,7 @@ async def verify_admin_token(authorization: str = Header(...)) -> AdminProfile:
         if not authorization.startswith("Bearer "):
             raise HTTPException(status_code=401, detail="Invalid authorization header format")
         token = authorization.replace("Bearer ", "")
-        supabase = get_supabase().client
+        supabase = get_supabase().auth_client
         user_response = supabase.auth.get_user(token)
         if not user_response or not user_response.user:
             raise HTTPException(status_code=401, detail="Invalid or expired token")

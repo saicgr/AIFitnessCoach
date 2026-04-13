@@ -29,8 +29,12 @@ class MyLibraryTab extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    // Initialize custom exercises provider on first build
-    ref.read(customExercisesProvider.notifier).initialize();
+    // Initialize custom exercises provider after the current build settles.
+    // Calling `initialize()` synchronously inside build() mutates provider
+    // state while the widget tree is building, which Riverpod rejects.
+    Future.microtask(
+      () => ref.read(customExercisesProvider.notifier).initialize(),
+    );
 
     return RefreshIndicator(
       onRefresh: () async {

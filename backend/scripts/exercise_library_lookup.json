@@ -103,10 +103,10 @@
     "has_video": true,
     "has_image": true
   },
-  "4 coners side step_female": {
+  "4 corners side step_female": {
     "id": "7023dffb-c227-4673-84e6-125d3b781a85",
-    "name": "4 Coners Side Step",
-    "original_name": "4 Coners Side Step_female",
+    "name": "4 Corners Side Step",
+    "original_name": "4 Corners Side Step_female",
     "equipment": "Bodyweight",
     "body_part": "Bodyweight",
     "target_muscle": "Quadriceps (Quadriceps Femoris), Hamstrings (Biceps femoris, Semitendinosus, Semimembranosus), Glutes (gluteus maximus, gluteus mideus)",
@@ -116,10 +116,10 @@
     "has_video": false,
     "has_image": false
   },
-  "4 coners side step": {
+  "4 corners side step": {
     "id": "7023dffb-c227-4673-84e6-125d3b781a85",
-    "name": "4 Coners Side Step",
-    "original_name": "4 Coners Side Step_female",
+    "name": "4 Corners Side Step",
+    "original_name": "4 Corners Side Step_female",
     "equipment": "Bodyweight",
     "body_part": "Bodyweight",
     "target_muscle": "Quadriceps (Quadriceps Femoris), Hamstrings (Biceps femoris, Semitendinosus, Semimembranosus), Glutes (gluteus maximus, gluteus mideus)",

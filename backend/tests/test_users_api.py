@@ -76,7 +76,7 @@ class TestGoogleAuthEndpoint:
         """Test Google auth returns 401 for invalid token."""
         # Mock Supabase to return None user (invalid token)
         mock_supabase_instance = MagicMock()
-        mock_supabase_instance.client.auth.get_user.return_value = MagicMock(user=None)
+        mock_supabase_instance.auth_client.auth.get_user.return_value = MagicMock(user=None)
         mock_supabase.return_value = mock_supabase_instance
 
         response = client.post(
@@ -98,7 +98,7 @@ class TestGoogleAuthEndpoint:
         mock_user.user_metadata = {"full_name": "Test User"}
 
         mock_supabase_instance = MagicMock()
-        mock_supabase_instance.client.auth.get_user.return_value = MagicMock(user=mock_user)
+        mock_supabase_instance.auth_client.auth.get_user.return_value = MagicMock(user=mock_user)
         mock_supabase.return_value = mock_supabase_instance
 
         # Mock database - user exists
@@ -141,7 +141,7 @@ class TestGoogleAuthEndpoint:
         mock_user.user_metadata = {"full_name": "New User"}
 
         mock_supabase_instance = MagicMock()
-        mock_supabase_instance.client.auth.get_user.return_value = MagicMock(user=mock_user)
+        mock_supabase_instance.auth_client.auth.get_user.return_value = MagicMock(user=mock_user)
         mock_supabase.return_value = mock_supabase_instance
 
         # Mock database - user doesn't exist, then gets created

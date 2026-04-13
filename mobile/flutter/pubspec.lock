@@ -694,6 +694,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "4.5.2"
+  flutter_body_atlas:
+    dependency: "direct main"
+    description:
+      name: flutter_body_atlas
+      sha256: "8876e3b0beb115a73cbecc8f2b5eeac58f7acb04fac527aee847fc6c655ec8fd"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.1.4"
   flutter_cache_manager:
     dependency: "direct main"
     description:
@@ -1472,6 +1480,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.9.1"
+  path_drawing:
+    dependency: transitive
+    description:
+      name: path_drawing
+      sha256: bbb1934c0cbb03091af082a6389ca2080345291ef07a5fa6d6e078ba8682f977
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.0.1"
   path_parsing:
     dependency: transitive
     description:
@@ -2534,5 +2550,5 @@ packages:
     source: hosted
     version: "2.1.0"
 sdks:
-  dart: ">=3.10.3 <4.0.0"
+  dart: ">=3.10.8 <4.0.0"
   flutter: ">=3.38.4"

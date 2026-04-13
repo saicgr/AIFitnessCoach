@@ -11,6 +11,7 @@ import '../../data/models/training_intensity.dart';
 import '../../data/providers/scores_provider.dart';
 import '../../core/providers/training_intensity_provider.dart';
 import '../../data/services/haptic_service.dart';
+import '../../utils/share_report_helper.dart';
 import '../../widgets/pill_app_bar.dart';
 
 // ============================================================================
@@ -33,6 +34,7 @@ class PersonalRecordsScreen extends ConsumerStatefulWidget {
 
 class _PersonalRecordsScreenState extends ConsumerState<PersonalRecordsScreen> {
   final _searchController = TextEditingController();
+  final GlobalKey _reportKey = GlobalKey();
   String _searchQuery = '';
   _SortMode _sortMode = _SortMode.recentPr;
   bool _sortAscending = false;
@@ -93,10 +95,27 @@ class _PersonalRecordsScreenState extends ConsumerState<PersonalRecordsScreen> {
 
     return Scaffold(
       backgroundColor: bg,
-      appBar: const PillAppBar(title: 'Personal Records'),
+      appBar: PillAppBar(
+        title: 'Personal Records',
+        actions: [
+          PillAppBarAction(
+            icon: Icons.ios_share_rounded,
+            onTap: () => shareReportScreen(
+              context: context,
+              repaintKey: _reportKey,
+              caption: 'My FitWiz personal records',
+              subject: 'My PRs',
+            ),
+          ),
+        ],
+      ),
       body: isLoading
           ? const Center(child: CircularProgressIndicator())
-          : Column(
+          : RepaintBoundary(
+              key: _reportKey,
+              child: Container(
+                color: bg,
+                child: Column(
               children: [
                 // Summary row
                 if (prStats != null)
@@ -136,6 +155,8 @@ class _PersonalRecordsScreenState extends ConsumerState<PersonalRecordsScreen> {
                         ),
                 ),
               ],
+            ),
+              ),
             ),
     );
   }

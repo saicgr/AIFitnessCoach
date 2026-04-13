@@ -2,6 +2,7 @@
 library;
 
 export 'next_workout_card.dart';
+export 'steps_counter_card.dart';
 export 'quick_start_card.dart';
 export 'weekly_progress_card.dart';
 export 'weekly_goals_card.dart';
@@ -35,3 +36,4 @@ export 'weekly_calendar_tile.dart';
 export 'muscle_heatmap_tile.dart';
 export 'compliance_ring_card.dart';
 export 'wellness_checkin_card.dart';
+export 'weekly_report_card.dart';

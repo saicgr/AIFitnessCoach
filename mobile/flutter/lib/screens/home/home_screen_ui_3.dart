@@ -35,6 +35,11 @@ extension _HomeScreenStateUI3 on _HomeScreenState {
         ),
       ),
 
+      // Reports & Insights entry — mirrors the placement in the dynamic tile
+      // renderer so the card is consistently visible in both default and
+      // customized home layouts.
+      SliverToBoxAdapter(child: WeeklyReportCard(isDark: isDark)),
+
       // Quick Actions Row
       SliverToBoxAdapter(
         child: Padding(

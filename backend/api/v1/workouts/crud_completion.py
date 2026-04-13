@@ -17,7 +17,7 @@ from core.auth import get_current_user, verify_resource_ownership
 from core.exceptions import safe_internal_error
 from core.timezone_utils import resolve_timezone
 
-from core.db import get_supabase_db as get_db
+from core.db import get_supabase_db
 from core.logger import get_logger
 from models.schemas import Workout
 
@@ -76,7 +76,7 @@ async def complete_workout(
     logger.info(f"Completing workout: id={workout_id}")
     try:
         db = get_supabase_db()
-        supabase = get_db().client
+        supabase = db.client
 
         existing = db.get_workout(workout_id)
         if not existing:
@@ -507,7 +507,7 @@ async def get_workout_completion_summary(workout_id: str,
     logger.info(f"Fetching workout summary: id={workout_id}")
     try:
         db = get_supabase_db()
-        supabase = get_db().client
+        supabase = db.client
 
         existing = db.get_workout(workout_id)
         if not existing:
@@ -733,7 +733,7 @@ async def update_exercise_sets(
     logger.info(f"Updating exercise sets: workout={workout_id}, exercise_index={request.exercise_index}")
     try:
         db = get_supabase_db()
-        supabase = get_db().client
+        supabase = db.client
 
         existing = db.get_workout(workout_id)
         if not existing:

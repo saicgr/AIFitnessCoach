@@ -22,7 +22,7 @@ class StatsAchievementsTemplate extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: 320,
-      height: 440,
+      height: 480,
       decoration: BoxDecoration(
         gradient: const LinearGradient(
           begin: Alignment.topCenter,

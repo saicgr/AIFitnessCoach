@@ -32,7 +32,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from core.auth import get_current_user
 from core.exceptions import safe_internal_error
 
-from core.db import get_supabase_db as get_db
+from core.db import get_supabase_db
 from core.logger import get_logger
 from models.schemas import (
     SetAdjustmentRequest,
@@ -120,7 +120,7 @@ async def adjust_sets(workout_id: str, request: SetAdjustmentRequest,
 
     try:
         db = get_supabase_db()
-        supabase = get_db().client
+        supabase = db.client
 
         # Verify workout exists
         workout = db.get_workout(workout_id)
@@ -257,7 +257,7 @@ async def edit_set(workout_id: str, set_number: int, request: EditSetRequest,
 
     try:
         db = get_supabase_db()
-        supabase = get_db().client
+        supabase = db.client
 
         # Verify workout exists
         workout = db.get_workout(workout_id)
@@ -394,7 +394,7 @@ async def delete_set(
 
     try:
         db = get_supabase_db()
-        supabase = get_db().client
+        supabase = db.client
 
         # Verify workout exists
         workout = db.get_workout(workout_id)
@@ -526,7 +526,7 @@ async def get_workout_adjustments(workout_id: str,
 
     try:
         db = get_supabase_db()
-        supabase = get_db().client
+        supabase = db.client
 
         # Verify workout exists
         workout = db.get_workout(workout_id)

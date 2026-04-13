@@ -31,29 +31,13 @@ class DiscoverTab extends ConsumerWidget {
       children: [
         _AiHeroCard(isDark: isDark),
         const SizedBox(height: 20),
+        _ForYouSection(presets: forYouPresets, isDark: isDark),
+        const SizedBox(height: 20),
+        _TrainingPlansSection(isDark: isDark),
+        const SizedBox(height: 20),
         _BrowseSection(
           isDark: isDark,
           onMuscleSelected: onSwitchToExercises,
-        ),
-        const SizedBox(height: 20),
-        _ForYouSection(presets: forYouPresets, isDark: isDark),
-        const SizedBox(height: 20),
-        _SplitCategorySection(
-          title: 'Classic Splits',
-          category: 'classic',
-          isDark: isDark,
-        ),
-        const SizedBox(height: 16),
-        _SplitCategorySection(
-          title: 'AI-Powered',
-          category: 'ai_powered',
-          isDark: isDark,
-        ),
-        const SizedBox(height: 16),
-        _SplitCategorySection(
-          title: 'Specialty',
-          category: 'specialty',
-          isDark: isDark,
         ),
       ],
     );
@@ -289,7 +273,7 @@ class _ForYouSection extends StatelessWidget {
             onTap: () {
               HapticService.light();
               context.push('/chat', extra: {
-                'initialMessage': 'I\'m not sure what to train. Can you suggest a workout split for me based on my goals and what I\'ve been doing recently?',
+                'initialMessage': 'I\'m not sure what to train. Can you suggest a training plan for me based on my goals and what I\'ve been doing recently?',
               });
             },
             child: Row(
@@ -319,43 +303,66 @@ class _ForYouSection extends StatelessWidget {
 }
 
 // ============================================================================
-// SPLIT CATEGORY SECTION (Reusable for Classic / AI-Powered / Specialty)
+// TRAINING PLANS SECTION (unified: All / Classic / AI-Powered / Specialty)
 // ============================================================================
 
-class _SplitCategorySection extends StatelessWidget {
-  final String title;
-  final String category;
+class _TrainingPlansSection extends StatefulWidget {
   final bool isDark;
 
-  const _SplitCategorySection({
-    required this.title,
-    required this.category,
-    required this.isDark,
-  });
+  const _TrainingPlansSection({required this.isDark});
+
+  @override
+  State<_TrainingPlansSection> createState() => _TrainingPlansSectionState();
+}
+
+class _TrainingPlansSectionState extends State<_TrainingPlansSection> {
+  String _selectedCategory = 'all';
+
+  static const _categories = [
+    ('all', 'All'),
+    ('classic', 'Classic'),
+    ('ai_powered', 'AI-Powered'),
+    ('specialty', 'Specialty'),
+  ];
+
+  List<AISplitPreset> _presetsForSelected() {
+    if (_selectedCategory == 'all') {
+      return [
+        ...getPresetsByCategory('classic'),
+        ...getPresetsByCategory('ai_powered'),
+        ...getPresetsByCategory('specialty'),
+      ];
+    }
+    return getPresetsByCategory(_selectedCategory);
+  }
 
   @override
   Widget build(BuildContext context) {
-    final presets = getPresetsByCategory(category);
+    final isDark = widget.isDark;
     final textPrimary =
         isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textSecondary =
         isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final purple = isDark ? AppColors.purple : AppColorsLight.purple;
 
+    final presets = _presetsForSelected();
     if (presets.isEmpty) return const SizedBox.shrink();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Section header with View All
+        // Section header
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                title,
+                'Training Plans',
                 style: TextStyle(
-                  fontSize: 16,
+                  fontSize: 18,
                   fontWeight: FontWeight.w700,
                   color: textPrimary,
                 ),
@@ -363,7 +370,10 @@ class _SplitCategorySection extends StatelessWidget {
               GestureDetector(
                 onTap: () {
                   HapticService.light();
-                  context.push('/library/splits?category=$category');
+                  final qs = _selectedCategory == 'all'
+                      ? ''
+                      : '?category=$_selectedCategory';
+                  context.push('/library/splits$qs');
                 },
                 child: Text(
                   'View All',
@@ -377,6 +387,54 @@ class _SplitCategorySection extends StatelessWidget {
             ],
           ),
         ).animate().fadeIn(duration: 300.ms).slideY(begin: 0.05),
+
+        const SizedBox(height: 10),
+
+        // Category chips
+        SizedBox(
+          height: 32,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            itemCount: _categories.length,
+            separatorBuilder: (_, __) => const SizedBox(width: 8),
+            itemBuilder: (context, i) {
+              final (key, label) = _categories[i];
+              final selected = _selectedCategory == key;
+              return GestureDetector(
+                onTap: () {
+                  HapticService.light();
+                  setState(() => _selectedCategory = key);
+                },
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 180),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 6,
+                  ),
+                  decoration: BoxDecoration(
+                    color: selected ? purple : elevated,
+                    borderRadius: BorderRadius.circular(16),
+                    border: selected
+                        ? null
+                        : Border.all(
+                            color: textMuted.withValues(alpha: 0.2),
+                          ),
+                  ),
+                  child: Text(
+                    label,
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight:
+                          selected ? FontWeight.w600 : FontWeight.w500,
+                      color: selected ? Colors.white : textSecondary,
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
 
         const SizedBox(height: 12),
 
@@ -446,24 +504,31 @@ class _BrowseSection extends ConsumerWidget {
 
         const SizedBox(height: 12),
 
-        // Muscle group pills
-        SizedBox(
-          height: 90,
-          child: ListView.builder(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            itemCount: _muscleGroups.length,
-            itemBuilder: (context, index) {
+        // Muscle group wrap grid (reflows to fit screen width, no horizontal scroll)
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Wrap(
+            spacing: 8,
+            runSpacing: 12,
+            alignment: WrapAlignment.start,
+            children: List.generate(_muscleGroups.length, (index) {
               final muscle = _muscleGroups[index];
               final imagePath = muscleGroupAssets[muscle.name];
-              final count = categoryData.whenOrNull(
-                data: (data) => data.all[muscle.name]?.length ?? 0,
+              final countLabel = categoryData.when(
+                data: (data) {
+                  final n = data.totalCounts?[muscle.name] ??
+                      data.all[muscle.name]?.length ??
+                      0;
+                  return _formatBucketCount(n);
+                },
+                loading: () => '—',
+                error: (_, __) => '',
               );
 
               return _MusclePill(
                 name: muscle.name,
                 imagePath: imagePath,
-                exerciseCount: count ?? 0,
+                countLabel: countLabel,
                 isDark: isDark,
                 animationIndex: index,
                 onTap: () {
@@ -471,7 +536,7 @@ class _BrowseSection extends ConsumerWidget {
                   onMuscleSelected?.call(muscle.name);
                 },
               );
-            },
+            }),
           ),
         ),
 
@@ -492,14 +557,14 @@ class _BrowseSection extends ConsumerWidget {
 
         const SizedBox(height: 12),
 
-        // Equipment pills
-        SizedBox(
-          height: 90,
-          child: ListView.builder(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            itemCount: _equipmentTypes.length,
-            itemBuilder: (context, index) {
+        // Equipment wrap grid (fits all 4 in one row on every phone size)
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Wrap(
+            spacing: 8,
+            runSpacing: 12,
+            alignment: WrapAlignment.start,
+            children: List.generate(_equipmentTypes.length, (index) {
               final equipment = _equipmentTypes[index];
               return _EquipmentPill(
                 name: equipment.name,
@@ -512,12 +577,23 @@ class _BrowseSection extends ConsumerWidget {
                   onMuscleSelected?.call(equipment.name);
                 },
               );
-            },
+            }),
           ),
         ),
       ],
     );
   }
+}
+
+/// Bucket exact counts into friendlier labels:
+///   0        -> ''        (hide)
+///   1..99    -> exact
+///   >=100    -> "Npp+" where N is floor(count/100)*100 (e.g. 354 -> "300+", 782 -> "700+")
+String _formatBucketCount(int count) {
+  if (count <= 0) return '';
+  if (count < 100) return '$count';
+  final bucket = (count ~/ 100) * 100;
+  return '$bucket+';
 }
 
 // ============================================================================
@@ -527,7 +603,7 @@ class _BrowseSection extends ConsumerWidget {
 class _MusclePill extends StatelessWidget {
   final String name;
   final String? imagePath;
-  final int exerciseCount;
+  final String countLabel;
   final bool isDark;
   final int animationIndex;
   final VoidCallback onTap;
@@ -535,7 +611,7 @@ class _MusclePill extends StatelessWidget {
   const _MusclePill({
     required this.name,
     this.imagePath,
-    required this.exerciseCount,
+    required this.countLabel,
     required this.isDark,
     required this.animationIndex,
     required this.onTap,
@@ -550,9 +626,8 @@ class _MusclePill extends StatelessWidget {
 
     return GestureDetector(
       onTap: onTap,
-      child: Container(
+      child: SizedBox(
         width: 72,
-        margin: const EdgeInsets.only(right: 10),
         child: Column(
           children: [
             // Circular avatar with anatomy image
@@ -597,10 +672,10 @@ class _MusclePill extends StatelessWidget {
               overflow: TextOverflow.ellipsis,
               textAlign: TextAlign.center,
             ),
-            // Count
-            if (exerciseCount > 0)
+            // Count (bucketed or "—" during load)
+            if (countLabel.isNotEmpty)
               Text(
-                '$exerciseCount',
+                countLabel,
                 style: TextStyle(
                   fontSize: 10,
                   color: textMuted,
@@ -650,9 +725,8 @@ class _EquipmentPill extends StatelessWidget {
 
     return GestureDetector(
       onTap: onTap,
-      child: Container(
+      child: SizedBox(
         width: 72,
-        margin: const EdgeInsets.only(right: 10),
         child: Column(
           children: [
             // Circular icon with color

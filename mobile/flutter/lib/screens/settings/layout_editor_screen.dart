@@ -78,6 +78,8 @@ class _LayoutEditorScreenState extends ConsumerState<LayoutEditorScreen>
           SegmentedTabBar(
             controller: _tabController,
             showIcons: false,
+            compact: true,
+            padding: const EdgeInsets.fromLTRB(16, 4, 16, 4),
             tabs: const [
               SegmentedTabItem(label: 'Toggles'),
               SegmentedTabItem(label: 'Discover'),
