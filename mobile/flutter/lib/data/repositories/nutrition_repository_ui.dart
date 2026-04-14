@@ -48,7 +48,12 @@ extension NutritionRepositoryExt on NutritionRepository {
   }
 
 
-  /// Update macros/weight on an existing food log (portion adjustment)
+  /// Update macros/weight on an existing food log (portion adjustment).
+  ///
+  /// [itemEdits] carries optional per-field audit rows — sent alongside the
+  /// update so the backend can write them to the food_log_edits table atomically.
+  /// [foodItems] is the full updated items array — required when individual
+  /// item macros were edited so the JSONB column reflects the new values.
   Future<Map<String, dynamic>> updateFoodLog({
     required String logId,
     required int totalCalories,
@@ -58,6 +63,8 @@ extension NutritionRepositoryExt on NutritionRepository {
     double? fiberG,
     double? weightG,
     double? portionMultiplier,
+    List<FoodItemEdit> itemEdits = const [],
+    List<Map<String, dynamic>>? foodItems,
   }) async {
     try {
       final body = <String, dynamic>{
@@ -69,6 +76,10 @@ extension NutritionRepositoryExt on NutritionRepository {
       if (fiberG != null) body['fiber_g'] = fiberG;
       if (weightG != null) body['weight_g'] = weightG;
       if (portionMultiplier != null) body['portion_multiplier'] = portionMultiplier;
+      if (foodItems != null) body['food_items'] = foodItems;
+      if (itemEdits.isNotEmpty) {
+        body['item_edits'] = itemEdits.map((e) => e.toJson()).toList();
+      }
 
       final response = await _client.put(
         '/nutrition/food-logs/$logId',
@@ -77,6 +88,22 @@ extension NutritionRepositoryExt on NutritionRepository {
       return response.data as Map<String, dynamic>;
     } catch (e) {
       debugPrint('Error updating food log: $e');
+      rethrow;
+    }
+  }
+
+  /// Fetch per-field edit history for a food log.
+  Future<List<FoodLogEditRecord>> listFoodLogEdits(String logId) async {
+    try {
+      final response = await _client.get('/nutrition/food-logs/$logId/edits');
+      final data = response.data;
+      if (data is! List) return const [];
+      return data
+          .whereType<Map<String, dynamic>>()
+          .map(FoodLogEditRecord.fromJson)
+          .toList();
+    } catch (e) {
+      debugPrint('Error listing food log edits: $e');
       rethrow;
     }
   }
@@ -136,7 +163,9 @@ extension NutritionRepositoryExt on NutritionRepository {
   }
 
 
-  /// Update mood/energy on a food log
+  /// Update mood/energy on a food log. On success, also cancels the 45-min
+  /// reminder push if one was scheduled for this log — no point nudging the
+  /// user after they've already answered.
   Future<Map<String, dynamic>> updateFoodLogMood({
     required String logId,
     String? moodBefore,
@@ -153,6 +182,14 @@ extension NutritionRepositoryExt on NutritionRepository {
         '/nutrition/food-logs/$logId/mood',
         data: body,
       );
+      // Best-effort cancel — don't block the mood save if it throws.
+      if (moodAfter != null || energyLevel != null) {
+        try {
+          await PostMealCheckinReminderService.instance.cancelForLog(logId);
+        } catch (cancelErr) {
+          debugPrint('⚠️ reminder cancel failed: $cancelErr');
+        }
+      }
       return response.data as Map<String, dynamic>;
     } catch (e) {
       debugPrint('Error updating food log mood: $e');
@@ -373,12 +410,24 @@ extension NutritionRepositoryExt on NutritionRepository {
         saturatedFatG: result.saturatedFatG,
       );
 
+      // Meal-suggestion widget refresh on log — staged, see Coming Soon.
+      // _refreshMealSuggestionWidget();
+
       return result;
     } catch (e) {
       debugPrint('Error logging food from text: $e');
       rethrow;
     }
   }
+
+  // Re-enable when the meal-suggestion widget feature goes live.
+  // void _refreshMealSuggestionWidget() {
+  //   try {
+  //     MealSuggestionWidgetService.instance.refreshNow();
+  //   } catch (_) {
+  //     // intentional: widget refresh is never required to succeed
+  //   }
+  // }
 
 
   /// Log pre-analyzed food directly (for restaurant mode, manual adjustments)
@@ -426,9 +475,16 @@ extension NutritionRepositoryExt on NutritionRepository {
     // Image storage
     String? imageUrl,
     String? imageStorageKey,
+    // AI/vision description of the meal (preserved so the meal list shows
+    // what the AI saw instead of the generic "Logged via image" placeholder).
+    String? aiFeedback,
+    // Originating user input (caption, dish name, chat prompt).
+    String? userQuery,
     // Scores
     int? healthScore,
     int? overallMealScore,
+    // Per-field edits made in the Log Meal sheet before saving (audit trail)
+    List<FoodItemEdit> itemEdits = const [],
   }) async {
     try {
       final response = await _client.post(
@@ -446,8 +502,12 @@ extension NutritionRepositoryExt on NutritionRepository {
           if (notes != null) 'notes': notes,
           if (imageUrl != null) 'image_url': imageUrl,
           if (imageStorageKey != null) 'image_storage_key': imageStorageKey,
+          if (aiFeedback != null) 'ai_feedback': aiFeedback,
+          if (userQuery != null) 'user_query': userQuery,
           if (healthScore != null) 'health_score': healthScore,
           if (overallMealScore != null) 'overall_meal_score': overallMealScore,
+          if (itemEdits.isNotEmpty)
+            'item_edits': itemEdits.map((e) => e.toJson()).toList(),
           // Micronutrients
           if (sodiumMg != null) 'sodium_mg': sodiumMg,
           if (sugarG != null) 'sugar_g': sugarG,
@@ -521,6 +581,7 @@ extension NutritionRepositoryExt on NutritionRepository {
     required LogFoodResponse analyzedFood,
     double portionMultiplier = 1.0,
     String sourceType = 'text',
+    List<FoodItemEdit> itemEdits = const [],
   }) async {
     debugPrint('💾 [Nutrition] Saving analyzed food for $userId');
 
@@ -542,14 +603,16 @@ extension NutritionRepositoryExt on NutritionRepository {
     final adjustedIron = analyzedFood.ironMg != null ? analyzedFood.ironMg! * portionMultiplier : null;
     final adjustedPotassium = analyzedFood.potassiumMg != null ? analyzedFood.potassiumMg! * portionMultiplier : null;
 
-    // Adjust food items
+    // Adjust food items — serialize typed rankings back to JSON maps for the
+    // backend request, then apply the portion multiplier in-place.
     final adjustedItems = analyzedFood.foodItems.map((item) {
+      final raw = item.toJson();
       return {
-        ...item,
-        'calories': ((item['calories'] ?? 0) * portionMultiplier).round(),
-        'protein_g': ((item['protein_g'] ?? 0) * portionMultiplier).round(),
-        'carbs_g': ((item['carbs_g'] ?? 0) * portionMultiplier).round(),
-        'fat_g': ((item['fat_g'] ?? 0) * portionMultiplier).round(),
+        ...raw,
+        'calories': (((raw['calories'] as num?) ?? 0) * portionMultiplier).round(),
+        'protein_g': (((raw['protein_g'] as num?) ?? 0) * portionMultiplier).round(),
+        'carbs_g': (((raw['carbs_g'] as num?) ?? 0) * portionMultiplier).round(),
+        'fat_g': (((raw['fat_g'] as num?) ?? 0) * portionMultiplier).round(),
         if (portionMultiplier != 1.0) 'portion_adjusted': true,
         if (portionMultiplier != 1.0) 'portion_multiplier': portionMultiplier,
       };
@@ -578,8 +641,13 @@ extension NutritionRepositoryExt on NutritionRepository {
       // Image storage and scores from analysis
       imageUrl: analyzedFood.imageUrl,
       imageStorageKey: analyzedFood.imageStorageKey,
+      // Forward the vision description (analyze-image-stream aliases Gemini's
+      // `feedback` string onto `ai_suggestion`). This is what the meal list
+      // surfaces instead of the generic "Logged via image" placeholder.
+      aiFeedback: analyzedFood.aiSuggestion,
       healthScore: analyzedFood.healthScore,
       overallMealScore: analyzedFood.overallMealScore,
+      itemEdits: itemEdits,
     );
   }
 

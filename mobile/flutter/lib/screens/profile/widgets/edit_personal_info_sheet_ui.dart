@@ -13,7 +13,7 @@ extension _EditPersonalInfoSheetStateUI on _EditPersonalInfoSheetState {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildSectionTitle('PROFILE PHOTO', textMuted),
+        _buildSectionTitle('PROFILE PHOTO', textMuted, icon: Icons.photo_camera_outlined, accent: cyan),
         const SizedBox(height: 12),
         Center(
           child: GestureDetector(
@@ -157,7 +157,16 @@ extension _EditPersonalInfoSheetStateUI on _EditPersonalInfoSheetState {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            _buildSectionTitle(label, textMuted),
+            _buildSectionTitle(
+              label,
+              textMuted,
+              icon: isHeight
+                  ? Icons.height_rounded
+                  : (label == 'TARGET WEIGHT'
+                      ? Icons.flag_rounded
+                      : Icons.monitor_weight_outlined),
+              accent: cyan,
+            ),
             Row(
               mainAxisSize: MainAxisSize.min,
               children: [

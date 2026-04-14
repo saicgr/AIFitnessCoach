@@ -25,6 +25,39 @@ class _RegenerateWorkoutSheetState
   Timer? _elapsedTimer;
   Duration _elapsed = Duration.zero;
 
+  // Rotating substatus hints so the UI never looks frozen during the long
+  // Gemini call (step 3 can run 15–25s with no backend events).
+  Timer? _hintRotationTimer;
+  int _hintIndex = 0;
+
+  // Hints appropriate for the phase the backend is currently in. Step 3
+  // (AI generation) is the only truly slow phase, so it gets the richest set.
+  static const Map<int, List<String>> _stepHints = {
+    0: ['Warming up'],
+    1: ['Reading your profile', 'Checking preferences', 'Loading injuries and goals'],
+    2: [
+      'Scanning the exercise library',
+      'Filtering by your equipment',
+      'Matching your fitness level',
+      'Considering focus areas',
+    ],
+    3: [
+      'Balancing muscle groups',
+      'Dialing in sets and reps',
+      'Sequencing compound lifts first',
+      'Matching intensity to your difficulty',
+      'Pairing push and pull work',
+      'Respecting your injury list',
+      'Tuning rest periods',
+      'Adding variety to prevent plateaus',
+    ],
+    4: ['Saving to your plan', 'Updating your schedule'],
+  };
+
+  // Rough expected total generation time — used only for the "~Ns remaining"
+  // hint so the user has a sense of pace.
+  static const Duration _estimatedTotal = Duration(seconds: 22);
+
   // Custom inputs
   String _customFocusArea = '';
   String _customInjury = '';
@@ -164,12 +197,52 @@ class _RegenerateWorkoutSheetState
         setState(() => _elapsed = _stopwatch.elapsed);
       }
     });
+    _startHintRotation();
   }
 
   void _stopElapsedTimer() {
     _stopwatch.stop();
     _elapsedTimer?.cancel();
     _elapsedTimer = null;
+    _stopHintRotation();
+  }
+
+  void _startHintRotation() {
+    _hintRotationTimer?.cancel();
+    _hintIndex = 0;
+    _hintRotationTimer = Timer.periodic(const Duration(seconds: 3), (_) {
+      if (!mounted) return;
+      setState(() => _hintIndex++);
+    });
+  }
+
+  void _stopHintRotation() {
+    _hintRotationTimer?.cancel();
+    _hintRotationTimer = null;
+  }
+
+  /// Returns the substatus shown under the main progress message. Prefers the
+  /// backend-provided detail, and falls back to a rotating hint for the
+  /// current step so the UI keeps moving even when nothing is being emitted.
+  String? _displayDetail() {
+    if (_progressDetail != null && _progressDetail!.isNotEmpty) {
+      return _progressDetail;
+    }
+    final hints = _stepHints[_currentStep];
+    if (hints == null || hints.isEmpty) return null;
+    return hints[_hintIndex % hints.length];
+  }
+
+  /// Rough remaining-time hint ("~Ns remaining" or "Almost there..."). Returns
+  /// null before the first real progress event so we don't promise a time
+  /// we haven't started measuring against.
+  String? _estimatedRemainingHint() {
+    if (!_isRegenerating) return null;
+    final remaining = _estimatedTotal - _elapsed;
+    if (remaining.inSeconds <= 2) {
+      return 'Almost there…';
+    }
+    return '~${remaining.inSeconds}s remaining';
   }
 
   String _formatElapsed(Duration d) {
@@ -181,6 +254,7 @@ class _RegenerateWorkoutSheetState
   @override
   void dispose() {
     _stopElapsedTimer();
+    _stopHintRotation();
     _tabController.dispose();
     _focusAreaController.dispose();
     _injuryController.dispose();

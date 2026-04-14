@@ -400,10 +400,13 @@ class XPNotifier extends StateNotifier<XPState> {
         loggedWeight: status.weightLog,
         hitProteinGoal: status.proteinGoal,
         loggedBodyMeasurements: status.bodyMeasurements,
+        hitStepsGoal: status.stepsGoal,
+        hitHydrationGoal: status.hydrationGoal,
+        hitCalorieGoal: status.calorieGoal,
       );
 
       state = state.copyWith(dailyGoals: goals);
-      debugPrint('[XPProvider] Synced daily goals: ${goals.completedCount}/${goals.totalCount} (weight=${status.weightLog}, meal=${status.mealLog}, workout=${status.workoutComplete}, protein=${status.proteinGoal}, bodyMeasurements=${status.bodyMeasurements})');
+      debugPrint('[XPProvider] Synced daily goals: ${goals.completedCount}/${goals.totalCount} (weight=${status.weightLog}, meal=${status.mealLog}, workout=${status.workoutComplete}, protein=${status.proteinGoal}, bodyMeasurements=${status.bodyMeasurements}, steps=${status.stepsGoal}, hydration=${status.hydrationGoal}, calorie=${status.calorieGoal})');
     } catch (e) {
       debugPrint('[XPProvider] Error syncing daily goals: $e');
     }
@@ -645,6 +648,70 @@ class XPNotifier extends StateNotifier<XPState> {
       await checkAndUnlockActivityCrate();
 
       // Always refresh XP data to keep progress bar in sync.
+      await loadUserXP(userId: _currentUserId, showLoading: false);
+    }
+  }
+
+  /// Mark the daily hydration goal hit (user reached their daily fluid target).
+  /// Idempotent per day.
+  Future<void> markHydrationGoalHit() async {
+    final goals = _getOrCreateDailyGoals();
+    if (!goals.hitHydrationGoal) {
+      state = state.copyWith(
+        dailyGoals: goals.copyWith(hitHydrationGoal: true),
+      );
+      debugPrint('[XPProvider] Daily goal: hydration goal hit');
+
+      final xpAwarded = await _repository.awardGoalXP('hydration_goal');
+      if (xpAwarded > 0) {
+        state = state.copyWith(
+          lastXPEarnedEvent: XPEarnedAnimationEvent(
+            xpAmount: xpAwarded,
+            goalType: XPGoalType.hydrationGoal,
+          ),
+        );
+        _posthog.capture(
+          eventName: 'xp_earned',
+          properties: <String, Object>{
+            'xp_amount': xpAwarded,
+            'goal_type': 'hydration_goal',
+          },
+        );
+      }
+
+      await checkAndUnlockActivityCrate();
+      await loadUserXP(userId: _currentUserId, showLoading: false);
+    }
+  }
+
+  /// Mark the daily calorie goal hit — "calorie deficit" (consumed under target
+  /// after eating most of the day's planned food). Idempotent per day.
+  Future<void> markCalorieGoalHit() async {
+    final goals = _getOrCreateDailyGoals();
+    if (!goals.hitCalorieGoal) {
+      state = state.copyWith(
+        dailyGoals: goals.copyWith(hitCalorieGoal: true),
+      );
+      debugPrint('[XPProvider] Daily goal: calorie goal hit');
+
+      final xpAwarded = await _repository.awardGoalXP('calorie_goal');
+      if (xpAwarded > 0) {
+        state = state.copyWith(
+          lastXPEarnedEvent: XPEarnedAnimationEvent(
+            xpAmount: xpAwarded,
+            goalType: XPGoalType.calorieGoal,
+          ),
+        );
+        _posthog.capture(
+          eventName: 'xp_earned',
+          properties: <String, Object>{
+            'xp_amount': xpAwarded,
+            'goal_type': 'calorie_goal',
+          },
+        );
+      }
+
+      await checkAndUnlockActivityCrate();
       await loadUserXP(userId: _currentUserId, showLoading: false);
     }
   }

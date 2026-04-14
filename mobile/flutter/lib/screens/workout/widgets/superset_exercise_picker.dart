@@ -229,28 +229,20 @@ class _ExercisePickerCard extends StatelessWidget {
                     borderRadius: BorderRadius.circular(8),
                   ),
                   clipBehavior: Clip.hardEdge,
-                  child: exercise.gifUrl != null && exercise.gifUrl!.isNotEmpty
-                      ? CachedNetworkImage(
-                          imageUrl: exercise.gifUrl!,
-                          fit: BoxFit.cover,
-                          placeholder: (_, __) => Center(
-                            child: Icon(
-                              Icons.fitness_center,
-                              color: textMuted,
-                              size: 24,
-                            ),
-                          ),
-                          errorWidget: (_, __, ___) => Icon(
-                            Icons.fitness_center,
-                            color: textMuted,
-                            size: 24,
-                          ),
-                        )
-                      : Icon(
-                          Icons.fitness_center,
-                          color: textMuted,
-                          size: 24,
-                        ),
+                  child: Builder(builder: (_) {
+                    final url = exercise.imageS3Path ?? exercise.gifUrl;
+                    if (url == null || url.isEmpty) {
+                      return Icon(Icons.fitness_center, color: textMuted, size: 24);
+                    }
+                    return CachedNetworkImage(
+                      imageUrl: url,
+                      fit: BoxFit.cover,
+                      placeholder: (_, __) => Center(
+                        child: Icon(Icons.fitness_center, color: textMuted, size: 24),
+                      ),
+                      errorWidget: (_, __, ___) => Icon(Icons.fitness_center, color: textMuted, size: 24),
+                    );
+                  }),
                 ),
                 const SizedBox(width: 12),
 

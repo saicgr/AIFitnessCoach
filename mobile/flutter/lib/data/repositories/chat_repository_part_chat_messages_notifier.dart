@@ -326,11 +326,15 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
         });
       }
 
-      // Build context
-      final history = currentMessages.map((m) => {
-        'role': m.role,
-        'content': m.content,
-      }).toList();
+      // Build context. Filter to user/assistant only — backend rejects any
+      // other role (e.g. 'error') with a Pydantic 422.
+      final history = currentMessages
+          .where((m) => m.role == 'user' || m.role == 'assistant')
+          .map((m) => {
+                'role': m.role,
+                'content': m.content,
+              })
+          .toList();
 
       Map<String, dynamic>? userProfile;
       if (_user != null) {
@@ -645,10 +649,14 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
         'duration_ms': durationMs,
       };
 
-      final history = currentMessages.map((m) => {
-        'role': m.role,
-        'content': m.content,
-      }).toList();
+      // Filter to user/assistant — backend 422s on other roles.
+      final history = currentMessages
+          .where((m) => m.role == 'user' || m.role == 'assistant')
+          .map((m) => {
+                'role': m.role,
+                'content': m.content,
+              })
+          .toList();
 
       Map<String, dynamic>? userProfile;
       if (_user != null) {

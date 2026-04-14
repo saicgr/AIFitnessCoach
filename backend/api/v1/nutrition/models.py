@@ -257,6 +257,11 @@ class LogDirectRequest(BaseModel):
     notes: Optional[str] = Field(default=None, max_length=500)
     # Originating user input (e.g. dish name the user selected, restaurant item they picked).
     user_query: Optional[str] = Field(default=None, max_length=500)
+    # AI/vision description of the analyzed meal (e.g. Gemini's "feedback" string for
+    # photo logs). When present, the server stores this instead of the generic
+    # "Logged via {source_type}" placeholder so the meal list surfaces what the AI
+    # actually saw.
+    ai_feedback: Optional[str] = Field(default=None, max_length=2000)
     # Micronutrients
     sodium_mg: Optional[float] = None
     sugar_g: Optional[float] = None
@@ -756,3 +761,100 @@ class FoodReportResponse(BaseModel):
     success: bool
     report_id: str
     message: str
+
+
+# ── Food Patterns (Nutrition > Patterns tab) ─────────────────────
+
+class FoodPatternEntry(BaseModel):
+    """A single food's mood/energy aggregate over the last N days."""
+    food_name: str
+    logs: int                          # confirmed + inferred
+    confirmed_count: int
+    inferred_count: int
+    negative_mood_count: int
+    positive_mood_count: int
+    avg_energy: Optional[float] = None
+    low_energy_count: int = 0
+    high_energy_count: int = 0
+    dominant_symptom: Optional[str] = None  # e.g. "bloated"
+    last_logged_at: Optional[str] = None
+    negative_score: float
+    positive_score: float
+
+
+class FoodPatternsMoodResponse(BaseModel):
+    """GET /nutrition/food-patterns/mood response."""
+    energizing_foods: List[FoodPatternEntry]
+    draining_foods: List[FoodPatternEntry]
+    total_logs_analyzed: int
+    days_window: int
+    oldest_log_date: Optional[str] = None
+    checkin_disabled: bool = False
+    inference_enabled: bool = True
+
+
+class TopFoodEntry(BaseModel):
+    """A single food's total for a given nutrient over the selected range."""
+    food_name: str
+    total_value: float
+    unit: str                          # "g", "mg", "kcal"
+    occurrences: int
+    last_image_url: Optional[str] = None
+    last_food_score: Optional[int] = None
+    last_logged_at: Optional[str] = None
+
+
+class TopFoodsResponse(BaseModel):
+    """GET /nutrition/food-patterns/top-foods response."""
+    metric: str                        # calories | protein | carbs | ...
+    range: str                         # day | week | month | 90d
+    start_date: str
+    end_date: str
+    items: List[TopFoodEntry]
+
+
+class DailyMacroSeriesPoint(BaseModel):
+    date: str                          # YYYY-MM-DD (user-local)
+    calories: int = 0
+    protein_g: float = 0
+    carbs_g: float = 0
+    fat_g: float = 0
+    fiber_g: float = 0
+
+
+class MacrosSummaryResponse(BaseModel):
+    """GET /nutrition/food-patterns/macros-summary response."""
+    range: str
+    start_date: str
+    end_date: str
+    days_counted: int
+    avg_calories: int = 0
+    avg_protein_g: float = 0
+    avg_carbs_g: float = 0
+    avg_fat_g: float = 0
+    avg_fiber_g: float = 0
+    calorie_goal: Optional[int] = None
+    protein_goal: Optional[int] = None
+    carbs_goal: Optional[int] = None
+    fat_goal: Optional[int] = None
+    fiber_goal: Optional[int] = None
+    daily_series: List[DailyMacroSeriesPoint]
+
+
+class PatternsHistoryResponse(BaseModel):
+    """GET /nutrition/food-patterns/history response."""
+    items: List[FoodLogResponse]
+    total: int
+    limit: int
+    offset: int
+
+
+class InferenceConfirmRequest(BaseModel):
+    """PATCH /food-logs/{id}/inference — confirm/dismiss an AI-inferred mood."""
+    action: str  # "confirm" | "dismiss"
+
+    @validator('action')
+    def action_must_be_allowed(cls, v):
+        if v not in ("confirm", "dismiss"):
+            raise ValueError("action must be 'confirm' or 'dismiss'")
+        return v

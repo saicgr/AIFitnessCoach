@@ -121,6 +121,13 @@ class _ComingSoonFeature {
 
 const _comingSoonFeatures = [
   _ComingSoonFeature(
+    icon: Icons.restaurant_menu,
+    color: AppColors.orange,
+    title: 'What Should I Eat? Widget',
+    description:
+        'One tap on your home or lock screen for an AI meal idea with calories & macros — plus a "Log it" button',
+  ),
+  _ComingSoonFeature(
     icon: Icons.insights,
     color: AppColors.green,
     title: 'Fitness Score',

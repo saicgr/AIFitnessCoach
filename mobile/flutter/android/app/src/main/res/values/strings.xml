@@ -40,6 +40,12 @@
     <string name="widget_goals_description">Track progress towards your personal goals.</string>
     <string name="widget_calendar_description">View your weekly workout schedule.</string>
     <string name="widget_ai_coach_description">Quick access to your AI fitness coach for tips and advice.</string>
+    <string name="widget_meal_suggestion_description">One tap for a meal idea that fits your macros.</string>
+
+    <!-- Long-press app-icon shortcuts -->
+    <string name="shortcut_suggest_food_short_label">Eat?</string>
+    <string name="shortcut_suggest_food_long_label">What should I eat?</string>
+    <string name="shortcut_suggest_food_disabled_message">Sign in to FitWiz first.</string>
 
     <!-- Widget Content Labels -->
     <string name="start_workout">Start</string>

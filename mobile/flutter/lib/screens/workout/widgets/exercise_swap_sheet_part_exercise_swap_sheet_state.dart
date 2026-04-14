@@ -13,6 +13,7 @@ class _ExerciseSwapSheetState extends ConsumerState<_ExerciseSwapSheet>
   bool _isLoadingAI = false;
   bool _aiLoaded = false;
   List<Map<String, dynamic>> _aiSuggestions = [];
+  String? _aiError;
 
   // Recent tab
   bool _isLoadingRecent = true;
@@ -49,7 +50,13 @@ class _ExerciseSwapSheetState extends ConsumerState<_ExerciseSwapSheet>
     super.initState();
     _tabController = TabController(length: 4, vsync: this);
     _tabController.addListener(_onTabChanged);
-    ref.read(customExercisesProvider.notifier).initialize();
+    // Defer provider state mutation until after the first frame so we don't
+    // trip Riverpod's "modify while building" guard. initialize() synchronously
+    // sets isLoading=true on its first call, which is what the guard catches.
+    Future.microtask(() {
+      if (!mounted) return;
+      ref.read(customExercisesProvider.notifier).initialize();
+    });
     _loadAvoidedExercises();
     _loadSimilarExercises();
     _loadRecentExercises();
@@ -195,29 +202,26 @@ class _ExerciseSwapSheetState extends ConsumerState<_ExerciseSwapSheet>
   }
 
   /// Load slow AI-powered suggestions (~10s) - only called when AI tab is selected
-  /// Uses user's text/voice input if provided, otherwise uses selected reason chip
+  /// Uses user's text/voice input if provided, otherwise uses selected reason chip.
   Future<void> _loadAISuggestions() async {
-    setState(() => _isLoadingAI = true);
+    setState(() {
+      _isLoadingAI = true;
+      _aiError = null;
+    });
 
     try {
       final userId = await ref.read(apiClientProvider).getUserId();
       final repo = ref.read(workoutRepositoryProvider);
 
-      // Build message for AI: prefer user input, then reason chip, then default
-      String? message;
+      // Freeform input goes through customMessage; the chip (if any) goes
+      // through reason. The repository picks whichever is set.
       final userInput = _aiInputController.text.trim();
-      if (userInput.isNotEmpty) {
-        message = userInput;
-      } else if (_selectedReason != null) {
-        message = _selectedReason;
-      }
-      // If no message, AI will use default behavior
-
       final suggestions = await repo.getExerciseSuggestions(
         workoutId: widget.workoutId,
         exercise: widget.exercise,
         userId: userId!,
-        reason: message,
+        reason: _selectedReason,
+        customMessage: userInput.isEmpty ? null : userInput,
         avoidedExercises: _avoidedExerciseNames,
       );
 
@@ -228,7 +232,6 @@ class _ExerciseSwapSheetState extends ConsumerState<_ExerciseSwapSheet>
           _aiLoaded = true;
         });
 
-        // Pre-fetch images in background (non-blocking)
         final aiNames = suggestions
             .map((s) => s['name'] as String?)
             .whereType<String>()
@@ -243,11 +246,35 @@ class _ExerciseSwapSheetState extends ConsumerState<_ExerciseSwapSheet>
       if (mounted) {
         setState(() {
           _aiSuggestions = [];
+          _aiError = _friendlyAIError(e);
           _isLoadingAI = false;
           _aiLoaded = true;
         });
       }
     }
+  }
+
+  /// Map a raw exception into a human-readable AI Picks error. Distinguishes
+  /// the common cases so the user knows if it's a rate limit vs. a network
+  /// issue vs. a server problem, rather than the generic "No AI suggestions".
+  String _friendlyAIError(Object e) {
+    final msg = e.toString();
+    if (msg.contains('429')) {
+      return 'You\'re asking a bit fast — try again in a minute.';
+    }
+    if (msg.contains('401') || msg.contains('403')) {
+      return 'Session expired. Please sign in again.';
+    }
+    if (msg.contains('SocketException') ||
+        msg.contains('timeout') ||
+        msg.contains('TimeoutException') ||
+        msg.contains('Network')) {
+      return 'Network problem. Check your connection and try again.';
+    }
+    if (msg.contains('500') || msg.contains('502') || msg.contains('503')) {
+      return 'The AI service is having trouble right now. Please try again.';
+    }
+    return 'Couldn\'t reach the AI service. Please try again.';
   }
 
   Future<void> _searchLibrary(String query) async {

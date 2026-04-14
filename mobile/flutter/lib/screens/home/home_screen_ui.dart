@@ -360,6 +360,8 @@ extension __HomeScreenStateExt on _HomeScreenState {
         return Icons.bar_chart;
       case TileType.stepsCounter:
         return Icons.directions_walk;
+      case TileType.nutritionPatterns:
+        return Icons.restaurant_menu;
     }
   }
 

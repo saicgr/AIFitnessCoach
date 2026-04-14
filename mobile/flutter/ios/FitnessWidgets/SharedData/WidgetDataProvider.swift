@@ -14,6 +14,10 @@ struct WidgetDataKeys {
     static let goals = "goals_data"
     static let calendar = "calendar_data"
     static let aiCoach = "aicoach_data"
+    // One-tap "what should I eat" widget — written by
+    // MealSuggestionWidgetService.dart.
+    static let mealSuggestion = "meal_suggestion_json"
+    static let mealSuggestionTimestamp = "meal_suggestion_ts"
 }
 
 /// Provider to fetch shared data from Flutter app
@@ -214,6 +218,46 @@ class WidgetDataProvider {
         return CalendarWidgetData(
             days: days,
             todayIndex: json["todayIndex"] as? Int ?? 0
+        )
+    }
+
+    // MARK: - Meal Suggestion (one-tap "what should I eat") Data
+
+    /// Fetch the widget's cached meal suggestion. Returns `.placeholder` when
+    /// the user is signed out, storage is empty, or the payload is malformed.
+    func getMealSuggestionData() -> MealSuggestionWidgetData {
+        guard let jsonString = userDefaults?.string(forKey: WidgetDataKeys.mealSuggestion),
+              !jsonString.isEmpty,
+              let data = jsonString.data(using: .utf8),
+              let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+            return MealSuggestionWidgetData.signInPlaceholder
+        }
+
+        let foodItemsJson = json["food_items"] as? [[String: Any]] ?? []
+        let foodItems = foodItemsJson.map { item -> MealSuggestionFoodItem in
+            MealSuggestionFoodItem(
+                name: item["name"] as? String ?? "",
+                grams: item["grams"] as? Int,
+                calories: item["calories"] as? Int ?? 0,
+                proteinG: item["protein_g"] as? Double ?? 0,
+                carbsG: item["carbs_g"] as? Double ?? 0,
+                fatG: item["fat_g"] as? Double ?? 0
+            )
+        }
+
+        return MealSuggestionWidgetData(
+            emoji: json["emoji"] as? String ?? "🍽",
+            mealSlot: json["meal_slot"] as? String ?? "snack",
+            title: json["title"] as? String ?? "",
+            subtitle: json["subtitle"] as? String ?? "",
+            calories: json["calories"] as? Int ?? 0,
+            proteinG: json["protein_g"] as? Double ?? 0,
+            carbsG: json["carbs_g"] as? Double ?? 0,
+            fatG: json["fat_g"] as? Double ?? 0,
+            foodItems: foodItems,
+            stale: json["stale"] as? Bool ?? false,
+            loggedAlready: (json["logged_already"] as? [String]) ?? [],
+            isSignedOut: false
         )
     }
 
@@ -458,5 +502,66 @@ struct AICoachWidgetData {
         lastMessagePreview: "Ready to help with your fitness journey!",
         lastAgent: "coach",
         quickPrompts: defaultPrompts
+    )
+}
+
+// MARK: - Meal Suggestion (one-tap "what should I eat") Models
+
+struct MealSuggestionFoodItem {
+    let name: String
+    let grams: Int?
+    let calories: Int
+    let proteinG: Double
+    let carbsG: Double
+    let fatG: Double
+}
+
+struct MealSuggestionWidgetData {
+    let emoji: String
+    let mealSlot: String         // breakfast|lunch|dinner|snack|fasting
+    let title: String
+    let subtitle: String
+    let calories: Int
+    let proteinG: Double
+    let carbsG: Double
+    let fatG: Double
+    let foodItems: [MealSuggestionFoodItem]
+    let stale: Bool              // true when Gemini failed and we served stale cache
+    let loggedAlready: [String]  // meal slots already logged today
+    let isSignedOut: Bool        // when true, render "Sign in to FitWiz" placeholder
+
+    /// Shown when the user hasn't signed in OR the widget has never been populated.
+    static let signInPlaceholder = MealSuggestionWidgetData(
+        emoji: "🍽",
+        mealSlot: "signed_out",
+        title: "Sign in to FitWiz",
+        subtitle: "Tap to get personalised meal ideas",
+        calories: 0,
+        proteinG: 0,
+        carbsG: 0,
+        fatG: 0,
+        foodItems: [],
+        stale: false,
+        loggedAlready: [],
+        isSignedOut: true
+    )
+
+    /// Used by SwiftUI previews.
+    static let samplePlaceholder = MealSuggestionWidgetData(
+        emoji: "🍳",
+        mealSlot: "breakfast",
+        title: "3-egg scramble + avocado toast",
+        subtitle: "Leaves 40g protein for dinner after leg day",
+        calories: 380,
+        proteinG: 28,
+        carbsG: 24,
+        fatG: 20,
+        foodItems: [
+            MealSuggestionFoodItem(name: "3-egg scramble", grams: 150, calories: 220, proteinG: 18, carbsG: 2, fatG: 16),
+            MealSuggestionFoodItem(name: "Avocado toast", grams: 100, calories: 160, proteinG: 10, carbsG: 22, fatG: 4),
+        ],
+        stale: false,
+        loggedAlready: [],
+        isSignedOut: false
     )
 }

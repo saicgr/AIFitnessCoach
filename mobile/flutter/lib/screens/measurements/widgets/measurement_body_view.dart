@@ -164,23 +164,22 @@ class MeasurementBodyView extends ConsumerWidget {
               builder: (context, constraints) {
                 final w = constraints.maxWidth;
                 final h = constraints.maxHeight;
-                return Container(
-                  decoration: BoxDecoration(
-                    color: backgroundColor.withValues(alpha: 0.3),
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(16),
-                    child: Stack(
-                      clipBehavior: Clip.none,
-                      children: [
-                        // High-fidelity anatomical atlas from the
-                        // flutter_body_atlas package. We paint every muscle
-                        // with the same ghost tint via colorMapping so the
-                        // figure reads as a faded silhouette. IgnorePointer
-                        // ensures the atlas doesn't intercept pill taps —
-                        // the overlay pills own all input.
-                        Positioned.fill(
+                // Clipping is applied ONLY to the background + atlas layer
+                // (rounded panel look). The pill layer lives in an outer
+                // `Stack(clipBehavior: Clip.none)` so paired-metric pills
+                // (Bicep L/R, Forearm L/R) whose anchors sit near the edges
+                // at x=0.15 / 0.85 aren't clipped by the rounded rect.
+                return Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    // Background + anatomical atlas — clipped to rounded rect.
+                    Positioned.fill(
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(16),
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: backgroundColor.withValues(alpha: 0.3),
+                          ),
                           child: IgnorePointer(
                             child: Padding(
                               padding: const EdgeInsets.all(8),
@@ -194,14 +193,15 @@ class MeasurementBodyView extends ConsumerWidget {
                             ),
                           ),
                         ),
-
-                        // Every pill, anchored to its anatomical (x, y) and
-                        // centered over that anchor via FractionalTranslation.
-                        for (final entry in _bodyAnchor.entries)
-                          _positionPill(entry.key, entry.value, w: w, h: h),
-                      ],
+                      ),
                     ),
-                  ),
+
+                    // Pill overlay — unclipped so edge-anchored pills render
+                    // in full. Each pill is anchored anatomically and then
+                    // centered on the anchor via FractionalTranslation.
+                    for (final entry in _bodyAnchor.entries)
+                      _positionPill(entry.key, entry.value, w: w, h: h),
+                  ],
                 );
               },
             ),

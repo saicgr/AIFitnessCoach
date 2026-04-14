@@ -261,7 +261,7 @@ def score_exercise_match(search_name: str, db_name: str) -> int:
 
 def search_s3_for_image(exercise_name: str, gender: str = None) -> str:
     """
-    Search S3 ILLUSTRATIONS folder for matching exercise image.
+    Search S3 ILLUSTRATIONS ALL folder for matching exercise image.
     Uses fuzzy matching on filename with pagination support.
     """
     try:

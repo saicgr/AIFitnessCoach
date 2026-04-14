@@ -198,13 +198,13 @@ class _DraggableThumbnailState extends ConsumerState<_DraggableThumbnail>
       return;
     }
 
-    final exerciseGifUrl = widget.exercise.gifUrl;
-    if (exerciseGifUrl != null && exerciseGifUrl.isNotEmpty) {
+    final preResolvedUrl = widget.exercise.imageS3Path ?? widget.exercise.gifUrl;
+    if (preResolvedUrl != null && preResolvedUrl.isNotEmpty) {
       final cacheKey = exerciseName.toLowerCase();
-      _imageCache[cacheKey] = exerciseGifUrl;
+      _imageCache[cacheKey] = preResolvedUrl;
       if (mounted) {
         setState(() {
-          _imageUrl = exerciseGifUrl;
+          _imageUrl = preResolvedUrl;
           _isLoadingImage = false;
         });
       }
@@ -593,13 +593,13 @@ class _ExerciseThumbnailState extends ConsumerState<_ExerciseThumbnail>
       return;
     }
 
-    final exerciseGifUrl = widget.exercise.gifUrl;
-    if (exerciseGifUrl != null && exerciseGifUrl.isNotEmpty) {
+    final preResolvedUrl = widget.exercise.imageS3Path ?? widget.exercise.gifUrl;
+    if (preResolvedUrl != null && preResolvedUrl.isNotEmpty) {
       final cacheKey = exerciseName.toLowerCase();
-      _imageCache[cacheKey] = exerciseGifUrl;
+      _imageCache[cacheKey] = preResolvedUrl;
       if (mounted) {
         setState(() {
-          _imageUrl = exerciseGifUrl;
+          _imageUrl = preResolvedUrl;
           _isLoadingImage = false;
         });
       }

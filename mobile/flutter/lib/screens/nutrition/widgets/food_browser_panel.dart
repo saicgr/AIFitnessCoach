@@ -10,7 +10,10 @@ import '../../../data/providers/xp_provider.dart';
 import '../../../data/repositories/auth_repository.dart';
 import '../../../core/constants/country_codes.dart';
 import '../food_history_screen.dart';
+import 'companion_picker_sheet.dart';
 import 'food_report_dialog.dart';
+import 'food_source_indicator.dart';
+import '../../../data/models/companion_suggestion.dart';
 
 
 part 'food_browser_panel_part_food_browser_filter.dart';
@@ -222,24 +225,210 @@ class _FoodBrowserPanelState extends ConsumerState<FoodBrowserPanel> {
     }
   }
 
+  // Companion-aware re-log (Fix 2 decision tree).
+  //
+  //   tap(food_log)
+  //   ├── same food logged <30 min ago?     → silent log, skip sheet
+  //   ├── log has >1 food_items (group)     → open sheet in "pick from group" mode
+  //   └── log has 1 food_item (solo)
+  //         ├── /nutrition/companions returns empty → silent log, skip sheet
+  //         └── otherwise → open sheet in "add sides?" mode
+  //
+  // Per [feedback_no_silent_fallbacks]: if the backend companions call fails
+  // entirely, fall back to logging the primary silently rather than showing
+  // a broken sheet. Per [feedback_no_silent_fallbacks]: never re-add
+  // companions the user didn't tick.
+  static const Duration _relogDedupWindow = Duration(minutes: 30);
+  final Map<String, DateTime> _recentRelogTimestamps = <String, DateTime>{};
+
   Future<void> _relogFoodLog(FoodLog log) async {
     final key = 'recent_${log.id}';
     setState(() => _logStates[key] = _LogState.loading);
+
+    final primaryName = log.foodItems.isNotEmpty
+        ? log.foodItems.first.name
+        : log.mealType;
+
+    // 30-min dedup: if the user just logged this same food, the sheet is
+    // almost always noise. Log silently and move on.
+    final dedupKey = primaryName.toLowerCase();
+    final lastTap = _recentRelogTimestamps[dedupKey];
+    final now = DateTime.now();
+    if (lastTap != null && now.difference(lastTap) < _relogDedupWindow) {
+      _recentRelogTimestamps[dedupKey] = now;
+      await _logLegacyCopy(log, key);
+      return;
+    }
+    _recentRelogTimestamps[dedupKey] = now;
+
     try {
       final repo = ref.read(nutritionRepositoryProvider);
-      await repo.copyFoodLog(logId: log.id, mealType: widget.mealType.value, date: _targetDateString);
-      ref.read(xpProvider.notifier).markMealLogged();
+
+      // Build the sheet's inputs based on the source log's shape.
+      final siblings = log.foodItems.length > 1
+          ? log.foodItems.skip(1).toList()
+          : const <FoodItem>[];
+
+      // Only call the companions endpoint for solo logs — multi-item logs
+      // already surface siblings via same-log history, and asking for more
+      // on every re-log would double the Gemini spend.
+      final companions = siblings.isEmpty
+          ? await repo.fetchCompanions(
+              userId: widget.userId,
+              primaryFoodName: primaryName,
+              mealType: widget.mealType.value,
+            )
+          : const <CompanionSuggestion>[];
+
+      // Silent-log path: nothing else to offer.
+      if (siblings.isEmpty && companions.isEmpty) {
+        await _logLegacyCopy(log, key);
+        return;
+      }
+
       if (!mounted) return;
-      setState(() => _logStates[key] = _LogState.done);
-      widget.onFoodLogged();
-      Future.delayed(const Duration(seconds: 1), () {
-        if (mounted) setState(() => _logStates.remove(key));
-      });
+      setState(() => _logStates.remove(key));
+
+      final result = await showModalBottomSheet<CompanionPickerResult>(
+        context: context,
+        isScrollControlled: true,
+        backgroundColor: Colors.transparent,
+        builder: (_) => CompanionPickerSheet(
+          primaryName: primaryName,
+          primaryCalories: log.totalCalories,
+          primaryImageUrl: log.imageUrl,
+          primarySourceType: log.sourceType,
+          primaryItem: log.foodItems.isNotEmpty ? log.foodItems.first : null,
+          sameLogSiblings: siblings,
+          companions: companions,
+        ),
+      );
+
+      if (result == null) return; // user dismissed — no log
+
+      await _logFromPickerResult(log, result, key);
+
+      // Teach the resolver about any globally-suggested items the user
+      // unchecked, so we stop suggesting them next time. Fire-and-forget.
+      for (final rejected in result.rejectedCompanions) {
+        // ignore: discarded_futures
+        repo.rejectCompanion(
+          userId: widget.userId,
+          primaryFoodName: primaryName,
+          companionName: rejected.name,
+        );
+      }
     } catch (e) {
       if (!mounted) return;
       setState(() => _logStates.remove(key));
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to log: $e'), behavior: SnackBarBehavior.floating),
+        SnackBar(
+          content: Text('Failed to log: $e'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
+  }
+
+  /// Fallback / silent-log path — clones the source log as-is via the
+  /// existing backend endpoint. Preserves every food_item from the source.
+  Future<void> _logLegacyCopy(FoodLog log, String stateKey) async {
+    try {
+      final repo = ref.read(nutritionRepositoryProvider);
+      await repo.copyFoodLog(
+        logId: log.id,
+        mealType: widget.mealType.value,
+        date: _targetDateString,
+      );
+      ref.read(xpProvider.notifier).markMealLogged();
+      if (!mounted) return;
+      setState(() => _logStates[stateKey] = _LogState.done);
+      widget.onFoodLogged();
+      Future.delayed(const Duration(seconds: 1), () {
+        if (mounted) setState(() => _logStates.remove(stateKey));
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _logStates.remove(stateKey));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to log: $e'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
+  }
+
+  /// Compose a log payload from the primary + user-selected siblings and
+  /// companion suggestions, then push it via the existing /log-direct path
+  /// so item-level edits + image URLs stay consistent with the image-log
+  /// flow (Fix 1).
+  Future<void> _logFromPickerResult(
+    FoodLog source,
+    CompanionPickerResult result,
+    String stateKey,
+  ) async {
+    setState(() => _logStates[stateKey] = _LogState.loading);
+    try {
+      final repo = ref.read(nutritionRepositoryProvider);
+
+      // Primary item — keep as the first entry.
+      final primary = source.foodItems.isNotEmpty
+          ? source.foodItems.first
+          : null;
+      final items = <Map<String, dynamic>>[
+        if (primary != null) primary.toJson(),
+        for (final sib in result.historicItems) sib.toJson(),
+        for (final c in result.newCompanions) c.toLogItem(),
+      ];
+
+      int totalCal = source.totalCalories ~/
+          (source.foodItems.isEmpty ? 1 : source.foodItems.length);
+      // More accurate: sum per-item calories from what we're actually logging.
+      totalCal = items.fold<int>(
+        0,
+        (sum, it) => sum + ((it['calories'] as num?)?.toInt() ?? 0),
+      );
+      final totalP = items.fold<double>(
+        0,
+        (s, it) => s + ((it['protein_g'] as num?)?.toDouble() ?? 0),
+      );
+      final totalC = items.fold<double>(
+        0,
+        (s, it) => s + ((it['carbs_g'] as num?)?.toDouble() ?? 0),
+      );
+      final totalF = items.fold<double>(
+        0,
+        (s, it) => s + ((it['fat_g'] as num?)?.toDouble() ?? 0),
+      );
+
+      await repo.logAdjustedFood(
+        userId: widget.userId,
+        mealType: widget.mealType.value,
+        foodItems: items,
+        totalCalories: totalCal,
+        totalProtein: totalP.round(),
+        totalCarbs: totalC.round(),
+        totalFat: totalF.round(),
+        sourceType: 'recent',
+        imageUrl: source.imageUrl,
+      );
+
+      ref.read(xpProvider.notifier).markMealLogged();
+      if (!mounted) return;
+      setState(() => _logStates[stateKey] = _LogState.done);
+      widget.onFoodLogged();
+      Future.delayed(const Duration(seconds: 1), () {
+        if (mounted) setState(() => _logStates.remove(stateKey));
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _logStates.remove(stateKey));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to log: $e'),
+          behavior: SnackBarBehavior.floating,
+        ),
       );
     }
   }

@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../../core/constants/api_constants.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/accent_color_provider.dart';
 import '../../../widgets/app_snackbar.dart';
 import '../../../widgets/glass_sheet.dart';
 import '../../../data/repositories/auth_repository.dart';
@@ -348,8 +349,8 @@ class _EditPersonalInfoSheetState extends ConsumerState<EditPersonalInfoSheet> {
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
     final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
-    // Use monochrome accent
-    final accentColor = isDark ? AppColors.accent : AppColorsLight.accent;
+    // Respect the user's selected accent from AccentColorScope — falls back to orange
+    final accentColor = AccentColorScope.of(context).getColor(isDark);
 
     return DraggableScrollableSheet(
       initialChildSize: 0.85,
@@ -442,11 +443,11 @@ class _EditPersonalInfoSheetState extends ConsumerState<EditPersonalInfoSheet> {
             children: [
               _buildPhotoSection(isDark, elevatedColor, cardBorder, textMuted, cyan),
               const SizedBox(height: 20),
-              _buildEmailField(isDark, elevatedColor, cardBorder, textMuted),
+              _buildEmailField(isDark, elevatedColor, cardBorder, textMuted, cyan),
               const SizedBox(height: 14),
-              _buildNameAgeRow(isDark, elevatedColor, cardBorder, textMuted),
+              _buildNameAgeRow(isDark, elevatedColor, cardBorder, textMuted, cyan),
               const SizedBox(height: 14),
-              _buildBioField(isDark, elevatedColor, cardBorder, textMuted),
+              _buildBioField(isDark, elevatedColor, cardBorder, textMuted, cyan),
               const SizedBox(height: 14),
               _buildGenderSelector(elevatedColor, cardBorder, textSecondary, cyan, textMuted),
               const SizedBox(height: 14),
@@ -463,11 +464,11 @@ class _EditPersonalInfoSheetState extends ConsumerState<EditPersonalInfoSheet> {
     );
   }
 
-  Widget _buildEmailField(bool isDark, Color elevatedColor, Color cardBorder, Color textMuted) {
+  Widget _buildEmailField(bool isDark, Color elevatedColor, Color cardBorder, Color textMuted, Color accent) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildSectionTitle('EMAIL', textMuted),
+        _buildSectionTitle('EMAIL', textMuted, icon: Icons.mail_outline, accent: accent),
         const SizedBox(height: 6),
         _buildTextField(
           controller: _emailController,
@@ -475,6 +476,7 @@ class _EditPersonalInfoSheetState extends ConsumerState<EditPersonalInfoSheet> {
           isDark: isDark,
           elevatedColor: elevatedColor,
           cardBorder: cardBorder,
+          accent: accent,
           keyboardType: TextInputType.emailAddress,
           validator: (value) {
             if (value != null && value.trim().isNotEmpty && !value.contains('@')) {
@@ -487,7 +489,7 @@ class _EditPersonalInfoSheetState extends ConsumerState<EditPersonalInfoSheet> {
     );
   }
 
-  Widget _buildNameAgeRow(bool isDark, Color elevatedColor, Color cardBorder, Color textMuted) {
+  Widget _buildNameAgeRow(bool isDark, Color elevatedColor, Color cardBorder, Color textMuted, Color accent) {
     return Row(
       children: [
         Expanded(
@@ -495,7 +497,7 @@ class _EditPersonalInfoSheetState extends ConsumerState<EditPersonalInfoSheet> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildSectionTitle('NAME', textMuted),
+              _buildSectionTitle('NAME', textMuted, icon: Icons.person_outline, accent: accent),
               const SizedBox(height: 6),
               _buildTextField(
                 controller: _nameController,
@@ -503,6 +505,7 @@ class _EditPersonalInfoSheetState extends ConsumerState<EditPersonalInfoSheet> {
                 isDark: isDark,
                 elevatedColor: elevatedColor,
                 cardBorder: cardBorder,
+                accent: accent,
                 validator: (value) {
                   if (value == null || value.trim().isEmpty) {
                     return 'Required';
@@ -518,7 +521,7 @@ class _EditPersonalInfoSheetState extends ConsumerState<EditPersonalInfoSheet> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildSectionTitle('AGE', textMuted),
+              _buildSectionTitle('AGE', textMuted, icon: Icons.cake_outlined, accent: accent),
               const SizedBox(height: 6),
               _buildTextField(
                 controller: _ageController,
@@ -526,6 +529,7 @@ class _EditPersonalInfoSheetState extends ConsumerState<EditPersonalInfoSheet> {
                 isDark: isDark,
                 elevatedColor: elevatedColor,
                 cardBorder: cardBorder,
+                accent: accent,
                 keyboardType: TextInputType.number,
               ),
             ],
@@ -535,11 +539,11 @@ class _EditPersonalInfoSheetState extends ConsumerState<EditPersonalInfoSheet> {
     );
   }
 
-  Widget _buildBioField(bool isDark, Color elevatedColor, Color cardBorder, Color textMuted) {
+  Widget _buildBioField(bool isDark, Color elevatedColor, Color cardBorder, Color textMuted, Color accent) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildSectionTitle('BIO', textMuted),
+        _buildSectionTitle('BIO', textMuted, icon: Icons.notes_rounded, accent: accent),
         const SizedBox(height: 6),
         TextFormField(
           controller: _bioController,
@@ -566,7 +570,7 @@ class _EditPersonalInfoSheetState extends ConsumerState<EditPersonalInfoSheet> {
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
-              borderSide: BorderSide(color: isDark ? AppColors.accent : AppColorsLight.accent),
+              borderSide: BorderSide(color: accent, width: 1.5),
             ),
             contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
           ),
@@ -585,7 +589,7 @@ class _EditPersonalInfoSheetState extends ConsumerState<EditPersonalInfoSheet> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildSectionTitle('GENDER', textMuted),
+        _buildSectionTitle('GENDER', textMuted, icon: Icons.wc_rounded, accent: cyan),
         const SizedBox(height: 6),
         Row(
           children: _genderOptions.map((gender) {
@@ -700,7 +704,7 @@ class _EditPersonalInfoSheetState extends ConsumerState<EditPersonalInfoSheet> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildSectionTitle('ACTIVITY LEVEL', textMuted),
+        _buildSectionTitle('ACTIVITY LEVEL', textMuted, icon: Icons.directions_run_rounded, accent: cyan),
         const SizedBox(height: 6),
         Container(
           decoration: BoxDecoration(
@@ -774,8 +778,8 @@ class _EditPersonalInfoSheetState extends ConsumerState<EditPersonalInfoSheet> {
     );
   }
 
-  Widget _buildSectionTitle(String title, Color textMuted) {
-    return Text(
+  Widget _buildSectionTitle(String title, Color textMuted, {IconData? icon, Color? accent}) {
+    final child = Text(
       title,
       style: TextStyle(
         fontSize: 12,
@@ -783,6 +787,14 @@ class _EditPersonalInfoSheetState extends ConsumerState<EditPersonalInfoSheet> {
         color: textMuted,
         letterSpacing: 1.5,
       ),
+    );
+    if (icon == null || accent == null) return child;
+    return Row(
+      children: [
+        Icon(icon, size: 13, color: accent),
+        const SizedBox(width: 6),
+        child,
+      ],
     );
   }
 
@@ -792,6 +804,7 @@ class _EditPersonalInfoSheetState extends ConsumerState<EditPersonalInfoSheet> {
     required bool isDark,
     required Color elevatedColor,
     required Color cardBorder,
+    required Color accent,
     TextInputType keyboardType = TextInputType.text,
     String? Function(String?)? validator,
   }) {
@@ -801,6 +814,7 @@ class _EditPersonalInfoSheetState extends ConsumerState<EditPersonalInfoSheet> {
       enabled: !_isSaving,
       validator: validator,
       style: const TextStyle(fontSize: 14),
+      cursorColor: accent,
       decoration: InputDecoration(
         hintText: hint,
         filled: true,
@@ -816,7 +830,7 @@ class _EditPersonalInfoSheetState extends ConsumerState<EditPersonalInfoSheet> {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
-          borderSide: BorderSide(color: isDark ? AppColors.accent : AppColorsLight.accent),
+          borderSide: BorderSide(color: accent, width: 1.5),
         ),
         contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       ),

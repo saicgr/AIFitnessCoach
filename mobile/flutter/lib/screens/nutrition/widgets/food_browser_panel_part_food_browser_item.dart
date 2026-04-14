@@ -10,6 +10,11 @@ class _FoodBrowserItem extends StatelessWidget {
   final _LogState? logState;
   final VoidCallback onAdd;
   final bool isDark;
+  // Leading source indicator. When both are null the leading slot is still
+  // rendered as a subtle text-source icon so rows line up consistently.
+  final String? imageUrl;
+  final String? sourceType;
+  final String? heroTagSuffix;
 
   const _FoodBrowserItem({
     required this.name,
@@ -18,6 +23,9 @@ class _FoodBrowserItem extends StatelessWidget {
     this.logState,
     required this.onAdd,
     required this.isDark,
+    this.imageUrl,
+    this.sourceType,
+    this.heroTagSuffix,
   });
 
   @override
@@ -29,7 +37,7 @@ class _FoodBrowserItem extends StatelessWidget {
     final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
 
     return Container(
-      height: 52,
+      height: 60,
       margin: const EdgeInsets.only(bottom: 4),
       padding: const EdgeInsets.symmetric(horizontal: 12),
       decoration: BoxDecoration(
@@ -39,6 +47,14 @@ class _FoodBrowserItem extends StatelessWidget {
       ),
       child: Row(
         children: [
+          FoodSourceIndicator(
+            imageUrl: imageUrl,
+            sourceType: sourceType,
+            heroTag: heroTagSuffix != null ? 'food-browser-$heroTagSuffix' : null,
+            mutedColor: textMuted,
+            size: 32,
+          ),
+          const SizedBox(width: 10),
           Expanded(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,

@@ -22,17 +22,25 @@ List<RouteBase> _mainShellRoutes() => [
             pageBuilder: (context, state) {
               // Support deep link: fitwiz://nutrition?meal=lunch
               final initialMeal = state.uri.queryParameters['meal'];
-              // Support deep link: fitwiz://nutrition?tab=2 (0=Daily, 1=Nutrients, 2=Water, 3=Fast)
+              // Support deep link: fitwiz://nutrition?tab=2 (0=Daily, 1=Recipes, 2=Patterns, 3=Fuel)
               final tabParam = state.uri.queryParameters['tab'];
               final initialTab = tabParam != null ? int.tryParse(tabParam) ?? 0 : 0;
               // Support deep link: fitwiz://nutrition?camera=true (auto-open camera for meal photo)
               final autoOpenCamera = state.uri.queryParameters['camera'] == 'true';
               // Support deep link: fitwiz://nutrition?barcode=true (auto-open barcode scanner)
               final autoOpenBarcode = state.uri.queryParameters['barcode'] == 'true';
+              // 45-min check-in reminder taps land here: fitwiz://nutrition?openCheckin=<food_log_id>
+              final openCheckinLogId = state.uri.queryParameters['openCheckin'];
               return NoTransitionPage(
-                // Key on query params so GoRouter rebuilds when ?tab= changes
+                // Key on query params so GoRouter rebuilds when params change
                 key: state.pageKey,
-                child: NutritionScreen(initialMeal: initialMeal, initialTab: initialTab, autoOpenCamera: autoOpenCamera, autoOpenBarcode: autoOpenBarcode),
+                child: NutritionScreen(
+                  initialMeal: initialMeal,
+                  initialTab: initialTab,
+                  autoOpenCamera: autoOpenCamera,
+                  autoOpenBarcode: autoOpenBarcode,
+                  openCheckinLogId: openCheckinLogId,
+                ),
               );
             },
           ),

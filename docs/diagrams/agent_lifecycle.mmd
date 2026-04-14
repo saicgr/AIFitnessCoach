@@ -1,0 +1,52 @@
+sequenceDiagram
+  autonumber
+  participant U as Flutter Client
+  participant API as FastAPI /chat
+  participant LGS as LangGraphCoachService
+  participant VS as VisionService
+  participant AG as Selected Agent<br/>(LangGraph graph)
+  participant LLM as Gemini (bound tools)
+  participant T as "@tool function"
+  participant DB as Supabase PG
+  participant CH as ChromaDB
+  participant RAG as RAGService
+
+  U->>API: ChatRequest (message, media_refs)
+  API->>LGS: process_chat_message()
+  LGS->>LGS: sanitize_user_message()
+  LGS->>LGS: _is_trivial_message()?
+  alt trivial (hi/thanks)
+    LGS->>DB: _store_chat_history (fast path)
+    LGS-->>API: ChatResponse
+  else non-trivial
+    LGS->>LGS: _validate_media_request()
+    LGS->>DB: _check_media_usage (cap 20/100)
+    opt has media
+      LGS->>VS: classify_media_content(frame)
+      VS->>LLM: Gemini Vision (T=0.1, max=15)
+      VS-->>LGS: media_content_type
+    end
+    LGS->>LGS: _select_agent()<br/>mention → media → intent → keywords → Coach
+    LGS->>RAG: fetch user profile + schedule + RAG ctx
+    RAG->>CH: similarity search
+    RAG-->>LGS: rag_documents, rag_context_formatted
+    LGS->>AG: graph.ainvoke(state)
+    Note over AG: internal per-agent graph
+    AG->>LLM: llm.bind_tools(TOOLS).ainvoke(messages)
+    alt LLM decides to call tools
+      LLM-->>AG: AIMessage.tool_calls = [...]
+      AG->>T: invoke(tool_args)
+      T->>DB: writes / reads
+      T-->>AG: ToolMessage result
+      AG->>LLM: continue with tool result
+      LLM-->>AG: final AIMessage
+    else LLM answers directly
+      LLM-->>AG: AIMessage (no tool_calls)
+    end
+    AG->>AG: build_action_data<br/>(structured payload for UI)
+    AG-->>LGS: final state
+    LGS->>DB: insert into chat_messages
+    LGS->>RAG: add_qa_pair (embed Q/A into ChromaDB)
+    LGS-->>API: ChatResponse
+  end
+  API-->>U: JSON

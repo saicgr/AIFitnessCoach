@@ -7,6 +7,12 @@ class CollapsibleFoodItemsSection extends StatefulWidget {
   final bool isDark;
   final void Function(int index, FoodItemRanking updatedItem)? onItemWeightChanged;
   final void Function(int index)? onItemRemoved;
+  /// Per-field inline edit: (index, field, newValue) where field is one of
+  /// 'calories' | 'protein_g' | 'carbs_g' | 'fat_g'. Parent decides whether
+  /// to commit, diff against originals, and emit analytics.
+  final void Function(int index, String field, num newValue)? onItemFieldEdited;
+  /// Set of indices that have already been edited (for the "edited" badge).
+  final Set<int> editedIndices;
 
   const CollapsibleFoodItemsSection({
     super.key,
@@ -14,6 +20,8 @@ class CollapsibleFoodItemsSection extends StatefulWidget {
     required this.isDark,
     this.onItemWeightChanged,
     this.onItemRemoved,
+    this.onItemFieldEdited,
+    this.editedIndices = const {},
   });
 
   @override
@@ -87,11 +95,15 @@ class _CollapsibleFoodItemsSectionState extends State<CollapsibleFoodItemsSectio
                 ...widget.foodItems.asMap().entries.map((entry) => _FoodItemRankingCard(
                   item: entry.value,
                   isDark: widget.isDark,
+                  isEdited: widget.editedIndices.contains(entry.key),
                   onWeightChanged: widget.onItemWeightChanged != null
                       ? (updatedItem) => widget.onItemWeightChanged!(entry.key, updatedItem)
                       : null,
                   onRemoved: widget.onItemRemoved != null
                       ? () => widget.onItemRemoved!(entry.key)
+                      : null,
+                  onFieldEdited: widget.onItemFieldEdited != null
+                      ? (field, value) => widget.onItemFieldEdited!(entry.key, field, value)
                       : null,
                 )),
               ],
@@ -108,14 +120,19 @@ class _CollapsibleFoodItemsSectionState extends State<CollapsibleFoodItemsSectio
 class _FoodItemRankingCard extends StatefulWidget {
   final FoodItemRanking item;
   final bool isDark;
+  final bool isEdited;
   final void Function(FoodItemRanking updatedItem)? onWeightChanged;
   final VoidCallback? onRemoved;
+  /// Inline per-field edit. [field] is 'calories' | 'protein_g' | 'carbs_g' | 'fat_g'.
+  final void Function(String field, num newValue)? onFieldEdited;
 
   const _FoodItemRankingCard({
     required this.item,
     required this.isDark,
+    this.isEdited = false,
     this.onWeightChanged,
     this.onRemoved,
+    this.onFieldEdited,
   });
 
   @override
@@ -322,7 +339,39 @@ class _FoodItemRankingCardState extends State<_FoodItemRankingCard> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(widget.item.name, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: textPrimary)),
+                    Row(
+                      children: [
+                        Flexible(
+                          child: Text(
+                            widget.item.name,
+                            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: textPrimary),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        if (widget.isEdited) ...[
+                          const SizedBox(width: 6),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: teal.withValues(alpha: 0.15),
+                              borderRadius: BorderRadius.circular(6),
+                              border: Border.all(color: teal.withValues(alpha: 0.4), width: 0.5),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Icons.edit_rounded, size: 9, color: teal),
+                                const SizedBox(width: 3),
+                                Text(
+                                  'edited',
+                                  style: TextStyle(fontSize: 9, color: teal, fontWeight: FontWeight.w600),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
                     if (canScale)
                       Padding(
                         padding: const EdgeInsets.only(top: 4),
@@ -335,16 +384,27 @@ class _FoodItemRankingCardState extends State<_FoodItemRankingCard> {
                         padding: const EdgeInsets.only(top: 4),
                         child: Text(widget.item.reason!, style: TextStyle(fontSize: 11, color: scoreColor, fontStyle: FontStyle.italic)),
                       ),
+                    if (widget.onFieldEdited != null)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 6),
+                        child: _buildMacroChipsRow(textPrimary, textMuted, teal),
+                      ),
                   ],
                 ),
               ),
-              // Calories
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Text('${_displayCalories ?? widget.item.calories ?? 0}', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: textPrimary)),
-                  Text('kcal', style: TextStyle(fontSize: 10, color: textMuted)),
-                ],
+              // Calories (tap-to-edit)
+              _EditablePill(
+                label: 'kcal',
+                value: (_displayCalories ?? widget.item.calories ?? 0).toDouble(),
+                isInt: true,
+                isEdited: widget.isEdited,
+                isDark: widget.isDark,
+                accent: teal,
+                onSaved: widget.onFieldEdited != null
+                    ? (v) => widget.onFieldEdited!('calories', v.round())
+                    : null,
+                valueStyle: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: textPrimary),
+                unitStyle: TextStyle(fontSize: 10, color: textMuted),
               ),
               // Remove button
               if (widget.onRemoved != null) ...[
@@ -567,6 +627,357 @@ class _FoodItemRankingCardState extends State<_FoodItemRankingCard> {
         toggleButton('Count', _PortionDisplayMode.count),
         toggleButton('Both', _PortionDisplayMode.both, borderRadius: const BorderRadius.only(topRight: Radius.circular(6), bottomRight: Radius.circular(6))),
       ],
+    );
+  }
+
+  /// Inline-editable P / C / F chips. Shown only when onFieldEdited is wired.
+  /// Uses macro-specific palette per feedback_accent_colors.md.
+  Widget _buildMacroChipsRow(Color textPrimary, Color textMuted, Color accent) {
+    final proteinColor = widget.isDark ? AppColors.macroProtein : AppColorsLight.macroProtein;
+    final carbsColor = widget.isDark ? AppColors.macroCarbs : AppColorsLight.macroCarbs;
+    final fatColor = widget.isDark ? AppColors.macroFat : AppColorsLight.macroFat;
+
+    return Wrap(
+      spacing: 6,
+      runSpacing: 4,
+      children: [
+        _MacroChip(
+          label: 'P',
+          value: (widget.item.proteinG ?? 0).toDouble(),
+          color: proteinColor,
+          isDark: widget.isDark,
+          onSaved: (v) => widget.onFieldEdited?.call('protein_g', double.parse(v.toStringAsFixed(1))),
+        ),
+        _MacroChip(
+          label: 'C',
+          value: (widget.item.carbsG ?? 0).toDouble(),
+          color: carbsColor,
+          isDark: widget.isDark,
+          onSaved: (v) => widget.onFieldEdited?.call('carbs_g', double.parse(v.toStringAsFixed(1))),
+        ),
+        _MacroChip(
+          label: 'F',
+          value: (widget.item.fatG ?? 0).toDouble(),
+          color: fatColor,
+          isDark: widget.isDark,
+          onSaved: (v) => widget.onFieldEdited?.call('fat_g', double.parse(v.toStringAsFixed(1))),
+        ),
+      ],
+    );
+  }
+}
+
+/// Inline tap-to-edit pill for the right-side "kcal" corner of a food row.
+/// Normal state shows "248 kcal"; tapping swaps in a number TextField plus
+/// ✓/✕ affordances. Saves via onSaved callback; cancel leaves the value alone.
+class _EditablePill extends StatefulWidget {
+  final String label;             // e.g. 'kcal'
+  final double value;
+  final bool isInt;
+  final bool isEdited;
+  final bool isDark;
+  final Color accent;
+  final TextStyle valueStyle;
+  final TextStyle unitStyle;
+  final void Function(num newValue)? onSaved;
+
+  const _EditablePill({
+    required this.label,
+    required this.value,
+    required this.isInt,
+    required this.isEdited,
+    required this.isDark,
+    required this.accent,
+    required this.valueStyle,
+    required this.unitStyle,
+    this.onSaved,
+  });
+
+  @override
+  State<_EditablePill> createState() => _EditablePillState();
+}
+
+class _EditablePillState extends State<_EditablePill> {
+  bool _editing = false;
+  late TextEditingController _controller;
+  final _focusNode = FocusNode();
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController(text: _fmt(widget.value));
+  }
+
+  @override
+  void didUpdateWidget(covariant _EditablePill oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Only sync the text field from parent when NOT actively editing —
+    // otherwise we'd stomp the user's in-progress input.
+    if (!_editing && oldWidget.value != widget.value) {
+      _controller.text = _fmt(widget.value);
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    _focusNode.dispose();
+    super.dispose();
+  }
+
+  String _fmt(double v) {
+    if (widget.isInt) return v.round().toString();
+    // One decimal for macros, trimmed of trailing zero
+    final s = v.toStringAsFixed(1);
+    return s.endsWith('.0') ? s.substring(0, s.length - 2) : s;
+  }
+
+  void _commit() {
+    final text = _controller.text.trim();
+    final parsed = double.tryParse(text);
+    if (parsed == null || parsed < 0 || parsed > 100000) {
+      // Invalid — reset and exit edit mode
+      _controller.text = _fmt(widget.value);
+      setState(() => _editing = false);
+      return;
+    }
+    setState(() => _editing = false);
+    if (parsed != widget.value) {
+      widget.onSaved?.call(widget.isInt ? parsed.round() : parsed);
+    }
+  }
+
+  void _cancel() {
+    _controller.text = _fmt(widget.value);
+    setState(() => _editing = false);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_editing) {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+        decoration: BoxDecoration(
+          color: widget.accent.withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: widget.accent, width: 1),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            SizedBox(
+              width: 52,
+              child: TextField(
+                controller: _controller,
+                focusNode: _focusNode,
+                autofocus: true,
+                keyboardType: TextInputType.numberWithOptions(decimal: !widget.isInt),
+                textAlign: TextAlign.end,
+                style: widget.valueStyle,
+                decoration: const InputDecoration(
+                  isDense: true,
+                  contentPadding: EdgeInsets.zero,
+                  border: InputBorder.none,
+                ),
+                onSubmitted: (_) => _commit(),
+              ),
+            ),
+            const SizedBox(width: 4),
+            Text(widget.label, style: widget.unitStyle),
+            const SizedBox(width: 4),
+            GestureDetector(
+              onTap: _commit,
+              behavior: HitTestBehavior.opaque,
+              child: Padding(
+                padding: const EdgeInsets.all(2),
+                child: Icon(Icons.check_rounded, size: 16, color: widget.accent),
+              ),
+            ),
+            GestureDetector(
+              onTap: _cancel,
+              behavior: HitTestBehavior.opaque,
+              child: Padding(
+                padding: const EdgeInsets.all(2),
+                child: Icon(
+                  Icons.close_rounded,
+                  size: 14,
+                  color: widget.isDark ? AppColors.textMuted : AppColorsLight.textMuted,
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    final editedColor = widget.isEdited ? widget.accent : null;
+    final displayValueStyle = editedColor != null
+        ? widget.valueStyle.copyWith(color: editedColor)
+        : widget.valueStyle;
+
+    return GestureDetector(
+      onTap: widget.onSaved == null ? null : () => setState(() => _editing = true),
+      behavior: HitTestBehavior.opaque,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+        decoration: widget.onSaved == null
+            ? null
+            : BoxDecoration(
+                borderRadius: BorderRadius.circular(6),
+                border: Border(
+                  bottom: BorderSide(
+                    color: widget.accent.withValues(alpha: widget.isEdited ? 0.4 : 0.15),
+                    width: 1,
+                    style: BorderStyle.solid,
+                  ),
+                ),
+              ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            Text(_fmt(widget.value), style: displayValueStyle),
+            Text(widget.label, style: widget.unitStyle),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Compact P / C / F inline-editable macro chip shown under the food name.
+class _MacroChip extends StatefulWidget {
+  final String label;   // 'P' | 'C' | 'F'
+  final double value;
+  final Color color;
+  final bool isDark;
+  final void Function(num newValue)? onSaved;
+
+  const _MacroChip({
+    required this.label,
+    required this.value,
+    required this.color,
+    required this.isDark,
+    this.onSaved,
+  });
+
+  @override
+  State<_MacroChip> createState() => _MacroChipState();
+}
+
+class _MacroChipState extends State<_MacroChip> {
+  bool _editing = false;
+  late TextEditingController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController(text: _fmt(widget.value));
+  }
+
+  @override
+  void didUpdateWidget(covariant _MacroChip oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (!_editing && oldWidget.value != widget.value) {
+      _controller.text = _fmt(widget.value);
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  String _fmt(double v) {
+    final s = v.toStringAsFixed(1);
+    return s.endsWith('.0') ? s.substring(0, s.length - 2) : s;
+  }
+
+  void _commit() {
+    final parsed = double.tryParse(_controller.text.trim());
+    if (parsed == null || parsed < 0 || parsed > 10000) {
+      _controller.text = _fmt(widget.value);
+      setState(() => _editing = false);
+      return;
+    }
+    setState(() => _editing = false);
+    if (parsed != widget.value) widget.onSaved?.call(parsed);
+  }
+
+  void _cancel() {
+    _controller.text = _fmt(widget.value);
+    setState(() => _editing = false);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final textMuted = widget.isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final bg = widget.color.withValues(alpha: 0.12);
+    final borderCol = widget.color.withValues(alpha: _editing ? 0.9 : 0.4);
+
+    if (_editing) {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+        decoration: BoxDecoration(
+          color: bg,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: borderCol, width: 1),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              '${widget.label}:',
+              style: TextStyle(fontSize: 11, color: widget.color, fontWeight: FontWeight.w700),
+            ),
+            const SizedBox(width: 3),
+            SizedBox(
+              width: 36,
+              child: TextField(
+                controller: _controller,
+                autofocus: true,
+                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                style: TextStyle(fontSize: 11, color: widget.color, fontWeight: FontWeight.w600),
+                decoration: const InputDecoration(
+                  isDense: true,
+                  contentPadding: EdgeInsets.zero,
+                  border: InputBorder.none,
+                ),
+                onSubmitted: (_) => _commit(),
+              ),
+            ),
+            Text('g', style: TextStyle(fontSize: 10, color: textMuted)),
+            const SizedBox(width: 3),
+            GestureDetector(
+              onTap: _commit,
+              behavior: HitTestBehavior.opaque,
+              child: Icon(Icons.check_rounded, size: 13, color: widget.color),
+            ),
+            GestureDetector(
+              onTap: _cancel,
+              behavior: HitTestBehavior.opaque,
+              child: Icon(Icons.close_rounded, size: 11, color: textMuted),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return GestureDetector(
+      onTap: widget.onSaved == null ? null : () => setState(() => _editing = true),
+      behavior: HitTestBehavior.opaque,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+        decoration: BoxDecoration(
+          color: bg,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: widget.color.withValues(alpha: 0.25), width: 0.5),
+        ),
+        child: Text(
+          '${widget.label} ${_fmt(widget.value)}g',
+          style: TextStyle(fontSize: 11, color: widget.color, fontWeight: FontWeight.w600),
+        ),
+      ),
     );
   }
 }

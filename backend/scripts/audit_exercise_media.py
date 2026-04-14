@@ -30,7 +30,7 @@ AWS_ACCESS_KEY_ID = os.getenv('AWS_ACCESS_KEY_ID')
 AWS_SECRET_ACCESS_KEY = os.getenv('AWS_SECRET_ACCESS_KEY')
 AWS_REGION = os.getenv('AWS_DEFAULT_REGION', 'us-east-1')
 S3_BUCKET = 'ai-fitness-coach'
-IMAGE_PREFIX = 'ILLUSTRATIONS/'
+IMAGE_PREFIX = 'ILLUSTRATIONS ALL/'
 VIDEO_PREFIX = 'VERTICAL VIDEOS/'
 
 DB_HOST = 'db.hpbzfahijszqmgsybuor.supabase.co'

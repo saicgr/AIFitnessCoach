@@ -195,10 +195,15 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
             'meal_type': _selectedMealType.name,
           },
         );
+        final finalResponse = response;
         setState(() {
           _isAnalyzing = false;
           _showLoadingIndicator = false;
-          _analyzedResponse = response;
+          _analyzedResponse = finalResponse;
+          // Snapshot the AI's per-item nutrition so inline edits diff against
+          // the original values (shallow copy — FoodItemRanking is immutable).
+          _originalFoodItems = List<FoodItemRanking>.from(finalResponse.foodItems);
+          _pendingItemEdits.clear();
         });
         // Show "Log This Meal" tooltip tour on first analysis
         _triggerLogMealTour();
@@ -236,127 +241,217 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
   void _handleFoodItemWeightChange(int index, FoodItemRanking updatedItem) {
     if (_analyzedResponse == null) return;
 
-    final currentItems = List<Map<String, dynamic>>.from(_analyzedResponse!.foodItems);
+    final currentItems = List<FoodItemRanking>.from(_analyzedResponse!.foodItems);
     if (index < 0 || index >= currentItems.length) return;
 
-    currentItems[index] = updatedItem.toJson();
+    currentItems[index] = updatedItem;
+    setState(() => _analyzedResponse = _rebuildResponseWithItems(currentItems));
+  }
 
+  /// User tapped the inline kcal/macro pill on a food item and saved a new
+  /// value. Commit the edit locally and diff against the AI's original
+  /// analysis to produce audit rows flushed at save time.
+  void _handleFoodItemFieldEdited(int index, String field, num newValue) {
+    if (_analyzedResponse == null) return;
+
+    final currentItems = List<FoodItemRanking>.from(_analyzedResponse!.foodItems);
+    if (index < 0 || index >= currentItems.length) return;
+
+    final item = currentItems[index];
+    final previousValue = _readField(item, field);
+
+    FoodItemRanking updated;
+    switch (field) {
+      case 'calories':
+        updated = item.copyWithFields(calories: newValue.round());
+        break;
+      case 'protein_g':
+        updated = item.copyWithFields(proteinG: newValue.toDouble());
+        break;
+      case 'carbs_g':
+        updated = item.copyWithFields(carbsG: newValue.toDouble());
+        break;
+      case 'fat_g':
+        updated = item.copyWithFields(fatG: newValue.toDouble());
+        break;
+      default:
+        return;
+    }
+    currentItems[index] = updated;
+
+    setState(() => _analyzedResponse = _rebuildResponseWithItems(currentItems));
+
+    // Diff against AI's ORIGINAL values (not the last-edited value) so the
+    // audit row represents the total correction the user made this session.
+    _recomputePendingEditsForIndex(index, updated);
+
+    // Analytics (see CLAUDE.md feedback — event-level edit tracking)
+    final deltaPct = previousValue != 0
+        ? ((newValue - previousValue) / previousValue * 100).toStringAsFixed(1)
+        : 'inf';
+    ref.read(posthogServiceProvider).capture(
+      eventName: 'food_item_edited',
+      properties: <String, Object>{
+        'field': field,
+        'previous': previousValue,
+        'updated': newValue,
+        'delta': newValue - previousValue,
+        'delta_pct': deltaPct,
+        'source': 'pre_save_log_meal',
+        'food_item_name': item.name,
+        'data_source': _sourceType,
+        'meal_type': _selectedMealType.value,
+      },
+    );
+  }
+
+  /// Rebuild pending audit rows for the item at [index] by diffing every
+  /// field against the ORIGINAL AI values. Replaces whatever was there —
+  /// edit-back-to-original cleanly removes the audit row.
+  void _recomputePendingEditsForIndex(int index, FoodItemRanking current) {
+    final originals = _originalFoodItems;
+    if (originals == null) return;
+    if (index < 0 || index >= originals.length) return;
+
+    final original = originals[index];
+    final rows = <FoodItemEdit>[];
+
+    void addIfChanged(String field, num prev, num next) {
+      if (prev != next) {
+        rows.add(FoodItemEdit(
+          foodItemIndex: index,
+          foodItemName: current.name,
+          editedField: field,
+          previousValue: prev,
+          updatedValue: next,
+        ));
+      }
+    }
+
+    addIfChanged('calories', original.calories ?? 0, current.calories ?? 0);
+    addIfChanged('protein_g', original.proteinG ?? 0, current.proteinG ?? 0);
+    addIfChanged('carbs_g', original.carbsG ?? 0, current.carbsG ?? 0);
+    addIfChanged('fat_g', original.fatG ?? 0, current.fatG ?? 0);
+
+    if (rows.isEmpty) {
+      _pendingItemEdits.remove(index);
+    } else {
+      _pendingItemEdits[index] = rows;
+    }
+  }
+
+  num _readField(FoodItemRanking item, String field) {
+    switch (field) {
+      case 'calories':
+        return item.calories ?? 0;
+      case 'protein_g':
+        return item.proteinG ?? 0;
+      case 'carbs_g':
+        return item.carbsG ?? 0;
+      case 'fat_g':
+        return item.fatG ?? 0;
+    }
+    return 0;
+  }
+
+  /// Rebuild the LogFoodResponse with new items + recomputed totals.
+  /// Extracted so both weight-scaling and field-edit paths share the same
+  /// totals-aggregation logic.
+  LogFoodResponse _rebuildResponseWithItems(List<FoodItemRanking> items) {
     int totalCalories = 0;
     double totalProtein = 0;
     double totalCarbs = 0;
     double totalFat = 0;
     double totalFiber = 0;
-
-    for (final item in currentItems) {
-      totalCalories += (item['calories'] as num?)?.toInt() ?? 0;
-      totalProtein += (item['protein_g'] as num?)?.toDouble() ?? 0;
-      totalCarbs += (item['carbs_g'] as num?)?.toDouble() ?? 0;
-      totalFat += (item['fat_g'] as num?)?.toDouble() ?? 0;
-      totalFiber += (item['fiber_g'] as num?)?.toDouble() ?? 0;
+    for (final item in items) {
+      totalCalories += item.calories ?? 0;
+      totalProtein += item.proteinG ?? 0;
+      totalCarbs += item.carbsG ?? 0;
+      totalFat += item.fatG ?? 0;
+      totalFiber += item.fiberG ?? 0;
     }
-
-    setState(() {
-      _analyzedResponse = LogFoodResponse(
-        success: _analyzedResponse!.success,
-        foodLogId: _analyzedResponse!.foodLogId,
-        foodItems: currentItems,
-        totalCalories: totalCalories,
-        proteinG: totalProtein,
-        carbsG: totalCarbs,
-        fatG: totalFat,
-        fiberG: totalFiber,
-        overallMealScore: _analyzedResponse!.overallMealScore,
-        healthScore: _analyzedResponse!.healthScore,
-        goalAlignmentPercentage: _analyzedResponse!.goalAlignmentPercentage,
-        aiSuggestion: _analyzedResponse!.aiSuggestion,
-        encouragements: _analyzedResponse!.encouragements,
-        warnings: _analyzedResponse!.warnings,
-        recommendedSwap: _analyzedResponse!.recommendedSwap,
-        confidenceScore: _analyzedResponse!.confidenceScore,
-        confidenceLevel: _analyzedResponse!.confidenceLevel,
-        sourceType: _analyzedResponse!.sourceType,
-        correctedQuery: _analyzedResponse!.correctedQuery,
-        sodiumMg: _analyzedResponse!.sodiumMg,
-        sugarG: _analyzedResponse!.sugarG,
-        saturatedFatG: _analyzedResponse!.saturatedFatG,
-        cholesterolMg: _analyzedResponse!.cholesterolMg,
-        potassiumMg: _analyzedResponse!.potassiumMg,
-        vitaminAIu: _analyzedResponse!.vitaminAIu,
-        vitaminCMg: _analyzedResponse!.vitaminCMg,
-        vitaminDIu: _analyzedResponse!.vitaminDIu,
-        calciumMg: _analyzedResponse!.calciumMg,
-        ironMg: _analyzedResponse!.ironMg,
-        imageUrl: _analyzedResponse!.imageUrl,
-        imageStorageKey: _analyzedResponse!.imageStorageKey,
-        plateDescription: _analyzedResponse!.plateDescription,
-      );
-    });
+    final base = _analyzedResponse!;
+    return LogFoodResponse(
+      success: base.success,
+      foodLogId: base.foodLogId,
+      foodItems: items,
+      totalCalories: totalCalories,
+      proteinG: totalProtein,
+      carbsG: totalCarbs,
+      fatG: totalFat,
+      fiberG: totalFiber,
+      overallMealScore: base.overallMealScore,
+      healthScore: base.healthScore,
+      goalAlignmentPercentage: base.goalAlignmentPercentage,
+      aiSuggestion: base.aiSuggestion,
+      encouragements: base.encouragements,
+      warnings: base.warnings,
+      recommendedSwap: base.recommendedSwap,
+      confidenceScore: base.confidenceScore,
+      confidenceLevel: base.confidenceLevel,
+      sourceType: base.sourceType,
+      correctedQuery: base.correctedQuery,
+      sodiumMg: base.sodiumMg,
+      sugarG: base.sugarG,
+      saturatedFatG: base.saturatedFatG,
+      cholesterolMg: base.cholesterolMg,
+      potassiumMg: base.potassiumMg,
+      vitaminAIu: base.vitaminAIu,
+      vitaminCMg: base.vitaminCMg,
+      vitaminDIu: base.vitaminDIu,
+      calciumMg: base.calciumMg,
+      ironMg: base.ironMg,
+      imageUrl: base.imageUrl,
+      imageStorageKey: base.imageStorageKey,
+      plateDescription: base.plateDescription,
+    );
   }
 
 
   void _handleFoodItemRemoved(int index) {
     if (_analyzedResponse == null) return;
 
-    final currentItems = List<Map<String, dynamic>>.from(_analyzedResponse!.foodItems);
+    final currentItems = List<FoodItemRanking>.from(_analyzedResponse!.foodItems);
     if (index < 0 || index >= currentItems.length) return;
     currentItems.removeAt(index);
+    // Keep the originals list aligned so diffs always line up 1:1.
+    if (_originalFoodItems != null && index < _originalFoodItems!.length) {
+      _originalFoodItems!.removeAt(index);
+    }
 
     if (currentItems.isEmpty) {
-      // All items removed — clear the response to go back to input
-      setState(() => _analyzedResponse = null);
+      setState(() {
+        _analyzedResponse = null;
+        _pendingItemEdits.clear();
+        _originalFoodItems = null;
+      });
       return;
     }
 
-    int totalCalories = 0;
-    double totalProtein = 0;
-    double totalCarbs = 0;
-    double totalFat = 0;
-    double totalFiber = 0;
-
-    for (final item in currentItems) {
-      totalCalories += (item['calories'] as num?)?.toInt() ?? 0;
-      totalProtein += (item['protein_g'] as num?)?.toDouble() ?? 0;
-      totalCarbs += (item['carbs_g'] as num?)?.toDouble() ?? 0;
-      totalFat += (item['fat_g'] as num?)?.toDouble() ?? 0;
-      totalFiber += (item['fiber_g'] as num?)?.toDouble() ?? 0;
-    }
-
-    setState(() {
-      _analyzedResponse = LogFoodResponse(
-        success: _analyzedResponse!.success,
-        foodLogId: _analyzedResponse!.foodLogId,
-        foodItems: currentItems,
-        totalCalories: totalCalories,
-        proteinG: totalProtein,
-        carbsG: totalCarbs,
-        fatG: totalFat,
-        fiberG: totalFiber,
-        overallMealScore: _analyzedResponse!.overallMealScore,
-        healthScore: _analyzedResponse!.healthScore,
-        goalAlignmentPercentage: _analyzedResponse!.goalAlignmentPercentage,
-        aiSuggestion: _analyzedResponse!.aiSuggestion,
-        encouragements: _analyzedResponse!.encouragements,
-        warnings: _analyzedResponse!.warnings,
-        recommendedSwap: _analyzedResponse!.recommendedSwap,
-        confidenceScore: _analyzedResponse!.confidenceScore,
-        confidenceLevel: _analyzedResponse!.confidenceLevel,
-        sourceType: _analyzedResponse!.sourceType,
-        correctedQuery: _analyzedResponse!.correctedQuery,
-        sodiumMg: _analyzedResponse!.sodiumMg,
-        sugarG: _analyzedResponse!.sugarG,
-        saturatedFatG: _analyzedResponse!.saturatedFatG,
-        cholesterolMg: _analyzedResponse!.cholesterolMg,
-        potassiumMg: _analyzedResponse!.potassiumMg,
-        vitaminAIu: _analyzedResponse!.vitaminAIu,
-        vitaminCMg: _analyzedResponse!.vitaminCMg,
-        vitaminDIu: _analyzedResponse!.vitaminDIu,
-        calciumMg: _analyzedResponse!.calciumMg,
-        ironMg: _analyzedResponse!.ironMg,
-        imageUrl: _analyzedResponse!.imageUrl,
-        imageStorageKey: _analyzedResponse!.imageStorageKey,
-        plateDescription: _analyzedResponse!.plateDescription,
-      );
+    // Drop edits for the removed item AND re-key higher indices down by 1
+    // (so audit payload indices match the post-removal food_items array).
+    final rekeyed = <int, List<FoodItemEdit>>{};
+    _pendingItemEdits.forEach((idx, edits) {
+      if (idx < index) {
+        rekeyed[idx] = edits;
+      } else if (idx > index) {
+        rekeyed[idx - 1] = edits
+            .map((e) => FoodItemEdit(
+                  foodItemIndex: idx - 1,
+                  foodItemName: e.foodItemName,
+                  foodItemId: e.foodItemId,
+                  editedField: e.editedField,
+                  previousValue: e.previousValue,
+                  updatedValue: e.updatedValue,
+                ))
+            .toList();
+      }
     });
+    _pendingItemEdits
+      ..clear()
+      ..addAll(rekeyed);
+
+    setState(() => _analyzedResponse = _rebuildResponseWithItems(currentItems));
   }
 
 
@@ -394,6 +489,12 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
     // Optimistic: mark XP and close sheet immediately
     ref.read(xpProvider.notifier).markMealLogged();
 
+    // Flatten pending pre-save edits into a single list — backend writes them
+    // to food_log_edits table with the new food_log_id as part of the same
+    // request. Any item edits for already-removed items have already been
+    // pruned by _handleFoodItemRemoved.
+    final pendingEdits = _pendingItemEdits.values.expand((e) => e).toList();
+
     // Start the save — capture the food_log_id for post-meal review
     String? savedLogId;
     final saveFuture = repository.logFoodDirect(
@@ -401,6 +502,7 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
       mealType: mealType,
       analyzedFood: response,
       sourceType: sourceType,
+      itemEdits: pendingEdits,
     ).then((savedResponse) {
       savedLogId = savedResponse.foodLogId;
       return savedResponse;
@@ -715,9 +817,12 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
         }
 
         // Use the rich preview (same as text search) instead of the bare dialog
+        final finalResponse = response;
         setState(() {
-          _analyzedResponse = response;
+          _analyzedResponse = finalResponse;
           _sourceType = 'image';
+          _originalFoodItems = List<FoodItemRanking>.from(finalResponse.foodItems);
+          _pendingItemEdits.clear();
         });
         // _buildNutritionPreview renders with food items, AI tips, editing.
         // "Log This Meal" button calls _handleLog() which saves.
@@ -760,7 +865,7 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
         // End the fast
         await ref.read(fastingProvider.notifier).endFast(
           userId: widget.userId,
-          notes: 'Ended by meal log: ${response.foodItems.map((f) => f['name'] ?? 'Food').join(", ")}',
+          notes: 'Ended by meal log: ${response.foodItems.map((f) => f.name).join(", ")}',
         );
       } else if (shouldEndFast == null) {
         // User cancelled, don't log the meal
@@ -773,7 +878,7 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
     final nutritionNotifier = ref.read(nutritionProvider.notifier);
     final userId = widget.userId;
     final isDark = widget.isDark;
-    final foodNames = response.foodItems.map((f) => (f['name'] as String?) ?? 'Food').toList();
+    final foodNames = response.foodItems.map((f) => f.name).toList();
     final totalCalories = response.totalCalories;
     // foodLogId from analysis response is null (not saved yet)
     // getSavedLogId() will have the real ID after save completes
@@ -793,6 +898,7 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
     // Show post-log review sheet after a brief delay
     await Future.delayed(const Duration(milliseconds: 400));
     final reviewContext = overlay?.context;
+    final savedLogId = getSavedLogId?.call();
     if (reviewContext != null && reviewContext.mounted) {
       showPostMealReviewSheet(
         reviewContext,
@@ -800,8 +906,42 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
         totalCalories: totalCalories,
         isDark: isDark,
         userId: userId,
-        foodLogId: getSavedLogId?.call(),
+        foodLogId: savedLogId,
       );
+    }
+
+    // Schedule the 45-min reminder push so users who skip the sheet still get
+    // a second chance to fill in mood_after. Service respects patterns
+    // settings + notification prefs internally.
+    if (savedLogId != null && savedLogId.isNotEmpty) {
+      unawaited(_schedulePostMealReminder(
+        userId: userId,
+        foodLogId: savedLogId,
+        mealSummary: foodNames.isNotEmpty ? foodNames.first : null,
+      ));
+    }
+  }
+
+  Future<void> _schedulePostMealReminder({
+    required String userId,
+    required String foodLogId,
+    String? mealSummary,
+  }) async {
+    try {
+      final repo = ref.read(nutritionRepositoryProvider);
+      final settings = await repo.getPatternsSettings(userId);
+      if (settings.postMealCheckinDisabled || !settings.postMealReminderEnabled) {
+        return;
+      }
+      await PostMealCheckinReminderService.instance.scheduleForLog(
+        foodLogId: foodLogId,
+        loggedAt: DateTime.now(),
+        mealSummary: mealSummary,
+        reminderEnabled: settings.postMealReminderEnabled,
+        checkinDisabled: settings.postMealCheckinDisabled,
+      );
+    } catch (e) {
+      debugPrint('⚠️ [PostMeal] Could not schedule reminder: $e');
     }
   }
 
@@ -904,7 +1044,7 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
     // Derive a display name from food items or fallback
     final displayName = foodName ??
         (response?.foodItems.isNotEmpty == true
-            ? response!.foodItems.map((f) => f['name'] ?? 'Food').join(', ')
+            ? response!.foodItems.map((f) => f.name).join(', ')
             : 'Food');
 
     // Use individual fields if provided, otherwise fall back to LogFoodResponse

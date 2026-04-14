@@ -141,7 +141,7 @@ extension _LogMealSheetStateUI on _LogMealSheetState {
     final hasText = _descriptionController.text.trim().isNotEmpty;
 
     return Padding(
-      padding: EdgeInsets.fromLTRB(16, 8, 16, MediaQuery.of(context).padding.bottom + 12),
+      padding: EdgeInsets.fromLTRB(12, 4, 12, MediaQuery.of(context).padding.bottom + 4),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -156,7 +156,7 @@ extension _LogMealSheetStateUI on _LogMealSheetState {
                 isDark: isDark,
                 color: const Color(0xFFEF4444), // red
               ),
-              const SizedBox(width: 4),
+              const SizedBox(width: 2),
 
               // Camera button
               ActionIconButton(
@@ -165,7 +165,7 @@ extension _LogMealSheetStateUI on _LogMealSheetState {
                 isDark: isDark,
                 color: const Color(0xFF3B82F6), // blue
               ),
-              const SizedBox(width: 4),
+              const SizedBox(width: 2),
 
               // Gallery button
               ActionIconButton(
@@ -174,7 +174,7 @@ extension _LogMealSheetStateUI on _LogMealSheetState {
                 isDark: isDark,
                 color: const Color(0xFF8B5CF6), // purple
               ),
-              const SizedBox(width: 4),
+              const SizedBox(width: 2),
 
               // Barcode button
               ActionIconButton(
@@ -183,7 +183,7 @@ extension _LogMealSheetStateUI on _LogMealSheetState {
                 isDark: isDark,
                 color: const Color(0xFF10B981), // green
               ),
-              const SizedBox(width: 4),
+              const SizedBox(width: 2),
 
               // AI Coach button — opens a context-aware popup with preset
               // questions informed by today's logged meals, workout, and
@@ -200,21 +200,23 @@ extension _LogMealSheetStateUI on _LogMealSheetState {
               // Analyze pill button
               ElevatedButton.icon(
                 onPressed: hasText ? _handleAnalyze : null,
-                icon: const Icon(Icons.auto_awesome, size: 18),
-                label: const Text('Analyze', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
+                icon: const Icon(Icons.auto_awesome, size: 16),
+                label: const Text('Analyze', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: orange,
                   foregroundColor: Colors.white,
                   disabledBackgroundColor: orange.withValues(alpha: 0.3),
                   disabledForegroundColor: Colors.white54,
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  minimumSize: Size.zero,
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                 ),
               ),
             ],
           ),
 
-          const SizedBox(height: 8),
+          const SizedBox(height: 4),
 
           // Daily macro summary pill
           _buildDailyMacroBar(isDark),
@@ -272,10 +274,10 @@ extension _LogMealSheetStateUI on _LogMealSheetState {
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 8),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
       decoration: BoxDecoration(
         color: glassSurface,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(18),
         border: Border.all(
           color: isDark ? Colors.white.withValues(alpha: 0.08) : Colors.black.withValues(alpha: 0.06),
           width: 0.5,
@@ -581,11 +583,19 @@ extension _LogMealSheetStateUI on _LogMealSheetState {
                     isDark: isDark,
                     onItemWeightChanged: (index, updatedItem) => _handleFoodItemWeightChange(index, updatedItem),
                     onItemRemoved: _handleFoodItemRemoved,
+                    onItemFieldEdited: _handleFoodItemFieldEdited,
+                    editedIndices: _pendingItemEdits.keys.toSet(),
                   ),
                 if (response.foodItems.isNotEmpty) const SizedBox(height: 12),
 
-                // AI Coach Tip
-                if (response.aiSuggestion != null || (response.encouragements != null && response.encouragements!.isNotEmpty) || (response.warnings != null && response.warnings!.isNotEmpty))
+                // AI Coach Tip (also surfaces the personal_history pill when
+                // the server flagged this food as one the user has had bad
+                // reactions to before).
+                if (response.aiSuggestion != null ||
+                    (response.encouragements != null && response.encouragements!.isNotEmpty) ||
+                    (response.warnings != null && response.warnings!.isNotEmpty) ||
+                    (response.personalHistoryNote != null &&
+                        response.personalHistoryNote!.trim().isNotEmpty))
                   Builder(builder: (_) {
                     final aiSettings = ref.read(aiSettingsProvider);
                     final coach = CoachPersona.findById(aiSettings.coachPersonaId) ?? CoachPersona.defaultCoach;
@@ -594,8 +604,23 @@ extension _LogMealSheetStateUI on _LogMealSheetState {
                       encouragements: response.encouragements,
                       warnings: response.warnings,
                       recommendedSwap: response.recommendedSwap,
+                      personalHistoryNote: response.personalHistoryNote,
                       isDark: isDark,
                       coach: coach,
+                      onHistoryTap: () {
+                        // Close the meal log sheet, then jump into the
+                        // Patterns tab so the user can see the full history.
+                        Navigator.of(context).pop();
+                        // Give the nav stack a frame to settle before routing.
+                        WidgetsBinding.instance.addPostFrameCallback((_) {
+                          try {
+                            context.go('/nutrition?tab=2');
+                          } catch (_) {
+                            // If router isn't ready, silently fall back —
+                            // the user is already back on the Nutrition screen.
+                          }
+                        });
+                      },
                     );
                   }),
 

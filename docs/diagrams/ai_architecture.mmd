@@ -1,0 +1,96 @@
+flowchart TB
+  subgraph ClientAI["Client AI"]
+    UM[User message + media]
+    OCS[OfflineCoachService]
+    OGEMMA[flutter_gemma<br/>on-device Gemma 270M/1B/4B]
+    OORCH[WorkoutGenerationOrchestrator<br/>pre-cache / rule-based / on-device<br/>NO cross-mode fallback]
+  end
+
+  subgraph Classify["Pre-routing Classification"]
+    VIS[VisionService.classify_media_content<br/>Gemini Vision, T=0.1, max=15]
+    CLS{{10 content types:<br/>food_plate, food_menu, food_buffet,<br/>exercise_form, progress_photo,<br/>app_screenshot, nutrition_label,<br/>document, gym_equipment, unknown}}
+  end
+
+  subgraph Router["LangGraphCoachService Router"]
+    MENTION["@mention (@nutrition/@workout/<br/>@injury/@hydration/@coach)"]
+    MEDIA[media_content_type fallback]
+    INTENT[Gemini intent classifier]
+    KW[keyword dictionary fallback]
+    DEFAULT[Coach agent default]
+  end
+
+  subgraph Agents["Domain Agents (LangGraph StateGraphs)"]
+    AG_Coach[Coach Agent<br/>general Q&A, app nav, settings]
+    AG_Nut[Nutrition Agent<br/>10 @tool functions]
+    AG_Work[Workout Agent<br/>7 @tool functions]
+    AG_Inj[Injury Agent<br/>4 @tool functions]
+    AG_Hyd[Hydration Agent]
+    AG_Onb[Onboarding Agent<br/>AI-driven, no hardcoded Q]
+    AG_ExSug[Exercise Suggestion Agent]
+    AG_Plan[Plan Agent]
+    AG_Insights[Workout Insights Agent]
+  end
+
+  subgraph GraphNodes["Per-agent graph (example: Coach)"]
+    N1[intent_extractor]
+    N2[rag_context]
+    N3{should_use_tools?}
+    N4[agent<br/>LLM.bind_tools]
+    N5{tool_calls?}
+    N6[tool_executor]
+    N7[response_after_tools]
+    N8[simple_response]
+    N9[build_action_data]
+    N10[(storage: chat + vectors)]
+  end
+
+  subgraph Tools["Tool Belt (@tool funcs)"]
+    T_NUT[nutrition_tools.py<br/>analyze_food_image, multi_images,<br/>parse_app_screenshot, parse_nutrition_label,<br/>log_food_from_text, get_summary,<br/>get_recent_meals, get_calorie_remainder,<br/>get_favorite_foods, get_todays_workout]
+    T_WK[workout_tools.py<br/>add/remove/replace exercise,<br/>modify_intensity, reschedule,<br/>delete_workout, generate_quick_workout]
+    T_INJ[injury_tools.py<br/>report_injury, clear_injury,<br/>get_active_injuries, update_status]
+    T_FORM[form_tools.py<br/>check_exercise_form,<br/>compare_exercise_form]
+  end
+
+  subgraph Gen["Non-chat AI surfaces"]
+    WGEN[Workout Generation<br/>GeminiService + Comeback +<br/>ProgressiveOverload + RAG]
+    HABIT[Habit / Recipe suggestion]
+    FORM[Form analysis pipeline<br/>keyframe_extractor → Gemini Vision]
+    HASH[Hashtag service]
+    WRAP[Wrapped / year-in-review]
+  end
+
+  subgraph RAGSys["RAG"]
+    RAG_EX[ExerciseRAG]
+    RAG_WK[WorkoutRAG]
+    RAG_FB[WorkoutFeedbackRAG]
+    RAG_NUT[NutritionRAG + SavedFoodsRAG]
+    RAG_SOC[SocialRAG]
+    RAG_CIN[CustomInputsRAG]
+    CHROMA2[(ChromaDB Cloud)]
+  end
+
+  UM --> VIS --> CLS --> Router
+  UM --> Router
+  MENTION -->|priority 1| Agents
+  MEDIA -->|priority 2| Agents
+  INTENT -->|priority 3| Agents
+  KW -->|priority 4| Agents
+  DEFAULT -->|fallback| AG_Coach
+
+  AG_Coach --> GraphNodes
+  AG_Nut --> T_NUT
+  AG_Work --> T_WK
+  AG_Work --> T_FORM
+  AG_Inj --> T_INJ
+
+  N2 --> RAGSys
+  RAGSys --> CHROMA2
+  N4 --> Tools
+  N6 --> Tools
+
+  WGEN --> RAGSys
+  FORM --> CHROMA2
+
+  UM -.offline.-> OCS
+  OCS --> OORCH
+  OORCH --> OGEMMA

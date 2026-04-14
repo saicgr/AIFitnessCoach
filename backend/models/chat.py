@@ -32,6 +32,7 @@ class CoachIntent(str, Enum):
     ANALYZE_FOOD = "analyze_food"
     NUTRITION_SUMMARY = "nutrition_summary"
     RECENT_MEALS = "recent_meals"
+    LOG_FOOD = "log_food"  # user is telling us what they ate/are eating so we save it
     # App control intents
     CHANGE_SETTING = "change_setting"
     NAVIGATE = "navigate"

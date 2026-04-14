@@ -119,8 +119,8 @@ class _ExercisePreviewOverlayState extends State<ExercisePreviewOverlay>
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final hasVideo =
-        widget.exercise.gifUrl != null && widget.exercise.gifUrl!.isNotEmpty;
+    final previewUrl = widget.exercise.imageS3Path ?? widget.exercise.gifUrl;
+    final hasVideo = previewUrl != null && previewUrl.isNotEmpty;
 
     return GestureDetector(
       onTap: _dismiss,
@@ -145,7 +145,7 @@ class _ExercisePreviewOverlayState extends State<ExercisePreviewOverlay>
             mainAxisSize: MainAxisSize.min,
             children: [
               // Video/GIF section
-              _buildVideoSection(isDark, hasVideo),
+              _buildVideoSection(isDark, hasVideo, previewUrl),
 
               // Exercise info
               _buildExerciseInfo(isDark),
@@ -162,7 +162,7 @@ class _ExercisePreviewOverlayState extends State<ExercisePreviewOverlay>
     );
   }
 
-  Widget _buildVideoSection(bool isDark, bool hasVideo) {
+  Widget _buildVideoSection(bool isDark, bool hasVideo, String? previewUrl) {
     return Container(
       height: 220,
       width: double.infinity,
@@ -175,7 +175,7 @@ class _ExercisePreviewOverlayState extends State<ExercisePreviewOverlay>
       clipBehavior: Clip.antiAlias,
       child: hasVideo
           ? CachedNetworkImage(
-              imageUrl: widget.exercise.gifUrl!,
+              imageUrl: previewUrl!,
               fit: BoxFit.contain,
               placeholder: (context, url) => Center(
                 child: CircularProgressIndicator(

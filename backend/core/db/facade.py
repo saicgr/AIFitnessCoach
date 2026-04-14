@@ -664,6 +664,28 @@ class SupabaseDB:
             user_id=user_id, food_log_id=food_log_id,
         )
 
+    def upsert_user_food_override(
+        self,
+        user_id: str,
+        food_item: Dict[str, Any],
+    ) -> Optional[Dict[str, Any]]:
+        """UPSERT a per-user cal/P/C/F override keyed by food_item_id or
+        food_name_normalized. Called after audit rows are written."""
+        return self._nutrition_db.upsert_user_food_override(
+            user_id=user_id, food_item=food_item,
+        )
+
+    def fetch_user_food_overrides_for_items(
+        self,
+        user_id: str,
+        food_items: List[Dict[str, Any]],
+    ) -> Dict[str, Dict[str, Any]]:
+        """Batch-fetch per-user overrides for a list of food items. Keys:
+        `id:{food_item_id}` and `name:{food_name_normalized}`."""
+        return self._nutrition_db.fetch_user_food_overrides_for_items(
+            user_id=user_id, food_items=food_items,
+        )
+
     def delete_food_logs_by_user(self, user_id: str) -> bool:
         """Delete all food logs for a user."""
         return self._nutrition_db.delete_food_logs_by_user(user_id)

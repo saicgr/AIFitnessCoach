@@ -372,6 +372,12 @@ class ChatRequest {
   @JsonKey(name: 'media_url')
   final String? mediaUrl;
 
+  /// Force-route to a specific agent, bypassing classifier.
+  /// One of AgentType values (e.g. 'nutrition', 'workout', 'coach').
+  /// Used by contextual widgets that already know the correct agent.
+  @JsonKey(name: 'agent_override')
+  final String? agentOverride;
+
   const ChatRequest({
     required this.message,
     required this.userId,
@@ -386,6 +392,7 @@ class ChatRequest {
     this.imageBase64,
     this.videoFrames,
     this.mediaUrl,
+    this.agentOverride,
   });
 
   factory ChatRequest.fromJson(Map<String, dynamic> json) =>

@@ -8,6 +8,9 @@ class DailyGoalsStatus {
   final bool workoutComplete;
   final bool proteinGoal;
   final bool bodyMeasurements;
+  final bool stepsGoal;
+  final bool hydrationGoal;
+  final bool calorieGoal;
 
   const DailyGoalsStatus({
     this.weightLog = false,
@@ -15,6 +18,9 @@ class DailyGoalsStatus {
     this.workoutComplete = false,
     this.proteinGoal = false,
     this.bodyMeasurements = false,
+    this.stepsGoal = false,
+    this.hydrationGoal = false,
+    this.calorieGoal = false,
   });
 
   factory DailyGoalsStatus.fromJson(Map<String, dynamic> json) {
@@ -24,6 +30,9 @@ class DailyGoalsStatus {
       workoutComplete: json['workout_complete'] as bool? ?? false,
       proteinGoal: json['protein_goal'] as bool? ?? false,
       bodyMeasurements: json['body_measurements'] as bool? ?? false,
+      stepsGoal: json['steps_goal'] as bool? ?? false,
+      hydrationGoal: json['hydration_goal'] as bool? ?? false,
+      calorieGoal: json['calorie_goal'] as bool? ?? false,
     );
   }
 }

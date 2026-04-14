@@ -478,26 +478,18 @@ class _SupersetEditSheetState extends ConsumerState<_SupersetEditSheet> {
                 borderRadius: BorderRadius.circular(8),
               ),
               clipBehavior: Clip.hardEdge,
-              child: exercise.gifUrl != null && exercise.gifUrl!.isNotEmpty
-                  ? CachedNetworkImage(
-                      imageUrl: exercise.gifUrl!,
-                      fit: BoxFit.cover,
-                      placeholder: (_, __) => Icon(
-                        Icons.fitness_center,
-                        color: textMuted,
-                        size: 20,
-                      ),
-                      errorWidget: (_, __, ___) => Icon(
-                        Icons.fitness_center,
-                        color: textMuted,
-                        size: 20,
-                      ),
-                    )
-                  : Icon(
-                      Icons.fitness_center,
-                      color: textMuted,
-                      size: 20,
-                    ),
+              child: Builder(builder: (_) {
+                final url = exercise.imageS3Path ?? exercise.gifUrl;
+                if (url == null || url.isEmpty) {
+                  return Icon(Icons.fitness_center, color: textMuted, size: 20);
+                }
+                return CachedNetworkImage(
+                  imageUrl: url,
+                  fit: BoxFit.cover,
+                  placeholder: (_, __) => Icon(Icons.fitness_center, color: textMuted, size: 20),
+                  errorWidget: (_, __, ___) => Icon(Icons.fitness_center, color: textMuted, size: 20),
+                );
+              }),
             ),
             const SizedBox(width: 12),
 

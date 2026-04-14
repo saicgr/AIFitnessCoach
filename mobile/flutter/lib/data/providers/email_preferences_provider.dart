@@ -97,6 +97,17 @@ class EmailPreferencesNotifier extends StateNotifier<EmailPreferencesState> {
         case EmailPreferenceType.promotional:
           optimisticUpdate = previousPrefs.copyWith(promotional: enabled);
           break;
+        case EmailPreferenceType.streakAlerts:
+          optimisticUpdate = previousPrefs.copyWith(streakAlerts: enabled);
+          break;
+        case EmailPreferenceType.missedWorkoutAlerts:
+          optimisticUpdate =
+              previousPrefs.copyWith(missedWorkoutAlerts: enabled);
+          break;
+        case EmailPreferenceType.achievementAlerts:
+          optimisticUpdate =
+              previousPrefs.copyWith(achievementAlerts: enabled);
+          break;
       }
       state = state.copyWith(preferences: optimisticUpdate, clearError: true);
     }

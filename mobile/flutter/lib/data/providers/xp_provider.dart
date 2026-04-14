@@ -29,6 +29,8 @@ enum XPGoalType {
   proteinGoal,
   bodyMeasurements,
   stepsGoal,
+  hydrationGoal,
+  calorieGoal,
 }
 
 // ============================================

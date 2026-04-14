@@ -48,10 +48,13 @@ def normalize_body_part(target_muscle: str) -> str:
         return "Back"
     elif any(x in target_lower for x in ["shoulder", "deltoid"]):
         return "Shoulders"
-    elif any(x in target_lower for x in ["bicep", "brachii"]):
-        return "Biceps"
-    elif any(x in target_lower for x in ["tricep"]):
+    # Check tricep BEFORE bicep — "triceps brachii" would otherwise match the
+    # bicep branch via "brachii" and get miscategorized as "Biceps", dropping
+    # every triceps candidate at the muscle-filter step.
+    elif "tricep" in target_lower:
         return "Triceps"
+    elif "bicep" in target_lower:
+        return "Biceps"
     elif any(x in target_lower for x in ["forearm", "wrist"]):
         return "Forearms"
     elif any(x in target_lower for x in ["quad", "thigh"]):

@@ -69,7 +69,9 @@ class SaveFoodRequest {
       totalCarbsG: response.carbsG,
       totalFatG: response.fatG,
       totalFiberG: response.fiberG,
-      foodItems: response.foodItems,
+      // response.foodItems is List<FoodItemRanking>; SaveFoodRequest persists
+      // raw JSON maps so the backend can round-trip them verbatim.
+      foodItems: response.foodItems.map((e) => e.toJson()).toList(),
       overallMealScore: response.overallMealScore,
       goalAlignmentPercentage: response.goalAlignmentPercentage,
       tags: tags,

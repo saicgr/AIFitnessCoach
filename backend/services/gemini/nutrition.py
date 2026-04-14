@@ -313,6 +313,7 @@ MICRONUTRIENTS: Estimate all vitamins (A, C, D, E, K, B1, B2, B3, B6, B9, B12), 
         mood_before: Optional[str] = None,
         meal_type: Optional[str] = None,
         user_id: Optional[str] = None,
+        personal_history: Optional[List[Dict]] = None,
     ) -> Optional[Dict]:
         """
         Parse a text description of food and extract nutrition information with goal-based rankings.
@@ -327,15 +328,36 @@ MICRONUTRIENTS: Estimate all vitamins (A, C, D, E, K, B1, B2, B3, B6, B9, B12), 
         Returns:
             Dictionary with food_items (with rankings), total_calories, macros, ai_suggestion, etc.
         """
-        # Check food text cache first (same food description returns same analysis)
+        # Check food text cache first (same food description returns same analysis).
+        # CORRECTNESS: cache key includes user_id because personal_history injects
+        # per-user warnings into the response. Without user_id, user A's history
+        # could leak into user B's re-log tip for the same food text.
+        personal_history_key = ""
+        if personal_history:
+            try:
+                personal_history_key = "|".join(
+                    f"{h.get('food_name')}:{h.get('severity')}:{h.get('negative_mood_count')}"
+                    for h in personal_history
+                )
+            except Exception:
+                personal_history_key = "has_history"
         try:
             cache_key = _food_text_cache.make_key(
-                "food_text", description.strip().lower(), user_goals, nutrition_targets
+                "food_text",
+                description.strip().lower(),
+                user_goals,
+                nutrition_targets,
+                user_id or "anon",
+                personal_history_key,
             )
-            cached_result = await _food_text_cache.get(cache_key)
-            if cached_result is not None:
-                logger.info(f"[FoodTextCache] Cache HIT for: '{description[:60]}...'")
-                return cached_result
+            # Skip cache entirely when there's personal history — the note is
+            # user-specific AND mood_before-specific, and we'd rather re-run than
+            # risk a stale miss-attribution.
+            if not personal_history_key:
+                cached_result = await _food_text_cache.get(cache_key)
+                if cached_result is not None:
+                    logger.info(f"[FoodTextCache] Cache HIT for: '{description[:60]}...'")
+                    return cached_result
         except Exception as cache_err:
             logger.warning(f"[FoodTextCache] Cache lookup error (falling through): {cache_err}", exc_info=True)
 
@@ -359,6 +381,53 @@ MICRONUTRIENTS: Estimate all vitamins (A, C, D, E, K, B1, B2, B3, B6, B9, B12), 
         rag_section = ""
         if rag_context:
             rag_section = f"\nNUTRITION KNOWLEDGE CONTEXT:\n{rag_context}\n"
+
+        # Personal history: prior logs of the same food with mood/energy data.
+        # Gemini must acknowledge this pattern in warnings + recommended_swap,
+        # and set `personal_history_note` so the UI can render a dedicated pill.
+        personal_history_section = ""
+        if personal_history:
+            lines = []
+            for h in personal_history:
+                severity = (h.get("severity") or "").lower()
+                if severity not in ("strong", "moderate"):
+                    continue
+                food = h.get("food_name") or "this food"
+                total = h.get("logs") or 0
+                confirmed = h.get("confirmed_count") or 0
+                inferred = h.get("inferred_count") or 0
+                negative = h.get("negative_mood_count") or 0
+                symptom = h.get("dominant_symptom") or "off"
+                avg_energy = h.get("avg_energy")
+                conf_note = (
+                    f"{confirmed} user-reported"
+                    if not inferred
+                    else f"{confirmed} reported + {inferred} AI-inferred"
+                )
+                energy_note = (
+                    f", avg energy {avg_energy:.1f}/5"
+                    if isinstance(avg_energy, (int, float))
+                    else ""
+                )
+                lines.append(
+                    f"- '{food}': logged {total}x in last 90d ({conf_note}); "
+                    f"user felt {symptom} {negative} of {total} times{energy_note}. "
+                    f"Severity: {severity}."
+                )
+            if lines:
+                personal_history_section = (
+                    "\nUSER'S PERSONAL HISTORY WITH THESE FOODS (last 90 days):\n"
+                    + "\n".join(lines)
+                    + "\n"
+                    "RULES for using this history:\n"
+                    "1. Add a specific item to `warnings` citing the pattern — include the "
+                    "numbers (e.g. '4 of 5 times you ate pasta you felt bloated').\n"
+                    "2. `recommended_swap` MUST address the pattern directly.\n"
+                    "3. Set `personal_history_note` to a short 1-sentence friendly callout "
+                    "(e.g. 'Heads up — this one has left you feeling bloated most times').\n"
+                    "4. Tone for 'moderate' severity: softer ('this one has sometimes left you…'). "
+                    "Tone for 'strong': direct ('consistently leaves you…'). Never sarcastic.\n"
+                )
 
         # Build scoring criteria based on goals - simplified for speed
         scoring_criteria = """
@@ -407,7 +476,8 @@ Per-item inflammation_score: Rate EACH food item individually. Meal-level inflam
   "encouragements": ["What's good about this meal for their goals"],
   "warnings": ["Any concerns - skip if none"],
   "ai_suggestion": "Next time: specific actionable tip",
-  "recommended_swap": "Healthier alternative if applicable"
+  "recommended_swap": "Healthier alternative if applicable",
+  "personal_history_note": "Short friendly callout when user has prior history with this food — else null"
 }}'''
         else:
             response_format = '''{{
@@ -434,7 +504,8 @@ Per-item inflammation_score: Rate EACH food item individually. Meal-level inflam
   "encouragements": ["What's good about this meal"],
   "warnings": ["Any concerns - skip if none"],
   "ai_suggestion": "Next time: specific actionable tip",
-  "recommended_swap": "Healthier alternative if applicable"
+  "recommended_swap": "Healthier alternative if applicable",
+  "personal_history_note": "Short friendly callout when user has prior history with this food — else null"
 }}'''
 
         # Build actionable tip guidance based on user goals
@@ -462,7 +533,7 @@ SCORE-BASED TIP TONE:
         prompt = f'''Parse food and return nutrition JSON. Be fast and accurate.
 
 Food: "{description}"
-{user_context}{rag_section}{scoring_criteria if user_goals else ""}{tip_guidance}
+{user_context}{rag_section}{personal_history_section}{scoring_criteria if user_goals else ""}{tip_guidance}
 
 Return ONLY JSON (no markdown):
 {response_format}

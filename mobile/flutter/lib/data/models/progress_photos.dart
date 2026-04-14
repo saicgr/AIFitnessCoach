@@ -157,7 +157,7 @@ class ProgressPhoto {
 }
 
 /// Photo comparison (before/after or N-photo)
-@JsonSerializable()
+@JsonSerializable(explicitToJson: true)
 class PhotoComparison {
   final String id;
   @JsonKey(name: 'user_id')
@@ -340,6 +340,9 @@ class ComparisonSettings {
   final String photoBorderColor;
   final double photoBorderWidth;
   final double photoSpacing;
+  final bool showUsername;
+  final String logoVariant; // 'auto', 'original', 'light', 'dark'
+  final Map<int, String> dateOverrides; // per-photo ISO8601 date override
 
   const ComparisonSettings({
     this.layout = 'side_by_side',
@@ -364,6 +367,9 @@ class ComparisonSettings {
     this.photoBorderColor = '#FFFFFF',
     this.photoBorderWidth = 2.0,
     this.photoSpacing = 2.0,
+    this.showUsername = false,
+    this.logoVariant = 'auto',
+    this.dateOverrides = const {},
   });
 
   Map<String, dynamic> toJson() => {
@@ -391,6 +397,10 @@ class ComparisonSettings {
     'photoBorderColor': photoBorderColor,
     'photoBorderWidth': photoBorderWidth,
     'photoSpacing': photoSpacing,
+    'showUsername': showUsername,
+    'logoVariant': logoVariant,
+    if (dateOverrides.isNotEmpty)
+      'dateOverrides': dateOverrides.map((k, v) => MapEntry(k.toString(), v)),
   };
 
   factory ComparisonSettings.fromJson(Map<String, dynamic> json) {
@@ -406,6 +416,18 @@ class ComparisonSettings {
           datePositions[key] = (entry.value as List)
               .map((e) => (e as num).toDouble())
               .toList();
+        }
+      }
+    }
+
+    // Parse dateOverrides
+    final rawDateOverrides = json['dateOverrides'] as Map<String, dynamic>?;
+    final dateOverrides = <int, String>{};
+    if (rawDateOverrides != null) {
+      for (final entry in rawDateOverrides.entries) {
+        final key = int.tryParse(entry.key);
+        if (key != null && entry.value is String) {
+          dateOverrides[key] = entry.value as String;
         }
       }
     }
@@ -446,6 +468,9 @@ class ComparisonSettings {
       photoBorderColor: json['photoBorderColor'] as String? ?? '#FFFFFF',
       photoBorderWidth: (json['photoBorderWidth'] as num?)?.toDouble() ?? 2.0,
       photoSpacing: (json['photoSpacing'] as num?)?.toDouble() ?? 2.0,
+      showUsername: json['showUsername'] as bool? ?? false,
+      logoVariant: json['logoVariant'] as String? ?? 'auto',
+      dateOverrides: dateOverrides,
     );
   }
 
@@ -472,6 +497,9 @@ class ComparisonSettings {
     String? photoBorderColor,
     double? photoBorderWidth,
     double? photoSpacing,
+    bool? showUsername,
+    String? logoVariant,
+    Map<int, String>? dateOverrides,
   }) {
     return ComparisonSettings(
       layout: layout ?? this.layout,
@@ -496,6 +524,9 @@ class ComparisonSettings {
       photoBorderColor: photoBorderColor ?? this.photoBorderColor,
       photoBorderWidth: photoBorderWidth ?? this.photoBorderWidth,
       photoSpacing: photoSpacing ?? this.photoSpacing,
+      showUsername: showUsername ?? this.showUsername,
+      logoVariant: logoVariant ?? this.logoVariant,
+      dateOverrides: dateOverrides ?? this.dateOverrides,
     );
   }
 }

@@ -1,0 +1,55 @@
+flowchart LR
+  subgraph Client["Flutter App (iOS / Android)"]
+    UI[Screens + Widgets]
+    RP[Riverpod Providers]
+    DIO[Dio API Client<br/>api_client.dart]
+    DCS[DataCacheService<br/>in-memory TTL]
+    DRIFT[(Drift / SQLite<br/>7 tables, 7 DAOs)]
+    SECSTOR[FlutterSecureStorage<br/>refresh token only]
+    WM[WorkManager<br/>background sync]
+  end
+
+  subgraph Edge["Render Edge"]
+    FA[FastAPI / Uvicorn]
+    RL[SlowAPI rate limiter]
+    REDIS[(Redis<br/>response + gen cache)]
+    MEMCACHE[In-proc TTL<br/>ResponseCache]
+  end
+
+  subgraph Data["Managed Data Plane"]
+    SBAUTH[Supabase Auth<br/>JWT / OAuth]
+    SBPG[(Supabase<br/>PostgreSQL)]
+    S3[(AWS S3<br/>exercise media, user videos,<br/>progress photos)]
+    CHROMA[(ChromaDB Cloud<br/>RAG vectors)]
+    USDA[(USDA FoodData<br/>external API)]
+  end
+
+  subgraph External["3rd-Party"]
+    GEMINI[Google Gemini<br/>google-genai SDK]
+    RC[RevenueCat<br/>subscriptions]
+    GCAL[Google Calendar]
+    FCM[Firebase / APNs<br/>push]
+    SG[SendGrid<br/>email]
+  end
+
+  UI --> RP --> DIO
+  RP --> DCS
+  UI --> DRIFT
+  DIO -- HTTPS + Bearer JWT --> FA
+  FA --> RL
+  FA <--> REDIS
+  FA <--> MEMCACHE
+  FA -- service-role key --> SBPG
+  DIO -- OAuth / refresh --> SBAUTH
+  SBAUTH --> SBPG
+  FA <--> S3
+  FA <--> CHROMA
+  FA --> USDA
+  FA --> GEMINI
+  FA --> RC
+  FA --> GCAL
+  FA --> FCM
+  FA --> SG
+  WM -- sync queue --> DIO
+  DRIFT <-- conflict resolution --> WM
+  SECSTOR -. refresh only .-> DIO

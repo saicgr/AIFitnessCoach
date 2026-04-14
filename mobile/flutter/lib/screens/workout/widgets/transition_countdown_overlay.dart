@@ -243,7 +243,7 @@ class _TransitionCountdownOverlayState extends State<TransitionCountdownOverlay>
     bool isDark,
   ) {
     final exercise = widget.nextExercise;
-    final imageUrl = widget.nextExerciseImageUrl ?? exercise.gifUrl;
+    final imageUrl = widget.nextExerciseImageUrl ?? exercise.imageS3Path ?? exercise.gifUrl;
 
     return Container(
       padding: const EdgeInsets.all(20),

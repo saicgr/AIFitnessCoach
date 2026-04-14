@@ -18,7 +18,6 @@ import '../../widgets/segmented_tab_bar.dart';
 import '../../widgets/main_shell.dart';
 import '../../widgets/pill_swipe_navigation.dart';
 import 'log_meal_sheet.dart';
-import 'nutrient_explorer.dart';
 import 'food_history_screen.dart';
 import 'nutrition_settings_screen.dart';
 import 'recipe_builder_sheet.dart';
@@ -28,9 +27,10 @@ import 'widgets/nutrition_loading_skeleton.dart';
 import 'widgets/nutrition_error_state.dart';
 import 'widgets/my_foods_sheet.dart';
 import 'widgets/share_nutrition_sheet.dart';
-import 'tabs/hydration_tab.dart';
-// COMING SOON: Fasting tab — uncomment when fasting feature launches
-// import 'tabs/fasting_tab.dart';
+import 'widgets/fuel_tab.dart';
+import 'widgets/recipes_tab.dart';
+import 'widgets/nutrition_patterns_tab.dart';
+import 'widgets/post_meal_review_sheet.dart';
 import '../../core/services/posthog_service.dart';
 import '../../data/repositories/hydration_repository.dart';
 
@@ -38,8 +38,7 @@ class NutritionScreen extends ConsumerStatefulWidget {
   /// Optional meal type to auto-open the log meal sheet (from deep link).
   final String? initialMeal;
 
-  /// Optional initial tab index (0=Daily, 1=Nutrients, 2=Water).
-  /// COMING SOON: Fasting will be index 3 when re-enabled.
+  /// Optional initial tab index (0=Daily, 1=Recipes, 2=Patterns, 3=Fuel).
   final int initialTab;
 
   /// When true, auto-opens the log meal sheet and launches the camera.
@@ -48,7 +47,18 @@ class NutritionScreen extends ConsumerStatefulWidget {
   /// When true, auto-opens the log meal sheet and launches the barcode scanner.
   final bool autoOpenBarcode;
 
-  const NutritionScreen({super.key, this.initialMeal, this.initialTab = 0, this.autoOpenCamera = false, this.autoOpenBarcode = false});
+  /// When non-null, the 45-min check-in reminder push tapped into the app and
+  /// we should re-open the post-meal review sheet bound to this food_log_id.
+  final String? openCheckinLogId;
+
+  const NutritionScreen({
+    super.key,
+    this.initialMeal,
+    this.initialTab = 0,
+    this.autoOpenCamera = false,
+    this.autoOpenBarcode = false,
+    this.openCheckinLogId,
+  });
 
   @override
   ConsumerState<NutritionScreen> createState() => _NutritionScreenState();
@@ -77,8 +87,8 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
   @override
   void initState() {
     super.initState();
-    // COMING SOON: Change back to length: 4 when fasting tab is re-enabled
-    _tabController = TabController(length: 3, vsync: this, initialIndex: widget.initialTab);
+    // Tabs: Daily | Recipes | Patterns | Fuel (merged Nutrients + Water)
+    _tabController = TabController(length: 4, vsync: this, initialIndex: widget.initialTab);
     _loadData();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(posthogServiceProvider).capture(eventName: 'nutrition_screen_viewed');
@@ -92,6 +102,10 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
       if (widget.initialMeal != null || widget.autoOpenCamera || widget.autoOpenBarcode) {
         final isDark = Theme.of(context).brightness == Brightness.dark;
         _showLogMealSheet(isDark, mealType: widget.initialMeal, autoOpenCamera: widget.autoOpenCamera, autoOpenBarcode: widget.autoOpenBarcode);
+      }
+      // 45-min reminder tap: re-open the post-meal check-in sheet bound to the log.
+      if (widget.openCheckinLogId != null && widget.openCheckinLogId!.isNotEmpty) {
+        _reopenCheckinFromReminder(widget.openCheckinLogId!);
       }
     });
   }
@@ -112,6 +126,37 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
   void dispose() {
     _tabController.dispose();
     super.dispose();
+  }
+
+  /// Re-opens the post-meal check-in sheet bound to a specific food_log,
+  /// fired from the 45-min reminder notification tap. We look up the log on
+  /// the fly so the sheet has the correct food names / calories / log id.
+  Future<void> _reopenCheckinFromReminder(String foodLogId) async {
+    final userId = _userId ?? await ref.read(apiClientProvider).getUserId();
+    if (!mounted || userId == null) return;
+    try {
+      final repo = ref.read(nutritionRepositoryProvider);
+      final logs = await repo.getFoodLogs(userId, limit: 50);
+      final match = logs.firstWhere(
+        (l) => l.id == foodLogId,
+        orElse: () => logs.first,
+      );
+      if (!mounted) return;
+      final isDark = Theme.of(context).brightness == Brightness.dark;
+      await Future<void>.delayed(const Duration(milliseconds: 350));
+      if (!mounted) return;
+      // ignore: use_build_context_synchronously
+      showPostMealReviewSheet(
+        context,
+        foodNames: match.foodItems.map((e) => e.name).take(4).toList(),
+        totalCalories: match.totalCalories,
+        isDark: isDark,
+        userId: userId,
+        foodLogId: foodLogId,
+      );
+    } catch (e) {
+      debugPrint('⚠️ [Nutrition] reopen from reminder failed: $e');
+    }
   }
 
   Future<void> _loadData() async {
@@ -290,10 +335,9 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
               showBorder: true,
               tabs: const [
                 SegmentedTabItem(label: 'Daily', icon: Icons.restaurant_menu_rounded),
-                SegmentedTabItem(label: 'Nutrients', icon: Icons.science_outlined),
-                SegmentedTabItem(label: 'Water', icon: Icons.water_drop_outlined),
-                // COMING SOON: Fasting tab — uncomment when fasting feature launches
-                // SegmentedTabItem(label: 'Fast', icon: Icons.timer_outlined),
+                SegmentedTabItem(label: 'Recipes', icon: Icons.menu_book_rounded),
+                SegmentedTabItem(label: 'Patterns', icon: Icons.insights_outlined),
+                SegmentedTabItem(label: 'Fuel', icon: Icons.bolt_outlined),
               ],
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
             ),
@@ -322,24 +366,38 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
                             onDeleteMeal: (id) => _deleteMeal(id),
                             onCopyMeal: (id, mealType) => _copyMeal(id, mealType),
                             onMoveMeal: (id, mealType) => _moveMeal(id, mealType),
-                            onUpdateMeal: (logId, cal, p, c, f, {double? weightG}) => _updateMeal(logId, cal, p, c, f, weightG: weightG),
+                            onCopyItem: (logId, idx, mealType) => _copyItemAsStandalone(logId, idx, mealType),
+                            onMoveItem: (logId, idx, mealType) => _moveItemAsStandalone(logId, idx, mealType),
+                            onUpdateMeal: (logId, cal, p, c, f, {double? weightG, List<Map<String, dynamic>>? foodItems, List<FoodItemEdit>? itemEdits}) =>
+                                _updateMeal(logId, cal, p, c, f, weightG: weightG, foodItems: foodItems, itemEdits: itemEdits),
                             onUpdateMealTime: (logId, newTime) => _updateMealTime(logId, newTime),
                             onUpdateMealNotes: (logId, notes) => _updateMealNotes(logId, notes),
                             onUpdateMealMood: (logId, {String? moodBefore, String? moodAfter, int? energyLevel}) => _updateMealMood(logId, moodBefore: moodBefore, moodAfter: moodAfter, energyLevel: energyLevel),
                             onSaveFoodToFavorites: (meal) => _saveFoodToFavorites(meal),
+                            onFetchItemEdits: _fetchItemEdits,
                             apiClient: ref.read(apiClientProvider),
-                            onSwitchToNutrientsTab: () => _tabController.animateTo(1),
-                            onSwitchToHydrationTab: () => _tabController.animateTo(2),
+                            // Fuel tab (index 3) now hosts both Nutrients and Water pill toggles
+                            onSwitchToNutrientsTab: () => _tabController.animateTo(3),
+                            onSwitchToHydrationTab: () => _tabController.animateTo(3),
                             isDark: isDark,
                             calmMode: calmMode,
                           ),
 
-                          // Nutrients Tab
-                          NutrientExplorerTab(
+                          // Recipes Tab (placeholder — full feature on a separate track)
+                          RecipesPlaceholderTab(isDark: isDark),
+
+                          // Patterns Tab (macros, top foods, mood patterns, history)
+                          NutritionPatternsTab(
                             userId: _userId ?? '',
-                            summary: _micronutrientSummary,
+                            isDark: isDark,
+                          ),
+
+                          // Fuel Tab — merged Nutrients + Water with pill toggles
+                          FuelTab(
+                            userId: _userId ?? '',
+                            micronutrients: _micronutrientSummary,
                             isLoading: _isLoadingMicronutrients,
-                            onRefresh: () {
+                            onRefreshMicronutrients: () {
                               if (_userId != null) {
                                 final dateStr = DateFormat('yyyy-MM-dd').format(_selectedDate);
                                 _loadMicronutrients(_userId!, dateStr);
@@ -347,18 +405,6 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
                             },
                             isDark: isDark,
                           ),
-
-                          // Hydration Tab
-                          HydrationTab(
-                            userId: _userId ?? '',
-                            isDark: isDark,
-                          ),
-
-                          // COMING SOON: Fasting Tab — uncomment when fasting feature launches
-                          // FastingTab(
-                          //   userId: _userId ?? '',
-                          //   isDark: isDark,
-                          // ),
                         ],
                       ),
           ),
@@ -718,6 +764,129 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
     }
   }
 
+  /// Promote one food inside a multi-item meal into its own standalone log
+  /// under `targetMealType`. Leaves the source meal untouched.
+  ///
+  /// Implemented client-side on top of existing endpoints:
+  ///   1. POST `/nutrition/log-direct` with a single-item `food_items` array
+  ///      derived from the source item. Source meal's `ai_feedback` is NOT
+  ///      forwarded (it describes the whole parent meal, not this item).
+  ///   2. Refresh the daily summary so both meal sections update.
+  Future<void> _copyItemAsStandalone(String sourceLogId, int itemIdx, String targetMealType) async {
+    if (_userId == null) return;
+    try {
+      final state = ref.read(nutritionProvider);
+      final source = state.todaySummary?.meals.firstWhere(
+        (m) => m.id == sourceLogId,
+        orElse: () => throw Exception('Source meal not found'),
+      );
+      if (source == null || itemIdx < 0 || itemIdx >= source.foodItems.length) return;
+      final item = source.foodItems[itemIdx];
+
+      final itemJson = item.toJson();
+      final repo = ref.read(nutritionRepositoryProvider);
+      await repo.logAdjustedFood(
+        userId: _userId!,
+        mealType: targetMealType,
+        foodItems: <Map<String, dynamic>>[itemJson],
+        totalCalories: item.calories ?? 0,
+        totalProtein: (item.proteinG ?? 0).round(),
+        totalCarbs: (item.carbsG ?? 0).round(),
+        totalFat: (item.fatG ?? 0).round(),
+        sourceType: source.sourceType ?? 'text',
+        // Keep the originating user-query so the standalone row has a sensible
+        // title. Don't forward the image — it describes the source meal, not
+        // this single item.
+        userQuery: item.name,
+      );
+      _cachedMicronutrientsTime = null;
+      await ref.read(nutritionProvider.notifier).refreshAll(_userId!);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Copied ${item.name} to ${targetMealType[0].toUpperCase()}${targetMealType.substring(1)}'),
+            behavior: SnackBarBehavior.floating,
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+    } catch (e) {
+      debugPrint('Error copying item as standalone: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Failed to copy item'), behavior: SnackBarBehavior.floating),
+        );
+      }
+    }
+  }
+
+  /// Move = copy into target + remove from source (delete source if it was
+  /// the last item, else update source with the remaining items).
+  Future<void> _moveItemAsStandalone(String sourceLogId, int itemIdx, String targetMealType) async {
+    if (_userId == null) return;
+    try {
+      final state = ref.read(nutritionProvider);
+      final source = state.todaySummary?.meals.firstWhere(
+        (m) => m.id == sourceLogId,
+        orElse: () => throw Exception('Source meal not found'),
+      );
+      if (source == null || itemIdx < 0 || itemIdx >= source.foodItems.length) return;
+      final item = source.foodItems[itemIdx];
+
+      final repo = ref.read(nutritionRepositoryProvider);
+
+      // 1. Copy into target meal type.
+      await repo.logAdjustedFood(
+        userId: _userId!,
+        mealType: targetMealType,
+        foodItems: <Map<String, dynamic>>[item.toJson()],
+        totalCalories: item.calories ?? 0,
+        totalProtein: (item.proteinG ?? 0).round(),
+        totalCarbs: (item.carbsG ?? 0).round(),
+        totalFat: (item.fatG ?? 0).round(),
+        sourceType: source.sourceType ?? 'text',
+        userQuery: item.name,
+      );
+
+      // 2. Remove from source.
+      if (source.foodItems.length <= 1) {
+        await ref.read(nutritionProvider.notifier).deleteLog(_userId!, source.id);
+      } else {
+        final remaining = [
+          for (int i = 0; i < source.foodItems.length; i++)
+            if (i != itemIdx) source.foodItems[i],
+        ];
+        await repo.updateFoodLog(
+          logId: source.id,
+          totalCalories: remaining.fold<int>(0, (s, f) => s + (f.calories ?? 0)),
+          proteinG: remaining.fold<double>(0, (s, f) => s + (f.proteinG ?? 0)),
+          carbsG: remaining.fold<double>(0, (s, f) => s + (f.carbsG ?? 0)),
+          fatG: remaining.fold<double>(0, (s, f) => s + (f.fatG ?? 0)),
+          foodItems: remaining.map((f) => f.toJson()).toList(),
+        );
+      }
+
+      _cachedMicronutrientsTime = null;
+      await ref.read(nutritionProvider.notifier).refreshAll(_userId!);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Moved ${item.name} to ${targetMealType[0].toUpperCase()}${targetMealType.substring(1)}'),
+            behavior: SnackBarBehavior.floating,
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+    } catch (e) {
+      debugPrint('Error moving item as standalone: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Failed to move item'), behavior: SnackBarBehavior.floating),
+        );
+      }
+    }
+  }
+
   Future<void> _moveMeal(String mealId, String targetMealType) async {
     if (_userId == null) return;
     try {
@@ -747,7 +916,16 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
     }
   }
 
-  Future<void> _updateMeal(String logId, int calories, double proteinG, double carbsG, double fatG, {double? weightG}) async {
+  Future<void> _updateMeal(
+    String logId,
+    int calories,
+    double proteinG,
+    double carbsG,
+    double fatG, {
+    double? weightG,
+    List<Map<String, dynamic>>? foodItems,
+    List<FoodItemEdit>? itemEdits,
+  }) async {
     if (_userId == null) return;
     try {
       final repository = ref.read(nutritionRepositoryProvider);
@@ -758,7 +936,34 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
         carbsG: carbsG,
         fatG: fatG,
         weightG: weightG,
+        foodItems: foodItems,
+        itemEdits: itemEdits ?? const [],
       );
+
+      // Per-edit PostHog analytics — one event per audit row (matches the
+      // pre-save path). Fire-and-forget.
+      if (itemEdits != null && itemEdits.isNotEmpty) {
+        final posthog = ref.read(posthogServiceProvider);
+        for (final e in itemEdits) {
+          final deltaPct = e.previousValue != 0
+              ? ((e.updatedValue - e.previousValue) / e.previousValue * 100).toStringAsFixed(1)
+              : 'inf';
+          posthog.capture(
+            eventName: 'food_item_edited',
+            properties: <String, Object>{
+              'field': e.editedField,
+              'previous': e.previousValue,
+              'updated': e.updatedValue,
+              'delta': e.updatedValue - e.previousValue,
+              'delta_pct': deltaPct,
+              'source': 'post_save_nutrition_screen',
+              'food_item_name': e.foodItemName,
+              'food_log_id': logId,
+            },
+          );
+        }
+      }
+
       _cachedMicronutrientsTime = null;
       await ref.read(nutritionProvider.notifier).refreshAll(_userId!);
     } catch (e) {
@@ -769,6 +974,11 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
         );
       }
     }
+  }
+
+  Future<List<FoodLogEditRecord>> _fetchItemEdits(String logId) async {
+    final repository = ref.read(nutritionRepositoryProvider);
+    return repository.listFoodLogEdits(logId);
   }
 
   Future<void> _updateMealTime(String logId, DateTime newTime) async {

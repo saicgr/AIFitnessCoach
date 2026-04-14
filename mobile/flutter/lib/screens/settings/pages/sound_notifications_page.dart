@@ -21,13 +21,9 @@ class SoundNotificationsPage extends ConsumerWidget {
           padding: const EdgeInsets.all(16),
           child: Column(
             children: [
-              const SoundSettingsSection(),
-              const SizedBox(height: 16),
-              const AudioSettingsSection(),
-              const SizedBox(height: 16),
               const NotificationsSection(),
               const SizedBox(height: 16),
-              const TestNotificationsSection(),
+              const AdvancedAudioSection(),
               const SizedBox(height: 32),
             ],
           ),

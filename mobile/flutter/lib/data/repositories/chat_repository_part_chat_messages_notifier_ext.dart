@@ -89,11 +89,17 @@ extension ChatMessagesNotifierExt on ChatMessagesNotifier {
     }
 
     try {
-      // Build conversation history for context
-      final history = currentMessages.map((m) => {
-        'role': m.role,
-        'content': m.content,
-      }).toList();
+      // Build conversation history for context. Filter to user/assistant only
+      // — the backend rejects any other role (e.g. 'error' from a previous
+      // failed send) with a Pydantic 422, which would permanently break chat
+      // for this user once a single error message was in local state.
+      final history = currentMessages
+          .where((m) => m.role == 'user' || m.role == 'assistant')
+          .map((m) => {
+                'role': m.role,
+                'content': m.content,
+              })
+          .toList();
 
       // Build user profile context (matches backend UserProfile model)
       Map<String, dynamic>? userProfile;
@@ -300,8 +306,12 @@ extension ChatMessagesNotifierExt on ChatMessagesNotifier {
     }
 
     try {
-      // Build shared context
-      final history = currentMessages.map((m) => {'role': m.role, 'content': m.content}).toList();
+      // Build shared context. Filter to user/assistant only — backend rejects
+      // any other role (e.g. 'error' from a prior failure) with a 422.
+      final history = currentMessages
+          .where((m) => m.role == 'user' || m.role == 'assistant')
+          .map((m) => {'role': m.role, 'content': m.content})
+          .toList();
       Map<String, dynamic>? userProfile;
       if (_user != null) {
         userProfile = {

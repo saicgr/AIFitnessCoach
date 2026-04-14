@@ -25,6 +25,13 @@ from services.gemini_service import GeminiService
 from services.nutrition_rag_service import get_nutrition_rag_service
 from services.food_analysis_cache_service import get_food_analysis_cache_service
 from services.saved_foods_rag_service import get_saved_foods_rag_service
+from services.food_analysis.personal_history import (
+    lookup_personal_history_for_foods,
+)
+from services.food_analysis.mood_inference import (
+    build_insert_patch,
+    infer_mood_from_nutrition,
+)
 
 from api.v1.nutrition.models import (
     LogTextRequest,
@@ -141,6 +148,19 @@ async def analyze_food_from_text_streaming(request: Request, body: LogTextReques
                 loop = asyncio.get_event_loop()
                 return await loop.run_in_executor(None, db.get_user, body.user_id)
 
+            # Fetch personal food history in parallel with the cache check so
+            # Gemini (or the cache-hit enrichment) can surface re-log warnings.
+            candidate_names = [p.strip() for p in body.description.split(",") if p.strip()]
+
+            async def fetch_history():
+                try:
+                    return await lookup_personal_history_for_foods(
+                        body.user_id, candidate_names
+                    )
+                except Exception as exc:
+                    logger.warning(f"[ANALYZE-STREAM] personal history lookup failed: {exc}")
+                    return []
+
             async def check_cache():
                 """Initial cache check without RAG context."""
                 return await cache_service.analyze_food(
@@ -152,12 +172,16 @@ async def analyze_food_from_text_streaming(request: Request, body: LogTextReques
                     user_id=body.user_id,
                     mood_before=body.mood_before,
                     meal_type=body.meal_type,
+                    # personal_history is passed again on the real analyze_food
+                    # call below when available; the initial cache hit path
+                    # uses apply_personal_history_to_cache_hit instead.
                 )
 
             try:
-                user, food_analysis = await asyncio.gather(
+                user, food_analysis, personal_history = await asyncio.gather(
                     fetch_user_profile(),
                     check_cache(),
+                    fetch_history(),
                 )
 
                 # Process user profile
@@ -181,11 +205,16 @@ async def analyze_food_from_text_streaming(request: Request, body: LogTextReques
             except Exception as e:
                 logger.warning(f"[ANALYZE-STREAM] Could not fetch user/cache: {e}", exc_info=True)
                 food_analysis = None
+                personal_history = []
 
-            # If cache hit, skip to finalizing
+            # If cache hit, skip to finalizing (but enrich with personal history first)
             if food_analysis and food_analysis.get("cache_hit"):
                 cache_source = food_analysis.get("cache_source", "cache")
                 logger.info(f"[ANALYZE-STREAM] Cache HIT ({cache_source}) for: {body.description[:50]}...")
+                if personal_history:
+                    cache_service.apply_personal_history_to_cache_hit(
+                        food_analysis, personal_history
+                    )
                 yield send_progress(3, 3, "Finalizing results...", f"Found in {cache_source}!")
             else:
                 # Cache miss - do full AI analysis
@@ -221,6 +250,7 @@ async def analyze_food_from_text_streaming(request: Request, body: LogTextReques
                     user_id=body.user_id,
                     mood_before=body.mood_before,
                     meal_type=body.meal_type,
+                    personal_history=personal_history or None,
                 ))
 
                 # Send SSE keep-alive comments every 10s while waiting for Gemini
@@ -247,6 +277,20 @@ async def analyze_food_from_text_streaming(request: Request, body: LogTextReques
             carbs_g = food_analysis.get('carbs_g', 0.0)
             fat_g = food_analysis.get('fat_g', 0.0)
             fiber_g = food_analysis.get('fiber_g', 0.0)
+
+            # Apply per-user food overrides on the text-stream path too.
+            from services.food_override_service import apply_user_food_overrides
+            _ov_db = get_supabase_db()
+            food_items, _override_totals, _n_overridden = apply_user_food_overrides(
+                _ov_db, user_id, food_items,
+            )
+            if _n_overridden:
+                logger.info(f"[STREAM text] Applied {_n_overridden} override(s) for {user_id}")
+                total_calories = _override_totals["total_calories"]
+                protein_g = _override_totals["protein_g"]
+                carbs_g = _override_totals["carbs_g"]
+                fat_g = _override_totals["fat_g"]
+
             overall_meal_score = food_analysis.get('overall_meal_score')
             health_score = food_analysis.get('health_score')
             goal_alignment_percentage = food_analysis.get('goal_alignment_percentage')
@@ -438,6 +482,22 @@ async def log_food_from_image_streaming(
             carbs_g = food_analysis.get('carbs_g', 0.0)
             fat_g = food_analysis.get('fat_g', 0.0)
             fiber_g = food_analysis.get('fiber_g', 0.0)
+
+            # Apply per-user food overrides: replace AI estimates with the
+            # user's past corrections for the same food (matched by food_item_id
+            # or normalized name). Runs AFTER the calorie bias so explicit
+            # user edits trump the global heuristic.
+            from services.food_override_service import apply_user_food_overrides
+            db = get_supabase_db()
+            food_items, _override_totals, _n_overridden = apply_user_food_overrides(
+                db, user_id, food_items,
+            )
+            if _n_overridden:
+                logger.info(f"[STREAM image] Applied {_n_overridden} override(s) for {user_id}")
+                total_calories = _override_totals["total_calories"]
+                protein_g = _override_totals["protein_g"]
+                carbs_g = _override_totals["carbs_g"]
+                fat_g = _override_totals["fat_g"]
 
             # Extract micronutrients from analysis
             micronutrients = {}
@@ -728,6 +788,23 @@ async def analyze_food_from_image_streaming(
             carbs_g = food_analysis.get('carbs_g', 0.0)
             fat_g = food_analysis.get('fat_g', 0.0)
             fiber_g = food_analysis.get('fiber_g', 0.0)
+
+            # Apply per-user overrides BEFORE returning the analysis to the
+            # client — the log-meal-sheet preview should show the user's
+            # corrected numbers, not fresh Gemini estimates, for foods they
+            # edited in the past. No double-apply risk because /log-direct's
+            # skip_indices only protects just-edited-in-sheet items.
+            from services.food_override_service import apply_user_food_overrides
+            _ov_db = get_supabase_db()
+            food_items, _override_totals, _n_overridden = apply_user_food_overrides(
+                _ov_db, user_id, food_items,
+            )
+            if _n_overridden:
+                logger.info(f"[ANALYZE-STREAM:{request_id}] Applied {_n_overridden} user override(s)")
+                total_calories = _override_totals["total_calories"]
+                protein_g = _override_totals["protein_g"]
+                carbs_g = _override_totals["carbs_g"]
+                fat_g = _override_totals["fat_g"]
 
             # Micronutrients
             sodium_mg = food_analysis.get('sodium_mg')

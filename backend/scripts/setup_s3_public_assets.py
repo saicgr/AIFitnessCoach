@@ -1,7 +1,7 @@
 """
 Set up S3 bucket for public static assets.
 
-Makes ILLUSTRATIONS/* and Ultimate-Muscle-Visuals/* publicly readable
+Makes ILLUSTRATIONS ALL/* and Ultimate-Muscle-Visuals/* publicly readable
 and sets Cache-Control headers for permanent caching.
 
 Idempotent — safe to run multiple times.
@@ -23,7 +23,7 @@ BUCKET = os.getenv("S3_BUCKET_NAME", "ai-fitness-coach")
 REGION = os.getenv("AWS_DEFAULT_REGION", "us-east-1")
 
 # Prefixes that should be publicly readable
-STATIC_PREFIXES = ["ILLUSTRATIONS/*", "Ultimate-Muscle-Visuals/*"]
+STATIC_PREFIXES = ["ILLUSTRATIONS ALL/*", "Ultimate-Muscle-Visuals/*"]
 
 # Cache-Control header for immutable static assets (1 year)
 CACHE_CONTROL = "public, max-age=31536000, immutable"
@@ -162,7 +162,7 @@ def main():
 
     print("\n" + "=" * 60)
     print("Done! Verify with:")
-    print(f"  curl -I https://{BUCKET}.s3.{REGION}.amazonaws.com/ILLUSTRATIONS/<any-image>.png")
+    print(f"  curl -I 'https://{BUCKET}.s3.{REGION}.amazonaws.com/ILLUSTRATIONS%20ALL/<any-image>.jpg'")
     print("  Expected: Cache-Control: public, max-age=31536000, immutable")
 
 

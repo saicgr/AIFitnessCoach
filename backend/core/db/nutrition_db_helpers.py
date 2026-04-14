@@ -78,6 +78,12 @@ class NutritionDB(NutritionDBPart2, BaseDB):
         # Inflammation / ultra-processed tracking
         inflammation_score: Optional[int] = None,
         is_ultra_processed: Optional[bool] = None,
+        # Passive mood inference (rules_v1). Null when no rule matched or
+        # confidence was below the persistence threshold.
+        mood_after_inferred: Optional[str] = None,
+        energy_level_inferred: Optional[int] = None,
+        inference_confidence: Optional[float] = None,
+        inference_source: Optional[str] = None,
     ) -> Optional[Dict[str, Any]]:
         """
         Create a food log entry from AI analysis.
@@ -133,6 +139,16 @@ class NutritionDB(NutritionDBPart2, BaseDB):
             data["inflammation_score"] = inflammation_score
         if is_ultra_processed is not None:
             data["is_ultra_processed"] = is_ultra_processed
+
+        # Passive mood inference columns
+        if mood_after_inferred is not None:
+            data["mood_after_inferred"] = mood_after_inferred
+        if energy_level_inferred is not None:
+            data["energy_level_inferred"] = energy_level_inferred
+        if inference_confidence is not None:
+            data["inference_confidence"] = inference_confidence
+        if inference_source is not None:
+            data["inference_source"] = inference_source
 
         # Add micronutrients if provided (only include non-None values)
         micronutrients = {
@@ -366,6 +382,165 @@ class NutritionDB(NutritionDBPart2, BaseDB):
             .execute()
         )
         return result.data or []
+
+    # ==================== USER FOOD OVERRIDES ====================
+    # Per-user cal/P/C/F corrections that auto-apply to future logs of the
+    # same food. Match key priority: food_item_id when present, else
+    # food_name_normalized. See migration 1921_user_food_overrides.sql.
+
+    def upsert_user_food_override(
+        self,
+        user_id: str,
+        food_item: Dict[str, Any],
+    ) -> Optional[Dict[str, Any]]:
+        """
+        UPSERT a per-user override from a food_item dict.
+
+        `food_item` is a row from food_logs.food_items[] — expected keys:
+        `name`, `calories`, `protein_g`, `carbs_g`, `fat_g`, optionally
+        `id` / `food_item_id`, `weight_g`, `count`, `unit`.
+
+        Match key: (user_id, food_item_id) when food_item_id is present;
+        otherwise (user_id, food_name_normalized).
+
+        Bumps `edit_count` and `last_edited_at` on conflict.
+        Returns the upserted row, or None on error.
+        """
+        from core.food_naming import normalize_food_name
+
+        name = (food_item.get("name") or "").strip()
+        if not name:
+            return None
+
+        food_item_id = food_item.get("id") or food_item.get("food_item_id")
+        if food_item_id is not None:
+            food_item_id = str(food_item_id)
+        normalized = normalize_food_name(name)
+        if not normalized:
+            return None
+
+        def _num(key: str) -> Optional[float]:
+            v = food_item.get(key)
+            try:
+                return float(v) if v is not None else None
+            except (TypeError, ValueError):
+                return None
+
+        calories = _num("calories")
+        if calories is None:
+            return None  # calories is required; can't learn from a partial row
+
+        payload: Dict[str, Any] = {
+            "user_id": user_id,
+            "food_item_id": food_item_id,
+            "food_name_normalized": normalized,
+            "display_name": name[:200],
+            "calories": int(round(calories)),
+            "protein_g": _num("protein_g") or 0,
+            "carbs_g": _num("carbs_g") or 0,
+            "fat_g": _num("fat_g") or 0,
+            "reference_weight_g": _num("weight_g"),
+            "reference_count": _num("count"),
+            "reference_unit": (food_item.get("unit") or None),
+            "last_edited_at": datetime.utcnow().isoformat(),
+        }
+
+        # Supabase-py doesn't support partial-unique-index upserts via
+        # `on_conflict` (it requires a single column or a composite UNIQUE).
+        # Emulate UPSERT: SELECT existing row → UPDATE or INSERT.
+        try:
+            query = self.client.table("user_food_overrides").select("*").eq("user_id", user_id)
+            if food_item_id is not None:
+                query = query.eq("food_item_id", food_item_id)
+            else:
+                query = query.is_("food_item_id", "null").eq("food_name_normalized", normalized)
+            existing = query.limit(1).execute()
+
+            if existing.data:
+                row = existing.data[0]
+                payload["edit_count"] = int(row.get("edit_count") or 1) + 1
+                result = (
+                    self.client.table("user_food_overrides")
+                    .update(payload)
+                    .eq("id", row["id"])
+                    .execute()
+                )
+            else:
+                payload["edit_count"] = 1
+                payload["first_edited_at"] = payload["last_edited_at"]
+                result = (
+                    self.client.table("user_food_overrides")
+                    .insert(payload)
+                    .execute()
+                )
+            return result.data[0] if result.data else None
+        except Exception as e:
+            logger.error(f"Failed to upsert user_food_override: {e}", exc_info=True)
+            return None
+
+    def fetch_user_food_overrides_for_items(
+        self,
+        user_id: str,
+        food_items: List[Dict[str, Any]],
+    ) -> Dict[str, Dict[str, Any]]:
+        """
+        Batch-fetch overrides for a list of food items.
+
+        Returns a dict keyed so callers can look up quickly:
+          "id:{food_item_id}" → override
+          "name:{normalized}" → override
+
+        An item may match both keys if the same food has overrides under
+        both an ID-keyed row (historical) and a name-keyed row. Callers
+        should prefer ID lookups first.
+        """
+        from core.food_naming import normalize_food_name
+
+        if not food_items:
+            return {}
+
+        ids = {
+            str(it["id"] if "id" in it else it["food_item_id"])
+            for it in food_items
+            if it.get("id") or it.get("food_item_id")
+        }
+        names = {
+            normalize_food_name(it.get("name") or "")
+            for it in food_items
+            if it.get("name")
+        }
+        names.discard("")
+
+        lookup: Dict[str, Dict[str, Any]] = {}
+        try:
+            if ids:
+                id_rows = (
+                    self.client.table("user_food_overrides")
+                    .select("*")
+                    .eq("user_id", user_id)
+                    .in_("food_item_id", list(ids))
+                    .execute()
+                )
+                for row in (id_rows.data or []):
+                    fid = row.get("food_item_id")
+                    if fid:
+                        lookup[f"id:{fid}"] = row
+            if names:
+                name_rows = (
+                    self.client.table("user_food_overrides")
+                    .select("*")
+                    .eq("user_id", user_id)
+                    .in_("food_name_normalized", list(names))
+                    .execute()
+                )
+                for row in (name_rows.data or []):
+                    norm = row.get("food_name_normalized")
+                    if norm:
+                        lookup[f"name:{norm}"] = row
+        except Exception as e:
+            logger.error(f"Failed to fetch user_food_overrides: {e}", exc_info=True)
+            return {}
+        return lookup
 
     def delete_food_log(self, log_id: str) -> bool:
         """

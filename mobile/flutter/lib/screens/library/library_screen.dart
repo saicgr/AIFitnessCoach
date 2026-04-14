@@ -59,16 +59,38 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
     super.dispose();
   }
 
-  void _switchToExercises([String? muscleFilter]) {
+  /// [axis] lets the Discover tab disambiguate label collisions across
+  /// Browse sections (e.g. "Cardio" exists as both equipment and category).
+  /// Accepted values: 'muscle', 'equipment', 'category'. Null = auto-detect.
+  void _switchToExercises([String? filter, String? axis]) {
     HapticService.light();
-    if (muscleFilter != null) {
+    if (filter != null) {
       const muscles = {'Chest', 'Back', 'Shoulders', 'Arms', 'Legs', 'Core', 'Glutes'};
-      if (muscles.contains(muscleFilter)) {
-        ref.read(selectedMuscleGroupsProvider.notifier).state = {muscleFilter};
-        ref.read(selectedEquipmentsProvider.notifier).state = {};
-      } else {
-        ref.read(selectedEquipmentsProvider.notifier).state = {muscleFilter};
-        ref.read(selectedMuscleGroupsProvider.notifier).state = {};
+      const equipment = {'Weights', 'Bodyweight', 'Machines', 'Cardio'};
+      // Clear all three filter axes before applying the new one so the
+      // Exercises tab reflects exactly one selection.
+      ref.read(selectedMuscleGroupsProvider.notifier).state = {};
+      ref.read(selectedEquipmentsProvider.notifier).state = {};
+      ref.read(selectedCategoriesProvider.notifier).state = {};
+
+      final resolvedAxis = axis ??
+          (muscles.contains(filter)
+              ? 'muscle'
+              : equipment.contains(filter)
+                  ? 'equipment'
+                  : 'category');
+
+      switch (resolvedAxis) {
+        case 'muscle':
+          ref.read(selectedMuscleGroupsProvider.notifier).state = {filter};
+          break;
+        case 'equipment':
+          ref.read(selectedEquipmentsProvider.notifier).state = {filter};
+          break;
+        case 'category':
+          // DB category values are lowercase.
+          ref.read(selectedCategoriesProvider.notifier).state = {filter.toLowerCase()};
+          break;
       }
     }
     _tabController.animateTo(1);

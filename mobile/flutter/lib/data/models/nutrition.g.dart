@@ -72,6 +72,8 @@ FoodLog _$FoodLogFromJson(Map<String, dynamic> json) => FoodLog(
   inflammationScore: (json['inflammation_score'] as num?)?.toInt(),
   isUltraProcessed: json['is_ultra_processed'] as bool?,
   imageUrl: json['image_url'] as String?,
+  sourceType: json['source_type'] as String?,
+  userQuery: json['user_query'] as String?,
   createdAt: _parseDateTimeOrNow(json['created_at'] as String?),
 );
 
@@ -105,6 +107,8 @@ Map<String, dynamic> _$FoodLogToJson(FoodLog instance) => <String, dynamic>{
   'inflammation_score': instance.inflammationScore,
   'is_ultra_processed': instance.isUltraProcessed,
   'image_url': instance.imageUrl,
+  'source_type': instance.sourceType,
+  'user_query': instance.userQuery,
   'created_at': instance.createdAt.toIso8601String(),
 };
 
@@ -334,11 +338,7 @@ LogFoodResponse _$LogFoodResponseFromJson(Map<String, dynamic> json) =>
     LogFoodResponse(
       success: json['success'] as bool,
       foodLogId: json['food_log_id'] as String?,
-      foodItems:
-          (json['food_items'] as List<dynamic>?)
-              ?.map((e) => e as Map<String, dynamic>)
-              .toList() ??
-          const [],
+      foodItems: _foodItemRankingListFromJson(json['food_items']),
       totalCalories: (json['total_calories'] as num?)?.toInt() ?? 0,
       proteinG: (json['protein_g'] as num?)?.toDouble() ?? 0.0,
       carbsG: (json['carbs_g'] as num?)?.toDouble() ?? 0.0,
@@ -356,6 +356,7 @@ LogFoodResponse _$LogFoodResponseFromJson(Map<String, dynamic> json) =>
           ?.map((e) => e as String)
           .toList(),
       recommendedSwap: json['recommended_swap'] as String?,
+      personalHistoryNote: json['personal_history_note'] as String?,
       confidenceScore: (json['confidence_score'] as num?)?.toDouble(),
       confidenceLevel: json['confidence_level'] as String?,
       sourceType: json['source_type'] as String?,
@@ -395,6 +396,7 @@ Map<String, dynamic> _$LogFoodResponseToJson(LogFoodResponse instance) =>
       'encouragements': instance.encouragements,
       'warnings': instance.warnings,
       'recommended_swap': instance.recommendedSwap,
+      'personal_history_note': instance.personalHistoryNote,
       'confidence_score': instance.confidenceScore,
       'confidence_level': instance.confidenceLevel,
       'source_type': instance.sourceType,
@@ -472,11 +474,7 @@ SavedFood _$SavedFoodFromJson(Map<String, dynamic> json) => SavedFood(
   totalCarbsG: (json['total_carbs_g'] as num?)?.toDouble(),
   totalFatG: (json['total_fat_g'] as num?)?.toDouble(),
   totalFiberG: (json['total_fiber_g'] as num?)?.toDouble(),
-  foodItems:
-      (json['food_items'] as List<dynamic>?)
-          ?.map((e) => e as Map<String, dynamic>)
-          .toList() ??
-      const [],
+  foodItems: _savedFoodItemListFromJson(json['food_items']),
   overallMealScore: (json['overall_meal_score'] as num?)?.toInt(),
   goalAlignmentPercentage: (json['goal_alignment_percentage'] as num?)?.toInt(),
   tags: (json['tags'] as List<dynamic>?)?.map((e) => e as String).toList(),

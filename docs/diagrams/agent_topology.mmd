@@ -1,0 +1,76 @@
+flowchart TB
+  subgraph Entry["Entry"]
+    CR[POST /chat<br/>ChatRequest]
+    LC[POST /live-chat]
+  end
+
+  subgraph Orch["LangGraphCoachService (orchestrator)"]
+    SAN[sanitize_user_message<br/>prompt-injection strip]
+    TRIV[_is_trivial_message<br/>fast-path for hi/thanks/bye]
+    MEDIA_VAL[_validate_media_request<br/>_check_media_usage<br/>cap: free=20/d, pro=100/d]
+    CLASSIFY[VisionService.classify_media_content]
+    SELECT[_select_agent<br/>mention → media → intent → keywords]
+    CTX[_build_agent_state<br/>trim history, attach user profile,<br/>schedule, RAG ctx]
+    INVOKE[agents dict dispatcher<br/>agents agent_type ainvoke state]
+    STORE[_store_chat_history<br/>chat_messages table +<br/>RAGService add_qa_pair]
+  end
+
+  subgraph Agents["Domain agents (compiled LangGraph StateGraphs)"]
+    AN[Nutrition]
+    AW[Workout]
+    AI2[Injury]
+    AH[Hydration]
+    AC[Coach]
+  end
+
+  subgraph AuxAgents["Auxiliary agents (invoked outside chat router)"]
+    AONB[Onboarding<br/>langgraph_onboarding_service.py]
+    AES[Exercise Suggestion<br/>api/v1/exercise_suggestions.py]
+    APL[Plan Agent<br/>holistic_plan_service]
+    AIN[Workout Insights<br/>ai_insights_service]
+  end
+
+  subgraph Shared["Shared resources"]
+    LLM[get_langchain_llm<br/>Gemini via LangChain]
+    GEMS[GeminiService<br/>5400 LOC]
+    RAGS[RAGService +<br/>Exercise / Workout / Feedback /<br/>Nutrition / SavedFoods / Social]
+    VIS[VisionService]
+    FORM[FormAnalysisService]
+    JQ[JobQueueService<br/>async form jobs]
+    SB[(Supabase PG)]
+    S3[(S3)]
+    CHR[(ChromaDB Cloud)]
+  end
+
+  CR --> SAN --> TRIV
+  LC --> SAN
+  TRIV -- trivial --> STORE
+  TRIV -- non-trivial --> MEDIA_VAL --> CLASSIFY --> SELECT --> CTX --> INVOKE
+  INVOKE --> AN
+  INVOKE --> AW
+  INVOKE --> AI2
+  INVOKE --> AH
+  INVOKE --> AC
+  AN --> STORE
+  AW --> STORE
+  AI2 --> STORE
+  AH --> STORE
+  AC --> STORE
+  STORE --> SB
+  STORE --> CHR
+
+  AN -.uses.-> LLM
+  AW -.uses.-> LLM
+  AI2 -.uses.-> LLM
+  AC -.uses.-> LLM
+  AN -.uses.-> RAGS
+  AW -.uses.-> RAGS
+  AN -.vision.-> VIS
+  AW -.form.-> FORM
+  FORM --> JQ
+  VIS --> GEMS
+  RAGS --> CHR
+  AONB -.uses.-> LLM
+  AES -.uses.-> RAGS
+  APL -.uses.-> GEMS
+  AIN -.uses.-> GEMS

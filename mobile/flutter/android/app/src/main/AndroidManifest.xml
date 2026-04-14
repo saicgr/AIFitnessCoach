@@ -118,6 +118,15 @@
                 <category android:name="android.intent.category.BROWSABLE"/>
                 <data android:scheme="fitwiz"/>
             </intent-filter>
+
+            <!-- Long-press app-icon shortcuts (Android 7.1+) — staged
+                 alongside the meal-suggestion widget (see Settings →
+                 Coming Soon). Uncomment to surface on the launcher.
+            <meta-data
+                android:name="android.app.shortcuts"
+                android:resource="@xml/shortcuts" />
+            -->
+
         </activity>
 
         <!-- Transparent activity for quick log overlay from widgets -->
@@ -304,6 +313,20 @@
                 android:name="android.appwidget.provider"
                 android:resource="@xml/ai_coach_widget_info" />
         </receiver>
+
+        <!-- Meal Suggestion (one-tap "what should I eat?") Widget —
+             staged under Settings → Coming Soon. Uncomment to enable.
+        <receiver android:name=".widgets.MealSuggestionWidgetReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/meal_suggestion_widget_info" />
+        </receiver>
+        -->
+
 
         <!-- Wearable Data Layer Listener Service for Watch Sync -->
         <service

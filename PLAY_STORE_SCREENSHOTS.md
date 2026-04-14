@@ -205,6 +205,22 @@ The first 3 are visible without scrolling. All three showcase AI features no com
 
 ---
 
+## Foldable Showcase (3 smaller mockups)
+
+A single caption spans all three — the row of foldable mockups reads as one "Fits every form factor" beat without needing per-device copy.
+
+**Caption (shared)**: *"Fold, Flip, Unfold. Fully Loaded."*
+
+| # | Device | Orientation | Screen to capture |
+|---|--------|-------------|-------------------|
+| F1 | Samsung Z Fold (inner screen) | Portrait, book-unfolded | Full day view — home dashboard or nutrition tab so the taller canvas reads as "more at a glance" |
+| F2 | Samsung Z Fold (inner screen) | Landscape, wide-unfolded | Chat + workout side-by-side layout so the wide mode reads as "coach on one side, set on the other" |
+| F3 | Samsung Z Flip | Half-folded or cover display | Quick-log action (meal add / water log / start workout) — whatever surfaces best at that aspect ratio |
+
+**Layout**: render the three mockups smaller than the main 7 screenshots and group them on a single card/frame so the caption applies to the row as one unit.
+
+---
+
 ## In-App Intro Screen
 
 The app intro screen mirrors these 5 screenshots exactly — same captions, same background colors, one phone per page. Screenshot assets go in `assets/images/`:

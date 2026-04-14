@@ -261,6 +261,7 @@ class FoodAnalysisCacheService(FoodAnalysisCacheServicePart2):
         user_id: Optional[str] = None,
         mood_before: Optional[str] = None,
         meal_type: Optional[str] = None,
+        personal_history: Optional[List[Dict]] = None,
     ) -> Dict[str, Any]:
         """
         Analyze food with intelligent caching.
@@ -371,11 +372,15 @@ class FoodAnalysisCacheService(FoodAnalysisCacheServicePart2):
             rag_context=rag_context,
             mood_before=mood_before,
             meal_type=meal_type,
+            user_id=user_id,
+            personal_history=personal_history,
         )
 
         if analysis and analysis.get('food_items'):
-            # Cache the successful result
-            if use_cache:
+            # Cache the successful result — only when there's NO personal history.
+            # With history, the analysis includes a user-specific warning and
+            # MUST NOT be cached globally (user A's history would leak to user B).
+            if use_cache and not personal_history:
                 await self._cache_result(description, analysis)
 
             # Auto-learn food items for future common food lookups
@@ -389,6 +394,46 @@ class FoodAnalysisCacheService(FoodAnalysisCacheServicePart2):
         # Analysis failed
         logger.warning(f"❌ Gemini analysis failed for: {description[:50]}...")
         return None
+
+    def apply_personal_history_to_cache_hit(
+        self,
+        result: Dict[str, Any],
+        personal_history: Optional[List[Dict]],
+    ) -> None:
+        """When analyze_food returned a cache hit (saved food / override / common /
+        cached Gemini), Gemini's prompt never ran so its personal_history_note is
+        absent. Synthesize one here from the history rows so the client still
+        surfaces the pattern. Modifies `result` in place."""
+        if not personal_history or not result:
+            return
+        warnable = [
+            h for h in personal_history
+            if (h.get("severity") or "").lower() in ("strong", "moderate")
+        ]
+        if not warnable:
+            return
+        # Pick the highest-severity row for the headline note.
+        strong = [h for h in warnable if (h.get("severity") or "") == "strong"]
+        pick = strong[0] if strong else warnable[0]
+        food = pick.get("food_name") or "this meal"
+        symptom = pick.get("dominant_symptom") or "off"
+        neg = int(pick.get("negative_mood_count") or 0)
+        total = int(pick.get("logs") or 0)
+        severity = pick.get("severity") or "moderate"
+        if severity == "strong":
+            note = (
+                f"Heads up — {food} has consistently left you feeling {symptom} "
+                f"({neg} of {total} past logs)."
+            )
+        else:
+            note = (
+                f"Note: {food} has sometimes left you feeling {symptom} "
+                f"({neg} of {total} past logs)."
+            )
+        result["personal_history_note"] = note
+        warnings = list(result.get("warnings") or [])
+        warnings.insert(0, note)
+        result["warnings"] = warnings
 
     async def _enrich_cache_hit_with_tips(
         self,

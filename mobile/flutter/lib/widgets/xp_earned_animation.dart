@@ -13,6 +13,8 @@ enum XPGoalType {
   proteinGoal,
   bodyMeasurements,
   stepsGoal,
+  hydrationGoal,
+  calorieGoal,
 }
 
 extension XPGoalTypeExtension on XPGoalType {
@@ -33,6 +35,10 @@ extension XPGoalTypeExtension on XPGoalType {
         return Icons.straighten_rounded;
       case XPGoalType.stepsGoal:
         return Icons.directions_walk_rounded;
+      case XPGoalType.hydrationGoal:
+        return Icons.water_drop_rounded;
+      case XPGoalType.calorieGoal:
+        return Icons.local_fire_department_rounded;
     }
   }
 
@@ -53,6 +59,10 @@ extension XPGoalTypeExtension on XPGoalType {
         return const Color(0xFFEC4899); // Pink
       case XPGoalType.stepsGoal:
         return AppColors.green;
+      case XPGoalType.hydrationGoal:
+        return const Color(0xFF0EA5E9); // Sky blue
+      case XPGoalType.calorieGoal:
+        return AppColors.orange;
     }
   }
 
@@ -73,6 +83,10 @@ extension XPGoalTypeExtension on XPGoalType {
         return 'Measurements logged';
       case XPGoalType.stepsGoal:
         return 'Daily steps goal';
+      case XPGoalType.hydrationGoal:
+        return 'Hydration goal';
+      case XPGoalType.calorieGoal:
+        return 'Calorie goal';
     }
   }
 }

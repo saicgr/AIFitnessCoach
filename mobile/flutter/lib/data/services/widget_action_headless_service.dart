@@ -152,7 +152,7 @@ class WidgetActionHeadlessService {
 
       // Extract food description from AI-identified items
       final foodDescription = response.foodItems
-          .map((item) => item['name'] as String)
+          .map((item) => item.name)
           .join(', ');
 
       return {

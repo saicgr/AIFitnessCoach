@@ -80,6 +80,7 @@ from api.v1 import beast_mode  # Beast mode custom training preferences
 from api.v1 import wrapped  # Fitness Wrapped monthly recap cards
 from api.v1 import plateau  # Plateau detection (exercise + weight stalling)
 from api.v1 import email_cron  # Lifecycle email cron jobs
+from api.v1 import email_webhooks  # Resend webhook: bounce / complaint handling
 from api.v1 import push_nudge_cron  # Hourly accountability push nudge cron jobs
 from api.v1 import dashboard  # Weekly dashboard summary endpoint
 from api.v1.users.mcp_integrations import router as mcp_integrations_router  # MCP connected-client management
@@ -360,6 +361,9 @@ router.include_router(plateau.router, prefix="/plateau", tags=["Plateau Detectio
 
 # Lifecycle email cron endpoint (secured by X-Cron-Secret header)
 router.include_router(email_cron.router, prefix="/emails", tags=["Email Cron"])
+
+# Resend webhook (bounce / complaint / delivered events)
+router.include_router(email_webhooks.router, tags=["Email Webhooks"])
 
 # Hourly accountability push nudge cron (secured by X-Cron-Secret header)
 router.include_router(push_nudge_cron.router, prefix="/nudges", tags=["Push Nudge Cron"])

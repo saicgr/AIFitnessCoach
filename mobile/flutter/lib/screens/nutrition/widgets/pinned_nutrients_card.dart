@@ -40,8 +40,9 @@ class _PinnedNutrientsCardState extends State<PinnedNutrientsCard> {
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Header row — tap anywhere on the row (outside the edit icon) to
-          // toggle expand/collapse. A chevron hints at the interaction.
+          // Header row — tap anywhere toggles expand/collapse.
+          // Sentence case label, no count badge, no always-visible edit icon.
+          // Edit pencil only appears when expanded (Task #6 cleanup).
           GestureDetector(
             behavior: HitTestBehavior.opaque,
             onTap: () => setState(() => _expanded = !_expanded),
@@ -50,40 +51,14 @@ class _PinnedNutrientsCardState extends State<PinnedNutrientsCard> {
               child: Row(
                 children: [
                   Text(
-                    'PINNED NUTRIENTS',
+                    'Pinned nutrients',
                     style: TextStyle(
-                      fontSize: 10,
+                      fontSize: 12,
                       fontWeight: FontWeight.w600,
                       color: textMuted,
-                      letterSpacing: 0.8,
-                    ),
-                  ),
-                  const SizedBox(width: 4),
-                  Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
-                    decoration: BoxDecoration(
-                      color: teal.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                    child: Text(
-                      '${widget.pinned.length}',
-                      style: TextStyle(
-                        fontSize: 9,
-                        fontWeight: FontWeight.w600,
-                        color: teal,
-                      ),
                     ),
                   ),
                   const Spacer(),
-                  GestureDetector(
-                    onTap: widget.onEdit,
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 4),
-                      child: Icon(Icons.edit, size: 13, color: textMuted),
-                    ),
-                  ),
-                  const SizedBox(width: 4),
                   AnimatedRotation(
                     duration: const Duration(milliseconds: 200),
                     turns: _expanded ? 0.5 : 0,
@@ -97,8 +72,7 @@ class _PinnedNutrientsCardState extends State<PinnedNutrientsCard> {
               ),
             ),
           ),
-          // Chips revealed only when expanded — AnimatedCrossFade gives a
-          // smooth height transition.
+          // Chips + edit icon revealed only when expanded.
           AnimatedCrossFade(
             duration: const Duration(milliseconds: 200),
             crossFadeState: _expanded
@@ -107,17 +81,31 @@ class _PinnedNutrientsCardState extends State<PinnedNutrientsCard> {
             firstChild: const SizedBox(width: double.infinity, height: 0),
             secondChild: Padding(
               padding: const EdgeInsets.only(top: 6, bottom: 2),
-              child: SizedBox(
-                height: 40,
-                child: ListView.separated(
-                  scrollDirection: Axis.horizontal,
-                  itemCount: widget.pinned.length,
-                  separatorBuilder: (_, __) => const SizedBox(width: 6),
-                  itemBuilder: (_, i) => _CompactNutrientChip(
-                    nutrient: widget.pinned[i],
-                    isDark: isDark,
+              child: Row(
+                children: [
+                  Expanded(
+                    child: SizedBox(
+                      height: 40,
+                      child: ListView.separated(
+                        scrollDirection: Axis.horizontal,
+                        itemCount: widget.pinned.length,
+                        separatorBuilder: (_, __) => const SizedBox(width: 6),
+                        itemBuilder: (_, i) => _CompactNutrientChip(
+                          nutrient: widget.pinned[i],
+                          isDark: isDark,
+                        ),
+                      ),
+                    ),
                   ),
-                ),
+                  if (widget.onEdit != null)
+                    GestureDetector(
+                      onTap: widget.onEdit,
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        child: Icon(Icons.edit, size: 14, color: teal),
+                      ),
+                    ),
+                ],
               ),
             ),
           ),

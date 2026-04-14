@@ -16,20 +16,31 @@ from typing import Optional, List, Dict, Any
 import resend
 
 from core.logger import get_logger
+from services.email_helpers import build_social_footer_html
 
 # Import mixins (defined in sibling files)
 from services.email_lifecycle import EmailLifecycleMixin
 from services.email_marketing import EmailMarketingMixin
+from services.email_cancel_ladder import EmailCancelLadderMixin
+from services.email_engagement import EmailEngagementMixin
 
 logger = get_logger(__name__)
 
 
-class EmailService(EmailLifecycleMixin, EmailMarketingMixin):
+class EmailService(
+    EmailLifecycleMixin,
+    EmailMarketingMixin,
+    EmailCancelLadderMixin,
+    EmailEngagementMixin,
+):
     """Service for sending emails via Resend.
 
-    Core transactional emails are defined here.
-    Lifecycle emails (trial, cancellation, streak) are in EmailLifecycleMixin.
-    Marketing emails (win-back, upsell, weekly summary) are in EmailMarketingMixin.
+    Core transactional methods are defined here (welcome, workout_reminder,
+    purchase_confirmation, billing_issue). Everything else lives in a mixin:
+    - EmailLifecycleMixin: trial / streak / day-3 / onboarding / N1/N2/N3
+    - EmailMarketingMixin: win-back / 14-day upsell / weekly summary
+    - EmailCancelLadderMixin: C1-C7 post-cancel re-engagement
+    - EmailEngagementMixin: idle-nudge / one-workout-wonder / premium-idle / welcome-back
     """
 
     def __init__(self):
@@ -97,7 +108,7 @@ class EmailService(EmailLifecycleMixin, EmailMarketingMixin):
           <tr>
             <td align="center" style="padding:0 48px 40px;">
               <p style="margin:0;font-size:16px;line-height:1.65;color:#a1a1aa;text-align:center;">
-                You're all set. Your AI-powered training partner is ready to build your first personalised workout plan.
+                You're all set, {display_name}. FitWiz is ready to build your first personalised workout plan.
               </p>
             </td>
           </tr>
@@ -109,23 +120,38 @@ class EmailService(EmailLifecycleMixin, EmailMarketingMixin):
           <tr><td style="padding:0 32px;"><table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0"><tr><td style="border-top:1px solid #1e1e1e;font-size:0;line-height:0;">&nbsp;</td></tr></table></td></tr>
           <tr>
             <td style="padding:40px 40px 16px;">
-              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin-bottom:28px;"><tr><td width="48" valign="top"><div style="width:40px;height:40px;background:#0f2733;border-radius:12px;text-align:center;line-height:40px;font-size:20px;">&#127947;</div></td><td style="padding-left:16px;" valign="top"><p style="margin:0 0 4px;font-size:15px;font-weight:700;color:#ffffff;">AI-Generated Workout Plans</p><p style="margin:0;font-size:14px;color:#71717a;line-height:1.5;">Personalised monthly plans built around your goals, schedule, and equipment.</p></td></tr></table>
-              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin-bottom:28px;"><tr><td width="48" valign="top"><div style="width:40px;height:40px;background:#0f2733;border-radius:12px;text-align:center;line-height:40px;font-size:20px;">&#129303;</div></td><td style="padding-left:16px;" valign="top"><p style="margin:0 0 4px;font-size:15px;font-weight:700;color:#ffffff;">Your 24/7 AI Coach</p><p style="margin:0;font-size:14px;color:#71717a;line-height:1.5;">Ask anything -- form tips, nutrition advice, or swap an exercise -- anytime.</p></td></tr></table>
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin-bottom:28px;"><tr><td width="48" valign="top"><div style="width:40px;height:40px;background:#0f2733;border-radius:12px;text-align:center;line-height:40px;font-size:20px;">&#127947;</div></td><td style="padding-left:16px;" valign="top"><p style="margin:0 0 4px;font-size:15px;font-weight:700;color:#ffffff;">Your workout plan, built for you</p><p style="margin:0;font-size:14px;color:#71717a;line-height:1.5;">Personalised monthly plans built around your goals, schedule, and equipment.</p></td></tr></table>
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin-bottom:28px;"><tr><td width="48" valign="top"><div style="width:40px;height:40px;background:#0f2733;border-radius:12px;text-align:center;line-height:40px;font-size:20px;">&#129303;</div></td><td style="padding-left:16px;" valign="top"><p style="margin:0 0 4px;font-size:15px;font-weight:700;color:#ffffff;">Your 24/7 coach</p><p style="margin:0;font-size:14px;color:#71717a;line-height:1.5;">Ask anything -- form tips, nutrition advice, or swap an exercise -- anytime.</p></td></tr></table>
               <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin-bottom:8px;"><tr><td width="48" valign="top"><div style="width:40px;height:40px;background:#0f2733;border-radius:12px;text-align:center;line-height:40px;font-size:20px;">&#128200;</div></td><td style="padding-left:16px;" valign="top"><p style="margin:0 0 4px;font-size:15px;font-weight:700;color:#ffffff;">Track Your Evolution</p><p style="margin:0;font-size:14px;color:#71717a;line-height:1.5;">Log sets, see your strength curve, and watch your body transform week by week.</p></td></tr></table>
             </td>
           </tr>
           <tr><td style="padding:32px 40px 0;"><table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0"><tr><td style="border-top:1px solid #1e1e1e;font-size:0;line-height:0;">&nbsp;</td></tr></table></td></tr>
           <tr>
             <td align="center" style="padding:28px 40px 12px;">
-              <p style="margin:0 0 8px;font-size:15px;font-weight:700;color:#ffffff;">Join the Community</p>
-              <p style="margin:0 0 20px;font-size:14px;color:#71717a;line-height:1.5;">Get help, share your progress, request features, and chat with other FitWiz users.</p>
-              <a href="https://discord.gg/WAYNZpVgsK" style="display:inline-block;background:#5865F2;color:#ffffff;font-size:14px;font-weight:700;text-decoration:none;padding:12px 32px;border-radius:50px;letter-spacing:0.2px;">Join our Discord</a>
+              <p style="margin:0 0 8px;font-size:15px;font-weight:700;color:#ffffff;">Join the community</p>
+              <p style="margin:0 0 20px;font-size:14px;color:#71717a;line-height:1.5;">Get help, share progress, and hang out with other FitWiz users.</p>
+              <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin:0 auto;">
+                <tr>
+                  <td style="padding:0 6px;">
+                    <a href="https://discord.gg/WAYNZpVgsK" style="display:inline-block;background:#5865F2;color:#ffffff;font-size:14px;font-weight:700;text-decoration:none;padding:10px 22px;border-radius:50px;line-height:20px;">
+                      <img src="https://cdn.simpleicons.org/discord/ffffff" alt="" width="16" height="16" style="display:inline-block;vertical-align:middle;margin-right:8px;border:0;" />
+                      <span style="vertical-align:middle;">Discord</span>
+                    </a>
+                  </td>
+                  <td style="padding:0 6px;">
+                    <a href="https://instagram.com/fitwiz.us" style="display:inline-block;background:linear-gradient(135deg,#833AB4,#FD1D1D,#FCB045);color:#ffffff;font-size:14px;font-weight:700;text-decoration:none;padding:10px 22px;border-radius:50px;line-height:20px;">
+                      <img src="https://cdn.simpleicons.org/instagram/ffffff" alt="" width="16" height="16" style="display:inline-block;vertical-align:middle;margin-right:8px;border:0;" />
+                      <span style="vertical-align:middle;">Instagram</span>
+                    </a>
+                  </td>
+                </tr>
+              </table>
             </td>
           </tr>
           <tr><td style="padding:24px 40px 0;"><table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0"><tr><td style="border-top:1px solid #1e1e1e;font-size:0;line-height:0;">&nbsp;</td></tr></table></td></tr>
           <tr>
             <td align="center" style="padding:28px 40px 40px;">
-              <p style="margin:0 0 4px;font-size:12px;color:#3f3f46;">FitWiz &mdash; Your Personal AI Training Assistant</p>
+              <p style="margin:0 0 4px;font-size:12px;color:#3f3f46;">FitWiz &mdash; Your Personal Training Assistant</p>
               <p style="margin:0;font-size:12px;color:#3f3f46;">You received this because you created a FitWiz account.</p>
             </td>
           </tr>
@@ -137,7 +163,8 @@ class EmailService(EmailLifecycleMixin, EmailMarketingMixin):
 </html>"""
 
         try:
-            params = {"from": self.from_email, "to": [to_email], "subject": "Welcome to FitWiz!", "html": html_content}
+            subject = f"Welcome to FitWiz, {display_name}."
+            params = {"from": self.from_email, "to": [to_email], "subject": subject, "html": html_content}
             response = resend.Emails.send(params)
             logger.info(f"Welcome email sent to {to_email}: {response}")
             return {"success": True, "id": response.get("id")}
@@ -146,60 +173,78 @@ class EmailService(EmailLifecycleMixin, EmailMarketingMixin):
             return {"error": str(e)}
 
     async def send_workout_reminder(
-        self, to_email: str, user_name: str, workout_name: str,
-        workout_type: str, scheduled_date: date, exercises: List[Dict[str, Any]],
+        self, to_email: str, first_name_value: str, stats,
+        workout_name: str, workout_type: str, scheduled_date: date,
+        exercises: List[Dict[str, Any]],
     ) -> Dict[str, Any]:
-        """Send a workout reminder email to a user."""
+        """Workout reminder email — persona voice, stats grid, full social footer.
+
+        Brought under the standard-email template so it inherits the social
+        footer, persona signature, and design system. Imports UserStats locally
+        to avoid circular-import risk between email_service and email_helpers.
+        """
         if not self.is_configured():
             return {"error": "Email service not configured"}
 
-        exercise_list_html = ""
-        for i, exercise in enumerate(exercises[:8], 1):
-            exercise_name = exercise.get("name", "Unknown Exercise")
+        # Local imports: avoid importing models.email at module top since this
+        # file is imported early in app startup and model imports could fan out.
+        from services.email_helpers import build_persona_signature_html, build_stats_grid_html
+
+        from core.config import get_settings
+        backend_url = get_settings().backend_base_url
+        logo_url = f"{backend_url}/static/logo.png"
+        open_url = f"{backend_url}/open"
+
+        name = first_name_value or "there"
+        coach = stats.coach_name if stats else "Your Coach"
+        formatted_date = scheduled_date.strftime("%A, %B %d")
+
+        # Build exercise preview (top 3 for subtitle)
+        preview_names = [e.get("name", "move") for e in exercises[:3]]
+        preview_line = ", ".join(preview_names)
+        if len(exercises) > 3:
+            preview_line += f" · +{len(exercises) - 3} more"
+
+        subject = f"{name}. {workout_name}. {formatted_date}."
+        title = f"{workout_name}, {name}"
+        subtitle = (
+            f"{coach} has you down for {workout_type.replace('_', ' ')} today: "
+            f"{preview_line}. Keep it simple — one set at a time."
+        )
+
+        # Build exercise feature blocks (up to 3, compact)
+        features = []
+        for exercise in exercises[:3]:
+            ename = exercise.get("name", "Exercise")
             sets = exercise.get("sets", 3)
             reps = exercise.get("reps", 10)
-            exercise_list_html += f"<li><strong>{exercise_name}</strong> - {sets} sets x {reps} reps</li>"
-        if len(exercises) > 8:
-            exercise_list_html += f"<li><em>...and {len(exercises) - 8} more exercises</em></li>"
+            features.append((
+                "&#127947;", ename, f"{sets} sets × {reps} reps",
+            ))
+        if len(exercises) > 3:
+            features.append((
+                "&#128202;", f"+{len(exercises) - 3} more exercises",
+                "See the full workout in the app. Warm-up and cool-down included.",
+            ))
 
-        formatted_date = scheduled_date.strftime("%A, %B %d, %Y")
-
-        html_content = f"""<!DOCTYPE html><html><head><style>
-body{{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;line-height:1.6;color:#333;max-width:600px;margin:0 auto;padding:20px;}}
-.header{{background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:white;padding:30px;border-radius:12px 12px 0 0;text-align:center;}}
-.header h1{{margin:0;font-size:24px;}}
-.content{{background:#f8f9fa;padding:30px;border-radius:0 0 12px 12px;}}
-.workout-card{{background:white;border-radius:8px;padding:20px;margin:20px 0;box-shadow:0 2px 8px rgba(0,0,0,0.1);}}
-.workout-type{{display:inline-block;background:#667eea;color:white;padding:4px 12px;border-radius:20px;font-size:12px;text-transform:uppercase;}}
-.exercise-list{{list-style:none;padding:0;}}
-.exercise-list li{{padding:10px 0;border-bottom:1px solid #eee;}}
-.exercise-list li:last-child{{border-bottom:none;}}
-.cta-button{{display:inline-block;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:white;padding:14px 28px;border-radius:8px;text-decoration:none;font-weight:600;margin-top:20px;}}
-.footer{{text-align:center;color:#666;font-size:12px;margin-top:30px;}}
-</style></head><body>
-<div class="header"><h1>Time to Train!</h1></div>
-<div class="content">
-<p>Hey {user_name or 'there'},</p>
-<p>You have a workout scheduled for <strong>{formatted_date}</strong>. Let's crush it!</p>
-<div class="workout-card">
-<span class="workout-type">{workout_type.replace('_', ' ')}</span>
-<h2 style="margin:10px 0;">{workout_name}</h2>
-<h3>Today's Exercises:</h3>
-<ul class="exercise-list">{exercise_list_html}</ul>
-</div>
-<p style="text-align:center;"><a href="#" class="cta-button">Open App & Start Workout</a></p>
-<p style="color:#666;font-size:14px;">Remember: Consistency is key! Even a shorter workout is better than no workout.</p>
-</div>
-<div class="footer"><p>FitWiz - Your Personal Training Assistant</p><p>You received this email because you have workout reminders enabled.</p></div>
-</body></html>"""
+        html_content = self._build_standard_email(
+            logo_url=logo_url, open_url=open_url,
+            title=title, subtitle=subtitle,
+            cta_text="Start workout",
+            features=features or [("&#127947;", workout_name, "Open the app to see the full workout.")],
+            footer_text="You received this because you have workout reminders enabled.",
+            persona_signature_html=build_persona_signature_html(stats) if stats else "",
+            stats_row_html=build_stats_grid_html(stats) if stats else "",
+            category_name="workout reminders",
+        )
 
         try:
-            params = {"from": self.from_email, "to": [to_email], "subject": f"Workout Reminder: {workout_name} - {formatted_date}", "html": html_content}
+            params = {"from": self.from_email, "to": [to_email], "subject": subject, "html": html_content}
             response = resend.Emails.send(params)
-            logger.info(f"Email sent successfully to {to_email}: {response}")
+            logger.info(f"Workout reminder sent to {to_email}: {response}")
             return {"success": True, "id": response.get("id")}
         except Exception as e:
-            logger.error(f"Failed to send email to {to_email}: {e}", exc_info=True)
+            logger.error(f"Failed to send workout reminder to {to_email}: {e}", exc_info=True)
             return {"error": str(e)}
 
     async def send_purchase_confirmation(
@@ -219,19 +264,20 @@ body{{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
 
         html_content = self._build_standard_email(
             logo_url=logo_url, open_url=open_url,
-            title=f"You're Premium, {display_name}!",
-            subtitle=f"Your {tier_label} plan is now active. {price_paid} {currency} charged. Welcome to the full FitWiz experience.",
+            title=f"You're in, {display_name}",
+            subtitle=f"Your FitWiz {tier_label} plan is now active. {price_paid} {currency} charged. Your coach is unlimited from here.",
             cta_text="Open FitWiz",
             features=[
-                ("&#127947;", "Unlimited AI Workouts", "Generate new plans anytime. Your AI coach adapts to your progress every week."),
-                ("&#129303;", "Priority AI Coach", "Unlimited chat with your personal coach. No daily limits, no waiting."),
-                ("&#128200;", "Advanced Analytics", "Deep performance metrics, strength curves, and body composition tracking."),
+                ("&#127947;", "Unlimited workouts", "Generate new plans anytime. Your coach adapts to your progress every week."),
+                ("&#129303;", "Priority coach access", "Unlimited chat with your personal coach. No daily limits, no waiting."),
+                ("&#128200;", "Advanced analytics", "Deep performance metrics, strength curves, and body composition tracking."),
             ],
             footer_text="You received this because you upgraded your FitWiz plan.",
+            category_name="billing & account",
         )
 
         try:
-            params = {"from": self.from_email, "to": [to_email], "subject": f"Welcome to FitWiz {tier_label}, {display_name} -- your upgrade is live", "html": html_content}
+            params = {"from": self.from_email, "to": [to_email], "subject": f"You're in, {display_name}. FitWiz {tier_label} is active.", "html": html_content}
             response = resend.Emails.send(params)
             logger.info(f"Purchase confirmation email sent to {to_email}: {response}")
             return {"success": True, "id": response.get("id")}
@@ -255,19 +301,20 @@ body{{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
 
         html_content = self._build_standard_email(
             logo_url=logo_url, open_url=open_url,
-            title=f"Payment issue, {display_name}",
-            subtitle=f"We couldn't process your payment for FitWiz {tier_label}. Please update your payment method to keep your access.",
-            cta_text="Update Payment",
+            title=f"{display_name}, your FitWiz access is paused",
+            subtitle=f"We couldn't process your payment for FitWiz {tier_label}. Update your payment method to keep your plan active.",
+            cta_text="Update payment",
             features=[
-                ("&#9888;", "Your access is at risk", "Update your payment method within the next few days to avoid losing Premium access."),
-                ("&#128179;", "Quick fix via the App Store", "Open your phone's App Store or Google Play, go to Subscriptions, and update your card."),
-                ("&#128737;", "Your data is safe", "All your workout history, progress photos, and plans are saved and waiting for you."),
+                ("&#9888;", "Access paused until resolved", "Once your payment method is updated, FitWiz resumes immediately."),
+                ("&#128179;", "Quick fix via the app store", "Open the App Store / Google Play, go to Subscriptions, update your card."),
+                ("&#128737;", "Your data is safe", "All workout history, progress photos, and plans are saved and waiting."),
             ],
             footer_text="You received this because your payment failed.",
+            category_name="billing & account",
         )
 
         try:
-            params = {"from": self.from_email, "to": [to_email], "subject": "Action required: Your FitWiz payment failed", "html": html_content}
+            params = {"from": self.from_email, "to": [to_email], "subject": f"{display_name}, your FitWiz access is paused", "html": html_content}
             response = resend.Emails.send(params)
             logger.info(f"Billing issue email sent to {to_email}: {response}")
             return {"success": True, "id": response.get("id")}
@@ -278,6 +325,11 @@ body{{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
     def _build_standard_email(
         self, logo_url: str, open_url: str, title: str, subtitle: str,
         cta_text: str, features: List[tuple], footer_text: str,
+        *,
+        persona_signature_html: str = "",
+        stats_row_html: str = "",
+        unsubscribe_url: Optional[str] = None,
+        category_name: Optional[str] = None,
     ) -> str:
         """Build a standard FitWiz email template with consistent styling.
 
@@ -289,9 +341,14 @@ body{{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
             cta_text: CTA button text
             features: List of (emoji_code, feature_title, feature_desc) tuples
             footer_text: Footer explanation text
+            persona_signature_html: Optional <tr> from build_persona_signature_html;
+                motivational emails inject a coach-name + mood card here.
+            stats_row_html: Optional <tr> with a zero-state line or 2x2 stats grid.
+            unsubscribe_url: Optional per-category unsubscribe link for the footer.
+            category_name: Human label ("streak alerts") for the unsubscribe line.
 
         Returns:
-            Complete HTML email string
+            Complete HTML email string.
         """
         features_html = ""
         for i, (emoji, feat_title, feat_desc) in enumerate(features):
@@ -317,14 +374,16 @@ body{{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
     <tr><td align="center" style="padding:40px 16px;">
         <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="max-width:560px;background-color:#0f0f0f;border-radius:20px;overflow:hidden;border:1px solid #1a1a1a;">
           <tr><td style="background:linear-gradient(135deg,#0891b2 0%,#06b6d4 50%,#22d3ee 100%);height:4px;font-size:0;line-height:0;">&nbsp;</td></tr>
-          <tr><td align="center" style="padding:48px 40px 32px;"><img src="{logo_url}" alt="FitWiz" width="88" height="88" style="display:block;border-radius:20px;border:0;width:88px;height:88px;object-fit:cover;"><p style="margin:20px 0 0;font-size:13px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:#06b6d4;">FITWIZ</p></td></tr>
-          <tr><td align="center" style="padding:0 40px 12px;"><h1 style="margin:0;font-size:36px;font-weight:800;color:#ffffff;line-height:1.15;letter-spacing:-0.5px;">{title}</h1></td></tr>
-          <tr><td align="center" style="padding:0 48px 40px;"><p style="margin:0;font-size:16px;line-height:1.65;color:#a1a1aa;text-align:center;">{subtitle}</p></td></tr>
-          <tr><td align="center" style="padding:0 40px 48px;"><a href="{open_url}" style="display:inline-block;background:#06b6d4;color:#000000;font-size:16px;font-weight:700;text-decoration:none;padding:16px 44px;border-radius:50px;letter-spacing:0.2px;">{cta_text}</a></td></tr>
+          <tr><td align="center" style="padding:48px 40px 24px;"><img src="{logo_url}" alt="FitWiz" width="88" height="88" style="display:block;border-radius:20px;border:0;width:88px;height:88px;object-fit:cover;"><p style="margin:20px 0 0;font-size:13px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:#06b6d4;">FITWIZ</p></td></tr>
+          {persona_signature_html}
+          <tr><td align="center" style="padding:24px 40px 12px;"><h1 style="margin:0;font-size:36px;font-weight:800;color:#ffffff;line-height:1.15;letter-spacing:-0.5px;">{title}</h1></td></tr>
+          <tr><td align="center" style="padding:0 48px 20px;"><p style="margin:0;font-size:16px;line-height:1.65;color:#a1a1aa;text-align:center;">{subtitle}</p></td></tr>
+          {stats_row_html}
+          <tr><td align="center" style="padding:28px 40px 40px;"><a href="{open_url}" style="display:inline-block;background:#06b6d4;color:#000000;font-size:16px;font-weight:700;text-decoration:none;padding:16px 44px;border-radius:50px;letter-spacing:0.2px;">{cta_text}</a></td></tr>
           <tr><td style="padding:0 32px;"><table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0"><tr><td style="border-top:1px solid #1e1e1e;font-size:0;line-height:0;">&nbsp;</td></tr></table></td></tr>
           <tr><td style="padding:40px 40px 16px;">{features_html}</td></tr>
-          <tr><td style="padding:40px 40px 0;"><table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0"><tr><td style="border-top:1px solid #1e1e1e;font-size:0;line-height:0;">&nbsp;</td></tr></table></td></tr>
-          <tr><td align="center" style="padding:28px 40px 40px;"><p style="margin:0 0 4px;font-size:12px;color:#3f3f46;">FitWiz &mdash; Your Personal AI Training Assistant</p><p style="margin:0;font-size:12px;color:#3f3f46;">{footer_text}</p></td></tr>
+          {build_social_footer_html(unsubscribe_url=unsubscribe_url, category_name=category_name)}
+          <tr><td align="center" style="padding:28px 40px 40px;"><p style="margin:0 0 4px;font-size:12px;color:#3f3f46;">FitWiz &mdash; Your Personal Training Assistant</p><p style="margin:0;font-size:12px;color:#3f3f46;">{footer_text}</p></td></tr>
         </table>
     </td></tr>
   </table>

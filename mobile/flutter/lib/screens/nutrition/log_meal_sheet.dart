@@ -28,6 +28,8 @@ import '../ai_settings/ai_settings_screen.dart';
 import '../../core/services/posthog_service.dart';
 import 'widgets/accuracy_feedback_snackbar.dart';
 import 'widgets/barcode_scanner_overlay.dart';
+import '../../services/post_meal_checkin_reminder.dart';
+import 'package:go_router/go_router.dart';
 import 'widgets/food_browser_panel.dart';
 import 'widgets/food_report_dialog.dart';
 import 'widgets/food_analysis_loading.dart';
@@ -149,6 +151,14 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet> {
   // Merged from _DescribeTab
   LogFoodResponse? _analyzedResponse;
   LogFoodResponse? _previousResponse; // Stored when user goes back to input to allow returning to results
+  // Per-item snapshot of the AI's original nutrition values, kept parallel to
+  // _analyzedResponse!.foodItems — if the user removes an item, both lists
+  // get shortened at the same index so diffs stay aligned.
+  List<FoodItemRanking>? _originalFoodItems;
+  // Pending pre-save edits, keyed by CURRENT food-item index in
+  // _analyzedResponse.foodItems. Flushed to logFoodDirect → POST
+  // /nutrition/log-direct when the user taps Log This Meal.
+  final Map<int, List<FoodItemEdit>> _pendingItemEdits = {};
   bool _isAnalyzing = false;
   bool _isSaved = false;
   bool _hasLoggedThisSession = false;
@@ -316,7 +326,7 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet> {
         builder: (context, setDialogState) {
           // Extract food names from AI response
           final foodNames = response.foodItems.isNotEmpty
-              ? response.foodItems.map((f) => f['name'] ?? 'Food').join(', ')
+              ? response.foodItems.map((f) => f.name).join(', ')
               : description;
 
           // Calculate adjusted values based on portion multiplier

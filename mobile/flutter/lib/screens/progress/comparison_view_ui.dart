@@ -219,11 +219,19 @@ extension _ComparisonViewStateUI on _ComparisonViewState {
   }
 
 
-  Widget _buildDateChip(ProgressPhoto photo) {
+  Widget _buildDateChip(DateTime date) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-      decoration: BoxDecoration(color: Colors.black54, borderRadius: BorderRadius.circular(4)),
-      child: Text(DateFormat('MMM d, yyyy').format(photo.takenAt), style: const TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.w500)),
+      decoration: BoxDecoration(
+        color: Colors.black54,
+        borderRadius: BorderRadius.circular(4),
+        border: Border.all(color: Colors.white24, width: 0.5),
+      ),
+      child: Row(mainAxisSize: MainAxisSize.min, children: [
+        const Icon(Icons.edit, size: 8, color: Colors.white70),
+        const SizedBox(width: 3),
+        Text(DateFormat('MMM d, yyyy').format(date), style: const TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.w500)),
+      ]),
     );
   }
 
@@ -236,10 +244,12 @@ extension _ComparisonViewStateUI on _ComparisonViewState {
     if (_selectedPhotos.length < 2 || _enabledStatCategories.isEmpty) return null;
     final first = _selectedPhotos.first;
     final last = _selectedPhotos.last;
+    final firstDate = _dateOverrides[0] ?? first.takenAt;
+    final lastDate = _dateOverrides[_selectedPhotos.length - 1] ?? last.takenAt;
     final result = <StatCategory, List<String>>{};
 
     if (_enabledStatCategories.contains(StatCategory.duration)) {
-      final days = last.takenAt.difference(first.takenAt).inDays.abs();
+      final days = lastDate.difference(firstDate).inDays.abs();
       String durText;
       if (days == 0) { durText = 'Same day'; }
       else if (days < 30) { durText = '$days days'; }
@@ -326,28 +336,60 @@ extension _ComparisonViewStateUI on _ComparisonViewState {
   }
 
 
-  Widget _buildAppIconLogo() {
-    return Container(
-      width: 28, height: 28,
-      decoration: BoxDecoration(borderRadius: BorderRadius.circular(7), boxShadow: const [BoxShadow(color: Colors.black45, blurRadius: 4)]),
-      child: ClipRRect(borderRadius: BorderRadius.circular(7), child: Image.asset('assets/images/app_icon.png', fit: BoxFit.cover, errorBuilder: (_, __, ___) => Container(decoration: BoxDecoration(gradient: const LinearGradient(colors: [AppColors.cyan, AppColors.purple]), borderRadius: BorderRadius.circular(7)), child: const Icon(Icons.fitness_center, size: 14, color: Colors.white)))),
-    );
+  /// Resolves the logo tint based on variant + background luminance.
+  /// Returns null to render the original colored app icon.
+  Color? _resolveLogoTint(Color bgColor) {
+    switch (_logoVariant) {
+      case 'original':
+        return null;
+      case 'light':
+        return Colors.white;
+      case 'dark':
+        return Colors.black;
+      case 'auto':
+      default:
+        return bgColor.computeLuminance() < 0.5 ? Colors.white : Colors.black;
+    }
   }
 
+  Widget _buildLogoIcon(Color bgColor, {double size = 16}) {
+    final tint = _resolveLogoTint(bgColor);
+    Widget icon = Image.asset(
+      'assets/images/app_icon.png',
+      width: size, height: size, fit: BoxFit.cover,
+      errorBuilder: (_, __, ___) => Icon(Icons.fitness_center, size: size * 0.85, color: tint ?? Colors.white),
+    );
+    if (tint != null) {
+      icon = ColorFiltered(colorFilter: ColorFilter.mode(tint, BlendMode.srcIn), child: icon);
+    }
+    return ClipRRect(borderRadius: BorderRadius.circular(size * 0.25), child: icon);
+  }
 
-  Widget _buildBrandingFooter(Color bgColor) {
-    final textColor = bgColor.computeLuminance() < 0.5 ? Colors.white : Colors.black;
+  /// Draggable branding pill — FitWiz logo + optional @username.
+  /// Replaces the old duplicate (top-left overlay + bottom footer).
+  Widget _buildBrandingPill(Color bgColor) {
+    final tint = _resolveLogoTint(bgColor) ?? Colors.white;
     final authState = ref.watch(authStateProvider);
     final username = authState.user?.username;
+    final showUsername = _showUsername && username != null && username.isNotEmpty;
+
     return Container(
-      height: 28, color: bgColor.withOpacity(0.9),
-      padding: const EdgeInsets.symmetric(horizontal: 8),
-      child: Row(children: [
-        ClipRRect(borderRadius: BorderRadius.circular(4), child: Image.asset('assets/images/app_icon.png', width: 16, height: 16, fit: BoxFit.cover, errorBuilder: (_, __, ___) => Icon(Icons.fitness_center, size: 14, color: textColor.withOpacity(0.7)))),
-        const SizedBox(width: 4),
-        Text('FitWiz', style: TextStyle(color: textColor.withOpacity(0.7), fontSize: 11, fontWeight: FontWeight.w600)),
-        const Spacer(),
-        if (username != null && username.isNotEmpty) Text('@$username', style: TextStyle(color: textColor.withOpacity(0.5), fontSize: 10, fontWeight: FontWeight.w500)),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+      decoration: BoxDecoration(
+        color: Colors.black.withOpacity(0.35),
+        borderRadius: BorderRadius.circular(999),
+        boxShadow: const [BoxShadow(color: Colors.black45, blurRadius: 4)],
+      ),
+      child: Row(mainAxisSize: MainAxisSize.min, children: [
+        _buildLogoIcon(bgColor, size: 16),
+        const SizedBox(width: 5),
+        Text('FitWiz', style: TextStyle(color: tint.withOpacity(0.95), fontSize: 11, fontWeight: FontWeight.w700, letterSpacing: 0.3)),
+        if (showUsername) ...[
+          const SizedBox(width: 6),
+          Container(width: 0.5, height: 10, color: tint.withOpacity(0.4)),
+          const SizedBox(width: 6),
+          Text('@$username', style: TextStyle(color: tint.withOpacity(0.8), fontSize: 10, fontWeight: FontWeight.w500)),
+        ],
       ]),
     );
   }

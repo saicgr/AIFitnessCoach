@@ -63,6 +63,10 @@ class EmailPreferencesRepository {
     bool? coachTips,
     bool? productUpdates,
     bool? promotional,
+    bool? streakAlerts,
+    bool? missedWorkoutAlerts,
+    bool? achievementAlerts,
+    DateTime? notificationsPausedUntil,
   }) async {
     try {
       debugPrint('📧 [EmailPrefsRepo] Updating preferences for $userId');
@@ -83,6 +87,19 @@ class EmailPreferencesRepository {
       }
       if (promotional != null) {
         updateData['promotional'] = promotional;
+      }
+      if (streakAlerts != null) {
+        updateData['streak_alerts'] = streakAlerts;
+      }
+      if (missedWorkoutAlerts != null) {
+        updateData['missed_workout_alerts'] = missedWorkoutAlerts;
+      }
+      if (achievementAlerts != null) {
+        updateData['achievement_alerts'] = achievementAlerts;
+      }
+      if (notificationsPausedUntil != null) {
+        updateData['notifications_paused_until'] =
+            notificationsPausedUntil.toIso8601String();
       }
 
       if (updateData.isEmpty) {
@@ -123,6 +140,12 @@ class EmailPreferencesRepository {
         return updatePreferences(userId: userId, productUpdates: enabled);
       case EmailPreferenceType.promotional:
         return updatePreferences(userId: userId, promotional: enabled);
+      case EmailPreferenceType.streakAlerts:
+        return updatePreferences(userId: userId, streakAlerts: enabled);
+      case EmailPreferenceType.missedWorkoutAlerts:
+        return updatePreferences(userId: userId, missedWorkoutAlerts: enabled);
+      case EmailPreferenceType.achievementAlerts:
+        return updatePreferences(userId: userId, achievementAlerts: enabled);
     }
   }
 
@@ -174,11 +197,17 @@ class EmailPreferencesRepository {
   }
 }
 
-/// Email preference types for individual toggle updates
+/// Email preference types for individual toggle updates.
+///
+/// The string values mirror the backend column names and are used in user-
+/// facing copy for per-category unsubscribe links.
 enum EmailPreferenceType {
   workoutReminders,
   weeklySummary,
   coachTips,
   productUpdates,
   promotional,
+  streakAlerts,
+  missedWorkoutAlerts,
+  achievementAlerts,
 }

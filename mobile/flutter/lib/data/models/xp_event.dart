@@ -127,7 +127,7 @@ class LoginStreakInfo {
 }
 
 /// Result from processing daily login
-@JsonSerializable()
+@JsonSerializable(explicitToJson: true)
 class DailyLoginResult {
   @JsonKey(name: 'is_first_login')
   final bool isFirstLogin;

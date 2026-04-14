@@ -422,6 +422,19 @@ async def parse_app_screenshot(
         ai_feedback = analysis_result.get("feedback", "")
         source_app = analysis_result.get("source_app", "unknown")
 
+        # Apply per-user food overrides so chat-logged meals learn from the
+        # user's past cal/P/C/F corrections (same as the /log-* endpoints).
+        from services.food_override_service import apply_user_food_overrides
+        food_items, _override_totals, _n_overridden = apply_user_food_overrides(
+            db, user_id, food_items,
+        )
+        if _n_overridden:
+            logger.info(f"[parse_app_screenshot] Applied {_n_overridden} override(s) for {user_id}")
+            total_calories = _override_totals["total_calories"]
+            protein_g = _override_totals["protein_g"]
+            carbs_g = _override_totals["carbs_g"]
+            fat_g = _override_totals["fat_g"]
+
         # Save to database
         food_log = db.create_food_log(
             user_id=user_id,
@@ -573,6 +586,19 @@ async def parse_nutrition_label(
         ai_feedback = analysis_result.get("feedback", "")
         product_name = analysis_result.get("product_name", "unknown")
         serving_size = analysis_result.get("serving_size", "unknown")
+
+        # Apply per-user food overrides — nutrition-label scans benefit just
+        # as much as photo logs when the user has corrected a branded item.
+        from services.food_override_service import apply_user_food_overrides
+        food_items, _override_totals, _n_overridden = apply_user_food_overrides(
+            db, user_id, food_items,
+        )
+        if _n_overridden:
+            logger.info(f"[parse_nutrition_label] Applied {_n_overridden} override(s) for {user_id}")
+            total_calories = _override_totals["total_calories"]
+            protein_g = _override_totals["protein_g"]
+            carbs_g = _override_totals["carbs_g"]
+            fat_g = _override_totals["fat_g"]
 
         # Save to database
         food_log = db.create_food_log(
@@ -936,6 +962,19 @@ async def log_food_from_text(
                 meal_type = "snack"
             else:
                 meal_type = "dinner"
+
+        # Apply per-user food overrides — coach-chat auto-logs need to honor
+        # the user's corrections just like the /log-* endpoints.
+        from services.food_override_service import apply_user_food_overrides
+        food_items, _override_totals, _n_overridden = apply_user_food_overrides(
+            db, user_id, food_items,
+        )
+        if _n_overridden:
+            logger.info(f"[log_food_from_text] Applied {_n_overridden} override(s) for {user_id}")
+            total_calories = _override_totals["total_calories"]
+            protein_g = _override_totals["protein_g"]
+            carbs_g = _override_totals["carbs_g"]
+            fat_g = _override_totals["fat_g"]
 
         # Save to database
         food_log = db.create_food_log(

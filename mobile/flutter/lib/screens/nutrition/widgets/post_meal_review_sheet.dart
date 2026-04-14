@@ -4,6 +4,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/theme/accent_color_provider.dart';
 import '../../../data/models/nutrition.dart';
+import '../../../data/providers/food_patterns_provider.dart';
+import '../../../data/repositories/nutrition_repository.dart';
 import '../../../data/services/api_client.dart';
 
 const _kHidePostMealReviewKey = 'hide_post_meal_review';
@@ -25,6 +27,12 @@ Future<void> showPostMealReviewSheet(
   showModalBottomSheet(
     context: context,
     isScrollControlled: true,
+    // Stickier: explicit Skip / Don't-show-again actions only — no tap-outside
+    // or swipe-down dismissals. This keeps the sheet on screen long enough for
+    // users to actually fill it in (live data showed 1/78 recent logs had mood
+    // filled — mostly because the sheet was getting dismissed too easily).
+    isDismissible: false,
+    enableDrag: false,
     backgroundColor: Colors.transparent,
     barrierColor: Colors.black.withValues(alpha: 0.3),
     builder: (context) => _PostMealReviewSheet(
@@ -285,20 +293,39 @@ class _PostMealReviewSheetState extends ConsumerState<_PostMealReviewSheet> {
                 ),
               ),
               const SizedBox(height: 10),
-              // Don't show again
+              // Don't show again — also persists server-side so the sheet
+              // stays hidden across devices until the user re-enables it from
+              // Nutrition > Patterns tab.
               Center(
                 child: GestureDetector(
                   onTap: () async {
                     final prefs = await SharedPreferences.getInstance();
                     await prefs.setBool(_kHidePostMealReviewKey, true);
+                    try {
+                      await ref.read(nutritionRepositoryProvider)
+                          .updatePatternsSettings(
+                        widget.userId,
+                        postMealCheckinDisabled: true,
+                      );
+                      // Bust the cached patterns-settings + mood-patterns so
+                      // the Patterns tab reflects the new disabled state.
+                      ref.invalidate(patternsSettingsProvider(widget.userId));
+                      ref.invalidate(foodPatternsMoodProvider(widget.userId));
+                    } catch (e) {
+                      debugPrint('⚠️ [PostMealReview] Backend toggle failed: $e');
+                    }
                     if (context.mounted) {
                       Navigator.pop(context);
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
-                          content: const Text('Post-meal check-in disabled. Re-enable in Settings.'),
+                          content: const Text(
+                            'Check-in disabled. Re-enable from Nutrition → Patterns.',
+                          ),
                           behavior: SnackBarBehavior.floating,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                          duration: const Duration(seconds: 3),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          duration: const Duration(seconds: 4),
                         ),
                       );
                     }

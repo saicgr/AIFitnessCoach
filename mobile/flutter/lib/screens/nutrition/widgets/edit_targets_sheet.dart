@@ -26,6 +26,7 @@ class _EditTargetsSheetState extends ConsumerState<EditTargetsSheet> {
   bool _isPercentageMode = false;
   bool _isLoadingRecommended = false;
   bool _isSaving = false;
+  bool _isRecalculating = false;
   String? _selectedRate;
 
   late final TextEditingController _caloriesController;
@@ -206,6 +207,51 @@ class _EditTargetsSheetState extends ConsumerState<EditTargetsSheet> {
     }
   }
 
+  /// Recompute calorie / macro targets from the user's current profile
+  /// (weight, activity, goal) via the backend and refresh the sheet.
+  /// Replaces the refresh icon that lived on the removed NutritionGoalsCard.
+  Future<void> _recalculateFromProfile() async {
+    setState(() => _isRecalculating = true);
+    try {
+      await ref.read(nutritionPreferencesProvider.notifier)
+          .recalculateTargets(widget.userId);
+
+      if (!mounted) return;
+      final prefs = ref.read(nutritionPreferencesProvider).preferences;
+      if (prefs != null) {
+        _caloriesController.text = (prefs.targetCalories ?? 2000).toString();
+        _proteinController.text = (prefs.targetProteinG ?? 150).toString();
+        _carbsController.text = (prefs.targetCarbsG ?? 200).toString();
+        _fatController.text = (prefs.targetFatG ?? 65).toString();
+        _selectedRate = prefs.rateOfChange;
+      }
+      _computeRecommended();
+      _recalculate();
+
+      final isDark = Theme.of(context).brightness == Brightness.dark;
+      final teal = isDark ? AppColors.teal : AppColorsLight.teal;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Targets recalculated from profile'),
+          backgroundColor: teal,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      widget.onSaved();
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to recalculate: $e'),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isRecalculating = false);
+    }
+  }
+
   Future<void> _save() async {
     final calories = int.tryParse(_caloriesController.text);
     if (calories == null || calories <= 0) return;
@@ -326,6 +372,36 @@ class _EditTargetsSheetState extends ConsumerState<EditTargetsSheet> {
                 constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
               ),
             ],
+          ),
+          // Recalculate from profile — was formerly a ↻ icon on the Daily
+          // Goals card; moved here since the card was removed during the
+          // Daily-tab minimalist redesign. Recomputes targets from
+          // profile (weight/activity/goal) via the backend.
+          Align(
+            alignment: Alignment.centerLeft,
+            child: TextButton.icon(
+              onPressed: _isRecalculating ? null : _recalculateFromProfile,
+              icon: _isRecalculating
+                  ? SizedBox(
+                      width: 12,
+                      height: 12,
+                      child: CircularProgressIndicator(strokeWidth: 2, color: teal),
+                    )
+                  : Icon(Icons.refresh, size: 14, color: teal),
+              label: Text(
+                'Recalculate from profile',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: teal,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              style: TextButton.styleFrom(
+                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                minimumSize: Size.zero,
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
+            ),
           ),
           const SizedBox(height: 8),
 

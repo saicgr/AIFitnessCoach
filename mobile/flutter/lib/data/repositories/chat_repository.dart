@@ -269,6 +269,11 @@ class ChatRepository {
   }
 
   /// Send a message to the AI coach
+  ///
+  /// [agentOverride] lets contextual widgets force a specific agent (e.g. the
+  /// nutrition meal-log AI Coach card passes `'nutrition'` so every prompt is
+  /// guaranteed to reach the Nutrition agent regardless of intent classifier
+  /// output). Must be a valid `AgentType` value server-side.
   Future<ChatResponse> sendMessage({
     required String message,
     required String userId,
@@ -283,6 +288,7 @@ class ChatRepository {
     String? imageBase64,
     List<String>? videoFrames,
     String? mediaUrl,
+    String? agentOverride,
   }) async {
     try {
       debugPrint('🔍 [Chat] Sending message: ${message.substring(0, message.length.clamp(0, 50))}...');
@@ -297,6 +303,9 @@ class ChatRepository {
       }
 
       final hasMedia = imageBase64 != null || videoFrames != null || mediaRef != null || (mediaRefs != null && mediaRefs.isNotEmpty);
+      if (agentOverride != null) {
+        debugPrint('🎯 [Chat] agent_override=$agentOverride (bypassing classifier)');
+      }
       final response = await _apiClient.post(
         '${ApiConstants.chat}/send',
         data: ChatRequest(
@@ -313,6 +322,7 @@ class ChatRepository {
           imageBase64: imageBase64,
           videoFrames: videoFrames,
           mediaUrl: mediaUrl,
+          agentOverride: agentOverride,
         ).toJson(),
         // Media requests go through Gemini Vision — allow up to 3 minutes
         options: Options(receiveTimeout: hasMedia ? const Duration(minutes: 3) : ApiConstants.aiReceiveTimeout),

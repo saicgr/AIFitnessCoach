@@ -194,7 +194,7 @@ class _ExerciseOptionsSheetState extends State<ExerciseOptionsSheet> {
   }
 
   Widget _buildExerciseHeader(bool isDark, Color textPrimary, Color textMuted) {
-    final imageUrl = widget.exercise.gifUrl;
+    final imageUrl = widget.exercise.imageS3Path ?? widget.exercise.gifUrl;
     final hasImage = imageUrl != null && imageUrl.isNotEmpty;
 
     return Padding(

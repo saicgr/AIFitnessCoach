@@ -98,6 +98,7 @@ INTENT_TO_AGENT = {
     CoachIntent.ANALYZE_FOOD: AgentType.NUTRITION,
     CoachIntent.NUTRITION_SUMMARY: AgentType.NUTRITION,
     CoachIntent.RECENT_MEALS: AgentType.NUTRITION,
+    CoachIntent.LOG_FOOD: AgentType.NUTRITION,
 
     # Workout agent
     CoachIntent.ADD_EXERCISE: AgentType.WORKOUT,
@@ -710,10 +711,20 @@ class LangGraphCoachService:
                 fetch_recent_favorites,
                 fetch_todays_workout,
             )
-            user_tz = (
-                (request.user_profile or {}).get("timezone")
-                if request.user_profile else None
-            ) or "UTC"
+            # `user_profile` arrives as a Pydantic `UserProfile` model from the
+            # chat endpoint (no `.get`) OR as a plain dict from internal
+            # call-sites. Normalize before reading the timezone — and note that
+            # UserProfile doesn't even declare a timezone field today, so this
+            # will typically fall through to the "UTC" default until the model
+            # is extended.
+            _up = request.user_profile
+            if hasattr(_up, "model_dump"):
+                _up_dict = _up.model_dump()
+            elif isinstance(_up, dict):
+                _up_dict = _up
+            else:
+                _up_dict = {}
+            user_tz = _up_dict.get("timezone") or "UTC"
             daily_ctx, favs, today_wo = await asyncio.gather(
                 fetch_daily_nutrition_context(str(request.user_id), user_tz),
                 fetch_recent_favorites(str(request.user_id), limit=5, exclude_days=0),

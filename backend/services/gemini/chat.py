@@ -105,7 +105,7 @@ class ChatMixin:
 
 Return ONLY valid JSON in this exact format (no markdown, no explanation):
 {
-  "intent": "add_exercise|remove_exercise|swap_workout|modify_intensity|reschedule|delete_workout|report_injury|change_setting|navigate|start_workout|complete_workout|log_hydration|set_water_goal|log_weight|generate_quick_workout|nutrition_summary|recent_meals|question",
+  "intent": "add_exercise|remove_exercise|swap_workout|modify_intensity|reschedule|delete_workout|report_injury|change_setting|navigate|start_workout|complete_workout|log_hydration|set_water_goal|log_weight|generate_quick_workout|log_food|nutrition_summary|recent_meals|question",
   "exercises": ["exercise name 1", "exercise name 2"],
   "muscle_groups": ["chest", "back", "shoulders", "biceps", "triceps", "legs", "core", "glutes"],
   "modification": "easier|harder|shorter|longer",
@@ -134,9 +134,45 @@ INTENT DEFINITIONS:
 - set_water_goal: User wants to SET their daily water goal (e.g., "set my water goal to 10 glasses", "change my daily water target to 12 cups")
 - log_weight: User wants to LOG their weight (e.g., "log my weight as 75kg", "I weigh 165 lbs", "record my weight")
 - generate_quick_workout: User wants to CREATE/GENERATE a new workout (e.g., "give me a quick workout", "create a 15-minute workout", "make me a cardio workout", "I need a short workout", "new workout please")
-- nutrition_summary: User wants a SUMMARY of their nutrition/diet (e.g., "how's my diet today?", "show my macros", "nutrition summary", "what did I eat today?", "calorie report")
-- recent_meals: User wants to see their RECENT MEALS or food log (e.g., "what did I eat?", "show my meals", "recent food", "meal history")
-- question: General fitness question or unclear intent
+- log_food: User is TELLING US WHAT THEY ATE/DRANK/ARE EATING so we can log it. Save to the meal list.
+    Past tense ("I ate", "I had", "just had", "just finished", "just ate", "just drank", "just finished drinking", "for breakfast I had", "breakfast was", "consumed", "demolished", "polished off"):
+      * "I ate 2 eggs and toast"
+      * "had a bowl of oats for breakfast"
+      * "just finished a chicken salad"
+      * "breakfast was a protein shake and banana"
+      * "demolished a pepperoni pizza"
+      * "I just ate Greek yogurt with ground chicken"
+      * "had a masala dosa and coconut chutney for lunch"
+    Present tense ("eating", "drinking", "having"):
+      * "eating an apple right now"
+      * "drinking a protein shake"
+      * "having pasta for dinner"
+    Meal-context phrasing ("for breakfast/lunch/dinner/snack"):
+      * "2 eggs for breakfast"
+      * "pasta for dinner tonight"
+      * "protein bar as a snack"
+    Explicit logging language ("log", "track", "add to my food"):
+      * "log my dinner: chicken, rice, broccoli"
+      * "track 2 eggs and toast"
+      * "add a greek yogurt to my breakfast"
+      * "I'm logging my snack: apple and peanut butter"
+    Ordering/delivery when user confirms it's what they had:
+      * "ordered a large pepperoni pizza for dinner"
+      * "got a burrito bowl from chipotle"
+    Beverages and liquids count as food:
+      * "had a latte"
+      * "drank a smoothie"
+      * "2 beers last night"
+    IMPORTANT: DO NOT classify these as log_food — use a different intent:
+      * "what should I eat?" → question (asking for suggestions, not logging)
+      * "I might eat pizza later" → question (future/hypothetical, not yet logged)
+      * "I'm hungry" → question (no specific food)
+      * "show my meals" → recent_meals (wants to SEE past logs)
+      * "how many calories today?" → nutrition_summary (wants totals)
+      * "did I eat vegetables today?" → recent_meals or nutrition_summary
+- nutrition_summary: User wants a SUMMARY of their nutrition/diet TOTALS (e.g., "how's my diet today?", "show my macros", "nutrition summary", "calorie report", "how many calories have I eaten", "am I hitting my protein goal")
+- recent_meals: User wants to SEE their RECENT MEALS list or food log (e.g., "what did I eat?", "show my meals", "recent food", "meal history", "what have I logged today")
+- question: General fitness question, asking for food suggestions, or unclear intent that doesn't fit another category
 
 SETTING EXTRACTION:
 - For dark mode requests: setting_name="dark_mode", setting_value=true

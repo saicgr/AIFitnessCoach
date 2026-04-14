@@ -5,7 +5,7 @@ from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 
-from core.timezone_utils import resolve_timezone, get_user_today
+from core.timezone_utils import resolve_timezone, get_user_today, to_utc_iso
 from core.auth import get_current_user, verify_user_ownership
 from core.exceptions import safe_internal_error
 from core.logger import get_logger
@@ -76,7 +76,7 @@ async def get_daily_summary(
                 id=log.get("id"),
                 user_id=log.get("user_id"),
                 meal_type=log.get("meal_type"),
-                logged_at=str(log.get("logged_at", "")),
+                logged_at=to_utc_iso(log.get("logged_at")),
                 food_items=log.get("food_items", []),
                 total_calories=log.get("total_calories", 0),
                 protein_g=log.get("protein_g", 0),
@@ -85,7 +85,30 @@ async def get_daily_summary(
                 fiber_g=log.get("fiber_g"),
                 health_score=log.get("health_score"),
                 ai_feedback=log.get("ai_feedback"),
-                created_at=str(log.get("created_at") or log.get("logged_at") or ""),
+                notes=log.get("notes"),
+                mood_before=log.get("mood_before"),
+                mood_after=log.get("mood_after"),
+                energy_level=log.get("energy_level"),
+                inflammation_score=log.get("inflammation_score"),
+                is_ultra_processed=log.get("is_ultra_processed"),
+                # Row-level provenance — drives the thumbnail / source icon in the
+                # nutrition tab. Omitted here previously, which meant image-logged
+                # foods rendered without their photo in the daily summary view.
+                image_url=log.get("image_url"),
+                source_type=log.get("source_type"),
+                user_query=log.get("user_query"),
+                # Key micronutrients (optional surfacing in row detail)
+                sodium_mg=log.get("sodium_mg"),
+                sugar_g=log.get("sugar_g"),
+                saturated_fat_g=log.get("saturated_fat_g"),
+                cholesterol_mg=log.get("cholesterol_mg"),
+                potassium_mg=log.get("potassium_mg"),
+                calcium_mg=log.get("calcium_mg"),
+                iron_mg=log.get("iron_mg"),
+                vitamin_a_ug=log.get("vitamin_a_ug"),
+                vitamin_c_mg=log.get("vitamin_c_mg"),
+                vitamin_d_iu=log.get("vitamin_d_iu"),
+                created_at=to_utc_iso(log.get("created_at") or log.get("logged_at")),
             ))
 
         response = DailyNutritionResponse(

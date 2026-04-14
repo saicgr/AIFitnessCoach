@@ -45,7 +45,9 @@ class EquipmentResolver:
     async def load(self):
         """Load equipment_types + substitutions from Supabase, cache in memory."""
         try:
-            supabase = get_supabase()
+            # get_supabase() returns the SupabaseManager wrapper; PostgREST
+            # calls go through .client (the underlying supabase-py Client).
+            supabase = get_supabase().client
 
             # Load equipment types
             types_result = supabase.table("equipment_types").select(

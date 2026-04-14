@@ -22,15 +22,33 @@ List<RouteBase> _workoutRoutes() => [
         },
       ),
 
-      // Exercise detail (full screen with autoplay video)
+      // Exercise detail (full screen with autoplay video).
+      // `extra` accepts either a raw `WorkoutExercise`, a plain JSON map for
+      // the exercise, OR `{exercise: <WorkoutExercise|Map>, initialTab: int}`
+      // for deep-linking into a specific tab (0=Info, 1=Stats, 2=History).
       GoRoute(
         path: '/exercise-detail',
         builder: (context, state) {
           WorkoutExercise? exercise;
-          if (state.extra is WorkoutExercise) {
-            exercise = state.extra as WorkoutExercise;
-          } else if (state.extra is Map<String, dynamic>) {
-            exercise = WorkoutExercise.fromJson(state.extra as Map<String, dynamic>);
+          int initialTab = 0;
+
+          final extra = state.extra;
+          if (extra is WorkoutExercise) {
+            exercise = extra;
+          } else if (extra is Map<String, dynamic>) {
+            final inner = extra['exercise'];
+            if (inner is WorkoutExercise) {
+              exercise = inner;
+              final t = extra['initialTab'];
+              if (t is int) initialTab = t;
+            } else if (inner is Map<String, dynamic>) {
+              exercise = WorkoutExercise.fromJson(inner);
+              final t = extra['initialTab'];
+              if (t is int) initialTab = t;
+            } else {
+              // Legacy shape: the whole map IS the exercise JSON.
+              exercise = WorkoutExercise.fromJson(extra);
+            }
           }
           if (exercise == null) {
             return Scaffold(
@@ -51,7 +69,7 @@ List<RouteBase> _workoutRoutes() => [
               ),
             );
           }
-          return ExerciseDetailScreen(exercise: exercise);
+          return ExerciseDetailScreen(exercise: exercise, initialTab: initialTab);
         },
       ),
 

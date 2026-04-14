@@ -441,7 +441,8 @@ class _ExerciseStripItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final hasImage = exercise.gifUrl != null && exercise.gifUrl!.isNotEmpty;
+    final exerciseImageUrl = exercise.imageS3Path ?? exercise.gifUrl;
+    final hasImage = exerciseImageUrl != null && exerciseImageUrl.isNotEmpty;
     final allSetsComplete = completedSets >= totalSets;
 
     // Determine colors based on state
@@ -490,7 +491,7 @@ class _ExerciseStripItem extends StatelessWidget {
                   clipBehavior: Clip.antiAlias,
                   child: hasImage
                       ? CachedNetworkImage(
-                          imageUrl: exercise.gifUrl!,
+                          imageUrl: exerciseImageUrl,
                           fit: BoxFit.cover,
                           placeholder: (context, url) => _buildPlaceholder(),
                           errorWidget: (context, url, error) => _buildPlaceholder(),

@@ -152,8 +152,10 @@ def _get_exercise_simplified_name(name_lower: str) -> Optional[str]:
     simplified, _ = _get_simplified_and_canonicals(name_lower)
     return simplified
 
-# S3 prefixes that are publicly readable (no presigning needed)
-_STATIC_PREFIXES = ("ILLUSTRATIONS/", "ILLUSTRATIONS ALL/", "Ultimate-Muscle-Visuals/")
+# S3 prefixes that are publicly readable (no presigning needed).
+# Keep in sync with backend/scripts/setup_s3_public_assets.py — the bucket
+# policy there is what actually grants anonymous s3:GetObject on these.
+_STATIC_PREFIXES = ("ILLUSTRATIONS ALL/", "Ultimate-Muscle-Visuals/")
 
 
 def presign_s3_path(s3_path: Optional[str]) -> Optional[str]:

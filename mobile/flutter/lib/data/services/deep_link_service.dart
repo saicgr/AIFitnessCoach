@@ -4,6 +4,8 @@ import 'package:go_router/go_router.dart';
 import 'package:home_widget/home_widget.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../navigation/app_router.dart';
+// Meal-suggestion widget — staged, see Coming Soon screen.
+// import '../../services/meal_suggestion_widget_service.dart';
 import '../repositories/hydration_repository.dart';
 
 /// Service for handling deep links from home screen widgets.
@@ -150,6 +152,24 @@ class DeepLinkService {
         _openChat(router, prompt: prompt, agent: agent);
         break;
 
+      // One-tap meal suggestion — used by the home-screen widget, iOS
+      // Action Button / Siri, and Android long-press shortcut. Currently
+      // staged under Settings → Coming Soon (see coming_soon_screen.dart),
+      // but the chat route is harmless on its own: we just open nutrition
+      // chat with the canned prompt, and the user can still ask manually.
+      case 'chat/suggest-food':
+        _openChat(
+          router,
+          prompt: 'What should I eat right now?',
+          agent: 'nutrition',
+        );
+        break;
+
+      // Widget "Log it" button — staged, widget feature is in Coming Soon.
+      // case 'nutrition/widget-log':
+      //   _logCachedMealSuggestion(router);
+      //   break;
+
       // Other screens
       case 'challenges':
         router.go('/social'); // Challenges are in social tab
@@ -236,6 +256,25 @@ class DeepLinkService {
     debugPrint('DeepLinkService: Opening share sheet for $shareType');
     router.go('/social');
   }
+
+  // Meal-suggestion widget helpers — staged, Coming Soon.
+  // static void _refreshMealSuggestion() {
+  //   try {
+  //     MealSuggestionWidgetService.instance.refreshNow();
+  //   } catch (e) {
+  //     debugPrint('DeepLinkService: widget refresh skipped: $e');
+  //   }
+  // }
+  //
+  // static void _logCachedMealSuggestion(GoRouter router) async {
+  //   try {
+  //     final logged = await MealSuggestionWidgetService.instance.logSuggestedMeal();
+  //     debugPrint('DeepLinkService: widget log result=$logged');
+  //   } catch (e) {
+  //     debugPrint('DeepLinkService: widget log failed: $e');
+  //   }
+  //   router.go('/nutrition');
+  // }
 
   /// Build a deep link URI for a specific action
   static Uri buildUri(String path, {Map<String, String>? queryParams}) {

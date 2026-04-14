@@ -80,6 +80,13 @@ $FLUTTER_PATH clean
 echo -e "${YELLOW}Getting dependencies...${NC}"
 $FLUTTER_PATH pub get
 
+# NOTE: codegen (build_runner) is NOT run here. The codegen stack
+# (build_runner / riverpod_generator / drift_dev) is pinned to analyzer 7.x,
+# which crashes on Dart 3.11 dot-shorthand AST nodes. The generated .g.dart
+# files are committed to git instead. When you intentionally need to
+# regenerate, run: dart run build_runner build --delete-conflicting-outputs
+# AFTER bumping the codegen stack majors.
+
 # flutter_gemma exclusion is handled by the Podfile (strips it from iOS plugins)
 
 # Regenerate launcher icons if the source is newer than the generated 1024px icon.

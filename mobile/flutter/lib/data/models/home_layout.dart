@@ -17,7 +17,7 @@ const Set<TileType> deprecatedTiles = {
 };
 
 /// A saved layout configuration
-@JsonSerializable()
+@JsonSerializable(explicitToJson: true)
 class HomeLayout {
   final String id;
   @JsonKey(name: 'user_id')

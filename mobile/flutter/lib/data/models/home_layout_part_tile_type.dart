@@ -88,6 +88,9 @@ enum TileType {
   todayStats,
   @JsonValue('stepsCounter')
   stepsCounter,
+  // Food-mood patterns hub — deep-links into Nutrition > Patterns.
+  @JsonValue('nutritionPatterns')
+  nutritionPatterns,
 }
 
 
@@ -178,6 +181,8 @@ extension TileTypeExtension on TileType {
         return 'Today Stats';
       case TileType.stepsCounter:
         return 'Steps';
+      case TileType.nutritionPatterns:
+        return 'Food Patterns';
     }
   }
 
@@ -266,6 +271,8 @@ extension TileTypeExtension on TileType {
         return 'Goals, calories, and hydration at a glance';
       case TileType.stepsCounter:
         return 'Today\'s step count and daily goal';
+      case TileType.nutritionPatterns:
+        return 'See which foods fuel you and which drag you down';
     }
   }
 
@@ -354,6 +361,8 @@ extension TileTypeExtension on TileType {
         return 'bar_chart';
       case TileType.stepsCounter:
         return 'directions_walk';
+      case TileType.nutritionPatterns:
+        return 'insights';
     }
   }
 
@@ -418,6 +427,8 @@ extension TileTypeExtension on TileType {
         return TileCategory.progress;
       case TileType.stepsCounter:
         return TileCategory.wellness;
+      case TileType.nutritionPatterns:
+        return TileCategory.nutrition;
     }
   }
 
@@ -482,6 +493,8 @@ extension TileTypeExtension on TileType {
         return [TileSize.full];
       case TileType.stepsCounter:
         return [TileSize.full, TileSize.half, TileSize.compact];
+      case TileType.nutritionPatterns:
+        return [TileSize.full, TileSize.half];
     }
   }
 
@@ -661,7 +674,7 @@ class HomeTile {
   }
 }
 
-@JsonSerializable()
+@JsonSerializable(explicitToJson: true)
 class HomeLayoutTemplate {
   final String id;
   final String name;
@@ -687,7 +700,7 @@ class HomeLayoutTemplate {
   Map<String, dynamic> toJson() => _$HomeLayoutTemplateToJson(this);
 }
 
-@JsonSerializable()
+@JsonSerializable(explicitToJson: true)
 class CreateLayoutRequest {
   final String name;
   final List<HomeTile> tiles;
@@ -705,7 +718,7 @@ class CreateLayoutRequest {
   Map<String, dynamic> toJson() => _$CreateLayoutRequestToJson(this);
 }
 
-@JsonSerializable()
+@JsonSerializable(explicitToJson: true)
 class UpdateLayoutRequest {
   final String? name;
   final List<HomeTile>? tiles;

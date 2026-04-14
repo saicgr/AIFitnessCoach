@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Long-press app-icon shortcut list (Android 7.1+).
+
+    Appears when the user long-presses the FitWiz icon in the launcher.
+    `suggest_food` is the one-tap "what should I eat?" shortcut — two
+    taps total (long-press → tap shortcut) which is a good complement to
+    the home-screen widget for users who haven't added it.
+-->
+<shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
+    <shortcut
+        android:shortcutId="suggest_food"
+        android:enabled="true"
+        android:icon="@mipmap/ic_launcher"
+        android:shortcutShortLabel="@string/shortcut_suggest_food_short_label"
+        android:shortcutLongLabel="@string/shortcut_suggest_food_long_label"
+        android:shortcutDisabledMessage="@string/shortcut_suggest_food_disabled_message">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:targetPackage="com.aifitnesscoach.app"
+            android:targetClass="com.aifitnesscoach.app.MainActivity"
+            android:data="fitwiz://chat/suggest-food" />
+        <categories android:name="android.shortcut.conversation" />
+    </shortcut>
+</shortcuts>

@@ -4,7 +4,7 @@ import 'consistency.dart';
 part 'workout_day_detail.g.dart';
 
 /// Detailed workout data for a specific day
-@JsonSerializable()
+@JsonSerializable(explicitToJson: true)
 class WorkoutDayDetail {
   final String date;
   final String status;
@@ -112,7 +112,7 @@ class WorkoutDayDetail {
 }
 
 /// Exercise detail with all sets
-@JsonSerializable()
+@JsonSerializable(explicitToJson: true)
 class ExerciseSetDetail {
   @JsonKey(name: 'exercise_name')
   final String exerciseName;

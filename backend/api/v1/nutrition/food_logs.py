@@ -8,7 +8,7 @@ import time
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from pydantic import BaseModel
 
-from core.timezone_utils import resolve_timezone, local_date_to_utc_range, get_user_today, get_user_now_iso, target_date_to_utc_iso
+from core.timezone_utils import resolve_timezone, local_date_to_utc_range, get_user_today, get_user_now_iso, target_date_to_utc_iso, to_utc_iso
 from core.auth import get_current_user, verify_resource_ownership
 from core.exceptions import safe_internal_error
 from core.logger import get_logger
@@ -80,7 +80,7 @@ async def list_food_logs(
                 id=log.get("id"),
                 user_id=log.get("user_id"),
                 meal_type=log.get("meal_type"),
-                logged_at=str(log.get("logged_at", "")),
+                logged_at=to_utc_iso(log.get("logged_at")),
                 food_items=log.get("food_items", []),
                 total_calories=log.get("total_calories", 0),
                 protein_g=log.get("protein_g", 0),
@@ -106,7 +106,7 @@ async def list_food_logs(
                 inflammation_score=log.get("inflammation_score"),
                 is_ultra_processed=log.get("is_ultra_processed"),
                 image_url=log.get("image_url"),
-                created_at=str(log.get("created_at") or log.get("logged_at") or ""),
+                created_at=to_utc_iso(log.get("created_at") or log.get("logged_at")),
             ))
 
         logger.info(f"Returning {len(result)} food logs for user {user_id}")
@@ -139,7 +139,7 @@ async def get_food_log(user_id: str, log_id: str, current_user: dict = Depends(g
             id=log.get("id"),
             user_id=log.get("user_id"),
             meal_type=log.get("meal_type"),
-            logged_at=str(log.get("logged_at", "")),
+            logged_at=to_utc_iso(log.get("logged_at")),
             food_items=log.get("food_items", []),
             total_calories=log.get("total_calories", 0),
             protein_g=log.get("protein_g", 0),
@@ -165,7 +165,7 @@ async def get_food_log(user_id: str, log_id: str, current_user: dict = Depends(g
             inflammation_score=log.get("inflammation_score"),
             is_ultra_processed=log.get("is_ultra_processed"),
             image_url=log.get("image_url"),
-            created_at=str(log.get("created_at") or log.get("logged_at") or ""),
+            created_at=to_utc_iso(log.get("created_at") or log.get("logged_at")),
         )
 
     except HTTPException:
@@ -242,6 +242,23 @@ async def update_food_log(log_id: str, body: UpdateFoodLogRequest, current_user:
                 )
             except Exception as edit_err:
                 logger.warning(f"Failed to record post-save item edits for {log_id}: {edit_err}")
+
+            # Also UPSERT per-user overrides so the next log of the same food
+            # defaults to the user's corrected values. One UPSERT per edited
+            # item index — merges cross-field edits into a single override row.
+            try:
+                items_after_update = body.food_items or (updated.get("food_items") or [])
+                edited_indices = {e.food_item_index for e in body.item_edits}
+                for idx in edited_indices:
+                    if 0 <= idx < len(items_after_update):
+                        db.upsert_user_food_override(
+                            user_id=user_id,
+                            food_item=items_after_update[idx],
+                        )
+            except Exception as ov_err:
+                logger.warning(
+                    f"Failed to upsert user_food_overrides for {log_id}: {ov_err}"
+                )
 
         # Invalidate daily summary cache so the next fetch returns fresh data
         from api.v1.nutrition.summaries import invalidate_daily_summary_cache

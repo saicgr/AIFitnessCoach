@@ -1,5 +1,7 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'services/post_meal_checkin_reminder.dart';
 import 'core/providers/window_mode_provider.dart';
 import 'core/providers/workout_mini_player_provider.dart';
 import 'core/theme/accent_color_provider.dart';
@@ -12,6 +14,9 @@ import 'core/services/posthog_service.dart';
 import 'data/repositories/auth_repository.dart';
 import 'data/services/api_client.dart';
 import 'data/services/notification_service.dart';
+// Meal-suggestion widget — staged under Settings → Coming Soon. Re-enable
+// the import when the feature goes live (see main.dart for the checklist).
+// import 'services/meal_suggestion_widget_service.dart';
 import 'navigation/app_router.dart';
 import 'screens/ai_settings/ai_settings_screen.dart';
 import 'screens/notifications/notifications_screen.dart';
@@ -26,6 +31,10 @@ class FitWizApp extends ConsumerStatefulWidget {
 }
 
 class _FitWizAppState extends ConsumerState<FitWizApp> {
+  // Note: WidgetsBindingObserver + didChangeAppLifecycleState were added
+  // to support the meal-suggestion widget's "refresh on resume" hook.
+  // The hook is staged (see Settings → Coming Soon); re-add the mixin,
+  // observer registration, and override when that feature ships.
   bool _syncCallbackSet = false;
   bool _notificationCallbackSet = false;
   bool _posthogListenerSet = false;
@@ -39,6 +48,25 @@ class _FitWizAppState extends ConsumerState<FitWizApp> {
     // launch (before the user knows what the app does) tanks opt-in rates.
     // It now fires from NotificationPrimeScreen, gated to run once after
     // onboarding/paywall via HomeScreen's initState.
+
+    // Initialize the post-meal check-in reminder plugin + route taps into
+    // the nutrition screen with the check-in pre-bound to the log.
+    unawaited(
+      PostMealCheckinReminderService.instance.initialize(
+        onOpenCheckinCallback: (foodLogId) {
+          // Deferred so we don't try to navigate before a MaterialApp.router
+          // context exists on first-launch cold-start taps.
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            try {
+              final router = ref.read(routerProvider);
+              router.go('/nutrition?tab=0&openCheckin=$foodLogId');
+            } catch (e) {
+              debugPrint('⚠️ [PostMealReminder] Router not ready: $e');
+            }
+          });
+        },
+      ),
+    );
   }
 
   @override

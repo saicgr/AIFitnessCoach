@@ -1,0 +1,169 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Meal-suggestion home-screen widget layout.
+
+    Populated by MealSuggestionWidgetReceiver.kt, which reads
+    `meal_suggestion_json` from the home_widget SharedPreferences store
+    and fills the IDs below. Kept intentionally compact so it renders
+    well on both 4x2 and 4x3 grid sizes.
+-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@drawable/widget_background"
+    android:padding="14dp">
+
+    <!-- Header row: emoji + meal-slot label + stale badge -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical">
+
+        <TextView
+            android:id="@+id/meal_emoji"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="🍽"
+            android:textSize="22sp"
+            android:layout_marginEnd="8dp" />
+
+        <TextView
+            android:id="@+id/meal_slot_label"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="wrap_content"
+            android:text="MEAL IDEA"
+            android:textColor="#AAB4C0"
+            android:textSize="11sp"
+            android:textStyle="bold"
+            android:letterSpacing="0.08"
+            android:maxLines="1"
+            android:ellipsize="end" />
+
+        <TextView
+            android:id="@+id/meal_stale_badge"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="OFFLINE"
+            android:textColor="#F5C518"
+            android:textSize="9sp"
+            android:textStyle="bold"
+            android:visibility="gone" />
+    </LinearLayout>
+
+    <!-- Title -->
+    <TextView
+        android:id="@+id/meal_title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="6dp"
+        android:text="Sign in to FitWiz"
+        android:textColor="#FFFFFF"
+        android:textSize="15sp"
+        android:textStyle="bold"
+        android:maxLines="2"
+        android:ellipsize="end" />
+
+    <!-- Subtitle / reasoning -->
+    <TextView
+        android:id="@+id/meal_subtitle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="2dp"
+        android:text="Tap to get personalised meal ideas"
+        android:textColor="#94A3B8"
+        android:textSize="12sp"
+        android:maxLines="2"
+        android:ellipsize="end" />
+
+    <!-- Macros row -->
+    <LinearLayout
+        android:id="@+id/meal_macros_row"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginTop="8dp">
+
+        <TextView
+            android:id="@+id/meal_calories"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="-- cal"
+            android:textColor="#F59E0B"
+            android:textSize="12sp"
+            android:textStyle="bold"
+            android:layout_marginEnd="10dp" />
+
+        <TextView
+            android:id="@+id/meal_protein"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="--P"
+            android:textColor="#EF4444"
+            android:textSize="12sp"
+            android:textStyle="bold"
+            android:layout_marginEnd="10dp" />
+
+        <TextView
+            android:id="@+id/meal_carbs"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="--C"
+            android:textColor="#3B82F6"
+            android:textSize="12sp"
+            android:textStyle="bold"
+            android:layout_marginEnd="10dp" />
+
+        <TextView
+            android:id="@+id/meal_fat"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="--F"
+            android:textColor="#EAB308"
+            android:textSize="12sp"
+            android:textStyle="bold" />
+    </LinearLayout>
+
+    <!-- Spacer -->
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1" />
+
+    <!-- Action buttons -->
+    <LinearLayout
+        android:id="@+id/meal_actions_row"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginTop="10dp">
+
+        <TextView
+            android:id="@+id/meal_log_button"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="36dp"
+            android:gravity="center"
+            android:text="✓ Log it"
+            android:textColor="#FFFFFF"
+            android:textSize="12sp"
+            android:textStyle="bold"
+            android:background="@drawable/widget_button_food"
+            android:layout_marginEnd="6dp" />
+
+        <TextView
+            android:id="@+id/meal_refresh_button"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="36dp"
+            android:gravity="center"
+            android:text="↻ Refresh"
+            android:textColor="#FFFFFF"
+            android:textSize="12sp"
+            android:textStyle="bold"
+            android:background="@drawable/widget_button_background" />
+    </LinearLayout>
+
+</LinearLayout>

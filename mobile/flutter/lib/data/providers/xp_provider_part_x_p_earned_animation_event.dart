@@ -58,6 +58,8 @@ class DailyGoals {
   final bool hitProteinGoal;
   final bool loggedBodyMeasurements;
   final bool hitStepsGoal;
+  final bool hitHydrationGoal;
+  final bool hitCalorieGoal;
   final DateTime date;
 
   const DailyGoals({
@@ -68,6 +70,8 @@ class DailyGoals {
     this.hitProteinGoal = false,
     this.loggedBodyMeasurements = false,
     this.hitStepsGoal = false,
+    this.hitHydrationGoal = false,
+    this.hitCalorieGoal = false,
     required this.date,
   });
 
@@ -79,6 +83,8 @@ class DailyGoals {
     bool? hitProteinGoal,
     bool? loggedBodyMeasurements,
     bool? hitStepsGoal,
+    bool? hitHydrationGoal,
+    bool? hitCalorieGoal,
     DateTime? date,
   }) {
     return DailyGoals(
@@ -89,6 +95,8 @@ class DailyGoals {
       hitProteinGoal: hitProteinGoal ?? this.hitProteinGoal,
       loggedBodyMeasurements: loggedBodyMeasurements ?? this.loggedBodyMeasurements,
       hitStepsGoal: hitStepsGoal ?? this.hitStepsGoal,
+      hitHydrationGoal: hitHydrationGoal ?? this.hitHydrationGoal,
+      hitCalorieGoal: hitCalorieGoal ?? this.hitCalorieGoal,
       date: date ?? this.date,
     );
   }
@@ -103,11 +111,13 @@ class DailyGoals {
     if (hitProteinGoal) count++;
     if (loggedBodyMeasurements) count++;
     if (hitStepsGoal) count++;
+    if (hitHydrationGoal) count++;
+    if (hitCalorieGoal) count++;
     return count;
   }
 
   /// Total number of daily goals
-  int get totalCount => 7;
+  int get totalCount => 9;
 
   /// Progress as a fraction (0.0 to 1.0)
   double get progress => completedCount / totalCount;
@@ -123,7 +133,9 @@ class DailyGoals {
     if (loggedWeight) xp += 15;
     if (hitProteinGoal) xp += 50;
     if (loggedBodyMeasurements) xp += 20;
-    if (hitStepsGoal) xp += 30;
+    if (hitStepsGoal) xp += 100;
+    if (hitHydrationGoal) xp += 40;
+    if (hitCalorieGoal) xp += 60;
     return (xp * multiplier).round();
   }
 

@@ -221,31 +221,51 @@ extension __ExerciseSwapSheetStateExt on _ExerciseSwapSheetState {
               ),
             ),
           )
-        // Empty state
+        // Empty state — distinguish "the request failed" from "the server
+        // returned 0 suggestions" so the user knows what actually happened.
         else if (_aiSuggestions.isEmpty)
           Expanded(
             child: Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.auto_awesome, size: 48, color: textMuted),
-                  const SizedBox(height: 16),
-                  Text(
-                    'No AI suggestions available',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w600,
-                      color: textMuted,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      _aiError != null
+                          ? Icons.error_outline
+                          : Icons.auto_awesome,
+                      size: 48,
+                      color: _aiError != null ? AppColors.error : textMuted,
                     ),
-                  ),
-                  const SizedBox(height: 8),
-                  TextButton(
-                    onPressed: () {
-                      setState(() => _aiLoaded = false);
-                      _loadAISuggestions();
-                    },
-                    child: const Text('Try Again'),
-                  ),
-                ],
+                    const SizedBox(height: 16),
+                    Text(
+                      _aiError != null
+                          ? 'AI Picks unavailable'
+                          : 'No alternatives matched your request',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        color: textPrimary,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      _aiError ??
+                          'Try rephrasing your request above, picking a different reason, or check the Library tab.',
+                      style: TextStyle(fontSize: 13, color: textMuted),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 12),
+                    TextButton(
+                      onPressed: () {
+                        setState(() => _aiLoaded = false);
+                        _loadAISuggestions();
+                      },
+                      child: const Text('Try Again'),
+                    ),
+                  ],
+                ),
               ),
             ),
           )

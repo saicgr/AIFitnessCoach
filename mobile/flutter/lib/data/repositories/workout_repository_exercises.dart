@@ -93,69 +93,73 @@ extension WorkoutRepositoryExercises on WorkoutRepository {
     }
   }
 
-  /// Get AI exercise swap suggestions
+  /// Get AI exercise swap suggestions.
+  ///
+  /// Pass a known chip label in [reason] ("Too difficult", "Too easy", ...)
+  /// or a freeform user message in [customMessage]. If both are provided,
+  /// [customMessage] wins. Throws on network / API errors so callers can
+  /// distinguish an empty result from a failed request.
   Future<List<Map<String, dynamic>>> getExerciseSuggestions({
     required String workoutId,
     required WorkoutExercise exercise,
     required String userId,
     String? reason,
+    String? customMessage,
     List<String>? avoidedExercises,
   }) async {
-    try {
-      // Build message based on reason
-      String message;
-      switch (reason) {
-        case 'Too difficult':
-          message = 'I need an easier alternative';
-          break;
-        case 'Too easy':
-          message = 'I want something more challenging';
-          break;
-        case 'Equipment unavailable':
-          message = "I don't have the equipment for this exercise";
-          break;
-        case 'Injury concern':
-          message = 'I have an injury and need a safer alternative';
-          break;
-        case 'Personal preference':
-          message = 'I want a different exercise for variety';
-          break;
-        default:
-          message = 'I want an alternative exercise';
-      }
+    // Known reason chip → canned message mapping. Any reason value NOT in
+    // this map is treated as freeform user text, so typing "I only have
+    // dumbbells" no longer gets silently replaced with the default message.
+    const chipMessages = {
+      'Too difficult': 'I need an easier alternative',
+      'Too easy': 'I want something more challenging',
+      'Equipment unavailable': "I don't have the equipment for this exercise",
+      'Injury concern': 'I have an injury and need a safer alternative',
+      'Personal preference': 'I want a different exercise for variety',
+    };
 
-      debugPrint('🔍 [Workout] Getting suggestions for ${exercise.name} - reason: $reason');
-      if (avoidedExercises != null && avoidedExercises.isNotEmpty) {
-        debugPrint('🚫 [Workout] Filtering ${avoidedExercises.length} avoided exercises');
-      }
-
-      final response = await apiClient.post(
-        '/exercise-suggestions/suggest',
-        data: {
-          'user_id': userId,
-          'message': message,
-          'current_exercise': {
-            'name': exercise.name,
-            'sets': exercise.sets ?? 3,
-            'reps': exercise.reps ?? 10,
-            'muscle_group': exercise.muscleGroup ?? exercise.primaryMuscle ?? exercise.bodyPart,
-            'equipment': exercise.equipment,
-          },
-          if (avoidedExercises != null && avoidedExercises.isNotEmpty)
-            'avoided_exercises': avoidedExercises,
-        },
-      );
-      if (response.statusCode == 200) {
-        final data = response.data as Map<String, dynamic>;
-        final suggestions = List<Map<String, dynamic>>.from(data['suggestions'] ?? []);
-        debugPrint('✅ [Workout] Got ${suggestions.length} suggestions');
-        return suggestions;
-      }
-      return [];
-    } catch (e) {
-      debugPrint('❌ [Workout] Error getting exercise suggestions: $e');
-      return [];
+    final freeform = customMessage?.trim();
+    String message;
+    if (freeform != null && freeform.isNotEmpty) {
+      message = freeform;
+    } else if (reason != null && chipMessages.containsKey(reason)) {
+      message = chipMessages[reason]!;
+    } else if (reason != null && reason.trim().isNotEmpty) {
+      // Unknown reason value — assume the caller passed freeform text.
+      message = reason.trim();
+    } else {
+      message = 'I want an alternative exercise';
     }
+
+    debugPrint('🔍 [Workout] Getting suggestions for ${exercise.name} — message: "$message"');
+    if (avoidedExercises != null && avoidedExercises.isNotEmpty) {
+      debugPrint('🚫 [Workout] Filtering ${avoidedExercises.length} avoided exercises');
+    }
+
+    final response = await apiClient.post(
+      '/exercise-suggestions/suggest',
+      data: {
+        'user_id': userId,
+        'message': message,
+        'current_exercise': {
+          'name': exercise.name,
+          'sets': exercise.sets ?? 3,
+          'reps': exercise.reps ?? 10,
+          'muscle_group': exercise.muscleGroup ?? exercise.primaryMuscle ?? exercise.bodyPart,
+          'equipment': exercise.equipment,
+        },
+        if (avoidedExercises != null && avoidedExercises.isNotEmpty)
+          'avoided_exercises': avoidedExercises,
+      },
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception('Server returned ${response.statusCode}');
+    }
+    final data = response.data as Map<String, dynamic>;
+    final suggestions = List<Map<String, dynamic>>.from(data['suggestions'] ?? []);
+    debugPrint('✅ [Workout] Got ${suggestions.length} suggestions');
+    return suggestions;
   }
 
   /// Get AI exercise suggestions for adding to a workout (not swapping)

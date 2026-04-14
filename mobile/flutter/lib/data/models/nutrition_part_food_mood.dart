@@ -89,6 +89,16 @@ class FoodLog {
   final bool? isUltraProcessed;
   @JsonKey(name: 'image_url')
   final String? imageUrl;
+  /// How this log was captured — 'image' | 'barcode' | 'text' | 'chat' |
+  /// 'restaurant' | 'parse_app_screenshot' | 'parse_nutrition_label'.
+  /// Drives the leading source indicator on each food row.
+  @JsonKey(name: 'source_type')
+  final String? sourceType;
+  /// The originating user input (search query, chat message, photo caption,
+  /// scanned product name, dish label). Used as the group-header title
+  /// when a log has multiple food items.
+  @JsonKey(name: 'user_query')
+  final String? userQuery;
   @JsonKey(name: 'created_at', fromJson: _parseDateTimeOrNow)
   final DateTime createdAt;
 
@@ -122,6 +132,8 @@ class FoodLog {
     this.inflammationScore,
     this.isUltraProcessed,
     this.imageUrl,
+    this.sourceType,
+    this.userQuery,
     required this.createdAt,
   });
 
@@ -504,7 +516,7 @@ class AiPerGramData {
   }
 }
 
-@JsonSerializable()
+@JsonSerializable(explicitToJson: true)
 class FoodItemRanking {
   final String name;
   final String? amount;
@@ -654,15 +666,126 @@ class FoodItemRanking {
     final newWeightG = newCount * weightPerUnitG!;
     return withWeight(newWeightG, newCount: newCount);
   }
+
+  /// Field-level copy used for direct user edits to kcal/macros.
+  /// Distinct from [withWeight] which scales every value based on portion —
+  /// this one changes only the fields passed and leaves the rest untouched.
+  FoodItemRanking copyWithFields({
+    int? calories,
+    double? proteinG,
+    double? carbsG,
+    double? fatG,
+  }) {
+    return FoodItemRanking(
+      name: name,
+      amount: amount,
+      calories: calories ?? this.calories,
+      proteinG: proteinG ?? this.proteinG,
+      carbsG: carbsG ?? this.carbsG,
+      fatG: fatG ?? this.fatG,
+      fiberG: fiberG,
+      goalScore: goalScore,
+      goalAlignment: goalAlignment,
+      reason: reason,
+      weightG: weightG,
+      weightSource: weightSource,
+      usdaData: usdaData,
+      aiPerGram: aiPerGram,
+      count: count,
+      weightPerUnitG: weightPerUnitG,
+      unit: unit,
+    );
+  }
 }
 
-@JsonSerializable()
+/// Per-field edit to a food item, mirrored from backend FoodItemEdit pydantic.
+/// One row per (item, field) pair — an item with both cal and protein edits
+/// produces two entries.
+class FoodItemEdit {
+  final int foodItemIndex;
+  final String foodItemName;
+  final String? foodItemId;
+  /// 'calories' | 'protein_g' | 'carbs_g' | 'fat_g'
+  final String editedField;
+  final num previousValue;
+  final num updatedValue;
+
+  const FoodItemEdit({
+    required this.foodItemIndex,
+    required this.foodItemName,
+    this.foodItemId,
+    required this.editedField,
+    required this.previousValue,
+    required this.updatedValue,
+  });
+
+  Map<String, dynamic> toJson() => {
+        'food_item_index': foodItemIndex,
+        'food_item_name': foodItemName,
+        if (foodItemId != null) 'food_item_id': foodItemId,
+        'edited_field': editedField,
+        'previous_value': previousValue,
+        'updated_value': updatedValue,
+      };
+
+  factory FoodItemEdit.fromJson(Map<String, dynamic> json) => FoodItemEdit(
+        foodItemIndex: (json['food_item_index'] as num).toInt(),
+        foodItemName: json['food_item_name'] as String,
+        foodItemId: json['food_item_id'] as String?,
+        editedField: json['edited_field'] as String,
+        previousValue: json['previous_value'] as num,
+        updatedValue: json['updated_value'] as num,
+      );
+}
+
+/// Audit row as returned by GET /food-logs/{id}/edits — includes server-assigned
+/// id, source, and timestamp on top of the edit payload.
+class FoodLogEditRecord {
+  final String id;
+  final String foodLogId;
+  final int foodItemIndex;
+  final String foodItemName;
+  final String? foodItemId;
+  final String editedField;
+  final num previousValue;
+  final num updatedValue;
+  final String editSource;
+  final DateTime editedAt;
+
+  const FoodLogEditRecord({
+    required this.id,
+    required this.foodLogId,
+    required this.foodItemIndex,
+    required this.foodItemName,
+    this.foodItemId,
+    required this.editedField,
+    required this.previousValue,
+    required this.updatedValue,
+    required this.editSource,
+    required this.editedAt,
+  });
+
+  factory FoodLogEditRecord.fromJson(Map<String, dynamic> json) => FoodLogEditRecord(
+        id: json['id'] as String,
+        foodLogId: json['food_log_id'] as String,
+        foodItemIndex: (json['food_item_index'] as num).toInt(),
+        foodItemName: json['food_item_name'] as String,
+        foodItemId: json['food_item_id'] as String?,
+        editedField: json['edited_field'] as String,
+        previousValue: json['previous_value'] as num,
+        updatedValue: json['updated_value'] as num,
+        editSource: json['edit_source'] as String,
+        editedAt: DateTime.parse(json['edited_at'] as String),
+      );
+}
+
+@JsonSerializable(explicitToJson: true)
 class LogFoodResponse {
   final bool success;
   @JsonKey(name: 'food_log_id')
   final String? foodLogId;  // Nullable for analyze-only responses (not yet saved)
-  @JsonKey(name: 'food_items')
-  final List<Map<String, dynamic>> foodItems;
+  @JsonKey(name: 'food_items', fromJson: _foodItemRankingListFromJson)
+  final List<FoodItemRanking> foodItems;
   @JsonKey(name: 'total_calories', defaultValue: 0)
   final int totalCalories;
   @JsonKey(name: 'protein_g', defaultValue: 0.0)
@@ -686,6 +809,10 @@ class LogFoodResponse {
   final List<String>? warnings;  // Concerns (high sodium, etc.)
   @JsonKey(name: 'recommended_swap')
   final String? recommendedSwap;  // Healthier alternative
+  // Personal food history callout when user has re-logged this food with bad
+  // mood/energy. Populated by the server (Gemini prompt or cache-hit enrichment).
+  @JsonKey(name: 'personal_history_note')
+  final String? personalHistoryNote;
   // AI confidence for estimates
   @JsonKey(name: 'confidence_score')
   final double? confidenceScore;  // 0.0-1.0 confidence in analysis
@@ -755,6 +882,7 @@ class LogFoodResponse {
     this.encouragements,
     this.warnings,
     this.recommendedSwap,
+    this.personalHistoryNote,
     this.confidenceScore,
     this.confidenceLevel,
     this.sourceType,
@@ -781,10 +909,8 @@ class LogFoodResponse {
       _$LogFoodResponseFromJson(json);
   Map<String, dynamic> toJson() => _$LogFoodResponseToJson(this);
 
-  /// Get typed food items with rankings
-  List<FoodItemRanking> get foodItemsRanked {
-    return foodItems.map((item) => FoodItemRanking.fromJson(item)).toList();
-  }
+  /// Backwards-compat alias. Prefer [foodItems] directly — it is already typed.
+  List<FoodItemRanking> get foodItemsRanked => foodItems;
 
   /// Get color for overall meal score
   String get mealScoreColor {
@@ -822,23 +948,25 @@ class LogFoodResponse {
   LogFoodResponse copyWithMultiplier(double multiplier) {
     // Scale food items if they have calorie/macro data
     final scaledFoodItems = foodItems.map((item) {
-      final scaledItem = Map<String, dynamic>.from(item);
-      if (scaledItem.containsKey('calories')) {
-        scaledItem['calories'] = ((scaledItem['calories'] as num) * multiplier).round();
-      }
-      if (scaledItem.containsKey('protein_g')) {
-        scaledItem['protein_g'] = (scaledItem['protein_g'] as num) * multiplier;
-      }
-      if (scaledItem.containsKey('carbs_g')) {
-        scaledItem['carbs_g'] = (scaledItem['carbs_g'] as num) * multiplier;
-      }
-      if (scaledItem.containsKey('fat_g')) {
-        scaledItem['fat_g'] = (scaledItem['fat_g'] as num) * multiplier;
-      }
-      if (scaledItem.containsKey('fiber_g') && scaledItem['fiber_g'] != null) {
-        scaledItem['fiber_g'] = (scaledItem['fiber_g'] as num) * multiplier;
-      }
-      return scaledItem;
+      return FoodItemRanking(
+        name: item.name,
+        amount: item.amount,
+        calories: item.calories != null ? (item.calories! * multiplier).round() : null,
+        proteinG: item.proteinG != null ? item.proteinG! * multiplier : null,
+        carbsG: item.carbsG != null ? item.carbsG! * multiplier : null,
+        fatG: item.fatG != null ? item.fatG! * multiplier : null,
+        fiberG: item.fiberG != null ? item.fiberG! * multiplier : null,
+        goalScore: item.goalScore,
+        goalAlignment: item.goalAlignment,
+        reason: item.reason,
+        weightG: item.weightG,
+        weightSource: item.weightSource,
+        usdaData: item.usdaData,
+        aiPerGram: item.aiPerGram,
+        count: item.count,
+        weightPerUnitG: item.weightPerUnitG,
+        unit: item.unit,
+      );
     }).toList();
 
     return LogFoodResponse(
@@ -857,6 +985,7 @@ class LogFoodResponse {
       encouragements: encouragements,
       warnings: warnings,
       recommendedSwap: recommendedSwap,
+      personalHistoryNote: personalHistoryNote,
       confidenceScore: confidenceScore,
       confidenceLevel: confidenceLevel,
       sourceType: sourceType,
@@ -898,7 +1027,7 @@ enum FoodSourceType {
   }
 }
 
-@JsonSerializable()
+@JsonSerializable(explicitToJson: true)
 class SavedFoodItem {
   final String name;
   final String? amount;
@@ -957,7 +1086,7 @@ class SavedFoodItem {
   bool get canScaleByCount => count != null && weightPerUnitG != null && canScale;
 }
 
-@JsonSerializable()
+@JsonSerializable(explicitToJson: true)
 class SavedFood {
   final String id;
   @JsonKey(name: 'user_id')
@@ -979,8 +1108,8 @@ class SavedFood {
   final double? totalFatG;
   @JsonKey(name: 'total_fiber_g')
   final double? totalFiberG;
-  @JsonKey(name: 'food_items')
-  final List<Map<String, dynamic>> foodItems;
+  @JsonKey(name: 'food_items', fromJson: _savedFoodItemListFromJson)
+  final List<SavedFoodItem> foodItems;
   @JsonKey(name: 'overall_meal_score')
   final int? overallMealScore;
   @JsonKey(name: 'goal_alignment_percentage')
@@ -1024,10 +1153,8 @@ class SavedFood {
       _$SavedFoodFromJson(json);
   Map<String, dynamic> toJson() => _$SavedFoodToJson(this);
 
-  /// Get typed food items with rankings
-  List<SavedFoodItem> get foodItemsTyped {
-    return foodItems.map((item) => SavedFoodItem.fromJson(item)).toList();
-  }
+  /// Backwards-compat alias. Prefer [foodItems] directly — it is already typed.
+  List<SavedFoodItem> get foodItemsTyped => foodItems;
 
   /// Get source type as enum
   FoodSourceType get sourceTypeEnum => FoodSourceType.fromValue(sourceType);
@@ -1069,3 +1196,54 @@ class SavedFoodsResponse {
   Map<String, dynamic> toJson() => _$SavedFoodsResponseToJson(this);
 }
 
+/// Normalizes a raw JSON map that may contain already-hydrated nested models.
+/// Guards against the latent "type 'AiPerGramData' is not a subtype of type
+/// 'Map<String, dynamic>'" crash when a cached map round-trips through fromJson.
+Map<String, dynamic> _normalizeNestedModels(Map<String, dynamic> raw) {
+  final copy = Map<String, dynamic>.from(raw);
+  final apg = copy['ai_per_gram'];
+  if (apg is AiPerGramData) copy['ai_per_gram'] = apg.toJson();
+  final usda = copy['usda_data'];
+  if (usda is USDANutrientData) copy['usda_data'] = usda.toJson();
+  return copy;
+}
+
+/// Tolerant decoder used by `@JsonKey(fromJson: ...)` on
+/// `LogFoodResponse.foodItems`. Accepts a list of JSON maps OR a list already
+/// containing `FoodItemRanking` instances (the latter occurs when we echo an
+/// in-memory response through toJson -> fromJson, e.g. during hot reload).
+List<FoodItemRanking> _foodItemRankingListFromJson(dynamic raw) {
+  if (raw == null) return const [];
+  if (raw is! List) return const [];
+  return raw.map<FoodItemRanking>((item) {
+    if (item is FoodItemRanking) return item;
+    if (item is Map<String, dynamic>) {
+      return FoodItemRanking.fromJson(_normalizeNestedModels(item));
+    }
+    if (item is Map) {
+      return FoodItemRanking.fromJson(
+        _normalizeNestedModels(Map<String, dynamic>.from(item)),
+      );
+    }
+    throw FormatException('Unexpected food item payload: ${item.runtimeType}');
+  }).toList();
+}
+
+/// Tolerant decoder used by `@JsonKey(fromJson: ...)` on
+/// `SavedFood.foodItems`. Symmetric to [_foodItemRankingListFromJson].
+List<SavedFoodItem> _savedFoodItemListFromJson(dynamic raw) {
+  if (raw == null) return const [];
+  if (raw is! List) return const [];
+  return raw.map<SavedFoodItem>((item) {
+    if (item is SavedFoodItem) return item;
+    if (item is Map<String, dynamic>) {
+      return SavedFoodItem.fromJson(_normalizeNestedModels(item));
+    }
+    if (item is Map) {
+      return SavedFoodItem.fromJson(
+        _normalizeNestedModels(Map<String, dynamic>.from(item)),
+      );
+    }
+    throw FormatException('Unexpected saved food item payload: ${item.runtimeType}');
+  }).toList();
+}

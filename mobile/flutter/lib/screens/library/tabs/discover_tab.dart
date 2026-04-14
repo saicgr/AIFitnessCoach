@@ -17,7 +17,9 @@ import '../widgets/compact_split_card.dart';
 /// Shows AI hero card, personalized "For You" splits, category-organized
 /// training splits, and browse-by-muscle/equipment pills.
 class DiscoverTab extends ConsumerWidget {
-  final Function(String? muscleFilter)? onSwitchToExercises;
+  /// Callback: (filter, axis). `axis` is 'muscle' | 'equipment' | 'category'
+  /// or null to let the router auto-detect.
+  final void Function(String? filter, [String? axis])? onSwitchToExercises;
 
   const DiscoverTab({super.key, this.onSwitchToExercises});
 
@@ -473,7 +475,7 @@ class _TrainingPlansSectionState extends State<_TrainingPlansSection> {
 
 class _BrowseSection extends ConsumerWidget {
   final bool isDark;
-  final Function(String? muscleFilter)? onMuscleSelected;
+  final void Function(String? filter, [String? axis])? onMuscleSelected;
 
   const _BrowseSection({
     required this.isDark,
@@ -533,7 +535,7 @@ class _BrowseSection extends ConsumerWidget {
                 animationIndex: index,
                 onTap: () {
                   HapticService.light();
-                  onMuscleSelected?.call(muscle.name);
+                  onMuscleSelected?.call(muscle.name, 'muscle');
                 },
               );
             }),
@@ -574,7 +576,50 @@ class _BrowseSection extends ConsumerWidget {
                 animationIndex: index,
                 onTap: () {
                   HapticService.light();
-                  onMuscleSelected?.call(equipment.name);
+                  onMuscleSelected?.call(equipment.name, 'equipment');
+                },
+              );
+            }),
+          ),
+        ),
+
+        const SizedBox(height: 20),
+
+        // "By Category" header — mirrors the exercise_library_cleaned.category column
+        // (strength, cardio, stretching, core, yoga, plyometric, power,
+        //  conditioning, functional, balance)
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Text(
+            'Browse by Category',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w700,
+              color: textPrimary,
+            ),
+          ),
+        ).animate().fadeIn(duration: 300.ms).slideY(begin: 0.05),
+
+        const SizedBox(height: 12),
+
+        // Category wrap grid (reflows over multiple rows; 10 entries)
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Wrap(
+            spacing: 8,
+            runSpacing: 12,
+            alignment: WrapAlignment.start,
+            children: List.generate(_categoryTypes.length, (index) {
+              final category = _categoryTypes[index];
+              return _EquipmentPill(
+                name: category.name,
+                icon: category.icon,
+                color: category.color(isDark),
+                isDark: isDark,
+                animationIndex: index,
+                onTap: () {
+                  HapticService.light();
+                  onMuscleSelected?.call(category.name, 'category');
                 },
               );
             }),
@@ -822,5 +867,60 @@ final _equipmentTypes = [
     'Cardio',
     Icons.directions_run,
     (isDark) => isDark ? AppColors.yellow : const Color(0xFFCA8A04),
+  ),
+];
+
+// Display names are Title Case; library_screen lowercases them before
+// sending to the API (DB category values are lowercase).
+final _categoryTypes = [
+  _EquipmentData(
+    'Strength',
+    Icons.fitness_center,
+    (isDark) => isDark ? AppColors.orange : AppColorsLight.orange,
+  ),
+  _EquipmentData(
+    'Cardio',
+    Icons.directions_run,
+    (isDark) => isDark ? AppColors.red : AppColorsLight.coral,
+  ),
+  _EquipmentData(
+    'Stretching',
+    Icons.accessibility_new,
+    (isDark) => isDark ? AppColors.cyan : AppColorsLight.macroCarbs,
+  ),
+  _EquipmentData(
+    'Core',
+    Icons.self_improvement,
+    (isDark) => isDark ? AppColors.purple : AppColorsLight.purple,
+  ),
+  _EquipmentData(
+    'Yoga',
+    Icons.spa,
+    (isDark) => isDark ? AppColors.green : AppColorsLight.green,
+  ),
+  _EquipmentData(
+    'Plyometric',
+    Icons.bolt,
+    (isDark) => isDark ? AppColors.yellow : const Color(0xFFCA8A04),
+  ),
+  _EquipmentData(
+    'Power',
+    Icons.flash_on,
+    (isDark) => isDark ? AppColors.warning : AppColorsLight.warning,
+  ),
+  _EquipmentData(
+    'Conditioning',
+    Icons.whatshot,
+    (isDark) => isDark ? AppColors.magenta : AppColorsLight.magenta,
+  ),
+  _EquipmentData(
+    'Functional',
+    Icons.sports_gymnastics,
+    (isDark) => isDark ? AppColors.info : AppColorsLight.info,
+  ),
+  _EquipmentData(
+    'Balance',
+    Icons.balance,
+    (isDark) => isDark ? AppColors.pink : AppColorsLight.magenta,
   ),
 ];

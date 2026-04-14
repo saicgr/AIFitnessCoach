@@ -103,6 +103,9 @@ extension _FoodBrowserPanelStateUI on _FoodBrowserPanelState {
               logState: _logStates[key],
               onAdd: () => _relogFoodLog(log),
               isDark: widget.isDark,
+              imageUrl: log.imageUrl,
+              sourceType: log.sourceType,
+              heroTagSuffix: 'recent-${log.id}',
             );
           }),
           const SizedBox(height: 12),
@@ -129,6 +132,9 @@ extension _FoodBrowserPanelStateUI on _FoodBrowserPanelState {
               logState: _logStates[key],
               onAdd: () => _relogSavedFood(food),
               isDark: widget.isDark,
+              imageUrl: food.imageUrl,
+              sourceType: food.sourceType,
+              heroTagSuffix: 'saved-${food.id}',
             );
           }),
         ],
@@ -207,6 +213,9 @@ extension _FoodBrowserPanelStateUI on _FoodBrowserPanelState {
               logState: _logStates[key],
               onAdd: () => _relogSavedFood(food),
               isDark: widget.isDark,
+              imageUrl: food.imageUrl,
+              sourceType: food.sourceType,
+              heroTagSuffix: 'saved-full-${food.id}',
             );
           }),
           if (_savedHasMore)

@@ -168,6 +168,8 @@ $FLUTTER_PATH clean
 echo -e "${YELLOW}Getting dependencies...${NC}"
 $FLUTTER_PATH pub get
 
+# Generated .g.dart files are committed to git — no codegen step here.
+
 echo -e "${YELLOW}Uninstalling existing app from $TARGET_DEVICE...${NC}"
 $ADB_PATH -s "$TARGET_DEVICE" uninstall com.aifitnesscoach.app 2>/dev/null || echo -e "${YELLOW}App was not installed.${NC}"
 

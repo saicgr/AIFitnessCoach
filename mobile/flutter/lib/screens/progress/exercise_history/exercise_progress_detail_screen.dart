@@ -26,12 +26,17 @@ class _ExerciseProgressDetailScreenState extends ConsumerState<ExerciseProgressD
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
   DateTime? _screenOpenTime;
+  // Cache the repo in initState — Riverpod invalidates `ref` before dispose()
+  // runs, so reading the provider from inside dispose throws
+  // "Cannot use ref after the widget was disposed".
+  late final ExerciseHistoryRepository _historyRepo;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
     _screenOpenTime = DateTime.now();
+    _historyRepo = ref.read(exerciseHistoryRepositoryProvider);
     ref.read(posthogServiceProvider).capture(
       eventName: 'exercise_progress_detail_viewed',
       properties: <String, Object>{'exercise_name': widget.exerciseName},
@@ -48,7 +53,7 @@ class _ExerciseProgressDetailScreenState extends ConsumerState<ExerciseProgressD
   void _logViewDuration() {
     if (_screenOpenTime != null) {
       final duration = DateTime.now().difference(_screenOpenTime!).inSeconds;
-      ref.read(exerciseHistoryRepositoryProvider).logView(
+      _historyRepo.logView(
         exerciseName: widget.exerciseName,
         sessionDurationSeconds: duration,
       );

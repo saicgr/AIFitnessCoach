@@ -9,7 +9,6 @@ import '../../../data/repositories/nutrition_repository.dart';
 import '../../../widgets/glass_sheet.dart';
 import '../../../widgets/main_shell.dart';
 import 'edit_targets_sheet.dart';
-import 'nutrition_goals_card.dart';
 import 'pinned_nutrients_card.dart';
 import 'logged_meals_section.dart';
 import 'goal_row.dart';
@@ -24,11 +23,16 @@ class DailyTab extends ConsumerStatefulWidget {
   final void Function(String) onDeleteMeal;
   final void Function(String mealId, String targetMealType) onCopyMeal;
   final void Function(String mealId, String targetMealType) onMoveMeal;
-  final void Function(String logId, int calories, double proteinG, double carbsG, double fatG, {double? weightG}) onUpdateMeal;
+  /// Per-item copy/move — promote one food inside a multi-item meal to its
+  /// own standalone log under a different meal type.
+  final void Function(String sourceLogId, int itemIdx, String targetMealType)? onCopyItem;
+  final void Function(String sourceLogId, int itemIdx, String targetMealType)? onMoveItem;
+  final void Function(String logId, int calories, double proteinG, double carbsG, double fatG, {double? weightG, List<Map<String, dynamic>>? foodItems, List<FoodItemEdit>? itemEdits}) onUpdateMeal;
   final void Function(String logId, DateTime newTime) onUpdateMealTime;
   final void Function(String logId, String notes) onUpdateMealNotes;
   final void Function(String logId, {String? moodBefore, String? moodAfter, int? energyLevel}) onUpdateMealMood;
   final void Function(FoodLog meal) onSaveFoodToFavorites;
+  final Future<List<FoodLogEditRecord>> Function(String logId)? onFetchItemEdits;
   final ApiClient? apiClient;
   final VoidCallback? onSwitchToNutrientsTab;
   final VoidCallback? onSwitchToHydrationTab;
@@ -46,11 +50,14 @@ class DailyTab extends ConsumerStatefulWidget {
     required this.onDeleteMeal,
     required this.onCopyMeal,
     required this.onMoveMeal,
+    this.onCopyItem,
+    this.onMoveItem,
     required this.onUpdateMeal,
     required this.onUpdateMealTime,
     required this.onUpdateMealNotes,
     required this.onUpdateMealMood,
     required this.onSaveFoodToFavorites,
+    this.onFetchItemEdits,
     this.apiClient,
     this.onSwitchToNutrientsTab,
     this.onSwitchToHydrationTab,
@@ -332,45 +339,13 @@ class _DailyTabState extends ConsumerState<DailyTab> {
     });
   }
 
-  /// Recalculate nutrition targets based on user profile
-  Future<void> _recalculateTargets() async {
-    final teal = widget.isDark ? AppColors.teal : AppColorsLight.teal;
-
-    // Guard against empty userId
-    if (widget.userId.isEmpty) {
-      debugPrint('Warning: [NutritionScreen] Cannot recalculate targets - userId is empty');
-      return;
-    }
-
-    try {
-      await ref.read(nutritionPreferencesProvider.notifier).recalculateTargets(widget.userId);
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('Targets recalculated based on your profile'),
-            backgroundColor: teal,
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
-        widget.onRefresh();
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to recalculate: $e'),
-            backgroundColor: Colors.red,
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
-      }
-    }
-  }
+  // Note: `_recalculateTargets` used to live here as the handler for the
+  // refresh icon on the removed NutritionGoalsCard. The equivalent flow is
+  // now exposed as "Recalculate from profile" inside EditTargetsSheet.
 
   @override
   Widget build(BuildContext context) {
     final teal = widget.isDark ? AppColors.teal : AppColorsLight.teal;
-    final prefsState = ref.watch(nutritionPreferencesProvider);
 
     return RefreshIndicator(
       onRefresh: () async {
@@ -397,38 +372,41 @@ class _DailyTabState extends ConsumerState<DailyTab> {
                   const SizedBox(height: 12),
                 ],
 
-                // 2. GOALS - Nutrition Goals Card
-                if (!widget.calmMode)
-                  NutritionGoalsCard(
-                    targets: widget.targets,
-                    summary: widget.summary,
+                // 2. MEAL SECTIONS with hero-row summary at top of card.
+                //    Daily Goals card removed — the 4 macro rings + goal-config strip
+                //    now live on the Profile screen (Nutrition & Fasting card).
+                //    Calorie remaining + macro progress is now the hero of this card.
+                Builder(builder: (ctx) {
+                  final prefs = ref.watch(nutritionPreferencesProvider);
+                  return LoggedMealsSection(
+                    meals: widget.summary?.meals ?? [],
+                    onDeleteMeal: widget.onDeleteMeal,
+                    onCopyMeal: widget.onCopyMeal,
+                    onMoveMeal: widget.onMoveMeal,
+                    onCopyItem: widget.onCopyItem,
+                    onMoveItem: widget.onMoveItem,
+                    onUpdateMeal: widget.onUpdateMeal,
+                    onUpdateMealTime: widget.onUpdateMealTime,
+                    onUpdateMealNotes: widget.onUpdateMealNotes,
+                    onUpdateMealMood: widget.onUpdateMealMood,
+                    onSaveFoodToFavorites: widget.onSaveFoodToFavorites,
+                    onLogMeal: widget.onLogMeal,
+                    onFetchItemEdits: widget.onFetchItemEdits,
+                    apiClient: widget.apiClient,
                     isDark: widget.isDark,
-                    onEdit: () => _showEditTargetsSheet(context),
-                    onRecalculate: () => _recalculateTargets(),
-                    onHydrationTap: widget.onSwitchToHydrationTab,
-                  ),
-
-                if (!widget.calmMode) const SizedBox(height: 8),
-
-                // 3. MEAL SECTIONS - All 4 meal types always visible with inline add
-                LoggedMealsSection(
-                  meals: widget.summary?.meals ?? [],
-                  onDeleteMeal: widget.onDeleteMeal,
-                  onCopyMeal: widget.onCopyMeal,
-                  onMoveMeal: widget.onMoveMeal,
-                  onUpdateMeal: widget.onUpdateMeal,
-                  onUpdateMealTime: widget.onUpdateMealTime,
-                  onUpdateMealNotes: widget.onUpdateMealNotes,
-                  onUpdateMealMood: widget.onUpdateMealMood,
-                  onSaveFoodToFavorites: widget.onSaveFoodToFavorites,
-                  onLogMeal: widget.onLogMeal,
-                  apiClient: widget.apiClient,
-                  isDark: widget.isDark,
-                  userId: widget.userId,
-                  onFoodSaved: _loadFavorites,
-                  calorieTarget: ref.read(nutritionPreferencesProvider).currentCalorieTarget,
-                  totalCaloriesEaten: widget.summary?.totalCalories ?? 0,
-                ),
+                    userId: widget.userId,
+                    onFoodSaved: _loadFavorites,
+                    calorieTarget: prefs.currentCalorieTarget,
+                    totalCaloriesEaten: widget.summary?.totalCalories ?? 0,
+                    proteinTarget: prefs.currentProteinTarget,
+                    carbsTarget: prefs.currentCarbsTarget,
+                    fatTarget: prefs.currentFatTarget,
+                    consumedProtein: widget.summary?.totalProteinG ?? 0,
+                    consumedCarbs: widget.summary?.totalCarbsG ?? 0,
+                    consumedFat: widget.summary?.totalFatG ?? 0,
+                    onEditTargets: widget.calmMode ? null : () => _showEditTargetsSheet(context),
+                  );
+                }),
                 const SizedBox(height: 12),
 
                 const SizedBox(height: 80), // Nav bar clearance

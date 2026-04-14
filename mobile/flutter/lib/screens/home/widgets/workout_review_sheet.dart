@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import '../../../data/models/workout.dart';
 import '../../../data/models/exercise.dart';
+import '../../../widgets/exercise_image.dart';
 import '../../../widgets/glass_sheet.dart';
 import '../../../widgets/main_shell.dart';
 import '../../workout/widgets/exercise_swap_sheet.dart';
@@ -448,8 +448,10 @@ class _ReviewExerciseCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final gifUrl = exercise.gifUrl ?? exercise.videoUrl;
-
+    // Backend's enrich_exercises_with_video_urls() populates image_s3_path
+    // (from exercise_library_cleaned.image_url) for ~84% of exercises; gif_url
+    // is almost never populated. Prefer the populated field, then let
+    // ExerciseImage fuzzy-fetch by name as a final fallback.
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(12),
@@ -460,40 +462,14 @@ class _ReviewExerciseCard extends StatelessWidget {
       ),
       child: Row(
         children: [
-          // Exercise thumbnail
-          ClipRRect(
-            borderRadius: BorderRadius.circular(8),
-            child: Container(
-              width: 60,
-              height: 60,
-              color: colors.textMuted.withOpacity(0.1),
-              child: gifUrl != null && gifUrl.isNotEmpty
-                  ? CachedNetworkImage(
-                      imageUrl: gifUrl,
-                      fit: BoxFit.cover,
-                      placeholder: (context, url) => Center(
-                        child: Icon(
-                          Icons.fitness_center,
-                          color: colors.textMuted,
-                          size: 24,
-                        ),
-                      ),
-                      errorWidget: (context, url, error) => Center(
-                        child: Icon(
-                          Icons.fitness_center,
-                          color: colors.textMuted,
-                          size: 24,
-                        ),
-                      ),
-                    )
-                  : Center(
-                      child: Icon(
-                        Icons.fitness_center,
-                        color: colors.textMuted,
-                        size: 24,
-                      ),
-                    ),
-            ),
+          ExerciseImage(
+            exerciseName: exercise.name,
+            imageUrl: exercise.imageS3Path ?? exercise.gifUrl ?? exercise.videoUrl,
+            width: 60,
+            height: 60,
+            borderRadius: 8,
+            backgroundColor: colors.textMuted.withOpacity(0.1),
+            iconColor: colors.textMuted,
           ),
           const SizedBox(width: 12),
           // Exercise details

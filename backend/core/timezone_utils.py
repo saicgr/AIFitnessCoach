@@ -46,6 +46,39 @@ def get_user_now_iso(timezone_str: str) -> str:
     return datetime.now(ZoneInfo("UTC")).isoformat()
 
 
+def to_utc_iso(value) -> str:
+    """
+    Normalize a ``logged_at``-style value to ISO8601 with an explicit UTC offset
+    (e.g. ``"2026-04-14T14:15:00+00:00"``).
+
+    Handles:
+      * ``datetime`` — naive values are assumed UTC (our columns are ``timestamptz``
+        stored in UTC); aware values are converted.
+      * ``str`` — both offset-bearing (``"…Z"`` / ``"…+00:00"``) and naive forms.
+      * ``None`` / ``""`` → ``""`` (callers serialize that as-is).
+
+    Kept deliberately tolerant: if we can't parse, we return the input untouched
+    rather than crash a response.
+    """
+    if value is None:
+        return ""
+    if isinstance(value, datetime):
+        dt = value if value.tzinfo else value.replace(tzinfo=ZoneInfo("UTC"))
+    elif isinstance(value, str):
+        s = value.strip()
+        if not s:
+            return ""
+        try:
+            dt = datetime.fromisoformat(s.replace("Z", "+00:00"))
+        except ValueError:
+            return s
+        if dt.tzinfo is None:
+            dt = dt.replace(tzinfo=ZoneInfo("UTC"))
+    else:
+        return str(value)
+    return dt.astimezone(ZoneInfo("UTC")).isoformat()
+
+
 def target_date_to_utc_iso(date_str: str, timezone_str: str) -> str:
     """
     Convert a 'YYYY-MM-DD' local date to a UTC ISO timestamp at noon local time.

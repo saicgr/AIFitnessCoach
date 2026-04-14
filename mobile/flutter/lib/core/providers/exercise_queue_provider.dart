@@ -9,7 +9,15 @@ class ExerciseQueueState {
   final bool isLoading;
   final String? error;
 
-  const ExerciseQueueState({
+  // Computed once per state instance — avoids filter+sort on every isQueued call.
+  late final List<QueuedExercise> activeQueue =
+      (queue.where((q) => q.isActive).toList()
+        ..sort((a, b) => a.priority.compareTo(b.priority)));
+
+  late final Set<String> queuedNames =
+      activeQueue.map((q) => q.exerciseName.toLowerCase()).toSet();
+
+  ExerciseQueueState({
     this.queue = const [],
     this.isLoading = false,
     this.error,
@@ -27,21 +35,9 @@ class ExerciseQueueState {
     );
   }
 
-  /// Get only active queue items (not used, not expired)
-  List<QueuedExercise> get activeQueue =>
-      queue.where((q) => q.isActive).toList()
-        ..sort((a, b) => a.priority.compareTo(b.priority));
-
-  /// Check if an exercise is in the queue
-  bool isQueued(String exerciseName) {
-    return activeQueue.any(
-      (q) => q.exerciseName.toLowerCase() == exerciseName.toLowerCase(),
-    );
-  }
-
-  /// Get the set of queued exercise names for quick lookup
-  Set<String> get queuedNames =>
-      activeQueue.map((q) => q.exerciseName.toLowerCase()).toSet();
+  /// Check if an exercise is in the queue (O(1) set lookup).
+  bool isQueued(String exerciseName) =>
+      queuedNames.contains(exerciseName.toLowerCase());
 }
 
 /// Exercise queue provider
@@ -54,7 +50,7 @@ final exerciseQueueProvider =
 class ExerciseQueueNotifier extends StateNotifier<ExerciseQueueState> {
   final Ref _ref;
 
-  ExerciseQueueNotifier(this._ref) : super(const ExerciseQueueState()) {
+  ExerciseQueueNotifier(this._ref) : super(ExerciseQueueState()) {
     _init();
   }
 

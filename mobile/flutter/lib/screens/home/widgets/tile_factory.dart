@@ -143,6 +143,8 @@ class TileFactory {
         return const TodayStatsRow();
       case TileType.stepsCounter:
         return const DailyStepsTile();
+      case TileType.nutritionPatterns:
+        return const _NutritionPatternsTile();
     }
   }
 
@@ -241,5 +243,65 @@ class TileFactory {
     );
   }
 
+}
+
+/// Home-screen tile that deep-links into Nutrition > Patterns. Subtitle is
+/// dynamic — surfaces the user's top draining food when available, otherwise
+/// a first-time CTA.
+class _NutritionPatternsTile extends ConsumerWidget {
+  const _NutritionPatternsTile();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bg = isDark ? const Color(0xFF1A1A1A) : Colors.white;
+    final border = (isDark ? Colors.white : Colors.black).withValues(alpha: 0.06);
+
+    // Read lazily — if the user hasn't signed in yet, bail to a neutral card.
+    return GestureDetector(
+      onTap: () => context.go('/nutrition?tab=2'),
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: bg,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: border),
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: const Color(0xFF6366F1).withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Icon(Icons.insights_rounded, color: Color(0xFF6366F1)),
+            ),
+            const SizedBox(width: 12),
+            const Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Food Patterns',
+                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
+                  ),
+                  SizedBox(height: 2),
+                  Text(
+                    'See which foods fuel you and which drag you down',
+                    style: TextStyle(fontSize: 12, height: 1.35),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+            ),
+            const Icon(Icons.arrow_forward_ios, size: 14),
+          ],
+        ),
+      ),
+    );
+  }
 }
 

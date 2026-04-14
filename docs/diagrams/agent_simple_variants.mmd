@@ -1,0 +1,24 @@
+flowchart LR
+  subgraph Coach["Coach Agent"]
+    direction TB
+    CS([START])
+    CR{should_handle_action<br/>setting / navigate?}
+    CA[coach_action_node<br/>build action_data for:<br/>dark_mode toggle<br/>navigate to screen<br/>log_weight]
+    CRS[coach_response_node<br/>freeform coaching reply]
+    CE([END])
+    CS --> CR
+    CR -- action --> CA --> CE
+    CR -- respond --> CRS --> CE
+  end
+
+  subgraph Hydration["Hydration Agent"]
+    direction TB
+    HS([START])
+    HR{should_log_hydration<br/>amount extracted?}
+    HL[hydration_log_node<br/>action_data: log_water qty]
+    HA[hydration_advice_node<br/>tips + reminders]
+    HE([END])
+    HS --> HR
+    HR -- log --> HL --> HE
+    HR -- respond --> HA --> HE
+  end

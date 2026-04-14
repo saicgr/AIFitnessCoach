@@ -20,6 +20,13 @@ import 'data/services/notification_service.dart';
 import 'data/services/widget_action_headless_service.dart';
 import 'data/services/background_sync_service.dart';
 import 'data/local/database_provider.dart';
+// Meal-suggestion widget (see coming_soon_screen.dart) — code is staged
+// but not yet wired. When bringing live, uncomment these imports and the
+// init block further down in _initNonCriticalServices.
+// import 'data/services/api_client.dart';
+// import 'data/services/widget_service.dart';
+// import 'services/meal_suggestion_widget_service.dart';
+// import 'package:home_widget/home_widget.dart';
 // FlutterGemma import removed -- initialization deferred to OnDeviceGemmaService.ensureInitialized()
 // to avoid ANR from heavy native ML runtime setup during app startup.
 import 'core/services/analytics_service.dart';
@@ -188,6 +195,29 @@ Future<void> _initNonCriticalServices(
   } catch (e) {
     debugPrint('⚠️ Widget action headless service initialization failed: $e');
   }
+
+  // Meal-suggestion widget (one-tap "what should I eat?") — currently
+  // listed under Settings → Coming Soon. Implementation is staged but not
+  // live because the iOS widget needs an App Group entitlement added to
+  // Runner.entitlements + a re-signed provisioning profile, which is a
+  // manual Xcode step. To enable: (1) add the capability in Xcode, (2)
+  // uncomment the imports at the top of this file, (3) uncomment the
+  // block below. See project_widget_infra.md memory note for full details.
+  //
+  // try {
+  //   await WidgetService.initialize();
+  //   final apiClient = container.read(apiClientProvider);
+  //   MealSuggestionWidgetService.init(apiClient);
+  //   HomeWidget.registerInteractivityCallback(
+  //     MealSuggestionWidgetService.handleWidgetCallback,
+  //   );
+  //   Future<void>.delayed(const Duration(seconds: 2), () {
+  //     MealSuggestionWidgetService.instance.refreshIfStale();
+  //   });
+  //   debugPrint('✅ MealSuggestionWidgetService initialized');
+  // } catch (e) {
+  //   debugPrint('⚠️ MealSuggestionWidgetService initialization failed: $e');
+  // }
 
   // FlutterGemma is deferred to when user accesses on-device AI settings.
   // It performs heavy native library loading and ML runtime setup that can

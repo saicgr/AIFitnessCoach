@@ -548,14 +548,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             onTap: () => _launchExternalUrl('mailto:${AppLinks.supportEmail}?subject=FitWiz Support Request'),
           ),
           _SettingsRow(
-            icon: Icons.lightbulb_outline,
-            iconColor: isDark ? AppColors.yellow : AppColors.yellow,
-            title: 'Feature Requests',
-            value: 'Vote & suggest features',
-            route: '/features',
-            sectionKeys: const ['feature_requests'],
-          ),
-          _SettingsRow(
             icon: Icons.play_circle_outline_rounded,
             iconColor: isDark ? AppColors.orange : AppColorsLight.orange,
             title: 'Replay Tutorials',

@@ -262,9 +262,16 @@ extension __WorkoutDetailScreenStateExt2 on _WorkoutDetailScreenState {
           ? null  // Already in a superset
           : () => _startSupersetPairing(index),
       onViewHistory: () {
-        // Navigate to exercise history screen with exercise name
-        final encodedName = Uri.encodeComponent(exercise.name);
-        context.push('/stats/exercise-history/$encodedName');
+        // Open the exercise-detail screen with the History tab pre-selected.
+        // Replaces the old standalone per-exercise history screen — users
+        // get the full exercise context (video, stats, history) in one place.
+        context.push(
+          '/exercise-detail',
+          extra: <String, dynamic>{
+            'exercise': exercise,
+            'initialTab': 2,
+          },
+        );
       },
       onRemove: () => _removeExerciseFromWorkout(exercise, index),
       onNeverRecommend: () => _neverRecommendExercise(exercise),

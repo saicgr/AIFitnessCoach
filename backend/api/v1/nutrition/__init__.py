@@ -29,6 +29,7 @@ from fastapi import APIRouter
 
 from api.v1.nutrition import (
     food_logs,
+    food_patterns,
     summaries,
     barcode,
     food_search,
@@ -47,12 +48,14 @@ from api.v1.nutrition import (
     tdee_adherence,
     food_reports,
     quick_suggestion,
+    companions,
 )
 
 router = APIRouter()
 
 # Include all sub-routers (no prefix — the parent already mounts at /nutrition)
 router.include_router(food_logs.router)
+router.include_router(food_patterns.router)
 router.include_router(summaries.router)
 router.include_router(barcode.router)
 router.include_router(food_search.router)
@@ -71,6 +74,7 @@ router.include_router(cooking_conversions.router)
 router.include_router(tdee_adherence.router)
 router.include_router(food_reports.router)
 router.include_router(quick_suggestion.router)
+router.include_router(companions.router)
 
 # Re-export commonly used models for backward compatibility with test imports
 from api.v1.nutrition.models import (  # noqa: E402, F401

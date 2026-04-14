@@ -107,9 +107,13 @@ class FoodModifier {
       defaultWeightG: (json['default_weight_g'] as num?)?.toDouble(),
       weightPerUnitG: (json['weight_per_unit_g'] as num?)?.toDouble(),
       unitName: json['unit_name'] as String?,
-      perGram: json['per_gram'] != null
-          ? NutrientPerGram.fromJson(json['per_gram'] as Map<String, dynamic>)
-          : null,
+      perGram: () {
+        final v = json['per_gram'];
+        if (v is NutrientPerGram) return v;
+        if (v is Map<String, dynamic>) return NutrientPerGram.fromJson(v);
+        if (v is Map) return NutrientPerGram.fromJson(Map<String, dynamic>.from(v));
+        return null;
+      }(),
       group: json['group'] as String?,
       groupOptions: (json['group_options'] as List<dynamic>?)
           ?.map((e) => ModifierGroupOption.fromJson(e as Map<String, dynamic>))
@@ -161,7 +165,9 @@ class NLFoodItem {
       weightG: (json['weight_g'] as num?)?.toDouble(),
       weightSource: json['weight_source'] as String?,
       unit: json['unit'] as String?,
-      aiPerGram: json['ai_per_gram'] as Map<String, dynamic>?,
+      aiPerGram: json['ai_per_gram'] is Map
+          ? Map<String, dynamic>.from(json['ai_per_gram'] as Map)
+          : null,
       modifiers: (json['modifiers'] as List<dynamic>?)
           ?.map((e) => FoodModifier.fromJson(e as Map<String, dynamic>))
           .toList() ?? [],

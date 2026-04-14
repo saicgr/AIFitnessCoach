@@ -39,6 +39,73 @@ async def _get_achievement(db, achievement_id: str) -> Optional[Dict]:
         return None
 
 
+async def _send_achievement_email(db, user_id: str, achievement: Dict) -> None:
+    """N1. Send an achievement-unlocked email to the user.
+
+    Rate-limited via `email_send_log.email_type='achievement_unlocked'` + 24h
+    cooldown so users who unlock multiple trophies in a short burst get one
+    email per day, not a flood.
+    """
+    # Email gate: coach_tips / achievement category
+    prefs = db.client.table("email_preferences") \
+        .select("coach_tips") \
+        .eq("user_id", user_id) \
+        .limit(1) \
+        .execute()
+    if prefs.data and prefs.data[0].get("coach_tips") is False:
+        return
+
+    # 24h cooldown across achievement type
+    from datetime import timezone
+    cutoff = (datetime.now(timezone.utc) - timedelta(hours=24)).isoformat()
+    prior = db.client.table("email_send_log") \
+        .select("id") \
+        .eq("user_id", user_id) \
+        .eq("email_type", "achievement_unlocked") \
+        .gte("sent_at", cutoff) \
+        .limit(1) \
+        .execute()
+    if prior.data:
+        return
+
+    # User lookup
+    ur = db.client.table("users") \
+        .select("id, email, name, timezone") \
+        .eq("id", user_id) \
+        .limit(1) \
+        .execute()
+    if not ur.data:
+        return
+    user = ur.data[0]
+
+    from services.email_service import get_email_service
+    from services.email_helpers import first_name
+    from api.v1.email_cron import _get_user_stats
+
+    stats = _get_user_stats(db.client if hasattr(db, "client") else db, user) if False else None
+    # _get_user_stats takes a supabase-wrapper — pass the same wrapper the db arg is.
+    # db here is `get_supabase_db()` instance with .client; email_cron helper reads .client.
+    # Rebuild as: wrap in SimpleNamespace so email_cron's `.client` attribute access works.
+    class _DbWrap:
+        def __init__(self, client): self.client = client
+    stats = _get_user_stats(_DbWrap(db.client), user)
+    email_svc = get_email_service()
+    await email_svc.send_achievement_unlocked(
+        to_email=user["email"],
+        first_name_value=first_name(user),
+        stats=stats,
+        achievement_name=achievement.get("name", "Achievement"),
+        achievement_description=achievement.get("description"),
+    )
+
+    # Log send for dedup
+    db.client.table("email_send_log").insert({
+        "user_id": user_id,
+        "email_type": "achievement_unlocked",
+        "metadata": {"achievement_id": achievement.get("id")},
+    }).execute()
+
+
 async def _has_achievement(db, user_id: str, achievement_id: str) -> bool:
     """Check if user already has an achievement."""
     try:
@@ -123,6 +190,13 @@ async def _award_achievement(
                             pass  # Push is best-effort
             except Exception as notif_err:
                 logger.warning(f"[Trophies] Failed to send achievement notification: {notif_err}", exc_info=True)
+
+            # N1 Achievement Unlocked email — fire when trophy is granted.
+            # Best-effort; any failure is logged and does not block XP/push flow.
+            try:
+                await _send_achievement_email(db, user_id, achievement)
+            except Exception as email_err:
+                logger.warning(f"[Trophies] Achievement email skipped: {email_err}")
 
             # Award XP if configured
             xp_reward = achievement.get("xp_reward", 0)

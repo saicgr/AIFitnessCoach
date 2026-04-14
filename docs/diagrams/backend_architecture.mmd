@@ -1,0 +1,83 @@
+flowchart TB
+  subgraph FE["Flutter Client"]
+    C1[Screens]
+    C2[api_client.dart]
+  end
+
+  subgraph Middleware["FastAPI Middleware Stack"]
+    direction TB
+    M1[SecurityHeadersMiddleware]
+    M2[BodySizeLimitMiddleware<br/>ASGI, streaming-safe]
+    M3[GZipMiddleware]
+    M4[SlowAPIMiddleware<br/>rate limit]
+    M5[CORS]
+    M6[Auth dependency<br/>Supabase JWT verify]
+  end
+
+  subgraph Routers["api/v1 Routers (80+ modules)"]
+    R_Workouts[workouts/<br/>today.py, generation.py,<br/>crud_completion.py, utils.py]
+    R_Nutrition[nutrition/<br/>food_logging, food_logs,<br/>summaries, models]
+    R_Chat[chat.py, live_chat.py,<br/>chat_reports.py]
+    R_Users[users/, onboarding.py,<br/>ai_settings.py]
+    R_Social[social/, leaderboard,<br/>challenges, trophies]
+    R_Health[injuries, diabetes,<br/>hormonal_health, fasting]
+    R_Cron[email_cron, push_nudge_cron]
+    R_Misc[subscriptions, videos,<br/>admin, dashboard, ...]
+  end
+
+  subgraph ServiceLayer["Service Layer (backend/services/)"]
+    SVC_Gemini[GeminiService<br/>5400 LOC]
+    SVC_RAG[RAGService / ExerciseRAG /<br/>NutritionRAG / FeedbackRAG]
+    SVC_LG[LangGraphCoachService<br/>multi-agent router]
+    SVC_Vision[VisionService<br/>media classifier]
+    SVC_Form[FormAnalysisService]
+    SVC_Email[email_service, email_lifecycle,<br/>email_marketing]
+    SVC_Notif[notification_service<br/>FCM + APNs]
+    SVC_Job[JobQueueService<br/>async workers]
+    SVC_Comeback[ComebackService]
+    SVC_Prog[ProgressionService,<br/>ProgressiveOverload,<br/>VolumeTracking]
+    SVC_Adapt[AdaptiveWorkoutService,<br/>WorkoutModifier]
+    SVC_Sub[Subscription / RevenueCat]
+  end
+
+  subgraph CoreInfra["core/"]
+    CFG[config.py<br/>settings, env]
+    LOG[logger.py]
+    DBFAC[db/facade.py<br/>SupabaseDB]
+    GEMCLI[gemini_client.py]
+    CHROMACLI[chroma_http_client.py]
+    AUTH[auth.py<br/>JWT]
+    TZ[timezone_utils.py]
+  end
+
+  subgraph External2["External"]
+    X_SB[(Supabase PG + Auth)]
+    X_S3[(S3)]
+    X_CHR[(ChromaDB Cloud)]
+    X_GEM[Gemini API]
+    X_RC[RevenueCat]
+    X_FCM[FCM / APNs]
+    X_SG[SendGrid]
+  end
+
+  C2 -->|HTTPS JSON / SSE| M1 --> M2 --> M3 --> M4 --> M5 --> M6 --> Routers
+  Routers --> ServiceLayer
+  ServiceLayer --> CoreInfra
+  SVC_Gemini --> GEMCLI --> X_GEM
+  SVC_RAG --> CHROMACLI --> X_CHR
+  SVC_LG --> SVC_Gemini
+  SVC_LG --> SVC_RAG
+  SVC_LG --> SVC_Vision
+  SVC_Vision --> X_GEM
+  SVC_Form --> X_GEM
+  R_Workouts --> SVC_Gemini
+  R_Workouts --> SVC_Comeback
+  R_Workouts --> SVC_Prog
+  R_Nutrition --> SVC_Gemini
+  R_Chat --> SVC_LG
+  R_Cron --> SVC_Email --> X_SG
+  R_Cron --> SVC_Notif --> X_FCM
+  DBFAC --> X_SB
+  ServiceLayer --> X_S3
+  SVC_Sub --> X_RC
+  R_Users --> AUTH --> X_SB

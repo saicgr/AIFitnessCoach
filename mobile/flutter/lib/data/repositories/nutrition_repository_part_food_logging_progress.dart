@@ -141,6 +141,28 @@ class NutritionNotifier extends StateNotifier<NutritionState> {
       // Award XP - the provider handles duplicate prevention
       _ref.read(xpProvider.notifier).markProteinGoalHit();
     }
+
+    _checkCalorieGoal(summary);
+  }
+
+  /// Fire the "calorie deficit" XP award when the user has logged the bulk of
+  /// their day's food (>= 80% of target) AND stayed under their calorie
+  /// target. The 80% floor prevents premature firing after a single small
+  /// snack; the upper bound is the target itself since "less than target"
+  /// defines the deficit. Idempotent per day via the provider.
+  void _checkCalorieGoal(DailyNutritionSummary summary) {
+    final targets = state.targets;
+    if (targets == null) return;
+
+    final caloriesConsumed = summary.totalCalories;
+    final calorieTarget = targets.dailyCalorieTarget;
+    if (calorieTarget == null || calorieTarget <= 0) return;
+
+    final floor = (calorieTarget * 0.8).round();
+    if (caloriesConsumed >= floor && caloriesConsumed < calorieTarget) {
+      debugPrint('🎯 [NutritionProvider] Calorie deficit hit! $caloriesConsumed / $calorieTarget kcal');
+      _ref.read(xpProvider.notifier).markCalorieGoalHit();
+    }
   }
 
   /// Load nutrition summary for a specific date (used when navigating dates)

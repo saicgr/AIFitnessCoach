@@ -429,6 +429,17 @@ async def complete_workout(
         gym_profile_id = existing.get("gym_profile_id")
         await invalidate_today_workout_cache(user_id, gym_profile_id, scheduled_date)
 
+        # N2 First-Workout-Done email — fire in background if this is the user's
+        # first ever completed workout. Caller-side gate: count workout_logs,
+        # require == 1. One-shot dedup via email_send_log.
+        background_tasks.add_task(
+            _maybe_send_first_workout_email,
+            supabase=supabase,
+            user_id=user_id,
+            workout_name=workout.name,
+            duration_seconds=duration_seconds,
+        )
+
         return WorkoutCompletionResponse(
             workout=workout, personal_records=detected_prs,
             performance_comparison=performance_comparison,
@@ -441,6 +452,81 @@ async def complete_workout(
     except Exception as e:
         logger.error(f"Failed to complete workout: {e}", exc_info=True)
         raise safe_internal_error(e, "crud")
+
+
+async def _maybe_send_first_workout_email(
+    *, supabase, user_id: str, workout_name: str, duration_seconds: int = 0,
+):
+    """Background task: send N2 first-workout-done email iff this is the first.
+
+    Gate cascade (all must be true):
+      - workouts_total == 1 (from workout_logs count)
+      - email_preferences.workout_reminders != false
+      - no prior "first_workout_done" row in email_send_log (one-shot)
+    Any failure logs a warning and returns silently — never blocks the
+    completion response.
+    """
+    try:
+        # Must be exactly 1 completed workout (this one)
+        logs = supabase.table("workout_logs") \
+            .select("id") \
+            .eq("user_id", user_id) \
+            .limit(2) \
+            .execute()
+        if not logs.data or len(logs.data) != 1:
+            return
+
+        # Email prefs check
+        prefs = supabase.table("email_preferences") \
+            .select("workout_reminders") \
+            .eq("user_id", user_id) \
+            .limit(1) \
+            .execute()
+        if prefs.data and prefs.data[0].get("workout_reminders") is False:
+            return
+
+        # One-shot dedup — has this email ever fired for this user?
+        prior = supabase.table("email_send_log") \
+            .select("id") \
+            .eq("user_id", user_id) \
+            .eq("email_type", "first_workout_done") \
+            .limit(1) \
+            .execute()
+        if prior.data:
+            return
+
+        # User row for email + name + timezone
+        u = supabase.table("users") \
+            .select("id, email, name, timezone") \
+            .eq("id", user_id) \
+            .limit(1) \
+            .execute()
+        if not u.data:
+            return
+        user = u.data[0]
+
+        # Import lazily to avoid slowing every /complete request
+        from services.email_service import get_email_service
+        from services.email_helpers import first_name
+        from api.v1.email_cron import _get_user_stats
+
+        stats = _get_user_stats(supabase, user)
+        email_svc = get_email_service()
+        await email_svc.send_first_workout_done(
+            to_email=user["email"],
+            first_name_value=first_name(user),
+            stats=stats,
+            workout_name=workout_name,
+            duration_min=max(1, int(duration_seconds // 60)),
+        )
+        # Record one-shot fire
+        supabase.table("email_send_log").insert({
+            "user_id": user_id,
+            "email_type": "first_workout_done",
+            "metadata": {"workout_name": workout_name},
+        }).execute()
+    except Exception as e:
+        logger.warning(f"N2 first-workout email skipped for user {user_id}: {e}")
 
 
 @router.post("/{workout_id}/uncomplete", response_model=Workout)

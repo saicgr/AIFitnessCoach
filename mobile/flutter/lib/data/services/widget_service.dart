@@ -6,7 +6,11 @@ import '../../utils/tz.dart';
 /// Service to bridge Flutter app data to native iOS/Android home screen widgets.
 /// Uses the home_widget package to communicate with WidgetKit (iOS) and App Widgets (Android).
 class WidgetService {
-  static const String _appGroupId = 'group.com.fitwiz.widgets';
+  // Must match the iOS app-group ID declared in WidgetDataProvider.swift
+  // (WidgetDataKeys.appGroupId) and the Runner + FitnessWidgets targets'
+  // entitlements. Changing this string requires updating Xcode capabilities
+  // and the provisioning profile — don't change casually.
+  static const String _appGroupId = 'group.com.aifitnesscoach.widgets';
   static const String _androidWidgetName = 'FitnessWidgetReceiver';
 
   // Widget data keys

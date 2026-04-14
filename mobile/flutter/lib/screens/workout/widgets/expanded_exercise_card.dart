@@ -133,11 +133,11 @@ class _ExpandedExerciseCardState extends ConsumerState<ExpandedExerciseCard> {
       // Image not found from API
     }
 
-    // Fall back to gifUrl from exercise data if API failed
-    final exerciseGifUrl = widget.exercise.gifUrl;
-    if (exerciseGifUrl != null && exerciseGifUrl.isNotEmpty && mounted) {
+    // Fall back to backend-enriched image URL if API failed
+    final fallbackUrl = widget.exercise.imageS3Path ?? widget.exercise.gifUrl;
+    if (fallbackUrl != null && fallbackUrl.isNotEmpty && mounted) {
       setState(() {
-        _imageUrl = exerciseGifUrl;
+        _imageUrl = fallbackUrl;
         _isLoadingImage = false;
       });
       return;

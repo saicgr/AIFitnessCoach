@@ -113,7 +113,7 @@ class FoodItem {
 }
 
 /// A meal suggestion within a daily plan
-@JsonSerializable()
+@JsonSerializable(explicitToJson: true)
 class MealSuggestion {
   @JsonKey(name: 'meal_type')
   final String mealType;
@@ -248,7 +248,7 @@ class CoordinationNote {
 }
 
 /// A single day's plan entry
-@JsonSerializable()
+@JsonSerializable(explicitToJson: true)
 class DailyPlanEntry {
   final String id;
   @JsonKey(name: 'weekly_plan_id')

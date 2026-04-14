@@ -1,28 +1,40 @@
 """
-Email marketing mixin: win-back, upsell, and weekly summary emails.
+Email marketing mixin: win-back, upsell, weekly summary emails.
 
-Extracted from email_service.py to keep files under 1000 lines.
-These methods are mixed into EmailService via multiple inheritance.
+All methods take pre-resolved `first_name_value` + populated `UserStats`.
+Weekly summary is the premier nutrition-showcase email; win-back references
+the user's actual lifetime stats as re-engagement hooks.
 """
 import resend
-from typing import List, Dict, Any
+from typing import Dict, Any
 
 from core.logger import get_logger
+from models.email import UserStats
+from services.email_helpers import (
+    build_persona_signature_html,
+    build_stats_grid_html,
+    build_nutrition_grid_html,
+)
 
 logger = get_logger(__name__)
 
 
 class EmailMarketingMixin:
-    """Mixin providing marketing email methods for EmailService.
+    """Marketing email methods mixed into EmailService.
 
-    Expects self.from_email, self.is_configured(), and self._build_standard_email() to exist.
+    Expects `self.from_email`, `self.is_configured()`, `self._build_standard_email()`.
     """
 
     async def send_win_back(
-        self, to_email: str, user_name: str, days_since_expiry: int,
-        workouts_completed: int, discount_percent: int = 25,
+        self, to_email: str, first_name_value: str, stats: UserStats,
+        days_since_expiry: int, discount_percent: int = 25,
     ) -> Dict[str, Any]:
-        """Send a win-back email to lapsed Premium users with a discount offer."""
+        """Win-back email for lapsed users — 30-day post-cancel ladder entry.
+
+        Persona voice + specific stats ("30 days. {coach} has receipts.").
+        Stats grid shows lifetime totals so the user sees what they built
+        and is remembering what they lost.
+        """
         if not self.is_configured():
             return {"error": "Email service not configured"}
 
@@ -30,23 +42,43 @@ class EmailMarketingMixin:
         backend_url = get_settings().backend_base_url
         logo_url = f"{backend_url}/static/logo.png"
         open_url = f"{backend_url}/open"
-        display_name = user_name.split()[0] if user_name else "there"
+
+        name = first_name_value or "there"
+        coach = stats.coach_name
+        workouts = stats.workouts_total
+        longest = stats.longest_streak_days or stats.current_streak_days
+
+        subject = f"{name}. {days_since_expiry} days. {coach} has receipts."
+        title = f"{coach} kept your seat, {name}"
+        subtitle = (
+            f"{days_since_expiry} days since your Premium ended. "
+            f"You logged {workouts} workouts with us"
+            + (f", hit a {longest}-day streak," if longest > 0 else "")
+            + f" and then disappeared. {coach} kept all of it. Come back for {discount_percent}% off."
+        )
+
+        features = [
+            ("&#128202;", f"{workouts} workouts still on the record",
+             "Your history, PRs, and progress data are exactly where you left them."),
+            ("&#129303;", f"{coach} remembers you",
+             "Your preferences, injuries, and goals — no re-onboarding. Just tap resume."),
+            ("&#9889;", f"{discount_percent}% off for returning members",
+             f"Lock in now and save {discount_percent}%. Offer expires in 7 days."),
+        ]
 
         html_content = self._build_standard_email(
             logo_url=logo_url, open_url=open_url,
-            title=f"We've been saving your spot, {display_name}",
-            subtitle=f"It's been {days_since_expiry} days since your Premium expired. Your {workouts_completed} logged workouts are still here. Come back and get {discount_percent}% off.",
-            cta_text=f"Get {discount_percent}% Off",
-            features=[
-                ("&#127947;", f"{workouts_completed} workouts logged", "All your history, personal records, and progress data are intact."),
-                ("&#129303;", "Your AI coach remembers you", "It knows your preferences, injuries, and goals. No re-setup required."),
-                ("&#9889;", f"{discount_percent}% off for returning members", f"Subscribe now and save {discount_percent}% on your first month back. Limited time."),
-            ],
+            title=title, subtitle=subtitle,
+            cta_text=f"Come back — {discount_percent}% off",
+            features=features,
             footer_text="You received this because you were a FitWiz Premium member.",
+            persona_signature_html=build_persona_signature_html(stats),
+            stats_row_html=build_stats_grid_html(stats) if stats.has_any_activity else "",
+            category_name="offers",
         )
 
         try:
-            params = {"from": self.from_email, "to": [to_email], "subject": f"{display_name}, your {workouts_completed} workouts are still here -- come back for {discount_percent}% off", "html": html_content}
+            params = {"from": self.from_email, "to": [to_email], "subject": subject, "html": html_content}
             response = resend.Emails.send(params)
             logger.info(f"Win-back email sent to {to_email}: {response}")
             return {"success": True, "id": response.get("id")}
@@ -55,10 +87,15 @@ class EmailMarketingMixin:
             return {"error": str(e)}
 
     async def send_14day_upsell(
-        self, to_email: str, user_name: str, workouts_completed: int,
-        free_workouts_remaining: int,
+        self, to_email: str, first_name_value: str, stats: UserStats,
+        free_workouts_remaining: int = 0,
     ) -> Dict[str, Any]:
-        """Send a 14-day upsell email to free users who are active but hitting limits."""
+        """14-day upsell for free-tier users who are actively using the app.
+
+        `free_workouts_remaining` is optional (default 0). Template only mentions
+        it if the caller passes a non-zero value — avoids the old signature bug
+        where the cron didn't pass this field at all.
+        """
         if not self.is_configured():
             return {"error": "Email service not configured"}
 
@@ -66,23 +103,46 @@ class EmailMarketingMixin:
         backend_url = get_settings().backend_base_url
         logo_url = f"{backend_url}/static/logo.png"
         open_url = f"{backend_url}/open"
-        display_name = user_name.split()[0] if user_name else "there"
+
+        name = first_name_value or "there"
+        coach = stats.coach_name
+        workouts = stats.workouts_total
+
+        subject = f"You're a regular now, {name}."
+        title = f"You're a regular now, {name}"
+        limit_line = (
+            f"You have {free_workouts_remaining} free workouts left this month — "
+            if free_workouts_remaining > 0
+            else ""
+        )
+        subtitle = (
+            f"14 days. {workouts} workouts with {coach}. "
+            + limit_line
+            + "Premium removes every cap, unlocks unlimited coaching, and adapts the plan to you every week."
+        )
+
+        features = [
+            ("&#127947;", f"{workouts} workouts and climbing",
+             f"{coach} thinks you're ready for unlimited."),
+            ("&#129303;", "Unlimited coach access",
+             "Free plan caps daily messages. Premium removes the cap entirely."),
+            ("&#128200;", "Advanced analytics",
+             "Strength curves, body composition trends, nutrition correlations."),
+        ]
 
         html_content = self._build_standard_email(
             logo_url=logo_url, open_url=open_url,
-            title=f"You're on a roll, {display_name}",
-            subtitle=f"You've done {workouts_completed} workouts on the free plan. You have {free_workouts_remaining} free AI workouts left this month. Upgrade to keep your momentum.",
+            title=title, subtitle=subtitle,
             cta_text="Go Premium",
-            features=[
-                ("&#127947;", f"{workouts_completed} workouts and counting", "You're building a habit. Premium ensures you never hit a limit."),
-                ("&#129303;", "Unlimited AI coach", "Free plan caps your daily messages. Premium gives you unlimited access to your AI coach."),
-                ("&#128200;", "Unlock full analytics", "See your strength curves, body composition trends, and detailed performance metrics."),
-            ],
+            features=features,
             footer_text="You received this because you've been active on the FitWiz free plan.",
+            persona_signature_html=build_persona_signature_html(stats),
+            stats_row_html=build_stats_grid_html(stats),
+            category_name="offers",
         )
 
         try:
-            params = {"from": self.from_email, "to": [to_email], "subject": f"{display_name}, you've done {workouts_completed} workouts -- here's what Premium unlocks", "html": html_content}
+            params = {"from": self.from_email, "to": [to_email], "subject": subject, "html": html_content}
             response = resend.Emails.send(params)
             logger.info(f"14-day upsell email sent to {to_email}: {response}")
             return {"success": True, "id": response.get("id")}
@@ -91,12 +151,22 @@ class EmailMarketingMixin:
             return {"error": str(e)}
 
     async def send_weekly_summary(
-        self, to_email: str, user_name: str,
-        workouts_this_week: int, total_volume_kg: float,
-        total_duration_minutes: int, streak_days: int,
-        top_exercise: str, top_exercise_volume: float,
+        self, to_email: str, first_name_value: str, stats: UserStats,
+        total_duration_minutes: int = 0, top_exercise: str = "",
+        top_exercise_volume_lbs: float = 0,
     ) -> Dict[str, Any]:
-        """Send a weekly performance summary email."""
+        """Weekly summary — the nutrition showcase email.
+
+        Renders two stat grids: the workouts/streak/volume grid, AND the
+        dedicated nutrition grid showing days logged, avg calories, avg protein,
+        and whether they logged today. When user has never touched nutrition,
+        the nutrition block shows a gentle "start logging" nudge instead of
+        an empty grid.
+
+        Persona signature + mood emoji adapt: impressed when active, concerned
+        when sparse. The subject uses specific numbers ("3 workouts, 2,341 lbs")
+        so the user reads the value before even opening.
+        """
         if not self.is_configured():
             return {"error": "Email service not configured"}
 
@@ -104,30 +174,82 @@ class EmailMarketingMixin:
         backend_url = get_settings().backend_base_url
         logo_url = f"{backend_url}/static/logo.png"
         open_url = f"{backend_url}/open"
-        display_name = user_name.split()[0] if user_name else "there"
+
+        name = first_name_value or "there"
+        coach = stats.coach_name
 
         hours = total_duration_minutes // 60
         mins = total_duration_minutes % 60
-        duration_str = f"{hours}h {mins}m" if hours > 0 else f"{mins}m"
+        duration_str = f"{hours}h {mins}m" if hours > 0 else f"{mins}m" if mins else ""
+
+        # Dynamic subject — the numbers go first, the name second.
+        if stats.workouts_this_week >= 1:
+            summary_bits = [f"{stats.workouts_this_week} workouts"]
+            if stats.nutrition_days_logged_this_week:
+                summary_bits.append(f"{stats.nutrition_days_logged_this_week}/7 meal days")
+            if stats.nutrition_avg_protein_g_week:
+                summary_bits.append(f"{stats.nutrition_avg_protein_g_week}g protein avg")
+            subject = f"{name}, your week: " + " · ".join(summary_bits)
+            title = f"Your week, {name}"
+            if stats.workouts_this_week >= 3:
+                mood_line = f"{coach} is impressed."
+            else:
+                mood_line = f"{coach} noticed."
+            subtitle = f"Here's what you pulled off" + (f" · {duration_str} of training." if duration_str else ".")
+        else:
+            subject = f"{name}, empty week — {coach} wants to talk."
+            title = f"A quiet week, {name}"
+            subtitle = (
+                f"You didn't log a workout this week. "
+                f"{coach} isn't mad. {coach} is just asking what happened."
+            )
+            mood_line = ""
+
+        # Feature blocks — workouts, nutrition, next steps.
+        features = [
+            ("&#127947;", f"{stats.workouts_this_week} workouts done",
+             f"Lifetime total: {stats.workouts_total}." + (f" Current streak: {stats.current_streak_days} 🔥" if stats.current_streak_days else "")),
+            ("&#128202;", "Nutrition this week",
+             _nutrition_summary_line(stats)),
+            ("&#127942;", "Coming up",
+             f"Up next: {stats.next_workout_name or 'your next session'}." + (" " + mood_line if mood_line else "")),
+        ]
+
+        # The core content: workouts grid + nutrition grid, stacked.
+        stats_row = build_stats_grid_html(stats) + build_nutrition_grid_html(stats)
 
         html_content = self._build_standard_email(
             logo_url=logo_url, open_url=open_url,
-            title=f"Your week in review, {display_name}",
-            subtitle=f"{workouts_this_week} workouts, {total_volume_kg:,.0f} kg lifted, {duration_str} of training. Here's your full breakdown.",
-            cta_text="See Full Stats",
-            features=[
-                ("&#127947;", f"{workouts_this_week} workouts completed", f"Total training time: {duration_str}. Total volume: {total_volume_kg:,.0f} kg."),
-                ("&#128293;", f"{streak_days}-day streak", "Consistency is the key to progress. Keep showing up."),
-                ("&#128170;", f"Top exercise: {top_exercise}", f"Your strongest lift this week with {top_exercise_volume:,.0f} kg total volume."),
-            ],
-            footer_text="You received this because you have weekly summary emails enabled.",
+            title=title, subtitle=subtitle,
+            cta_text="See full stats",
+            features=features,
+            footer_text="You received this because you have weekly summaries enabled.",
+            persona_signature_html=build_persona_signature_html(stats),
+            stats_row_html=stats_row,
+            category_name="weekly summary",
         )
 
         try:
-            params = {"from": self.from_email, "to": [to_email], "subject": f"Your week: {workouts_this_week} workouts, {total_volume_kg:,.0f} kg lifted", "html": html_content}
+            params = {"from": self.from_email, "to": [to_email], "subject": subject, "html": html_content}
             response = resend.Emails.send(params)
             logger.info(f"Weekly summary email sent to {to_email}: {response}")
             return {"success": True, "id": response.get("id")}
         except Exception as e:
             logger.error(f"Failed to send weekly summary email to {to_email}: {e}", exc_info=True)
             return {"error": str(e)}
+
+
+def _nutrition_summary_line(stats: UserStats) -> str:
+    """One-liner describing the user's nutrition week for the feature block.
+
+    Adapts to zero-state vs logged: "You logged 3 meals this week, averaging
+    1,840 cal and 120g protein." vs "Nothing logged. Nutrition is blind."
+    """
+    if stats.nutrition_days_logged_this_week == 0:
+        return "Nothing logged this week. Coach can't see what you eat if you don't tell us."
+    parts = [f"{stats.nutrition_days_logged_this_week}/7 days logged"]
+    if stats.nutrition_avg_calories_week:
+        parts.append(f"~{stats.nutrition_avg_calories_week:,} cal/day")
+    if stats.nutrition_avg_protein_g_week:
+        parts.append(f"~{stats.nutrition_avg_protein_g_week}g protein/day")
+    return ". ".join(parts) + "."

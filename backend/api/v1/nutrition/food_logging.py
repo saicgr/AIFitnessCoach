@@ -49,6 +49,13 @@ from services.gemini_service import GeminiService
 from services.nutrition_rag_service import get_nutrition_rag_service
 from services.food_analysis_cache_service import get_food_analysis_cache_service
 from services.saved_foods_rag_service import get_saved_foods_rag_service
+from services.food_analysis.personal_history import (
+    lookup_personal_history_for_foods,
+)
+from services.food_analysis.mood_inference import (
+    build_insert_patch,
+    infer_mood_from_nutrition,
+)
 
 from api.v1.nutrition.models import (
     LogTextRequest,
@@ -155,6 +162,22 @@ async def log_food_from_image(
 
         # Create food log with image URL
         db = get_supabase_db()
+
+        # Apply the user's personal cal/P/C/F corrections for foods they've
+        # edited before. Runs AFTER the calorie-bias heuristic so explicit
+        # user overrides trump the global bias.
+        from services.food_override_service import apply_user_food_overrides
+        food_items, override_totals, num_overridden = apply_user_food_overrides(
+            db, user_id, food_items,
+        )
+        if num_overridden:
+            logger.info(
+                f"Applied {num_overridden} user food override(s) on /log-image for user {user_id}"
+            )
+            total_calories = override_totals["total_calories"]
+            protein_g = override_totals["protein_g"]
+            carbs_g = override_totals["carbs_g"]
+            fat_g = override_totals["fat_g"]
 
         # Resolve timezone for logged_at timestamp
         user_tz = resolve_timezone(request, db, user_id)
@@ -309,6 +332,19 @@ async def log_food_from_text(body: LogTextRequest, background_tasks: BackgroundT
             except Exception as e:
                 logger.warning(f"Could not fetch RAG context: {e}", exc_info=True)
 
+        # Personal food history — if user has re-logged this food before with
+        # bad mood/energy, we want Gemini to cite it. Use a naive split on
+        # commas as the first-pass candidate set; deeper name extraction will
+        # fire on subsequent logs when the parsed food_items are known.
+        candidate_names = [p.strip() for p in body.description.split(",") if p.strip()]
+        try:
+            personal_history = await lookup_personal_history_for_foods(
+                body.user_id, candidate_names
+            )
+        except Exception as hist_err:
+            logger.warning(f"personal history lookup failed: {hist_err}")
+            personal_history = []
+
         # Parse description through cache service (DB-first, then Gemini)
         cache_service = get_food_analysis_cache_service()
         food_analysis = await cache_service.analyze_food(
@@ -320,7 +356,19 @@ async def log_food_from_text(body: LogTextRequest, background_tasks: BackgroundT
             user_id=body.user_id,
             mood_before=body.mood_before,
             meal_type=body.meal_type,
+            personal_history=personal_history or None,
         )
+
+        # Cache-hit paths skip Gemini's prompt, so the personal_history_note is
+        # missing — synthesize it from history rows.
+        if (
+            food_analysis
+            and personal_history
+            and food_analysis.get("cache_source") != "gemini_fresh"
+        ):
+            cache_service.apply_personal_history_to_cache_hit(
+                food_analysis, personal_history
+            )
 
         if not food_analysis or not food_analysis.get('food_items'):
             raise HTTPException(
@@ -355,11 +403,56 @@ async def log_food_from_text(body: LogTextRequest, background_tasks: BackgroundT
         # Extract all micronutrients from Gemini analysis
         micronutrients = _extract_micronutrients(food_analysis)
 
+        # Apply per-user food overrides — their personal cal/P/C/F corrections
+        # for foods they've edited before. Runs AFTER bias so explicit user
+        # overrides trump the calorie-bias heuristic.
+        from services.food_override_service import apply_user_food_overrides
+        food_items, override_totals, num_overridden = apply_user_food_overrides(
+            db, body.user_id, food_items,
+        )
+        if num_overridden:
+            logger.info(
+                f"Applied {num_overridden} user food override(s) on /log-text for user {body.user_id}"
+            )
+            total_calories = override_totals["total_calories"]
+            protein_g = override_totals["protein_g"]
+            carbs_g = override_totals["carbs_g"]
+            fat_g = override_totals["fat_g"]
+
         # Resolve timezone for logged_at timestamp
         user_tz_logged_at = None
         if request:
             user_tz = resolve_timezone(request, db, body.user_id)
             user_tz_logged_at = get_user_now_iso(user_tz)
+
+        # Passive mood inference — respect the user toggle before running.
+        inference_patch: dict = {}
+        try:
+            prefs = db.client.table("user_nutrition_preferences")\
+                .select("passive_inference_enabled").eq("user_id", body.user_id).maybe_single().execute()
+            inference_enabled = True
+            if prefs and prefs.data and prefs.data.get("passive_inference_enabled") is not None:
+                inference_enabled = bool(prefs.data["passive_inference_enabled"])
+            if inference_enabled and getattr(body, "mood_after", None) is None:
+                inferred = infer_mood_from_nutrition(
+                    {
+                        "total_calories": total_calories,
+                        "protein_g": protein_g,
+                        "carbs_g": carbs_g,
+                        "fat_g": fat_g,
+                        "fiber_g": fiber_g,
+                        "sugar_g": micronutrients.get("sugar_g"),
+                        "sodium_mg": micronutrients.get("sodium_mg"),
+                        "added_sugar_g": food_analysis.get("added_sugar_g"),
+                        "alcohol_g": food_analysis.get("alcohol_g"),
+                        "caffeine_mg": food_analysis.get("caffeine_mg"),
+                        "omega3_g": micronutrients.get("omega3_g"),
+                        "is_ultra_processed": food_analysis.get("is_ultra_processed"),
+                    }
+                )
+                inference_patch = build_insert_patch(inferred)
+        except Exception as inf_err:
+            logger.warning(f"passive inference skipped: {inf_err}")
 
         # Save to database using positional arguments
         created_log = db.create_food_log(
@@ -377,6 +470,7 @@ async def log_food_from_text(body: LogTextRequest, background_tasks: BackgroundT
             source_type="text",
             user_query=body.description,
             **micronutrients,
+            **inference_patch,
         )
 
         # Get the food log ID from the created record
@@ -513,6 +607,26 @@ async def log_food_direct(body: LogDirectRequest, request: Request, current_user
             user_tz = resolve_timezone(request, db, body.user_id)
             user_tz_logged_at = get_user_now_iso(user_tz)
 
+        # Apply per-user food overrides. Skip any item the client just edited
+        # in the Log Meal sheet — those are the user's fresh corrections and
+        # we'd otherwise double-apply a stale override on top of them.
+        edited_indices = (
+            {e.food_item_index for e in (body.item_edits or [])}
+        )
+        from services.food_override_service import apply_user_food_overrides
+        applied_items, override_totals, num_overridden = apply_user_food_overrides(
+            db, body.user_id, list(body.food_items), skip_indices=edited_indices,
+        )
+        if num_overridden:
+            logger.info(
+                f"[LOG-DIRECT] Applied {num_overridden} user food override(s) for user {body.user_id}"
+            )
+            body.food_items = applied_items
+            body.total_calories = override_totals["total_calories"]
+            body.total_protein = int(round(override_totals["protein_g"]))
+            body.total_carbs = int(round(override_totals["carbs_g"]))
+            body.total_fat = int(round(override_totals["fat_g"]))
+
         # Create food log directly
         created_log = db.create_food_log(
             user_id=body.user_id,
@@ -523,7 +637,13 @@ async def log_food_direct(body: LogDirectRequest, request: Request, current_user
             carbs_g=body.total_carbs,
             fat_g=body.total_fat,
             fiber_g=body.total_fiber,
-            ai_feedback=f"Logged via {body.source_type}" + (f": {body.notes}" if body.notes else ""),
+            # Honor the vision/text-analysis feedback the client already ran. Only
+            # fall back to the generic placeholder when the caller provided nothing
+            # — otherwise we'd clobber Gemini's real description of the meal.
+            ai_feedback=(
+                body.ai_feedback
+                or f"Logged via {body.source_type}" + (f": {body.notes}" if body.notes else "")
+            ),
             health_score=body.health_score or body.overall_meal_score,
             logged_at=user_tz_logged_at,
             image_url=body.image_url,
@@ -553,6 +673,25 @@ async def log_food_direct(body: LogDirectRequest, request: Request, current_user
             except Exception as edit_err:
                 # Audit failures must never block a successful log
                 logger.warning(f"[LOG-DIRECT] Failed to record pre-save item edits: {edit_err}")
+
+            # Feed the user's corrections back into user_food_overrides so the
+            # next log of the same food defaults to their numbers. UPSERT once
+            # per edited item index (not per field) — if they edited 3 of 4
+            # fields on one item, we want one override row with the final
+            # values, not three separate UPSERTs racing against each other.
+            try:
+                edited_indices = {e.food_item_index for e in body.item_edits}
+                for idx in edited_indices:
+                    if 0 <= idx < len(body.food_items):
+                        db.upsert_user_food_override(
+                            user_id=body.user_id,
+                            food_item=body.food_items[idx],
+                        )
+            except Exception as ov_err:
+                # Override learning is best-effort — never fail the log
+                logger.warning(
+                    f"[LOG-DIRECT] Failed to upsert user_food_overrides: {ov_err}"
+                )
 
         # Invalidate daily summary cache so the next fetch returns fresh data
         from api.v1.nutrition.summaries import invalidate_daily_summary_cache

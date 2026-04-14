@@ -11,21 +11,44 @@ class EmailPreferences {
   /// The user ID these preferences belong to
   final String userId;
 
-  /// Whether to receive daily workout reminder emails
+  /// Workout reminder emails (before-session reminder, per-user time)
   final bool workoutReminders;
 
-  /// Whether to receive weekly progress summary emails
+  /// Weekly progress summary (Sunday recap with nutrition + XP + streaks)
   final bool weeklySummary;
 
-  /// Whether to receive AI coach tips and motivational emails
+  /// Motivational nudges from the user's selected coach persona
+  /// (day-3 activation, onboarding-incomplete, comeback, idle, one-workout-wonder).
+  /// Formerly called "coachTips" — same column on the backend for compatibility.
   final bool coachTips;
 
-  /// Whether to receive product update emails (new features, updates)
+  /// Product update emails (new features, release notes)
   final bool productUpdates;
 
-  /// Whether to receive promotional emails (offers, discounts)
-  /// This is opt-in by default (false)
+  /// Promotional offers + discounts. Opt-in (false by default).
   final bool promotional;
+
+  /// Streak-at-risk alerts. Independent of workoutReminders so users can
+  /// keep streak protection without daily workout nudges.
+  final bool streakAlerts;
+
+  /// Missed-workout nudges (after the scheduled time passes without a log).
+  final bool missedWorkoutAlerts;
+
+  /// Achievement unlock emails (trophies + first-workout-done).
+  final bool achievementAlerts;
+
+  /// Billing & account emails (purchase, billing issue, trial expiry,
+  /// cancellation). Cannot be disabled — legally required transactional.
+  final bool billingAccount;
+
+  /// Deliverable flag. Flipped to false after 3 hard bounces or a complaint;
+  /// read-only in the UI. Displayed as a banner if false.
+  final bool deliverable;
+
+  /// Vacation mode — if set and in the future, all non-transactional sends
+  /// are paused until this timestamp passes.
+  final DateTime? notificationsPausedUntil;
 
   /// When the preferences were created
   final DateTime createdAt;
@@ -41,6 +64,12 @@ class EmailPreferences {
     this.coachTips = true,
     this.productUpdates = true,
     this.promotional = false,
+    this.streakAlerts = true,
+    this.missedWorkoutAlerts = true,
+    this.achievementAlerts = true,
+    this.billingAccount = true,
+    this.deliverable = true,
+    this.notificationsPausedUntil,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -56,6 +85,12 @@ class EmailPreferences {
       coachTips: true,
       productUpdates: true,
       promotional: false,
+      streakAlerts: true,
+      missedWorkoutAlerts: true,
+      achievementAlerts: true,
+      billingAccount: true,
+      deliverable: true,
+      notificationsPausedUntil: null,
       createdAt: now,
       updatedAt: now,
     );
@@ -71,6 +106,14 @@ class EmailPreferences {
       coachTips: json['coach_tips'] as bool? ?? true,
       productUpdates: json['product_updates'] as bool? ?? true,
       promotional: json['promotional'] as bool? ?? false,
+      streakAlerts: json['streak_alerts'] as bool? ?? true,
+      missedWorkoutAlerts: json['missed_workout_alerts'] as bool? ?? true,
+      achievementAlerts: json['achievement_alerts'] as bool? ?? true,
+      billingAccount: json['billing_account'] as bool? ?? true,
+      deliverable: json['deliverable'] as bool? ?? true,
+      notificationsPausedUntil: json['notifications_paused_until'] != null
+          ? DateTime.parse(json['notifications_paused_until'] as String)
+          : null,
       createdAt: json['created_at'] != null
           ? DateTime.parse(json['created_at'] as String)
           : DateTime.now(),
@@ -88,6 +131,12 @@ class EmailPreferences {
       'coach_tips': coachTips,
       'product_updates': productUpdates,
       'promotional': promotional,
+      'streak_alerts': streakAlerts,
+      'missed_workout_alerts': missedWorkoutAlerts,
+      'achievement_alerts': achievementAlerts,
+      // billing_account is not sent in PUT — always true, cannot be disabled.
+      if (notificationsPausedUntil != null)
+        'notifications_paused_until': notificationsPausedUntil!.toIso8601String(),
     };
   }
 
@@ -100,6 +149,12 @@ class EmailPreferences {
     bool? coachTips,
     bool? productUpdates,
     bool? promotional,
+    bool? streakAlerts,
+    bool? missedWorkoutAlerts,
+    bool? achievementAlerts,
+    bool? billingAccount,
+    bool? deliverable,
+    DateTime? notificationsPausedUntil,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) {
@@ -111,6 +166,13 @@ class EmailPreferences {
       coachTips: coachTips ?? this.coachTips,
       productUpdates: productUpdates ?? this.productUpdates,
       promotional: promotional ?? this.promotional,
+      streakAlerts: streakAlerts ?? this.streakAlerts,
+      missedWorkoutAlerts: missedWorkoutAlerts ?? this.missedWorkoutAlerts,
+      achievementAlerts: achievementAlerts ?? this.achievementAlerts,
+      billingAccount: billingAccount ?? this.billingAccount,
+      deliverable: deliverable ?? this.deliverable,
+      notificationsPausedUntil:
+          notificationsPausedUntil ?? this.notificationsPausedUntil,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );

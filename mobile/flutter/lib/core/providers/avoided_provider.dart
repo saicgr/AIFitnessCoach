@@ -68,6 +68,9 @@ class AvoidedNotifier extends StateNotifier<AvoidedState> {
 
   /// Refresh avoided exercises from API
   Future<void> refresh() async {
+    // Yield so callers (e.g. initState) don't mutate provider state during build.
+    await Future<void>.delayed(Duration.zero);
+    if (!mounted) return;
     state = state.copyWith(isLoading: true, error: null);
 
     try {

@@ -9,8 +9,14 @@ class CollapsibleAISuggestion extends StatefulWidget {
   final List<String>? encouragements;
   final List<String>? warnings;
   final String? recommendedSwap;
+  /// Server-generated callout when the user has re-logged this food and had
+  /// negative mood/energy responses before. Rendered above the tip as a
+  /// distinct amber pill so it's obvious and harder to miss.
+  final String? personalHistoryNote;
   final bool isDark;
   final CoachPersona? coach;
+  /// Optional — tap on the history pill navigates here.
+  final VoidCallback? onHistoryTap;
 
   const CollapsibleAISuggestion({
     super.key,
@@ -18,8 +24,10 @@ class CollapsibleAISuggestion extends StatefulWidget {
     this.encouragements,
     this.warnings,
     this.recommendedSwap,
+    this.personalHistoryNote,
     required this.isDark,
     this.coach,
+    this.onHistoryTap,
   });
 
   @override
@@ -35,7 +43,18 @@ class _CollapsibleAISuggestionState extends State<CollapsibleAISuggestion> {
     final textMuted = widget.isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final teal = widget.isDark ? AppColors.teal : AppColorsLight.teal;
 
-    return GestureDetector(
+    return Column(
+      children: [
+        if (widget.personalHistoryNote != null &&
+            widget.personalHistoryNote!.trim().isNotEmpty) ...[
+          _PersonalHistoryPill(
+            note: widget.personalHistoryNote!,
+            isDark: widget.isDark,
+            onTap: widget.onHistoryTap,
+          ),
+          const SizedBox(height: 8),
+        ],
+        GestureDetector(
       onTap: () => setState(() => _isExpanded = !_isExpanded),
       child: Container(
         decoration: BoxDecoration(
@@ -99,6 +118,60 @@ class _CollapsibleAISuggestionState extends State<CollapsibleAISuggestion> {
               crossFadeState: _isExpanded ? CrossFadeState.showSecond : CrossFadeState.showFirst,
               duration: const Duration(milliseconds: 200),
             ),
+          ],
+        ),
+      ),
+        ),
+      ],
+    );
+  }
+}
+
+/// Pill shown above the coach tip when the server returned a
+/// `personal_history_note` — i.e. the user has re-logged this food before and
+/// had negative mood/energy responses. Tapping navigates to the Patterns tab.
+class _PersonalHistoryPill extends StatelessWidget {
+  final String note;
+  final bool isDark;
+  final VoidCallback? onTap;
+  const _PersonalHistoryPill({
+    required this.note,
+    required this.isDark,
+    this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final bg = AppColors.orange.withValues(alpha: 0.12);
+    final fg = isDark ? AppColors.orange : AppColorsLight.orange;
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        decoration: BoxDecoration(
+          color: bg,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: fg.withValues(alpha: 0.35)),
+        ),
+        child: Row(
+          children: [
+            Icon(Icons.history, size: 18, color: fg),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                note,
+                style: TextStyle(
+                  fontSize: 12.5,
+                  height: 1.35,
+                  color: fg,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+            if (onTap != null) ...[
+              const SizedBox(width: 6),
+              Icon(Icons.arrow_forward_ios, size: 12, color: fg),
+            ],
           ],
         ),
       ),

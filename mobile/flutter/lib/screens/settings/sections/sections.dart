@@ -4,6 +4,7 @@
 library;
 
 export 'accessibility_section.dart';
+export 'advanced_audio_section.dart';
 export 'ble_heart_rate_section.dart';
 export 'ai_privacy_section.dart';
 export 'audio_settings_section.dart';
@@ -16,7 +17,6 @@ export 'health_sync_section.dart';
 export 'location_settings_section.dart';
 export 'logout_section.dart';
 export 'notifications_section.dart';
-export 'test_notifications_section.dart';
 export 'nutrition_fasting_section.dart';
 export 'preferences_section.dart';
 export 'social_privacy_section.dart';

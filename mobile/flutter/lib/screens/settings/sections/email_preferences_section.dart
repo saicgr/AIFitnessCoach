@@ -187,11 +187,11 @@ class _EmailPreferencesCardState extends ConsumerState<_EmailPreferencesCard> {
           ),
           Divider(height: 1, color: cardBorder),
 
-          // Workout Reminders (essential)
+          // Workout Reminders
           SettingSwitchTile(
             icon: Icons.fitness_center,
             iconColor: AppColors.cyan,
-            title: 'Workout Reminders',
+            title: 'Workout reminders',
             subtitle: 'Daily reminders about your scheduled workouts',
             value: prefs?.workoutReminders ?? true,
             onChanged: (value) => _updatePreference(
@@ -201,29 +201,71 @@ class _EmailPreferencesCardState extends ConsumerState<_EmailPreferencesCard> {
           ),
           Divider(height: 1, color: cardBorder, indent: 50),
 
-          // Weekly Report
+          // Missed-workout alerts (new)
           SettingSwitchTile(
-            icon: Icons.bar_chart,
-            iconColor: AppColors.purple,
-            title: 'Weekly Report',
-            subtitle: 'Your weekly progress report every Sunday',
-            value: prefs?.weeklySummary ?? true,
+            icon: Icons.running_with_errors_outlined,
+            iconColor: AppColors.orange,
+            title: 'Missed workout nudges',
+            subtitle: 'A follow-up if your scheduled time passes unlogged',
+            value: prefs?.missedWorkoutAlerts ?? true,
             onChanged: (value) => _updatePreference(
-              EmailPreferenceType.weeklySummary,
+              EmailPreferenceType.missedWorkoutAlerts,
               value,
             ),
           ),
           Divider(height: 1, color: cardBorder, indent: 50),
 
-          // Coach Tips
+          // Streak alerts (new, independent of workout reminders)
           SettingSwitchTile(
-            icon: Icons.lightbulb_outline,
+            icon: Icons.local_fire_department_outlined,
+            iconColor: Colors.deepOrange,
+            title: 'Streak alerts',
+            subtitle: "When your streak is at risk of breaking",
+            value: prefs?.streakAlerts ?? true,
+            onChanged: (value) => _updatePreference(
+              EmailPreferenceType.streakAlerts,
+              value,
+            ),
+          ),
+          Divider(height: 1, color: cardBorder, indent: 50),
+
+          // Motivational nudges (renamed from AI coach tips)
+          SettingSwitchTile(
+            icon: Icons.favorite_outline,
             iconColor: AppColors.orange,
-            title: 'Coach Tips',
-            subtitle: 'AI coach tips and motivational messages',
+            title: 'Motivational nudges',
+            subtitle: 'Check-ins from your coach — activation, comebacks, gentle guilt',
             value: prefs?.coachTips ?? true,
             onChanged: (value) => _updatePreference(
               EmailPreferenceType.coachTips,
+              value,
+            ),
+          ),
+          Divider(height: 1, color: cardBorder, indent: 50),
+
+          // Achievement alerts (new)
+          SettingSwitchTile(
+            icon: Icons.emoji_events_outlined,
+            iconColor: Colors.amber,
+            title: 'Achievement unlocks',
+            subtitle: 'Trophies + first-workout celebrations',
+            value: prefs?.achievementAlerts ?? true,
+            onChanged: (value) => _updatePreference(
+              EmailPreferenceType.achievementAlerts,
+              value,
+            ),
+          ),
+          Divider(height: 1, color: cardBorder, indent: 50),
+
+          // Weekly Summary
+          SettingSwitchTile(
+            icon: Icons.bar_chart,
+            iconColor: AppColors.purple,
+            title: 'Weekly summary',
+            subtitle: 'Sunday recap with workouts, nutrition, streak, XP',
+            value: prefs?.weeklySummary ?? true,
+            onChanged: (value) => _updatePreference(
+              EmailPreferenceType.weeklySummary,
               value,
             ),
           ),
@@ -233,7 +275,7 @@ class _EmailPreferencesCardState extends ConsumerState<_EmailPreferencesCard> {
           SettingSwitchTile(
             icon: Icons.new_releases_outlined,
             iconColor: AppColors.success,
-            title: 'Product Updates',
+            title: 'Product updates',
             subtitle: 'New features and app improvements',
             value: prefs?.productUpdates ?? true,
             onChanged: (value) => _updatePreference(
@@ -247,12 +289,28 @@ class _EmailPreferencesCardState extends ConsumerState<_EmailPreferencesCard> {
           SettingSwitchTile(
             icon: Icons.local_offer_outlined,
             iconColor: Colors.pink,
-            title: 'Promotional',
-            subtitle: 'Special offers and discounts',
+            title: 'Offers & discounts',
+            subtitle: 'Special offers and re-engagement discounts',
             value: prefs?.promotional ?? false,
             onChanged: (value) => _updatePreference(
               EmailPreferenceType.promotional,
               value,
+            ),
+          ),
+          Divider(height: 1, color: cardBorder, indent: 50),
+
+          // Billing & account — locked on, legally required
+          Opacity(
+            opacity: 0.65,
+            child: IgnorePointer(
+              child: SettingSwitchTile(
+                icon: Icons.credit_card_outlined,
+                iconColor: AppColors.cyan,
+                title: 'Billing & account',
+                subtitle: 'Purchase, billing, cancellation (required)',
+                value: true,
+                onChanged: (_) {},
+              ),
             ),
           ),
           Divider(height: 1, color: cardBorder),
@@ -343,10 +401,11 @@ class _UnsubscribeConfirmDialog extends StatelessWidget {
             style: TextStyle(color: textSecondary, fontSize: 14),
           ),
           const SizedBox(height: 12),
-          _buildBulletPoint('Weekly Summary', textSecondary),
-          _buildBulletPoint('Coach Tips', textSecondary),
-          _buildBulletPoint('Product Updates', textSecondary),
-          _buildBulletPoint('Promotional', textSecondary),
+          _buildBulletPoint('Weekly summary', textSecondary),
+          _buildBulletPoint('Motivational nudges', textSecondary),
+          _buildBulletPoint('Product updates', textSecondary),
+          _buildBulletPoint('Offers & discounts', textSecondary),
+          _buildBulletPoint('Achievement unlocks', textSecondary),
           const SizedBox(height: 12),
           Text(
             'You will still receive essential workout reminders.',

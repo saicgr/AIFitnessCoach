@@ -29,9 +29,15 @@ part 'exercise_detail_screen_ui.dart';
 class ExerciseDetailScreen extends ConsumerStatefulWidget {
   final WorkoutExercise exercise;
 
+  /// Initial tab index: 0=Info, 1=Stats, 2=History.
+  /// Used when the caller wants to deep-link into a specific tab
+  /// (e.g. "View History" from the 3-dot exercise-options sheet).
+  final int initialTab;
+
   const ExerciseDetailScreen({
     super.key,
     required this.exercise,
+    this.initialTab = 0,
   });
 
   @override
@@ -63,7 +69,9 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this);
+    final startTab = widget.initialTab.clamp(0, 2);
+    _tabController = TabController(length: 3, vsync: this, initialIndex: startTab);
+    _selectedTab = startTab;
     _tabController.addListener(() {
       if (_tabController.indexIsChanging) return;
       setState(() => _selectedTab = _tabController.index);

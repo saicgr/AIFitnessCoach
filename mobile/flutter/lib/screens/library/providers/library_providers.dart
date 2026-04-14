@@ -27,6 +27,9 @@ final selectedMuscleGroupsProvider = StateProvider<Set<String>>((ref) => {});
 /// Selected equipment filter
 final selectedEquipmentsProvider = StateProvider<Set<String>>((ref) => {});
 
+/// Selected DB-category filter (e.g. strength, cardio, yoga — lowercase)
+final selectedCategoriesProvider = StateProvider<Set<String>>((ref) => {});
+
 /// Selected exercise types filter
 final selectedExerciseTypesProvider = StateProvider<Set<String>>((ref) => {});
 
@@ -76,6 +79,7 @@ class ExercisesNotifier extends StateNotifier<ExercisesState> {
       final apiClient = _ref.read(apiClientProvider);
       final selectedMuscles = _ref.read(selectedMuscleGroupsProvider);
       final selectedEquipments = _ref.read(selectedEquipmentsProvider);
+      final selectedCategories = _ref.read(selectedCategoriesProvider);
       final selectedTypes = _ref.read(selectedExerciseTypesProvider);
       final selectedGoals = _ref.read(selectedGoalsProvider);
       final selectedSuitableFor = _ref.read(selectedSuitableForSetProvider);
@@ -89,6 +93,9 @@ class ExercisesNotifier extends StateNotifier<ExercisesState> {
       }
       if (selectedEquipments.isNotEmpty) {
         queryParams['equipment'] = selectedEquipments.join(',');
+      }
+      if (selectedCategories.isNotEmpty) {
+        queryParams['categories'] = selectedCategories.join(',');
       }
       if (selectedTypes.isNotEmpty) {
         queryParams['exercise_types'] = selectedTypes.join(',');
@@ -320,6 +327,7 @@ int getActiveFilterCount(WidgetRef ref) {
   int count = 0;
   count += ref.read(selectedMuscleGroupsProvider).length;
   count += ref.read(selectedEquipmentsProvider).length;
+  count += ref.read(selectedCategoriesProvider).length;
   count += ref.read(selectedExerciseTypesProvider).length;
   count += ref.read(selectedGoalsProvider).length;
   count += ref.read(selectedSuitableForSetProvider).length;
@@ -332,6 +340,7 @@ int getActiveFilterCount(WidgetRef ref) {
 void clearAllFilters(WidgetRef ref) {
   ref.read(selectedMuscleGroupsProvider.notifier).state = {};
   ref.read(selectedEquipmentsProvider.notifier).state = {};
+  ref.read(selectedCategoriesProvider.notifier).state = {};
   ref.read(selectedExerciseTypesProvider.notifier).state = {};
   ref.read(selectedGoalsProvider.notifier).state = {};
   ref.read(selectedSuitableForSetProvider.notifier).state = {};

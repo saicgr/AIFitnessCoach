@@ -331,7 +331,8 @@ class _ExerciseRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final hasImage = exercise.gifUrl != null && exercise.gifUrl!.isNotEmpty;
+    final exerciseImageUrl = exercise.imageS3Path ?? exercise.gifUrl;
+    final hasImage = exerciseImageUrl != null && exerciseImageUrl.isNotEmpty;
     final screenWidth = MediaQuery.of(context).size.width;
     // Compact mode for narrow screens
     final isCompact = screenWidth < 360;
@@ -419,7 +420,7 @@ class _ExerciseRow extends StatelessWidget {
                   children: [
                     hasImage
                         ? CachedNetworkImage(
-                            imageUrl: exercise.gifUrl!,
+                            imageUrl: exerciseImageUrl,
                             fit: BoxFit.cover,
                             placeholder: (context, url) => _buildPlaceholder(isCompact),
                             errorWidget: (context, url, error) =>

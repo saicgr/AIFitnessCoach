@@ -578,6 +578,70 @@ class NotificationService(NotificationServicePart2):
             {"title": "{coach_name}", "body": "{name}, your {muscle_group} has had {hours_recovered}h to recover. It's ready for today's workout!"},
             {"title": "{coach_name}", "body": "Science says your {muscle_group} is primed! {hours_recovered}h recovery = peak performance window."},
         ],
+
+        # --- Day-3 Activation (push parity for the email) ---
+        ("day3_activation", "gentle"): [
+            {"title": "{coach_name}", "body": "Hey {name}, your plan is ready when you are. About 20 minutes for the first one."},
+            {"title": "{coach_name}", "body": "{name}, no rush — your first workout is sitting on the home screen whenever you want it."},
+        ],
+        ("day3_activation", "balanced"): [
+            {"title": "{coach_name}", "body": "{name}, your plan's been waiting. 20 minutes to start your first workout."},
+            {"title": "{coach_name}", "body": "Your first workout is built and waiting, {name}. Today's the day."},
+        ],
+        ("day3_activation", "tough_love"): [
+            {"title": "{coach_name}", "body": "{name}! Your plan has been sitting untouched. 20 minutes. Now."},
+            {"title": "{coach_name}", "body": "Day 3 and zero workouts, {name}. Your plan didn't build itself for nothing."},
+        ],
+
+        # --- Onboarding Incomplete ---
+        ("onboarding_incomplete", "gentle"): [
+            {"title": "{coach_name}", "body": "{name}, just 2 more answers and your plan is ready. Two minutes."},
+            {"title": "{coach_name}", "body": "Hey {name} — your plan can't be built until you finish setup. Quick wrap-up?"},
+        ],
+        ("onboarding_incomplete", "balanced"): [
+            {"title": "{coach_name}", "body": "{name}, 2 answers left. Two minutes. Then your plan generates instantly."},
+            {"title": "{coach_name}", "body": "Almost there, {name}. Finish setup and your full plan builds in seconds."},
+        ],
+        ("onboarding_incomplete", "tough_love"): [
+            {"title": "{coach_name}", "body": "{name}, you started and stopped. Two minutes to finish. Do it."},
+        ],
+
+        # --- Weekly Recap ---
+        ("weekly_recap", "gentle"): [
+            {"title": "{coach_name}", "body": "{name}, your week in numbers — tap to see how you did."},
+            {"title": "{coach_name}", "body": "Sunday review time, {name}. Quick look at your week?"},
+        ],
+        ("weekly_recap", "balanced"): [
+            {"title": "{coach_name}", "body": "{name}, your week is in. Numbers don't lie — let's see them."},
+            {"title": "{coach_name}", "body": "Weekly recap dropped, {name}. Open to see what you pulled off."},
+        ],
+        ("weekly_recap", "tough_love"): [
+            {"title": "{coach_name}", "body": "{name}, your week is graded. Open it. Be honest."},
+        ],
+
+        # --- Achievement Unlocked (real-time) ---
+        ("achievement_unlocked", "gentle"): [
+            {"title": "🏆 {achievement_name}", "body": "Earned, {name}. {coach_name} saw that."},
+        ],
+        ("achievement_unlocked", "balanced"): [
+            {"title": "🏆 {achievement_name}", "body": "{name}, you earned that. {coach_name} is taking notes."},
+        ],
+        ("achievement_unlocked", "tough_love"): [
+            {"title": "🏆 {achievement_name}", "body": "{name}, you earned that. Don't get comfortable — there's more."},
+        ],
+
+        # --- Comeback (returned after ≥7d gap) ---
+        ("comeback", "gentle"): [
+            {"title": "{coach_name}", "body": "{name}, welcome back. {coach_name} kept your plan."},
+            {"title": "{coach_name}", "body": "Glad to see you, {name}. Plan's queued and adjusted for the time off."},
+        ],
+        ("comeback", "balanced"): [
+            {"title": "{coach_name}", "body": "Welcome back, {name}. {coach_name} missed you."},
+            {"title": "{coach_name}", "body": "{name}, you came back. That's the hardest part. {coach_name} is ready."},
+        ],
+        ("comeback", "tough_love"): [
+            {"title": "{coach_name}", "body": "{name}. Don't disappear again. {coach_name} is watching."},
+        ],
     }
 
     # ─────────────────────────────────────────────────────────────────

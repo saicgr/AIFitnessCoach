@@ -353,6 +353,24 @@ extension _XPGoalsScreenStateUI1 on _XPGoalsScreenState {
         isComplete: dailyGoalsState?.loggedBodyMeasurements ?? false,
         icon: Icons.straighten,
       ),
+      _DailyGoal(
+        title: 'Hit 10k steps',
+        xp: 100,
+        isComplete: dailyGoalsState?.hitStepsGoal ?? false,
+        icon: Icons.directions_walk,
+      ),
+      _DailyGoal(
+        title: 'Hit hydration goal',
+        xp: 40,
+        isComplete: dailyGoalsState?.hitHydrationGoal ?? false,
+        icon: Icons.water_drop_outlined,
+      ),
+      _DailyGoal(
+        title: 'Hit calorie goal',
+        xp: 60,
+        isComplete: dailyGoalsState?.hitCalorieGoal ?? false,
+        icon: Icons.local_fire_department_outlined,
+      ),
     ];
 
     final completedCount = dailyGoals.where((g) => g.isComplete).length;

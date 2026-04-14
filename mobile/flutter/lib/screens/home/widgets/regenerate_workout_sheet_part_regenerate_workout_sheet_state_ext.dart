@@ -345,22 +345,64 @@ extension __RegenerateWorkoutSheetStateExt on _RegenerateWorkoutSheetState {
             }),
           ),
           const SizedBox(height: 14),
-          // Message + elapsed time
-          Text(
-            _progressMessage,
-            style: TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.w600,
-              color: colors.textPrimary,
+          // Main message (AnimatedSwitcher so changes fade rather than pop)
+          AnimatedSwitcher(
+            duration: const Duration(milliseconds: 250),
+            child: Text(
+              _progressMessage.isNotEmpty ? _progressMessage : 'Warming up…',
+              key: ValueKey(_progressMessage),
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w600,
+                color: colors.textPrimary,
+              ),
             ),
           ),
-          if (_progressDetail != null) ...[
-            const SizedBox(height: 4),
-            Text(
-              _progressDetail!,
-              style: TextStyle(fontSize: 13, color: colors.textMuted),
-            ),
-          ],
+          const SizedBox(height: 4),
+          // Substatus — either backend detail or a rotating phase hint so the
+          // UI always looks alive during the long AI call.
+          Builder(builder: (_) {
+            final detail = _displayDetail();
+            return AnimatedSwitcher(
+              duration: const Duration(milliseconds: 350),
+              transitionBuilder: (child, anim) => FadeTransition(
+                opacity: anim,
+                child: SlideTransition(
+                  position: Tween<Offset>(
+                    begin: const Offset(0, 0.15),
+                    end: Offset.zero,
+                  ).animate(anim),
+                  child: child,
+                ),
+              ),
+              child: detail == null
+                  ? const SizedBox(key: ValueKey('no-detail'), height: 0)
+                  : Row(
+                      key: ValueKey(detail),
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        SizedBox(
+                          width: 10,
+                          height: 10,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 1.4,
+                            valueColor:
+                                AlwaysStoppedAnimation<Color>(accentColor),
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        Flexible(
+                          child: Text(
+                            detail,
+                            style: TextStyle(
+                                fontSize: 13, color: colors.textMuted),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                      ],
+                    ),
+            );
+          }),
           const SizedBox(height: 10),
           // Elapsed time + step count row
           Row(
@@ -377,20 +419,38 @@ extension __RegenerateWorkoutSheetStateExt on _RegenerateWorkoutSheetState {
                   fontFeatures: const [FontFeature.tabularFigures()],
                 ),
               ),
-              Container(
-                margin: const EdgeInsets.symmetric(horizontal: 10),
-                width: 1,
-                height: 14,
-                color: colors.textMuted.withOpacity(0.3),
-              ),
-              Text(
-                'Step $_currentStep of $_totalSteps',
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w500,
-                  color: colors.textSecondary,
+              if (_currentStep > 0) ...[
+                Container(
+                  margin: const EdgeInsets.symmetric(horizontal: 10),
+                  width: 1,
+                  height: 14,
+                  color: colors.textMuted.withOpacity(0.3),
                 ),
-              ),
+                Text(
+                  'Step $_currentStep of $_totalSteps',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                    color: colors.textSecondary,
+                  ),
+                ),
+              ],
+              if (_estimatedRemainingHint() != null) ...[
+                Container(
+                  margin: const EdgeInsets.symmetric(horizontal: 10),
+                  width: 1,
+                  height: 14,
+                  color: colors.textMuted.withOpacity(0.3),
+                ),
+                Text(
+                  _estimatedRemainingHint()!,
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                    color: colors.textSecondary,
+                  ),
+                ),
+              ],
             ],
           ),
           const SizedBox(height: 8),
@@ -398,7 +458,9 @@ extension __RegenerateWorkoutSheetStateExt on _RegenerateWorkoutSheetState {
           ClipRRect(
             borderRadius: BorderRadius.circular(4),
             child: LinearProgressIndicator(
-              value: _totalSteps > 0 ? _currentStep / _totalSteps : null,
+              value: _totalSteps > 0 && _currentStep > 0
+                  ? _currentStep / _totalSteps
+                  : null,
               backgroundColor: accentColor.withOpacity(0.15),
               valueColor: AlwaysStoppedAnimation<Color>(accentColor),
               minHeight: 4,

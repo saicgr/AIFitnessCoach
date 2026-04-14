@@ -12,6 +12,7 @@ import '../../core/constants/app_colors.dart';
 import '../../core/services/posthog_service.dart';
 import '../../data/services/haptic_service.dart';
 import '../../widgets/pill_app_bar.dart';
+import 'report_thumbnail_provider.dart';
 
 /// Reports Hub — one catalog of every shareable report in the app.
 ///
@@ -418,6 +419,7 @@ class _CarouselViewState extends ConsumerState<_CarouselView> {
               final r = widget.reports[index];
               final page = _CarouselPage(
                 report: r,
+                month: _currentMonth,
                 isFavorited: widget.favorites.contains(r.route),
                 onToggleFavorite: () => widget.onToggleFavorite(r.route),
                 onTap: () {
@@ -425,6 +427,10 @@ class _CarouselViewState extends ConsumerState<_CarouselView> {
                   context.push(r.route);
                 },
                 onShare: () => _shareReport(r, _currentMonth),
+                onMaximize: () {
+                  HapticService.selection();
+                  context.push(r.route);
+                },
               );
               // Siblings shrink, dim, and are pulled slightly inward so
               // their inner edges overlap the focused card's margin and
@@ -520,17 +526,21 @@ class _CarouselViewState extends ConsumerState<_CarouselView> {
 /// labels are hoisted into the parent so they don't travel with the swipe.
 class _CarouselPage extends StatelessWidget {
   final _ReportDef report;
+  final DateTime month;
   final bool isFavorited;
   final VoidCallback onToggleFavorite;
   final VoidCallback onTap;
   final VoidCallback onShare;
+  final VoidCallback onMaximize;
 
   const _CarouselPage({
     required this.report,
+    required this.month,
     required this.isFavorited,
     required this.onToggleFavorite,
     required this.onTap,
     required this.onShare,
+    required this.onMaximize,
   });
 
   @override
@@ -542,10 +552,12 @@ class _CarouselPage extends StatelessWidget {
           aspectRatio: 4 / 5,
           child: _SquircleCard(
             report: report,
+            month: month,
             isFavorited: isFavorited,
             onToggleFavorite: onToggleFavorite,
             onTap: onTap,
             onShare: onShare,
+            onMaximize: onMaximize,
           ),
         ),
       ),
@@ -553,23 +565,34 @@ class _CarouselPage extends StatelessWidget {
   }
 }
 
-class _SquircleCard extends StatelessWidget {
+class _SquircleCard extends ConsumerWidget {
   final _ReportDef report;
+  final DateTime month;
   final bool isFavorited;
   final VoidCallback onToggleFavorite;
   final VoidCallback onTap;
   final VoidCallback onShare;
+  final VoidCallback onMaximize;
 
   const _SquircleCard({
     required this.report,
+    required this.month,
     required this.isFavorited,
     required this.onToggleFavorite,
     required this.onTap,
     required this.onShare,
+    required this.onMaximize,
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    // Watch the lightweight thumbnail summary for this (report, month). When
+    // it resolves to non-null, we replace "View report" with the live stat;
+    // otherwise the card keeps its hero-icon placeholder look.
+    final thumbAsync = ref.watch(reportThumbnailProvider(
+      ReportThumbnailKey(route: report.route, month: month),
+    ));
+    final thumb = thumbAsync.asData?.value;
     // Aspect-ratio is owned by the parent (_CarouselPage). This widget fills
     // whatever box it's given so peek/scale animations stay smooth.
     return Material(
@@ -735,35 +758,78 @@ class _SquircleCard extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       mainAxisSize: MainAxisSize.min,
                       children: [
+                        // Title sits smaller when there's a hero stat to
+                        // promote — otherwise the title is the hero.
                         Text(
                           report.title,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 24,
-                            fontWeight: FontWeight.w800,
-                            height: 1.1,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          'View report',
                           style: TextStyle(
-                            color: Colors.white.withValues(alpha: 0.75),
-                            fontSize: 12,
-                            fontWeight: FontWeight.w500,
+                            color: Colors.white,
+                            fontSize: thumb != null ? 16 : 24,
+                            fontWeight: thumb != null
+                                ? FontWeight.w600
+                                : FontWeight.w800,
+                            height: 1.1,
+                            letterSpacing: thumb != null ? 0.2 : 0,
                           ),
                         ),
+                        if (thumb != null) ...[
+                          const SizedBox(height: 6),
+                          Text(
+                            thumb.primary,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 28,
+                              fontWeight: FontWeight.w800,
+                              height: 1.05,
+                              letterSpacing: -0.4,
+                            ),
+                          ),
+                          if (thumb.secondary != null) ...[
+                            const SizedBox(height: 2),
+                            Text(
+                              thumb.secondary!,
+                              style: TextStyle(
+                                color: Colors.white.withValues(alpha: 0.78),
+                                fontSize: 12,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                        ] else ...[
+                          const SizedBox(height: 4),
+                          Text(
+                            'View report',
+                            style: TextStyle(
+                              color: Colors.white.withValues(alpha: 0.75),
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
                       ],
                     ),
                   ),
                 ),
-                // Favorite heart
+                // Top-right action cluster: maximize then favorite.
+                // Maximize is the primary "open the full report" affordance
+                // and is placed BEFORE the heart so the eye flow reads
+                // [open] [save].
                 Positioned(
                   top: 14,
                   right: 14,
-                  child: _HeartButton(
-                    isFavorited: isFavorited,
-                    onTap: onToggleFavorite,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      _CardCircleButton(
+                        icon: Icons.fullscreen_rounded,
+                        onTap: onMaximize,
+                      ),
+                      const SizedBox(width: 8),
+                      _HeartButton(
+                        isFavorited: isFavorited,
+                        onTap: onToggleFavorite,
+                      ),
+                    ],
                   ),
                 ),
                 // Share pill — bottom right, visually balances the title
@@ -854,6 +920,32 @@ class _ChevronButton extends StatelessWidget {
             child: Icon(icon, color: color, size: 22),
           ),
         ),
+      ),
+    );
+  }
+}
+
+/// Generic round dark-glass button used in the top-right cluster of a card.
+/// Matches the heart's footprint so adjacent buttons read as a paired set.
+class _CardCircleButton extends StatelessWidget {
+  final IconData icon;
+  final VoidCallback onTap;
+
+  const _CardCircleButton({required this.icon, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 36,
+        height: 36,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: Colors.black.withValues(alpha: 0.35),
+        ),
+        child: Icon(icon, color: Colors.white.withValues(alpha: 0.92), size: 20),
       ),
     );
   }

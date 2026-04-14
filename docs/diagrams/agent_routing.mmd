@@ -1,0 +1,31 @@
+flowchart LR
+  M[User message + optional media]
+  NUT[Nutrition Agent]
+  WK[Workout Agent]
+  INJ[Injury Agent]
+  HYD[Hydration Agent]
+  CCH[Coach Agent]
+  AGENTS[LangGraph StateGraph<br/>intent → rag → agent ↔ tools → storage]
+
+  M --> T{trivial?<br/>greeting / thanks / bye}
+  T -->|yes| FAST[fast-path reply<br/>skips RAG + agent]
+  T -->|no| CLS[classify media<br/>VisionService]
+  CLS --> P1{"@mention present?"}
+  P1 -->|yes| ROUTE[route to mentioned agent]
+  P1 -->|no| P2{media_content_type?}
+  P2 -->|food_*| NUT
+  P2 -->|exercise_form| WK
+  P2 -->|progress_photo<br/>document<br/>gym_equipment| CCH
+  P2 -->|none| P3{intent classifier}
+  P3 -->|ANALYZE_FOOD, LOG_FOOD| NUT
+  P3 -->|ADD_EXERCISE, SWAP_WORKOUT| WK
+  P3 -->|REPORT_INJURY| INJ
+  P3 -->|LOG_HYDRATION| HYD
+  P3 -->|unknown| KW{keywords}
+  KW --> CCH
+  ROUTE --> AGENTS
+  NUT --> AGENTS
+  WK --> AGENTS
+  INJ --> AGENTS
+  HYD --> AGENTS
+  CCH --> AGENTS

@@ -473,315 +473,311 @@ extension _ExpandedExerciseCardStateUI1 on _ExpandedExerciseCardState {
   }
 
 
-  /// Build the 3-dot menu with all exercise options
+  /// 3-dot menu trigger — opens a glass bottom sheet.
+  /// The button itself does NOT watch any provider, so taps feel instant
+  /// and the card doesn't rebuild when favorite/staple/queue state changes.
   Widget _buildExerciseOptionsMenu(BuildContext context, Color accentColor) {
-    final exerciseName = widget.exercise.name;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-
-    // Watch provider states for toggle indicators
-    final isFavorite = ref.watch(favoritesProvider).isFavorite(exerciseName);
-    final isStaple = ref.watch(staplesProvider).isStaple(exerciseName);
-    final isQueued = ref.watch(exerciseQueueProvider).isQueued(exerciseName);
-
-    return PopupMenuButton<String>(
+    return IconButton(
+      padding: EdgeInsets.zero,
+      constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+      visualDensity: VisualDensity.compact,
+      splashRadius: 20,
       icon: Container(
         padding: const EdgeInsets.all(6),
         decoration: BoxDecoration(
           color: accentColor.withOpacity(0.1),
           shape: BoxShape.circle,
         ),
-        child: Icon(
-          Icons.more_vert,
-          size: 18,
-          color: accentColor,
+        child: Icon(Icons.more_vert, size: 18, color: accentColor),
+      ),
+      onPressed: () => _showExerciseOptionsSheet(context),
+    );
+  }
+
+  /// Shows the exercise-actions bottom sheet. Provider-watching is scoped
+  /// to a Consumer inside the sheet so only the list items rebuild.
+  void _showExerciseOptionsSheet(BuildContext context) {
+    HapticService.light();
+    final exerciseName = widget.exercise.name;
+
+    showGlassSheet<void>(
+      context: context,
+      builder: (sheetCtx) => GlassSheet(
+        showHandle: true,
+        child: Consumer(
+          builder: (ctx, sheetRef, _) {
+            final isDark = Theme.of(ctx).brightness == Brightness.dark;
+            final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+            final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+
+            // Scoped selectors — rebuild only when THIS exercise's flag flips.
+            final isFavorite = sheetRef.watch(favoritesProvider
+                .select((s) => s.isFavorite(exerciseName)));
+            final isStaple = sheetRef.watch(staplesProvider
+                .select((s) => s.isStaple(exerciseName)));
+            final isQueued = sheetRef.watch(exerciseQueueProvider
+                .select((s) => s.isQueued(exerciseName)));
+
+            return Padding(
+              padding: const EdgeInsets.only(top: 8, bottom: 8),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Header — exercise name
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 4, 20, 12),
+                    child: Text(
+                      exerciseName,
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        color: textPrimary,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  Divider(height: 1, color: textMuted.withOpacity(0.15)),
+
+                  // === TOGGLES ===
+                  _sheetTile(
+                    context: ctx,
+                    icon: isFavorite ? Icons.favorite : Icons.favorite_border,
+                    iconColor: isFavorite ? AppColors.error : textPrimary,
+                    label: isFavorite ? 'Remove from Favorites' : 'Add to Favorites',
+                    trailingCheck: isFavorite ? AppColors.error : null,
+                    textPrimary: textPrimary,
+                    onTap: () => _handleSheetAction(sheetCtx, 'favorite'),
+                  ),
+                  _sheetTile(
+                    context: ctx,
+                    icon: isQueued ? Icons.playlist_add_check : Icons.playlist_add,
+                    iconColor: isQueued ? AppColors.cyan : textPrimary,
+                    label: isQueued ? 'Remove from Queue' : 'Repeat Next Time',
+                    trailingCheck: isQueued ? AppColors.cyan : null,
+                    textPrimary: textPrimary,
+                    onTap: () => _handleSheetAction(sheetCtx, 'queue'),
+                  ),
+                  _sheetTile(
+                    context: ctx,
+                    icon: isStaple ? Icons.push_pin : Icons.push_pin_outlined,
+                    iconColor: isStaple ? AppColors.purple : textPrimary,
+                    label: isStaple ? 'Remove as Staple' : 'Mark as Staple',
+                    trailingCheck: isStaple ? AppColors.purple : null,
+                    textPrimary: textPrimary,
+                    onTap: () => _handleSheetAction(sheetCtx, 'staple'),
+                  ),
+
+                  Divider(height: 1, color: textMuted.withOpacity(0.15)),
+
+                  // === ACTIONS ===
+                  if (widget.onViewHistory != null)
+                    _sheetTile(
+                      context: ctx,
+                      icon: Icons.history_rounded,
+                      iconColor: textPrimary,
+                      label: 'View History',
+                      textPrimary: textPrimary,
+                      onTap: () => _handleSheetAction(sheetCtx, 'history'),
+                    ),
+                  if (widget.onSwap != null)
+                    _sheetTile(
+                      context: ctx,
+                      icon: Icons.swap_horiz,
+                      iconColor: textPrimary,
+                      label: 'Swap Exercise',
+                      textPrimary: textPrimary,
+                      onTap: () => _handleSheetAction(sheetCtx, 'swap'),
+                    ),
+                  if (widget.onLinkSuperset != null)
+                    _sheetTile(
+                      context: ctx,
+                      icon: Icons.link,
+                      iconColor: textPrimary,
+                      label: 'Link as Superset',
+                      textPrimary: textPrimary,
+                      onTap: () => _handleSheetAction(sheetCtx, 'superset'),
+                    ),
+
+                  Divider(height: 1, color: textMuted.withOpacity(0.15)),
+
+                  // === DESTRUCTIVE ===
+                  if (widget.onRemove != null)
+                    _sheetTile(
+                      context: ctx,
+                      icon: Icons.delete_outline,
+                      iconColor: AppColors.error,
+                      label: 'Remove from Workout',
+                      labelColor: AppColors.error,
+                      textPrimary: textPrimary,
+                      onTap: () => _handleSheetAction(sheetCtx, 'remove'),
+                    ),
+                  if (widget.onNeverRecommend != null)
+                    _sheetTile(
+                      context: ctx,
+                      icon: Icons.block_rounded,
+                      iconColor: AppColors.error,
+                      label: 'Never Recommend',
+                      labelColor: AppColors.error,
+                      textPrimary: textPrimary,
+                      onTap: () => _handleSheetAction(sheetCtx, 'never_recommend'),
+                    ),
+
+                  Divider(height: 1, color: textMuted.withOpacity(0.15)),
+
+                  // === INFO ===
+                  _sheetTile(
+                    context: ctx,
+                    icon: Icons.help_outline,
+                    iconColor: textMuted,
+                    label: 'What do these mean?',
+                    labelColor: textMuted,
+                    textPrimary: textPrimary,
+                    onTap: () => _handleSheetAction(sheetCtx, 'info'),
+                  ),
+                ],
+              ),
+            );
+          },
         ),
       ),
-      onSelected: (value) async {
-        HapticService.light();
+    );
+  }
 
-        switch (value) {
-          case 'favorite':
-            final success = await ref.read(favoritesProvider.notifier)
-                .toggleFavorite(exerciseName, exerciseId: widget.exercise.exerciseId);
-            if (mounted && success) {
-              final newState = ref.read(favoritesProvider).isFavorite(exerciseName);
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Row(
-                    children: [
-                      Icon(
-                        newState ? Icons.favorite : Icons.favorite_border,
-                        color: Colors.white,
-                        size: 18,
-                      ),
-                      const SizedBox(width: 8),
-                      Text(newState ? 'Added to favorites' : 'Removed from favorites'),
-                    ],
-                  ),
-                  backgroundColor: AppColors.success,
-                  duration: const Duration(seconds: 2),
-                ),
-              );
-            }
-            break;
-
-          case 'queue':
-            final success = await ref.read(exerciseQueueProvider.notifier)
-                .toggleQueue(exerciseName,
-                  exerciseId: widget.exercise.exerciseId,
-                  targetMuscleGroup: widget.exercise.muscleGroup,
-                );
-            if (mounted && success) {
-              final newState = ref.read(exerciseQueueProvider).isQueued(exerciseName);
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Row(
-                    children: [
-                      Icon(
-                        newState ? Icons.playlist_add_check : Icons.playlist_add,
-                        color: Colors.white,
-                        size: 18,
-                      ),
-                      const SizedBox(width: 8),
-                      Text(newState ? 'Queued for next workout' : 'Removed from queue'),
-                    ],
-                  ),
-                  backgroundColor: AppColors.cyan,
-                  duration: const Duration(seconds: 2),
-                ),
-              );
-            }
-            break;
-
-          case 'staple':
-            final success = await ref.read(staplesProvider.notifier)
-                .toggleStaple(exerciseName,
-                  libraryId: widget.exercise.libraryId,
-                  muscleGroup: widget.exercise.muscleGroup,
-                );
-            if (mounted && success) {
-              final newState = ref.read(staplesProvider).isStaple(exerciseName);
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Row(
-                    children: [
-                      Icon(
-                        newState ? Icons.push_pin : Icons.push_pin_outlined,
-                        color: Colors.white,
-                        size: 18,
-                      ),
-                      const SizedBox(width: 8),
-                      Text(newState
-                        ? 'Marked as staple - updating workout...'
-                        : 'Removed from staples'),
-                    ],
-                  ),
-                  backgroundColor: AppColors.purple,
-                  duration: const Duration(seconds: 2),
-                ),
-              );
-            }
-            break;
-
-          case 'history':
-            widget.onViewHistory?.call();
-            break;
-
-          case 'swap':
-            widget.onSwap?.call();
-            break;
-
-          case 'superset':
-            widget.onLinkSuperset?.call();
-            break;
-
-          case 'remove':
-            widget.onRemove?.call();
-            break;
-
-          case 'never_recommend':
-            widget.onNeverRecommend?.call();
-            break;
-
-          case 'info':
-            showExerciseOptionsInfoSheet(context: context);
-            break;
-        }
-      },
-      itemBuilder: (ctx) => [
-        // === TOGGLE OPTIONS ===
-
-        // Favorite toggle
-        PopupMenuItem(
-          value: 'favorite',
-          child: Row(
-            children: [
-              Icon(
-                isFavorite ? Icons.favorite : Icons.favorite_border,
-                size: 20,
-                color: isFavorite ? AppColors.error : textPrimary,
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  isFavorite ? 'Remove from Favorites' : 'Add to Favorites',
-                  style: TextStyle(
-                    color: isFavorite ? AppColors.error : textPrimary,
-                  ),
+  /// Compact, tappable row used inside the options sheet.
+  Widget _sheetTile({
+    required BuildContext context,
+    required IconData icon,
+    required Color iconColor,
+    required String label,
+    required Color textPrimary,
+    Color? labelColor,
+    Color? trailingCheck,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+        child: Row(
+          children: [
+            Icon(icon, size: 22, color: iconColor),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Text(
+                label,
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w500,
+                  color: labelColor ?? textPrimary,
                 ),
               ),
-              if (isFavorite)
-                Icon(Icons.check, size: 16, color: AppColors.error),
-            ],
-          ),
+            ),
+            if (trailingCheck != null)
+              Icon(Icons.check_rounded, size: 18, color: trailingCheck),
+          ],
         ),
+      ),
+    );
+  }
 
-        // Queue toggle (Repeat Next Time)
-        PopupMenuItem(
-          value: 'queue',
-          child: Row(
-            children: [
-              Icon(
-                isQueued ? Icons.playlist_add_check : Icons.playlist_add,
-                size: 20,
-                color: isQueued ? AppColors.cyan : textPrimary,
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  isQueued ? 'Remove from Queue' : 'Repeat Next Time',
-                  style: TextStyle(
-                    color: isQueued ? AppColors.cyan : textPrimary,
-                  ),
-                ),
-              ),
-              if (isQueued)
-                Icon(Icons.check, size: 16, color: AppColors.cyan),
-            ],
-          ),
+  /// Dispatch for sheet actions — closes sheet first, then runs the action
+  /// on the next frame so the dismiss animation stays smooth.
+  Future<void> _handleSheetAction(BuildContext sheetCtx, String value) async {
+    HapticService.light();
+    Navigator.of(sheetCtx).pop();
+
+    // Let the sheet dismiss animation run one frame before heavier work.
+    await Future<void>.delayed(const Duration(milliseconds: 10));
+    if (!mounted) return;
+
+    final exerciseName = widget.exercise.name;
+
+    switch (value) {
+      case 'favorite':
+        final success = await ref.read(favoritesProvider.notifier).toggleFavorite(
+              exerciseName,
+              exerciseId: widget.exercise.exerciseId,
+            );
+        if (!mounted || !success) return;
+        final newState = ref.read(favoritesProvider).isFavorite(exerciseName);
+        _showActionSnackBar(
+          icon: newState ? Icons.favorite : Icons.favorite_border,
+          text: newState ? 'Added to favorites' : 'Removed from favorites',
+          color: AppColors.success,
+        );
+        break;
+
+      case 'queue':
+        final success = await ref.read(exerciseQueueProvider.notifier).toggleQueue(
+              exerciseName,
+              exerciseId: widget.exercise.exerciseId,
+              targetMuscleGroup: widget.exercise.muscleGroup,
+            );
+        if (!mounted || !success) return;
+        final newState = ref.read(exerciseQueueProvider).isQueued(exerciseName);
+        _showActionSnackBar(
+          icon: newState ? Icons.playlist_add_check : Icons.playlist_add,
+          text: newState ? 'Queued for next workout' : 'Removed from queue',
+          color: AppColors.cyan,
+        );
+        break;
+
+      case 'staple':
+        final success = await ref.read(staplesProvider.notifier).toggleStaple(
+              exerciseName,
+              libraryId: widget.exercise.libraryId,
+              muscleGroup: widget.exercise.muscleGroup,
+            );
+        if (!mounted || !success) return;
+        final newState = ref.read(staplesProvider).isStaple(exerciseName);
+        _showActionSnackBar(
+          icon: newState ? Icons.push_pin : Icons.push_pin_outlined,
+          text: newState ? 'Marked as staple - updating workout...' : 'Removed from staples',
+          color: AppColors.purple,
+        );
+        break;
+
+      case 'history':
+        widget.onViewHistory?.call();
+        break;
+      case 'swap':
+        widget.onSwap?.call();
+        break;
+      case 'superset':
+        widget.onLinkSuperset?.call();
+        break;
+      case 'remove':
+        widget.onRemove?.call();
+        break;
+      case 'never_recommend':
+        widget.onNeverRecommend?.call();
+        break;
+      case 'info':
+        showExerciseOptionsInfoSheet(context: context);
+        break;
+    }
+  }
+
+  void _showActionSnackBar({
+    required IconData icon,
+    required String text,
+    required Color color,
+  }) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            Icon(icon, color: Colors.white, size: 18),
+            const SizedBox(width: 8),
+            Expanded(child: Text(text)),
+          ],
         ),
-
-        // Staple toggle
-        PopupMenuItem(
-          value: 'staple',
-          child: Row(
-            children: [
-              Icon(
-                isStaple ? Icons.push_pin : Icons.push_pin_outlined,
-                size: 20,
-                color: isStaple ? AppColors.purple : textPrimary,
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  isStaple ? 'Remove as Staple' : 'Mark as Staple',
-                  style: TextStyle(
-                    color: isStaple ? AppColors.purple : textPrimary,
-                  ),
-                ),
-              ),
-              if (isStaple)
-                Icon(Icons.check, size: 16, color: AppColors.purple),
-            ],
-          ),
-        ),
-
-        const PopupMenuDivider(),
-
-        // === ACTION OPTIONS ===
-
-        // View History
-        if (widget.onViewHistory != null)
-          PopupMenuItem(
-            value: 'history',
-            child: Row(
-              children: [
-                Icon(Icons.history_rounded, size: 20, color: textPrimary),
-                const SizedBox(width: 12),
-                const Text('View History'),
-              ],
-            ),
-          ),
-
-        // Swap Exercise
-        if (widget.onSwap != null)
-          PopupMenuItem(
-            value: 'swap',
-            child: Row(
-              children: [
-                Icon(Icons.swap_horiz, size: 20, color: textPrimary),
-                const SizedBox(width: 12),
-                const Text('Swap Exercise'),
-              ],
-            ),
-          ),
-
-        // Link as Superset
-        if (widget.onLinkSuperset != null)
-          PopupMenuItem(
-            value: 'superset',
-            child: Row(
-              children: [
-                Icon(Icons.link, size: 20, color: textPrimary),
-                const SizedBox(width: 12),
-                const Text('Link as Superset'),
-              ],
-            ),
-          ),
-
-        const PopupMenuDivider(),
-
-        // === DESTRUCTIVE OPTIONS ===
-
-        // Remove from Workout
-        if (widget.onRemove != null)
-          PopupMenuItem(
-            value: 'remove',
-            child: Row(
-              children: [
-                Icon(Icons.delete_outline, size: 20, color: AppColors.error),
-                const SizedBox(width: 12),
-                Text(
-                  'Remove from Workout',
-                  style: TextStyle(color: AppColors.error),
-                ),
-              ],
-            ),
-          ),
-
-        // Never Recommend
-        if (widget.onNeverRecommend != null)
-          PopupMenuItem(
-            value: 'never_recommend',
-            child: Row(
-              children: [
-                Icon(Icons.block_rounded, size: 20, color: AppColors.error),
-                const SizedBox(width: 12),
-                Text(
-                  'Never Recommend',
-                  style: TextStyle(color: AppColors.error),
-                ),
-              ],
-            ),
-          ),
-
-        const PopupMenuDivider(),
-
-        // === INFO ===
-
-        // What do these mean?
-        PopupMenuItem(
-          value: 'info',
-          child: Row(
-            children: [
-              Icon(Icons.help_outline, size: 20, color: textPrimary),
-              const SizedBox(width: 12),
-              const Text('What do these mean?'),
-            ],
-          ),
-        ),
-      ],
+        backgroundColor: color,
+        duration: const Duration(seconds: 2),
+      ),
     );
   }
 

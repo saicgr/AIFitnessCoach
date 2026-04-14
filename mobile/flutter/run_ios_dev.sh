@@ -125,6 +125,8 @@ $FLUTTER_PATH clean
 echo -e "${YELLOW}Getting dependencies...${NC}"
 $FLUTTER_PATH pub get
 
+# Generated .g.dart files are committed to git — no codegen step here.
+
 # flutter_gemma exclusion is handled by the Podfile (strips it from iOS plugins)
 
 echo -e "${YELLOW}Uninstalling existing app...${NC}"

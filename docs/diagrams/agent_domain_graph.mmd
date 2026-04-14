@@ -1,0 +1,21 @@
+flowchart TB
+  S([START])
+  R1{should_use_tools<br/>has media?<br/>modifier intent?<br/>query intent?}
+  AGENT[agent node<br/>llm.bind_tools TOOLS<br/>ainvoke messages]
+  R2{check_for_tool_calls<br/>tool_calls present?}
+  TE[tool_executor<br/>run tool funcs,<br/>append ToolMessage]
+  RESP[response<br/>llm.ainvoke tool_msgs<br/>final text]
+  AUTO["autonomous<br/>advice without tools<br/>e.g. what should I eat"]
+  AD[action_data<br/>build structured payload<br/>for Flutter UI]
+  E([END])
+
+  S --> R1
+  R1 -- use tools --> AGENT
+  R1 -- respond only --> AUTO
+  AGENT --> R2
+  R2 -- tool_calls present --> TE
+  R2 -- no tools --> AD
+  TE --> RESP
+  RESP --> AD
+  AUTO --> AD
+  AD --> E

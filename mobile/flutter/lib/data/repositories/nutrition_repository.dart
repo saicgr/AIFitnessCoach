@@ -6,13 +6,18 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:dio/dio.dart';
 import '../../core/constants/api_constants.dart';
 import '../models/nutrition.dart';
+import '../models/food_patterns.dart';
 import '../models/micronutrients.dart';
 import '../models/nutrition_preferences.dart';
+import '../models/companion_suggestion.dart';
 import '../models/recipe.dart';
 import '../services/api_client.dart';
 import '../../utils/tz.dart';
 import '../services/health_service.dart';
 import '../providers/xp_provider.dart';
+import '../../services/post_meal_checkin_reminder.dart';
+// Meal-suggestion widget — staged. Re-enable once widget feature ships.
+// import '../../services/meal_suggestion_widget_service.dart';
 
 part 'nutrition_repository_part_food_logging_progress.dart';
 
@@ -691,6 +696,63 @@ class NutritionRepository {
     }
   }
 
+  /// Fetch typical-companion suggestions for a primary food.
+  ///
+  /// Backend merges the user's own cross-log co-occurrence history with a
+  /// cached Gemini call ("often paired with this") and applies the user's
+  /// rejected-pair suppressions. An **empty** list is a valid response — it
+  /// tells the UI to log the primary silently without showing any sheet.
+  Future<List<CompanionSuggestion>> fetchCompanions({
+    required String userId,
+    required String primaryFoodName,
+    required String mealType,
+    String locale = 'en',
+  }) async {
+    try {
+      final response = await _client.post(
+        '/nutrition/companions',
+        data: {
+          'user_id': userId,
+          'primary_food_name': primaryFoodName,
+          'meal_type': mealType,
+          'locale': locale,
+        },
+      );
+      final raw = (response.data as Map<String, dynamic>?)?['suggestions']
+              as List<dynamic>? ??
+          const [];
+      return raw
+          .whereType<Map<String, dynamic>>()
+          .map(CompanionSuggestion.fromJson)
+          .toList();
+    } catch (e) {
+      debugPrint('⚠️ [Nutrition] fetchCompanions failed: $e');
+      // Never fabricate sides. Let the caller fall through to silent log.
+      return const [];
+    }
+  }
+
+  /// Record a user-taught negative — suppress `companionName` on future
+  /// companion prompts for `primaryFoodName`. Idempotent.
+  Future<void> rejectCompanion({
+    required String userId,
+    required String primaryFoodName,
+    required String companionName,
+  }) async {
+    try {
+      await _client.post(
+        '/nutrition/companions/reject',
+        data: {
+          'user_id': userId,
+          'primary_food_name': primaryFoodName,
+          'companion_name': companionName,
+        },
+      );
+    } catch (e) {
+      debugPrint('⚠️ [Nutrition] rejectCompanion failed (non-fatal): $e');
+    }
+  }
+
   /// Get all RDA (Reference Daily Allowance) values
   Future<List<NutrientRDA>> getAllRDAs() async {
     try {
@@ -893,5 +955,123 @@ class NutritionRepository {
       debugPrint('❌ [Nutrition] Error loading weekly check-in data: $e');
       return null;
     }
+  }
+
+  // ── Food Patterns (Nutrition > Patterns tab) ──────────────────────────────
+
+  Future<FoodPatternsMoodResponse> getMoodPatterns(
+    String userId, {
+    int days = 90,
+    int minLogs = 3,
+  }) async {
+    final resp = await _client.get(
+      '/nutrition/food-patterns/mood/$userId',
+      queryParameters: {'days': days, 'min_logs': minLogs},
+    );
+    return FoodPatternsMoodResponse.fromJson(
+      Map<String, dynamic>.from(resp.data as Map),
+    );
+  }
+
+  Future<TopFoodsResponse> getTopFoods(
+    String userId, {
+    String metric = 'calories',
+    String range = 'week',
+    String? date,
+    int limit = 20,
+  }) async {
+    final resp = await _client.get(
+      '/nutrition/food-patterns/top-foods/$userId',
+      queryParameters: {
+        'metric': metric,
+        'range': range,
+        if (date != null) 'date': date,
+        'limit': limit,
+      },
+    );
+    return TopFoodsResponse.fromJson(
+      Map<String, dynamic>.from(resp.data as Map),
+    );
+  }
+
+  Future<MacrosSummaryResponse> getMacrosSummary(
+    String userId, {
+    String range = 'week',
+    String? date,
+  }) async {
+    final resp = await _client.get(
+      '/nutrition/food-patterns/macros-summary/$userId',
+      queryParameters: {
+        'range': range,
+        if (date != null) 'date': date,
+      },
+    );
+    return MacrosSummaryResponse.fromJson(
+      Map<String, dynamic>.from(resp.data as Map),
+    );
+  }
+
+  /// Raw food_log rows for the Patterns timeline (Section 4).
+  Future<List<Map<String, dynamic>>> getPatternsHistory(
+    String userId, {
+    String range = 'week',
+    String? date,
+    int limit = 50,
+    int offset = 0,
+  }) async {
+    final resp = await _client.get(
+      '/nutrition/food-patterns/history/$userId',
+      queryParameters: {
+        'range': range,
+        if (date != null) 'date': date,
+        'limit': limit,
+        'offset': offset,
+      },
+    );
+    final data = Map<String, dynamic>.from(resp.data as Map);
+    final items = (data['items'] as List<dynamic>? ?? const [])
+        .map((e) => Map<String, dynamic>.from(e as Map))
+        .toList();
+    return items;
+  }
+
+  Future<PatternsSettings> getPatternsSettings(String userId) async {
+    final resp = await _client.get('/nutrition/food-patterns/settings/$userId');
+    return PatternsSettings.fromJson(
+      Map<String, dynamic>.from(resp.data as Map),
+    );
+  }
+
+  Future<PatternsSettings> updatePatternsSettings(
+    String userId, {
+    bool? postMealCheckinDisabled,
+    bool? postMealReminderEnabled,
+    bool? passiveInferenceEnabled,
+  }) async {
+    final body = <String, dynamic>{};
+    if (postMealCheckinDisabled != null) {
+      body['post_meal_checkin_disabled'] = postMealCheckinDisabled;
+    }
+    if (postMealReminderEnabled != null) {
+      body['post_meal_reminder_enabled'] = postMealReminderEnabled;
+    }
+    if (passiveInferenceEnabled != null) {
+      body['passive_inference_enabled'] = passiveInferenceEnabled;
+    }
+    final resp = await _client.patch(
+      '/nutrition/food-patterns/settings/$userId',
+      data: body,
+    );
+    return PatternsSettings.fromJson(
+      Map<String, dynamic>.from(resp.data as Map),
+    );
+  }
+
+  /// Confirm or dismiss a passive mood-inference guess on a food log.
+  Future<void> patchInference(String logId, {required bool confirm}) async {
+    await _client.patch(
+      '/nutrition/food-logs/$logId/inference',
+      data: {'action': confirm ? 'confirm' : 'dismiss'},
+    );
   }
 }

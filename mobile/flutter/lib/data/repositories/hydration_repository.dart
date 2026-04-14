@@ -4,6 +4,7 @@ import '../models/hydration.dart';
 import '../services/api_client.dart';
 import '../../utils/tz.dart';
 import '../services/health_service.dart';
+import '../providers/xp_provider.dart';
 
 /// In-memory cache for instant display on provider recreation
 /// Survives provider invalidation and prevents loading flash
@@ -50,19 +51,20 @@ class HydrationState {
 /// Hydration state provider
 final hydrationProvider =
     StateNotifierProvider<HydrationNotifier, HydrationState>((ref) {
-  return HydrationNotifier(ref.watch(hydrationRepositoryProvider));
+  return HydrationNotifier(ref.watch(hydrationRepositoryProvider), ref);
 });
 
 /// Hydration state notifier
 class HydrationNotifier extends StateNotifier<HydrationState> {
   final HydrationRepository _repository;
+  final Ref _ref;
 
   /// Monotonic counter to discard stale responses from earlier loads.
   /// Incremented at the start of every [loadTodaySummary]; the response is
   /// only applied when the epoch still matches (i.e. no newer load started).
   int _loadEpoch = 0;
 
-  HydrationNotifier(this._repository)
+  HydrationNotifier(this._repository, this._ref)
       : super(_hydrationInMemoryCache ?? const HydrationState());
 
   /// Clear in-memory cache (called on logout)
@@ -91,9 +93,19 @@ class HydrationNotifier extends StateNotifier<HydrationState> {
       );
       // Update in-memory cache for instant access on provider recreation
       _hydrationInMemoryCache = state;
+
+      _checkHydrationGoal(summary);
     } catch (e) {
       if (_loadEpoch != epoch) return;
       state = state.copyWith(isLoading: false, error: e.toString());
+    }
+  }
+
+  /// Fire-once-per-day XP award when the user crosses their hydration goal.
+  /// `markHydrationGoalHit` is idempotent — subsequent calls are no-ops.
+  void _checkHydrationGoal(DailyHydrationSummary summary) {
+    if (summary.goalMl > 0 && summary.totalMl >= summary.goalMl) {
+      _ref.read(xpProvider.notifier).markHydrationGoalHit();
     }
   }
 

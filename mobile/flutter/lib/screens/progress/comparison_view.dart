@@ -84,6 +84,13 @@ class _ComparisonViewState extends ConsumerState<ComparisonView> {
   bool _ghostOverlayEnabled = false;
   double _ghostOpacity = 0.4;
 
+  // Branding / logo
+  bool _showUsername = false;
+  String _logoVariant = 'auto'; // 'auto' | 'original' | 'light' | 'dark'
+
+  // Per-photo date overrides (only affects rendered chip, not the underlying photo)
+  final Map<int, DateTime> _dateOverrides = {};
+
   @override
   void initState() {
     super.initState();
@@ -134,6 +141,12 @@ class _ComparisonViewState extends ConsumerState<ComparisonView> {
       _photoBorderColor = _parseBorderColor(_settings.photoBorderColor);
       _photoBorderWidth = _settings.photoBorderWidth;
       _photoSpacing = _settings.photoSpacing;
+      _showUsername = _settings.showUsername;
+      _logoVariant = _settings.logoVariant;
+      for (final entry in _settings.dateOverrides.entries) {
+        final dt = DateTime.tryParse(entry.value);
+        if (dt != null) _dateOverrides[entry.key] = dt;
+      }
     }
     if (existing.aiSummary != null) {
       _aiSummary = existing.aiSummary;
@@ -402,18 +415,17 @@ class _ComparisonViewState extends ConsumerState<ComparisonView> {
                             child: CustomPaint(painter: CanvasPatternPainter(bgColor)),
                           ),
                         ),
-                        Positioned(left: 0, right: 0, bottom: 0, child: _buildBrandingFooter(bgColor)),
                         if (_showStats && _buildRichStatsData() != null)
                           _buildDraggableStatsBar(bgColor),
                         if (_settings.showAiSummary && _aiSummary != null)
-                          Positioned(left: 0, right: 0, bottom: 28, child: _buildAiSummaryOverlay(bgColor)),
+                          Positioned(left: 0, right: 0, bottom: 0, child: _buildAiSummaryOverlay(bgColor)),
                         if (_settings.showDates) _buildDateOverlays(),
                         if (_settings.showLogo)
                           Positioned(
                             left: _logoPosition.dx, top: _logoPosition.dy,
                             child: GestureDetector(
                               onPanUpdate: (details) => setState(() => _logoPosition += details.delta),
-                              child: _buildAppIconLogo(),
+                              child: _buildBrandingPill(bgColor),
                             ),
                           ),
                       ],
@@ -431,7 +443,7 @@ class _ComparisonViewState extends ConsumerState<ComparisonView> {
   }
 
   EdgeInsets _computeCanvasPhotoPadding() {
-    double bottom = 28;
+    double bottom = 0;
     if (_settings.showAiSummary && _aiSummary != null) bottom += 60;
     final statsH = _computeStatsBarHeight();
     if (statsH > 0) bottom += statsH;
@@ -540,21 +552,22 @@ class _ComparisonViewState extends ConsumerState<ComparisonView> {
 
   Offset _computeDefaultDatePosition(int index, int totalPhotos, BoxConstraints constraints) {
     final isHorizontal = _selectedLayout == ComparisonLayout.sideBySide || _selectedLayout == ComparisonLayout.triptych;
-    final footerH = 28.0;
     const chipW = 80.0;
+    final aiH = (_settings.showAiSummary && _aiSummary != null) ? 60.0 : 0.0;
+    final bottomOffset = aiH + 8;
     if (isHorizontal && totalPhotos > 1) {
       final segmentWidth = constraints.maxWidth / totalPhotos;
-      return Offset(_dateAlignX(index * segmentWidth, segmentWidth, chipW), constraints.maxHeight - footerH - 24);
+      return Offset(_dateAlignX(index * segmentWidth, segmentWidth, chipW), constraints.maxHeight - bottomOffset - 24);
     }
     if (_selectedLayout == ComparisonLayout.verticalStack && totalPhotos >= 2) {
       final segmentHeight = constraints.maxHeight / totalPhotos;
-      return Offset(_dateAlignX(0, constraints.maxWidth, chipW), (index + 1) * segmentHeight - footerH - 24);
+      return Offset(_dateAlignX(0, constraints.maxWidth, chipW), (index + 1) * segmentHeight - bottomOffset - 24);
     }
     if (totalPhotos >= 2) {
-      if (index == 0) return Offset(_dateAlignX(0, constraints.maxWidth / 2, chipW), constraints.maxHeight - footerH - 24);
-      return Offset(_dateAlignX(constraints.maxWidth / 2, constraints.maxWidth / 2, chipW), constraints.maxHeight - footerH - 24);
+      if (index == 0) return Offset(_dateAlignX(0, constraints.maxWidth / 2, chipW), constraints.maxHeight - bottomOffset - 24);
+      return Offset(_dateAlignX(constraints.maxWidth / 2, constraints.maxWidth / 2, chipW), constraints.maxHeight - bottomOffset - 24);
     }
-    return Offset(_dateAlignX(0, constraints.maxWidth, chipW), constraints.maxHeight - footerH - 24);
+    return Offset(_dateAlignX(0, constraints.maxWidth, chipW), constraints.maxHeight - bottomOffset - 24);
   }
 
   Widget _buildDateOverlays() {
@@ -564,16 +577,31 @@ class _ComparisonViewState extends ConsumerState<ComparisonView> {
     return Positioned.fill(child: LayoutBuilder(builder: (context, constraints) {
       return Stack(children: photosToLabel.asMap().entries.map((entry) {
         final i = entry.key;
+        final photo = entry.value;
         final pos = _datePositions[i] ?? _computeDefaultDatePosition(i, photosToLabel.length, constraints);
+        final displayedDate = _dateOverrides[i] ?? photo.takenAt;
         return Positioned(left: pos.dx, top: pos.dy, child: GestureDetector(
           onPanUpdate: (details) => setState(() {
             final current = _datePositions[i] ?? _computeDefaultDatePosition(i, photosToLabel.length, constraints);
             _datePositions[i] = Offset((current.dx + details.delta.dx).clamp(0, constraints.maxWidth - 80), (current.dy + details.delta.dy).clamp(0, constraints.maxHeight - 20));
           }),
-          child: _buildDateChip(entry.value),
+          onTap: () => _pickDateOverride(i, displayedDate),
+          child: _buildDateChip(displayedDate),
         ));
       }).toList());
     }));
+  }
+
+  Future<void> _pickDateOverride(int index, DateTime current) async {
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: current,
+      firstDate: DateTime(2000),
+      lastDate: DateTime.now().add(const Duration(days: 365)),
+    );
+    if (picked != null && mounted) {
+      setState(() => _dateOverrides[index] = picked);
+    }
   }
 
   // ---------------------------------------------------------------------------
@@ -630,10 +658,9 @@ class _ComparisonViewState extends ConsumerState<ComparisonView> {
 
   Widget _buildDraggableStatsBar(Color bgColor) {
     return Positioned.fill(child: LayoutBuilder(builder: (context, constraints) {
-      final footerH = 28.0;
       final aiH = (_settings.showAiSummary && _aiSummary != null) ? 60.0 : 0.0;
       final barH = _computeStatsBarHeight();
-      final defaultPos = Offset(0, constraints.maxHeight - footerH - aiH - barH);
+      final defaultPos = Offset(0, constraints.maxHeight - aiH - barH);
       final pos = _statsPosition.dx < 0 ? defaultPos : _statsPosition;
       return Stack(children: [Positioned(left: pos.dx, top: pos.dy, width: constraints.maxWidth, child: GestureDetector(
         onPanUpdate: (details) => setState(() {
@@ -658,6 +685,8 @@ class _ComparisonViewState extends ConsumerState<ComparisonView> {
       child: SafeArea(top: false, child: Column(mainAxisSize: MainAxisSize.min, children: [
         SingleChildScrollView(scrollDirection: Axis.horizontal, child: Row(children: [
           ComparisonToolbarChip(label: 'Logo', icon: Icons.auto_awesome, isActive: _settings.showLogo, colorScheme: colorScheme, onTap: () => setState(() => _settings = _settings.copyWith(showLogo: !_settings.showLogo))),
+          const SizedBox(width: 8),
+          ComparisonToolbarChip(label: 'Username', icon: Icons.alternate_email, isActive: _showUsername, colorScheme: colorScheme, onTap: () => setState(() => _showUsername = !_showUsername)),
           const SizedBox(width: 8),
           ComparisonToolbarChip(label: 'Stats', icon: Icons.bar_chart, isActive: _showStats, colorScheme: colorScheme, onTap: () => setState(() => _showStats = !_showStats)),
           const SizedBox(width: 8),
@@ -754,7 +783,39 @@ class _ComparisonViewState extends ConsumerState<ComparisonView> {
         Expanded(child: SliderTheme(data: SliderTheme.of(context).copyWith(trackHeight: 3, thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6)), child: Slider(value: _photoSpacing, min: 0, max: 24, onChanged: (v) => setState(() => _photoSpacing = v)))),
         SizedBox(width: 28, child: Text('${_photoSpacing.round()}', style: TextStyle(fontSize: 11, color: colorScheme.onSurfaceVariant))),
       ])),
+      AnimatedSize(duration: const Duration(milliseconds: 200), child: _settings.showLogo
+          ? Padding(padding: const EdgeInsets.only(top: 8), child: SingleChildScrollView(scrollDirection: Axis.horizontal, child: Row(children: [
+              Text('Logo', style: TextStyle(fontSize: 11, color: colorScheme.onSurfaceVariant, fontWeight: FontWeight.w500)),
+              const SizedBox(width: 8),
+              ..._buildLogoVariantPills(colorScheme),
+            ])))
+          : const SizedBox.shrink()),
     ]));
+  }
+
+  List<Widget> _buildLogoVariantPills(ColorScheme colorScheme) {
+    const variants = <MapEntry<String, (String, IconData)>>[
+      MapEntry('auto', ('Auto', Icons.brightness_auto)),
+      MapEntry('original', ('Original', Icons.palette_outlined)),
+      MapEntry('light', ('Light', Icons.light_mode)),
+      MapEntry('dark', ('Dark', Icons.dark_mode)),
+    ];
+    return variants.map((entry) {
+      final isActive = _logoVariant == entry.key;
+      final label = entry.value.$1;
+      final icon = entry.value.$2;
+      return Padding(padding: const EdgeInsets.only(right: 6), child: GestureDetector(
+        onTap: () => setState(() => _logoVariant = entry.key),
+        child: AnimatedContainer(duration: const Duration(milliseconds: 150), height: 28, padding: const EdgeInsets.symmetric(horizontal: 8),
+          decoration: BoxDecoration(color: isActive ? colorScheme.primaryContainer : Colors.transparent, borderRadius: BorderRadius.circular(14), border: Border.all(color: isActive ? colorScheme.primary : colorScheme.outlineVariant, width: 1)),
+          child: Row(mainAxisSize: MainAxisSize.min, children: [
+            Icon(icon, size: 13, color: isActive ? colorScheme.onPrimaryContainer : colorScheme.onSurfaceVariant),
+            const SizedBox(width: 4),
+            Text(label, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w500, color: isActive ? colorScheme.onPrimaryContainer : colorScheme.onSurfaceVariant)),
+          ]),
+        ),
+      ));
+    }).toList();
   }
 
   Widget _buildGhostOpacitySlider(ColorScheme colorScheme) {
@@ -862,12 +923,15 @@ class _ComparisonViewState extends ConsumerState<ComparisonView> {
     try {
       final datePosMap = <int, List<double>>{};
       for (final entry in _datePositions.entries) datePosMap[entry.key] = [entry.value.dx, entry.value.dy];
+      final dateOverridesMap = <int, String>{};
+      for (final entry in _dateOverrides.entries) dateOverridesMap[entry.key] = entry.value.toIso8601String();
       final finalSettings = _settings.copyWith(
         layout: _selectedLayout.value, logoDx: _logoPosition.dx, logoDy: _logoPosition.dy, showStats: _showStats,
         datePositions: datePosMap, statsPosition: _statsPosition.dx >= 0 ? [_statsPosition.dx, _statsPosition.dy] : null,
         enabledStatCategories: _enabledStatCategories.map((c) => c.name).toList(), showPhotoWeights: _showPhotoWeights,
         datePosition: _datePosition.name, photoShape: _photoShape.name, squircleRadius: _squircleRadius,
         photoBorderEnabled: _photoBorderEnabled, photoBorderColor: _borderColorToHex(_photoBorderColor), photoBorderWidth: _photoBorderWidth, photoSpacing: _photoSpacing,
+        showUsername: _showUsername, logoVariant: _logoVariant, dateOverrides: dateOverridesMap,
       );
       final labels = _selectedLayout.getLabels(_selectedPhotos.length);
       final photosJsonList = _selectedPhotos.asMap().entries.map((entry) => {'photo_id': entry.value.id, 'order': entry.key, 'label': labels[min(entry.key, labels.length - 1)]}).toList();
