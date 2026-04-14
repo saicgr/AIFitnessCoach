@@ -790,7 +790,7 @@ Be encouraging but honest. If changes are subtle, acknowledge effort and consist
 Return ONLY a JSON object: {{"summary": "your analysis here"}}"""
 
         response = gemini_generate_with_retry_sync(
-            model="gemini-2.0-flash",
+            model=settings.gemini_model,
             contents=[
                 types.Part.from_bytes(data=before_resp.content, mime_type="image/jpeg"),
                 types.Part.from_bytes(data=after_resp.content, mime_type="image/jpeg"),

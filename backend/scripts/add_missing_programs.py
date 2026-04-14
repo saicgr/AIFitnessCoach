@@ -9,7 +9,7 @@ from google.genai import types
 load_dotenv()
 
 client = genai.Client(api_key=os.getenv('GEMINI_API_KEY'))
-model_name = os.getenv('GEMINI_MODEL', 'gemini-2.0-flash')
+model_name = os.getenv('GEMINI_MODEL', 'gemini-3-flash-preview')
 
 MISSING_PROGRAMS = [
     "Arthritis-Friendly Movement",

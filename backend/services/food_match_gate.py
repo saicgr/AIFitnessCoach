@@ -351,17 +351,22 @@ def score_row(query_content: List[str], row: Dict[str, Any]) -> MatchScore:
     )
 
 
+_TIER_B_MIN_COVERAGE = 2 / 3  # 0.6666… — see classify() docstring.
+
+
 def classify(score: MatchScore) -> str:
     """Tier A/B/C/D per the module contract.
 
-    Threshold 0.5 for B — 2 of 3 content words covered is the common
-    "user typed an extra qualifier we don't have" shape (e.g. `chicken
-    tikka masala` → `Tikka Masala`). Gemini then decides whether to
-    surface it as a partial match or drop.
+    Tier B: coverage ≥ 2/3 AND missing ≤ 1. The 2/3 floor preserves the
+    legit 2-of-3 partial-match shape (`chicken tikka masala` → `Tikka
+    Masala`) while dropping 1-of-2 cases (`chocolate milk` → `Milk`) where
+    the missing word is the distinguishing ingredient/adjective. Missing
+    ≤ 1 guards longer queries: 4-of-6 (coverage 0.67, missing 2) is too
+    much semantic drift for Gemini to reliably validate.
     """
     if score.coverage >= 1.0:
         return "A"
-    if score.coverage >= 0.5:
+    if score.coverage >= _TIER_B_MIN_COVERAGE and len(score.missing) <= 1:
         return "B"
     if score.trigram_score >= 0.9:
         return "C"
@@ -404,9 +409,12 @@ def _rank(scored: List[MatchScore]) -> List[MatchScore]:
 
 # ── Gemini batch validation (ambiguous-tier gate) ──────────────────────────
 
-# Cache: (query_lower, frozenset(candidate_names), region) -> (ts, accepted_idx)
+# Cache: (query_lower, frozenset(candidate_names), region, prompt_version)
+#        -> (ts, accepted_idx).
+# prompt_version lets us invalidate all stale verdicts when the validator
+# rubric changes.
 _VALIDATE_CACHE: Dict[
-    Tuple[str, FrozenSet[str], Optional[str]],
+    Tuple[str, FrozenSet[str], Optional[str], str],
     Tuple[float, Set[int]],
 ] = {}
 _VALIDATE_TTL = 60 * 60 * 24 * 7  # 7 days
@@ -455,7 +463,9 @@ async def gemini_batch_validate(
         (c.row.get("display_name") or c.row.get("name") or "").strip()
         for c in candidates
     )
-    cache_key = (query.strip().lower(), frozenset(cand_names), region)
+    # "v2" salt invalidates cached verdicts from before the stricter
+    # region/brand/protein rules were added to the validator prompt.
+    cache_key = (query.strip().lower(), frozenset(cand_names), region, "v2")
     now = time.time()
     cached = _VALIDATE_CACHE.get(cache_key)
     if cached and (now - cached[0]) < _VALIDATE_TTL:
@@ -468,6 +478,7 @@ async def gemini_batch_validate(
     try:
         from google.genai import types
         from services.gemini.constants import gemini_generate_with_retry
+        from core.config import get_settings
     except Exception as e:
         logger.warning(f"[FoodMatchGate] Gemini import failed: {e}; fallback")
         return None
@@ -487,6 +498,30 @@ async def gemini_batch_validate(
         "   chicken tikka != tikka).\n"
         "- Typos/transliterations are fine (paner = paneer, aubergine = eggplant).\n"
         "- Pure descriptors (spicy, large, fresh) can differ.\n"
+        "- REGIONAL/STYLE names are DISTINGUISHING and must be preserved.\n"
+        "  If the query contains a region or regional-style word the\n"
+        "  candidate lacks, REJECT. Examples (not exhaustive, apply the\n"
+        "  principle to any place/style name): donne, Hyderabadi, Lucknowi,\n"
+        "  Awadhi, Kolkata, Sindhi, Thalassery, Malabar, Punjabi, Tex-Mex,\n"
+        "  Sichuan, Cantonese, Neapolitan, Roman, Sicilian, Detroit-style,\n"
+        "  New York-style, Chicago-style, Korean, Thai, Vietnamese,\n"
+        "  Japanese.\n"
+        "- BRAND/CHAIN names on the QUERY side missing from the candidate\n"
+        "  (Chipotle, McDonald's, Starbucks, Domino's, Taco Bell, Subway,\n"
+        "  KFC, Chick-fil-A) mean the user wants brand-specific nutrition\n"
+        "  — REJECT a generic candidate. But brand/restaurant words on the\n"
+        "  CANDIDATE side missing from a generic query (House Special,\n"
+        "  Chef's, Signature, Classic) DO NOT block a match — those are\n"
+        "  restaurant labels, not distinguishing qualifiers.\n"
+        "- PROTEIN/MAIN-INGREDIENT words present on one side but not the\n"
+        "  other are DISTINGUISHING — REJECT. Examples: chicken, beef,\n"
+        "  lamb, mutton, pork, paneer, tofu, shrimp, fish, egg, vegan,\n"
+        "  vegetarian. A chicken biryani is not a mutton biryani.\n"
+        "- Unknown non-English words in the query default to DISTINGUISHING\n"
+        "  unless they are clearly a COOKING METHOD or BREADING/COATING\n"
+        "  STYLE with similar macros (panko, tempura, tandoori, tikka are\n"
+        "  OK to cross-match to the non-prefixed candidate). When\n"
+        "  uncertain, REJECT.\n"
         "- If NONE match, reply exactly: NONE\n"
         "- Otherwise reply with comma-separated indices (e.g. `1,3`).\n\n"
         f'User query: "{safe_query}"\n'
@@ -496,11 +531,11 @@ async def gemini_batch_validate(
     start = time.monotonic()
     try:
         resp = await gemini_generate_with_retry(
-            model="gemini-2.0-flash",
+            model=get_settings().gemini_model,
             contents=prompt,
             config=types.GenerateContentConfig(
                 temperature=0,
-                max_output_tokens=32,
+                max_output_tokens=48,
             ),
             timeout=timeout,
             method_name="food_match_gate_validate",

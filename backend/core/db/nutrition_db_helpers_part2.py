@@ -267,7 +267,7 @@ class NutritionDBPart2:
         self,
         food_description: str,
         analysis_result: Dict[str, Any],
-        model_version: str = "gemini-2.0-flash",
+        model_version: str = "gemini-3-flash-preview",
         prompt_version: str = "v1"
     ) -> bool:
         """

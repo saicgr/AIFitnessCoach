@@ -16,7 +16,7 @@ load_dotenv()
 
 # Initialize Gemini client
 client = genai.Client(api_key=os.getenv('GEMINI_API_KEY'))
-model_name = os.getenv('GEMINI_MODEL', 'gemini-2.0-flash')
+model_name = os.getenv('GEMINI_MODEL', 'gemini-3-flash-preview')
 
 # Load all 253 programs from catalog
 with open('/Users/saichetangrandhe/AIFitnessCoach/backend/scripts/all_programs_catalog.json', 'r') as f:

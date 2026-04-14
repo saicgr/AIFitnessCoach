@@ -141,23 +141,44 @@ class FoodDatabaseLookupService(FoodDatabaseLookupServicePart2):
             seen_ids: set = set()
             deadline = time.monotonic() + 3.0
 
-            # Skip expensive fuzzy phases for very short queries (trigrams need ≥3 chars)
-            skip_fuzzy = len(q) < 3
+            # Skip expensive fuzzy phases for very short queries (trigrams need ≥3 chars).
+            # Also skip for single-token queries under 5 chars with no space — these
+            # are almost always a prefix being typed (e.g. "chic" while typing "chicken"),
+            # and fuzzy on 4 chars yields noisy matches anyway. The frontend debounce
+            # catches most of these, but a slow typist can still trigger them.
+            skip_fuzzy = len(q) < 3 or (' ' not in q and len(q) < 5)
 
-            # --- Phase 1: Exact match (BTREE + GIN array indexes, ~1ms) ---
+            # --- Phase 1: Exact match (BTREE + GIN array indexes, ~30ms) ---
+            # Rewritten as UNION ALL of two indexable branches instead of a single
+            # WHERE with `OR`. Postgres refuses to combine a btree hit on
+            # food_name_normalized with a GIN hit on variant_names across an OR
+            # and falls back to a seq scan on 200K+ rows (EXPLAIN shows ~670ms).
+            # UNION ALL lets each branch pick its own index; measured ~30ms end
+            # to end. Budget 500ms — leaves 2.5s for Phases 1.5/2/3.
             try:
                 remaining = deadline - time.monotonic()
                 if remaining > 0.1:
                     async with sb.get_managed_session() as session:
                         phase1 = await asyncio.wait_for(
                             session.execute(text(f"""
-                                SELECT *,
-                                    CASE WHEN food_name_normalized = :q THEN 1.0 ELSE 0.9 END AS sim_score,
-                                    CASE WHEN food_name_normalized = :q THEN 0 ELSE 1 END AS match_rank
-                                FROM food_nutrition_overrides
-                                WHERE is_active = TRUE
-                                AND (food_name_normalized = :q OR :q = ANY(variant_names))
-                                {filter_clause}
+                                SELECT * FROM (
+                                    SELECT *,
+                                        1.0 AS sim_score,
+                                        0 AS match_rank
+                                    FROM food_nutrition_overrides
+                                    WHERE is_active = TRUE
+                                      AND food_name_normalized = :q
+                                      {filter_clause}
+                                    UNION ALL
+                                    SELECT *,
+                                        0.9 AS sim_score,
+                                        1 AS match_rank
+                                    FROM food_nutrition_overrides
+                                    WHERE is_active = TRUE
+                                      AND variant_names @> ARRAY[:q]::text[]
+                                      AND food_name_normalized <> :q
+                                      {filter_clause}
+                                ) t
                                 ORDER BY match_rank,
                                     CASE WHEN region IS NULL THEN 0 ELSE 1 END,
                                     CASE WHEN replace(food_name_normalized, '_', ' ') = :q THEN 0 ELSE 1 END,
@@ -165,7 +186,7 @@ class FoodDatabaseLookupService(FoodDatabaseLookupServicePart2):
                                     length(display_name)
                                 LIMIT :lim
                             """), params),
-                            timeout=min(1.0, remaining),
+                            timeout=min(0.5, remaining),
                         )
                         for row in phase1.fetchall():
                             rd = dict(row._mapping)
@@ -282,7 +303,7 @@ class FoodDatabaseLookupService(FoodDatabaseLookupServicePart2):
 
                         phase2 = await asyncio.wait_for(
                             _phase2(),
-                            timeout=min(1.5, remaining),
+                            timeout=min(1.8, remaining),
                         )
                         for row in phase2.fetchall():
                             rd = dict(row._mapping)
@@ -721,13 +742,14 @@ class FoodDatabaseLookupService(FoodDatabaseLookupServicePart2):
         try:
             from google.genai import types
             from services.gemini.constants import gemini_generate_with_retry
+            from core.config import get_settings
 
             prompt = (
                 f"Is '{matched_name}' a reasonable food database match for someone "
                 f"searching '{query}'? Answer ONLY 'YES' or 'NO'."
             )
             response = await gemini_generate_with_retry(
-                model="gemini-2.0-flash",
+                model=get_settings().gemini_model,
                 contents=prompt,
                 config=types.GenerateContentConfig(
                     temperature=0,

@@ -266,7 +266,7 @@ def ingest_program(supabase, filepath: Path, existing_keys: set, dry_run: bool =
         "tags": data.get("tags", [])[:10] if data.get("tags") else [],
         "goals": data.get("goals", [])[:10] if data.get("goals") else [],
         "workouts": data.get("workouts", {}),
-        "generation_model": "gemini-2.5-flash",
+        "generation_model": os.getenv("GEMINI_MODEL", "gemini-3-flash-preview"),
         "generation_cost_usd": 0.003,  # Approximate
     }
 

@@ -81,6 +81,55 @@ class SecurityHeadersMiddleware:
         await self.app(scope, receive, send_with_headers)
 
 
+class BodySizeLimitMiddleware:
+    """Pure ASGI middleware that rejects requests whose Content-Length exceeds `max_bytes`.
+
+    Why ASGI instead of @app.middleware("http"):
+      @app.middleware("http") is implemented via Starlette's BaseHTTPMiddleware, which
+      runs the downstream app inside an anyio TaskGroup. For StreamingResponse endpoints
+      (e.g. POST /api/v1/workouts/generate-stream), a client disconnect mid-stream can
+      cancel the task before the response object is yielded, surfacing as
+      `RuntimeError: No response returned.` in the logs. A pure-ASGI middleware passes
+      send/receive straight through — no TaskGroup, no race.
+    """
+
+    def __init__(self, app: ASGIApp, max_bytes: int):
+        self.app = app
+        self.max_bytes = max_bytes
+
+    async def __call__(self, scope: Scope, receive: Receive, send: Send):
+        if scope["type"] != "http":
+            await self.app(scope, receive, send)
+            return
+
+        # Content-Length is optional (chunked transfer has none); only enforce when present.
+        content_length: Optional[str] = None
+        for name, value in scope.get("headers", ()):
+            if name == b"content-length":
+                content_length = value.decode("latin-1")
+                break
+
+        if content_length is not None:
+            try:
+                if int(content_length) > self.max_bytes:
+                    body = json.dumps({"detail": "Request body too large (max 20MB)"}).encode()
+                    await send({
+                        "type": "http.response.start",
+                        "status": 413,
+                        "headers": [
+                            (b"content-type", b"application/json"),
+                            (b"content-length", str(len(body)).encode()),
+                        ],
+                    })
+                    await send({"type": "http.response.body", "body": body})
+                    return
+            except ValueError:
+                # Malformed Content-Length — let the app handle it (will 400 downstream).
+                pass
+
+        await self.app(scope, receive, send)
+
+
 class LoggingMiddleware:
     """Pure ASGI middleware to log all requests and responses with user context.
 
@@ -553,14 +602,10 @@ async def unhandled_exception_handler(request: Request, exc: Exception):
 # Add GZip compression for responses >= 500 bytes
 app.add_middleware(GZipMiddleware, minimum_size=500)
 
-# SECURITY: Reject oversized request bodies to prevent OOM on 512MB Render tier
-@app.middleware("http")
-async def limit_request_body_size(request: Request, call_next):
-    content_length = request.headers.get("content-length")
-    if content_length and int(content_length) > 20 * 1024 * 1024:  # 20MB
-        from starlette.responses import JSONResponse
-        return JSONResponse(status_code=413, content={"detail": "Request body too large (max 20MB)"})
-    return await call_next(request)
+# SECURITY: Reject oversized request bodies to prevent OOM on 512MB Render tier.
+# Implemented as pure ASGI (see BodySizeLimitMiddleware) so streaming endpoints
+# don't surface `RuntimeError: No response returned.` on client disconnects.
+app.add_middleware(BodySizeLimitMiddleware, max_bytes=20 * 1024 * 1024)
 
 # Add CORS middleware for Flutter app
 app.add_middleware(

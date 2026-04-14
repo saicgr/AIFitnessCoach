@@ -55,6 +55,33 @@ def _ensure_str(content) -> str:
 
 logger = get_logger(__name__)
 
+
+# Greeting/thanks/goodbye messages have no retrievable past context worth the
+# ChromaDB Cloud round-trip. Anchored regex so "hip pain" doesn't match "hi".
+_TRIVIAL_MESSAGE_RE = re.compile(
+    r"^\s*("
+    r"hi|hello|hey|howdy|yo|sup|hola|"
+    r"thanks|thank you|thx|ty|cheers|"
+    r"bye|goodbye|cya|see ya|later|"
+    r"ok|okay|cool|nice|great|awesome|sweet|"
+    r"good morning|good afternoon|good evening|good night|gm|gn"
+    r")[\s!.?,]*$",
+    re.IGNORECASE,
+)
+
+
+def _is_trivial_message(message: str) -> bool:
+    """True if the message is a pure greeting/thanks/goodbye with no question.
+
+    Such messages don't benefit from RAG context — skipping saves the 5-13s
+    ChromaDB Cloud cold-query latency. Keep strict: anything with a question
+    mark, @mention, or content beyond the greeting must go through RAG.
+    """
+    if not message or len(message) > 60 or "?" in message or "@" in message:
+        return False
+    return bool(_TRIVIAL_MESSAGE_RE.match(message))
+
+
 # ──────────────────────────────────────────────
 # @mention patterns for direct agent routing
 AGENT_MENTION_PATTERNS = {
@@ -461,11 +488,13 @@ class LangGraphCoachService:
         has_multi_images: bool = False,
         has_multi_videos: bool = False,
         media_content_type: Optional[str] = None,
+        agent_override: Optional[str] = None,
     ) -> AgentType:
         """
         Select the appropriate agent based on all available signals.
 
         Priority:
+        0. Explicit `agent_override` from the caller (trusted contextual widgets)
         1. Explicit @mention
         2. Content-aware routing (media_content_type from classifier)
         3. Type-based fallbacks (video->Workout, image->Nutrition) when classifier unavailable
@@ -473,6 +502,21 @@ class LangGraphCoachService:
         5. Keyword-based routing
         6. Default to Coach
         """
+        # 0. Trusted caller override beats every other signal. The Pydantic
+        # validator on ChatRequest.agent_override already guarantees the value
+        # matches an AgentType member, but we defensively re-validate here in
+        # case the function is invoked from a path that bypasses Pydantic.
+        if agent_override:
+            try:
+                forced = AgentType(agent_override.lower().strip())
+                logger.info(f"Agent selection: agent_override -> {forced.value}")
+                return forced
+            except ValueError:
+                logger.warning(
+                    f"Agent selection: invalid agent_override={agent_override!r}, "
+                    "falling through to classifier"
+                )
+
         # 1. Explicit @mention takes priority
         if mentioned_agent:
             logger.info(f"Agent selection: @mention -> {mentioned_agent.value}")
@@ -802,12 +846,22 @@ class LangGraphCoachService:
             # 3. Run intent extraction and media classification in parallel.
             #    RAG is skipped for media messages — the image/video IS the content;
             #    past Q&A and training settings add latency with no benefit for vision tasks.
+            #    RAG is also skipped for trivial greetings/thanks/goodbyes — ChromaDB
+            #    Cloud cold queries can take 5-13s with no useful context for "hi".
+            skip_rag = has_media or _is_trivial_message(cleaned_message)
             if has_media:
                 (intent, extraction_data), media_content_type = await asyncio.gather(
                     self._extract_intent(cleaned_message, user_id=request.user_id),
                     self._classify_media(request),
                 )
                 rag_context, rag_used, similar_questions = "", False, []
+            elif skip_rag:
+                intent, extraction_data = await self._extract_intent(
+                    cleaned_message, user_id=request.user_id,
+                )
+                rag_context, rag_used, similar_questions = "", False, []
+                media_content_type = None
+                logger.info("Skipped RAG for trivial message")
             else:
                 (intent, extraction_data), (rag_context, rag_used, similar_questions) = \
                     await asyncio.gather(
@@ -823,6 +877,7 @@ class LangGraphCoachService:
                 has_multi_images=has_multi_images,
                 has_multi_videos=has_multi_videos,
                 media_content_type=media_content_type,
+                agent_override=request.agent_override,
             )
             logger.info(f"Selected agent: {selected_agent.value}")
 

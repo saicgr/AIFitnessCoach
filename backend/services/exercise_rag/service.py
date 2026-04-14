@@ -441,12 +441,18 @@ class ExerciseRAGService:
             any("dumbbell" in eq for eq in eq_lower) and
             not any("bench" in eq or "home_gym" in eq or "full_gym" in eq for eq in eq_lower)
         )
+        # Multipliers tuned so the post-filter pipeline (media, difficulty,
+        # workout_type, injury, avoided_muscles, consistency_mode, hard-remove
+        # of 7d-recent) leaves enough survivors to fill the requested count
+        # without triggering "Only got N/M unique exercises" backfill warnings.
+        # Previously 6x gave 30 candidates — for users with 20+ recent
+        # exercises + narrow focus areas, survivors fell to 4.
         if is_constrained_env:
-            candidate_count = min(count * 12, 80)
+            candidate_count = min(count * 15, 100)
         elif has_dumbbells_no_bench:
-            candidate_count = min(count * 8, 60)
+            candidate_count = min(count * 12, 80)
         else:
-            candidate_count = min(count * 6, 40)
+            candidate_count = min(count * 10, 60)
 
         results = self.collection.query(
             query_embeddings=[query_embedding],
@@ -706,16 +712,21 @@ class ExerciseRAGService:
         if remaining_count > 0:
             # Apply batch offset to ensure variety across parallel workout generations
             # Each workout in a batch gets a different offset (0, 1, 2, ...) to select
-            # different exercises from the candidate pool
+            # different exercises from the candidate pool.
+            # Window size must be ≥ 4x remaining_count so the AI has real choice
+            # after its own dedup/variety rules. With a 4-exercise window for a
+            # 5-exercise request, duplicates or rejected picks leave no room to
+            # backfill unique alternatives.
+            window = max(30, remaining_count * 6)
             offset_start = batch_offset * count
-            offset_end = offset_start + 20  # Get 20 candidates starting from offset
+            offset_end = offset_start + window
 
             # Ensure we have enough candidates by using modulo wrap-around
             if len(candidates) > 0:
                 if offset_start >= len(candidates):
                     # Wrap around if offset is beyond candidate list
                     offset_start = offset_start % len(candidates)
-                    offset_end = offset_start + 20
+                    offset_end = offset_start + window
 
                 # Get candidates with offset
                 if offset_end <= len(candidates):
@@ -736,11 +747,11 @@ class ExerciseRAGService:
                 if batch_offset > 0:
                     logger.info(f"🎯 [Batch Variety] Applied batch_offset={batch_offset}, using candidates [{offset_start}:{offset_end}] (total: {len(candidates)})")
             else:
-                offset_candidates = candidates[:20]
+                offset_candidates = candidates[:window]
 
             # Use AI to select remaining exercises
             selected = await self._ai_select_exercises(
-                candidates=offset_candidates[:20],  # Ensure max 20
+                candidates=offset_candidates[:window],
                 focus_area=focus_area,
                 fitness_level=fitness_level,
                 goals=goals,

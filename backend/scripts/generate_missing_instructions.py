@@ -44,7 +44,7 @@ if not all([SUPABASE_URL, SUPABASE_KEY, GEMINI_API_KEY]):
 
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 client = genai.Client(api_key=GEMINI_API_KEY)
-model_name = os.getenv('GEMINI_MODEL', 'gemini-2.0-flash')
+model_name = os.getenv('GEMINI_MODEL', 'gemini-3-flash-preview')
 
 
 def get_exercises_missing_instructions() -> List[Dict]:
