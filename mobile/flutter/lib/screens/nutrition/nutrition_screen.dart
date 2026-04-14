@@ -23,7 +23,6 @@ import 'nutrition_settings_screen.dart';
 import 'recipe_builder_sheet.dart';
 import 'weekly_checkin_sheet.dart';
 import 'widgets/daily_tab.dart';
-import 'widgets/nutrition_loading_skeleton.dart';
 import 'widgets/nutrition_error_state.dart';
 import 'widgets/my_foods_sheet.dart';
 import 'widgets/share_nutrition_sheet.dart';
@@ -159,18 +158,24 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
     }
   }
 
-  Future<void> _loadData() async {
+  Future<void> _loadData({bool forceRefresh = false}) async {
     final userId = await ref.read(apiClientProvider).getUserId();
     if (userId != null && mounted) {
       setState(() => _userId = userId);
 
       final dateStr = DateFormat('yyyy-MM-dd').format(_selectedDate);
 
+      // When forcing (Try Again / pull-to-refresh), invalidate the local
+      // micronutrient cache too so the bypassed network call actually fires.
+      if (forceRefresh) {
+        _cachedMicronutrientsTime = null;
+      }
+
       _loadRecipes(userId);
-      ref.read(nutritionProvider.notifier).loadTodaySummary(userId);
+      ref.read(nutritionProvider.notifier).loadTodaySummary(userId, forceRefresh: forceRefresh);
       _loadMicronutrients(userId, dateStr);
       ref.read(nutritionPreferencesProvider.notifier).initialize(userId);
-      ref.read(nutritionProvider.notifier).loadRecentLogs(userId);
+      ref.read(nutritionProvider.notifier).loadRecentLogs(userId, forceRefresh: forceRefresh);
       ref.read(hydrationProvider.notifier).loadTodaySummary(userId);
     }
   }
@@ -342,14 +347,27 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
             ),
 
-          // Tab Content
+          // Tab Content.
+          //
+          // First-load UX: never block the entire tab with a full-screen
+          // skeleton. DailyTab handles null summary gracefully (zeroed
+          // macros, empty meal list, log-a-meal CTA visible) so the user
+          // gets a usable interface in <16ms instead of staring at a
+          // skeleton for a network round-trip. Stale-while-revalidate in
+          // loadTodaySummary then fills in real data when the network
+          // returns. The full-screen error state is kept ONLY for the
+          // truly broken case (network failed AND we have no cached data
+          // to fall back on); transient refresh failures on top of stale
+          // data are silently swallowed by the notifier.
           Expanded(
-            child: state.isLoading
-                ? NutritionLoadingSkeleton(isDark: isDark)
-                : state.error != null
-                    ? NutritionErrorState(
+            child: (state.error != null && state.todaySummary == null)
+                ? NutritionErrorState(
                         error: state.error!,
-                        onRetry: _loadData,
+                        // Always force a refresh when the user explicitly
+                        // taps Try Again — otherwise the 5-minute summary
+                        // cache short-circuits the call and the user is
+                        // stuck on the error screen.
+                        onRetry: () => _loadData(forceRefresh: true),
                         isDark: isDark,
                       )
                     : TabBarView(

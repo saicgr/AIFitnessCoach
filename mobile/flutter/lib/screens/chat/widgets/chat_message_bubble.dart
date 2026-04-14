@@ -293,6 +293,11 @@ class ChatMessageBubble extends ConsumerWidget {
                 workoutName: message.workoutName,
               ),
             ),
+          if (!isUser && message.hasFoodLogged)
+            ViewLoggedMealButton(
+              mealType: message.loggedMealType,
+              calories: message.loggedMealCalories,
+            ),
           // Timestamp + delivery status
           Padding(
             padding: const EdgeInsets.only(top: 6),

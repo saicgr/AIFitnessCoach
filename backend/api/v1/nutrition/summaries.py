@@ -10,6 +10,7 @@ from core.auth import get_current_user, verify_user_ownership
 from core.exceptions import safe_internal_error
 from core.logger import get_logger
 from core.nutrition_bias import apply_calorie_bias, get_user_calorie_bias
+from api.v1.nutrition.helpers import resign_food_image_url
 from models.schemas import UpdateNutritionTargetsRequest
 
 from api.v1.nutrition.models import (
@@ -94,7 +95,7 @@ async def get_daily_summary(
                 # Row-level provenance — drives the thumbnail / source icon in the
                 # nutrition tab. Omitted here previously, which meant image-logged
                 # foods rendered without their photo in the daily summary view.
-                image_url=log.get("image_url"),
+                image_url=resign_food_image_url(log.get("image_url")),
                 source_type=log.get("source_type"),
                 user_query=log.get("user_query"),
                 # Key micronutrients (optional surfacing in row detail)

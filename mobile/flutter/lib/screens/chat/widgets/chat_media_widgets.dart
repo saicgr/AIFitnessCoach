@@ -214,6 +214,79 @@ class FoodAnalysisSummaryCard extends StatelessWidget {
 }
 
 /// Button to navigate to a generated workout
+/// Compact deep-link rendered inside the coach's chat bubble whenever the
+/// Nutrition agent persisted a food_log row. Tapping navigates to the
+/// Nutrition tab's Daily view so the user can see the logged meal in
+/// context (and edit/delete it from there).
+class ViewLoggedMealButton extends StatelessWidget {
+  final String? mealType;
+  final int? calories;
+
+  const ViewLoggedMealButton({
+    super.key,
+    this.mealType,
+    this.calories,
+  });
+
+  String _label() {
+    final mt = mealType;
+    final cal = calories;
+    final mealLabel = mt != null && mt.isNotEmpty
+        ? '${mt[0].toUpperCase()}${mt.substring(1)}'
+        : 'meal';
+    if (cal != null && cal > 0) {
+      return 'View logged $mealLabel · $cal cal';
+    }
+    return 'View logged $mealLabel';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 10),
+      child: InkWell(
+        onTap: () {
+          HapticService.selection();
+          // tab=0 = Daily tab in MainShell's nutrition route.
+          context.go('/nutrition?tab=0');
+        },
+        borderRadius: BorderRadius.circular(10),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          decoration: BoxDecoration(
+            color: AppColors.cyan.withValues(alpha: 0.12),
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(
+              color: AppColors.cyan.withValues(alpha: 0.35),
+              width: 1,
+            ),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.restaurant_menu_rounded, size: 16, color: AppColors.cyan),
+              const SizedBox(width: 8),
+              Flexible(
+                child: Text(
+                  _label(),
+                  style: TextStyle(
+                    color: AppColors.cyan,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 13,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              const SizedBox(width: 6),
+              Icon(Icons.arrow_forward_rounded, size: 14, color: AppColors.cyan),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class GoToWorkoutButton extends StatelessWidget {
   final String workoutId;
   final String? workoutName;

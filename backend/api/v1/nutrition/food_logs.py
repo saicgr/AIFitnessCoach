@@ -15,6 +15,7 @@ from core.logger import get_logger
 from core.activity_logger import log_user_activity
 from core.supabase_client import get_supabase
 from core.nutrition_bias import apply_calorie_bias, get_user_calorie_bias
+from api.v1.nutrition.helpers import resign_food_image_url
 
 from api.v1.nutrition.models import (
     FoodLogResponse,
@@ -105,7 +106,7 @@ async def list_food_logs(
                 vitamin_d_iu=log.get("vitamin_d_iu"),
                 inflammation_score=log.get("inflammation_score"),
                 is_ultra_processed=log.get("is_ultra_processed"),
-                image_url=log.get("image_url"),
+                image_url=resign_food_image_url(log.get("image_url")),
                 created_at=to_utc_iso(log.get("created_at") or log.get("logged_at")),
             ))
 

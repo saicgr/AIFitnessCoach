@@ -324,6 +324,24 @@ class ChatMessage extends Equatable {
       actionData!['action'] == 'food_analysis' &&
       actionData!['food_items'] != null;
 
+  /// True when the Nutrition agent persisted a food_log row (text log,
+  /// nutrition label scan, or app screenshot). Drives the "View logged
+  /// meal" deep-link in the chat bubble.
+  bool get hasFoodLogged =>
+      actionData != null &&
+      actionData!['action'] == 'food_logged' &&
+      actionData!['success'] == true;
+
+  /// Total calories of the just-logged meal (used for the link label).
+  int? get loggedMealCalories {
+    final v = actionData?['total_calories'];
+    if (v is num) return v.toInt();
+    return null;
+  }
+
+  /// Meal type of the just-logged meal (breakfast/lunch/dinner/snack).
+  String? get loggedMealType => actionData?['meal_type'] as String?;
+
   /// Check if this message has a buffet analysis result
   bool get hasBuffetAnalysis =>
       actionData != null &&

@@ -152,10 +152,19 @@ class _RangeHeaderDelegate extends SliverPersistentHeaderDelegate {
     required this.onStep,
   });
 
+  // Extent sized for worst realistic case:
+  //   outer padding 8+8 = 16
+  //   pill row (up to ~44 at 1.3x text scale with iOS default padding)
+  //   gap 6
+  //   arrow row 28
+  //   = 94, plus a 10px safety margin for platform text metrics = 104.
+  // We also wrap the inner Column in a FittedBox(scaleDown) so even at
+  // extreme accessibility text scales the content scales down instead of
+  // throwing a RenderFlex overflow.
   @override
-  double get minExtent => 88;
+  double get minExtent => 104;
   @override
-  double get maxExtent => 88;
+  double get maxExtent => 104;
 
   @override
   bool shouldRebuild(covariant _RangeHeaderDelegate old) =>
@@ -213,10 +222,22 @@ class _RangeHeaderDelegate extends SliverPersistentHeaderDelegate {
       );
     }
 
+    final availableWidth = MediaQuery.of(context).size.width - 32; // minus horizontal padding
     return Container(
       color: bg,
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-      child: Column(
+      alignment: Alignment.center,
+      // FittedBox + fixed-width SizedBox guarantees the content never throws
+      // a RenderFlex overflow: on normal text scales nothing scales (fits
+      // naturally inside 104 - 16 = 88px); on extreme accessibility scales
+      // the whole header scales down to fit.
+      child: FittedBox(
+        fit: BoxFit.scaleDown,
+        alignment: Alignment.center,
+        child: SizedBox(
+          width: availableWidth,
+          child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
           Container(
             padding: const EdgeInsets.all(3),
@@ -276,6 +297,8 @@ class _RangeHeaderDelegate extends SliverPersistentHeaderDelegate {
               const SizedBox(width: 28),
           ]),
         ],
+          ),
+        ),
       ),
     );
   }
@@ -520,6 +543,30 @@ const _METRICS = <MapEntry<String, String>>[
   MapEntry('sodium', 'Sodium'),
 ];
 
+/// Per-metric accent color so the P/C/F/etc. chips are visually distinct and
+/// match the rest of the app's macro color language (purple=protein,
+/// cyan=carbs, orange=fat). Light and dark themes use the theme-appropriate
+/// darker/brighter variants already defined in AppColors / AppColorsLight.
+Color _metricColor(String key, bool isDark) {
+  switch (key) {
+    case 'protein':
+      return isDark ? AppColors.macroProtein : AppColorsLight.macroProtein;
+    case 'carbs':
+      return isDark ? AppColors.macroCarbs : AppColorsLight.macroCarbs;
+    case 'fat':
+      return isDark ? AppColors.macroFat : AppColorsLight.macroFat;
+    case 'fiber':
+      return AppColors.limeGreen;
+    case 'sugar':
+      return AppColors.pink;
+    case 'sodium':
+      return AppColors.info;
+    case 'calories':
+    default:
+      return AppColors.cyan;
+  }
+}
+
 class _TopFoodsSection extends ConsumerStatefulWidget {
   final String userId;
   final String range;
@@ -562,23 +609,40 @@ class _TopFoodsSectionState extends ConsumerState<_TopFoodsSection> {
             child: Row(
               children: [
                 for (final m in _METRICS)
-                  Padding(
-                    padding: const EdgeInsets.only(right: 8),
-                    child: ChoiceChip(
-                      label: Text(m.value),
-                      selected: _metric == m.key,
-                      onSelected: (_) {
-                        HapticService.light();
-                        setState(() => _metric = m.key);
-                      },
-                      selectedColor: AppColors.cyan.withValues(alpha: 0.2),
-                      labelStyle: TextStyle(
-                        fontSize: 12,
-                        fontWeight: _metric == m.key ? FontWeight.w600 : FontWeight.w500,
+                  () {
+                    final selected = _metric == m.key;
+                    final mColor = _metricColor(m.key, widget.isDark);
+                    return Padding(
+                      padding: const EdgeInsets.only(right: 8),
+                      child: ChoiceChip(
+                        label: Text(m.value),
+                        selected: selected,
+                        onSelected: (_) {
+                          HapticService.light();
+                          setState(() => _metric = m.key);
+                        },
+                        selectedColor: mColor.withValues(alpha: 0.2),
+                        side: BorderSide(
+                          color: selected
+                              ? mColor.withValues(alpha: 0.55)
+                              : (widget.isDark
+                                  ? AppColors.cardBorder
+                                  : AppColorsLight.cardBorder),
+                        ),
+                        checkmarkColor: mColor,
+                        labelStyle: TextStyle(
+                          fontSize: 12,
+                          fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
+                          color: selected
+                              ? mColor
+                              : (widget.isDark
+                                  ? AppColors.textSecondary
+                                  : AppColorsLight.textSecondary),
+                        ),
+                        visualDensity: VisualDensity.compact,
                       ),
-                      visualDensity: VisualDensity.compact,
-                    ),
-                  ),
+                    );
+                  }(),
               ],
             ),
           ),

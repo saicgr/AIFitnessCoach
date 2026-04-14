@@ -645,12 +645,20 @@ async def nutrition_action_data_node(state: NutritionAgentState) -> Dict[str, An
                 "meal_type": result.get("meal_type", "snack"),
                 "success": result.get("success", False),
             }
-        elif action in ("parse_app_screenshot", "parse_nutrition_label"):
+        elif action in ("parse_app_screenshot", "parse_nutrition_label", "log_food_from_text"):
+            # All three persist a food_log row. Surface a 'food_logged'
+            # action_data so the chat bubble can render a "View logged
+            # meal" affordance that deep-links into the Nutrition tab.
+            food_items_raw = result.get("food_items") or []
             action_data = {
                 "action": "food_logged",
                 "food_log_id": result.get("food_log_id"),
                 "meal_type": result.get("meal_type"),
                 "total_calories": result.get("total_calories"),
+                "protein_g": result.get("protein_g"),
+                "carbs_g": result.get("carbs_g"),
+                "fat_g": result.get("fat_g"),
+                "food_item_count": len(food_items_raw) if isinstance(food_items_raw, list) else 0,
                 "source_type": action,
                 "success": result.get("success", False),
             }

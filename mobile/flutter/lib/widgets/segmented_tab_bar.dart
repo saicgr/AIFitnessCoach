@@ -186,7 +186,7 @@ class _SegmentedTabButton extends StatelessWidget {
                       child: Text(
                         item.label,
                         style: TextStyle(
-                          fontSize: compact ? 12 : 14,
+                          fontSize: compact ? 11 : 12,
                           fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
                           color: fgColor,
                         ),
