@@ -639,6 +639,31 @@ class SupabaseDB:
         """Delete a food log entry."""
         return self._nutrition_db.delete_food_log(log_id)
 
+    def insert_food_log_edits(
+        self,
+        user_id: str,
+        food_log_id: str,
+        edits: List[Dict[str, Any]],
+        edit_source: str,
+    ) -> int:
+        """Bulk-insert per-field audit rows into food_log_edits."""
+        return self._nutrition_db.insert_food_log_edits(
+            user_id=user_id,
+            food_log_id=food_log_id,
+            edits=edits,
+            edit_source=edit_source,
+        )
+
+    def list_food_log_edits(
+        self,
+        user_id: str,
+        food_log_id: str,
+    ) -> List[Dict[str, Any]]:
+        """Return per-field edit history for a food log (newest first)."""
+        return self._nutrition_db.list_food_log_edits(
+            user_id=user_id, food_log_id=food_log_id,
+        )
+
     def delete_food_logs_by_user(self, user_id: str) -> bool:
         """Delete all food logs for a user."""
         return self._nutrition_db.delete_food_logs_by_user(user_id)

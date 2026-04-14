@@ -263,6 +263,7 @@ async def list_exercises(
     body_parts: Optional[str] = Query(default=None, alias="body_parts", description="Comma-separated body parts (e.g., 'Chest,Back')"),
     equipment: Optional[str] = Query(default=None, description="Comma-separated equipment (e.g., 'Dumbbells,Barbell')"),
     exercise_types: Optional[str] = Query(default=None, alias="exercise_types", description="Comma-separated types (e.g., 'Strength,Cardio')"),
+    categories: Optional[str] = Query(default=None, alias="categories", description="Comma-separated DB categories (e.g., 'strength,cardio,yoga')"),
     difficulty: Optional[int] = None,
     search: Optional[str] = None,
     goals: Optional[str] = Query(default=None, alias="goals", description="Comma-separated goals (e.g., 'Fat Burn,Muscle Building')"),
@@ -294,14 +295,15 @@ async def list_exercises(
         body_parts_list = [bp.strip() for bp in body_parts.split(",")] if body_parts else []
         equipment_list = [eq.strip() for eq in equipment.split(",")] if equipment else []
         exercise_types_list = [et.strip() for et in exercise_types.split(",")] if exercise_types else []
+        categories_list = [c.strip().lower() for c in categories.split(",")] if categories else []
         goals_list = [g.strip() for g in goals.split(",")] if goals else []
         suitable_for_list = [sf.strip() for sf in suitable_for.split(",")] if suitable_for else []
         avoid_if_list = [ai.strip() for ai in avoid_if.split(",")] if avoid_if else []
 
         # Determine if we need post-filtering (filters that can't be done at DB level)
         needs_post_filter = bool(body_parts_list or len(equipment_list) > 1 or
-                                  exercise_types_list or goals_list or
-                                  suitable_for_list or avoid_if_list)
+                                  exercise_types_list or categories_list or
+                                  goals_list or suitable_for_list or avoid_if_list)
 
         # When searching, ALWAYS use fuzzy search for typo tolerance
         # (e.g., "threadmill" -> "Treadmill", "benchpress" -> "Bench Press")
@@ -406,11 +408,15 @@ async def list_exercises(
         if avoid_if_list:
             exercises = [e for e in exercises if not (e.avoid_if and any(ai in e.avoid_if for ai in avoid_if_list))]
 
+        # Filter by DB category column (OR logic). Values in DB are lowercase.
+        if categories_list:
+            exercises = [e for e in exercises if (e.category or "").lower() in categories_list]
+
         # Apply offset and limit AFTER filtering
         if needs_post_filter:
             exercises = exercises[offset:offset + limit]
 
-        logger.info(f"Listed {len(exercises)} exercises (body_parts={body_parts_list}, equipment={equipment_list}, types={exercise_types_list}, goals={goals_list}, suitable_for={suitable_for_list}, avoid_if={avoid_if_list})")
+        logger.info(f"Listed {len(exercises)} exercises (body_parts={body_parts_list}, equipment={equipment_list}, types={exercise_types_list}, categories={categories_list}, goals={goals_list}, suitable_for={suitable_for_list}, avoid_if={avoid_if_list})")
         return exercises
 
     except Exception as e:

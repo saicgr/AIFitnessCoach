@@ -76,6 +76,7 @@ async def log_food_from_image(
     user_id: str = Form(...),
     meal_type: str = Form(...),
     image: UploadFile = File(...),
+    caption: Optional[str] = Form(None),
     current_user: dict = Depends(get_current_user),
 ):
     """
@@ -174,6 +175,7 @@ async def log_food_from_image(
             image_url=image_url,
             image_storage_key=storage_key,
             source_type="image",
+            user_query=caption if caption else None,
             **micronutrients,
         )
 
@@ -372,6 +374,8 @@ async def log_food_from_text(body: LogTextRequest, background_tasks: BackgroundT
             ai_feedback=ai_suggestion,
             health_score=health_score,
             logged_at=user_tz_logged_at,
+            source_type="text",
+            user_query=body.description,
             **micronutrients,
         )
 
@@ -525,6 +529,7 @@ async def log_food_direct(body: LogDirectRequest, request: Request, current_user
             image_url=body.image_url,
             image_storage_key=body.image_storage_key,
             source_type=body.source_type,
+            user_query=body.user_query,
             inflammation_score=body.inflammation_score,
             is_ultra_processed=body.is_ultra_processed,
             **micronutrients,
@@ -532,6 +537,22 @@ async def log_food_direct(body: LogDirectRequest, request: Request, current_user
 
         food_log_id = created_log.get('id') if created_log else "unknown"
         logger.info(f"Successfully logged food directly as {food_log_id}")
+
+        # Persist any pre-save per-field edits made in the Log Meal sheet.
+        # Done after the food_log row exists so the FK points somewhere.
+        if body.item_edits and food_log_id != "unknown":
+            try:
+                edit_rows = [e.dict() for e in body.item_edits]
+                inserted = db.insert_food_log_edits(
+                    user_id=body.user_id,
+                    food_log_id=food_log_id,
+                    edits=edit_rows,
+                    edit_source='pre_save_log_meal',
+                )
+                logger.info(f"[LOG-DIRECT] Recorded {inserted} pre-save item edits for {food_log_id}")
+            except Exception as edit_err:
+                # Audit failures must never block a successful log
+                logger.warning(f"[LOG-DIRECT] Failed to record pre-save item edits: {edit_err}")
 
         # Invalidate daily summary cache so the next fetch returns fresh data
         from api.v1.nutrition.summaries import invalidate_daily_summary_cache

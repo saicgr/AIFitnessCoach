@@ -40,7 +40,13 @@ async def _post_webhook(url: Optional[str], payload: dict) -> bool:
         logger.warning(f"Discord webhook returned {resp.status_code}: {resp.text[:200]}")
         return False
     except Exception as e:
-        logger.error(f"Discord webhook failed: {e}")
+        # Discord notifications are best-effort telemetry — log at WARNING (not ERROR) so
+        # outbound network blips don't trip alerts. Include exception type + repr so an
+        # empty str(e) (common for timeouts / connection resets) still leaves a clue.
+        logger.warning(
+            f"Discord webhook failed: type={type(e).__name__} repr={e!r}",
+            exc_info=True,
+        )
         return False
 
 

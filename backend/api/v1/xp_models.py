@@ -83,6 +83,9 @@ class DailyGoalsStatusResponse(BaseModel):
     workout_complete: bool = False
     protein_goal: bool = False
     body_measurements: bool = False
+    steps_goal: bool = False
+    hydration_goal: bool = False
+    calorie_goal: bool = False
 
 
 class FirstTimeBonusRequest(BaseModel):

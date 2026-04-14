@@ -648,13 +648,20 @@ async def _job_weekly_summary(supabase, email_svc) -> int:
             if _was_recently_sent(supabase, uid, email_type):
                 continue
 
+            # Signature: services/email_marketing.py::send_weekly_summary — the kwargs
+            # must match exactly. Volume / duration / top-exercise aren't summarized by
+            # this cron yet, so pass neutral defaults. When we want richer stats we can
+            # aggregate from workout_logs here, not reshape the email function.
+            streak_days = _get_user_streak(supabase, uid, user_tz)
             result = await email_svc.send_weekly_summary(
                 to_email=user["email"],
                 user_name=user.get("name", ""),
-                completed_workouts=workout_count,
-                total_workouts=max(workout_count, 3),  # estimate
-                total_volume_kg=0.0,  # simplified
-                top_exercises=[],
+                workouts_this_week=workout_count,
+                total_volume_kg=0.0,
+                total_duration_minutes=0,
+                streak_days=streak_days,
+                top_exercise="",
+                top_exercise_volume=0.0,
             )
             if result.get("success"):
                 _log_email_sent(supabase, uid, email_type)

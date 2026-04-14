@@ -4,7 +4,7 @@ User profile CRUD endpoints: get, update, delete, reset, photo upload/delete.
 from core.db import get_supabase_db
 import json
 from datetime import datetime
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, Body, Depends, HTTPException, Request
 from core.auth import get_current_user, get_verified_auth_token, verify_user_ownership, get_admin_user
 from core.exceptions import safe_internal_error
 from typing import Optional, List
@@ -719,34 +719,50 @@ async def delete_user(user_id: str,
 
 @router.post("/{user_id}/reset-onboarding")
 async def reset_onboarding(user_id: str,
-    body: DestructiveActionRequest,
+    body: Optional[DestructiveActionRequest] = Body(default=None),
     current_user: dict = Depends(get_current_user),
 ):
     """
     Reset onboarding - clears workouts and resets onboarding status.
-    SECURITY: Requires password re-authentication.
+
+    SECURITY: Password re-auth gates this endpoint in the case that matters —
+    an authenticated session on an unlocked phone wiping real user data.
+    It is intentionally skipped in two cases where the password prompt would
+    be pure friction:
+      1) OAuth users (Google/Apple) have no password — the JWT is the credential.
+      2) The pre-auth quiz screen legitimately calls this for a freshly-signed-in
+         user whose `onboarding_completed == False` — there's no accumulated data
+         to protect, and prompting for a password mid-onboarding is bad UX.
     """
     logger.info(f"Resetting onboarding for user: id={user_id}")
     try:
         verify_user_ownership(current_user, user_id)
 
-        # SECURITY: Re-authenticate before destructive action
-        supabase = get_supabase()
-        try:
-            supabase.auth_client.auth.sign_in_with_password({
-                "email": current_user["email"],
-                "password": body.password,
-            })
-        except Exception:
-            raise HTTPException(status_code=401, detail="Invalid password — re-authentication required")
-
         db = get_supabase_db()
 
-        # Check if user exists
+        # Check if user exists first — we also need onboarding_completed below.
         existing = db.get_user(user_id)
         if not existing:
             logger.warning(f"User not found for onboarding reset: id={user_id}")
             raise HTTPException(status_code=404, detail="User not found")
+
+        auth_provider = current_user.get("app_metadata", {}).get("provider", "email")
+        onboarding_completed = bool(existing.get("onboarding_completed"))
+
+        # Only require password re-auth for email users who have completed onboarding
+        # (i.e., have real data that deserves a second confirmation).
+        if auth_provider == "email" and onboarding_completed:
+            password = body.password if body else None
+            if not password:
+                raise HTTPException(status_code=400, detail="Password required for email accounts")
+            supabase = get_supabase()
+            try:
+                supabase.auth_client.auth.sign_in_with_password({
+                    "email": current_user["email"],
+                    "password": password,
+                })
+            except Exception:
+                raise HTTPException(status_code=401, detail="Invalid password — re-authentication required")
 
         # Get workout IDs first
         workouts = db.list_workouts(user_id, limit=1000)

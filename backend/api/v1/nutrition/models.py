@@ -34,6 +34,9 @@ class FoodLogResponse(BaseModel):
     inflammation_score: Optional[int] = None
     is_ultra_processed: Optional[bool] = None
     image_url: Optional[str] = None
+    # Origin-of-log tracking
+    source_type: Optional[str] = None  # 'image' | 'barcode' | 'text' | 'chat' | 'restaurant' | 'parse_app_screenshot' | 'parse_nutrition_label'
+    user_query: Optional[str] = None   # Originating user input (search query, caption, chat message, product name, etc.)
     # Key micronutrients
     sodium_mg: Optional[float] = None
     sugar_g: Optional[float] = None
@@ -48,6 +51,36 @@ class FoodLogResponse(BaseModel):
     created_at: str
 
 
+class FoodItemEdit(BaseModel):
+    """One per-field edit to a food item (cal/P/C/F) for the audit trail."""
+    food_item_index: int
+    food_item_name: str
+    food_item_id: Optional[str] = None
+    edited_field: str   # 'calories' | 'protein_g' | 'carbs_g' | 'fat_g'
+    previous_value: float
+    updated_value: float
+
+    @validator('edited_field')
+    def field_must_be_allowed(cls, v):
+        if v not in ('calories', 'protein_g', 'carbs_g', 'fat_g'):
+            raise ValueError(f"edited_field must be one of calories/protein_g/carbs_g/fat_g, got {v}")
+        return v
+
+
+class FoodItemEditResponse(BaseModel):
+    """Audit row as returned by GET /food-logs/{id}/edits."""
+    id: str
+    food_log_id: str
+    food_item_index: int
+    food_item_name: str
+    food_item_id: Optional[str] = None
+    edited_field: str
+    previous_value: float
+    updated_value: float
+    edit_source: str
+    edited_at: str
+
+
 class UpdateFoodLogRequest(BaseModel):
     total_calories: Optional[int] = None
     protein_g: Optional[float] = None
@@ -60,6 +93,8 @@ class UpdateFoodLogRequest(BaseModel):
     logged_at: Optional[str] = None
     notes: Optional[str] = None
     food_items: Optional[List[dict]] = None
+    # Per-field item edits recorded alongside the update for audit/analytics
+    item_edits: Optional[List[FoodItemEdit]] = None
 
 
 class UpdateMoodRequest(BaseModel):
@@ -220,6 +255,8 @@ class LogDirectRequest(BaseModel):
     total_fiber: Optional[int] = None
     source_type: str = Field(default="restaurant", max_length=50)
     notes: Optional[str] = Field(default=None, max_length=500)
+    # Originating user input (e.g. dish name the user selected, restaurant item they picked).
+    user_query: Optional[str] = Field(default=None, max_length=500)
     # Micronutrients
     sodium_mg: Optional[float] = None
     sugar_g: Optional[float] = None
@@ -259,6 +296,8 @@ class LogDirectRequest(BaseModel):
     # Inflammation / ultra-processed tracking
     inflammation_score: Optional[int] = None
     is_ultra_processed: Optional[bool] = None
+    # Pre-save per-field edits made in the Log Meal sheet before this save
+    item_edits: Optional[List[FoodItemEdit]] = None
 
     @validator('user_id')
     def user_id_must_not_be_empty(cls, v):

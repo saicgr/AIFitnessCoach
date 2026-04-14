@@ -719,12 +719,12 @@ async def get_scores_overview(
 
     def _q_prs():
         try:
-            return db.client.table("personal_records").select("*").eq("user_id", user_id).order("achieved_at", desc=True).limit(5).execute()
+            return db.client.table("personal_records").select("*").eq("user_id", user_id).not_.is_("weight_kg", "null").order("achieved_at", desc=True).limit(5).execute()
         except: return None
 
     def _q_pr_count():
         try:
-            return db.client.table("personal_records").select("id", count="exact").eq("user_id", user_id).gte("achieved_at", thirty_days_ago).execute()
+            return db.client.table("personal_records").select("id", count="exact").eq("user_id", user_id).not_.is_("weight_kg", "null").gte("achieved_at", thirty_days_ago).execute()
         except: return None
 
     def _q_readiness_avg():

@@ -4,10 +4,12 @@ Profile photo upload and delete endpoints (S3-backed).
 from core.db import get_supabase_db
 import uuid
 from datetime import datetime
+from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from core.auth import get_current_user, verify_user_ownership
 from core.exceptions import safe_internal_error
 import boto3
+from botocore.config import Config
 
 from core.logger import get_logger
 from core.config import get_settings
@@ -17,16 +19,61 @@ from api.v1.users.models import ProfilePhotoResponse
 router = APIRouter()
 logger = get_logger(__name__)
 
+# Profile photo presigned URL TTL. 7 days is the sigv4 max; we refresh on every
+# user GET, so the client always has a fresh URL well before expiry.
+PROFILE_PHOTO_URL_EXPIRATION = 7 * 24 * 3600
+
 
 def get_s3_client():
-    """Get boto3 S3 client with credentials from settings."""
+    """Get boto3 S3 client with credentials from settings. Uses sigv4 for presigning."""
     settings = get_settings()
     return boto3.client(
         's3',
         aws_access_key_id=settings.aws_access_key_id,
         aws_secret_access_key=settings.aws_secret_access_key,
         region_name=settings.aws_default_region,
+        config=Config(signature_version='s3v4'),
     )
+
+
+def _extract_storage_key(photo_url: str) -> Optional[str]:
+    """Extract S3 object key from a stored profile photo URL.
+
+    Stored URLs have the form
+    https://{bucket}.s3.{region}.amazonaws.com/{key}
+    Splitting on `.amazonaws.com/` also survives any accidentally-persisted
+    presigned query string.
+    """
+    if not photo_url or ".amazonaws.com/" not in photo_url:
+        return None
+    key_part = photo_url.split(".amazonaws.com/", 1)[1]
+    return key_part.split("?", 1)[0] or None
+
+
+def presign_profile_photo_url(photo_url: Optional[str]) -> Optional[str]:
+    """Return a short-lived presigned GET URL for a stored profile photo.
+
+    The S3 bucket is private, so the raw URL in `users.photo_url` is not
+    fetchable by the client. We regenerate a presigned URL each time we serve
+    a user record. Returns the input unchanged when it is not an S3 URL
+    (e.g., null or a third-party OAuth avatar).
+    """
+    if not photo_url:
+        return photo_url
+    storage_key = _extract_storage_key(photo_url)
+    if not storage_key:
+        return photo_url
+    try:
+        settings = get_settings()
+        s3 = get_s3_client()
+        return s3.generate_presigned_url(
+            'get_object',
+            Params={'Bucket': settings.s3_bucket_name, 'Key': storage_key},
+            ExpiresIn=PROFILE_PHOTO_URL_EXPIRATION,
+        )
+    except Exception as e:
+        logger.error(f"Failed to presign profile photo URL: {e}", exc_info=True)
+        return photo_url
 
 
 async def upload_profile_photo_to_s3(
@@ -134,15 +181,18 @@ async def upload_profile_photo(
 
         # Delete old photo from S3 if it exists
         if old_photo_url and "profile_photos/" in old_photo_url:
-            try:
-                old_storage_key = old_photo_url.split(".amazonaws.com/")[1]
-                await delete_profile_photo_from_s3(old_storage_key)
-                logger.info(f"🗑️ [ProfilePhoto] Deleted old photo: {old_storage_key}")
-            except Exception as e:
-                logger.warning(f"⚠️ [ProfilePhoto] Could not delete old photo: {e}", exc_info=True)
+            old_storage_key = _extract_storage_key(old_photo_url)
+            if old_storage_key:
+                try:
+                    await delete_profile_photo_from_s3(old_storage_key)
+                    logger.info(f"🗑️ [ProfilePhoto] Deleted old photo: {old_storage_key}")
+                except Exception as e:
+                    logger.warning(f"⚠️ [ProfilePhoto] Could not delete old photo: {e}", exc_info=True)
 
+        # Return a presigned URL so the client can render the photo immediately —
+        # the raw S3 URL is private and would 403.
         return ProfilePhotoResponse(
-            photo_url=photo_url,
+            photo_url=presign_profile_photo_url(photo_url) or photo_url,
             message="Profile photo uploaded successfully"
         )
 
@@ -182,12 +232,13 @@ async def delete_profile_photo(id: str,
 
         # Delete from S3 if it's our photo
         if "profile_photos/" in photo_url:
-            try:
-                storage_key = photo_url.split(".amazonaws.com/")[1]
-                await delete_profile_photo_from_s3(storage_key)
-                logger.info(f"✅ [ProfilePhoto] Deleted from S3: {storage_key}")
-            except Exception as e:
-                logger.warning(f"⚠️ [ProfilePhoto] Could not delete from S3: {e}", exc_info=True)
+            storage_key = _extract_storage_key(photo_url)
+            if storage_key:
+                try:
+                    await delete_profile_photo_from_s3(storage_key)
+                    logger.info(f"✅ [ProfilePhoto] Deleted from S3: {storage_key}")
+                except Exception as e:
+                    logger.warning(f"⚠️ [ProfilePhoto] Could not delete from S3: {e}", exc_info=True)
 
         # Update user's photo_url to null
         db.client.table("users").update({

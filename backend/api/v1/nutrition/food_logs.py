@@ -20,6 +20,7 @@ from api.v1.nutrition.models import (
     FoodLogResponse,
     UpdateFoodLogRequest,
     UpdateMoodRequest,
+    FoodItemEditResponse,
 )
 
 router = APIRouter()
@@ -228,6 +229,20 @@ async def update_food_log(log_id: str, body: UpdateFoodLogRequest, current_user:
         if not updated:
             raise HTTPException(status_code=404, detail="Food log not found or not owned by user")
 
+        # Persist any per-field audit rows alongside the update. Audit writes
+        # must never fail the update — they are best-effort.
+        edits_recorded = 0
+        if body.item_edits:
+            try:
+                edits_recorded = db.insert_food_log_edits(
+                    user_id=user_id,
+                    food_log_id=log_id,
+                    edits=[e.dict() for e in body.item_edits],
+                    edit_source='post_save_nutrition_screen',
+                )
+            except Exception as edit_err:
+                logger.warning(f"Failed to record post-save item edits for {log_id}: {edit_err}")
+
         # Invalidate daily summary cache so the next fetch returns fresh data
         from api.v1.nutrition.summaries import invalidate_daily_summary_cache
         await invalidate_daily_summary_cache(user_id)
@@ -240,12 +255,41 @@ async def update_food_log(log_id: str, body: UpdateFoodLogRequest, current_user:
             "carbs_g": updated.get("carbs_g"),
             "fat_g": updated.get("fat_g"),
             "meal_type": updated.get("meal_type"),
+            "edits_recorded": edits_recorded,
         }
 
     except HTTPException:
         raise
     except Exception as e:
         logger.error(f"Failed to update food log: {e}", exc_info=True)
+        raise safe_internal_error(e, "nutrition")
+
+
+@router.get("/food-logs/{log_id}/edits", response_model=List[FoodItemEditResponse])
+async def list_food_log_edits(log_id: str, current_user: dict = Depends(get_current_user)):
+    """Return the per-field edit history for a food log (newest first)."""
+    user_id = current_user.get("id") or current_user.get("sub")
+    try:
+        db = get_supabase_db()
+        rows = db.list_food_log_edits(user_id=user_id, food_log_id=log_id)
+        # Normalize timestamps/UUIDs to strings for the pydantic response model
+        return [
+            FoodItemEditResponse(
+                id=str(r["id"]),
+                food_log_id=str(r["food_log_id"]),
+                food_item_index=int(r["food_item_index"]),
+                food_item_name=r["food_item_name"],
+                food_item_id=r.get("food_item_id"),
+                edited_field=r["edited_field"],
+                previous_value=float(r["previous_value"]),
+                updated_value=float(r["updated_value"]),
+                edit_source=r["edit_source"],
+                edited_at=str(r["edited_at"]),
+            )
+            for r in rows
+        ]
+    except Exception as e:
+        logger.error(f"Failed to list food log edits: {e}", exc_info=True)
         raise safe_internal_error(e, "nutrition")
 
 

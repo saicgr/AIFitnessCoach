@@ -203,6 +203,27 @@ class ChatRequest(BaseModel):
         max_length=2000,
         description="Public S3 URL of the uploaded media (for persistence in chat history)"
     )
+    agent_override: Optional[str] = Field(
+        default=None,
+        max_length=32,
+        description="Force-route to a specific agent, bypassing classifier. One of AgentType values "
+                    "(e.g. 'nutrition', 'workout', 'coach', 'injury', 'hydration', 'plan'). "
+                    "Used by contextual widgets (e.g. the nutrition meal-log AI Coach card) that "
+                    "already know which agent should handle the request."
+    )
+
+    @field_validator("agent_override")
+    @classmethod
+    def validate_agent_override(cls, v):
+        if v is None:
+            return v
+        valid = {a.value for a in AgentType}
+        normalized = v.lower().strip()
+        if normalized not in valid:
+            raise ValueError(
+                f"Invalid agent_override={v!r}; must be one of {sorted(valid)} or null"
+            )
+        return normalized
 
 
 class IntentExtraction(BaseModel):

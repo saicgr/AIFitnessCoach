@@ -630,6 +630,10 @@ async def analyze_food_from_image_streaming(
             }
             return f"event: progress\ndata: {json.dumps(data)}\n\n"
 
+        # Error codes that represent user-recoverable input problems, not system failures.
+        # These should be logged at WARNING so they don't trip error alerts.
+        USER_RECOVERABLE_ERROR_CODES = {"NO_FOOD_DETECTED", "INVALID_IMAGE", "IMAGE_TOO_LARGE"}
+
         def send_error(error: str, error_code: str = "UNKNOWN_ERROR", error_details: str = None):
             data = {
                 "type": "error",
@@ -640,8 +644,10 @@ async def analyze_food_from_image_streaming(
                 "user_id": user_id,
                 "elapsed_ms": elapsed_ms()
             }
-            logger.error(
-                f"[ANALYZE-STREAM:{request_id}] FAILED | "
+            log_fn = logger.warning if error_code in USER_RECOVERABLE_ERROR_CODES else logger.error
+            status_label = "USER_INPUT_REJECTED" if error_code in USER_RECOVERABLE_ERROR_CODES else "FAILED"
+            log_fn(
+                f"[ANALYZE-STREAM:{request_id}] {status_label} | "
                 f"user={user_id} | "
                 f"error_code={error_code} | "
                 f"error={error} | "

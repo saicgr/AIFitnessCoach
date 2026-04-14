@@ -74,6 +74,7 @@ class NutritionDB(NutritionDBPart2, BaseDB):
         image_url: Optional[str] = None,
         image_storage_key: Optional[str] = None,
         source_type: str = "text",
+        user_query: Optional[str] = None,
         # Inflammation / ultra-processed tracking
         inflammation_score: Optional[int] = None,
         is_ultra_processed: Optional[bool] = None,
@@ -123,6 +124,9 @@ class NutritionDB(NutritionDBPart2, BaseDB):
             data["image_url"] = image_url
         if image_storage_key:
             data["image_storage_key"] = image_storage_key
+        # Capture originating user input (search query, chat message, caption, etc.)
+        if user_query:
+            data["user_query"] = user_query
 
         # Add inflammation / ultra-processed fields if provided
         if inflammation_score is not None:
@@ -292,6 +296,76 @@ class NutritionDB(NutritionDBPart2, BaseDB):
             .execute()
         )
         return result.data[0] if result.data else None
+
+    def insert_food_log_edits(
+        self,
+        user_id: str,
+        food_log_id: str,
+        edits: List[Dict[str, Any]],
+        edit_source: str,
+    ) -> int:
+        """
+        Bulk-insert audit rows into food_log_edits.
+
+        Each edit dict must carry: food_item_index, food_item_name, edited_field,
+        previous_value, updated_value. Optionally food_item_id.
+
+        Returns number of rows inserted.
+        """
+        if not edits:
+            return 0
+
+        rows: List[Dict[str, Any]] = []
+        for e in edits:
+            try:
+                field = e["edited_field"]
+                if field not in ("calories", "protein_g", "carbs_g", "fat_g"):
+                    logger.warning(f"Skipping edit with invalid field: {field}")
+                    continue
+                prev = float(e["previous_value"])
+                new = float(e["updated_value"])
+                if prev == new:
+                    continue
+                rows.append({
+                    "food_log_id": food_log_id,
+                    "user_id": user_id,
+                    "food_item_index": int(e["food_item_index"]),
+                    "food_item_name": str(e["food_item_name"])[:200],
+                    "food_item_id": e.get("food_item_id"),
+                    "edited_field": field,
+                    "previous_value": prev,
+                    "updated_value": new,
+                    "edit_source": edit_source,
+                })
+            except (KeyError, ValueError, TypeError) as err:
+                logger.warning(f"Skipping malformed edit row: {err}")
+                continue
+
+        if not rows:
+            return 0
+
+        try:
+            result = self.client.table("food_log_edits").insert(rows).execute()
+            return len(result.data) if result.data else 0
+        except Exception as e:
+            logger.error(f"Failed to insert food_log_edits: {e}", exc_info=True)
+            return 0
+
+    def list_food_log_edits(
+        self,
+        user_id: str,
+        food_log_id: str,
+    ) -> List[Dict[str, Any]]:
+        """Return all edit-history rows for a given food log, newest first."""
+        result = (
+            self.client.table("food_log_edits")
+            .select("*")
+            .eq("food_log_id", food_log_id)
+            .eq("user_id", user_id)
+            .order("edited_at", desc=True)
+            .execute()
+        )
+        return result.data or []
 
     def delete_food_log(self, log_id: str) -> bool:
         """

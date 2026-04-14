@@ -27,7 +27,6 @@ from fastapi import Request
 import json
 import logging
 import os
-import time
 from slowapi import Limiter
 from starlette.requests import Request
 
@@ -66,64 +65,34 @@ limiter = Limiter(
 )
 
 
-# Cache for request bodies (needed because body can only be read once)
-# Bounded to 1000 entries with 60s TTL to prevent unbounded growth
-_request_body_cache: dict = {}
-_REQUEST_CACHE_MAX_SIZE = 200
-_REQUEST_CACHE_TTL = 60  # seconds
-
-
-async def get_user_id_from_request(request: Request) -> str:
+def get_user_id_from_request(request: Request) -> str:
     """
-    Extract user_id from request body for user-based rate limiting.
+    Extract user_id from request for user-based rate limiting.
 
-    This is more reliable than IP-based limiting for authenticated endpoints,
-    especially behind reverse proxies like Render where multiple users might
-    share the same IP address.
-
-    Falls back to IP-based limiting if user_id cannot be extracted.
+    Must be synchronous — slowapi 0.1.9 calls key_func without awaiting.
+    Body parsing happens only if Starlette has already cached it on the
+    request object (middleware/endpoint has read it). Otherwise we fall
+    back to query params, then IP.
     """
     try:
-        # Try query params first (fastest)
         user_id = request.query_params.get("user_id")
         if user_id:
             return f"user:{user_id}"
 
-        # Check if we have a cached body for this request
-        request_id = id(request)
-        cached_entry = _request_body_cache.get(request_id)
-        if cached_entry is not None:
-            body = cached_entry[1]  # (timestamp, body)
-        else:
-            # Read and cache the body (can only be read once)
-            body_bytes = await request.body()
-            if body_bytes:
-                try:
-                    body = json.loads(body_bytes)
-                    # Evict stale entries before adding new one
-                    if len(_request_body_cache) >= _REQUEST_CACHE_MAX_SIZE:
-                        now = time.monotonic()
-                        stale_keys = [
-                            k for k, (ts, _) in _request_body_cache.items()
-                            if now - ts > _REQUEST_CACHE_TTL
-                        ]
-                        for k in stale_keys:
-                            del _request_body_cache[k]
-                    _request_body_cache[request_id] = (time.monotonic(), body)
-                except json.JSONDecodeError:
-                    body = {}
-            else:
-                body = {}
-
-        # Extract user_id from body
-        user_id = body.get("user_id")
-        if user_id:
-            return f"user:{user_id}"
+        # Only inspect body if Starlette has already cached it (sync-safe).
+        body_bytes = getattr(request, "_body", None)
+        if body_bytes:
+            try:
+                body = json.loads(body_bytes)
+                user_id = body.get("user_id") if isinstance(body, dict) else None
+                if user_id:
+                    return f"user:{user_id}"
+            except (json.JSONDecodeError, TypeError):
+                pass
 
     except Exception as e:
         logger.debug(f"User ID extraction failed: {e}")
 
-    # Fall back to IP-based limiting
     return get_real_client_ip(request)
 
 

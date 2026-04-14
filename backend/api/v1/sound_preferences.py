@@ -12,31 +12,40 @@ logger = get_logger(__name__)
 router = APIRouter(prefix="/sound-preferences", tags=["Sound Preferences"])
 
 
+# Allowed sound-type vocabularies. MUST stay in sync with Flutter
+# `mobile/flutter/lib/screens/settings/sections/sound_settings_section.dart`
+# and the DB CHECK constraints (see migration 146_sound_preferences_expand_types.sql).
+CountdownSoundType = Literal["beep", "chime", "voice", "tick", "custom", "none"]
+CompletionSoundType = Literal["chime", "bell", "success", "fanfare", "custom", "none"]
+RestTimerSoundType = Literal["beep", "chime", "gong", "custom", "none"]
+ExerciseCompletionSoundType = Literal["chime", "bell", "ding", "pop", "whoosh", "custom", "none"]
+
+
 class SoundPreferences(BaseModel):
     """Sound preferences model."""
     countdown_sound_enabled: bool = True
-    countdown_sound_type: Literal["beep", "chime", "voice", "tick", "none"] = "beep"
+    countdown_sound_type: CountdownSoundType = "beep"
     completion_sound_enabled: bool = True
-    completion_sound_type: Literal["chime", "bell", "success", "fanfare", "none"] = "chime"
+    completion_sound_type: CompletionSoundType = "chime"
     # NOTE: No "applause" option - user specifically hated it
     rest_timer_sound_enabled: bool = True
-    rest_timer_sound_type: Literal["beep", "chime", "voice", "tick", "none"] = "beep"
+    rest_timer_sound_type: RestTimerSoundType = "beep"
     # Exercise completion sound - plays when all sets of an exercise are done
     exercise_completion_sound_enabled: bool = True
-    exercise_completion_sound_type: Literal["chime", "bell", "ding", "pop", "whoosh", "none"] = "chime"
+    exercise_completion_sound_type: ExerciseCompletionSoundType = "chime"
     sound_effects_volume: float = Field(default=0.8, ge=0.0, le=1.0)
 
 
 class SoundPreferencesUpdate(BaseModel):
     """Update model for sound preferences."""
     countdown_sound_enabled: Optional[bool] = None
-    countdown_sound_type: Optional[Literal["beep", "chime", "voice", "tick", "none"]] = None
+    countdown_sound_type: Optional[CountdownSoundType] = None
     completion_sound_enabled: Optional[bool] = None
-    completion_sound_type: Optional[Literal["chime", "bell", "success", "fanfare", "none"]] = None
+    completion_sound_type: Optional[CompletionSoundType] = None
     rest_timer_sound_enabled: Optional[bool] = None
-    rest_timer_sound_type: Optional[Literal["beep", "chime", "voice", "tick", "none"]] = None
+    rest_timer_sound_type: Optional[RestTimerSoundType] = None
     exercise_completion_sound_enabled: Optional[bool] = None
-    exercise_completion_sound_type: Optional[Literal["chime", "bell", "ding", "pop", "whoosh", "none"]] = None
+    exercise_completion_sound_type: Optional[ExerciseCompletionSoundType] = None
     sound_effects_volume: Optional[float] = Field(default=None, ge=0.0, le=1.0)
 
 

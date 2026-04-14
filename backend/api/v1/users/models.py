@@ -284,6 +284,8 @@ def row_to_user(row: dict, is_new_user: bool = False, support_friend_added: bool
         support_friend_added: True if FitWiz Support was auto-added as friend
     """
     from models.schemas import User
+    # Deferred import: photo.py imports ProfilePhotoResponse from this module.
+    from api.v1.users.photo import presign_profile_photo_url as _presigned_photo_url
 
     # Handle JSONB fields - they come as dicts/lists from Supabase
     goals = row.get("goals")
@@ -373,8 +375,10 @@ def row_to_user(row: dict, is_new_user: bool = False, support_friend_added: bool
         weight_unit=row.get("weight_unit") or "kg",
         # Body measurement unit preference (cm or in)
         measurement_unit=row.get("measurement_unit") or "cm",
-        # Profile photo URL and bio
-        photo_url=row.get("photo_url"),
+        # Profile photo URL and bio. The bucket is private, so we presign the
+        # stored S3 URL each time we serve the user (OAuth avatars pass through
+        # unchanged).
+        photo_url=_presigned_photo_url(row.get("photo_url")),
         bio=row.get("bio"),
         # Device info fields
         device_model=row.get("device_model"),

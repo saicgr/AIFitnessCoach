@@ -513,6 +513,9 @@ async def award_goal_xp(
             "workout_complete": 100,
             "protein_goal": 50,
             "body_measurements": 20,
+            "steps_goal": 100,
+            "hydration_goal": 40,
+            "calorie_goal": 60,
         }
 
         if request.goal_type not in goal_xp_amounts:
@@ -617,6 +620,9 @@ class DailyGoalsStatusResponse(BaseModel):
     workout_complete: bool = False
     protein_goal: bool = False
     body_measurements: bool = False
+    steps_goal: bool = False
+    hydration_goal: bool = False
+    calorie_goal: bool = False
 
 
 @router.get("/daily-goals-status", response_model=DailyGoalsStatusResponse)
@@ -652,6 +658,9 @@ async def get_daily_goals_status(
             workout_complete="daily_goal_workout_complete" in sources,
             protein_goal="daily_goal_protein_goal" in sources,
             body_measurements="daily_goal_body_measurements" in sources,
+            steps_goal="daily_goal_steps_goal" in sources,
+            hydration_goal="daily_goal_hydration_goal" in sources,
+            calorie_goal="daily_goal_calorie_goal" in sources,
         )
 
     except Exception as e:

@@ -328,9 +328,15 @@ async def generate_suggestions_node(state: ExerciseSuggestionState) -> Dict[str,
     mode = state.get("mode", "swap")
 
     if not candidates:
+        logger.warning(
+            f"[Generate Node] No candidates from search node — "
+            f"exercise='{current_exercise.get('name')}', "
+            f"target_muscle='{state.get('target_muscle_group')}', "
+            f"swap_reason='{swap_reason}'. Returning empty suggestions."
+        )
         return {
             "suggestions": [],
-            "response_message": "I couldn't find any suitable alternatives in the exercise library. Try browsing manually or adjusting your preferences.",
+            "response_message": "I couldn't find any suitable alternatives in the exercise library. Try browsing the Library tab, or rephrasing what you're looking for.",
         }
 
     llm = get_langchain_llm(temperature=0.3)
@@ -450,19 +456,70 @@ IMPORTANT: Only suggest exercises from the provided list. Match names exactly.""
         suggestions = result.get("suggestions", [])
         message = result.get("message", "Here are some alternative exercises for you:")
 
-        # Enrich suggestions with full exercise data
+        # Enrich suggestions with full exercise data. We tolerate minor formatting
+        # drift between the LLM's name and the library name (spaces, punctuation,
+        # casing) — a strict equality check was silently dropping every pick when
+        # Gemini replied with e.g. "Cable Triceps Pushdown" vs library's
+        # "Cable Triceps Push Down", producing an empty UI list.
+        def _norm(s: str) -> str:
+            return "".join(ch for ch in s.lower() if ch.isalnum())
+
+        candidate_index: Dict[str, dict] = {}
+        for c in candidates:
+            key = _norm(c.get("name", ""))
+            if key and key not in candidate_index:
+                candidate_index[key] = c
+
         enriched_suggestions = []
+        used_keys: set = set()
+        unmatched_names: List[str] = []
         for suggestion in suggestions[:5]:
-            suggested_name = suggestion.get("name", "").lower()
-            # Find matching candidate
-            for candidate in candidates:
-                if candidate.get("name", "").lower() == suggested_name:
-                    enriched_suggestions.append({
-                        **candidate,
-                        "reason": suggestion.get("reason", ""),
-                        "tip": suggestion.get("tip", ""),
-                    })
-                    break
+            raw_name = suggestion.get("name", "") or ""
+            key = _norm(raw_name)
+            candidate = candidate_index.get(key)
+            if not candidate:
+                # Fall back to a substring match on the normalized key, which
+                # handles cases like "Push Down" vs "Cable Push Down".
+                for ck, cv in candidate_index.items():
+                    if ck in used_keys:
+                        continue
+                    if key and (key in ck or ck in key):
+                        candidate = cv
+                        key = ck
+                        break
+            if not candidate:
+                unmatched_names.append(raw_name)
+                continue
+            if key in used_keys:
+                continue
+            used_keys.add(key)
+            enriched_suggestions.append({
+                **candidate,
+                "reason": suggestion.get("reason", ""),
+                "tip": suggestion.get("tip", ""),
+            })
+
+        if unmatched_names:
+            logger.warning(
+                f"[Generate Node] Dropped {len(unmatched_names)} LLM picks that "
+                f"didn't match any candidate: {unmatched_names}"
+            )
+
+        # Safety net: if name-matching nuked every LLM pick but we DO have
+        # candidates, surface the top candidates directly so the user sees
+        # something actionable instead of an empty "No AI suggestions" card.
+        if not enriched_suggestions and candidates:
+            logger.warning(
+                "[Generate Node] LLM produced no usable matches; returning "
+                "top candidates as fallback."
+            )
+            for candidate in candidates[:5]:
+                enriched_suggestions.append({
+                    **candidate,
+                    "reason": f"Alternative targeting {candidate.get('body_part', 'the same area')}.",
+                    "tip": "",
+                })
+            message = "Here are some alternatives based on similarity:"
 
         # Lookup gif_urls from Supabase for the suggestions
         try:

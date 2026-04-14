@@ -202,6 +202,7 @@ async def log_food_from_barcode(request: LogBarcodeRequest, http_request: Reques
             health_score=None,
             logged_at=user_tz_logged_at,
             source_type="barcode",
+            user_query=product.product_name,
             sugar_g=sugar_g,
             sodium_mg=sodium_mg,
             saturated_fat_g=saturated_fat_g,

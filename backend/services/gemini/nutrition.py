@@ -267,7 +267,7 @@ MICRONUTRIENTS: Estimate all vitamins (A, C, D, E, K, B1, B2, B3, B6, B9, B12), 
 
             # Check if we got empty food items
             if not result.get('food_items'):
-                logger.error(f"[IMAGE-ANALYSIS:{req_id}] NO FOOD ITEMS detected in image")
+                logger.warning(f"[IMAGE-ANALYSIS:{req_id}] NO FOOD ITEMS detected in image (user-recoverable)")
                 return {
                     "error": "Could not identify any food items in the image. Please try a clearer photo.",
                     "error_code": "NO_FOOD_DETECTED",
@@ -482,6 +482,12 @@ FOOD NAMING RULES (CRITICAL — lookup accuracy depends on this):
 - If the user likely made a typo (e.g. "paner"), correct it to the canonical spelling
   ("paneer") in corrected_query but KEEP the full multi-word name in food_items[].name.
 - Only drop pure descriptors that never change nutrition (spicy, mild, fresh, my favorite).
+- COMMA IS AN UNBREAKABLE ITEM BOUNDARY: "X, Y" is ALWAYS two separate items, even
+  when "X Y" (or "Y X") happens to spell a popular dish. Never fuse adjacent
+  comma-separated words into a compound dish name. Examples of what NOT to do:
+  - "chicken fry, rice" is two items (Chicken Fry + Rice), NOT "Chicken Fried Rice"
+  - "egg, fried rice" is two items (Egg + Fried Rice), NOT "Egg Fried Rice"
+  - "sweet, sour pork" is two items, NOT "Sweet and Sour Pork"
 
 CRITICAL PORTION SIZE RULES:
 - HIGHEST PRIORITY: If user specifies an EXACT quantity (e.g., "500g rice", "300ml milk", "2 cups oats", "750g chicken"), ALWAYS use that exact quantity. User-specified amounts override ALL defaults below. Never reduce or round user-specified quantities.
@@ -613,6 +619,10 @@ NO COMPOSITE KEYWORD — list each item separately:
 - "chicken, rice, and beans" → 3 items (no bowl/burrito/plate keyword)
 - "steak and lobster" → 2 items (separate dishes)
 - "bruschetta appetizer, filet mignon, caesar salad, tiramisu" → 4 items (multi-course)
+- "chicken fry, dal, rice and curd" → 4 items: "Chicken Fry" (South Indian fried chicken), "Dal", "Steamed Rice", "Curd". NEVER return a single "Chicken Fried Rice" — that fuses comma-separated items into a hallucinated dish.
+- "paneer fry, naan, raita" → 3 items: "Paneer Fry", "Naan", "Raita"
+- "egg bhurji, roti, pickle" → 3 items (Indian breakfast, no composite keyword)
+- "idli, sambar, chutney, filter coffee" → 4 items (South Indian breakfast, no thali keyword)
 
 ABSURD/IMPOSSIBLE COMBOS — use culinary common sense:
 - "ice cream topped with garlic chicken" → 2 items: "Ice Cream" + "Garlic Chicken" (garlic chicken is NOT an ice cream topping — these are separate foods)

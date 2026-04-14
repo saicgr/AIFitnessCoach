@@ -451,6 +451,39 @@ class SnackSuggestionsResponse(BaseModel):
 
 
 # =============================================================================
+# QUICK MEAL SUGGESTION (home-screen widget / Siri / Action Button)
+# =============================================================================
+
+class QuickSuggestionFoodItem(BaseModel):
+    """Single food component inside a quick meal suggestion."""
+    name: str = Field(..., description="Food item name, e.g. '3-egg scramble'")
+    grams: Optional[int] = Field(default=None, description="Portion in grams")
+    calories: int = Field(..., description="Calories for this component")
+    protein_g: float = Field(..., description="Protein in grams")
+    carbs_g: float = Field(..., description="Carbs in grams")
+    fat_g: float = Field(..., description="Fat in grams")
+
+
+class QuickSuggestionGeminiResponse(BaseModel):
+    """Gemini structured output for the widget's single-meal suggestion.
+
+    Kept deliberately tight: the widget can only render ~2 lines of text + a
+    macros row, so the LLM should return exactly one meal, not a list.
+    """
+    emoji: str = Field(..., description="One emoji summarising the meal, e.g. 🍳")
+    title: str = Field(..., description="Short meal title, max ~40 chars")
+    subtitle: str = Field(..., description="One-line why-this-fits reasoning, max ~80 chars")
+    calories: int = Field(..., description="Total calories for the meal")
+    protein_g: float = Field(..., description="Total protein")
+    carbs_g: float = Field(..., description="Total carbs")
+    fat_g: float = Field(..., description="Total fat")
+    food_items: List[QuickSuggestionFoodItem] = Field(
+        default_factory=list,
+        description="Component foods used for auto-logging when user taps 'Log it'",
+    )
+
+
+# =============================================================================
 # WORKOUT SUGGESTION SCHEMAS (for API routes)
 # =============================================================================
 

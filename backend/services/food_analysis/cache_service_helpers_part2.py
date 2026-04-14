@@ -1,9 +1,11 @@
 """Second part of cache_service_helpers.py (auto-split for size)."""
 from typing import Any, Dict, List, Optional, Tuple
+import asyncio
 import hashlib
 import json
 import logging
 import re
+import unicodedata
 from sqlalchemy import text
 from core.supabase_client import get_supabase
 from services.food_analysis.parser import ParsedFoodItem
@@ -152,8 +154,25 @@ class FoodAnalysisCacheServicePart2:
 
         return has_ingredients
 
+    # Hard item delimiters — comma, semicolon, pipe (and their full-width equivalents).
+    # Foreign-language keyboards (Indian, Chinese, Japanese) emit non-ASCII commas
+    # and danda (।) that we normalize to ASCII comma before splitting.
+    _FOREIGN_COMMA_TRANS = str.maketrans({
+        '，': ',',  # full-width comma (Chinese/Japanese)
+        '、': ',',  # ideographic comma
+        '।': ',',  # Devanagari danda (Indian scripts)
+        '۔': ',',  # Arabic full stop (sometimes used as separator)
+        '；': ';',  # full-width semicolon
+    })
+    _HARD_DELIM_RE = re.compile(r'[,;|]+')
+
     def _split_text_into_parts(self, text: str) -> List[str]:
         """Split text into individual food strings using newlines, commas, and conjunctions."""
+        # Normalize Unicode (NFC) so combining diacritics match cache keys consistently,
+        # then map foreign-language separators to ASCII so the rest of the pipeline can
+        # treat them uniformly.
+        text = unicodedata.normalize('NFC', text).translate(self._FOREIGN_COMMA_TRANS)
+
         # Check for composite meal BEFORE splitting — send whole description to Gemini
         if self._is_composite_meal(text):
             return [text]
@@ -166,9 +185,12 @@ class FoodAnalysisCacheServicePart2:
             if self._is_composite_meal(line):
                 parts.append(line)
                 continue
-            # Step 2: Split on commas
-            comma_parts = [p.strip() for p in line.split(',') if p.strip()]
-            for cp in comma_parts:
+            # Step 2: Split on hard delimiters (comma / semicolon / pipe)
+            # Strip leading/trailing delimiters so ",a, b," → ["a", "b"] rather than
+            # ["", "a", "b", ""].
+            stripped = line.strip(',;| \t')
+            hard_parts = [p.strip() for p in self._HARD_DELIM_RE.split(stripped) if p.strip()]
+            for cp in hard_parts:
                 # Step 3: Split on " and " / " & " / " + " with compound food protection
                 parts.extend(self._split_on_conjunctions(cp))
         return parts
@@ -226,8 +248,39 @@ class FoodAnalysisCacheServicePart2:
 
         return self._split_on_and_only(text, lookup_service)
 
+    # Hardcoded compound-food fallback: in memory-safe override mode,
+    # `lookup_service._overrides` is intentionally empty (DB-backed lookups
+    # instead). Without this set, popular "X and Y" compounds would be
+    # incorrectly split. Mirrors the frontend compound dictionary in
+    # mobile/flutter/lib/data/services/food_search_service.dart so FE and BE
+    # agree on what counts as a single dish.
+    _COMPOUND_AND_FOODS = frozenset([
+        # English
+        'mac and cheese', 'fish and chips', 'peanut butter and jelly',
+        'biscuits and gravy', 'surf and turf', 'bacon and eggs',
+        'ham and cheese', 'rice and beans', 'chips and salsa',
+        'chips and guac', 'chips and guacamole', 'meat and potatoes',
+        'bread and butter', 'chicken and waffles', 'chicken and rice',
+        'chicken and dumplings', 'cheese and crackers', 'salt and pepper',
+        'sweet and sour chicken', 'sweet and sour pork',
+        'pork and beans', 'strawberries and cream', 'peaches and cream',
+        'bread and butter pudding', 'bangers and mash',
+        # Indian
+        'dal chawal', 'rajma chawal', 'kadhi chawal', 'curd rice',
+        'dal and rice', 'rice and dal', 'dal rice',
+        'chole bhature', 'dal makhani', 'paneer butter masala',
+        'rajma and rice',
+        # "with" compounds (handled by smart-with logic, listed here for clarity)
+        'coffee with milk', 'tea with honey', 'tea with milk',
+    ])
+
     def _split_on_and_only(self, text: str, lookup_service) -> List[str]:
         """Split on ' and ', ' & ', ' + ' with compound food protection."""
+        # Full-text protection: don't split a known compound, even across conjunctions.
+        text_lower = text.lower().strip()
+        if text_lower in self._COMPOUND_AND_FOODS:
+            return [text]
+
         # Try splitting
         parts = re.split(r'\s+and\s+|\s*&\s*|\s*\+\s*', text, flags=re.IGNORECASE)
         parts = [p.strip() for p in parts if p.strip()]
@@ -236,12 +289,17 @@ class FoodAnalysisCacheServicePart2:
 
         # Check if any adjacent pair forms a compound food
         # e.g., "mac and cheese" → rejoin if "mac and cheese" is in overrides
+        # or in the hardcoded fallback set.
         merged: List[str] = []
         i = 0
         while i < len(parts):
             if i + 1 < len(parts):
                 compound = f"{parts[i]} and {parts[i+1]}"
-                if lookup_service._overrides.get(compound.lower().strip()):
+                compound_key = compound.lower().strip()
+                if (
+                    lookup_service._overrides.get(compound_key)
+                    or compound_key in self._COMPOUND_AND_FOODS
+                ):
                     merged.append(compound)
                     i += 2
                     continue
@@ -342,65 +400,158 @@ class FoodAnalysisCacheServicePart2:
         # No quantity detected
         return ParsedFoodItem(food_name=text, quantity=1.0, raw_text=raw)
 
+    # Cap splitter output to prevent unbounded fan-out on adversarial inputs like
+    # "a, b, c, ..., z" (50+ items). Items beyond the cap fall through to
+    # whole-description Gemini.
+    _MAX_SPLIT_ITEMS = 20
+    # Bound parallel per-item Gemini calls so a 10-item meal doesn't fan out to
+    # 10 concurrent requests against the model provider.
+    _PER_ITEM_GEMINI_CONCURRENCY = 4
+
     async def _try_multi_item_lookup(
         self, description: str, user_id: Optional[str] = None
     ) -> Optional[Dict[str, Any]]:
         """
-        Try to resolve food description from overrides + common foods.
+        Try to resolve food description from overrides + common foods, with
+        per-item Gemini fallback when the local DB misses on some items.
 
-        Now handles single items with quantities (e.g., "2 dosa") in addition
-        to multi-item descriptions. For each parsed item, checks:
+        For each parsed item:
         1. Exact override match
         2. Fuzzy override search (word-index)
         3. Common foods DB
+        4. Per-item Gemini fallback (NEW) — only when >= 2 items were parsed
+           and the local lookup missed; Gemini sees ONE food name at a time,
+           which prevents comma-separated lists from being fused into a single
+           hallucinated dish like "chicken fry, dal, rice" → "chicken fried rice".
 
-        If ALL items resolve locally, combines and returns the result.
-        If any item misses, returns None to let Gemini handle the full description.
-
-        When weight_g is provided on a ParsedFoodItem, scales using per-100g data.
-        Applies countability heuristic for bare numbers.
+        Returns None only when:
+        - Splitter returns < 2 items (let the full-description Gemini path handle
+          single items — this method is strictly for multi-item descriptions)
+        - All per-item Gemini fallbacks also fail (full-description Gemini gets a turn)
 
         Args:
             description: Food description
             user_id: Optional user ID
 
         Returns:
-            Combined analysis dict if all items found, None otherwise
+            Combined analysis dict if at least one item resolved, None otherwise
         """
         try:
             # Strip trailing restaurant names before parsing
             description = strip_restaurant_qualifier(description)
 
-            items = self._split_food_description(description)
-            if not items:
-                return None
-
-            # Ensure overrides are loaded
+            # Load overrides BEFORE splitting so the compound-food guard inside
+            # _split_on_and_only (which consults `lookup_service._overrides`) can
+            # keep "mac and cheese" / "fish and chips" / "dal chawal" intact on
+            # the very first call — otherwise the first request after a cold
+            # start would split them incorrectly.
             lookup_service = get_food_db_lookup_service()
             await lookup_service._load_overrides()
 
-            all_food_items = []
+            items = self._split_food_description(description)
+            if not items:
+                return None
+            # Single-item descriptions are handled by the full-description Gemini
+            # path (Step 3 in analyze_food). This method exists specifically to
+            # prevent item-fusion in multi-item phrases.
+            if len(items) < 2:
+                return None
+
+            # Prevent DOS via pathological inputs. Excess items fall through to
+            # full-description Gemini, which will at least produce *something*.
+            if len(items) > self._MAX_SPLIT_ITEMS:
+                logger.warning(
+                    f"Multi-item lookup: capped {len(items)} items to {self._MAX_SPLIT_ITEMS}; "
+                    f"falling through for: {description[:80]}"
+                )
+                return None
+
+            # Dedup identical items while preserving order and summing quantity,
+            # so "rice, rice, rice" → one Gemini call with qty=3 instead of three.
+            items = self._collapse_duplicate_items(items)
+
+            # Phase A: local resolution per item (fast, no Gemini)
+            local_results: List[Optional[Dict[str, Any]]] = []
+            for item in items:
+                local_results.append(
+                    await self._resolve_single_parsed_item(item, lookup_service)
+                )
+
+            # Phase B: per-item Gemini fallback for every local miss, in parallel
+            # with bounded concurrency.
+            miss_indexes = [i for i, r in enumerate(local_results) if r is None]
+            used_gemini = False
+            if miss_indexes:
+                sem = asyncio.Semaphore(self._PER_ITEM_GEMINI_CONCURRENCY)
+
+                async def _gemini_one(item: ParsedFoodItem) -> Optional[Dict[str, Any]]:
+                    # item.raw_text preserves user-specified quantities/units
+                    # ("200g chicken fry") so Gemini respects them. Fall back to
+                    # food_name if raw_text is somehow empty.
+                    prompt_text = (item.raw_text or item.food_name or "").strip()
+                    if not prompt_text:
+                        return None
+                    async with sem:
+                        try:
+                            return await self.gemini_service.parse_food_description(
+                                description=prompt_text,
+                            )
+                        except Exception as e:
+                            logger.warning(
+                                f"Per-item Gemini fallback failed for '{prompt_text}': {e}"
+                            )
+                            return None
+
+                gemini_results = await asyncio.gather(
+                    *[_gemini_one(items[i]) for i in miss_indexes]
+                )
+                for idx, gres in zip(miss_indexes, gemini_results):
+                    if gres and gres.get("food_items"):
+                        local_results[idx] = gres
+                        used_gemini = True
+                        # Cache individual item so future "chicken fry" alone is instant.
+                        try:
+                            await self._cache_result(
+                                items[idx].raw_text or items[idx].food_name, gres
+                            )
+                            # Auto-learn the individual item for common-foods coverage.
+                            asyncio.create_task(self._auto_learn_food_items(gres))
+                        except Exception:
+                            # Non-fatal — caching/learning errors shouldn't fail the lookup.
+                            pass
+
+            # If every item is still a miss, let the full-description Gemini step
+            # take a shot (preserves the previous fallback behavior).
+            if all(r is None for r in local_results):
+                return None
+
+            # Phase C: aggregate. Preserve input order. Tag each food_item with the
+            # matched_query (original input phrase) so the UI can group results
+            # back to their source tokens, mirroring food_database_lookup_service.
+            all_food_items: List[Dict[str, Any]] = []
             total_cals = 0
             total_protein = 0.0
             total_carbs = 0.0
             total_fat = 0.0
             total_fiber = 0.0
+            partial_failure = False
 
-            for item in items:
-                analysis = await self._resolve_single_parsed_item(item, lookup_service)
-
-                if not analysis:
-                    # Any miss means Gemini handles the full description
-                    return None
-
-                for fi in analysis["food_items"]:
+            for item, analysis in zip(items, local_results):
+                if analysis is None:
+                    # Item genuinely couldn't be resolved. Flag it but don't abort.
+                    partial_failure = True
+                    continue
+                for fi in analysis.get("food_items", []):
+                    fi.setdefault("matched_query", item.raw_text or item.food_name)
                     all_food_items.append(fi)
+                total_cals += analysis.get("total_calories", 0) or 0
+                total_protein += analysis.get("protein_g", 0) or 0
+                total_carbs += analysis.get("carbs_g", 0) or 0
+                total_fat += analysis.get("fat_g", 0) or 0
+                total_fiber += analysis.get("fiber_g", 0) or 0
 
-                total_cals += analysis["total_calories"]
-                total_protein += analysis["protein_g"]
-                total_carbs += analysis["carbs_g"]
-                total_fat += analysis["fat_g"]
-                total_fiber += analysis["fiber_g"]
+            if not all_food_items:
+                return None
 
             score = self._compute_health_score(total_cals, total_protein, total_fiber)
 
@@ -417,12 +568,42 @@ class FoodAnalysisCacheServicePart2:
                 "recommended_swap": None,
                 "overall_meal_score": score,
                 "health_score": score,
-                "data_source": "multi_lookup",
+                # Telemetry distinguishes all-DB hits from hybrid (DB + Gemini fallback)
+                "data_source": "multi_lookup_partial_ai" if used_gemini else "multi_lookup",
+                "partial_failure": partial_failure,
             }
 
         except Exception as e:
             logger.warning(f"Multi-item lookup failed: {e}", exc_info=True)
             return None
+
+    @staticmethod
+    def _collapse_duplicate_items(items: List[ParsedFoodItem]) -> List[ParsedFoodItem]:
+        """
+        Collapse identical bare-count items (no weight/volume specified) by summing
+        their quantity, so "rice, rice, rice" → one item with quantity=3 and only
+        one Gemini call is needed.
+
+        Items with explicit weight_g or volume_ml are NOT collapsed — keeping them
+        as distinct ParsedFoodItems avoids undercounting when a user logs
+        "200g rice, 200g rice" (two servings, should total 400g, not 200g).
+        Preserves first-occurrence order.
+        """
+        collapsed: List[ParsedFoodItem] = []
+        index_by_name: Dict[str, int] = {}
+        for item in items:
+            name_key = (item.food_name or "").strip().lower()
+            is_bare_count = not item.weight_g and not item.volume_ml and not item.unit
+            if name_key and is_bare_count and name_key in index_by_name:
+                existing = collapsed[index_by_name[name_key]]
+                # Only collapse into a previously-collapsed bare-count item.
+                if not existing.weight_g and not existing.volume_ml and not existing.unit:
+                    existing.quantity = (existing.quantity or 1.0) + (item.quantity or 1.0)
+                    continue
+            if name_key and is_bare_count:
+                index_by_name[name_key] = len(collapsed)
+            collapsed.append(item)
+        return collapsed
 
     async def _try_modified_override(self, description: str) -> Optional[Dict[str, Any]]:
         """

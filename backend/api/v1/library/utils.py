@@ -19,55 +19,138 @@ from .models import LibraryExercise, LibraryProgram
 
 _presign_error_logged = False  # Log first error only to avoid log spam
 
-# Ordered list of (compiled_regex, simplified_base_name).
+# Ordered list of (compiled_regex, simplified_base_name, canonical_exercise_names).
 # First matching pattern wins — put MORE SPECIFIC patterns before generic ones.
-# Why regex instead of an exact-name dict:
-#   - "bodyweight squat" and "bodyweight squats" → 1 pattern, not 2 entries
-#   - "push-up" and "push up" and "pushup" → 1 pattern
-#   - New exercises added to the library auto-match if they contain the keyword
-#   - To add a new movement type: add one tuple. No DB changes needed.
-_SIMPLIFIED_PATTERNS: list[tuple[re.Pattern, str]] = [
+#
+# `canonical_exercise_names` is an ordered tuple of exact exercise names (matched
+# case-insensitively against exercise_library_cleaned.name) that should pin to the
+# top of tier-1 when a user searches the simplified base. Index in the tuple sets
+# rank — first entry = #1 result. Names that don't exist in the DB silently fall
+# through to the non-canonical tier-1 branch, so an outdated entry causes no error.
+# An empty tuple keeps today's word-count/length/alphabetical tiebreaker.
+# Regex nouns use `s?` / `(?:es)?` / `(?:ies)?` to match both singular and plural
+# exercise names because the DB mixes conventions ("Dumbbell Curls", "Barbell Shrugs",
+# "Bodyweight Squats", "Good Mornings", "Mountain Climbers", "Sit-Ups", "Push Ups",
+# "Crunches", "Dips", "Flies"). Without plural coverage, simplified-match misses
+# these rows and they fall to a lower tier than intended.
+_SIMPLIFIED_PATTERNS: list[tuple[re.Pattern, str, tuple[str, ...]]] = [
     # ── Planks — specific before generic ──────────────────
-    (re.compile(r'\bside\s+plank\b'),                          "Side Plank"),
-    (re.compile(r'\breverse\s+plank\b'),                       "Reverse Plank"),
-    (re.compile(r'\bplank\b'),                                 "Plank"),
-    # ── Upper body push ───────────────────────────────────
-    (re.compile(r'\bpush[\s\-]?up\b|\bpushup\b'),              "Push Up"),
-    # ── Upper body pull ───────────────────────────────────
-    (re.compile(r'\bpull[\s\-]?up\b|\bpullup\b'),              "Pull Up"),
-    (re.compile(r'\bchin[\s\-]?up\b|\bchinup\b'),              "Chin Up"),
-    # ── Compound press ────────────────────────────────────
-    (re.compile(r'\bbench\s+press\b'),                         "Bench Press"),
-    (re.compile(r'\bleg\s+press\b'),                           "Leg Press"),
-    # ── Hinge / compound lower ────────────────────────────
-    (re.compile(r'\bdeadlift\b'),                              "Deadlift"),
-    (re.compile(r'\bsquat\b'),                                 "Squat"),
-    (re.compile(r'\blunge\b'),                                 "Lunge"),
-    # ── Pulls / rows ──────────────────────────────────────
-    (re.compile(r'\brow\b'),                                   "Row"),
+    (re.compile(r'\bside\s+planks?\b'),                        "Side Plank",       ("Side Plank",)),
+    (re.compile(r'\breverse\s+planks?\b'),                     "Reverse Plank",    ()),
+    (re.compile(r'\bplanks?\b'),                               "Plank",            ("Plank On Elbows", "High Plank")),
+    # ── Core / abs ────────────────────────────────────────
+    (re.compile(r'\brussian\s+twists?\b'),                     "Russian Twist",    ("Russian Twist",)),
+    (re.compile(r'\bmountain\s+climbers?\b'),                  "Mountain Climber", ("Mountain Climber", "Mountain Climbers")),
+    (re.compile(r'\bleg\s+raises?\b'),                         "Leg Raise",        ("Hanging Leg Raises", "Captains Chair Leg Raise")),
+    (re.compile(r'\bcrunch(?:es)?\b'),                         "Crunch",           ("Reverse Crunch", "Cable Crunch", "Oblique Crunch")),
+    (re.compile(r'\bsit[\s\-]?ups?\b|\bsitups?\b'),            "Sit Up",           ("Decline Sit Up", "Sit-Ups", "Situps")),
+    # ── Upper body push (specific before generic) ─────────
+    (re.compile(r'\bpush\s+press\b'),                          "Push Press",       ("Dumbbell Push Press",)),
+    (re.compile(r'\boverhead\s+press\b|\bshoulder\s+press\b|\bmilitary\s+press\b'),
+                                                               "Overhead Press",   ("Barbell Standing Shoulder Press", "Dumbbell Standing Overhead Press",
+                                                                                    "Dumbbell Seated Shoulder Press", "Barbell Seated Overhead Press")),
+    (re.compile(r'\btriceps?\s+extensions?\b'),                "Tricep Extension", ("Tricep Extension Machine", "Dumbbell Lying Triceps Extension",
+                                                                                    "Barbell Lying Triceps Extension")),
+    (re.compile(r'\bbench\s+press\b'),                         "Bench Press",      ("Barbell Bench Press", "Dumbbell Bench Press",
+                                                                                    "Barbell Incline Bench Press", "Dumbbell Incline Bench Press",
+                                                                                    "Close Grip Barbell Bench Press")),
+    (re.compile(r'\bleg\s+press\b'),                           "Leg Press",        ()),
+    (re.compile(r'\bpush[\s\-]?ups?\b|\bpushups?\b'),          "Push Up",          ("Normal Push-Up", "Decline Push Up", "Diamond Push Up",
+                                                                                    "Incline Push-Up (On Box)")),
+    (re.compile(r'\bdips?\b'),                                 "Dip",              ("Chest Dip", "Assisted Dip")),
+    # Flies/flyes/flys: match both spellings and plurals of each.
+    (re.compile(r'\bfly\b|\bflies\b|\bflyes?\b|\bflys\b'),     "Fly",              ("Machine Fly", "Pec Deck Fly", "Dumbbell Reverse Fly",
+                                                                                    "Cable Rear Delt Fly")),
+    # ── Upper body pull (specific before generic) ─────────
+    (re.compile(r'\bface\s+pulls?\b'),                         "Face Pull",        ("Cable Face Pull", "Band Face Pull")),
+    (re.compile(r'\bmuscle[\s\-]?ups?\b'),                     "Muscle Up",        ()),
+    (re.compile(r'\bpull[\s\-]?ups?\b|\bpullups?\b'),          "Pull Up",          ("Pull Up Normal Grip", "Pull Up Wide Grip", "Assisted Pull Up")),
+    (re.compile(r'\bchin[\s\-]?ups?\b|\bchinups?\b'),          "Chin Up",          ("Chin Up",)),
+    (re.compile(r'\bpulldowns?\b|\blat\s+pulldowns?\b'),       "Pulldown",         ("Lat Pulldown", "Wide Grip Lat Pulldown",
+                                                                                    "Close Grip Lat Pulldown", "Cable Straight Arm Pulldown")),
+    (re.compile(r'\bshrugs?\b'),                               "Shrug",            ("Barbell Shrugs", "Dumbbell Shrugs", "Kettlebell Shrug",
+                                                                                    "Trap Bar Shrug")),
+    (re.compile(r'\bupright\s+rows?\b'),                       "Upright Row",      ("Upright Row Barbell", "Upright Row Dumbbell")),
+    (re.compile(r'\brows?\b'),                                 "Row",              ("Bent Over Barbell Row", "Dumbbell Bent-Over Row",
+                                                                                    "Kettlebell Row", "Cable Bent Over Row", "Landmine Row")),
+    # ── Shoulder isolation (specific before generic raise) ─
+    (re.compile(r'\blateral\s+raises?\b|\bside\s+raises?\b'),  "Lateral Raise",    ("Machine Lateral Raise", "Lateral Raises Dumbbell",
+                                                                                    "Dumbbell One Arm Lateral Raise", "Lateral Raise Bodyweight")),
+    (re.compile(r'\bfront\s+raises?\b'),                       "Front Raise",      ("Dumbbell Front Raise", "Barbell Front Raise", "Plate Front Raise")),
+    (re.compile(r'\brear\s+(?:delt|lateral)\s+raises?\b'),     "Rear Delt Raise",  ("Dumbbell Rear Lateral Raise",)),
+    (re.compile(r'\bcalf\s+raises?\b'),                        "Calf Raise",       ("Dumbbell Standing Calf Raise", "Bodyweight Standing Calf Raise",
+                                                                                    "Donkey Calf Raise", "Dumbbell Seated Calf Raise")),
     # ── Curls — specific before generic ───────────────────
-    (re.compile(r'\bleg\s+curl\b'),                            "Leg Curl"),
-    (re.compile(r'\bwrist\s+curl\b'),                          "Wrist Curl"),
-    (re.compile(r'\bcurl\b'),                                  "Curl"),
+    (re.compile(r'\bwrist\s+curls?\b'),                        "Wrist Curl",       ("Wrist Curl Barbell", "Wrist Curl Dumbbell")),
+    (re.compile(r'\bhammer\s+curls?\b'),                       "Hammer Curl",      ("Dumbbell Hammer Curl",)),
+    (re.compile(r'\bpreacher\s+curls?\b'),                     "Preacher Curl",    ("Barbell Preacher Curl", "Dumbbell Preacher Curl")),
+    (re.compile(r'\bleg\s+curls?\b'),                          "Leg Curl",         ("Seated Leg Curl", "Lying Leg Curl")),
+    (re.compile(r'\bcurls?\b'),                                "Curl",             ("Barbell Curl", "Dumbbell Curls", "Barbell Biceps Curl",
+                                                                                    "Incline Dumbbell Curl")),
+    # ── Lower-body compound (specific before generic) ─────
+    (re.compile(r'\bbulgarian\s+split\s+squats?\b'),           "Bulgarian Split Squat",
+                                                               ("Bulgarian Split Squat", "Barbell Bulgarian Split Squat",
+                                                                "Dumbbell Bulgarian Split Squat")),
+    (re.compile(r'\bgoblet\s+squats?\b'),                      "Goblet Squat",     ("Dumbbell Goblet Squat", "Cable Goblet Squat")),
+    (re.compile(r'\bfront\s+squats?\b'),                       "Front Squat",      ("Barbell Front Squat", "Dumbbell Front Squat")),
+    (re.compile(r'\bhack\s+squats?\b'),                        "Hack Squat",       ("Hack Squat", "Hack Squat Machine", "Reverse Hack Squat")),
+    (re.compile(r'\bsquats?\b'),                               "Squat",            ("Bodyweight Squat", "Barbell Low Bar Squat", "Barbell Full Squat",
+                                                                                    "Dumbbell Goblet Squat")),
+    (re.compile(r'\bromanian\s+deadlifts?\b|\brdls?\b'),       "Romanian Deadlift",
+                                                               ("Barbell Romanian Deadlift", "Dumbbell Romanian Deadlift")),
+    (re.compile(r'\bsumo\s+deadlifts?\b'),                     "Sumo Deadlift",    ("Barbell Sumo Deadlift", "Kettlebell Sumo Deadlift")),
+    (re.compile(r'\btrap\s+bar\s+deadlifts?\b|\bhex\s+bar\s+deadlifts?\b'),
+                                                               "Trap Bar Deadlift", ("Trap Bar Deadlift",)),
+    (re.compile(r'\bdeadlifts?\b'),                            "Deadlift",         ("Barbell Deadlift", "Barbell Romanian Deadlift",
+                                                                                    "Barbell Sumo Deadlift", "Trap Bar Deadlift",
+                                                                                    "Dumbbell Romanian Deadlift")),
+    (re.compile(r'\bleg\s+extensions?\b'),                     "Leg Extension",    ("Leg Extension",)),
+    (re.compile(r'\blunges?\b'),                               "Lunge",            ("Barbell Lunge", "Bodyweight Forward Lunge",
+                                                                                    "Dumbbell Rear Lunge", "Lateral Lunge")),
+    (re.compile(r'\bhip\s+thrusts?\b'),                        "Hip Thrust",       ("Barbell Hip Thrust", "Dumbbell Hip Thrust", "Bodyweight Hip Thrust")),
+    (re.compile(r'\bglute\s+bridges?\b'),                      "Glute Bridge",     ("Barbell Glute Bridge", "Dumbbell Glute Bridge", "Kettlebell Glute Bridge")),
+    (re.compile(r'\bgood\s+mornings?\b'),                      "Good Morning",     ("Barbell Good Morning", "Good Mornings", "Bodyweight Good Morning")),
+    (re.compile(r'\bkettlebell\s+swings?\b'),                  "Kettlebell Swing", ("Kettlebell Swing",)),
     # ── Cardio ────────────────────────────────────────────
-    (re.compile(r'\btreadmill\b'),                             "Treadmill"),
-    (re.compile(r'\bstationary\s+bike\b|\bspin\s+bike\b|\bexercise\s+bike\b'), "Stationary Bike"),
-    (re.compile(r'\bcycling\b|\bcycle\b'),                     "Cycling"),
-    (re.compile(r'\browing\s+machine\b|\bgym\s+row'),          "Rowing Machine"),
-    (re.compile(r'\belliptical\b'),                            "Elliptical"),
-    (re.compile(r'\bjump\s+rope\b|\bjumping\s+rope\b'),        "Jump Rope"),
-    (re.compile(r'\bstair\s+(?:climb|step|mill)'),             "Stair Climber"),
-    (re.compile(r'\bski\s+erg(?:ometer)?\b'),                  "Ski Erg"),
+    (re.compile(r'\btreadmill\b'),                             "Treadmill",        ("Treadmill Run", "Treadmill Walk", "Treadmill Jog")),
+    (re.compile(r'\bstationary\s+bike\b|\bspin\s+bike\b|\bexercise\s+bike\b'),
+                                                               "Stationary Bike",  ("Stationary Bike Moderate", "Stationary Bike Easy")),
+    (re.compile(r'\bcycling\b|\bcycle\b'),                     "Cycling",          ()),
+    (re.compile(r'\browing\s+machine\b|\bgym\s+row'),          "Rowing Machine",   ("Rowing Machine Moderate", "Rowing Machine Easy")),
+    (re.compile(r'\belliptical\b'),                            "Elliptical",       ("Elliptical Moderate", "Elliptical Easy")),
+    (re.compile(r'\bjump\s+rope\b|\bjumping\s+rope\b'),        "Jump Rope",        ("Jump Rope Basic Jump", "Jump Rope Alternating Foot")),
+    (re.compile(r'\bstair\s+(?:climb|step|mill)'),             "Stair Climber",    ("Stair Climber Moderate", "Stair Climber Easy")),
+    (re.compile(r'\bski\s+erg(?:ometer)?\b'),                  "Ski Erg",          ("Ski Erg Easy", "Ski Erg Intervals")),
+    (re.compile(r'\bburpees?\b'),                              "Burpee",           ("Burpee",)),
+    (re.compile(r'\bjumping\s+jacks?\b'),                      "Jumping Jack",     ("Jumping Jack",)),
+    (re.compile(r'\bhigh\s+knees?\b'),                         "High Knees",       ("High Knees",)),
+    (re.compile(r'\bbox\s+jumps?\b'),                          "Box Jump",         ("Box Jump",)),
+    (re.compile(r'\bsprints?\b'),                              "Sprint",           ("Treadmill Sprint Intervals",)),
+]
+
+# Pre-compute lowercased canonical tuples so the hot-path doesn't lowercase per-call.
+_SIMPLIFIED_PATTERNS_LC: list[tuple[re.Pattern, str, tuple[str, ...]]] = [
+    (p, s, tuple(c.lower() for c in canon)) for p, s, canon in _SIMPLIFIED_PATTERNS
 ]
 
 
-def _get_exercise_simplified_name(name_lower: str) -> Optional[str]:
-    """Return the simplified base name for an exercise, or None if no pattern matches.
-    First matching pattern wins — order of _SIMPLIFIED_PATTERNS matters."""
-    for pattern, simplified in _SIMPLIFIED_PATTERNS:
+def _get_simplified_and_canonicals(name_lower: str) -> tuple[Optional[str], tuple[str, ...]]:
+    """Return (simplified_base_name, lowercased_canonical_names) for an exercise name.
+
+    First matching pattern wins — order of _SIMPLIFIED_PATTERNS matters.
+    Returns (None, ()) if no pattern matches."""
+    for pattern, simplified, canon_lc in _SIMPLIFIED_PATTERNS_LC:
         if pattern.search(name_lower):
-            return simplified
-    return None
+            return simplified, canon_lc
+    return None, ()
+
+
+def _get_exercise_simplified_name(name_lower: str) -> Optional[str]:
+    """Back-compat shim: return only the simplified name.
+
+    Kept so external callers (none at present, but defensive) keep working."""
+    simplified, _ = _get_simplified_and_canonicals(name_lower)
+    return simplified
 
 # S3 prefixes that are publicly readable (no presigning needed)
 _STATIC_PREFIXES = ("ILLUSTRATIONS/", "ILLUSTRATIONS ALL/", "Ultimate-Muscle-Visuals/")
@@ -265,9 +348,15 @@ def sort_by_relevance(exercises: List['LibraryExercise'], search_query: str) -> 
 
     Tiers (lower = higher rank):
       0 — Exact name match
-      1 — Simplified base name matches search (e.g., "High Plank" when searching "plank")
-          Tiebreaker within tier: word_count ASC, length ASC (simpler = fewer words = first)
-      2 — Name starts with search query; same tiebreakers
+      1 — Simplified base name matches search (e.g., "High Plank" when searching "plank").
+          Within tier 1:
+            · If the exercise name is in the pattern's canonical list, rank by its
+              canonical index (0-based) — curated canonical variants sort first in
+              the order they're listed.
+            · Otherwise, fall through to len(canonical) + word_count ASC so curated
+              canonicals always precede non-canonical variants, and the legacy
+              word-count/length/alphabetical tiebreaker still orders the rest.
+      2 — Name starts with search query; tiebreak by word count, length
       3 — Search appears as a complete word in the name
       4 — Partial (substring) match
       5 — Everything else (trigram matches returned by SQL)
@@ -279,13 +368,18 @@ def sort_by_relevance(exercises: List['LibraryExercise'], search_query: str) -> 
 
     def relevance_score(exercise: 'LibraryExercise') -> tuple:
         name_lower = (exercise.name or "").lower()
-        simplified = _get_exercise_simplified_name(name_lower)
+        simplified, canonical_lc = _get_simplified_and_canonicals(name_lower)
 
         if name_lower == search_lower:
             return (0, 0, 0, name_lower)
 
         if simplified and simplified.lower() == search_lower:
-            return (1, len(name_lower.split()), len(name_lower), name_lower)
+            if canonical_lc and name_lower in canonical_lc:
+                # Pin canonical variants to the top of tier 1 in curator-specified order.
+                return (1, canonical_lc.index(name_lower), 0, name_lower)
+            # Non-canonical tier-1 match: offset by len(canonical) so canonicals
+            # always rank first, then legacy word-count/length tiebreakers apply.
+            return (1, len(canonical_lc) + len(name_lower.split()), len(name_lower), name_lower)
 
         if name_lower.startswith(search_lower):
             return (2, len(name_lower.split()), len(name_lower), name_lower)
