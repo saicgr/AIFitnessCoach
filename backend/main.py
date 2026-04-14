@@ -221,25 +221,6 @@ class LoggingMiddleware:
             clear_log_context()
 
 
-class RateLimitCacheCleanupMiddleware:
-    """Pure ASGI middleware to clean up rate limiter request body cache after each request."""
-
-    def __init__(self, app: ASGIApp):
-        self.app = app
-
-    async def __call__(self, scope: Scope, receive: Receive, send: Send):
-        if scope["type"] != "http":
-            await self.app(scope, receive, send)
-            return
-
-        request = Request(scope)
-        try:
-            await self.app(scope, receive, send)
-        finally:
-            from core.rate_limiter import _request_body_cache
-            _request_body_cache.pop(id(request), None)
-
-
 async def _init_rag_service():
     """Initialize RAG service (depends on Gemini service being ready)."""
     logger.info("Initializing RAG service...")
@@ -626,9 +607,6 @@ app.add_middleware(SecurityHeadersMiddleware)
 # Add SlowAPI middleware for rate limiting
 # This MUST be added for rate limiting to work properly
 app.add_middleware(SlowAPIMiddleware)
-
-# Add rate limiter cache cleanup middleware
-app.add_middleware(RateLimitCacheCleanupMiddleware)
 
 # Include API routes
 app.include_router(v1_router, prefix="/api")
