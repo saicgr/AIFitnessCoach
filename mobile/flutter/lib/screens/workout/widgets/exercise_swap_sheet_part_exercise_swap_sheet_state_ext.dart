@@ -291,10 +291,19 @@ extension __ExerciseSwapSheetStateExt on _ExerciseSwapSheetState {
                         .where((s) => s.isNotEmpty)
                         .join(' • ');
 
-                // Badge text based on rank
+                final isCustom = suggestion['is_custom'] == true;
+                final source =
+                    suggestion['source'] as String? ?? 'ai_suggestion';
+
+                // Badge text based on rank / source. Custom exercises get
+                // their own "YOURS" badge so the user recognises their own
+                // imported content.
                 String badge;
                 Color badgeColor;
-                if (rank == 1) {
+                if (isCustom) {
+                  badge = 'YOURS';
+                  badgeColor = AppColors.orange;
+                } else if (rank == 1) {
                   badge = 'Best Match';
                   badgeColor = AppColors.success;
                 } else if (rank <= 3) {
@@ -310,7 +319,7 @@ extension __ExerciseSwapSheetStateExt on _ExerciseSwapSheetState {
                   subtitle: subtitle,
                   badge: badge,
                   badgeColor: badgeColor,
-                  onTap: () => _swapExercise(name, source: 'ai_suggestion'),
+                  onTap: () => _swapExercise(name, source: source),
                   textPrimary: textPrimary,
                   textMuted: textMuted,
                 );

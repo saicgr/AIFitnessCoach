@@ -32,13 +32,17 @@ enum RecipeCategory {
 enum RecipeSourceType {
   manual('manual', 'Created manually'),
   imported('imported', 'Imported from URL'),
-  aiGenerated('ai_generated', 'AI Generated');
+  aiGenerated('ai_generated', 'AI Generated'),
+  improvized('improvized', 'Improvized', '✨'),
+  curated('curated', 'Curated', '🌟');
 
   final String value;
   final String description;
+  final String? emoji;
 
-  const RecipeSourceType(this.value, this.description);
+  const RecipeSourceType(this.value, this.description, [this.emoji]);
 
+  /// Safe decoder — unknown values fall back to [manual] so we never crash.
   static RecipeSourceType fromValue(String? value) {
     if (value == null) return RecipeSourceType.manual;
     return RecipeSourceType.values.firstWhere(
@@ -219,8 +223,9 @@ class RecipeIngredientCreate {
 @JsonSerializable()
 class Recipe {
   final String id;
+  // Nullable: curated recipes (shared library) have NULL user_id in the backend.
   @JsonKey(name: 'user_id')
-  final String userId;
+  final String? userId;
   final String name;
   final String? description;
   final int servings;
@@ -282,6 +287,31 @@ class Recipe {
   @JsonKey(name: 'ingredient_count')
   final int? ingredientCount;
 
+  // Discover / Favorites / Improvize metadata
+  /// True for shared/curated recipes (user_id is NULL, appears in Discover).
+  @JsonKey(name: 'is_curated')
+  final bool isCurated;
+
+  /// Public slug for curated / shared recipes (used in /r/{slug} links).
+  final String? slug;
+
+  /// When this recipe was cloned ("improvized") from another, the source recipe id.
+  @JsonKey(name: 'source_recipe_id')
+  final String? sourceRecipeId;
+
+  /// Display name of the source recipe (denormalized for UI badges).
+  @JsonKey(name: 'source_recipe_name')
+  final String? sourceRecipeName;
+
+  /// Owner user_id of the source recipe (for attribution).
+  @JsonKey(name: 'source_recipe_user_id')
+  final String? sourceRecipeUserId;
+
+  /// Whether the current user has favorited this recipe.
+  /// Server projects this per-request; defaults to false.
+  @JsonKey(name: 'is_favorited')
+  final bool isFavorited;
+
   // Timestamps
   @JsonKey(name: 'created_at')
   final DateTime createdAt;
@@ -292,7 +322,7 @@ class Recipe {
 
   const Recipe({
     required this.id,
-    required this.userId,
+    this.userId,
     required this.name,
     this.description,
     this.servings = 1,
@@ -322,6 +352,12 @@ class Recipe {
     this.lastLoggedAt,
     this.ingredients = const [],
     this.ingredientCount,
+    this.isCurated = false,
+    this.slug,
+    this.sourceRecipeId,
+    this.sourceRecipeName,
+    this.sourceRecipeUserId,
+    this.isFavorited = false,
     required this.createdAt,
     required this.updatedAt,
     this.deletedAt,
@@ -387,6 +423,19 @@ class RecipeSummary {
   @JsonKey(name: 'created_at')
   final DateTime createdAt;
 
+  // Discover / Favorites / Improvize metadata (list-level)
+  @JsonKey(name: 'is_curated')
+  final bool isCurated;
+  final String? slug;
+  @JsonKey(name: 'source_recipe_id')
+  final String? sourceRecipeId;
+  @JsonKey(name: 'source_recipe_name')
+  final String? sourceRecipeName;
+  @JsonKey(name: 'is_favorited')
+  final bool isFavorited;
+  @JsonKey(name: 'source_type')
+  final String? sourceType;
+
   const RecipeSummary({
     required this.id,
     required this.name,
@@ -398,6 +447,12 @@ class RecipeSummary {
     this.timesLogged = 0,
     this.imageUrl,
     required this.createdAt,
+    this.isCurated = false,
+    this.slug,
+    this.sourceRecipeId,
+    this.sourceRecipeName,
+    this.isFavorited = false,
+    this.sourceType,
   });
 
   factory RecipeSummary.fromJson(Map<String, dynamic> json) =>
@@ -406,6 +461,9 @@ class RecipeSummary {
 
   /// Get category as enum
   RecipeCategory get categoryEnum => RecipeCategory.fromValue(category);
+
+  /// Get source type as enum (safe: unknown → manual)
+  RecipeSourceType get sourceTypeEnum => RecipeSourceType.fromValue(sourceType);
 }
 
 /// List of recipes response

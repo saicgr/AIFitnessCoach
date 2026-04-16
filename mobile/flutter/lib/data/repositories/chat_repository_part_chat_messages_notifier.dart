@@ -829,6 +829,20 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
           debugPrint('🍽️ [Chat] Failed to refresh nutrition: $e');
         }
         break;
+      case 'open_grocery_list':
+        // Emitted by the build_grocery_list nutrition agent tool. The tool
+        // already persisted the list; we just hand the list_id off via the
+        // pending-action holder so the next live screen with WidgetRef
+        // (MainShell) can deep-link into grocery_list_screen.
+        final listId = actionData['list_id'] as String?;
+        if (listId != null && listId.isNotEmpty) {
+          RecipeNotificationRouter.pending = RecipeNotificationActionData(
+            action: 'open_grocery_list',
+            groceryListId: listId,
+          );
+          debugPrint('🛒 [Chat] Pending open_grocery_list for list $listId');
+        }
+        break;
       default:
         debugPrint('🤖 [Chat] Unknown action: $action');
     }

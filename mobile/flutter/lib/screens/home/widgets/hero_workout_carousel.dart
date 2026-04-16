@@ -130,6 +130,30 @@ class _HeroWorkoutCarouselState extends ConsumerState<HeroWorkoutCarousel> {
   String _dateKey(DateTime date) =>
       '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
 
+  /// Pick the default-focused carousel card in priority order. Treats
+  /// `isCompleted == null` as actionable (freshly-generated, never-attempted
+  /// workouts have null state — the old `== false` check silently skipped them).
+  /// First match wins: today → next future → any placeholder → index 0.
+  int _pickInitialIndex(List<CarouselItem> items, DateTime today) {
+    int? todayIdx, futureIdx, placeholderIdx;
+    final todayKey = _dateKey(today);
+    for (int i = 0; i < items.length; i++) {
+      final item = items[i];
+      final actionable = item.isPlaceholder ||
+          (item.isWorkout && item.workout!.isCompleted != true);
+      if (!actionable) continue;
+      final d = item.date;
+      if (d != null && _dateKey(d) == todayKey) {
+        todayIdx ??= i;
+      } else if (d != null && d.isAfter(today)) {
+        futureIdx ??= i;
+      } else if (item.isPlaceholder) {
+        placeholderIdx ??= i;
+      }
+    }
+    return todayIdx ?? futureIdx ?? placeholderIdx ?? 0;
+  }
+
   /// Get workout dates for this week (including past days for missed workout viewing).
   /// Uses [weekConfig] to respect the user's Sunday/Monday week-start preference.
   /// Past dates are included so users can tap missed dates in the week strip
@@ -328,45 +352,32 @@ class _HeroWorkoutCarouselState extends ConsumerState<HeroWorkoutCarousel> {
           }
         }
 
-        // Auto-scroll to the first actionable (today/future, non-completed) workout
-        // on first data load. Skips past missed workouts.
-        // Recreates the PageController with the correct initialPage so there's
-        // no visible flicker from jumping after render.
+        // Pick the actionable target on first data load + auto-scroll to it.
+        // Carousel starts at index 0 (earliest, usually the missed card if
+        // present) so users see what they missed, then the animation reveals
+        // today's / next workout. Feels intentional, not magic.
         if (!_hasScrolledToInitial && carouselItems.length > 1 && _ownsController) {
           _hasScrolledToInitial = true;
-          int targetIndex = 0;
-          for (int i = 0; i < carouselItems.length; i++) {
-            final item = carouselItems[i];
-            // A placeholder (not yet generated) is always actionable
-            if (item.isPlaceholder) {
-              targetIndex = i;
-              break;
-            }
-            // A non-completed workout that's today or future (skip missed past workouts)
-            if (item.isWorkout && item.workout!.isCompleted == false) {
-              final itemDate = item.date;
-              if (itemDate != null && !itemDate.isBefore(today)) {
-                targetIndex = i;
-                break;
-              }
-            }
-            // If we've checked all and none matched, default to last item
-            if (i == carouselItems.length - 1) {
-              targetIndex = i;
-            }
-          }
-          if (targetIndex != _currentPage) {
-            _currentPage = targetIndex;
-            // Recreate controller with correct initial page — no flicker
-            _ownedPageController?.dispose();
-            _ownedPageController = PageController(
-              viewportFraction: 0.88,
-              initialPage: targetIndex,
-            );
+          final targetIndex = _pickInitialIndex(carouselItems, today);
+          _currentPage = 0;
+
+          if (targetIndex != 0) {
+            // Dwell briefly on the first (likely missed) card, then slide to
+            // the actionable target. Reuses the same tween vocabulary as the
+            // on-completion auto-scroll below.
+            WidgetsBinding.instance.addPostFrameCallback((_) async {
+              await Future.delayed(const Duration(milliseconds: 800));
+              if (!mounted || !_pageController.hasClients) return;
+              await _pageController.animateToPage(
+                targetIndex,
+                duration: const Duration(milliseconds: 550),
+                curve: Curves.easeOutCubic,
+              );
+              if (mounted) widget.onPageChanged?.call(targetIndex);
+            });
+          } else {
             WidgetsBinding.instance.addPostFrameCallback((_) {
-              if (mounted) {
-                widget.onPageChanged?.call(targetIndex);
-              }
+              if (mounted) widget.onPageChanged?.call(0);
             });
           }
         }
@@ -383,7 +394,7 @@ class _HeroWorkoutCarouselState extends ConsumerState<HeroWorkoutCarousel> {
               found = true;
               break;
             }
-            if (item.isWorkout && item.workout!.isCompleted == false) {
+            if (item.isWorkout && item.workout!.isCompleted != true) {
               final itemDate = item.date;
               if (itemDate != null && !itemDate.isBefore(today)) {
                 targetIndex = i;

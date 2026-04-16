@@ -126,7 +126,7 @@ Map<String, dynamic> _$RecipeIngredientCreateToJson(
 
 Recipe _$RecipeFromJson(Map<String, dynamic> json) => Recipe(
   id: json['id'] as String,
-  userId: json['user_id'] as String,
+  userId: json['user_id'] as String?,
   name: json['name'] as String,
   description: json['description'] as String?,
   servings: (json['servings'] as num?)?.toInt() ?? 1,
@@ -163,6 +163,12 @@ Recipe _$RecipeFromJson(Map<String, dynamic> json) => Recipe(
           .toList() ??
       const [],
   ingredientCount: (json['ingredient_count'] as num?)?.toInt(),
+  isCurated: json['is_curated'] as bool? ?? false,
+  slug: json['slug'] as String?,
+  sourceRecipeId: json['source_recipe_id'] as String?,
+  sourceRecipeName: json['source_recipe_name'] as String?,
+  sourceRecipeUserId: json['source_recipe_user_id'] as String?,
+  isFavorited: json['is_favorited'] as bool? ?? false,
   createdAt: DateTime.parse(json['created_at'] as String),
   updatedAt: DateTime.parse(json['updated_at'] as String),
   deletedAt: json['deleted_at'] == null
@@ -202,6 +208,12 @@ Map<String, dynamic> _$RecipeToJson(Recipe instance) => <String, dynamic>{
   'last_logged_at': instance.lastLoggedAt?.toIso8601String(),
   'ingredients': instance.ingredients,
   'ingredient_count': instance.ingredientCount,
+  'is_curated': instance.isCurated,
+  'slug': instance.slug,
+  'source_recipe_id': instance.sourceRecipeId,
+  'source_recipe_name': instance.sourceRecipeName,
+  'source_recipe_user_id': instance.sourceRecipeUserId,
+  'is_favorited': instance.isFavorited,
   'created_at': instance.createdAt.toIso8601String(),
   'updated_at': instance.updatedAt.toIso8601String(),
   'deleted_at': instance.deletedAt?.toIso8601String(),
@@ -219,6 +231,12 @@ RecipeSummary _$RecipeSummaryFromJson(Map<String, dynamic> json) =>
       timesLogged: (json['times_logged'] as num?)?.toInt() ?? 0,
       imageUrl: json['image_url'] as String?,
       createdAt: DateTime.parse(json['created_at'] as String),
+      isCurated: json['is_curated'] as bool? ?? false,
+      slug: json['slug'] as String?,
+      sourceRecipeId: json['source_recipe_id'] as String?,
+      sourceRecipeName: json['source_recipe_name'] as String?,
+      isFavorited: json['is_favorited'] as bool? ?? false,
+      sourceType: json['source_type'] as String?,
     );
 
 Map<String, dynamic> _$RecipeSummaryToJson(RecipeSummary instance) =>
@@ -233,6 +251,12 @@ Map<String, dynamic> _$RecipeSummaryToJson(RecipeSummary instance) =>
       'times_logged': instance.timesLogged,
       'image_url': instance.imageUrl,
       'created_at': instance.createdAt.toIso8601String(),
+      'is_curated': instance.isCurated,
+      'slug': instance.slug,
+      'source_recipe_id': instance.sourceRecipeId,
+      'source_recipe_name': instance.sourceRecipeName,
+      'is_favorited': instance.isFavorited,
+      'source_type': instance.sourceType,
     };
 
 RecipesResponse _$RecipesResponseFromJson(Map<String, dynamic> json) =>

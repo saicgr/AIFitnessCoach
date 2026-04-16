@@ -861,15 +861,36 @@ class _HeroWorkoutCardState extends ConsumerState<HeroWorkoutCard> {
                 ),
               ),
 
-            // Missed workout overlay (past date, not completed)
+            // Missed workout overlay (past date, not completed).
+            // Contrast strategy: heavier blur + vertical gradient scrim (dark/light
+            // band in the centre where the copy lives, red-tinted at the edges to
+            // preserve the "missed" affordance) + full-opacity text with a shadow
+            // so the workout name stays readable over any underlying hero image.
             if (widget.workout.isCompleted != true && _isMissedWorkout(workout))
               Positioned.fill(
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(22),
                   child: BackdropFilter(
-                    filter: ImageFilter.blur(sigmaX: 4, sigmaY: 4),
-                    child: Container(
-                      color: AppColors.error.withValues(alpha: isDark ? 0.2 : 0.15),
+                    filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: isDark
+                              ? [
+                                  AppColors.error.withValues(alpha: 0.35),
+                                  Colors.black.withValues(alpha: 0.62),
+                                  AppColors.error.withValues(alpha: 0.35),
+                                ]
+                              : [
+                                  AppColors.error.withValues(alpha: 0.25),
+                                  Colors.white.withValues(alpha: 0.85),
+                                  AppColors.error.withValues(alpha: 0.25),
+                                ],
+                          stops: const [0.0, 0.5, 1.0],
+                        ),
+                      ),
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
@@ -890,14 +911,37 @@ class _HeroWorkoutCardState extends ConsumerState<HeroWorkoutCard> {
                               color: isDark ? Colors.white : Colors.black87,
                               fontSize: 20,
                               fontWeight: FontWeight.bold,
+                              shadows: isDark
+                                  ? [
+                                      Shadow(
+                                        color: Colors.black.withValues(alpha: 0.6),
+                                        blurRadius: 4,
+                                      ),
+                                    ]
+                                  : null,
                             ),
                           ),
                           const SizedBox(height: 4),
-                          Text(
-                            workout.name ?? '',
-                            style: TextStyle(
-                              color: isDark ? Colors.white70 : Colors.black54,
-                              fontSize: 14,
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 24),
+                            child: Text(
+                              workout.name ?? '',
+                              textAlign: TextAlign.center,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                color: isDark ? Colors.white : Colors.black87,
+                                fontSize: 15,
+                                fontWeight: FontWeight.w600,
+                                shadows: isDark
+                                    ? [
+                                        Shadow(
+                                          color: Colors.black.withValues(alpha: 0.6),
+                                          blurRadius: 4,
+                                        ),
+                                      ]
+                                    : null,
+                              ),
                             ),
                           ),
                           const SizedBox(height: 24),

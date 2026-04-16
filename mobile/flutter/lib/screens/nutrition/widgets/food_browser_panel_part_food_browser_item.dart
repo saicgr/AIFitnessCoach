@@ -52,6 +52,7 @@ class _FoodBrowserItem extends StatelessWidget {
             sourceType: sourceType,
             heroTag: heroTagSuffix != null ? 'food-browser-$heroTagSuffix' : null,
             mutedColor: textMuted,
+            viewerTitle: name,
             size: 32,
           ),
           const SizedBox(width: 10),

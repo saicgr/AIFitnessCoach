@@ -90,7 +90,7 @@ async def analyze_food_from_text_streaming(request: Request, body: LogTextReques
             from core.db.nutrition_db import NutritionDB
 
             contextual_db = NutritionDB()
-            _ctx_tz = resolve_timezone(request, None, body.user_id)
+            _ctx_tz = resolve_timezone(request, get_supabase_db(), body.user_id)
             contextual_result = await detect_contextual(
                 description=body.description,
                 user_id=body.user_id,
@@ -282,10 +282,10 @@ async def analyze_food_from_text_streaming(request: Request, body: LogTextReques
             from services.food_override_service import apply_user_food_overrides
             _ov_db = get_supabase_db()
             food_items, _override_totals, _n_overridden = apply_user_food_overrides(
-                _ov_db, user_id, food_items,
+                _ov_db, body.user_id, food_items,
             )
             if _n_overridden:
-                logger.info(f"[STREAM text] Applied {_n_overridden} override(s) for {user_id}")
+                logger.info(f"[STREAM text] Applied {_n_overridden} override(s) for {body.user_id}")
                 total_calories = _override_totals["total_calories"]
                 protein_g = _override_totals["protein_g"]
                 carbs_g = _override_totals["carbs_g"]

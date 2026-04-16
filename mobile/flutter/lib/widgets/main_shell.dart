@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../core/constants/app_colors.dart';
 import '../core/providers/subscription_provider.dart';
+import '../data/services/recipe_notification_router.dart';
 import '../core/theme/theme_colors.dart';
 import '../data/models/coach_persona.dart';
 import '../data/providers/admin_provider.dart';
@@ -177,6 +178,17 @@ class MainShell extends ConsumerWidget {
         widgetActionService.initialize(context, ref);
       }
     });
+
+    // Consume any pending meal-reminder notification action (set by the FCM
+    // handler in notification_service_ext._handleMessageOpenedApp). No-op if
+    // nothing pending; clears itself after first consumption.
+    if (RecipeNotificationRouter.pending != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (context.mounted) {
+          RecipeNotificationRouter.consume(context, ref);
+        }
+      });
+    }
 
     // Listen for pending widget actions (from home screen widget deep links)
     ref.listen<PendingWidgetAction>(pendingWidgetActionProvider, (previous, next) {

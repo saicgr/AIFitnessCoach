@@ -134,12 +134,16 @@ ALLOWED_CONTENT_TYPES = {
     "video/mp4", "video/quicktime", "video/webm",
     # Audio
     "audio/m4a", "audio/mp4", "audio/aac", "audio/mpeg", "audio/wav",
+    # Documents (for AI Gym-Equipment Importer: PDF / DOCX)
+    "application/pdf",
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
 }
 
 # Size limits in bytes
 MAX_IMAGE_SIZE = 10 * 1024 * 1024   # 10 MB
 MAX_VIDEO_SIZE = 50 * 1024 * 1024   # 50 MB
 MAX_AUDIO_SIZE = 25 * 1024 * 1024   # 25 MB
+MAX_DOCUMENT_SIZE = 15 * 1024 * 1024  # 15 MB (PDF/DOCX for equipment importer)
 
 # Presigned URL expiry
 PRESIGN_EXPIRY_SECONDS = 300  # 5 minutes
@@ -157,6 +161,8 @@ EXT_MAP = {
     "audio/aac": "aac",
     "audio/mpeg": "mp3",
     "audio/wav": "wav",
+    "application/pdf": "pdf",
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document": "docx",
 }
 
 
@@ -190,10 +196,17 @@ def _validate_media_file(content_type: str, media_type: str, expected_size_bytes
         raise HTTPException(status_code=400, detail="media_type 'image' requires an image/* content_type")
     if media_type == "audio" and not content_type.startswith("audio/"):
         raise HTTPException(status_code=400, detail="media_type 'audio' requires an audio/* content_type")
+    if media_type == "document" and content_type not in (
+        "application/pdf",
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    ):
+        raise HTTPException(status_code=400, detail="media_type 'document' requires application/pdf or docx content_type")
     if media_type == "audio":
         max_size = MAX_AUDIO_SIZE
     elif media_type == "video":
         max_size = MAX_VIDEO_SIZE
+    elif media_type == "document":
+        max_size = MAX_DOCUMENT_SIZE
     else:
         max_size = MAX_IMAGE_SIZE
     if expected_size_bytes > max_size:
@@ -210,6 +223,8 @@ def _generate_presigned_post(s3_client, bucket: str, s3_key: str, content_type: 
         max_size = MAX_AUDIO_SIZE
     elif media_type == "video":
         max_size = MAX_VIDEO_SIZE
+    elif media_type == "document":
+        max_size = MAX_DOCUMENT_SIZE
     else:
         max_size = MAX_IMAGE_SIZE
     return s3_client.generate_presigned_post(

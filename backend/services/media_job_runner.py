@@ -38,6 +38,11 @@ async def run_media_job(job_id: str):
                 result = await _execute_form_comparison(job)
             elif job_type == "food_analysis":
                 result = await _execute_food_analysis(job)
+            elif job_type == "gym_equipment_import":
+                result = await _execute_gym_equipment_import(job)
+            # === AI_EXERCISE_IMPORT_BRANCH ===
+            elif job_type == "custom_exercise_import":
+                result = await _execute_custom_exercise_import(job)
             else:
                 raise ValueError(f"Unknown media job type: {job_type}")
 
@@ -140,6 +145,155 @@ async def _execute_food_analysis(job: dict) -> dict:
         analysis_mode=params.get("analysis_mode", "auto"),
         nutrition_context=params.get("nutrition_context"),
     )
+
+
+async def _execute_gym_equipment_import(job: dict) -> dict:
+    """Run AI gym-equipment extraction for a media_analysis_jobs row.
+
+    Input contract: job['params'] contains the dispatcher body:
+      {
+        "source": "file" | "images" | "text" | "url",
+        # one of:
+        "s3_key": "...", "mime_type": "application/pdf" | ... | "image/*",
+        "s3_keys": [...],
+        "raw_text": "...",
+        "url": "..."
+      }
+
+    Returns the full extractor result dict (persisted into result_json by the runner).
+    """
+    from services.gym_equipment_extractor import GymEquipmentExtractor
+
+    params = job.get("params") or {}
+    source = params.get("source")
+    if not source:
+        raise ValueError("gym_equipment_import job is missing params.source")
+
+    logger.info(f"🏋️ [MediaJobRunner] gym_equipment_import starting (source={source})")
+
+    extractor = GymEquipmentExtractor()
+
+    # Forward only the keys relevant to each source so extra fields don't leak through.
+    if source == "file":
+        return await extractor.extract(
+            source="file",
+            s3_key=params.get("s3_key"),
+            mime_type=params.get("mime_type"),
+        )
+    if source == "images":
+        return await extractor.extract(
+            source="images",
+            s3_keys=params.get("s3_keys") or job.get("s3_keys") or [],
+        )
+    if source == "text":
+        return await extractor.extract(source="text", raw_text=params.get("raw_text"))
+    if source == "url":
+        return await extractor.extract(source="url", url=params.get("url"))
+
+    raise ValueError(f"Unknown gym_equipment_import source: {source}")
+
+
+# === AI_EXERCISE_IMPORT_BRANCH ===
+async def _execute_custom_exercise_import(job: dict) -> dict:
+    """
+    Run AI custom-exercise extraction for a video upload, persist the resulting
+    custom_exercises row, and index it into ChromaDB.
+
+    Input contract: job['s3_keys'][0] is the video s3_key; job['params'] contains:
+      { "user_id": "...", "user_hint": <str|None>, "source": "video" }
+
+    Returns a dict shaped like:
+      {
+        "exercise": <full CustomExercise row>,
+        "rag_indexed": true|false,
+        "keyframe_confidences": [0.8, 0.9, 0.7],
+        "duplicate": false
+      }
+    """
+    from services.ai_exercise_extractor import get_ai_exercise_extractor
+    from services.exercise_rag.service import get_exercise_rag_service
+    from core.db import get_supabase_db
+
+    params = job.get("params") or {}
+    user_id = params.get("user_id") or job.get("user_id")
+    user_hint = params.get("user_hint")
+    s3_keys = job.get("s3_keys") or []
+    if not user_id:
+        raise ValueError("custom_exercise_import job missing user_id")
+    if not s3_keys:
+        raise ValueError("custom_exercise_import job missing s3_keys")
+
+    s3_key = s3_keys[0]
+    logger.info(
+        f"🤖 [MediaJobRunner] custom_exercise_import starting "
+        f"(user={user_id}, s3_key={s3_key}, hint={user_hint!r})"
+    )
+
+    extractor = get_ai_exercise_extractor()
+    payload = await extractor.extract_from_video(
+        s3_key=s3_key,
+        user_hint=user_hint,
+        num_frames=3,
+    )
+
+    keyframe_confidences = payload.pop("keyframe_confidences", [])
+
+    # Persist + dedupe + RAG index. Mirrors `_save_imported_exercise` but lives
+    # in the runner context (no FastAPI request).
+    db = get_supabase_db()
+    name = (payload.get("name") or "").strip()
+    if not name:
+        raise ValueError("Extracted exercise has no name")
+
+    duplicate = False
+    row = None
+    try:
+        existing = (
+            db.client.table("custom_exercises")
+            .select("*")
+            .eq("user_id", user_id)
+            .ilike("name", name)
+            .limit(1)
+            .execute()
+        )
+        if existing and existing.data:
+            row = existing.data[0]
+            duplicate = True
+            logger.info(f"🏋️ Duplicate import detected for '{name}' — reusing existing row {row.get('id')}")
+    except Exception as e:
+        logger.warning(f"⚠️ Duplicate-check query failed (continuing with insert): {e}", exc_info=True)
+
+    if not duplicate:
+        # Pydantic import deferred to avoid FastAPI startup cost.
+        from api.v1.custom_exercises import CustomExerciseCreate
+
+        allowed_keys = set(CustomExerciseCreate.model_fields.keys())
+        insert_data = {k: v for k, v in payload.items() if k in allowed_keys}
+        insert_data["user_id"] = user_id
+        insert_data.setdefault("is_public", False)
+
+        result = db.client.table("custom_exercises").insert(insert_data).execute()
+        if not result.data:
+            raise RuntimeError("Failed to persist imported custom exercise (insert returned no rows)")
+        row = result.data[0]
+        logger.info(f"🏋️ Imported custom exercise '{name}' for user {user_id} (id={row.get('id')})")
+
+    rag_indexed = False
+    try:
+        rag_service = get_exercise_rag_service()
+        rag_indexed = await rag_service.index_custom_exercise(row)
+    except Exception as rag_err:
+        logger.warning(
+            f"⚠️ RAG indexing failed (non-fatal) for imported exercise {row.get('id')}: {rag_err}",
+            exc_info=True,
+        )
+
+    return {
+        "exercise": row,
+        "rag_indexed": rag_indexed,
+        "keyframe_confidences": keyframe_confidences,
+        "duplicate": duplicate,
+    }
 
 
 async def resume_pending_media_jobs():

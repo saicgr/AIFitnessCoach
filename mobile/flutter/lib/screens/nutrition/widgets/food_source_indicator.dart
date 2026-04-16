@@ -15,6 +15,10 @@ class FoodSourceIndicator extends StatelessWidget {
   final String? imageUrl;
   final String? sourceType;
   final String? heroTag;
+  /// Title to show in the fullscreen viewer's top pill (typically the
+  /// dish/meal name). Optional — when null the viewer renders without a
+  /// label.
+  final String? viewerTitle;
   final double size;
   final Color mutedColor;
 
@@ -24,6 +28,7 @@ class FoodSourceIndicator extends StatelessWidget {
     required this.sourceType,
     required this.mutedColor,
     this.heroTag,
+    this.viewerTitle,
     this.size = 28.0,
   });
 
@@ -36,7 +41,11 @@ class FoodSourceIndicator extends StatelessWidget {
         behavior: HitTestBehavior.opaque,
         onTap: () {
           Navigator.of(context).push(MaterialPageRoute(
-            builder: (_) => FullscreenImageViewer(imageUrl: url, heroTag: tag),
+            builder: (_) => FullscreenImageViewer(
+              imageUrl: url,
+              heroTag: tag,
+              title: viewerTitle,
+            ),
           ));
         },
         child: Hero(

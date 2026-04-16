@@ -1,0 +1,57 @@
+sequenceDiagram
+  autonumber
+  participant U as User (Flutter)
+  participant S3 as S3 (presigned)
+  participant API as FastAPI
+  participant MW as Middleware<br/>(Auth/RateLimit)
+  participant LG as LangGraphCoach
+  participant VS as VisionService
+  participant GEM as Gemini API
+  participant RAG as RAG (Chroma)
+  participant DB as Supabase PG
+  participant FCM as FCM/APNs
+
+  Note over U,API: Case A — Chat with food image
+  U->>S3: PUT presigned (image)
+  S3-->>U: 200
+  U->>API: POST /chat/messages {text, media_url}
+  API->>MW: verify JWT + rate limit
+  MW-->>API: user_id
+  API->>LG: dispatch(message, media)
+  LG->>VS: classify_media_content(url)
+  VS->>GEM: vision classify (T=0.1)
+  GEM-->>VS: food_plate
+  VS-->>LG: media_content_type
+  LG->>LG: route → Nutrition Agent
+  LG->>RAG: retrieve saved foods + nutrition ctx
+  RAG-->>LG: vectors
+  LG->>GEM: agent LLM (bind_tools)
+  GEM-->>LG: tool_call: analyze_food_image
+  LG->>GEM: vision tool call
+  GEM-->>LG: parsed foods + macros
+  LG->>DB: INSERT food_log rows
+  LG->>GEM: response_after_tools
+  GEM-->>LG: final message + action_data
+  LG-->>API: stream SSE
+  API-->>U: SSE tokens + action_data
+  U->>U: render + _handleSettingChange
+
+  Note over U,API: Case B — Offline workout generation
+  U->>U: connectivity lost (1.5s debounce)
+  U->>U: WorkoutGenerationOrchestrator
+  alt pre-cached server workouts exist
+    U->>U: load from Drift
+  else rule-based path
+    U->>U: templates + progressive_overload
+  else on-device AI
+    U->>U: flutter_gemma (Gemma 1B/4B)
+  end
+  U-->>U: render workout (no fallback between modes)
+
+  Note over API,FCM: Case C — Scheduled nudge (cron)
+  API->>DB: SELECT users in local-time window
+  loop per user (user-local TZ)
+    API->>API: compose by time-of-day + schedule
+    API->>FCM: send push
+    API->>DB: log notification
+  end

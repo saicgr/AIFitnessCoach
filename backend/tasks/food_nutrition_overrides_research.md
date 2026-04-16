@@ -5434,6 +5434,7 @@ INSERT INTO food_nutrition_overrides (
 - Sections 99-119: Branded products (Trader Joe's, Costco, Aldi, Target, Walmart, meal kits, weight mgmt, frozen meals, cereals, yogurt, snacks, cookies, candy, ice cream, beverages, bread, condiments, protein bars, plant-based, sports drinks)
 - Sections 120-147: Restaurant menus (McDonald's, Wendy's, Taco Bell, BK, Chick-fil-A, Chipotle, Subway, Domino's, Pizza Hut, Popeyes, Arby's, Sonic, Jack in the Box, Whataburger, Culver's), casual dining (Olive Garden, Applebee's, Chili's, Texas Roadhouse, Red Lobster, Outback, Cheesecake Factory, Cracker Barrel, IHOP, Denny's, BWW, P.F. Chang's), coffee shop food, dessert chains, alcohol complete, street food 30+ countries, gas station/vending/school/airport, juice/smoothie chains, grocery brands complete
 
+
 ### Countries: 90+
 ### Brands: 1000+
 ### Sources cross-referenced: All migration SQL files, foods_needed.md, MISSING_GENERIC_FOODS.md, WRONG_FOOD_MATCHES.md, FOOD_LOG_EDGE_CASES.md, FOOD_LOG_TEST_PROMPTS.md, FOODS_BY_WEIGHT.md, street_food_by_country.md, chain_restaurants_by_country.md

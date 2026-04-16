@@ -6,6 +6,8 @@ library;
 
 import 'dart:async';
 import 'dart:io';
+import 'package:file_picker/file_picker.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -16,7 +18,7 @@ import '../../../core/theme/theme_colors.dart';
 import '../../../data/services/haptic_service.dart';
 
 /// Supported media types for chat uploads
-enum ChatMediaType { image, video }
+enum ChatMediaType { image, video, document }
 
 /// Result of a media pick operation
 class PickedMedia {
@@ -74,8 +76,101 @@ class MediaPickerHelper {
   // Limits
   static const int maxImageBytes = 10 * 1024 * 1024; // 10 MB
   static const int maxVideoSeconds = 60;
+  static const int maxDocumentBytes = 15 * 1024 * 1024; // 15 MB (matches backend doc cap)
   static const List<String> supportedImageFormats = ['jpg', 'jpeg', 'png', 'heic', 'webp'];
   static const List<String> supportedVideoFormats = ['mp4', 'mov', 'avi', 'mkv'];
+  static const List<String> supportedDocumentFormats = ['pdf', 'docx'];
+
+  /// Pick a PDF or DOCX document using file_picker.
+  ///
+  /// Returns null when the user cancels. Throws [MediaValidationException]
+  /// for oversized files or unsupported formats.
+  ///
+  /// The file_picker plugin gives us either an on-disk path (desktop / mobile)
+  /// or in-memory bytes (web / some Android configs). We normalize to a
+  /// [PickedMedia] with a real [File] so downstream upload code (which reads
+  /// from disk) works uniformly — writing bytes to a temp file when needed.
+  static Future<PickedMedia?> pickDocument({BuildContext? context}) async {
+    try {
+      final result = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: supportedDocumentFormats,
+        // On small docs we want bytes for immediate validation. On mobile
+        // a path is also returned and we prefer that to avoid double-RAM.
+        withData: true,
+        withReadStream: false,
+      );
+
+      if (result == null || result.files.isEmpty) {
+        if (kDebugMode) debugPrint('🔍 [MediaPicker] pickDocument cancelled');
+        return null;
+      }
+
+      final picked = result.files.first;
+      final ext = (picked.extension ?? '').toLowerCase();
+
+      // Edge case: file_picker on some platforms strips the extension; fall
+      // back to the filename suffix.
+      final effectiveExt = ext.isNotEmpty
+          ? ext
+          : (picked.name.contains('.')
+              ? picked.name.split('.').last.toLowerCase()
+              : '');
+
+      if (!supportedDocumentFormats.contains(effectiveExt)) {
+        throw MediaValidationException(
+          'Unsupported document format (.$effectiveExt). Supported: ${supportedDocumentFormats.join(", ")}',
+        );
+      }
+
+      if (picked.size > maxDocumentBytes) {
+        throw MediaValidationException(
+          'Document is too large (${_formatBytes(picked.size)}). Maximum size is 15 MB.',
+        );
+      }
+
+      // Resolve to a File: prefer the on-disk path, else write bytes to temp.
+      File file;
+      if (picked.path != null && picked.path!.isNotEmpty) {
+        file = File(picked.path!);
+      } else if (picked.bytes != null) {
+        // Write to a temp file so upstream S3 upload (which streams from a
+        // File) works unchanged.
+        final dir = Directory.systemTemp;
+        final tmpPath =
+            '${dir.path}/fitwiz_doc_${DateTime.now().millisecondsSinceEpoch}_${picked.name}';
+        file = await File(tmpPath).writeAsBytes(picked.bytes!, flush: true);
+      } else {
+        throw const MediaValidationException(
+          'Could not read the selected document. Please try a different file.',
+        );
+      }
+
+      final mimeType = _getMimeType(effectiveExt);
+      if (kDebugMode) {
+        debugPrint('✅ [MediaPicker] pickDocument: ${picked.name} '
+            '(${_formatBytes(picked.size)}, $mimeType)');
+      }
+
+      return PickedMedia(
+        file: file,
+        type: ChatMediaType.document,
+        sizeBytes: picked.size,
+        mimeType: mimeType,
+      );
+    } on MediaValidationException {
+      rethrow;
+    } catch (e, stack) {
+      debugPrint('❌ [MediaPicker] Error picking document: $e');
+      debugPrint('❌ [MediaPicker] Stack: $stack');
+      if (context != null && context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Could not open file picker: $e')),
+        );
+      }
+      return null;
+    }
+  }
 
   /// Request camera permission, returns true if granted.
   static Future<bool> _requestCameraPermission(BuildContext context) async {
@@ -586,6 +681,10 @@ class MediaPickerHelper {
         return 'video/x-msvideo';
       case 'mkv':
         return 'video/x-matroska';
+      case 'pdf':
+        return 'application/pdf';
+      case 'docx':
+        return 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
       default:
         return 'application/octet-stream';
     }

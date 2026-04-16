@@ -25,6 +25,7 @@ from services.email_helpers import (
     build_stats_grid_html,
     build_zero_state_row_html,
     build_nutrition_grid_html,
+    overdue_tier,
 )
 
 logger = get_logger(__name__)
@@ -338,12 +339,39 @@ class EmailLifecycleMixin:
 
         elif stats.schedule_state == ScheduleState.OVERDUE:
             days = stats.days_overdue or 3
-            subject = f"{name}, {coach} is getting worried."
-            title = f"Your plan started {days} days ago, {name}"
-            subtitle = (
-                f"{coach} built your {goal} plan on day one. It's been sitting there. "
-                f"Untouched. 20 minutes is all it takes — less than your last scroll session."
-            )
+            day_word = "day" if days == 1 else "days"
+            # Three-tier escalation driven by `coach_style` (gentle/balanced/
+            # tough_love). See `_overdue_thresholds()` in email_helpers for the
+            # day cutoffs — users who picked "gentle" never see the firm tier;
+            # "balanced" gets ~2 weeks of runway before guilt kicks in;
+            # "tough_love" escalates within days. Previously a single missed
+            # day would trigger "Disappointed" copy regardless of preference.
+            tier = overdue_tier(stats)
+            if tier == "nudge":
+                if days == 1:
+                    subject = f"{name}, your plan's waiting."
+                    title = f"Your plan started yesterday, {name}"
+                else:
+                    subject = f"{name}, ready when you are."
+                    title = f"Your plan's been ready for {days} {day_word}, {name}"
+                subtitle = (
+                    f"{coach} built your {goal} plan and it's sitting on the home "
+                    f"screen. 20 minutes whenever you're ready — no pressure."
+                )
+            elif tier == "concerned":
+                subject = f"{name}, still want to get started?"
+                title = f"It's been {days} {day_word}, {name}"
+                subtitle = (
+                    f"{coach} checked in on your {goal} plan — still untouched. "
+                    f"Life gets in the way. 20 minutes is enough to get day one done."
+                )
+            else:  # firm
+                subject = f"{name}, {coach} is getting worried."
+                title = f"Your plan started {days} {day_word} ago, {name}"
+                subtitle = (
+                    f"{coach} built your {goal} plan on day one. It's been sitting there. "
+                    f"Untouched. 20 minutes is all it takes — less than your last scroll session."
+                )
             features = [
                 ("&#127919;", "Built for you",
                  f"{workout_name} was tailored to your goals and equipment."),
@@ -356,8 +384,9 @@ class EmailLifecycleMixin:
 
         elif stats.schedule_state == ScheduleState.LAUNCHES_FUTURE:
             days = stats.days_until_first_workout or 0
-            subject = f"{name}, your plan starts in {days} days."
-            title = f"Your plan starts in {days} days, {name}"
+            day_word = "day" if days == 1 else "days"
+            subject = f"{name}, your plan starts in {days} {day_word}."
+            title = f"Your plan starts in {days} {day_word}, {name}"
             subtitle = f"{coach} has your {goal} plan queued. You'll get a nudge on day one."
             features = [
                 ("&#127919;", "Plan's locked in",

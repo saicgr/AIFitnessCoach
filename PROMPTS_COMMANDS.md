@@ -67,7 +67,6 @@ Make sure if its a smaller screen then there are no overflowing issues
 Be sure to check that all items in your plans are implemented
 -->
 
-
 <!-- --------------------------------------------------- -->
 
 <!-- Implement them all, implement frontend flutter, backend API, supabase tables, gemini API calls, backend tests, supabase table migration, user context logging should all be implemented as well and Update Features.md accordingly also don't forget to updae features.md with 1. features that are added and 2. how does it work whats the user flow  -->

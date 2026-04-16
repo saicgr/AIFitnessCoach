@@ -89,6 +89,7 @@ const _$TileTypeEnumMap = {
   TileType.upNext: 'upNext',
   TileType.todayStats: 'todayStats',
   TileType.stepsCounter: 'stepsCounter',
+  TileType.nutritionPatterns: 'nutritionPatterns',
 };
 
 const _$TileSizeEnumMap = {

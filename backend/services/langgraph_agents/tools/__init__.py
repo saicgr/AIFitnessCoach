@@ -40,6 +40,11 @@ from .form_tools import (
     compare_exercise_form,
 )
 
+from .coach_tools import (
+    import_gym_equipment,
+    import_exercise,
+)
+
 from .base import get_vision_service, get_form_analysis_service
 
 # Registry of all available tools
@@ -68,6 +73,9 @@ ALL_TOOLS = [
     # Form analysis tools
     check_exercise_form,
     compare_exercise_form,
+    # Coach import tools (gym equipment + custom exercise)
+    import_gym_equipment,
+    import_exercise,
 ]
 
 # Tool name to function mapping
@@ -98,6 +106,9 @@ __all__ = [
     # Form analysis tools
     "check_exercise_form",
     "compare_exercise_form",
+    # Coach import tools
+    "import_gym_equipment",
+    "import_exercise",
     # Utilities
     "get_vision_service",
     "get_form_analysis_service",

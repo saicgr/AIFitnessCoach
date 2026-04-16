@@ -27,7 +27,9 @@ import 'widgets/nutrition_error_state.dart';
 import 'widgets/my_foods_sheet.dart';
 import 'widgets/share_nutrition_sheet.dart';
 import 'widgets/fuel_tab.dart';
-import 'widgets/recipes_tab.dart';
+// `my_foods_sheet.dart` happens to export an internal helper called RecipesTab
+// for the saved-foods grid; alias our real Recipes tab to disambiguate.
+import 'widgets/recipes_tab.dart' as recipes_tab show RecipesTab;
 import 'widgets/nutrition_patterns_tab.dart';
 import 'widgets/post_meal_review_sheet.dart';
 import '../../core/services/posthog_service.dart';
@@ -87,7 +89,21 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
   void initState() {
     super.initState();
     // Tabs: Daily | Recipes | Patterns | Fuel (merged Nutrients + Water)
-    _tabController = TabController(length: 4, vsync: this, initialIndex: widget.initialTab);
+    //
+    // Animation tuning for iOS-feel slide:
+    //   • 260ms — slightly snappier than Flutter's 300ms default. iOS UIKit
+    //     uses ~350ms but with a heavier easeOut curve; 260ms with
+    //     `Curves.ease` lands at the same perceived crispness.
+    //   • All four tabs use AutomaticKeepAliveClientMixin so intermediate
+    //     tabs are pre-built — the slide is silky because there's no
+    //     widget construction happening mid-animation (which was the
+    //     actual cause of the perceived lag earlier).
+    _tabController = TabController(
+      length: 4,
+      vsync: this,
+      initialIndex: widget.initialTab,
+      animationDuration: const Duration(milliseconds: 260),
+    );
     _loadData();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(posthogServiceProvider).capture(eventName: 'nutrition_screen_viewed');
@@ -401,8 +417,9 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
                             calmMode: calmMode,
                           ),
 
-                          // Recipes Tab (placeholder — full feature on a separate track)
-                          RecipesPlaceholderTab(isDark: isDark),
+                          // Recipes Tab — full feature (search, build, import, fridge,
+                          // schedule, planner, grocery, sharing, versioning, leftovers)
+                          recipes_tab.RecipesTab(userId: _userId ?? '', isDark: isDark),
 
                           // Patterns Tab (macros, top foods, mood patterns, history)
                           NutritionPatternsTab(

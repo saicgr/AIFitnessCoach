@@ -611,6 +611,10 @@ app.add_middleware(SlowAPIMiddleware)
 # Include API routes
 app.include_router(v1_router, prefix="/api")
 
+# Public (no-auth) shareable resources — short links like fitwiz.app/r/{slug}
+from api.public import router as public_router  # noqa: E402
+app.include_router(public_router)
+
 # MCP OAuth 2.1 authorization server. Mounted at /mcp/oauth — paired with the
 # MCP streamable-HTTP server at /mcp (wired separately in mcp/server.py when
 # Phase 2 lands). Gated to yearly subscribers via mcp/subscription.py.

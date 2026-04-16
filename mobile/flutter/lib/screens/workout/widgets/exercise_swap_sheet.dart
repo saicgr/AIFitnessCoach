@@ -15,6 +15,7 @@ import '../../../widgets/exercise_image.dart';
 import '../../../widgets/glass_sheet.dart';
 import '../../../widgets/segmented_tab_bar.dart';
 import '../../../data/services/image_url_cache.dart';
+import '../../exercises/import_exercise_screen.dart';
 
 
 part 'exercise_swap_sheet_part_exercise_swap_sheet_state.dart';

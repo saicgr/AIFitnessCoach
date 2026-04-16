@@ -100,6 +100,10 @@ const List<TileType> defaultHiddenTiles = [
   TileType.achievements,
   TileType.quickLogWeight,
   TileType.stepsCounter,
+  TileType.caloriesSummary,
+  TileType.macroRings,
+  TileType.fasting,
+  TileType.nutritionPatterns,
 ];
 
 /// Create default tiles for a new user
@@ -188,6 +192,22 @@ const List<LayoutPreset> layoutPresets = [
       TileType.habits,
       TileType.weeklyGoals,
       TileType.achievements,
+    ],
+  ),
+  LayoutPreset(
+    id: 'nutrition_focus',
+    name: 'Nutrition Focus',
+    description: 'Calories, macros, fasting, and food patterns front and center',
+    icon: Icons.restaurant_menu,
+    color: Color(0xFFFF9800),
+    tiles: [
+      TileType.caloriesSummary,
+      TileType.macroRings,
+      TileType.fasting,
+      TileType.nutritionPatterns,
+      TileType.habits,
+      TileType.quickLogWeight,
+      TileType.nextWorkout,
     ],
   ),
   LayoutPreset(

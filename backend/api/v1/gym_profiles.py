@@ -17,8 +17,10 @@ ENDPOINTS:
 """
 from .gym_profiles_endpoints import router as _endpoints_router
 
+import asyncio
 from datetime import datetime
 from fastapi import APIRouter, HTTPException, Query, Depends
+from pydantic import BaseModel, Field
 from typing import Optional, List
 
 from core.supabase_client import get_supabase
@@ -562,6 +564,158 @@ async def get_gym_profile(
 # UPDATE PROFILE
 # =============================================================================
 
+
+
+# =============================================================================
+# AI GYM-EQUIPMENT IMPORTER
+# =============================================================================
+
+# Allowed MIME types for the 'file' source of the equipment importer.
+_IMPORT_FILE_MIMES = {
+    "application/pdf",
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    "image/jpeg", "image/png", "image/webp",
+}
+
+
+class ImportEquipmentRequest(BaseModel):
+    """Request body for POST /{gym_profile_id}/import-equipment.
+
+    Exactly one 'source' must be provided with its matching fields.
+    """
+    source: str = Field(..., description="One of: 'file', 'images', 'text', 'url'")
+    # file
+    s3_key: Optional[str] = None
+    mime_type: Optional[str] = None
+    # images
+    s3_keys: Optional[List[str]] = None
+    # text
+    raw_text: Optional[str] = None
+    # url
+    url: Optional[str] = None
+
+
+def _validate_import_request(body: ImportEquipmentRequest) -> None:
+    """Validate source-specific fields. Raises HTTPException(400) on bad input."""
+    if body.source == "file":
+        if not body.s3_key or not body.mime_type:
+            raise HTTPException(status_code=400, detail="source='file' requires s3_key and mime_type")
+        if body.mime_type not in _IMPORT_FILE_MIMES:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Unsupported mime_type '{body.mime_type}'. "
+                       f"Allowed: {sorted(_IMPORT_FILE_MIMES)}",
+            )
+    elif body.source == "images":
+        if not body.s3_keys:
+            raise HTTPException(status_code=400, detail="source='images' requires s3_keys")
+    elif body.source == "text":
+        if not (body.raw_text and body.raw_text.strip()):
+            raise HTTPException(status_code=400, detail="source='text' requires non-empty raw_text")
+    elif body.source == "url":
+        if not body.url:
+            raise HTTPException(status_code=400, detail="source='url' requires url")
+    else:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid source '{body.source}'. Expected one of: file, images, text, url",
+        )
+
+
+@router.post("/{gym_profile_id}/import-equipment", status_code=202)
+async def import_equipment(
+    gym_profile_id: str,
+    body: ImportEquipmentRequest,
+    current_user: dict = Depends(get_current_user),
+):
+    """Kick off an AI-powered equipment import for a gym profile.
+
+    Creates a `gym_equipment_import` media_analysis_jobs row and dispatches the
+    extractor in the background. Clients poll the existing
+    `GET /api/v1/media-jobs/{job_id}` (or the chat-media variant) for status.
+
+    Flutter contract (returns 202):
+      { "job_id": "uuid", "status": "pending" }
+
+    Polling result_json schema:
+      {
+        "matched":    [{canonical, raw, confidence, quantity, weight_range}],
+        "unmatched":  [{raw, confidence, quantity, weight_range}],
+        "inferred_environment": "commercial_gym" | "home_gym" | "home" | "outdoor" | "hotel",
+        "total_extracted": int
+      }
+    """
+    user_id = str(current_user["id"])
+    _validate_import_request(body)
+
+    logger.info(
+        f"🏋️ [GymProfile] Import request: profile={gym_profile_id} "
+        f"user={user_id} source={body.source}"
+    )
+
+    # Ownership verification (mirrors pattern in gym_profiles_endpoints.py).
+    supabase = get_supabase()
+    try:
+        profile_row = supabase.client.table("gym_profiles") \
+            .select("id, user_id") \
+            .eq("id", gym_profile_id) \
+            .single() \
+            .execute()
+    except Exception as e:
+        if "0 rows" in str(e).lower() or "no rows" in str(e).lower():
+            raise HTTPException(status_code=404, detail="Gym profile not found")
+        logger.error(f"❌ [GymProfile] Failed to load profile for import: {e}", exc_info=True)
+        raise safe_internal_error(e, "endpoint")
+
+    if not profile_row.data:
+        raise HTTPException(status_code=404, detail="Gym profile not found")
+    if profile_row.data["user_id"] != user_id:
+        # Use 404 to avoid leaking profile existence.
+        raise HTTPException(status_code=404, detail="Gym profile not found")
+
+    # Build params + s3 key mirrors so resume-on-restart has everything it needs.
+    params = body.model_dump(exclude_none=True)
+    params["gym_profile_id"] = gym_profile_id
+
+    s3_keys: List[str] = []
+    mime_types: List[str] = []
+    media_types: List[str] = []
+    if body.source == "file":
+        s3_keys = [body.s3_key]  # type: ignore[list-item]
+        mime_types = [body.mime_type]  # type: ignore[list-item]
+        media_types = ["document" if body.mime_type in (
+            "application/pdf",
+            "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        ) else "image"]
+    elif body.source == "images":
+        s3_keys = list(body.s3_keys or [])
+        mime_types = ["image/jpeg"] * len(s3_keys)
+        media_types = ["image"] * len(s3_keys)
+
+    # Create job + dispatch runner.
+    try:
+        from services.media_job_service import get_media_job_service
+        from services.media_job_runner import run_media_job
+
+        job_service = get_media_job_service()
+        job_id = job_service.create_job(
+            user_id=user_id,
+            job_type="gym_equipment_import",
+            s3_keys=s3_keys,
+            mime_types=mime_types,
+            media_types=media_types,
+            params=params,
+        )
+
+        asyncio.create_task(run_media_job(job_id))
+        logger.info(f"✅ [GymProfile] Dispatched gym_equipment_import job {job_id}")
+
+        return {"job_id": job_id, "status": "pending"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ [GymProfile] Failed to create import job: {e}", exc_info=True)
+        raise safe_internal_error(e, "endpoint")
 
 
 # Include secondary endpoints

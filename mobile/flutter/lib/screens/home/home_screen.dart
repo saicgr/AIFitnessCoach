@@ -673,8 +673,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
 
   /// Load XP data and initialize goals/streak tracking.
   /// Daily login XP is already processed by app_router.dart on startup.
+  ///
+  /// Guards every `ref` access that follows an `await` with a `mounted`
+  /// check — if the user navigates away from Home mid-load, the State is
+  /// disposed and any further `ref.read` would throw.
   Future<void> _processDailyLogin() async {
     try {
+      if (!mounted) return;
       final authState = ref.read(authStateProvider);
       final userId = authState.user?.id;
       if (userId == null) return;
@@ -683,9 +688,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
 
       // Load user XP data so we have it available
       await xpNotifier.loadAll(userId: userId);
+      if (!mounted) return;
 
       // Load active XP events (Double XP, etc.)
       await xpNotifier.loadActiveEvents();
+      if (!mounted) return;
 
       // Initialize streak tracking for milestone detection
       xpNotifier.initializeStreakTracking();
@@ -694,7 +701,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       xpNotifier.initializeDailyGoals();
 
       final loginStreak = ref.read(xpProvider).loginStreak;
-      if (loginStreak != null && mounted) {
+      if (loginStreak != null) {
         // Check for streak milestones (7, 30, 100, 365 days)
         xpNotifier.checkStreakMilestone(loginStreak.currentStreak);
       }

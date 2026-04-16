@@ -1,0 +1,142 @@
+flowchart TB
+  classDef client fill:#E3F2FD,stroke:#1565C0,color:#0D47A1
+  classDef edge fill:#FFF3E0,stroke:#E65100,color:#BF360C
+  classDef app fill:#E8F5E9,stroke:#2E7D32,color:#1B5E20
+  classDef ai fill:#F3E5F5,stroke:#6A1B9A,color:#4A148C
+  classDef data fill:#FFF8E1,stroke:#F57F17,color:#E65100
+  classDef ext fill:#ECEFF1,stroke:#455A64,color:#263238
+  classDef obs fill:#FBE9E7,stroke:#BF360C,color:#3E2723
+
+  subgraph Clients["Clients"]
+    direction LR
+    iOS[iOS<br/>Flutter 3.38.10]
+    Android[Android<br/>Flutter 3.38.10]
+    Widget[iOS/Android<br/>Home-screen Widgets]
+    Offline[(Drift SQLite<br/>+ flutter_gemma<br/>on-device)]
+  end
+  class iOS,Android,Widget,Offline client
+
+  subgraph Edge["Edge / Transport"]
+    direction LR
+    CF[CDN / TLS]
+    APNS_FCM[APNs / FCM<br/>push delivery]
+    S3Pub[(S3 signed URLs<br/>media upload/download)]
+  end
+  class CF,APNS_FCM,S3Pub edge
+
+  subgraph Backend["FastAPI Backend (Render)"]
+    direction TB
+    MW[Middleware Stack<br/>Security • BodySize • GZip<br/>RateLimit • CORS • JWT Auth]
+    subgraph Routers["api/v1 — 80+ routers"]
+      RW[workouts]
+      RN[nutrition]
+      RCH[chat / live_chat]
+      RU[users / onboarding / settings]
+      RS[social / challenges / trophies]
+      RH[injuries / diabetes / hormonal / fasting]
+      RX[cron • subscriptions • admin]
+    end
+    subgraph Services["Service Layer"]
+      SG[GeminiService<br/>5400 LOC]
+      SL[LangGraph Coach<br/>multi-agent router]
+      SV[VisionService<br/>media classifier]
+      SF[FormAnalysisService]
+      SR[RAG services<br/>Exercise • Workout • Nutrition<br/>Social • Feedback]
+      SE[Email + Push<br/>lifecycle / marketing]
+      SJ[JobQueueService<br/>async workers]
+      SP[Progression / Adaptive /<br/>Comeback / Modifier]
+      SS[Subscriptions /<br/>RevenueCat]
+    end
+    subgraph Core["core/"]
+      CFG[config • logger • timezone]
+      DBF[db facade<br/>SupabaseDB]
+      GC[gemini_client]
+      CH[chroma_http_client]
+      AUTH[JWT verify]
+    end
+  end
+  class MW,RW,RN,RCH,RU,RS,RH,RX,SG,SL,SV,SF,SR,SE,SJ,SP,SS,CFG,DBF,GC,CH,AUTH app
+
+  subgraph AISurf["AI Surfaces"]
+    direction LR
+    Gen[Workout / Recipe / Plan<br/>Generation]
+    Chat[Conversational Coach<br/>LangGraph StateGraphs]
+    Tools[Tool Belt<br/>nutrition • workout •<br/>injury • form]
+    OnDev[On-device Gemma<br/>offline generation]
+  end
+  class Gen,Chat,Tools,OnDev ai
+
+  subgraph DataLayer["Data Layer"]
+    direction LR
+    SB[(Supabase<br/>PostgreSQL)]
+    SBA[Supabase Auth<br/>JWT]
+    ChDB[(ChromaDB Cloud<br/>vector store)]
+    S3[(S3<br/>media + thumbnails)]
+    Cache[In-memory TTL<br/>ResponseCache]
+  end
+  class SB,SBA,ChDB,S3,Cache data
+
+  subgraph External["External Providers"]
+    direction LR
+    GEM[Google Gemini API<br/>gemini-3-flash]
+    RC[RevenueCat]
+    SG2[SendGrid]
+    FCM2[FCM / APNs]
+  end
+  class GEM,RC,SG2,FCM2 ext
+
+  subgraph Ops["Observability / Ops"]
+    direction LR
+    RL[Render logs]
+    SBAdv[Supabase advisors]
+    Metrics[App metrics<br/>request_id propagation]
+  end
+  class RL,SBAdv,Metrics obs
+
+  iOS --> CF
+  Android --> CF
+  Widget --> CF
+  iOS <-. app-group .-> Offline
+  Android <-. content-provider .-> Offline
+
+  CF -->|HTTPS JSON / SSE| MW
+  APNS_FCM --> iOS
+  APNS_FCM --> Android
+  iOS -->|presigned PUT| S3Pub
+  S3Pub --> S3
+
+  MW --> Routers
+  Routers --> Services
+  Services --> Core
+
+  RW --> SG
+  RW --> SP
+  RN --> SG
+  RCH --> SL
+  RU --> AUTH
+  RX --> SE
+  RX --> SJ
+
+  SL --> SG
+  SL --> SV
+  SL --> SR
+  SL --> Tools
+  SG --> GC --> GEM
+  SV --> GC
+  SF --> GC
+  SR --> CH --> ChDB
+  Chat --> SL
+  Gen --> SG
+  Gen --> SR
+  OnDev -. fallback .- Offline
+
+  DBF --> SB
+  AUTH --> SBA
+  Services --> S3
+  Services --> Cache
+  SS --> RC
+  SE --> SG2
+  SE --> FCM2
+
+  Backend -. logs/metrics .-> Ops
+  DataLayer -. advisors .-> SBAdv

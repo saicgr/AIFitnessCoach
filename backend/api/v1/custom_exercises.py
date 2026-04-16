@@ -10,7 +10,7 @@ This module allows users to:
 """
 from core.db import get_supabase_db
 from fastapi import APIRouter, Depends, HTTPException, Query, UploadFile, File
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 from typing import List, Optional, Dict, Any
 from datetime import datetime
 import base64
@@ -25,6 +25,11 @@ from core.config import get_settings
 from core.exceptions import safe_internal_error
 from services.gemini.constants import gemini_generate_with_retry
 from services.custom_exercise_media_service import get_custom_exercise_media_service
+from services.ai_exercise_extractor import get_ai_exercise_extractor
+from services.exercise_rag.service import get_exercise_rag_service
+from services.media_job_service import get_media_job_service
+from services.media_job_runner import run_media_job
+import asyncio
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/custom-exercises", tags=["Custom Exercises"])
@@ -144,6 +149,42 @@ class AnalyzePhotoResponse(BaseModel):
     is_compound: bool = Field(..., description="Whether the exercise is a compound movement")
     instructions: str = Field(..., description="Step-by-step instructions for the exercise")
     secondary_muscles: List[str] = Field(default_factory=list, description="Secondary muscle groups involved")
+
+
+class ImportExerciseRequest(BaseModel):
+    """
+    Request body for POST /custom-exercises/{user_id}/import.
+
+    Exactly one `source` must be supplied, with the appropriate payload key:
+      - source='photo' → s3_key required
+      - source='video' → s3_key required (processed async — returns job_id)
+      - source='text'  → raw_text required
+    """
+    source: str = Field(..., description="'photo' | 'video' | 'text'")
+    s3_key: Optional[str] = Field(default=None, description="S3 key for photo/video")
+    raw_text: Optional[str] = Field(default=None, description="Description for text source")
+    user_hint: Optional[str] = Field(default=None, description="Optional name hint for disambiguation")
+
+    @model_validator(mode="after")
+    def _check_source_payload(self) -> "ImportExerciseRequest":
+        s = (self.source or "").lower().strip()
+        if s not in ("photo", "video", "text"):
+            raise ValueError("source must be one of: photo, video, text")
+        self.source = s
+        if s in ("photo", "video") and not self.s3_key:
+            raise ValueError(f"s3_key is required when source='{s}'")
+        if s == "text" and not (self.raw_text and self.raw_text.strip()):
+            raise ValueError("raw_text is required when source='text'")
+        return self
+
+
+class ImportExerciseResponse(BaseModel):
+    """Response from POST /custom-exercises/{user_id}/import."""
+    exercise: Optional[CustomExerciseResponse] = None
+    rag_indexed: bool = False
+    job_id: Optional[str] = None
+    status: Optional[str] = None
+    duplicate: bool = False
 
 
 class PresignedUploadResponse(BaseModel):
@@ -266,8 +307,22 @@ async def create_custom_exercise(user_id: str, request: CustomExerciseCreate, cu
         result = db.client.table("custom_exercises").insert(insert_data).execute()
 
         if result.data:
-            logger.info(f"✅ Created custom exercise '{request.name}' for user {user_id}")
-            return CustomExerciseResponse(**result.data[0])
+            row = result.data[0]
+            logger.info(f"🏋️ Created custom exercise '{request.name}' for user {user_id}")
+            # Best-effort RAG indexing — non-fatal on failure.
+            try:
+                rag_service = get_exercise_rag_service()
+                indexed = await rag_service.index_custom_exercise(row)
+                if indexed:
+                    logger.info(f"✅ RAG indexed custom exercise {row.get('id')}")
+                else:
+                    logger.warning(f"⚠️ RAG indexing returned False for custom exercise {row.get('id')}")
+            except Exception as rag_err:
+                logger.warning(
+                    f"⚠️ RAG indexing failed (non-fatal) for custom exercise {row.get('id')}: {rag_err}",
+                    exc_info=True,
+                )
+            return CustomExerciseResponse(**row)
         else:
             raise safe_internal_error(ValueError("Failed to create exercise"), "custom_exercises")
 
@@ -314,8 +369,18 @@ async def update_custom_exercise(user_id: str, exercise_id: str, request: Custom
         ).execute()
 
         if result.data:
-            logger.info(f"✅ Updated custom exercise {exercise_id}")
-            return CustomExerciseResponse(**result.data[0])
+            row = result.data[0]
+            logger.info(f"🏋️ Updated custom exercise {exercise_id}")
+            # Best-effort RAG re-index (non-fatal).
+            try:
+                rag_service = get_exercise_rag_service()
+                await rag_service.update_custom_exercise_index(row)
+            except Exception as rag_err:
+                logger.warning(
+                    f"⚠️ RAG re-index failed (non-fatal) for custom exercise {exercise_id}: {rag_err}",
+                    exc_info=True,
+                )
+            return CustomExerciseResponse(**row)
         else:
             raise safe_internal_error(ValueError("Failed to update exercise"), "custom_exercises")
 
@@ -347,6 +412,16 @@ async def delete_custom_exercise(user_id: str, exercise_id: str, current_user: d
 
         exercise_name = check.data[0]["name"]
 
+        # Remove from ChromaDB custom collection first (non-fatal).
+        try:
+            rag_service = get_exercise_rag_service()
+            await rag_service.delete_custom_exercise_index(exercise_id)
+        except Exception as rag_err:
+            logger.warning(
+                f"⚠️ RAG delete failed (non-fatal) for custom exercise {exercise_id}: {rag_err}",
+                exc_info=True,
+            )
+
         # Delete media from S3
         media_service = get_custom_exercise_media_service()
         await media_service.delete_media(user_id, exercise_id)
@@ -354,7 +429,7 @@ async def delete_custom_exercise(user_id: str, exercise_id: str, current_user: d
         # Delete from database
         db.client.table("custom_exercises").delete().eq("id", exercise_id).execute()
 
-        logger.info(f"✅ Deleted custom exercise '{exercise_name}' for user {user_id}")
+        logger.info(f"🏋️ Deleted custom exercise '{exercise_name}' for user {user_id}")
         return {"message": f"Deleted exercise: {exercise_name}"}
 
     except HTTPException:
@@ -495,106 +570,229 @@ async def analyze_exercise_photo(
 
     Returns structured exercise details including name, target muscles,
     equipment type, whether it's compound, and instructions.
+
+    NOTE: This endpoint is preserved for backward compat. Internally it now
+    delegates to `AiExerciseExtractor.extract_from_photo()` and projects the
+    result down to the narrower legacy `AnalyzePhotoResponse` shape.
+    New clients should call `POST /{user_id}/import` instead.
     """
     if str(current_user["id"]) != str(user_id):
         raise HTTPException(status_code=403, detail="Access denied")
 
-    prompt = f"""Analyze this image of an exercise or gym equipment. Identify what exercise is being performed
-or what machine/equipment is shown, and return structured JSON with exercise details.
-
-Return ONLY valid JSON with this exact structure:
-{{
-    "name": "exercise name (e.g., 'Lat Pulldown', 'Barbell Bench Press')",
-    "primary_muscle": "one of: {', '.join(VALID_MUSCLE_GROUPS)}",
-    "equipment": "one of: {', '.join(VALID_EQUIPMENT)}",
-    "is_compound": true or false,
-    "instructions": "Clear step-by-step instructions for performing this exercise (2-4 sentences)",
-    "secondary_muscles": ["list", "of", "secondary", "muscles"]
-}}
-
-Rules:
-- primary_muscle MUST be one of the valid muscle groups listed above
-- equipment MUST be one of the valid equipment types listed above
-- secondary_muscles entries MUST each be one of the valid muscle groups listed above
-- is_compound is true if the exercise works multiple joint/muscle groups
-- If you see a machine, identify the most common exercise performed on it
-- If the image is unclear, make your best reasonable guess based on what you can see
-"""
-
     try:
-        logger.info(f"🔍 Analyzing exercise photo for user {user_id}")
+        logger.info(f"🤖 Analyzing exercise photo for user {user_id} (legacy analyze-photo)")
 
-        # Decode base64 image
         try:
             image_bytes = base64.b64decode(request.image_base64)
         except Exception:
             raise HTTPException(status_code=400, detail="Invalid base64 image data")
 
-        # Create image part for Gemini
-        image_part = types.Part.from_bytes(
-            data=image_bytes,
+        extractor = get_ai_exercise_extractor()
+        payload = await extractor.extract_from_photo(
+            image_bytes=image_bytes,
             mime_type="image/jpeg",
+            user_hint=None,
         )
 
-        # Call Gemini Vision
-        settings = get_settings()
+        # Project payload down to the legacy response model.
+        target_muscles = payload.get("target_muscles") or []
+        primary = target_muscles[0] if target_muscles else "full body"
+        if primary not in VALID_MUSCLE_GROUPS:
+            primary = "full body"
 
-        response = await gemini_generate_with_retry(
-            model=settings.gemini_model,
-            contents=[prompt, image_part],
-            config=types.GenerateContentConfig(
-                response_mime_type="application/json",
-                temperature=0.3,
-                max_output_tokens=1000,
-            ),
-            user_id=str(user_id),
-            method_name="create_custom_exercise",
-        )
-
-        # Parse the response
-        content = response.text.strip()
-        try:
-            result = json.loads(content)
-        except json.JSONDecodeError as e:
-            logger.error(f"❌ Failed to parse Gemini response as JSON: {e}", exc_info=True)
-            logger.error(f"Raw response: {content[:500]}", exc_info=True)
-            raise HTTPException(status_code=502, detail="AI returned invalid response format")
-
-        # Validate and normalize primary_muscle
-        primary_muscle = result.get("primary_muscle", "").lower().strip()
-        if primary_muscle not in VALID_MUSCLE_GROUPS:
-            logger.warning(f"⚠️ Invalid primary_muscle '{primary_muscle}', defaulting to 'full body'")
-            primary_muscle = "full body"
-
-        # Validate and normalize equipment
-        equipment = result.get("equipment", "").lower().strip()
+        equipment = payload.get("equipment") or "other"
         if equipment not in VALID_EQUIPMENT:
-            logger.warning(f"⚠️ Invalid equipment '{equipment}', defaulting to 'other'")
             equipment = "other"
 
-        # Validate and normalize secondary_muscles
-        raw_secondary = result.get("secondary_muscles", [])
-        secondary_muscles = [
-            m.lower().strip() for m in raw_secondary
-            if isinstance(m, str) and m.lower().strip() in VALID_MUSCLE_GROUPS
+        secondary = [
+            m for m in (payload.get("secondary_muscles") or [])
+            if isinstance(m, str) and m in VALID_MUSCLE_GROUPS
         ]
 
+        # Compound heuristic: more than one target or secondary muscle.
+        is_compound = (len(target_muscles) + len(secondary)) > 1
+
+        instructions_field = payload.get("instructions") or "No instructions available."
+
         analysis = AnalyzePhotoResponse(
-            name=result.get("name", "Unknown Exercise"),
-            primary_muscle=primary_muscle,
+            name=payload.get("name") or "Unknown Exercise",
+            primary_muscle=primary,
             equipment=equipment,
-            is_compound=bool(result.get("is_compound", False)),
-            instructions=result.get("instructions", "No instructions available."),
-            secondary_muscles=secondary_muscles,
+            is_compound=is_compound,
+            instructions=instructions_field,
+            secondary_muscles=secondary,
         )
 
-        logger.info(f"✅ Exercise photo analyzed: '{analysis.name}' (primary: {analysis.primary_muscle}, equipment: {analysis.equipment})")
+        logger.info(
+            f"✅ Exercise photo analyzed: '{analysis.name}' "
+            f"(primary: {analysis.primary_muscle}, equipment: {analysis.equipment})"
+        )
         return analysis
 
     except HTTPException:
         raise
+    except ValueError as ve:
+        # AI returned unparseable response etc.
+        raise HTTPException(status_code=502, detail=str(ve))
     except Exception as e:
         logger.error(f"❌ Failed to analyze exercise photo: {e}", exc_info=True)
+        raise safe_internal_error(e, "custom_exercises")
+
+
+# =============================================================================
+# Unified Import Endpoint
+# =============================================================================
+
+async def _save_imported_exercise(
+    db,
+    user_id: str,
+    payload: Dict[str, Any],
+) -> tuple[Dict[str, Any], bool, bool]:
+    """
+    Persist an AI-extracted exercise payload.
+
+    Handles duplicate detection by `(user_id, name)`:
+      - if a row with the same (user_id, name) already exists → return it with duplicate=True
+      - else insert, then best-effort RAG-index.
+
+    Returns: (row, rag_indexed, duplicate)
+    """
+    name = (payload.get("name") or "").strip()
+    if not name:
+        raise HTTPException(status_code=400, detail="Extracted exercise has no name")
+
+    # Duplicate detection — case-insensitive compare.
+    try:
+        existing = (
+            db.client.table("custom_exercises")
+            .select("*")
+            .eq("user_id", user_id)
+            .ilike("name", name)
+            .limit(1)
+            .execute()
+        )
+    except Exception as e:
+        logger.warning(f"⚠️ Duplicate-check query failed (continuing with insert): {e}", exc_info=True)
+        existing = None
+
+    if existing and existing.data:
+        row = existing.data[0]
+        logger.info(f"🏋️ Duplicate import detected for '{name}' — returning existing row {row.get('id')}")
+        return row, False, True
+
+    # Strip non-column keys before insert (e.g. keyframe_confidences from video merge).
+    allowed_keys = set(CustomExerciseCreate.model_fields.keys())
+    insert_data = {k: v for k, v in payload.items() if k in allowed_keys}
+    insert_data["user_id"] = user_id
+    # is_public default to False unless explicitly provided.
+    insert_data.setdefault("is_public", False)
+
+    result = db.client.table("custom_exercises").insert(insert_data).execute()
+    if not result.data:
+        raise HTTPException(status_code=500, detail="Failed to persist imported exercise")
+
+    row = result.data[0]
+    logger.info(f"🏋️ Imported custom exercise '{name}' for user {user_id} (id={row.get('id')})")
+
+    # Best-effort RAG indexing.
+    rag_indexed = False
+    try:
+        rag_service = get_exercise_rag_service()
+        rag_indexed = await rag_service.index_custom_exercise(row)
+    except Exception as rag_err:
+        logger.warning(
+            f"⚠️ RAG indexing failed (non-fatal) for imported exercise {row.get('id')}: {rag_err}",
+            exc_info=True,
+        )
+
+    return row, rag_indexed, False
+
+
+@router.post("/{user_id}/import", response_model=ImportExerciseResponse, status_code=200)
+async def import_custom_exercise(
+    user_id: str,
+    request: ImportExerciseRequest,
+    current_user: dict = Depends(get_current_user),
+):
+    """
+    Import a custom exercise from a photo, short video, or text description.
+
+    Photo / text paths run synchronously and return the persisted exercise +
+    RAG-indexed flag. Video path enqueues a `custom_exercise_import` media job
+    and returns `{job_id, status: 'pending'}`; poll `GET /api/v1/media-jobs/{job_id}`.
+    """
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
+
+    source = request.source
+    db = get_supabase_db()
+
+    try:
+        if source == "photo":
+            extractor = get_ai_exercise_extractor()
+            payload = await extractor.extract_from_photo(
+                s3_key=request.s3_key,
+                user_hint=request.user_hint,
+            )
+            row, rag_indexed, duplicate = await _save_imported_exercise(db, user_id, payload)
+            return ImportExerciseResponse(
+                exercise=CustomExerciseResponse(**row),
+                rag_indexed=rag_indexed,
+                job_id=None,
+                status="completed",
+                duplicate=duplicate,
+            )
+
+        elif source == "text":
+            extractor = get_ai_exercise_extractor()
+            payload = await extractor.extract_from_text(
+                raw_text=request.raw_text or "",
+                user_hint=request.user_hint,
+            )
+            row, rag_indexed, duplicate = await _save_imported_exercise(db, user_id, payload)
+            return ImportExerciseResponse(
+                exercise=CustomExerciseResponse(**row),
+                rag_indexed=rag_indexed,
+                job_id=None,
+                status="completed",
+                duplicate=duplicate,
+            )
+
+        elif source == "video":
+            # Enqueue async job. Actual extraction + persist happens in runner.
+            media_job_service = get_media_job_service()
+            job_id = media_job_service.create_job(
+                user_id=user_id,
+                job_type="custom_exercise_import",
+                s3_keys=[request.s3_key or ""],
+                mime_types=["video/mp4"],
+                media_types=["video"],
+                params={
+                    "user_id": user_id,
+                    "user_hint": request.user_hint,
+                    "source": "video",
+                },
+            )
+            asyncio.create_task(run_media_job(job_id))
+            logger.info(f"🎬 Enqueued custom_exercise_import job {job_id} for user {user_id}")
+            return ImportExerciseResponse(
+                exercise=None,
+                rag_indexed=False,
+                job_id=job_id,
+                status="pending",
+                duplicate=False,
+            )
+
+        else:
+            raise HTTPException(status_code=400, detail=f"Unknown source: {source}")
+
+    except HTTPException:
+        raise
+    except ValueError as ve:
+        logger.warning(f"⚠️ Import validation failure: {ve}")
+        raise HTTPException(status_code=400, detail=str(ve))
+    except Exception as e:
+        logger.error(f"❌ Failed to import custom exercise: {e}", exc_info=True)
         raise safe_internal_error(e, "custom_exercises")
 
 

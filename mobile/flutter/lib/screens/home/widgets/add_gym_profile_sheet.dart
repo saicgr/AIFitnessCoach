@@ -9,6 +9,7 @@ import '../../../models/equipment_item.dart';
 import '../../../widgets/glass_sheet.dart';
 import '../../../widgets/sheet_header.dart';
 import 'gym_equipment_sheet.dart';
+import 'import_equipment_sheet.dart';
 
 part 'add_gym_profile_sheet_part_equipment_follow_up.dart';
 
@@ -231,6 +232,73 @@ class _AddGymProfileSheetState extends ConsumerState<AddGymProfileSheet> {
       _initShownFollowUps();
     });
     HapticService.medium();
+  }
+
+  /// Open the AI import flow from inside the Add flow.
+  ///
+  /// Edge case: during the initial Add flow the profile doesn't exist yet
+  /// so we don't have an id to attach results to. We create the profile
+  /// now (with whatever the user has entered so far) and push the import
+  /// sheet against the newly created id. After save, the user is returned
+  /// to the equipment step with the imported gear already applied.
+  Future<void> _openImportSheet() async {
+    if (_name.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Enter a name for your gym first (step 1).'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      setState(() => _currentStep = 0);
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    String? newProfileId;
+    try {
+      final created = await ref
+          .read(gymProfilesProvider.notifier)
+          .createProfile(GymProfileCreate(
+            name: _name,
+            icon: _selectedIcon,
+            color: _selectedColor,
+            workoutEnvironment: _selectedEnvironment,
+            equipment: _selectedEquipment,
+            equipmentDetails: _equipmentDetails,
+          ));
+      newProfileId = created?.id;
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Could not save profile before import: $e'),
+            behavior: SnackBarBehavior.floating,
+            backgroundColor: Colors.red.shade700,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+
+    if (!mounted || newProfileId == null) return;
+
+    // Close the Add sheet first so the import + result sheets can pop
+    // cleanly back to the Home screen with the provider already updated.
+    Navigator.of(context).pop();
+
+    showGlassSheet(
+      context: context,
+      builder: (ctx) => GlassSheet(
+        child: ImportEquipmentSheet(
+          gymProfileId: newProfileId!,
+          existingEquipment: _selectedEquipment,
+          existingEquipmentDetails: _equipmentDetails,
+          currentEnvironment: _selectedEnvironment,
+        ),
+      ),
+    );
   }
 
   void _openEquipmentSheet() {

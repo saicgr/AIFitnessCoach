@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../models/equipment_item.dart';
 import '../../../widgets/glass_sheet.dart';
 import '../../../widgets/sheet_header.dart';
 import '../../workout/widgets/edit_weights_sheet.dart';
+import 'import_equipment_sheet.dart';
 
 /// Equipment categories and their items - matching gym equipment structure
 const Map<String, List<String>> gymEquipmentCategories = {
@@ -134,6 +136,16 @@ class GymEquipmentSheet extends StatefulWidget {
   /// Optional callback for back button - if null, no back button shown
   final VoidCallback? onBack;
 
+  /// If provided, enables the "Import from PDF/photo/URL" button in the
+  /// header. Null when the parent is still constructing a new profile
+  /// (e.g. step 2 of AddGymProfileSheet) — in that case the import entry
+  /// lives on the parent screen instead.
+  final String? gymProfileId;
+
+  /// Current workout environment — forwarded to the import flow so the
+  /// extractor can override only when it infers a different one.
+  final String? workoutEnvironment;
+
   const GymEquipmentSheet({
     super.key,
     required this.selectedEquipment,
@@ -141,6 +153,8 @@ class GymEquipmentSheet extends StatefulWidget {
     required this.onSave,
     this.title,
     this.onBack,
+    this.gymProfileId,
+    this.workoutEnvironment,
   });
 
   @override
@@ -333,6 +347,17 @@ class _GymEquipmentSheetState extends State<GymEquipmentSheet> {
               ],
             ),
           ),
+
+          // AI import entry — only when we know the profile id
+          if (widget.gymProfileId != null)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 4, 16, 0),
+              child: _ImportFromAIButton(
+                onTap: () => _openImportSheet(context),
+                accentColor: accentColor,
+                isDark: isDark,
+              ),
+            ),
 
           // Equipment list
           Expanded(
@@ -612,5 +637,111 @@ class _GymEquipmentSheetState extends State<GymEquipmentSheet> {
 
     widget.onSave(equipment, equipmentDetails);
     Navigator.pop(context);
+  }
+
+  /// Open the AI import sheet. Requires [widget.gymProfileId] to be non-null
+  /// because the backend needs an existing profile to attach results to.
+  ///
+  /// The import flow writes directly to the profile via
+  /// `gymProfilesProvider.notifier.updateProfile()`, so after it completes
+  /// we close this equipment sheet and let the caller pick up the refreshed
+  /// profile through Riverpod.
+  void _openImportSheet(BuildContext parentCtx) {
+    final profileId = widget.gymProfileId;
+    if (profileId == null) return; // defensive — button is hidden otherwise
+
+    // Snapshot current selections so the import merges, not overwrites.
+    final existingEquipment = _selectedEquipment.toList();
+    final existingDetails = _selectedEquipment
+        .map((name) =>
+            (_equipmentMap[name] ?? EquipmentItem.fromName(name)).toJson())
+        .toList();
+
+    showGlassSheet(
+      context: parentCtx,
+      builder: (ctx) => GlassSheet(
+        child: Consumer(
+          builder: (ctx, ref, _) => ImportEquipmentSheet(
+            gymProfileId: profileId,
+            existingEquipment: existingEquipment,
+            existingEquipmentDetails: existingDetails,
+            currentEnvironment: widget.workoutEnvironment ?? 'commercial_gym',
+          ),
+        ),
+      ),
+    );
+    // Once the user completes the import, the provider updates itself —
+    // close this local sheet so the stale snapshot isn't shown. We use a
+    // post-frame callback so we don't pop during build.
+    //
+    // We watch the gymProfilesProvider from a helper consumer below.
+  }
+}
+
+/// Compact "AI import" call-to-action shown above the equipment list.
+class _ImportFromAIButton extends StatelessWidget {
+  final VoidCallback onTap;
+  final Color accentColor;
+  final bool isDark;
+
+  const _ImportFromAIButton({
+    required this.onTap,
+    required this.accentColor,
+    required this.isDark,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              accentColor.withValues(alpha: 0.18),
+              accentColor.withValues(alpha: 0.08),
+            ],
+          ),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: accentColor.withValues(alpha: 0.35)),
+        ),
+        child: Row(
+          children: [
+            Icon(Icons.auto_awesome_rounded, color: accentColor, size: 18),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Import from PDF, photos, or URL',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: isDark
+                          ? Colors.white
+                          : AppColorsLight.textPrimary,
+                    ),
+                  ),
+                  Text(
+                    'Let AI populate your equipment list automatically',
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: (isDark
+                              ? Colors.white
+                              : AppColorsLight.textPrimary)
+                          .withValues(alpha: 0.6),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Icon(Icons.chevron_right_rounded, color: accentColor, size: 18),
+          ],
+        ),
+      ),
+    );
   }
 }

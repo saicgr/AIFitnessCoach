@@ -348,7 +348,8 @@ extension _HomeScreenStateUI1 on _HomeScreenState {
 
     // Define section groups and their tile types
     // COMING SOON: TileType.fasting removed — re-add when fasting feature launches
-    const nutritionTileTypes = {TileType.caloriesSummary, TileType.macroRings};
+    const nutritionTileTypes = {TileType.caloriesSummary, TileType.macroRings, TileType.nutritionPatterns};
+    const upcomingTiles = {TileType.upcomingWorkouts};
     const insightsTiles = {TileType.aiCoachTip, TileType.personalRecords, TileType.fitnessScore};
     const goalsTiles = {TileType.weeklyGoals, TileType.weekChanges};
     const trackingTiles = {TileType.habits, TileType.bodyWeight, TileType.achievements, TileType.dailyStats, TileType.quickLogWeight, TileType.quickLogMeasurements, TileType.todayStats, TileType.stepsCounter};
@@ -356,6 +357,7 @@ extension _HomeScreenStateUI1 on _HomeScreenState {
 
     // Group tiles by section
     final workoutTiles = <HomeTile>[];  // nextWorkout, quickStart, quickActions
+    final upcomingTilesList = <HomeTile>[];
     final nutritionTilesList = <HomeTile>[];
     final insightTilesList = <HomeTile>[];
     final goalsTilesList = <HomeTile>[];
@@ -366,6 +368,8 @@ extension _HomeScreenStateUI1 on _HomeScreenState {
     for (final tile in visibleTiles) {
       if (tile.type == TileType.nextWorkout || tile.type == TileType.quickStart || tile.type == TileType.quickActions) {
         workoutTiles.add(tile);
+      } else if (upcomingTiles.contains(tile.type)) {
+        upcomingTilesList.add(tile);
       } else if (nutritionTileTypes.contains(tile.type)) {
         nutritionTilesList.add(tile);
       } else if (insightsTiles.contains(tile.type)) {
@@ -481,6 +485,15 @@ extension _HomeScreenStateUI1 on _HomeScreenState {
     slivers.add(SliverToBoxAdapter(
       child: WeeklyReportCard(isDark: isDark),
     ));
+
+    // Upcoming workouts get their own labeled section so the list of
+    // scheduled-workout cards doesn't look like orphaned tiles.
+    if (upcomingTilesList.isNotEmpty) {
+      slivers.add(SliverToBoxAdapter(
+        child: _buildHomeSectionHeader('Upcoming Workouts', isDark, icon: Icons.event_outlined),
+      ));
+      renderTileGroup(upcomingTilesList);
+    }
 
     // Render nutrition section (right after workout for prominence)
     if (nutritionTilesList.isNotEmpty) {

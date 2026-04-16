@@ -2,7 +2,6 @@
 
 **Deadline**: 14 days from closed testing start (before applying for production)
 
-
 ---
 
 ## MUST DO WITHIN 14 DAYS (Production Blockers)
@@ -125,6 +124,7 @@ Google will reject or the app will break in production without these. Everything
 - [ ] App preview video for Play Store
 - [ ] A/B test screenshots with Google Play Console Experiments
 - [ ] ASO keyword optimization based on search data
+- [ ] Web onboarding quiz funnel for paid UA (see [WEB_ONBOARDING_FUNNEL.md](WEB_ONBOARDING_FUNNEL.md)) — build when ready to run Instagram/TikTok ads
 
 ---
 

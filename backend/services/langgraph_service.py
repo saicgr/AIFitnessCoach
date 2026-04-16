@@ -474,6 +474,9 @@ class LangGraphCoachService:
         "food_buffet": AgentType.NUTRITION,
         "nutrition_label": AgentType.NUTRITION,
         "app_screenshot": AgentType.NUTRITION,
+        # Recipes feature: pantry photos and handwritten recipes both go to Nutrition
+        "pantry_photo": AgentType.NUTRITION,
+        "recipe_handwritten": AgentType.NUTRITION,
         "progress_photo": AgentType.COACH,
         "document": AgentType.COACH,
         "gym_equipment": AgentType.COACH,

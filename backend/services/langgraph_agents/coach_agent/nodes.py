@@ -161,6 +161,20 @@ ADDITIONAL ACTIONS:
 - action: "log_weight", weight: N - Navigate to log weight
 - action: "start_workout", workout_id: ID - Start a specific workout
 - action: "complete_workout", workout_id: ID - Mark workout as done
+
+AI IMPORT TOOLS (delegated to the tool-binding agent path):
+- import_gym_equipment(source='file'|'images'|'text'|'url', s3_keys?, mime_types?, raw_text?, url?)
+  * When a user uploads a gym equipment list (PDF/Word/photo/URL) or says
+    something like "import my gym equipment from this PDF", call this tool.
+  * Returns {{action: "import_gym_equipment", job_id}} — the frontend polls
+    /media-jobs/{{job_id}} and shows a confirmation sheet when the job
+    completes. DO NOT attempt to list equipment yourself — the tool handles
+    extraction, taxonomy matching, and environment inference.
+- import_exercise(source='photo'|'video'|'text', s3_key?, raw_text?, user_hint?)
+  * Use when the user wants to save a new custom exercise to their library
+    — e.g. "add barbell hip thrust to my exercises", a photo of a new
+    machine, or a video demo. Photo/text return the saved row synchronously;
+    video returns a job_id for the preview sheet.
 """
 
 

@@ -1206,3 +1206,72 @@ def get_todays_workout_for_meal(
             "user_id": user_id,
             "message": f"Failed to load workout: {str(e)}",
         }
+
+
+@tool
+def build_grocery_list(
+    user_id: str,
+    scope: str,
+    subject_id: str,
+    suppress_staples: bool = True,
+) -> Dict[str, Any]:
+    """
+    Build a grocery list from a meal plan or a single recipe.
+
+    Use this when the user asks something like "make me a grocery list for my
+    plan today" or "what do I need to buy for the chili recipe?". The list is
+    persisted; the response includes a list_id the UI can deep-link into.
+
+    Args:
+        user_id: User's UUID.
+        scope: "plan" to build from a meal plan; "recipe" for a single recipe.
+        subject_id: meal_plan_id when scope=plan; recipe_id when scope=recipe.
+        suppress_staples: hide the user's staples (oil/salt/pepper) by default.
+
+    Returns:
+        Dict with success flag, list_id, item_count, aisles touched, and an
+        action_data payload the UI can read to navigate to grocery_list_screen.
+    """
+    try:
+        from models.grocery_list import GroceryListCreate
+        from services.grocery_list_service import get_grocery_service
+
+        scope_clean = (scope or "").strip().lower()
+        if scope_clean not in ("plan", "recipe"):
+            return {
+                "success": False,
+                "action": "build_grocery_list",
+                "message": "scope must be 'plan' or 'recipe'",
+            }
+
+        req = GroceryListCreate(
+            meal_plan_id=subject_id if scope_clean == "plan" else None,
+            source_recipe_id=subject_id if scope_clean == "recipe" else None,
+            suppress_staples=suppress_staples,
+        )
+        gl = run_async_in_sync(get_grocery_service().build(user_id, req))
+
+        aisles = sorted({(item.aisle.value if item.aisle else "other") for item in gl.items})
+        return {
+            "success": True,
+            "action": "build_grocery_list",
+            "list_id": gl.id,
+            "name": gl.name,
+            "item_count": len(gl.items),
+            "aisles": aisles,
+            "message": f"Built grocery list ({len(gl.items)} items across {len(aisles)} aisles).",
+            # action_data is consumed by the Flutter chat handler to deep-link
+            # into grocery_list_screen — see notification_action_handler / chat
+            # message renderers.
+            "action_data": {
+                "action": "open_grocery_list",
+                "list_id": gl.id,
+            },
+        }
+    except Exception as e:
+        logger.error(f"build_grocery_list failed: {e}", exc_info=True)
+        return {
+            "success": False,
+            "action": "build_grocery_list",
+            "message": f"Failed to build grocery list: {str(e)}",
+        }

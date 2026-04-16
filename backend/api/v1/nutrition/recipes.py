@@ -4,7 +4,7 @@ from datetime import datetime
 from typing import List, Optional
 import uuid
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Request
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, Request
 
 from core.timezone_utils import resolve_timezone, get_user_now_iso
 from core.auth import get_current_user
@@ -34,12 +34,65 @@ logger = get_logger(__name__)
 # ============================================
 
 
+async def _index_recipe_in_chroma(
+    *,
+    recipe_id: str,
+    user_id: str,
+    name: str,
+    description: Optional[str],
+    ingredient_names: List[str],
+    cuisine: Optional[str],
+    category: Optional[str],
+    tags: Optional[List[str]],
+    is_public: bool,
+):
+    """BackgroundTask helper: index a recipe in the saved_foods Chroma collection.
+
+    Wrapped here so the request can return immediately even when ChromaDB or
+    Gemini embedding is slow/unavailable. Failures are logged but never propagate.
+    """
+    try:
+        from services.saved_foods_rag_service import get_saved_foods_rag
+
+        rag = get_saved_foods_rag()
+        await rag.save_recipe(
+            recipe_id=recipe_id,
+            user_id=user_id,
+            name=name,
+            description=description,
+            ingredient_names=ingredient_names,
+            cuisine=cuisine,
+            category=category,
+            tags=tags,
+            is_public=is_public,
+        )
+    except Exception as exc:  # noqa: BLE001 — best-effort indexing
+        logger.warning(f"[Chroma] Recipe index failed for {recipe_id}: {exc}", exc_info=True)
+
+
+async def _delete_recipe_from_chroma(recipe_id: str):
+    try:
+        from services.saved_foods_rag_service import get_saved_foods_rag
+
+        rag = get_saved_foods_rag()
+        await rag.delete_recipe(recipe_id)
+    except Exception as exc:  # noqa: BLE001
+        logger.warning(f"[Chroma] Recipe delete failed for {recipe_id}: {exc}", exc_info=True)
+
+
 @router.post("/recipes", response_model=Recipe)
-async def create_recipe(request: RecipeCreate, user_id: str = Query(...), current_user: dict = Depends(get_current_user)):
+async def create_recipe(
+    request: RecipeCreate,
+    background_tasks: BackgroundTasks,
+    user_id: str = Query(...),
+    current_user: dict = Depends(get_current_user),
+):
     """
     Create a new recipe with ingredients.
 
     The recipe's nutrition values are automatically calculated from ingredients.
+    Spawns a background ChromaDB index so semantic recipe search can find this
+    row by name/ingredients/cuisine without joining Postgres.
     """
     logger.info(f"Creating recipe '{request.name}' for user {user_id}")
 
@@ -149,6 +202,20 @@ async def create_recipe(request: RecipeCreate, user_id: str = Query(...), curren
 
         logger.info(f"Successfully created recipe {recipe_id}")
 
+        # Fire-and-forget: index in ChromaDB so semantic recipe-search finds it.
+        background_tasks.add_task(
+            _index_recipe_in_chroma,
+            recipe_id=recipe_id,
+            user_id=user_id,
+            name=request.name,
+            description=request.description,
+            ingredient_names=[i.food_name for i in request.ingredients],
+            cuisine=request.cuisine,
+            category=(request.category.value if request.category else None),
+            tags=request.tags,
+            is_public=request.is_public,
+        )
+
         return Recipe(
             id=updated.data["id"],
             user_id=updated.data["user_id"],
@@ -198,37 +265,126 @@ async def list_recipes(
     offset: int = Query(default=0, ge=0),
     category: Optional[str] = Query(default=None),
     include_public: bool = Query(default=False),
+    # --- Discover / Favorites / Improvize additions (migration 1925) ---
+    source_type_in: Optional[str] = Query(
+        default=None,
+        description=(
+            "CSV of RecipeSourceType enum values to filter by, e.g. "
+            "'improvized,cloned_from_share'. When set, curated rows are NOT "
+            "auto-excluded so the caller can request them explicitly."
+        ),
+    ),
+    is_favorite: Optional[bool] = Query(
+        default=None,
+        description="When true, restrict to recipes favorited by the current user.",
+    ),
+    sort_by: str = Query(
+        default="created_desc",
+        regex=r"^(created_desc|name_asc|most_logged|last_cooked)$",
+        description="Sort order for the My Recipes list.",
+    ),
 ):
     """
-    List user's recipes with optional public recipes.
+    List the user's recipes (and optionally public ones).
+
+    Default behavior ("My Recipes" tab):
+      - user_id = caller, is_curated=FALSE (curated = Discover tab only),
+        deleted_at IS NULL.
+
+    Behavior changes when extra filters are supplied:
+      - is_favorite=true: return only recipes the caller has favorited.
+        We DO NOT restrict to user_id in this mode — a user can favorite
+        curated or shared recipes owned by others.
+      - source_type_in=...: restrict to one or more source_type values.
+        In this mode the curated auto-exclude is relaxed (so callers can
+        explicitly ask for e.g. source_type_in=improvized to see their forks).
+
+    Sorts:
+      - created_desc (default): newest first.
+      - name_asc: alphabetical.
+      - most_logged: times_logged DESC, tiebreak created_at DESC.
+      - last_cooked: last_logged_at DESC (nulls last), tiebreak created_at DESC.
     """
     logger.info(f"Listing recipes for user {user_id}")
 
     try:
         db = get_supabase_db()
 
-        # Build query
-        query = db.client.table("user_recipes")\
-            .select("id, name, category, calories_per_serving, protein_per_serving_g, servings, times_logged, image_url, created_at")\
-            .is_("deleted_at", "null")\
-            .order("times_logged", desc=True)\
-            .order("created_at", desc=True)\
-            .range(offset, offset + limit - 1)
+        # Base columns — must include the new Discover/Favorites/Improvize
+        # fields so the response includes is_curated / slug / source_*.
+        select_cols = (
+            "id, name, category, calories_per_serving, protein_per_serving_g, "
+            "servings, times_logged, image_url, created_at, last_logged_at, "
+            "is_curated, slug, source_recipe_id, source_recipe_name, source_type"
+        )
 
-        if include_public:
+        query = db.client.table("user_recipes").select(select_cols).is_("deleted_at", "null")
+        count_query = db.client.table("user_recipes").select("id", count="exact").is_("deleted_at", "null")
+
+        # --- Ownership / visibility ---
+        if is_favorite is True:
+            # Pull the user's favorite recipe ids; then scope the query to
+            # that set. Don't restrict to user_id — users can favorite
+            # curated / shared recipes owned by others.
+            from services.recipe_favorites_service import get_recipe_favorites_service
+            fav_ids = await get_recipe_favorites_service().recipe_ids_for_user(user_id)
+            if not fav_ids:
+                # Short-circuit: empty list → empty response.
+                return RecipesResponse(items=[], total_count=0)
+            query = query.in_("id", fav_ids)
+            count_query = count_query.in_("id", fav_ids)
+        elif include_public:
             query = query.or_(f"user_id.eq.{user_id},is_public.eq.true")
+            count_query = count_query.or_(f"user_id.eq.{user_id},is_public.eq.true")
         else:
             query = query.eq("user_id", user_id)
+            count_query = count_query.eq("user_id", user_id)
 
+        # --- Curated filter ---
+        # Default: exclude curated rows from "My Recipes". Relax only when the
+        # caller explicitly asks for source_type filtering OR favorites
+        # (favoriting a curated recipe should still list it).
+        if is_favorite is not True and not source_type_in:
+            query = query.eq("is_curated", False)
+            count_query = count_query.eq("is_curated", False)
+
+        # --- Category filter ---
         if category:
             query = query.eq("category", category)
+            count_query = count_query.eq("category", category)
 
+        # --- source_type_in filter (CSV → list) ---
+        if source_type_in:
+            source_types = [s.strip() for s in source_type_in.split(",") if s.strip()]
+            if source_types:
+                query = query.in_("source_type", source_types)
+                count_query = count_query.in_("source_type", source_types)
+
+        # --- Sort ---
+        if sort_by == "name_asc":
+            query = query.order("name")
+        elif sort_by == "most_logged":
+            query = query.order("times_logged", desc=True).order("created_at", desc=True)
+        elif sort_by == "last_cooked":
+            # nullsfirst=False → recipes never cooked sink to the bottom.
+            query = query.order("last_logged_at", desc=True, nullsfirst=False).order("created_at", desc=True)
+        else:  # created_desc (default)
+            query = query.order("created_at", desc=True)
+
+        query = query.range(offset, offset + limit - 1)
         result = query.execute()
+        rows = result.data or []
 
-        # Get ingredient counts
+        # --- Bulk favorites lookup to avoid N+1 heart checks on the UI ---
+        ids = [r["id"] for r in rows]
+        from services.recipe_favorites_service import get_recipe_favorites_service
+        fav_map = await get_recipe_favorites_service().is_favorited_bulk(current_user["id"], ids)
+
         items = []
-        for row in result.data or []:
-            # Count ingredients
+        for row in rows:
+            # Ingredient count — per-row query kept for backwards compat, but
+            # this is the main hotspot for the list. A future optimization
+            # is a single aggregate query grouped by recipe_id.
             count_result = db.client.table("recipe_ingredients")\
                 .select("id", count="exact")\
                 .eq("recipe_id", row["id"])\
@@ -246,20 +402,13 @@ async def list_recipes(
                 times_logged=row.get("times_logged", 0),
                 image_url=row.get("image_url"),
                 created_at=datetime.fromisoformat(row["created_at"].replace("Z", "+00:00")),
+                is_curated=row.get("is_curated", False),
+                slug=row.get("slug"),
+                source_recipe_id=row.get("source_recipe_id"),
+                source_recipe_name=row.get("source_recipe_name"),
+                source_type=row.get("source_type"),
+                is_favorited=fav_map.get(row["id"], False),
             ))
-
-        # Get total count
-        count_query = db.client.table("user_recipes")\
-            .select("id", count="exact")\
-            .is_("deleted_at", "null")
-
-        if include_public:
-            count_query = count_query.or_(f"user_id.eq.{user_id},is_public.eq.true")
-        else:
-            count_query = count_query.eq("user_id", user_id)
-
-        if category:
-            count_query = count_query.eq("category", category)
 
         count_result = count_query.execute()
         total_count = count_result.count or 0
@@ -275,13 +424,19 @@ async def list_recipes(
 async def get_recipe(recipe_id: str, user_id: str = Query(...), current_user: dict = Depends(get_current_user)):
     """
     Get a specific recipe with all ingredients.
+
+    Visibility:
+      - Owner can always read.
+      - is_public=TRUE: any authenticated user can read.
+      - is_curated=TRUE: any authenticated user can read (Discover tab).
     """
     logger.info(f"Getting recipe {recipe_id} for user {user_id}")
 
     try:
         db = get_supabase_db()
 
-        # Get recipe
+        # Get recipe (select * includes is_curated, slug, source_recipe_*
+        # columns added in migration 1925).
         result = db.client.table("user_recipes")\
             .select("*")\
             .eq("id", recipe_id)\
@@ -294,8 +449,12 @@ async def get_recipe(recipe_id: str, user_id: str = Query(...), current_user: di
 
         row = result.data
 
-        # Check ownership or public
-        if row["user_id"] != user_id and not row.get("is_public"):
+        # Check ownership, public, or curated. Curated rows may have user_id=NULL.
+        if (
+            row.get("user_id") != user_id
+            and not row.get("is_public")
+            and not row.get("is_curated")
+        ):
             raise HTTPException(status_code=403, detail="Access denied")
 
         # Get ingredients
@@ -335,9 +494,15 @@ async def get_recipe(recipe_id: str, user_id: str = Query(...), current_user: di
             for ing in (ing_result.data or [])
         ]
 
+        # Compute is_favorited for the calling user. Lazy import to avoid a
+        # circular import at module load (favorites service imports nothing
+        # from recipes.py, but keeping it local is cheap).
+        from services.recipe_favorites_service import get_recipe_favorites_service
+        is_favorited = await get_recipe_favorites_service().is_favorited(current_user["id"], recipe_id)
+
         return Recipe(
             id=row["id"],
-            user_id=row["user_id"],
+            user_id=row.get("user_id"),  # may be NULL for curated rows
             name=row["name"],
             description=row.get("description"),
             servings=row.get("servings", 1),
@@ -351,6 +516,8 @@ async def get_recipe(recipe_id: str, user_id: str = Query(...), current_user: di
             source_url=row.get("source_url"),
             source_type=RecipeSourceType(row.get("source_type", "manual")),
             is_public=row.get("is_public", False),
+            cooked_yield_grams=row.get("cooked_yield_grams"),
+            cooking_method=row.get("cooking_method"),
             calories_per_serving=row.get("calories_per_serving"),
             protein_per_serving_g=row.get("protein_per_serving_g"),
             carbs_per_serving_g=row.get("carbs_per_serving_g"),
@@ -364,6 +531,13 @@ async def get_recipe(recipe_id: str, user_id: str = Query(...), current_user: di
             sodium_per_serving_mg=row.get("sodium_per_serving_mg"),
             times_logged=row.get("times_logged", 0),
             last_logged_at=datetime.fromisoformat(row["last_logged_at"].replace("Z", "+00:00")) if row.get("last_logged_at") else None,
+            # Discover / Favorites / Improvize (migration 1925)
+            is_curated=row.get("is_curated", False),
+            slug=row.get("slug"),
+            source_recipe_id=row.get("source_recipe_id"),
+            source_recipe_name=row.get("source_recipe_name"),
+            source_recipe_user_id=row.get("source_recipe_user_id"),
+            is_favorited=is_favorited,
             ingredients=ingredients,
             ingredient_count=len(ingredients),
             created_at=datetime.fromisoformat(row["created_at"].replace("Z", "+00:00")),
@@ -378,11 +552,20 @@ async def get_recipe(recipe_id: str, user_id: str = Query(...), current_user: di
 
 
 @router.delete("/recipes/{recipe_id}")
-async def delete_recipe(recipe_id: str, user_id: str = Query(...), current_user: dict = Depends(get_current_user)):
+async def delete_recipe(
+    recipe_id: str,
+    background_tasks: BackgroundTasks,
+    user_id: str = Query(...),
+    current_user: dict = Depends(get_current_user),
+):
     """
     Delete a recipe (soft delete).
+
+    Also removes it from the Chroma semantic-search index so search no longer
+    surfaces a deleted recipe (the lexical path already filters via deleted_at).
     """
     logger.info(f"Deleting recipe {recipe_id} for user {user_id}")
+    background_tasks.add_task(_delete_recipe_from_chroma, recipe_id)
 
     try:
         db = get_supabase_db()

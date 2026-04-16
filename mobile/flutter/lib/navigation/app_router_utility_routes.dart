@@ -4,6 +4,17 @@ part of 'app_router.dart';
 List<RouteBase> _utilityRoutes() => [
   // === Utility Routes ===
 
+      // Public shared recipe deep link: fitwiz.app/r/{slug} → PublicRecipeScreen.
+      // Auth not required; user is prompted to sign in on "Save to my recipes" tap.
+      GoRoute(
+        path: '/r/:slug',
+        builder: (context, state) {
+          final slug = state.pathParameters['slug'] ?? '';
+          final isDark = Theme.of(context).brightness == Brightness.dark;
+          return PublicRecipeScreen(slug: slug, isDark: isDark);
+        },
+      ),
+
       GoRoute(
         path: '/notifications',
         builder: (context, state) => const NotificationsScreen(),

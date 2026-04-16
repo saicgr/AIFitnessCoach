@@ -149,6 +149,7 @@ import '../screens/onboarding/accuracy_intro_screen.dart';
 import '../screens/onboarding/health_connect_screen.dart';
 import '../screens/onboarding/feature_showcase_screen.dart';
 import '../screens/dashboard/coach_dashboard_screen.dart';
+import '../screens/nutrition/recipes/public_recipe_screen.dart';
 
 part 'app_router_workout_routes.dart';
 part 'app_router_pre_auth_routes.dart';

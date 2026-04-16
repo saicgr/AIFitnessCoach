@@ -1,7 +1,6 @@
 -- Migration 270: Food Nutrition Overrides
 -- Purpose: Curated, verified nutrition data that takes priority over the base food_database.
 -- Fixes known issues: inflated calories (dosa=639 instead of 150), duplicate branded entries (eggs).
-
 -- ── Table ──────────────────────────────────────────────────────────
 
 CREATE TABLE IF NOT EXISTS food_nutrition_overrides (

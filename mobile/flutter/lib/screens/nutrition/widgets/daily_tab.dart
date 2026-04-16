@@ -5,6 +5,7 @@ import '../../../data/models/nutrition.dart';
 import '../../../data/models/micronutrients.dart';
 import '../../../data/services/api_client.dart';
 import '../../../data/providers/nutrition_preferences_provider.dart';
+import '../../../data/providers/recipe_providers.dart';
 import '../../../data/repositories/nutrition_repository.dart';
 import '../../../widgets/glass_sheet.dart';
 import '../../../widgets/main_shell.dart';
@@ -69,10 +70,17 @@ class DailyTab extends ConsumerStatefulWidget {
   ConsumerState<DailyTab> createState() => _DailyTabState();
 }
 
-class _DailyTabState extends ConsumerState<DailyTab> {
+class _DailyTabState extends ConsumerState<DailyTab>
+    with AutomaticKeepAliveClientMixin {
   List<SavedFood> _favorites = [];
   bool _isLoadingFavorites = false;
   bool _analyticsExpanded = false;
+
+  // Keep this tab's state alive when the user switches away and back —
+  // otherwise the favorites fetch and the (heavy) meal-list rebuild fires
+  // on every visit, which is the perceived "lag" when returning to Daily.
+  @override
+  bool get wantKeepAlive => true;
 
   @override
   void initState() {
@@ -345,6 +353,7 @@ class _DailyTabState extends ConsumerState<DailyTab> {
 
   @override
   Widget build(BuildContext context) {
+    super.build(context); // required by AutomaticKeepAliveClientMixin
     final teal = widget.isDark ? AppColors.teal : AppColorsLight.teal;
 
     return RefreshIndicator(
@@ -371,6 +380,10 @@ class _DailyTabState extends ConsumerState<DailyTab> {
                   ),
                   const SizedBox(height: 12),
                 ],
+
+                // 1.5 LEFTOVERS — quick-log from active cook events.
+                //     Only appears when the user has batch-cooked recipes remaining.
+                _LeftoversCarousel(userId: widget.userId, isDark: widget.isDark),
 
                 // 2. MEAL SECTIONS with hero-row summary at top of card.
                 //    Daily Goals card removed — the 4 macro rings + goal-config strip
@@ -709,5 +722,134 @@ class _NutrientToggleChip extends StatelessWidget {
         ),
       ),
     );
+  }
+}
+
+/// Quick-log-from-leftovers carousel. Appears above the meal-sections card
+/// when the user has active cook events (batch-cooked recipes with portions
+/// remaining). Tapping a chip logs one portion now under the current meal slot
+/// and decrements portions_remaining (DB trigger from migration 509).
+class _LeftoversCarousel extends ConsumerWidget {
+  final String userId;
+  final bool isDark;
+  const _LeftoversCarousel({required this.userId, required this.isDark});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    if (userId.isEmpty) return const SizedBox.shrink();
+    final leftoversAsync = ref.watch(activeCookEventsProvider(userId));
+    return leftoversAsync.when(
+      loading: () => const SizedBox.shrink(),
+      error: (_, __) => const SizedBox.shrink(),
+      data: (items) {
+        if (items.isEmpty) return const SizedBox.shrink();
+        final accent = AppColors.orange; // matches leftovers warning color family
+        final text = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+        final muted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+        final surface = isDark ? AppColors.elevated : AppColorsLight.elevated;
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: const EdgeInsets.only(left: 4, bottom: 8),
+                child: Text(
+                  'Leftovers ready to log',
+                  style: TextStyle(color: muted, fontSize: 11, fontWeight: FontWeight.w800, letterSpacing: 0.5),
+                ),
+              ),
+              SizedBox(
+                height: 76,
+                child: ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: items.length,
+                  separatorBuilder: (_, __) => const SizedBox(width: 10),
+                  itemBuilder: (_, i) {
+                    final ev = items[i];
+                    final warningColor = ev.isExpired
+                        ? AppColors.error
+                        : ev.isExpiringSoon
+                            ? AppColors.yellow
+                            : accent;
+                    return InkWell(
+                      borderRadius: BorderRadius.circular(14),
+                      onTap: ev.isExpired ? null : () async {
+                        try {
+                          await ref.read(nutritionRepositoryProvider).logRecipe(
+                                userId: userId,
+                                recipeId: ev.recipeId ?? '',
+                                mealType: _currentMealSlot(),
+                                servings: 1.0,
+                              );
+                          // Invalidate so the carousel updates portions_remaining
+                          ref.invalidate(activeCookEventsProvider(userId));
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text('Logged ${ev.recipeName ?? "leftover"}')),
+                            );
+                          }
+                        } catch (e) {
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text('Log failed: $e')),
+                            );
+                          }
+                        }
+                      },
+                      child: Container(
+                        width: 200,
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: surface,
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(color: warningColor.withValues(alpha: 0.3)),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(Icons.kitchen_rounded, color: warningColor, size: 28),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Text(
+                                    ev.isExpired ? 'EXPIRED' : 'TAP TO LOG',
+                                    style: TextStyle(fontSize: 9, color: warningColor, fontWeight: FontWeight.w800, letterSpacing: 0.4),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    ev.recipeName ?? 'Cooked dish',
+                                    style: TextStyle(color: text, fontSize: 13, fontWeight: FontWeight.w700),
+                                    maxLines: 1, overflow: TextOverflow.ellipsis,
+                                  ),
+                                  Text(
+                                    '${ev.portionsRemaining.toStringAsFixed(0)} of ${ev.portionsMade.toStringAsFixed(0)} left',
+                                    style: TextStyle(color: muted, fontSize: 11),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  String _currentMealSlot() {
+    final h = DateTime.now().hour;
+    if (h < 10) return 'breakfast';
+    if (h < 14) return 'lunch';
+    if (h < 17) return 'snack';
+    return 'dinner';
   }
 }

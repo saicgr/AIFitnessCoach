@@ -92,12 +92,33 @@ class ExerciseRAGService:
         self.chroma_client = get_chroma_cloud_client()
         self.collection = self.chroma_client.get_or_create_collection("exercise_library")
 
+        # Second collection for user-created custom exercises.
+        # Scoped by user_id in metadata; public exercises are queryable across users.
+        try:
+            self.custom_collection = self.chroma_client.get_or_create_collection(
+                name="custom_exercise_library",
+                metadata={"hnsw:space": "cosine"},
+            )
+        except TypeError:
+            # Older chroma-cloud clients may not accept metadata kwarg.
+            self.custom_collection = self.chroma_client.get_or_create_collection(
+                "custom_exercise_library"
+            )
+
         try:
             _count = self.collection.count()
         except Exception as e:
             logger.warning(f"Failed to get collection count: {e}", exc_info=True)
             _count = "unknown"
-        logger.info(f"Exercise RAG initialized with {_count} exercises")
+        try:
+            _custom_count = self.custom_collection.count()
+        except Exception as e:
+            logger.warning(f"Failed to get custom collection count: {e}", exc_info=True)
+            _custom_count = "unknown"
+        logger.info(
+            f"Exercise RAG initialized with {_count} library exercises, "
+            f"{_custom_count} custom exercises"
+        )
 
     async def index_all_exercises(self, batch_size: int = 100) -> int:
         """
@@ -267,6 +288,183 @@ class ExerciseRAGService:
             text_parts.append(f"Instructions: {instructions[:300]}")
 
         return "\n".join(text_parts)
+
+    # =========================================================================
+    # Custom Exercise Indexing (user-created exercises)
+    # =========================================================================
+
+    def _build_custom_exercise_text(self, exercise: Dict[str, Any]) -> str:
+        """Build the embedding text for a custom exercise row. Mirrors library shape."""
+        name = exercise.get("name") or "Custom Exercise"
+        body_part = exercise.get("body_part") or ""
+        target_muscles = exercise.get("target_muscles") or []
+        secondary = exercise.get("secondary_muscles") or []
+        equipment = exercise.get("equipment") or "bodyweight"
+        difficulty = exercise.get("difficulty_level") or ""
+        exercise_type = exercise.get("exercise_type") or "strength"
+        movement_type = exercise.get("movement_type") or "dynamic"
+        instructions = exercise.get("instructions") or ""
+
+        if isinstance(target_muscles, str):
+            target_muscles = [target_muscles]
+        if isinstance(secondary, str):
+            secondary = [secondary]
+
+        text_parts = [
+            f"Exercise: {name}",
+            f"Body Part: {body_part}",
+            f"Target Muscle: {', '.join(target_muscles) if target_muscles else ''}",
+            f"Equipment: {equipment}",
+        ]
+        if secondary:
+            text_parts.append(f"Secondary Muscles: {', '.join(secondary)}")
+        if exercise_type:
+            text_parts.append(f"Category: {exercise_type}")
+        if movement_type:
+            text_parts.append(f"Movement: {movement_type}")
+        if difficulty:
+            text_parts.append(f"Difficulty: {difficulty}")
+        if instructions:
+            text_parts.append(f"Instructions: {str(instructions)[:300]}")
+        return "\n".join(text_parts)
+
+    def _build_custom_metadata(self, exercise: Dict[str, Any]) -> Dict[str, Any]:
+        """Build ChromaDB metadata dict for a custom exercise."""
+        target_muscles = exercise.get("target_muscles") or []
+        if isinstance(target_muscles, str):
+            target_muscles = [target_muscles]
+
+        secondary = exercise.get("secondary_muscles") or []
+        if isinstance(secondary, str):
+            secondary = [secondary]
+
+        raw_name = exercise.get("name", "Custom Exercise")
+        cleaned_name = clean_exercise_name_for_display(raw_name)
+
+        # Primary target_muscle (first element) for parity with library schema.
+        primary_target = target_muscles[0] if target_muscles else ""
+
+        return {
+            "exercise_id": str(exercise.get("id") or ""),
+            "name": cleaned_name,
+            "body_part": str(exercise.get("body_part") or ""),
+            "equipment": str(exercise.get("equipment") or "bodyweight"),
+            "target_muscle": str(primary_target),
+            "target_muscles": json.dumps(list(target_muscles)),
+            "secondary_muscles": json.dumps(list(secondary)),
+            "difficulty": str(exercise.get("difficulty_level") or "intermediate"),
+            "category": str(exercise.get("exercise_type") or "strength"),
+            "movement_type": str(exercise.get("movement_type") or "dynamic"),
+            "gif_url": str(exercise.get("image_url") or ""),
+            "video_url": str(exercise.get("video_url") or ""),
+            "image_url": str(exercise.get("image_url") or ""),
+            "instructions": str(exercise.get("instructions") or "")[:500],
+            "has_video": "true" if exercise.get("video_url") else "false",
+            "is_custom": "true",
+            "user_id": str(exercise.get("user_id") or ""),
+            "is_public": bool(exercise.get("is_public", False)),
+            "is_warmup_suitable": bool(exercise.get("is_warmup_suitable", False)),
+            "is_stretch_suitable": bool(exercise.get("is_stretch_suitable", False)),
+            "is_cooldown_suitable": bool(exercise.get("is_cooldown_suitable", False)),
+        }
+
+    async def index_custom_exercise(self, exercise: Dict[str, Any]) -> bool:
+        """
+        Index a single custom exercise into the `custom_exercise_library` collection.
+
+        Returns True on success, False (non-fatal) on failure — callers should log
+        a ⚠️ but NOT fail the parent request on indexing errors.
+        """
+        exercise_id = exercise.get("id")
+        if not exercise_id:
+            logger.warning("⚠️ [ExerciseRAG] index_custom_exercise: missing id — skipping")
+            return False
+
+        try:
+            doc_id = f"custom_{exercise_id}"
+            document = self._build_custom_exercise_text(exercise)
+            metadata = self._build_custom_metadata(exercise)
+
+            embedding = await self.gemini_service.get_embedding_async(document)
+            if not embedding:
+                logger.warning(f"⚠️ [ExerciseRAG] embedding returned empty for custom exercise {exercise_id}")
+                return False
+
+            # Upsert: try delete-then-add to keep semantics consistent with library ingest.
+            try:
+                self.custom_collection.delete(ids=[doc_id])
+            except Exception as e:
+                logger.debug(f"[ExerciseRAG] delete-before-add noop for {doc_id}: {e}")
+
+            self.custom_collection.add(
+                ids=[doc_id],
+                embeddings=[embedding],
+                documents=[document],
+                metadatas=[metadata],
+            )
+            logger.info(
+                f"✅ [ExerciseRAG] Indexed custom exercise '{exercise.get('name')}' (id={exercise_id}) "
+                f"into custom_exercise_library"
+            )
+            return True
+        except Exception as e:
+            logger.error(
+                f"❌ [ExerciseRAG] Failed to index custom exercise {exercise_id}: {e}",
+                exc_info=True,
+            )
+            return False
+
+    async def update_custom_exercise_index(self, exercise: Dict[str, Any]) -> bool:
+        """Re-index a custom exercise after update. Upsert semantics."""
+        return await self.index_custom_exercise(exercise)
+
+    async def delete_custom_exercise_index(self, exercise_id: str) -> bool:
+        """Remove a custom exercise from the ChromaDB custom collection."""
+        if not exercise_id:
+            return False
+        try:
+            doc_id = f"custom_{exercise_id}"
+            self.custom_collection.delete(ids=[doc_id])
+            logger.info(f"✅ [ExerciseRAG] Deleted custom exercise {exercise_id} from index")
+            return True
+        except Exception as e:
+            logger.error(
+                f"❌ [ExerciseRAG] Failed to delete custom exercise {exercise_id} from index: {e}",
+                exc_info=True,
+            )
+            return False
+
+    def query_custom_collection(
+        self,
+        query_embedding: List[float],
+        user_id: Optional[str],
+        n_results: int = 20,
+    ) -> Dict[str, Any]:
+        """
+        Query the custom exercise collection filtered to exercises the user can see:
+          - their own (user_id match) OR
+          - public (is_public=true)
+
+        Returns the raw ChromaDB query result dict.
+        """
+        if not user_id:
+            where = {"is_public": True}
+        else:
+            where = {"$or": [{"user_id": user_id}, {"is_public": True}]}
+
+        try:
+            return self.custom_collection.query(
+                query_embeddings=[query_embedding],
+                n_results=n_results,
+                where=where,
+                include=["documents", "metadatas", "distances"],
+            )
+        except Exception as e:
+            logger.warning(
+                f"⚠️ [ExerciseRAG] custom collection query failed: {e}",
+                exc_info=True,
+            )
+            return {"ids": [[]], "metadatas": [[]], "distances": [[]], "documents": [[]]}
 
     async def select_exercises_for_workout(
         self,

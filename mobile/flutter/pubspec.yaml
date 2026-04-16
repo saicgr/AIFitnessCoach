@@ -94,6 +94,8 @@ dependencies:
   # Image Picker (for food photos)
   image_picker: ^1.1.2
   image_cropper: ^8.0.2
+  # In-app live camera preview (Snapchat-style capture in recipe import)
+  camera: ^0.11.0
   speech_to_text: ^7.3.0
 
   # Audio Recording (for exercise notes voice memos)

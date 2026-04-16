@@ -29,6 +29,45 @@ DISCORD_ICON_URL = "https://cdn.simpleicons.org/discord/ffffff"
 INSTAGRAM_ICON_URL = "https://cdn.simpleicons.org/instagram/ffffff"
 
 
+# ─── Overdue escalation thresholds (driven by coach_style) ──────────────────
+# Days the user has been OVERDUE before the mood/copy escalates. Customizable
+# via the user's coach_style preference (user_ai_settings.coaching_style):
+#   - GENTLE: never escalates past "Nudging" — no guilt ever, regardless of days.
+#   - BALANCED (default): gentle nudge → concerned check-in → disappointed.
+#     Two full weeks of runway before the firm tone kicks in.
+#   - TOUGH_LOVE: aggressive from day 1. Concerned immediately, Disappointed
+#     by day 3 — for users who explicitly opted into harder coaching.
+#
+# Returned tuple: (nudge_max_days, concerned_max_days).
+#   days_overdue <= nudge_max_days        → Nudging
+#   days_overdue <= concerned_max_days    → Concerned
+#   days_overdue >  concerned_max_days    → Disappointed
+def _overdue_thresholds(coach_style: CoachStyle) -> Tuple[int, int]:
+    if coach_style == CoachStyle.GENTLE:
+        # Effectively infinite — Gentle users never see Concerned/Disappointed.
+        return (10**9, 10**9)
+    if coach_style == CoachStyle.TOUGH_LOVE:
+        return (0, 2)  # day 1+ → Concerned; day 3+ → Disappointed
+    # BALANCED default: 3-day nudge window, 13-day concerned window, firm at 14+
+    return (3, 13)
+
+
+def overdue_tier(stats: UserStats) -> str:
+    """Return the escalation tier for OVERDUE state: 'nudge' | 'concerned' | 'firm'.
+
+    Pure function of `days_overdue` + `coach_style`. Used by both `persona_mood()`
+    and the lifecycle email copy branches so mood emoji and subject line stay
+    in sync.
+    """
+    days = stats.days_overdue or 0
+    nudge_max, concerned_max = _overdue_thresholds(stats.coach_style)
+    if days <= nudge_max:
+        return "nudge"
+    if days <= concerned_max:
+        return "concerned"
+    return "firm"
+
+
 # ─── Name handling ──────────────────────────────────────────────────────────
 
 def first_name(user: dict) -> str:
@@ -125,11 +164,19 @@ def persona_mood(stats: UserStats) -> Tuple[str, str]:
     Order matters — earlier branches win, so the most specific "bad" states
     are checked before the celebratory ones.
     """
-    # Overdue with zero activity — classic guilt trigger
+    # Overdue with zero activity. The escalation ramp is driven by the user's
+    # coach_style preference so users who picked "gentle" never get guilted and
+    # users who picked "balanced" get two weeks of runway before the firm tone.
+    # See `_overdue_thresholds()` for the day cutoffs.
     if (
         stats.schedule_state == ScheduleState.OVERDUE
         and stats.workouts_total == 0
     ):
+        tier = overdue_tier(stats)
+        if tier == "nudge":
+            return ("👋", "Nudging")
+        if tier == "concerned":
+            return ("😰", "Concerned")
         return ("😤", "Disappointed")
 
     # Launches today, still no action late in the day

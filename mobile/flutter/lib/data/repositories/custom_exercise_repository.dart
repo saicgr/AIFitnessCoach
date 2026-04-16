@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/api_constants.dart';
 import '../models/custom_exercise.dart';
+import '../models/exercise_import.dart';
 import '../services/api_client.dart';
 
 /// Custom exercise repository provider
@@ -323,6 +324,170 @@ class CustomExerciseRepository {
   // ============================================================================
   // Helpers
   // ============================================================================
+
+  // ============================================================================
+  // AI Exercise Importer (photo / video / text)
+  // ============================================================================
+
+  /// Import a custom exercise from a photo that's already uploaded to S3.
+  /// Backend auto-extracts metadata via Gemini Vision, auto-saves the row, and
+  /// returns the created exercise synchronously.
+  Future<ImportExerciseResult> importFromPhoto({
+    required String userId,
+    required String s3Key,
+    String? userHint,
+  }) async {
+    debugPrint('🤖 [CustomExerciseRepo] Importing exercise from photo s3_key=$s3Key');
+    try {
+      final response = await _apiClient.post<Map<String, dynamic>>(
+        '${ApiConstants.apiBaseUrl}/custom-exercises/$userId/import',
+        data: {
+          'source': 'photo',
+          's3_key': s3Key,
+          if (userHint != null && userHint.isNotEmpty) 'user_hint': userHint,
+        },
+      );
+      return _parseImportResponse(response.data, 'photo');
+    } catch (e, stackTrace) {
+      debugPrint('❌ [CustomExerciseRepo] importFromPhoto failed: $e');
+      debugPrint('Stack: $stackTrace');
+      rethrow;
+    }
+  }
+
+  /// Import a custom exercise from a form-check video on S3.
+  /// Returns asynchronously — caller must poll via [pollImportJob].
+  Future<ImportExerciseResult> importFromVideo({
+    required String userId,
+    required String s3Key,
+    String? userHint,
+  }) async {
+    debugPrint('🤖 [CustomExerciseRepo] Importing exercise from video s3_key=$s3Key');
+    try {
+      final response = await _apiClient.post<Map<String, dynamic>>(
+        '${ApiConstants.apiBaseUrl}/custom-exercises/$userId/import',
+        data: {
+          'source': 'video',
+          's3_key': s3Key,
+          if (userHint != null && userHint.isNotEmpty) 'user_hint': userHint,
+        },
+      );
+      return _parseImportResponse(response.data, 'video');
+    } catch (e, stackTrace) {
+      debugPrint('❌ [CustomExerciseRepo] importFromVideo failed: $e');
+      debugPrint('Stack: $stackTrace');
+      rethrow;
+    }
+  }
+
+  /// Import a custom exercise from a free-text description.
+  Future<ImportExerciseResult> importFromText({
+    required String userId,
+    required String rawText,
+    String? userHint,
+  }) async {
+    debugPrint('🤖 [CustomExerciseRepo] Importing exercise from text (${rawText.length} chars)');
+    try {
+      final response = await _apiClient.post<Map<String, dynamic>>(
+        '${ApiConstants.apiBaseUrl}/custom-exercises/$userId/import',
+        data: {
+          'source': 'text',
+          'raw_text': rawText,
+          if (userHint != null && userHint.isNotEmpty) 'user_hint': userHint,
+        },
+      );
+      return _parseImportResponse(response.data, 'text');
+    } catch (e, stackTrace) {
+      debugPrint('❌ [CustomExerciseRepo] importFromText failed: $e');
+      debugPrint('Stack: $stackTrace');
+      rethrow;
+    }
+  }
+
+  /// Poll an async import job. Caller repeats every ~2s until status is
+  /// "completed" or "failed". On "completed" the payload includes the final
+  /// exercise row.
+  Future<ImportJobStatus> pollImportJob(String jobId) async {
+    debugPrint('🔍 [CustomExerciseRepo] Polling import job: $jobId');
+    try {
+      final response = await _apiClient.get<Map<String, dynamic>>(
+        '${ApiConstants.apiBaseUrl}/media-jobs/$jobId',
+      );
+      final data = response.data;
+      if (data == null) {
+        throw Exception('Empty response polling job $jobId');
+      }
+      final status = (data['status'] as String?) ?? 'pending';
+      final resultJson = data['result_json'] as Map<String, dynamic>?;
+      final errorMessage = data['error_message'] as String?;
+      debugPrint('🔍 [CustomExerciseRepo] Job $jobId status=$status');
+
+      CustomExercise? exercise;
+      bool ragIndexed = false;
+      bool duplicate = false;
+      List<double>? keyframeConfidences;
+      if (status == 'completed' && resultJson != null) {
+        final exerciseJson = resultJson['exercise'];
+        if (exerciseJson is Map<String, dynamic>) {
+          exercise = _parseFullExercise(exerciseJson);
+        }
+        ragIndexed = (resultJson['rag_indexed'] as bool?) ?? false;
+        duplicate = (resultJson['duplicate'] as bool?) ?? false;
+        final kf = resultJson['keyframe_confidences'];
+        if (kf is List) {
+          keyframeConfidences = kf
+              .map((v) => v is num ? v.toDouble() : 0.0)
+              .toList();
+        }
+      }
+
+      return ImportJobStatus(
+        jobId: jobId,
+        status: status,
+        exercise: exercise,
+        ragIndexed: ragIndexed,
+        duplicate: duplicate,
+        keyframeConfidences: keyframeConfidences,
+        errorMessage: errorMessage,
+      );
+    } catch (e, stackTrace) {
+      debugPrint('❌ [CustomExerciseRepo] pollImportJob failed: $e');
+      debugPrint('Stack: $stackTrace');
+      rethrow;
+    }
+  }
+
+  /// Parse the sync 201 or async 202 response from POST /import.
+  ImportExerciseResult _parseImportResponse(
+    Map<String, dynamic>? data,
+    String source,
+  ) {
+    if (data == null) {
+      throw Exception('Empty import response');
+    }
+    final jobId = data['job_id'] as String?;
+    final exerciseJson = data['exercise'];
+    if (jobId != null && exerciseJson == null) {
+      debugPrint('✅ [CustomExerciseRepo] Async import queued job=$jobId');
+      return ImportExerciseResult.async(
+        jobId: jobId,
+        status: (data['status'] as String?) ?? 'pending',
+      );
+    }
+    if (exerciseJson is! Map<String, dynamic>) {
+      throw Exception('Import response missing exercise payload');
+    }
+    final exercise = _parseFullExercise(exerciseJson);
+    final ragIndexed = (data['rag_indexed'] as bool?) ?? false;
+    final duplicate = (data['duplicate'] as bool?) ?? false;
+    debugPrint('✅ [CustomExerciseRepo] Imported (${source}) ${exercise.name} '
+        'rag_indexed=$ragIndexed duplicate=$duplicate');
+    return ImportExerciseResult.complete(
+      exercise: exercise,
+      ragIndexed: ragIndexed,
+      duplicate: duplicate,
+    );
+  }
 
   /// Parse a full exercise response
   CustomExercise _parseFullExercise(Map<String, dynamic> data) {

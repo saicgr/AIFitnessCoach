@@ -174,14 +174,22 @@ class _ExerciseSwapSheetState extends ConsumerState<_ExerciseSwapSheet>
         avoidedExercises: _avoidedExerciseNames,
       );
 
+      // Merge user's custom exercises that match the current exercise's body
+      // part or target muscle. Custom exercises aren't in the library DB
+      // (unless RAG-indexed post-import), so they'd otherwise be invisible
+      // here. Matched customs get a "Your Exercise" badge and are inserted
+      // at the top, because the user's own exercises are more relevant than
+      // generic library alternatives.
+      final merged = _mergeCustomExercisesIntoSimilar(suggestions);
+
       if (mounted) {
         setState(() {
-          _similarExercises = suggestions;
+          _similarExercises = merged;
           _isLoadingSimilar = false;
         });
 
         // Pre-fetch images in background (non-blocking)
-        final exerciseNames = suggestions
+        final exerciseNames = merged
             .map((s) => s['name'] as String?)
             .whereType<String>()
             .toList();
@@ -199,6 +207,102 @@ class _ExerciseSwapSheetState extends ConsumerState<_ExerciseSwapSheet>
         });
       }
     }
+  }
+
+  /// Merge user custom exercises that match the current exercise's body-part
+  /// or target_muscle into the Similar-tab list. Returns a new list — does
+  /// not mutate [librarySuggestions].
+  List<Map<String, dynamic>> _mergeCustomExercisesIntoSimilar(
+    List<Map<String, dynamic>> librarySuggestions,
+  ) {
+    final customs = ref.read(customExercisesProvider).exercises;
+    if (customs.isEmpty) return librarySuggestions;
+
+    // Avoid duplicates vs. the library-sourced list and the exercise we're
+    // currently trying to replace.
+    final librarySet = librarySuggestions
+        .map((s) => (s['name'] as String? ?? '').toLowerCase())
+        .toSet();
+    final replacingLower = widget.exercise.name.toLowerCase();
+
+    // Heuristic matcher: share body-part or any muscle token with the
+    // replacing exercise. We fall back across the taxonomy fields that the
+    // backend populates in different scenarios (primary_muscle, body_part,
+    // muscle_group) so the matcher still fires regardless of which the
+    // workout row happens to carry.
+    final replacingMuscle = (widget.exercise.primaryMuscle ??
+            widget.exercise.bodyPart ??
+            widget.exercise.muscleGroup ??
+            '')
+        .toLowerCase();
+    final replacingEquip = (widget.exercise.equipment ?? '').toLowerCase();
+
+    final matches = <Map<String, dynamic>>[];
+    for (final ex in customs) {
+      final nameLower = ex.name.toLowerCase();
+      if (nameLower == replacingLower) continue;
+      if (librarySet.contains(nameLower)) continue;
+
+      final primary = ex.primaryMuscle.toLowerCase();
+      final secondaries =
+          (ex.secondaryMuscles ?? const <String>[]).map((m) => m.toLowerCase());
+      final allMuscles = {primary, ...secondaries};
+
+      // Match when primary/secondary muscle overlaps OR equipment matches.
+      final muscleHit = replacingMuscle.isNotEmpty &&
+          allMuscles.any((m) =>
+              m.contains(replacingMuscle) || replacingMuscle.contains(m));
+      final equipHit = replacingEquip.isNotEmpty &&
+          ex.equipment.toLowerCase().contains(replacingEquip);
+
+      if (!muscleHit && !equipHit) continue;
+
+      matches.add(<String, dynamic>{
+        'name': ex.name,
+        'target_muscle': ex.primaryMuscle,
+        'body_part': ex.primaryMuscle,
+        'equipment': ex.equipment,
+        'reason': 'From your custom exercises',
+        'rank': 1,
+        'source': 'custom_exercise',
+        'is_custom': true,
+      });
+    }
+
+    if (matches.isEmpty) return librarySuggestions;
+    // Put customs first, keep library ordering below.
+    return [...matches, ...librarySuggestions];
+  }
+
+  /// Append all user customs to the AI Picks results so the user sees their
+  /// own exercises even if the RAG pass somehow missed them (legacy / pre-
+  /// import rows, or very low similarity scores).
+  List<Map<String, dynamic>> _appendCustomExercisesToAI(
+    List<Map<String, dynamic>> aiSuggestions,
+  ) {
+    final customs = ref.read(customExercisesProvider).exercises;
+    if (customs.isEmpty) return aiSuggestions;
+    final existing = aiSuggestions
+        .map((s) => (s['name'] as String? ?? '').toLowerCase())
+        .toSet();
+    final replacingLower = widget.exercise.name.toLowerCase();
+    final extras = <Map<String, dynamic>>[];
+    for (final ex in customs) {
+      final nameLower = ex.name.toLowerCase();
+      if (nameLower == replacingLower) continue;
+      if (existing.contains(nameLower)) continue;
+      extras.add(<String, dynamic>{
+        'name': ex.name,
+        'target_muscle': ex.primaryMuscle,
+        'body_part': ex.primaryMuscle,
+        'equipment': ex.equipment,
+        'reason': 'From your custom exercises',
+        'rank': 99,
+        'source': 'custom_exercise',
+        'is_custom': true,
+      });
+    }
+    return [...aiSuggestions, ...extras];
   }
 
   /// Load slow AI-powered suggestions (~10s) - only called when AI tab is selected
@@ -225,14 +329,19 @@ class _ExerciseSwapSheetState extends ConsumerState<_ExerciseSwapSheet>
         avoidedExercises: _avoidedExerciseNames,
       );
 
+      // Always append user custom exercises at the end so they're reachable
+      // even when the RAG pass didn't surface them (custom exercises aren't
+      // always indexed into ChromaDB — legacy cases).
+      final mergedAI = _appendCustomExercisesToAI(suggestions);
+
       if (mounted) {
         setState(() {
-          _aiSuggestions = suggestions;
+          _aiSuggestions = mergedAI;
           _isLoadingAI = false;
           _aiLoaded = true;
         });
 
-        final aiNames = suggestions
+        final aiNames = mergedAI
             .map((s) => s['name'] as String?)
             .whereType<String>()
             .toList();
@@ -419,6 +528,49 @@ class _ExerciseSwapSheetState extends ConsumerState<_ExerciseSwapSheet>
                                       fontWeight: FontWeight.bold,
                                       color: textPrimary,
                                     ),
+                          ),
+                        ),
+                        // AI import entry point — launches the full 3-mode
+                        // importer and refreshes the custom-exercise list so
+                        // newly imported items appear in Similar/Library/AI.
+                        TextButton.icon(
+                          onPressed: () async {
+                            final saved =
+                                await showImportExerciseScreen(context);
+                            if (saved && context.mounted) {
+                              await ref
+                                  .read(customExercisesProvider.notifier)
+                                  .refresh();
+                              _loadSimilarExercises();
+                              if (_searchQuery.isNotEmpty) {
+                                _searchLibrary(_searchQuery);
+                              }
+                              if (_tabController.index == 3) {
+                                // Let the user regenerate AI picks on demand —
+                                // don't silently burn tokens.
+                                setState(() => _aiLoaded = false);
+                              }
+                            }
+                          },
+                          icon: const Icon(
+                            Icons.auto_awesome_outlined,
+                            size: 16,
+                            color: AppColors.cyan,
+                          ),
+                          label: const Text(
+                            'Import',
+                            style: TextStyle(
+                              color: AppColors.cyan,
+                              fontWeight: FontWeight.w700,
+                              fontSize: 13,
+                            ),
+                          ),
+                          style: TextButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 10, vertical: 4),
+                            minimumSize: const Size(0, 32),
+                            tapTargetSize:
+                                MaterialTapTargetSize.shrinkWrap,
                           ),
                         ),
                         IconButton(
@@ -645,10 +797,19 @@ class _ExerciseSwapSheetState extends ConsumerState<_ExerciseSwapSheet>
             ? reason
             : [targetMuscle, equipment].where((s) => s.isNotEmpty).join(' • ');
 
-        // Badge text based on rank
+        final isCustom = suggestion['is_custom'] == true;
+        final source =
+            suggestion['source'] as String? ?? 'similar_exercise';
+
+        // Badge text based on rank / source. Custom exercises get their own
+        // "YOURS" badge so the user knows it's their own gear, independent of
+        // rank heuristics.
         String badge;
         Color badgeColor;
-        if (rank == 1) {
+        if (isCustom) {
+          badge = 'YOURS';
+          badgeColor = AppColors.orange;
+        } else if (rank == 1) {
           badge = 'Best Match';
           badgeColor = AppColors.success;
         } else if (rank <= 3) {
@@ -664,7 +825,7 @@ class _ExerciseSwapSheetState extends ConsumerState<_ExerciseSwapSheet>
           subtitle: subtitle,
           badge: badge,
           badgeColor: badgeColor,
-          onTap: () => _swapExercise(name, source: 'similar_exercise'),
+          onTap: () => _swapExercise(name, source: source),
           textPrimary: textPrimary,
           textMuted: textMuted,
         );
@@ -757,6 +918,115 @@ class _ExerciseSwapSheetState extends ConsumerState<_ExerciseSwapSheet>
     );
   }
 
+  /// Library tab list body — splits into two sections:
+  /// 1. "Your custom exercises" (if any custom items are in the current
+  ///    result set) — with a header.
+  /// 2. "Exercise library" (everything else).
+  ///
+  /// This is a behaviour-preserving extraction of the old inline
+  /// `ListView.builder` in [_buildLibraryTab], with an added section header.
+  Widget _buildLibraryList({
+    required Color textPrimary,
+    required Color textMuted,
+  }) {
+    final customItems = _libraryExercises
+        .where((e) => e.id.startsWith('custom_'))
+        .toList();
+    final libraryItems = _libraryExercises
+        .where((e) => !e.id.startsWith('custom_'))
+        .toList();
+
+    final children = <Widget>[];
+    if (customItems.isNotEmpty) {
+      children.add(_sectionHeader(
+        'Your custom exercises',
+        textMuted,
+        icon: Icons.auto_awesome_outlined,
+      ));
+      for (final exercise in customItems) {
+        children.add(_buildLibraryCard(
+          exercise: exercise,
+          isCustom: true,
+          textPrimary: textPrimary,
+          textMuted: textMuted,
+        ));
+      }
+    }
+    if (libraryItems.isNotEmpty) {
+      if (customItems.isNotEmpty) {
+        children.add(_sectionHeader(
+          'Exercise library',
+          textMuted,
+          icon: Icons.fitness_center_outlined,
+        ));
+      }
+      for (final exercise in libraryItems) {
+        children.add(_buildLibraryCard(
+          exercise: exercise,
+          isCustom: false,
+          textPrimary: textPrimary,
+          textMuted: textMuted,
+        ));
+      }
+    }
+
+    return ListView(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      children: children,
+    );
+  }
+
+  Widget _sectionHeader(String title, Color textMuted, {IconData? icon}) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(2, 4, 2, 8),
+      child: Row(
+        children: [
+          if (icon != null) ...[
+            Icon(icon, size: 14, color: textMuted),
+            const SizedBox(width: 6),
+          ],
+          Text(
+            title.toUpperCase(),
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w800,
+              color: textMuted,
+              letterSpacing: 0.6,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLibraryCard({
+    required LibraryExerciseItem exercise,
+    required bool isCustom,
+    required Color textPrimary,
+    required Color textMuted,
+  }) {
+    return _ExerciseOptionCard(
+      name: exercise.name,
+      imageUrl: exercise.imageUrl,
+      subtitle: exercise.targetMuscle ?? exercise.bodyPart ?? '',
+      badge: isCustom ? 'CUSTOM' : (exercise.equipment ?? 'Bodyweight'),
+      badgeColor: isCustom ? AppColors.orange : AppColors.purple,
+      onTap: () => _showExercisePreviewAndSwap(
+        name: exercise.name,
+        targetMuscle: exercise.targetMuscle,
+        equipment: exercise.equipment,
+        instructions: exercise.instructions,
+        source: isCustom ? 'custom_exercise' : 'library_search',
+      ),
+      onSwap: () => _swapExercise(
+        exercise.name,
+        source: isCustom ? 'custom_exercise' : 'library_search',
+      ),
+      textPrimary: textPrimary,
+      textMuted: textMuted,
+    );
+  }
+
   Widget _buildLibraryTab(
       Color cardBackground, Color textMuted, Color textPrimary) {
     return Column(
@@ -798,36 +1068,9 @@ class _ExerciseSwapSheetState extends ConsumerState<_ExerciseSwapSheet>
                         style: TextStyle(color: textMuted),
                       ),
                     )
-                  : ListView.builder(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      itemCount: _libraryExercises.length,
-                      itemBuilder: (context, index) {
-                        final exercise = _libraryExercises[index];
-                        final isCustom = exercise.id.startsWith('custom_');
-                        return _ExerciseOptionCard(
-                          name: exercise.name,
-                          imageUrl: exercise.imageUrl,
-                          subtitle:
-                              exercise.targetMuscle ?? exercise.bodyPart ?? '',
-                          badge: isCustom
-                              ? 'CUSTOM'
-                              : (exercise.equipment ?? 'Bodyweight'),
-                          badgeColor: isCustom
-                              ? AppColors.orange
-                              : AppColors.purple,
-                          onTap: () => _showExercisePreviewAndSwap(
-                            name: exercise.name,
-                            targetMuscle: exercise.targetMuscle,
-                            equipment: exercise.equipment,
-                            instructions: exercise.instructions,
-                            source: isCustom ? 'custom_exercise' : 'library_search',
-                          ),
-                          onSwap: () => _swapExercise(exercise.name,
-                              source: isCustom ? 'custom_exercise' : 'library_search'),
-                          textPrimary: textPrimary,
-                          textMuted: textMuted,
-                        );
-                      },
+                  : _buildLibraryList(
+                      textPrimary: textPrimary,
+                      textMuted: textMuted,
                     ),
         ),
       ],

@@ -288,6 +288,7 @@ class _CompanionPickerSheetState extends State<CompanionPickerSheet> {
             imageUrl: widget.primaryImageUrl,
             sourceType: widget.primarySourceType,
             mutedColor: colors.textMuted,
+            viewerTitle: widget.primaryName,
             size: 36,
           ),
           const SizedBox(width: 12),

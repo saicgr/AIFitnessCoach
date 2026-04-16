@@ -146,13 +146,72 @@ def test_time_band_falls_back_to_utc_on_bad_tz():
 
 
 def test_persona_mood_overdue_zero_workouts_is_disappointed():
+    """BALANCED coach_style (default): Disappointed only kicks in after ~2 weeks."""
     from services.email_helpers import persona_mood
-    from models.email import UserStats, ScheduleState
+    from models.email import UserStats, ScheduleState, CoachStyle
     stats = UserStats(
         schedule_state=ScheduleState.OVERDUE,
         workouts_total=0,
+        days_overdue=14,
+        coach_style=CoachStyle.BALANCED,
     )
     emoji, mood = persona_mood(stats)
+    assert mood == "Disappointed"
+
+
+def test_persona_mood_overdue_day_one_is_soft_nudge():
+    """BALANCED + day 1 overdue → Nudging (no guilt for one missed day)."""
+    from services.email_helpers import persona_mood
+    from models.email import UserStats, ScheduleState, CoachStyle
+    stats = UserStats(
+        schedule_state=ScheduleState.OVERDUE,
+        workouts_total=0,
+        days_overdue=1,
+        coach_style=CoachStyle.BALANCED,
+    )
+    emoji, mood = persona_mood(stats)
+    assert mood == "Nudging"
+
+
+def test_persona_mood_overdue_mid_range_is_concerned():
+    """BALANCED + 4-13 days overdue → Concerned check-in, not yet Disappointed."""
+    from services.email_helpers import persona_mood
+    from models.email import UserStats, ScheduleState, CoachStyle
+    stats = UserStats(
+        schedule_state=ScheduleState.OVERDUE,
+        workouts_total=0,
+        days_overdue=7,
+        coach_style=CoachStyle.BALANCED,
+    )
+    _emoji, mood = persona_mood(stats)
+    assert mood == "Concerned"
+
+
+def test_persona_mood_gentle_never_escalates():
+    """GENTLE coach_style → never Disappointed, even after 30 days overdue."""
+    from services.email_helpers import persona_mood
+    from models.email import UserStats, ScheduleState, CoachStyle
+    stats = UserStats(
+        schedule_state=ScheduleState.OVERDUE,
+        workouts_total=0,
+        days_overdue=30,
+        coach_style=CoachStyle.GENTLE,
+    )
+    _emoji, mood = persona_mood(stats)
+    assert mood == "Nudging"
+
+
+def test_persona_mood_tough_love_escalates_fast():
+    """TOUGH_LOVE coach_style → Disappointed by day 3 (opt-in aggressive tone)."""
+    from services.email_helpers import persona_mood
+    from models.email import UserStats, ScheduleState, CoachStyle
+    stats = UserStats(
+        schedule_state=ScheduleState.OVERDUE,
+        workouts_total=0,
+        days_overdue=3,
+        coach_style=CoachStyle.TOUGH_LOVE,
+    )
+    _emoji, mood = persona_mood(stats)
     assert mood == "Disappointed"
 
 
@@ -256,6 +315,8 @@ def test_day3_launches_today_morning_uses_anticipatory_voice(render_email):
 
 
 def test_day3_overdue_uses_guilt_voice(render_email):
+    """Firm "worried" voice only fires once the balanced escalation window expires
+    (14+ days). Earlier days render softer nudge/concerned copy."""
     from services.email_service import EmailService
     from models.email import UserStats, ScheduleState, TimeBand
 
@@ -264,7 +325,7 @@ def test_day3_overdue_uses_guilt_voice(render_email):
     stats = UserStats(
         schedule_state=ScheduleState.OVERDUE,
         time_band=TimeBand.MORNING,
-        days_overdue=5,
+        days_overdue=14,
         coach_name="Max",  # user picked custom persona
     )
     captured = render_email(
@@ -274,6 +335,30 @@ def test_day3_overdue_uses_guilt_voice(render_email):
     )
     assert "Max" in captured["subject"]  # persona name in subject
     assert "worried" in captured["subject"].lower()
+
+
+def test_day3_overdue_day_one_uses_soft_nudge_copy(render_email):
+    """Day 1 overdue on default (BALANCED) must not render guilt copy — soft nudge only."""
+    from services.email_service import EmailService
+    from models.email import UserStats, ScheduleState, TimeBand
+
+    os.environ.setdefault("RESEND_API_KEY", "dummy")
+    svc = EmailService()
+    stats = UserStats(
+        schedule_state=ScheduleState.OVERDUE,
+        time_band=TimeBand.MORNING,
+        days_overdue=1,
+    )
+    captured = render_email(
+        svc.send_day3_activation(
+            to_email="t@example.com", first_name_value="Sai", stats=stats
+        )
+    )
+    subject = captured["subject"].lower()
+    html = captured["html"]
+    assert "worried" not in subject
+    assert "disappointed" not in html.lower()
+    assert "1 days ago" not in html  # pluralization guard
 
 
 def test_day3_subject_always_contains_first_name(render_email):

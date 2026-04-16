@@ -241,6 +241,128 @@ class SavedFoodsRAGService:
             logger.warning(f"Failed to get user food count: {e}", exc_info=True)
             return 0
 
+    # ============================================================
+    # Recipe indexing — same collection, source_type='recipe'
+    # ============================================================
+
+    async def save_recipe(
+        self,
+        recipe_id: str,
+        user_id: str,
+        name: str,
+        description: Optional[str],
+        ingredient_names: List[str],
+        cuisine: Optional[str] = None,
+        category: Optional[str] = None,
+        tags: Optional[List[str]] = None,
+        is_public: bool = False,
+    ) -> str:
+        """Index a user_recipes row in ChromaDB for semantic search.
+
+        Stored as `source_type='recipe'` with `recipe_id` in metadata so
+        recipe_search_service can disambiguate from saved-food rows.
+        """
+        ingredients_text = ", ".join(n for n in ingredient_names if n)
+        document = (
+            f"{name}: {description or ''} "
+            f"[{cuisine or ''} / {category or ''}] - {ingredients_text}"
+        ).strip()
+
+        embedding = await self.gemini_service.get_embedding_async(document)
+
+        # Use a `recipe:{uuid}` doc id so it never collides with saved-food UUIDs.
+        doc_id = f"recipe:{recipe_id}"
+        try:
+            self.collection.delete(ids=[doc_id])
+        except Exception:
+            pass
+
+        self.collection.add(
+            ids=[doc_id],
+            embeddings=[embedding],
+            documents=[document],
+            metadatas=[{
+                "user_id": user_id,
+                "name": name,
+                "source_type": "recipe",
+                "recipe_id": recipe_id,
+                "cuisine": cuisine or "",
+                "category": category or "",
+                "is_public": "true" if is_public else "false",
+                "tags": ",".join(tags) if tags else "",
+            }],
+        )
+        return doc_id
+
+    async def delete_recipe(self, recipe_id: str) -> bool:
+        try:
+            self.collection.delete(ids=[f"recipe:{recipe_id}"])
+            return True
+        except Exception as e:
+            logger.warning(f"delete_recipe failed: {e}", exc_info=True)
+            return False
+
+    async def semantic_search(
+        self,
+        query: str,
+        source_type: Optional[str] = None,
+        user_id: Optional[str] = None,
+        limit: int = 10,
+    ) -> List[Dict[str, Any]]:
+        """Semantic search across the saved_foods collection.
+
+        - source_type='recipe' filters to indexed recipes.
+        - user_id=None searches across all owners (community/public scope);
+          callers are responsible for further filtering (e.g., is_public).
+        - Returns rows with (recipe_id, saved_food_id, name, distance, …).
+        """
+        try:
+            embedding = await self.gemini_service.get_embedding_async(query)
+        except Exception as e:
+            logger.warning(f"semantic_search embedding failed: {e}", exc_info=True)
+            return []
+
+        clauses: List[Dict[str, Any]] = []
+        if source_type:
+            clauses.append({"source_type": source_type})
+        if user_id:
+            clauses.append({"user_id": user_id})
+        where_filter: Optional[Dict[str, Any]] = None
+        if len(clauses) == 1:
+            where_filter = clauses[0]
+        elif len(clauses) > 1:
+            where_filter = {"$and": clauses}
+
+        try:
+            results = self.collection.query(
+                query_embeddings=[embedding],
+                n_results=max(limit, 1),
+                where=where_filter,
+                include=["metadatas", "distances", "documents"],
+            )
+        except Exception as e:
+            logger.warning(f"semantic_search query failed: {e}", exc_info=True)
+            return []
+
+        if not results or not results.get("ids") or not results["ids"][0]:
+            return []
+
+        out: List[Dict[str, Any]] = []
+        for i, doc_id in enumerate(results["ids"][0]):
+            metadata = results["metadatas"][0][i] if results.get("metadatas") else {}
+            out.append({
+                "doc_id": doc_id,
+                "recipe_id": metadata.get("recipe_id"),
+                "saved_food_id": doc_id if not str(doc_id).startswith("recipe:") else None,
+                "name": metadata.get("name"),
+                "source_type": metadata.get("source_type"),
+                "user_id": metadata.get("user_id"),
+                "is_public": metadata.get("is_public") == "true",
+                "distance": results["distances"][0][i] if results.get("distances") else None,
+                "document": results["documents"][0][i] if results.get("documents") else None,
+            })
+        return out
+
 
 # Singleton instance
 _saved_foods_rag_service: Optional[SavedFoodsRAGService] = None
@@ -252,3 +374,8 @@ def get_saved_foods_rag_service() -> SavedFoodsRAGService:
     if _saved_foods_rag_service is None:
         _saved_foods_rag_service = SavedFoodsRAGService()
     return _saved_foods_rag_service
+
+
+def get_saved_foods_rag() -> SavedFoodsRAGService:
+    """Alias of get_saved_foods_rag_service() — used by recipe_search_service."""
+    return get_saved_foods_rag_service()

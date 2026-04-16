@@ -289,6 +289,21 @@ extension NotificationServiceCore on NotificationService {
       return;
     }
 
+    // Handle meal_reminder (scheduled recipe log) — action_data routes to the
+    // confirm-and-log sheet via RecipeNotificationRouter.
+    if (notificationType == 'meal_reminder') {
+      RecipeNotificationRouter.pending = RecipeNotificationActionData(
+        action: (message.data['action'] as String?) ?? 'log_recipe',
+        recipeId: message.data['recipe_id'] as String?,
+        mealType: message.data['meal_type'] as String?,
+        servings: double.tryParse((message.data['servings'] as String?) ?? '1') ?? 1.0,
+        scheduledLogId: message.data['scheduled_log_id'] as String?,
+        cookEventId: message.data['cook_event_id'] as String?,
+      );
+      onNotificationTapped?.call('meal_reminder');
+      return;
+    }
+
     // Handle other notification types
     if (notificationType != null) {
       onNotificationTapped?.call(notificationType);

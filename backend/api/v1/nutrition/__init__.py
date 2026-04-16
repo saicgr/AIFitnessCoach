@@ -49,6 +49,20 @@ from api.v1.nutrition import (
     food_reports,
     quick_suggestion,
     companions,
+    # Recipes Tab v1 additions
+    recipe_imports,
+    recipe_search,
+    recipe_sharing,
+    recipe_versions,
+    coach_reviews,
+    cook_events,
+    grocery_lists,
+    meal_plans,
+    scheduled_recipes,
+    # Discover / Favorites / Improvize (migration 1925)
+    recipe_favorites,
+    recipe_discover,
+    recipe_improvize,
 )
 
 router = APIRouter()
@@ -62,6 +76,28 @@ router.include_router(food_search.router)
 router.include_router(food_logging.router)
 router.include_router(food_logging_stream.router)
 router.include_router(saved_foods.router)
+
+# Recipes Tab v1 — LITERAL-path recipe routers MUST be registered BEFORE
+# `recipes.router` because recipes.router defines `GET /recipes/{recipe_id}`
+# which would otherwise swallow literal paths like `/recipes/analyze-ingredient`
+# and produce 405 Method Not Allowed for POSTs.
+router.include_router(recipe_imports.router)
+router.include_router(recipe_search.router)
+router.include_router(recipe_sharing.router)
+router.include_router(recipe_versions.router)
+router.include_router(coach_reviews.router)
+router.include_router(cook_events.router)
+router.include_router(grocery_lists.router)
+router.include_router(meal_plans.router)
+router.include_router(scheduled_recipes.router)
+# Discover / Favorites / Improvize — literal paths, MUST be before recipes.router
+# so `/recipes/favorites`, `/recipes/discover`, `/recipes/{id}/favorite`, and
+# `/recipes/{id}/improvize` aren't swallowed by `GET /recipes/{recipe_id}`.
+router.include_router(recipe_favorites.router)
+router.include_router(recipe_discover.router)
+router.include_router(recipe_improvize.router)
+
+# Catch-all recipes router (includes `GET /recipes/{recipe_id}`) registered last
 router.include_router(recipes.router)
 router.include_router(micronutrients.router)
 router.include_router(preferences.router)

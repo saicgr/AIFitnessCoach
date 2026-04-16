@@ -136,7 +136,7 @@ class _AchievementsSectionState extends ConsumerState<AchievementsSection> {
           if (recentAchievements.isNotEmpty) ...[
             const SizedBox(height: 12),
             SizedBox(
-              height: 80,
+              height: 92,
               child: ListView.builder(
                 scrollDirection: Axis.horizontal,
                 padding: const EdgeInsets.symmetric(horizontal: 16),

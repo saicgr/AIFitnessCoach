@@ -2,14 +2,87 @@
 Search query building for exercise RAG.
 
 Includes support for custom user goals with AI-generated keywords.
+Also includes helpers to merge results from the `exercise_library` and
+`custom_exercise_library` ChromaDB collections.
 """
 
-from typing import List, Optional
+from typing import Any, Dict, List, Optional
 
 from core.logger import get_logger
 from services.training_program_service import get_training_program_keywords_sync
 
 logger = get_logger(__name__)
+
+
+def merge_library_and_custom_results(
+    library_results: Dict[str, Any],
+    custom_results: Dict[str, Any],
+    top_n: int,
+) -> Dict[str, Any]:
+    """
+    Merge ChromaDB query results from `exercise_library` and `custom_exercise_library`.
+
+    Results are combined and re-sorted by distance ascending (lower = more similar),
+    then truncated to `top_n`. Preserves the ChromaDB result shape:
+      { "ids": [[...]], "metadatas": [[...]], "distances": [[...]], "documents": [[...]] }
+
+    Args:
+        library_results: Result dict from `collection.query(...)` on exercise_library.
+        custom_results:  Result dict from `custom_collection.query(...)` filtered by user.
+        top_n:           Max number of merged results to return.
+
+    Returns:
+        Merged ChromaDB-shaped result dict.
+    """
+    def _safe_first(result: Dict[str, Any], key: str) -> List[Any]:
+        v = result.get(key) if result else None
+        if not v:
+            return []
+        if isinstance(v, list) and v and isinstance(v[0], list):
+            return v[0]
+        return v
+
+    lib_ids = _safe_first(library_results, "ids")
+    lib_meta = _safe_first(library_results, "metadatas")
+    lib_dist = _safe_first(library_results, "distances")
+    lib_docs = _safe_first(library_results, "documents")
+
+    cust_ids = _safe_first(custom_results, "ids")
+    cust_meta = _safe_first(custom_results, "metadatas")
+    cust_dist = _safe_first(custom_results, "distances")
+    cust_docs = _safe_first(custom_results, "documents")
+
+    combined: List[Dict[str, Any]] = []
+    for i, _id in enumerate(lib_ids):
+        combined.append({
+            "id": _id,
+            "meta": lib_meta[i] if i < len(lib_meta) else {},
+            "distance": lib_dist[i] if i < len(lib_dist) else 2.0,
+            "document": lib_docs[i] if i < len(lib_docs) else "",
+        })
+    for i, _id in enumerate(cust_ids):
+        m = cust_meta[i] if i < len(cust_meta) else {}
+        # Ensure is_custom flag is present on custom-collection items even if the
+        # metadata was partially populated.
+        if "is_custom" not in m:
+            m = {**m, "is_custom": "true"}
+        combined.append({
+            "id": _id,
+            "meta": m,
+            "distance": cust_dist[i] if i < len(cust_dist) else 2.0,
+            "document": cust_docs[i] if i < len(cust_docs) else "",
+        })
+
+    # Lower distance = closer match. Sort ascending.
+    combined.sort(key=lambda x: x["distance"])
+    combined = combined[:top_n]
+
+    return {
+        "ids": [[c["id"] for c in combined]],
+        "metadatas": [[c["meta"] for c in combined]],
+        "distances": [[c["distance"] for c in combined]],
+        "documents": [[c["document"] for c in combined]],
+    }
 
 
 # Focus area keywords for semantic search

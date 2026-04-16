@@ -121,6 +121,13 @@ class _ComingSoonFeature {
 
 const _comingSoonFeatures = [
   _ComingSoonFeature(
+    icon: Icons.public_rounded,
+    color: AppColors.cyan,
+    title: 'Recipe Discovery Feed',
+    description:
+        'Browse, like, and remix recipes shared by the community. Coming with the Social tab.',
+  ),
+  _ComingSoonFeature(
     icon: Icons.restaurant_menu,
     color: AppColors.orange,
     title: 'What Should I Eat? Widget',

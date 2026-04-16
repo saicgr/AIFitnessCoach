@@ -73,6 +73,7 @@ from api.v1 import gym_profiles  # Multi-gym profile system (Robinhood-style swi
 from api.v1 import xp  # XP events, daily login, streaks, double XP
 from api.v1 import warmup_preferences  # Custom warmup/stretch preferences and pre/post workout routines
 from api.v1 import custom_exercises  # User-defined custom exercises with media upload
+from api.v1 import media_jobs  # Top-level media_analysis_jobs polling (cross-feature)
 from api.v1 import daily_schedule  # Daily schedule planner
 from api.v1 import sync  # Offline sync bulk upload and import
 from api.v1 import exercise_popularity  # Collaborative filtering exercise scores
@@ -340,6 +341,9 @@ router.include_router(warmup_preferences.router, tags=["Warmup Preferences"])
 
 # User-defined custom exercises for equipment not in library (with media upload)
 router.include_router(custom_exercises.router, tags=["Custom Exercises"])
+
+# Top-level media analysis job polling (used by gym equipment / custom exercise import flows)
+router.include_router(media_jobs.router, prefix="/media-jobs", tags=["Media Jobs"])
 
 # Daily schedule planner (workouts, activities, meals, habits in one timeline)
 router.include_router(daily_schedule.router, prefix="/daily-schedule", tags=["Daily Schedule"])

@@ -14,7 +14,7 @@ from langchain_core.messages import HumanMessage, SystemMessage, AIMessage, Tool
 from core.gemini_client import get_langchain_llm, sanitize_messages_for_response
 from .state import NutritionAgentState
 from ..tools import analyze_food_image, analyze_multi_food_images, parse_app_screenshot, parse_nutrition_label, get_nutrition_summary, get_recent_meals, log_food_from_text
-from ..tools.nutrition_tools import get_calorie_remainder, get_favorite_foods, get_todays_workout_for_meal
+from ..tools.nutrition_tools import get_calorie_remainder, get_favorite_foods, get_todays_workout_for_meal, build_grocery_list
 from ..personality import build_personality_prompt, sanitize_coach_name
 from models.chat import AISettings
 from services.gemini_service import GeminiService
@@ -36,6 +36,7 @@ NUTRITION_TOOLS = [
     get_calorie_remainder,
     get_favorite_foods,
     get_todays_workout_for_meal,
+    build_grocery_list,
 ]
 
 # Nutrition expertise base prompt template (coach name is inserted dynamically)

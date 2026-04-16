@@ -32,7 +32,26 @@ extension __AddGymProfileSheetStateExt on _AddGymProfileSheetState {
             color: textSecondary,
           ),
         ),
-        const SizedBox(height: 24),
+        const SizedBox(height: 16),
+
+        // AI import entry — saves profile immediately then hands off to the
+        // import flow. See _openImportSheet() in add_gym_profile_sheet.dart
+        // for the "create-then-import" sequence.
+        FilledButton.tonalIcon(
+          onPressed: _isLoading ? null : _openImportSheet,
+          icon: const Icon(Icons.auto_awesome_rounded, size: 18),
+          label: const Text('Import from PDF, photo, or URL'),
+          style: FilledButton.styleFrom(
+            padding:
+                const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            minimumSize: const Size.fromHeight(48),
+          ),
+        ),
+
+        const SizedBox(height: 16),
 
         // Edit Equipment button
         GestureDetector(

@@ -19,6 +19,7 @@ import '../models/user.dart';
 import '../services/api_client.dart';
 import '../services/connectivity_service.dart';
 import '../services/data_cache_service.dart';
+import '../services/recipe_notification_router.dart';
 import '../providers/audio_preferences_provider.dart';
 import '../providers/unified_state_provider.dart';
 import 'workout_repository.dart';

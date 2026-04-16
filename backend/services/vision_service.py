@@ -259,6 +259,8 @@ Guidelines:
         "food_plate", "food_menu", "food_buffet", "exercise_form",
         "progress_photo", "app_screenshot", "nutrition_label",
         "document", "gym_equipment", "unknown",
+        # Recipes feature additions
+        "pantry_photo", "recipe_handwritten",
     }
 
     async def classify_media_content(
@@ -293,6 +295,8 @@ Guidelines:
             "- nutrition_label: A nutrition facts label on food packaging\n"
             "- document: A text document, handwritten note, printed paper, or PDF\n"
             "- gym_equipment: Gym equipment or machines with no person exercising\n"
+            "- pantry_photo: An open fridge, pantry, or refrigerator interior showing groceries on hand\n"
+            "- recipe_handwritten: A handwritten or printed recipe card / cookbook page\n"
             "- unknown: Cannot determine or none of the above"
         )
 
@@ -336,6 +340,82 @@ Guidelines:
             elapsed = _time.time() - start
             logger.warning(f"[MediaClassifier] Classification failed (took {elapsed:.2f}s): {e}", exc_info=True)
             return "unknown"
+
+    # ============================================================
+    # Recipes feature: pantry photo + handwritten recipe extraction
+    # ============================================================
+
+    async def analyze_pantry_image(self, image_b64: str) -> list[dict]:
+        """Detect groceries visible in a pantry/fridge photo.
+
+        Returns: [{name, confidence, qty_estimate?}, ...]. Throws on hard failure
+        so callers can surface the error rather than silently returning [].
+        """
+        prompt = (
+            "List every distinct food/drink item visible in this fridge or pantry image. "
+            "Return JSON ONLY with this shape: "
+            '{"items":[{"name":"chicken breast","confidence":85,"qty_estimate":"approx 2 packs"}]}\n'
+            "Be specific: 'whole milk' not 'dairy'. Skip non-food items."
+        )
+        try:
+            raw_bytes = base64.b64decode(image_b64)
+            image_part = types.Part.from_bytes(data=raw_bytes, mime_type="image/jpeg")
+            response = await gemini_generate_with_retry(
+                model=self.model,
+                contents=[prompt, image_part],
+                config=types.GenerateContentConfig(
+                    temperature=0.2, max_output_tokens=800,
+                ),
+                method_name="vision_pantry",
+            )
+            text = (response.text or "").strip()
+            if text.startswith("```"):
+                import re as _re
+                text = _re.sub(r"^```(?:json)?\s*", "", text)
+                text = _re.sub(r"\s*```$", "", text)
+            import json as _json
+            data = _json.loads(text)
+            items = data.get("items") or []
+            # Defensive: filter to dict items with a name
+            return [
+                {"name": i["name"], "confidence": int(i.get("confidence", 70)),
+                 "qty_estimate": i.get("qty_estimate")}
+                for i in items if isinstance(i, dict) and i.get("name")
+            ]
+        except Exception as exc:
+            logger.exception("[Vision] pantry analyze failed")
+            raise RuntimeError(f"Could not analyze pantry image: {exc}") from exc
+
+    async def extract_handwritten_recipe(self, image_b64: str) -> str:
+        """OCR + light cleanup for a handwritten or printed recipe image.
+
+        Returns plain text: title on first line, ingredients next, then steps.
+        Caller (recipe_import_service) parses this into structured form via Gemini.
+        """
+        prompt = (
+            "This image contains a recipe (handwritten card, cookbook page, or printed). "
+            "Read it carefully and return plain text in this layout:\n"
+            "TITLE: <name>\n"
+            "SERVINGS: <number or blank>\n"
+            "INGREDIENTS:\n- one per line with amount and unit\n"
+            "STEPS:\n1. ...\n2. ...\n"
+            "If parts are illegible, mark them with [unclear]. Do not invent missing items."
+        )
+        try:
+            raw_bytes = base64.b64decode(image_b64)
+            image_part = types.Part.from_bytes(data=raw_bytes, mime_type="image/jpeg")
+            response = await gemini_generate_with_retry(
+                model=self.model,
+                contents=[prompt, image_part],
+                config=types.GenerateContentConfig(
+                    temperature=0.1, max_output_tokens=2000,
+                ),
+                method_name="vision_handwritten_recipe",
+            )
+            return (response.text or "").strip()
+        except Exception as exc:
+            logger.exception("[Vision] handwritten OCR failed")
+            raise RuntimeError(f"Could not read handwritten recipe: {exc}") from exc
 
     async def _download_image_from_s3(self, s3_key: str) -> bytes:
         """Download an image from S3 into memory (max ~1.5MB per image).
@@ -862,6 +942,142 @@ Guidelines:
             "feedback": "Unable to fully analyze this image.",
         }
         return defaults.get(field)
+
+    # ============================================================
+    # Gym Equipment Importer: document extraction (PDF / DOCX / images)
+    # Used by GymEquipmentExtractor in services/gym_equipment_extractor.py.
+    # Native Gemini PDF input (no external OCR library). 10-page hard cap.
+    # ============================================================
+
+    GYM_EQUIPMENT_EXTRACTION_PROMPT = (
+        "You are extracting gym equipment from the provided content. "
+        "Identify every distinct machine, free weight, accessory, or training tool mentioned. "
+        "Return ONLY a JSON array. Schema:\n"
+        "[{\"raw_name\": \"exact text or item name\", "
+        "\"quantity\": number or null, "
+        "\"weight_range\": \"e.g. '5-100lb'\" or null, "
+        "\"confidence\": 0.0-1.0}]\n"
+        "Do not invent items. If uncertain, set confidence lower. "
+        "Preserve weight units verbatim (lb/kg/lbs) — do not convert. "
+        "If nothing found, return []."
+    )
+
+    async def extract_equipment_from_document(
+        self,
+        file_bytes: bytes,
+        mime_type: str,
+    ) -> list[dict]:
+        """Extract a list of raw gym-equipment mentions from a PDF or image document.
+
+        Args:
+            file_bytes: Raw bytes of the PDF or image file.
+            mime_type: One of 'application/pdf', 'image/jpeg', 'image/png', 'image/webp'.
+
+        Returns:
+            List of dicts: [{"raw_name": str, "quantity": int|None, "weight_range": str|None, "confidence": float}]
+
+        Raises:
+            ValueError: If mime_type unsupported, PDF page count > 10, or response is not valid JSON.
+            Exception: Any Gemini / network error propagates (no silent fallback).
+        """
+        allowed_mimes = {
+            "application/pdf",
+            "image/jpeg", "image/png", "image/webp",
+        }
+        if mime_type not in allowed_mimes:
+            raise ValueError(
+                f"❌ extract_equipment_from_document: unsupported mime_type '{mime_type}'. "
+                f"Allowed: {sorted(allowed_mimes)}"
+            )
+
+        # 10-page hard cap for PDFs
+        if mime_type == "application/pdf":
+            try:
+                import pypdf
+                from io import BytesIO
+                reader = pypdf.PdfReader(BytesIO(file_bytes))
+                page_count = len(reader.pages)
+                logger.info(f"🏋️ [EquipmentDoc] PDF page count: {page_count}")
+                if page_count > 10:
+                    raise ValueError(
+                        f"PDF has {page_count} pages — exceeds the 10-page limit for equipment import. "
+                        f"Please trim the document or split it across multiple uploads."
+                    )
+            except ValueError:
+                raise
+            except Exception as e:
+                # pypdf failed to parse — surface the error rather than silently passing garbage to Gemini
+                logger.error(f"❌ [EquipmentDoc] pypdf failed to parse PDF: {e}", exc_info=True)
+                raise ValueError(f"Could not parse PDF: {e}") from e
+
+        logger.info(
+            f"🏋️ [EquipmentDoc] Extracting equipment (mime={mime_type}, size={len(file_bytes)} bytes)"
+        )
+
+        try:
+            part = types.Part.from_bytes(data=file_bytes, mime_type=mime_type)
+            response = await gemini_generate_with_retry(
+                model=self.model,
+                contents=[self.GYM_EQUIPMENT_EXTRACTION_PROMPT, part],
+                config=types.GenerateContentConfig(
+                    temperature=0.1,
+                    # Large enough for ~100 items at ~40 tokens each plus JSON overhead.
+                    max_output_tokens=8000,
+                    response_mime_type="application/json",
+                ),
+                method_name="vision_extract_equipment_document",
+            )
+
+            text = (response.text or "").strip()
+            # Strip ```json fences defensively (response_mime_type usually prevents this,
+            # but Gemini occasionally wraps output anyway).
+            if text.startswith("```"):
+                import re as _re
+                text = _re.sub(r"^```(?:json)?\s*", "", text)
+                text = _re.sub(r"\s*```$", "", text)
+
+            try:
+                parsed = json.loads(text)
+            except json.JSONDecodeError as e:
+                logger.error(
+                    f"❌ [EquipmentDoc] Gemini returned non-JSON: {text[:300]}", exc_info=True
+                )
+                raise ValueError(f"Gemini returned invalid JSON for equipment extraction: {e}") from e
+
+            if not isinstance(parsed, list):
+                logger.warning(
+                    f"⚠️ [EquipmentDoc] Expected list, got {type(parsed).__name__}; coercing to []"
+                )
+                return []
+
+            # Defensive shape-normalization; drop malformed entries.
+            cleaned: list[dict] = []
+            for item in parsed:
+                if not isinstance(item, dict):
+                    continue
+                raw_name = (item.get("raw_name") or "").strip()
+                if not raw_name:
+                    continue
+                try:
+                    confidence = float(item.get("confidence") or 0.5)
+                except (TypeError, ValueError):
+                    confidence = 0.5
+                confidence = max(0.0, min(1.0, confidence))
+                cleaned.append({
+                    "raw_name": raw_name,
+                    "quantity": item.get("quantity"),
+                    "weight_range": item.get("weight_range"),
+                    "confidence": confidence,
+                })
+
+            logger.info(f"✅ [EquipmentDoc] Extracted {len(cleaned)} raw equipment items")
+            return cleaned
+
+        except ValueError:
+            raise
+        except Exception as e:
+            logger.error(f"❌ [EquipmentDoc] Extraction failed: {e}", exc_info=True)
+            raise
 
 
 # Singleton instance

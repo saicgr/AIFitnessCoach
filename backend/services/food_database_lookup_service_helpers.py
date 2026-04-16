@@ -158,9 +158,14 @@ class FoodDatabaseLookupService(FoodDatabaseLookupServicePart2):
             try:
                 remaining = deadline - time.monotonic()
                 if remaining > 0.1:
-                    async with sb.get_managed_session() as session:
-                        phase1 = await asyncio.wait_for(
-                            session.execute(text(f"""
+                    p1_budget = min(0.5, remaining)
+
+                    async def _phase1():
+                        async with sb.get_managed_session() as session:
+                            await session.execute(
+                                text(f"SET LOCAL statement_timeout = '{int(p1_budget * 1000)}ms'")
+                            )
+                            return await session.execute(text(f"""
                                 SELECT * FROM (
                                     SELECT *,
                                         1.0 AS sim_score,
@@ -185,14 +190,14 @@ class FoodDatabaseLookupService(FoodDatabaseLookupServicePart2):
                                     CASE WHEN lower(display_name) LIKE '%' || :q || '%' THEN 0 ELSE 1 END,
                                     length(display_name)
                                 LIMIT :lim
-                            """), params),
-                            timeout=min(0.5, remaining),
-                        )
-                        for row in phase1.fetchall():
-                            rd = dict(row._mapping)
-                            if rd['id'] not in seen_ids:
-                                seen_ids.add(rd['id'])
-                                results.append(rd)
+                            """), params)
+
+                    phase1 = await asyncio.wait_for(_phase1(), timeout=p1_budget)
+                    for row in phase1.fetchall():
+                        rd = dict(row._mapping)
+                        if rd['id'] not in seen_ids:
+                            seen_ids.add(rd['id'])
+                            results.append(rd)
             except asyncio.TimeoutError:
                 logger.warning(f"[FoodDB] Phase 1 (exact) timed out for '{query}'")
             except Exception as e:
@@ -246,9 +251,14 @@ class FoodDatabaseLookupService(FoodDatabaseLookupServicePart2):
                         # clause here. If Phase 1 timed out, the exact row would
                         # otherwise be locked out of every subsequent phase. We
                         # rely on the `seen_ids` set below to dedupe instead.
-                        async with sb.get_managed_session() as session:
-                            phase15 = await asyncio.wait_for(
-                                session.execute(text(f"""
+                        p15_budget = min(0.5, remaining)
+
+                        async def _phase15():
+                            async with sb.get_managed_session() as session:
+                                await session.execute(
+                                    text(f"SET LOCAL statement_timeout = '{int(p15_budget * 1000)}ms'")
+                                )
+                                return await session.execute(text(f"""
                                     SELECT *,
                                         similarity(food_name_normalized, :q) AS sim_score,
                                         1 AS match_rank
@@ -259,14 +269,14 @@ class FoodDatabaseLookupService(FoodDatabaseLookupServicePart2):
                                     ORDER BY length(display_name),
                                              similarity(food_name_normalized, :q) DESC
                                     LIMIT :lim
-                                """), p15_params),
-                                timeout=min(0.5, remaining),
-                            )
-                            for row in phase15.fetchall():
-                                rd = dict(row._mapping)
-                                if rd['id'] not in seen_ids:
-                                    seen_ids.add(rd['id'])
-                                    results.append(rd)
+                                """), p15_params)
+
+                        phase15 = await asyncio.wait_for(_phase15(), timeout=p15_budget)
+                        for row in phase15.fetchall():
+                            rd = dict(row._mapping)
+                            if rd['id'] not in seen_ids:
+                                seen_ids.add(rd['id'])
+                                results.append(rd)
                 except asyncio.TimeoutError:
                     logger.warning(f"[FoodDB] Phase 1.5 (token-AND) timed out for '{query}'")
                 except Exception as e:
@@ -281,9 +291,13 @@ class FoodDatabaseLookupService(FoodDatabaseLookupServicePart2):
                     remaining = deadline - time.monotonic()
                     if remaining > 0.1:
                         p2_params = {**params, "lim": limit - len(results)}
+                        p2_budget = min(1.8, remaining)
 
                         async def _phase2():
                             async with sb.get_managed_session() as sess:
+                                await sess.execute(
+                                    text(f"SET LOCAL statement_timeout = '{int(p2_budget * 1000)}ms'")
+                                )
                                 await sess.execute(text("SET LOCAL pg_trgm.similarity_threshold = 0.35"))
                                 # Exclusion clause removed: if Phase 1 timed out
                                 # and didn't retrieve the exact row, we still
@@ -301,10 +315,7 @@ class FoodDatabaseLookupService(FoodDatabaseLookupServicePart2):
                                     LIMIT :lim
                                 """), p2_params)
 
-                        phase2 = await asyncio.wait_for(
-                            _phase2(),
-                            timeout=min(1.8, remaining),
-                        )
+                        phase2 = await asyncio.wait_for(_phase2(), timeout=p2_budget)
                         for row in phase2.fetchall():
                             rd = dict(row._mapping)
                             if rd['id'] not in seen_ids:
@@ -324,9 +335,13 @@ class FoodDatabaseLookupService(FoodDatabaseLookupServicePart2):
                     remaining = deadline - time.monotonic()
                     if remaining > 0.1:
                         p3_params = {**params, "lim": limit - len(results)}
+                        p3_budget = min(1.0, remaining)
 
                         async def _phase3():
                             async with sb.get_managed_session() as sess:
+                                await sess.execute(
+                                    text(f"SET LOCAL statement_timeout = '{int(p3_budget * 1000)}ms'")
+                                )
                                 await sess.execute(text("SET LOCAL pg_trgm.similarity_threshold = 0.35"))
                                 # Exclusion clauses removed for the same reason
                                 # as Phase 2: seen_ids dedupes; we never want
@@ -344,10 +359,7 @@ class FoodDatabaseLookupService(FoodDatabaseLookupServicePart2):
                                     LIMIT :lim
                                 """), p3_params)
 
-                        phase3 = await asyncio.wait_for(
-                            _phase3(),
-                            timeout=min(1.0, remaining),
-                        )
+                        phase3 = await asyncio.wait_for(_phase3(), timeout=p3_budget)
                         for row in phase3.fetchall():
                             rd = dict(row._mapping)
                             if rd['id'] not in seen_ids:

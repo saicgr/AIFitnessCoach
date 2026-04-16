@@ -1,0 +1,82 @@
+flowchart LR
+  classDef device fill:#E3F2FD,stroke:#1565C0
+  classDef store fill:#FFF3E0,stroke:#E65100
+  classDef cloud fill:#E8F5E9,stroke:#2E7D32
+  classDef saas fill:#F3E5F5,stroke:#6A1B9A
+  classDef data fill:#FFF8E1,stroke:#F57F17
+
+  subgraph Dev["Developer Machines"]
+    MAC[macOS / Xcode 15+<br/>Android Studio<br/>Flutter 3.38.10 pinned]
+  end
+  class MAC device
+
+  subgraph Stores["App Distribution"]
+    ASC[App Store Connect<br/>TestFlight]
+    PLAY[Google Play Console<br/>Internal / Open testing]
+  end
+  class ASC,PLAY store
+
+  subgraph CI["CI / CD"]
+    GH[GitHub]
+    GHA[GitHub Actions<br/>lint • test • build]
+    RENDER_DEP[Render auto-deploy<br/>on push to main]
+  end
+  class GH,GHA cloud
+
+  subgraph RenderEnv["Render (Backend Hosts)"]
+    direction TB
+    WEB[Web Service<br/>uvicorn • FastAPI<br/>3-phase startup<br/>cold start 10-30s]
+    CRON1[Cron: email_cron<br/>hourly]
+    CRON2[Cron: push_nudge_cron<br/>hourly]
+    CRON3[Cron: media_job_runner<br/>form-analysis worker]
+  end
+  class WEB,CRON1,CRON2,CRON3 cloud
+
+  subgraph SaaS["Managed SaaS"]
+    SUPA[(Supabase<br/>PG + Auth + RLS)]
+    CHR[(ChromaDB Cloud)]
+    S3X[(AWS S3 bucket<br/>ILLUSTRATIONS ALL/)]
+    GEMX[Google Gemini API]
+    RCX[RevenueCat]
+    SGX[SendGrid]
+    FCMX[FCM]
+    APNX[APNs]
+  end
+  class SUPA,CHR,S3X data
+  class GEMX,RCX,SGX,FCMX,APNX saas
+
+  subgraph RunDev["Runtime: Users"]
+    IOS[iOS App]
+    AND[Android App]
+  end
+  class IOS,AND device
+
+  MAC --> GH
+  GH --> GHA --> RENDER_DEP --> WEB
+  GHA --> ASC --> IOS
+  GHA --> PLAY --> AND
+
+  IOS -->|HTTPS| WEB
+  AND -->|HTTPS| WEB
+  IOS -. presigned .- S3X
+  AND -. presigned .- S3X
+  FCMX --> AND
+  APNX --> IOS
+
+  WEB --> SUPA
+  WEB --> CHR
+  WEB --> S3X
+  WEB --> GEMX
+  WEB --> RCX
+  WEB --> SGX
+  WEB --> FCMX
+  WEB --> APNX
+
+  CRON1 --> SUPA
+  CRON1 --> SGX
+  CRON2 --> SUPA
+  CRON2 --> FCMX
+  CRON2 --> APNX
+  CRON3 --> S3X
+  CRON3 --> GEMX
+  CRON3 --> SUPA

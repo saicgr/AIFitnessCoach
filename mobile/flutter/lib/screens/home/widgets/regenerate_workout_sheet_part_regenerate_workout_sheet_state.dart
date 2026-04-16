@@ -308,7 +308,12 @@ class _RegenerateWorkoutSheetState
     return GlassSheet(
       maxHeightFraction: 0.85,
       showHandle: false,
+      // SafeArea(bottom: false) — GlassSheet already pads for the home
+      // indicator (`MediaQuery.padding.bottom` SizedBox at its base). If we
+      // also let SafeArea apply its bottom inset we end up double-padding,
+      // which leaves ~70px of dead space below the regenerate button.
       child: SafeArea(
+        bottom: false,
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -325,9 +330,11 @@ class _RegenerateWorkoutSheetState
                 ],
               ),
             ),
-            // Pinned regenerate button at bottom
+            // Pinned regenerate button. Just a small breathing gap above —
+            // no bottom padding here (GlassSheet supplies the home-indicator
+            // inset on its own).
             Padding(
-              padding: const EdgeInsets.only(top: 8, bottom: 8),
+              padding: const EdgeInsets.only(top: 8),
               child: _buildRegenerateButton(colors),
             ),
           ],

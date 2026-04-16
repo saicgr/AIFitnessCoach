@@ -27,6 +27,7 @@ import '../../widgets/level_up_dialog.dart';
 import '../../data/models/user_xp.dart';
 import 'beast_mode_unlock_dialog.dart';
 import 'coming_soon_screen.dart';
+import 'meal_reminders_settings_screen.dart';
 import '../../core/services/posthog_service.dart';
 import 'sections/sections.dart';
 import 'widgets/widgets.dart';
@@ -490,10 +491,23 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             sectionKeys: const ['voice_announcements', 'audio_settings', 'notifications'],
           ),
           _SettingsRow(
+            icon: Icons.alarm_rounded,
+            iconColor: isDark ? AppColors.orange : AppColorsLight.orange,
+            title: 'Meal Reminders',
+            value: 'Recipe schedules + sharing + versioning',
+            sectionKeys: const [
+              'meal_reminders', 'recipe_schedules', 'recipe_sharing', 'recipe_versions',
+            ],
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => MealRemindersSettingsScreen(isDark: isDark)),
+            ),
+          ),
+          _SettingsRow(
             icon: Icons.rocket_launch_rounded,
             iconColor: isDark ? AppColors.purple : AppColorsLight.purple,
             title: 'Coming Soon',
-            value: '21 upcoming widgets',
+            value: '24 upcoming features',
             sectionKeys: const ['coming_soon', 'upcoming', 'new_features'],
             onTap: () => Navigator.push(
               context,

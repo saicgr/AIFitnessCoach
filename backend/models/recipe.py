@@ -22,6 +22,37 @@ class RecipeSourceType(str, Enum):
     MANUAL = "manual"
     IMPORTED = "imported"
     AI_GENERATED = "ai_generated"
+    IMPORTED_TEXT = "imported_text"
+    IMPORTED_URL = "imported_url"
+    IMPORTED_HANDWRITTEN = "imported_handwritten"
+    PANTRY_SUGGESTED = "pantry_suggested"
+    CLONED_FROM_SHARE = "cloned_from_share"
+    IMPROVIZED = "improvized"  # Forked from a curated / public recipe via the Improvize action
+    CURATED = "curated"        # Editorially-seeded Discover recipes (is_curated=TRUE)
+
+
+class CookingMethod(str, Enum):
+    """How a recipe or ingredient is cooked. Affects macro estimation."""
+    RAW = "raw"
+    BAKED = "baked"
+    GRILLED = "grilled"
+    FRIED = "fried"
+    BOILED = "boiled"
+    STEAMED = "steamed"
+    ROASTED = "roasted"
+    SAUTEED = "sauteed"
+    SLOW_COOKED = "slow_cooked"
+    PRESSURE_COOKED = "pressure_cooked"
+    AIR_FRIED = "air_fried"
+    SMOKED = "smoked"
+    OTHER = "other"
+
+
+class NutritionSource(str, Enum):
+    """Where ingredient nutrition data came from."""
+    BRANDED = "branded"     # exact match from a barcode/saved-food
+    USDA = "usda"           # match in USDA / open food facts
+    AI_ESTIMATE = "ai_estimate"  # Gemini estimate
 
 
 # ============================================================
@@ -179,6 +210,13 @@ class RecipeIngredientBase(BaseModel):
     notes: Optional[str] = Field(default=None, max_length=500)
     is_optional: bool = False
 
+    # Cooking + nutrition source tracking (migration 510)
+    cooking_method: Optional[CookingMethod] = None
+    nutrition_source: Optional[NutritionSource] = None
+    nutrition_confidence: Optional[int] = Field(default=None, ge=0, le=100)
+    is_negligible: bool = False  # "salt to taste" type rows excluded from totals
+    raw_text: Optional[str] = Field(default=None, max_length=500)  # original user input
+
 
 class RecipeIngredientCreate(RecipeIngredientBase):
     """Create a recipe ingredient."""
@@ -215,6 +253,11 @@ class RecipeBase(BaseModel):
     source_type: RecipeSourceType = RecipeSourceType.MANUAL
     is_public: bool = False
 
+    # Yield + cooking method (migration 510)
+    cooked_yield_grams: Optional[float] = Field(default=None, ge=0)
+    cooking_method: Optional[CookingMethod] = None
+    auto_snapshot_versions: bool = True
+
 
 class RecipeCreate(RecipeBase):
     """Create a recipe."""
@@ -234,12 +277,16 @@ class RecipeUpdate(BaseModel):
     cuisine: Optional[str] = Field(default=None, max_length=50)
     tags: Optional[List[str]] = None
     is_public: Optional[bool] = None
+    cooked_yield_grams: Optional[float] = Field(default=None, ge=0)
+    cooking_method: Optional[CookingMethod] = None
+    auto_snapshot_versions: Optional[bool] = None
 
 
 class Recipe(RecipeBase):
     """Recipe response with calculated nutrition."""
     id: str
-    user_id: str
+    # user_id is NULL for curated recipes (is_curated=TRUE) per migration 1925
+    user_id: Optional[str] = None
 
     # Calculated nutrition per serving
     calories_per_serving: Optional[int] = None
@@ -262,6 +309,14 @@ class Recipe(RecipeBase):
     # Usage stats
     times_logged: int = 0
     last_logged_at: Optional[datetime] = None
+
+    # Discover / Favorites / Improvize (migration 1925)
+    is_curated: bool = False
+    slug: Optional[str] = None
+    source_recipe_id: Optional[str] = None
+    source_recipe_name: Optional[str] = None  # denormalized — survives source delete
+    source_recipe_user_id: Optional[str] = None
+    is_favorited: bool = False  # computed per-request for calling user
 
     # Ingredients
     ingredients: List[RecipeIngredient] = Field(default_factory=list)
@@ -286,6 +341,14 @@ class RecipeSummary(BaseModel):
     image_url: Optional[str] = None
     created_at: datetime
 
+    # Discover / Favorites / Improvize (migration 1925)
+    is_curated: bool = False
+    slug: Optional[str] = None
+    source_recipe_id: Optional[str] = None
+    source_recipe_name: Optional[str] = None
+    is_favorited: bool = False
+    source_type: Optional[str] = None
+
 
 class RecipesResponse(BaseModel):
     """List of recipes response."""
@@ -297,6 +360,8 @@ class LogRecipeRequest(BaseModel):
     """Request to log a recipe as a meal."""
     meal_type: str  # breakfast, lunch, dinner, snack
     servings: float = Field(default=1.0, gt=0, le=20)
+    cook_event_id: Optional[str] = None  # leftover-tracking link
+    nutrition_confidence: Optional[str] = Field(default=None, pattern="^(high|medium|low)$")
 
 
 class LogRecipeResponse(BaseModel):
@@ -310,6 +375,56 @@ class LogRecipeResponse(BaseModel):
     carbs_g: float
     fat_g: float
     fiber_g: Optional[float] = None
+
+
+# ============================================================
+# AI INGREDIENT ANALYZER
+# ============================================================
+
+
+class IngredientAnalyzeRequest(BaseModel):
+    """Request to analyze a free-text ingredient row into structured nutrition."""
+    text: str = Field(..., min_length=1, max_length=300)
+    cooking_method_hint: Optional[CookingMethod] = None
+    brand_hint: Optional[str] = Field(default=None, max_length=100)
+    user_id: Optional[str] = None  # for branded/saved-food matching
+
+
+class IngredientAnalyzeResponse(BaseModel):
+    """Structured ingredient with macros + source badge."""
+    food_name: str
+    brand: Optional[str] = None
+    amount: float
+    unit: str
+    amount_grams: Optional[float] = None
+    cooking_method: Optional[CookingMethod] = None
+    nutrition_source: NutritionSource
+    nutrition_confidence: int = Field(..., ge=0, le=100)
+    is_negligible: bool = False
+    raw_text: str
+    # Macros for the parsed amount
+    calories: float = 0
+    protein_g: float = 0
+    carbs_g: float = 0
+    fat_g: float = 0
+    fiber_g: float = 0
+    sugar_g: float = 0
+    # Key micros
+    vitamin_d_iu: Optional[float] = None
+    calcium_mg: Optional[float] = None
+    iron_mg: Optional[float] = None
+    sodium_mg: Optional[float] = None
+    omega3_g: Optional[float] = None
+
+
+class BulkIngredientAnalyzeRequest(BaseModel):
+    """Analyze many rows in one round trip (used by recipe builder save)."""
+    items: List[IngredientAnalyzeRequest] = Field(..., max_length=50)
+    user_id: Optional[str] = None
+
+
+class BulkIngredientAnalyzeResponse(BaseModel):
+    items: List[IngredientAnalyzeResponse]
 
 
 # ============================================================
@@ -330,3 +445,55 @@ class ImportRecipeResponse(BaseModel):
     error: Optional[str] = None
     ingredients_found: int = 0
     ingredients_with_nutrition: int = 0
+
+
+class ImportTextRecipeRequest(BaseModel):
+    """Paste a full recipe as text; AI extracts title, ingredients, steps."""
+    text: str = Field(..., min_length=10, max_length=10000)
+    servings_override: Optional[int] = Field(default=None, ge=1, le=100)
+
+
+class ImportHandwrittenRecipeRequest(BaseModel):
+    """Submit an image of a handwritten/printed recipe; Gemini OCR + structures it."""
+    image_b64: str = Field(..., max_length=20_000_000)  # ~15 MB base64
+    servings_override: Optional[int] = Field(default=None, ge=1, le=100)
+
+
+class PantryAnalyzeRequest(BaseModel):
+    """Request recipes given pantry items (text list and/or image)."""
+    items_text: Optional[List[str]] = Field(default=None, max_length=200)
+    image_b64: Optional[str] = Field(default=None, max_length=20_000_000)
+    meal_type: Optional[str] = None
+    count: int = Field(default=3, ge=1, le=8)
+    additional_requirements: Optional[str] = None
+
+
+class PantryDetectedItem(BaseModel):
+    name: str
+    confidence: int = Field(..., ge=0, le=100)
+    source: str  # 'text' | 'image'
+
+
+class PantrySuggestion(BaseModel):
+    name: str
+    description: Optional[str] = None
+    cuisine: Optional[str] = None
+    category: Optional[str] = None
+    servings: int = 1
+    prep_time_minutes: Optional[int] = None
+    cook_time_minutes: Optional[int] = None
+    calories_per_serving: Optional[int] = None
+    protein_per_serving_g: Optional[float] = None
+    carbs_per_serving_g: Optional[float] = None
+    fat_per_serving_g: Optional[float] = None
+    fiber_per_serving_g: Optional[float] = None
+    matched_pantry_items: List[str] = Field(default_factory=list)
+    missing_ingredients: List[str] = Field(default_factory=list)
+    overall_match_score: int = Field(default=0, ge=0, le=100)
+    suggestion_reason: Optional[str] = None
+    ingredients: List[RecipeIngredientCreate] = Field(default_factory=list)
+
+
+class PantryAnalyzeResponse(BaseModel):
+    detected_items: List[PantryDetectedItem]
+    suggestions: List[PantrySuggestion]

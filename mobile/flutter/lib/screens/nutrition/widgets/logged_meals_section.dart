@@ -503,7 +503,25 @@ class LoggedMealsSection extends StatelessWidget {
       sourceType: meal.sourceType,
       heroTag: 'food-photo-${meal.id}',
       mutedColor: textMuted,
+      viewerTitle: _viewerTitleForMeal(meal),
     );
+  }
+
+  /// Best-effort dish name for the fullscreen-photo top pill.
+  /// Mirrors `_GroupedMealRow._groupTitle()` precedence so the pill
+  /// matches the row label the user just tapped:
+  ///   1. user's caption / query
+  ///   2. first detected food item (image-source meals)
+  ///   3. first food item name (any source) as last resort
+  String? _viewerTitleForMeal(FoodLog meal) {
+    String trim40(String s) => s.length <= 40 ? s : '${s.substring(0, 40)}…';
+    final q = meal.userQuery?.trim();
+    if (q != null && q.isNotEmpty) return trim40(q);
+    if (meal.foodItems.isNotEmpty) {
+      final name = meal.foodItems.first.name.trim();
+      if (name.isNotEmpty) return trim40(name);
+    }
+    return null;
   }
 
   // ============================================
