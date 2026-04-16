@@ -488,9 +488,8 @@ class WorkoutDB(BaseDB):
         result = (
             self.client.table("workout_logs")
             .select(
-                "id, user_id, workout_id, completed_at, duration_seconds, "
-                "exercises_completed, total_sets, total_reps, total_volume_kg, "
-                "calories_burned, performance_rating, notes"
+                "id, user_id, workout_id, sets_json, completed_at, "
+                "total_time_seconds, exercises_completed, status"
             )
             .eq("user_id", user_id)
             .order("completed_at", desc=True)

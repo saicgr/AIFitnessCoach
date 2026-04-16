@@ -280,7 +280,7 @@ async def list_recipes(
     ),
     sort_by: str = Query(
         default="created_desc",
-        regex=r"^(created_desc|name_asc|most_logged|last_cooked)$",
+        regex=r"^(created_desc|name_asc|most_logged|times_logged|last_cooked)$",
         description="Sort order for the My Recipes list.",
     ),
 ):
@@ -361,6 +361,9 @@ async def list_recipes(
                 count_query = count_query.in_("source_type", source_types)
 
         # --- Sort ---
+        # Normalize legacy alias from older app versions
+        if sort_by == "times_logged":
+            sort_by = "most_logged"
         if sort_by == "name_asc":
             query = query.order("name")
         elif sort_by == "most_logged":
