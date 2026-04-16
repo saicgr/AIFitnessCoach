@@ -87,11 +87,19 @@ CRITICAL RULES:
 WEIGHT/COUNT FIELDS (required for portion editing):
 - weight_g: Total weight in grams for this item (be realistic for restaurant portions!)
 - unit: "g" (solids), "ml" (liquids), "oz", "cups", "tsp", "tbsp"
-- For COUNTABLE items (eggs, cookies, nuggets, slices, pieces, naan, roti):
-  - count: Number of pieces visible
-  - weight_per_unit_g: Weight of ONE piece (e.g., naan=90g, roti=45g, pakora=45g, samosa=80g)
+- COUNTABLE items — discrete pieces you pick up and eat individually. ALWAYS set count + weight_per_unit_g:
+  - Breads: naan(~90g), roti/chapati(~45g), paratha(~80g), puri(~25g), bhatura(~60g), dosa(~120g), appam(~50g), bread slice(~30g), tortilla(~35g), pita(~60g)
+  - Indian snacks/starters: samosa(~80g), pakora/pakoda(~45g), vada/medu vada(~40g), bonda(~35g), bajji(~40g), cutlet(~60g), paneer tikka piece(~30g), chicken tikka piece(~35g), seekh kebab(~50g), shami kebab(~60g), chicken 65 piece(~25g), gobi/paneer manchurian piece(~25g), spring roll(~50g), egg roll(~80g), kachori(~50g), aloo tikki(~60g), dhokla piece(~30g), idli(~40g), momos/dumpling(~30g)
+  - Western snacks: french fry(~8g), chip/crisp(~2g), tater tot(~10g), chicken nugget(~18g), meatball(~30g), falafel(~17g), chicken wing(~85g), sushi piece(~35g), pizza slice(~100g), taco(~80g), egg(~50g), cookie(~15g), donut(~60g), muffin(~120g), pancake(~40g), waffle(~75g), sausage/hot dog(~45g), crab rangoon(~25g), wonton(~15g), empanada(~80g), pierogi(~40g), gyoza(~25g), tempura piece(~30g)
+  - Sweets: laddoo(~40g), gulab jamun(~40g), rasgulla(~40g), barfi piece(~30g), peda(~20g), jalebi piece(~25g), mysore pak piece(~30g), chocolate piece(~10g)
+  - count: Number of pieces visible/described
+  - weight_per_unit_g: Weight of ONE piece
   - weight_g = count × weight_per_unit_g
-- For non-countable items (curry, rice, dal): count=null, weight_per_unit_g=null
+  - For "small fries"/"medium fries"/"large fries", estimate individual fry sticks (small≈40, medium≈55, large≈70) at ~8g each
+- NON-COUNTABLE items — served as a portion/heap/bowl. Set count=null, weight_per_unit_g=null:
+  - Indian mains/sides: curry (any), dal, sambhar, rasam, biryani, pulao, fried rice, curd rice, rice (any), upma, poha, khichdi, raita
+  - Indian "fry" dishes: chicken fry, fish fry, prawn fry, bhindi fry, aloo fry, gobi fry, egg fry — these are DRY PREPARATIONS served as a portion, NOT individual countable pieces
+  - Other: soup, salad, pasta, noodles, stir-fry, mashed potatoes, scrambled eggs, oatmeal/porridge, yogurt, ice cream, halwa, kheer/payasam, chutney, sauce, gravy
 
 INFLAMMATION SCORE (1-10, 10 = most inflammatory):
 1-2: Strongly anti-inflammatory (wild salmon, turmeric, berries, leafy greens, ginger tea, olive oil)
@@ -622,12 +630,18 @@ VAGUE QUANTITY LANGUAGE:
 - "a few [food]": 3-4 pieces/items of that food
 - "several [food]": 4-5 pieces/items
 
-COUNTABLE ITEMS - For foods naturally counted as pieces/units (NOT by weight):
+COUNTABLE ITEMS - Discrete pieces you pick up and eat individually (NOT by weight):
 - ALWAYS include "count" (number of pieces) and "weight_per_unit_g" (weight of ONE piece)
-- Examples: tater tots (~8g each), cookies (~15g each), chicken nuggets (~18g each), eggs (~50g each), slices of pizza (~100g each), meatballs (~30g each)
+- Breads: naan(~90g), roti/chapati(~45g), paratha(~80g), puri(~25g), bhatura(~60g), dosa(~120g), appam(~50g), idli(~40g), bread slice(~30g), tortilla(~35g), pita(~60g)
+- Indian snacks: samosa(~80g), pakora(~45g), vada(~40g), bonda(~35g), bajji(~40g), cutlet(~60g), paneer tikka piece(~30g), chicken tikka piece(~35g), seekh kebab(~50g), shami kebab(~60g), chicken 65 piece(~25g), gobi manchurian piece(~25g), spring roll(~50g), kachori(~50g), aloo tikki(~60g), dhokla piece(~30g), momos(~30g)
+- Western: french fry(~8g), chip(~2g), tater tot(~10g), nugget(~18g), meatball(~30g), falafel(~17g), wing(~85g), sushi(~35g), pizza slice(~100g), taco(~80g), egg(~50g), cookie(~15g), donut(~60g), sausage(~45g), wonton(~15g), gyoza(~25g), tempura(~30g), empanada(~80g)
+- Sweets: laddoo(~40g), gulab jamun(~40g), rasgulla(~40g), barfi(~30g), peda(~20g), jalebi piece(~25g)
 - weight_g = count × weight_per_unit_g
 - If user mentions count (e.g., "18 tater tots"), use that count
 - If user just says "tater tots" without count, estimate reasonable serving (e.g., 10-12 pieces)
+- For "small fries"/"medium fries"/"large fries", estimate individual fry sticks (small≈40, medium≈55, large≈70) at ~8g each
+- NOT COUNTABLE (use count=null, weight_per_unit_g=null): curry, dal, rice, biryani, pulao, soup, salad, pasta, noodles, oatmeal, yogurt, ice cream, halwa, kheer, chutney, sauce
+- IMPORTANT "fry" dishes (chicken fry, fish fry, prawn fry, bhindi fry, aloo fry, gobi fry) are Indian DRY PREPARATIONS served as a portion — NOT countable individual pieces. Use count=null, weight_per_unit_g=null for these.
 
 MEASUREMENT UNITS - Use "unit" field to specify the most natural unit:
 - "g" = grams (default for solid foods: chicken, rice, bread)

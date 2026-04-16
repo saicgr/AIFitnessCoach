@@ -4,7 +4,7 @@ from datetime import datetime
 from typing import List, Optional
 import uuid
 
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, Request
+from fastapi import APIRouter, BackgroundTasks, Depends, File, HTTPException, Query, Request, UploadFile
 
 from core.timezone_utils import resolve_timezone, get_user_now_iso
 from core.auth import get_current_user
@@ -835,4 +835,49 @@ async def remove_ingredient(
         logger.error(f"Failed to remove ingredient: {e}", exc_info=True)
         raise safe_internal_error(e, "nutrition")
 
+
+@router.post("/recipes/{recipe_id}/upload-image")
+async def upload_recipe_image(
+    recipe_id: str,
+    file: UploadFile = File(...),
+    user_id: str = Query(...),
+    current_user: dict = Depends(get_current_user),
+):
+    """Upload a photo for a recipe. Stores in S3, updates image_url on the recipe row."""
+    from api.v1.nutrition.helpers import upload_food_image_to_s3
+
+    db = get_supabase_db()
+
+    # Verify recipe ownership
+    recipe_result = (
+        db.client.table("user_recipes")
+        .select("id, user_id")
+        .eq("id", recipe_id)
+        .eq("user_id", user_id)
+        .is_("deleted_at", "null")
+        .single()
+        .execute()
+    )
+    if not recipe_result.data:
+        raise HTTPException(status_code=404, detail="Recipe not found")
+
+    image_bytes = await file.read()
+    content_type = file.content_type or "image/jpeg"
+
+    image_url, storage_key = await upload_food_image_to_s3(
+        file_bytes=image_bytes,
+        user_id=user_id,
+        content_type=content_type,
+        source="recipe",
+        meal_type="recipe",
+    )
+
+    # Persist the URL on the recipe row
+    db.client.table("user_recipes").update({
+        "image_url": image_url,
+        "updated_at": datetime.now().isoformat(),
+    }).eq("id", recipe_id).execute()
+
+    logger.info(f"Uploaded recipe image for {recipe_id}: {storage_key}")
+    return {"image_url": image_url, "storage_key": storage_key}
 

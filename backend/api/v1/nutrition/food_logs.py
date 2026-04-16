@@ -178,12 +178,25 @@ async def get_food_log(user_id: str, log_id: str, current_user: dict = Depends(g
 
 @router.delete("/food-logs/{log_id}")
 async def delete_food_log(log_id: str, current_user: dict = Depends(get_current_user)):
-    """Delete a food log."""
+    """Delete a food log. Idempotent — returns success if already soft-deleted."""
     logger.info(f"Deleting food log {log_id}")
 
     try:
         db = get_supabase_db()
         log = db.get_food_log(log_id)
+
+        if log is None:
+            # Check if it was already soft-deleted (vs never existed)
+            existing = db.client.table("food_logs").select("id, user_id, deleted_at").eq("id", log_id).execute()
+            if existing.data:
+                row = existing.data[0]
+                # Verify ownership even for already-deleted logs
+                user_id = current_user.get("id") or current_user.get("sub")
+                if row.get("user_id") == user_id and row.get("deleted_at"):
+                    logger.info(f"Food log {log_id} already soft-deleted — returning success")
+                    return {"status": "deleted", "id": log_id, "soft_deleted": True}
+            raise HTTPException(status_code=404, detail="Food log not found")
+
         verify_resource_ownership(current_user, log, "Food log")
         success = db.delete_food_log(log_id)
 

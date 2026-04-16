@@ -497,3 +497,13 @@ class PantrySuggestion(BaseModel):
 class PantryAnalyzeResponse(BaseModel):
     detected_items: List[PantryDetectedItem]
     suggestions: List[PantrySuggestion]
+
+
+class PantryDetectRequest(BaseModel):
+    """Lightweight detect-only request — just run vision on a pantry photo."""
+    image_b64: str = Field(..., max_length=20_000_000)
+
+
+class PantryDetectResponse(BaseModel):
+    """Returns just the detected items, no recipe suggestions."""
+    items: List[PantryDetectedItem]

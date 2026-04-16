@@ -88,6 +88,7 @@ class PantryAnalysisService:
             meal_type=meal_type,
             count=req.count,
             additional_requirements=constraint,
+            skip_save=True,
         )
 
         suggestions: List[PantrySuggestion] = []

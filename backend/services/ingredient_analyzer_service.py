@@ -16,6 +16,8 @@ import logging
 import re
 from typing import List, Optional
 
+from core.parse_utils import safe_float as _safe_float
+
 from core.db import get_supabase_db
 from models.recipe import (
     BulkIngredientAnalyzeRequest,
@@ -248,7 +250,7 @@ class IngredientAnalyzerService:
 
         # Convert volume → grams when possible to populate amount_grams
         unit = (first.get("unit") or "g").lower()
-        amount = float(first.get("amount") or 1)
+        amount = _safe_float(first.get("amount"), default=1.0)
         amount_grams = None
         try:
             amount_grams = _weight_unit_to_grams(amount, unit)
@@ -270,12 +272,12 @@ class IngredientAnalyzerService:
             cooking_method=cooking_method,
             nutrition_source=NutritionSource.AI_ESTIMATE,
             nutrition_confidence=confidence,
-            calories=float(first.get("calories") or 0),
-            protein_g=float(first.get("protein_g") or 0),
-            carbs_g=float(first.get("carbs_g") or 0),
-            fat_g=float(first.get("fat_g") or 0),
-            fiber_g=float(first.get("fiber_g") or 0),
-            sugar_g=float(first.get("sugar_g") or 0),
+            calories=_safe_float(first.get("calories")),
+            protein_g=_safe_float(first.get("protein_g")),
+            carbs_g=_safe_float(first.get("carbs_g")),
+            fat_g=_safe_float(first.get("fat_g")),
+            fiber_g=_safe_float(first.get("fiber_g")),
+            sugar_g=_safe_float(first.get("sugar_g")),
             sodium_mg=first.get("sodium_mg"),
             raw_text=text,
         )

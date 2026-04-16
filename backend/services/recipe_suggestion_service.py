@@ -23,6 +23,7 @@ from google.genai import types
 
 from core.config import get_settings
 from core.db import get_supabase_db
+from core.parse_utils import safe_float, safe_int
 from services.gemini.constants import gemini_generate_with_retry
 
 settings = get_settings()
@@ -303,6 +304,7 @@ IMPORTANT:
         meal_type: MealType = MealType.ANY,
         count: int = 3,
         additional_requirements: Optional[str] = None,
+        skip_save: bool = False,
     ) -> List[RecipeSuggestion]:
         """
         Generate personalized recipe suggestions for a user.
@@ -369,12 +371,12 @@ IMPORTANT:
                 ingredients = [
                     RecipeIngredient(
                         name=ing.get("name", ""),
-                        amount=float(ing.get("amount", 0)),
+                        amount=safe_float(ing.get("amount")),
                         unit=ing.get("unit", "g"),
-                        calories=float(ing.get("calories", 0)),
-                        protein_g=float(ing.get("protein_g", 0)),
-                        carbs_g=float(ing.get("carbs_g", 0)),
-                        fat_g=float(ing.get("fat_g", 0)),
+                        calories=safe_float(ing.get("calories")),
+                        protein_g=safe_float(ing.get("protein_g")),
+                        carbs_g=safe_float(ing.get("carbs_g")),
+                        fat_g=safe_float(ing.get("fat_g")),
                         notes=ing.get("notes"),
                     )
                     for ing in recipe.get("ingredients", [])
@@ -387,32 +389,33 @@ IMPORTANT:
                     category=recipe.get("category", meal_type.value),
                     ingredients=ingredients,
                     instructions=recipe.get("instructions", []),
-                    servings=int(recipe.get("servings", 1)),
-                    calories_per_serving=int(recipe.get("calories_per_serving", 0)),
-                    protein_per_serving_g=float(recipe.get("protein_per_serving_g", 0)),
-                    carbs_per_serving_g=float(recipe.get("carbs_per_serving_g", 0)),
-                    fat_per_serving_g=float(recipe.get("fat_per_serving_g", 0)),
-                    fiber_per_serving_g=float(recipe.get("fiber_per_serving_g", 0)),
-                    prep_time_minutes=int(recipe.get("prep_time_minutes", 0)),
-                    cook_time_minutes=int(recipe.get("cook_time_minutes", 0)),
+                    servings=safe_int(recipe.get("servings"), default=1),
+                    calories_per_serving=safe_int(recipe.get("calories_per_serving")),
+                    protein_per_serving_g=safe_float(recipe.get("protein_per_serving_g")),
+                    carbs_per_serving_g=safe_float(recipe.get("carbs_per_serving_g")),
+                    fat_per_serving_g=safe_float(recipe.get("fat_per_serving_g")),
+                    fiber_per_serving_g=safe_float(recipe.get("fiber_per_serving_g")),
+                    prep_time_minutes=safe_int(recipe.get("prep_time_minutes")),
+                    cook_time_minutes=safe_int(recipe.get("cook_time_minutes")),
                     suggestion_reason=recipe.get("suggestion_reason", ""),
-                    goal_alignment_score=int(recipe.get("goal_alignment_score", 50)),
-                    cuisine_match_score=int(recipe.get("cuisine_match_score", 50)),
-                    diet_compliance_score=int(recipe.get("diet_compliance_score", 100)),
-                    overall_match_score=int(recipe.get("overall_match_score", 50)),
+                    goal_alignment_score=safe_int(recipe.get("goal_alignment_score"), default=50),
+                    cuisine_match_score=safe_int(recipe.get("cuisine_match_score"), default=50),
+                    diet_compliance_score=safe_int(recipe.get("diet_compliance_score"), default=100),
+                    overall_match_score=safe_int(recipe.get("overall_match_score"), default=50),
                 )
                 suggestions.append(suggestion)
 
             logger.info(f"✅ [RecipeSuggestion] Generated {len(suggestions)} recipes")
 
-            # Save session to database
-            await self._save_suggestion_session(
-                user_id=user_id,
-                meal_type=meal_type,
-                context=context,
-                suggestions=suggestions,
-                generation_time_ms=generation_time_ms,
-            )
+            # Save session to database (skip for pantry flow — saves latency)
+            if not skip_save:
+                await self._save_suggestion_session(
+                    user_id=user_id,
+                    meal_type=meal_type,
+                    context=context,
+                    suggestions=suggestions,
+                    generation_time_ms=generation_time_ms,
+                )
 
             return suggestions
 

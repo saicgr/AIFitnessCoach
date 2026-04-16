@@ -18,10 +18,14 @@ from models.recipe import (
     IngredientAnalyzeResponse,
     PantryAnalyzeRequest,
     PantryAnalyzeResponse,
+    PantryDetectRequest,
+    PantryDetectResponse,
+    PantryDetectedItem,
 )
 from services.ingredient_analyzer_service import get_ingredient_analyzer
 from services.pantry_analysis_service import get_pantry_service
 from services.recipe_import_service import get_recipe_import_service
+from services.vision_service import VisionService
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -103,6 +107,33 @@ async def import_recipe_handwritten(
             yield _sse(evt)
 
     return StreamingResponse(stream(), media_type="text/event-stream")
+
+
+@router.post("/recipes/detect-pantry-items", response_model=PantryDetectResponse)
+async def detect_pantry_items(
+    request: PantryDetectRequest,
+    user_id: str = Query(...),
+    current_user: dict = Depends(get_current_user),
+):
+    """Lightweight detect-only: run vision on a pantry photo and return items.
+    No recipe generation — fast response for showing detected ingredients."""
+    try:
+        vision = VisionService()
+        raw_items = await vision.analyze_pantry_image(request.image_b64)
+        items = [
+            PantryDetectedItem(
+                name=v.get("name") or "unknown",
+                confidence=int(v.get("confidence") or 70),
+                source="image",
+            )
+            for v in raw_items
+        ]
+        return PantryDetectResponse(items=items)
+    except RuntimeError as exc:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=400, detail=str(exc))
+    except Exception as exc:
+        raise safe_internal_error(exc, "nutrition")
 
 
 @router.post("/recipes/from-pantry", response_model=PantryAnalyzeResponse)

@@ -22,6 +22,7 @@ from typing import AsyncIterator, Dict, List, Optional
 
 import httpx
 
+from core.parse_utils import safe_int
 from models.recipe import (
     CookingMethod,
     NutritionSource,
@@ -39,6 +40,122 @@ logger = logging.getLogger(__name__)
 
 # Heuristic: minimum confidence the import reached a "this is actually a recipe" state
 _MIN_RECIPE_CONFIDENCE = 60
+
+# Unicode fraction map (from OCR / web scraping)
+_UNICODE_FRACTIONS = {
+    "½": 0.5, "⅓": 1/3, "⅔": 2/3, "¼": 0.25, "¾": 0.75,
+    "⅕": 0.2, "⅖": 0.4, "⅗": 0.6, "⅘": 0.8,
+    "⅙": 1/6, "⅚": 5/6, "⅛": 0.125, "⅜": 0.375, "⅝": 0.625, "⅞": 0.875,
+}
+
+# Known unit strings — used to detect when Gemini merges amount+unit into
+# the "amount" field (e.g. "2.0 cup" instead of amount=2.0, unit="cup").
+_KNOWN_UNITS = frozenset({
+    "g", "kg", "oz", "lb", "lbs", "ml", "l", "dl", "cl",
+    "cup", "cups", "tbsp", "tsp", "tablespoon", "tablespoons",
+    "teaspoon", "teaspoons", "piece", "pieces", "slice", "slices",
+    "clove", "cloves", "bunch", "bunches", "pinch", "dash",
+    "handful", "can", "cans", "bottle", "bottles", "packet", "packets",
+    "sprig", "sprigs", "stick", "sticks", "head", "heads",
+    "stalk", "stalks", "fillet", "fillets", "leaf", "leaves",
+    "strip", "strips", "scoop", "scoops", "quart", "pint", "gallon",
+    "drop", "drops", "bag", "bags", "jar", "jars", "box", "boxes",
+    "large", "medium", "small",
+})
+
+
+def _parse_amount(raw: object) -> float:
+    """Robustly parse an ingredient amount from Gemini's JSON output.
+
+    Handles: numeric, string-numeric, amount+unit merged ("2.0 cup"),
+    fractions ("1/2"), mixed fractions ("1 1/2"), unicode ("½"),
+    ranges ("2-3"), European decimals ("1,5"), descriptive ("a pinch"),
+    and None / empty.
+    """
+    if raw is None:
+        return 1.0
+    if isinstance(raw, (int, float)):
+        return float(raw) if raw > 0 else 1.0
+
+    s = str(raw).strip()
+    if not s:
+        return 1.0
+
+    # European comma decimal ("1,5" → "1.5") — only when no other commas
+    if s.count(",") == 1 and "." not in s:
+        s = s.replace(",", ".")
+
+    # Strip unit suffix if Gemini merged amount+unit ("2.0 cup" → "2.0")
+    parts = s.split()
+    if len(parts) >= 2 and parts[-1].lower().rstrip("s.") in _KNOWN_UNITS or parts[-1].lower() in _KNOWN_UNITS:
+        s = " ".join(parts[:-1])
+
+    # Try plain float first
+    try:
+        val = float(s)
+        return val if val > 0 else 1.0
+    except ValueError:
+        pass
+
+    # Unicode fractions: "½", "1½", "1 ½"
+    for uf, fval in _UNICODE_FRACTIONS.items():
+        if uf in s:
+            # "1½" → 1 + 0.5;  "½" → 0.5
+            prefix = s.replace(uf, "").strip()
+            whole = float(prefix) if prefix else 0.0
+            return whole + fval
+
+    # Slash fractions: "1/2", "1 1/2", "3/4"
+    frac_match = re.match(r"^(\d+)\s+(\d+)\s*/\s*(\d+)$", s)
+    if frac_match:
+        whole, num, den = int(frac_match.group(1)), int(frac_match.group(2)), int(frac_match.group(3))
+        return whole + (num / den if den else 0)
+
+    frac_match = re.match(r"^(\d+)\s*/\s*(\d+)$", s)
+    if frac_match:
+        num, den = int(frac_match.group(1)), int(frac_match.group(2))
+        return num / den if den else 1.0
+
+    # Ranges: "2-3", "2 to 3" → take the first value
+    range_match = re.match(r"^([\d.]+)\s*(?:-|to)\s*[\d.]+", s)
+    if range_match:
+        return float(range_match.group(1))
+
+    # Last resort: extract first number-like token
+    num_match = re.search(r"[\d.]+", s)
+    if num_match:
+        try:
+            return float(num_match.group())
+        except ValueError:
+            pass
+
+    return 1.0
+
+
+def _split_amount_unit(ing: dict) -> tuple:
+    """Extract clean (amount_str, unit, food_name) from a Gemini ingredient dict.
+
+    Handles the case where Gemini merges amount+unit into the amount field
+    (e.g. amount="2.0 cup", unit="" instead of amount=2.0, unit="cup").
+    """
+    raw_amount = ing.get("amount", "")
+    unit = ing.get("unit", "")
+    food_name = ing.get("food_name", "")
+
+    # If amount is already numeric, nothing to split
+    if isinstance(raw_amount, (int, float)):
+        return str(raw_amount), unit, food_name
+
+    amount_str = str(raw_amount).strip()
+    parts = amount_str.split()
+
+    # Detect merged amount+unit: "2.0 cup" → amount="2.0", unit="cup"
+    if len(parts) >= 2 and not unit:
+        tail = parts[-1].lower()
+        if tail.rstrip("s.") in _KNOWN_UNITS or tail in _KNOWN_UNITS:
+            return " ".join(parts[:-1]), parts[-1], food_name
+
+    return amount_str, unit, food_name
 
 _RECIPE_PARSE_PROMPT = """You are a strict recipe parser. Given the input, return ONLY valid JSON
 with this exact schema (no markdown, no commentary):
@@ -199,7 +316,10 @@ class RecipeImportService:
 
         ingredients: List[RecipeIngredientCreate] = []
         for idx, ing in enumerate(ingredients_raw[:50]):
-            ing_text = f"{ing.get('amount', '')} {ing.get('unit', '')} {ing.get('food_name', '')}".strip()
+            # Cleanly separate amount/unit/food_name even when Gemini
+            # merges them (e.g. amount="2.0 cup", unit="").
+            amt_str, unit_str, food_name = _split_amount_unit(ing)
+            ing_text = f"{amt_str} {unit_str} {food_name}".strip()
             try:
                 from models.recipe import IngredientAnalyzeRequest
 
@@ -235,13 +355,12 @@ class RecipeImportService:
                 )
             except Exception as exc:
                 logger.warning("[RecipeImport] ingredient analyze failed: %s", exc)
-                # Keep the row as a low-confidence AI estimate so the user can edit
                 ingredients.append(
                     RecipeIngredientCreate(
                         ingredient_order=idx,
-                        food_name=ing.get("food_name") or ing_text,
-                        amount=float(ing.get("amount") or 1),
-                        unit=ing.get("unit") or "g",
+                        food_name=food_name or ing_text,
+                        amount=_parse_amount(ing.get("amount")),
+                        unit=unit_str or "g",
                         nutrition_source=NutritionSource.AI_ESTIMATE,
                         nutrition_confidence=0,
                         raw_text=ing_text,
@@ -261,7 +380,7 @@ class RecipeImportService:
         recipe_create = RecipeCreate(
             name=recipe.get("name") or "Imported recipe",
             description=recipe.get("description"),
-            servings=int(recipe.get("servings") or 1),
+            servings=safe_int(recipe.get("servings"), default=1),
             prep_time_minutes=recipe.get("prep_time_minutes"),
             cook_time_minutes=recipe.get("cook_time_minutes"),
             instructions=recipe.get("instructions"),

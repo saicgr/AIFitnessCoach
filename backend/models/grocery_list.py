@@ -53,7 +53,8 @@ class GroceryListItem(GroceryListItemBase):
 
 
 class GroceryListCreate(BaseModel):
-    """Either a meal_plan_id OR source_recipe_id source — service builds items automatically."""
+    """Source for auto-building: meal_plan_id OR source_recipe_id.
+    Omit both to create a blank manual list."""
     meal_plan_id: Optional[str] = None
     source_recipe_id: Optional[str] = None
     name: Optional[str] = None
