@@ -183,7 +183,7 @@ class WorkoutRepository {
       }
 
       final response = await _apiClient.get(
-        ApiConstants.workouts,
+        '${ApiConstants.workouts}/',
         queryParameters: queryParams,
       );
 

@@ -539,7 +539,7 @@ extension WorkoutRepositoryExercises on WorkoutRepository {
     try {
       debugPrint('🏋️ [Workout] Creating custom workout: $name with ${exercises.length} exercises');
       final response = await apiClient.post(
-        ApiConstants.workouts,
+        '${ApiConstants.workouts}/',
         data: {
           'user_id': userId,
           'name': name,

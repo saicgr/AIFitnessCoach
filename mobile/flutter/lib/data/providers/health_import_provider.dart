@@ -159,7 +159,7 @@ class HealthImportNotifier extends StateNotifier<HealthImportState> {
 
       // 1. Create the workout via API.
       final createResponse = await _apiClient.post(
-        ApiConstants.workouts,
+        '${ApiConstants.workouts}/',
         data: {
           'user_id': userId,
           'name': workoutName,
@@ -290,7 +290,7 @@ class HealthImportNotifier extends StateNotifier<HealthImportState> {
 
         // Create workout
         final createResponse = await _apiClient.post(
-          ApiConstants.workouts,
+          '${ApiConstants.workouts}/',
           data: {
             'user_id': userId,
             'name': workoutName,
