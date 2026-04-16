@@ -191,11 +191,11 @@ class WearableEventHandler {
 
     debugPrint('🏋️ [Wearable] Set: $exerciseName - Set $setNumber: $actualReps reps @ ${weightKg}kg');
 
-    // Invalidate today's workout provider to refresh with updated set data
+    // Refresh today's workout provider silently (no loading flash)
     // The backend should have already received this via the watch's direct sync
-    _ref.invalidate(todayWorkoutProvider);
+    _ref.read(todayWorkoutProvider.notifier).invalidateAndRefresh();
 
-    debugPrint('✅ [Wearable] Invalidated todayWorkoutProvider to refresh workout state');
+    debugPrint('✅ [Wearable] Refreshed todayWorkoutProvider to update workout state');
   }
 
   void _handleWorkoutCompleted(Map<String, dynamic> data) {
@@ -212,8 +212,8 @@ class WearableEventHandler {
     if (durationMinutes != null) debugPrint('   Duration: ${durationMinutes}min');
     if (caloriesBurned != null) debugPrint('   Calories: $caloriesBurned');
 
-    // Invalidate workout provider to refresh (will show completed state)
-    _ref.invalidate(todayWorkoutProvider);
+    // Refresh workout provider silently (will show completed state)
+    _ref.read(todayWorkoutProvider.notifier).invalidateAndRefresh();
 
     // Also refresh daily activity to update calories burned
     try {

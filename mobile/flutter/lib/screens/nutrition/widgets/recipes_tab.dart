@@ -171,7 +171,7 @@ class _RecipesTabState extends ConsumerState<RecipesTab>
             },
             backgroundColor: accent,
             foregroundColor: Colors.white,
-            icon: const Icon(Icons.add_rounded),
+            icon: const Icon(Icons.restaurant_menu_rounded),
             label: const Text('Build',
                 style: TextStyle(fontWeight: FontWeight.w700)),
           ),
@@ -1116,6 +1116,7 @@ class _MyRecipesGrid extends ConsumerWidget {
           resp.items,
           isEmptyHint:
               hasQuery ? 'No matches in your recipes' : 'No recipes match these filters',
+          widgetRef: ref,
         ),
       );
     }
@@ -1136,13 +1137,13 @@ class _MyRecipesGrid extends ConsumerWidget {
           return _ErrorView(message: snap.error.toString(), isDark: isDark);
         }
         final items = snap.data?.items ?? const <RecipeSummary>[];
-        return _renderGrid(context, items);
+        return _renderGrid(context, items, widgetRef: ref);
       },
     );
   }
 
   Widget _renderGrid(BuildContext context, List<RecipeSummary> items,
-      {String? isEmptyHint}) {
+      {String? isEmptyHint, WidgetRef? widgetRef}) {
     if (items.isEmpty) {
       return _EmptyState(isDark: isDark, accent: accent, hint: isEmptyHint);
     }
@@ -1172,6 +1173,7 @@ class _MyRecipesGrid extends ConsumerWidget {
                   recipeId: s.id, userId: userId, isDark: isDark),
             ));
           },
+          onLongPress: widgetRef != null ? () => _showRecipeContextMenu(context, widgetRef, s) : null,
         );
       },
     );
@@ -1182,6 +1184,84 @@ class _MyRecipesGrid extends ConsumerWidget {
     final t = (s.sourceType ?? '').toLowerCase();
     if (t.isEmpty || t == 'manual') return false;
     return true;
+  }
+
+  void _showRecipeContextMenu(BuildContext context, WidgetRef ref, RecipeSummary s) {
+    final muted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    showModalBottomSheet(
+      context: context,
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(height: 8),
+            Container(
+              width: 40, height: 4,
+              decoration: BoxDecoration(
+                color: muted.withValues(alpha: 0.3),
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(height: 8),
+            ListTile(
+              leading: const Icon(Icons.open_in_new, size: 20),
+              title: const Text('Open'),
+              onTap: () {
+                Navigator.of(ctx).pop();
+                Navigator.of(context).push(MaterialPageRoute(
+                  builder: (_) => RecipeDetailScreen(
+                    recipeId: s.id, userId: userId, isDark: isDark),
+                ));
+              },
+            ),
+            if (!s.isCurated)
+              ListTile(
+                leading: Icon(Icons.delete_outline, size: 20, color: AppColors.error),
+                title: Text('Delete', style: TextStyle(color: AppColors.error)),
+                onTap: () {
+                  Navigator.of(ctx).pop();
+                  _confirmDeleteRecipe(context, ref, s);
+                },
+              ),
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _confirmDeleteRecipe(BuildContext context, WidgetRef ref, RecipeSummary s) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Delete recipe?'),
+        content: Text('Are you sure you want to delete "${s.name}"? This cannot be undone.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: const Text('Cancel')),
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: Text('Delete', style: TextStyle(color: AppColors.error)),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+
+    try {
+      final repo = ref.read(nutritionRepositoryProvider);
+      await repo.deleteRecipe(userId: userId, recipeId: s.id);
+      if (!context.mounted) return;
+      // Invalidate the search/list providers to refresh the grid
+      ref.invalidate(recipeSearchProvider);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Recipe deleted'), duration: Duration(seconds: 2)),
+      );
+    } catch (e) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to delete: $e')),
+      );
+    }
   }
 }
 

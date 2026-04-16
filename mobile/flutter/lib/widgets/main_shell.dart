@@ -118,28 +118,39 @@ class EdgeHandlePositionNotifier extends StateNotifier<double> {
 
 /// Main shell with floating bottom navigation bar
 class MainShell extends ConsumerWidget {
-  final Widget child;
+  /// StatefulNavigationShell for the main tab navigation (keeps tabs alive).
+  final StatefulNavigationShell? navigationShell;
 
-  const MainShell({super.key, required this.child});
+  /// Fallback child widget for non-tab usages (e.g. progress_screen wrapping).
+  final Widget? child;
+
+  const MainShell({super.key, this.navigationShell, this.child})
+      : assert(navigationShell != null || child != null,
+            'Either navigationShell or child must be provided');
+
+  /// The widget to display as the main content area.
+  Widget get _child => navigationShell ?? child!;
 
   int _calculateSelectedIndex(BuildContext context) {
+    if (navigationShell != null) return navigationShell!.currentIndex;
     final location = GoRouterState.of(context).matchedLocation;
     if (location.startsWith('/home')) return 0;
     if (location.startsWith('/workouts')) return 1;
     if (location.startsWith('/nutrition')) return 2;
-    // TODO: Re-enable social features when user base grows
-    // if (location.startsWith('/social')) return 3;
     if (location.startsWith('/profile')) return 3;
     return 0;
   }
 
   bool _isSecondaryPage(BuildContext context) {
-    // Use the full URI path to detect secondary pages, not just the shell's matched location
     final fullPath = GoRouter.of(context).routerDelegate.currentConfiguration.uri.path;
     return fullPath.startsWith('/fasting');
   }
 
   void _onItemTapped(BuildContext context, int index) {
+    if (navigationShell != null) {
+      navigationShell!.goBranch(index, initialLocation: index == navigationShell!.currentIndex);
+      return;
+    }
     switch (index) {
       case 0:
         context.go('/home');
@@ -150,10 +161,6 @@ class MainShell extends ConsumerWidget {
       case 2:
         context.go('/nutrition');
         break;
-      // TODO: Re-enable social features when user base grows
-      // case 3:
-      //   context.go('/social');
-      //   break;
       case 3:
         context.go('/profile');
         break;
@@ -262,7 +269,7 @@ class MainShell extends ConsumerWidget {
                 // Offline banner (auto-shows/hides based on connectivity)
                 const OfflineBanner(),
                 // Main content fills remaining space
-                Expanded(child: child),
+                Expanded(child: _child),
               ],
             ),
           ),

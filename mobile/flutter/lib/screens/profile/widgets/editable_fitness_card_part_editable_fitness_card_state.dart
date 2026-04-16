@@ -153,9 +153,9 @@ class EditableFitnessCardState extends ConsumerState<EditableFitnessCard> {
 
       await ref.read(authStateProvider.notifier).refreshUser();
 
-      // Invalidate workout providers to trigger regeneration
-      ref.invalidate(todayWorkoutProvider);
-      ref.invalidate(workoutsProvider);
+      // Refresh workout providers silently (no loading flash)
+      ref.read(todayWorkoutProvider.notifier).invalidateAndRefresh();
+      ref.read(workoutsProvider.notifier).silentRefresh();
 
       if (mounted) {
         setState(() {

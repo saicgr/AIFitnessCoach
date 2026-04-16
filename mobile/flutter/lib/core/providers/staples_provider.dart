@@ -170,9 +170,9 @@ class StaplesNotifier extends StateNotifier<StaplesState> {
         await _injectIntoCurrentWorkout(exerciseName, section, cardioParams: cardioParams);
       }
 
-      // Invalidate providers to refresh UI with new workouts
-      _ref.invalidate(todayWorkoutProvider);
-      _ref.invalidate(workoutsProvider);
+      // Refresh providers silently (no loading flash)
+      _ref.read(todayWorkoutProvider.notifier).invalidateAndRefresh();
+      _ref.read(workoutsProvider.notifier).silentRefresh();
 
       return true;
     } catch (e) {
@@ -250,9 +250,9 @@ class StaplesNotifier extends StateNotifier<StaplesState> {
 
       debugPrint('✅ Staple updated: ${updated.exerciseName}');
 
-      // Invalidate providers to refresh UI
-      _ref.invalidate(todayWorkoutProvider);
-      _ref.invalidate(workoutsProvider);
+      // Refresh providers silently (no loading flash)
+      _ref.read(todayWorkoutProvider.notifier).invalidateAndRefresh();
+      _ref.read(workoutsProvider.notifier).silentRefresh();
 
       return true;
     } catch (e) {

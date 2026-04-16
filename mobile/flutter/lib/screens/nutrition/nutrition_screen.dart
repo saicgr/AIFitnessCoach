@@ -77,6 +77,11 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
   static DateTime? _cachedMicronutrientsTime;
   static const _micronutrientCacheTtl = Duration(minutes: 5);
 
+  // In-memory cache for recipes — survives widget rebuilds
+  static List<RecipeSummary>? _cachedRecipes;
+  static DateTime? _cachedRecipesTime;
+  static const _recipeCacheTtl = Duration(minutes: 5);
+
   String? _userId;
   DateTime _selectedDate = DateTime.now();
   late TabController _tabController;
@@ -187,7 +192,7 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
         _cachedMicronutrientsTime = null;
       }
 
-      _loadRecipes(userId);
+      _loadRecipes(userId, forceRefresh: forceRefresh);
       ref.read(nutritionProvider.notifier).loadTodaySummary(userId, forceRefresh: forceRefresh);
       _loadMicronutrients(userId, dateStr);
       ref.read(nutritionPreferencesProvider.notifier).initialize(userId);
@@ -270,16 +275,28 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
     }
   }
 
-  Future<void> _loadRecipes(String userId) async {
+  Future<void> _loadRecipes(String userId, {bool forceRefresh = false}) async {
+    // Use cached recipes if fresh enough
+    if (!forceRefresh &&
+        _cachedRecipes != null &&
+        _cachedRecipesTime != null &&
+        DateTime.now().difference(_cachedRecipesTime!) < _recipeCacheTtl) {
+      if (mounted && _recipes.isEmpty) {
+        setState(() => _recipes = _cachedRecipes!);
+      }
+      return;
+    }
     try {
       final repository = ref.read(nutritionRepositoryProvider);
       final response = await repository.getRecipes(
         userId: userId,
         limit: 10,
-        sortBy: 'times_logged',
+        sortBy: 'most_logged',
       );
       if (mounted) {
         setState(() => _recipes = response.items);
+        _cachedRecipes = response.items;
+        _cachedRecipesTime = DateTime.now();
       }
     } catch (e) {
       debugPrint('Error loading recipes: $e');
@@ -767,12 +784,20 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
   Future<void> _deleteMeal(String mealId) async {
     if (_userId == null) return;
     _cachedMicronutrientsTime = null; // Invalidate cache — nutrients changed
+    ref.read(posthogServiceProvider).capture(
+      eventName: 'food_log_deleted',
+      properties: <String, Object>{'food_log_id': mealId},
+    );
     await ref.read(nutritionProvider.notifier).deleteLog(_userId!, mealId);
   }
 
   Future<void> _copyMeal(String mealId, String targetMealType) async {
     if (_userId == null) return;
     try {
+      ref.read(posthogServiceProvider).capture(
+        eventName: 'food_log_copied',
+        properties: <String, Object>{'food_log_id': mealId, 'target_meal_type': targetMealType},
+      );
       final repository = ref.read(nutritionRepositoryProvider);
       await repository.copyFoodLog(logId: mealId, mealType: targetMealType);
       _cachedMicronutrientsTime = null;
@@ -925,6 +950,10 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
   Future<void> _moveMeal(String mealId, String targetMealType) async {
     if (_userId == null) return;
     try {
+      ref.read(posthogServiceProvider).capture(
+        eventName: 'food_log_moved',
+        properties: <String, Object>{'food_log_id': mealId, 'target_meal_type': targetMealType},
+      );
       final repository = ref.read(nutritionRepositoryProvider);
       await repository.moveFoodLog(logId: mealId, mealType: targetMealType);
       _cachedMicronutrientsTime = null;

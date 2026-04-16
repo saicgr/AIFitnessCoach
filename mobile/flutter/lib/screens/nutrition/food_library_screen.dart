@@ -197,7 +197,7 @@ class FoodLibraryNotifier extends StateNotifier<FoodLibraryState> {
       final results = await Future.wait([
         _repository.getSavedFoods(userId: _userId, limit: 100),
         _repository.getRecipes(
-            userId: _userId, limit: 100, sortBy: 'times_logged'),
+            userId: _userId, limit: 100, sortBy: 'most_logged'),
       ]);
 
       final savedFoodsResponse = results[0] as SavedFoodsResponse;

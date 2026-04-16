@@ -160,7 +160,7 @@ class _TodayWorkoutCardState extends ConsumerState<TodayWorkoutCard>
           ),
           const SizedBox(height: 8),
           TextButton(
-            onPressed: () => ref.invalidate(todayWorkoutProvider),
+            onPressed: () => ref.read(todayWorkoutProvider.notifier).invalidateAndRefresh(),
             child: const Text('Retry'),
           ),
         ],

@@ -747,8 +747,8 @@ class _WorkoutSummaryScreenState extends ConsumerState<WorkoutSummaryScreen> {
       final repo = ref.read(workoutRepositoryProvider);
       final success = await repo.uncompleteWorkout(widget.workoutId);
       if (success && mounted) {
-        ref.invalidate(todayWorkoutProvider);
-        ref.invalidate(workoutsProvider);
+        ref.read(todayWorkoutProvider.notifier).invalidateAndRefresh();
+        ref.read(workoutsProvider.notifier).silentRefresh();
         if (mounted) context.pop();
       } else if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

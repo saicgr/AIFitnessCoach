@@ -155,9 +155,8 @@ class _NextWorkoutCardState extends ConsumerState<NextWorkoutCard> {
       final success = await repo.deleteWorkout(widget.workout.id!);
 
       if (success && mounted) {
-        await ref.read(workoutsProvider.notifier).refresh();
-        // Invalidate provider to force UI rebuild with fresh data
-        ref.invalidate(workoutsProvider);
+        // Refresh workouts silently (no loading flash)
+        await ref.read(workoutsProvider.notifier).silentRefresh();
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(

@@ -192,10 +192,10 @@ class AutoSwitchNotifier extends StateNotifier<AutoSwitchState> {
     try {
       await _ref.read(gymProfilesProvider.notifier).activateProfile(suggested.id);
 
-      // Reset generation state and invalidate workout providers for new profile
+      // Reset generation state (clears _inMemoryCache for gym switch) and invalidate
       TodayWorkoutNotifier.resetGenerationState();
-      _ref.invalidate(todayWorkoutProvider);
-      _ref.invalidate(workoutsProvider);
+      _ref.invalidate(todayWorkoutProvider); // Full invalidate — stale data is wrong gym
+      _ref.read(workoutsProvider.notifier).silentRefresh();
 
       state = state.copyWith(clearSuggested: true);
     } catch (e) {

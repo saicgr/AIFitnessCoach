@@ -97,8 +97,8 @@ class _ActiveWorkoutScreenState
   void showSupersetSheet() => WorkoutSheetsMixinUI(this).showSupersetSheet();
 
   @override
-  void applyProgressionTargets(int exerciseIndex, SetProgressionPattern pattern) =>
-      SetLoggingMixinUI(this).applyProgressionTargets(exerciseIndex, pattern);
+  void applyProgressionTargets(int exerciseIndex, SetProgressionPattern pattern, {double? overrideWeight}) =>
+      SetLoggingMixinUI(this).applyProgressionTargets(exerciseIndex, pattern, overrideWeight: overrideWeight);
 
   @override
   void showBarTypeSelectorImpl(WorkoutExercise exercise) =>

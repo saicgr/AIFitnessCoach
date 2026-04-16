@@ -117,8 +117,8 @@ extension __RegenerateWorkoutSheetStateExt on _RegenerateWorkoutSheetState {
             }
 
             TodayWorkoutNotifier.clearCache();
-            ref.invalidate(todayWorkoutProvider);
-            ref.invalidate(workoutsProvider);
+            ref.read(todayWorkoutProvider.notifier).invalidateAndRefresh();
+            ref.read(workoutsProvider.notifier).silentRefresh();
             Navigator.pop(context, approvedWorkout);
           } else if (mounted) {
             // User pressed Back - return to customize with form preserved
@@ -246,8 +246,8 @@ extension __RegenerateWorkoutSheetStateExt on _RegenerateWorkoutSheetState {
             }
 
             TodayWorkoutNotifier.clearCache();
-            ref.invalidate(todayWorkoutProvider);
-            ref.invalidate(workoutsProvider);
+            ref.read(todayWorkoutProvider.notifier).invalidateAndRefresh();
+            ref.read(workoutsProvider.notifier).silentRefresh();
             Navigator.pop(context, approvedWorkout);
           } else if (mounted) {
             // User pressed Back - return to customize with form preserved

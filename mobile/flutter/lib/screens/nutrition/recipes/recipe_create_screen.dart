@@ -9,8 +9,11 @@
 ///   - Saves via existing POST /nutrition/recipes
 library;
 
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/theme/accent_color_provider.dart';
@@ -39,6 +42,9 @@ class _RecipeCreateScreenState extends ConsumerState<RecipeCreateScreen> {
   String? _category;     // value matches RecipeCategory.value
   String? _cuisine;
   String? _cookingMethod;
+
+  // Optional recipe photo
+  File? _photo;
 
   // Each row: either editable text OR analyzed result
   final List<_RecipeRow> _rows = [_RecipeRow.empty()];
@@ -98,6 +104,55 @@ class _RecipeCreateScreenState extends ConsumerState<RecipeCreateScreen> {
     }
     final n = _servings == 0 ? 1 : _servings;
     return {'cal': cal / n, 'p': p / n, 'c': c / n, 'f': f / n};
+  }
+
+  Future<void> _pickPhoto() async {
+    final source = await showModalBottomSheet<ImageSource>(
+      context: context,
+      builder: (ctx) {
+        final isDark = widget.isDark;
+        final surface = isDark ? AppColors.elevated : AppColorsLight.elevated;
+        final text = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+        return Container(
+          color: surface,
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: Icon(Icons.camera_alt_rounded, color: text),
+                title: Text('Take photo', style: TextStyle(color: text)),
+                onTap: () => Navigator.pop(ctx, ImageSource.camera),
+              ),
+              ListTile(
+                leading: Icon(Icons.photo_library_rounded, color: text),
+                title: Text('Choose from gallery', style: TextStyle(color: text)),
+                onTap: () => Navigator.pop(ctx, ImageSource.gallery),
+              ),
+              if (_photo != null)
+                ListTile(
+                  leading: Icon(Icons.delete_outline_rounded, color: Colors.redAccent),
+                  title: Text('Remove photo', style: TextStyle(color: Colors.redAccent)),
+                  onTap: () {
+                    setState(() => _photo = null);
+                    Navigator.pop(ctx);
+                  },
+                ),
+            ],
+          ),
+        );
+      },
+    );
+    if (source == null) return;
+    final picked = await ImagePicker().pickImage(
+      source: source,
+      maxWidth: 1200,
+      maxHeight: 1200,
+      imageQuality: 80,
+    );
+    if (picked != null) {
+      setState(() => _photo = File(picked.path));
+    }
   }
 
   Future<void> _analyzeRow(int idx) async {
@@ -168,10 +223,22 @@ class _RecipeCreateScreenState extends ConsumerState<RecipeCreateScreen> {
         sourceType: 'manual',
         ingredients: ingredients,
       );
-      // The yield + cooking_method fields aren't on the existing RecipeCreate yet;
-      // they're applied via PATCH after create when the existing model evolves.
       final repo = ref.read(nutritionRepositoryProvider);
       final recipe = await repo.createRecipe(userId: widget.userId, request: create);
+      if (!mounted) return;
+
+      // Upload photo if one was picked (fire after create so we have the recipe ID)
+      if (_photo != null) {
+        try {
+          await ref.read(recipeRepositoryProvider).uploadRecipeImage(
+            userId: widget.userId,
+            recipeId: recipe.id,
+            imageFile: _photo!,
+          );
+        } catch (e) {
+          debugPrint('Recipe photo upload failed (non-blocking): $e');
+        }
+      }
       if (!mounted) return;
       Navigator.of(context).pop(recipe);
     } catch (e) {
@@ -247,6 +314,57 @@ class _RecipeCreateScreenState extends ConsumerState<RecipeCreateScreen> {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
             child: Text('per serving', style: TextStyle(fontSize: 11, color: muted)),
+          ),
+          const SizedBox(height: 16),
+
+          // Optional photo
+          GestureDetector(
+            onTap: _pickPhoto,
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              height: _photo != null ? 180 : 100,
+              decoration: BoxDecoration(
+                color: surface,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(
+                  color: _photo != null
+                      ? accent.withValues(alpha: 0.4)
+                      : muted.withValues(alpha: 0.25),
+                  width: _photo != null ? 1.5 : 1,
+                ),
+                image: _photo != null
+                    ? DecorationImage(
+                        image: FileImage(_photo!),
+                        fit: BoxFit.cover,
+                      )
+                    : null,
+              ),
+              child: _photo == null
+                  ? Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.add_a_photo_rounded, color: muted, size: 28),
+                        const SizedBox(height: 6),
+                        Text('Add photo (optional)',
+                            style: TextStyle(color: muted, fontSize: 12)),
+                      ],
+                    )
+                  : Align(
+                      alignment: Alignment.topRight,
+                      child: Padding(
+                        padding: const EdgeInsets.all(8),
+                        child: CircleAvatar(
+                          radius: 16,
+                          backgroundColor: Colors.black54,
+                          child: IconButton(
+                            icon: const Icon(Icons.close_rounded, size: 16, color: Colors.white),
+                            padding: EdgeInsets.zero,
+                            onPressed: () => setState(() => _photo = null),
+                          ),
+                        ),
+                      ),
+                    ),
+            ),
           ),
           const SizedBox(height: 16),
 

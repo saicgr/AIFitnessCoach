@@ -28,8 +28,8 @@ extension __HeroWorkoutCardStateExt on _HeroWorkoutCardState {
       final result = await repo.markWorkoutAsDone(widget.workout.id!);
 
       if (result != null && mounted) {
-        ref.invalidate(todayWorkoutProvider);
-        ref.invalidate(workoutsProvider);
+        ref.read(todayWorkoutProvider.notifier).invalidateAndRefresh();
+        ref.read(workoutsProvider.notifier).silentRefresh();
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(

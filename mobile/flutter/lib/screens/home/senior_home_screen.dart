@@ -33,8 +33,7 @@ class _SeniorHomeScreenState extends ConsumerState<SeniorHomeScreen> {
     );
     // Fetch workouts on screen load
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-      await ref.read(workoutsProvider.notifier).refresh();
-      ref.invalidate(workoutsProvider);
+      await ref.read(workoutsProvider.notifier).silentRefresh();
     });
   }
 
@@ -91,8 +90,7 @@ class _SeniorHomeScreenState extends ConsumerState<SeniorHomeScreen> {
       title: 'Home',
       body: RefreshIndicator(
         onRefresh: () async {
-          await workoutsNotifier.refresh();
-          ref.invalidate(workoutsProvider);
+          await workoutsNotifier.silentRefresh();
         },
         color: AppColors.cyan,
         child: SingleChildScrollView(

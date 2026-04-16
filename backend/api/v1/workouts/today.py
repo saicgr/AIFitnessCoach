@@ -23,6 +23,10 @@ from core.auth import get_current_user
 from core.exceptions import safe_internal_error
 from pydantic import BaseModel
 
+import hashlib
+
+from fastapi.responses import JSONResponse, Response
+
 from core.logger import get_logger
 from core.timezone_utils import resolve_timezone, get_user_today, local_date_to_utc_range
 from services.user_context_service import user_context_service
@@ -35,14 +39,26 @@ from .utils import parse_json_field, get_workout_focus, resolve_training_split, 
 _db_executor = ThreadPoolExecutor(max_workers=15)
 
 # Redis cache for /today responses — prevents redundant DB hits on frequent polls
-_today_workout_cache = RedisCache(prefix="workout_today", ttl_seconds=120, max_size=200)
+_today_workout_cache = RedisCache(prefix="workout_today", ttl_seconds=1800, max_size=200)
+
+# Short TTL for transient states (is_generating, needs_generation) to prevent poll storms
+_TRANSIENT_CACHE_TTL = 30  # seconds
+
+# Redis cache for user records — avoids Supabase query on every cache miss
+_user_record_cache = RedisCache(prefix="user_record", ttl_seconds=60, max_size=200)
+
+# Redis cache for active gym profile IDs — queried on every /today call
+_gym_profile_cache = RedisCache(prefix="gym_profile", ttl_seconds=30, max_size=200)
 
 
 async def invalidate_today_workout_cache(user_id: str, gym_profile_id: str = None, date: str = None):
     """Invalidate cached /today response after workout changes."""
     cache_key = f"{user_id}:{gym_profile_id or 'none'}:{date or 'unknown'}"
     await _today_workout_cache.delete(cache_key)
-    logger.debug(f"[CACHE] Invalidated workout_today cache for key={cache_key}")
+    # Also clear user/gym caches so next request picks up fresh data
+    await _user_record_cache.delete(user_id)
+    await _gym_profile_cache.delete(user_id)
+    logger.debug(f"[CACHE] Invalidated workout_today + user/gym caches for key={cache_key}")
 
 
 # =============================================================================
@@ -77,6 +93,30 @@ def _get_active_gym_profile_id(db, user_id: str) -> Optional[str]:
         # No active profile found (single() raises if no match)
         logger.debug(f"No active gym profile found: {e}")
     return None
+
+
+async def _get_cached_gym_profile_id(db, user_id: str) -> Optional[str]:
+    """Get active gym profile ID with Redis caching."""
+    cache_key = user_id
+    cached = await _gym_profile_cache.get(cache_key)
+    if cached is not None:
+        # Cached "none" string means no profile was found last time
+        return None if cached == "__none__" else cached
+    profile_id = _get_active_gym_profile_id(db, user_id)
+    await _gym_profile_cache.set(cache_key, profile_id if profile_id else "__none__")
+    return profile_id
+
+
+def _compute_etag(response: "TodayWorkoutResponse") -> str:
+    """Lightweight ETag based on workout IDs + completion + generating status."""
+    parts = []
+    if response.today_workout:
+        parts.append(f"{response.today_workout.id}:{response.today_workout.is_completed}")
+    if response.next_workout:
+        parts.append(f"{response.next_workout.id}:{response.next_workout.is_completed}")
+    parts.append(f"gen:{response.is_generating}")
+    parts.append(f"need:{response.needs_generation}")
+    return hashlib.md5("|".join(parts).encode()).hexdigest()[:16]
 
 router = APIRouter()
 logger = get_logger(__name__)
@@ -556,13 +596,19 @@ async def get_today_workout(
         user_tz = resolve_timezone(request, db, user_id)
         today_str = get_user_today(user_tz)
 
-        # Get user to check their workout days
-        user = db.get_user(user_id)
+        # Get user to check their workout days (with Redis cache)
+        cached_user = await _user_record_cache.get(user_id)
+        if cached_user:
+            user = cached_user
+        else:
+            user = db.get_user(user_id)
+            if user:
+                await _user_record_cache.set(user_id, user)
         if not user:
             raise HTTPException(status_code=404, detail="User not found")
 
-        # Get active gym profile for filtering
-        active_profile_id = _get_active_gym_profile_id(db, user_id)
+        # Get active gym profile for filtering (with Redis cache)
+        active_profile_id = await _get_cached_gym_profile_id(db, user_id)
         logger.debug(f"[GYM PROFILE] Active profile for user {user_id}: {active_profile_id}")
 
         # Check cache before running expensive DB queries
@@ -570,7 +616,12 @@ async def get_today_workout(
         cached = await _today_workout_cache.get(cache_key)
         if cached:
             logger.info(f"[CACHE] HIT workout_today for user {user_id}")
-            return TodayWorkoutResponse(**cached)
+            cached_response = TodayWorkoutResponse(**cached)
+            etag = _compute_etag(cached_response)
+            if_none_match = request.headers.get("if-none-match", "")
+            if if_none_match == etag:
+                return Response(status_code=304, headers={"ETag": etag})
+            return JSONResponse(content=cached, headers={"ETag": etag})
 
         selected_days = _get_user_workout_days(user)
 
@@ -781,12 +832,24 @@ async def get_today_workout(
             gym_profile_id=active_profile_id,
         )
 
-        # Cache stable responses (not transient generating/needs_generation states)
-        if not response.is_generating and not response.needs_generation:
+        # Cache all responses — stable ones with full TTL, transient with short TTL
+        if response.is_generating or response.needs_generation:
+            await _today_workout_cache.set(cache_key, response.dict(), ttl_override=_TRANSIENT_CACHE_TTL)
+            logger.debug(f"[CACHE] SET workout_today (transient, {_TRANSIENT_CACHE_TTL}s) for user {user_id}")
+        else:
             await _today_workout_cache.set(cache_key, response.dict())
             logger.debug(f"[CACHE] SET workout_today for user {user_id}")
 
-        return response
+        # ETag / 304 support — avoids sending unchanged payloads over the wire
+        etag = _compute_etag(response)
+        if_none_match = request.headers.get("if-none-match", "")
+        if if_none_match == etag:
+            return Response(status_code=304, headers={"ETag": etag})
+
+        return JSONResponse(
+            content=response.dict(),
+            headers={"ETag": etag},
+        )
 
     except Exception as e:
         logger.error(f"Failed to get today's workout: {e}", exc_info=True)

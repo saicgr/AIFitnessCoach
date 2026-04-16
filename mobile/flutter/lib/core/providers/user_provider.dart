@@ -10,7 +10,7 @@ final currentUserProvider = Provider<AsyncValue<app_user.User?>>((ref) {
   final user = ref.watch(authStateProvider.select((s) => s.user));
   final status = ref.watch(authStateProvider.select((s) => s.status));
   final errorMessage = ref.watch(authStateProvider.select((s) => s.errorMessage));
-  if (status == AuthStatus.loading) {
+  if (status == AuthStatus.loading && user == null) {
     return const AsyncValue.loading();
   }
   if (errorMessage != null) {

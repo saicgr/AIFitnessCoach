@@ -575,11 +575,10 @@ class _CustomizeProgramButtonState extends ConsumerState<CustomizeProgramButton>
         setState(() => _isRegenerating = false);
         HapticService.success();
 
-        // Refresh workouts and invalidate to force UI rebuild
-        await ref.read(workoutsProvider.notifier).refresh();
-        ref.invalidate(workoutsProvider);
-        // Also invalidate todayWorkoutProvider so hero card shows correct workout
-        ref.invalidate(todayWorkoutProvider);
+        // Refresh workouts silently (no loading flash)
+        await ref.read(workoutsProvider.notifier).silentRefresh();
+        // Also refresh todayWorkoutProvider so hero card shows correct workout
+        ref.read(todayWorkoutProvider.notifier).invalidateAndRefresh();
 
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -624,11 +623,10 @@ class _CustomizeProgramButtonState extends ConsumerState<CustomizeProgramButton>
 
       // Refresh user profile data (for consistent Training Setup display)
       ref.invalidate(authStateProvider);
-      // Refresh workouts and invalidate to force UI rebuild
-      await ref.read(workoutsProvider.notifier).refresh();
-      ref.invalidate(workoutsProvider);
-      // Also invalidate todayWorkoutProvider so hero card shows correct workout
-      ref.invalidate(todayWorkoutProvider);
+      // Refresh workouts silently (no loading flash)
+      await ref.read(workoutsProvider.notifier).silentRefresh();
+      // Also refresh todayWorkoutProvider so hero card shows correct workout
+      ref.read(todayWorkoutProvider.notifier).invalidateAndRefresh();
 
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

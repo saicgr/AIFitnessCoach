@@ -612,8 +612,8 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen>
                       );
                       if (updatedWorkout != null && context.mounted) {
                         setState(() => _workout = updatedWorkout);
-                        ref.invalidate(todayWorkoutProvider);
-                        ref.invalidate(workoutsProvider);
+                        ref.read(todayWorkoutProvider.notifier).invalidateAndRefresh();
+                        ref.read(workoutsProvider.notifier).silentRefresh();
                       }
                     },
                     child: Container(

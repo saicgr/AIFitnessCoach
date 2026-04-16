@@ -19,6 +19,8 @@ import '../../../data/repositories/recipe_repository.dart';
 import '../../../data/services/haptic_service.dart';
 import '../../../widgets/glass_back_button.dart';
 import '../../../widgets/main_shell.dart' show floatingNavBarVisibleProvider;
+import '../../../data/models/grocery_list.dart';
+import '../grocery/grocery_list_screen.dart';
 import '../meal_planner/meal_planner_screen.dart';
 import 'recipe_create_screen.dart';
 import 'recipe_history_screen.dart';
@@ -148,7 +150,10 @@ class _RecipeDetailScreenState extends ConsumerState<RecipeDetailScreen> {
     final favSet = ref.watch(recipeFavoritesProvider).ids;
     final isFav = favSet.contains(r.id) || r.isFavorited;
 
-    return CustomScrollView(
+    return Stack(
+      children: [
+        // Scrollable content (image + body)
+        CustomScrollView(
       slivers: [
         // Hero header sliver
         SliverToBoxAdapter(
@@ -158,7 +163,6 @@ class _RecipeDetailScreenState extends ConsumerState<RecipeDetailScreen> {
             surface: surface,
             topPad: topPad,
             hasImage: hasImage,
-            isFav: isFav,
             isDark: isDark,
           ),
         ),
@@ -247,6 +251,24 @@ class _RecipeDetailScreenState extends ConsumerState<RecipeDetailScreen> {
           ),
         ),
       ],
+    ),
+        // Floating back button (top-left, fixed over scroll)
+        Positioned(
+          left: 12,
+          top: topPad + 8,
+          child: GlassBackButton(onTap: () => Navigator.of(context).pop()),
+        ),
+        // Floating favorite heart (top-right, fixed over scroll)
+        Positioned(
+          right: 12,
+          top: topPad + 8,
+          child: _HeartToggle(
+            isFav: isFav,
+            isDark: isDark,
+            onTap: () => _toggleFavorite(r.id),
+          ),
+        ),
+      ],
     );
   }
 
@@ -260,7 +282,6 @@ class _RecipeDetailScreenState extends ConsumerState<RecipeDetailScreen> {
     required Color surface,
     required double topPad,
     required bool hasImage,
-    required bool isFav,
     required bool isDark,
   }) {
     const imageHeight = 240.0;
@@ -310,22 +331,6 @@ class _RecipeDetailScreenState extends ConsumerState<RecipeDetailScreen> {
                 ),
               ),
             ),
-          // Back button (top-left)
-          Positioned(
-            left: 12,
-            top: topPad + 8,
-            child: GlassBackButton(onTap: () => Navigator.of(context).pop()),
-          ),
-          // Favorite heart (top-right)
-          Positioned(
-            right: 12,
-            top: topPad + 8,
-            child: _HeartToggle(
-              isFav: isFav,
-              isDark: isDark,
-              onTap: () => _toggleFavorite(r.id),
-            ),
-          ),
         ],
       ),
     );
@@ -531,6 +536,8 @@ class _RecipeDetailScreenState extends ConsumerState<RecipeDetailScreen> {
     required bool isDark,
   }) {
     final improvizeColor = const Color(0xFF9B59FF); // distinct purple accent
+    final favSet = ref.watch(recipeFavoritesProvider).ids;
+    final isFav = favSet.contains(r.id) || r.isFavorited;
     return Wrap(
       spacing: 8,
       runSpacing: 8,
@@ -632,6 +639,18 @@ class _RecipeDetailScreenState extends ConsumerState<RecipeDetailScreen> {
             );
           },
         ),
+        _ActionChip(
+          label: isFav ? 'Favorited' : 'Favorite',
+          icon: isFav ? Icons.favorite : Icons.favorite_border,
+          color: isFav ? AppColors.error : accent,
+          onTap: () => _toggleFavorite(r.id),
+        ),
+        _ActionChip(
+          label: 'Grocery list',
+          icon: Icons.shopping_cart_outlined,
+          color: accent,
+          onTap: () => _buildGroceryList(r),
+        ),
         if (canDelete)
           _ActionChip(
             label: 'Delete',
@@ -711,6 +730,42 @@ class _RecipeDetailScreenState extends ConsumerState<RecipeDetailScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("Couldn't update favorite: $e")),
+      );
+    }
+  }
+
+  Future<void> _buildGroceryList(Recipe r) async {
+    HapticService.light();
+    try {
+      final groceryList = await ref.read(recipeRepositoryProvider).buildGroceryList(
+        widget.userId,
+        GroceryListCreate(sourceRecipeId: r.id),
+      );
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          duration: const Duration(seconds: 2),
+          content: Text('Grocery list created (${groceryList.items.length} items)'),
+          action: SnackBarAction(
+            label: 'View',
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => GroceryListScreen(
+                    listId: groceryList.id,
+                    userId: widget.userId,
+                    isDark: widget.isDark,
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Couldn't create grocery list: $e")),
       );
     }
   }

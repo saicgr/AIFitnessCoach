@@ -458,8 +458,8 @@ class _AvoidedExercisesScreenState extends ConsumerState<AvoidedExercisesScreen>
       );
 
       ref.invalidate(avoidedExercisesProvider(userId));
-      ref.invalidate(todayWorkoutProvider);
-      ref.invalidate(workoutsProvider);
+      ref.read(todayWorkoutProvider.notifier).invalidateAndRefresh();
+      ref.read(workoutsProvider.notifier).silentRefresh();
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

@@ -133,6 +133,7 @@ class HealthService {
     HealthDataType.HEART_RATE_VARIABILITY_SDNN,
     HealthDataType.SLEEP_IN_BED,
     HealthDataType.INSULIN_DELIVERY,
+    HealthDataType.DISTANCE_WALKING_RUNNING,
   };
 
   // Types that are only available on Android (not supported on iOS)
@@ -278,13 +279,16 @@ class HealthService {
       final now = DateTime.now();
       final start = now.subtract(Duration(days: days));
 
+      final distanceType = Platform.isIOS
+          ? HealthDataType.DISTANCE_WALKING_RUNNING
+          : HealthDataType.DISTANCE_DELTA;
       final rawData = await _health.getHealthDataFromTypes(
         startTime: start,
         endTime: now,
         types: [
           HealthDataType.STEPS,
           HealthDataType.ACTIVE_ENERGY_BURNED,
-          HealthDataType.DISTANCE_DELTA,
+          distanceType,
         ],
       );
 
@@ -305,6 +309,7 @@ class HealthService {
             totalCalories += value;
             break;
           case HealthDataType.DISTANCE_DELTA:
+          case HealthDataType.DISTANCE_WALKING_RUNNING:
             totalDistance += value;
             break;
           default:

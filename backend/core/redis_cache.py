@@ -96,14 +96,19 @@ class RedisCache:
         # Fallback to local cache
         return self._local_get(key)
 
-    async def set(self, key: str, value: Any):
-        """Store a value. Writes to Redis if available, otherwise local."""
+    async def set(self, key: str, value: Any, ttl_override: Optional[int] = None):
+        """Store a value. Writes to Redis if available, otherwise local.
+
+        Args:
+            ttl_override: Optional TTL in seconds to use instead of the default.
+        """
+        ttl = ttl_override if ttl_override is not None else self._ttl
         if _redis_available and _redis_client:
             try:
                 await _redis_client.set(
                     self._prefix + key,
                     json.dumps(value, default=str),
-                    ex=self._ttl,
+                    ex=ttl,
                 )
                 return
             except Exception as e:

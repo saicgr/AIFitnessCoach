@@ -112,25 +112,37 @@ class WorkoutsNotifier extends StateNotifier<AsyncValue<List<Workout>>> {
     }
   }
 
-  /// Refresh workouts
+  /// Refresh workouts silently without showing loading state
+  /// Used by external callers instead of ref.invalidate() to prevent loading flash
+  Future<void> silentRefresh() async {
+    final userId = _userId ?? await _apiClient.getUserId();
+    if (!mounted || userId == null || userId.isEmpty) return;
+    await _fetchWorkoutsSilent(userId);
+  }
+
+  /// Refresh workouts — stale-while-revalidate: if we already have data,
+  /// keep showing it while fetching fresh data in the background (no loading
+  /// flash). Only shows loading spinner on the very first cold load.
   Future<void> refresh() async {
     if (!mounted) return;
     debugPrint('🏋️ [Workouts] refresh() called');
-    // Use userId from authStateProvider (passed from provider) first
     String? userId = _userId;
     if (userId == null || userId.isEmpty) {
-      // Fallback to apiClient.getUserId() for backwards compatibility
       userId = await _apiClient.getUserId();
     }
-    if (!mounted) return; // Check mounted after async
+    if (!mounted) return;
     if (userId != null && userId.isNotEmpty) {
-      debugPrint('🏋️ [Workouts] Fetching workouts for user: $userId');
-      await fetchWorkouts(userId);
-      if (!mounted) return; // Check mounted after async
+      // If we already have data, refresh silently (no loading flash)
+      if (state.hasValue) {
+        debugPrint('🏋️ [Workouts] Silent refresh (stale-while-revalidate)');
+        await _fetchWorkoutsSilent(userId);
+      } else {
+        debugPrint('🏋️ [Workouts] Cold fetch for user: $userId');
+        await fetchWorkouts(userId);
+      }
+      if (!mounted) return;
       final currentWorkouts = state.valueOrNull ?? [];
       debugPrint('🏋️ [Workouts] After refresh: ${currentWorkouts.length} workouts');
-      final nextWorkoutName = nextWorkout?.name;
-      debugPrint('🏋️ [Workouts] Next workout: $nextWorkoutName');
     } else {
       debugPrint('🏋️ [Workouts] refresh() - no userId available');
     }

@@ -391,10 +391,10 @@ class _AutoTargetCell extends StatelessWidget {
 
     if (targetWeight != null && targetReps != null) {
       final displayWeight = useKg ? targetWeight! : WeightUtils.fromKgSnapped(targetWeight!, displayInLbs: true);
-      targetString = '${displayWeight.toStringAsFixed(0)} ${useKg ? 'kg' : 'lb'} x $targetReps';
+      targetString = '${displayWeight.toStringAsFixed(displayWeight % 1 == 0 ? 0 : 1)} ${useKg ? 'kg' : 'lb'} x $targetReps';
     } else if (previousWeight != null && previousReps != null) {
       final displayWeight = useKg ? previousWeight! : WeightUtils.fromKgSnapped(previousWeight!, displayInLbs: true);
-      targetString = '${displayWeight.toStringAsFixed(0)} ${useKg ? 'kg' : 'lb'} x $previousReps';
+      targetString = '${displayWeight.toStringAsFixed(displayWeight % 1 == 0 ? 0 : 1)} ${useKg ? 'kg' : 'lb'} x $previousReps';
     } else {
       throw StateError(
         'No weight data available for set target. '

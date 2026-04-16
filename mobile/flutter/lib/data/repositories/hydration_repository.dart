@@ -73,6 +73,24 @@ class HydrationNotifier extends StateNotifier<HydrationState> {
     debugPrint('🧹 [HydrationProvider] In-memory cache cleared');
   }
 
+  /// Pre-seed state from bootstrap data so the home screen shows hydration instantly.
+  void preSeedFromBootstrap({required int currentMl, required int targetMl}) {
+    if (state.todaySummary != null) return; // Don't overwrite real data
+    final now = DateTime.now();
+    final todayStr = '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
+    state = state.copyWith(
+      todaySummary: DailyHydrationSummary(
+        date: todayStr,
+        totalMl: currentMl,
+        waterMl: currentMl,
+        goalMl: targetMl,
+        goalPercentage: targetMl > 0 ? (currentMl / targetMl * 100).clamp(0, 100) : 0,
+      ),
+      dailyGoalMl: targetMl,
+    );
+    debugPrint('⚡ [Hydration] Pre-seeded from bootstrap');
+  }
+
   /// Load today's hydration summary
   /// Set [showLoading] to false for background refreshes (e.g., after adding water)
   Future<void> loadTodaySummary(String userId, {bool showLoading = true}) async {
@@ -120,24 +138,27 @@ class HydrationNotifier extends StateNotifier<HydrationState> {
     try {
       // Invalidate any in-flight background load so it doesn't overwrite
       ++_loadEpoch;
-      // Optimistic update - immediately update the total
-      final currentSummary = state.todaySummary;
-      if (currentSummary != null) {
-        final newTotal = currentSummary.totalMl + amountMl;
-        final updatedSummary = DailyHydrationSummary(
-          date: currentSummary.date,
-          totalMl: newTotal,
-          waterMl: drinkType == 'water' ? currentSummary.waterMl + amountMl : currentSummary.waterMl,
-          proteinShakeMl: drinkType == 'protein_shake' ? currentSummary.proteinShakeMl + amountMl : currentSummary.proteinShakeMl,
-          sportsDrinkMl: drinkType == 'sports_drink' ? currentSummary.sportsDrinkMl + amountMl : currentSummary.sportsDrinkMl,
-          otherMl: (drinkType != 'water' && drinkType != 'protein_shake' && drinkType != 'sports_drink')
-              ? currentSummary.otherMl + amountMl : currentSummary.otherMl,
-          goalMl: currentSummary.goalMl,
-          goalPercentage: newTotal / currentSummary.goalMl,
-          entries: currentSummary.entries,
-        );
-        state = state.copyWith(todaySummary: updatedSummary);
-      }
+      // Optimistic update - immediately update the total.
+      // If todaySummary is null (first log, initial load not yet complete),
+      // create a fresh summary so the UI updates instantly.
+      final currentSummary = state.todaySummary ?? DailyHydrationSummary(
+        date: Tz.localDate(),
+        goalMl: state.dailyGoalMl,
+      );
+      final newTotal = currentSummary.totalMl + amountMl;
+      final goalMl = currentSummary.goalMl > 0 ? currentSummary.goalMl : state.dailyGoalMl;
+      state = state.copyWith(todaySummary: DailyHydrationSummary(
+        date: currentSummary.date,
+        totalMl: newTotal,
+        waterMl: drinkType == 'water' ? currentSummary.waterMl + amountMl : currentSummary.waterMl,
+        proteinShakeMl: drinkType == 'protein_shake' ? currentSummary.proteinShakeMl + amountMl : currentSummary.proteinShakeMl,
+        sportsDrinkMl: drinkType == 'sports_drink' ? currentSummary.sportsDrinkMl + amountMl : currentSummary.sportsDrinkMl,
+        otherMl: (drinkType != 'water' && drinkType != 'protein_shake' && drinkType != 'sports_drink')
+            ? currentSummary.otherMl + amountMl : currentSummary.otherMl,
+        goalMl: goalMl,
+        goalPercentage: goalMl > 0 ? newTotal / goalMl : 0,
+        entries: currentSummary.entries,
+      ));
 
       await _repository.logHydration(
         userId: userId,
@@ -170,24 +191,27 @@ class HydrationNotifier extends StateNotifier<HydrationState> {
     try {
       // Invalidate any in-flight background load so it doesn't overwrite
       ++_loadEpoch;
-      // Optimistic update - immediately update the total
-      final currentSummary = state.todaySummary;
-      if (currentSummary != null) {
-        final newTotal = currentSummary.totalMl + amountMl;
-        final updatedSummary = DailyHydrationSummary(
-          date: currentSummary.date,
-          totalMl: newTotal,
-          waterMl: drinkType == 'water' ? currentSummary.waterMl + amountMl : currentSummary.waterMl,
-          proteinShakeMl: drinkType == 'protein_shake' ? currentSummary.proteinShakeMl + amountMl : currentSummary.proteinShakeMl,
-          sportsDrinkMl: drinkType == 'sports_drink' ? currentSummary.sportsDrinkMl + amountMl : currentSummary.sportsDrinkMl,
-          otherMl: (drinkType != 'water' && drinkType != 'protein_shake' && drinkType != 'sports_drink')
-              ? currentSummary.otherMl + amountMl : currentSummary.otherMl,
-          goalMl: currentSummary.goalMl,
-          goalPercentage: newTotal / currentSummary.goalMl,
-          entries: currentSummary.entries,
-        );
-        state = state.copyWith(todaySummary: updatedSummary);
-      }
+      // Optimistic update - immediately update the total.
+      // If todaySummary is null (first log, initial load not yet complete),
+      // create a fresh summary so the UI updates instantly.
+      final currentSummary = state.todaySummary ?? DailyHydrationSummary(
+        date: Tz.localDate(),
+        goalMl: state.dailyGoalMl,
+      );
+      final newTotal = currentSummary.totalMl + amountMl;
+      final goalMl = currentSummary.goalMl > 0 ? currentSummary.goalMl : state.dailyGoalMl;
+      state = state.copyWith(todaySummary: DailyHydrationSummary(
+        date: currentSummary.date,
+        totalMl: newTotal,
+        waterMl: drinkType == 'water' ? currentSummary.waterMl + amountMl : currentSummary.waterMl,
+        proteinShakeMl: drinkType == 'protein_shake' ? currentSummary.proteinShakeMl + amountMl : currentSummary.proteinShakeMl,
+        sportsDrinkMl: drinkType == 'sports_drink' ? currentSummary.sportsDrinkMl + amountMl : currentSummary.sportsDrinkMl,
+        otherMl: (drinkType != 'water' && drinkType != 'protein_shake' && drinkType != 'sports_drink')
+            ? currentSummary.otherMl + amountMl : currentSummary.otherMl,
+        goalMl: goalMl,
+        goalPercentage: goalMl > 0 ? newTotal / goalMl : 0,
+        entries: currentSummary.entries,
+      ));
 
       await _repository.quickLog(
         userId: userId,

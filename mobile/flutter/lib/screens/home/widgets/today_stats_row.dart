@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/accent_color_provider.dart';
 import '../../../data/providers/xp_provider.dart';
 import '../../../data/providers/consistency_provider.dart';
 import '../../../data/providers/habit_provider.dart';
@@ -26,8 +27,7 @@ class TodayStatsRow extends ConsumerWidget {
     final pillWidgets = <Widget>[];
 
     if (pills.showGoals) pillWidgets.add(const _GoalsPill(key: ValueKey('goals_pill')));
-    if (pills.showCalories) pillWidgets.add(const _CaloriesPill(key: ValueKey('calories_pill')));
-    if (pills.showWater) pillWidgets.add(const _WaterPill(key: ValueKey('water_pill')));
+    if (pills.showNutrition) pillWidgets.add(const _NutritionPill(key: ValueKey('nutrition_pill')));
     if (pills.showBurned) pillWidgets.add(const _BurnedPill(key: ValueKey('burned_pill')));
     if (pills.showSteps) pillWidgets.add(const _StepsPill(key: ValueKey('steps_pill')));
     if (pills.showSleep) pillWidgets.add(const _SleepPill(key: ValueKey('sleep_pill')));
@@ -41,7 +41,9 @@ class TodayStatsRow extends ConsumerWidget {
       final children = <Widget>[];
       for (int i = 0; i < pillWidgets.length; i++) {
         if (i > 0) children.add(const SizedBox(width: 6));
-        children.add(Expanded(child: pillWidgets[i]));
+        // Nutrition pill gets double width for calories + macros + water
+        final flex = (pillWidgets[i].key == const ValueKey('nutrition_pill')) ? 2 : 1;
+        children.add(Expanded(flex: flex, child: pillWidgets[i]));
       }
       return Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -104,9 +106,10 @@ class _GoalsPill extends ConsumerWidget {
         children: [
           Text(
             '$completed/4',
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 15,
               fontWeight: FontWeight.bold,
+              color: completed > 0 ? doneColor : Theme.of(context).colorScheme.onSurface,
             ),
           ),
           const SizedBox(height: 4),
@@ -166,27 +169,36 @@ class _GoalsPill extends ConsumerWidget {
 }
 
 // =============================================================================
-// Pill 2 - Calories + Labeled Macros
+// Pill 2 - Nutrition (Calories + Macros + Water combined)
 // =============================================================================
 
-class _CaloriesPill extends ConsumerWidget {
-  const _CaloriesPill({super.key});
-
-  static const Color _proteinColor = AppColors.macroProtein;
-  static const Color _carbsColor = AppColors.macroCarbs;
-  static const Color _fatColor = AppColors.macroFat;
+class _NutritionPill extends ConsumerWidget {
+  const _NutritionPill({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final nutritionState = ref.watch(nutritionProvider);
     final summary = nutritionState.todaySummary;
+    final hydrationState = ref.watch(hydrationProvider);
+    final waterSummary = hydrationState.todaySummary;
+    final goalMl = hydrationState.dailyGoalMl;
 
-    final bool hasData = summary != null;
+    final bool hasNutrition = summary != null;
     final String calorieText =
-        hasData ? _formatCalories(summary.totalCalories) : '--';
-    final int proteinG = hasData ? summary.totalProteinG.round() : 0;
-    final int carbsG = hasData ? summary.totalCarbsG.round() : 0;
-    final int fatG = hasData ? summary.totalFatG.round() : 0;
+        hasNutrition ? _formatCalories(summary.totalCalories) : '--';
+    final int proteinG = hasNutrition ? summary.totalProteinG.round() : 0;
+    final int carbsG = hasNutrition ? summary.totalCarbsG.round() : 0;
+    final int fatG = hasNutrition ? summary.totalFatG.round() : 0;
+
+    final double currentL = waterSummary != null ? waterSummary.totalMl / 1000 : 0;
+    final double goalL = goalMl / 1000;
+
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final accent = AccentColorScope.of(context).getColor(isDark);
+    final textColor = Theme.of(context).colorScheme.onSurface;
+    final waterColor = currentL >= goalL
+        ? const Color(0xFF3B82F6)
+        : const Color(0xFF60A5FA);
 
     return _StatPillContainer(
       onTap: () {
@@ -196,51 +208,62 @@ class _CaloriesPill extends ConsumerWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text(
-            '$calorieText kcal',
-            style: const TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.bold,
-            ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-          const SizedBox(height: 4),
+          // Row 1: Calories + Water
           FittedBox(
             fit: BoxFit.scaleDown,
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                _macroLabel('P', proteinG, _proteinColor),
-                const SizedBox(width: 6),
-                _macroLabel('C', carbsG, _carbsColor),
-                const SizedBox(width: 6),
-                _macroLabel('F', fatG, _fatColor),
+                Text(
+                  calorieText,
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.bold,
+                    color: const Color(0xFFFF6B35),
+                  ),
+                ),
+                Text(
+                  ' kcal',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: textColor.withValues(alpha: 0.6),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Icon(Icons.water_drop, size: 13, color: waterColor),
+                const SizedBox(width: 2),
+                Text(
+                  '${currentL.toStringAsFixed(1)}L',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    color: waterColor,
+                  ),
+                ),
               ],
+            ),
+          ),
+          const SizedBox(height: 3),
+          // Row 2: Macros spanning full width with colors
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: RichText(
+              maxLines: 1,
+              text: TextSpan(
+                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
+                children: [
+                  TextSpan(text: 'P:${proteinG}g', style: TextStyle(color: isDark ? AppColors.macroProtein : AppColorsLight.macroProtein)),
+                  const TextSpan(text: '  '),
+                  TextSpan(text: 'C:${carbsG}g', style: TextStyle(color: isDark ? AppColors.macroCarbs : AppColorsLight.macroCarbs)),
+                  const TextSpan(text: '  '),
+                  TextSpan(text: 'F:${fatG}g', style: TextStyle(color: isDark ? AppColors.macroFat : AppColorsLight.macroFat)),
+                ],
+              ),
             ),
           ),
         ],
       ),
-    );
-  }
-
-  Widget _macroLabel(String letter, int grams, Color color) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Text(
-          '$letter:',
-          style: TextStyle(
-            fontSize: 10,
-            fontWeight: FontWeight.w600,
-            color: color,
-          ),
-        ),
-        Text(
-          '${grams}g',
-          style: const TextStyle(fontSize: 10),
-        ),
-      ],
     );
   }
 
@@ -251,68 +274,6 @@ class _CaloriesPill extends ConsumerWidget {
       return '$thousands,${remainder.toString().padLeft(3, '0')}';
     }
     return calories.toString();
-  }
-}
-
-// =============================================================================
-// Pill 3 - Water
-// =============================================================================
-
-class _WaterPill extends ConsumerWidget {
-  const _WaterPill({super.key});
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final hydrationState = ref.watch(hydrationProvider);
-    final summary = hydrationState.todaySummary;
-    final goalMl = hydrationState.dailyGoalMl;
-
-    final bool hasData = summary != null;
-    final double currentL = hasData ? summary.totalMl / 1000 : 0;
-    final double goalL = goalMl / 1000;
-
-    return _StatPillContainer(
-      onTap: () {
-        HapticService.light();
-        context.go('/nutrition?tab=2');
-      },
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          RichText(
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            text: TextSpan(
-              style: DefaultTextStyle.of(context).style,
-              children: [
-                TextSpan(
-                  text: currentL.toStringAsFixed(1),
-                  style: const TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                TextSpan(
-                  text: '/${goalL.toStringAsFixed(1)}L',
-                  style: TextStyle(
-                    fontSize: 10,
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 4),
-          Icon(
-            Icons.water_drop_outlined,
-            size: 14,
-            color: currentL >= goalL
-                ? const Color(0xFF3B82F6)
-                : Theme.of(context).colorScheme.onSurfaceVariant,
-          ),
-        ],
-      ),
-    );
   }
 }
 
@@ -353,9 +314,12 @@ class _BurnedPill extends ConsumerWidget {
         children: [
           Text(
             connected || saunaCal > 0 ? '$burned' : '--',
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 15,
               fontWeight: FontWeight.bold,
+              color: (connected && healthBurned > 0) || saunaCal > 0
+                  ? const Color(0xFFFF6B35)
+                  : Theme.of(context).colorScheme.onSurface,
             ),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
@@ -400,9 +364,12 @@ class _StepsPill extends ConsumerWidget {
         children: [
           Text(
             connected ? _formatSteps(steps) : '--',
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 15,
               fontWeight: FontWeight.bold,
+              color: connected && steps > 0
+                  ? const Color(0xFF8B5CF6)
+                  : Theme.of(context).colorScheme.onSurface,
             ),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
@@ -457,9 +424,12 @@ class _SleepPill extends ConsumerWidget {
         children: [
           Text(
             connected && totalMin > 0 ? '${hours}h${mins > 0 ? ' ${mins}m' : ''}' : '--',
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 15,
               fontWeight: FontWeight.bold,
+              color: connected && totalMin > 0
+                  ? const Color(0xFF6366F1)
+                  : Theme.of(context).colorScheme.onSurface,
             ),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
@@ -501,14 +471,17 @@ class _StreakPill extends ConsumerWidget {
         children: [
           Text(
             '$streak',
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 15,
               fontWeight: FontWeight.bold,
+              color: isActive && streak > 0
+                  ? const Color(0xFFF59E0B)
+                  : Theme.of(context).colorScheme.onSurface,
             ),
           ),
           const SizedBox(height: 4),
           Icon(
-            Icons.local_fire_department_outlined,
+            Icons.bolt_outlined,
             size: 14,
             color: isActive && streak > 0
                 ? const Color(0xFFF59E0B)
@@ -561,9 +534,12 @@ class _HabitsPill extends ConsumerWidget {
         children: [
           Text(
             total > 0 ? '$completed/$total' : '--',
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 15,
               fontWeight: FontWeight.bold,
+              color: completed > 0
+                  ? const Color(0xFF10B981)
+                  : Theme.of(context).colorScheme.onSurface,
             ),
           ),
           const SizedBox(height: 4),
@@ -597,6 +573,7 @@ class _StatPillContainer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final textColor = Theme.of(context).colorScheme.onSurface;
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(12),
@@ -606,7 +583,10 @@ class _StatPillContainer extends StatelessWidget {
           color: Theme.of(context).colorScheme.surfaceContainerLow,
           borderRadius: BorderRadius.circular(12),
         ),
-        child: child,
+        child: DefaultTextStyle(
+          style: TextStyle(color: textColor),
+          child: child,
+        ),
       ),
     );
   }

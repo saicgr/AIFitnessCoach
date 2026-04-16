@@ -225,7 +225,6 @@ extension _SettingsScreenStateUI on _SettingsScreenState {
               )
             else if (row.value != null) ...[
               Flexible(
-                flex: 0,
                 child: Text(
                   row.value!,
                   style: TextStyle(
@@ -234,6 +233,7 @@ extension _SettingsScreenStateUI on _SettingsScreenState {
                   ),
                   overflow: TextOverflow.ellipsis,
                   maxLines: 1,
+                  textAlign: TextAlign.end,
                 ),
               ),
               const SizedBox(width: 4),

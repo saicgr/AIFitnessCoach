@@ -210,8 +210,8 @@ class _HeroWorkoutCardState extends ConsumerState<HeroWorkoutCard> {
       final success = await repo.deleteWorkout(widget.workout.id!);
 
       if (success && mounted) {
-        ref.invalidate(todayWorkoutProvider);
-        ref.invalidate(workoutsProvider);
+        ref.read(todayWorkoutProvider.notifier).invalidateAndRefresh();
+        ref.read(workoutsProvider.notifier).silentRefresh();
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
@@ -258,8 +258,8 @@ class _HeroWorkoutCardState extends ConsumerState<HeroWorkoutCard> {
       final success = await repo.uncompleteWorkout(widget.workout.id!);
 
       if (success && mounted) {
-        ref.invalidate(todayWorkoutProvider);
-        ref.invalidate(workoutsProvider);
+        ref.read(todayWorkoutProvider.notifier).invalidateAndRefresh();
+        ref.read(workoutsProvider.notifier).silentRefresh();
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
@@ -349,8 +349,8 @@ class _HeroWorkoutCardState extends ConsumerState<HeroWorkoutCard> {
     );
 
     if (updatedWorkout != null && mounted) {
-      ref.invalidate(todayWorkoutProvider);
-      ref.invalidate(workoutsProvider);
+      ref.read(todayWorkoutProvider.notifier).invalidateAndRefresh();
+      ref.read(workoutsProvider.notifier).silentRefresh();
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Exercise added!'),
@@ -757,10 +757,14 @@ class _HeroWorkoutCardState extends ConsumerState<HeroWorkoutCard> {
                           child: Container(
                             padding: const EdgeInsets.symmetric(vertical: 8),
                             decoration: BoxDecoration(
-                              color: accentColor.withValues(alpha: 0.15),
+                              color: isDark
+                                  ? Colors.white.withValues(alpha: 0.1)
+                                  : Colors.black.withValues(alpha: 0.05),
                               borderRadius: BorderRadius.circular(10),
                               border: Border.all(
-                                color: accentColor.withValues(alpha: 0.3),
+                                color: isDark
+                                    ? Colors.white.withValues(alpha: 0.15)
+                                    : Colors.black.withValues(alpha: 0.1),
                               ),
                             ),
                             child: Row(
@@ -769,7 +773,9 @@ class _HeroWorkoutCardState extends ConsumerState<HeroWorkoutCard> {
                                 Icon(
                                   Icons.refresh,
                                   size: 16,
-                                  color: accentColor,
+                                  color: isDark
+                                      ? Colors.white.withValues(alpha: 0.9)
+                                      : Colors.black87,
                                 ),
                                 const SizedBox(width: 6),
                                 Text(
@@ -777,7 +783,9 @@ class _HeroWorkoutCardState extends ConsumerState<HeroWorkoutCard> {
                                   style: TextStyle(
                                     fontSize: 13,
                                     fontWeight: FontWeight.w500,
-                                    color: accentColor,
+                                    color: isDark
+                                        ? Colors.white.withValues(alpha: 0.9)
+                                        : Colors.black87,
                                   ),
                                 ),
                               ],

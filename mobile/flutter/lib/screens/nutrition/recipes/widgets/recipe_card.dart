@@ -20,6 +20,7 @@ class RecipeCard extends StatelessWidget {
   final bool isDark;
   final Color accent;
   final VoidCallback onTap;
+  final VoidCallback? onLongPress;
 
   /// When true, shows a top-left source pill ("Curated" / "Improvized" /
   /// "Imported") when the recipe has a distinct enough source to warrant it.
@@ -32,6 +33,7 @@ class RecipeCard extends StatelessWidget {
     required this.isDark,
     required this.accent,
     required this.onTap,
+    this.onLongPress,
     this.showSourceBadge = false,
   });
 
@@ -46,6 +48,7 @@ class RecipeCard extends StatelessWidget {
     return InkWell(
       borderRadius: BorderRadius.circular(16),
       onTap: onTap,
+      onLongPress: onLongPress,
       child: Container(
         decoration: BoxDecoration(
           color: surface,

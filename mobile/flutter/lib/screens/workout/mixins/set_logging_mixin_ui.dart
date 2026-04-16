@@ -19,10 +19,10 @@ extension SetLoggingMixinUI on SetLoggingMixin {
   /// Recalculate and apply progression targets for an exercise.
   /// Works in DISPLAY units to avoid kg/lbs rounding issues.
   /// Handles warmup sets with 50% weight and 6-12 rep clamping.
-  void applyProgressionTargets(int exerciseIndex, SetProgressionPattern pattern) {
+  void applyProgressionTargets(int exerciseIndex, SetProgressionPattern pattern, {double? overrideWeight}) {
     final exercise = exercises[exerciseIndex];
     debugPrint('🎯 [ApplyTargets] ENTER: ex=$exerciseIndex "${exercise.name}", pattern=${pattern.displayName}, '
-        'exercise.weight=${exercise.weight}, equipment=${exercise.equipment}, setTargets=${exercise.setTargets?.length ?? 0}');
+        'exercise.weight=${exercise.weight}, equipment=${exercise.equipment}, setTargets=${exercise.setTargets?.length ?? 0}, overrideWeight=$overrideWeight');
 
     final eq = (exercise.equipment ?? '').toLowerCase();
     if (eq.contains('bodyweight') || eq.contains('body weight')) {
@@ -42,40 +42,54 @@ extension SetLoggingMixinUI on SetLoggingMixin {
       effectiveIncrement = incrementRaw;
     }
 
-    final controllerWeight = exerciseIndex == currentExerciseIndex
-        ? (double.tryParse(weightController.text) ?? 0)
-        : 0.0;
     double displayWeight;
-    if (controllerWeight > 0) {
-      displayWeight = controllerWeight;
-      debugPrint('⚙️ [ApplyTargets] ex=$exerciseIndex weight from controller: $displayWeight');
+    if (overrideWeight != null && overrideWeight > 0) {
+      // Explicit correct weight from caller — bypasses controller entirely
+      displayWeight = overrideWeight;
+      debugPrint('⚙️ [ApplyTargets] ex=$exerciseIndex weight from override: $displayWeight');
     } else {
-      final aiWeight = exercise.weight?.toDouble() ?? 0;
-      if (aiWeight > 0) {
-        displayWeight = useKg
-            ? aiWeight
-            : kgToDisplayLbs(aiWeight, exercise.equipment,
-                exerciseName: exercise.name,);
-        debugPrint('⚙️ [ApplyTargets] ex=$exerciseIndex weight from exercise.weight: $aiWeight kg → display=$displayWeight');
+      // Safety net: if current set is a warmup, the controller has the
+      // warmup-halved weight — skip it and use exercise.weight instead.
+      final completedCount = completedSets[exerciseIndex]?.length ?? 0;
+      final currentSetTarget = exercise.setTargets != null && completedCount < exercise.setTargets!.length
+          ? exercise.setTargets![completedCount] : null;
+      final isOnWarmupSet = currentSetTarget?.isWarmup ?? false;
+
+      final controllerWeight = (!isOnWarmupSet && exerciseIndex == currentExerciseIndex)
+          ? (double.tryParse(weightController.text) ?? 0)
+          : 0.0;
+
+      if (controllerWeight > 0) {
+        displayWeight = controllerWeight;
+        debugPrint('⚙️ [ApplyTargets] ex=$exerciseIndex weight from controller: $displayWeight');
       } else {
-        final workingTarget = exercise.setTargets?.cast<SetTarget?>().firstWhere(
-          (t) => t != null && t.setType.toLowerCase() != 'warmup' && (t.targetWeightKg ?? 0) > 0,
-          orElse: () => exercise.setTargets?.isNotEmpty == true ? exercise.setTargets!.first : null,
-        );
-        final targetWt = workingTarget?.targetWeightKg ?? 0;
-        if (targetWt > 0) {
+        final aiWeight = exercise.weight?.toDouble() ?? 0;
+        if (aiWeight > 0) {
           displayWeight = useKg
-              ? targetWt
-              : kgToDisplayLbs(targetWt, exercise.equipment,
-                exerciseName: exercise.name,);
-          debugPrint('⚙️ [ApplyTargets] ex=$exerciseIndex weight from setTarget: $targetWt → display=$displayWeight');
+              ? aiWeight
+              : kgToDisplayLbs(aiWeight, exercise.equipment,
+                  exerciseName: exercise.name,);
+          debugPrint('⚙️ [ApplyTargets] ex=$exerciseIndex weight from exercise.weight: $aiWeight kg → display=$displayWeight${isOnWarmupSet ? ' (warmup safety net)' : ''}');
         } else {
-          displayWeight = getDefaultWeight(exercise.equipment,
-              exerciseName: exercise.name,
-              fitnessLevel: ref.read(authStateProvider).user?.effectiveFitnessLevel,
-              gender: ref.read(authStateProvider).user?.gender,
-              useKg: useKg);
-          debugPrint('⚙️ [ApplyTargets] ex=$exerciseIndex weight from getDefaultWeight: $displayWeight');
+          final workingTarget = exercise.setTargets?.cast<SetTarget?>().firstWhere(
+            (t) => t != null && t.setType.toLowerCase() != 'warmup' && (t.targetWeightKg ?? 0) > 0,
+            orElse: () => exercise.setTargets?.isNotEmpty == true ? exercise.setTargets!.first : null,
+          );
+          final targetWt = workingTarget?.targetWeightKg ?? 0;
+          if (targetWt > 0) {
+            displayWeight = useKg
+                ? targetWt
+                : kgToDisplayLbs(targetWt, exercise.equipment,
+                  exerciseName: exercise.name,);
+            debugPrint('⚙️ [ApplyTargets] ex=$exerciseIndex weight from setTarget: $targetWt → display=$displayWeight');
+          } else {
+            displayWeight = getDefaultWeight(exercise.equipment,
+                exerciseName: exercise.name,
+                fitnessLevel: ref.read(authStateProvider).user?.effectiveFitnessLevel,
+                gender: ref.read(authStateProvider).user?.gender,
+                useKg: useKg);
+            debugPrint('⚙️ [ApplyTargets] ex=$exerciseIndex weight from getDefaultWeight: $displayWeight');
+          }
         }
       }
     }
@@ -92,9 +106,27 @@ extension SetLoggingMixinUI on SetLoggingMixin {
     final baseReps = exercise.reps ?? 10;
     final totalSets = totalSetsPerExercise[exerciseIndex] ?? 3;
 
+    final currentSetTargets = List<SetTarget>.from(exercise.setTargets ?? []);
+    while (currentSetTargets.length < totalSets) {
+      currentSetTargets.add(SetTarget(
+        setNumber: currentSetTargets.length + 1,
+        targetReps: baseReps,
+        targetWeightKg: _displayToKg(enteredWeight),
+      ));
+    }
+
+    // Count working sets (exclude warmups) so pyramid targets are generated
+    // for working sets only. Without this, the warmup position consumes a
+    // pyramid slot and the first working set starts one increment above the
+    // entered weight instead of AT the entered weight.
+    final warmupCount = currentSetTargets.where(
+        (t) => t.setType.toLowerCase() == 'warmup').length;
+    final workingSets = totalSets - warmupCount;
+    final effectiveSetsForTargets = workingSets > 0 ? workingSets : totalSets;
+
     final workingWeight = pattern.deriveWorkingWeight(
       enteredWeight: enteredWeight,
-      totalSets: totalSets,
+      totalSets: effectiveSetsForTargets,
       increment: effectiveIncrement,
     );
     exerciseWorkingWeight[exerciseIndex] = workingWeight;
@@ -110,7 +142,7 @@ extension SetLoggingMixinUI on SetLoggingMixin {
 
     final targets = pattern.generateTargets(
       workingWeight: workingWeight,
-      totalSets: totalSets,
+      totalSets: effectiveSetsForTargets,
       baseReps: baseReps,
       increment: effectiveIncrement,
       trainingGoal: userGoal,
@@ -120,23 +152,28 @@ extension SetLoggingMixinUI on SetLoggingMixin {
       equipment: exercise.equipment,
     );
 
-    final currentSetTargets = List<SetTarget>.from(exercise.setTargets ?? []);
-    while (currentSetTargets.length < totalSets) {
-      currentSetTargets.add(SetTarget(
-        setNumber: currentSetTargets.length + 1,
-        targetReps: baseReps,
-        targetWeightKg: _displayToKg(workingWeight),
-      ));
-    }
+    debugPrint('⚙️ [ApplyTargets] ex=$exerciseIndex totalSets=$totalSets, warmups=$warmupCount, '
+        'workingSets=$effectiveSetsForTargets, targets=${targets.length}, enteredWeight=$enteredWeight, workingWeight=$workingWeight');
 
     final completedCount = completedSets[exerciseIndex]?.length ?? 0;
 
-    for (int i = completedCount; i < targets.length && i < currentSetTargets.length; i++) {
-      final pt = targets[i];
+    // Map targets (generated for working sets only) to set positions.
+    // Warmup sets get 50% of the first working target's weight.
+    // Working sets get their targets in order.
+    int workingTargetIdx = 0;
+    // Count how many working sets were already completed to start the target index correctly
+    for (int i = 0; i < completedCount && i < currentSetTargets.length; i++) {
+      if (currentSetTargets[i].setType.toLowerCase() != 'warmup') {
+        workingTargetIdx++;
+      }
+    }
+
+    for (int i = completedCount; i < currentSetTargets.length; i++) {
       final isWarmupSet = currentSetTargets[i].setType.toLowerCase() == 'warmup';
 
       double targetWeight;
       int targetReps;
+      int? targetRir;
 
       if (isWarmupSet) {
         targetWeight = targets.first.weight * 0.5;
@@ -148,10 +185,20 @@ extension SetLoggingMixinUI on SetLoggingMixin {
           targetWeight = ((targetWeight / warmupStep).round() * warmupStep)
               .clamp(minWeight, upperBound);
         }
-        targetReps = (pt.reps > 0 ? pt.reps : baseReps).clamp(6, 12);
-      } else {
+        targetReps = baseReps.clamp(6, 12);
+        targetRir = currentSetTargets[i].targetRir;
+      } else if (workingTargetIdx < targets.length) {
+        final pt = targets[workingTargetIdx];
         targetWeight = pt.weight;
         targetReps = pt.isAmrap ? 0 : pt.reps;
+        targetRir = pt.rir ?? currentSetTargets[i].targetRir;
+        workingTargetIdx++;
+      } else {
+        // More working sets than targets — use last target
+        final pt = targets.last;
+        targetWeight = pt.weight;
+        targetReps = pt.isAmrap ? 0 : pt.reps;
+        targetRir = pt.rir ?? currentSetTargets[i].targetRir;
       }
 
       // Snap to valid equipment weight (e.g., barbell 5 lb steps from 45)
@@ -162,10 +209,10 @@ extension SetLoggingMixinUI on SetLoggingMixin {
       // converts kg→display, so storing lbs would cause double-conversion
       currentSetTargets[i] = SetTarget(
         setNumber: i + 1,
-        setType: isWarmupSet ? 'warmup' : (pt.isAmrap ? 'amrap' : currentSetTargets[i].setType),
+        setType: isWarmupSet ? 'warmup' : (workingTargetIdx <= targets.length && workingTargetIdx > 0 && targets[workingTargetIdx - 1].isAmrap ? 'amrap' : currentSetTargets[i].setType),
         targetReps: targetReps,
         targetWeightKg: _displayToKg(targetWeight),
-        targetRir: pt.rir ?? currentSetTargets[i].targetRir,
+        targetRir: targetRir,
       );
     }
 
@@ -173,9 +220,8 @@ extension SetLoggingMixinUI on SetLoggingMixin {
       exercises[exerciseIndex] = exercise.copyWith(setTargets: currentSetTargets);
     });
 
-    if (completedCount < targets.length) {
-      final isWarmup = currentSetTargets.length > completedCount &&
-          currentSetTargets[completedCount].setType.toLowerCase() == 'warmup';
+    if (completedCount < currentSetTargets.length) {
+      final isWarmup = currentSetTargets[completedCount].setType.toLowerCase() == 'warmup';
 
       final double weight;
       final int reps;
@@ -185,10 +231,23 @@ extension SetLoggingMixinUI on SetLoggingMixin {
         weight = useKg ? rawKg : kgToDisplayLbs(rawKg, exercise.equipment, exerciseName: exercise.name);
         reps = warmupTarget.targetReps;
       } else {
-        final pt = targets[completedCount];
-        weight = snapToRealIncrement(pt.weight, exercise.equipment,
-            exerciseName: exercise.name, useKg: useKg);
-        reps = pt.reps;
+        // Find the first uncompleted working target
+        int firstWorkingIdx = 0;
+        for (int i = 0; i < completedCount && i < currentSetTargets.length; i++) {
+          if (currentSetTargets[i].setType.toLowerCase() != 'warmup') {
+            firstWorkingIdx++;
+          }
+        }
+        if (firstWorkingIdx < targets.length) {
+          final pt = targets[firstWorkingIdx];
+          weight = snapToRealIncrement(pt.weight, exercise.equipment,
+              exerciseName: exercise.name, useKg: useKg);
+          reps = pt.reps;
+        } else {
+          weight = snapToRealIncrement(targets.last.weight, exercise.equipment,
+              exerciseName: exercise.name, useKg: useKg);
+          reps = targets.last.reps;
+        }
       }
 
       weightController.text = weight > 0
@@ -223,7 +282,51 @@ extension SetLoggingMixinUI on SetLoggingMixin {
     }
 
     if (lastWorkingLog == null) {
-      debugPrint('📊 [NextSet] No working sets completed yet — delegating to initControllersForExercise');
+      if (completedLogs != null && completedLogs.isNotEmpty) {
+        // Warmups completed but no working sets yet. Check if the user
+        // significantly overrode the warmup target (e.g., did 20kg when
+        // target was 3kg) — if so, recalculate targets using their actual weight.
+        final lastLog = completedLogs.last;
+        final actualWeightKg = lastLog.weight;
+        final actualWeight = useKg
+            ? actualWeightKg
+            : kgToDisplayLbs(actualWeightKg, exercise.equipment,
+                exerciseName: exercise.name);
+
+        final lastLogIdx = completedLogs.length - 1;
+        final warmupTargetKg = exercise.setTargets != null && lastLogIdx < exercise.setTargets!.length
+            ? (exercise.setTargets![lastLogIdx].targetWeightKg ?? 0.0) : 0.0;
+
+        if (warmupTargetKg > 0 && actualWeightKg > warmupTargetKg * 1.3) {
+          // User used significantly heavier weight than warmup target — recalculate
+          debugPrint('📊 [NextSet] Warmup override detected: actual=${actualWeightKg}kg vs target=${warmupTargetKg}kg — recalculating');
+          applyProgressionTargets(currentExerciseIndex, pattern, overrideWeight: actualWeight);
+        }
+
+        // Advance controller to the next set's target (original or recalculated)
+        final updatedExercise = exercises[currentExerciseIndex];
+        final nextSetIndex = completedLogs.length;
+        if (updatedExercise.setTargets != null && nextSetIndex < updatedExercise.setTargets!.length) {
+          final nextTarget = updatedExercise.setTargets![nextSetIndex];
+          final nextWeightKg = nextTarget.targetWeightKg ?? 0;
+          if (nextWeightKg > 0) {
+            final nextDisplayWeight = useKg
+                ? nextWeightKg
+                : kgToDisplayLbs(nextWeightKg, exercise.equipment,
+                    exerciseName: exercise.name);
+            weightController.text = nextDisplayWeight.toStringAsFixed(
+                nextDisplayWeight % 1 == 0 ? 0 : 1);
+            repsController.text = (nextTarget.targetReps > 0
+                ? nextTarget.targetReps
+                : (exercise.reps ?? 10)).toString();
+            repsRightController.text = repsController.text;
+            debugPrint('📊 [NextSet] Warmup done — controller set to set ${nextSetIndex + 1}: $nextDisplayWeight');
+            return;
+          }
+        }
+      }
+      // True fallback: no completed logs at all
+      debugPrint('📊 [NextSet] No completed logs — delegating to initControllersForExercise');
       initControllersForExercise(currentExerciseIndex);
       return;
     }
@@ -250,20 +353,36 @@ extension SetLoggingMixinUI on SetLoggingMixin {
         ? (actualWeight / effectiveIncrement).round() * effectiveIncrement
         : actualWeight;
 
-    final completedIndex = (completedLogs?.length ?? 1) - 1;
+    // Count working sets (exclude warmups) for correct pyramid calculation
+    final setTargetsRef = exercise.setTargets;
+    final warmupCount = setTargetsRef != null
+        ? setTargetsRef.where((t) => t.setType.toLowerCase() == 'warmup').length : 0;
+    final workingSets = totalSets - warmupCount;
+    final effectiveSetsForTargets = workingSets > 0 ? workingSets : totalSets;
+
+    // Compute the working-set index of the last completed working set
+    int completedWorkingIndex = 0;
+    if (completedLogs != null) {
+      for (int i = 0; i < completedLogs.length; i++) {
+        final isWarmup = setTargetsRef != null && i < setTargetsRef.length &&
+            setTargetsRef[i].setType.toLowerCase() == 'warmup';
+        if (!isWarmup) completedWorkingIndex++;
+      }
+      completedWorkingIndex = (completedWorkingIndex - 1).clamp(0, effectiveSetsForTargets - 1);
+    }
 
     final workingWeight = pattern.deriveWorkingWeight(
       enteredWeight: snapped,
-      totalSets: totalSets,
+      totalSets: effectiveSetsForTargets,
       increment: effectiveIncrement,
-      completedSetIndex: completedIndex,
+      completedSetIndex: completedWorkingIndex,
     );
     exerciseWorkingWeight[currentExerciseIndex] = workingWeight;
 
     final userGoal = ref.read(authStateProvider).user?.primaryGoal;
     final rawBaseReps = (lastWorkingLog.reps).clamp(1, 30);
     final baseReps = SetProgressionPatternX.reverseRepOffset(
-      pattern, rawBaseReps, completedIndex, totalSets,
+      pattern, rawBaseReps, completedWorkingIndex, effectiveSetsForTargets,
     );
 
     final exType = FatigueService.getExerciseType(exercise.muscleGroup, exercise.name);
@@ -276,7 +395,7 @@ extension SetLoggingMixinUI on SetLoggingMixin {
 
     var targets = pattern.generateTargets(
       workingWeight: workingWeight,
-      totalSets: totalSets,
+      totalSets: effectiveSetsForTargets,
       baseReps: baseReps,
       increment: effectiveIncrement,
       trainingGoal: userGoal,
@@ -289,7 +408,6 @@ extension SetLoggingMixinUI on SetLoggingMixin {
     final completedSetLogs = completedSets[currentExerciseIndex];
 
     if (completedSetLogs != null && completedSetLogs.isNotEmpty) {
-      final setTargetsRef = exercise.setTargets;
       final completedData = <CompletedSetData>[];
       for (int i = 0; i < completedSetLogs.length; i++) {
         final log = completedSetLogs[i];
@@ -312,7 +430,7 @@ extension SetLoggingMixinUI on SetLoggingMixin {
         originalTargets: targets,
         completedSets: completedData,
         increment: effectiveIncrement,
-        totalSets: totalSets,
+        totalSets: effectiveSetsForTargets,
       );
       targets = adaptResult.targets;
 
@@ -331,8 +449,18 @@ extension SetLoggingMixinUI on SetLoggingMixin {
           targetWeightKg: _displayToKg(workingWeight),
         ));
       }
-      for (int i = completedCount; i < targets.length && i < currentSetTargets.length; i++) {
-        final pt = targets[i];
+      // Map working-set targets to the correct positions (skip warmups)
+      int workingTargetIdx = 0;
+      for (int i = 0; i < completedCount && i < currentSetTargets.length; i++) {
+        if (currentSetTargets[i].setType.toLowerCase() != 'warmup') {
+          workingTargetIdx++;
+        }
+      }
+      for (int i = completedCount; i < currentSetTargets.length; i++) {
+        final isWarmup = currentSetTargets[i].setType.toLowerCase() == 'warmup';
+        if (isWarmup) continue; // Don't overwrite warmup targets
+        if (workingTargetIdx >= targets.length) break;
+        final pt = targets[workingTargetIdx];
         final snappedWeight = snapToRealIncrement(pt.weight, exercise.equipment,
             exerciseName: exercise.name, useKg: useKg);
         currentSetTargets[i] = SetTarget(
@@ -342,16 +470,23 @@ extension SetLoggingMixinUI on SetLoggingMixin {
           targetWeightKg: _displayToKg(snappedWeight),
           targetRir: currentSetTargets[i].targetRir,
         );
+        workingTargetIdx++;
       }
       _setState(() {
         exercises[currentExerciseIndex] = exercise.copyWith(setTargets: currentSetTargets);
       });
     }
 
-    final nextSetIndex = completedCount;
-    if (nextSetIndex >= targets.length) return;
+    // Find the next working set's target
+    int nextWorkingIdx = 0;
+    for (int i = 0; i < completedCount; i++) {
+      final isWarmup = setTargetsRef != null && i < setTargetsRef.length &&
+          setTargetsRef[i].setType.toLowerCase() == 'warmup';
+      if (!isWarmup) nextWorkingIdx++;
+    }
+    if (nextWorkingIdx >= targets.length) return;
 
-    final nextTarget = targets[nextSetIndex];
+    final nextTarget = targets[nextWorkingIdx];
 
     final currentControllerWeight = double.tryParse(weightController.text) ?? 0;
     final previousSetWeightKg = completedSets[currentExerciseIndex]?.last.weight ?? 0;

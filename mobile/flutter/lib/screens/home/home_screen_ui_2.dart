@@ -233,7 +233,7 @@ extension _HomeScreenStateUI2 on _HomeScreenState {
       ),
       error: (e, _) => ErrorCard(
         message: 'Failed to load workout',
-        onRetry: () => ref.invalidate(workoutsProvider),
+        onRetry: () => ref.read(workoutsProvider.notifier).silentRefresh(),
       ),
       data: (workouts) {
         if (workouts.isEmpty) {

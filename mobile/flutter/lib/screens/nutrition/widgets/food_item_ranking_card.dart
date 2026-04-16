@@ -151,6 +151,7 @@ class _FoodItemRankingCardState extends State<_FoodItemRankingCard> {
   int? _displayCalories;
   _PortionDisplayMode _displayMode = _PortionDisplayMode.weight;
   late double _baselineWeight;
+  late double _baselineWeightPerUnit;
   String? _activePreset;
 
   @override
@@ -159,6 +160,10 @@ class _FoodItemRankingCardState extends State<_FoodItemRankingCard> {
     _currentWeight = widget.item.weightG ?? 100.0;
     _currentCount = widget.item.count ?? 1;
     _baselineWeight = _currentWeight;
+    // When weightPerUnitG isn't set, derive per-unit weight from total weight / count
+    // so count mode doesn't treat the entire serving as one "piece"
+    _baselineWeightPerUnit = widget.item.weightPerUnitG ??
+        (_currentWeight / _currentCount);
     _activePreset = 'M';
     _weightController = TextEditingController(text: _currentWeight.round().toString());
     _countController = TextEditingController(text: _currentCount.toString());
@@ -177,6 +182,9 @@ class _FoodItemRankingCardState extends State<_FoodItemRankingCard> {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.item.name != widget.item.name) {
       _baselineWeight = widget.item.weightG ?? 100.0;
+      final count = widget.item.count ?? 1;
+      _baselineWeightPerUnit = widget.item.weightPerUnitG ??
+          (_baselineWeight / count);
       _activePreset = 'M';
     }
     if (oldWidget.item.weightG != widget.item.weightG) {
@@ -250,7 +258,7 @@ class _FoodItemRankingCardState extends State<_FoodItemRankingCard> {
       _activePreset = null;
       _currentCount = newCount;
       _countController.text = newCount.toString();
-      final effectiveWeightPerUnit = widget.item.weightPerUnitG ?? _baselineWeight;
+      final effectiveWeightPerUnit = widget.item.weightPerUnitG ?? _baselineWeightPerUnit;
       _currentWeight = newCount * effectiveWeightPerUnit;
       _weightController.text = _currentWeight.round().toString();
       final originalWeight = widget.item.weightG ?? 100.0;
@@ -264,7 +272,7 @@ class _FoodItemRankingCardState extends State<_FoodItemRankingCard> {
         final updatedItem = widget.item.withCount(newCount);
         widget.onWeightChanged!(updatedItem);
       } else {
-        final effectiveWPU = widget.item.weightPerUnitG ?? _baselineWeight;
+        final effectiveWPU = widget.item.weightPerUnitG ?? _baselineWeightPerUnit;
         final newWeight = newCount * effectiveWPU;
         final originalWeight = widget.item.weightG ?? 100.0;
         if (originalWeight > 0) {
@@ -534,7 +542,8 @@ class _FoodItemRankingCardState extends State<_FoodItemRankingCard> {
                     ),
                   ),
                   const SizedBox(width: 2),
-                  Text('pcs', style: TextStyle(fontSize: 12, color: textMuted)),
+                  Text(widget.item.weightPerUnitG != null ? 'pcs' : 'servings',
+                      style: TextStyle(fontSize: 12, color: textMuted)),
                 ],
               )
             else

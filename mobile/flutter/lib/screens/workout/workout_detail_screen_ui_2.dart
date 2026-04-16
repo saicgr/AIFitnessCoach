@@ -254,8 +254,8 @@ extension __WorkoutDetailScreenStateExt2 on _WorkoutDetailScreenState {
         );
         if (updatedWorkout != null && mounted) {
           setState(() => _workout = updatedWorkout);
-          ref.invalidate(todayWorkoutProvider);
-          ref.invalidate(workoutsProvider);
+          ref.read(todayWorkoutProvider.notifier).invalidateAndRefresh();
+          ref.read(workoutsProvider.notifier).silentRefresh();
         }
       },
       onLinkSuperset: exercise.isInSuperset
@@ -324,8 +324,8 @@ extension __WorkoutDetailScreenStateExt2 on _WorkoutDetailScreenState {
       if (mounted) {
         if (updatedWorkout != null) {
           setState(() => _workout = updatedWorkout);
-          ref.invalidate(todayWorkoutProvider);
-          ref.invalidate(workoutsProvider);
+          ref.read(todayWorkoutProvider.notifier).invalidateAndRefresh();
+          ref.read(workoutsProvider.notifier).silentRefresh();
 
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(

@@ -14,6 +14,9 @@ extension __HomeScreenStateExt on _HomeScreenState {
     // before the user interacts with home. Runs async so it can read prefs.
     _maybeShowNotificationPrime();
     WidgetsBinding.instance.addPostFrameCallback((_) async {
+      // Eagerly trigger todayWorkoutProvider so it starts loading before build()
+      // If bootstrap already pre-seeded the cache, this returns instantly
+      ref.read(todayWorkoutProvider);
       // Reset nav bar labels to expanded when on Home screen
       ref.read(navBarLabelsExpandedProvider.notifier).state = true;
       // M4: Run critical initialization tasks first, then non-critical ones

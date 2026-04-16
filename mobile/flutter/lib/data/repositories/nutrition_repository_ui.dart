@@ -823,7 +823,7 @@ extension NutritionRepositoryExt on NutritionRepository {
     int offset = 0,
     String? category,
     String? search,
-    String sortBy = 'created_at',
+    String sortBy = 'created_desc',
   }) async {
     try {
       final queryParams = <String, dynamic>{

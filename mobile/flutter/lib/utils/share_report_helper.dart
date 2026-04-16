@@ -62,10 +62,18 @@ Future<void> shareReportScreen({
       return;
     }
 
+    // iOS requires a non-zero sharePositionOrigin for the share popover.
+    Rect? origin;
+    final box = context.findRenderObject() as RenderBox?;
+    if (box != null && box.hasSize) {
+      origin = box.localToGlobal(Offset.zero) & box.size;
+    }
+
     final result = await ShareService.shareGeneric(
       bytes,
       caption: caption,
       subject: subject,
+      sharePositionOrigin: origin,
     );
 
     if (!result.success && result.error != null) {

@@ -733,8 +733,7 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
       final success = await repository.rescheduleWorkout(workout.id!, newDateStr);
 
       if (success) {
-        await ref.read(workoutsProvider.notifier).refresh();
-        ref.invalidate(workoutsProvider);
+        await ref.read(workoutsProvider.notifier).silentRefresh();
 
         if (mounted) {
           AppSnackBar.success(context, 'Workout moved to ${DateFormat('EEEE, MMM d').format(newDate)}');

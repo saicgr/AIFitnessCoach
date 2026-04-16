@@ -19,6 +19,8 @@ Future<void> showPostMealReviewSheet(
   required bool isDark,
   required String userId,
   String? foodLogId,
+  Future<void>? saveFuture,
+  String? Function()? getSavedLogId,
 }) async {
   final prefs = await SharedPreferences.getInstance();
   if (prefs.getBool(_kHidePostMealReviewKey) == true) return;
@@ -41,6 +43,8 @@ Future<void> showPostMealReviewSheet(
       isDark: isDark,
       userId: userId,
       foodLogId: foodLogId,
+      saveFuture: saveFuture,
+      getSavedLogId: getSavedLogId,
     ),
   );
 }
@@ -51,6 +55,8 @@ class _PostMealReviewSheet extends ConsumerStatefulWidget {
   final bool isDark;
   final String userId;
   final String? foodLogId;
+  final Future<void>? saveFuture;
+  final String? Function()? getSavedLogId;
 
   const _PostMealReviewSheet({
     required this.foodNames,
@@ -58,6 +64,8 @@ class _PostMealReviewSheet extends ConsumerStatefulWidget {
     required this.isDark,
     required this.userId,
     this.foodLogId,
+    this.saveFuture,
+    this.getSavedLogId,
   });
 
   @override
@@ -349,7 +357,16 @@ class _PostMealReviewSheetState extends ConsumerState<_PostMealReviewSheet> {
   }
 
   Future<void> _saveMoodReview(Color teal) async {
-    if (widget.foodLogId == null) {
+    // Resolve foodLogId — may still be in-flight if sheet was shown optimistically
+    String? logId = widget.foodLogId;
+    if (logId == null && widget.saveFuture != null) {
+      setState(() => _isSaving = true);
+      try {
+        await widget.saveFuture;
+      } catch (_) {}
+      logId = widget.getSavedLogId?.call();
+    }
+    if (logId == null) {
       debugPrint('⚠️ [PostMealReview] No foodLogId, skipping backend save');
       Navigator.pop(context);
       return;
@@ -360,14 +377,14 @@ class _PostMealReviewSheetState extends ConsumerState<_PostMealReviewSheet> {
     try {
       final apiClient = ref.read(apiClientProvider);
       await apiClient.patch(
-        '/nutrition/food-logs/${widget.foodLogId}/mood',
+        '/nutrition/food-logs/$logId/mood',
         data: {
           if (_moodBefore != null) 'mood_before': _moodBefore!.value,
           if (_moodAfter != null) 'mood_after': _moodAfter!.value,
           'energy_level': _energyLevel,
         },
       );
-      debugPrint('✅ [PostMealReview] Mood saved for log ${widget.foodLogId}');
+      debugPrint('✅ [PostMealReview] Mood saved for log $logId');
     } catch (e) {
       debugPrint('❌ [PostMealReview] Failed to save mood: $e');
     }

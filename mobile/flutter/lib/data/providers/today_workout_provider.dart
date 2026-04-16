@@ -547,14 +547,14 @@ class TodayWorkoutNotifier extends StateNotifier<AsyncValue<TodayWorkoutResponse
     await _fetchFromApi(showLoading: false);
   }
 
-  /// Invalidate cache and refresh
+  /// Invalidate cache and refresh silently (no loading flash)
+  /// Keeps _inMemoryCache intact so stale data shows while refreshing
   Future<void> invalidateAndRefresh() async {
-    // Clear in-memory cache too
-    _inMemoryCache = null;
-    _hasTriggeredGeneration = false; // Reset so new profile can trigger generation
-    _generationTimedOut = false; // Allow auto-generation on fresh start
+    // Keep _inMemoryCache intact — show stale data while refreshing silently
+    _hasTriggeredGeneration = false;
+    _generationTimedOut = false;
     await DataCacheService.instance.invalidate(DataCacheService.todayWorkoutKey);
-    await _fetchFromApi(showLoading: true);
+    await _fetchFromApi(showLoading: false); // silent refresh, no loading flash
   }
 
   /// Reset generation state (called on gym profile switch)
@@ -576,6 +576,13 @@ class TodayWorkoutNotifier extends StateNotifier<AsyncValue<TodayWorkoutResponse
     _isAutoGenerating = false;
     _generationTimedOut = false;
     debugPrint('🧹 [TodayWorkout] In-memory cache cleared');
+  }
+
+  /// Pre-seed the in-memory cache from bootstrap data so the provider
+  /// starts with data instead of loading state on first construction.
+  static void preSeedCache(TodayWorkoutResponse data) {
+    _inMemoryCache = data;
+    debugPrint('⚡ [TodayWorkout] Pre-seeded from bootstrap');
   }
 
   @override

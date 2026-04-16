@@ -7,6 +7,7 @@ import 'posthog_route_observer.dart';
 import '../data/models/workout.dart';
 import '../data/models/user.dart' as app_user;
 import '../data/repositories/auth_repository.dart';
+import '../data/services/bootstrap_prefetch_service.dart';
 import '../screens/achievements/achievements_screen.dart';
 import '../screens/challenges/challenge_compare_screen.dart';
 import '../screens/auth/stats_welcome_screen.dart';
@@ -330,6 +331,8 @@ String? _handleAuthRedirect(
         final nextStep = _getNextOnboardingStep(user, ref);
         if (nextStep != null) return nextStep;
       }
+      // Fire-and-forget: prefetch ALL home screen data during splash → home transition
+      BootstrapPrefetchService.prefetch(ref);
       return homeRoute;
     } else {
       return '/intro';

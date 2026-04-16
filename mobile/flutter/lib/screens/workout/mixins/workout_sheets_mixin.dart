@@ -80,7 +80,7 @@ mixin WorkoutSheetsMixin<T extends StatefulWidget> on State<T> {
   String? get coachTipMessage;
   dynamic get workoutWidget;
   void breakSuperset(int groupId);
-  void applyProgressionTargets(int exerciseIndex, SetProgressionPattern pattern);
+  void applyProgressionTargets(int exerciseIndex, SetProgressionPattern pattern, {double? overrideWeight});
 
   /// Show the 1RM logging sheet
   void showLog1RMSheet(WorkoutExercise exercise) {
@@ -614,6 +614,14 @@ mixin WorkoutSheetsMixin<T extends StatefulWidget> on State<T> {
           final pattern = exerciseProgressionPattern[i] ?? SetProgressionPattern.pyramidUp;
           // Always populate map so hasProgression is true in buildSetRowsForExercise
           exerciseProgressionPattern[i] = pattern;
+          // Skip exercises already initialized by initControllersForExercise —
+          // that call already ran applyProgressionTargets with the correct
+          // overrideWeight. Re-running here without override would read the
+          // warmup-halved weight from the controller and overwrite correct targets.
+          if (exerciseWorkingWeight.containsKey(i)) {
+            debugPrint('📋 [Preload] ex $i: "${exercises[i].name}" → already initialized, skipping');
+            continue;
+          }
           debugPrint('📋 [Preload] ex $i: "${exercises[i].name}" → ${pattern.displayName}');
           applyProgressionTargets(i, pattern);
         } catch (e) {

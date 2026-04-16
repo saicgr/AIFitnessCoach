@@ -44,9 +44,8 @@ extension __WorkoutCompleteScreenStateExt2 on _WorkoutCompleteScreenState {
       }
     }
 
-    // Refresh workouts and navigate home
-    await ref.read(workoutsProvider.notifier).refresh();
-    ref.invalidate(workoutsProvider);
+    // Refresh workouts silently and navigate home
+    await ref.read(workoutsProvider.notifier).silentRefresh();
 
     if (mounted) {
       context.go('/home');

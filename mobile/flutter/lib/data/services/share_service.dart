@@ -177,6 +177,7 @@ class ShareService {
     Uint8List imageBytes, {
     String? caption,
     String? subject,
+    Rect? sharePositionOrigin,
   }) async {
     try {
       final tempDir = await getTemporaryDirectory();
@@ -188,6 +189,7 @@ class ShareService {
         [XFile(file.path)],
         text: caption ?? 'Check out my workout!',
         subject: subject ?? 'My Workout Recap',
+        sharePositionOrigin: sharePositionOrigin,
       );
 
       debugPrint('✅ [Share] System share completed: ${result.status}');

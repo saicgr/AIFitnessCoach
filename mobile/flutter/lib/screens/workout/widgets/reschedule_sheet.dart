@@ -485,8 +485,8 @@ class _RescheduleSheetState extends ConsumerState<_RescheduleSheet> {
         setState(() => _isLoading = false);
 
         if (success) {
-          // Also refresh workouts
-          ref.invalidate(workoutsProvider);
+          // Also refresh workouts silently
+          ref.read(workoutsProvider.notifier).silentRefresh();
 
           Navigator.pop(context, true);
 

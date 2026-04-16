@@ -430,9 +430,9 @@ class _AISplitPresetDetailSheetState extends ConsumerState<AISplitPresetDetailSh
     // Reset generation state so new split triggers fresh workout generation
     TodayWorkoutNotifier.resetGenerationState();
 
-    // Invalidate workout providers to trigger regeneration with new split
-    ref.invalidate(todayWorkoutProvider);
-    ref.invalidate(workoutsProvider);
+    // Refresh workout providers silently (no loading flash)
+    ref.read(todayWorkoutProvider.notifier).invalidateAndRefresh();
+    ref.read(workoutsProvider.notifier).silentRefresh();
 
     // Show success snackbar
     ScaffoldMessenger.of(context).showSnackBar(
@@ -468,9 +468,9 @@ class _AISplitPresetDetailSheetState extends ConsumerState<AISplitPresetDetailSh
     // Reset generation state so new split triggers fresh workout generation
     TodayWorkoutNotifier.resetGenerationState();
 
-    // Invalidate workout providers to trigger regeneration with new split
-    ref.invalidate(todayWorkoutProvider);
-    ref.invalidate(workoutsProvider);
+    // Refresh workout providers silently (no loading flash)
+    ref.read(todayWorkoutProvider.notifier).invalidateAndRefresh();
+    ref.read(workoutsProvider.notifier).silentRefresh();
 
     // Show success snackbar
     ScaffoldMessenger.of(context).showSnackBar(
@@ -522,9 +522,9 @@ class _AISplitPresetDetailSheetState extends ConsumerState<AISplitPresetDetailSh
       // Reset generation state so new split triggers fresh workout generation
       TodayWorkoutNotifier.resetGenerationState();
 
-      // Invalidate workout providers to trigger regeneration with new split
-      ref.invalidate(todayWorkoutProvider);
-      ref.invalidate(workoutsProvider);
+      // Refresh workout providers silently (no loading flash)
+      ref.read(todayWorkoutProvider.notifier).invalidateAndRefresh();
+      ref.read(workoutsProvider.notifier).silentRefresh();
 
       // Show success snackbar
       if (context.mounted) {

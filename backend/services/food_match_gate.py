@@ -60,10 +60,11 @@ _TEMPERATURE_DESCRIPTORS: FrozenSet[str] = frozenset({
     "hot", "cold", "warm", "frozen", "chilled", "iced", "raw",
     "lukewarm", "fresh",
 })
-_SENSORY_DESCRIPTORS: FrozenSet[str] = frozenset({
-    "spicy", "mild", "sweet", "salty", "sour", "bitter", "savory",
-    "bland", "plain",
-})
+# NOTE: sensory words like "spicy", "sweet", "sour", "plain" are NOT dropped.
+# They are often part of distinct product/food names whose nutrition differs:
+#   "Spicy McChicken" ≠ "McChicken", "Sweet Potato" ≠ "Potato",
+#   "Sour Cream" ≠ "Cream", "Plain Yogurt" ≠ "Yogurt",
+#   "Bitter Melon" ≠ "Melon". Dropping them causes wrong DB matches.
 _PERSONAL_DESCRIPTORS: FrozenSet[str] = frozenset({
     "favorite", "favourite",
 })
@@ -116,7 +117,6 @@ def _droplist() -> FrozenSet[str]:
         _STOP_WORDS
         | _SIZE_DESCRIPTORS
         | _TEMPERATURE_DESCRIPTORS
-        | _SENSORY_DESCRIPTORS
         | _PERSONAL_DESCRIPTORS
         | _cooking_stems()
     )

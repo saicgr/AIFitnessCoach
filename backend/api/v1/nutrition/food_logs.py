@@ -208,6 +208,15 @@ async def delete_food_log(log_id: str, current_user: dict = Depends(get_current_
         user_id = log.get("user_id") or current_user.get("id") or current_user.get("sub")
         await invalidate_daily_summary_cache(user_id)
 
+        await log_user_activity(
+            user_id=user_id,
+            action="food_log_deleted",
+            endpoint="/api/v1/nutrition/food-logs/{log_id}",
+            message=f"Deleted food log {log_id} ({log.get('meal_type', 'unknown')} — {log.get('total_calories', 0)} cal)",
+            metadata={"food_log_id": log_id, "meal_type": log.get("meal_type"), "total_calories": log.get("total_calories", 0)},
+            status_code=200,
+        )
+
         return {"status": "deleted", "id": log_id, "soft_deleted": True}
 
     except HTTPException:
@@ -277,6 +286,22 @@ async def update_food_log(log_id: str, body: UpdateFoodLogRequest, current_user:
         # Invalidate daily summary cache so the next fetch returns fresh data
         from api.v1.nutrition.summaries import invalidate_daily_summary_cache
         await invalidate_daily_summary_cache(user_id)
+
+        # Determine edit actions for logging
+        edit_actions = [e.edited_field for e in body.item_edits] if body.item_edits else []
+        await log_user_activity(
+            user_id=user_id,
+            action="food_log_updated",
+            endpoint="/api/v1/nutrition/food-logs/{log_id}",
+            message=f"Updated food log {log_id} ({edits_recorded} edits: {', '.join(edit_actions[:5])})",
+            metadata={
+                "food_log_id": log_id,
+                "edits_recorded": edits_recorded,
+                "edit_actions": edit_actions[:10],
+                "total_calories": updated.get("total_calories", 0),
+            },
+            status_code=200,
+        )
 
         return {
             "status": "updated",
@@ -404,6 +429,15 @@ async def copy_food_log(log_id: str, http_request: Request, meal_type: str = Que
         # Invalidate daily summary cache so the next fetch returns fresh data
         from api.v1.nutrition.summaries import invalidate_daily_summary_cache
         await invalidate_daily_summary_cache(source["user_id"])
+
+        await log_user_activity(
+            user_id=source["user_id"],
+            action="food_log_copied",
+            endpoint="/api/v1/nutrition/food-logs/{log_id}/copy",
+            message=f"Copied food log {log_id} → {food_log_id} as {meal_type} ({source.get('total_calories', 0)} cal)",
+            metadata={"source_id": log_id, "new_id": food_log_id, "meal_type": meal_type, "total_calories": source.get("total_calories", 0)},
+            status_code=200,
+        )
 
         return {
             "status": "copied",

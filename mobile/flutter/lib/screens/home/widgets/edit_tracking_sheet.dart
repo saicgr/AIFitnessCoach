@@ -13,6 +13,7 @@ class TrackingPillsState {
   final bool showGoals;
   final bool showCalories;
   final bool showWater;
+  final bool showNutrition; // merged calories + water pill
   final bool showBurned;
   final bool showSteps;
   final bool showSleep;
@@ -24,10 +25,11 @@ class TrackingPillsState {
     this.showGoals = true,
     this.showCalories = true,
     this.showWater = true,
+    this.showNutrition = true,
     this.showBurned = true,
     this.showSteps = false,
     this.showSleep = false,
-    this.showStreak = true,
+    this.showStreak = false,
     this.showHabits = false,
     this.isLoaded = false,
   });
@@ -36,6 +38,7 @@ class TrackingPillsState {
     bool? showGoals,
     bool? showCalories,
     bool? showWater,
+    bool? showNutrition,
     bool? showBurned,
     bool? showSteps,
     bool? showSleep,
@@ -47,6 +50,7 @@ class TrackingPillsState {
       showGoals: showGoals ?? this.showGoals,
       showCalories: showCalories ?? this.showCalories,
       showWater: showWater ?? this.showWater,
+      showNutrition: showNutrition ?? this.showNutrition,
       showBurned: showBurned ?? this.showBurned,
       showSteps: showSteps ?? this.showSteps,
       showSleep: showSleep ?? this.showSleep,
@@ -58,8 +62,7 @@ class TrackingPillsState {
 
   int get visibleCount =>
       (showGoals ? 1 : 0) +
-      (showCalories ? 1 : 0) +
-      (showWater ? 1 : 0) +
+      (showNutrition ? 1 : 0) +
       (showBurned ? 1 : 0) +
       (showSteps ? 1 : 0) +
       (showSleep ? 1 : 0) +
@@ -80,6 +83,7 @@ class TrackingPillsNotifier extends StateNotifier<TrackingPillsState> {
       showGoals: prefs.getBool('${_prefix}goals') ?? true,
       showCalories: prefs.getBool('${_prefix}calories') ?? true,
       showWater: prefs.getBool('${_prefix}water') ?? true,
+      showNutrition: prefs.getBool('${_prefix}nutrition') ?? true,
       showBurned: prefs.getBool('${_prefix}burned') ?? true,
       showSteps: prefs.getBool('${_prefix}steps') ?? false,
       showSleep: prefs.getBool('${_prefix}sleep') ?? false,
@@ -102,6 +106,9 @@ class TrackingPillsNotifier extends StateNotifier<TrackingPillsState> {
       case 'water':
         state = state.copyWith(showWater: value);
         break;
+      case 'nutrition':
+        state = state.copyWith(showNutrition: value);
+        break;
       case 'burned':
         state = state.copyWith(showBurned: value);
         break;
@@ -122,7 +129,7 @@ class TrackingPillsNotifier extends StateNotifier<TrackingPillsState> {
 
   Future<void> resetToDefaults() async {
     final prefs = await SharedPreferences.getInstance();
-    for (final key in ['goals', 'calories', 'water', 'burned', 'steps', 'sleep', 'streak', 'habits']) {
+    for (final key in ['goals', 'calories', 'water', 'nutrition', 'burned', 'steps', 'sleep', 'streak', 'habits']) {
       await prefs.remove('$_prefix$key');
     }
     state = const TrackingPillsState(isLoaded: true);
@@ -159,20 +166,12 @@ class EditTrackingSheet extends ConsumerWidget {
         enabled: pillsState.showGoals,
       ),
       _PillOption(
-        key: 'calories',
-        title: 'Calories & Macros',
-        subtitle: 'Total kcal with P/C/F breakdown',
-        icon: Icons.local_fire_department_outlined,
+        key: 'nutrition',
+        title: 'Nutrition & Hydration',
+        subtitle: 'Calories, P/C/F macros & water intake',
+        icon: Icons.restaurant_outlined,
         color: AppColors.orange,
-        enabled: pillsState.showCalories,
-      ),
-      _PillOption(
-        key: 'water',
-        title: 'Water Intake',
-        subtitle: 'Daily hydration vs goal',
-        icon: Icons.water_drop_outlined,
-        color: const Color(0xFF3B82F6),
-        enabled: pillsState.showWater,
+        enabled: pillsState.showNutrition,
       ),
       _PillOption(
         key: 'burned',
@@ -202,7 +201,7 @@ class EditTrackingSheet extends ConsumerWidget {
         key: 'streak',
         title: 'Workout Streak',
         subtitle: 'Consecutive workout days',
-        icon: Icons.local_fire_department_outlined,
+        icon: Icons.bolt_outlined,
         color: const Color(0xFFF59E0B),
         enabled: pillsState.showStreak,
       ),

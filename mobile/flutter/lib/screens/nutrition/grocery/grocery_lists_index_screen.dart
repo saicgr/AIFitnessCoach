@@ -6,7 +6,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/theme/accent_color_provider.dart';
+import '../../../data/models/grocery_list.dart';
 import '../../../data/providers/recipe_providers.dart';
+import '../../../data/repositories/recipe_repository.dart';
 import '../../../widgets/glass_back_button.dart';
 import '../../../widgets/main_shell.dart' show floatingNavBarVisibleProvider;
 import 'grocery_list_screen.dart';
@@ -50,6 +52,51 @@ class _GroceryListsIndexScreenState extends ConsumerState<GroceryListsIndexScree
     super.dispose();
   }
 
+  Future<void> _createManualList(String userId, bool isDark) async {
+    final nameController = TextEditingController();
+    final name = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('New grocery list'),
+        content: TextField(
+          controller: nameController,
+          autofocus: true,
+          decoration: const InputDecoration(hintText: 'List name (optional)'),
+          onSubmitted: (v) => Navigator.of(ctx).pop(v),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.of(ctx).pop(), child: const Text('Cancel')),
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(nameController.text),
+            child: const Text('Create'),
+          ),
+        ],
+      ),
+    );
+    if (name == null || !mounted) return;
+
+    try {
+      final list = await ref.read(recipeRepositoryProvider).buildGroceryList(
+        userId,
+        GroceryListCreate(name: name.isNotEmpty ? name : null),
+      );
+      if (!mounted) return;
+      // Refresh the lists
+      ref.invalidate(groceryListsProvider(userId));
+      // Navigate to the new list
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => GroceryListScreen(listId: list.id, userId: userId, isDark: isDark),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to create list: $e')),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = widget.isDark;
@@ -64,6 +111,12 @@ class _GroceryListsIndexScreenState extends ConsumerState<GroceryListsIndexScree
 
     return Scaffold(
       backgroundColor: bg,
+      floatingActionButton: FloatingActionButton(
+        backgroundColor: accent,
+        foregroundColor: isDark ? Colors.black : Colors.white,
+        onPressed: () => _createManualList(userId, isDark),
+        child: const Icon(Icons.add),
+      ),
       body: Column(
         children: [
           SizedBox(height: topPad + 8),
@@ -103,7 +156,7 @@ class _GroceryListsIndexScreenState extends ConsumerState<GroceryListsIndexScree
                           const SizedBox(height: 12),
                           Text('No lists yet', style: TextStyle(color: text, fontSize: 18, fontWeight: FontWeight.w700)),
                           const SizedBox(height: 6),
-                          Text('Create one from a meal plan or a single recipe.',
+                          Text('Tap + to create a list, or add one from a recipe.',
                               textAlign: TextAlign.center, style: TextStyle(color: muted)),
                         ],
                       ),
@@ -111,7 +164,7 @@ class _GroceryListsIndexScreenState extends ConsumerState<GroceryListsIndexScree
                   );
                 }
                 return ListView.separated(
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 80),
                   itemCount: lists.length,
                   separatorBuilder: (_, __) => const SizedBox(height: 8),
                   itemBuilder: (_, i) {

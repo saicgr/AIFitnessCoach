@@ -160,6 +160,39 @@ class NutritionNotifier extends StateNotifier<NutritionState> {
 
   NutritionNotifier(this._repository, this._ref) : super(const NutritionState());
 
+  /// Pre-seed state from bootstrap data so the home screen shows nutrition instantly.
+  void preSeedFromBootstrap({
+    required int calories,
+    int? targetCalories,
+    required double protein,
+    required double carbs,
+    required double fat,
+    double? targetProtein,
+    double? targetCarbs,
+    double? targetFat,
+  }) {
+    if (state.todaySummary != null) return; // Don't overwrite real data
+    final now = DateTime.now();
+    final todayStr = '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
+    state = state.copyWith(
+      todaySummary: DailyNutritionSummary(
+        date: todayStr,
+        totalCalories: calories,
+        totalProteinG: protein,
+        totalCarbsG: carbs,
+        totalFatG: fat,
+      ),
+      targets: targetCalories != null ? NutritionTargets(
+        userId: '',
+        dailyCalorieTarget: targetCalories,
+        dailyProteinTargetG: targetProtein ?? 0,
+        dailyCarbsTargetG: targetCarbs ?? 0,
+        dailyFatTargetG: targetFat ?? 0,
+      ) : null,
+    );
+    debugPrint('⚡ [Nutrition] Pre-seeded from bootstrap');
+  }
+
   /// Check if we should skip loading (data is fresh - less than 5 minutes old)
   bool _shouldSkipLoad(String userId) {
     if (_lastLoadedUserId != userId) return false;

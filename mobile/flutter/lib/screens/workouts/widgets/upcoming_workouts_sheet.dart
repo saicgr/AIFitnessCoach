@@ -449,9 +449,9 @@ class _UpcomingWorkoutsSheetState extends ConsumerState<_UpcomingWorkoutsSheet> 
 
         if (progress.status == WorkoutGenerationStatus.completed) {
           debugPrint('✅ [Upcoming] Workout generated for $scheduledDate');
-          // Refresh workouts list
-          ref.invalidate(workoutsProvider);
-          ref.invalidate(todayWorkoutProvider);
+          // Refresh workouts list silently (no loading flash)
+          ref.read(workoutsProvider.notifier).silentRefresh();
+          ref.read(todayWorkoutProvider.notifier).invalidateAndRefresh();
           break;
         }
 

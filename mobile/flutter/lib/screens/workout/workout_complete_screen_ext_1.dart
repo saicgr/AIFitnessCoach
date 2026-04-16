@@ -921,9 +921,8 @@ extension __WorkoutCompleteScreenStateExt1 on _WorkoutCompleteScreenState {
         debugPrint('⚠️ [Feedback] Missing userId or workoutId - skipping submission');
       }
 
-      // Refresh workouts and invalidate provider to force UI update
-      await ref.read(workoutsProvider.notifier).refresh();
-      ref.invalidate(workoutsProvider);
+      // Refresh workouts silently (no loading flash)
+      await ref.read(workoutsProvider.notifier).silentRefresh();
 
       // Refresh fitness scores (they are recalculated on the backend after workout completion)
       ref.read(scoresProvider.notifier).loadScoresOverview(userId: userId);

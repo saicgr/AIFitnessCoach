@@ -17,7 +17,8 @@ extension HealthServiceExt on HealthService {
 
     // Activity
     HealthDataType.STEPS,
-    HealthDataType.DISTANCE_DELTA,
+    HealthDataType.DISTANCE_DELTA,          // Android
+    HealthDataType.DISTANCE_WALKING_RUNNING, // iOS
     HealthDataType.ACTIVE_ENERGY_BURNED,
     HealthDataType.TOTAL_CALORIES_BURNED,
     HealthDataType.BASAL_ENERGY_BURNED,

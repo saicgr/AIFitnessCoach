@@ -6,6 +6,7 @@ library;
 
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -19,6 +20,7 @@ import '../models/recipe.dart';
 import '../models/recipe_share.dart';
 import '../models/recipe_version.dart';
 import '../models/scheduled_recipe.dart';
+import '../../core/constants/api_constants.dart';
 import '../services/api_client.dart';
 
 final recipeRepositoryProvider = Provider<RecipeRepository>((ref) {
@@ -65,6 +67,22 @@ class RecipeRepository {
     return ((res.data['items'] as List?) ?? const [])
         .map((e) => IngredientAnalysis.fromJson(e as Map<String, dynamic>))
         .toList();
+  }
+
+  // ============================================================
+  // RECIPE IMAGE UPLOAD
+  // ============================================================
+
+  Future<String> uploadRecipeImage({
+    required String userId,
+    required String recipeId,
+    required File imageFile,
+  }) async {
+    final res = await _client.uploadFile(
+      '/nutrition/recipes/$recipeId/upload-image?user_id=$userId',
+      imageFile,
+    );
+    return (res.data as Map<String, dynamic>)['image_url'] as String;
   }
 
   // ============================================================
@@ -145,8 +163,27 @@ class RecipeRepository {
         'count': count,
         if (additionalRequirements != null) 'additional_requirements': additionalRequirements,
       },
+      options: Options(receiveTimeout: ApiConstants.aiReceiveTimeout),
     );
     return PantryAnalyzeResponse.fromJson(res.data as Map<String, dynamic>);
+  }
+
+  /// Lightweight detect-only: run vision on a pantry photo without generating
+  /// recipes. Returns just the detected items so the UI can show them fast.
+  Future<List<PantryDetectedItem>> detectPantryItems(
+    String userId, {
+    required String imageB64,
+  }) async {
+    final res = await _client.post(
+      '/nutrition/recipes/detect-pantry-items',
+      queryParameters: {'user_id': userId},
+      data: {'image_b64': imageB64},
+      options: Options(receiveTimeout: ApiConstants.aiReceiveTimeout),
+    );
+    final items = (res.data['items'] as List?) ?? const [];
+    return items
+        .map((e) => PantryDetectedItem.fromJson(e as Map<String, dynamic>))
+        .toList();
   }
 
   // ============================================================

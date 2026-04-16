@@ -889,16 +889,27 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
     // Close sheet immediately for snappy UX
     Navigator.pop(context);
 
-    // Wait for backend save to complete, then refresh to show updated data
+    // Fire-and-forget: refresh nutrition UI after save completes
     if (saveFuture != null) {
-      await saveFuture;
+      unawaited(saveFuture.then((_) {
+        nutritionNotifier.loadTodaySummary(userId, forceRefresh: true);
+        // Schedule the 45-min reminder after save completes (needs foodLogId)
+        final logId = getSavedLogId?.call();
+        if (logId != null && logId.isNotEmpty) {
+          _schedulePostMealReminder(
+            userId: userId,
+            foodLogId: logId,
+            mealSummary: foodNames.isNotEmpty ? foodNames.first : null,
+          );
+        }
+      }));
+    } else {
+      nutritionNotifier.loadTodaySummary(userId, forceRefresh: true);
     }
-    nutritionNotifier.loadTodaySummary(userId, forceRefresh: true);
 
-    // Show post-log review sheet after a brief delay
-    await Future.delayed(const Duration(milliseconds: 400));
+    // Show success sheet immediately — don't block on backend save
+    await Future.delayed(const Duration(milliseconds: 150));
     final reviewContext = overlay?.context;
-    final savedLogId = getSavedLogId?.call();
     if (reviewContext != null && reviewContext.mounted) {
       showPostMealReviewSheet(
         reviewContext,
@@ -906,19 +917,10 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
         totalCalories: totalCalories,
         isDark: isDark,
         userId: userId,
-        foodLogId: savedLogId,
+        foodLogId: getSavedLogId?.call(),
+        saveFuture: saveFuture,
+        getSavedLogId: getSavedLogId,
       );
-    }
-
-    // Schedule the 45-min reminder push so users who skip the sheet still get
-    // a second chance to fill in mood_after. Service respects patterns
-    // settings + notification prefs internally.
-    if (savedLogId != null && savedLogId.isNotEmpty) {
-      unawaited(_schedulePostMealReminder(
-        userId: userId,
-        foodLogId: savedLogId,
-        mealSummary: foodNames.isNotEmpty ? foodNames.first : null,
-      ));
     }
   }
 

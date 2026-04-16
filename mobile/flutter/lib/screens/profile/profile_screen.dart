@@ -52,6 +52,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   String? _bio;
   bool _bioLoaded = false;
 
+  // Static cache for bio — survives widget rebuilds (tab switches)
+  static String? _cachedBio;
+  static bool _cachedBioLoaded = false;
+  static DateTime? _cachedBioTime;
+  static const _bioCacheTtl = Duration(minutes: 10);
+
   @override
   void initState() {
     super.initState();
@@ -76,6 +82,18 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   }
 
   Future<void> _loadBio() async {
+    // Use cached bio if fresh enough
+    if (_cachedBioLoaded &&
+        _cachedBioTime != null &&
+        DateTime.now().difference(_cachedBioTime!) < _bioCacheTtl) {
+      if (mounted && !_bioLoaded) {
+        setState(() {
+          _bio = _cachedBio;
+          _bioLoaded = true;
+        });
+      }
+      return;
+    }
     try {
       final authState = ref.read(authStateProvider);
       final userId = authState.user?.id;
@@ -85,10 +103,14 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       if (response.statusCode == 200 && response.data != null) {
         final userData = response.data as Map<String, dynamic>;
         if (mounted) {
+          final bio = userData['bio'] as String?;
           setState(() {
-            _bio = userData['bio'] as String?;
+            _bio = bio;
             _bioLoaded = true;
           });
+          _cachedBio = bio;
+          _cachedBioLoaded = true;
+          _cachedBioTime = DateTime.now();
         }
       }
     } catch (e) {

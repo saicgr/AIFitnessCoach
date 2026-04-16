@@ -177,9 +177,9 @@ class _ManageGymProfilesSheetState
       // can trigger generation for the new profile (static flags survive invalidation)
       TodayWorkoutNotifier.resetGenerationState();
 
-      // Invalidate workout providers
+      // Full invalidate — stale data is wrong gym (resetGenerationState cleared _inMemoryCache)
       ref.invalidate(todayWorkoutProvider);
-      ref.invalidate(workoutsProvider);
+      ref.read(workoutsProvider.notifier).silentRefresh();
 
       // Update local state
       setState(() {

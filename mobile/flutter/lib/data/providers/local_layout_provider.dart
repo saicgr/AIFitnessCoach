@@ -10,6 +10,10 @@ const _layoutsKey = 'home_layouts';
 const _activeLayoutKey = 'active_layout_id';
 const _userDefaultLayoutKey = 'user_default_layout_tiles';
 
+/// In-memory cache so subsequent reads of LocalLayoutNotifier start with data
+/// instead of AsyncValue.loading() (avoids blank home screen flash).
+HomeLayout? _layoutInMemoryCache;
+
 /// Local layout provider - stores layouts in SharedPreferences
 /// This works offline without needing backend API
 final localLayoutProvider =
@@ -25,8 +29,34 @@ final allLocalLayoutsProvider =
 
 /// Local layout state notifier
 class LocalLayoutNotifier extends StateNotifier<AsyncValue<HomeLayout?>> {
-  LocalLayoutNotifier() : super(const AsyncValue.loading()) {
+  LocalLayoutNotifier()
+      : super(AsyncValue.data(
+            _layoutInMemoryCache ?? _createDefaultLayoutSync())) {
     _loadActiveLayout();
+  }
+
+  /// Synchronous default so the home screen never starts in loading state.
+  static HomeLayout _createDefaultLayoutSync() {
+    final now = DateTime.now();
+    return HomeLayout(
+      id: 'layout_default_sync',
+      userId: 'local',
+      name: 'My Layout',
+      tiles: createDefaultTiles(),
+      isActive: true,
+      createdAt: now,
+      updatedAt: now,
+    );
+  }
+
+  /// Clear in-memory cache (call on logout).
+  static void clearCache() {
+    _layoutInMemoryCache = null;
+  }
+
+  /// Reload from SharedPreferences without setting state to loading first.
+  Future<void> reload() async {
+    await _loadActiveLayout();
   }
 
   Future<void> _loadActiveLayout() async {
@@ -75,10 +105,13 @@ class LocalLayoutNotifier extends StateNotifier<AsyncValue<HomeLayout?>> {
         await _saveLayouts(layouts);
       }
 
+      _layoutInMemoryCache = activeLayout;
       state = AsyncValue.data(activeLayout);
       debugPrint('✅ [LocalLayout] Loaded: ${activeLayout.name}');
     } catch (e, stackTrace) {
       debugPrint('❌ [LocalLayout] Error loading: $e');
+      // Ensure cache has a usable default so next construction never shows loading
+      _layoutInMemoryCache ??= _createDefaultLayoutSync();
       state = AsyncValue.error(e, stackTrace);
     }
   }

@@ -814,6 +814,18 @@ async def get_workout_generation_params(workout_id: str,
                 "gender": ud.get("gender"),
             }
 
+        # If this workout was regenerated, prefer the injuries_considered from
+        # the regeneration metadata over the user's permanent injury profile.
+        gen_meta_raw = workout_data.get("generation_metadata")
+        if gen_meta_raw:
+            try:
+                gen_meta = json.loads(gen_meta_raw) if isinstance(gen_meta_raw, str) else gen_meta_raw
+                regen_injuries = gen_meta.get("injuries_considered")
+                if regen_injuries:
+                    user_profile["injuries"] = regen_injuries
+            except (json.JSONDecodeError, TypeError):
+                pass
+
         program_preferences = {}
         try:
             regen_result = db.client.table("workout_regenerations").select("*").eq(

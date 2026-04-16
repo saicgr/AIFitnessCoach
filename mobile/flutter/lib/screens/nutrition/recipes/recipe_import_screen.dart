@@ -89,6 +89,14 @@ class _RecipeImportScreenState extends ConsumerState<RecipeImportScreen>
         setState(() => _events.add(evt));
         if (evt.step == 'done' && evt.recipe != null) {
           _resultRecipe = _recipeFromMap(evt.recipe!);
+          // Auto-navigate to review screen — no reason to stare at an empty page.
+          if (mounted && _resultRecipe != null) {
+            Navigator.of(context).pushReplacement(MaterialPageRoute(
+              builder: (_) => RecipeCreateScreen(
+                userId: widget.userId, isDark: widget.isDark, prefill: _resultRecipe),
+            ));
+            return; // stop consuming stream, we've navigated away
+          }
         }
       }
     } catch (e) {

@@ -231,8 +231,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       // Refresh Health Connect status - user may have granted permissions externally
       ref.read(healthSyncProvider.notifier).refreshConnectionStatus();
 
-      // Refresh nutrition & hydration data for TodayStatsRow
-      _initializeNutritionAndHydration();
+      // Refresh nutrition & hydration data silently (no loading flash)
+      _refreshNutritionSilent();
 
       // Check for new workout imports from Health Connect on resume
       _checkForWorkoutImports();
@@ -250,15 +250,20 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     if (!mounted) return;
 
     // Wait until todayWorkoutProvider has resolved (data or error, not loading)
-    // This ensures the home screen content is visible before showing the popup
-    for (int i = 0; i < 30; i++) {
-      final state = ref.read(todayWorkoutProvider);
-      if (!state.isLoading) break;
-      await Future.delayed(const Duration(milliseconds: 500));
-      if (!mounted) return;
+    // Uses a listener instead of polling for instant response
+    if (ref.read(todayWorkoutProvider).isLoading) {
+      final completer = Completer<void>();
+      final sub = ref.listenManual(todayWorkoutProvider, (prev, next) {
+        if (!next.isLoading && !completer.isCompleted) completer.complete();
+      });
+      await completer.future.timeout(
+        const Duration(seconds: 10),
+        onTimeout: () {},
+      );
+      sub.close();
     }
 
-    // Extra small delay so the home content renders after provider resolves
+    // Small delay so the home content renders after provider resolves
     await Future.delayed(const Duration(milliseconds: 300));
     if (!mounted) return;
 
@@ -631,6 +636,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     }
   }
 
+  /// Silent nutrition/hydration refresh for auto-refresh — no loading flash.
+  Future<void> _refreshNutritionSilent() async {
+    final userId = ref.read(authStateProvider).user?.id;
+    if (userId == null) return;
+    ref.read(nutritionProvider.notifier).loadTodaySummary(userId);
+    ref.read(hydrationProvider.notifier).loadTodaySummary(userId, showLoading: false);
+  }
+
   /// Load nutrition & hydration data so TodayStatsRow shows on first launch.
   /// Also pre-warms nutrition preferences so Profile tab loads instantly.
   Future<void> _initializeNutritionAndHydration() async {
@@ -822,10 +835,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
             HeroWorkoutCarousel.resetAutoGeneration();
             // Refresh user data (picks up workout days, preferences changes)
             await ref.read(authStateProvider.notifier).refreshUser();
-            // Invalidate todayWorkoutProvider to refetch
-            ref.invalidate(todayWorkoutProvider);
-            // Also refresh layout in case it changed
-            ref.invalidate(activeLayoutProvider);
+            // Silently refresh today's workout (stale-while-revalidate)
+            ref.read(todayWorkoutProvider.notifier).invalidateAndRefresh();
+            // Silently reload layout from SharedPreferences
+            ref.read(localLayoutProvider.notifier).reload();
             debugPrint('✅ [Home] Pull-to-refresh complete');
           },
           color: AppColors.cyan,
@@ -845,7 +858,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
 
               // Dynamic tiles from local layout
               ...localLayoutState.when(
-                loading: () => [const SliverToBoxAdapter(child: SizedBox.shrink())],
+                loading: () => _buildFallbackTilesAsSlivers(context, isDark, todayWorkoutState, isAIGenerating),
                 error: (_, __) => _buildFallbackTilesAsSlivers(context, isDark, todayWorkoutState, isAIGenerating),
                 data: (layout) => _buildLayoutTilesAsSlivers(context, layout, isDark, todayWorkoutState, isAIGenerating),
               ),

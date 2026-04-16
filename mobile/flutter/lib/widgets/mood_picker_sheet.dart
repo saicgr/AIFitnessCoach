@@ -367,9 +367,8 @@ class _MoodPickerSheetState extends ConsumerState<MoodPickerSheet> {
           durationMinutes: workout.durationMinutes,
         );
 
-        // Refresh workouts list
-        await ref.read(workoutsProvider.notifier).refresh();
-        ref.invalidate(workoutsProvider);
+        // Refresh workouts list silently (no loading flash)
+        await ref.read(workoutsProvider.notifier).silentRefresh();
 
         // Navigate to workout
         if (mounted) {

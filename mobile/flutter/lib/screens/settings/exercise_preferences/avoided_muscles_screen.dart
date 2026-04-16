@@ -595,8 +595,8 @@ class _AvoidedMusclesScreenState extends ConsumerState<AvoidedMusclesScreen> {
         endDate: muscle.endDate,
       );
       ref.invalidate(avoidedMusclesProvider(userId));
-      ref.invalidate(todayWorkoutProvider);
-      ref.invalidate(workoutsProvider);
+      ref.read(todayWorkoutProvider.notifier).invalidateAndRefresh();
+      ref.read(workoutsProvider.notifier).silentRefresh();
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -640,8 +640,8 @@ class _AvoidedMusclesScreenState extends ConsumerState<AvoidedMusclesScreen> {
       }
 
       ref.invalidate(avoidedMusclesProvider(userId));
-      ref.invalidate(todayWorkoutProvider);
-      ref.invalidate(workoutsProvider);
+      ref.read(todayWorkoutProvider.notifier).invalidateAndRefresh();
+      ref.read(workoutsProvider.notifier).silentRefresh();
 
       final count = _pendingMuscles.length;
       setState(() => _pendingMuscles.clear());

@@ -170,8 +170,8 @@ extension __QuickWorkoutSheetStateExt2 on _QuickWorkoutSheetState {
 
       // Refresh today workout provider so carousel picks up the new workout
       ref.read(todayWorkoutProvider.notifier).refresh();
-      // Also invalidate workoutsProvider to refresh the full list
-      ref.invalidate(workoutsProvider);
+      // Also refresh workoutsProvider silently (no loading flash)
+      ref.read(workoutsProvider.notifier).silentRefresh();
 
       Navigator.pop(context, workout);
     }

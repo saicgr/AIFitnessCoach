@@ -624,8 +624,40 @@ class _HeroWorkoutCarouselState extends ConsumerState<HeroWorkoutCarousel> {
       decoration: BoxDecoration(
         color: isDark ? const Color(0xFF1a1a1a) : const Color(0xFFF5F5F5),
         borderRadius: BorderRadius.circular(24),
+        border: Border.all(
+          color: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.06),
+        ),
       ),
-      child: Center(child: CircularProgressIndicator(color: accentColor)),
+      child: Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.fitness_center_rounded,
+              size: 40,
+              color: accentColor.withValues(alpha: 0.4),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Setting up your workout...',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: isDark ? Colors.white70 : Colors.black54,
+              ),
+            ),
+            const SizedBox(height: 12),
+            SizedBox(
+              width: 24,
+              height: 24,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: accentColor.withValues(alpha: 0.5),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 

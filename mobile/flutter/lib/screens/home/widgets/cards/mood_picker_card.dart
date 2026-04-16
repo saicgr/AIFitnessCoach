@@ -406,9 +406,8 @@ class _MoodPickerCardState extends ConsumerState<MoodPickerCard>
         durationMinutes: workout.durationMinutes,
       );
 
-      // Refresh workouts list and invalidate to force UI rebuild
-      await ref.read(workoutsProvider.notifier).refresh();
-      ref.invalidate(workoutsProvider);
+      // Refresh workouts list silently (no loading flash)
+      await ref.read(workoutsProvider.notifier).silentRefresh();
     }
   }
 

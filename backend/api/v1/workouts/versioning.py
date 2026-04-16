@@ -617,7 +617,20 @@ async def regenerate_workout_streaming(request: Request, body: RegenerateWorkout
             else:
                 target_duration = body.duration_minutes or 45
 
-            exercise_count = max(3, min(10, target_duration // 7))
+            # Difficulty-aware exercise count: easy = fewer exercises with more rest,
+            # hard/hell = more exercises packed tighter.
+            diff_lower = (user_difficulty or "medium").lower()
+            if diff_lower == "easy":
+                exercise_count = max(3, min(5, target_duration // 10))
+                target_duration = min(target_duration, 40)  # cap easy at 40 min
+            elif diff_lower in ("hard", "hell"):
+                exercise_count = max(4, min(10, target_duration // 6))
+            else:
+                exercise_count = max(3, min(8, target_duration // 7))
+
+            # Further reduce if many injuries — fewer safe exercises available
+            if injuries and len(injuries) >= 4:
+                exercise_count = max(3, exercise_count - len(injuries) // 3)
 
             rag_exercises = await exercise_rag.select_exercises_for_workout(
                 focus_area=focus_area,

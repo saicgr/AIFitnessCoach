@@ -466,9 +466,8 @@ class _AddToWorkoutSheetState extends ConsumerState<_AddToWorkoutSheet> {
       if (mounted) {
         Navigator.pop(context);
         if (updatedWorkout != null) {
-          // Refresh workout list and invalidate to force UI rebuild
-          await ref.read(workoutsProvider.notifier).refresh();
-          ref.invalidate(workoutsProvider);
+          // Refresh workout list silently (no loading flash)
+          await ref.read(workoutsProvider.notifier).silentRefresh();
 
           if (context.mounted) {
             ScaffoldMessenger.of(context).showSnackBar(

@@ -306,6 +306,12 @@ mixin SetLoggingMixin<T extends StatefulWidget> on State<T> {
 
     final ownedWeights = _getOwnedWeightsForEquipment(exercise.equipment);
 
+    // Save the working weight BEFORE warmup halving — needed by
+    // applyProgressionTargets to compute correct pyramid targets.
+    // Without this, the controller gets the halved warmup weight and
+    // the progression system generates absurdly low targets.
+    final workingDisplayWeight = displayWeight;
+
     if (isWarmup && displayWeight > 0) {
       final rawWarmup = displayWeight * 0.5;
       if (ownedWeights != null && ownedWeights.isNotEmpty) {
@@ -337,7 +343,7 @@ mixin SetLoggingMixin<T extends StatefulWidget> on State<T> {
 
     final activePattern = exerciseProgressionPattern[exerciseIndex]
         ?? SetProgressionPattern.pyramidUp;
-    applyProgressionTargets(exerciseIndex, activePattern);
+    applyProgressionTargets(exerciseIndex, activePattern, overrideWeight: workingDisplayWeight);
   }
 
   /// Get the user's owned weights for an equipment type from their gym profile.

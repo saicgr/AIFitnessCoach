@@ -148,9 +148,9 @@ class AvoidedNotifier extends StateNotifier<AvoidedState> {
 
       debugPrint('🚫 [AvoidedProvider] Added avoided: $exerciseName');
 
-      // Invalidate workout providers to trigger UI refresh
-      _ref.invalidate(todayWorkoutProvider);
-      _ref.invalidate(workoutsProvider);
+      // Refresh workout providers silently (no loading flash)
+      _ref.read(todayWorkoutProvider.notifier).invalidateAndRefresh();
+      _ref.read(workoutsProvider.notifier).silentRefresh();
       return true;
     } catch (e) {
       debugPrint('❌ [AvoidedProvider] Error adding avoided: $e');

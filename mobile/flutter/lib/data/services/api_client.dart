@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 import 'package:dio/dio.dart';
+import 'package:dio/io.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -37,6 +38,40 @@ class ApiClient with WidgetsBindingObserver {
 
   static const _tokenKey = 'auth_token';
   static const _userIdKey = 'user_id';
+
+  // In-memory timezone cache — avoids hitting SharedPreferences on every request
+  static String? _cachedTimezone;
+  static DateTime? _cachedTimezoneTime;
+
+  /// Returns IANA timezone string, cached in memory for 30 minutes.
+  static Future<String> _getCachedTimezone() async {
+    final now = DateTime.now();
+    if (_cachedTimezone != null &&
+        _cachedTimezone!.isNotEmpty &&
+        _cachedTimezoneTime != null &&
+        now.difference(_cachedTimezoneTime!) < const Duration(minutes: 30)) {
+      return _cachedTimezone!;
+    }
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final tz = prefs.getString('user_timezone');
+      if (tz != null && tz.isNotEmpty && tz.contains('/')) {
+        _cachedTimezone = tz;
+        _cachedTimezoneTime = now;
+        return tz;
+      }
+      // Fallback: detect from device
+      final deviceTzInfo = await FlutterTimezone.getLocalTimezone();
+      final deviceTz = deviceTzInfo.identifier;
+      if (deviceTz.isNotEmpty) {
+        _cachedTimezone = deviceTz;
+        _cachedTimezoneTime = now;
+        await prefs.setString('user_timezone', deviceTz);
+        return deviceTz;
+      }
+    } catch (_) {}
+    return DateTime.now().timeZoneName;
+  }
 
   /// How many minutes before expiry to proactively refresh the token.
   static const _refreshBufferMinutes = 5;
@@ -88,9 +123,19 @@ class ApiClient with WidgetsBindingObserver {
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
+          'Accept-Encoding': 'gzip',
         },
       ),
     );
+
+    // Configure HttpClient for connection keep-alive and reuse
+    (_dio.httpClientAdapter as IOHttpClientAdapter).createHttpClient = () {
+      final client = HttpClient();
+      client.idleTimeout = const Duration(seconds: 30);
+      client.maxConnectionsPerHost = 6;
+      client.autoUncompress = true;
+      return client;
+    };
 
     // Certificate pinning: disabled for Render's rotating certificates. TLS is enforced by network_security_config.xml.
 
@@ -198,32 +243,14 @@ class ApiClient with WidgetsBindingObserver {
     );
 
     // Timezone interceptor — attaches X-User-Timezone header to every request.
-    // Always sends a proper IANA identifier (e.g. "America/Chicago"), never
-    // an abbreviation like "CST" which is ambiguous.
+    // Uses in-memory cache to avoid hitting SharedPreferences on every call.
     _dio.interceptors.add(
       InterceptorsWrapper(
         onRequest: (options, handler) async {
           try {
-            final prefs = await SharedPreferences.getInstance();
-            final tz = prefs.getString('user_timezone');
-            if (tz != null && tz.isNotEmpty && tz.contains('/')) {
-              // Stored IANA timezone (e.g. "America/Chicago")
+            final tz = await _getCachedTimezone();
+            if (tz.isNotEmpty) {
               options.headers['X-User-Timezone'] = tz;
-            } else {
-              // Fallback: detect IANA timezone from device OS
-              try {
-                final deviceTzInfo = await FlutterTimezone.getLocalTimezone();
-                final deviceTz = deviceTzInfo.identifier;
-                if (deviceTz.isNotEmpty) {
-                  options.headers['X-User-Timezone'] = deviceTz;
-                  // Cache it for next time
-                  await prefs.setString('user_timezone', deviceTz);
-                } else {
-                  options.headers['X-User-Timezone'] = DateTime.now().timeZoneName;
-                }
-              } catch (_) {
-                options.headers['X-User-Timezone'] = DateTime.now().timeZoneName;
-              }
             }
           } catch (e) {
             debugPrint('⚠️ [API] Could not attach timezone header: $e');

@@ -560,7 +560,9 @@ FOOD NAMING RULES (CRITICAL — lookup accuracy depends on this):
   - Input "paneer butter masala" → WRONG "Butter Masala" or "Paneer" · RIGHT "Paneer Butter Masala"
 - If the user likely made a typo (e.g. "paner"), correct it to the canonical spelling
   ("paneer") in corrected_query but KEEP the full multi-word name in food_items[].name.
-- Only drop pure descriptors that never change nutrition (spicy, mild, fresh, my favorite).
+- Only drop personal descriptors that never change nutrition (my favorite, best ever).
+- KEEP sensory/taste words (spicy, mild, sweet, sour, plain, bitter) — they often identify
+  distinct products (Spicy McChicken ≠ McChicken, Sweet Potato ≠ Potato, Plain Yogurt ≠ Yogurt).
 - COMMA IS AN UNBREAKABLE ITEM BOUNDARY: "X, Y" is ALWAYS two separate items, even
   when "X Y" (or "Y X") happens to spell a popular dish. Never fuse adjacent
   comma-separated words into a compound dish name. Examples of what NOT to do:

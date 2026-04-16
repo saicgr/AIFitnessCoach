@@ -954,6 +954,16 @@ class LoggedMealsSection extends StatelessWidget {
             itemEdits: [edit],
           );
         },
+        onDeleteMeal: onDeleteMeal,
+        onAnalyzeText: apiClient != null
+            ? (description) async {
+                final response = await apiClient!.post(
+                  '/nutrition/analyze-text',
+                  data: {'description': description},
+                );
+                return response.data as Map<String, dynamic>;
+              }
+            : null,
       ),
       const SizedBox(height: 8),
       if (onFetchItemEdits != null)
@@ -2854,6 +2864,10 @@ class _EditableFoodItemsList extends StatefulWidget {
   final Color accent;
   final Color cardBorder;
   final _EditCommit onCommit;
+  final void Function(String logId)? onDeleteMeal;
+  /// Calls POST /nutrition/analyze-text and returns the raw JSON response.
+  /// Used by swap/add to auto-fill macros via Gemini.
+  final Future<Map<String, dynamic>> Function(String description)? onAnalyzeText;
 
   const _EditableFoodItemsList({
     required this.meal,
@@ -2862,6 +2876,8 @@ class _EditableFoodItemsList extends StatefulWidget {
     required this.accent,
     required this.cardBorder,
     required this.onCommit,
+    this.onDeleteMeal,
+    this.onAnalyzeText,
   });
 
   @override
@@ -2913,6 +2929,294 @@ class _EditableFoodItemsListState extends State<_EditableFoodItemsList> {
     widget.onCommit(widget.meal.id, _items, totalCal, totalP, totalC, totalF, edit);
   }
 
+  /// Recompute totals and commit with a synthetic edit entry.
+  void _commitFullUpdate({String editField = 'calories', int editIndex = 0, num prevValue = 0, num newValue = 0}) {
+    int totalCal = 0;
+    double totalP = 0, totalC = 0, totalF = 0;
+    for (final it in _items) {
+      totalCal += ((it['calories'] as num?) ?? 0).round();
+      totalP += ((it['protein_g'] as num?) ?? 0).toDouble();
+      totalC += ((it['carbs_g'] as num?) ?? 0).toDouble();
+      totalF += ((it['fat_g'] as num?) ?? 0).toDouble();
+    }
+    final edit = FoodItemEdit(
+      foodItemIndex: editIndex,
+      foodItemName: editIndex < _items.length
+          ? ((_items[editIndex]['name'] as String?) ?? 'item') : 'item',
+      editedField: editField,
+      previousValue: prevValue,
+      updatedValue: newValue,
+    );
+    widget.onCommit(widget.meal.id, _items, totalCal, totalP, totalC, totalF, edit);
+  }
+
+  void _removeItem(int index) {
+    if (index < 0 || index >= _items.length) return;
+    final removed = _items[index];
+    final removedName = (removed['name'] as String?) ?? 'item';
+    final removedCal = ((removed['calories'] as num?) ?? 0).round();
+
+    if (_items.length <= 1) {
+      // Last item — delete the whole log
+      widget.onDeleteMeal?.call(widget.meal.id);
+      Navigator.of(context).pop();
+      return;
+    }
+
+    setState(() {
+      _items.removeAt(index);
+      _editedIndices.clear();
+    });
+    _commitFullUpdate(editField: 'removed_item', editIndex: 0, prevValue: removedCal, newValue: 0);
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Removed $removedName'),
+        backgroundColor: AppColors.success,
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+
+  void _showSwapOrAddDialog({int? replaceIndex}) {
+    final isSwap = replaceIndex != null;
+    final existing = isSwap ? _items[replaceIndex] : null;
+    final existingName = isSwap ? ((existing!['name'] as String?) ?? 'item') : null;
+
+    final nameCtrl = TextEditingController();
+    final calCtrl = TextEditingController();
+    final proteinCtrl = TextEditingController();
+    final carbsCtrl = TextEditingController();
+    final fatCtrl = TextEditingController();
+    final amountCtrl = TextEditingController();
+
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final sheetTextPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final sheetTextMuted = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+    final bg = isDark ? const Color(0xFF1C1C1E) : Colors.white;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: bg,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) {
+        return StatefulBuilder(builder: (ctx, setSheetState) {
+          bool isAnalyzing = false;
+
+          Future<void> analyzeFood() async {
+            final desc = nameCtrl.text.trim();
+            if (desc.isEmpty || widget.onAnalyzeText == null) return;
+
+            setSheetState(() { isAnalyzing = true; });
+            try {
+              final result = await widget.onAnalyzeText!(desc);
+              // Extract the first food item from the analysis
+              final items = result['food_items'] as List<dynamic>?;
+              if (items != null && items.isNotEmpty) {
+                final item = items[0] as Map<String, dynamic>;
+                calCtrl.text = '${((item['calories'] as num?) ?? 0).round()}';
+                proteinCtrl.text = '${((item['protein_g'] as num?) ?? 0).toDouble()}';
+                carbsCtrl.text = '${((item['carbs_g'] as num?) ?? 0).toDouble()}';
+                fatCtrl.text = '${((item['fat_g'] as num?) ?? 0).toDouble()}';
+                if (amountCtrl.text.isEmpty) {
+                  amountCtrl.text = (item['amount'] as String?) ?? '';
+                }
+                // Use the AI's name if more specific
+                final aiName = item['name'] as String?;
+                if (aiName != null && aiName.isNotEmpty) {
+                  nameCtrl.text = aiName;
+                }
+                setSheetState(() {});
+              }
+            } catch (e) {
+              debugPrint('Analyze error: $e');
+              if (ctx.mounted) {
+                ScaffoldMessenger.of(ctx).showSnackBar(
+                  SnackBar(content: Text('Analysis failed: ${e.toString().length > 60 ? '${e.toString().substring(0, 60)}...' : e}'),
+                      behavior: SnackBarBehavior.floating),
+                );
+              }
+            } finally {
+              if (ctx.mounted) setSheetState(() { isAnalyzing = false; });
+            }
+          }
+
+          return Padding(
+            padding: EdgeInsets.fromLTRB(20, 16, 20, MediaQuery.of(ctx).viewInsets.bottom + 20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Container(
+                    width: 40, height: 4,
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade400,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  isSwap ? 'Swap $existingName' : 'Add Item',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: sheetTextPrimary),
+                ),
+                const SizedBox(height: 16),
+                // Food name + Analyze button
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: nameCtrl,
+                        autofocus: true,
+                        style: TextStyle(color: sheetTextPrimary),
+                        textInputAction: TextInputAction.search,
+                        onSubmitted: (_) => analyzeFood(),
+                        decoration: InputDecoration(
+                          labelText: 'Food name',
+                          hintText: isSwap ? 'e.g., Sweet Tea' : 'e.g., Side Salad',
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                        ),
+                      ),
+                    ),
+                    if (widget.onAnalyzeText != null) ...[
+                      const SizedBox(width: 8),
+                      SizedBox(
+                        height: 48,
+                        child: ElevatedButton.icon(
+                          onPressed: isAnalyzing ? null : analyzeFood,
+                          icon: isAnalyzing
+                              ? SizedBox(width: 16, height: 16,
+                                  child: CircularProgressIndicator(strokeWidth: 2, color: widget.accent))
+                              : Icon(Icons.auto_awesome_rounded, size: 18),
+                          label: Text(isAnalyzing ? '' : 'AI', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: widget.accent.withValues(alpha: 0.15),
+                            foregroundColor: widget.accent,
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            padding: const EdgeInsets.symmetric(horizontal: 12),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+                if (widget.onAnalyzeText != null)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 4),
+                    child: Text('Type a food and tap AI to auto-fill macros',
+                        style: TextStyle(fontSize: 11, color: sheetTextMuted)),
+                  ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: amountCtrl,
+                  style: TextStyle(color: sheetTextPrimary),
+                  decoration: InputDecoration(
+                    labelText: 'Amount',
+                    hintText: 'e.g., medium, 1 cup, 350ml',
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(child: TextField(
+                      controller: calCtrl,
+                      keyboardType: TextInputType.number,
+                      style: TextStyle(color: sheetTextPrimary),
+                      decoration: InputDecoration(
+                        labelText: 'Cal',
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                    )),
+                    const SizedBox(width: 8),
+                    Expanded(child: TextField(
+                      controller: proteinCtrl,
+                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                      style: TextStyle(color: sheetTextPrimary),
+                      decoration: InputDecoration(
+                        labelText: 'Protein',
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                    )),
+                    const SizedBox(width: 8),
+                    Expanded(child: TextField(
+                      controller: carbsCtrl,
+                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                      style: TextStyle(color: sheetTextPrimary),
+                      decoration: InputDecoration(
+                        labelText: 'Carbs',
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                    )),
+                    const SizedBox(width: 8),
+                    Expanded(child: TextField(
+                      controller: fatCtrl,
+                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                      style: TextStyle(color: sheetTextPrimary),
+                      decoration: InputDecoration(
+                        labelText: 'Fat',
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                    )),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: widget.accent,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                    onPressed: () {
+                      final name = nameCtrl.text.trim();
+                      if (name.isEmpty) return;
+
+                      final newItem = <String, dynamic>{
+                        'name': name,
+                        'amount': amountCtrl.text.trim().isNotEmpty ? amountCtrl.text.trim() : null,
+                        'calories': int.tryParse(calCtrl.text) ?? 0,
+                        'protein_g': double.tryParse(proteinCtrl.text) ?? 0,
+                        'carbs_g': double.tryParse(carbsCtrl.text) ?? 0,
+                        'fat_g': double.tryParse(fatCtrl.text) ?? 0,
+                      };
+
+                      Navigator.of(ctx).pop();
+
+                      setState(() {
+                        if (isSwap) {
+                          final prevCal = ((_items[replaceIndex]['calories'] as num?) ?? 0).round();
+                          _items[replaceIndex] = newItem;
+                          _editedIndices.add(replaceIndex);
+                          _commitFullUpdate(editField: 'swapped_item', editIndex: replaceIndex,
+                              prevValue: prevCal, newValue: newItem['calories'] as int);
+                        } else {
+                          _items.add(newItem);
+                          _editedIndices.add(_items.length - 1);
+                          _commitFullUpdate(editField: 'added_item', editIndex: _items.length - 1,
+                              prevValue: 0, newValue: newItem['calories'] as int);
+                        }
+                      });
+                    },
+                    child: Text(isSwap ? 'Swap Item' : 'Add Item',
+                        style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
+                  ),
+                ),
+              ],
+            ),
+          );
+        });
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final proteinCol = Theme.of(context).brightness == Brightness.dark
@@ -2926,111 +3230,161 @@ class _EditableFoodItemsListState extends State<_EditableFoodItemsList> {
         : AppColorsLight.macroFat;
 
     return Column(
-      children: _items.asMap().entries.map((entry) {
-        final idx = entry.key;
-        final item = entry.value;
-        final edited = _editedIndices.contains(idx);
-        final name = (item['name'] as String?) ?? 'item';
-        final amount = item['amount'] as String?;
-        final calories = ((item['calories'] as num?) ?? 0).round();
-        final protein = ((item['protein_g'] as num?) ?? 0).toDouble();
-        final carbs = ((item['carbs_g'] as num?) ?? 0).toDouble();
-        final fat = ((item['fat_g'] as num?) ?? 0).toDouble();
+      children: [
+        ..._items.asMap().entries.map((entry) {
+          final idx = entry.key;
+          final item = entry.value;
+          final edited = _editedIndices.contains(idx);
+          final name = (item['name'] as String?) ?? 'item';
+          final amount = item['amount'] as String?;
+          final calories = ((item['calories'] as num?) ?? 0).round();
+          final protein = ((item['protein_g'] as num?) ?? 0).toDouble();
+          final carbs = ((item['carbs_g'] as num?) ?? 0).toDouble();
+          final fat = ((item['fat_g'] as num?) ?? 0).toDouble();
 
-        return Container(
-          margin: const EdgeInsets.only(bottom: 8),
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: widget.cardBorder.withValues(alpha: 0.3),
-            borderRadius: BorderRadius.circular(12),
-            border: edited
-                ? Border.all(color: widget.accent.withValues(alpha: 0.45), width: 1)
-                : null,
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Flexible(
-                    child: Text(
-                      name,
-                      style: TextStyle(
-                        fontSize: 14, fontWeight: FontWeight.w600, color: widget.textPrimary,
-                      ),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                  if (edited) ...[
-                    const SizedBox(width: 6),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: widget.accent.withValues(alpha: 0.15),
-                        borderRadius: BorderRadius.circular(6),
-                      ),
+          return Container(
+            margin: const EdgeInsets.only(bottom: 8),
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: widget.cardBorder.withValues(alpha: 0.3),
+              borderRadius: BorderRadius.circular(12),
+              border: edited
+                  ? Border.all(color: widget.accent.withValues(alpha: 0.45), width: 1)
+                  : null,
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
                       child: Row(
-                        mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(Icons.edit_rounded, size: 9, color: widget.accent),
-                          const SizedBox(width: 3),
-                          Text('edited',
+                          Flexible(
+                            child: Text(
+                              name,
                               style: TextStyle(
-                                  fontSize: 9, color: widget.accent, fontWeight: FontWeight.w600)),
+                                fontSize: 14, fontWeight: FontWeight.w600, color: widget.textPrimary,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          if (edited) ...[
+                            const SizedBox(width: 6),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: widget.accent.withValues(alpha: 0.15),
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(Icons.edit_rounded, size: 9, color: widget.accent),
+                                  const SizedBox(width: 3),
+                                  Text('edited',
+                                      style: TextStyle(
+                                          fontSize: 9, color: widget.accent, fontWeight: FontWeight.w600)),
+                                ],
+                              ),
+                            ),
+                          ],
                         ],
                       ),
                     ),
+                    // Per-item action buttons: swap and remove
+                    InkWell(
+                      onTap: () => _showSwapOrAddDialog(replaceIndex: idx),
+                      borderRadius: BorderRadius.circular(8),
+                      child: Padding(
+                        padding: const EdgeInsets.all(4),
+                        child: Icon(Icons.swap_horiz_rounded, size: 18, color: widget.accent),
+                      ),
+                    ),
+                    const SizedBox(width: 2),
+                    InkWell(
+                      onTap: () => _removeItem(idx),
+                      borderRadius: BorderRadius.circular(8),
+                      child: Padding(
+                        padding: const EdgeInsets.all(4),
+                        child: Icon(Icons.close_rounded, size: 18, color: Colors.red.shade400),
+                      ),
+                    ),
                   ],
+                ),
+                const SizedBox(height: 6),
+                Wrap(
+                  spacing: 6,
+                  runSpacing: 4,
+                  children: [
+                    _InlineEditableChip(
+                      label: 'Cal',
+                      value: calories.toDouble(),
+                      isInt: true,
+                      suffix: '',
+                      color: widget.accent,
+                      onSaved: (v) => _onFieldSaved(idx, 'calories', v.round()),
+                    ),
+                    _InlineEditableChip(
+                      label: 'P',
+                      value: protein,
+                      isInt: false,
+                      suffix: 'g',
+                      color: proteinCol,
+                      onSaved: (v) => _onFieldSaved(idx, 'protein_g', double.parse(v.toStringAsFixed(1))),
+                    ),
+                    _InlineEditableChip(
+                      label: 'C',
+                      value: carbs,
+                      isInt: false,
+                      suffix: 'g',
+                      color: carbsCol,
+                      onSaved: (v) => _onFieldSaved(idx, 'carbs_g', double.parse(v.toStringAsFixed(1))),
+                    ),
+                    _InlineEditableChip(
+                      label: 'F',
+                      value: fat,
+                      isInt: false,
+                      suffix: 'g',
+                      color: fatCol,
+                      onSaved: (v) => _onFieldSaved(idx, 'fat_g', double.parse(v.toStringAsFixed(1))),
+                    ),
+                  ],
+                ),
+                if (amount != null) ...[
+                  const SizedBox(height: 4),
+                  Text('Amount: $amount',
+                      style: TextStyle(fontSize: 11, color: widget.textMuted)),
                 ],
-              ),
-              const SizedBox(height: 6),
-              Wrap(
-                spacing: 6,
-                runSpacing: 4,
-                children: [
-                  _InlineEditableChip(
-                    label: 'Cal',
-                    value: calories.toDouble(),
-                    isInt: true,
-                    suffix: '',
-                    color: widget.accent,
-                    onSaved: (v) => _onFieldSaved(idx, 'calories', v.round()),
-                  ),
-                  _InlineEditableChip(
-                    label: 'P',
-                    value: protein,
-                    isInt: false,
-                    suffix: 'g',
-                    color: proteinCol,
-                    onSaved: (v) => _onFieldSaved(idx, 'protein_g', double.parse(v.toStringAsFixed(1))),
-                  ),
-                  _InlineEditableChip(
-                    label: 'C',
-                    value: carbs,
-                    isInt: false,
-                    suffix: 'g',
-                    color: carbsCol,
-                    onSaved: (v) => _onFieldSaved(idx, 'carbs_g', double.parse(v.toStringAsFixed(1))),
-                  ),
-                  _InlineEditableChip(
-                    label: 'F',
-                    value: fat,
-                    isInt: false,
-                    suffix: 'g',
-                    color: fatCol,
-                    onSaved: (v) => _onFieldSaved(idx, 'fat_g', double.parse(v.toStringAsFixed(1))),
-                  ),
-                ],
-              ),
-              if (amount != null) ...[
-                const SizedBox(height: 4),
-                Text('Amount: $amount',
-                    style: TextStyle(fontSize: 11, color: widget.textMuted)),
               ],
-            ],
+            ),
+          );
+        }),
+        // Add Item button
+        const SizedBox(height: 4),
+        InkWell(
+          onTap: () => _showSwapOrAddDialog(),
+          borderRadius: BorderRadius.circular(12),
+          child: Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(vertical: 10),
+            decoration: BoxDecoration(
+              border: Border.all(color: widget.accent.withValues(alpha: 0.4), width: 1),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.add_rounded, size: 18, color: widget.accent),
+                const SizedBox(width: 6),
+                Text('Add Item', style: TextStyle(
+                  fontSize: 13, fontWeight: FontWeight.w600, color: widget.accent,
+                )),
+              ],
+            ),
           ),
-        );
-      }).toList(),
+        ),
+      ],
     );
   }
 }

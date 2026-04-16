@@ -2,7 +2,6 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:share_plus/share_plus.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -11,6 +10,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/services/posthog_service.dart';
 import '../../data/services/haptic_service.dart';
+import '../../utils/share_report_helper.dart';
 import '../../widgets/pill_app_bar.dart';
 import 'report_thumbnail_provider.dart';
 
@@ -271,6 +271,7 @@ class _CarouselView extends ConsumerStatefulWidget {
 class _CarouselViewState extends ConsumerState<_CarouselView> {
   late final PageController _pageController;
   int _currentPage = 0;
+  final Map<int, GlobalKey> _repaintKeys = {};
   // Months offset from the current month. 0 = current, -1 = one month
   // back, etc. Header chevrons mutate this so users can browse their
   // report history over time; cards/carousel are unaffected (that axis
@@ -302,26 +303,21 @@ class _CarouselViewState extends ConsumerState<_CarouselView> {
     setState(() => _monthOffset += delta);
   }
 
-  /// Kick off a share sheet for the given report scoped to [month].
-  ///
-  /// Text-share today. When report snapshot rendering ships, this will
-  /// render the card-sized summary to a PNG and `Share.shareXFiles` it
-  /// so recipients get an actual visual instead of a link.
-  Future<void> _shareReport(_ReportDef report, DateTime month) async {
-    HapticService.light();
+  /// Render the visible report card to a PNG image and open the system
+  /// share sheet so recipients see a visual, not just plain text.
+  Future<void> _shareReport(_ReportDef report, DateTime month, int pageIndex) async {
     final monthLabel = DateFormat('MMMM yyyy').format(month);
-    final text = 'My FitWiz ${report.title} — $monthLabel\n${report.subtitle}';
     ref.read(posthogServiceProvider).capture(
       eventName: 'reports_hub_share_tapped',
       properties: {'route': report.route, 'month_offset': _monthOffset},
     );
-    final box = context.findRenderObject() as RenderBox?;
-    await Share.share(
-      text,
+    final key = _repaintKeys[pageIndex];
+    if (key == null) return;
+    await shareReportScreen(
+      context: context,
+      repaintKey: key,
+      caption: 'My FitWiz ${report.title} — $monthLabel',
       subject: '${report.title} — $monthLabel',
-      sharePositionOrigin: box != null
-          ? box.localToGlobal(Offset.zero) & box.size
-          : null,
     );
   }
 
@@ -417,20 +413,24 @@ class _CarouselViewState extends ConsumerState<_CarouselView> {
             },
             itemBuilder: (context, index) {
               final r = widget.reports[index];
-              final page = _CarouselPage(
-                report: r,
-                month: _currentMonth,
-                isFavorited: widget.favorites.contains(r.route),
-                onToggleFavorite: () => widget.onToggleFavorite(r.route),
-                onTap: () {
-                  HapticService.selection();
-                  context.push(r.route);
-                },
-                onShare: () => _shareReport(r, _currentMonth),
-                onMaximize: () {
-                  HapticService.selection();
-                  context.push(r.route);
-                },
+              _repaintKeys.putIfAbsent(index, () => GlobalKey());
+              final page = RepaintBoundary(
+                key: _repaintKeys[index],
+                child: _CarouselPage(
+                  report: r,
+                  month: _currentMonth,
+                  isFavorited: widget.favorites.contains(r.route),
+                  onToggleFavorite: () => widget.onToggleFavorite(r.route),
+                  onTap: () {
+                    HapticService.selection();
+                    context.push(r.route);
+                  },
+                  onShare: () => _shareReport(r, _currentMonth, index),
+                  onMaximize: () {
+                    HapticService.selection();
+                    context.push(r.route);
+                  },
+                ),
               );
               // Siblings shrink, dim, and are pulled slightly inward so
               // their inner edges overlap the focused card's margin and

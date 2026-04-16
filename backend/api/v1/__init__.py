@@ -84,6 +84,7 @@ from api.v1 import email_cron  # Lifecycle email cron jobs
 from api.v1 import email_webhooks  # Resend webhook: bounce / complaint handling
 from api.v1 import push_nudge_cron  # Hourly accountability push nudge cron jobs
 from api.v1 import dashboard  # Weekly dashboard summary endpoint
+from api.v1 import home  # Home screen bootstrap (single-request aggregated data)
 from api.v1.users.mcp_integrations import router as mcp_integrations_router  # MCP connected-client management
 
 # Create v1 router
@@ -374,6 +375,9 @@ router.include_router(push_nudge_cron.router, prefix="/nudges", tags=["Push Nudg
 
 # Weekly dashboard summary (workout compliance, nutrition, readiness, measurements, goals)
 router.include_router(dashboard.router, prefix="/dashboard", tags=["Dashboard"])
+
+# Home screen bootstrap (single-request aggregated data for home screen)
+router.include_router(home.router, prefix="/home", tags=["Home"])
 
 # MCP integrations — list/revoke external AI assistants connected to this user
 router.include_router(
