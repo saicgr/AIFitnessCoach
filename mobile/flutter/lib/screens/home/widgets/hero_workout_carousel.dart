@@ -356,7 +356,7 @@ class _HeroWorkoutCarouselState extends ConsumerState<HeroWorkoutCarousel> {
         // Carousel starts at index 0 (earliest, usually the missed card if
         // present) so users see what they missed, then the animation reveals
         // today's / next workout. Feels intentional, not magic.
-        if (!_hasScrolledToInitial && carouselItems.length > 1 && _ownsController) {
+        if (!_hasScrolledToInitial && carouselItems.length > 1) {
           _hasScrolledToInitial = true;
           final targetIndex = _pickInitialIndex(carouselItems, today);
           _currentPage = 0;
@@ -384,7 +384,7 @@ class _HeroWorkoutCarouselState extends ConsumerState<HeroWorkoutCarousel> {
 
         // Auto-scroll to next actionable (today/future) workout when a workout is newly completed
         final completedCount = carouselItems.where((item) => item.isWorkout && item.workout!.isCompleted == true).length;
-        if (_hasScrolledToInitial && _lastCompletedCount >= 0 && completedCount > _lastCompletedCount && carouselItems.length > 1 && _ownsController) {
+        if (_hasScrolledToInitial && _lastCompletedCount >= 0 && completedCount > _lastCompletedCount && carouselItems.length > 1) {
           int targetIndex = 0;
           bool found = false;
           for (int i = 0; i < carouselItems.length; i++) {

@@ -48,17 +48,26 @@ class _HeroNutritionCardState extends ConsumerState<HeroNutritionCard>
   }
 
   Future<void> _loadData() async {
+    // If providers already have cached data (pre-loaded by home screen),
+    // show it immediately instead of blocking on a loading spinner.
+    final existingNutrition = ref.read(nutritionProvider).todaySummary;
+    final existingPrefs = ref.read(nutritionPreferencesProvider).currentCalorieTarget;
+    if (existingNutrition != null && existingPrefs > 0 && _isLoading) {
+      setState(() => _isLoading = false);
+      _animController.forward();
+    }
+
     final apiClient = ref.read(apiClientProvider);
     final userId = await apiClient.getUserId();
     if (userId != null && mounted) {
-      // Load all data in parallel instead of sequentially
+      // Refresh in background (providers short-circuit if data is fresh)
       await Future.wait([
         ref.read(nutritionProvider.notifier).loadTodaySummary(userId),
         ref.read(hydrationProvider.notifier).loadTodaySummary(userId),
         ref.read(nutritionPreferencesProvider.notifier).initialize(userId),
       ]);
 
-      if (mounted) {
+      if (mounted && _isLoading) {
         setState(() => _isLoading = false);
         _animController.forward();
       }

@@ -17,12 +17,17 @@ extension __HomeScreenStateExt on _HomeScreenState {
       // Reset nav bar labels to expanded when on Home screen
       ref.read(navBarLabelsExpandedProvider.notifier).state = true;
       // M4: Run critical initialization tasks first, then non-critical ones
+      // Nutrition/hydration loads in parallel with workouts so the Nutrition
+      // tab has data ready before the user can tap it.
       await Future.wait([
         _initializeWorkouts().catchError((e) {
           debugPrint('❌ [Home] _initializeWorkouts error: $e');
         }),
         Future(() => _initializeCurrentProgram()).catchError((e) {
           debugPrint('❌ [Home] _initializeCurrentProgram error: $e');
+        }),
+        _initializeNutritionAndHydration().catchError((e) {
+          debugPrint('❌ [Home] _initializeNutritionAndHydration error: $e');
         }),
       ]);
       // Non-critical tasks run after critical ones resolve
@@ -39,9 +44,6 @@ extension __HomeScreenStateExt on _HomeScreenState {
         }),
         _checkForWorkoutImports().catchError((e) {
           debugPrint('❌ [Home] _checkForWorkoutImports error: $e');
-        }),
-        _initializeNutritionAndHydration().catchError((e) {
-          debugPrint('❌ [Home] _initializeNutritionAndHydration error: $e');
         }),
       ]);
       // Trigger nav tour after critical data has loaded so the home screen
