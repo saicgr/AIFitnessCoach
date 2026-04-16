@@ -11,7 +11,10 @@ Two dependency levels:
 """
 from fastapi import Header, HTTPException, status, Depends
 from typing import Optional
+import asyncio
 import logging
+
+from supabase_auth.errors import AuthRetryableError
 
 from core.supabase_client import get_supabase
 
@@ -120,9 +123,19 @@ async def get_current_user(
     token = _extract_bearer_token(authorization)
 
     try:
-        # Verify token with Supabase
+        # Verify token with Supabase (retry once on transient 5xx errors)
         supabase = get_supabase()
-        user_response = supabase.auth_client.auth.get_user(token)
+        user_response = None
+        for attempt in range(2):
+            try:
+                user_response = supabase.auth_client.auth.get_user(token)
+                break
+            except AuthRetryableError:
+                if attempt == 0:
+                    logger.warning("Supabase auth returned transient error, retrying in 0.5s")
+                    await asyncio.sleep(0.5)
+                else:
+                    raise
 
         if not user_response or not user_response.user:
             raise HTTPException(
@@ -158,6 +171,14 @@ async def get_current_user(
 
     except HTTPException:
         raise
+    except AuthRetryableError as e:
+        # Both attempts failed — Supabase is genuinely down, return 503
+        # so the client knows to retry (not 401 which would trigger logout)
+        logger.error(f"Supabase auth unavailable after retry: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Authentication service temporarily unavailable. Please try again.",
+        )
     except Exception as e:
         logger.error(f"Auth error: {e}", exc_info=True)
         raise HTTPException(
