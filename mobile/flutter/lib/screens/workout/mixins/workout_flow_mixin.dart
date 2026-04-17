@@ -35,6 +35,8 @@ mixin WorkoutFlowMixin<T extends StatefulWidget> on State<T> {
   List<WorkoutExercise> get exercises;
   int get currentExerciseIndex;
   Map<int, List<SetLog>> get completedSets;
+  Map<int, int> get exerciseTimeSeconds;
+  DateTime? get currentExerciseStartTime;
   Map<int, int> get totalSetsPerExercise;
   Map<int, SetProgressionPattern> get exerciseProgressionPattern;
   WorkoutTimerController get timerController;
@@ -343,11 +345,24 @@ mixin WorkoutFlowMixin<T extends StatefulWidget> on State<T> {
 
   /// Build comprehensive workout metadata JSON
   Map<String, dynamic> _buildWorkoutMetadata(Workout workout) {
+    // Finalize the currently-active exercise's elapsed time so the final
+    // exercise (on which the user tapped "Finish Workout" without moving on)
+    // doesn't get stuck at whatever was last persisted — usually nothing.
+    // exerciseTimeSeconds for earlier exercises is populated in
+    // exercise_navigation_mixin.dart:117 / :1037 on transitions.
+    if (currentExerciseStartTime != null &&
+        !exerciseTimeSeconds.containsKey(currentExerciseIndex)) {
+      exerciseTimeSeconds[currentExerciseIndex] = DateTime.now()
+          .difference(currentExerciseStartTime!)
+          .inSeconds
+          .clamp(0, 86400);
+    }
+
     final exerciseOrder = exercises.asMap().entries.map((e) => {
       'index': e.key,
       'exercise_id': e.value.exerciseId ?? e.value.libraryId,
       'exercise_name': e.value.name,
-      'time_spent_seconds': 0, // Exercise time tracking is in main class
+      'time_spent_seconds': exerciseTimeSeconds[e.key] ?? 0,
       if (e.value.supersetGroup != null) 'superset_group': e.value.supersetGroup,
       if (e.value.supersetOrder != null) 'superset_order': e.value.supersetOrder,
     }).toList();
@@ -445,43 +460,61 @@ mixin WorkoutFlowMixin<T extends StatefulWidget> on State<T> {
     };
   }
 
-  /// Log all set performances to backend
+  /// Log all set performances to backend.
+  ///
+  /// Previously this looped per-set with sequential awaits — on a typical
+  /// 20-set workout that's 20 round trips (~3–5s on the "Saving workout…"
+  /// spinner). We now build the full payload locally and POST it to a bulk
+  /// endpoint, so the whole call is one round trip.
   Future<void> logAllSetPerformances(String workoutLogId, String userId) async {
     final workoutRepo = ref.read(workoutRepositoryProvider);
 
+    final records = <Map<String, dynamic>>[];
     for (int i = 0; i < exercises.length; i++) {
       final exercise = exercises[i];
       final sets = completedSets[i] ?? [];
-      final pattern = exerciseProgressionPattern[i] ?? SetProgressionPattern.pyramidUp;
+      final pattern =
+          exerciseProgressionPattern[i] ?? SetProgressionPattern.pyramidUp;
 
       for (int j = 0; j < sets.length; j++) {
         final setLog = sets[j];
         final setTarget = exercise.getTargetForSet(j + 1);
-        try {
-          await workoutRepo.logSetPerformance(
-            workoutLogId: workoutLogId,
-            exerciseId: exercise.exerciseId ?? exercise.libraryId ?? exercise.name,
-            exerciseName: exercise.name,
-            setNumber: j + 1,
-            repsCompleted: setLog.reps,
-            weightKg: setLog.weight,
-            userId: userId,
-            rpe: setLog.rpe?.toDouble(),
-            rir: setLog.rir,
-            notes: setLog.notes,
-            aiInputSource: setLog.aiInputSource,
-            targetWeightKg: setTarget?.targetWeightKg ?? exercise.weight?.toDouble(),
-            targetReps: setTarget?.targetReps ?? exercise.reps,
-            progressionModel: pattern.storageKey,
-            setDurationSeconds: setLog.durationSeconds,
-            restDurationSeconds: setLog.restDurationSeconds,
-          );
-        } catch (e) {
-          debugPrint('⚠️ Failed to log set performance: $e');
-        }
+        records.add({
+          'workout_log_id': workoutLogId,
+          'user_id': userId,
+          'exercise_id':
+              exercise.exerciseId ?? exercise.libraryId ?? exercise.name,
+          'exercise_name': exercise.name,
+          'set_number': j + 1,
+          'reps_completed': setLog.reps,
+          'weight_kg': setLog.weight,
+          'is_completed': true,
+          'set_type': 'working',
+          if (setLog.rpe != null) 'rpe': setLog.rpe!.toDouble(),
+          if (setLog.rir != null) 'rir': setLog.rir,
+          if (setLog.notes != null && setLog.notes!.isNotEmpty)
+            'notes': setLog.notes,
+          if (setLog.aiInputSource != null && setLog.aiInputSource!.isNotEmpty)
+            'ai_input_source': setLog.aiInputSource,
+          'target_weight_kg':
+              setTarget?.targetWeightKg ?? exercise.weight?.toDouble(),
+          if ((setTarget?.targetReps ?? exercise.reps) != null)
+            'target_reps': setTarget?.targetReps ?? exercise.reps,
+          'progression_model': pattern.storageKey,
+          if (setLog.durationSeconds != null)
+            'set_duration_seconds': setLog.durationSeconds,
+          if (setLog.restDurationSeconds != null)
+            'rest_duration_seconds': setLog.restDurationSeconds,
+        });
       }
     }
-    debugPrint('💪 Logged ${completedSets.values.fold<int>(0, (s, l) => s + l.length)} set performances');
+
+    if (records.isEmpty) {
+      debugPrint('💪 No sets to log');
+      return;
+    }
+    final inserted = await workoutRepo.logSetPerformancesBulk(records);
+    debugPrint('💪 Bulk-logged $inserted / ${records.length} set performances');
   }
 
   /// Log superset usage to backend for analytics
@@ -502,47 +535,45 @@ mixin WorkoutFlowMixin<T extends StatefulWidget> on State<T> {
     final apiClient = ref.read(apiClientProvider);
     final workout = (workoutWidget as dynamic).workout as Workout;
 
+    // Build every superset pair POST upfront, then fire all in parallel.
+    // Previously these were awaited one-by-one inside a nested loop.
+    final futures = <Future<void>>[];
     for (final entry in supersetGroups.entries) {
       final groupId = entry.key;
       final groupExercises = entry.value;
+      if (groupExercises.length < 2) continue;
 
-      if (groupExercises.length >= 2) {
-        groupExercises.sort((a, b) => (a.supersetOrder ?? 0).compareTo(b.supersetOrder ?? 0));
+      groupExercises.sort(
+          (a, b) => (a.supersetOrder ?? 0).compareTo(b.supersetOrder ?? 0));
 
+      Future<void> postPair(WorkoutExercise a, WorkoutExercise b) async {
         try {
           await apiClient.post(
             '/supersets/logs',
             data: {
               'user_id': userId,
               'workout_id': workout.id,
-              'exercise_1_name': groupExercises[0].name,
-              'exercise_2_name': groupExercises[1].name,
-              'exercise_1_muscle': groupExercises[0].muscleGroup,
-              'exercise_2_muscle': groupExercises[1].muscleGroup,
+              'exercise_1_name': a.name,
+              'exercise_2_name': b.name,
+              'exercise_1_muscle': a.muscleGroup,
+              'exercise_2_muscle': b.muscleGroup,
               'superset_group': groupId,
             },
           );
-          debugPrint('🔗 Logged superset group $groupId: ${groupExercises[0].name} + ${groupExercises[1].name}');
-
-          for (int i = 2; i < groupExercises.length; i++) {
-            await apiClient.post(
-              '/supersets/logs',
-              data: {
-                'user_id': userId,
-                'workout_id': workout.id,
-                'exercise_1_name': groupExercises[i - 1].name,
-                'exercise_2_name': groupExercises[i].name,
-                'exercise_1_muscle': groupExercises[i - 1].muscleGroup,
-                'exercise_2_muscle': groupExercises[i].muscleGroup,
-                'superset_group': groupId,
-              },
-            );
-            debugPrint('🔗 Logged superset continuation: ${groupExercises[i - 1].name} + ${groupExercises[i].name}');
-          }
+          debugPrint('🔗 Logged superset pair: ${a.name} + ${b.name}');
         } catch (e) {
           debugPrint('⚠️ Failed to log superset: $e');
         }
       }
+
+      futures.add(postPair(groupExercises[0], groupExercises[1]));
+      for (int i = 2; i < groupExercises.length; i++) {
+        futures.add(postPair(groupExercises[i - 1], groupExercises[i]));
+      }
+    }
+
+    if (futures.isNotEmpty) {
+      await Future.wait(futures);
     }
   }
 

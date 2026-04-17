@@ -8,19 +8,26 @@ import 'package:image_picker/image_picker.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/providers/user_provider.dart';
-import '../../../data/models/coach_persona.dart';
 import '../../../data/providers/workout_gallery_provider.dart';
 import '../../../data/services/api_client.dart';
+import '../../../data/providers/share_preferences_provider.dart';
+import '../../../data/services/share_caption_service.dart';
 import '../../../data/services/share_service.dart';
 import '../../../data/services/workout_gallery_service.dart';
-import '../../../screens/ai_settings/ai_settings_screen.dart';
 import '../../../utils/image_capture_utils.dart';
-import 'share_templates/stats_template.dart';
-import 'share_templates/prs_template.dart';
-import 'share_templates/photo_overlay_template.dart';
-import 'share_templates/motivational_template.dart';
-import 'share_templates/coach_review_template.dart';
-import 'share_templates/progress_template.dart';
+import 'share_templates/_share_common.dart';
+import 'share_templates/anatomy_hero_template.dart';
+import 'share_templates/classic_stats_template.dart';
+import 'share_templates/exercise_breakdown_template.dart';
+import 'share_templates/newspaper_template.dart';
+import 'share_templates/pr_poster_template.dart';
+import 'share_templates/receipt_template.dart';
+import 'share_templates/retro_80s_template.dart';
+import 'share_templates/streak_calendar_template.dart';
+import 'share_templates/trading_card_template.dart';
+import 'share_templates/transparent_sticker_template.dart';
+import 'share_templates/volume_hero_template.dart';
+import 'share_templates/wrapped_template.dart';
 
 part 'share_workout_sheet_part_simple_photo_editor.dart';
 
@@ -50,6 +57,18 @@ class ShareWorkoutSheet extends ConsumerStatefulWidget {
   final int? currentStreak;
   final int? totalWorkouts;
 
+  // New fields for the gallery templates (Commit 2+). All optional so
+  // existing callers keep working.
+  /// Per-muscle set counts — powers the Anatomy Hero + Trading Card top move.
+  final Map<String, int>? musclesWorked;
+  /// Slim view-model list of exercises — powers Exercise Breakdown / Receipt / Newspaper.
+  final List<ShareExerciseSummary>? exercises;
+  /// For Trading Card name + Newspaper byline.
+  final String? userDisplayName;
+  final String? userAvatarUrl;
+  /// For Streak Calendar heatmap fill.
+  final List<DateTime>? recentWorkoutDates;
+
   const ShareWorkoutSheet({
     super.key,
     required this.workoutName,
@@ -64,6 +83,11 @@ class ShareWorkoutSheet extends ConsumerStatefulWidget {
     this.achievements,
     this.currentStreak,
     this.totalWorkouts,
+    this.musclesWorked,
+    this.exercises,
+    this.userDisplayName,
+    this.userAvatarUrl,
+    this.recentWorkoutDates,
   });
 
   @override
@@ -75,12 +99,14 @@ class _ShareWorkoutSheetState extends ConsumerState<ShareWorkoutSheet> {
   int _currentPage = 0;
   bool _isSharing = false;
   bool _isSaving = false;
+  bool _isGeneratingCaption = false;
   Uint8List? _userPhotoBytes;
   String? _userId;
   bool _showWatermark = true;
 
-  // Capture keys for each template (6 templates now)
-  final List<GlobalKey> _captureKeys = List.generate(6, (_) => GlobalKey());
+  // Capture keys for each of the 12 gallery templates.
+  // See _buildTemplateGallery() for the canonical template order.
+  final List<GlobalKey> _captureKeys = List.generate(12, (_) => GlobalKey());
 
   @override
   void initState() {
@@ -201,6 +227,48 @@ class _ShareWorkoutSheetState extends ConsumerState<ShareWorkoutSheet> {
       if (mounted) {
         setState(() => _isSharing = false);
       }
+    }
+  }
+
+  /// Generates an AI caption for the current workout via the backend
+  /// Gemini endpoint and copies it to the clipboard. Shows a snackbar
+  /// with the caption preview so the user sees what they just copied.
+  Future<void> _copyAiCaption() async {
+    if (_isGeneratingCaption) return;
+    HapticFeedback.mediumImpact();
+    setState(() => _isGeneratingCaption = true);
+    try {
+      final useKg = ref.read(useKgForWorkoutProvider);
+      final volKg = widget.totalVolumeKg;
+      final displayVol = volKg == null
+          ? '—'
+          : (useKg
+              ? '${volKg.round()} kg'
+              : '${(volKg * 2.20462).round()} lb');
+      final svc = ShareCaptionService(ref.read(apiClientProvider));
+      final caption = await svc.generate(
+        workoutName: widget.workoutName,
+        volumeDisplay: displayVol,
+        sets: widget.totalSets ?? 0,
+        durationSeconds: widget.durationSeconds,
+        topExercise: widget.exercises?.isNotEmpty == true
+            ? widget.exercises!.first.name
+            : null,
+        prCount: widget.newPRs?.length ?? 0,
+      );
+      await Clipboard.setData(ClipboardData(text: caption));
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Copied: "$caption"'),
+            duration: const Duration(seconds: 4),
+          ),
+        );
+      }
+    } catch (e) {
+      _showError('Could not generate caption');
+    } finally {
+      if (mounted) setState(() => _isGeneratingCaption = false);
     }
   }
 
@@ -493,16 +561,9 @@ class _ShareWorkoutSheetState extends ConsumerState<ShareWorkoutSheet> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                // Handle bar
-                Container(
-                  margin: const EdgeInsets.only(top: 12),
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: Colors.grey.withValues(alpha: 0.3),
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
+                // Native showModalBottomSheet drag handle is already rendered
+                // by showGlassSheet() via showDragHandle: true — no second
+                // handle needed here.
 
           // Header
           Padding(
@@ -569,7 +630,7 @@ class _ShareWorkoutSheetState extends ConsumerState<ShareWorkoutSheet> {
 
           // Template carousel
           Expanded(
-            child: _buildTemplateCarousel(),
+            child: _buildTemplateGallery(),
           ),
 
           // Page indicators - scrollable for 6 templates
@@ -682,17 +743,6 @@ class _ShareWorkoutSheetState extends ConsumerState<ShareWorkoutSheet> {
                 // Secondary buttons row
                 Row(
                   children: [
-                    // TODO: Re-enable social features when user base grows
-                    // Expanded(
-                    //   child: _buildShareButton(
-                    //     onPressed: _postToFeed,
-                    //     icon: Icons.feed_rounded,
-                    //     label: 'Post to Feed',
-                    //     isPrimary: false,
-                    //     isLoading: _isSharing,
-                    //   ),
-                    // ),
-                    // const SizedBox(width: 12),
                     Expanded(
                       child: _buildShareButton(
                         onPressed: _saveToGallery,
@@ -700,6 +750,16 @@ class _ShareWorkoutSheetState extends ConsumerState<ShareWorkoutSheet> {
                         label: 'Save Only',
                         isPrimary: false,
                         isLoading: _isSaving,
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: _buildShareButton(
+                        onPressed: _copyAiCaption,
+                        icon: Icons.auto_awesome,
+                        label: _isGeneratingCaption ? 'Writing...' : 'AI Caption',
+                        isPrimary: false,
+                        isLoading: _isGeneratingCaption,
                       ),
                     ),
                   ],

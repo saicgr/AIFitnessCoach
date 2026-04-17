@@ -350,8 +350,8 @@ async def recalculate_user_fitness_score(user_id: str, supabase, timezone_str: s
             completed=completed_count,
         )
 
-        # 3. Get nutrition score (current week)
-        week_start, week_end = nutrition_service.get_current_week_range()
+        # 3. Get nutrition score (current week) — user-local week boundaries.
+        week_start, week_end = nutrition_service.get_current_week_range(timezone_str)
 
         nutrition_response = supabase.table("nutrition_scores").select(
             "nutrition_score"

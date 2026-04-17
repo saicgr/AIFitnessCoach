@@ -10,6 +10,10 @@ class PrsTemplate extends StatelessWidget {
   final List<Map<String, dynamic>>? achievementsData;
   final DateTime completedAt;
   final bool showWatermark;
+  /// User's preferred workout weight unit ('kg' or 'lbs'). Used to label
+  /// PR weight values. Defaults to 'lbs' so the common-in-US fallback
+  /// applies if a caller forgets to pass it.
+  final String weightUnit;
 
   const PrsTemplate({
     super.key,
@@ -18,6 +22,7 @@ class PrsTemplate extends StatelessWidget {
     this.achievementsData,
     required this.completedAt,
     this.showWatermark = true,
+    this.weightUnit = 'lbs',
   });
 
   @override
@@ -197,9 +202,18 @@ class PrsTemplate extends StatelessWidget {
 
   Widget _buildPrCard(Map<String, dynamic> pr) {
     final exercise = pr['exercise'] as String? ?? 'Exercise';
-    final weight = pr['weight_kg'] as num? ?? pr['value'] as num?;
+    final weightKg = pr['weight_kg'] as num? ?? pr['value'] as num?;
     final prType = pr['pr_type'] as String? ?? 'weight';
-    final unit = prType == 'weight' ? 'kg' : (pr['unit'] as String? ?? '');
+    // Convert to user's preferred unit for WEIGHT PRs. Backend always
+    // stores kg; we convert at display time using the same factor as
+    // WeightUtils.kgToLbsFactor (2.20462).
+    final isLbs = weightUnit.toLowerCase() == 'lbs' || weightUnit.toLowerCase() == 'lb';
+    final num? weight = (prType == 'weight' && weightKg != null)
+        ? (isLbs ? weightKg * 2.20462 : weightKg)
+        : weightKg;
+    final unit = prType == 'weight'
+        ? (isLbs ? 'lbs' : 'kg')
+        : (pr['unit'] as String? ?? '');
     final improvement = pr['improvement'] as num?;
 
     return Container(

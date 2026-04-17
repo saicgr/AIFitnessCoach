@@ -300,12 +300,113 @@ At $4.99, you can afford **~$3K/mo** in marketing at 1K users. At $9.99, you can
 
 ---
 
+## Launch Decision (2026-04-16)
+
+**Going to market with Premium only at $4.99/mo · $49.99/yr.**
+
+- No free tier with usage limits (paywall-or-leave, as today).
+- No Ultra / Premium Plus tier at launch.
+- No Lifetime plan at launch.
+
+Rationale: ship the simplest paywall possible, gather 2–3 months of cohort data (D1/D7/D30 retention, trial→paid, ARPU), then layer tiers on top once we know which features drive stickiness and have real marginal cost. Additional tiers below are **documented but not sold** — this section grows as tiers are added.
+
+---
+
+## Future Tier: Ultra (Premium Plus) — Planned, Not Launched
+
+### Status
+- **Not sold today.** Schema and entitlements already exist in code:
+  - `SubscriptionTier.premiumPlus` enum value at `subscription_provider.dart:16`
+  - Product IDs: `premium_plus_monthly`, `premium_plus_yearly` at `subscription_provider.dart:228-229`
+  - Entitlement key: `premium_plus` at `subscription_provider.dart:234`
+  - Tier checks: `isPremiumPlusOrHigher` at `subscription_provider.dart:119`
+- "Formerly ultra" comment on line 16 — the tier was renamed Premium Plus in code; for marketing we can still call it **Ultra**. Pick one name before paywall copy goes live.
+
+### Recommended pricing (when launched)
+
+| Price point | Monthly | Yearly | vs. Premium ($4.99/$49.99) | Rationale |
+|---|---|---|---|---|
+| **Primary** | **$9.99** | **$99.99** | 2× | Industry norm (Notion, Spotify Family). Clean ladder. |
+| Alternative | $12.99 | $129.99 | 2.6× | If feature gap is large (custom voices, priority Gemini 3 Pro) |
+| Aggressive-close | $7.99 | $79.99 | 1.6× | Works only if Premium becomes **capped** (usage limits) and Ultra is **unlimited** — i.e., the gap is "capped vs unlimited," not "$3 more" |
+
+**Default recommendation: $9.99/mo · $99.99/yr.** Revisit if the doc's Phase 2 A/B moves Premium to $9.99 — Ultra would then shift to $14.99+.
+
+### Feature gating (proposed)
+
+Only gate features with **real marginal cost** or that unlock outcomes Premium can't. Don't gate on vanity.
+
+| Feature | Premium ($4.99) | Ultra ($9.99) | Why gate |
+|---|---|---|---|
+| AI coach chat | ✅ Unlimited | ✅ Unlimited | Core to the product; don't cap |
+| Workout generation | ✅ 4/mo | ✅ Unlimited | Gemini cost + anchors value |
+| Food photo scans | ✅ 30/mo | ✅ Unlimited | Vision API cost is real |
+| Video form analysis | ❌ | ✅ Unlimited | Highest-cost feature (keyframe extraction + vision) |
+| Gemini model tier | Flash | **Pro** | Better reasoning for plans, costs ~6× more |
+| Custom coach voices | ❌ | ✅ | Persona differentiation |
+| Offline Gemma AI model | ✅ | ✅ | Shipped; no cost to gate |
+| Batch cooking flows | ✅ | ✅ | Core nutrition |
+| Priority support | ❌ | ✅ | Cheap to offer at low volume |
+
+Rule of thumb: **if it costs us Gemini tokens, it's a gating candidate.** If it's just UI, it belongs in Premium.
+
+### Launch prerequisites
+
+Don't turn on Ultra until:
+- [ ] Premium has ≥500 paying subscribers (need a real base to upsell from)
+- [ ] 3+ months of D30 retention data proves PMF at $4.99
+- [ ] At least 3 Ultra-only features are built and QA'd (video form, unlimited photos, Pro model routing)
+- [ ] Paywall copy rewritten as a 3-column comparison (today it's 2-column)
+- [ ] RevenueCat Offerings configured with Premium + Ultra + trial phase
+- [ ] App Store Connect / Play Console SKUs created and approved
+
+### RevenueCat / Store setup (when the time comes)
+
+- Create 2 new SKUs per store: `premium_plus_monthly` ($9.99), `premium_plus_yearly` ($99.99)
+- Attach both to `premium_plus` entitlement in RevenueCat
+- Keep `premium` entitlement on existing SKUs (don't migrate)
+- Update paywall to show tier comparison — code lives at `mobile/flutter/lib/screens/paywall/paywall_pricing_screen.dart`
+
+### Why Ultra over Lifetime
+
+Documented at length above (Launch Decision section). Short version: lifetime = one-time cash + forever Gemini liability. Ultra = recurring revenue that scales with cost. If we ever do lifetime, it's a **scarcity lever** (e.g., "Founding 500") at $149.99 — never a permanent SKU.
+
+---
+
+## Future Tier: Lifetime — Deferred
+
+### Status
+Not planned for launch. `SubscriptionTier.lifetime` exists in code (`subscription_provider.dart:20`) for potential future use.
+
+### If we ever launch it
+
+- **Only after Premium moves to $9.99** — at $4.99 the math doesn't pencil (20-month break-even vs monthly reads as weak).
+- **Price: $149.99** (3× yearly at $9.99/$49.99 era; adjust if yearly changes).
+- **Cap at 500 seats** ("Founding Member" scarcity) — never a permanent SKU.
+- **Exclude future tiers** from lifetime — covers today's Premium only, so Ultra/Plus upsell still works.
+
+---
+
+## Future Tier: Free with Limits — Not Recommended
+
+A capped free tier (e.g., 3 workouts/mo, 5 photo logs, no chat) is plumbed in code via `SubscriptionTier.free` but **not implemented as a product**. Today `free` = "paywall was dismissed."
+
+Don't build this until:
+- Organic install volume is high enough that paywall-or-leave is leaving money on the table (likely at 50K+ MAU)
+- We have data showing which features convert free users → paid (i.e., which limits actually drive conversion)
+
+Premature freemium = revenue loss with no learning.
+
+---
+
 ## Appendix: Files to update if price changes
 
-- `mobile/flutter/lib/core/providers/subscription_provider.dart:719-731` — `ProductPricing.products` fallback map
-- RevenueCat dashboard — Offerings + pricing phases (source of truth for live price)
+- `mobile/flutter/lib/core/providers/subscription_provider.dart:719-731` — `ProductPricing.products` fallback map (add `premium_plus_monthly` / `premium_plus_yearly` entries when Ultra launches)
+- `mobile/flutter/lib/core/providers/subscription_provider.dart:228-229` — Premium Plus product ID constants (already exist)
+- `mobile/flutter/lib/core/providers/subscription_provider.dart:234` — `premiumPlusEntitlement` key
+- RevenueCat dashboard — Offerings + pricing phases (source of truth for live price); create Premium Plus Offering when adding Ultra
 - App Store Connect + Google Play Console — product SKU prices
 - `/PRICING.md` (root) — refresh to match reality (currently shows $5.99/$9.99 — misleading)
 - `/SUBSCRIPTION_TIER_GUIDE.md` — same
 - `research/COMPETITIVE_ANALYSIS.md:91-93` — update "Your App" row
-- Paywall copy in `mobile/flutter/lib/screens/paywall/paywall_pricing_screen.dart`
+- Paywall copy in `mobile/flutter/lib/screens/paywall/paywall_pricing_screen.dart` (rewrite as 3-column when Ultra launches)

@@ -41,7 +41,10 @@ Future<HydrationDialogResult?> showHydrationDialog({
         Color getDrinkColor(DrinkType type) {
           switch (type) {
             case DrinkType.water:
-              return AppColors.teal;
+              // Use waterBlue (always blue) instead of AppColors.teal, which
+              // resolves to silver/gray under the monochrome theme and made
+              // the "Log Water" button look disabled.
+              return AppColors.waterBlue;
             case DrinkType.proteinShake:
               return AppColors.purple;
             case DrinkType.sportsDrink:

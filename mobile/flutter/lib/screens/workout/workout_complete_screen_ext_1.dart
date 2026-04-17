@@ -766,6 +766,15 @@ extension __WorkoutCompleteScreenStateExt1 on _WorkoutCompleteScreenState {
             : null,
         currentStreak: _achievements?['streak_days'] as int?,
         totalWorkouts: _achievements?['total_workouts'] as int?,
+        musclesWorked: extractMuscles(widget.workout.exercises),
+        exercises: widget.workout.exercises
+            .map((ex) => ShareExerciseSummary(
+                  name: ex.name,
+                  sets: ex.sets ?? 0,
+                  reps: ex.reps ?? 0,
+                ))
+            .toList(),
+        userDisplayName: ref.read(authStateProvider).user?.displayName,
       ),
       ),
     );
@@ -840,13 +849,9 @@ extension __WorkoutCompleteScreenStateExt1 on _WorkoutCompleteScreenState {
 
 
   Future<void> _submitFeedback() async {
-    debugPrint('📝 [Feedback] Starting feedback submission...');
-    debugPrint('📝 [Feedback] Rating: $_rating, Difficulty: $_difficulty');
-    debugPrint('📝 [Feedback] Exercise ratings count: ${_exerciseRatings.length}');
-    debugPrint('📝 [Feedback] Workout ID: ${widget.workout.id}');
+    debugPrint('📝 [Feedback] Starting feedback submission (async background)...');
 
     if (_rating == 0) {
-      debugPrint('⚠️ [Feedback] Rating is 0 - prompting user');
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Please rate your workout'),
@@ -856,90 +861,124 @@ extension __WorkoutCompleteScreenStateExt1 on _WorkoutCompleteScreenState {
       return;
     }
 
+    // Navigate home IMMEDIATELY — the user already tapped Done; they don't
+    // need to watch three sequential API round-trips complete before the
+    // home screen appears. Fire the feedback POSTs as unawaited futures.
+    // Errors surface via the existing error-reporting on api_client
+    // (and the logs below) without blocking navigation.
     setState(() => _isSubmitting = true);
 
+    // Snapshot the data we need so background work is unaffected by
+    // state disposal.
+    final apiClient = ref.read(apiClientProvider);
+    final workoutId = widget.workout.id;
+    final rating = _rating;
+    final difficulty = _difficulty;
+    final energyLevel = _getEnergyLevel();
+    final moodAfter = _moodAfter;
+    final energyAfter = _energyAfter;
+    final confidenceLevel = _confidenceLevel;
+    final feelingStronger = _feelingStronger;
+    final exerciseFeedbackSnapshot = <Map<String, dynamic>>[];
+    for (int i = 0; i < widget.workout.exercises.length; i++) {
+      final exercise = widget.workout.exercises[i];
+      if (_exerciseRatings.containsKey(i)) {
+        exerciseFeedbackSnapshot.add({
+          'exercise_name': exercise.name,
+          'exercise_index': i,
+          'rating': _exerciseRatings[i],
+          'difficulty_felt': _exerciseDifficulties[i] ?? 'just_right',
+          'would_do_again': true,
+        });
+      }
+    }
+    final subjectiveNotifier = ref.read(subjectiveFeedbackProvider.notifier);
+    final workoutsNotifier = ref.read(workoutsProvider.notifier);
+    final scoresNotifier = ref.read(scoresProvider.notifier);
+
+    // Kick off all background work without awaiting.
+    // ignore: unawaited_futures
+    _runFeedbackBackground(
+      apiClient: apiClient,
+      workoutId: workoutId,
+      rating: rating,
+      difficulty: difficulty,
+      energyLevel: energyLevel,
+      moodAfter: moodAfter,
+      energyAfter: energyAfter,
+      confidenceLevel: confidenceLevel,
+      feelingStronger: feelingStronger,
+      exerciseFeedback: exerciseFeedbackSnapshot,
+      subjectiveNotifier: subjectiveNotifier,
+      workoutsNotifier: workoutsNotifier,
+      scoresNotifier: scoresNotifier,
+    );
+
+    // Navigate home immediately — home screen doesn't depend on these
+    // posts completing.
+    if (mounted) {
+      context.go('/home');
+    }
+  }
+
+  /// Runs the feedback POSTs, streak refresh, and score recompute in the
+  /// background after navigation. All failures are logged but not bubbled
+  /// because the user has already moved on to the home screen.
+  Future<void> _runFeedbackBackground({
+    required ApiClient apiClient,
+    required String? workoutId,
+    required int rating,
+    required String difficulty,
+    required String energyLevel,
+    required int? moodAfter,
+    required int? energyAfter,
+    required int? confidenceLevel,
+    required bool feelingStronger,
+    required List<Map<String, dynamic>> exerciseFeedback,
+    required SubjectiveFeedbackNotifier subjectiveNotifier,
+    required WorkoutsNotifier workoutsNotifier,
+    required ScoresNotifier scoresNotifier,
+  }) async {
     try {
-      final apiClient = ref.read(apiClientProvider);
       final userId = await apiClient.getUserId();
-      debugPrint('📝 [Feedback] User ID: $userId');
+      if (userId != null && workoutId != null) {
+        // Stamp user_id on each exercise feedback row now that we have it.
+        final exerciseFeedbackWithUser = exerciseFeedback
+            .map((e) => {...e, 'user_id': userId, 'workout_id': workoutId})
+            .toList();
 
-      if (userId != null && widget.workout.id != null) {
-        // Build exercise feedback list
-        final exerciseFeedbackList = <Map<String, dynamic>>[];
-        for (int i = 0; i < widget.workout.exercises.length; i++) {
-          final exercise = widget.workout.exercises[i];
-          if (_exerciseRatings.containsKey(i)) {
-            exerciseFeedbackList.add({
-              'user_id': userId,
-              'workout_id': widget.workout.id,
-              'exercise_name': exercise.name,
-              'exercise_index': i,
-              'rating': _exerciseRatings[i],
-              'difficulty_felt': _exerciseDifficulties[i] ?? 'just_right',
-              'would_do_again': true,
-            });
-          }
-        }
-        debugPrint('📝 [Feedback] Exercise feedback list: ${exerciseFeedbackList.length} exercises');
-
-        // Submit workout feedback to backend
-        debugPrint('📝 [Feedback] Calling POST /feedback/workout/${widget.workout.id}...');
-        final response = await apiClient.post(
-          '/feedback/workout/${widget.workout.id}',
+        await apiClient.post(
+          '/feedback/workout/$workoutId',
           data: {
             'user_id': userId,
-            'workout_id': widget.workout.id,
-            'overall_rating': _rating,
-            'overall_difficulty': _difficulty,
-            'energy_level': _getEnergyLevel(),
-            'would_recommend': _rating >= 3,
-            'exercise_feedback': exerciseFeedbackList,
+            'workout_id': workoutId,
+            'overall_rating': rating,
+            'overall_difficulty': difficulty,
+            'energy_level': energyLevel,
+            'would_recommend': rating >= 3,
+            'exercise_feedback': exerciseFeedbackWithUser,
           },
         );
-        debugPrint('✅ [Feedback] Workout feedback API response: ${response.statusCode}');
 
-        // Submit subjective feedback (mood, energy, confidence) if provided
-        if (_moodAfter != null) {
-          debugPrint('📝 [Subjective Feedback] Submitting: mood=$_moodAfter, energy=$_energyAfter, stronger=$_feelingStronger');
+        if (moodAfter != null) {
           try {
-            final notifier = ref.read(subjectiveFeedbackProvider.notifier);
-            await notifier.createPostCheckin(
-              workoutId: widget.workout.id!,
-              moodAfter: _moodAfter!,
-              energyAfter: _energyAfter,
-              confidenceLevel: _confidenceLevel,
-              feelingStronger: _feelingStronger,
+            await subjectiveNotifier.createPostCheckin(
+              workoutId: workoutId,
+              moodAfter: moodAfter,
+              energyAfter: energyAfter,
+              confidenceLevel: confidenceLevel,
+              feelingStronger: feelingStronger,
             );
-            debugPrint('✅ [Subjective Feedback] Successfully submitted');
           } catch (e) {
-            debugPrint('⚠️ [Subjective Feedback] Error (non-blocking): $e');
-            // Non-blocking - don't fail the whole submission
+            debugPrint('⚠️ [Subjective Feedback] background error: $e');
           }
         }
-        debugPrint('✅ [Feedback] All feedback submitted successfully');
-      } else {
-        debugPrint('⚠️ [Feedback] Missing userId or workoutId - skipping submission');
       }
-
-      // Refresh workouts silently (no loading flash)
-      await ref.read(workoutsProvider.notifier).silentRefresh();
-
-      // Refresh fitness scores (they are recalculated on the backend after workout completion)
-      ref.read(scoresProvider.notifier).loadScoresOverview(userId: userId);
-
-      if (mounted) {
-        context.go('/home');
-      }
+      await workoutsNotifier.silentRefresh();
+      scoresNotifier.loadScoresOverview(userId: await apiClient.getUserId());
+      debugPrint('✅ [Feedback] Background submission complete');
     } catch (e) {
-      debugPrint('❌ [Feedback] Failed to submit feedback: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Failed to submit feedback: $e'),
-          backgroundColor: AppColors.error,
-        ),
-      );
-    } finally {
-      setState(() => _isSubmitting = false);
+      debugPrint('❌ [Feedback] Background submission failed (non-blocking): $e');
     }
   }
 

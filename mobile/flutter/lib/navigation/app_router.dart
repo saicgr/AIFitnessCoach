@@ -500,7 +500,12 @@ final routerProvider = Provider<GoRouter>((ref) {
       final deepLink = _handleDeepLinkRedirect(state, posthog: posthog);
       if (deepLink != null) return deepLink;
 
-      // 2. Process daily login XP for authenticated users (fire-and-forget, once per session)
+      // 2. Reset daily-login flag on logout so re-login processes it again
+      if (authState.status == AuthStatus.unauthenticated) {
+        _dailyLoginXpProcessed = false;
+      }
+
+      // 3. Process daily login XP for authenticated users (fire-and-forget, once per auth session)
       if (authState.status == AuthStatus.authenticated && !_dailyLoginXpProcessed) {
         _dailyLoginXpProcessed = true;
         Future.microtask(() {
@@ -508,7 +513,7 @@ final routerProvider = Provider<GoRouter>((ref) {
         });
       }
 
-      // 3. Handle loading/initial state
+      // 4. Handle loading/initial state
       final loadingRedirect = _handleLoadingState(state, authState, languageState);
       if (loadingRedirect != null) return loadingRedirect;
       // If loading state returned null but we ARE loading, stay put
@@ -518,10 +523,10 @@ final routerProvider = Provider<GoRouter>((ref) {
         return null;
       }
 
-      // 4. Handle auth error state
+      // 5. Handle auth error state
       _handleAuthError(state, authState);
 
-      // 5. Handle auth-based redirects (onboarding, login gates, accessibility)
+      // 6. Handle auth-based redirects (onboarding, login gates, accessibility)
       return _handleAuthRedirect(state, ref, authState, accessibilitySettings);
     },
     routes: [

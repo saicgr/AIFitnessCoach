@@ -653,6 +653,10 @@ class AuthNotifier extends StateNotifier<AuthState> {
     try {
       await _repository.signOut();
       await _clearPreAuthQuiz();
+      // Reset live XP state — the provider persists (not autoDispose), so
+      // stale userXp/lastLevelUp would survive logout and cause false
+      // level-up animations on re-login.
+      _ref.read(xpProvider.notifier).resetState();
       state = const AuthState(status: AuthStatus.unauthenticated);
     } catch (e) {
       state = AuthState(

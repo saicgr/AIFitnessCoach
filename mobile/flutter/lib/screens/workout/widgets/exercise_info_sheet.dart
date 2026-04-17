@@ -14,6 +14,7 @@ import 'package:video_player/video_player.dart';
 
 import '../../../core/animations/app_animations.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/constants/exercise_video_overrides.dart';
 import '../../../core/theme/accent_color_provider.dart';
 import '../../../data/models/exercise.dart';
 import '../../../data/services/api_client.dart';
@@ -277,7 +278,39 @@ class _ExerciseInstructionsScreenState
       );
     }
 
+    // Per-exercise framing override (see exercise_video_overrides.dart).
+    // Null for almost every exercise — falls back to native aspect.
+    final crop = exerciseVideoCropFor(widget.exercise.name);
+
     if (_isVideoInitialized && _videoController != null) {
+      final nativeAspect = _videoController!.value.aspectRatio;
+      final targetAspect = crop?.aspectRatio ?? nativeAspect;
+      final scale = crop?.scale ?? 1.0;
+
+      Widget videoChild = AspectRatio(
+        aspectRatio: nativeAspect,
+        child: VideoPlayer(_videoController!),
+      );
+
+      // If an override is set, force a tighter frame and optionally zoom in
+      // to crop the baked-in whitespace.
+      if (crop != null) {
+        videoChild = ClipRect(
+          child: AspectRatio(
+            aspectRatio: targetAspect,
+            child: FittedBox(
+              fit: BoxFit.cover,
+              clipBehavior: Clip.hardEdge,
+              child: SizedBox(
+                width: _videoController!.value.size.width * scale,
+                height: _videoController!.value.size.height * scale,
+                child: VideoPlayer(_videoController!),
+              ),
+            ),
+          ),
+        );
+      }
+
       return GestureDetector(
         onTap: () {
           // Toggle play/pause
@@ -292,13 +325,7 @@ class _ExerciseInstructionsScreenState
         child: Stack(
           alignment: Alignment.center,
           children: [
-            // Video player - centered and fitted
-            Center(
-              child: AspectRatio(
-                aspectRatio: _videoController!.value.aspectRatio,
-                child: VideoPlayer(_videoController!),
-              ),
-            ),
+            Center(child: videoChild),
             // Play/pause overlay
             if (!_videoController!.value.isPlaying)
               Container(
@@ -319,12 +346,33 @@ class _ExerciseInstructionsScreenState
       );
     }
 
-    // Placeholder when no video - show the exercise image
+    // Placeholder when no video - show the exercise image.
+    // If an override exists, mirror the same crop so the still image matches
+    // the cropped video framing.
+    final screenW = MediaQuery.of(context).size.width;
+    final screenH = MediaQuery.of(context).size.height;
+    if (crop != null) {
+      return Center(
+        child: AspectRatio(
+          aspectRatio: crop.aspectRatio,
+          child: ExerciseImage(
+            exerciseName: widget.exercise.name,
+            width: screenW,
+            height: screenW / crop.aspectRatio,
+            borderRadius: 0,
+            fit: BoxFit.cover,
+            backgroundColor:
+                isDark ? AppColors.pureBlack : AppColorsLight.pureWhite,
+            iconColor: textMuted,
+          ),
+        ),
+      );
+    }
     return Center(
       child: ExerciseImage(
         exerciseName: widget.exercise.name,
-        width: MediaQuery.of(context).size.width,
-        height: MediaQuery.of(context).size.height * 0.5,
+        width: screenW,
+        height: screenH * 0.5,
         borderRadius: 0,
         fit: BoxFit.contain,
         backgroundColor: isDark ? AppColors.pureBlack : AppColorsLight.pureWhite,

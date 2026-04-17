@@ -92,6 +92,16 @@ mixin TimerRestMixin<T extends StatefulWidget> on State<T> {
     actualRestDurations[currentExerciseIndex] ??= [];
     actualRestDurations[currentExerciseIndex]!.add(actualRest);
 
+    // Sync the actual rest back into the last `restIntervals` entry so the
+    // post-workout "Rest Analysis" widget shows real rest vs prescribed
+    // instead of prescribed-vs-prescribed. startRest() pushes the entry with
+    // rest_seconds == prescribed; we overwrite it here once we know what the
+    // user actually rested (including Skip Rest, which routes through this
+    // same callback via timerController.skipRest → _endRest).
+    if (restIntervals.isNotEmpty) {
+      restIntervals.last['rest_seconds'] = actualRest;
+    }
+
     // Mark start time for the next set
     currentSetStartTime = DateTime.now();
 

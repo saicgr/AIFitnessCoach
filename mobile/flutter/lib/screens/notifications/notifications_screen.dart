@@ -296,9 +296,9 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                 ],
               ).then((value) {
                 if (value == 'mark_all_read') {
-                  ref.read(notificationsProvider.notifier).markAllAsRead();
+                  ref.read(unifiedNotificationsProvider.notifier).markAllAsRead();
                 } else if (value == 'clear_all') {
-                  ref.read(notificationsProvider.notifier).clearAll();
+                  ref.read(unifiedNotificationsProvider.notifier).clearAll();
                 }
               });
             },

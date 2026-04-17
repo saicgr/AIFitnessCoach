@@ -5,6 +5,8 @@
 /// Also includes AI-powered rest time suggestions.
 library;
 
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -706,23 +708,51 @@ class RestTimerOverlay extends StatelessWidget {
 
   Widget _buildSkipButton(bool isDark) {
     final purple = isDark ? AppColors.purple : _darkenColor(AppColors.purple);
-    return TextButton.icon(
-      onPressed: onSkipRest,
-      style: TextButton.styleFrom(
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-        backgroundColor:
-            isDark ? Colors.white.withValues(alpha: 0.1) : AppColorsLight.cardBorder,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
-      ),
-      icon: Icon(Icons.skip_next, color: purple, size: 20),
-      label: Text(
-        'Skip Rest',
-        style: TextStyle(
-          color: purple,
-          fontWeight: FontWeight.w600,
-          fontSize: 15,
+    // Glassmorphic pill: frosted blur + translucent tint + subtle border +
+    // hairline purple glow so the CTA reads against the video/image strip
+    // sitting underneath, without hiding it.
+    final fill = isDark
+        ? Colors.white.withValues(alpha: 0.08)
+        : Colors.white.withValues(alpha: 0.55);
+    final border = purple.withValues(alpha: 0.35);
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(14),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            color: fill,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: border, width: 1),
+            boxShadow: [
+              BoxShadow(
+                color: purple.withValues(alpha: isDark ? 0.22 : 0.14),
+                blurRadius: 18,
+                spreadRadius: -4,
+              ),
+            ],
+          ),
+          child: TextButton.icon(
+            onPressed: onSkipRest,
+            style: TextButton.styleFrom(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              backgroundColor: Colors.transparent,
+              foregroundColor: purple,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(14),
+              ),
+            ),
+            icon: Icon(Icons.skip_next, color: purple, size: 20),
+            label: Text(
+              'Skip Rest',
+              style: TextStyle(
+                color: purple,
+                fontWeight: FontWeight.w600,
+                fontSize: 15,
+              ),
+            ),
+          ),
         ),
       ),
     );

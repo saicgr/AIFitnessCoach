@@ -346,6 +346,56 @@ class UnifiedNotificationsNotifier extends StateNotifier<AsyncValue<List<Unified
     }
   }
 
+  /// Mark ALL notifications as read (local + challenge + social)
+  Future<void> markAllAsRead() async {
+    // 1. Mark local notifications as read
+    _ref.read(notificationsProvider.notifier).markAllAsRead();
+
+    // 2. Mark challenge notifications as read on server
+    final userId = _ref.read(currentUserIdProvider);
+    if (userId != null) {
+      state.whenData((notifications) async {
+        for (final n in notifications) {
+          if (!n.isRead && n.id.startsWith('challenge_')) {
+            try {
+              final realId = n.id.substring('challenge_'.length);
+              final service = _ref.read(challengesServiceProvider);
+              await service.markNotificationRead(userId: userId, notificationId: realId);
+            } catch (_) {}
+          }
+        }
+      });
+    }
+
+    // 3. Update unified state immediately
+    state = state.whenData(
+      (notifications) => notifications
+          .map((n) => UnifiedNotification(
+                id: n.id,
+                title: n.title,
+                body: n.body,
+                type: n.type,
+                timestamp: n.timestamp,
+                isRead: true,
+                challengeId: n.challengeId,
+                requestId: n.requestId,
+                fromUserName: n.fromUserName,
+                fromUserAvatar: n.fromUserAvatar,
+                referenceId: n.referenceId,
+              ))
+          .toList(),
+    );
+  }
+
+  /// Clear ALL notifications (local + unified state)
+  void clearAll() {
+    // 1. Clear local notifications
+    _ref.read(notificationsProvider.notifier).clearAll();
+
+    // 2. Clear unified state
+    state = const AsyncValue.data([]);
+  }
+
   /// Accept a friend request and remove its notification
   Future<void> acceptFriendRequest(String notificationId, String requestId) async {
     final userId = _ref.read(currentUserIdProvider);

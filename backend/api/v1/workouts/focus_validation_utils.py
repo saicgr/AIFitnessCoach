@@ -9,7 +9,8 @@ Handles:
 - Favorite workout context building
 """
 import json
-from typing import List, Dict, Any, Optional
+import re
+from typing import List, Dict, Any, Optional, Set
 
 from core.supabase_db import get_supabase_db
 from core.logger import get_logger
@@ -244,34 +245,97 @@ async def get_all_muscles_for_exercise(exercise_name: str) -> List[Dict[str, Any
         return []
 
 
+def _extract_muscle_tokens(label: Optional[str]) -> Set[str]:
+    """
+    Extract a set of comparable tokens from a muscle descriptor.
+
+    We include BOTH the region label (the part before the parens) and the
+    anatomical muscle names (inside the parens). That way the similarity
+    math is robust across mixed labelling styles in the DB — a plain
+    ``chest`` and a fully qualified ``chest (pectoralis major)`` share the
+    ``chest`` token; a ``back (latissimus dorsi)`` and a ``middle back
+    (latissimus dorsi, teres major)`` share ``latissimus dorsi``.
+
+    Examples:
+        'back (latissimus dorsi)'                     -> {'back', 'latissimus dorsi'}
+        'middle back (latissimus dorsi, teres major)' -> {'middle back', 'latissimus dorsi', 'teres major'}
+        'chest'                                        -> {'chest'}
+        'chest (pectoralis major)'                     -> {'chest', 'pectoralis major'}
+        ''                                             -> set()
+    """
+    if not label:
+        return set()
+    text = label.strip().lower()
+    match = re.search(r"\(([^)]+)\)", text)
+    if not match:
+        return {text}
+    region = text[: match.start()].strip()
+    tokens = {t.strip() for t in match.group(1).split(",") if t.strip()}
+    if region:
+        tokens.add(region)
+    return tokens
+
+
 def compare_muscle_profiles(
     old_exercise_muscles: List[Dict[str, Any]],
     new_exercise_muscles: List[Dict[str, Any]],
 ) -> Dict[str, Any]:
-    """Compare the muscle profiles of two exercises to detect significant differences."""
-    old_muscles = {m["muscle"].lower() for m in old_exercise_muscles if m.get("muscle")}
-    new_muscles = {m["muscle"].lower() for m in new_exercise_muscles if m.get("muscle")}
+    """Compare the muscle profiles of two exercises to detect significant differences.
 
-    old_primary = next((m["muscle"].lower() for m in old_exercise_muscles if m.get("is_primary")), None)
-    new_primary = next((m["muscle"].lower() for m in new_exercise_muscles if m.get("is_primary")), None)
+    Uses anatomical muscle tokens (parsed from the parenthetical in labels like
+    ``back (latissimus dorsi)``) rather than raw label strings, so exercises
+    that hit the same muscles through different body-region labels score as
+    similar instead of triggering false-positive warnings.
+    """
+    # Build anatomical-muscle sets from every entry's label.
+    old_muscles: Set[str] = set()
+    for m in old_exercise_muscles:
+        old_muscles |= _extract_muscle_tokens(m.get("muscle"))
+    new_muscles: Set[str] = set()
+    for m in new_exercise_muscles:
+        new_muscles |= _extract_muscle_tokens(m.get("muscle"))
 
-    primary_match = False
-    if old_primary and new_primary:
-        primary_match = old_primary == new_primary or old_primary in new_primary or new_primary in old_primary
+    old_primary_label = next(
+        (m["muscle"] for m in old_exercise_muscles if m.get("is_primary") and m.get("muscle")),
+        None,
+    )
+    new_primary_label = next(
+        (m["muscle"] for m in new_exercise_muscles if m.get("is_primary") and m.get("muscle")),
+        None,
+    )
+    old_primary_tokens = _extract_muscle_tokens(old_primary_label)
+    new_primary_tokens = _extract_muscle_tokens(new_primary_label)
+    # Primary muscles match if they share ANY anatomical token — covers "main
+    # muscle still targeted" (e.g. lat → lat+teres). Fall back to substring
+    # on the raw labels so the region-only case ("chest" vs
+    # "chest (pectoralis major)") still reads as a match even though one side
+    # has no parenthetical.
+    primary_match = bool(old_primary_tokens & new_primary_tokens)
+    if not primary_match and old_primary_label and new_primary_label:
+        a = old_primary_label.strip().lower()
+        b = new_primary_label.strip().lower()
+        if a and b and (a == b or a in b or b in a):
+            primary_match = True
 
     common_muscles = old_muscles & new_muscles
-    all_muscles = old_muscles | new_muscles
+    # Source-retention similarity (Tversky with α=1, β=0): "what fraction of
+    # the old exercise's muscles does the new exercise still hit?"
+    # Symmetric Jaccard penalized swaps that ADD muscles (e.g. lat → lat+teres
+    # scored 25% instead of matching), which produced false-positive warnings.
+    # For swap comparisons we care about muscles preserved, not muscles added.
+    similarity_score = (len(common_muscles) / len(old_muscles)) if old_muscles else 1.0
 
-    similarity_score = len(common_muscles) / len(all_muscles) if all_muscles else 1.0
-
-    missing_muscles = list(old_muscles - new_muscles)
-    added_muscles = list(new_muscles - old_muscles)
+    missing_muscles = sorted(old_muscles - new_muscles)
+    added_muscles = sorted(new_muscles - old_muscles)
 
     is_similar = primary_match and similarity_score >= 0.5
 
     warning = None
     if not primary_match:
-        warning = f"Primary muscle changed from '{old_primary}' to '{new_primary}'"
+        warning = (
+            f"Primary muscle changed from '{(old_primary_label or '').lower()}' "
+            f"to '{(new_primary_label or '').lower()}'"
+        )
     elif similarity_score < 0.5:
         warning = f"Muscle profile significantly different (similarity: {similarity_score:.0%})"
     elif missing_muscles:

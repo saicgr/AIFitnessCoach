@@ -1381,10 +1381,16 @@ class _PerExerciseDeepDiveSection extends StatelessWidget {
             return dn != null && dn.toLowerCase() == entry.key;
           }).toList();
 
-          // Calculate 1RM from best set (Epley formula)
+          // Calculate 1RM from best set (Epley formula).
+          //
+          // Field-name contract must match `buildSetsJson()` in
+          // mobile/flutter/lib/screens/workout/mixins/set_logging_mixin.dart —
+          // the canonical key is `weight_kg`; bare `weight` is a legacy
+          // fallback for any pre-rename rows.
           double? best1RM;
           for (final s in sets) {
-            final w = (s['weight'] as num?)?.toDouble();
+            final w = (s['weight_kg'] as num?)?.toDouble() ??
+                (s['weight'] as num?)?.toDouble();
             final r = (s['reps'] as num?)?.toInt();
             if (w != null && w > 0 && r != null && r > 0) {
               final lbWeight = w * 2.20462;
@@ -1674,7 +1680,10 @@ class _ExerciseDeepDiveCardState extends State<_ExerciseDeepDiveCard> {
           final prevR = (s['previous_reps'] as num?)?.toInt();
           final targetW = (s['target_weight_kg'] as num?)?.toDouble();
           final targetR = (s['target_reps'] as num?)?.toInt();
-          final weight = (s['weight'] as num?)?.toDouble();
+          // `weight_kg` is the canonical key (written by buildSetsJson);
+          // `weight` is accepted as a legacy fallback for older rows.
+          final weight = (s['weight_kg'] as num?)?.toDouble() ??
+              (s['weight'] as num?)?.toDouble();
           final reps = (s['reps'] as num?)?.toInt();
           final rir = (s['rir'] as num?)?.toInt();
           final rpe = (s['rpe'] as num?)?.toInt();

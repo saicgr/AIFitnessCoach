@@ -34,6 +34,7 @@ import 'widgets/food_browser_panel.dart';
 import 'widgets/food_report_dialog.dart';
 import 'widgets/food_analysis_loading.dart';
 import 'widgets/inflammation_analysis_widget.dart';
+import 'widgets/inflammation_tags_section.dart';
 import 'widgets/log_meal_helpers.dart';
 import 'widgets/meal_score_widgets.dart';
 import 'widgets/ai_suggestion_section.dart';

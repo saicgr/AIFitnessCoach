@@ -12,10 +12,41 @@ import 'workout_summary_general.dart';
 import 'workout_summary_advanced.dart';
 import 'widgets/summary_floating_pill.dart';
 
+/// Pill selector state for [WorkoutSummaryScreenV2]. Kept as an enum (rather
+/// than a raw int) so callers — including the `?tab=` query param on
+/// `/workout-summary/:id` — can deep-link to a specific pane without knowing
+/// the pill's underlying index. Declaration order matches the pill layout
+/// (Detail, Summary, Advanced) so the built-in `Enum.index` IS the pill index.
+enum WorkoutSummaryTab {
+  detail,
+  summary,
+  advanced;
+
+  /// Parse the `?tab=` query param. Unknown / missing values resolve to
+  /// [detail] so the existing "open the workout detail" entry points keep
+  /// their behaviour.
+  static WorkoutSummaryTab fromQuery(String? raw) {
+    switch ((raw ?? '').toLowerCase()) {
+      case 'summary':
+      case 'general':
+        return WorkoutSummaryTab.summary;
+      case 'advanced':
+        return WorkoutSummaryTab.advanced;
+      default:
+        return WorkoutSummaryTab.detail;
+    }
+  }
+}
+
 class WorkoutSummaryScreenV2 extends ConsumerStatefulWidget {
   final String workoutId;
+  final WorkoutSummaryTab initialTab;
 
-  const WorkoutSummaryScreenV2({super.key, required this.workoutId});
+  const WorkoutSummaryScreenV2({
+    super.key,
+    required this.workoutId,
+    this.initialTab = WorkoutSummaryTab.detail,
+  });
 
   @override
   ConsumerState<WorkoutSummaryScreenV2> createState() =>
@@ -24,7 +55,7 @@ class WorkoutSummaryScreenV2 extends ConsumerStatefulWidget {
 
 class _WorkoutSummaryScreenV2State
     extends ConsumerState<WorkoutSummaryScreenV2> {
-  int _selectedView = 0; // 0 = Detail, 1 = General, 2 = Advanced
+  late int _selectedView = widget.initialTab.index; // 0 = Detail, 1 = General, 2 = Advanced
   WorkoutSummaryResponse? _summaryData;
   Map<String, dynamic>? _metadata;
   Workout? _parsedWorkout;

@@ -29,6 +29,7 @@ class _IntroScreenState extends State<IntroScreen>
   Timer? _autoRotateTimer;
   bool _isExpanded = false;
   bool _isCollapsing = false;
+  String _appVersion = '';
 
   static const _autoRotateInterval = Duration(seconds: 2);
   static const _lastIndex = 6;
@@ -53,6 +54,9 @@ class _IntroScreenState extends State<IntroScreen>
       duration: const Duration(milliseconds: 600),
     )..addListener(() => setState(() {}));
     _startAutoRotate();
+    PackageInfo.fromPlatform().then((info) {
+      if (mounted) setState(() => _appVersion = info.version);
+    });
   }
 
   @override
@@ -343,7 +347,15 @@ class _IntroScreenState extends State<IntroScreen>
                               child: Row(mainAxisSize: MainAxisSize.min, children: [
                                 ClipOval(child: Image.asset('assets/images/app_icon.png', width: 24, height: 24, errorBuilder: (_, __, ___) => const Icon(Icons.fitness_center, color: Colors.white, size: 20))),
                                 const SizedBox(width: 8),
-                                const Text('FitWiz', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+                                Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const Text('FitWiz', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold, height: 1.2)),
+                                    if (_appVersion.isNotEmpty)
+                                      Text('v$_appVersion', style: TextStyle(color: Colors.white.withValues(alpha: 0.6), fontSize: 10, fontWeight: FontWeight.w500, height: 1.2)),
+                                  ],
+                                ),
                               ]),
                             ),
                           ),

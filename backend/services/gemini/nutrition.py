@@ -23,8 +23,56 @@ logger = logging.getLogger("gemini")
 FOOD_ANALYSIS_TIMEOUT = 30
 
 
+def compute_meal_inflammation(food_items: List[Dict]) -> tuple[Optional[int], Optional[bool]]:
+    """Fallback meal-level inflammation computed from per-item scores.
+
+    Gemini unreliably fills meal-level `inflammation_score` / `is_ultra_processed`
+    for mixed branded meals. When the meal-level fields are null but items carry
+    per-item scores, compute the calorie-weighted average (rounded to int, clamped
+    [1,10]) and flag ultra-processed if ANY item is ultra-processed.
+
+    Returns (None, None) when no item carries inflammation data.
+    """
+    scored = [
+        (it.get("inflammation_score"), float(it.get("calories") or 0))
+        for it in food_items
+        if it.get("inflammation_score") is not None
+    ]
+    if not scored:
+        return (None, None)
+    total_cal = sum(cal for _, cal in scored) or float(len(scored))
+    weighted = sum(score * (cal or 1.0) for score, cal in scored) / total_cal
+    meal_score = max(1, min(10, round(weighted)))
+    meal_upf: Optional[bool] = (
+        True if any(it.get("is_ultra_processed") is True for it in food_items) else None
+    )
+    return (meal_score, meal_upf)
+
+
 class NutritionMixin:
     """Mixin providing nutrition analysis methods for GeminiService."""
+
+    def _apply_meal_inflammation_fallback(
+        self, result: Dict, description: Optional[str]
+    ) -> None:
+        """Fill meal-level `inflammation_score` / `is_ultra_processed` from
+        per-item scores when Gemini left them null. Logs a warning if the
+        meal-level field is STILL null after the fallback — that means
+        Gemini also dropped the per-item scores and the prompt needs
+        another pass. Mutates `result` in place."""
+        items = result.get("food_items") or []
+        if result.get("inflammation_score") is None:
+            meal_infl, meal_upf = compute_meal_inflammation(items)
+            if meal_infl is not None:
+                result["inflammation_score"] = meal_infl
+            if result.get("is_ultra_processed") is None and meal_upf is not None:
+                result["is_ultra_processed"] = meal_upf
+        if result.get("inflammation_score") is None:
+            desc_preview = (description or "")[:60]
+            logger.warning(
+                f"[NUTRITION] inflammation_score null after analysis; "
+                f"desc={desc_preview!r} items={len(items)}"
+            )
 
     # ============================================
     # Food Analysis Methods
@@ -282,6 +330,10 @@ MICRONUTRIENTS: Estimate all vitamins (A, C, D, E, K, B1, B2, B3, B6, B9, B12), 
                     "error_details": "Gemini returned empty food_items array",
                     "request_id": req_id,
                 }
+
+            # Meal-level inflammation fallback. Image path has no user text,
+            # so only the inflammation fill-in runs (no name sanitization).
+            self._apply_meal_inflammation_fallback(result, description=None)
 
             # Success - log final summary
             total_elapsed = time.time() - start_time
@@ -551,6 +603,19 @@ FOOD NAMING RULES (CRITICAL — lookup accuracy depends on this):
 - NEVER canonicalize to a shorter or more generic name. The DB has distinct rows
   for specific variants with very different macros — stripping a qualifier yields
   the wrong row.
+
+ITEM NAME LANGUAGE (CRITICAL):
+- The "name" field MUST be in the SAME LANGUAGE the user wrote. If the user wrote English, keep English.
+- Do NOT substitute a foreign-language or regional trademark name, even if it's the "global" brand name.
+- Examples of what NOT to do:
+  - "laughing cow cheese" → ALWAYS "Laughing Cow Cheese" — NEVER "Fromage La Vache Qui Rit" or "La Vache Qui Rit"
+  - "oat milk" → "Oat Milk" — NEVER "lait d'avoine"
+  - "soy sauce" → "Soy Sauce" — NEVER "shoyu"
+  - "cheese fondue" → "Cheese Fondue" — NEVER "fondue au fromage"
+- This rule takes precedence over the SPELLING CORRECTION rule for brand names — only correct
+  actual typos within the user's chosen language, never translate across languages.
+- Use plain ASCII characters when the user wrote plain ASCII. Only use non-ASCII (accents, non-Latin scripts)
+  when the user wrote them in that script themselves (e.g. user types "jalapeños" → keep the ñ).
 - Examples of WRONG vs RIGHT extraction:
   - Input "paneer masala dosa" → WRONG "Masala Dosa" · RIGHT "Paneer Masala Dosa"
   - Input "chicken tikka masala" → WRONG "Tikka Masala" · RIGHT "Chicken Tikka Masala"
@@ -658,12 +723,14 @@ MEASUREMENT UNITS - Use "unit" field to specify the most natural unit:
 Rules: Use USDA data. Sum totals from items. Account for prep methods (fried adds fat).
 
 SPELLING CORRECTION - Detect and correct misspelled food names:
+- Only fix typos WITHIN the user's chosen language. Do NOT translate across languages —
+  "laughing cow cheese" is correctly spelled English, not a typo for "Fromage La Vache Qui Rit".
 - If the user misspells a food/brand name, correct it and use the CORRECT name for nutrition lookup
 - Set "corrected_query" to the corrected version of the FULL input (e.g., "mchiken wrap" → "McChicken Wrap")
 - Use the CORRECT food's nutrition data, not a random similar food
 - Common fast food misspellings: mchiken/mchicken → McChicken, mcflury → McFlurry, bic mac → Big Mac, whooper → Whopper, chik fil a → Chick-fil-A, subwey → Subway, etc.
 - If no misspellings detected, set "corrected_query" to null
-- The "name" field in food_items should always use the CORRECT spelling
+- The "name" field in food_items should always use the CORRECT spelling — IN THE SAME LANGUAGE the user wrote
 
 COMPOSITE MEAL RULE - CRITICAL:
 When user describes a NAMED composite meal (bowl, burrito, wrap, plate, combo, sandwich, sub, taco, pizza, ramen, poke bowl, shake, smoothie, thali, bento, bibimbap) with its toppings/ingredients, return ONLY the individual ingredients as separate food items — each with its own weight and nutrition. Do NOT add a redundant wrapper item for the whole meal.
@@ -823,7 +890,9 @@ RESTAURANT/LOCATION QUALIFIERS — DO NOT create food items from restaurant name
 
                 # Enhance food items with USDA per-100g data for accurate scaling
                 try:
-                    enhanced_items = await self._enhance_food_items_with_nutrition_db(result['food_items'])
+                    enhanced_items = await self._enhance_food_items_with_nutrition_db(
+                        result['food_items'], original_query=description,
+                    )
                     result['food_items'] = enhanced_items
 
                     # Recalculate totals based on enhanced items
@@ -843,6 +912,11 @@ RESTAURANT/LOCATION QUALIFIERS — DO NOT create food items from restaurant name
                 except Exception as e:
                     logger.warning(f"Nutrition DB enhancement failed, using AI estimates: {e}", exc_info=True)
                     # Continue with original AI estimates if enhancement fails
+
+                # Meal-level inflammation fallback: when Gemini omitted the
+                # meal-level field but returned per-item scores, compute the
+                # weighted average so the UI pill renders.
+                self._apply_meal_inflammation_fallback(result, description)
 
                 # Cache the successful result
                 try:
@@ -882,7 +956,9 @@ RESTAURANT/LOCATION QUALIFIERS — DO NOT create food items from restaurant name
 
                     # Enhance with USDA data
                     try:
-                        enhanced_items = await self._enhance_food_items_with_nutrition_db(result['food_items'])
+                        enhanced_items = await self._enhance_food_items_with_nutrition_db(
+                            result['food_items'], original_query=description,
+                        )
                         result['food_items'] = enhanced_items
                         result['total_calories'] = sum(item.get('calories', 0) or 0 for item in enhanced_items)
                         result['protein_g'] = round(sum(item.get('protein_g', 0) or 0 for item in enhanced_items), 1)
@@ -891,6 +967,9 @@ RESTAURANT/LOCATION QUALIFIERS — DO NOT create food items from restaurant name
                         result['fiber_g'] = round(sum(item.get('fiber_g', 0) or 0 for item in enhanced_items), 1)
                     except Exception as e:
                         logger.warning(f"Nutrition DB enhancement failed in fallback: {e}", exc_info=True)
+
+                    # Meal-level inflammation fallback — same logic as structured path
+                    self._apply_meal_inflammation_fallback(result, description)
 
                     # Cache the fallback result too
                     try:

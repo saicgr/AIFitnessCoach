@@ -15,6 +15,18 @@ class XPNotifier extends StateNotifier<XPState> {
     debugPrint('🧹 [XPProvider] In-memory cache cleared');
   }
 
+  /// Reset live state to fresh defaults (called on logout).
+  /// [clearCache] only clears the static in-memory snapshot — the live
+  /// notifier's state (including stale userXp / lastLevelUp) survives
+  /// because xpProvider is NOT autoDispose. This method zeroes the live
+  /// state so that re-login doesn't falsely detect a "level-up" by
+  /// comparing the stale cached level to the freshly fetched one.
+  void resetState() {
+    _currentUserId = null;
+    state = const XPState();
+    debugPrint('🧹 [XPProvider] Live state reset');
+  }
+
   /// Set user ID for this session
   void setUserId(String userId) {
     _currentUserId = userId;

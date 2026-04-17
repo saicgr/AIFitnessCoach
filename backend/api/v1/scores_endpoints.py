@@ -191,6 +191,7 @@ async def get_dots_score(
 
 @router.get("/nutrition", response_model=NutritionScoreResponse, tags=["Nutrition"])
 async def get_nutrition_score(
+    http_request: Request,
     user_id: str = Query(...),
     week_start: Optional[date] = Query(None, description="Start of week (Monday)"),
     current_user: dict = Depends(get_current_user),
@@ -203,9 +204,10 @@ async def get_nutrition_score(
     db = get_supabase_db()
     nutrition_service = NutritionCalculatorService()
 
-    # Determine week range
+    # Determine week range — user-local via device X-User-Timezone header.
     if week_start is None:
-        week_start, week_end = nutrition_service.get_current_week_range()
+        tz_str = resolve_timezone(http_request, db, user_id)
+        week_start, week_end = nutrition_service.get_current_week_range(tz_str)
     else:
         week_end = week_start + timedelta(days=6)
 
@@ -255,6 +257,7 @@ async def get_nutrition_score(
 async def calculate_nutrition_score(
     request: NutritionCalculateRequest,
     background_tasks: BackgroundTasks,
+    http_request: Request,
     current_user: dict = Depends(get_current_user),
 ):
     """
@@ -264,10 +267,11 @@ async def calculate_nutrition_score(
     """
     db = get_supabase_db()
     nutrition_service = NutritionCalculatorService()
+    tz_str = resolve_timezone(http_request, db, request.user_id)
 
-    # Determine week range
+    # Determine week range — user-local via device X-User-Timezone header.
     if request.week_start is None:
-        week_start, week_end = nutrition_service.get_current_week_range()
+        week_start, week_end = nutrition_service.get_current_week_range(tz_str)
     else:
         week_start = request.week_start
         week_end = week_start + timedelta(days=6)
@@ -344,8 +348,8 @@ async def calculate_nutrition_score(
     tips = nutrition_service.get_improvement_tips(score)
     score.ai_improvement_tips = tips
 
-    # Get previous week's score for comparison
-    previous_week_start, previous_week_end = nutrition_service.get_previous_week_range()
+    # Get previous week's score for comparison (user-local week).
+    previous_week_start, previous_week_end = nutrition_service.get_previous_week_range(tz_str)
     try:
         previous_response = db.client.table("nutrition_scores").select(
             "nutrition_score"
@@ -556,9 +560,10 @@ async def calculate_fitness_score(
         completed=completed_count,
     )
 
-    # 3. Get nutrition score (current week)
+    # 3. Get nutrition score (current week) — user-local via device X-User-Timezone header.
+    tz_str = resolve_timezone(http_request, db, user_id)
     from services.nutrition_calculator_service import nutrition_calculator_service
-    week_start, week_end = nutrition_calculator_service.get_current_week_range()
+    week_start, week_end = nutrition_calculator_service.get_current_week_range(tz_str)
 
     try:
         nutrition_response = db.client.table("nutrition_scores").select(
@@ -601,7 +606,6 @@ async def calculate_fitness_score(
     previous_score = previous_response.data.get("overall_fitness_score") if previous_response and previous_response.data else None
 
     # 6. Calculate overall fitness score
-    tz_str = resolve_timezone(http_request, db, user_id)
     score = fitness_service.calculate_fitness_score(
         user_id=user_id,
         strength_score=strength_score,
@@ -706,6 +710,8 @@ async def get_scores_overview(
     today = _today.isoformat()
     thirty_days_ago = (_today - timedelta(days=30)).isoformat()
     seven_days_ago = (_today - timedelta(days=7)).isoformat()
+    # User-local timezone for any week-boundary math below.
+    tz_str = resolve_timezone(http_request, db, user_id)
 
     def _q_readiness():
         try:
@@ -735,7 +741,7 @@ async def get_scores_overview(
     def _q_nutrition():
         try:
             ns = NutritionCalculatorService()
-            ws, _ = ns.get_current_week_range()
+            ws, _ = ns.get_current_week_range(tz_str)
             return db.client.table("nutrition_scores").select("nutrition_score, nutrition_level").eq("user_id", user_id).eq("week_start", ws.isoformat()).maybe_single().execute()
         except: return None
 

@@ -3,10 +3,24 @@ part of 'workout_complete_screen.dart';
 /// UI builder methods extracted from _WorkoutCompleteScreenState
 extension _WorkoutCompleteScreenStateUI1 on _WorkoutCompleteScreenState {
 
-  /// Compact stats grid for single-screen layout
+  /// Compact stats grid for single-screen layout.
+  ///
+  /// Primary row (Time / Cal / Volume) is always visible. Secondary row
+  /// (Exercises / Sets / Reps) is hidden behind a "Show all stats" toggle
+  /// to reduce vertical scroll. Volume respects the user's workout weight
+  /// unit preference — kg values are converted to lb when the user set
+  /// `preferredWorkoutWeightUnit=lbs`.
   Widget _buildCompactStatsGrid() {
+    final useKg = ref.watch(useKgForWorkoutProvider);
+    final volumeKg = widget.totalVolumeKg ?? 0;
+    final displayVolume = useKg ? volumeKg : WeightUtils.kgToLbs(volumeKg);
+    final unit = useKg ? 'kg' : 'lb';
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+
     return Column(
       children: [
+        // Primary row — always visible
         Row(
           children: [
             Expanded(
@@ -20,53 +34,81 @@ extension _WorkoutCompleteScreenStateUI1 on _WorkoutCompleteScreenState {
             const SizedBox(width: 8),
             Expanded(
               child: CompactStatTile(
-                icon: Icons.fitness_center,
-                value: '${widget.workout.exercises.length}',
-                label: 'Exercises',
-                color: AppColors.purple,
-              ),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: CompactStatTile(
                 icon: Icons.local_fire_department,
                 value: '${widget.calories}',
                 label: 'Cal',
                 color: AppColors.orange,
               ),
             ),
-          ],
-        ),
-        const SizedBox(height: 8),
-        Row(
-          children: [
+            const SizedBox(width: 8),
             Expanded(
               child: CompactStatTile(
                 icon: Icons.scale,
-                value: '${(widget.totalVolumeKg ?? 0).toStringAsFixed(0)}kg',
+                value: '${displayVolume.toStringAsFixed(0)}$unit',
                 label: 'Volume',
                 color: AppColors.green,
               ),
             ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: CompactStatTile(
-                icon: Icons.repeat,
-                value: '${widget.totalSets ?? 0}',
-                label: 'Sets',
-                color: AppColors.purple,
-              ),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: CompactStatTile(
-                icon: Icons.tag,
-                value: '${widget.totalReps ?? 0}',
-                label: 'Reps',
-                color: AppColors.orange,
-              ),
-            ),
           ],
+        ),
+        // Secondary row — collapsed by default
+        AnimatedCrossFade(
+          firstChild: const SizedBox(width: double.infinity, height: 0),
+          secondChild: Padding(
+            padding: const EdgeInsets.only(top: 8),
+            child: Row(
+              children: [
+                Expanded(
+                  child: CompactStatTile(
+                    icon: Icons.fitness_center,
+                    value: '${widget.workout.exercises.length}',
+                    label: 'Exercises',
+                    color: AppColors.purple,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: CompactStatTile(
+                    icon: Icons.repeat,
+                    value: '${widget.totalSets ?? 0}',
+                    label: 'Sets',
+                    color: AppColors.purple,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: CompactStatTile(
+                    icon: Icons.tag,
+                    value: '${widget.totalReps ?? 0}',
+                    label: 'Reps',
+                    color: AppColors.orange,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          crossFadeState: _showAllStats
+              ? CrossFadeState.showSecond
+              : CrossFadeState.showFirst,
+          duration: const Duration(milliseconds: 200),
+        ),
+        // Toggle button
+        TextButton.icon(
+          onPressed: toggleShowAllStats,
+          icon: Icon(
+            _showAllStats ? Icons.expand_less : Icons.expand_more,
+            size: 16,
+            color: textMuted,
+          ),
+          label: Text(
+            _showAllStats ? 'Hide details' : 'Show all stats',
+            style: TextStyle(fontSize: 12, color: textMuted),
+          ),
+          style: TextButton.styleFrom(
+            padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+            minimumSize: Size.zero,
+            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          ),
         ),
       ],
     );

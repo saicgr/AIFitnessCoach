@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/utils/weight_utils.dart';
 import '../../../data/models/exercise.dart';
 import '../../../data/models/workout.dart';
 import '../../../widgets/lottie_animations.dart';
@@ -18,6 +19,11 @@ class AiCoachReportCard extends StatelessWidget {
   final int durationSeconds;
   final List<Map<String, dynamic>> newPRs;
   final PerformanceComparisonInfo? performanceComparison;
+  /// True when the user prefers kg for workout weights. Controls display
+  /// unit on Volume / work-rate / avg-per-set stats. Defaults to true for
+  /// backward compat; the caller (workout_complete_screen) passes the
+  /// real preference from `useKgForWorkoutProvider`.
+  final bool useKg;
 
   const AiCoachReportCard({
     super.key,
@@ -31,6 +37,7 @@ class AiCoachReportCard extends StatelessWidget {
     this.durationSeconds = 0,
     this.newPRs = const [],
     this.performanceComparison,
+    this.useKg = true,
   });
 
   @override
@@ -94,6 +101,7 @@ class AiCoachReportCard extends StatelessWidget {
               durationSeconds: durationSeconds,
               prCount: newPRs.length,
               performanceComparison: performanceComparison,
+              useKg: useKg,
             ),
           ],
         ),
@@ -408,6 +416,7 @@ class _QuickStatsRow extends StatelessWidget {
   final int durationSeconds;
   final int prCount;
   final PerformanceComparisonInfo? performanceComparison;
+  final bool useKg;
 
   const _QuickStatsRow({
     required this.totalSets,
@@ -415,15 +424,22 @@ class _QuickStatsRow extends StatelessWidget {
     required this.durationSeconds,
     required this.prCount,
     this.performanceComparison,
+    this.useKg = true,
   });
 
   @override
   Widget build(BuildContext context) {
-    // Compute stats
+    // Compute stats in kg first (storage convention), then convert
+    // to the user's display unit for rendering.
     final volumePercent = performanceComparison?.workoutComparison.volumeDiffPercent;
     final minutes = durationSeconds > 0 ? durationSeconds / 60.0 : 1.0;
-    final workRate = totalVolumeKg / minutes;
-    final avgPerSet = totalSets > 0 ? totalVolumeKg / totalSets : 0.0;
+    final workRateKg = totalVolumeKg / minutes;
+    final avgPerSetKg = totalSets > 0 ? totalVolumeKg / totalSets : 0.0;
+
+    final displayVolume = useKg ? totalVolumeKg : WeightUtils.kgToLbs(totalVolumeKg);
+    final displayWorkRate = useKg ? workRateKg : WeightUtils.kgToLbs(workRateKg);
+    final displayAvgPerSet = useKg ? avgPerSetKg : WeightUtils.kgToLbs(avgPerSetKg);
+    final unit = useKg ? 'kg' : 'lb';
 
     return Row(
       children: [
@@ -433,7 +449,7 @@ class _QuickStatsRow extends StatelessWidget {
             icon: Icons.trending_up,
             value: volumePercent != null
                 ? '${volumePercent >= 0 ? '+' : ''}${volumePercent.toStringAsFixed(0)}%'
-                : '${totalVolumeKg.toStringAsFixed(0)}kg',
+                : '${displayVolume.toStringAsFixed(0)}$unit',
             label: volumePercent != null ? 'vs Last' : 'Volume',
             color: volumePercent != null
                 ? (volumePercent >= 0 ? AppColors.green : Colors.redAccent)
@@ -445,8 +461,8 @@ class _QuickStatsRow extends StatelessWidget {
         Expanded(
           child: _MiniStat(
             icon: Icons.speed,
-            value: '${workRate.toStringAsFixed(0)}',
-            label: 'kg/min',
+            value: displayWorkRate.toStringAsFixed(0),
+            label: '$unit/min',
             color: AppColors.purple,
           ),
         ),
@@ -462,8 +478,8 @@ class _QuickStatsRow extends StatelessWidget {
                 )
               : _MiniStat(
                   icon: Icons.fitness_center,
-                  value: '${avgPerSet.toStringAsFixed(1)}',
-                  label: 'kg/set',
+                  value: displayAvgPerSet.toStringAsFixed(1),
+                  label: '$unit/set',
                   color: AppColors.orange,
                 ),
         ),

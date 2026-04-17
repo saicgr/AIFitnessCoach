@@ -35,7 +35,7 @@ class CollapsibleAISuggestion extends StatefulWidget {
 }
 
 class _CollapsibleAISuggestionState extends State<CollapsibleAISuggestion> {
-  bool _isExpanded = false;
+  bool _isExpanded = true;
 
   @override
   Widget build(BuildContext context) {

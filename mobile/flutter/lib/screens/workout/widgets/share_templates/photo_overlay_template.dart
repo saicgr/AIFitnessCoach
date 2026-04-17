@@ -28,7 +28,7 @@ class PhotoOverlayTemplate extends StatelessWidget {
     this.userPhotoUrl,
     required this.completedAt,
     this.showWatermark = true,
-    this.weightUnit = 'kg',
+    this.weightUnit = 'lbs',
   });
 
   String get _formattedDuration {

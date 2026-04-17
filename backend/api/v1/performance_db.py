@@ -160,6 +160,56 @@ async def create_performance_log(log: PerformanceLogCreate,
         raise safe_internal_error(e, "performance_db")
 
 
+@router.post("/logs/bulk")
+async def create_performance_logs_bulk(
+    logs: List[PerformanceLogCreate],
+    current_user: dict = Depends(get_current_user),
+):
+    """
+    Bulk-insert performance logs in a single round trip.
+
+    Used by the end-of-workout save flow to avoid N sequential POSTs
+    (one per set) — a typical 20-set workout spent 3–5 seconds here.
+    """
+    if not logs:
+        return {"inserted": 0}
+    try:
+        db = get_supabase_db()
+        records = [
+            {
+                "workout_log_id": log.workout_log_id,
+                "user_id": log.user_id,
+                "exercise_id": log.exercise_id,
+                "exercise_name": log.exercise_name,
+                "set_number": log.set_number,
+                "reps_completed": log.reps_completed,
+                "weight_kg": log.weight_kg,
+                "set_type": log.set_type,
+                "rpe": log.rpe,
+                "rir": log.rir,
+                "tempo": log.tempo,
+                "is_completed": log.is_completed,
+                "failed_at_rep": log.failed_at_rep,
+                "notes": log.notes,
+                "ai_input_source": log.ai_input_source,
+                "target_weight_kg": log.target_weight_kg,
+                "target_reps": log.target_reps,
+                "progression_model": log.progression_model,
+                "set_duration_seconds": log.set_duration_seconds,
+                "rest_duration_seconds": log.rest_duration_seconds,
+            }
+            for log in logs
+        ]
+        result = db.client.table("performance_logs").insert(records).execute()
+        inserted = len(result.data or [])
+        logger.info(f"Performance logs bulk-inserted: count={inserted}, user_id={logs[0].user_id}")
+        return {"inserted": inserted}
+
+    except Exception as e:
+        logger.error(f"Error bulk-creating performance logs: {e}", exc_info=True)
+        raise safe_internal_error(e, "performance_db")
+
+
 @router.get("/logs", response_model=List[PerformanceLog])
 async def list_performance_logs(
     user_id: str,

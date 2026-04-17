@@ -331,11 +331,21 @@ class WorkoutSummaryGeneral extends StatelessWidget {
       // Look up planned exercise data from exercises_json
       final planned = exerciseLookup[key];
 
-      // Build SummarySetData from each set map
+      // Build SummarySetData from each set map.
+      //
+      // Field-name contract must match `buildSetsJson()` in
+      // mobile/flutter/lib/screens/workout/mixins/set_logging_mixin.dart —
+      // the writer uses `weight_kg` (canonical) and `set_duration_seconds`.
+      // Bare `weight` / `duration_seconds` are accepted as legacy fallbacks
+      // for any workout logged before the field names were aligned, so
+      // historic rows keep rendering correctly.
       final summarySetsList = sets.map((s) {
-        final weightKg = (s['weight'] as num?)?.toDouble();
+        final weightKg =
+            (s['weight_kg'] as num?)?.toDouble() ?? (s['weight'] as num?)?.toDouble();
         final targetWeightKg = (s['target_weight_kg'] as num?)?.toDouble();
         final previousWeightKg = (s['previous_weight_kg'] as num?)?.toDouble();
+        final durationSeconds = (s['set_duration_seconds'] as int?) ??
+            (s['duration_seconds'] as int?);
 
         return SummarySetData(
           setNumber: s['set_number'] as int? ?? 1,
@@ -348,7 +358,7 @@ class WorkoutSummaryGeneral extends StatelessWidget {
           actualWeightLbs: weightKg != null ? weightKg * 2.20462 : null,
           rir: s['rir'] as int?,
           rpe: (s['rpe'] as num?)?.toDouble(),
-          durationSeconds: s['duration_seconds'] as int?,
+          durationSeconds: durationSeconds,
           restSeconds: s['rest_duration_seconds'] as int?,
           barType: s['bar_type'] as String?,
           previousWeightKg: previousWeightKg,

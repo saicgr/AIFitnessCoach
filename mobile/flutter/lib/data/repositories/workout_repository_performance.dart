@@ -164,6 +164,33 @@ extension WorkoutRepositoryPerformance on WorkoutRepository {
     }
   }
 
+  /// Bulk-log all performance sets in a single round trip. Replaces the old
+  /// per-set POST loop that took ~3–5s for a typical 20-set workout.
+  /// Accepts a list of pre-built set records keyed exactly like the POST body
+  /// of [logSetPerformance].
+  Future<int> logSetPerformancesBulk(List<Map<String, dynamic>> setRecords) async {
+    if (setRecords.isEmpty) return 0;
+    try {
+      debugPrint('🔍 [Workout] Bulk-logging ${setRecords.length} sets');
+      final response = await apiClient.post(
+        '/performance/logs/bulk',
+        data: setRecords,
+      );
+      if (response.statusCode == 200) {
+        final inserted = (response.data is Map)
+            ? ((response.data as Map)['inserted'] as int? ?? setRecords.length)
+            : setRecords.length;
+        debugPrint('✅ [Workout] Bulk-logged $inserted sets');
+        return inserted;
+      }
+      debugPrint('⚠️ [Workout] Bulk log unexpected status: ${response.statusCode}');
+      return 0;
+    } catch (e) {
+      debugPrint('❌ [Workout] Error bulk-logging sets: $e');
+      return 0;
+    }
+  }
+
   /// Log workout exit/quit with reason and progress
   Future<Map<String, dynamic>?> logWorkoutExit({
     required String workoutId,

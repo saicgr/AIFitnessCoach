@@ -8,6 +8,7 @@ from api.v1 import exercise_suggestions
 from api.v1 import library  # Modular library package
 from api.v1 import hydration
 from api.v1 import feedback, achievements, summaries, insights
+from api.v1 import share_preferences, share_analytics, share_caption  # Share gallery
 from api.v1 import notifications, ai_settings
 from api.v1 import activity
 from api.v1 import subscriptions, stats
@@ -130,6 +131,11 @@ router.include_router(feedback.router, prefix="/feedback", tags=["Feedback"])
 
 # Achievements and milestones endpoints
 router.include_router(achievements.router, prefix="/achievements", tags=["Achievements"])
+
+# Share template preferences (favorites + custom order) and analytics
+router.include_router(share_preferences.router, tags=["Share Templates"])
+router.include_router(share_analytics.router, tags=["Share Templates"])
+router.include_router(share_caption.router, tags=["Share Templates"])
 
 # Weekly summaries and notification preferences
 router.include_router(summaries.router, prefix="/summaries", tags=["Summaries"])

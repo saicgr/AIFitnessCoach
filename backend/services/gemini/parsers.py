@@ -12,6 +12,123 @@ from core.ai_response_parser import parse_ai_json
 logger = logging.getLogger("gemini")
 
 
+# Splits a query like "laughing cow cheese with 4 bacon and 10 ritz crackers"
+# into the chunks ["laughing cow cheese", "4 bacon", "10 ritz crackers"].
+_QUERY_SPLIT_RE = regex_module.compile(
+    r"[,;]|\s+with\s+|\s+and\s+|\s+plus\s+|\s+&\s+",
+    regex_module.IGNORECASE,
+)
+
+# Strip leading counts, articles, and filler ("4 bacon" → "bacon", "a cup of rice" → "rice").
+# Applied repeatedly so "a cup of rice" → "cup of rice" → "of rice" → "rice" in one pass
+# (the outer + handles the repetition).
+_LEADING_NOISE_RE = regex_module.compile(
+    r"^\s*(?:\d+(?:\.\d+)?\s*(?:cups?|cup|oz|g|grams?|ml|tbsp|tsp|lbs?|pounds?|pieces?|pcs?|slices?)?\s+"
+    r"|a\s+|an\s+|the\s+|some\s+|of\s+)+",
+    regex_module.IGNORECASE,
+)
+
+# Tokens too short or too common to count as "substantive overlap" between a
+# Gemini item name and the user's query. Includes English + French stopwords
+# because the bug is specifically Gemini translating English → French, and
+# "la"/"le"/"qui" must NOT count as overlap if the user typed them in English.
+_NAME_STOPWORDS = frozenset({
+    "a", "an", "the", "of", "with", "and", "or", "for", "in", "on", "at",
+    "to", "by", "from", "my", "your", "some", "as", "is", "are", "was",
+    "la", "le", "les", "de", "du", "des", "et", "ou", "en", "au", "aux",
+    "qui", "que", "un", "une",
+})
+
+# Strong signals that a Gemini item name is in a FOREIGN language and
+# should be eligible for sanitization. Words on this list are either
+# rare in English usage or are specific translation-target vocabulary
+# observed in real Gemini failures. Being conservative here matters —
+# a common English-used word like "queso" or "guacamole" would cause
+# false positives on composite-meal ingredients.
+_FOREIGN_INDICATORS = frozenset({
+    # French determiners / prepositions when they appear INSIDE a name
+    # (stopwords filter them from the overlap check; this set uses them
+    # as a positive "this name is French" signal instead).
+    "la", "le", "les", "du", "des", "aux", "qui", "que",
+    # French foods / nouns
+    "fromage", "lait", "pain", "beurre", "poulet", "boeuf", "jambon",
+    "oeuf", "oeufs", "pommes", "frites", "crème", "pâté", "pâte",
+    "tartiner", "avoine", "amande",
+    # French adjectives / brand-translation markers
+    "vache", "rit", "taureau", "rouge", "fumé",
+    # Spanish generic translations (not commonly used English)
+    "leche",
+    # Japanese / other Asian translations
+    "shoyu",
+})
+
+
+def _looks_foreign(name: str) -> bool:
+    """True when `name` is either non-ASCII OR contains a token from
+    `_FOREIGN_INDICATORS`. Used to gate the sanitizer so composite-meal
+    ingredients like "Black Beans" or "Corn Salsa" (English, zero-overlap
+    with the user's query text) are NOT rewritten."""
+    if not name.isascii():
+        return True
+    tokens = set(regex_module.findall(r"\w+", name.lower()))
+    return bool(tokens & _FOREIGN_INDICATORS)
+
+
+def _sanitize_foreign_name(name: str, original_query: Optional[str]) -> str:
+    """Safety net for when Gemini translates the user's English brand/food
+    name to a foreign canonical (e.g. `laughing cow cheese` → `Fromage La
+    Vache Qui Rit`) despite the prompt rule.
+
+    Two-stage detection:
+    1. `_looks_foreign(name)` — the item name itself must show foreign
+       signals (non-ASCII OR French/Spanish/Japanese tokens from the
+       indicator list). Items like "Black Beans" or "White Rice" that are
+       plain English composite ingredients pass this check → skip.
+    2. Zero substantive token overlap with the user's query. If the
+       item name shares any meaningful token with the user's wording,
+       Gemini's output is aligned → skip.
+
+    When both stages fire, replace the item name with the first usable
+    chunk of the user's original query.
+
+    Returns `name` unchanged when:
+    - original_query is empty (image flow)
+    - name doesn't look foreign
+    - there's any substantive token overlap with the query
+    - no usable chunk (1-6 tokens) exists in the query after noise-stripping
+    """
+    if not name or not original_query:
+        return name
+    if not _looks_foreign(name):
+        return name
+    name_tokens = {
+        t for t in regex_module.findall(r"\w+", name.lower())
+        if len(t) >= 3 and t not in _NAME_STOPWORDS
+    }
+    query_tokens = {
+        t for t in regex_module.findall(r"\w+", original_query.lower())
+        if len(t) >= 3 and t not in _NAME_STOPWORDS
+    }
+    if not name_tokens or not query_tokens:
+        return name
+    if name_tokens & query_tokens:
+        return name
+    # Zero overlap + foreign-looking: safe to replace with a query chunk.
+    for chunk in _QUERY_SPLIT_RE.split(original_query):
+        chunk = _LEADING_NOISE_RE.sub("", chunk.strip()).strip()
+        if not chunk:
+            continue
+        token_count = len(chunk.split())
+        if 1 <= token_count <= 6:
+            sanitized = chunk.title()
+            logger.info(
+                f"[NameSanitizer] Replaced '{name}' → '{sanitized}' "
+                f"(foreign-looking + zero token overlap with query '{original_query[:60]}')"
+            )
+            return sanitized
+    return name
+
+
 class ParsersMixin:
     """Mixin providing parsing methods for GeminiService."""
 
@@ -251,7 +368,12 @@ class ParsersMixin:
             logger.warning(f"USDA lookup failed for '{food_name}': {e}", exc_info=True)
         return None
 
-    async def _enhance_food_items_with_nutrition_db(self, food_items: List[Dict], use_usda: bool = False) -> List[Dict]:
+    async def _enhance_food_items_with_nutrition_db(
+        self,
+        food_items: List[Dict],
+        use_usda: bool = False,
+        original_query: Optional[str] = None,
+    ) -> List[Dict]:
         """
         Enhance food items with per-100g nutrition data for accurate scaling.
 
@@ -264,6 +386,8 @@ class ParsersMixin:
         1. Look up in nutrition database (batch or parallel)
         2. If found: Add usda_data with per-100g values
         3. If not found: Calculate ai_per_gram from AI's estimate
+        4. Post-process: strip non-ASCII foreign canonical names when the user's
+           `original_query` carries an English equivalent (see _sanitize_foreign_name).
         """
         # Parse weights first (synchronous, fast)
         # Use Gemini's weight_g if provided, otherwise parse from amount string
@@ -421,6 +545,11 @@ class ParsersMixin:
                     logger.warning(f"[{source_label}] No match for '{food_names[i]}', using AI per-gram estimate")
                 else:
                     item['ai_per_gram'] = None
+
+            # Safety net: if Gemini parroted back a foreign canonical/trademark name
+            # despite the prompt rule (e.g. "Fromage La Vache Qui Rit" for a user
+            # query of "laughing cow cheese"), rewrite it to the user's wording.
+            item['name'] = _sanitize_foreign_name(item.get('name', ''), original_query)
 
             enhanced_items.append(item)
 

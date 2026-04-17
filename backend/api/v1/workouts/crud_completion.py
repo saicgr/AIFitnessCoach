@@ -8,6 +8,7 @@ Provides:
 - GET /{workout_id}/completion-summary - Get combined summary data
 - PATCH /{workout_id}/exercise-sets - Update exercise sets post-completion
 """
+import asyncio
 import json
 from datetime import datetime, date, timedelta
 from typing import List, Optional, Dict, Any
@@ -150,9 +151,13 @@ async def complete_workout(
 
                 logger.info(f"Detected {len(new_prs)} PRs in workout {workout_id}")
 
-                for pr in new_prs:
+                # Generate every PR celebration in parallel — each Gemini call
+                # is ~1–3s; running N sequentially was pushing the Save spinner
+                # past 6s on PR-heavy workouts. gather() collects exceptions as
+                # values so one failure doesn't skip the others.
+                async def _celebrate(pr):
                     try:
-                        ai_celebration = await ai_insights_service.generate_pr_celebration(
+                        return await ai_insights_service.generate_pr_celebration(
                             pr_data={
                                 "exercise_name": pr.exercise_name,
                                 "weight_kg": pr.weight_kg,
@@ -166,9 +171,14 @@ async def complete_workout(
                         )
                     except Exception as e:
                         logger.warning(f"Failed to generate AI celebration: {e}", exc_info=True)
-                        ai_celebration = pr.celebration_message
+                        return pr.celebration_message
 
-                    pr_record = {
+                celebrations = await asyncio.gather(*[_celebrate(pr) for pr in new_prs])
+
+                now_iso = datetime.now().isoformat()
+                pr_records = []
+                for pr, ai_celebration in zip(new_prs, celebrations):
+                    pr_records.append({
                         "user_id": user_id,
                         "exercise_name": pr.exercise_name,
                         "exercise_id": pr.exercise_id,
@@ -178,7 +188,7 @@ async def complete_workout(
                         "estimated_1rm_kg": pr.estimated_1rm_kg,
                         "set_type": pr.set_type,
                         "rpe": pr.rpe,
-                        "achieved_at": datetime.now().isoformat(),
+                        "achieved_at": now_iso,
                         "workout_id": workout_id,
                         "previous_weight_kg": pr.previous_weight_kg,
                         "previous_1rm_kg": pr.previous_1rm_kg,
@@ -186,10 +196,7 @@ async def complete_workout(
                         "improvement_percent": pr.improvement_percent,
                         "is_all_time_pr": pr.is_all_time_pr,
                         "celebration_message": ai_celebration,
-                    }
-
-                    supabase.table("personal_records").insert(pr_record).execute()
-
+                    })
                     detected_prs.append(PersonalRecordInfo(
                         exercise_name=pr.exercise_name,
                         weight_kg=pr.weight_kg,
@@ -201,6 +208,10 @@ async def complete_workout(
                         is_all_time_pr=pr.is_all_time_pr,
                         celebration_message=ai_celebration,
                     ))
+
+                # Single bulk insert instead of one round trip per PR.
+                if pr_records:
+                    supabase.table("personal_records").insert(pr_records).execute()
 
                 logger.info(f"Saved {len(detected_prs)} PRs for workout {workout_id}")
 
@@ -304,16 +315,38 @@ async def complete_workout(
                     except Exception as e:
                         logger.warning(f"Failed to store exercise summary: {e}", exc_info=True)
 
+            # Fetch previous performance for every exercise in parallel.
+            # Each RPC was ~150–300 ms; on a 6-exercise workout that serial
+            # loop was ~1.5s of blocking time on the Save spinner.
+            def _fetch_prev(ex_name: str):
+                return supabase.rpc(
+                    "get_previous_exercise_performance",
+                    {
+                        "p_user_id": user_id,
+                        "p_exercise_name": ex_name,
+                        "p_current_workout_log_id": workout_log_id,
+                        "p_limit": 1,
+                    },
+                ).execute()
+
+            ex_names_ordered = [
+                ex_perf.get("exercise_name", "") for ex_perf in exercises_performance
+            ]
+            prev_results = await asyncio.gather(
+                *[
+                    asyncio.to_thread(_fetch_prev, name) if name else asyncio.sleep(0, result=None)
+                    for name in ex_names_ordered
+                ]
+            )
+
             exercise_comparisons: List[ExerciseComparisonInfo] = []
-            for ex_perf in exercises_performance:
+            for ex_perf, prev_response in zip(exercises_performance, prev_results):
                 ex_name = ex_perf.get("exercise_name", "")
                 if not ex_name:
                     continue
-                prev_response = supabase.rpc(
-                    "get_previous_exercise_performance",
-                    {"p_user_id": user_id, "p_exercise_name": ex_name, "p_current_workout_log_id": workout_log_id, "p_limit": 1}
-                ).execute()
-                previous_performances = prev_response.data if prev_response.data else []
+                previous_performances = (
+                    prev_response.data if prev_response and prev_response.data else []
+                )
 
                 sets = ex_perf.get("sets", [])
                 completed_sets = [s for s in sets if s.get("completed", True)]
@@ -399,16 +432,34 @@ async def complete_workout(
 
             logger.info(f"Performance comparison: {improved_count} improved, {declined_count} declined, {maintained_count} maintained")
 
-            try:
-                await user_context_service.log_performance_comparison_viewed(
-                    user_id=user_id, workout_id=str(workout_id), workout_log_id=workout_log_id or "",
-                    improved_count=improved_count, declined_count=declined_count,
-                    first_time_count=first_time_count, exercises_compared=len(exercise_comparisons),
-                    duration_diff_seconds=workout_comparison.duration_diff_seconds,
-                    volume_diff_percentage=workout_comparison.volume_diff_percent,
-                )
-            except Exception as log_error:
-                logger.warning(f"Failed to log performance comparison view: {log_error}", exc_info=True)
+            # Telemetry only — don't block the Save response on it. Swallow
+            # any failure inside the bg task instead of bubbling back.
+            async def _log_view_safe(
+                uid: str, wid: str, wlog_id: str,
+                imp: int, dec: int, ft: int, ex_count: int,
+                dur_diff: Optional[int], vol_diff_pct: Optional[float],
+            ) -> None:
+                try:
+                    await user_context_service.log_performance_comparison_viewed(
+                        user_id=uid, workout_id=wid, workout_log_id=wlog_id,
+                        improved_count=imp, declined_count=dec,
+                        first_time_count=ft, exercises_compared=ex_count,
+                        duration_diff_seconds=dur_diff,
+                        volume_diff_percentage=vol_diff_pct,
+                    )
+                except Exception as log_error:
+                    logger.warning(
+                        f"Failed to log performance comparison view: {log_error}",
+                        exc_info=True,
+                    )
+
+            background_tasks.add_task(
+                _log_view_safe,
+                user_id, str(workout_id), workout_log_id or "",
+                improved_count, declined_count, first_time_count, len(exercise_comparisons),
+                workout_comparison.duration_diff_seconds,
+                workout_comparison.volume_diff_percent,
+            )
 
         except Exception as e:
             logger.error(f"Error calculating performance comparison: {e}", exc_info=True)

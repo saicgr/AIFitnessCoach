@@ -13,12 +13,19 @@ List<RouteBase> _workoutRoutes() => [
         },
       ),
 
-      // Workout completion summary
+      // Workout completion summary. `?tab=(detail|summary|advanced)` selects
+      // the initial pill — defaults to detail so nothing changes for existing
+      // entry points. Used by the workout-complete screen's "Summary" button
+      // to deep-link straight to the Summary pane.
       GoRoute(
         path: '/workout-summary/:id',
         builder: (context, state) {
           final workoutId = state.pathParameters['id'] ?? '';
-          return WorkoutSummaryScreenV2(workoutId: workoutId);
+          final tab = state.uri.queryParameters['tab'];
+          return WorkoutSummaryScreenV2(
+            workoutId: workoutId,
+            initialTab: WorkoutSummaryTab.fromQuery(tab),
+          );
         },
       ),
 

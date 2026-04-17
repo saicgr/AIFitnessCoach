@@ -574,6 +574,15 @@ extension _LogMealSheetStateUI on _LogMealSheetState {
                     ],
                   ),
                 ),
+                // Secondary score breakdown (health score + goal alignment %)
+                if (response.healthScore != null ||
+                    response.goalAlignmentPercentage != null) ...[
+                  const SizedBox(height: 8),
+                  MealScoreBreakdownRow(
+                    healthScore: response.healthScore,
+                    goalAlignmentPercentage: response.goalAlignmentPercentage,
+                  ),
+                ],
                 const SizedBox(height: 12),
 
                 // Food items — always visible (primary content)
@@ -623,6 +632,17 @@ extension _LogMealSheetStateUI on _LogMealSheetState {
                       },
                     );
                   }),
+
+                // Inflammation score + ultra-processed tags (before macros deep-dive)
+                if (response.inflammationScore != null ||
+                    response.isUltraProcessed == true) ...[
+                  const SizedBox(height: 12),
+                  InflammationTagsSection(
+                    inflammationScore: response.inflammationScore,
+                    isUltraProcessed: response.isUltraProcessed,
+                    isDark: isDark,
+                  ),
+                ],
 
                 // Micronutrients
                 if (_hasMicronutrients(response)) ...[

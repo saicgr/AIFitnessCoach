@@ -283,7 +283,9 @@ class _HeroWorkoutCardState extends ConsumerState<HeroWorkoutCard> {
 
   void _viewSummary() {
     HapticService.selection();
-    context.push('/workout-summary/${widget.workout.id}');
+    // Deep-link to the Summary pane (not the default Detail pane) so the
+    // user sees the high-level summary they asked for.
+    context.push('/workout-summary/${widget.workout.id}?tab=summary');
   }
 
   void _shareToSocial() {
@@ -828,9 +830,24 @@ class _HeroWorkoutCardState extends ConsumerState<HeroWorkoutCard> {
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
                               border: Border.all(color: AppColors.success, width: 3),
-                              color: AppColors.success.withValues(alpha: 0.2),
+                              // Solid green fill + white checkmark — the
+                              // previous translucent-green fill made the
+                              // green checkmark blend into the background
+                              // and vanish.
+                              color: AppColors.success,
+                              boxShadow: [
+                                BoxShadow(
+                                  color: AppColors.success.withValues(alpha: 0.45),
+                                  blurRadius: 18,
+                                ),
+                              ],
                             ),
-                            child: const Icon(Icons.check, color: AppColors.success, size: 34),
+                            child: const Icon(
+                              Icons.check_rounded,
+                              color: Colors.white,
+                              size: 36,
+                              weight: 800,
+                            ),
                           ),
                           const SizedBox(height: 12),
                           Text(
@@ -908,9 +925,23 @@ class _HeroWorkoutCardState extends ConsumerState<HeroWorkoutCard> {
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
                               border: Border.all(color: AppColors.error, width: 3),
-                              color: AppColors.error.withValues(alpha: 0.2),
+                              // Solid red fill + white X — matches the
+                              // Workout-Complete green tick treatment so
+                              // the icon isn't tinted-on-tinted.
+                              color: AppColors.error,
+                              boxShadow: [
+                                BoxShadow(
+                                  color: AppColors.error.withValues(alpha: 0.45),
+                                  blurRadius: 18,
+                                ),
+                              ],
                             ),
-                            child: const Icon(Icons.close, color: AppColors.error, size: 34),
+                            child: const Icon(
+                              Icons.close_rounded,
+                              color: Colors.white,
+                              size: 36,
+                              weight: 800,
+                            ),
                           ),
                           const SizedBox(height: 12),
                           Text(

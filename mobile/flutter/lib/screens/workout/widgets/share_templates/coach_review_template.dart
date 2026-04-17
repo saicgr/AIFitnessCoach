@@ -34,7 +34,7 @@ class CoachReviewTemplate extends StatelessWidget {
     this.performanceRating,
     required this.completedAt,
     this.showWatermark = true,
-    this.weightUnit = 'kg',
+    this.weightUnit = 'lbs',
   });
 
   String get _formattedDuration {

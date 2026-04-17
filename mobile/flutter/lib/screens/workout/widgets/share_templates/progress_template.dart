@@ -33,7 +33,7 @@ class ProgressTemplate extends StatelessWidget {
     this.prsThisMonth,
     required this.completedAt,
     this.showWatermark = true,
-    this.weightUnit = 'kg',
+    this.weightUnit = 'lbs',
   });
 
   String get _formattedDuration {

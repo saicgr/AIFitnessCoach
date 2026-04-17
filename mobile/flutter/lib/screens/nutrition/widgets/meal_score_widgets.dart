@@ -207,3 +207,113 @@ class CompactGoalScore extends StatelessWidget {
     );
   }
 }
+
+/// Labeled pill for secondary meal scores (health, goal alignment).
+class _LabeledScorePill extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String value;
+  final Color color;
+
+  const _LabeledScorePill({
+    required this.icon,
+    required this.label,
+    required this.value,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.10),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: color.withValues(alpha: 0.30)),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, size: 14, color: color),
+            const SizedBox(width: 6),
+            Flexible(
+              child: Text(
+                '$label ',
+                style: TextStyle(
+                  fontSize: 11,
+                  color: color.withValues(alpha: 0.85),
+                  fontWeight: FontWeight.w500,
+                ),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            Text(
+              value,
+              style: TextStyle(
+                fontSize: 13,
+                color: color,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Row that surfaces the meal's health score and goal alignment %
+/// alongside the overall meal score chip already in the header.
+class MealScoreBreakdownRow extends StatelessWidget {
+  final int? healthScore;
+  final int? goalAlignmentPercentage;
+
+  const MealScoreBreakdownRow({
+    super.key,
+    this.healthScore,
+    this.goalAlignmentPercentage,
+  });
+
+  bool get _hasAnything =>
+      healthScore != null || goalAlignmentPercentage != null;
+
+  Color _healthColor(int score) {
+    if (score >= 8) return AppColors.green;
+    if (score >= 5) return AppColors.teal;
+    if (score >= 3) return AppColors.yellow;
+    return AppColors.coral;
+  }
+
+  Color _alignmentColor(int pct) {
+    if (pct >= 80) return AppColors.green;
+    if (pct >= 50) return AppColors.yellow;
+    return AppColors.coral;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (!_hasAnything) return const SizedBox.shrink();
+
+    return Row(
+      children: [
+        if (healthScore != null)
+          _LabeledScorePill(
+            icon: Icons.favorite,
+            label: 'Health',
+            value: '${healthScore!}/10',
+            color: _healthColor(healthScore!),
+          ),
+        if (healthScore != null && goalAlignmentPercentage != null)
+          const SizedBox(width: 8),
+        if (goalAlignmentPercentage != null)
+          _LabeledScorePill(
+            icon: Icons.flag,
+            label: 'Goal fit',
+            value: '${goalAlignmentPercentage!}%',
+            color: _alignmentColor(goalAlignmentPercentage!),
+          ),
+      ],
+    );
+  }
+}

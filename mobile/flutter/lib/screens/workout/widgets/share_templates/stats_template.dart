@@ -27,7 +27,7 @@ class StatsTemplate extends StatelessWidget {
     required this.exercisesCount,
     required this.completedAt,
     this.showWatermark = true,
-    this.weightUnit = 'kg',
+    this.weightUnit = 'lbs',
   });
 
   String get _formattedDuration {

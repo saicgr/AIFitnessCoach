@@ -612,42 +612,94 @@ class _TrophiesEarnedSheet extends StatelessWidget {
     );
   }
 
+  /// Next workout-count milestone after `current`. Returns null once the
+  /// user has blown past the last threshold — defensive; in practice
+  /// everyone is still chasing one of these.
+  int? _nextMilestone(int current, List<int> thresholds) {
+    for (final t in thresholds) {
+      if (t > current) return t;
+    }
+    return null;
+  }
+
   Widget _buildEmptyState(BuildContext context, Color elevated) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+
+    // Workout-count ladder matches _WorkoutCompleteScreenState._milestoneThresholds
+    // so copy here is consistent with what triggers trophies above.
+    const workoutMilestones = [5, 10, 25, 50, 100, 150, 200, 250, 500, 1000];
+    const streakMilestones = [3, 7, 14, 30, 60, 100, 365];
+
+    final nextWorkoutMilestone = _nextMilestone(totalWorkouts, workoutMilestones);
+    final streak = currentStreak ?? 0;
+    final nextStreakMilestone = _nextMilestone(streak, streakMilestones);
 
     return Container(
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: elevated,
         borderRadius: BorderRadius.circular(16),
       ),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(
-            Icons.star_outline_rounded,
-            size: 48,
-            color: textSecondary.withOpacity(0.5),
+          Row(
+            children: [
+              Icon(Icons.flag_rounded, size: 20, color: AppColors.orange),
+              const SizedBox(width: 8),
+              Text(
+                'Next Milestones',
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
+                  color: textPrimary,
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 4),
           Text(
-            'Keep Pushing!',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: textPrimary,
-            ),
+            "No new records this session — here's what you're working toward:",
+            style: TextStyle(fontSize: 12, color: textMuted),
           ),
-          const SizedBox(height: 8),
-          Text(
-            'No new records this session, but every workout brings you closer to your goals!',
-            style: TextStyle(
-              fontSize: 14,
-              color: textSecondary,
+          const SizedBox(height: 16),
+          if (nextWorkoutMilestone != null)
+            _MilestoneProgressRow(
+              icon: Icons.fitness_center,
+              iconColor: AppColors.purple,
+              label: '$nextWorkoutMilestone-Workout Badge',
+              current: totalWorkouts,
+              target: nextWorkoutMilestone,
+              unit: totalWorkouts == 1 ? 'workout' : 'workouts',
+              textPrimary: textPrimary,
+              textSecondary: textSecondary,
+              textMuted: textMuted,
             ),
-            textAlign: TextAlign.center,
-          ),
+          if (nextWorkoutMilestone != null && nextStreakMilestone != null)
+            const SizedBox(height: 14),
+          if (nextStreakMilestone != null)
+            _MilestoneProgressRow(
+              icon: Icons.local_fire_department,
+              iconColor: AppColors.orange,
+              label: '$nextStreakMilestone-Day Streak',
+              current: streak,
+              target: nextStreakMilestone,
+              unit: streak == 1 ? 'day' : 'days',
+              textPrimary: textPrimary,
+              textSecondary: textSecondary,
+              textMuted: textMuted,
+            ),
+          if (nextWorkoutMilestone == null && nextStreakMilestone == null) ...[
+            const SizedBox(height: 8),
+            Text(
+              "You've cleared every milestone — stay consistent and new ones will appear!",
+              style: TextStyle(fontSize: 13, color: textSecondary),
+              textAlign: TextAlign.center,
+            ),
+          ],
         ],
       ),
     );
@@ -693,5 +745,93 @@ class _TrophiesEarnedSheet extends StatelessWidget {
       default:
         return '🏅';
     }
+  }
+}
+
+/// Labeled progress bar used in the "Next Milestones" empty state.
+/// Caller passes a [current] count / [target] threshold and a [unit]
+/// word (e.g. 'workouts', 'days') for the remaining-count copy.
+class _MilestoneProgressRow extends StatelessWidget {
+  final IconData icon;
+  final Color iconColor;
+  final String label;
+  final int current;
+  final int target;
+  final String unit;
+  final Color textPrimary;
+  final Color textSecondary;
+  final Color textMuted;
+
+  const _MilestoneProgressRow({
+    required this.icon,
+    required this.iconColor,
+    required this.label,
+    required this.current,
+    required this.target,
+    required this.unit,
+    required this.textPrimary,
+    required this.textSecondary,
+    required this.textMuted,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final progress = target > 0 ? (current / target).clamp(0.0, 1.0) : 0.0;
+    final remaining = (target - current).clamp(0, target);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Container(
+              width: 28,
+              height: 28,
+              decoration: BoxDecoration(
+                color: iconColor.withOpacity(0.15),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(icon, size: 16, color: iconColor),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                label,
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: textPrimary,
+                ),
+              ),
+            ),
+            Text(
+              '$current / $target',
+              style: TextStyle(
+                fontSize: 12,
+                color: textMuted,
+                fontFeatures: const [FontFeature.tabularFigures()],
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 6),
+        ClipRRect(
+          borderRadius: BorderRadius.circular(4),
+          child: LinearProgressIndicator(
+            value: progress,
+            minHeight: 6,
+            backgroundColor: textMuted.withOpacity(0.15),
+            valueColor: AlwaysStoppedAnimation<Color>(iconColor),
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          remaining == 0
+              ? 'Milestone reached — nice!'
+              : '$remaining more $unit to unlock',
+          style: TextStyle(fontSize: 11, color: textSecondary),
+        ),
+      ],
+    );
   }
 }

@@ -6,8 +6,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:confetti/confetti.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/providers/user_provider.dart';
 import '../../core/services/posthog_service.dart';
 import '../../core/providers/sound_preferences_provider.dart';
+import '../../core/utils/weight_utils.dart';
 import '../../widgets/lottie_animations.dart';
 import '../../data/models/workout.dart';
 import '../../data/repositories/workout_repository.dart';
@@ -24,6 +26,7 @@ import '../challenges/widgets/challenge_friends_dialog.dart';
 import 'widgets/hydration_dialog.dart';
 import 'widgets/sauna_dialog.dart';
 import 'widgets/ai_coach_report_card.dart';
+import 'widgets/share_templates/_share_common.dart';
 import 'widgets/share_workout_sheet.dart';
 import 'widgets/trophies_earned_sheet.dart';
 import 'widgets/trophy_celebration_overlay.dart';
@@ -152,6 +155,19 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
 
   // Total workout count for milestone detection
   int _totalWorkoutCount = 0;
+
+  // Whether the 6-block stats grid is showing the secondary row
+  // (Exercises / Sets / Reps). Collapsed by default per user request
+  // to reduce vertical scroll on the completion screen.
+  bool _showAllStats = false;
+
+  /// Toggle used by the "Show all stats / Hide details" button in the
+  /// _WorkoutCompleteScreenStateUI1 extension. Defined on the State
+  /// class so `setState` has proper access (extension methods cannot
+  /// call the protected `setState` directly).
+  void toggleShowAllStats() {
+    setState(() => _showAllStats = !_showAllStats);
+  }
 
   // Milestone thresholds
   static const List<int> _milestoneThresholds = [5, 10, 25, 50, 100, 150, 200, 250, 500, 1000];
@@ -442,8 +458,11 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
     return Scaffold(
       backgroundColor: backgroundColor,
       bottomNavigationBar: SafeArea(
+        // SafeArea already provides the device's bottom inset — the old
+        // 8px bottom padding + TextButton's default padding stacked on top
+        // of it produced a ~40px gap under "Skip rating". Zero it out.
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(20, 8, 20, 8),
+          padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -508,6 +527,11 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
               ),
               TextButton(
                 onPressed: _handleSkipRating,
+                style: TextButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 12),
+                  minimumSize: const Size(0, 32),
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                ),
                 child: Text(
                   'Skip rating',
                   style: TextStyle(
@@ -604,6 +628,7 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
                     durationSeconds: widget.duration,
                     newPRs: _newPRs,
                     performanceComparison: widget.performanceComparison,
+                    useKg: ref.watch(useKgForWorkoutProvider),
                   ).animate().fadeIn(delay: 300.ms),
 
                   const SizedBox(height: 16),
@@ -659,7 +684,10 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
 
                   const SizedBox(height: 16),
 
-                  // Secondary Actions Row
+                  // Secondary Actions Row — visible: Do More / Sauna /
+                  // Summary / Give Detailed Feedback. Water and This Week
+                  // live in the "More" overflow menu to reduce vertical
+                  // scroll on the completion screen.
                   Wrap(
                     alignment: WrapAlignment.center,
                     spacing: 4,
@@ -682,18 +710,6 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
                           foregroundColor: AppColors.purple,
                         ),
                       ),
-                      // Challenge button commented out - not yet functional
-                      // TextButton.icon(
-                      //   onPressed: _showChallengeFriendsDialog,
-                      //   icon: const Icon(Icons.emoji_events, size: 16),
-                      //   label: const Text(
-                      //     'Challenge',
-                      //     style: TextStyle(fontSize: 13),
-                      //   ),
-                      //   style: TextButton.styleFrom(
-                      //     foregroundColor: AppColors.orange,
-                      //   ),
-                      // ),
                       TextButton.icon(
                         onPressed: _saunaMinutes != null ? null : _showSaunaDialog,
                         icon: Icon(
@@ -709,20 +725,14 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
                           foregroundColor: const Color(0xFFE65100),
                         ),
                       ),
-                      TextButton.icon(
-                        onPressed: _showWaterDialog,
-                        icon: const Icon(Icons.water_drop_rounded, size: 16),
-                        label: const Text(
-                          'Water',
-                          style: TextStyle(fontSize: 13),
-                        ),
-                        style: TextButton.styleFrom(
-                          foregroundColor: AppColors.teal,
-                        ),
-                      ),
                       if (widget.workout.id != null)
                         TextButton.icon(
-                          onPressed: () => context.push('/workout-summary/${widget.workout.id}'),
+                          // `?tab=summary` deep-links the pill selector on
+                          // the summary screen to the Summary pane instead
+                          // of Detail — matches the button's label.
+                          onPressed: () => context.push(
+                            '/workout-summary/${widget.workout.id}?tab=summary',
+                          ),
                           icon: const Icon(Icons.summarize_outlined, size: 16),
                           label: const Text(
                             'Summary',
@@ -732,20 +742,6 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
                             foregroundColor: AppColors.orange,
                           ),
                         ),
-                      // Contextual entry to Reports & Insights right after the
-                      // user just completed a workout — this is the moment
-                      // they care most about their weekly progress.
-                      TextButton.icon(
-                        onPressed: () => context.push('/summaries'),
-                        icon: const Icon(Icons.insights_outlined, size: 16),
-                        label: const Text(
-                          'This Week',
-                          style: TextStyle(fontSize: 13),
-                        ),
-                        style: TextButton.styleFrom(
-                          foregroundColor: AppColors.cyan,
-                        ),
-                      ),
                       TextButton.icon(
                         onPressed: () => setState(() => _showDetailedFeedback = !_showDetailedFeedback),
                         icon: Icon(
@@ -758,6 +754,64 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
                         ),
                         style: TextButton.styleFrom(
                           foregroundColor: AppColors.purple,
+                        ),
+                      ),
+                      // Overflow menu — holds the less-frequently-used
+                      // actions so they don't consume a full row each.
+                      PopupMenuButton<String>(
+                        tooltip: 'More actions',
+                        onSelected: (value) {
+                          switch (value) {
+                            case 'water':
+                              _showWaterDialog();
+                              break;
+                            case 'this_week':
+                              context.push('/summaries');
+                              break;
+                          }
+                        },
+                        itemBuilder: (context) => [
+                          PopupMenuItem<String>(
+                            value: 'water',
+                            child: Row(
+                              children: [
+                                Icon(Icons.water_drop_rounded,
+                                    size: 18, color: AppColors.waterBlue),
+                                const SizedBox(width: 10),
+                                const Text('Log Water'),
+                              ],
+                            ),
+                          ),
+                          PopupMenuItem<String>(
+                            value: 'this_week',
+                            child: Row(
+                              children: [
+                                Icon(Icons.insights_outlined,
+                                    size: 18, color: AppColors.cyan),
+                                const SizedBox(width: 10),
+                                const Text('This Week'),
+                              ],
+                            ),
+                          ),
+                        ],
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 8),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.more_horiz,
+                                  size: 16, color: AppColors.textMuted),
+                              const SizedBox(width: 4),
+                              Text(
+                                'More',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: AppColors.textMuted,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     ],

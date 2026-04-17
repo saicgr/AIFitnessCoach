@@ -172,6 +172,28 @@ class FoodSearchService {
   /// too many generic/irrelevant results and waste network calls.
   static const int _minQueryLength = 3;
 
+  /// Max length to still run autocomplete. Longer phrases are almost
+  /// always natural-language descriptions (e.g., "today i ate chicken
+  /// biryani with gobi manchurian") that trigram/ILIKE search can't
+  /// match, so each keystroke burns 3-5s on phase timeouts for nothing.
+  static const int _maxAutocompleteLength = 45;
+
+  /// Sentence-starter phrases that indicate the user is describing a
+  /// meal in prose rather than searching a food name. These should route
+  /// to the AI analyzer, not the food-search autocomplete.
+  static final RegExp _nlPrefixPattern = RegExp(
+    r'^(today|yesterday|i\s+(ate|had|drank|ordered)|for\s+(breakfast|lunch|dinner|snack)|just\s+ate|this\s+(morning|afternoon|evening))\b',
+    caseSensitive: false,
+  );
+
+  /// True if [query] looks like a natural-language meal description rather
+  /// than a food name. Used to skip autocomplete for doomed queries.
+  bool _looksLikeNaturalLanguage(String query) {
+    if (query.length > _maxAutocompleteLength) return true;
+    if (_nlPrefixPattern.hasMatch(query)) return true;
+    return false;
+  }
+
   /// Search with debouncing
   /// Pass [cachedLogs] from NutritionState.recentLogs to avoid an API call
   /// for recent foods filtering.
@@ -190,6 +212,31 @@ class FoodSearchService {
 
     // Too-short queries — stay idle, no local match, no API call
     if (normalizedQuery.length < _minQueryLength) {
+      return;
+    }
+
+    // Natural-language queries can't match any food row — short-circuit
+    // autocomplete so the user isn't blocked on useless DB timeouts.
+    // They can still submit the query explicitly to the AI analyzer.
+    if (_looksLikeNaturalLanguage(normalizedQuery)) {
+      // Local recent-meal filter still runs so e.g. "yesterday's lunch"
+      // can surface the matching logged meal instantly.
+      if (cachedLogs != null && cachedLogs.isNotEmpty) {
+        final instantRecent = _filterRecentFoodsSync(normalizedQuery, cachedLogs);
+        _emit(FoodSearchResults(
+          query: normalizedQuery,
+          recent: instantRecent,
+          saved: const [],
+          foodDatabase: const [],
+        ));
+      } else {
+        _emit(FoodSearchResults(
+          query: normalizedQuery,
+          recent: const [],
+          saved: const [],
+          foodDatabase: const [],
+        ));
+      }
       return;
     }
 
