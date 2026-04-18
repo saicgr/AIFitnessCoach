@@ -331,11 +331,20 @@ async def create_workout_log(log: WorkoutLogCreate,
             logger.error(f"Invalid JSON in sets_json: {je}", exc_info=True)
             raise HTTPException(status_code=400, detail=f"Invalid JSON in sets_json: {je}")
 
+        # Derive duration_minutes from total_time_seconds so Volume/Endurance
+        # metrics on the Discover leaderboard and fitness radar work. The DB
+        # also coalesces at read time (migration 1947) as a belt-and-suspenders,
+        # but populating on insert keeps older readers correct too.
+        derived_minutes = None
+        if log.total_time_seconds and log.total_time_seconds > 0:
+            derived_minutes = max(1, round(log.total_time_seconds / 60))
+
         log_data = {
             "workout_id": log.workout_id,
             "user_id": log.user_id,
             "sets_json": sets_data,  # Pass as dict, not string
             "total_time_seconds": log.total_time_seconds,
+            "duration_minutes": derived_minutes,
         }
 
         # Include metadata if provided (progression patterns, increments, etc.)

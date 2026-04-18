@@ -551,6 +551,7 @@ async def get_discover_snapshot(
                         user_id=str(r.get("user_id")),
                         username=r.get("username"),
                         display_name=r.get("display_name"),
+                        avatar_url=r.get("avatar_url"),
                         rank=r.get("rank") or 0,
                         metric_value=float(r.get("metric_value") or 0),
                         is_current_user=bool(r.get("is_current_user")),
