@@ -345,7 +345,7 @@ def _build_leaderboard_entry(
         rank=rank,
         user_id=data["user_id"],
         user_name=data["user_name"],
-        avatar_url=data.get("avatar_url"),
+        avatar_url=_presign_avatar(data.get("avatar_url")),
         country_code=data.get("country_code"),
         is_friend=is_friend,
         is_current_user=is_current_user,
@@ -394,6 +394,7 @@ def _calculate_refresh_time(last_updated: datetime) -> str:
 from pydantic import BaseModel as _BaseModel
 from typing import List as _List
 from core.db import get_supabase_db as _get_supabase_db
+from api.v1.users.photo import presign_profile_photo_url as _presign_avatar
 
 
 class DiscoverLeaderboardEntry(_BaseModel):
@@ -493,7 +494,7 @@ async def get_discover_snapshot(
                 user_id=str(r.get("user_id")),
                 username=r.get("username"),
                 display_name=r.get("display_name"),
-                avatar_url=r.get("avatar_url"),
+                avatar_url=_presign_avatar(r.get("avatar_url")),
                 rank=r.get("rank") or 0,
                 metric_value=float(r.get("metric_value") or 0),
                 is_current_user=bool(r.get("is_current_user")),
@@ -517,7 +518,7 @@ async def get_discover_snapshot(
                 user_id=str(r.get("user_id")),
                 username=r.get("username"),
                 display_name=r.get("display_name"),
-                avatar_url=r.get("avatar_url"),
+                avatar_url=_presign_avatar(r.get("avatar_url")),
                 current_rank=r.get("current_rank") or 0,
                 previous_rank=r.get("previous_rank") or 0,
                 rank_delta=r.get("rank_delta") or 0,
@@ -551,7 +552,7 @@ async def get_discover_snapshot(
                         user_id=str(r.get("user_id")),
                         username=r.get("username"),
                         display_name=r.get("display_name"),
-                        avatar_url=r.get("avatar_url"),
+                        avatar_url=_presign_avatar(r.get("avatar_url")),
                         rank=r.get("rank") or 0,
                         metric_value=float(r.get("metric_value") or 0),
                         is_current_user=bool(r.get("is_current_user")),
