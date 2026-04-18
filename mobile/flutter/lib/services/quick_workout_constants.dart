@@ -138,12 +138,22 @@ class QuickWorkoutConstants {
   // C3b. Mood multipliers
   // -----------------------------------------------------------------------
   static const Map<String, MoodMultiplier> moodMultipliers = {
+    // (intensity, volume, rest, exerciseBias)
     'energized': MoodMultiplier(1.1, 1.1, 0.85, 'compound'),
     'tired': MoodMultiplier(0.8, 0.8, 1.3, 'isolation'),
     'stressed': MoodMultiplier(1.05, 1.0, 0.9, 'compound'),
     'chill': MoodMultiplier(0.9, 0.95, 1.15, 'balanced'),
     'motivated': MoodMultiplier(1.15, 1.2, 0.8, 'compound'),
     'low_energy': MoodMultiplier(0.7, 0.75, 1.4, 'mobility'),
+    // Added for the 10-mood algorithmic mood workouts.
+    // Angry: user explicitly wants max-intensity release (Hell default).
+    'angry': MoodMultiplier(1.30, 1.20, 0.60, 'plyometric'),
+    // Anxious: low intensity, long rest, mobility-biased (Petruzzello 1991,
+    // Stubbs 2017 — moderate aerobic + yoga strongest anxiolytic effect).
+    'anxious': MoodMultiplier(0.75, 0.85, 1.40, 'mobility'),
+    // Focused: structured, moderate-high, slightly longer rest to preserve
+    // attention (Chang 2012 — moderate exercise boosts executive function).
+    'focused': MoodMultiplier(1.10, 1.00, 1.05, 'compound'),
   };
 
   // -----------------------------------------------------------------------

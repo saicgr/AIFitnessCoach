@@ -72,7 +72,7 @@ class _FastingHeroCard extends ConsumerWidget {
         child: InkWell(
           onTap: () {
             onClose();
-            context.push('/fasting');
+            context.go('/fasting');
           },
           borderRadius: BorderRadius.circular(16),
           child: Container(

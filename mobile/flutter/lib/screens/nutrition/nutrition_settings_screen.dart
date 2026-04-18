@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/animations/app_animations.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/api_constants.dart';
+import '../../core/theme/accent_color_provider.dart';
 import '../../data/models/nutrition_preferences.dart';
 import '../../data/providers/nutrition_preferences_provider.dart';
 import '../../data/repositories/auth_repository.dart';
@@ -84,131 +85,32 @@ class _NutritionSettingsScreenState
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Mental Health & Wellbeing Section
-                  _buildSectionHeader(
-                    context,
-                    'Mental Health & Wellbeing',
-                    Icons.favorite_rounded,
-                    textPrimary,
-                    textPrimary,
-                  ),
-                  const SizedBox(height: 12),
-                  _buildSettingsCard(
-                    context,
-                    isDark,
-                    elevated,
-                    cardBorder,
-                    children: [
-                      _buildSwitchTile(
-                        context,
-                        title: 'Calm Mode',
-                        subtitle:
-                            'Hide calorie numbers and focus on food quality instead',
-                        value: preferences.calmModeEnabled,
-                        onChanged: (value) =>
-                            _updatePreference(userId, preferences, calmModeEnabled: value),
-                        icon: Icons.spa_rounded,
-                        iconColor: textPrimary,
-                        textPrimary: textPrimary,
-                        textMuted: textMuted,
-                      ),
-                      _buildDivider(isDark),
-                      _buildSwitchTile(
-                        context,
-                        title: 'Weekly View',
-                        subtitle:
-                            'Show weekly averages instead of daily targets',
-                        value: preferences.showWeeklyInsteadOfDaily,
-                        onChanged: (value) =>
-                            _updatePreference(userId, preferences, showWeeklyInsteadOfDaily: value),
-                        icon: Icons.calendar_view_week_rounded,
-                        iconColor: textPrimary,
-                        textPrimary: textPrimary,
-                        textMuted: textMuted,
-                      ),
-                      _buildDivider(isDark),
-                      _buildSwitchTile(
-                        context,
-                        title: 'Post-Meal Check-in',
-                        subtitle:
-                            'Ask how you feel after logging a meal (mood, energy)',
-                        value: !_hidePostMealReview,
-                        onChanged: (value) async {
-                          final prefs = await SharedPreferences.getInstance();
-                          await prefs.setBool('hide_post_meal_review', !value);
-                          setState(() => _hidePostMealReview = !value);
-                        },
-                        icon: Icons.mood_rounded,
-                        iconColor: textPrimary,
-                        textPrimary: textPrimary,
-                        textMuted: textMuted,
-                      ),
-                    ],
-                  ),
+                  // ── 1. Current Targets (hero) — macro rings + goal pill.
+                  //       Edit pencil, Recalculate ↻, Training Day chip all
+                  //       live inside the card header.
+                  if (userId != null) ...[
+                    _buildInfoCard(
+                      context,
+                      isDark,
+                      elevated,
+                      cardBorder,
+                      textPrimary,
+                      textMuted,
+                      preferences,
+                      prefsState,
+                      userId,
+                    ),
+                    const SizedBox(height: 28),
+                  ],
 
-                  const SizedBox(height: 24),
-
-                  // Streak & Goals Section
-                  _buildSectionHeader(
-                    context,
-                    'Streaks & Weekly Goals',
-                    Icons.local_fire_department,
-                    textPrimary,
-                    textPrimary,
-                  ),
-                  const SizedBox(height: 12),
-                  _buildStreakSettingsCard(
-                    context,
-                    isDark,
-                    elevated,
-                    cardBorder,
-                    textPrimary,
-                    textMuted,
-                    userId,
-                    prefsState.streak,
-                  ),
-
-                  const SizedBox(height: 24),
-
-                  // AI Assistance Section
-                  _buildSectionHeader(
-                    context,
-                    'AI Assistance',
-                    Icons.auto_awesome,
-                    textPrimary,
-                    textPrimary,
-                  ),
-                  const SizedBox(height: 12),
-                  _buildSettingsCard(
-                    context,
-                    isDark,
-                    elevated,
-                    cardBorder,
-                    children: [
-                      _buildSwitchTile(
-                        context,
-                        title: 'Disable AI Food Tips',
-                        subtitle:
-                            'Hide nutrition suggestions after logging meals',
-                        value: !preferences.showAiFeedbackAfterLogging,
-                        onChanged: (value) =>
-                            _updatePreference(userId, preferences, showAiFeedbackAfterLogging: !value),
-                        icon: Icons.lightbulb_outline_rounded,
-                        iconColor: textPrimary,
-                        textPrimary: textPrimary,
-                        textMuted: textMuted,
-                      ),
-                    ],
-                  ),
-
-                  const SizedBox(height: 24),
-
-                  // Logging Section
+                  // ── 2. Logging — most-touched preference block, kept
+                  //       high up so users can flip quick-log / macro
+                  //       visibility without scrolling.
                   _buildSectionHeader(
                     context,
                     'Logging',
                     Icons.edit_note_rounded,
-                    textPrimary,
+                    AppColors.cyan,
                     textPrimary,
                   ),
                   const SizedBox(height: 12),
@@ -227,7 +129,7 @@ class _NutritionSettingsScreenState
                         onChanged: (value) =>
                             _updatePreference(userId, preferences, quickLogModeEnabled: value),
                         icon: Icons.bolt_rounded,
-                        iconColor: textPrimary,
+                        iconColor: AppColors.yellow,
                         textPrimary: textPrimary,
                         textMuted: textMuted,
                       ),
@@ -241,7 +143,7 @@ class _NutritionSettingsScreenState
                         onChanged: (value) =>
                             _updatePreference(userId, preferences, showMacrosOnLog: value),
                         icon: Icons.pie_chart_rounded,
-                        iconColor: textPrimary,
+                        iconColor: AppColors.macroProtein,
                         textPrimary: textPrimary,
                         textMuted: textMuted,
                       ),
@@ -250,78 +152,57 @@ class _NutritionSettingsScreenState
 
                   const SizedBox(height: 24),
 
-                  // Food Library Section
+                  // ── 3. Weekly Check-In.
                   _buildSectionHeader(
                     context,
-                    'Food Library',
-                    Icons.menu_book_rounded,
-                    textPrimary,
+                    'Weekly Check-In',
+                    Icons.event_note_rounded,
+                    AppColors.cyan,
                     textPrimary,
                   ),
                   const SizedBox(height: 12),
-                  _buildNavigationCard(
+                  _buildWeeklyCheckinCard(
                     context,
                     isDark,
                     elevated,
                     cardBorder,
                     textPrimary,
                     textMuted,
-                    title: 'Saved Foods & Recipes',
-                    subtitle: 'Manage your food library for quick logging',
-                    icon: Icons.bookmark_rounded,
-                    iconColor: textPrimary,
-                    onTap: () {
-                      HapticService.light();
-                      Navigator.push(
-                        context,
-                        AppPageRoute(
-                          builder: (context) => const FoodLibraryScreen(),
-                        ),
-                      );
-                    },
+                    preferences,
                   ),
 
                   const SizedBox(height: 24),
 
-                  // Display Section
+                  // ── 4. Weekly Goal (streak toggle). Status (current
+                  //       streak, freezes, Use Freeze) lives on the
+                  //       Nutrition home now.
                   _buildSectionHeader(
                     context,
-                    'Display',
-                    Icons.view_compact_rounded,
-                    textPrimary,
+                    'Weekly Goal',
+                    Icons.calendar_view_week_rounded,
+                    AppColors.purple,
                     textPrimary,
                   ),
                   const SizedBox(height: 12),
-                  _buildSettingsCard(
+                  _buildStreakSettingsCard(
                     context,
                     isDark,
                     elevated,
                     cardBorder,
-                    children: [
-                      _buildSwitchTile(
-                        context,
-                        title: 'Compact Tracker View',
-                        subtitle:
-                            'Use a condensed layout with meals at the top',
-                        value: preferences.compactTrackerViewEnabled,
-                        onChanged: (value) =>
-                            _updatePreference(userId, preferences, compactTrackerViewEnabled: value),
-                        icon: Icons.density_small_rounded,
-                        iconColor: textPrimary,
-                        textPrimary: textPrimary,
-                        textMuted: textMuted,
-                      ),
-                    ],
+                    textPrimary,
+                    textMuted,
+                    userId,
+                    prefsState.streak,
                   ),
 
                   const SizedBox(height: 24),
 
-                  // Dynamic Targets Section
+                  // ── 5. Dynamic Calorie Adjustments.
                   _buildSectionHeader(
                     context,
                     'Dynamic Calorie Adjustments',
                     Icons.trending_up_rounded,
-                    textPrimary,
+                    AppColors.green,
                     textPrimary,
                   ),
                   const SizedBox(height: 12),
@@ -340,7 +221,7 @@ class _NutritionSettingsScreenState
                         onChanged: (value) =>
                             _updatePreference(userId, preferences, adjustCaloriesForTraining: value),
                         icon: Icons.fitness_center_rounded,
-                        iconColor: textPrimary,
+                        iconColor: AppColors.green,
                         textPrimary: textPrimary,
                         textMuted: textMuted,
                       ),
@@ -354,7 +235,7 @@ class _NutritionSettingsScreenState
                         onChanged: (value) =>
                             _updatePreference(userId, preferences, adjustCaloriesForRest: value),
                         icon: Icons.nightlight_round,
-                        iconColor: textPrimary,
+                        iconColor: AppColors.purple,
                         textPrimary: textPrimary,
                         textMuted: textMuted,
                       ),
@@ -369,7 +250,7 @@ class _NutritionSettingsScreenState
                         onChanged: (value) =>
                             _updatePreference(userId, preferences, weeklyCheckinEnabled: value),
                         icon: Icons.calendar_today_rounded,
-                        iconColor: textPrimary,
+                        iconColor: AppColors.cyan,
                         textPrimary: textPrimary,
                         textMuted: textMuted,
                       ),
@@ -378,12 +259,12 @@ class _NutritionSettingsScreenState
 
                   const SizedBox(height: 24),
 
-                  // Calorie Estimate Bias Section
+                  // ── 6. Calorie Estimate Bias.
                   _buildSectionHeader(
                     context,
                     'Calorie Estimate Bias',
                     Icons.tune_rounded,
-                    textPrimary,
+                    AppColors.yellow,
                     textPrimary,
                   ),
                   const SizedBox(height: 12),
@@ -400,95 +281,168 @@ class _NutritionSettingsScreenState
 
                   const SizedBox(height: 24),
 
-                  // Nutrition Goals Section
+                  // ── 7. Display.
                   _buildSectionHeader(
                     context,
-                    'Nutrition Goals',
-                    Icons.track_changes_rounded,
-                    textPrimary,
+                    'Display',
+                    Icons.view_compact_rounded,
+                    AppColors.purple,
                     textPrimary,
                   ),
                   const SizedBox(height: 12),
-                  _buildNutritionGoalsCard(
+                  _buildSettingsCard(
+                    context,
+                    isDark,
+                    elevated,
+                    cardBorder,
+                    children: [
+                      _buildSwitchTile(
+                        context,
+                        title: 'Compact Tracker View',
+                        subtitle:
+                            'Use a condensed layout with meals at the top',
+                        value: preferences.compactTrackerViewEnabled,
+                        onChanged: (value) =>
+                            _updatePreference(userId, preferences, compactTrackerViewEnabled: value),
+                        icon: Icons.density_small_rounded,
+                        iconColor: AppColors.cyan,
+                        textPrimary: textPrimary,
+                        textMuted: textMuted,
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 24),
+
+                  // ── 8. AI Assistance.
+                  _buildSectionHeader(
+                    context,
+                    'AI Assistance',
+                    Icons.auto_awesome,
+                    AppColors.purple,
+                    textPrimary,
+                  ),
+                  const SizedBox(height: 12),
+                  _buildSettingsCard(
+                    context,
+                    isDark,
+                    elevated,
+                    cardBorder,
+                    children: [
+                      _buildSwitchTile(
+                        context,
+                        title: 'Disable AI Food Tips',
+                        subtitle:
+                            'Hide nutrition suggestions after logging meals',
+                        value: !preferences.showAiFeedbackAfterLogging,
+                        onChanged: (value) =>
+                            _updatePreference(userId, preferences, showAiFeedbackAfterLogging: !value),
+                        icon: Icons.lightbulb_outline_rounded,
+                        iconColor: AppColors.purple,
+                        textPrimary: textPrimary,
+                        textMuted: textMuted,
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 24),
+
+                  // ── 9. Mental Health & Wellbeing — softer preferences
+                  //       settled toward the bottom since they're
+                  //       set-and-forget for most users.
+                  _buildSectionHeader(
+                    context,
+                    'Mental Health & Wellbeing',
+                    Icons.favorite_rounded,
+                    AppColors.pink,
+                    textPrimary,
+                  ),
+                  const SizedBox(height: 12),
+                  _buildSettingsCard(
+                    context,
+                    isDark,
+                    elevated,
+                    cardBorder,
+                    children: [
+                      _buildSwitchTile(
+                        context,
+                        title: 'Calm Mode',
+                        subtitle:
+                            'Hide calorie numbers and focus on food quality instead',
+                        value: preferences.calmModeEnabled,
+                        onChanged: (value) =>
+                            _updatePreference(userId, preferences, calmModeEnabled: value),
+                        icon: Icons.spa_rounded,
+                        iconColor: AppColors.green,
+                        textPrimary: textPrimary,
+                        textMuted: textMuted,
+                      ),
+                      _buildDivider(isDark),
+                      _buildSwitchTile(
+                        context,
+                        title: 'Weekly View',
+                        subtitle:
+                            'Show weekly averages instead of daily targets',
+                        value: preferences.showWeeklyInsteadOfDaily,
+                        onChanged: (value) =>
+                            _updatePreference(userId, preferences, showWeeklyInsteadOfDaily: value),
+                        icon: Icons.calendar_view_week_rounded,
+                        iconColor: AppColors.cyan,
+                        textPrimary: textPrimary,
+                        textMuted: textMuted,
+                      ),
+                      _buildDivider(isDark),
+                      _buildSwitchTile(
+                        context,
+                        title: 'Post-Meal Check-in',
+                        subtitle:
+                            'Ask how you feel after logging a meal (mood, energy)',
+                        value: !_hidePostMealReview,
+                        onChanged: (value) async {
+                          final prefs = await SharedPreferences.getInstance();
+                          await prefs.setBool('hide_post_meal_review', !value);
+                          setState(() => _hidePostMealReview = !value);
+                        },
+                        icon: Icons.mood_rounded,
+                        iconColor: AppColors.yellow,
+                        textPrimary: textPrimary,
+                        textMuted: textMuted,
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 24),
+
+                  // ── 10. Food Library — navigation to Saved Foods & Recipes.
+                  _buildSectionHeader(
+                    context,
+                    'Food Library',
+                    Icons.menu_book_rounded,
+                    AppColors.orange,
+                    textPrimary,
+                  ),
+                  const SizedBox(height: 12),
+                  _buildNavigationCard(
                     context,
                     isDark,
                     elevated,
                     cardBorder,
                     textPrimary,
                     textMuted,
-                    preferences,
-                    userId,
+                    title: 'Saved Foods & Recipes',
+                    subtitle: 'Manage your food library for quick logging',
+                    icon: Icons.bookmark_rounded,
+                    iconColor: AppColors.orange,
+                    onTap: () {
+                      HapticService.light();
+                      Navigator.push(
+                        context,
+                        AppPageRoute(
+                          builder: (context) => const FoodLibraryScreen(),
+                        ),
+                      );
+                    },
                   ),
-
-                  const SizedBox(height: 24),
-
-                  // Food Preferences Section
-                  _buildSectionHeader(
-                    context,
-                    'Food Preferences',
-                    Icons.restaurant_menu_rounded,
-                    textPrimary,
-                    textPrimary,
-                  ),
-                  const SizedBox(height: 12),
-                  _buildFoodPreferencesCard(
-                    context,
-                    isDark,
-                    elevated,
-                    cardBorder,
-                    textPrimary,
-                    textMuted,
-                    preferences,
-                    userId,
-                  ),
-
-                  const SizedBox(height: 24),
-
-                  // Weekly Check-In Section
-                  _buildSectionHeader(
-                    context,
-                    'Weekly Check-In',
-                    Icons.event_note_rounded,
-                    textPrimary,
-                    textPrimary,
-                  ),
-                  const SizedBox(height: 12),
-                  _buildWeeklyCheckinCard(
-                    context,
-                    isDark,
-                    elevated,
-                    cardBorder,
-                    textPrimary,
-                    textMuted,
-                    preferences,
-                  ),
-
-                  const SizedBox(height: 24),
-
-                  // Current Targets Info Card
-                  if (userId != null)
-                    _buildInfoCard(
-                      context,
-                      isDark,
-                      elevated,
-                      cardBorder,
-                      textPrimary,
-                      textMuted,
-                      preferences,
-                      prefsState,
-                      userId,
-                    ),
-
-                  const SizedBox(height: 24),
-
-                  // Recalculate Button
-                  if (userId != null)
-                    _buildRecalculateButton(
-                      context,
-                      userId,
-                      isDark,
-                      textPrimary,
-                    ),
 
                   const SizedBox(height: 32),
                 ],
@@ -536,96 +490,41 @@ class _NutritionSettingsScreenState
     }
   }
 
-  Widget _buildRecalculateButton(
-    BuildContext context,
-    String userId,
-    bool isDark,
-    Color textPrimary,
-  ) {
-    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
-    final cardBorder =
-        isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
-
-    return Container(
-      width: double.infinity,
-      decoration: BoxDecoration(
-        color: elevated,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: cardBorder),
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(16),
-          onTap: _isLoading
-              ? null
-              : () async {
-                  HapticService.medium();
-                  setState(() => _isLoading = true);
-                  try {
-                    await ref
-                        .read(nutritionPreferencesProvider.notifier)
-                        .recalculateTargets(userId);
-                    if (mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: const Text('Targets recalculated!'),
-                          backgroundColor: AppColors.textMuted,
-                          behavior: SnackBarBehavior.floating,
-                        ),
-                      );
-                    }
-                  } catch (e) {
-                    if (mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text('Error: $e'),
-                          backgroundColor: AppColors.textMuted,
-                          behavior: SnackBarBehavior.floating,
-                        ),
-                      );
-                    }
-                  } finally {
-                    if (mounted) {
-                      setState(() => _isLoading = false);
-                    }
-                  }
-                },
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                if (_isLoading)
-                  SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: textPrimary,
-                    ),
-                  )
-                else
-                  Icon(
-                    Icons.refresh_rounded,
-                    color: textPrimary,
-                    size: 20,
-                  ),
-                const SizedBox(width: 8),
-                Text(
-                  _isLoading ? 'Recalculating...' : 'Recalculate Targets',
-                  style: TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                    color: textPrimary,
-                  ),
-                ),
-              ],
-            ),
+  /// Trigger a backend target recalculation (BMR × activity × goal using the
+  /// user's current profile) and surface the result as a snackbar. Shared by
+  /// the ↻ icon button on the Current Targets header.
+  Future<void> _recalculateTargets(String userId) async {
+    if (_isLoading) return;
+    HapticService.medium();
+    setState(() => _isLoading = true);
+    try {
+      await ref
+          .read(nutritionPreferencesProvider.notifier)
+          .recalculateTargets(userId);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Targets recalculated from your profile.'),
+            backgroundColor: AppColors.textMuted,
+            behavior: SnackBarBehavior.floating,
           ),
-        ),
-      ),
-    );
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error: $e'),
+            backgroundColor: AppColors.textMuted,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
   }
 
   Future<void> _updatePreference(
@@ -764,10 +663,10 @@ class _NutritionSettingsScreenState
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: textPrimary.withValues(alpha: 0.15),
+                    color: AppColors.yellow.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: Icon(Icons.tune_rounded, color: textPrimary, size: 24),
+                  child: Icon(Icons.tune_rounded, color: AppColors.yellow, size: 24),
                 ),
                 const SizedBox(width: 16),
                 Expanded(

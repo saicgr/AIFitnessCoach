@@ -16,6 +16,7 @@ from .workout_tools import (
     reschedule_workout,
     delete_workout,
     generate_quick_workout,
+    propose_workout_change,
 )
 
 from .injury_tools import (
@@ -57,6 +58,7 @@ ALL_TOOLS = [
     reschedule_workout,
     delete_workout,
     generate_quick_workout,
+    propose_workout_change,
     # Injury tools
     report_injury,
     clear_injury,
@@ -90,6 +92,7 @@ __all__ = [
     "reschedule_workout",
     "delete_workout",
     "generate_quick_workout",
+    "propose_workout_change",
     # Injury tools
     "report_injury",
     "clear_injury",

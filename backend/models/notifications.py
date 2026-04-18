@@ -69,8 +69,10 @@ class NotificationPreferences(BaseModel):
     push_notifications_enabled: bool = False
     push_workout_reminders: bool = True
     push_achievement_alerts: bool = True
+    push_merch_alerts: bool = True
     push_weekly_summary: bool = False
     push_hydration_reminders: bool = False
+    email_merch_alerts: bool = True
 
     # Timing
     quiet_hours_start: str = "22:00"
@@ -91,8 +93,10 @@ class NotificationPreferencesUpdate(BaseModel):
     push_notifications_enabled: Optional[bool] = None
     push_workout_reminders: Optional[bool] = None
     push_achievement_alerts: Optional[bool] = None
+    push_merch_alerts: Optional[bool] = None
     push_weekly_summary: Optional[bool] = None
     push_hydration_reminders: Optional[bool] = None
+    email_merch_alerts: Optional[bool] = None
     quiet_hours_start: Optional[str] = None
     quiet_hours_end: Optional[str] = None
     timezone: Optional[str] = None

@@ -15,6 +15,7 @@ import '../../../widgets/glass_sheet.dart';
 import '../../../widgets/pill_app_bar.dart';
 import '../../../widgets/staple_choice_sheet.dart';
 import '../../library/components/exercise_detail_sheet.dart';
+import 'widgets/empty_state_with_suggestions.dart';
 import 'widgets/exercise_picker_sheet.dart';
 
 part 'staple_exercises_screen_part_staple_exercise_tile.dart';
@@ -86,6 +87,63 @@ class StapleExercisesScreen extends ConsumerWidget {
     }
   }
 
+  /// Quick-add from a suggestion chip: skip the exercise picker and go
+  /// straight to the staple choice sheet with the name pre-filled.
+  Future<void> _quickAddSuggestion(
+    BuildContext context,
+    WidgetRef ref,
+    SuggestedExercise suggestion,
+  ) async {
+    // Guard against dupes — suggestions can collide with already-added staples.
+    final isAlreadyStaple = ref
+        .read(staplesProvider)
+        .staples
+        .any((s) => s.exerciseName.toLowerCase() == suggestion.name.toLowerCase());
+    if (isAlreadyStaple) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('"${suggestion.name}" is already a staple'),
+          backgroundColor: AppColors.cyan,
+        ),
+      );
+      return;
+    }
+
+    final choice = await showStapleChoiceSheet(
+      context,
+      exerciseName: suggestion.name,
+    );
+    if (choice == null || choice.goBack) return;
+
+    final success = await ref.read(staplesProvider.notifier).addStaple(
+      suggestion.name,
+      muscleGroup: suggestion.muscleGroup,
+      addToCurrentWorkout: choice.addToday,
+      section: choice.section,
+      gymProfileId: choice.gymProfileId,
+      swapExerciseId: choice.swapExerciseId,
+      cardioParams: choice.cardioParams,
+      userSets: choice.userSets,
+      userReps: choice.userReps,
+      userRestSeconds: choice.userRestSeconds,
+      userWeightLbs: choice.userWeightLbs,
+      targetDays: choice.targetDays,
+    );
+
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            success
+                ? 'Added "${suggestion.name}" as a staple'
+                : 'Failed to add exercise',
+          ),
+          backgroundColor: success ? AppColors.success : AppColors.error,
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -134,53 +192,18 @@ class StapleExercisesScreen extends ConsumerWidget {
   }
 
   Widget _buildEmptyState(BuildContext context, WidgetRef ref, Color textMuted) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              Icons.push_pin_outlined,
-              size: 72,
-              color: (Theme.of(context).brightness == Brightness.dark
-                  ? AppColors.purple : AppColorsLight.purple).withValues(alpha: 0.5),
-            ),
-            const SizedBox(height: 24),
-            Text(
-              'No Staple Exercises',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.w600,
-                color: textMuted,
-              ),
-            ),
-            const SizedBox(height: 12),
-            Text(
-              'Staple exercises are your core lifts that will NEVER be rotated out of your workouts.',
-              style: TextStyle(
-                fontSize: 14,
-                color: textMuted.withValues(alpha: 0.7),
-              ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 24),
-            ElevatedButton.icon(
-              onPressed: () => _showAddExercisePicker(context, ref),
-              icon: const Icon(Icons.add),
-              label: const Text('Add Staple'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.cyan,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
+    return EmptyStateWithSuggestions(
+      heroIcon: Icons.push_pin_rounded,
+      accentColor: AppColors.cyan,
+      heroTitle: 'Lock in your core lifts',
+      heroSubtitle:
+          'Staples never rotate out. Pick the lifts you want to hit every week — your plan will build around them.',
+      sectionLabel: 'QUICK ADD',
+      primaryButtonLabel: 'Browse Full Library',
+      primaryButtonIcon: Icons.menu_book_rounded,
+      suggestions: kPopularStaples,
+      onSuggestionTap: (s) => _quickAddSuggestion(context, ref, s),
+      onBrowseLibrary: () => _showAddExercisePicker(context, ref),
     );
   }
 

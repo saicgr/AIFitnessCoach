@@ -153,6 +153,16 @@ class DailyLoginResult {
   final String message;
   @JsonKey(name: 'already_claimed')
   final bool alreadyClaimed;
+  /// Migration 1938: true when a streak_shield was auto-consumed to save the
+  /// streak from breaking after a missed day. Frontend fires celebration.
+  @JsonKey(name: 'streak_saved_by_shield')
+  final bool streakSavedByShield;
+  /// Remaining streak_shield count after this login (for UI display).
+  @JsonKey(name: 'shields_remaining')
+  final int shieldsRemaining;
+  /// Streak length BEFORE the shield save — used in "Your N-day streak is safe" copy.
+  @JsonKey(name: 'saved_streak_count')
+  final int savedStreakCount;
 
   const DailyLoginResult({
     required this.isFirstLogin,
@@ -168,6 +178,9 @@ class DailyLoginResult {
     required this.multiplier,
     required this.message,
     this.alreadyClaimed = false,
+    this.streakSavedByShield = false,
+    this.shieldsRemaining = 0,
+    this.savedStreakCount = 0,
   });
 
   factory DailyLoginResult.fromJson(Map<String, dynamic> json) {
@@ -192,6 +205,9 @@ class DailyLoginResult {
       multiplier: (json['multiplier'] as num?)?.toDouble() ?? 1.0,
       message: json['message'] as String? ?? '',
       alreadyClaimed: json['already_claimed'] as bool? ?? false,
+      streakSavedByShield: json['streak_saved_by_shield'] as bool? ?? false,
+      shieldsRemaining: json['shields_remaining'] as int? ?? 0,
+      savedStreakCount: json['saved_streak_count'] as int? ?? 0,
     );
   }
 

@@ -28,15 +28,16 @@ extension _EditableFitnessCardStateExt on EditableFitnessCardState {
             : '${_selectedInjuries.length} areas';
 
     return GridView.count(
-      // 3 columns × 3 rows — fills the 9 fitness tiles without an orphan
-      // row. Dropping from 4 → 3 cols also gives each tile more room so
-      // longer values like "Build Muscle" and "30-45 min" stop stacking.
-      crossAxisCount: 3,
+      // 4 columns × 2 rows = 8 tiles. Warmup + Stretch were merged into a
+      // single "Prep" tile showing both durations. Tapping it opens a sheet
+      // with both sliders. Edit mode (inline list) keeps them as separate
+      // rows since each is adjusted independently.
+      crossAxisCount: 4,
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
       crossAxisSpacing: 8,
       mainAxisSpacing: 8,
-      childAspectRatio: 1.0,
+      childAspectRatio: 0.88,
       children: [
         _FitnessTile(
           icon: gymIcon,
@@ -106,37 +107,57 @@ extension _EditableFitnessCardStateExt on EditableFitnessCardState {
           ),
         ),
         _FitnessTile(
-          icon: Icons.whatshot_outlined,
+          icon: Icons.self_improvement_outlined,
           iconColor: AppColors.orange,
-          label: 'Warmup',
-          value: '$_selectedWarmupDuration min',
+          label: 'Prep',
+          value: '$_selectedWarmupDuration+$_selectedStretchDuration min',
           backgroundColor: elevated,
           textMutedColor: textMuted,
           onTap: () => _showFieldEditor(
-            title: 'Warmup Duration',
-            icon: Icons.whatshot_outlined,
+            title: 'Warmup + Stretch',
+            icon: Icons.self_improvement_outlined,
             iconColor: AppColors.orange,
             isDark: isDark,
             cardBorder: cardBorder,
             textSecondary: textSecondary,
-            builder: () => _buildWarmupSelector(AppColors.orange, cardBorder, textSecondary),
-          ),
-        ),
-        _FitnessTile(
-          icon: Icons.self_improvement_outlined,
-          iconColor: AppColors.purple,
-          label: 'Stretch',
-          value: '$_selectedStretchDuration min',
-          backgroundColor: elevated,
-          textMutedColor: textMuted,
-          onTap: () => _showFieldEditor(
-            title: 'Stretch Duration',
-            icon: Icons.self_improvement_outlined,
-            iconColor: AppColors.purple,
-            isDark: isDark,
-            cardBorder: cardBorder,
-            textSecondary: textSecondary,
-            builder: () => _buildStretchSelector(AppColors.purple, cardBorder, textSecondary),
+            builder: () => Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Icon(Icons.whatshot_outlined,
+                        size: 16, color: AppColors.orange),
+                    const SizedBox(width: 6),
+                    Text(
+                      'Warmup',
+                      style: TextStyle(
+                        fontSize: 13, color: textSecondary,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                _buildWarmupSelector(AppColors.orange, cardBorder, textSecondary),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    Icon(Icons.self_improvement_outlined,
+                        size: 16, color: AppColors.purple),
+                    const SizedBox(width: 6),
+                    Text(
+                      'Stretch',
+                      style: TextStyle(
+                        fontSize: 13, color: textSecondary,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                _buildStretchSelector(AppColors.purple, cardBorder, textSecondary),
+              ],
+            ),
           ),
         ),
         _FitnessTile(

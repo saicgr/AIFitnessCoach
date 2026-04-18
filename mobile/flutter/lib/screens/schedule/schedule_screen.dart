@@ -3,7 +3,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/constants/app_colors.dart';
 import '../../widgets/app_snackbar.dart';
 import '../../widgets/pill_app_bar.dart';
@@ -260,7 +259,7 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
   }
 
   Future<void> _createScheduleItem(ScheduleItemCreate item, ThemeColors colors) async {
-    final userId = Supabase.instance.client.auth.currentUser?.id;
+    final userId = ref.read(currentUserIdProvider);
     if (userId == null) return;
 
     try {
@@ -366,6 +365,7 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
             day.day == today.day;
         final isPast = day.isBefore(DateTime(today.year, today.month, today.day));
         final dayWorkouts = _getWorkoutsForDay(workouts, day);
+        final dayAccent = _accentForWeekday(day.weekday);
 
         // Watch schedule items for this day
         final dayDate = DateTime(day.year, day.month, day.day);
@@ -383,9 +383,33 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
                     width: 48,
                     height: 48,
                     decoration: BoxDecoration(
-                      color: isToday ? colors.cyan : colors.elevated,
+                      gradient: isToday
+                          ? LinearGradient(
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                              colors: [dayAccent, dayAccent.withOpacity(0.7)],
+                            )
+                          : LinearGradient(
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                              colors: [
+                                dayAccent.withOpacity(isPast ? 0.08 : 0.18),
+                                dayAccent.withOpacity(isPast ? 0.04 : 0.08),
+                              ],
+                            ),
                       borderRadius: BorderRadius.circular(12),
-                      border: isToday ? null : Border.all(color: colors.cardBorder),
+                      border: isToday
+                          ? null
+                          : Border.all(color: dayAccent.withOpacity(isPast ? 0.15 : 0.3)),
+                      boxShadow: isToday
+                          ? [
+                              BoxShadow(
+                                color: dayAccent.withOpacity(0.35),
+                                blurRadius: 12,
+                                offset: const Offset(0, 4),
+                              ),
+                            ]
+                          : null,
                     ),
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -395,7 +419,9 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
                           style: TextStyle(
                             fontSize: 10,
                             fontWeight: FontWeight.w600,
-                            color: isToday ? Colors.white : colors.textMuted,
+                            color: isToday
+                                ? Colors.white
+                                : dayAccent.withOpacity(isPast ? 0.6 : 0.9),
                             letterSpacing: 0.5,
                           ),
                         ),
@@ -404,7 +430,9 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
                           style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
-                            color: isToday ? Colors.white : colors.textPrimary,
+                            color: isToday
+                                ? Colors.white
+                                : (isPast ? colors.textMuted : colors.textPrimary),
                           ),
                         ),
                       ],
@@ -420,7 +448,7 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w600,
-                            color: isToday ? colors.cyan : (isPast ? colors.textMuted : colors.textPrimary),
+                            color: isToday ? dayAccent : (isPast ? colors.textMuted : colors.textPrimary),
                           ),
                         ),
                         Text(
@@ -437,7 +465,7 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                       decoration: BoxDecoration(
-                        color: colors.cyan.withOpacity(0.2),
+                        color: dayAccent.withOpacity(0.2),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Text(
@@ -445,7 +473,7 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
                         style: TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.bold,
-                          color: colors.cyan,
+                          color: dayAccent,
                           letterSpacing: 0.5,
                         ),
                       ),
@@ -487,51 +515,9 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
                   return scheduleAsync.maybeWhen(
                     data: (schedule) {
                       if (schedule.items.isNotEmpty) return const SizedBox.shrink();
-                      return Container(
-                        margin: EdgeInsets.only(left: leftMargin, bottom: 8),
-                        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
-                        decoration: BoxDecoration(
-                          color: colors.elevated,
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: colors.cardBorder.withOpacity(0.5)),
-                        ),
-                        child: Row(
-                          children: [
-                            Icon(Icons.event_available, size: 20, color: colors.textMuted),
-                            const SizedBox(width: 12),
-                            Text(
-                              isPast ? 'Rest day' : 'No items scheduled',
-                              style: TextStyle(
-                                fontSize: 14,
-                                color: colors.textMuted,
-                              ),
-                            ),
-                          ],
-                        ),
-                      );
+                      return _buildEmptyDayTile(leftMargin, dayAccent, isPast, colors);
                     },
-                    orElse: () => Container(
-                      margin: EdgeInsets.only(left: leftMargin, bottom: 8),
-                      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
-                      decoration: BoxDecoration(
-                        color: colors.elevated,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: colors.cardBorder.withOpacity(0.5)),
-                      ),
-                      child: Row(
-                        children: [
-                          Icon(Icons.event_available, size: 20, color: colors.textMuted),
-                          const SizedBox(width: 12),
-                          Text(
-                            isPast ? 'Rest day' : 'No items scheduled',
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: colors.textMuted,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
+                    orElse: () => _buildEmptyDayTile(leftMargin, dayAccent, isPast, colors),
                   );
                 },
               )
@@ -679,7 +665,7 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
   }
 
   Future<void> _completeItem(ScheduleItem item, ThemeColors colors) async {
-    final userId = Supabase.instance.client.auth.currentUser?.id;
+    final userId = ref.read(currentUserIdProvider);
     if (userId == null) return;
 
     try {
@@ -702,6 +688,66 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
       if (w.scheduledDate == null) return false;
       return w.scheduledDate!.startsWith(dayStr);
     }).toList();
+  }
+
+  /// Day-of-week accent palette — gives each weekday its own identity so the
+  /// agenda view has visual rhythm instead of reading as a monochrome list.
+  Color _accentForWeekday(int weekday) {
+    switch (weekday) {
+      case DateTime.monday:
+        return const Color(0xFF6366F1); // Indigo
+      case DateTime.tuesday:
+        return const Color(0xFFA855F7); // Purple
+      case DateTime.wednesday:
+        return const Color(0xFFEC4899); // Pink
+      case DateTime.thursday:
+        return const Color(0xFF06B6D4); // Cyan
+      case DateTime.friday:
+        return const Color(0xFFF59E0B); // Amber
+      case DateTime.saturday:
+        return const Color(0xFFF87171); // Coral
+      case DateTime.sunday:
+        return const Color(0xFF14B8A6); // Teal
+      default:
+        return const Color(0xFF6366F1);
+    }
+  }
+
+  Widget _buildEmptyDayTile(double leftMargin, Color dayAccent, bool isPast, ThemeColors colors) {
+    return Container(
+      margin: EdgeInsets.only(left: leftMargin, bottom: 8),
+      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            dayAccent.withOpacity(isPast ? 0.05 : 0.10),
+            dayAccent.withOpacity(isPast ? 0.02 : 0.04),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: dayAccent.withOpacity(isPast ? 0.12 : 0.22)),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            isPast ? Icons.bedtime_outlined : Icons.event_available,
+            size: 20,
+            color: dayAccent.withOpacity(isPast ? 0.6 : 0.85),
+          ),
+          const SizedBox(width: 12),
+          Text(
+            isPast ? 'Rest day' : 'No items scheduled',
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+              color: isPast ? colors.textMuted : colors.textPrimary.withOpacity(0.85),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   Future<void> _rescheduleWorkout(Workout workout, DateTime newDate, ThemeColors colors) async {

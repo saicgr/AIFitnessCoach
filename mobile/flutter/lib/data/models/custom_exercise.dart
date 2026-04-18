@@ -311,7 +311,11 @@ class CustomExercise extends Equatable {
       ];
 }
 
-/// Request model for creating a simple custom exercise
+/// Request model for creating a simple custom exercise.
+///
+/// Advanced fields (rpe, tempo, bandColor, notes, rangeOfMotion, incline,
+/// duration, distance) are all optional and let the user capture richer
+/// detail for non-traditional exercises like walking, bands, or stretches.
 @JsonSerializable()
 class CreateCustomExerciseRequest extends Equatable {
   final String name;
@@ -323,8 +327,28 @@ class CreateCustomExerciseRequest extends Equatable {
   final int defaultSets;
   @JsonKey(name: 'default_reps')
   final int? defaultReps;
+  @JsonKey(name: 'default_rest_seconds')
+  final int? defaultRestSeconds;
   @JsonKey(name: 'is_compound')
   final bool isCompound;
+
+  // Advanced fields — all optional.
+  @JsonKey(name: 'default_rpe')
+  final int? defaultRpe;
+  @JsonKey(name: 'default_tempo')
+  final String? defaultTempo;
+  @JsonKey(name: 'default_band_color')
+  final String? defaultBandColor;
+  @JsonKey(name: 'default_notes')
+  final String? defaultNotes;
+  @JsonKey(name: 'default_range_of_motion')
+  final String? defaultRangeOfMotion;
+  @JsonKey(name: 'default_incline_percent')
+  final double? defaultInclinePercent;
+  @JsonKey(name: 'default_duration_seconds')
+  final int? defaultDurationSeconds;
+  @JsonKey(name: 'default_distance_miles')
+  final double? defaultDistanceMiles;
 
   const CreateCustomExerciseRequest({
     required this.name,
@@ -333,7 +357,16 @@ class CreateCustomExerciseRequest extends Equatable {
     this.instructions,
     this.defaultSets = 3,
     this.defaultReps = 10,
+    this.defaultRestSeconds,
     this.isCompound = false,
+    this.defaultRpe,
+    this.defaultTempo,
+    this.defaultBandColor,
+    this.defaultNotes,
+    this.defaultRangeOfMotion,
+    this.defaultInclinePercent,
+    this.defaultDurationSeconds,
+    this.defaultDistanceMiles,
   });
 
   factory CreateCustomExerciseRequest.fromJson(Map<String, dynamic> json) =>

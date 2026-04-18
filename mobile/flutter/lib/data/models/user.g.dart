@@ -40,6 +40,9 @@ User _$UserFromJson(Map<String, dynamic> json) => User(
   muscleFocusPoints: (json['muscle_focus_points'] as Map<String, dynamic>?)
       ?.map((k, e) => MapEntry(k, (e as num).toInt())),
   photoUrl: json['photo_url'] as String?,
+  inVacationMode: json['in_vacation_mode'] as bool?,
+  vacationStartDate: json['vacation_start_date'] as String?,
+  vacationEndDate: json['vacation_end_date'] as String?,
 );
 
 Map<String, dynamic> _$UserToJson(User instance) => <String, dynamic>{
@@ -75,6 +78,9 @@ Map<String, dynamic> _$UserToJson(User instance) => <String, dynamic>{
   'primary_goal': instance.primaryGoal,
   'muscle_focus_points': instance.muscleFocusPoints,
   'photo_url': instance.photoUrl,
+  'in_vacation_mode': instance.inVacationMode,
+  'vacation_start_date': instance.vacationStartDate,
+  'vacation_end_date': instance.vacationEndDate,
 };
 
 GoogleAuthRequest _$GoogleAuthRequestFromJson(Map<String, dynamic> json) =>

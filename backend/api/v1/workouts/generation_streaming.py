@@ -52,6 +52,8 @@ from .utils import (
     get_user_hormonal_context,
     # Focus area validation
     validate_and_filter_focus_mismatches,
+    # Duration resolver (request body → gym profile → user preferences → default)
+    resolve_target_duration,
 )
 
 from .generation_helpers import (
@@ -151,6 +153,10 @@ async def generate_workout_streaming(request: Request, body: GenerateWorkoutRequ
     async def generate_sse() -> AsyncGenerator[str, None]:
         start_time = datetime.now()
         gym_profile_id = None  # Track which profile this workout is generated for
+        # Track user + gym_profile across both branches below so the duration
+        # resolver can consult them (short-circuit path leaves both as None).
+        user = None
+        gym_profile = None
 
         try:
 
@@ -275,8 +281,27 @@ async def generate_workout_streaming(request: Request, body: GenerateWorkoutRequ
 
             gemini_service = GeminiService()
 
+            # Resolve target duration from request body → gym profile → user preferences.
+            # Without this, body.duration_minutes defaults to None and the effective
+            # value silently falls to 45 min even when the user set a different preference.
+            resolved_duration = resolve_target_duration(
+                body_duration=body.duration_minutes,
+                body_duration_min=body.duration_minutes_min,
+                body_duration_max=body.duration_minutes_max,
+                gym_profile=gym_profile,
+                user=user,
+            )
+            target_duration = resolved_duration["target"]
+            target_duration_min = resolved_duration["min"]
+            target_duration_max = resolved_duration["max"]
+            logger.info(
+                f"[Streaming Duration] Resolved target={target_duration}, "
+                f"min={target_duration_min}, max={target_duration_max} "
+                f"(body={body.duration_minutes}, gym.duration_minutes={gym_profile.get('duration_minutes') if gym_profile else None})"
+            )
+
             # Calculate exercise count with fitness-level caps
-            effective_duration = body.duration_minutes_max or body.duration_minutes_min or (body.duration_minutes or 45)
+            effective_duration = target_duration_max or target_duration_min or target_duration
             base_exercise_count = max(4, min(12, effective_duration // 6))
 
             EXERCISE_CAPS = {
@@ -351,9 +376,9 @@ async def generate_workout_streaming(request: Request, body: GenerateWorkoutRequ
                     "fitness_level": fitness_level or "intermediate",
                     "goals": goals if isinstance(goals, list) else [],
                     "equipment": equipment if isinstance(equipment, list) else [],
-                    "duration_minutes": body.duration_minutes or 45,
-                    "duration_minutes_min": body.duration_minutes_min,
-                    "duration_minutes_max": body.duration_minutes_max,
+                    "duration_minutes": target_duration,
+                    "duration_minutes_min": target_duration_min,
+                    "duration_minutes_max": target_duration_max,
                     "focus_areas": body.focus_areas,
                     "intensity_preference": intensity_preference,
                     "avoided_exercises": avoided_exercises if avoided_exercises else None,
@@ -451,10 +476,10 @@ async def generate_workout_streaming(request: Request, body: GenerateWorkoutRequ
                     estimated_duration = max(10, int(fallback_duration))
                     logger.debug(f"[Streaming Duration] Calculated fallback duration: {estimated_duration} min")
 
-                # DURATION VALIDATION
-                if estimated_duration and body.duration_minutes_max:
-                    if estimated_duration > body.duration_minutes_max:
-                        logger.warning(f"[Streaming Duration] Estimated duration {estimated_duration} min exceeds max {body.duration_minutes_max} min")
+                # DURATION VALIDATION (against resolved target, not raw body value)
+                if estimated_duration and target_duration_max:
+                    if estimated_duration > target_duration_max:
+                        logger.warning(f"[Streaming Duration] Estimated duration {estimated_duration} min exceeds max {target_duration_max} min")
                     else:
                         logger.debug(f"[Streaming Duration] Estimated {estimated_duration} min is within range")
                 elif estimated_duration:
@@ -503,6 +528,61 @@ async def generate_workout_streaming(request: Request, body: GenerateWorkoutRequ
                     if removed_count > 0:
                         logger.info(f"[Streaming Validation] Limited {removed_count} exercises targeting reduced muscles")
                         exercises = new_exercises
+
+                # Phase 3.5 (streaming): reject exercises requiring equipment the
+                # user does not have. Mirrors generation_endpoints.py:691. Also
+                # uses name-inference to catch mis-tagged library rows
+                # (e.g. "Hanging Toes-to-Bar" stored as bodyweight but needing a bar).
+                if equipment and exercises:
+                    from services.exercise_rag.filters import filter_by_equipment
+                    from services.exercise_rag.utils import infer_equipment_from_name
+                    equipment_compatible = []
+                    equipment_rejected_names: List[str] = []
+                    for ex in exercises:
+                        ex_equip = (ex.get("equipment") or "").strip()
+                        ex_name = ex.get("name", "") or ex.get("exercise_name", "")
+                        # Override bodyweight/empty tags via name inference so
+                        # mis-labeled rows don't sneak through.
+                        if not ex_equip or ex_equip.lower() in ("bodyweight", "body weight", "none", ""):
+                            ex_equip = infer_equipment_from_name(ex_name)
+                        if filter_by_equipment(ex_equip, equipment, ex_name):
+                            equipment_compatible.append(ex)
+                        else:
+                            equipment_rejected_names.append(ex_name)
+                            logger.warning(
+                                f"[Streaming Equipment Filter] Removed '{ex_name}' — "
+                                f"requires '{ex_equip}', user has: {equipment}"
+                            )
+                    if equipment_rejected_names:
+                        logger.info(
+                            f"[Streaming Equipment Filter] Removed {len(equipment_rejected_names)} "
+                            f"exercises with incompatible equipment: {equipment_rejected_names}"
+                        )
+                        exercises = equipment_compatible
+
+                # Defensive dedup: strip "(N)" suffixes that come from duplicate
+                # library imports (e.g. Burpee vs Burpee(1)), then collapse
+                # remaining duplicates by case-insensitive base name.
+                if exercises:
+                    from services.exercise_rag.utils import dedup_key, strip_dedup_suffix
+                    _seen_keys: set = set()
+                    _deduped: List[dict] = []
+                    _collapsed = 0
+                    for ex in exercises:
+                        raw_name = ex.get("name", "") or ex.get("exercise_name", "")
+                        key = dedup_key(raw_name)
+                        if not key or key in _seen_keys:
+                            _collapsed += 1
+                            continue
+                        _seen_keys.add(key)
+                        # Normalize the stored name too so the client never sees "(N)".
+                        cleaned = strip_dedup_suffix(raw_name)
+                        if cleaned != raw_name:
+                            ex["name"] = cleaned
+                        _deduped.append(ex)
+                    if _collapsed:
+                        logger.info(f"[Streaming Dedup] Collapsed {_collapsed} duplicate exercises by normalized name")
+                    exercises = _deduped
 
                 workout_data["exercises"] = exercises
 
@@ -623,7 +703,7 @@ async def generate_workout_streaming(request: Request, body: GenerateWorkoutRequ
             # Compute estimated calories using MET-based formula
             _user_weight_kg = float(user.get("weight_kg") or user.get("weight") or 70) if user else 70.0
             _user_weight_kg = max(30.0, min(_user_weight_kg, 250.0))
-            _effective_duration = estimated_duration or body.duration_minutes or 45
+            _effective_duration = estimated_duration or target_duration
             _met = _estimate_workout_met(exercises, workout_type, difficulty)
             _estimated_calories = round(_met * _user_weight_kg * (_effective_duration / 60.0))
 
@@ -637,9 +717,9 @@ async def generate_workout_streaming(request: Request, body: GenerateWorkoutRequ
                 "description": workout_description,
                 "scheduled_date": scheduled_date_str,
                 "exercises_json": exercises,
-                "duration_minutes": body.duration_minutes or 45,
-                "duration_minutes_min": body.duration_minutes_min,
-                "duration_minutes_max": body.duration_minutes_max,
+                "duration_minutes": target_duration,
+                "duration_minutes_min": target_duration_min,
+                "duration_minutes_max": target_duration_max,
                 "estimated_duration_minutes": estimated_duration,
                 "estimated_calories": _estimated_calories,
                 "generation_method": "ai",

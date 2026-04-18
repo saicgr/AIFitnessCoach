@@ -13,6 +13,7 @@ import '../../data/services/haptic_service.dart';
 import '../../widgets/dismissed_banners_section.dart';
 import '../../widgets/glass_back_button.dart';
 import '../../widgets/glass_sheet.dart';
+import '../../widgets/level_up_catch_up_banner.dart';
 import '../../widgets/segmented_tab_bar.dart';
 
 part 'xp_goals_screen_part_first_time_bonus.dart';
@@ -158,6 +159,13 @@ class _XPGoalsScreenState extends ConsumerState<XPGoalsScreen>
               Expanded(
                 child: NestedScrollView(
                   headerSliverBuilder: (context, innerBoxIsScrolled) => [
+                    // Retroactive level-up banner (only visible if unacked events exist)
+                    const SliverToBoxAdapter(
+                      child: Padding(
+                        padding: EdgeInsets.fromLTRB(16, 4, 16, 8),
+                        child: LevelUpCatchUpBanner(),
+                      ),
+                    ),
                     // Level Progress (scrolls away)
                     SliverToBoxAdapter(
                       child: Padding(

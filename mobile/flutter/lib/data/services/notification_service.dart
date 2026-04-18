@@ -11,6 +11,7 @@ import 'package:timezone/timezone.dart' as tz;
 import 'package:timezone/data/latest.dart' as tz_data;
 import 'api_client.dart';
 import 'recipe_notification_router.dart';
+import 'crate_notification_router.dart';
 import '../../core/constants/api_constants.dart';
 import '../models/coach_notification_templates.dart';
 import '../../utils/tz.dart';
@@ -76,6 +77,9 @@ class NotificationPrefsKeys {
   static const accountabilityIntensity = 'notif_accountability_intensity';
   static const aiPersonalizedNudges = 'notif_ai_personalized_nudges';
   static const guiltNotifications = 'notif_guilt_notifications';
+  // Daily crate reminder
+  static const dailyCrateReminders = 'notif_daily_crate_reminders';
+  static const dailyCrateReminderTime = 'notif_daily_crate_reminder_time';
   // Frequency preset
   static const frequencyPreset = 'notif_frequency_preset';
   // Bundle times
@@ -467,6 +471,9 @@ class NotificationPreferencesNotifier extends StateNotifier<NotificationPreferen
       accountabilityIntensity: _prefs.getString(NotificationPrefsKeys.accountabilityIntensity) ?? 'balanced',
       aiPersonalizedNudges: _prefs.getBool(NotificationPrefsKeys.aiPersonalizedNudges) ?? true,
       guiltNotifications: _prefs.getBool(NotificationPrefsKeys.guiltNotifications) ?? true,
+      // Daily crate reminder
+      dailyCrateReminders: _prefs.getBool(NotificationPrefsKeys.dailyCrateReminders) ?? true,
+      dailyCrateReminderTime: _prefs.getString(NotificationPrefsKeys.dailyCrateReminderTime) ?? '10:00',
       // Frequency preset
       frequencyPreset: _prefs.getString(NotificationPrefsKeys.frequencyPreset) ?? 'balanced',
       // Bundle times
@@ -743,6 +750,18 @@ class NotificationPreferencesNotifier extends StateNotifier<NotificationPreferen
   Future<void> setGuiltNotifications(bool value) async {
     await _prefs.setBool(NotificationPrefsKeys.guiltNotifications, value);
     state = state.copyWith(guiltNotifications: value);
+    await _syncPreferencesToBackend();
+  }
+
+  Future<void> setDailyCrateReminders(bool value) async {
+    await _prefs.setBool(NotificationPrefsKeys.dailyCrateReminders, value);
+    state = state.copyWith(dailyCrateReminders: value);
+    await _syncPreferencesToBackend();
+  }
+
+  Future<void> setDailyCrateReminderTime(String time) async {
+    await _prefs.setString(NotificationPrefsKeys.dailyCrateReminderTime, time);
+    state = state.copyWith(dailyCrateReminderTime: time);
     await _syncPreferencesToBackend();
   }
 

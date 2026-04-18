@@ -324,19 +324,24 @@ class _FitWizAppState extends ConsumerState<FitWizApp> {
           router.push('/chat');
           break;
         case 'workout_reminder':
-          router.push('/home');
+          router.go('/home');
           break;
         case 'movement_reminder':
           router.push('/neat');
           break;
         case 'nutrition_reminder':
-          router.push('/nutrition');
+          router.go('/nutrition');
           break;
         case 'hydration_reminder':
           router.go('/nutrition?tab=2');
           break;
         case 'streak_alert':
           router.push('/achievements');
+          break;
+        case 'daily_crate':
+          // Route to home so the crate banner is visible; tapping it
+          // triggers the auto-claim path in stacked_banner_panel.dart.
+          router.go('/home');
           break;
         case 'weekly_summary':
           router.push('/summaries');
@@ -361,7 +366,7 @@ class _FitWizAppState extends ConsumerState<FitWizApp> {
         default:
           // Handle schedule_reminder:$itemId payload format
           if (notificationType != null && notificationType.startsWith('schedule_reminder')) {
-            router.push('/home');
+            router.go('/home');
           } else {
             router.push('/notifications');
           }

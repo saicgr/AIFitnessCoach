@@ -202,8 +202,10 @@ async def get_notification_preferences(user_id: str, current_user: dict = Depend
                 push_notifications_enabled=np.get("push_notifications_enabled", False),
                 push_workout_reminders=np.get("push_workout_reminders", True),
                 push_achievement_alerts=np.get("push_achievement_alerts", True),
+                push_merch_alerts=np.get("push_merch_alerts", True),
                 push_weekly_summary=np.get("push_weekly_summary", False),
                 push_hydration_reminders=np.get("push_hydration_reminders", False),
+                email_merch_alerts=np.get("email_merch_alerts", True),
                 quiet_hours_start=np.get("quiet_hours_start", "22:00"),
                 quiet_hours_end=np.get("quiet_hours_end", "07:00"),
                 timezone=np.get("timezone", "America/New_York")
@@ -990,3 +992,59 @@ async def generate_period_insight(
     except Exception as e:
         logger.error(f"Failed to generate period insight: {e}", exc_info=True)
         raise safe_internal_error(e, "generate_period_insight")
+
+
+# ============================================================
+# Weekly Percentile (W5)
+# ============================================================
+
+from pydantic import BaseModel as _WSBaseModel
+
+
+class WeeklyPercentileResponse(_WSBaseModel):
+    """Current-week percentile for the logged-in user.
+    Feeds in-app weekly recap badges (insights_screen hero card).
+    """
+    week_start: str
+    rank: int
+    total_active: int
+    percentile: float  # 0.0-100.0
+    tier: str  # starter | active | rising | elite | top | legendary
+    metric_value: float
+    metric_label: str  # "XP" | "min" | "days"
+
+
+@router.get("/percentile/me", response_model=WeeklyPercentileResponse)
+async def get_my_weekly_percentile(
+    board: str = "xp",
+    current_user: dict = Depends(get_current_user),
+):
+    """Return the current-week percentile + tier for the logged-in user.
+    Used by the in-app weekly recap card on the insights screen (W5)."""
+    try:
+        from datetime import date as _date, timedelta as _td
+        db = get_supabase_db()
+        user_id = current_user["id"]
+        today = _date.today()
+        week_start = today - _td(days=today.weekday())
+
+        rpc = db.client.rpc(
+            "compute_user_percentile",
+            {"p_user_id": user_id, "p_week_start": week_start.isoformat(), "p_board_type": board},
+        ).execute()
+        pdata = rpc.data[0] if isinstance(rpc.data, list) and rpc.data else (rpc.data or {})
+
+        metric_label = {"xp": "XP", "volume": "min", "streaks": "days"}.get(board, "")
+
+        return WeeklyPercentileResponse(
+            week_start=week_start.isoformat(),
+            rank=pdata.get("rank", 0) or 0,
+            total_active=pdata.get("total", 0) or 0,
+            percentile=float(pdata.get("percentile") or 0),
+            tier=pdata.get("tier") or "starter",
+            metric_value=float(pdata.get("metric_value") or 0),
+            metric_label=metric_label,
+        )
+    except Exception as e:
+        logger.error(f"[W5] get_my_weekly_percentile failed: {e}", exc_info=True)
+        raise safe_internal_error(e, "summaries")

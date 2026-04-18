@@ -16,10 +16,10 @@ import 'exercise_queue_screen.dart';
 import 'avoided_exercises_screen.dart';
 import 'avoided_muscles_screen.dart';
 
-/// Unified screen for all exercise preferences with a tab bar.
-/// Consolidates: Favorites, Staples, Queue, Avoided Exercises, Avoided Muscles
+/// Unified screen for all exercise preferences with a flat tab bar.
+/// Tabs: Favorites (0), Staples (1), Avoided (2), Queue (3), Custom (4)
 class MyExercisesScreen extends ConsumerStatefulWidget {
-  /// Initial tab index (0=Favorites, 1=Avoided, 2=Queue, 3=Custom)
+  /// Initial tab index — see class doc for mapping.
   final int initialTab;
 
   const MyExercisesScreen({super.key, this.initialTab = 0});
@@ -30,15 +30,16 @@ class MyExercisesScreen extends ConsumerStatefulWidget {
 
 class _MyExercisesScreenState extends ConsumerState<MyExercisesScreen>
     with SingleTickerProviderStateMixin {
+  static const int _tabCount = 5;
   late TabController _tabController;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(
-      length: 4,
+      length: _tabCount,
       vsync: this,
-      initialIndex: widget.initialTab.clamp(0, 3),
+      initialIndex: widget.initialTab.clamp(0, _tabCount - 1),
     );
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(posthogServiceProvider).capture(eventName: 'my_exercises_viewed');
@@ -83,18 +84,10 @@ class _MyExercisesScreenState extends ConsumerState<MyExercisesScreen>
             tabAlignment: TabAlignment.start,
             tabs: const [
               Tab(text: 'Favorites'),
+              Tab(text: 'Staples'),
               Tab(text: 'Avoided'),
               Tab(text: 'Queue'),
-              Tab(
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.add_circle_outline, size: 16),
-                    SizedBox(width: 4),
-                    Text('Custom'),
-                  ],
-                ),
-              ),
+              Tab(text: 'Custom'),
             ],
           ),
           Expanded(
@@ -102,6 +95,7 @@ class _MyExercisesScreenState extends ConsumerState<MyExercisesScreen>
               controller: _tabController,
               children: const [
                 _FavoritesTab(),
+                _StaplesTab(),
                 _AvoidedTab(),
                 _QueueTab(),
                 _CustomTab(),
@@ -114,7 +108,7 @@ class _MyExercisesScreenState extends ConsumerState<MyExercisesScreen>
   }
 }
 
-/// Tab 1: Favorites - merges Favorite Exercises + Staple Exercises
+/// Tab 1: Favorite Exercises — AI prioritizes these when generating workouts.
 class _FavoritesTab extends ConsumerStatefulWidget {
   const _FavoritesTab();
 
@@ -124,116 +118,37 @@ class _FavoritesTab extends ConsumerStatefulWidget {
 
 class _FavoritesTabState extends ConsumerState<_FavoritesTab>
     with AutomaticKeepAliveClientMixin {
-  /// 0 = Favorite Exercises, 1 = Staple Exercises
-  int _selectedSegment = 0;
-
   @override
   bool get wantKeepAlive => true;
 
   @override
   Widget build(BuildContext context) {
     super.build(context);
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
-
-    return Column(
-      children: [
-        // Segment selector
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-          child: Container(
-            padding: const EdgeInsets.all(4),
-            decoration: BoxDecoration(
-              color: elevated,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Row(
-              children: [
-                _buildSegmentButton(
-                  label: 'Favorites',
-                  icon: Icons.favorite,
-                  isSelected: _selectedSegment == 0,
-                  color: AppColors.error,
-                  onTap: () => setState(() => _selectedSegment = 0),
-                  isDark: isDark,
-                ),
-                const SizedBox(width: 4),
-                _buildSegmentButton(
-                  label: 'Staples',
-                  icon: Icons.push_pin,
-                  isSelected: _selectedSegment == 1,
-                  color: AppColors.cyan,
-                  onTap: () => setState(() => _selectedSegment = 1),
-                  isDark: isDark,
-                ),
-              ],
-            ),
-          ),
-        ),
-        // Content
-        Expanded(
-          child: _selectedSegment == 0
-              ? const FavoriteExercisesScreen(embedded: true)
-              : const StapleExercisesScreen(embedded: true),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildSegmentButton({
-    required String label,
-    required IconData icon,
-    required bool isSelected,
-    required Color color,
-    required VoidCallback onTap,
-    required bool isDark,
-  }) {
-    final textPrimary =
-        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-
-    return Expanded(
-      child: GestureDetector(
-        onTap: () {
-          HapticFeedback.lightImpact();
-          onTap();
-        },
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          padding: const EdgeInsets.symmetric(vertical: 10),
-          decoration: BoxDecoration(
-            color: isSelected ? color.withValues(alpha: 0.15) : Colors.transparent,
-            borderRadius: BorderRadius.circular(10),
-            border: isSelected
-                ? Border.all(color: color.withValues(alpha: 0.3))
-                : null,
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                icon,
-                size: 16,
-                color: isSelected ? color : textMuted,
-              ),
-              const SizedBox(width: 6),
-              Text(
-                label,
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                  color: isSelected ? textPrimary : textMuted,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
+    return const FavoriteExercisesScreen(embedded: true);
   }
 }
 
-/// Tab 2: Avoided - merges Avoided Exercises + Avoided Muscles
+/// Tab 2: Staple Exercises — core lifts that never rotate out.
+class _StaplesTab extends ConsumerStatefulWidget {
+  const _StaplesTab();
+
+  @override
+  ConsumerState<_StaplesTab> createState() => _StaplesTabState();
+}
+
+class _StaplesTabState extends ConsumerState<_StaplesTab>
+    with AutomaticKeepAliveClientMixin {
+  @override
+  bool get wantKeepAlive => true;
+
+  @override
+  Widget build(BuildContext context) {
+    super.build(context);
+    return const StapleExercisesScreen(embedded: true);
+  }
+}
+
+/// Tab 3: Avoided — merges Avoided Exercises + Avoided Muscles (inner segment).
 class _AvoidedTab extends ConsumerStatefulWidget {
   const _AvoidedTab();
 
@@ -352,7 +267,7 @@ class _AvoidedTabState extends ConsumerState<_AvoidedTab>
   }
 }
 
-/// Tab 3: Queue - exercise queue (wraps existing screen)
+/// Tab 4: Queue — exercise queue (wraps existing screen).
 class _QueueTab extends StatefulWidget {
   const _QueueTab();
 
@@ -372,7 +287,7 @@ class _QueueTabState extends State<_QueueTab>
   }
 }
 
-/// Tab 4: Custom - user-created custom exercises
+/// Tab 5: Custom — user-created custom exercises.
 class _CustomTab extends ConsumerStatefulWidget {
   const _CustomTab();
 

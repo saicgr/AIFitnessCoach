@@ -2,13 +2,16 @@ part of 'settings_card.dart';
 
 
 /// Simple 4x3 grid of preset accent colors.
-class _AccentColorGrid extends StatelessWidget {
+/// Colors with a `gatingCosmeticId` show a lock icon until the user owns
+/// the corresponding cosmetic (unlocked via level-up).
+class _AccentColorGrid extends ConsumerWidget {
   final AccentColor currentAccent;
   final ValueChanged<AccentColor> onColorSelected;
   const _AccentColorGrid({required this.currentAccent, required this.onColorSelected});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final cosmeticsState = ref.watch(cosmeticsProvider);
     return GridView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
@@ -22,30 +25,63 @@ class _AccentColorGrid extends StatelessWidget {
         final accent = AccentColor.values[index];
         final isSelected = accent == currentAccent;
         final isDark = Theme.of(context).brightness == Brightness.dark;
+        final gatingId = accent.gatingCosmeticId;
+        final isLocked = gatingId != null && !cosmeticsState.ownsCosmetic(gatingId);
         return GestureDetector(
           onTap: () {
             HapticFeedback.selectionClick();
+            if (isLocked) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('Unlocks at Level ${accent.unlockLevel} — keep going!'),
+                  behavior: SnackBarBehavior.floating,
+                ),
+              );
+              return;
+            }
             onColorSelected(accent);
           },
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Container(
-                width: 48,
-                height: 48,
-                decoration: BoxDecoration(
-                  color: accent.previewColor,
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    color: isSelected ? (isDark ? Colors.white : Colors.black) : Colors.transparent,
-                    width: 3,
+              Stack(
+                alignment: Alignment.center,
+                children: [
+                  Opacity(
+                    opacity: isLocked ? 0.4 : 1.0,
+                    child: Container(
+                      width: 48,
+                      height: 48,
+                      decoration: BoxDecoration(
+                        color: accent.previewColor,
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: isSelected ? (isDark ? Colors.white : Colors.black) : Colors.transparent,
+                          width: 3,
+                        ),
+                        boxShadow: isSelected ? [BoxShadow(color: accent.previewColor.withValues(alpha: 0.4), blurRadius: 8, spreadRadius: 2)] : null,
+                      ),
+                      child: isSelected ? const Icon(Icons.check, color: Colors.white, size: 24) : null,
+                    ),
                   ),
-                  boxShadow: isSelected ? [BoxShadow(color: accent.previewColor.withValues(alpha: 0.4), blurRadius: 8, spreadRadius: 2)] : null,
-                ),
-                child: isSelected ? const Icon(Icons.check, color: Colors.white, size: 24) : null,
+                  if (isLocked)
+                    Container(
+                      width: 24,
+                      height: 24,
+                      decoration: BoxDecoration(
+                        color: Colors.black.withValues(alpha: 0.7),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.lock, color: Colors.white, size: 14),
+                    ),
+                ],
               ),
               const SizedBox(height: 4),
-              Text(accent.displayName, style: TextStyle(fontSize: 10, color: isDark ? AppColors.textMuted : AppColorsLight.textMuted), textAlign: TextAlign.center),
+              Text(
+                isLocked ? 'Lvl ${accent.unlockLevel}' : accent.displayName,
+                style: TextStyle(fontSize: 10, color: isDark ? AppColors.textMuted : AppColorsLight.textMuted),
+                textAlign: TextAlign.center,
+              ),
             ],
           ),
         );

@@ -20,6 +20,7 @@ import '../../../data/repositories/xp_repository.dart' show UnclaimedCrate;
 import '../../../data/models/weekly_plan.dart';
 import '../../../data/repositories/auth_repository.dart';
 import '../../../data/repositories/scheduling_repository.dart' show MissedWorkout;
+import '../../../data/services/crate_notification_router.dart';
 import '../../../data/services/haptic_service.dart';
 import '../../../widgets/glass_sheet.dart';
 import '../../workout/widgets/reschedule_sheet.dart';
@@ -397,7 +398,7 @@ class _StackedBannerPanelState extends ConsumerState<StackedBannerPanel>
               actionLabel: 'View',
               onTap: () {
                 HapticService.light();
-                context.push('/workouts');
+                context.go('/workouts');
               },
             );
           }
@@ -641,57 +642,57 @@ class _StackedBannerPanelState extends ConsumerState<StackedBannerPanel>
       return;
     }
 
-    // Single crate with only one option → auto-claim instantly with feedback
+    // Single date → auto-claim the best type (activity > streak > daily) instantly.
+    // The user sent one "Open" intent; they shouldn't have to pick a flavor.
     if (unclaimed.length == 1) {
       final crate = unclaimed.first;
-      final availableTypes = <String>[];
-      if (crate.dailyCrateAvailable) availableTypes.add('daily');
-      if (crate.streakCrateAvailable) availableTypes.add('streak');
-      if (crate.activityCrateAvailable) availableTypes.add('activity');
+      _isClaimingCrate = true;
+      ref.read(stackedBannerControllerProvider.notifier).dismiss('daily_crate');
 
-      if (availableTypes.length == 1) {
-        _isClaimingCrate = true;
-
-        // Dismiss banner immediately for instant feedback
-        ref.read(stackedBannerControllerProvider.notifier).dismiss('daily_crate');
-
-        // Show loading snackbar
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Row(
-              children: const [
-                SizedBox(
-                  width: 20, height: 20,
-                  child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                ),
-                SizedBox(width: 12),
-                Text('Opening crate...'),
-              ],
-            ),
-            backgroundColor: const Color(0xFFFFB300),
-            behavior: SnackBarBehavior.floating,
-            duration: const Duration(seconds: 30),
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Row(
+            children: const [
+              SizedBox(
+                width: 20, height: 20,
+                child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+              ),
+              SizedBox(width: 12),
+              Text('Opening crate...'),
+            ],
           ),
-        );
+          backgroundColor: const Color(0xFFFFB300),
+          behavior: SnackBarBehavior.floating,
+          duration: const Duration(seconds: 30),
+        ),
+      );
 
-        _autoClaimSingleCrate(availableTypes.first, crate.crateDate);
-        return;
-      }
+      _autoClaimSingleCrate(_pickBestType(crate), crate.crateDate);
+      return;
     }
 
+    // Multiple days of accumulated crates → still show picker so users can see
+    // what they've earned across days.
     showGlassSheet(
       context: context,
       builder: (ctx) => GlassSheet(
         child: OpenAllCratesSheet(
           unclaimedCrates: unclaimed,
           onAllCollected: () {
-            // Dismiss the crate banner after all crates collected
             ref.read(stackedBannerControllerProvider.notifier).dismiss('daily_crate');
             ref.invalidate(unclaimedCratesProvider);
           },
         ),
       ),
     );
+  }
+
+  /// Priority order: activity > streak > daily. Higher-tier crates always give
+  /// better rewards, so when auto-claiming we pick the best available.
+  String _pickBestType(UnclaimedCrate crate) {
+    if (crate.activityCrateAvailable) return 'activity';
+    if (crate.streakCrateAvailable) return 'streak';
+    return 'daily';
   }
 
   Future<void> _autoClaimSingleCrate(String crateType, DateTime crateDate) async {
@@ -1041,6 +1042,19 @@ class _StackedBannerPanelState extends ConsumerState<StackedBannerPanel>
         }
       }
     });
+
+    // Auto-open crates if the user just tapped a daily_crate push notification.
+    // Wait for the unclaimed provider to load so we don't show "no crates"
+    // on a cold start where data hasn't arrived yet. Consume flips the flag
+    // so this fires exactly once.
+    if (CrateNotificationRouter.pending) {
+      final unclaimedAsync = ref.watch(unclaimedCratesProvider);
+      if (unclaimedAsync.hasValue && CrateNotificationRouter.consume()) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) _showOpenAllCratesSheet();
+        });
+      }
+    }
 
     if (banners.isEmpty) {
       // Reset dismiss-all state when all banners gone

@@ -2,8 +2,11 @@
 /// Streams progress events from the SSE backend; offers Save → recipe_create_screen.
 library;
 
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/theme/accent_color_provider.dart';
@@ -243,28 +246,172 @@ class _RecipeImportScreenState extends ConsumerState<RecipeImportScreen>
 
   Widget _photoTab(Color accent, Color text, bool isDark) {
     final muted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final surface = isDark ? AppColors.elevated : AppColorsLight.elevated;
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
       child: Column(
         children: [
-          Expanded(
-            child: EmbeddedCameraPanel(
-              accent: accent,
-              isDark: isDark,
-              enabled: _tab.index == 0 && !_running,
-              onCaptured: (b64) => _runImport('handwritten', imageB64: b64),
+          // Tips strip — explains what the camera should see so users don't
+          // point at random surfaces (the old empty state just showed the live
+          // feed, confusing users who saw their laptop screen).
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            decoration: BoxDecoration(
+              color: accent.withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: accent.withValues(alpha: 0.25)),
+            ),
+            child: Row(
+              children: [
+                Icon(Icons.lightbulb_outline_rounded, color: accent, size: 18),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    'Aim at a recipe card, cookbook page, or screenshot. Fill the frame, hold steady.',
+                    style: TextStyle(color: text, fontSize: 12, height: 1.35),
+                  ),
+                ),
+              ],
             ),
           ),
           const SizedBox(height: 10),
+
+          // Camera with an explicit framing reticle so the user knows where
+          // to line up the recipe. Without this, users see whatever's in
+          // front of the lens (laptop screens, desks) and nothing guides them.
+          Expanded(
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                EmbeddedCameraPanel(
+                  accent: accent,
+                  isDark: isDark,
+                  enabled: _tab.index == 0 && !_running,
+                  onCaptured: (b64) => _runImport('handwritten', imageB64: b64),
+                ),
+                // Dimmed outside + framing reticle overlay. IgnorePointer so
+                // the shutter/flash controls beneath stay tappable.
+                IgnorePointer(
+                  child: CustomPaint(
+                    painter: _FramingReticlePainter(color: accent),
+                  ),
+                ),
+                // Centered hint shown over the reticle.
+                Center(
+                  child: Padding(
+                    padding: const EdgeInsets.only(top: 80),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withValues(alpha: 0.45),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: const Text(
+                        'Align recipe inside frame',
+                        style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w600),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 10),
+
+          // Alt action: gallery picker. The camera panel already has a gallery
+          // icon but it's small and easily missed, so offer a bigger affordance.
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: _running ? null : _pickFromGallery,
+              icon: Icon(Icons.photo_library_outlined, color: accent),
+              label: Text(
+                'Choose from gallery instead',
+                style: TextStyle(color: accent, fontWeight: FontWeight.w600),
+              ),
+              style: OutlinedButton.styleFrom(
+                side: BorderSide(color: accent.withValues(alpha: 0.5)),
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                backgroundColor: surface,
+              ),
+            ),
+          ),
+          const SizedBox(height: 6),
           Text(
-            'Point at a recipe card or cookbook page',
-            style: TextStyle(color: muted, fontSize: 12),
+            'Tap the large white circle below to capture',
+            style: TextStyle(color: muted, fontSize: 11),
             textAlign: TextAlign.center,
           ),
         ],
       ),
     );
   }
+
+  Future<void> _pickFromGallery() async {
+    // Delegate to the same capture flow by presenting the system picker.
+    final picker = ImagePicker();
+    final f = await picker.pickImage(source: ImageSource.gallery, imageQuality: 85);
+    if (f == null || !mounted) return;
+    final bytes = await f.readAsBytes();
+    final b64 = base64Encode(bytes);
+    await _runImport('handwritten', imageB64: b64);
+  }
+}
+
+/// Semi-transparent overlay that dims everything OUTSIDE a centered
+/// rounded-rectangle frame, with corner tick marks drawn in the accent color.
+class _FramingReticlePainter extends CustomPainter {
+  final Color color;
+  _FramingReticlePainter({required this.color});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    // Frame covers ~76% width and ~56% height (recipe cards are usually
+    // wider than they are tall; cookbook pages vary).
+    final frameWidth = size.width * 0.82;
+    final frameHeight = size.height * 0.6;
+    final left = (size.width - frameWidth) / 2;
+    final top = (size.height - frameHeight) / 2;
+    final frame = RRect.fromRectAndRadius(
+      Rect.fromLTWH(left, top, frameWidth, frameHeight),
+      const Radius.circular(14),
+    );
+
+    // Dim everything outside the frame (subtractive).
+    final overlay = Path()
+      ..addRect(Rect.fromLTWH(0, 0, size.width, size.height))
+      ..addRRect(frame)
+      ..fillType = PathFillType.evenOdd;
+    canvas.drawPath(overlay, Paint()..color = Colors.black.withValues(alpha: 0.35));
+
+    // Corner tick marks, 18px each, accent color.
+    final tick = Paint()
+      ..color = color
+      ..strokeWidth = 3
+      ..strokeCap = StrokeCap.round
+      ..style = PaintingStyle.stroke;
+    const len = 18.0;
+    final r = frame.outerRect;
+
+    // top-left
+    canvas.drawLine(Offset(r.left, r.top + len), Offset(r.left, r.top), tick);
+    canvas.drawLine(Offset(r.left, r.top), Offset(r.left + len, r.top), tick);
+    // top-right
+    canvas.drawLine(Offset(r.right - len, r.top), Offset(r.right, r.top), tick);
+    canvas.drawLine(Offset(r.right, r.top), Offset(r.right, r.top + len), tick);
+    // bottom-left
+    canvas.drawLine(Offset(r.left, r.bottom - len), Offset(r.left, r.bottom), tick);
+    canvas.drawLine(Offset(r.left, r.bottom), Offset(r.left + len, r.bottom), tick);
+    // bottom-right
+    canvas.drawLine(Offset(r.right - len, r.bottom), Offset(r.right, r.bottom), tick);
+    canvas.drawLine(Offset(r.right, r.bottom), Offset(r.right, r.bottom - len), tick);
+  }
+
+  @override
+  bool shouldRepaint(_FramingReticlePainter oldDelegate) => oldDelegate.color != color;
 }
 
 class _ProgressFooter extends StatelessWidget {

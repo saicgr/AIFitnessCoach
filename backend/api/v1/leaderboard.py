@@ -56,14 +56,17 @@ async def get_leaderboard(
     Returns:
         Leaderboard data with user's rank
     """
-    # Check unlock status (global leaderboard requires 10 workouts)
-    unlock_status = leaderboard_service.check_unlock_status(user_id)
+    # Check unlock status — migration 1939: friends scope unlocks at 1 workout,
+    # global/country still require 10.
+    scope_str = "friends" if filter_type == LeaderboardFilter.friends else \
+                ("country" if filter_type == LeaderboardFilter.country else "global")
+    unlock_status = leaderboard_service.check_unlock_status(user_id, scope=scope_str)
     is_unlocked = unlock_status.get("is_unlocked", False)
 
-    if filter_type == LeaderboardFilter.global_lb and not is_unlocked:
+    if not is_unlocked:
         raise HTTPException(
             status_code=403,
-            detail=f"Complete {unlock_status.get('workouts_needed', 10)} more workouts to unlock global leaderboard"
+            detail=f"Complete {unlock_status.get('workouts_needed', 10)} more workouts to unlock this leaderboard"
         )
 
     # Validate country filter
@@ -382,3 +385,336 @@ def _calculate_refresh_time(last_updated: datetime) -> str:
         return f"{int(delta.total_seconds() / 60)} minutes"
     else:
         return f"{int(delta.total_seconds() / 3600)} hours"
+
+
+# ============================================================
+# DISCOVER TAB AGGREGATOR — single call (migration 1939 / W2)
+# ============================================================
+
+from pydantic import BaseModel as _BaseModel
+from typing import List as _List
+from core.db import get_supabase_db as _get_supabase_db
+
+
+class DiscoverLeaderboardEntry(_BaseModel):
+    user_id: str
+    username: Optional[str] = None
+    display_name: Optional[str] = None
+    avatar_url: Optional[str] = None
+    rank: int
+    metric_value: float
+    is_current_user: bool = False
+
+
+class DiscoverRisingStar(_BaseModel):
+    user_id: str
+    username: Optional[str] = None
+    display_name: Optional[str] = None
+    avatar_url: Optional[str] = None
+    current_rank: int
+    previous_rank: int
+    rank_delta: int
+    metric_value: float
+
+
+class DiscoverSnapshot(_BaseModel):
+    board: str
+    scope: str
+    week_start: str
+    your_rank: int
+    your_percentile: float
+    your_tier: str
+    your_metric: float
+    total_active: int
+    next_tier: Optional[str] = None
+    units_to_next: int = 0
+    metric_label: str = ""
+    near_you: _List[DiscoverLeaderboardEntry] = []
+    rising_stars: _List[DiscoverRisingStar] = []
+    top_10: _List[DiscoverLeaderboardEntry] = []
+
+
+@router.get("/discover", response_model=DiscoverSnapshot)
+async def get_discover_snapshot(
+    board: str = Query("xp", pattern="^(xp|volume|streaks)$"),
+    scope: str = Query("global", pattern="^(global|country|friends)$"),
+    current_user: dict = Depends(get_current_user),
+):
+    """
+    Single-call aggregator for the Discover tab (migration 1939 / W2).
+    Returns percentile hero, Rising Stars, Near You, Top 10 in one payload.
+    """
+    from datetime import date as _date
+    import datetime as _dt
+
+    try:
+        db = _get_supabase_db()
+        user_id = current_user["id"]
+        # ISO week start (Monday)
+        today = _date.today()
+        week_start = today - _dt.timedelta(days=today.weekday())
+        week_start_str = week_start.isoformat()
+
+        # 1. Percentile + tier + user metric
+        perc_res = db.client.rpc(
+            "compute_user_percentile",
+            {"p_user_id": user_id, "p_week_start": week_start_str, "p_board_type": board},
+        ).execute()
+        pdata = perc_res.data[0] if isinstance(perc_res.data, list) and perc_res.data else (perc_res.data or {})
+        your_rank = pdata.get("rank", 0) or 0
+        your_percentile = float(pdata.get("percentile", 0) or 0)
+        your_tier = pdata.get("tier", "starter") or "starter"
+        your_metric = float(pdata.get("metric_value", 0) or 0)
+        total_active = pdata.get("total", 0) or 0
+
+        # 2. Next tier progress
+        tier_res = db.client.rpc(
+            "get_next_tier_progress",
+            {"p_user_id": user_id, "p_week_start": week_start_str, "p_board_type": board},
+        ).execute()
+        tdata = tier_res.data[0] if isinstance(tier_res.data, list) and tier_res.data else (tier_res.data or {})
+        next_tier = tdata.get("next_tier")
+        units_to_next = int(tdata.get("units_to_next", 0) or 0)
+        metric_label = tdata.get("metric_label", "")
+
+        # 3. Near You (5 above + you + 5 below)
+        near_res = db.client.rpc(
+            "get_near_you_leaderboard",
+            {
+                "p_user_id": user_id,
+                "p_week_start": week_start_str,
+                "p_board_type": board,
+                "p_scope": scope,
+                "p_window": 5,
+            },
+        ).execute()
+        near_you = [
+            DiscoverLeaderboardEntry(
+                user_id=str(r.get("user_id")),
+                username=r.get("username"),
+                display_name=r.get("display_name"),
+                avatar_url=r.get("avatar_url"),
+                rank=r.get("rank") or 0,
+                metric_value=float(r.get("metric_value") or 0),
+                is_current_user=bool(r.get("is_current_user")),
+            )
+            for r in (near_res.data or [])
+        ]
+
+        # 4. Rising Stars (top 3 biggest weekly improvers)
+        rising_res = db.client.rpc(
+            "get_rising_stars",
+            {
+                "p_week_start": week_start_str,
+                "p_board_type": board,
+                "p_scope": scope,
+                "p_limit": 3,
+                "p_exclude_user": user_id,
+            },
+        ).execute()
+        rising_stars = [
+            DiscoverRisingStar(
+                user_id=str(r.get("user_id")),
+                username=r.get("username"),
+                display_name=r.get("display_name"),
+                avatar_url=r.get("avatar_url"),
+                current_rank=r.get("current_rank") or 0,
+                previous_rank=r.get("previous_rank") or 0,
+                rank_delta=r.get("rank_delta") or 0,
+                metric_value=float(r.get("metric_value") or 0),
+            )
+            for r in (rising_res.data or [])
+        ]
+
+        # 5. Top 10 (reuse near-you RPC with window=999 — easier: query directly)
+        # For MVP: use a separate call with large window effectively returning top entries
+        top_10 = []
+        try:
+            # simple inline query via RPC or direct SQL — we'll use a direct view lookup later
+            # For now: near_you if user rank <= 10 covers this; else fetch top 10 via archive
+            if your_rank and your_rank <= 10:
+                top_10 = [e for e in near_you if e.rank <= 10]
+            else:
+                # Call the SQL directly via raw query
+                top_res = db.client.rpc(
+                    "get_near_you_leaderboard",
+                    {
+                        "p_user_id": user_id,
+                        "p_week_start": week_start_str,
+                        "p_board_type": board,
+                        "p_scope": scope,
+                        "p_window": 9999,  # wide window → full board
+                    },
+                ).execute()
+                top_10 = [
+                    DiscoverLeaderboardEntry(
+                        user_id=str(r.get("user_id")),
+                        username=r.get("username"),
+                        display_name=r.get("display_name"),
+                        rank=r.get("rank") or 0,
+                        metric_value=float(r.get("metric_value") or 0),
+                        is_current_user=bool(r.get("is_current_user")),
+                    )
+                    for r in (top_res.data or [])
+                    if (r.get("rank") or 0) <= 10
+                ][:10]
+        except Exception:
+            top_10 = []
+
+        return DiscoverSnapshot(
+            board=board,
+            scope=scope,
+            week_start=week_start_str,
+            your_rank=your_rank,
+            your_percentile=your_percentile,
+            your_tier=your_tier,
+            your_metric=your_metric,
+            total_active=total_active,
+            next_tier=next_tier,
+            units_to_next=units_to_next,
+            metric_label=metric_label,
+            near_you=near_you,
+            rising_stars=rising_stars,
+            top_10=top_10,
+        )
+    except Exception as e:
+        raise safe_internal_error(e, "leaderboard")
+
+
+# ─── Discover peek: dual-overlay fitness profile (6-axis radar) ────────────
+# Lazy per-tap endpoint. RPC runs ~50-80ms, client caches 5s to dedupe rapid taps.
+
+class FitnessProfileResponse(_BaseModel):
+    # 6 axes 0.0-1.0; NULL in target list if target has profile_stats_visible=FALSE
+    target_scores: _List[Optional[float]]   # [strength, muscle, recovery, consistency, endurance, nutrition]
+    viewer_scores: _List[Optional[float]]   # same order, for dual overlay
+    target_bio: Optional[str] = None
+    target_stats_hidden: bool = False
+    axis_labels: _List[str] = [
+        "Strength", "Muscle", "Recovery",
+        "Consistency", "Endurance", "Nutrition",
+    ]
+
+
+class FitnessHistoryPoint(_BaseModel):
+    date: str  # ISO date (YYYY-MM-DD)
+    target_scores: _List[Optional[float]]  # len 6, NULL if target stats hidden
+    viewer_scores: _List[Optional[float]]  # len 6
+
+
+class FitnessHistoryResponse(_BaseModel):
+    points: _List[FitnessHistoryPoint]  # chronological, oldest → newest
+    days_back: int
+    axis_labels: _List[str] = [
+        "Strength", "Muscle", "Recovery",
+        "Consistency", "Endurance", "Nutrition",
+    ]
+
+
+@router.get(
+    "/user-profile/{target_user_id}/history",
+    response_model=FitnessHistoryResponse,
+)
+async def get_fitness_profile_history(
+    target_user_id: str,
+    days: int = Query(90, ge=7, le=365),
+    current_user: dict = Depends(get_current_user),
+):
+    """
+    Dual-series radar-shape history for the Discover peek scrubber.
+    Returns one row per date with both target + viewer snapshot values so
+    the Flutter slider can animate the radar across time with zero extra
+    network requests.
+    """
+    try:
+        db = _get_supabase_db()
+        viewer_id = current_user["id"]
+
+        res = db.client.rpc(
+            "get_dual_fitness_shape_history",
+            {
+                "p_target_user_id": target_user_id,
+                "p_viewer_user_id": viewer_id,
+                "p_days_back": days,
+            },
+        ).execute()
+
+        def _num(v):
+            return None if v is None else float(v)
+
+        points = []
+        for row in (res.data or []):
+            points.append(
+                FitnessHistoryPoint(
+                    date=str(row.get("snapshot_date")),
+                    target_scores=[
+                        _num(row.get("target_strength")),
+                        _num(row.get("target_muscle")),
+                        _num(row.get("target_recovery")),
+                        _num(row.get("target_consistency")),
+                        _num(row.get("target_endurance")),
+                        _num(row.get("target_nutrition")),
+                    ],
+                    viewer_scores=[
+                        _num(row.get("viewer_strength")),
+                        _num(row.get("viewer_muscle")),
+                        _num(row.get("viewer_recovery")),
+                        _num(row.get("viewer_consistency")),
+                        _num(row.get("viewer_endurance")),
+                        _num(row.get("viewer_nutrition")),
+                    ],
+                )
+            )
+
+        return FitnessHistoryResponse(points=points, days_back=days)
+    except Exception as e:
+        raise safe_internal_error(e, "leaderboard")
+
+
+@router.get("/user-profile/{target_user_id}", response_model=FitnessProfileResponse)
+async def get_user_fitness_profile(
+    target_user_id: str,
+    current_user: dict = Depends(get_current_user),
+):
+    """
+    Returns 6-axis fitness scores for the tapped user + the viewer, plus bio.
+    Powers the Discover peek sheet's dual-overlay radar chart. Respects the
+    target's `profile_stats_visible` privacy flag.
+    """
+    try:
+        db = _get_supabase_db()
+        viewer_id = current_user["id"]
+
+        res = db.client.rpc(
+            "get_user_fitness_profile",
+            {"p_target_user_id": target_user_id, "p_viewer_user_id": viewer_id},
+        ).execute()
+
+        row = res.data[0] if isinstance(res.data, list) and res.data else (res.data or {})
+
+        def _axis(key: str) -> Optional[float]:
+            v = row.get(key)
+            return None if v is None else float(v)
+
+        return FitnessProfileResponse(
+            target_scores=[
+                _axis("target_strength"),
+                _axis("target_muscle"),
+                _axis("target_recovery"),
+                _axis("target_consistency"),
+                _axis("target_endurance"),
+                _axis("target_nutrition"),
+            ],
+            viewer_scores=[
+                _axis("viewer_strength"),
+                _axis("viewer_muscle"),
+                _axis("viewer_recovery"),
+                _axis("viewer_consistency"),
+                _axis("viewer_endurance"),
+                _axis("viewer_nutrition"),
+            ],
+            target_bio=row.get("target_bio"),
+            target_stats_hidden=bool(row.get("target_stats_hidden", False)),
+        )
+    except Exception as e:
+        raise safe_internal_error(e, "leaderboard")

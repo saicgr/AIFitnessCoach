@@ -466,15 +466,22 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
             'with ${nextWorkout.exercises.length} exercises';
       }
 
+      final offlineStopwatch = Stopwatch()..start();
       final response = await _offlineCoach.sendMessage(
         userMessage: message,
         conversationHistory: history,
         userProfile: userProfile,
         currentWorkoutContext: workoutContext,
       );
+      offlineStopwatch.stop();
+
+      // Attach user-perceived latency so the bubble can show "X.Xs".
+      final timedResponse = response.copyWith(
+        responseTimeMs: offlineStopwatch.elapsedMilliseconds,
+      );
 
       final updatedMessages = state.valueOrNull ?? [];
-      final newMessages = [...updatedMessages, response];
+      final newMessages = [...updatedMessages, timedResponse];
       state = AsyncValue.data(newMessages);
 
       // Cache offline messages too

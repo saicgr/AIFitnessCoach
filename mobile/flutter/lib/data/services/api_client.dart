@@ -10,6 +10,7 @@ import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' hide MultipartFile;
 import '../../core/constants/api_constants.dart';
+import '../../core/services/sentry_service.dart';
 
 /// Secure storage for auth tokens
 final secureStorageProvider = Provider<FlutterSecureStorage>((ref) {
@@ -273,6 +274,10 @@ class ApiClient with WidgetsBindingObserver {
         ),
       );
     }
+
+    // Sentry breadcrumbs + traces for every outbound HTTP call (no-op when
+    // Sentry is disabled). Must be last so it wraps the other interceptors.
+    SentryService.attachToDio(_dio);
   }
 
   /// Start listening to Supabase auth state changes.
@@ -292,11 +297,17 @@ class ApiClient with WidgetsBindingObserver {
           await _storage.write(key: _tokenKey, value: session.accessToken);
           // Re-schedule proactive refresh whenever we get a new token
           _scheduleProactiveRefresh();
+          // Attach the auth user id to Sentry events for this session.
+          unawaited(SentryService.setUser(
+            id: session.user.id,
+            email: session.user.email,
+          ));
         } else if (event == AuthChangeEvent.signedOut) {
           debugPrint('🚪 [API] Auth state: signed out, clearing stored token');
           _tokenRefreshTimer?.cancel();
           _tokenRefreshTimer = null;
           await clearAuth();
+          unawaited(SentryService.clearUser());
         }
       },
       onError: (error) {

@@ -416,12 +416,26 @@ extension _WorkoutDetailScreenStateUI on _WorkoutDetailScreenState {
     final glassSurface = isDark ? AppColors.glassSurface : AppColorsLight.glassSurface;
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
 
-    return Container(
+    // Optimistic entries carry a `just_added: 'true'` flag so we can give
+    // them a brief highlight the first time they render. This makes the
+    // instant-insert feel intentional rather than ghostly.
+    final bool isJustAdded = item['just_added'] == 'true';
+    final Color highlightColor = AppColors.cyan;
+
+    final tile = Container(
       margin: const EdgeInsets.fromLTRB(16, 0, 16, 8),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        color: glassSurface,
+        color: isJustAdded
+            ? highlightColor.withValues(alpha: 0.12)
+            : glassSurface,
         borderRadius: BorderRadius.circular(10),
+        border: isJustAdded
+            ? Border.all(
+                color: highlightColor.withValues(alpha: 0.4),
+                width: 1,
+              )
+            : null,
       ),
       child: Row(
         children: [
@@ -454,6 +468,14 @@ extension _WorkoutDetailScreenStateUI on _WorkoutDetailScreenState {
         ],
       ),
     );
+
+    if (!isJustAdded) return tile;
+
+    // Subtle fade-up + brief highlight pulse on entry.
+    return tile
+        .animate()
+        .fadeIn(duration: 180.ms)
+        .slideY(begin: -0.1, end: 0, duration: 220.ms, curve: Curves.easeOut);
   }
 
 }

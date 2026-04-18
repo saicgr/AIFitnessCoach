@@ -299,7 +299,7 @@ extension __PreAuthQuizScreenStateExt on _PreAuthQuizScreenState {
       case 0:
         return buildTip(
           icon: Icons.flag_rounded,
-          color: AppColors.orange,
+          color: AppColors.onboardingAccent,
           title: 'Your goals shape everything',
           body: 'We use your goals to determine training split, exercise selection, and how fast you progress.',
           bullets: [
@@ -357,7 +357,7 @@ extension __PreAuthQuizScreenStateExt on _PreAuthQuizScreenState {
       case 7:
         return buildTip(
           icon: Icons.tune_rounded,
-          color: AppColors.orange,
+          color: AppColors.onboardingAccent,
           title: 'Fine-tuning your plan',
           body: 'These optional details make your workouts even more personalized. Skip if you prefer AI defaults.',
         );
@@ -386,7 +386,7 @@ extension __PreAuthQuizScreenStateExt on _PreAuthQuizScreenState {
       case 12:
         return buildTip(
           icon: Icons.restaurant_rounded,
-          color: AppColors.orange,
+          color: AppColors.onboardingAccent,
           title: 'Fuel your training',
           body: 'Nutrition tracking is optional but powerful. AI calculates macros based on your goals and activity level.',
         );

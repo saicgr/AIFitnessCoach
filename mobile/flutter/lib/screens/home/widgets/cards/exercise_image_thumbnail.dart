@@ -119,11 +119,12 @@ class _ExerciseImageThumbnailState
       );
     }
 
-    // If no image URL, show FitWiz logo placeholder
+    // If no image URL, show a clean fitness icon placeholder
     if (_imageUrl == null) {
-      return Image.asset(
-        'assets/icon/app_icon.png',
-        fit: BoxFit.cover,
+      return Icon(
+        Icons.fitness_center,
+        color: AppColors.cyan.withOpacity(0.7),
+        size: widget.size * 0.45,
       );
     }
 

@@ -134,7 +134,16 @@ class CustomExercisesNotifier extends StateNotifier<CustomExercisesState> {
     String? instructions,
     int defaultSets = 3,
     int? defaultReps = 10,
+    int? defaultRestSeconds,
     bool isCompound = false,
+    int? defaultRpe,
+    String? defaultTempo,
+    String? defaultBandColor,
+    String? defaultNotes,
+    String? defaultRangeOfMotion,
+    double? defaultInclinePercent,
+    int? defaultDurationSeconds,
+    double? defaultDistanceMiles,
   }) async {
     state = state.copyWith(isLoading: true, clearError: true, clearSuccess: true);
 
@@ -154,7 +163,16 @@ class CustomExercisesNotifier extends StateNotifier<CustomExercisesState> {
         instructions: instructions,
         defaultSets: defaultSets,
         defaultReps: defaultReps,
+        defaultRestSeconds: defaultRestSeconds,
         isCompound: isCompound,
+        defaultRpe: defaultRpe,
+        defaultTempo: defaultTempo,
+        defaultBandColor: defaultBandColor,
+        defaultNotes: defaultNotes,
+        defaultRangeOfMotion: defaultRangeOfMotion,
+        defaultInclinePercent: defaultInclinePercent,
+        defaultDurationSeconds: defaultDurationSeconds,
+        defaultDistanceMiles: defaultDistanceMiles,
       );
 
       final exercise = await repository.createSimpleExercise(

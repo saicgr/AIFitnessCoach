@@ -2,6 +2,8 @@
 /// AI coach review, and Apply-to-today.
 library;
 
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -223,6 +225,12 @@ class _MealPlannerScreenState extends ConsumerState<MealPlannerScreen> {
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
       children: [
+        // Macro projection at TOP — ring-based so the user sees nutrition
+        // progress toward their targets at a glance without scrolling.
+        if (_sim != null) ...[
+          _MacroRingsHeader(sim: _sim!, isDark: widget.isDark, accent: accent),
+          const SizedBox(height: 12),
+        ],
         for (final m in MealSlot.values)
           _MealSlotCard(
             mealType: m, items: p.items.where((i) => i.mealType == m).toList(),
@@ -233,8 +241,6 @@ class _MealPlannerScreenState extends ConsumerState<MealPlannerScreen> {
               await _load();
             },
           ),
-        const SizedBox(height: 12),
-        if (_sim != null) _MacroProjectionCard(sim: _sim!, isDark: widget.isDark, accent: accent),
       ],
     );
   }
@@ -313,58 +319,285 @@ class _MealSlotCard extends StatelessWidget {
   }
 }
 
-class _MacroProjectionCard extends StatelessWidget {
+/// Top-of-screen ring-based macro projection.
+///
+/// Layout: a large calories ring on the left (showing kcal / target in the
+/// center) + three smaller macro ring tiles on the right (protein, carbs, fat).
+/// Replaces the linear-bar "Macro projection" section that used to sit at the
+/// bottom — moving it to the top so users see plan nutrition at a glance.
+class _MacroRingsHeader extends StatelessWidget {
   final SimulateResponse sim;
   final bool isDark;
   final Color accent;
-  const _MacroProjectionCard({required this.sim, required this.isDark, required this.accent});
+  const _MacroRingsHeader({required this.sim, required this.isDark, required this.accent});
+
   @override
   Widget build(BuildContext context) {
     final text = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final muted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final surface = isDark ? AppColors.elevated : AppColorsLight.elevated;
+
+    final cal = sim.totals.calories;
+    final calTarget = (sim.targetSnapshot['calories'] as num?)?.toDouble() ?? 0;
+    final protein = sim.totals.proteinG;
+    final proteinTarget = (sim.targetSnapshot['protein_g'] as num?)?.toDouble() ?? 0;
+    final carbs = sim.totals.carbsG;
+    final carbsTarget = (sim.targetSnapshot['carbs_g'] as num?)?.toDouble() ?? 0;
+    final fat = sim.totals.fatG;
+    final fatTarget = (sim.targetSnapshot['fat_g'] as num?)?.toDouble() ?? 0;
+
+    final trackColor = isDark
+        ? Colors.white.withValues(alpha: 0.08)
+        : Colors.black.withValues(alpha: 0.06);
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: surface, borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: accent.withValues(alpha: 0.18)),
+        color: surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: accent.withValues(alpha: 0.2)),
+        boxShadow: [
+          BoxShadow(
+            color: accent.withValues(alpha: 0.08),
+            blurRadius: 18,
+            offset: const Offset(0, 6),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Macro projection', style: TextStyle(color: muted, fontSize: 11, fontWeight: FontWeight.w800)),
-          const SizedBox(height: 8),
-          _row('Calories', sim.totals.calories, sim.targetSnapshot['calories'], 'kcal', text, accent, muted),
-          _row('Protein', sim.totals.proteinG, sim.targetSnapshot['protein_g'], 'g', text, AppColors.success, muted),
-          _row('Carbs', sim.totals.carbsG, sim.targetSnapshot['carbs_g'], 'g', text, AppColors.yellow, muted),
-          _row('Fat', sim.totals.fatG, sim.targetSnapshot['fat_g'], 'g', text, AppColors.purple, muted),
+          Row(
+            children: [
+              Icon(Icons.pie_chart_rounded, color: accent, size: 16),
+              const SizedBox(width: 6),
+              Text(
+                'Macro projection',
+                style: TextStyle(color: muted, fontSize: 11, fontWeight: FontWeight.w800, letterSpacing: 0.5),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              // Large calories ring
+              SizedBox(
+                width: 112,
+                height: 112,
+                child: CustomPaint(
+                  painter: _SingleRingPainter(
+                    progress: calTarget > 0 ? (cal / calTarget).clamp(0.0, 1.5) : 0,
+                    color: accent,
+                    trackColor: trackColor,
+                    strokeWidth: 14,
+                  ),
+                  child: Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          cal.toStringAsFixed(0),
+                          style: TextStyle(
+                            color: text,
+                            fontSize: 22,
+                            fontWeight: FontWeight.w800,
+                            height: 1.0,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          '/ ${calTarget.toStringAsFixed(0)}',
+                          style: TextStyle(color: muted, fontSize: 11, height: 1.0),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          'kcal',
+                          style: TextStyle(
+                            color: accent,
+                            fontSize: 10,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 16),
+              // Macro mini-rings
+              Expanded(
+                child: Column(
+                  children: [
+                    _MacroMiniRing(
+                      label: 'Protein',
+                      current: protein,
+                      target: proteinTarget,
+                      color: AppColors.macroProtein,
+                      trackColor: trackColor,
+                      text: text,
+                      muted: muted,
+                    ),
+                    const SizedBox(height: 10),
+                    _MacroMiniRing(
+                      label: 'Carbs',
+                      current: carbs,
+                      target: carbsTarget,
+                      color: AppColors.macroCarbs,
+                      trackColor: trackColor,
+                      text: text,
+                      muted: muted,
+                    ),
+                    const SizedBox(height: 10),
+                    _MacroMiniRing(
+                      label: 'Fat',
+                      current: fat,
+                      target: fatTarget,
+                      color: AppColors.macroFat,
+                      trackColor: trackColor,
+                      text: text,
+                      muted: muted,
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ],
       ),
     );
   }
+}
 
-  Widget _row(String label, double cur, dynamic targetRaw, String unit, Color text, Color color, Color muted) {
-    final target = (targetRaw as num?)?.toDouble() ?? 0;
-    final pct = target > 0 ? (cur / target).clamp(0, 1.5) : 0.0;
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Row(children: [
-          Expanded(child: Text(label, style: TextStyle(color: text, fontSize: 12))),
-          Text('${cur.toStringAsFixed(0)} / ${target.toStringAsFixed(0)} $unit',
-              style: TextStyle(color: muted, fontSize: 11)),
-        ]),
-        const SizedBox(height: 4),
-        ClipRRect(
-          borderRadius: BorderRadius.circular(4),
-          child: LinearProgressIndicator(
-            value: pct.toDouble(), minHeight: 6,
-            color: color, backgroundColor: color.withValues(alpha: 0.15),
+class _MacroMiniRing extends StatelessWidget {
+  final String label;
+  final double current;
+  final double target;
+  final Color color;
+  final Color trackColor;
+  final Color text;
+  final Color muted;
+  const _MacroMiniRing({
+    required this.label,
+    required this.current,
+    required this.target,
+    required this.color,
+    required this.trackColor,
+    required this.text,
+    required this.muted,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final pct = target > 0 ? (current / target).clamp(0.0, 1.5) : 0.0;
+    return Row(
+      children: [
+        SizedBox(
+          width: 36,
+          height: 36,
+          child: CustomPaint(
+            painter: _SingleRingPainter(
+              progress: pct.toDouble(),
+              color: color,
+              trackColor: trackColor,
+              strokeWidth: 5,
+            ),
+            child: Center(
+              child: Text(
+                '${(pct * 100).round()}%',
+                style: TextStyle(
+                  color: color,
+                  fontSize: 9,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
           ),
         ),
-      ]),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                label,
+                style: TextStyle(
+                  color: text,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                '${current.toStringAsFixed(0)} / ${target.toStringAsFixed(0)} g',
+                style: TextStyle(color: muted, fontSize: 11),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
+}
+
+/// Paints a single progress ring (track + arc from 12 o'clock).
+/// Used for the big calories ring + the 3 macro mini-rings.
+class _SingleRingPainter extends CustomPainter {
+  final double progress;
+  final Color color;
+  final Color trackColor;
+  final double strokeWidth;
+  _SingleRingPainter({
+    required this.progress,
+    required this.color,
+    required this.trackColor,
+    required this.strokeWidth,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = Offset(size.width / 2, size.height / 2);
+    final radius = math.min(size.width, size.height) / 2 - strokeWidth / 2;
+    final rect = Rect.fromCircle(center: center, radius: radius);
+
+    final track = Paint()
+      ..color = trackColor
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = strokeWidth
+      ..strokeCap = StrokeCap.round;
+    canvas.drawCircle(center, radius, track);
+
+    final effective = progress <= 0 ? 0.0 : progress;
+    final clamped = effective.clamp(0.0, 1.0);
+    final sweep = 2 * math.pi * clamped;
+
+    final arc = Paint()
+      ..color = color
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = strokeWidth
+      ..strokeCap = StrokeCap.round;
+    if (clamped > 0) {
+      canvas.drawArc(rect, -math.pi / 2, sweep, false, arc);
+    }
+
+    // Overshoot (lighter color wrapping around) when over 100%.
+    if (progress > 1.0) {
+      final overshoot = (progress - 1.0).clamp(0.0, 0.5);
+      final overshootSweep = 2 * math.pi * overshoot;
+      final overshootPaint = Paint()
+        ..color = Color.lerp(color, Colors.white, 0.4)!
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = strokeWidth
+        ..strokeCap = StrokeCap.round;
+      canvas.drawArc(rect, -math.pi / 2, overshootSweep, false, overshootPaint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(_SingleRingPainter oldDelegate) =>
+      oldDelegate.progress != progress || oldDelegate.color != color;
 }
 
 class _AddRecipeDialog extends ConsumerStatefulWidget {

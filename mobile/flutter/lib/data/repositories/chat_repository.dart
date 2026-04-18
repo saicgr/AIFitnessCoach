@@ -422,6 +422,54 @@ class ChatRepository {
     }
   }
 
+  /// Apply a workout change the AI has proposed in chat.
+  ///
+  /// Returns the raw response map from the backend so callers can react to
+  /// the applied mutation (e.g. refresh providers). Throws on any non-2xx
+  /// except the "soft failure" case where status==200 but success==false.
+  Future<Map<String, dynamic>> applyProposal({
+    required String proposalId,
+    required String proposalToken,
+  }) async {
+    try {
+      debugPrint('🎯 [Chat] Applying proposal $proposalId');
+      final response = await _apiClient.post(
+        '${ApiConstants.chat}/proposals/$proposalId/apply',
+        data: {'proposal_token': proposalToken},
+      );
+      final data = (response.data as Map).cast<String, dynamic>();
+      debugPrint('✅ [Chat] Proposal apply result: success=${data['success']}');
+      return data;
+    } on DioException catch (e) {
+      final status = e.response?.statusCode;
+      debugPrint('❌ [Chat] Apply proposal failed: HTTP $status - ${e.message}');
+      // Re-throw so the card can map 409/410 to distinct UI states.
+      rethrow;
+    } catch (e) {
+      debugPrint('❌ [Chat] Apply proposal error: $e');
+      rethrow;
+    }
+  }
+
+  /// Dismiss a pending proposal. Fire-and-forget from the UI — the user
+  /// tapped "Not now" and we mark the row dismissed server-side.
+  Future<void> dismissProposal({
+    required String proposalId,
+    required String proposalToken,
+  }) async {
+    try {
+      debugPrint('👋 [Chat] Dismissing proposal $proposalId');
+      await _apiClient.post(
+        '${ApiConstants.chat}/proposals/$proposalId/dismiss',
+        data: {'proposal_token': proposalToken},
+      );
+    } catch (e) {
+      // Dismiss is best-effort — if it fails the row just sits pending until
+      // it expires. Don't surface the error to the user.
+      debugPrint('⚠️ [Chat] Dismiss proposal error (ignored): $e');
+    }
+  }
+
   /// Report an AI message for review
   Future<void> reportMessage({
     String? messageId,

@@ -27,6 +27,15 @@ Map<String, dynamic>? _parseGenerationMetadata(dynamic value) {
 /// Uses Expando so entries are garbage-collected when the Workout is.
 final Expando<List<WorkoutExercise>> _exerciseCache = Expando<List<WorkoutExercise>>();
 
+/// Matches a trailing "(N)" suffix left behind by duplicate library imports
+/// (e.g. `Burpee(1)`, `Bird Dog (3)`). Mirrors backend `strip_dedup_suffix`.
+final RegExp _dedupSuffixRegex = RegExp(r'\s*\(\s*\d+\s*\)\s*$');
+
+String _stripDedupSuffix(String name) {
+  if (name.isEmpty) return name;
+  return name.replaceFirst(_dedupSuffixRegex, '').trim();
+}
+
 @JsonSerializable()
 class Workout extends Equatable {
   final String? id;
@@ -131,6 +140,16 @@ class Workout extends Equatable {
               }
               return st;
             }).toList();
+          }
+          // Strip trailing "(N)" import-duplicate suffix from legacy rows
+          // (e.g. "Burpee(1)"). Newer backend code never stores these, but
+          // older workouts in the DB/cache still contain them.
+          final rawName = exerciseMap['name'];
+          if (rawName is String) {
+            final cleaned = _stripDedupSuffix(rawName);
+            if (cleaned != rawName) {
+              exerciseMap['name'] = cleaned;
+            }
           }
           return WorkoutExercise.fromJson(exerciseMap);
         }
@@ -785,6 +804,10 @@ class WorkoutCompletionResponse {
   final PerformanceComparisonInfo? performanceComparison;
   final bool strengthScoresUpdated;
   final String message;
+  /// Workstream 1 (Day 0-7 retention). True when this was the user's
+  /// first-ever completed workout — the frontend should fire the
+  /// First Workout Forecast sheet after confetti.
+  final bool isFirstWorkout;
 
   const WorkoutCompletionResponse({
     required this.workout,
@@ -792,6 +815,7 @@ class WorkoutCompletionResponse {
     this.performanceComparison,
     this.strengthScoresUpdated = false,
     this.message = 'Workout completed successfully',
+    this.isFirstWorkout = false,
   });
 
   factory WorkoutCompletionResponse.fromJson(Map<String, dynamic> json) {
@@ -809,6 +833,7 @@ class WorkoutCompletionResponse {
           : null,
       strengthScoresUpdated: json['strength_scores_updated'] as bool? ?? false,
       message: json['message'] as String? ?? 'Workout completed successfully',
+      isFirstWorkout: json['is_first_workout'] as bool? ?? false,
     );
   }
 
@@ -921,7 +946,11 @@ class WorkoutSummaryResponse {
   final Map<String, dynamic> workout;
   final PerformanceComparisonInfo? performanceComparison;
   final List<PersonalRecordInfo> personalRecords;
+  /// Long-form 2–3 sentence encouragement shown in the Summary tab.
   final String? coachSummary;
+  /// Punchy one-liner (≤20 words) anchored to real session deltas.
+  /// Rendered as the hero card on the Advanced tab.
+  final String? heroNarrative;
   final String? completionMethod;
   final String? completedAt;
   final List<SetLogInfo> setLogs;
@@ -931,6 +960,7 @@ class WorkoutSummaryResponse {
     this.performanceComparison,
     this.personalRecords = const [],
     this.coachSummary,
+    this.heroNarrative,
     this.completionMethod,
     this.completedAt,
     this.setLogs = const [],
@@ -951,6 +981,7 @@ class WorkoutSummaryResponse {
           .map((pr) => PersonalRecordInfo.fromJson(pr as Map<String, dynamic>))
           .toList(),
       coachSummary: json['coach_summary'] as String?,
+      heroNarrative: json['hero_narrative'] as String?,
       completionMethod: json['completion_method'] as String?,
       completedAt: json['completed_at'] as String?,
       setLogs: setLogsData

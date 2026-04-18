@@ -239,11 +239,11 @@ class EmailLifecycleMixin:
         days_ago = stats.last_workout_days_ago or 3
         next_name = stats.next_workout_name or "Your Next Workout"
 
-        subject = f"Your {streak}-day streak is one skip from gone, {name}."
-        title = f"Don't break this, {name}"
+        subject = f"Your {streak}-day streak is worth protecting, {name}"
+        title = f"Let's protect this, {name}"
         subtitle = (
             f"{coach} noticed it's been {days_ago} days since {last}. "
-            f"{streak} days of work. One skip. Don't."
+            f"{streak} days of work is worth protecting. 20 minutes tonight keeps it alive."
         )
 
         features = [
@@ -366,11 +366,11 @@ class EmailLifecycleMixin:
                     f"Life gets in the way. 20 minutes is enough to get day one done."
                 )
             else:  # firm
-                subject = f"{name}, {coach} is getting worried."
+                subject = f"{name}, your {goal} plan is still waiting"
                 title = f"Your plan started {days} {day_word} ago, {name}"
                 subtitle = (
-                    f"{coach} built your {goal} plan on day one. It's been sitting there. "
-                    f"Untouched. 20 minutes is all it takes — less than your last scroll session."
+                    f"{coach} built your {goal} plan on day one — it's ready whenever you are. "
+                    f"20 minutes is all it takes. Less time than a lunch break."
                 )
             features = [
                 ("&#127919;", "Built for you",
@@ -659,4 +659,413 @@ class EmailLifecycleMixin:
             return {"success": True, "id": response.get("id")}
         except Exception as e:
             logger.error(f"Failed to send comeback email to {to_email}: {e}", exc_info=True)
+            return {"error": str(e)}
+
+    # ─── Week-1 Retention Emails (W4) ───────────────────────────────────
+    # Day 1/3/5/7 lifecycle emails timed to the exact week-1 churn cliff.
+
+    async def send_week1_day1(
+        self, to_email: str, first_name_value: str, stats: UserStats,
+    ) -> Dict[str, Any]:
+        """Day 1 email for users who haven't completed their first workout yet."""
+        if not self.is_configured():
+            return {"error": "Email service not configured"}
+        from core.config import get_settings
+        backend_url = get_settings().backend_base_url
+        logo_url = f"{backend_url}/static/logo.png"
+        open_url = f"{backend_url}/open"
+        name = first_name_value or "there"
+        coach = stats.coach_name or "Your Coach"
+        subject = f"{name}, day 1 of your plan is ready"
+        features = [
+            ("&#127921;", "Your plan is loaded",
+             f"{coach} built it around your goals. 20 minutes is all it takes."),
+            ("&#128293;", "The first session is the hardest",
+             "Once you show up once, the pattern starts. That's the whole game."),
+            ("&#128104;&#127996;&#8205;&#127939;&#65039;", "You're not alone",
+             f"{coach} is here for the whole journey — not just day 1."),
+        ]
+        html_content = self._build_standard_email(
+            logo_url=logo_url, open_url=open_url,
+            title=f"Day 1, {name}",
+            subtitle="Your plan is ready — 20 minutes starts the pattern.",
+            cta_text="Open FitWiz",
+            features=features,
+            footer_text="You received this because you just joined FitWiz.",
+            persona_signature_html=build_persona_signature_html(stats),
+            stats_row_html=build_stats_grid_html(stats),
+            category_name="onboarding",
+        )
+        try:
+            response = resend.Emails.send({
+                "from": self.from_email, "to": [to_email], "subject": subject, "html": html_content,
+            })
+            return {"success": True, "id": response.get("id")}
+        except Exception as e:
+            logger.error(f"send_week1_day1 failed for {to_email}: {e}", exc_info=True)
+            return {"error": str(e)}
+
+    async def send_week1_day3_completed(
+        self, to_email: str, first_name_value: str, stats: UserStats, workouts_count: int,
+    ) -> Dict[str, Any]:
+        """Day 3 for users who've done at least 1 workout — celebrate + encourage."""
+        if not self.is_configured():
+            return {"error": "Email service not configured"}
+        from core.config import get_settings
+        backend_url = get_settings().backend_base_url
+        logo_url = f"{backend_url}/static/logo.png"
+        open_url = f"{backend_url}/open"
+        name = first_name_value or "there"
+        coach = stats.coach_name or "Your Coach"
+        subject = f"{name}, 3 days in — you're building something"
+        features = [
+            ("&#128170;", f"{workouts_count} workout{'s' if workouts_count != 1 else ''} logged",
+             "The hardest part is showing up. You just did it three days in a row."),
+            ("&#128200;", "Research says week 1 is the cliff",
+             "Users daily-active in week 1 are 80% more likely to stick for 6 months. You're clearing the cliff."),
+            ("&#127941;", "Day 4 is waiting",
+             f"{coach} has the next session ready — 20 minutes to keep the momentum."),
+        ]
+        html_content = self._build_standard_email(
+            logo_url=logo_url, open_url=open_url,
+            title=f"3 days in, {name}",
+            subtitle="Most people who make it past day 3 are still here in month 3. You're one of them.",
+            cta_text="Keep going",
+            features=features,
+            footer_text="You received this because you're crushing week 1.",
+            persona_signature_html=build_persona_signature_html(stats),
+            stats_row_html=build_stats_grid_html(stats),
+            category_name="onboarding",
+        )
+        try:
+            response = resend.Emails.send({
+                "from": self.from_email, "to": [to_email], "subject": subject, "html": html_content,
+            })
+            return {"success": True, "id": response.get("id")}
+        except Exception as e:
+            logger.error(f"send_week1_day3_completed failed for {to_email}: {e}", exc_info=True)
+            return {"error": str(e)}
+
+    async def send_week1_day3_stalled(
+        self, to_email: str, first_name_value: str, stats: UserStats,
+    ) -> Dict[str, Any]:
+        """Day 3 for users who haven't started — gentle, compassionate re-engage."""
+        if not self.is_configured():
+            return {"error": "Email service not configured"}
+        from core.config import get_settings
+        backend_url = get_settings().backend_base_url
+        logo_url = f"{backend_url}/static/logo.png"
+        open_url = f"{backend_url}/open"
+        name = first_name_value or "there"
+        coach = stats.coach_name or "Your Coach"
+        subject = f"{name}, no judgment — here when you're ready"
+        features = [
+            ("&#128064;", "Life happens",
+             f"{coach} knows day 3 without starting is normal. What matters is the next 20 minutes."),
+            ("&#9202;", "10 minutes is enough to restart",
+             "Open the app, pick the shortest session. That's all — tomorrow gets easier from there."),
+            ("&#127942;", "You still have week 1 to start",
+             "The research says week 1 activity predicts 6-month retention. There's still time."),
+        ]
+        html_content = self._build_standard_email(
+            logo_url=logo_url, open_url=open_url,
+            title=f"Ready when you are, {name}",
+            subtitle="Your plan is warm. 10 minutes flips the week.",
+            cta_text="Start small",
+            features=features,
+            footer_text="You received this because your plan is still waiting.",
+            persona_signature_html=build_persona_signature_html(stats),
+            stats_row_html=build_stats_grid_html(stats),
+            category_name="onboarding",
+        )
+        try:
+            response = resend.Emails.send({
+                "from": self.from_email, "to": [to_email], "subject": subject, "html": html_content,
+            })
+            return {"success": True, "id": response.get("id")}
+        except Exception as e:
+            logger.error(f"send_week1_day3_stalled failed for {to_email}: {e}", exc_info=True)
+            return {"error": str(e)}
+
+    async def send_week1_day5(
+        self, to_email: str, first_name_value: str, stats: UserStats, workouts_count: int,
+    ) -> Dict[str, Any]:
+        """Day 5 — halfway through week 1."""
+        if not self.is_configured():
+            return {"error": "Email service not configured"}
+        from core.config import get_settings
+        backend_url = get_settings().backend_base_url
+        logo_url = f"{backend_url}/static/logo.png"
+        open_url = f"{backend_url}/open"
+        name = first_name_value or "there"
+        coach = stats.coach_name or "Your Coach"
+        subject = f"{name}, halfway through week one"
+        features = [
+            ("&#129309;", f"{workouts_count} workout{'s' if workouts_count != 1 else ''} this week so far",
+             "Every session is a deposit in the habit bank."),
+            ("&#128202;", "Your body is learning the pattern",
+             f"{coach} is watching your progress — strength gains kick in around week 2."),
+            ("&#127925;", "Day 7 is a milestone",
+             "Two more days and you clear the week-1 cliff. Keep the thread going."),
+        ]
+        html_content = self._build_standard_email(
+            logo_url=logo_url, open_url=open_url,
+            title=f"Halfway, {name}",
+            subtitle="You're building the pattern that sticks for 6 months. Keep showing up.",
+            cta_text="Open FitWiz",
+            features=features,
+            footer_text="You received this because you're halfway through week 1.",
+            persona_signature_html=build_persona_signature_html(stats),
+            stats_row_html=build_stats_grid_html(stats),
+            category_name="onboarding",
+        )
+        try:
+            response = resend.Emails.send({
+                "from": self.from_email, "to": [to_email], "subject": subject, "html": html_content,
+            })
+            return {"success": True, "id": response.get("id")}
+        except Exception as e:
+            logger.error(f"send_week1_day5 failed for {to_email}: {e}", exc_info=True)
+            return {"error": str(e)}
+
+    async def send_week1_day7(
+        self, to_email: str, first_name_value: str, stats: UserStats, workouts_count: int,
+    ) -> Dict[str, Any]:
+        """Day 7 — full week-1 celebration recap."""
+        if not self.is_configured():
+            return {"error": "Email service not configured"}
+        from core.config import get_settings
+        backend_url = get_settings().backend_base_url
+        logo_url = f"{backend_url}/static/logo.png"
+        open_url = f"{backend_url}/open"
+        name = first_name_value or "there"
+        coach = stats.coach_name or "Your Coach"
+        subject = f"🎉 {name}, week 1 complete"
+        features = [
+            ("&#127942;", f"{workouts_count} workout{'s' if workouts_count != 1 else ''} this week",
+             "You showed up. That's the whole game in week 1."),
+            ("&#128293;", "You cleared the cliff",
+             "80% of FitWiz users who hit day 7 are still active in month 3. You're officially one of them."),
+            ("&#128640;", "Week 2 builds on week 1",
+             f"{coach} has next week's plan ready — slightly harder, because you can handle it now."),
+        ]
+        html_content = self._build_standard_email(
+            logo_url=logo_url, open_url=open_url,
+            title=f"Week 1 done, {name}",
+            subtitle="The hardest week is behind you. Let's build.",
+            cta_text="See my recap",
+            features=features,
+            footer_text="You received this because you made it through week 1.",
+            persona_signature_html=build_persona_signature_html(stats),
+            stats_row_html=build_stats_grid_html(stats),
+            category_name="onboarding",
+        )
+        try:
+            response = resend.Emails.send({
+                "from": self.from_email, "to": [to_email], "subject": subject, "html": html_content,
+            })
+            return {"success": True, "id": response.get("id")}
+        except Exception as e:
+            logger.error(f"send_week1_day7 failed for {to_email}: {e}", exc_info=True)
+            return {"error": str(e)}
+
+    # ─── Merch Milestone Emails (migration 1931) ────────────────────────
+
+    MERCH_DISPLAY_NAMES = {
+        "sticker_pack": "FitWiz Sticker Pack",
+        "t_shirt": "FitWiz T-Shirt",
+        "hoodie": "FitWiz Hoodie",
+        "full_merch_kit": "Full Merch Kit (Tee + Hoodie + Shaker)",
+        "signed_premium_kit": "Signed Premium Kit",
+    }
+
+    async def send_merch_proximity(
+        self, to_email: str, first_name_value: str, stats: UserStats,
+        merch_type: str, next_level: int, levels_away: int,
+    ) -> Dict[str, Any]:
+        """User is 1-3 levels from a merch tier. Encourage the final push."""
+        if not self.is_configured():
+            return {"error": "Email service not configured"}
+
+        from core.config import get_settings
+        backend_url = get_settings().backend_base_url
+        logo_url = f"{backend_url}/static/logo.png"
+        open_url = f"{backend_url}/open"
+
+        name = first_name_value or "there"
+        merch_name = self.MERCH_DISPLAY_NAMES.get(merch_type, merch_type)
+        subject = f"🎁 {name}, you're {levels_away} levels from a FREE {merch_name}"
+
+        features = [
+            ("&#127873;", f"FREE {merch_name} at Level {next_level}",
+             f"Keep earning XP and real FitWiz gear ships to you — on us."),
+            ("&#128202;", f"Level {stats.xp_level} · {stats.xp_total:,} XP",
+             f"{stats.xp_to_next_level:,} XP to next level" if stats.xp_to_next_level else "Keep pushing."),
+            ("&#128293;", "No subscriptions, no catches",
+             "Just real merch for real consistency. One tap to accept when you unlock it."),
+        ]
+
+        html_content = self._build_standard_email(
+            logo_url=logo_url, open_url=open_url,
+            title=f"So close, {name}",
+            subtitle=f"{levels_away} levels stand between you and a FREE {merch_name}.",
+            cta_text="Open FitWiz",
+            features=features,
+            footer_text="You received this because you're close to a merch milestone. Manage notifications in Settings.",
+            persona_signature_html=build_persona_signature_html(stats),
+            stats_row_html=build_stats_grid_html(stats),
+            category_name="achievements",
+        )
+
+        try:
+            params = {"from": self.from_email, "to": [to_email], "subject": subject, "html": html_content}
+            response = resend.Emails.send(params)
+            return {"success": True, "id": response.get("id")}
+        except Exception as e:
+            logger.error(f"Failed to send merch_proximity email to {to_email}: {e}", exc_info=True)
+            return {"error": str(e)}
+
+    async def send_merch_unlocked(
+        self, to_email: str, first_name_value: str, stats: UserStats,
+        merch_type: str, awarded_at_level: int,
+    ) -> Dict[str, Any]:
+        """User just hit a merch-tier level. Celebrate + CTA to accept in-app."""
+        if not self.is_configured():
+            return {"error": "Email service not configured"}
+
+        from core.config import get_settings
+        backend_url = get_settings().backend_base_url
+        logo_url = f"{backend_url}/static/logo.png"
+        open_url = f"{backend_url}/open"
+
+        name = first_name_value or "there"
+        merch_name = self.MERCH_DISPLAY_NAMES.get(merch_type, merch_type)
+        subject = f"🎁 {name}, your FREE {merch_name} is unlocked!"
+
+        features = [
+            ("&#127873;", f"FREE {merch_name} — earned at Level {awarded_at_level}",
+             "Real FitWiz gear, shipped to you. No purchase needed."),
+            ("&#9989;", "Tap Accept in the Rewards tab",
+             "We'll email you when we're ready to ship to collect your size and shipping address."),
+            ("&#128293;", f"Level {stats.xp_level} · {stats.xp_total:,} XP",
+             "You earned this through consistent work. That's the whole point."),
+        ]
+
+        html_content = self._build_standard_email(
+            logo_url=logo_url, open_url=open_url,
+            title=f"You did it, {name}",
+            subtitle=f"🎁 FREE {merch_name} unlocked at Level {awarded_at_level}",
+            cta_text="Accept my reward",
+            features=features,
+            footer_text="You received this because you unlocked a physical reward.",
+            persona_signature_html=build_persona_signature_html(stats),
+            stats_row_html=build_stats_grid_html(stats),
+            category_name="achievements",
+        )
+
+        try:
+            params = {"from": self.from_email, "to": [to_email], "subject": subject, "html": html_content}
+            response = resend.Emails.send(params)
+            return {"success": True, "id": response.get("id")}
+        except Exception as e:
+            logger.error(f"Failed to send merch_unlocked email to {to_email}: {e}", exc_info=True)
+            return {"error": str(e)}
+
+    async def send_level_milestone_celebration(
+        self, to_email: str, first_name_value: str, stats: UserStats,
+        level_reached: int, rewards_summary: str, has_merch: bool = False,
+    ) -> Dict[str, Any]:
+        """Celebrate when user hits a major XP milestone (L5/10/25/50/75/100/...)."""
+        if not self.is_configured():
+            return {"error": "Email service not configured"}
+
+        from core.config import get_settings
+        backend_url = get_settings().backend_base_url
+        logo_url = f"{backend_url}/static/logo.png"
+        open_url = f"{backend_url}/open"
+
+        name = first_name_value or "there"
+        subject = f"🏅 Level {level_reached} unlocked, {name}"
+
+        features = [
+            ("&#127941;", f"Level {level_reached}",
+             f"You crossed {stats.xp_total:,} XP total. That's earned, not given."),
+            ("&#128230;", "Rewards in your inventory",
+             rewards_summary or "New consumables ready to use."),
+        ]
+        if has_merch:
+            features.append((
+                "&#127873;", "FREE physical reward",
+                "Open Merch Rewards to accept — we'll email you to collect shipping details.",
+            ))
+        else:
+            features.append((
+                "&#128640;", "Keep the momentum",
+                "The next milestone is closer than you think. One more session.",
+            ))
+
+        html_content = self._build_standard_email(
+            logo_url=logo_url, open_url=open_url,
+            title=f"Level {level_reached}, {name}",
+            subtitle=f"You earned every bit of this. {rewards_summary}",
+            cta_text="Open my rewards",
+            features=features,
+            footer_text="You received this because you reached a level milestone.",
+            persona_signature_html=build_persona_signature_html(stats),
+            stats_row_html=build_stats_grid_html(stats),
+            category_name="achievements",
+        )
+
+        try:
+            params = {"from": self.from_email, "to": [to_email], "subject": subject, "html": html_content}
+            response = resend.Emails.send(params)
+            return {"success": True, "id": response.get("id")}
+        except Exception as e:
+            logger.error(f"Failed to send level_milestone_celebration to {to_email}: {e}", exc_info=True)
+            return {"error": str(e)}
+
+    async def send_merch_claim_reminder(
+        self, to_email: str, first_name_value: str, stats: UserStats,
+        merch_type: str, awarded_at_level: int, days_waiting: int,
+    ) -> Dict[str, Any]:
+        """Claim still unaccepted after D+1/D+3/D+7. Reminder to tap Accept."""
+        if not self.is_configured():
+            return {"error": "Email service not configured"}
+
+        from core.config import get_settings
+        backend_url = get_settings().backend_base_url
+        logo_url = f"{backend_url}/static/logo.png"
+        open_url = f"{backend_url}/open"
+
+        name = first_name_value or "there"
+        merch_name = self.MERCH_DISPLAY_NAMES.get(merch_type, merch_type)
+        subject = f"🎁 {name}, your FREE {merch_name} is waiting"
+
+        features = [
+            ("&#127873;", f"Your FREE {merch_name} is unclaimed",
+             f"Earned at Level {awarded_at_level}, sitting in the Rewards tab for {days_waiting} day{'s' if days_waiting != 1 else ''}."),
+            ("&#9989;", "One tap to accept",
+             "We'll email you to collect shipping details when it's time to ship."),
+            ("&#128064;", "Don't let it expire",
+             "Accept it and we'll take it from there."),
+        ]
+
+        html_content = self._build_standard_email(
+            logo_url=logo_url, open_url=open_url,
+            title=f"Still waiting, {name}",
+            subtitle=f"Your FREE {merch_name} needs one tap to accept.",
+            cta_text="Accept it now",
+            features=features,
+            footer_text="You received this because you have an unclaimed reward.",
+            persona_signature_html=build_persona_signature_html(stats),
+            stats_row_html=build_stats_grid_html(stats),
+            category_name="achievements",
+        )
+
+        try:
+            params = {"from": self.from_email, "to": [to_email], "subject": subject, "html": html_content}
+            response = resend.Emails.send(params)
+            return {"success": True, "id": response.get("id")}
+        except Exception as e:
+            logger.error(f"Failed to send merch_claim_reminder email to {to_email}: {e}", exc_info=True)
             return {"error": str(e)}

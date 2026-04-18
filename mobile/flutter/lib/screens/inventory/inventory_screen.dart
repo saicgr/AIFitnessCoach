@@ -3,11 +3,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/theme/accent_color_provider.dart';
+import '../../data/providers/merch_claim_provider.dart';
 import '../../data/providers/xp_provider.dart';
 import '../../data/repositories/xp_repository.dart';
 import '../../data/services/haptic_service.dart';
+import '../../widgets/cosmetics/cosmetic_badge.dart';
 import '../../widgets/glass_back_button.dart';
 import '../../widgets/glass_sheet.dart';
+import '../../widgets/level_up_catch_up_banner.dart';
 import '../home/widgets/daily_crate_banner.dart';
 
 part 'inventory_screen_part_consumable_card.dart';
@@ -32,9 +35,10 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
   @override
   void initState() {
     super.initState();
-    // Load consumables data
+    // Load consumables and merch claims
     Future.microtask(() {
       ref.read(xpProvider.notifier).loadConsumables();
+      ref.read(merchClaimsProvider.notifier).load();
     });
   }
 
@@ -436,6 +440,9 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
                   padding: const EdgeInsets.all(16),
                   sliver: SliverList(
                     delegate: SliverChildListDelegate([
+                      // Retroactive level-up banner (visible only if unacked events exist)
+                      const LevelUpCatchUpBanner(margin: EdgeInsets.only(bottom: 16)),
+
                       // Trust Level Card
                       _buildTrustLevelCard(trustLevel, isDark, textColor, textMuted, cardBorder, accentColor),
                       const SizedBox(height: 24),
@@ -547,6 +554,18 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
                         textMuted: textMuted,
                         cardBorder: cardBorder,
                       ),
+                      const SizedBox(height: 32),
+
+                      // Merch Rewards Section (physical goods earned at milestone levels)
+                      _buildMerchRewardsSection(isDark, textColor, textMuted, elevatedColor, cardBorder, accentColor),
+                      const SizedBox(height: 12),
+
+                      // Refer Friends Section (unlock merch faster through referrals)
+                      _buildReferFriendsSection(isDark, textColor, textMuted, elevatedColor, cardBorder, accentColor),
+                      const SizedBox(height: 12),
+
+                      // Cosmetics entry — browse/equip badges and frames
+                      _buildCosmeticsSection(isDark, textColor, textMuted, elevatedColor, cardBorder, accentColor),
                       const SizedBox(height: 32),
 
                       // Daily Crates Section
@@ -721,6 +740,239 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
             ref.read(xpProvider.notifier).loadDailyCrates();
             ref.read(xpProvider.notifier).loadConsumables();
           },
+        ),
+      ),
+    );
+  }
+
+  /// Merch rewards entry card — shows pending claim count and routes to merch screen.
+  Widget _buildMerchRewardsSection(
+    bool isDark,
+    Color textColor,
+    Color textMuted,
+    Color elevatedColor,
+    Color cardBorder,
+    Color accentColor,
+  ) {
+    final pendingCount = ref.watch(pendingMerchClaimCountProvider);
+    final claimsState = ref.watch(merchClaimsProvider);
+    final activeCount = claimsState.active.length;
+
+    return GestureDetector(
+      onTap: () {
+        HapticService.light();
+        context.push('/merch-claims');
+      },
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              accentColor.withValues(alpha: 0.2),
+              accentColor.withValues(alpha: 0.08),
+            ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: pendingCount > 0
+                ? Colors.amber.withValues(alpha: 0.6)
+                : accentColor.withValues(alpha: 0.3),
+            width: pendingCount > 0 ? 1.5 : 1,
+          ),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 52,
+              height: 52,
+              decoration: BoxDecoration(
+                color: accentColor.withValues(alpha: 0.2),
+                shape: BoxShape.circle,
+              ),
+              child: const Center(
+                child: Text('👕', style: TextStyle(fontSize: 26)),
+              ),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Text(
+                        'Merch Rewards',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: textColor,
+                        ),
+                      ),
+                      if (pendingCount > 0) ...[
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: Colors.amber,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Text(
+                            '$pendingCount to claim',
+                            style: const TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    activeCount == 0
+                        ? 'First unlock: Level 50 — free sticker pack'
+                        : pendingCount > 0
+                            ? "Tap to accept — we'll reach out by email"
+                            : '$activeCount reward${activeCount == 1 ? "" : "s"} earned',
+                    style: TextStyle(fontSize: 12, color: textMuted),
+                  ),
+                ],
+              ),
+            ),
+            Icon(Icons.chevron_right, color: textMuted),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Refer-a-friend entry card — links to referral screen.
+  Widget _buildReferFriendsSection(
+    bool isDark,
+    Color textColor,
+    Color textMuted,
+    Color elevatedColor,
+    Color cardBorder,
+    Color accentColor,
+  ) {
+    return GestureDetector(
+      onTap: () {
+        HapticService.light();
+        context.push('/referrals');
+      },
+      child: Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: elevatedColor,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: cardBorder),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                color: accentColor.withValues(alpha: 0.15),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(Icons.group_add, color: accentColor, size: 24),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Refer friends, earn merch faster',
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.bold,
+                      color: textColor,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    '3 refs → Sticker · 10 → Shaker · 25 → T-Shirt',
+                    style: TextStyle(fontSize: 12, color: textMuted),
+                  ),
+                ],
+              ),
+            ),
+            Icon(Icons.chevron_right, color: textMuted),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Cosmetics entry — shows the equipped badge pill + "Change" CTA.
+  Widget _buildCosmeticsSection(
+    bool isDark,
+    Color textColor,
+    Color textMuted,
+    Color elevatedColor,
+    Color cardBorder,
+    Color accentColor,
+  ) {
+    return GestureDetector(
+      onTap: () {
+        HapticService.light();
+        context.push('/cosmetics');
+      },
+      child: Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: elevatedColor,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: cardBorder),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                color: accentColor.withValues(alpha: 0.15),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(Icons.auto_awesome, color: accentColor, size: 24),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Cosmetics',
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.bold,
+                      color: textColor,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      const EquippedBadgePill(height: 22),
+                      const SizedBox(width: 8),
+                      Flexible(
+                        child: Text(
+                          'Tap to browse or change',
+                          style: TextStyle(fontSize: 12, color: textMuted),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            Icon(Icons.chevron_right, color: textMuted),
+          ],
         ),
       ),
     );

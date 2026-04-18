@@ -117,6 +117,38 @@ async def create_custom_exercise(user_id: str, exercise: CustomExerciseCreate, c
         )
         logger.info(f"🏋️ [Custom Exercises] Mapped body_part: {body_part}")
 
+        # Build a structured preamble from advanced fields so the AI context
+        # includes user-specified defaults (tempo, RPE, notes, etc.) when
+        # generating workouts. Prepended to the instructions string.
+        advanced_parts = []
+        if exercise.default_rpe is not None:
+            advanced_parts.append(f"RPE {exercise.default_rpe}/10")
+        if exercise.default_tempo:
+            advanced_parts.append(f"Tempo: {exercise.default_tempo}")
+        if exercise.default_band_color:
+            advanced_parts.append(f"Band: {exercise.default_band_color}")
+        if exercise.default_range_of_motion:
+            advanced_parts.append(f"ROM: {exercise.default_range_of_motion}")
+        if exercise.default_incline_percent is not None:
+            advanced_parts.append(f"Incline: {exercise.default_incline_percent}%")
+        if exercise.default_duration_seconds is not None:
+            secs = exercise.default_duration_seconds
+            if secs >= 60:
+                advanced_parts.append(f"Duration: {secs // 60}m {secs % 60}s")
+            else:
+                advanced_parts.append(f"Duration: {secs}s")
+        if exercise.default_distance_miles is not None:
+            advanced_parts.append(f"Distance: {exercise.default_distance_miles}mi")
+        if exercise.default_notes:
+            advanced_parts.append(f"Notes: {exercise.default_notes}")
+
+        base_instructions = exercise.instructions or f"Perform {exercise.name} with proper form."
+        if advanced_parts:
+            preamble = "[" + " • ".join(advanced_parts) + "]"
+            full_instructions = f"{preamble}\n{base_instructions}"
+        else:
+            full_instructions = base_instructions
+
         exercise_data = {
             "external_id": external_id,
             "name": exercise.name,
@@ -131,9 +163,9 @@ async def create_custom_exercise(user_id: str, exercise: CustomExerciseCreate, c
             "target": exercise.primary_muscle,
             "default_sets": exercise.default_sets,
             "default_reps": exercise.default_reps,
-            "default_rest_seconds": 60,
+            "default_rest_seconds": exercise.default_rest_seconds or 60,
             "calories_per_minute": 5.0,
-            "instructions": exercise.instructions or f"Perform {exercise.name} with proper form.",
+            "instructions": full_instructions,
             "tips": "[]",
             "contraindicated_injuries": "[]",
             "is_compound": exercise.is_compound,

@@ -59,6 +59,13 @@ class User extends Equatable {
   final Map<String, int>? muscleFocusPoints; // e.g., {"triceps": 2, "lats": 1}
   @JsonKey(name: 'photo_url')
   final String? photoUrl; // Profile photo URL
+  // Vacation mode (migration 1941) — suppresses non-critical notifications.
+  @JsonKey(name: 'in_vacation_mode')
+  final bool? inVacationMode;
+  @JsonKey(name: 'vacation_start_date')
+  final String? vacationStartDate; // ISO date YYYY-MM-DD, null = active immediately
+  @JsonKey(name: 'vacation_end_date')
+  final String? vacationEndDate; // ISO date YYYY-MM-DD, null = open-ended
 
   const User({
     required this.id,
@@ -93,6 +100,9 @@ class User extends Equatable {
     this.primaryGoal,
     this.muscleFocusPoints,
     this.photoUrl,
+    this.inVacationMode,
+    this.vacationStartDate,
+    this.vacationEndDate,
   });
 
   factory User.fromJson(Map<String, dynamic> json) => _$UserFromJson(json);
@@ -678,6 +688,9 @@ class User extends Equatable {
         primaryGoal,
         muscleFocusPoints,
         photoUrl,
+        inVacationMode,
+        vacationStartDate,
+        vacationEndDate,
       ];
 
   User copyWith({
@@ -712,6 +725,9 @@ class User extends Equatable {
     String? primaryGoal,
     Map<String, int>? muscleFocusPoints,
     String? photoUrl,
+    bool? inVacationMode,
+    String? vacationStartDate,
+    String? vacationEndDate,
   }) {
     return User(
       id: id ?? this.id,
@@ -745,6 +761,9 @@ class User extends Equatable {
       primaryGoal: primaryGoal ?? this.primaryGoal,
       muscleFocusPoints: muscleFocusPoints ?? this.muscleFocusPoints,
       photoUrl: photoUrl ?? this.photoUrl,
+      inVacationMode: inVacationMode ?? this.inVacationMode,
+      vacationStartDate: vacationStartDate ?? this.vacationStartDate,
+      vacationEndDate: vacationEndDate ?? this.vacationEndDate,
     );
   }
 }

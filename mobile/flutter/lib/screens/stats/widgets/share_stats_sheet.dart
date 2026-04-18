@@ -21,6 +21,9 @@ import 'share_templates/stats_prs_template.dart';
 import 'share_templates/stats_streak_fire_template.dart';
 import 'share_templates/stats_weekly_report_template.dart';
 import 'share_templates/stats_level_up_template.dart';
+import 'share_templates/stats_elite_template.dart';
+import '../../../data/providers/cosmetics_provider.dart';
+import '../../../data/providers/xp_provider.dart';
 
 /// Share Stats Bottom Sheet
 ///
@@ -53,8 +56,8 @@ class _ShareStatsSheetState extends ConsumerState<ShareStatsSheet> {
   String? _userId;
   bool _showWatermark = true;
 
-  // Capture keys for each template (6 templates)
-  final List<GlobalKey> _captureKeys = List.generate(6, (_) => GlobalKey());
+  // Capture keys for each template (7 templates — Elite is cosmetic-gated)
+  final List<GlobalKey> _captureKeys = List.generate(7, (_) => GlobalKey());
 
   @override
   void initState() {
@@ -75,7 +78,12 @@ class _ShareStatsSheetState extends ConsumerState<ShareStatsSheet> {
     super.dispose();
   }
 
-  List<String> get _templateNames => ['Overview', 'Achievements', 'PRs', 'Streak', 'Weekly', 'Level Up'];
+  List<String> get _templateNames =>
+      ['Overview', 'Achievements', 'PRs', 'Streak', 'Weekly', 'Level Up', 'Elite'];
+
+  /// Whether the Elite template is unlocked for this user (owns `stats_card_elite`).
+  bool get _ownsElite =>
+      ref.watch(cosmeticsProvider.select((s) => s.ownsCosmetic('stats_card_elite')));
 
   StatsTemplateType get _currentTemplateType {
     switch (_currentPage) {
@@ -91,6 +99,8 @@ class _ShareStatsSheetState extends ConsumerState<ShareStatsSheet> {
         return StatsTemplateType.weeklyReport;
       case 5:
         return StatsTemplateType.levelUp;
+      case 6:
+        return StatsTemplateType.elite;
       default:
         return StatsTemplateType.overview;
     }
@@ -733,7 +743,92 @@ class _ShareStatsSheetState extends ConsumerState<ShareStatsSheet> {
             ),
           ),
         ),
+
+        // Elite Template (cosmetic-gated — owned when user hits Level 75)
+        Center(
+          child: _ownsElite
+              ? CapturableWidget(
+                  captureKey: _captureKeys[6],
+                  child: InstagramStoryWrapper(
+                    backgroundGradient: _getGradientForTemplate(6),
+                    child: StatsEliteTemplate(
+                      totalWorkouts: insights?.monthWorkoutsCompleted ?? workoutsNotifier.completedCount,
+                      currentStreak: consistencyState.currentStreak,
+                      longestStreak: consistencyState.longestStreak,
+                      weeklyCompleted: weeklyProgress.$1,
+                      weeklyGoal: weeklyProgress.$2,
+                      xpLevel: ref.watch(xpProvider).userXp?.currentLevel ?? 1,
+                      xpTotal: ref.watch(xpProvider).userXp?.totalXp ?? 0,
+                      dateRangeLabel: _dateRangeLabel,
+                      showWatermark: _showWatermark,
+                    ),
+                  ),
+                )
+              : _buildLockedEliteCard(),
+        ),
       ],
+    );
+  }
+
+  Widget _buildLockedEliteCard() {
+    final level = ref.watch(xpProvider).userXp?.currentLevel ?? 1;
+    final levelsToGo = (75 - level).clamp(0, 999);
+    return Container(
+      width: 320,
+      height: 440,
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Color(0xFF1A1000), Color(0xFF2E1D00), Color(0xFF1A0F00)],
+        ),
+        borderRadius: BorderRadius.circular(24),
+      ),
+      child: Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 80,
+              height: 80,
+              decoration: BoxDecoration(
+                color: const Color(0xFFFFD700).withValues(alpha: 0.15),
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: const Color(0xFFFFD700).withValues(alpha: 0.4),
+                  width: 2,
+                ),
+              ),
+              child: const Icon(Icons.lock, color: Color(0xFFFFD700), size: 38),
+            ),
+            const SizedBox(height: 20),
+            const Text(
+              'ELITE TEMPLATE',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w900,
+                color: Color(0xFFFFD700),
+                letterSpacing: 3,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 32),
+              child: Text(
+                levelsToGo > 0
+                    ? 'Unlocks at Level 75 · $levelsToGo levels to go'
+                    : 'Unlocked at Level 75 — open your Cosmetics',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 13,
+                  color: const Color(0xFFFFD700).withValues(alpha: 0.7),
+                  height: 1.4,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 

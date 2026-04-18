@@ -39,6 +39,7 @@ import 'widgets/hero_workout_card.dart';
 import '../../core/providers/week_start_provider.dart';
 import 'widgets/hero_workout_carousel.dart';
 import 'widgets/sectioned_hero_area.dart';
+import 'widgets/home_rank_card.dart';
 import 'widgets/workout_category_pills.dart';
 import 'widgets/habits_section.dart';
 import 'widgets/body_metrics_section.dart';
@@ -64,6 +65,7 @@ import '../settings/sections/nutrition_fasting_section.dart';
 import '../../widgets/usage_counter_strip.dart';
 import '../../widgets/app_tour/app_tour_controller.dart';
 import '../../core/services/posthog_service.dart';
+import '../../core/services/fitness_snapshot_service.dart';
 
 part 'home_screen_part_dummy_animation_controller.dart';
 
@@ -849,6 +851,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
               // Header: Always minimal
               const SliverToBoxAdapter(
                 child: MinimalHeader(),
+              ),
+
+              // W2: Week-1 rank card — only renders when user is in first 7 days
+              const SliverToBoxAdapter(
+                child: HomeRankCard(),
               ),
 
               // Stacked notification-panel banners (all active, swipeable)

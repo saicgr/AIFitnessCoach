@@ -854,12 +854,16 @@ class _PhotosTabState extends ConsumerState<PhotosTab>
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Handle + delete row
+            // Handle (true-centered on the full sheet width) + edit/delete
+            // actions pinned to the right. Using a Stack here instead of a
+            // Row with Spacers, because Spacers only balance the space *left*
+            // of the action buttons — which visually pushes the handle to
+            // the left of center.
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 8, 0),
-              child: Row(
+              padding: const EdgeInsets.fromLTRB(16, 8, 8, 0),
+              child: Stack(
+                alignment: Alignment.center,
                 children: [
-                  const Spacer(),
                   Container(
                     width: 36,
                     height: 4,
@@ -868,16 +872,25 @@ class _PhotosTabState extends ConsumerState<PhotosTab>
                       borderRadius: BorderRadius.circular(2),
                     ),
                   ),
-                  const Spacer(),
-                  IconButton(
-                    onPressed: () => _editExistingPhoto(photo),
-                    icon: Icon(Icons.edit_outlined, color: colorScheme.onSurfaceVariant),
-                    tooltip: 'Edit',
-                  ),
-                  IconButton(
-                    onPressed: () => _deletePhoto(photo),
-                    icon: Icon(Icons.delete_outline, color: colorScheme.error),
-                    tooltip: 'Delete',
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        IconButton(
+                          onPressed: () => _editExistingPhoto(photo),
+                          icon: Icon(Icons.edit_outlined,
+                              color: colorScheme.onSurfaceVariant),
+                          tooltip: 'Edit',
+                        ),
+                        IconButton(
+                          onPressed: () => _deletePhoto(photo),
+                          icon: Icon(Icons.delete_outline,
+                              color: colorScheme.error),
+                          tooltip: 'Delete',
+                        ),
+                      ],
+                    ),
                   ),
                 ],
               ),

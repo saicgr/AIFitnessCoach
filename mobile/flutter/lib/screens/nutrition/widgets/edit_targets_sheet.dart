@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/services/posthog_service.dart';
 import '../../../core/providers/user_provider.dart';
+import '../../../core/theme/accent_color_provider.dart';
 import '../../../data/models/nutrition_preferences.dart';
 import '../../../data/providers/nutrition_preferences_provider.dart';
 import '../../onboarding/widgets/calorie_macro_estimator.dart';
@@ -330,8 +331,18 @@ class _EditTargetsSheetState extends ConsumerState<EditTargetsSheet> {
         isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
-    final teal = isDark ? AppColors.teal : AppColorsLight.teal;
     final surface = isDark ? AppColors.surface : AppColorsLight.surface;
+    // Sheet-wide accent — matches the user's AccentColorScope so the
+    // Grams/Percentage toggle, Save button, Rate-of-Change pills, and
+    // "Recalculate from profile" link all read in the same app-wide hue.
+    final accent = AccentColorScope.of(context).getColor(isDark);
+    // Per-macro colors for the row labels — mirrors the macro rings on the
+    // Current Targets card (Calories=accent, P=purple, C=cyan, F=orange).
+    final proteinColor =
+        isDark ? AppColors.macroProtein : AppColorsLight.macroProtein;
+    final carbsColor =
+        isDark ? AppColors.macroCarbs : AppColorsLight.macroCarbs;
+    final fatColor = isDark ? AppColors.macroFat : AppColorsLight.macroFat;
 
     final calories = int.tryParse(_caloriesController.text);
     final canToggleToPercent = calories != null && calories > 0;
@@ -340,7 +351,7 @@ class _EditTargetsSheetState extends ConsumerState<EditTargetsSheet> {
     final percentOk = !_isPercentageMode || _percentageSum == 100;
 
     // Goal timeline
-    final timelineWidget = _buildGoalTimeline(isDark, textMuted, teal);
+    final timelineWidget = _buildGoalTimeline(isDark, textMuted, accent);
 
     return Padding(
       padding: EdgeInsets.only(
@@ -385,14 +396,15 @@ class _EditTargetsSheetState extends ConsumerState<EditTargetsSheet> {
                   ? SizedBox(
                       width: 12,
                       height: 12,
-                      child: CircularProgressIndicator(strokeWidth: 2, color: teal),
+                      child: CircularProgressIndicator(
+                          strokeWidth: 2, color: accent),
                     )
-                  : Icon(Icons.refresh, size: 14, color: teal),
+                  : Icon(Icons.refresh, size: 14, color: accent),
               label: Text(
                 'Recalculate from profile',
                 style: TextStyle(
                   fontSize: 12,
-                  color: teal,
+                  color: accent,
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -416,7 +428,7 @@ class _EditTargetsSheetState extends ConsumerState<EditTargetsSheet> {
               children: [
                 _toggleButton('Grams', !_isPercentageMode, () {
                   if (_isPercentageMode) _onModeToggle(false);
-                }, textPrimary, teal, surface),
+                }, textPrimary, accent, surface),
                 _toggleButton(
                   'Percentage',
                   _isPercentageMode,
@@ -426,7 +438,7 @@ class _EditTargetsSheetState extends ConsumerState<EditTargetsSheet> {
                         }
                       : null,
                   textPrimary,
-                  teal,
+                  accent,
                   surface,
                 ),
               ],
@@ -434,7 +446,8 @@ class _EditTargetsSheetState extends ConsumerState<EditTargetsSheet> {
           ),
           const SizedBox(height: 12),
 
-          // Input fields
+          // Input fields — each label tints with its macro color so the
+          // sheet lines up with the macro rings on the Current Targets card.
           _buildFieldRow(
             'Calories',
             _caloriesController,
@@ -443,7 +456,7 @@ class _EditTargetsSheetState extends ConsumerState<EditTargetsSheet> {
             textPrimary,
             textMuted,
             elevated,
-            teal,
+            accent,
             isCalories: true,
           ),
           const SizedBox(height: 8),
@@ -455,7 +468,7 @@ class _EditTargetsSheetState extends ConsumerState<EditTargetsSheet> {
             textPrimary,
             textMuted,
             elevated,
-            teal,
+            proteinColor,
           ),
           const SizedBox(height: 8),
           _buildFieldRow(
@@ -466,7 +479,7 @@ class _EditTargetsSheetState extends ConsumerState<EditTargetsSheet> {
             textPrimary,
             textMuted,
             elevated,
-            teal,
+            carbsColor,
           ),
           const SizedBox(height: 8),
           _buildFieldRow(
@@ -477,12 +490,12 @@ class _EditTargetsSheetState extends ConsumerState<EditTargetsSheet> {
             textPrimary,
             textMuted,
             elevated,
-            teal,
+            fatColor,
           ),
           const SizedBox(height: 8),
 
           // Info row
-          _buildInfoRow(textMuted, teal),
+          _buildInfoRow(textMuted, accent),
           const SizedBox(height: 4),
 
           // Goal timeline
@@ -493,7 +506,7 @@ class _EditTargetsSheetState extends ConsumerState<EditTargetsSheet> {
 
           // Rate of change selector (only for lose/gain goals)
           if (_showRateSelector) ...[
-            _buildRateSelector(isDark, textPrimary, textMuted, teal),
+            _buildRateSelector(isDark, textPrimary, textMuted, accent),
             const SizedBox(height: 8),
           ],
 
@@ -504,8 +517,8 @@ class _EditTargetsSheetState extends ConsumerState<EditTargetsSheet> {
                 child: OutlinedButton(
                   onPressed: _isLoadingRecommended ? null : _useRecommended,
                   style: OutlinedButton.styleFrom(
-                    foregroundColor: teal,
-                    side: BorderSide(color: teal.withValues(alpha: 0.5)),
+                    foregroundColor: accent,
+                    side: BorderSide(color: accent.withValues(alpha: 0.5)),
                     padding: const EdgeInsets.symmetric(vertical: 12),
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12)),
@@ -516,7 +529,7 @@ class _EditTargetsSheetState extends ConsumerState<EditTargetsSheet> {
                           height: 18,
                           child: CircularProgressIndicator(
                             strokeWidth: 2,
-                            color: teal,
+                            color: accent,
                           ),
                         )
                       : Text(
@@ -534,7 +547,8 @@ class _EditTargetsSheetState extends ConsumerState<EditTargetsSheet> {
                   onPressed:
                       (_isSaving || !percentOk) ? null : _save,
                   style: FilledButton.styleFrom(
-                    backgroundColor: teal,
+                    backgroundColor: accent,
+                    foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 12),
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12)),
@@ -570,7 +584,7 @@ class _EditTargetsSheetState extends ConsumerState<EditTargetsSheet> {
     bool selected,
     VoidCallback? onTap,
     Color textPrimary,
-    Color teal,
+    Color accent,
     Color surface,
   ) {
     return Expanded(
@@ -580,7 +594,7 @@ class _EditTargetsSheetState extends ConsumerState<EditTargetsSheet> {
           duration: const Duration(milliseconds: 200),
           padding: const EdgeInsets.symmetric(vertical: 8),
           decoration: BoxDecoration(
-            color: selected ? teal : Colors.transparent,
+            color: selected ? accent : Colors.transparent,
             borderRadius: BorderRadius.circular(8),
           ),
           alignment: Alignment.center,
@@ -609,12 +623,14 @@ class _EditTargetsSheetState extends ConsumerState<EditTargetsSheet> {
     Color textPrimary,
     Color textMuted,
     Color elevated,
-    Color teal, {
+    Color macroColor, {
     bool isCalories = false,
   }) {
     return Row(
       children: [
-        // Label + recommended
+        // Label + recommended. The macro color tints both so each row is
+        // scannable (orange = Fat, purple = Protein, …) and matches the
+        // macro rings on the Current Targets card.
         SizedBox(
           width: 110,
           child: Column(
@@ -624,8 +640,8 @@ class _EditTargetsSheetState extends ConsumerState<EditTargetsSheet> {
                 label,
                 style: TextStyle(
                   fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                  color: textPrimary,
+                  fontWeight: FontWeight.w700,
+                  color: macroColor,
                 ),
               ),
               if (recommended != null)
@@ -638,7 +654,7 @@ class _EditTargetsSheetState extends ConsumerState<EditTargetsSheet> {
                     'Rec: ${NumberFormat.decimalPattern().format(recommended)}${isCalories ? '' : 'g'}',
                     style: TextStyle(
                       fontSize: 11,
-                      color: teal.withValues(alpha: 0.7),
+                      color: macroColor.withValues(alpha: 0.7),
                     ),
                   ),
                 ),
@@ -808,7 +824,7 @@ class _EditTargetsSheetState extends ConsumerState<EditTargetsSheet> {
     );
   }
 
-  Widget _buildRateSelector(bool isDark, Color textPrimary, Color textMuted, Color teal) {
+  Widget _buildRateSelector(bool isDark, Color textPrimary, Color textMuted, Color accent) {
     const rates = [
       ('slow', '0.25', 'Slow'),
       ('moderate', '0.5', 'Moderate'),
@@ -836,10 +852,14 @@ class _EditTargetsSheetState extends ConsumerState<EditTargetsSheet> {
                   child: Container(
                     padding: const EdgeInsets.symmetric(vertical: 8),
                     decoration: BoxDecoration(
-                      color: isSelected ? teal.withValues(alpha: 0.15) : Colors.transparent,
+                      color: isSelected
+                          ? accent.withValues(alpha: 0.15)
+                          : Colors.transparent,
                       borderRadius: BorderRadius.circular(8),
                       border: Border.all(
-                        color: isSelected ? teal : textMuted.withValues(alpha: 0.3),
+                        color: isSelected
+                            ? accent
+                            : textMuted.withValues(alpha: 0.3),
                       ),
                     ),
                     child: Column(
@@ -849,14 +869,14 @@ class _EditTargetsSheetState extends ConsumerState<EditTargetsSheet> {
                           style: TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.bold,
-                            color: isSelected ? teal : textPrimary,
+                            color: isSelected ? accent : textPrimary,
                           ),
                         ),
                         Text(
                           r.$3,
                           style: TextStyle(
                             fontSize: 9,
-                            color: isSelected ? teal : textMuted,
+                            color: isSelected ? accent : textMuted,
                           ),
                         ),
                       ],

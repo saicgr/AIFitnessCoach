@@ -202,7 +202,7 @@ class _LevelUpDialogState extends ConsumerState<LevelUpDialog>
     }
 
     // 5. Next milestone (if any)
-    const milestones = [5, 10, 15, 25, 35, 50, 75, 100];
+    const milestones = [5, 10, 25, 50, 75, 100, 150, 200, 250];
     for (final m in milestones) {
       if (level < m) {
         final unlock = _getLevelUnlock(m);
@@ -607,15 +607,17 @@ class _LevelUpDialogState extends ConsumerState<LevelUpDialog>
   }
 
   String? _getLevelUnlock(int level) {
+    // Mirrors backend MERCH_TYPE_FOR_LEVEL + MILESTONE_REWARDS_DISPLAY.
     switch (level) {
-      case 5: return '"Rising Star" profile badge';
-      case 10: return 'Custom profile frame unlock';
-      case 15: return 'Exclusive theme color options';
-      case 25: return '"Dedicated" animated badge';
-      case 35: return 'Animated profile effects';
-      case 50: return '"Veteran" badge + FREE FitWiz T-Shirt!';
-      case 75: return '"Elite" holographic badge + FREE Shaker Bottle!';
-      case 100: return '"Legend" animated badge + FREE FitWiz Hoodie!';
+      case 5: return '"Rising Star" animated badge + Premium Crate';
+      case 10: return '"Iron Will" animated badge + Iron theme';
+      case 25: return 'Bronze animated frame + "Dedicated" chat title';
+      case 50: return 'Silver frame + FREE FitWiz Sticker Pack!';
+      case 75: return 'Gold holographic frame + "Elite" animated nameplate';
+      case 100: return 'Elite badge + FREE FitWiz T-Shirt!';
+      case 150: return 'Champion badge + FREE FitWiz Hoodie!';
+      case 200: return 'Mythic badge + FREE Full Merch Kit!';
+      case 250: return 'Transcendent badge + FREE Signed Premium Kit!';
       default: return null;
     }
   }

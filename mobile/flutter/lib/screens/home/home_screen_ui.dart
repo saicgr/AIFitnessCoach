@@ -10,6 +10,12 @@ extension __HomeScreenStateExt on _HomeScreenState {
     ref.read(posthogServiceProvider).capture(
       eventName: 'home_screen_viewed',
     );
+    // Fire-and-forget daily fitness-profile snapshot. Debounced 1x/day via
+    // SharedPreferences so repeat opens on the same day are a no-op.
+    // Replaces the external cron for active users.
+    Future.microtask(
+      () => ref.read(fitnessSnapshotServiceProvider).ensureToday(),
+    );
     // Gate: route to the notification pre-permission screen once per install
     // before the user interacts with home. Runs async so it can read prefs.
     _maybeShowNotificationPrime();

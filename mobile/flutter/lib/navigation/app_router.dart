@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../core/services/posthog_service.dart';
+import '../core/services/sentry_service.dart';
 import 'posthog_route_observer.dart';
 import '../data/models/workout.dart';
 import '../data/models/user.dart' as app_user;
@@ -51,6 +52,7 @@ import '../screens/metrics/metrics_dashboard_screen.dart';
 import '../screens/workout/active_workout_screen_refactored.dart';
 import '../screens/workout/workout_complete_screen.dart';
 import '../screens/workout/workout_detail_screen.dart';
+import '../screens/workout/mood_workout_pre_start_screen.dart';
 import '../screens/workout/workout_summary_screen_v2.dart';
 import '../screens/workout/exercise_detail_screen.dart';
 import '../screens/workout/custom_workout_builder_screen.dart';
@@ -121,6 +123,10 @@ import '../screens/trophies/trophy_room_screen.dart';
 import '../screens/leaderboard/xp_leaderboard_screen.dart';
 import '../screens/rewards/rewards_screen.dart';
 import '../screens/inventory/inventory_screen.dart';
+import '../screens/merch/merch_claims_screen.dart';
+import '../screens/referrals/referrals_screen.dart';
+import '../screens/cosmetics/cosmetics_gallery_screen.dart';
+import '../screens/discover/discover_screen.dart';
 import '../screens/xp_goals/xp_goals_screen.dart';
 // Guest mode provider import kept for potential future re-enablement
 // import '../data/providers/guest_mode_provider.dart';
@@ -485,7 +491,11 @@ final routerProvider = Provider<GoRouter>((ref) {
     // call that blocks the main thread. Only enable in debug builds.
     debugLogDiagnostics: kDebugMode,
     refreshListenable: authNotifier,
-    observers: [PosthogRouteObserver(posthog)],
+    observers: [
+      PosthogRouteObserver(posthog),
+      // No-op when Sentry is disabled; otherwise adds nav breadcrumbs.
+      if (SentryService.isEnabled) SentryService.navigatorObserver(),
+    ],
     redirect: (context, state) {
       final authState = ref.read(authStateProvider);
       final languageState = ref.read(languageProvider);

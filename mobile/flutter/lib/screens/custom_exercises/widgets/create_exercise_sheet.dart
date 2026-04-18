@@ -42,6 +42,27 @@ class _CreateExerciseSheetState extends ConsumerState<CreateExerciseSheet>
   int _defaultReps = 10;
   bool _isCompound = false;
 
+  // Advanced fields
+  final _restController = TextEditingController();
+  final _rpeController = TextEditingController();
+  final _tempoController = TextEditingController();
+  final _notesController = TextEditingController();
+  final _romController = TextEditingController();
+  final _inclineController = TextEditingController();
+  final _durationController = TextEditingController();
+  final _distanceController = TextEditingController();
+  String? _selectedBandColor;
+  bool _showAdvanced = false;
+
+  static const _bandColorOptions = [
+    ('yellow', 'Yellow'),
+    ('red', 'Red'),
+    ('green', 'Green'),
+    ('blue', 'Blue'),
+    ('black', 'Black'),
+    ('purple', 'Purple'),
+  ];
+
   // Composite exercise fields
   final _comboNameController = TextEditingController();
   final _comboNotesController = TextEditingController();
@@ -86,8 +107,36 @@ class _CreateExerciseSheetState extends ConsumerState<CreateExerciseSheet>
     _comboNameController.dispose();
     _comboNotesController.dispose();
     _componentNameController.dispose();
+    _restController.dispose();
+    _rpeController.dispose();
+    _tempoController.dispose();
+    _notesController.dispose();
+    _romController.dispose();
+    _inclineController.dispose();
+    _durationController.dispose();
+    _distanceController.dispose();
     super.dispose();
   }
+
+  bool get _nameLooksCardio {
+    final n = _nameController.text.toLowerCase();
+    return n.contains('walk') || n.contains('run') || n.contains('jog') ||
+        n.contains('hike') || n.contains('cycle') || n.contains('swim') ||
+        n.contains('row') || n.contains('sprint');
+  }
+
+  bool get _nameLooksTimed {
+    final n = _nameController.text.toLowerCase();
+    return n.contains('plank') || n.contains('hold') || n.contains('hang') ||
+        n.contains('wall sit') || n.contains('isometric') || n.contains('static');
+  }
+
+  bool get _nameLooksStretch {
+    final n = _nameController.text.toLowerCase();
+    return n.contains('stretch') || n.contains('yoga') || n.contains('mobility');
+  }
+
+  bool get _equipmentUsesBand => _equipment.toLowerCase().contains('band');
 
   @override
   Widget build(BuildContext context) {
@@ -290,6 +339,10 @@ class _CreateExerciseSheetState extends ConsumerState<CreateExerciseSheet>
               isDark: isDark,
               maxLines: 4,
             ),
+            const SizedBox(height: 20),
+
+            // Advanced fields (collapsible)
+            _buildAdvancedSection(isDark),
             const SizedBox(height: 32),
 
             // Create button
@@ -945,16 +998,31 @@ class _CreateExerciseSheetState extends ConsumerState<CreateExerciseSheet>
 
     setState(() => _isSubmitting = true);
 
+    String? textOrNull(TextEditingController c) {
+      final t = c.text.trim();
+      return t.isEmpty ? null : t;
+    }
+
+    final durationMinutes = double.tryParse(_durationController.text.trim());
+    final durationSeconds = durationMinutes != null ? (durationMinutes * 60).round() : null;
+
     final result = await ref.read(customExercisesProvider.notifier).createSimpleExercise(
           name: _nameController.text.trim(),
           primaryMuscle: _primaryMuscle,
           equipment: _equipment,
-          instructions: _instructionsController.text.trim().isEmpty
-              ? null
-              : _instructionsController.text.trim(),
+          instructions: textOrNull(_instructionsController),
           defaultSets: _defaultSets,
           defaultReps: _defaultReps,
           isCompound: _isCompound,
+          defaultRestSeconds: int.tryParse(_restController.text.trim()),
+          defaultRpe: int.tryParse(_rpeController.text.trim()),
+          defaultTempo: textOrNull(_tempoController),
+          defaultBandColor: _selectedBandColor,
+          defaultNotes: textOrNull(_notesController),
+          defaultRangeOfMotion: textOrNull(_romController),
+          defaultInclinePercent: double.tryParse(_inclineController.text.trim()),
+          defaultDurationSeconds: durationSeconds,
+          defaultDistanceMiles: double.tryParse(_distanceController.text.trim()),
         );
 
     setState(() => _isSubmitting = false);
@@ -962,6 +1030,236 @@ class _CreateExerciseSheetState extends ConsumerState<CreateExerciseSheet>
     if (result != null && mounted) {
       Navigator.pop(context);
     }
+  }
+
+  Widget _buildAdvancedSection(bool isDark) {
+    final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
+    final surface = isDark ? AppColors.surface : AppColorsLight.surface;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: surface,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: isDark ? Colors.white12 : Colors.black12,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          InkWell(
+            borderRadius: BorderRadius.circular(12),
+            onTap: () {
+              HapticService.light();
+              setState(() => _showAdvanced = !_showAdvanced);
+            },
+            child: Padding(
+              padding: const EdgeInsets.all(14),
+              child: Row(
+                children: [
+                  Icon(Icons.science_outlined, color: cyan, size: 18),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Advanced (optional)',
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600,
+                            color: isDark ? Colors.white : Colors.black,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          'Rest, RPE, tempo, incline, distance, duration, notes',
+                          style: TextStyle(fontSize: 12, color: textMuted),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ),
+                  ),
+                  Icon(
+                    _showAdvanced ? Icons.expand_less : Icons.expand_more,
+                    color: textMuted,
+                  ),
+                ],
+              ),
+            ),
+          ),
+          if (_showAdvanced) ...[
+            Padding(
+              padding: const EdgeInsets.fromLTRB(14, 0, 14, 14),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Rest
+                  _buildAdvField('Rest (sec)', _restController, isDark, keyboard: true),
+                  const SizedBox(height: 10),
+
+                  // RPE
+                  _buildAdvField('RPE (1-10)', _rpeController, isDark, keyboard: true),
+                  const SizedBox(height: 10),
+
+                  // Tempo (strength-ish)
+                  if (!_nameLooksCardio)
+                    _buildAdvField('Tempo (e.g. 3-0-1-0)', _tempoController, isDark),
+                  if (!_nameLooksCardio) const SizedBox(height: 10),
+
+                  // Duration — only for timed / stretch / cardio
+                  if (_nameLooksTimed || _nameLooksStretch || _nameLooksCardio)
+                    _buildAdvField(
+                      _nameLooksCardio ? 'Duration (min)' : 'Hold duration (sec)',
+                      _durationController,
+                      isDark,
+                      keyboard: true,
+                    ),
+                  if (_nameLooksTimed || _nameLooksStretch || _nameLooksCardio)
+                    const SizedBox(height: 10),
+
+                  // Incline — cardio / bench
+                  if (_nameLooksCardio ||
+                      _nameController.text.toLowerCase().contains('bench') ||
+                      _nameController.text.toLowerCase().contains('incline'))
+                    _buildAdvField('Incline (%)', _inclineController, isDark, keyboard: true),
+                  if (_nameLooksCardio ||
+                      _nameController.text.toLowerCase().contains('bench') ||
+                      _nameController.text.toLowerCase().contains('incline'))
+                    const SizedBox(height: 10),
+
+                  // Distance — walking/running/swimming
+                  if (_nameLooksCardio)
+                    _buildAdvField('Distance (mi)', _distanceController, isDark, keyboard: true),
+                  if (_nameLooksCardio) const SizedBox(height: 10),
+
+                  // ROM — strength / stretch
+                  _buildAdvField('Range of motion', _romController, isDark),
+                  const SizedBox(height: 10),
+
+                  // Band color chips
+                  if (_equipmentUsesBand) ...[
+                    Text(
+                      'Band',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: textMuted,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Wrap(
+                      spacing: 6,
+                      runSpacing: 6,
+                      children: _bandColorOptions.map((e) {
+                        final (value, label) = e;
+                        final isSelected = _selectedBandColor == value;
+                        return GestureDetector(
+                          onTap: () {
+                            HapticService.light();
+                            setState(() {
+                              _selectedBandColor = isSelected ? null : value;
+                            });
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                            decoration: BoxDecoration(
+                              color: isSelected ? cyan.withValues(alpha: 0.2) : Colors.transparent,
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(
+                                color: isSelected ? cyan : textMuted.withValues(alpha: 0.3),
+                              ),
+                            ),
+                            child: Text(
+                              label,
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                                color: isSelected ? cyan : textMuted,
+                              ),
+                            ),
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                    const SizedBox(height: 10),
+                  ],
+
+                  // Notes
+                  Text(
+                    'Notes',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: textMuted,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  _buildTextField(
+                    controller: _notesController,
+                    hint: 'e.g. Focus on squeeze at top, slow eccentric',
+                    isDark: isDark,
+                    maxLines: 3,
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAdvField(
+    String label,
+    TextEditingController controller,
+    bool isDark, {
+    bool keyboard = false,
+  }) {
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    return Row(
+      children: [
+        SizedBox(
+          width: 140,
+          child: Text(
+            label,
+            style: TextStyle(fontSize: 13, color: textMuted),
+          ),
+        ),
+        Expanded(
+          child: TextField(
+            controller: controller,
+            keyboardType: keyboard
+                ? const TextInputType.numberWithOptions(decimal: true)
+                : TextInputType.text,
+            style: TextStyle(
+              fontSize: 14,
+              color: isDark ? Colors.white : Colors.black,
+            ),
+            decoration: InputDecoration(
+              isDense: true,
+              contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: BorderSide(color: textMuted.withValues(alpha: 0.3)),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: BorderSide(color: textMuted.withValues(alpha: 0.3)),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: BorderSide(
+                  color: isDark ? AppColors.cyan : AppColorsLight.cyan,
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
   }
 
   Future<void> _createComboExercise() async {

@@ -125,6 +125,25 @@ class _StapleChoiceSheetState extends ConsumerState<StapleChoiceSheet> {
   final _rpmController = TextEditingController(text: '70');
   final _resistanceController = TextEditingController(text: '5');
   final _strokeRateController = TextEditingController(text: '25');
+  final _distanceController = TextEditingController();
+  final _paceController = TextEditingController();
+
+  // Advanced (universal) controllers — apply to any exercise type
+  final _rpeController = TextEditingController();
+  final _tempoController = TextEditingController();
+  final _notesController = TextEditingController();
+  final _romController = TextEditingController();
+  String? _selectedBandColor;
+  bool _showAdvanced = false;
+
+  static const _bandColors = [
+    ('yellow', 'Yellow (light)'),
+    ('red', 'Red (medium)'),
+    ('green', 'Green (heavy)'),
+    ('blue', 'Blue (extra heavy)'),
+    ('black', 'Black (max)'),
+    ('purple', 'Purple'),
+  ];
 
   static const _sections = [
     ('main', 'Main'),
@@ -144,17 +163,33 @@ class _StapleChoiceSheetState extends ConsumerState<StapleChoiceSheet> {
     _rpmController.dispose();
     _resistanceController.dispose();
     _strokeRateController.dispose();
+    _distanceController.dispose();
+    _paceController.dispose();
+    _rpeController.dispose();
+    _tempoController.dispose();
+    _notesController.dispose();
+    _romController.dispose();
     super.dispose();
   }
 
   bool get _isCardio {
     final eq = widget.equipmentValue?.toLowerCase() ?? '';
     final cat = widget.category?.toLowerCase() ?? '';
+    final name = widget.exerciseName.toLowerCase();
     return cat == 'cardio' ||
         eq.contains('treadmill') ||
         eq.contains('bike') ||
         eq.contains('rower') ||
-        eq.contains('elliptical');
+        eq.contains('elliptical') ||
+        name.contains('walk') ||
+        name.contains('run') ||
+        name.contains('jog') ||
+        name.contains('hike') ||
+        name.contains('cycle') ||
+        name.contains('cycling') ||
+        name.contains('swim') ||
+        name.contains('row') ||
+        name.contains('sprint');
   }
 
   bool get _isTimed {
@@ -167,39 +202,83 @@ class _StapleChoiceSheetState extends ConsumerState<StapleChoiceSheet> {
 
   bool get _isStrength => !_isCardio && !_isTimed;
 
+  bool get _isStretching {
+    final name = widget.exerciseName.toLowerCase();
+    final cat = widget.category?.toLowerCase() ?? '';
+    return cat == 'stretching' || cat == 'flexibility' || cat == 'mobility' ||
+        name.contains('stretch') || name.contains('yoga') || name.contains('mobility');
+  }
+
+  bool get _usesBand {
+    final eq = widget.equipmentValue?.toLowerCase() ?? '';
+    return eq.contains('band') || eq.contains('resistance');
+  }
+
+  bool get _supportsIncline {
+    final name = widget.exerciseName.toLowerCase();
+    final eq = widget.equipmentValue?.toLowerCase() ?? '';
+    return eq.contains('treadmill') ||
+        name.contains('incline') ||
+        name.contains('walk') ||
+        name.contains('run') ||
+        name.contains('hike') ||
+        name.contains('bench');
+  }
+
   String get _cardioType {
     final eq = widget.equipmentValue?.toLowerCase() ?? '';
+    final name = widget.exerciseName.toLowerCase();
     if (eq.contains('treadmill')) return 'treadmill';
-    if (eq.contains('bike')) return 'bike';
-    if (eq.contains('rower')) return 'rower';
+    if (eq.contains('bike') || name.contains('cycle') || name.contains('cycling')) return 'bike';
+    if (eq.contains('rower') || name.contains('row')) return 'rower';
     if (eq.contains('elliptical')) return 'elliptical';
+    if (name.contains('walk') || name.contains('hike')) return 'walking';
+    if (name.contains('run') || name.contains('jog') || name.contains('sprint')) return 'running';
+    if (name.contains('swim')) return 'swimming';
     return 'generic';
   }
 
+
   Map<String, double>? _buildCardioParams() {
-    if (!_isCardio) return null;
     final params = <String, double>{};
 
-    final duration = double.tryParse(_durationController.text);
-    if (duration != null) params['duration_seconds'] = duration * 60;
+    if (_isCardio) {
+      final duration = double.tryParse(_durationController.text);
+      if (duration != null) params['duration_seconds'] = duration * 60;
 
-    final type = _cardioType;
-    if (type == 'treadmill') {
-      final speed = double.tryParse(_speedController.text);
-      if (speed != null) params['speed_mph'] = speed;
-      final incline = double.tryParse(_inclineController.text);
-      if (incline != null) params['incline_percent'] = incline;
-    } else if (type == 'bike') {
-      final rpm = double.tryParse(_rpmController.text);
-      if (rpm != null) params['rpm'] = rpm;
-      final resistance = double.tryParse(_resistanceController.text);
-      if (resistance != null) params['resistance_level'] = resistance;
-    } else if (type == 'rower') {
-      final strokeRate = double.tryParse(_strokeRateController.text);
-      if (strokeRate != null) params['stroke_rate_spm'] = strokeRate;
-    } else if (type == 'elliptical') {
-      final resistance = double.tryParse(_resistanceController.text);
-      if (resistance != null) params['resistance_level'] = resistance;
+      final type = _cardioType;
+      if (type == 'treadmill' || type == 'walking' || type == 'running') {
+        final speed = double.tryParse(_speedController.text);
+        if (speed != null) params['speed_mph'] = speed;
+        final incline = double.tryParse(_inclineController.text);
+        if (incline != null) params['incline_percent'] = incline;
+        final distance = double.tryParse(_distanceController.text);
+        if (distance != null) params['distance_miles'] = distance;
+      } else if (type == 'bike') {
+        final rpm = double.tryParse(_rpmController.text);
+        if (rpm != null) params['rpm'] = rpm;
+        final resistance = double.tryParse(_resistanceController.text);
+        if (resistance != null) params['resistance_level'] = resistance;
+      } else if (type == 'rower') {
+        final strokeRate = double.tryParse(_strokeRateController.text);
+        if (strokeRate != null) params['stroke_rate_spm'] = strokeRate;
+      } else if (type == 'elliptical') {
+        final resistance = double.tryParse(_resistanceController.text);
+        if (resistance != null) params['resistance_level'] = resistance;
+      } else if (type == 'swimming') {
+        final distance = double.tryParse(_distanceController.text);
+        if (distance != null) params['distance_miles'] = distance;
+      }
+    }
+
+    // Universal advanced fields — apply regardless of exercise type.
+    if (_showAdvanced) {
+      if (!_isCardio && _supportsIncline) {
+        final incline = double.tryParse(_inclineController.text);
+        if (incline != null) params['incline_percent'] = incline;
+      }
+      final rpe = double.tryParse(_rpeController.text);
+      if (rpe != null) params['rpe'] = rpe;
     }
 
     return params.isEmpty ? null : params;
@@ -219,6 +298,10 @@ class _StapleChoiceSheetState extends ConsumerState<StapleChoiceSheet> {
     String? swapExerciseId,
     bool goBack = false,
   }) {
+    final tempo = _showAdvanced ? _tempoController.text.trim() : '';
+    final notes = _showAdvanced ? _notesController.text.trim() : '';
+    final rom = _showAdvanced ? _romController.text.trim() : '';
+
     return (
       addToday: addToday,
       section: _selectedSection,
@@ -234,6 +317,10 @@ class _StapleChoiceSheetState extends ConsumerState<StapleChoiceSheet> {
           : _dayTargetMode == _DayTargetMode.custom && _selectedDays.isNotEmpty
               ? (_selectedDays.toList()..sort())
               : null,
+      userTempo: tempo.isEmpty ? null : tempo,
+      userNotes: notes.isEmpty ? null : notes,
+      userBandColor: _showAdvanced ? _selectedBandColor : null,
+      userRangeOfMotion: rom.isEmpty ? null : rom,
       goBack: goBack,
     );
   }
@@ -369,6 +456,10 @@ class _StapleChoiceSheetState extends ConsumerState<StapleChoiceSheet> {
               _buildStrengthSection(textPrimary, textMuted, cardColor, cardBorder),
               const SizedBox(height: 16),
             ],
+
+            // Universal Advanced section (RPE, tempo, band, notes, incline, etc.)
+            _buildAdvancedSection(textPrimary, textMuted, cardColor, cardBorder),
+            const SizedBox(height: 16),
 
             // Day-of-week targeting
             _buildDayPickerSection(textPrimary, textMuted, cardColor, cardBorder),
@@ -864,5 +955,247 @@ class _StapleChoiceSheetState extends ConsumerState<StapleChoiceSheet> {
         ),
       ),
     );
+  }
+
+  /// Universal advanced options — shows for every exercise type, collapsed by default.
+  /// Contains: incline (if supported), RPE, tempo, band color (if bands), ROM, free-form notes.
+  Widget _buildAdvancedSection(
+    Color textPrimary,
+    Color textMuted,
+    Color cardColor,
+    Color cardBorder,
+  ) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Container(
+        decoration: BoxDecoration(
+          color: cardColor,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: cardBorder),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            InkWell(
+              borderRadius: BorderRadius.circular(12),
+              onTap: () {
+                HapticService.light();
+                setState(() => _showAdvanced = !_showAdvanced);
+              },
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Row(
+                  children: [
+                    Icon(Icons.science_outlined, color: AppColors.cyan, size: 18),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Advanced (optional)',
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w600,
+                              color: textPrimary,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            _advancedSubtitle(),
+                            style: TextStyle(fontSize: 12, color: textMuted),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
+                      ),
+                    ),
+                    Icon(
+                      _showAdvanced ? Icons.expand_less : Icons.expand_more,
+                      color: textMuted,
+                      size: 20,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            if (_showAdvanced) ...[
+              Divider(height: 1, color: cardBorder),
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Incline — shown for exercises that support it and aren't already showing it in cardio
+                    if (_supportsIncline && !_isCardio) ...[
+                      _buildCardioField(
+                        label: 'Incline',
+                        controller: _inclineController,
+                        suffix: '%',
+                        textPrimary: textPrimary,
+                        textMuted: textMuted,
+                      ),
+                      const SizedBox(height: 8),
+                    ],
+
+                    // Hold duration — shown for timed exercises if cardio section isn't already handling it
+                    if (_isTimed && !_isCardio) ...[
+                      _buildCardioField(
+                        label: 'Hold duration',
+                        controller: _durationController,
+                        suffix: 'sec',
+                        textPrimary: textPrimary,
+                        textMuted: textMuted,
+                      ),
+                      const SizedBox(height: 8),
+                    ],
+
+                    // RPE — universal 1-10 scale
+                    _buildCardioField(
+                      label: 'RPE (effort)',
+                      controller: _rpeController,
+                      suffix: '/10',
+                      textPrimary: textPrimary,
+                      textMuted: textMuted,
+                    ),
+                    const SizedBox(height: 8),
+
+                    // Tempo — only meaningful for strength work
+                    if (_isStrength) ...[
+                      _buildCardioField(
+                        label: 'Tempo',
+                        controller: _tempoController,
+                        suffix: 'e.g. 3-0-1-0',
+                        textPrimary: textPrimary,
+                        textMuted: textMuted,
+                      ),
+                      const SizedBox(height: 8),
+                    ],
+
+                    // Range of motion
+                    if (_isStrength || _isStretching) ...[
+                      _buildCardioField(
+                        label: 'ROM',
+                        controller: _romController,
+                        suffix: 'e.g. full',
+                        textPrimary: textPrimary,
+                        textMuted: textMuted,
+                      ),
+                      const SizedBox(height: 8),
+                    ],
+
+                    // Band color chips
+                    if (_usesBand) ...[
+                      Text(
+                        'Band',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w500,
+                          color: textMuted,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: _bandColors.map((entry) {
+                          final (value, label) = entry;
+                          final isSelected = _selectedBandColor == value;
+                          return GestureDetector(
+                            onTap: () {
+                              HapticService.light();
+                              setState(() {
+                                _selectedBandColor = isSelected ? null : value;
+                              });
+                            },
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                              decoration: BoxDecoration(
+                                color: isSelected
+                                    ? AppColors.cyan.withValues(alpha: 0.15)
+                                    : Colors.transparent,
+                                borderRadius: BorderRadius.circular(20),
+                                border: Border.all(
+                                  color: isSelected
+                                      ? AppColors.cyan
+                                      : textMuted.withValues(alpha: 0.3),
+                                ),
+                              ),
+                              child: Text(
+                                label,
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                                  color: isSelected ? AppColors.cyan : textMuted,
+                                ),
+                              ),
+                            ),
+                          );
+                        }).toList(),
+                      ),
+                      const SizedBox(height: 12),
+                    ],
+
+                    // Free-form notes
+                    Text(
+                      'Notes',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                        color: textMuted,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    TextField(
+                      controller: _notesController,
+                      maxLines: 3,
+                      maxLength: 300,
+                      style: TextStyle(fontSize: 14, color: textPrimary),
+                      decoration: InputDecoration(
+                        hintText: 'e.g. Focus on squeeze at top, slow eccentric',
+                        hintStyle: TextStyle(
+                          fontSize: 13,
+                          color: textMuted.withValues(alpha: 0.6),
+                        ),
+                        filled: true,
+                        fillColor: textMuted.withValues(alpha: 0.05),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                          borderSide: BorderSide(
+                            color: textMuted.withValues(alpha: 0.2),
+                          ),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                          borderSide: BorderSide(
+                            color: textMuted.withValues(alpha: 0.2),
+                          ),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                          borderSide: const BorderSide(color: AppColors.cyan),
+                        ),
+                        contentPadding: const EdgeInsets.all(12),
+                        isDense: true,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  String _advancedSubtitle() {
+    final parts = <String>[];
+    if (_supportsIncline) parts.add('incline');
+    parts.add('RPE');
+    if (_isStrength) parts.add('tempo');
+    if (_usesBand) parts.add('band');
+    parts.add('notes');
+    return parts.join(', ');
   }
 }

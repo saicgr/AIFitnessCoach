@@ -85,6 +85,11 @@ class _QuizBodyMetricsState extends State<QuizBodyMetrics> {
   late TextEditingController _nameController;
   late ScrollController _scrollController;
 
+  // Focus nodes so we can preserve focus across cm↔ft/in structure rebuilds.
+  final FocusNode _heightCmFocus = FocusNode();
+  final FocusNode _heightFeetFocus = FocusNode();
+  final FocusNode _heightInchesFocus = FocusNode();
+
   // Separate unit preferences for height and weight
   late bool _heightInMetric;
   late bool _weightInMetric;
@@ -200,6 +205,9 @@ class _QuizBodyMetricsState extends State<QuizBodyMetrics> {
     _weightController.dispose();
     _nameController.dispose();
     _scrollController.dispose();
+    _heightCmFocus.dispose();
+    _heightFeetFocus.dispose();
+    _heightInchesFocus.dispose();
     super.dispose();
   }
 

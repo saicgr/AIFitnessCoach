@@ -14,6 +14,10 @@ class StatsTemplateType(str, Enum):
     OVERVIEW = "overview"  # Activity heatmap + key stats
     ACHIEVEMENTS = "achievements"  # Achievements & milestones
     PRS = "prs"  # Personal records summary
+    STREAK_FIRE = "streak_fire"
+    WEEKLY_REPORT = "weekly_report"
+    LEVEL_UP = "level_up"
+    ELITE = "elite"  # Cosmetic-gated (stats_card_elite, L75)
 
 
 class StatsSnapshot(BaseModel):

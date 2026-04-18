@@ -6,7 +6,7 @@ Weekly summary is the premier nutrition-showcase email; win-back references
 the user's actual lifetime stats as re-engagement hooks.
 """
 import resend
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 
 from core.logger import get_logger
 from models.email import UserStats
@@ -154,6 +154,8 @@ class EmailMarketingMixin:
         self, to_email: str, first_name_value: str, stats: UserStats,
         total_duration_minutes: int = 0, top_exercise: str = "",
         top_exercise_volume_lbs: float = 0,
+        percentile: Optional[float] = None,   # W5: 0-100 among active users
+        percentile_tier: Optional[str] = None,  # 'legendary' | 'top' | 'elite' | 'rising' | 'active'
     ) -> Dict[str, Any]:
         """Weekly summary — the nutrition showcase email.
 
@@ -183,25 +185,40 @@ class EmailMarketingMixin:
         duration_str = f"{hours}h {mins}m" if hours > 0 else f"{mins}m" if mins else ""
 
         # Dynamic subject — the numbers go first, the name second.
+        # W5: prefer percentile when the user is in the top 30% and has logged
+        # workouts this week. This is Duolingo-style social-proof copy — research
+        # shows this is one of the strongest drivers of app consistency.
+        top_percent_text = None
+        if percentile is not None and percentile > 0 and stats.workouts_this_week >= 1:
+            top_pct = max(1, int(round(100 - percentile)))  # invert: percentile 95 → top 5%
+            if top_pct <= 30:
+                top_percent_text = f"top {top_pct}%"
+
         if stats.workouts_this_week >= 1:
             summary_bits = [f"{stats.workouts_this_week} workouts"]
             if stats.nutrition_days_logged_this_week:
                 summary_bits.append(f"{stats.nutrition_days_logged_this_week}/7 meal days")
             if stats.nutrition_avg_protein_g_week:
                 summary_bits.append(f"{stats.nutrition_avg_protein_g_week}g protein avg")
-            subject = f"{name}, your week: " + " · ".join(summary_bits)
-            title = f"Your week, {name}"
+
+            if top_percent_text is not None:
+                subject = f"🏆 {name}, you're in the {top_percent_text} this week"
+                title = f"You're in the {top_percent_text}, {name}"
+            else:
+                subject = f"{name}, your week: " + " · ".join(summary_bits)
+                title = f"Your week, {name}"
+
             if stats.workouts_this_week >= 3:
                 mood_line = f"{coach} is impressed."
             else:
                 mood_line = f"{coach} noticed."
             subtitle = f"Here's what you pulled off" + (f" · {duration_str} of training." if duration_str else ".")
         else:
-            subject = f"{name}, empty week — {coach} wants to talk."
+            subject = f"{name}, empty week — {coach} is here when you're ready"
             title = f"A quiet week, {name}"
             subtitle = (
                 f"You didn't log a workout this week. "
-                f"{coach} isn't mad. {coach} is just asking what happened."
+                f"{coach} isn't mad — just checking in. Ready to restart?"
             )
             mood_line = ""
 
@@ -211,9 +228,18 @@ class EmailMarketingMixin:
              f"Lifetime total: {stats.workouts_total}." + (f" Current streak: {stats.current_streak_days} 🔥" if stats.current_streak_days else "")),
             ("&#128202;", "Nutrition this week",
              _nutrition_summary_line(stats)),
-            ("&#127942;", "Coming up",
-             f"Up next: {stats.next_workout_name or 'your next session'}." + (" " + mood_line if mood_line else "")),
         ]
+        # W5: add percentile block prominently when we have it
+        if top_percent_text is not None:
+            features.append((
+                "&#127942;",
+                f"You're in the {top_percent_text} of active users",
+                "That's real consistency. Keep showing up — most people don't.",
+            ))
+        features.append((
+            "&#128293;", "Coming up",
+            f"Up next: {stats.next_workout_name or 'your next session'}." + (" " + mood_line if mood_line else "")
+        ))
 
         # The core content: workouts grid + nutrition grid, stacked.
         stats_row = build_stats_grid_html(stats) + build_nutrition_grid_html(stats)

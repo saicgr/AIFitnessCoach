@@ -34,12 +34,24 @@ extension ContextLoggingServiceExt1 on ContextLoggingService {
   }
 
 
-  /// Log when mood workout is generated
+  /// Log when mood workout is generated.
+  ///
+  /// Enriched with the local-algorithm fields ([style], [difficulty],
+  /// [wasStyleOverridden], [wasDifficultyOverridden], [wasDurationOverridden],
+  /// [latencyMs]) so we can track recommended-vs-chosen fit and local-gen
+  /// latency from analytics.
   Future<void> logMoodWorkoutGenerated({
     required Mood mood,
     required String workoutId,
     int? durationMinutes,
     int? generationTimeMs,
+    String? style,
+    String? difficulty,
+    bool? wasStyleOverridden,
+    bool? wasDifficultyOverridden,
+    bool? wasDurationOverridden,
+    int? latencyMs,
+    String? generator, // 'mood_rule_based' | 'mood_ai'
   }) async {
     try {
       final userId = await _apiClient.getUserId();
@@ -52,6 +64,16 @@ extension ContextLoggingServiceExt1 on ContextLoggingService {
           'workout_id': workoutId,
           'duration_minutes': durationMinutes,
           'generation_time_ms': generationTimeMs,
+          if (style != null) 'style': style,
+          if (difficulty != null) 'difficulty': difficulty,
+          if (wasStyleOverridden != null)
+            'style_was_overridden': wasStyleOverridden,
+          if (wasDifficultyOverridden != null)
+            'difficulty_was_overridden': wasDifficultyOverridden,
+          if (wasDurationOverridden != null)
+            'duration_was_overridden': wasDurationOverridden,
+          if (latencyMs != null) 'latency_ms': latencyMs,
+          if (generator != null) 'generator': generator,
         },
         context: {
           'time_of_day': _getTimeOfDay(),
@@ -61,6 +83,94 @@ extension ContextLoggingServiceExt1 on ContextLoggingService {
       debugPrint('✅ [ContextLog] Logged mood workout generation');
     } catch (e) {
       debugPrint('⚠️ [ContextLog] Failed to log mood workout generation: $e');
+    }
+  }
+
+
+  /// Log when the user expands the Advanced Options panel in the mood
+  /// sheet. Used to measure how often people care to tweak defaults.
+  Future<void> logMoodAdvancedOpened({
+    required Mood mood,
+    bool hadOverrides = false,
+  }) async {
+    try {
+      await _logEvent(
+        eventType: 'mood_workout_advanced_opened',
+        eventData: {
+          'mood': mood.value,
+          'had_overrides': hadOverrides,
+        },
+        context: {
+          'time_of_day': _getTimeOfDay(),
+          'day_of_week': _getDayOfWeek(),
+        },
+      );
+      debugPrint('✅ [ContextLog] Logged mood advanced opened');
+    } catch (e) {
+      debugPrint('⚠️ [ContextLog] Failed to log mood advanced opened: $e');
+    }
+  }
+
+
+  /// Log when the user overrides the recommended style / difficulty /
+  /// duration for a mood. Powers dashboards that measure how much the
+  /// research-based defaults match actual behavior.
+  Future<void> logMoodStyleOverridden({
+    required Mood mood,
+    required String field, // 'style' | 'difficulty' | 'duration'
+    required String recommended,
+    required String chosen,
+  }) async {
+    try {
+      await _logEvent(
+        eventType: 'mood_workout_style_overridden',
+        eventData: {
+          'mood': mood.value,
+          'field': field,
+          'recommended': recommended,
+          'chosen': chosen,
+        },
+        context: {
+          'time_of_day': _getTimeOfDay(),
+          'day_of_week': _getDayOfWeek(),
+        },
+      );
+      debugPrint('✅ [ContextLog] Logged override: $field recommended=$recommended → chosen=$chosen');
+    } catch (e) {
+      debugPrint('⚠️ [ContextLog] Failed to log override: $e');
+    }
+  }
+
+
+  /// Log the "how do you feel now?" post-workout mood prompt. The (before,
+  /// after) pair feeds mood-delta dashboards (was the workout effective
+  /// for this emotional state?).
+  Future<void> logMoodPostWorkout({
+    required Mood initialMood,
+    required Mood postMood,
+    required String workoutId,
+    int? durationActualMin,
+    double? completionPct,
+  }) async {
+    try {
+      await _logEvent(
+        eventType: 'mood_post_workout_mood',
+        eventData: {
+          'initial_mood': initialMood.value,
+          'post_mood': postMood.value,
+          'workout_id': workoutId,
+          'duration_actual_min': durationActualMin,
+          'completion_pct': completionPct,
+        },
+        context: {
+          'time_of_day': _getTimeOfDay(),
+          'day_of_week': _getDayOfWeek(),
+        },
+      );
+      debugPrint(
+          '✅ [ContextLog] Logged post-workout mood: ${initialMood.value} → ${postMood.value}');
+    } catch (e) {
+      debugPrint('⚠️ [ContextLog] Failed to log post-workout mood: $e');
     }
   }
 

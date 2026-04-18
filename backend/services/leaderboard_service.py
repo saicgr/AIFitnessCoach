@@ -49,8 +49,14 @@ class LeaderboardService:
     # UNLOCK STATUS
     # ============================================================
 
-    def check_unlock_status(self, user_id: str) -> Dict[str, Any]:
-        """Check if user has unlocked global leaderboard."""
+    def check_unlock_status(self, user_id: str, scope: str = "global") -> Dict[str, Any]:
+        """Check if user has unlocked the given leaderboard scope.
+
+        Migration 1939 / Workstream 2: relaxed `friends` scope to unlock at 1
+        workout (so week-1 users can see friend rankings immediately). `global`
+        and `country` keep the 10-workout gate to avoid demotivating brand-new
+        users who'd sit at the bottom of huge leaderboards.
+        """
         result = (
             self.supabase.table("workouts")
             .select("id", count="exact")
@@ -60,12 +66,19 @@ class LeaderboardService:
         )
 
         workouts_completed = result.count or 0
-        is_unlocked = workouts_completed >= 10
+
+        if scope == "friends":
+            threshold = 1
+        else:
+            threshold = 10
+
+        is_unlocked = workouts_completed >= threshold
 
         return {
             "is_unlocked": is_unlocked,
             "workouts_completed": workouts_completed,
-            "workouts_needed": max(10 - workouts_completed, 0),
+            "workouts_needed": max(threshold - workouts_completed, 0),
+            "threshold": threshold,
             "days_active": 0,
         }
 

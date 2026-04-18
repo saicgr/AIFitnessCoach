@@ -10,6 +10,7 @@ import '../../../data/repositories/nutrition_repository.dart';
 import '../../../widgets/glass_sheet.dart';
 import '../../../widgets/main_shell.dart';
 import 'edit_targets_sheet.dart';
+import 'nutrition_streak_card.dart';
 import 'pinned_nutrients_card.dart';
 import 'logged_meals_section.dart';
 import 'goal_row.dart';
@@ -370,6 +371,18 @@ class _DailyTabState extends ConsumerState<DailyTab>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // 0. STREAK CARD — moved out of Nutrition Settings (where it
+                //    was buried) to this top-of-Daily position so users see
+                //    their streak every time they open the Nutrition tab.
+                //    Settings now holds only the Weekly Goal toggle.
+                if (widget.userId.isNotEmpty) ...[
+                  NutritionStreakCard(
+                    userId: widget.userId,
+                    isDark: widget.isDark,
+                  ),
+                  const SizedBox(height: 12),
+                ],
+
                 // 1. PINNED NUTRIENTS - Compact, at the very top
                 if (widget.micronutrients != null &&
                     widget.micronutrients!.pinned.isNotEmpty) ...[

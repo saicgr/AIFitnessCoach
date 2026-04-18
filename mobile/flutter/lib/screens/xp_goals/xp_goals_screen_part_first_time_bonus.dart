@@ -323,9 +323,21 @@ class _AllLevelsSheet extends ConsumerWidget {
               ),
               if (level.reward != null && !isBigMilestone)
                 Container(
+                  constraints: const BoxConstraints(maxWidth: 160),
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                   decoration: BoxDecoration(color: rewardColor.withValues(alpha: isDark ? 0.2 : 0.15), borderRadius: BorderRadius.circular(10), border: Border.all(color: rewardColor.withValues(alpha: isDark ? 0.4 : 0.35))),
-                  child: Row(mainAxisSize: MainAxisSize.min, children: [if (level.rewardIcon != null) Text(level.rewardIcon!, style: const TextStyle(fontSize: 14))]),
+                  child: Row(mainAxisSize: MainAxisSize.min, children: [
+                    if (level.rewardIcon != null) Text(level.rewardIcon!, style: const TextStyle(fontSize: 14)),
+                    if (level.rewardIcon != null) const SizedBox(width: 4),
+                    Flexible(
+                      child: Text(
+                        level.reward!,
+                        style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: rewardColor),
+                        overflow: TextOverflow.ellipsis,
+                        maxLines: 2,
+                      ),
+                    ),
+                  ]),
                 ),
             ],
           ),

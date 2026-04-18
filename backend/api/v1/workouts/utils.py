@@ -162,6 +162,79 @@ def get_intensity_from_fitness_level(fitness_level: Optional[str]) -> str:
         return "medium"
 
 
+def _coerce_positive_int(value: Any) -> Optional[int]:
+    """Coerce a DB/JSON value (int, str, float, None) into a positive int or None."""
+    if value is None:
+        return None
+    try:
+        as_int = int(value)
+    except (TypeError, ValueError):
+        return None
+    return as_int if as_int > 0 else None
+
+
+def resolve_target_duration(
+    body_duration: Optional[int],
+    body_duration_min: Optional[int],
+    body_duration_max: Optional[int],
+    gym_profile: Optional[Dict[str, Any]],
+    user: Optional[Dict[str, Any]],
+    default: int = 45,
+) -> Dict[str, int]:
+    """Resolve the target workout duration from request body, gym profile, and user preferences.
+
+    Resolution priority (first non-None wins per field):
+        1. request body (body_duration / body_duration_min / body_duration_max)
+        2. active gym profile (duration_minutes / _min / _max)
+        3. users.preferences (workout_duration / workout_duration_min / workout_duration_max)
+        4. ``default`` for the target only (min/max stay None if unspecified).
+
+    The request body defaults to ``None`` (see ``GenerateWorkoutRequest`` in schemas.py)
+    so we can tell "user didn't specify" from "user picked 45".
+
+    Returns a dict with keys ``target``, ``min``, ``max`` — all positive ints or None
+    (except ``target`` which always has a value because of the default fallback).
+    """
+    prefs: Dict[str, Any] = {}
+    if user:
+        raw_prefs = user.get("preferences")
+        prefs = parse_json_field(raw_prefs, {}) if raw_prefs is not None else {}
+        if not isinstance(prefs, dict):
+            prefs = {}
+
+    # Gym profile sources
+    gym_target = _coerce_positive_int(gym_profile.get("duration_minutes")) if gym_profile else None
+    gym_min = _coerce_positive_int(gym_profile.get("duration_minutes_min")) if gym_profile else None
+    gym_max = _coerce_positive_int(gym_profile.get("duration_minutes_max")) if gym_profile else None
+
+    # User preference sources
+    pref_target = _coerce_positive_int(prefs.get("workout_duration"))
+    pref_min = _coerce_positive_int(prefs.get("workout_duration_min"))
+    pref_max = _coerce_positive_int(prefs.get("workout_duration_max"))
+
+    body_target = _coerce_positive_int(body_duration)
+    body_min = _coerce_positive_int(body_duration_min)
+    body_max = _coerce_positive_int(body_duration_max)
+
+    resolved_min = body_min if body_min is not None else (gym_min if gym_min is not None else pref_min)
+    resolved_max = body_max if body_max is not None else (gym_max if gym_max is not None else pref_max)
+
+    # Target: body -> gym -> user pref -> max -> default
+    resolved_target = (
+        body_target
+        or gym_target
+        or pref_target
+        or resolved_max
+        or default
+    )
+
+    return {
+        "target": int(resolved_target),
+        "min": resolved_min,
+        "max": resolved_max,
+    }
+
+
 def get_all_equipment(user: dict) -> List[str]:
     """Get combined list of standard and custom equipment for a user."""
     standard = parse_json_field(user.get("equipment"), [])
@@ -322,6 +395,7 @@ def row_to_workout(row: dict, enrich_videos: bool = True) -> Workout:
         superseded_by=row.get("superseded_by"),
         completed_at=row.get("completed_at"),
         completion_method=row.get("completion_method"),
+        is_favorite=bool(row.get("is_favorite", False)),
     )
 
 

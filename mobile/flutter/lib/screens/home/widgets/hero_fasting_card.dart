@@ -347,7 +347,7 @@ class _HeroFastingCardState extends ConsumerState<HeroFastingCard> {
               TextButton.icon(
                 onPressed: () {
                   HapticService.light();
-                  context.push('/fasting');
+                  context.go('/fasting');
                 },
                 icon: Icon(
                   Icons.insights_outlined,

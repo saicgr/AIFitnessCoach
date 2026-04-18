@@ -48,6 +48,9 @@ class NotificationPreferences {
   final String accountabilityIntensity; // gentle/balanced/tough_love/off
   final bool aiPersonalizedNudges;
   final bool guiltNotifications;
+  // Daily crate reminder (gamification)
+  final bool dailyCrateReminders;
+  final String dailyCrateReminderTime;
 
   // Frequency preset
   final String frequencyPreset; // 'minimal', 'balanced', 'full_coach'
@@ -119,6 +122,9 @@ class NotificationPreferences {
     this.accountabilityIntensity = 'balanced',
     this.aiPersonalizedNudges = true,
     this.guiltNotifications = true,
+    // Daily crate reminder
+    this.dailyCrateReminders = true,
+    this.dailyCrateReminderTime = '10:00',
     // Frequency preset
     this.frequencyPreset = 'balanced',
     // Bundle times
@@ -187,6 +193,9 @@ class NotificationPreferences {
     String? accountabilityIntensity,
     bool? aiPersonalizedNudges,
     bool? guiltNotifications,
+    // Daily crate reminder
+    bool? dailyCrateReminders,
+    String? dailyCrateReminderTime,
     // Frequency preset
     String? frequencyPreset,
     // Bundle times
@@ -254,6 +263,9 @@ class NotificationPreferences {
       accountabilityIntensity: accountabilityIntensity ?? this.accountabilityIntensity,
       aiPersonalizedNudges: aiPersonalizedNudges ?? this.aiPersonalizedNudges,
       guiltNotifications: guiltNotifications ?? this.guiltNotifications,
+      // Daily crate reminder
+      dailyCrateReminders: dailyCrateReminders ?? this.dailyCrateReminders,
+      dailyCrateReminderTime: dailyCrateReminderTime ?? this.dailyCrateReminderTime,
       // Frequency preset
       frequencyPreset: frequencyPreset ?? this.frequencyPreset,
       // Bundle times
@@ -323,6 +335,9 @@ class NotificationPreferences {
         'accountability_intensity': accountabilityIntensity,
         'ai_personalized_nudges': aiPersonalizedNudges,
         'guilt_notifications': guiltNotifications,
+        // Daily crate reminder
+        'daily_crate_reminders': dailyCrateReminders,
+        'daily_crate_reminder_time': dailyCrateReminderTime,
         // Frequency preset
         'frequency_preset': frequencyPreset,
         // Bundle times

@@ -12,7 +12,20 @@ class CustomExerciseCreate(BaseModel):
     instructions: str = Field(default="", max_length=5000)  # Optional instructions
     default_sets: int = Field(default=3, ge=1, le=10)
     default_reps: Optional[int] = Field(default=10, ge=1, le=100)
+    default_rest_seconds: Optional[int] = Field(default=None, ge=0, le=600)
     is_compound: bool = Field(default=False)  # Targets multiple muscle groups?
+
+    # Advanced optional fields — persisted as a preamble in instructions so
+    # the AI context reflects them during workout generation. Migrate to
+    # dedicated columns on the exercises table later if needed.
+    default_rpe: Optional[int] = Field(default=None, ge=1, le=10)
+    default_tempo: Optional[str] = Field(default=None, max_length=50)
+    default_band_color: Optional[str] = Field(default=None, max_length=30)
+    default_notes: Optional[str] = Field(default=None, max_length=500)
+    default_range_of_motion: Optional[str] = Field(default=None, max_length=100)
+    default_incline_percent: Optional[float] = Field(default=None, ge=-10, le=30)
+    default_duration_seconds: Optional[int] = Field(default=None, ge=1, le=7200)
+    default_distance_miles: Optional[float] = Field(default=None, ge=0, le=100)
 
 
 class CustomExerciseResponse(BaseModel):

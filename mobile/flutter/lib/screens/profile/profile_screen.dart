@@ -840,6 +840,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               _buildFitnessSectionHeader(isDark, textMuted),
               const SizedBox(height: 8),
               EditableFitnessCard(key: _fitnessCardKey, user: user),
+              const SizedBox(height: 20),
+
+              // PRIVACY — leaderboard visibility + anonymous + stats controls.
+              // Placed directly below FITNESS because privacy belongs adjacent
+              // to the data it controls.
+              const PrivacySection(),
               const SizedBox(height: 12),
 
               // Reports & Insights button

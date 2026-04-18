@@ -111,6 +111,37 @@ async def complete_workout(
             change_source="user"
         )
 
+        # Referral qualification (migration 1932) — only fires if:
+        #   (a) this is the user's first-ever completed workout, AND
+        #   (b) they signed up with a referral code
+        # RPC is idempotent (COALESCE on first_workout_completed_at) and returns
+        # {qualified: false} for users without a pending referral — cheap to call.
+        # Capture is_first_workout BEFORE we update the timestamp, so we can
+        # tell the frontend to fire the first-workout forecast sheet (W1).
+        is_first_workout = False
+        try:
+            user_row = supabase.table("users") \
+                .select("first_workout_completed_at,referred_by_code") \
+                .eq("id", user_id) \
+                .limit(1) \
+                .execute()
+            urow = (user_row.data or [{}])[0]
+            is_first_workout = urow.get("first_workout_completed_at") is None
+            has_referral = urow.get("referred_by_code") is not None
+            if is_first_workout and has_referral:
+                background_tasks.add_task(
+                    lambda: supabase.rpc("mark_referral_qualified", {"p_referred_id": user_id}).execute()
+                )
+                logger.info(f"[Referrals] Qualifying referral for user={user_id}")
+            elif is_first_workout:
+                # Still set the first_workout timestamp for users without a referrer
+                supabase.table("users").update(
+                    {"first_workout_completed_at": now.isoformat()}
+                ).eq("id", user_id).execute()
+        except Exception as ref_err:
+            logger.warning(f"[Referrals] qualification hook failed: {ref_err}")
+            # Non-critical — don't block workout completion
+
         # PR Detection
         detected_prs: List[PersonalRecordInfo] = []
 
@@ -496,6 +527,7 @@ async def complete_workout(
             performance_comparison=performance_comparison,
             strength_scores_updated=True, fitness_score_updated=True,
             completion_method=completion_method, message=message,
+            is_first_workout=is_first_workout,  # W1: trigger forecast sheet
         )
 
     except HTTPException:
@@ -793,8 +825,11 @@ async def get_workout_completion_summary(workout_id: str,
             except Exception as e:
                 logger.warning(f"Failed to build performance comparison for summary: {e}", exc_info=True)
 
-        # Generate AI coach summary
+        # Generate AI coach summary (long-form) and hero_narrative (punchy
+        # one-liner) in parallel — both share the same context but speak in
+        # different voices.
         coach_summary = None
+        hero_narrative = None
         try:
             exercises = existing.get("exercises") or existing.get("exercises_json") or []
             if isinstance(exercises, str):
@@ -842,7 +877,45 @@ async def get_workout_completion_summary(workout_id: str,
                 f"- summary: Personalized, encouraging, mention specific achievements. Under 60 words.\n"
                 f"- No emojis anywhere"
             )
-            coach_summary = await ai_insights_service.gemini.chat(user_message=summary_prompt)
+
+            # Punchy hero card — one sentence, anchored to a real delta.
+            hero_prompt = (
+                f"You are a concise fitness coach writing a ONE-LINE headline "
+                f"for a post-workout hero card. Plain text, no JSON, no quotes, "
+                f"no emojis.\n\n"
+                f"Workout: {existing.get('name')}\n"
+                f"Total Volume: {total_vol:.0f} kg ({vol_change} vs last)\n"
+                f"New PRs: {len([p for p in personal_records if p.improvement_percent])}\n"
+                f"Exercises improved: {improved_count}, declined: {declined_count}, first-time: {first_time_count}\n"
+                f"Top PRs: " + "; ".join(pr_details[:2]) + "\n\n"
+                f"Rules:\n"
+                f"- Exactly ONE sentence, max 18 words.\n"
+                f"- Anchor to a specific number or exercise from the data above "
+                f"(e.g. a PR, a volume delta, a 'first time' exercise).\n"
+                f"- Encouraging but not cheesy; skip generic phrases like "
+                f"'great job' or 'you crushed it'.\n"
+                f"- If the session declined vs last, acknowledge honestly "
+                f"(e.g. 'Lighter session — use it to sharpen form before "
+                f"next week').\n"
+                f"- No emojis, no markdown, no hashtags, no exclamation "
+                f"marks unless a PR was hit."
+            )
+
+            coach_summary, hero_narrative = await asyncio.gather(
+                ai_insights_service.gemini.chat(user_message=summary_prompt),
+                ai_insights_service.gemini.chat(user_message=hero_prompt),
+                return_exceptions=True,
+            )
+            if isinstance(coach_summary, Exception):
+                logger.warning(f"Failed to generate AI coach summary: {coach_summary}")
+                coach_summary = "Great work completing your workout!"
+            if isinstance(hero_narrative, Exception):
+                logger.warning(f"Failed to generate hero narrative: {hero_narrative}")
+                hero_narrative = None
+            elif hero_narrative:
+                # Defensive trim — strip stray quotes or trailing whitespace
+                # the model sometimes returns despite the prompt.
+                hero_narrative = hero_narrative.strip().strip('"').strip("'").strip()
         except Exception as e:
             logger.warning(f"Failed to generate AI coach summary: {e}", exc_info=True)
             coach_summary = "Great work completing your workout!"
@@ -850,6 +923,7 @@ async def get_workout_completion_summary(workout_id: str,
         return WorkoutSummaryResponse(
             workout=workout_data, performance_comparison=performance_comparison,
             personal_records=personal_records, coach_summary=coach_summary,
+            hero_narrative=hero_narrative,
             completion_method=completion_method, completed_at=str(completed_at) if completed_at else None,
             set_logs=set_logs,
         )

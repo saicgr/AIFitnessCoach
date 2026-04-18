@@ -736,7 +736,7 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
         'label': 'Hypertrophy',  // ← SHORTENED from "Muscle Hypertrophy"
         'description': '8–12 reps • muscle size',  // ← CONDENSED to concise format
         'icon': Icons.fitness_center_rounded,
-        'color': AppColors.orange, // Vibrant orange for visibility
+        'color': AppColors.onboardingAccent, // Vibrant orange for visibility
       },
       {
         'id': 'muscle_strength',
@@ -789,9 +789,9 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
 
   Widget _buildGoalQuestion({bool showHeader = true}) {
     final goals = [
-      {'id': 'build_muscle', 'label': 'Build Muscle', 'icon': Icons.fitness_center, 'color': AppColors.orange},
-      {'id': 'lose_weight', 'label': 'Lose Weight', 'icon': Icons.monitor_weight_outlined, 'color': AppColors.orange},
-      {'id': 'increase_strength', 'label': 'Get Stronger', 'icon': Icons.bolt, 'color': AppColors.orange},
+      {'id': 'build_muscle', 'label': 'Build Muscle', 'icon': Icons.fitness_center, 'color': AppColors.onboardingAccent},
+      {'id': 'lose_weight', 'label': 'Lose Weight', 'icon': Icons.monitor_weight_outlined, 'color': AppColors.onboardingAccent},
+      {'id': 'increase_strength', 'label': 'Get Stronger', 'icon': Icons.bolt, 'color': AppColors.onboardingAccent},
       {'id': 'improve_endurance', 'label': 'Build Endurance', 'icon': Icons.directions_run, 'color': AppColors.purple},
       {'id': 'stay_active', 'label': 'Stay Active', 'icon': Icons.favorite_outline, 'color': AppColors.green},
       {'id': 'athletic_performance', 'label': 'Athletic Performance', 'icon': Icons.sports_martial_arts, 'color': const Color(0xFF3B82F6)}, // Bright blue

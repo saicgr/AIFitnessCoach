@@ -75,6 +75,208 @@ class _GroceryListScreenState extends ConsumerState<GroceryListScreen> {
     }
   }
 
+  Future<void> _showAddItemSheet() async {
+    HapticFeedback.lightImpact();
+    final accent = AccentColorScope.of(context).getColor(widget.isDark);
+    final isDark = widget.isDark;
+    final bg = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final text = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final muted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+
+    final nameController = TextEditingController();
+    final qtyController = TextEditingController();
+    final unitController = TextEditingController();
+    Aisle? selectedAisle;
+
+    await showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: bg,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (sheetContext) {
+        return StatefulBuilder(
+          builder: (context, setSheetState) => Padding(
+            padding: EdgeInsets.only(
+              left: 20,
+              right: 20,
+              top: 20,
+              bottom: MediaQuery.of(sheetContext).viewInsets.bottom + 20,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Add item',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                    color: text,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: nameController,
+                  autofocus: true,
+                  textCapitalization: TextCapitalization.sentences,
+                  style: TextStyle(color: text),
+                  decoration: InputDecoration(
+                    labelText: 'Item name',
+                    labelStyle: TextStyle(color: muted),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide: BorderSide(color: accent),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(
+                      flex: 2,
+                      child: TextField(
+                        controller: qtyController,
+                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                        style: TextStyle(color: text),
+                        decoration: InputDecoration(
+                          labelText: 'Qty',
+                          labelStyle: TextStyle(color: muted),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                            borderSide: BorderSide(color: accent),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      flex: 3,
+                      child: TextField(
+                        controller: unitController,
+                        style: TextStyle(color: text),
+                        decoration: InputDecoration(
+                          labelText: 'Unit (g, cup, ...)',
+                          labelStyle: TextStyle(color: muted),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                            borderSide: BorderSide(color: accent),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  'Aisle (optional)',
+                  style: TextStyle(fontSize: 12, color: muted, fontWeight: FontWeight.w600),
+                ),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: Aisle.values.map((a) {
+                    final isSelected = selectedAisle == a;
+                    return GestureDetector(
+                      onTap: () {
+                        HapticFeedback.selectionClick();
+                        setSheetState(() {
+                          selectedAisle = isSelected ? null : a;
+                        });
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: isSelected ? accent.withValues(alpha: 0.2) : Colors.transparent,
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                            color: isSelected ? accent : muted.withValues(alpha: 0.3),
+                          ),
+                        ),
+                        child: Text(
+                          a.label,
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                            color: isSelected ? accent : muted,
+                          ),
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                ),
+                const SizedBox(height: 20),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () async {
+                      final name = nameController.text.trim();
+                      if (name.isEmpty) return;
+                      final qty = double.tryParse(qtyController.text.trim());
+                      final unit = unitController.text.trim();
+
+                      Navigator.of(sheetContext).pop();
+                      await _addItem(
+                        name: name,
+                        quantity: qty,
+                        unit: unit.isEmpty ? null : unit,
+                        aisle: selectedAisle,
+                      );
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: accent,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                    child: const Text('Add', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _addItem({
+    required String name,
+    double? quantity,
+    String? unit,
+    Aisle? aisle,
+  }) async {
+    try {
+      await ref.read(recipeRepositoryProvider).addGroceryItem(widget.listId, {
+        'ingredient_name': name,
+        if (quantity != null) 'quantity': quantity,
+        if (unit != null) 'unit': unit,
+        if (aisle != null) 'aisle': aisle.value,
+      });
+      HapticFeedback.mediumImpact();
+      await _load();
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to add item: $e')),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final accent = AccentColorScope.of(context).getColor(widget.isDark);
@@ -111,6 +313,15 @@ class _GroceryListScreenState extends ConsumerState<GroceryListScreen> {
           : _error != null
               ? Center(child: Text('Error: $_error', style: TextStyle(color: muted)))
               : _buildBody(accent, text, muted, surface),
+      floatingActionButton: _loading || _error != null
+          ? null
+          : FloatingActionButton.extended(
+              onPressed: _showAddItemSheet,
+              backgroundColor: accent,
+              foregroundColor: Colors.white,
+              icon: const Icon(Icons.add),
+              label: const Text('Add item', style: TextStyle(fontWeight: FontWeight.w600)),
+            ),
     );
   }
 

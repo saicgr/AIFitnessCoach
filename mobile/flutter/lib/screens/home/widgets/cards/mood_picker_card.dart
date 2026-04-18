@@ -620,7 +620,7 @@ class _MoodButton extends StatelessWidget {
                 duration: const Duration(milliseconds: 200),
                 child: Text(
                   mood.emoji,
-                  style: const TextStyle(fontSize: 32),
+                  style: const TextStyle(fontSize: 40),
                 ),
               ),
               const SizedBox(height: 6),

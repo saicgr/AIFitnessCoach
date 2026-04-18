@@ -174,6 +174,9 @@ extension ChatMessagesNotifierExt on ChatMessagesNotifier {
       final unifiedContext = _getUnifiedContext();
       debugPrint('🎯 [Chat] Unified context length: ${unifiedContext.length} chars');
 
+      // Measure user-perceived latency (tap-to-reply). Includes network +
+      // backend processing — the number the user actually waits for.
+      final responseStopwatch = Stopwatch()..start();
       final response = await _repository.sendMessage(
         message: message,
         userId: userId,
@@ -184,6 +187,7 @@ extension ChatMessagesNotifierExt on ChatMessagesNotifier {
         aiSettings: currentAISettings.toJson(),
         unifiedContext: unifiedContext,
       );
+      responseStopwatch.stop();
       if (!mounted) return;
 
       // Mark user message as sent after successful API call
@@ -213,6 +217,7 @@ extension ChatMessagesNotifierExt on ChatMessagesNotifier {
         createdAt: DateTime.now().toIso8601String(),
         actionData: response.actionData, // Include action_data for UI buttons
         coachPersonaId: currentAISettings.coachPersonaId,
+        responseTimeMs: responseStopwatch.elapsedMilliseconds,
       );
 
       // Debug: Check if hasGeneratedWorkout will be true

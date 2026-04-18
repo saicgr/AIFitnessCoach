@@ -66,9 +66,9 @@ class NotificationServicePart2:
                     tier = int(nudge_type.replace("guilt_day", ""))
                 except ValueError:
                     tier = 14
-                template_pool = self.GUILT_ESCALATION_TEMPLATES.get(
+                template_pool = self.COMEBACK_NUDGE_TEMPLATES.get(
                     (tier, accountability_intensity),
-                    self.GUILT_ESCALATION_TEMPLATES.get((14, "balanced"), [])
+                    self.COMEBACK_NUDGE_TEMPLATES.get((14, "balanced"), [])
                 )
             else:
                 template_pool = self.ACCOUNTABILITY_TEMPLATES.get(template_key, [])

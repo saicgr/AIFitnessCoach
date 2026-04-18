@@ -4,6 +4,38 @@ part of 'app_router.dart';
 List<RouteBase> _workoutRoutes() => [
   // === Workout Routes ===
 
+      // Mood workout pre-start — runs a breath or grounding prompt appropriate
+      // to the mood (Anxious gets 5-4-3-2-1; Angry / Stressed get breathwork)
+      // then replaces itself with the regular workout detail screen.
+      // Declared BEFORE `/workout/:id` so GoRouter treats it as a static
+      // path rather than a workoutId param.
+      GoRoute(
+        path: '/workout/mood-pre-start',
+        builder: (context, state) {
+          final workout = state.extra is Workout ? state.extra as Workout : null;
+          if (workout == null) {
+            return Scaffold(
+              body: Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.error_outline, size: 48, color: Colors.red),
+                    const SizedBox(height: 16),
+                    const Text('No workout data'),
+                    const SizedBox(height: 16),
+                    ElevatedButton(
+                      onPressed: () => context.go('/home'),
+                      child: const Text('Go Home'),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }
+          return MoodWorkoutPreStartScreen(workout: workout);
+        },
+      ),
+
       GoRoute(
         path: '/workout/:id',
         builder: (context, state) {
@@ -241,6 +273,8 @@ List<RouteBase> _workoutRoutes() => [
             avgHeartRate: data['avgHeartRate'] as int?,
             maxHeartRate: data['maxHeartRate'] as int?,
             minHeartRate: data['minHeartRate'] as int?,
+            // W1: triggers First Workout Forecast sheet
+            isFirstWorkout: data['isFirstWorkout'] as bool? ?? false,
           );
         },
       ),
@@ -343,6 +377,24 @@ List<RouteBase> _workoutRoutes() => [
       GoRoute(
         path: '/inventory',
         builder: (context, state) => const InventoryScreen(),
+      ),
+
+      // Merch Claims - Physical rewards earned at milestone levels
+      GoRoute(
+        path: '/merch-claims',
+        builder: (context, state) => const MerchClaimsScreen(),
+      ),
+
+      // Referrals - Share code + view progress + all merch tiers
+      GoRoute(
+        path: '/referrals',
+        builder: (context, state) => const ReferralsScreen(),
+      ),
+
+      // Cosmetics Gallery - Browse, equip badges and frames earned by leveling up
+      GoRoute(
+        path: '/cosmetics',
+        builder: (context, state) => const CosmeticsGalleryScreen(),
       ),
 
       // XP Goals - Full screen XP goals, daily/weekly/monthly tabs

@@ -884,3 +884,168 @@ def generate_quick_workout(
             "workout_id": workout_id,
             "message": f"Failed to generate quick workout: {str(e)}"
         }
+
+
+# ─── Proposal layer ──────────────────────────────────────────────────────────
+# When the user asks for advice ("any change you recommend?") the Workout
+# agent calls propose_workout_change instead of mutating directly. This
+# stages the change in chat_pending_proposals and the frontend renders an
+# Apply / Not now card. Direct commands ("swap squats for lunges") keep
+# using the mutation tools above — they still execute immediately.
+
+_PROPOSAL_ACTIONS = {
+    "add_exercise",
+    "remove_exercise",
+    "replace_exercise",
+    "replace_all_exercises",
+    "modify_intensity",
+    "reschedule",
+}
+
+
+@tool
+def propose_workout_change(
+    workout_id: str,
+    change_summary: str,
+    reason: str,
+    action: str,
+    tool_args: Dict[str, Any],
+) -> Dict[str, Any]:
+    """
+    Propose a workout modification WITHOUT applying it. Use this whenever the
+    user asks for advice, suggestions, or recommendations about their workout
+    — NEVER describe a change in prose and do nothing, and NEVER mutate
+    directly for soft/advisory requests.
+
+    Use the real mutation tools (add_exercise_to_workout /
+    remove_exercise_from_workout / replace_all_exercises / etc.) only when
+    the user gives an explicit command like "swap squats for lunges".
+
+    Args:
+        workout_id: UUID of the workout the proposed change applies to.
+        change_summary: Short user-facing line for the Apply card, e.g.
+            "Swap Standard Rows → Pendlay Rows".
+        reason: One-line rationale shown under the summary.
+        action: One of add_exercise, remove_exercise, replace_exercise,
+            replace_all_exercises, modify_intensity, reschedule.
+        tool_args: Exact JSON args that will be passed to the matching
+            mutation tool on apply. Example for a single-exercise swap:
+              {"old_exercise": "Barbell Row", "new_exercise": "Pendlay Row",
+               "muscle_group": "back"}
+
+    Returns:
+        {"success": True, "action": "propose_workout_change",
+         "proposal_id": "<uuid>", "proposal_token": "<secret>",
+         "summary": ..., "reason": ..., "proposed_action": action,
+         "expires_at": "<iso8601>"}
+        The proposal_token is required on apply — never log or echo it.
+    """
+    import secrets
+
+    if not _validate_workout_id(workout_id):
+        return {
+            "success": False,
+            "action": "propose_workout_change",
+            "message": f"Invalid workout_id: {workout_id}. Expected a UUID.",
+        }
+
+    if action not in _PROPOSAL_ACTIONS:
+        return {
+            "success": False,
+            "action": "propose_workout_change",
+            "message": (
+                f"Unsupported action: {action}. Must be one of "
+                f"{sorted(_PROPOSAL_ACTIONS)}."
+            ),
+        }
+
+    if not isinstance(tool_args, dict):
+        return {
+            "success": False,
+            "action": "propose_workout_change",
+            "message": "tool_args must be a JSON object.",
+        }
+
+    if not change_summary or not change_summary.strip():
+        return {
+            "success": False,
+            "action": "propose_workout_change",
+            "message": "change_summary is required.",
+        }
+
+    logger.info(
+        f"Tool: Proposing workout change action={action} workout={workout_id} "
+        f"summary={change_summary!r}"
+    )
+
+    try:
+        db = get_supabase_db()
+
+        workout = db.get_workout(workout_id)
+        if not workout:
+            return {
+                "success": False,
+                "action": "propose_workout_change",
+                "workout_id": workout_id,
+                "message": f"Workout {workout_id} not found.",
+            }
+
+        user_id = workout.get("user_id")
+        if not user_id:
+            return {
+                "success": False,
+                "action": "propose_workout_change",
+                "workout_id": workout_id,
+                "message": "Workout has no associated user_id.",
+            }
+
+        # 16-byte URL-safe token. Never echoed to logs; only returned to the
+        # client so it can be sent back on /apply or /dismiss.
+        proposal_token = secrets.token_urlsafe(16)
+
+        row = {
+            "user_id": user_id,
+            "workout_id": workout_id,
+            "action": action,
+            "tool_args": tool_args,
+            "summary": change_summary.strip(),
+            "reason": (reason or "").strip() or None,
+            "proposal_token": proposal_token,
+            "status": "pending",
+        }
+
+        insert_result = (
+            db.client.table("chat_pending_proposals").insert(row).execute()
+        )
+        if not insert_result.data:
+            raise RuntimeError("Insert into chat_pending_proposals returned no data")
+
+        inserted = insert_result.data[0]
+        proposal_id = inserted["id"]
+        expires_at = inserted["expires_at"]
+
+        logger.info(
+            f"Tool: Staged proposal {proposal_id} for workout {workout_id} "
+            f"(action={action})"
+        )
+
+        return {
+            "success": True,
+            "action": "propose_workout_change",
+            "workout_id": workout_id,
+            "proposal_id": proposal_id,
+            "proposal_token": proposal_token,
+            "summary": change_summary.strip(),
+            "reason": row["reason"],
+            "proposed_action": action,
+            "expires_at": expires_at,
+        }
+
+    except Exception as e:
+        logger.error(f"propose_workout_change failed: {e}", exc_info=True)
+        return {
+            "success": False,
+            "action": "propose_workout_change",
+            "workout_id": workout_id,
+            "message": f"Failed to stage proposal: {e}",
+        }

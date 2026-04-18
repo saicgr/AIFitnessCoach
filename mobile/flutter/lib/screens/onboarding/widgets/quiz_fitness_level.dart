@@ -38,7 +38,7 @@ class QuizFitnessLevel extends StatelessWidget {
       'id': 'intermediate',
       'label': 'Intermediate',
       'icon': Icons.trending_up,
-      'color': AppColors.orange,
+      'color': AppColors.onboardingAccent,
       'description': 'Workout regularly, familiar with exercises',
     },
     {

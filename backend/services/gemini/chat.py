@@ -105,7 +105,7 @@ class ChatMixin:
 
 Return ONLY valid JSON in this exact format (no markdown, no explanation):
 {
-  "intent": "add_exercise|remove_exercise|swap_workout|modify_intensity|reschedule|delete_workout|report_injury|change_setting|navigate|start_workout|complete_workout|log_hydration|set_water_goal|log_weight|generate_quick_workout|log_food|nutrition_summary|recent_meals|question",
+  "intent": "add_exercise|remove_exercise|swap_workout|modify_intensity|reschedule|delete_workout|recommend_workout_change|report_injury|change_setting|navigate|start_workout|complete_workout|log_hydration|set_water_goal|log_weight|generate_quick_workout|log_food|nutrition_summary|recent_meals|question",
   "exercises": ["exercise name 1", "exercise name 2"],
   "muscle_groups": ["chest", "back", "shoulders", "biceps", "triceps", "legs", "core", "glutes"],
   "modification": "easier|harder|shorter|longer",
@@ -125,6 +125,7 @@ INTENT DEFINITIONS:
 - modify_intensity: User wants to change difficulty/duration (e.g., "make it easier", "too hard")
 - reschedule: User wants to change workout timing (e.g., "move to tomorrow")
 - delete_workout: User wants to DELETE/CANCEL a workout entirely (e.g., "delete today's workout", "cancel my workout", "remove this workout")
+- recommend_workout_change: User is asking for ADVICE on what to change about their workout — NOT giving a direct command (e.g., "any change you recommend?", "what should I swap?", "recommend improvements", "got any tips for my workout?", "what would you tweak?", "suggest a change"). This routes to the Workout specialist which will propose the change with an Apply button. If the user says exactly which exercise to swap ("swap squats for lunges"), that's add_exercise/remove_exercise/swap_workout instead — reserve recommend_workout_change for open-ended advice requests.
 - report_injury: User mentions pain/injury (e.g., "my shoulder hurts")
 - change_setting: User wants to change app settings (e.g., "turn on dark mode", "enable dark theme", "switch to light mode")
 - navigate: User wants to go to a specific screen (e.g., "show my achievements", "open nutrition", "go to profile")

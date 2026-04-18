@@ -17,6 +17,7 @@ extension __RegenerateWorkoutSheetStateExt on _RegenerateWorkoutSheetState {
       _currentStep = 0;
       _progressMessage = 'Starting...';
       _progressDetail = null;
+      _lastBackendUpdateAt = DateTime.now();
     });
 
     final authState = ref.read(authStateProvider);
@@ -85,6 +86,7 @@ extension __RegenerateWorkoutSheetStateExt on _RegenerateWorkoutSheetState {
           setState(() {
             _progressMessage = 'Loading review...';
             _progressDetail = 'Preparing your workout';
+            _lastBackendUpdateAt = DateTime.now();
           });
 
           // Show review sheet for user to approve
@@ -133,6 +135,7 @@ extension __RegenerateWorkoutSheetStateExt on _RegenerateWorkoutSheetState {
           _totalSteps = progress.totalSteps;
           _progressMessage = progress.message;
           _progressDetail = progress.detail;
+          _lastBackendUpdateAt = DateTime.now();
         });
       }
     } catch (e) {
@@ -162,6 +165,7 @@ extension __RegenerateWorkoutSheetStateExt on _RegenerateWorkoutSheetState {
       _currentStep = 0;
       _progressMessage = 'Applying suggestion...';
       _progressDetail = null;
+      _lastBackendUpdateAt = DateTime.now();
     });
 
     final authState = ref.read(authStateProvider);
@@ -214,6 +218,7 @@ extension __RegenerateWorkoutSheetStateExt on _RegenerateWorkoutSheetState {
           setState(() {
             _progressMessage = 'Loading review...';
             _progressDetail = 'Preparing your workout';
+            _lastBackendUpdateAt = DateTime.now();
           });
 
           // Show review sheet for user to approve
@@ -262,6 +267,7 @@ extension __RegenerateWorkoutSheetStateExt on _RegenerateWorkoutSheetState {
           _totalSteps = progress.totalSteps;
           _progressMessage = progress.message;
           _progressDetail = progress.detail;
+          _lastBackendUpdateAt = DateTime.now();
         });
       }
     } catch (e) {
@@ -345,19 +351,24 @@ extension __RegenerateWorkoutSheetStateExt on _RegenerateWorkoutSheetState {
             }),
           ),
           const SizedBox(height: 14),
-          // Main message (AnimatedSwitcher so changes fade rather than pop)
-          AnimatedSwitcher(
-            duration: const Duration(milliseconds: 250),
-            child: Text(
-              _progressMessage.isNotEmpty ? _progressMessage : 'Warming up…',
-              key: ValueKey(_progressMessage),
-              style: TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w600,
-                color: colors.textPrimary,
+          // Main message (AnimatedSwitcher so changes fade rather than pop).
+          // Rotates through phase labels when the backend goes quiet so the
+          // headline never feels frozen on a single sentence.
+          Builder(builder: (_) {
+            final mainMessage = _displayMainMessage();
+            return AnimatedSwitcher(
+              duration: const Duration(milliseconds: 250),
+              child: Text(
+                mainMessage,
+                key: ValueKey(mainMessage),
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                  color: colors.textPrimary,
+                ),
               ),
-            ),
-          ),
+            );
+          }),
           const SizedBox(height: 4),
           // Substatus — either backend detail or a rotating phase hint so the
           // UI always looks alive during the long AI call.

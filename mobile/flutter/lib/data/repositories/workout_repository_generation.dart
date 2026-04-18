@@ -179,7 +179,9 @@ extension WorkoutRepositoryGeneration on WorkoutRepository {
     String? fitnessLevel,
     List<String>? goals,
     List<String>? equipment,
-    int durationMinutes = 45,
+    // Default is null (not 45) so the backend can resolve duration from the
+    // user's saved gym profile / preferences instead of silently forcing 45.
+    int? durationMinutes,
     int? durationMinutesMin,
     int? durationMinutesMax,
     List<String>? focusAreas,
@@ -223,7 +225,9 @@ extension WorkoutRepositoryGeneration on WorkoutRepository {
           if (fitnessLevel != null) 'fitness_level': fitnessLevel,
           if (goals != null && goals.isNotEmpty) 'goals': goals,
           if (equipment != null && equipment.isNotEmpty) 'equipment': equipment,
-          'duration_minutes': durationMinutes,
+          // Only send explicit duration; backend falls back to gym profile /
+          // user preferences when omitted (see resolve_target_duration).
+          if (durationMinutes != null) 'duration_minutes': durationMinutes,
           if (durationMinutesMin != null) 'duration_minutes_min': durationMinutesMin,
           if (durationMinutesMax != null) 'duration_minutes_max': durationMinutesMax,
           if (focusAreas != null && focusAreas.isNotEmpty) 'focus_areas': focusAreas,

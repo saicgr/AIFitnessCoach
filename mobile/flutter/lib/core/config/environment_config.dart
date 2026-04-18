@@ -80,4 +80,15 @@ class EnvironmentConfig {
     'REVENUECAT_GOOGLE_KEY',
     defaultValue: 'test_key_placeholder',
   );
+
+  // -- Sentry ---------------------------------------------------------------
+  // Sentry DSNs are public by design (rate-limited per-project keys), so it's
+  // safe to commit. Override at build time with
+  //   flutter build appbundle --dart-define=SENTRY_DSN=https://...
+  // if you ever rotate the key or point to a dev project.
+  static const String sentryDsn = String.fromEnvironment(
+    'SENTRY_DSN',
+    defaultValue:
+        'https://1f1f4e3167761431f27ded3e84831295@o4511241636872192.ingest.us.sentry.io/4511241668460544',
+  );
 }

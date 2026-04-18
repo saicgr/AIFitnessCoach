@@ -12,7 +12,8 @@ enum StatsTemplateType {
   prs('prs'),
   streakFire('streak_fire'),
   weeklyReport('weekly_report'),
-  levelUp('level_up');
+  levelUp('level_up'),
+  elite('elite');
 
   final String value;
   const StatsTemplateType(this.value);

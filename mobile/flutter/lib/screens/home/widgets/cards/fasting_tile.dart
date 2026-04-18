@@ -57,7 +57,7 @@ class FastingTimerCard extends ConsumerWidget {
     return GestureDetector(
       onTap: () {
         HapticService.light();
-        context.push('/fasting');
+        context.go('/fasting');
       },
       child: Container(
         margin: size == TileSize.full
@@ -108,7 +108,7 @@ class FastingTimerCard extends ConsumerWidget {
     return InkWell(
       onTap: () {
         HapticService.light();
-        context.push('/fasting');
+        context.go('/fasting');
       },
       borderRadius: BorderRadius.circular(12),
       child: Container(
@@ -298,7 +298,7 @@ class FastingTimerCard extends ConsumerWidget {
         ElevatedButton.icon(
           onPressed: () {
             HapticService.light();
-            context.push('/fasting');
+            context.go('/fasting');
           },
           icon: const Icon(Icons.play_arrow, size: 18),
           label: const Text('Start'),

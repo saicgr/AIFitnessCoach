@@ -19,14 +19,14 @@ class QuizMotivation extends StatelessWidget {
   });
 
   static const _motivations = [
-    {'id': 'look_better', 'label': 'Look better', 'icon': Icons.auto_awesome, 'color': AppColors.orange},
+    {'id': 'look_better', 'label': 'Look better', 'icon': Icons.auto_awesome, 'color': AppColors.onboardingAccent},
     {'id': 'feel_stronger', 'label': 'Feel stronger', 'icon': Icons.fitness_center, 'color': AppColors.purple},
     {'id': 'more_energy', 'label': 'Have more energy', 'icon': Icons.bolt, 'color': AppColors.electricBlue},
     {'id': 'mental_health', 'label': 'Improve mental health', 'icon': Icons.psychology, 'color': AppColors.green},
     {'id': 'sleep_better', 'label': 'Sleep better', 'icon': Icons.nightlight_round, 'color': AppColors.electricBlue},
     {'id': 'be_healthier', 'label': 'Be healthier overall', 'icon': Icons.favorite, 'color': AppColors.pink},
-    {'id': 'sports_performance', 'label': 'Sports performance', 'icon': Icons.sports_basketball, 'color': AppColors.orange},
-    {'id': 'confidence', 'label': 'Build confidence', 'icon': Icons.star, 'color': AppColors.orange},
+    {'id': 'sports_performance', 'label': 'Sports performance', 'icon': Icons.sports_basketball, 'color': AppColors.onboardingAccent},
+    {'id': 'confidence', 'label': 'Build confidence', 'icon': Icons.star, 'color': AppColors.onboardingAccent},
   ];
 
   @override
@@ -136,7 +136,7 @@ class _MotivationCard extends StatelessWidget {
               child: Row(
                 children: [
                   Builder(builder: (context) {
-                    final color = motivation['color'] as Color? ?? AppColors.orange;
+                    final color = motivation['color'] as Color? ?? AppColors.onboardingAccent;
                     return Container(
                       width: 36,
                       height: 36,

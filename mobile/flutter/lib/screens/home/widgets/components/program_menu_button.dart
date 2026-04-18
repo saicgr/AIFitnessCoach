@@ -332,7 +332,7 @@ class _CustomizeProgramButtonState extends ConsumerState<CustomizeProgramButton>
                     onTap: () {
                       Navigator.pop(ctx);
                       // Navigate to profile and scroll to workout preferences section
-                      context.push('/profile?scrollTo=preferences');
+                      context.go('/profile?scrollTo=preferences');
                     },
                     borderRadius: BorderRadius.circular(12),
                     child: Container(

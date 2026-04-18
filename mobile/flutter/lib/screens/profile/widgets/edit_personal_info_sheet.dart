@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../../core/constants/api_constants.dart';
@@ -344,7 +345,6 @@ class _EditPersonalInfoSheetState extends ConsumerState<EditPersonalInfoSheet> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final backgroundColor = isDark ? AppColors.nearBlack : AppColorsLight.elevated;
     final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.glassSurface;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
@@ -432,12 +432,14 @@ class _EditPersonalInfoSheetState extends ConsumerState<EditPersonalInfoSheet> {
     Color cardBorder,
     Color cyan,
   ) {
+    final keyboardInset = MediaQuery.of(context).viewInsets.bottom;
     return Expanded(
       child: Form(
         key: _formKey,
         child: SingleChildScrollView(
           controller: scrollController,
-          padding: const EdgeInsets.all(16),
+          keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+          padding: EdgeInsets.fromLTRB(16, 16, 16, 16 + keyboardInset),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -552,6 +554,11 @@ class _EditPersonalInfoSheetState extends ConsumerState<EditPersonalInfoSheet> {
           textCapitalization: TextCapitalization.sentences,
           enabled: !_isSaving,
           style: const TextStyle(fontSize: 14),
+          // Ensure the field scrolls above the keyboard when focused inside
+          // the DraggableScrollableSheet, which doesn't auto-resize.
+          scrollPadding: EdgeInsets.only(
+            bottom: MediaQuery.of(context).viewInsets.bottom + 120,
+          ),
           decoration: InputDecoration(
             hintText: 'Tell us about yourself...',
             hintStyle: TextStyle(
@@ -586,31 +593,56 @@ class _EditPersonalInfoSheetState extends ConsumerState<EditPersonalInfoSheet> {
     Color cyan,
     Color textMuted,
   ) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _buildSectionTitle('GENDER', textMuted, icon: Icons.wc_rounded, accent: cyan),
-        const SizedBox(height: 6),
+        const SizedBox(height: 10),
         Row(
           children: _genderOptions.map((gender) {
             final isSelected = _selectedGender == gender;
-            return Padding(
-              padding: const EdgeInsets.only(right: 8),
-              child: GestureDetector(
-                onTap: _isSaving ? null : () => setState(() => _selectedGender = gender),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: isSelected ? cyan.withOpacity(0.2) : elevatedColor,
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: isSelected ? cyan : cardBorder),
-                  ),
-                  child: Text(
-                    gender[0].toUpperCase() + gender.substring(1),
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: isSelected ? cyan : textSecondary,
-                      fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+            final label = gender[0].toUpperCase() + gender.substring(1);
+            return Expanded(
+              child: Padding(
+                padding: EdgeInsets.only(
+                  right: gender == _genderOptions.last ? 0 : 8,
+                ),
+                child: GestureDetector(
+                  onTap: _isSaving
+                      ? null
+                      : () {
+                          HapticFeedback.selectionClick();
+                          setState(() => _selectedGender = gender);
+                        },
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    decoration: BoxDecoration(
+                      gradient: isSelected
+                          ? LinearGradient(
+                              colors: [cyan, cyan.withValues(alpha: 0.8)],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            )
+                          : null,
+                      color: isSelected ? null : elevatedColor,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: isSelected ? cyan : cardBorder,
+                        width: isSelected ? 2 : 1,
+                      ),
+                    ),
+                    child: Center(
+                      child: Text(
+                        label,
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: isSelected ? Colors.white : textPrimary,
+                          fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                        ),
+                      ),
                     ),
                   ),
                 ),
@@ -701,99 +733,129 @@ class _EditPersonalInfoSheetState extends ConsumerState<EditPersonalInfoSheet> {
     Color textSecondary,
     Color cyan,
   ) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _buildSectionTitle('ACTIVITY LEVEL', textMuted, icon: Icons.directions_run_rounded, accent: cyan),
-        const SizedBox(height: 6),
-        Container(
-          decoration: BoxDecoration(
-            color: elevatedColor,
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: cardBorder),
-          ),
-          child: Column(
-            children: _activityLevels.asMap().entries.map((entry) {
-              final index = entry.key;
-              final (value, title, subtitle) = entry.value;
-              final isSelected = _selectedActivityLevel == value;
-              return Column(
-                children: [
-                  InkWell(
-                    onTap: _isSaving ? null : () => setState(() => _selectedActivityLevel = value),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                      child: Row(
+        const SizedBox(height: 10),
+        ..._activityLevels.map((entry) {
+          final (value, title, subtitle) = entry;
+          final isSelected = _selectedActivityLevel == value;
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: GestureDetector(
+              onTap: _isSaving
+                  ? null
+                  : () {
+                      HapticFeedback.selectionClick();
+                      setState(() => _selectedActivityLevel = value);
+                    },
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 180),
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                decoration: BoxDecoration(
+                  gradient: isSelected
+                      ? LinearGradient(
+                          colors: [
+                            cyan.withValues(alpha: 0.22),
+                            cyan.withValues(alpha: 0.10),
+                          ],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        )
+                      : null,
+                  color: isSelected ? null : elevatedColor,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: isSelected ? cyan : cardBorder,
+                    width: isSelected ? 2 : 1,
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    AnimatedContainer(
+                      duration: const Duration(milliseconds: 180),
+                      width: 20,
+                      height: 20,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: isSelected ? cyan : Colors.transparent,
+                        border: Border.all(
+                          color: isSelected ? cyan : textMuted,
+                          width: 2,
+                        ),
+                      ),
+                      child: isSelected
+                          ? const Icon(Icons.check, size: 14, color: Colors.white)
+                          : null,
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Container(
-                            width: 18,
-                            height: 18,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              border: Border.all(
-                                color: isSelected ? cyan : textMuted,
-                                width: 2,
-                              ),
-                              color: isSelected ? cyan : Colors.transparent,
+                          Text(
+                            title,
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                              color: isSelected ? cyan : textPrimary,
                             ),
-                            child: isSelected
-                                ? const Icon(Icons.check, size: 12, color: Colors.white)
-                                : null,
                           ),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: Row(
-                              children: [
-                                Text(
-                                  title,
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-                                    color: isSelected ? cyan : null,
-                                  ),
-                                ),
-                                const SizedBox(width: 6),
-                                Text(
-                                  '($subtitle)',
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    color: textMuted,
-                                  ),
-                                ),
-                              ],
+                          const SizedBox(height: 2),
+                          Text(
+                            subtitle,
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: textMuted,
                             ),
                           ),
                         ],
                       ),
                     ),
-                  ),
-                  if (index < _activityLevels.length - 1)
-                    Divider(height: 1, color: cardBorder, indent: 40),
-                ],
-              );
-            }).toList(),
-          ),
-        ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        }),
       ],
     );
   }
 
+  /// Onboarding-style label: rounded icon badge + Title Case label (16px w600).
   Widget _buildSectionTitle(String title, Color textMuted, {IconData? icon, Color? accent}) {
-    final child = Text(
-      title,
-      style: TextStyle(
-        fontSize: 12,
-        fontWeight: FontWeight.w600,
-        color: textMuted,
-        letterSpacing: 1.5,
-      ),
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    // Normalize ALL-CAPS tokens to Title Case so the Edit Profile sheet matches
+    // the onboarding wording style ("Bio" not "BIO").
+    final display = title
+        .toLowerCase()
+        .split(' ')
+        .map((w) => w.isEmpty ? w : '${w[0].toUpperCase()}${w.substring(1)}')
+        .join(' ');
+    final labelStyle = TextStyle(
+      fontSize: 14,
+      fontWeight: FontWeight.w600,
+      color: textPrimary,
     );
-    if (icon == null || accent == null) return child;
+    if (icon == null || accent == null) {
+      return Text(display, style: labelStyle);
+    }
     return Row(
       children: [
-        Icon(icon, size: 13, color: accent),
-        const SizedBox(width: 6),
-        child,
+        Container(
+          padding: const EdgeInsets.all(6),
+          decoration: BoxDecoration(
+            color: accent.withValues(alpha: 0.15),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Icon(icon, size: 14, color: accent),
+        ),
+        const SizedBox(width: 8),
+        Text(display, style: labelStyle),
       ],
     );
   }
@@ -815,6 +877,9 @@ class _EditPersonalInfoSheetState extends ConsumerState<EditPersonalInfoSheet> {
       validator: validator,
       style: const TextStyle(fontSize: 14),
       cursorColor: accent,
+      scrollPadding: EdgeInsets.only(
+        bottom: MediaQuery.of(context).viewInsets.bottom + 120,
+      ),
       decoration: InputDecoration(
         hintText: hint,
         filled: true,

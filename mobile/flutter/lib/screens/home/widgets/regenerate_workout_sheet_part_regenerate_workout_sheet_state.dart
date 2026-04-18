@@ -29,11 +29,49 @@ class _RegenerateWorkoutSheetState
   // Gemini call (step 3 can run 15–25s with no backend events).
   Timer? _hintRotationTimer;
   int _hintIndex = 0;
+  DateTime? _lastBackendUpdateAt;
+
+  // Main-line phase labels that rotate when the backend hasn't sent a fresh
+  // message in a while. Keeps the headline alive instead of stuck on
+  // "Starting regeneration...".
+  static const Map<int, List<String>> _stepMainLabels = {
+    0: [
+      'Starting regeneration…',
+      'Booting up the AI',
+      'Preparing your request',
+      'Getting ready',
+    ],
+    1: [
+      'Reading your profile',
+      'Loading preferences',
+      'Pulling your goals',
+    ],
+    2: [
+      'Picking your exercises',
+      'Filtering by equipment',
+      'Matching your fitness level',
+    ],
+    3: [
+      'Designing your workout',
+      'Shaping the session',
+      'Building your plan',
+      'Fine-tuning the details',
+    ],
+    4: [
+      'Finalizing your workout',
+      'Saving to your plan',
+    ],
+  };
 
   // Hints appropriate for the phase the backend is currently in. Step 3
   // (AI generation) is the only truly slow phase, so it gets the richest set.
   static const Map<int, List<String>> _stepHints = {
-    0: ['Warming up'],
+    0: [
+      'Warming up',
+      'Connecting to the AI',
+      'Priming the engine',
+      'Loading your profile',
+    ],
     1: ['Reading your profile', 'Checking preferences', 'Loading injuries and goals'],
     2: [
       'Scanning the exercise library',
@@ -53,6 +91,11 @@ class _RegenerateWorkoutSheetState
     ],
     4: ['Saving to your plan', 'Updating your schedule'],
   };
+
+  // How long a backend message stays "fresh" — after this, the main label
+  // starts rotating through phase-appropriate headings so the UI never feels
+  // frozen between server events.
+  static const Duration _mainMessageFreshness = Duration(milliseconds: 2500);
 
   // Rough expected total generation time — used only for the "~Ns remaining"
   // hint so the user has a sense of pace.
@@ -210,7 +253,8 @@ class _RegenerateWorkoutSheetState
   void _startHintRotation() {
     _hintRotationTimer?.cancel();
     _hintIndex = 0;
-    _hintRotationTimer = Timer.periodic(const Duration(seconds: 3), (_) {
+    _hintRotationTimer =
+        Timer.periodic(const Duration(milliseconds: 1800), (_) {
       if (!mounted) return;
       setState(() => _hintIndex++);
     });
@@ -219,6 +263,24 @@ class _RegenerateWorkoutSheetState
   void _stopHintRotation() {
     _hintRotationTimer?.cancel();
     _hintRotationTimer = null;
+  }
+
+  /// Main headline shown to the user. Uses the backend's latest message while
+  /// it's still fresh; once that message has been sitting on screen for
+  /// [_mainMessageFreshness], we rotate through phase-appropriate labels so
+  /// the UI never feels stuck on a single sentence.
+  String _displayMainMessage() {
+    final isFresh = _lastBackendUpdateAt != null &&
+        DateTime.now().difference(_lastBackendUpdateAt!) <
+            _mainMessageFreshness;
+    if (isFresh && _progressMessage.isNotEmpty) {
+      return _progressMessage;
+    }
+    final labels = _stepMainLabels[_currentStep];
+    if (labels != null && labels.isNotEmpty) {
+      return labels[_hintIndex % labels.length];
+    }
+    return _progressMessage.isNotEmpty ? _progressMessage : 'Warming up…';
   }
 
   /// Returns the substatus shown under the main progress message. Prefers the
@@ -761,51 +823,10 @@ class _RegenerateWorkoutSheetState
   }
 
   /// Returns true for "Replace", false for "Add", null if cancelled.
-  Future<bool?> _showReplaceOrAddDialog() async {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final colors = context.sheetColors;
-
-    return showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: isDark ? AppColors.elevated : AppColorsLight.elevated,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Text(
-          'What would you like to do?',
-          style: TextStyle(
-            color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        content: Text(
-          'You already have a workout scheduled for today.',
-          style: TextStyle(
-            color: isDark ? AppColors.textSecondary : AppColorsLight.textSecondary,
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: Text(
-              'Add Workout',
-              style: TextStyle(color: colors.cyan),
-            ),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: colors.purple,
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
-              ),
-            ),
-            child: const Text('Replace'),
-          ),
-        ],
-      ),
-    );
-  }
+  /// Delegates to the shared [showReplaceOrAddWorkoutDialog] so the mood
+  /// flow and the regenerate flow stay visually identical.
+  Future<bool?> _showReplaceOrAddDialog() =>
+      showReplaceOrAddWorkoutDialog(context);
 
   Widget _buildApplyButton(SheetColors colors) {
     return Container(

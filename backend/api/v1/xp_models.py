@@ -18,6 +18,10 @@ class DailyLoginResponse(BaseModel):
     multiplier: float
     message: str
     already_claimed: bool = False
+    # Migration 1938: streak shield auto-consume
+    streak_saved_by_shield: bool = False
+    shields_remaining: int = 0
+    saved_streak_count: int = 0
 
 
 class LoginStreakInfo(BaseModel):
@@ -156,4 +160,55 @@ class UnclaimedCratesResponse(BaseModel):
     unclaimed: List[UnclaimedCrateItem] = []
     count: int = 0
 
+
+# =============================================================================
+# MERCH CLAIMS
+# =============================================================================
+
+
+class MerchClaim(BaseModel):
+    """A physical merchandise reward earned at a milestone level."""
+    id: str
+    merch_type: str  # shaker_bottle | t_shirt | hoodie | full_merch_kit | signed_premium_kit
+    awarded_at_level: int
+    status: str  # pending_address | address_submitted | shipped | delivered | cancelled
+    shipping_full_name: Optional[str] = None
+    shipping_address_line1: Optional[str] = None
+    shipping_address_line2: Optional[str] = None
+    shipping_city: Optional[str] = None
+    shipping_state: Optional[str] = None
+    shipping_postal_code: Optional[str] = None
+    shipping_country: Optional[str] = None
+    shipping_phone: Optional[str] = None
+    size: Optional[str] = None
+    sizes: Optional[Dict[str, Any]] = None
+    notes: Optional[str] = None
+    address_submitted_at: Optional[str] = None
+    tracking_number: Optional[str] = None
+    carrier: Optional[str] = None
+    shipped_at: Optional[str] = None
+    delivered_at: Optional[str] = None
+    cancelled_at: Optional[str] = None
+    created_at: str
+    updated_at: str
+
+
+class MerchClaimListResponse(BaseModel):
+    claims: List[MerchClaim] = []
+    pending_count: int = 0
+    total_count: int = 0
+
+
+class SubmitMerchAddressRequest(BaseModel):
+    full_name: str = Field(..., min_length=1, max_length=200)
+    address_line1: str = Field(..., min_length=1, max_length=200)
+    address_line2: Optional[str] = Field(None, max_length=200)
+    city: str = Field(..., min_length=1, max_length=100)
+    state: str = Field(..., min_length=1, max_length=100)
+    postal_code: str = Field(..., min_length=1, max_length=20)
+    country: str = Field(..., min_length=2, max_length=2, description="ISO 3166-1 alpha-2")
+    phone: Optional[str] = Field(None, max_length=30)
+    size: Optional[str] = Field(None, max_length=10)
+    sizes: Optional[Dict[str, str]] = None
+    notes: Optional[str] = Field(None, max_length=500)
 

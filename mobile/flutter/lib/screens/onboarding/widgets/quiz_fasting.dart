@@ -101,7 +101,7 @@ class _QuizFastingState extends State<QuizFasting> {
       'fastingHours': 16,
       'eatingHours': 8,
       'icon': Icons.schedule,
-      'color': AppColors.orange,
+      'color': AppColors.onboardingAccent,
       'difficulty': 'Intermediate',
       'bestFor': ['intermediate', 'lose', 'maintain'],
       'popular': true,

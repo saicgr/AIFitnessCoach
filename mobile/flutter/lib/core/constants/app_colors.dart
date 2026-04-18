@@ -36,6 +36,7 @@ class AppColors {
   // Accent Colors - With orange as primary app accent
   static const Color orange = Color(0xFFF97316); // Primary app accent - orange
   static const Color orangeLight = Color(0xFFFFB366); // Lighter orange for hover/subtle states
+  static const Color onboardingAccent = Color(0xFF6366F1); // Indigo for pre-onboarding screens (matches background orbs)
   static const Color purple = Color(0xFFA855F7);
   static const Color coral = Color(0xFFF87171);
   static const Color magenta = Color(0xFFEC4899);

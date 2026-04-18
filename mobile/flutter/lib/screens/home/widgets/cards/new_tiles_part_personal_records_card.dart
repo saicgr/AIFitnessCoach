@@ -675,7 +675,7 @@ class LeaderboardRankCard extends ConsumerWidget {
     return InkWell(
       onTap: () {
         HapticService.light();
-        context.push('/social');
+        context.go('/social');
       },
       borderRadius: BorderRadius.circular(16),
       child: Container(

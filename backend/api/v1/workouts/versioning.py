@@ -35,6 +35,7 @@ from .utils import (
     parse_json_field,
     normalize_goals_list,
     get_all_equipment,
+    resolve_target_duration,
 )
 
 router = APIRouter()
@@ -296,15 +297,23 @@ async def regenerate_workout(request: RegenerateWorkoutRequest,
 
         focus_area = focus_areas[0] if focus_areas else "full_body"
 
-        # Calculate target duration from min/max range or fallback
+        # Calculate target duration from min/max range or fallback. When the
+        # request body has nothing, fall back to gym profile / user prefs via
+        # resolve_target_duration so user's saved workout_duration is honored.
         if request.duration_minutes_min and request.duration_minutes_max:
             target_duration = (request.duration_minutes_min + request.duration_minutes_max) // 2
         elif request.duration_minutes_min:
             target_duration = request.duration_minutes_min
         elif request.duration_minutes_max:
             target_duration = request.duration_minutes_max
+        elif request.duration_minutes:
+            target_duration = request.duration_minutes
         else:
-            target_duration = request.duration_minutes or 45
+            _resolved = resolve_target_duration(
+                body_duration=None, body_duration_min=None, body_duration_max=None,
+                gym_profile=None, user=user,
+            )
+            target_duration = _resolved["target"]
 
         # Rule: ~7 minutes per exercise (including rest) for a balanced workout
         exercise_count = max(3, min(10, target_duration // 7))  # 3-10 exercises
@@ -607,15 +616,23 @@ async def regenerate_workout_streaming(request: Request, body: RegenerateWorkout
 
             focus_area = focus_areas[0] if focus_areas else "full_body"
 
-            # Calculate target duration from min/max range or fallback
+            # Calculate target duration from min/max range or fallback. Fall
+            # back to user preferences (via resolve_target_duration) so saved
+            # workout_duration is honored when the body omits it.
             if body.duration_minutes_min and body.duration_minutes_max:
                 target_duration = (body.duration_minutes_min + body.duration_minutes_max) // 2
             elif body.duration_minutes_min:
                 target_duration = body.duration_minutes_min
             elif body.duration_minutes_max:
                 target_duration = body.duration_minutes_max
+            elif body.duration_minutes:
+                target_duration = body.duration_minutes
             else:
-                target_duration = body.duration_minutes or 45
+                _resolved = resolve_target_duration(
+                    body_duration=None, body_duration_min=None, body_duration_max=None,
+                    gym_profile=None, user=user,
+                )
+                target_duration = _resolved["target"]
 
             # Difficulty-aware exercise count: easy = fewer exercises with more rest,
             # hard/hell = more exercises packed tighter.

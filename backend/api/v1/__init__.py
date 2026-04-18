@@ -84,8 +84,10 @@ from api.v1 import plateau  # Plateau detection (exercise + weight stalling)
 from api.v1 import email_cron  # Lifecycle email cron jobs
 from api.v1 import email_webhooks  # Resend webhook: bounce / complaint handling
 from api.v1 import push_nudge_cron  # Hourly accountability push nudge cron jobs
+from api.v1 import fitness_profile_cron  # Daily radar-shape snapshotter
 from api.v1 import dashboard  # Weekly dashboard summary endpoint
 from api.v1 import home  # Home screen bootstrap (single-request aggregated data)
+from api.v1 import chat_proposals  # Apply / dismiss AI-proposed workout changes
 from api.v1.users.mcp_integrations import router as mcp_integrations_router  # MCP connected-client management
 
 # Create v1 router
@@ -94,6 +96,7 @@ router = APIRouter(prefix="/v1")
 # Include all v1 routes
 router.include_router(chat.router, prefix="/chat", tags=["Chat"])
 router.include_router(chat_meal_context.router, prefix="/chat", tags=["Chat"])
+router.include_router(chat_proposals.router, prefix="/chat", tags=["Chat"])
 router.include_router(health.router, prefix="/health", tags=["Health"])
 
 # Supabase-backed CRUD endpoints
@@ -378,6 +381,9 @@ router.include_router(email_webhooks.router, tags=["Email Webhooks"])
 
 # Hourly accountability push nudge cron (secured by X-Cron-Secret header)
 router.include_router(push_nudge_cron.router, prefix="/nudges", tags=["Push Nudge Cron"])
+
+# Daily fitness-shape snapshotter (secured by X-Cron-Secret header)
+router.include_router(fitness_profile_cron.router, tags=["Fitness Cron"])
 
 # Weekly dashboard summary (workout compliance, nutrition, readiness, measurements, goals)
 router.include_router(dashboard.router, prefix="/dashboard", tags=["Dashboard"])

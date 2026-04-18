@@ -619,8 +619,10 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
           // Settings
           GestureDetector(
             onTap: () {
-              Navigator.push(
-                context,
+              // Root navigator so the settings screen overlays the whole
+              // MainShell (including its floating bottom nav pill) — this
+              // page is a full-screen destination, not a tab-peer.
+              Navigator.of(context, rootNavigator: true).push(
                 AppPageRoute(
                   builder: (_) => const NutritionSettingsScreen(),
                 ),

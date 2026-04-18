@@ -9,15 +9,15 @@ extension _TrainingSplitScreenStateUI on _TrainingSplitScreenState {
       child: Row(
         children: [
           Container(
-            width: 48,
-            height: 48,
+            width: 40,
+            height: 40,
             decoration: BoxDecoration(
               color: AppColors.orange,
-              borderRadius: BorderRadius.circular(14),
+              borderRadius: BorderRadius.circular(12),
             ),
-            child: const Icon(Icons.fitness_center, color: Colors.white, size: 26),
+            child: const Icon(Icons.fitness_center, color: Colors.white, size: 22),
           ),
-          const SizedBox(width: 14),
+          const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -25,17 +25,19 @@ extension _TrainingSplitScreenStateUI on _TrainingSplitScreenState {
                 Text(
                   'Training Split',
                   style: TextStyle(
-                    fontSize: 24,
+                    fontSize: 20,
                     fontWeight: FontWeight.bold,
                     color: textPrimary,
+                    height: 1.15,
                   ),
                 ),
                 const SizedBox(height: 2),
                 Text(
                   'How do you want to structure your workouts?',
                   style: TextStyle(
-                    fontSize: 14,
+                    fontSize: 12,
                     color: textSecondary,
+                    height: 1.3,
                   ),
                 ),
               ],
@@ -181,13 +183,13 @@ extension _TrainingSplitScreenStateUI on _TrainingSplitScreenState {
                         Text(
                           'Continue',
                           style: TextStyle(
-                            fontSize: 16,
+                            fontSize: 15,
                             fontWeight: FontWeight.w600,
                             color: Colors.white,
                           ),
                         ),
                         SizedBox(width: 8),
-                        Icon(Icons.arrow_forward, size: 20, color: Colors.white),
+                        Icon(Icons.arrow_forward, size: 18, color: Colors.white),
                       ],
                     ),
             ),

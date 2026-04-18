@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../widgets/glass_sheet.dart';
+import 'widgets/first_workout_forecast_sheet.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -79,6 +80,11 @@ class WorkoutCompleteScreen extends ConsumerStatefulWidget {
   final int? maxHeartRate;
   final int? minHeartRate;
 
+  /// Workstream 1 (Day 0-7 retention). True only on the user's first-ever
+  /// completed workout — triggers the First Workout Forecast sheet after
+  /// confetti fires.
+  final bool isFirstWorkout;
+
   const WorkoutCompleteScreen({
     super.key,
     required this.workout,
@@ -101,6 +107,7 @@ class WorkoutCompleteScreen extends ConsumerStatefulWidget {
     this.avgHeartRate,
     this.maxHeartRate,
     this.minHeartRate,
+    this.isFirstWorkout = false,
   });
 
   @override
@@ -176,6 +183,53 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
   void initState() {
     super.initState();
     _extInitState();
+    // W1: fire the First Workout Forecast sheet ~2 seconds after mount
+    // so confetti has started and the user sees their receipt briefly first.
+    if (widget.isFirstWorkout) {
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
+        await Future.delayed(const Duration(milliseconds: 2200));
+        if (!mounted) return;
+        // Pick up user's planned sessions-per-week from preferences.
+        // Fallback to 3 if unavailable.
+        int sessionsPerWeek = 3;
+        try {
+          final apiClient = ref.read(apiClientProvider);
+          final userId = await apiClient.getUserId();
+          if (userId != null) {
+            final resp = await apiClient.get('/users/$userId');
+            final data = resp.data as Map<String, dynamic>?;
+            final prefs = data?['preferences'] as Map<String, dynamic>?;
+            final perWeek = prefs?['workouts_per_week'] ??
+                prefs?['days_per_week'] ??
+                data?['workouts_per_week'];
+            if (perWeek is int && perWeek > 0 && perWeek <= 7) {
+              sessionsPerWeek = perWeek;
+            }
+          }
+        } catch (_) {/* non-critical */}
+
+        // Pick highest PR improvement percent, if any
+        int firstPrImprovementPct = 0;
+        final prs = widget.personalRecords ?? const [];
+        for (final pr in prs) {
+          final pct = pr.improvementPercent;
+          if (pct != null && pct > firstPrImprovementPct) {
+            firstPrImprovementPct = pct.round();
+          }
+        }
+
+        if (!mounted) return;
+        await showFirstWorkoutForecastSheet(
+          context,
+          workout: widget.workout,
+          totalVolumeKg: widget.totalVolumeKg ?? 0,
+          caloriesBurned: widget.calories,
+          durationMinutes: (widget.duration / 60).round(),
+          sessionsPerWeek: sessionsPerWeek,
+          firstWorkoutPrImprovementPercent: firstPrImprovementPct,
+        );
+      });
+    }
   }
 
   // Sauna logging state

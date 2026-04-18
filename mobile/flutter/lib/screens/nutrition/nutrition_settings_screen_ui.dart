@@ -452,17 +452,60 @@ extension __NutritionSettingsScreenStateExt on _NutritionSettingsScreenState {
     if (userId == null) return;
 
     final nearBlack = isDark ? AppColors.nearBlack : AppColorsLight.nearWhite;
-    final green = textPrimary;
 
-    // Available goals
-    final allGoals = [
-      {'id': 'lose_fat', 'name': 'Lose Fat', 'icon': Icons.local_fire_department},
-      {'id': 'build_muscle', 'name': 'Build Muscle', 'icon': Icons.fitness_center},
-      {'id': 'maintain', 'name': 'Maintain Weight', 'icon': Icons.balance},
-      {'id': 'improve_energy', 'name': 'Improve Energy', 'icon': Icons.bolt},
-      {'id': 'eat_healthier', 'name': 'Eat Healthier', 'icon': Icons.eco},
-      {'id': 'recomposition', 'name': 'Body Recomposition', 'icon': Icons.swap_vert},
+    // Per-goal palette — matches the _GoalPill on the Current Targets card
+    // so the goal color is consistent across the whole flow (card → sheet).
+    // A goal's color drives its icon tint, selected border, and "Primary"
+    // badge; the PRIMARY goal's color drives the shared chrome (Rate of
+    // Change pills + Save button) so the sheet feels themed to the user's
+    // main goal.
+    final allGoals = <Map<String, dynamic>>[
+      {
+        'id': 'lose_fat',
+        'name': 'Lose Fat',
+        'icon': Icons.local_fire_department_rounded,
+        'color': AppColors.orange,
+      },
+      {
+        'id': 'build_muscle',
+        'name': 'Build Muscle',
+        'icon': Icons.fitness_center_rounded,
+        'color': AppColors.purple,
+      },
+      {
+        'id': 'maintain',
+        'name': 'Maintain Weight',
+        'icon': Icons.balance_rounded,
+        'color': AppColors.green,
+      },
+      {
+        'id': 'improve_energy',
+        'name': 'Improve Energy',
+        'icon': Icons.bolt_rounded,
+        'color': AppColors.yellow,
+      },
+      {
+        'id': 'eat_healthier',
+        'name': 'Eat Healthier',
+        'icon': Icons.eco_rounded,
+        'color': AppColors.green,
+      },
+      {
+        'id': 'recomposition',
+        'name': 'Body Recomposition',
+        'icon': Icons.swap_vert_rounded,
+        'color': AppColors.cyan,
+      },
     ];
+
+    Color primaryGoalColor(List<String> goals) {
+      if (goals.isEmpty) return AppColors.purple;
+      final first = goals.first;
+      return (allGoals.firstWhere(
+        (g) => g['id'] == first,
+        orElse: () => <String, dynamic>{'color': AppColors.purple},
+      )['color']) as Color;
+    }
 
     // Rate of change options
     final rateOptions = ['slow', 'moderate', 'fast', 'aggressive'];
@@ -510,10 +553,14 @@ extension __NutritionSettingsScreenStateExt on _NutritionSettingsScreenState {
                   style: TextStyle(fontSize: 14, color: textMuted),
                 ),
                 const SizedBox(height: 16),
-                // Goals multi-select
+                // Goals multi-select — each goal's row tints with its own
+                // semantic color when selected (matches the _GoalPill on
+                // the Current Targets card).
                 ...allGoals.map((goal) {
                   final isSelected = selectedGoals.contains(goal['id']);
-                  final isPrimary = selectedGoals.isNotEmpty && selectedGoals.first == goal['id'];
+                  final isPrimary = selectedGoals.isNotEmpty &&
+                      selectedGoals.first == goal['id'];
+                  final goalColor = goal['color'] as Color;
                   return Padding(
                     padding: const EdgeInsets.only(bottom: 8),
                     child: GestureDetector(
@@ -530,21 +577,31 @@ extension __NutritionSettingsScreenStateExt on _NutritionSettingsScreenState {
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
                           color: isSelected
-                              ? green.withValues(alpha: 0.15)
+                              ? goalColor.withValues(alpha: 0.15)
                               : elevated,
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
                             color: isSelected
-                                ? green.withValues(alpha: 0.5)
+                                ? goalColor.withValues(alpha: 0.6)
                                 : Colors.transparent,
                           ),
                         ),
                         child: Row(
                           children: [
-                            Icon(
-                              goal['icon'] as IconData,
-                              color: isSelected ? green : textMuted,
-                              size: 20,
+                            Container(
+                              width: 34,
+                              height: 34,
+                              decoration: BoxDecoration(
+                                color: goalColor.withValues(
+                                    alpha: isSelected ? 0.22 : 0.12),
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              alignment: Alignment.center,
+                              child: Icon(
+                                goal['icon'] as IconData,
+                                color: goalColor,
+                                size: 18,
+                              ),
                             ),
                             const SizedBox(width: 12),
                             Expanded(
@@ -552,24 +609,28 @@ extension __NutritionSettingsScreenStateExt on _NutritionSettingsScreenState {
                                 goal['name'] as String,
                                 style: TextStyle(
                                   fontSize: 15,
-                                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                                  color: isSelected ? green : textPrimary,
+                                  fontWeight: isSelected
+                                      ? FontWeight.w700
+                                      : FontWeight.w500,
+                                  color:
+                                      isSelected ? goalColor : textPrimary,
                                 ),
                               ),
                             ),
                             if (isPrimary)
                               Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 8, vertical: 2),
                                 decoration: BoxDecoration(
-                                  color: green.withValues(alpha: 0.2),
+                                  color: goalColor.withValues(alpha: 0.22),
                                   borderRadius: BorderRadius.circular(8),
                                 ),
                                 child: Text(
                                   'Primary',
                                   style: TextStyle(
                                     fontSize: 11,
-                                    fontWeight: FontWeight.w600,
-                                    color: green,
+                                    fontWeight: FontWeight.w700,
+                                    color: goalColor,
                                   ),
                                 ),
                               ),
@@ -578,7 +639,7 @@ extension __NutritionSettingsScreenStateExt on _NutritionSettingsScreenState {
                               isSelected
                                   ? Icons.check_circle
                                   : Icons.circle_outlined,
-                              color: isSelected ? green : textMuted,
+                              color: isSelected ? goalColor : textMuted,
                               size: 24,
                             ),
                           ],
@@ -598,43 +659,51 @@ extension __NutritionSettingsScreenStateExt on _NutritionSettingsScreenState {
                   ),
                 ),
                 const SizedBox(height: 8),
-                Row(
-                  children: rateOptions.map((rate) {
-                    final isSelected = selectedRate == rate;
-                    return Expanded(
-                      child: Padding(
-                        padding: EdgeInsets.only(right: rate != 'aggressive' ? 8 : 0),
-                        child: GestureDetector(
-                          onTap: () => setSheetState(() => selectedRate = rate),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(vertical: 10),
-                            decoration: BoxDecoration(
-                              color: isSelected
-                                  ? green.withValues(alpha: 0.15)
-                                  : elevated,
-                              borderRadius: BorderRadius.circular(8),
-                              border: Border.all(
+                Builder(builder: (context) {
+                  final themeColor = primaryGoalColor(selectedGoals);
+                  return Row(
+                    children: rateOptions.map((rate) {
+                      final isSelected = selectedRate == rate;
+                      return Expanded(
+                        child: Padding(
+                          padding: EdgeInsets.only(
+                              right: rate != 'aggressive' ? 8 : 0),
+                          child: GestureDetector(
+                            onTap: () =>
+                                setSheetState(() => selectedRate = rate),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(vertical: 10),
+                              decoration: BoxDecoration(
                                 color: isSelected
-                                    ? green.withValues(alpha: 0.5)
-                                    : Colors.transparent,
+                                    ? themeColor.withValues(alpha: 0.15)
+                                    : elevated,
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(
+                                  color: isSelected
+                                      ? themeColor.withValues(alpha: 0.6)
+                                      : Colors.transparent,
+                                ),
                               ),
-                            ),
-                            child: Center(
-                              child: Text(
-                                rate[0].toUpperCase() + rate.substring(1),
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                                  color: isSelected ? green : textMuted,
+                              child: Center(
+                                child: Text(
+                                  rate[0].toUpperCase() + rate.substring(1),
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: isSelected
+                                        ? FontWeight.w700
+                                        : FontWeight.w500,
+                                    color:
+                                        isSelected ? themeColor : textMuted,
+                                  ),
                                 ),
                               ),
                             ),
                           ),
                         ),
-                      ),
-                    );
-                  }).toList(),
-                ),
+                      );
+                    }).toList(),
+                  );
+                }),
                 const SizedBox(height: 24),
                 // Save button
                 SizedBox(
@@ -676,8 +745,10 @@ extension __NutritionSettingsScreenStateExt on _NutritionSettingsScreenState {
                               if (mounted) {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   SnackBar(
-                                    content: const Text('Goals updated and targets recalculated!'),
-                                    backgroundColor: green,
+                                    content: const Text(
+                                        'Goals updated and targets recalculated!'),
+                                    backgroundColor:
+                                        primaryGoalColor(selectedGoals),
                                     behavior: SnackBarBehavior.floating,
                                   ),
                                 );
@@ -697,7 +768,10 @@ extension __NutritionSettingsScreenStateExt on _NutritionSettingsScreenState {
                             }
                           },
                     style: FilledButton.styleFrom(
-                      backgroundColor: green,
+                      // Use the primary goal's color as the save-button fill
+                      // so the CTA is tied to the user's chosen direction
+                      // (orange for Lose Fat, purple for Build Muscle, …).
+                      backgroundColor: primaryGoalColor(selectedGoals),
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       shape: RoundedRectangleBorder(

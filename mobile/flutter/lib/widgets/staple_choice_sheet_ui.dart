@@ -83,7 +83,7 @@ extension _StapleChoiceSheetStateUI on _StapleChoiceSheetState {
               textPrimary: textPrimary,
               textMuted: textMuted,
             ),
-            if (type == 'treadmill') ...[
+            if (type == 'treadmill' || type == 'walking' || type == 'running') ...[
               const SizedBox(height: 8),
               _buildCardioField(
                 label: 'Speed',
@@ -96,7 +96,25 @@ extension _StapleChoiceSheetStateUI on _StapleChoiceSheetState {
               _buildCardioField(
                 label: 'Incline',
                 controller: _inclineController,
-                suffix: '',
+                suffix: '%',
+                textPrimary: textPrimary,
+                textMuted: textMuted,
+              ),
+              const SizedBox(height: 8),
+              _buildCardioField(
+                label: 'Distance',
+                controller: _distanceController,
+                suffix: 'mi',
+                textPrimary: textPrimary,
+                textMuted: textMuted,
+              ),
+            ],
+            if (type == 'swimming') ...[
+              const SizedBox(height: 8),
+              _buildCardioField(
+                label: 'Distance',
+                controller: _distanceController,
+                suffix: 'mi',
                 textPrimary: textPrimary,
                 textMuted: textMuted,
               ),

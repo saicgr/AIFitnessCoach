@@ -5,6 +5,33 @@ Utility functions for exercise name cleaning and equipment inference.
 import re
 
 
+# Match a trailing `(N)` suffix on exercise names — e.g. `Burpee(1)`,
+# `Bird Dog (3)`. These come from duplicate library imports.
+_DEDUP_SUFFIX_RE = re.compile(r'\s*\(\s*\d+\s*\)\s*$')
+
+
+def strip_dedup_suffix(name: str) -> str:
+    """Remove a trailing ``(N)`` suffix used by duplicate library imports.
+
+    ``Burpee(1)`` -> ``Burpee``, ``Bird Dog (3)`` -> ``Bird Dog``.
+    Idempotent. Safe on empty / None input.
+    """
+    if not name:
+        return name or ""
+    return _DEDUP_SUFFIX_RE.sub('', name).strip()
+
+
+def dedup_key(name: str) -> str:
+    """Canonical key for dedup: strip numeric suffix, lowercase, trim.
+
+    Ensures ``Burpee`` and ``Burpee(1)`` collapse to the same key so the
+    downstream generator never sends both to the client.
+    """
+    if not name:
+        return ""
+    return strip_dedup_suffix(name).lower().strip()
+
+
 def clean_exercise_name_for_display(exercise_name: str) -> str:
     """
     Clean exercise name for display by removing gender suffixes, version markers, video metadata, and numeric IDs.
@@ -66,6 +93,45 @@ def infer_equipment_from_name(exercise_name: str) -> str:
         return "Bodyweight"
 
     name_lower = exercise_name.lower()
+
+    # Gymnastic rings / suspension trainer — checked BEFORE pull-up-bar so that
+    # "Ring Pull-Up" and "TRX Row" are classified by the support apparatus
+    # rather than by the movement pattern.
+    if any(token in name_lower for token in ("gymnastic ring", "ring muscle-up", "ring pull", "ring dip", "rings ", "ring pull-up", "ring chin")):
+        return "Gymnastic Rings"
+    if any(token in name_lower for token in ("trx", "suspension trainer", "suspension strap")):
+        return "Suspension Trainer"
+
+    # Hanging / bar-supported movements take the next-highest priority.
+    # Some library rows are mis-tagged "bodyweight" even though the movement
+    # physically requires a pull-up bar. Catch them by name.
+    if "assisted pull" not in name_lower and "assisted chin" not in name_lower:
+        pullup_bar_tokens = (
+            "pull-up", "pull up", "pullup",
+            "chin-up", "chin up", "chinup",
+            "muscle-up", "muscle up", "muscleup",
+            "hanging ",
+            "toes-to-bar", "toes to bar",
+            "knees-to-elbow", "knees to elbow",
+            "knee-to-elbow", "knee to elbow",
+            "front lever", "back lever", "tuck lever",
+            "skin the cat",
+            "bar hang",
+            "dead hang",
+        )
+        for token in pullup_bar_tokens:
+            if token in name_lower:
+                return "Pull-Up Bar"
+
+    # Dip requires a dip station unless it's a bench dip or dumbbell dip.
+    if ("dip" in name_lower
+            and "bench dip" not in name_lower
+            and "chair dip" not in name_lower
+            and "dumbbell dip" not in name_lower
+            and "dumbell dip" not in name_lower):
+        # Avoid false positives like "dipped" or "dipping"
+        if re.search(r"\bdip(s|ping|ped)?\b", name_lower):
+            return "Dip Station"
 
     # Equipment inference rules (order matters - more specific first)
     equipment_patterns = [

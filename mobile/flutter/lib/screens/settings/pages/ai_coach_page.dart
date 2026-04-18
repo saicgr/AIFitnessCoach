@@ -7,6 +7,7 @@ import '../../../data/models/coach_persona.dart';
 import '../../../data/services/notification_service.dart';
 import '../../../screens/ai_settings/ai_settings_screen.dart';
 import '../../../widgets/coach_avatar.dart';
+import '../../../widgets/coach_voice_picker.dart';
 import '../../../widgets/main_shell.dart';
 import '../../../widgets/pill_app_bar.dart';
 import '../sections/sections.dart';
@@ -42,6 +43,11 @@ class AiCoachPage extends ConsumerWidget {
                 textMuted: textMuted,
                 cardBorder: cardBorder,
               ),
+
+              const SizedBox(height: 16),
+
+              // ── Coach Voice (TTS) with cosmetic gating for alt voices ──
+              const CoachVoicePicker(),
 
               const SizedBox(height: 16),
 
@@ -331,7 +337,41 @@ class AiCoachPage extends ConsumerWidget {
                 value: prefs.streakCelebration,
                 onChanged: (v) => ref.read(notificationPreferencesProvider.notifier).setStreakCelebration(v),
                 cardBorder: cardBorder,
-                isLast: true,
+              ),
+              _coachToggle(
+                icon: Icons.card_giftcard,
+                iconColor: const Color(0xFFFFB300),
+                title: 'Daily Crate Reminders',
+                subtitle: 'Get notified when your crate is ready',
+                value: prefs.dailyCrateReminders,
+                onChanged: (v) => ref.read(notificationPreferencesProvider.notifier).setDailyCrateReminders(v),
+                cardBorder: cardBorder,
+              ),
+              Divider(height: 1, color: cardBorder),
+              // Vacation mode — deep-links to the dedicated page. Suppresses
+              // ALL non-critical notifications (not just coach nudges), so it
+              // belongs here as an escape hatch even though it's not a pref.
+              Builder(
+                builder: (context) => ListTile(
+                  leading: const Icon(
+                    Icons.beach_access_rounded,
+                    color: Color(0xFF4FC3F7),
+                    size: 20,
+                  ),
+                  title: const Text('Vacation Mode', style: TextStyle(fontSize: 14)),
+                  subtitle: const Text(
+                    'Pause all non-critical notifications',
+                    style: TextStyle(fontSize: 11),
+                  ),
+                  trailing: Icon(
+                    Icons.chevron_right_rounded,
+                    color: textMuted,
+                    size: 20,
+                  ),
+                  dense: true,
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+                  onTap: () => context.push('/settings/vacation-mode'),
+                ),
               ),
             ],
           ),

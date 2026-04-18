@@ -163,6 +163,11 @@ class ChatMessage extends Equatable {
   @JsonKey(name: 'coach_persona_id')
   final String? coachPersonaId;
 
+  /// Client-measured user-perceived latency for assistant messages, in ms.
+  /// Transient — not serialized; captured at send time by the chat notifier.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  final int? responseTimeMs;
+
   const ChatMessage({
     this.id,
     this.userId,
@@ -183,6 +188,7 @@ class ChatMessage extends Equatable {
     this.coachPersonaId,
     this.uploadPhase,
     this.uploadProgress,
+    this.responseTimeMs,
   });
 
   factory ChatMessage.fromJson(Map<String, dynamic> json) =>
@@ -231,7 +237,7 @@ class ChatMessage extends Equatable {
       actionData?['form_check_result'] as Map<String, dynamic>?;
 
   @override
-  List<Object?> get props => [id, userId, role, content, agentType, createdAt, actionData, mediaUrl, mediaType, mediaRefs, localFilePath, status, isPinned, audioUrl, audioDurationMs, coachPersonaId];
+  List<Object?> get props => [id, userId, role, content, agentType, createdAt, actionData, mediaUrl, mediaType, mediaRefs, localFilePath, status, isPinned, audioUrl, audioDurationMs, coachPersonaId, responseTimeMs];
 
   /// Check if this is a voice message
   bool get isVoiceMessage => audioUrl != null && audioUrl!.isNotEmpty;
@@ -258,6 +264,7 @@ class ChatMessage extends Equatable {
       coachPersonaId: coachPersonaId,
       uploadPhase: phase,
       uploadProgress: progress,
+      responseTimeMs: responseTimeMs,
     );
   }
 
@@ -280,6 +287,7 @@ class ChatMessage extends Equatable {
     String? audioUrl,
     int? audioDurationMs,
     String? coachPersonaId,
+    int? responseTimeMs,
   }) {
     return ChatMessage(
       id: id ?? this.id,
@@ -299,7 +307,34 @@ class ChatMessage extends Equatable {
       audioUrl: audioUrl ?? this.audioUrl,
       audioDurationMs: audioDurationMs ?? this.audioDurationMs,
       coachPersonaId: coachPersonaId ?? this.coachPersonaId,
+      responseTimeMs: responseTimeMs ?? this.responseTimeMs,
     );
+  }
+
+  /// Check if this message carries a proposed workout change (advisory flow).
+  /// The AI suggested a modification and is waiting for user approval.
+  bool get hasProposedChange =>
+      actionData != null &&
+      actionData!['action'] == 'propose_workout_change' &&
+      actionData!['proposal_id'] != null;
+
+  /// Proposal identifiers and display fields for the Apply/Dismiss card.
+  String? get proposalId => actionData?['proposal_id'] as String?;
+  String? get proposalToken => actionData?['proposal_token'] as String?;
+  String? get proposalSummary => actionData?['change_summary'] as String?;
+  String? get proposalReason => actionData?['reason'] as String?;
+  String? get proposalProposedAction => actionData?['proposed_action'] as String?;
+
+  /// Expiry time for the proposal (server-issued ISO8601). Clients must treat
+  /// the Apply button as disabled once this is in the past.
+  DateTime? get proposalExpiresAt {
+    final raw = actionData?['expires_at'] as String?;
+    if (raw == null || raw.isEmpty) return null;
+    try {
+      return DateTime.parse(raw);
+    } catch (_) {
+      return null;
+    }
   }
 
   /// Check if this message has a generated workout

@@ -575,15 +575,41 @@ class _ComparisonViewState extends ConsumerState<ComparisonView> {
     final labels = _selectedLayout.getLabels(_selectedPhotos.length);
     final photosToLabel = _selectedPhotos.take(labels.length).toList();
     return Positioned.fill(child: LayoutBuilder(builder: (context, constraints) {
+      // Bottom chrome that chips must sit above — stats bar + AI summary.
+      // We re-clamp each render so stored positions (from earlier drags, a
+      // saved comparison, or a default computed when the canvas was taller)
+      // stay visible and never overlap the AI summary. Without this,
+      // toggling AI Summary leaves cached chip Y's inside the summary strip,
+      // and switching to Squircle (which adds the Radius slider and shrinks
+      // the canvas) pushes cached chip Y's below the visible bounds.
+      const chipHeight = 24.0;
+      const chipWidth = 80.0;
+      const chipGap = 4.0;
+      final aiH =
+          (_settings.showAiSummary && _aiSummary != null) ? 60.0 : 0.0;
+      final maxChipX =
+          max(0.0, constraints.maxWidth - chipWidth);
+      final maxChipY = max(
+        0.0,
+        constraints.maxHeight - aiH - chipHeight - chipGap,
+      );
       return Stack(children: photosToLabel.asMap().entries.map((entry) {
         final i = entry.key;
         final photo = entry.value;
-        final pos = _datePositions[i] ?? _computeDefaultDatePosition(i, photosToLabel.length, constraints);
+        final rawPos = _datePositions[i] ??
+            _computeDefaultDatePosition(i, photosToLabel.length, constraints);
+        final pos = Offset(
+          rawPos.dx.clamp(0.0, maxChipX),
+          rawPos.dy.clamp(0.0, maxChipY),
+        );
         final displayedDate = _dateOverrides[i] ?? photo.takenAt;
         return Positioned(left: pos.dx, top: pos.dy, child: GestureDetector(
           onPanUpdate: (details) => setState(() {
             final current = _datePositions[i] ?? _computeDefaultDatePosition(i, photosToLabel.length, constraints);
-            _datePositions[i] = Offset((current.dx + details.delta.dx).clamp(0, constraints.maxWidth - 80), (current.dy + details.delta.dy).clamp(0, constraints.maxHeight - 20));
+            _datePositions[i] = Offset(
+              (current.dx + details.delta.dx).clamp(0.0, maxChipX),
+              (current.dy + details.delta.dy).clamp(0.0, maxChipY),
+            );
           }),
           onTap: () => _pickDateOverride(i, displayedDate),
           child: _buildDateChip(displayedDate),

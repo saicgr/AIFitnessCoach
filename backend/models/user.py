@@ -183,6 +183,11 @@ class UserUpdate(BaseModel):
     os_version: Optional[str] = Field(default=None, max_length=20)  # e.g., "15", "18.2"
     screen_width: Optional[int] = Field(default=None, ge=0)
     screen_height: Optional[int] = Field(default=None, ge=0)
+    # Vacation mode (migration 1941) — suppresses non-critical notifications.
+    # Both dates are ISO format (YYYY-MM-DD), optional for open-ended vacations.
+    in_vacation_mode: Optional[bool] = None
+    vacation_start_date: Optional[str] = Field(default=None, max_length=10)
+    vacation_end_date: Optional[str] = Field(default=None, max_length=10)
 
 
 class User(BaseModel):
@@ -241,3 +246,7 @@ class User(BaseModel):
     screen_width: Optional[int] = None
     screen_height: Optional[int] = None
     last_device_update: Optional[datetime] = None
+    # Vacation mode (migration 1941)
+    in_vacation_mode: bool = False
+    vacation_start_date: Optional[str] = Field(default=None, max_length=10)
+    vacation_end_date: Optional[str] = Field(default=None, max_length=10)

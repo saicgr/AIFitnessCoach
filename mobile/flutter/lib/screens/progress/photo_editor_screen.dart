@@ -1,14 +1,134 @@
 import 'dart:io';
 import 'dart:math';
 import 'dart:ui' as ui;
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
+import 'package:image/image.dart' as img;
 import 'package:image_cropper/image_cropper.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/constants/app_colors.dart';
 import '../../widgets/pill_app_bar.dart';
+
+// ============================================================================
+// Photo filters — applied via pixel-level operations in a background isolate.
+// ============================================================================
+
+enum _FilterId {
+  none,
+  mono,
+  noir,
+  sepia,
+  vintage,
+  fade,
+  vivid,
+  dramatic,
+  cool,
+  warm,
+}
+
+const Map<_FilterId, String> _filterNames = {
+  _FilterId.none: 'Original',
+  _FilterId.mono: 'Mono',
+  _FilterId.noir: 'Noir',
+  _FilterId.sepia: 'Sepia',
+  _FilterId.vintage: 'Vintage',
+  _FilterId.fade: 'Fade',
+  _FilterId.vivid: 'Vivid',
+  _FilterId.dramatic: 'Drama',
+  _FilterId.cool: 'Cool',
+  _FilterId.warm: 'Warm',
+};
+
+/// Apply a filter to an [img.Image] non-destructively (clones first).
+/// Returns the filtered image.
+img.Image _applyFilterToImage(img.Image src, _FilterId filter) {
+  if (filter == _FilterId.none) return src;
+  final working = img.Image.from(src);
+  switch (filter) {
+    case _FilterId.none:
+      return working;
+    case _FilterId.mono:
+      return img.grayscale(working);
+    case _FilterId.noir:
+      final grey = img.grayscale(working);
+      return img.adjustColor(grey, contrast: 1.35, brightness: 0.95);
+    case _FilterId.sepia:
+      return img.sepia(working, amount: 1.0);
+    case _FilterId.vintage:
+      final s = img.sepia(working, amount: 0.55);
+      return img.adjustColor(s,
+          contrast: 0.9, saturation: 0.85, brightness: 1.03);
+    case _FilterId.fade:
+      return img.adjustColor(working,
+          contrast: 0.82, saturation: 0.9, brightness: 1.08);
+    case _FilterId.vivid:
+      return img.adjustColor(working, saturation: 1.5, contrast: 1.15);
+    case _FilterId.dramatic:
+      return img.adjustColor(working, contrast: 1.4, saturation: 0.75);
+    case _FilterId.cool:
+      return img.adjustColor(working, saturation: 1.05, hue: -18);
+    case _FilterId.warm:
+      return img.adjustColor(working, saturation: 1.05, hue: 18);
+  }
+}
+
+/// Background-isolate task: apply a geometric op (flip / rotate) + current
+/// filter to source bytes, returning encoded JPEG bytes.
+Uint8List _runEditTask(Map<String, dynamic> args) {
+  final bytes = args['bytes'] as Uint8List;
+  final op = args['op'] as String; // 'none' | 'rotate90' | 'flipH'
+  final filterIndex = args['filter'] as int;
+
+  final decoded = img.decodeImage(bytes);
+  if (decoded == null) {
+    throw Exception('Failed to decode image');
+  }
+
+  img.Image result = decoded;
+  switch (op) {
+    case 'rotate90':
+      result = img.copyRotate(decoded, angle: 90);
+      break;
+    case 'flipH':
+      img.flipHorizontal(decoded);
+      result = decoded;
+      break;
+    case 'none':
+    default:
+      break;
+  }
+
+  final filter = _FilterId.values[filterIndex];
+  final filtered = _applyFilterToImage(result, filter);
+  return Uint8List.fromList(img.encodeJpg(filtered, quality: 92));
+}
+
+/// Background-isolate task: generate a thumbnail for every filter from the
+/// source bytes. Returns a map of filter-index → JPEG bytes.
+Map<int, Uint8List> _runThumbnailTask(Uint8List bytes) {
+  final decoded = img.decodeImage(bytes);
+  if (decoded == null) {
+    throw Exception('Failed to decode image');
+  }
+  // Scale longest side to 160px for fast filter previews.
+  final longest = decoded.width > decoded.height ? decoded.width : decoded.height;
+  final scale = longest > 160 ? 160 / longest : 1.0;
+  final thumb = img.copyResize(
+    decoded,
+    width: (decoded.width * scale).round(),
+    height: (decoded.height * scale).round(),
+    interpolation: img.Interpolation.average,
+  );
+  final result = <int, Uint8List>{};
+  for (final f in _FilterId.values) {
+    final filtered = _applyFilterToImage(thumb, f);
+    result[f.index] = Uint8List.fromList(img.encodeJpg(filtered, quality: 82));
+  }
+  return result;
+}
 
 /// Photo editor screen with cropping and FitWiz logo overlay
 class PhotoEditorScreen extends StatefulWidget {
@@ -40,7 +160,25 @@ class _EmojiSticker {
 }
 
 class _PhotoEditorScreenState extends State<PhotoEditorScreen> {
+  /// The image currently displayed and saved — has geometric ops + current
+  /// filter baked in. Rebuilt whenever either changes.
   File? _editedImage;
+
+  /// The image with geometric ops (flip/rotate/crop) applied, but WITHOUT
+  /// any filter. Re-filtering uses this as the source so filters stay
+  /// swappable without compounding JPEG loss.
+  File? _baseImage;
+
+  /// Currently selected filter.
+  _FilterId _currentFilter = _FilterId.none;
+
+  /// Precomputed filter preview thumbnails, keyed by filter index.
+  Map<int, Uint8List>? _filterThumbs;
+
+  /// True while an image operation (filter/flip/rotate) is running on an
+  /// isolate. Used to gate rapid taps and show a loading overlay.
+  bool _isProcessing = false;
+
   bool _showLogo = false;
   bool _isSaving = false;
   bool _showPoseHint = true;
@@ -66,10 +204,120 @@ class _PhotoEditorScreenState extends State<PhotoEditorScreen> {
   void initState() {
     super.initState();
     _editedImage = widget.imageFile;
+    _baseImage = widget.imageFile;
+    _generateFilterThumbnails();
     // Auto-dismiss pose hint after 4 seconds
     Future.delayed(const Duration(seconds: 4), () {
       if (mounted) setState(() => _showPoseHint = false);
     });
+  }
+
+  Future<void> _generateFilterThumbnails() async {
+    try {
+      final bytes = await widget.imageFile.readAsBytes();
+      final thumbs = await compute(_runThumbnailTask, bytes);
+      if (mounted) setState(() => _filterThumbs = thumbs);
+    } catch (e) {
+      debugPrint('❌ [PhotoEditor] Failed to generate filter thumbs: $e');
+    }
+  }
+
+  /// Writes [bytes] to a temp file with a unique name and returns the file.
+  Future<File> _writeTempImage(Uint8List bytes, {String prefix = 'edit'}) async {
+    final tempDir = await getTemporaryDirectory();
+    final fileName =
+        '${prefix}_${DateTime.now().microsecondsSinceEpoch}.jpg';
+    final file = File('${tempDir.path}/$fileName');
+    await file.writeAsBytes(bytes, flush: true);
+    return file;
+  }
+
+  /// Regenerates [_editedImage] by applying [_currentFilter] to [_baseImage].
+  /// When the filter is None, [_editedImage] just points at [_baseImage] —
+  /// no unnecessary re-encode.
+  Future<void> _rebuildEditedFromBase() async {
+    if (_baseImage == null) return;
+    if (_currentFilter == _FilterId.none) {
+      setState(() => _editedImage = _baseImage);
+      return;
+    }
+    final bytes = await _baseImage!.readAsBytes();
+    final outBytes = await compute(_runEditTask, <String, dynamic>{
+      'bytes': bytes,
+      'op': 'none',
+      'filter': _currentFilter.index,
+    });
+    final file = await _writeTempImage(outBytes, prefix: 'filtered');
+    if (!mounted) return;
+    setState(() => _editedImage = file);
+  }
+
+  /// Applies a geometric op (`rotate90` or `flipH`) to [_baseImage], then
+  /// re-applies the current filter. Done in a single isolate pass to avoid
+  /// double decode/encode.
+  Future<void> _applyGeomOp(String op) async {
+    if (_isProcessing || _baseImage == null) return;
+    setState(() => _isProcessing = true);
+    try {
+      final bytes = await _baseImage!.readAsBytes();
+
+      // First: pure geometric op → new base (no filter).
+      final baseBytes = await compute(_runEditTask, <String, dynamic>{
+        'bytes': bytes,
+        'op': op,
+        'filter': _FilterId.none.index,
+      });
+      final newBase = await _writeTempImage(baseBytes, prefix: 'base');
+
+      File newEdited = newBase;
+      if (_currentFilter != _FilterId.none) {
+        final filteredBytes = await compute(_runEditTask, <String, dynamic>{
+          'bytes': baseBytes,
+          'op': 'none',
+          'filter': _currentFilter.index,
+        });
+        newEdited = await _writeTempImage(filteredBytes, prefix: 'filtered');
+      }
+
+      if (!mounted) return;
+      setState(() {
+        _baseImage = newBase;
+        _editedImage = newEdited;
+      });
+
+      // Rebuild filter thumbnails from the new base so previews match.
+      final thumbs = await compute(_runThumbnailTask, baseBytes);
+      if (mounted) setState(() => _filterThumbs = thumbs);
+    } catch (e) {
+      debugPrint('❌ [PhotoEditor] Geom op "$op" failed: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Could not ${op == "rotate90" ? "rotate" : "flip"} image.')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isProcessing = false);
+    }
+  }
+
+  Future<void> _rotateImage() => _applyGeomOp('rotate90');
+
+  Future<void> _flipImage() => _applyGeomOp('flipH');
+
+  Future<void> _selectFilter(_FilterId filter) async {
+    if (_isProcessing || _currentFilter == filter) {
+      setState(() => _currentFilter = filter);
+      return;
+    }
+    setState(() {
+      _currentFilter = filter;
+      _isProcessing = true;
+    });
+    try {
+      await _rebuildEditedFromBase();
+    } finally {
+      if (mounted) setState(() => _isProcessing = false);
+    }
   }
 
   IconData get _poseIcon {
@@ -85,12 +333,14 @@ class _PhotoEditorScreenState extends State<PhotoEditorScreen> {
 
   Future<void> _cropImage() async {
     try {
-      if (_editedImage == null) return;
+      if (_baseImage == null) return;
 
       final isDark = Theme.of(context).brightness == Brightness.dark;
 
+      // Crop the base image (pre-filter) so the user sees natural colors
+      // while cropping; the selected filter is re-applied afterwards.
       final croppedFile = await ImageCropper().cropImage(
-        sourcePath: _editedImage!.path,
+        sourcePath: _baseImage!.path,
         uiSettings: [
           AndroidUiSettings(
             toolbarTitle: 'Crop Photo',
@@ -143,8 +393,18 @@ class _PhotoEditorScreenState extends State<PhotoEditorScreen> {
 
       if (croppedFile != null && mounted) {
         setState(() {
-          _editedImage = File(croppedFile.path);
+          _baseImage = File(croppedFile.path);
+          _isProcessing = true;
         });
+        try {
+          await _rebuildEditedFromBase();
+          // Regenerate filter thumbs from the newly cropped base.
+          final bytes = await _baseImage!.readAsBytes();
+          final thumbs = await compute(_runThumbnailTask, bytes);
+          if (mounted) setState(() => _filterThumbs = thumbs);
+        } finally {
+          if (mounted) setState(() => _isProcessing = false);
+        }
       }
     } catch (e) {
       debugPrint('❌ [PhotoEditor] Error cropping image: $e');
@@ -551,37 +811,61 @@ class _PhotoEditorScreenState extends State<PhotoEditorScreen> {
                           ),
                         ],
 
-                        const SizedBox(height: 4),
+                        // Named filter strip
+                        _buildFilterStrip(),
 
-                        // Action buttons row
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                          children: [
-                            _buildToolButton(
-                              icon: Icons.crop,
-                              label: 'Crop',
-                              onTap: _cropImage,
-                            ),
-                            _buildToolButton(
-                              icon: _showLogo
-                                  ? Icons.branding_watermark
-                                  : Icons.branding_watermark_outlined,
-                              label: _showLogo ? 'Hide Logo' : 'Show Logo',
-                              onTap: () => setState(() => _showLogo = !_showLogo),
-                              isActive: _showLogo,
-                            ),
-                            _buildToolButton(
-                              icon: Icons.refresh,
-                              label: 'Reset Logo',
-                              onTap: () {
-                                setState(() {
-                                  _logoPosition = const Offset(20, 20);
-                                  _logoScale = 1.0;
-                                });
-                              },
-                              enabled: _showLogo,
-                            ),
-                          ],
+                        const SizedBox(height: 8),
+
+                        // Action buttons row (horizontally scrollable if
+                        // it overflows on narrow screens)
+                        SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          padding: const EdgeInsets.symmetric(horizontal: 4),
+                          child: Row(
+                            children: [
+                              _buildToolButton(
+                                icon: Icons.crop,
+                                label: 'Crop',
+                                onTap: _cropImage,
+                                enabled: !_isProcessing,
+                              ),
+                              const SizedBox(width: 18),
+                              _buildToolButton(
+                                icon: Icons.rotate_90_degrees_cw,
+                                label: 'Rotate',
+                                onTap: _rotateImage,
+                                enabled: !_isProcessing,
+                              ),
+                              const SizedBox(width: 18),
+                              _buildToolButton(
+                                icon: Icons.flip,
+                                label: 'Flip',
+                                onTap: _flipImage,
+                                enabled: !_isProcessing,
+                              ),
+                              const SizedBox(width: 18),
+                              _buildToolButton(
+                                icon: _showLogo
+                                    ? Icons.branding_watermark
+                                    : Icons.branding_watermark_outlined,
+                                label: _showLogo ? 'Hide Logo' : 'Show Logo',
+                                onTap: () => setState(() => _showLogo = !_showLogo),
+                                isActive: _showLogo,
+                              ),
+                              const SizedBox(width: 18),
+                              _buildToolButton(
+                                icon: Icons.refresh,
+                                label: 'Reset Logo',
+                                onTap: () {
+                                  setState(() {
+                                    _logoPosition = const Offset(20, 20);
+                                    _logoScale = 1.0;
+                                  });
+                                },
+                                enabled: _showLogo,
+                              ),
+                            ],
+                          ),
                         ),
                       ],
                     ),
@@ -590,8 +874,123 @@ class _PhotoEditorScreenState extends State<PhotoEditorScreen> {
               ),
             ),
           ),
+
+          // Processing overlay — shown while flip/rotate/filter runs on
+          // an isolate so the UI gives clear feedback.
+          if (_isProcessing)
+            Positioned.fill(
+              child: IgnorePointer(
+                ignoring: false,
+                child: Container(
+                  color: Colors.black.withValues(alpha: 0.25),
+                  alignment: Alignment.center,
+                  child: Container(
+                    padding: const EdgeInsets.all(18),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withValues(alpha: 0.7),
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2.4,
+                            valueColor:
+                                AlwaysStoppedAnimation<Color>(AppColors.cyan),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        const Text(
+                          'Processing…',
+                          style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w500),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
         ],
       ),
+      ),
+    );
+  }
+
+  /// Horizontal strip of filter preview tiles — thumbnail + name.
+  Widget _buildFilterStrip() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final accentColor = isDark ? AppColors.cyan : AppColorsLight.accent;
+    final borderColor = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+    final secondaryColor =
+        isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+
+    return SizedBox(
+      height: 82,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 4),
+        itemCount: _FilterId.values.length,
+        separatorBuilder: (_, __) => const SizedBox(width: 10),
+        itemBuilder: (context, index) {
+          final filter = _FilterId.values[index];
+          final isSelected = _currentFilter == filter;
+          final thumbBytes = _filterThumbs?[filter.index];
+
+          return GestureDetector(
+            onTap: _isProcessing ? null : () => _selectFilter(filter),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 56,
+                  height: 56,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(
+                      color: isSelected ? accentColor : borderColor,
+                      width: isSelected ? 2 : 1,
+                    ),
+                    color: isDark ? AppColors.elevated : AppColorsLight.elevated,
+                  ),
+                  clipBehavior: Clip.antiAlias,
+                  child: thumbBytes != null
+                      ? Image.memory(
+                          thumbBytes,
+                          fit: BoxFit.cover,
+                          gaplessPlayback: true,
+                        )
+                      : Center(
+                          child: SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor:
+                                  AlwaysStoppedAnimation<Color>(accentColor),
+                            ),
+                          ),
+                        ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  _filterNames[filter]!,
+                  style: TextStyle(
+                    color: isSelected ? accentColor : secondaryColor,
+                    fontSize: 10,
+                    fontWeight:
+                        isSelected ? FontWeight.w600 : FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
       ),
     );
   }

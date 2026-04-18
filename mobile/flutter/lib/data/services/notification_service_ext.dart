@@ -304,6 +304,14 @@ extension NotificationServiceCore on NotificationService {
       return;
     }
 
+    // Daily crate: mark pending so home screen auto-triggers the claim flow
+    // instead of forcing the user to tap the banner again after landing on home.
+    if (notificationType == 'daily_crate') {
+      CrateNotificationRouter.pending = true;
+      onNotificationTapped?.call(notificationType);
+      return;
+    }
+
     // Handle other notification types
     if (notificationType != null) {
       onNotificationTapped?.call(notificationType);

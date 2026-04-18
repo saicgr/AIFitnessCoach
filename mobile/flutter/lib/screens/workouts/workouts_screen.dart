@@ -23,6 +23,7 @@ import '../home/widgets/hero_workout_card.dart';
 import 'widgets/exercise_preferences_card.dart';
 import 'widgets/upcoming_workouts_sheet.dart';
 import 'widgets/previous_workouts_sheet.dart';
+import 'widgets/favorite_workouts_sheet.dart';
 
 /// Workouts screen - central hub for all workout-related content
 /// Accessible from the floating nav bar (replaces Profile)
@@ -475,6 +476,20 @@ class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen>
               onTap: () {
                 HapticService.light();
                 showPreviousWorkoutsSheet(context, ref);
+              },
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: _buildQuickActionButton(
+              context,
+              icon: Icons.favorite,
+              label: 'Favorites',
+              color: AppColors.error,
+              isDark: isDark,
+              onTap: () {
+                HapticService.light();
+                showFavoriteWorkoutsSheet(context, ref);
               },
             ),
           ),

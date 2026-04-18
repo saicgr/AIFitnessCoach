@@ -18,6 +18,10 @@ extension ExercisePreferencesRepositoryStaplesExt on ExercisePreferencesReposito
     int? userRestSeconds,
     double? userWeightLbs,
     List<int>? targetDays,
+    String? userTempo,
+    String? userNotes,
+    String? userBandColor,
+    String? userRangeOfMotion,
   }) async {
     debugPrint('🔒 [ExercisePrefs] Adding staple: $exerciseName for user: $userId');
 
@@ -35,6 +39,10 @@ extension ExercisePreferencesRepositoryStaplesExt on ExercisePreferencesReposito
         if (userRestSeconds != null) 'user_rest_seconds': userRestSeconds,
         if (userWeightLbs != null) 'user_weight_lbs': userWeightLbs,
         if (targetDays != null) 'target_days': targetDays,
+        if (userTempo != null) 'user_tempo': userTempo,
+        if (userNotes != null) 'user_notes': userNotes,
+        if (userBandColor != null) 'user_band_color': userBandColor,
+        if (userRangeOfMotion != null) 'user_range_of_motion': userRangeOfMotion,
       };
 
       if (cardioParams != null) {
@@ -55,6 +63,12 @@ extension ExercisePreferencesRepositoryStaplesExt on ExercisePreferencesReposito
         }
         if (cardioParams.containsKey('stroke_rate_spm')) {
           data['user_stroke_rate_spm'] = cardioParams['stroke_rate_spm']!.toInt();
+        }
+        if (cardioParams.containsKey('distance_miles')) {
+          data['user_distance_miles'] = cardioParams['distance_miles'];
+        }
+        if (cardioParams.containsKey('rpe')) {
+          data['user_rpe'] = cardioParams['rpe']!.toInt();
         }
       }
 

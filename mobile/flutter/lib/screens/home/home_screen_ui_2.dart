@@ -243,7 +243,7 @@ extension _HomeScreenStateUI2 on _HomeScreenState {
                 )
               : EmptyWorkoutCard(
                   onGenerate: () {
-                    context.push('/workouts');
+                    context.go('/workouts');
                   },
                 );
         }
@@ -286,7 +286,7 @@ extension _HomeScreenStateUI2 on _HomeScreenState {
 
         return EmptyWorkoutCard(
           onGenerate: () {
-            context.push('/workouts');
+            context.go('/workouts');
           },
         );
       },

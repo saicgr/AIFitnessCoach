@@ -202,7 +202,7 @@ class _FastingHeroCard extends ConsumerWidget {
       child: InkWell(
         onTap: () {
           HapticService.light();
-          context.push('/fasting');
+          context.go('/fasting');
         },
         borderRadius: BorderRadius.circular(16),
         child: Container(
@@ -850,7 +850,7 @@ class _FastGridActionItem extends ConsumerWidget {
       child: InkWell(
         onTap: () {
           HapticService.light();
-          context.push('/fasting');
+          context.go('/fasting');
         },
         borderRadius: BorderRadius.circular(12),
         child: Container(

@@ -290,6 +290,7 @@ extension _QuizBodyMetricsStateUI on _QuizBodyMetricsState {
     required Color cardBg,
     required Color cardBorder,
     bool allowDecimal = false,
+    FocusNode? focusNode,
   }) {
     return Container(
       decoration: BoxDecoration(
@@ -299,6 +300,7 @@ extension _QuizBodyMetricsStateUI on _QuizBodyMetricsState {
       ),
       child: TextField(
         controller: controller,
+        focusNode: focusNode,
         keyboardType: TextInputType.numberWithOptions(decimal: allowDecimal),
         inputFormatters: [
           FilteringTextInputFormatter.allow(

@@ -22,6 +22,7 @@ import '../../../models/equipment_item.dart';
 import '../../../widgets/glass_sheet.dart';
 import '../models/workout_state.dart';
 import '../widgets/exercise_options_sheet.dart' show RepProgressionType;
+import '../widgets/intensity_prompt_sheet.dart';
 import '../widgets/number_input_widgets.dart';
 
 part 'set_logging_mixin_ui.dart';
@@ -57,6 +58,7 @@ mixin SetLoggingMixin<T extends StatefulWidget> on State<T> {
   int? get lastSetRpe;
   set lastSetRpe(int? value);
   int? get lastSetRir;
+  set lastSetRir(int? value);
   bool get isLeftRightMode;
   set isLeftRightMode(bool value);
   bool get isDoneButtonPressed;
@@ -85,7 +87,7 @@ mixin SetLoggingMixin<T extends StatefulWidget> on State<T> {
   // ── Set Logging Methods ──
 
   /// Complete a set with current weight/reps values
-  void completeSet() {
+  Future<void> completeSet() async {
     final weight = double.tryParse(weightController.text) ?? 0;
     final reps = int.tryParse(repsController.text) ?? 0;
     final exercise = exercises[currentExerciseIndex];
@@ -143,6 +145,28 @@ mixin SetLoggingMixin<T extends StatefulWidget> on State<T> {
 
     HapticService.setCompletion();
 
+    // Mandatory intensity prompt — opens a sheet asking "how hard was
+    // that set?" and blocks set finalization until the user picks an
+    // effort. Stops the old silent RIR=3 default from stamping every
+    // set.
+    if (!mounted) return;
+    final result = await showIntensityPromptSheet(
+      context,
+      previousRpe: lastSetRpe,
+      exerciseName: exercise.name,
+      setNumber: currentSetNumber,
+    );
+    if (result != null) {
+      lastSetRpe = result.rpe;
+      lastSetRir = result.rir;
+    } else {
+      // User dismissed somehow (dev override) — keep pendingSetLog
+      // around but do NOT save with stale defaults.
+      pendingSetLog = null;
+      return;
+    }
+
+    if (!mounted) return;
     finalizeSetWithRpe();
   }
 

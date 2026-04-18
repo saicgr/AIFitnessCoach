@@ -137,7 +137,9 @@ class _WorkoutCategoryPillsState extends ConsumerState<WorkoutCategoryPills> {
                   onTap: () {
                     HapticService.selection();
                     if (route != null) {
-                      context.push(route);
+                      // Switch branches via go — push would stack on top of
+                      // the current branch and keep the wrong tab selected.
+                      context.go(route);
                     }
                   },
                 ),

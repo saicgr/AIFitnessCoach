@@ -54,7 +54,7 @@ class _QuizTrainingPreferencesState extends State<QuizTrainingPreferences> {
   // All 5 training splits with colors + "Nothing structured" option first
   static final _splits = [
     {'id': 'nothing_structured', 'label': 'Nothing structured', 'icon': Icons.shuffle, 'color': AppColors.purple, 'desc': "I'll let AI decide"},
-    {'id': 'push_pull_legs', 'label': 'Push/Pull/Legs', 'icon': Icons.splitscreen, 'color': AppColors.orange, 'desc': '6 days \u2022 Popular'},
+    {'id': 'push_pull_legs', 'label': 'Push/Pull/Legs', 'icon': Icons.splitscreen, 'color': AppColors.onboardingAccent, 'desc': '6 days \u2022 Popular'},
     {'id': 'full_body', 'label': 'Full Body', 'icon': Icons.accessibility_new, 'color': AppColors.green, 'desc': '3 days \u2022 Beginners'},
     {'id': 'upper_lower', 'label': 'Upper/Lower', 'icon': Icons.swap_vert, 'color': AppColors.electricBlue, 'desc': '4 days \u2022 Balanced'},
     {'id': 'phul', 'label': 'PHUL', 'icon': Icons.flash_on, 'color': AppColors.pink, 'desc': '4 days \u2022 Power + Hypertrophy'},
@@ -64,7 +64,7 @@ class _QuizTrainingPreferencesState extends State<QuizTrainingPreferences> {
   // Workout types with colors
   static final _workoutTypes = [
     {'id': 'strength', 'label': 'Strength', 'icon': Icons.fitness_center, 'color': AppColors.purple},
-    {'id': 'cardio', 'label': 'Cardio', 'icon': Icons.directions_run, 'color': AppColors.orange},
+    {'id': 'cardio', 'label': 'Cardio', 'icon': Icons.directions_run, 'color': AppColors.onboardingAccent},
     {'id': 'mixed', 'label': 'Mixed', 'icon': Icons.sports_gymnastics, 'color': AppColors.electricBlue},
   ];
 
@@ -72,13 +72,13 @@ class _QuizTrainingPreferencesState extends State<QuizTrainingPreferences> {
   static final _paces = [
     {'id': 'slow', 'label': 'Slow', 'desc': '3-4 weeks', 'color': AppColors.green},
     {'id': 'medium', 'label': 'Medium', 'desc': '1-2 weeks', 'color': AppColors.electricBlue},
-    {'id': 'fast', 'label': 'Fast', 'desc': 'Every session', 'color': AppColors.orange},
+    {'id': 'fast', 'label': 'Fast', 'desc': 'Every session', 'color': AppColors.onboardingAccent},
   ];
 
   // Sleep quality options
   static final _sleepQualityOptions = [
     {'id': 'poor', 'emoji': '😴', 'label': 'Poor', 'desc': '<5 hrs', 'color': AppColors.pink},
-    {'id': 'fair', 'emoji': '😐', 'label': 'Fair', 'desc': '5-6 hrs', 'color': AppColors.orange},
+    {'id': 'fair', 'emoji': '😐', 'label': 'Fair', 'desc': '5-6 hrs', 'color': AppColors.onboardingAccent},
     {'id': 'good', 'emoji': '😊', 'label': 'Good', 'desc': '7-8 hrs', 'color': AppColors.green},
     {'id': 'excellent', 'emoji': '🌟', 'label': 'Excellent', 'desc': '8+ hrs', 'color': AppColors.electricBlue},
   ];

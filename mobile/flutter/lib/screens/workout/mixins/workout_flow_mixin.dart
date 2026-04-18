@@ -339,6 +339,8 @@ mixin WorkoutFlowMixin<T extends StatefulWidget> on State<T> {
         'challengeData': challengeData,
         'personalRecords': personalRecords,
         'performanceComparison': performanceComparison,
+        // W1: Day 0-7 retention — trigger First Workout Forecast sheet
+        'isFirstWorkout': completionResponse?.isFirstWorkout ?? false,
       });
     }
   }

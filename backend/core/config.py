@@ -151,6 +151,12 @@ class Settings(BaseSettings):
             return self.nutrition_cache_enabled
         return self.gemini_cache_enabled
 
+    # Sentry (error tracking) — leave blank to disable.
+    sentry_dsn: Optional[str] = None
+    sentry_environment: Optional[str] = None  # falls back to `environment` if unset
+    sentry_traces_sample_rate: float = 0.1
+    app_version: str = "0.0.0"
+
     class Config:
         env_file = ".env"
         env_file_encoding = "utf-8"

@@ -101,7 +101,7 @@ class _QuizNutritionGoalsState extends State<QuizNutritionGoals> {
       'id': 'lose_fat',
       'label': 'Lose Fat',
       'icon': Icons.local_fire_department,
-      'color': AppColors.orange,
+      'color': AppColors.onboardingAccent,
     },
     {
       'id': 'build_muscle',

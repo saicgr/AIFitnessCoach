@@ -43,8 +43,25 @@ extension __QuizBodyMetricsStateExt on _QuizBodyMetricsState {
                     metricLabel: 'cm',
                     imperialLabel: 'ft',
                     onChanged: (isMetric) {
+                      // Was any height field focused before the switch?
+                      final hadHeightFocus = _heightCmFocus.hasFocus
+                          || _heightFeetFocus.hasFocus
+                          || _heightInchesFocus.hasFocus;
                       _convertHeightUnits(isMetric);
                       setState(() => _heightInMetric = isMetric);
+                      // Preserve focus on the equivalent field in the new unit
+                      // so the keyboard stays open and the scroll view doesn't
+                      // jump to another field.
+                      if (hadHeightFocus) {
+                        WidgetsBinding.instance.addPostFrameCallback((_) {
+                          if (!mounted) return;
+                          if (isMetric) {
+                            _heightCmFocus.requestFocus();
+                          } else {
+                            _heightFeetFocus.requestFocus();
+                          }
+                        });
+                      }
                     },
                     isDark: isDark,
                     cardBg: cardBg,
@@ -56,6 +73,7 @@ extension __QuizBodyMetricsStateExt on _QuizBodyMetricsState {
               if (_heightInMetric)
                 _buildCompactTextField(
                   controller: _heightController,
+                  focusNode: _heightCmFocus,
                   hint: 'cm',
                   onChanged: (_) => _onHeightChanged(),
                   isDark: isDark,
@@ -69,6 +87,7 @@ extension __QuizBodyMetricsStateExt on _QuizBodyMetricsState {
                     Expanded(
                       child: _buildCompactTextField(
                         controller: _heightFeetController,
+                        focusNode: _heightFeetFocus,
                         hint: 'ft',
                         onChanged: (_) => _onHeightChanged(),
                         isDark: isDark,
@@ -81,6 +100,7 @@ extension __QuizBodyMetricsStateExt on _QuizBodyMetricsState {
                     Expanded(
                       child: _buildCompactTextField(
                         controller: _heightInchesController,
+                        focusNode: _heightInchesFocus,
                         hint: 'in',
                         onChanged: (_) => _onHeightChanged(),
                         isDark: isDark,

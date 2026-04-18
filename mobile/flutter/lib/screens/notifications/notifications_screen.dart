@@ -182,10 +182,10 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
         context.push('/chat');
         break;
       case 'workout_reminder':
-        context.push('/home');
+        context.go('/home');
         break;
       case 'nutrition_reminder':
-        context.push('/nutrition');
+        context.go('/nutrition');
         break;
       case 'hydration_reminder':
         context.go('/nutrition?tab=2');
@@ -224,7 +224,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
       case 'comment':
       case 'mention':
         // Navigate to social feed
-        context.push('/social');
+        context.go('/social');
         break;
       case 'test':
         // Test notifications stay on this screen
@@ -235,10 +235,10 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
       case 'double_xp':
       case 'week1_tip':
       case 'contextual':
-        context.push('/home');
+        context.go('/home');
         break;
       case 'wrapped':
-        context.push('/home');
+        context.go('/home');
         break;
       case 'renewal':
         context.push('/settings/subscription');

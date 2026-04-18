@@ -225,8 +225,8 @@ async def _write_cache_to_db(
             {
                 "p_query_hash": query_hash,
                 "p_query_text": query_text,
-                "p_filters_json": json.dumps(filters_json),
-                "p_results": json.dumps(results),
+                "p_filters_json": filters_json,
+                "p_results": results,
                 "p_ttl_hours": 24,
             },
         ).execute()

@@ -180,13 +180,16 @@ class Workout(BaseModel):
     superseded_by: Optional[str] = Field(default=None, max_length=100)
     completed_at: Optional[datetime] = None
     completion_method: Optional[str] = Field(default=None, max_length=50)
+    is_favorite: bool = False
 
 
 class GenerateWorkoutRequest(BaseModel):
     user_id: str = Field(..., max_length=100)
     gym_profile_id: Optional[str] = Field(default=None, max_length=100, description="Gym profile ID to use for equipment/environment. If not provided, uses active profile or user defaults.")
     workout_type: Optional[str] = Field(default=None, max_length=50)
-    duration_minutes: Optional[int] = Field(default=45, ge=1, le=480)
+    # Default is None (not 45) so endpoints can detect "user didn't specify"
+    # and fall back to gym profile / user preferences via resolve_target_duration.
+    duration_minutes: Optional[int] = Field(default=None, ge=1, le=480)
     duration_minutes_min: Optional[int] = Field(default=None, ge=1, le=480)
     duration_minutes_max: Optional[int] = Field(default=None, ge=1, le=480)
     focus_areas: Optional[List[str]] = Field(default=None, max_length=20)

@@ -52,6 +52,7 @@ from core.logger import get_logger
 from core.exceptions import safe_internal_error
 from core.rate_limiter import limiter
 from services.notification_service import get_notification_service
+from services.notification_suppression import should_suppress_notification
 
 logger = get_logger(__name__)
 router = APIRouter()
@@ -220,11 +221,16 @@ def _fetch_nudge_eligible_users(supabase) -> List[dict]:
     """Fetch all users who have FCM tokens and notification preferences.
 
     Returns a list of user dicts with: id, name, email, fcm_token, timezone,
-    notification_preferences, created_at.
+    notification_preferences, created_at, plus vacation_* and comeback_* fields
+    used by the central suppression gate (services/notification_suppression.py).
     """
     try:
         result = supabase.client.table("users") \
-            .select("id, name, email, fcm_token, timezone, notification_preferences, created_at") \
+            .select(
+                "id, name, email, fcm_token, timezone, notification_preferences, created_at, "
+                "in_vacation_mode, vacation_start_date, vacation_end_date, "
+                "in_comeback_mode, comeback_week"
+            ) \
             .not_.is_("fcm_token", "null") \
             .execute()
         return result.data or []
@@ -306,6 +312,13 @@ async def _send_nudge(
     local_date = _get_user_local_date(tz_str)
     prefs = user.get("notification_preferences") or {}
 
+    # 0. Global suppression gate (vacation + comeback). Checked BEFORE dedup so
+    # suppressed nudges don't burn dedup slots or daily cap quota.
+    suppression = should_suppress_notification(user, nudge_type, channel="push")
+    if suppression:
+        logger.debug(f"🔕 [Nudge] Suppressed {nudge_type} for {user_id}: {suppression}")
+        return False
+
     # 1. Daily cap check (BEFORE dedup insert)
     daily_limit = prefs.get("daily_nudge_limit", 2)
     if _count_nudges_today(supabase, user_id, local_date) >= daily_limit:
@@ -322,6 +335,12 @@ async def _send_nudge(
     communication_tone = ai_settings.get("communication_tone", "encouraging")
     use_emojis = ai_settings.get("use_emojis", True)
     intensity = prefs.get("accountability_intensity", "balanced")
+    # New-user tone cap (migration 1938 / W6): research shows shame/tough_love
+    # undermines motivation for early users. Force balanced for accounts < 14d old
+    # regardless of user preference. Users who've used the app 2+ weeks can keep
+    # their chosen intensity.
+    if _user_account_age_days(user) < 14 and intensity == "tough_love":
+        intensity = "balanced"
     use_ai = prefs.get("ai_personalized_nudges", True)
 
     # 4. Generate message
@@ -1407,6 +1426,557 @@ async def _job_recovery_complete(supabase, notif_svc, users: List[dict]) -> int:
     return sent
 
 
+# ─── Merch Milestone Nudges (migration 1931) ─────────────────────────────────
+
+# Next merch tier for a given level in the proximity window.
+_MERCH_NEXT_FOR_PROXIMITY = {
+    47: 50, 48: 50, 49: 50,
+    97: 100, 98: 100, 99: 100,
+    147: 150, 148: 150, 149: 150,
+    197: 200, 198: 200, 199: 200,
+    247: 250, 248: 250, 249: 250,
+}
+
+_MERCH_DISPLAY_NAME = {
+    "sticker_pack": "FitWiz Sticker Pack",
+    "t_shirt": "FitWiz T-Shirt",
+    "hoodie": "FitWiz Hoodie",
+    "full_merch_kit": "Full Merch Kit",
+    "signed_premium_kit": "Signed Premium Kit",
+}
+
+
+def _merch_type_for_level(level: int) -> Optional[str]:
+    return {
+        50: "sticker_pack",
+        100: "t_shirt",
+        150: "hoodie",
+        200: "full_merch_kit",
+        250: "signed_premium_kit",
+    }.get(level)
+
+
+async def _job_merch_proximity(supabase, notif_svc, users: List[dict]) -> int:
+    """
+    Nudge users who are 1-3 levels away from a merch tier (L50 / L100 / L150 / L200 / L250).
+    Fires once per day per user at their preferred "progress_milestone" hour (default 18:00).
+    Dedup: (user_id, 'merch_proximity', local_date) via push_nudge_log UNIQUE constraint.
+    """
+    sent = 0
+    if not users:
+        return 0
+
+    # Bulk-fetch current_level + last_merch_nudge_at for all users
+    user_ids = [str(u["id"]) for u in users]
+    try:
+        xp_rows = supabase.client.table("user_xp") \
+            .select("user_id,current_level,last_merch_nudge_at") \
+            .in_("user_id", user_ids) \
+            .execute()
+    except Exception as e:
+        logger.warning(f"[Nudge] merch_proximity user_xp fetch failed: {e}")
+        return 0
+
+    xp_by_user = {r["user_id"]: r for r in (xp_rows.data or [])}
+
+    for user in users:
+        user_id = str(user["id"])
+        xp = xp_by_user.get(user_id)
+        if not xp:
+            continue
+
+        level = xp.get("current_level", 1)
+        next_merch_level = _MERCH_NEXT_FOR_PROXIMITY.get(level)
+        if not next_merch_level:
+            continue
+
+        merch_type = _merch_type_for_level(next_merch_level)
+        if not merch_type:
+            continue
+
+        prefs = user.get("notification_preferences") or {}
+        # Dedicated merch-notification toggle (migration 1932)
+        if prefs.get("push_merch_alerts") is False:
+            continue
+
+        tz_str = user.get("timezone") or "UTC"
+        local_now = datetime.now(_safe_zone(tz_str))
+        local_hour = local_now.hour
+
+        target_hour = _get_optimal_hour(user, "progress_milestone", 18)
+        if local_hour != target_hour:
+            continue
+        if _is_in_quiet_hours(prefs, local_hour):
+            continue
+
+        levels_away = next_merch_level - level
+        success = await _send_nudge(supabase, notif_svc, user, "merch_proximity", {
+            "merch_name": _MERCH_DISPLAY_NAME.get(merch_type, merch_type),
+            "next_level": next_merch_level,
+            "levels_away": levels_away,
+        })
+        if success:
+            sent += 1
+            # Mark last_merch_nudge_at so we don't spam (even if cron runs twice same day)
+            try:
+                supabase.client.table("user_xp") \
+                    .update({"last_merch_nudge_at": datetime.utcnow().isoformat(),
+                             "last_merch_nudge_level": level}) \
+                    .eq("user_id", user_id).execute()
+            except Exception:
+                pass
+
+    return sent
+
+
+async def _job_merch_unlocked(supabase, notif_svc, users: List[dict]) -> int:
+    """
+    Celebrate when a user hits a merch tier — fires as soon as the claim appears
+    in merch_claims with status='pending_address' (within the last 2 hours).
+    Dedup: (user_id, 'merch_unlocked', local_date).
+    """
+    sent = 0
+    if not users:
+        return 0
+
+    user_ids = [str(u["id"]) for u in users]
+    cutoff = (datetime.utcnow() - timedelta(hours=2)).isoformat()
+
+    try:
+        claims = supabase.client.table("merch_claims") \
+            .select("user_id,merch_type,awarded_at_level,created_at") \
+            .eq("status", "pending_address") \
+            .gte("created_at", cutoff) \
+            .in_("user_id", user_ids) \
+            .execute()
+    except Exception as e:
+        logger.warning(f"[Nudge] merch_unlocked fetch failed: {e}")
+        return 0
+
+    claims_by_user = {}
+    for row in (claims.data or []):
+        claims_by_user.setdefault(row["user_id"], row)  # first pending claim
+
+    for user in users:
+        user_id = str(user["id"])
+        claim = claims_by_user.get(user_id)
+        if not claim:
+            continue
+
+        prefs = user.get("notification_preferences") or {}
+        if prefs.get("push_merch_alerts") is False:
+            continue
+        tz_str = user.get("timezone") or "UTC"
+        local_hour = datetime.now(_safe_zone(tz_str)).hour
+        if _is_in_quiet_hours(prefs, local_hour):
+            continue
+
+        merch_type = claim["merch_type"]
+        success = await _send_nudge(supabase, notif_svc, user, "merch_unlocked", {
+            "merch_name": _MERCH_DISPLAY_NAME.get(merch_type, merch_type),
+            "next_level": claim["awarded_at_level"],
+            "levels_away": 0,
+        })
+        if success:
+            sent += 1
+    return sent
+
+
+async def _job_merch_claim_reminder(supabase, notif_svc, users: List[dict]) -> int:
+    """
+    Remind users who earned merch but haven't tapped Accept yet.
+    Fires at D+1, D+3, D+7 since claim was created.
+    Dedup: push_nudge_log unique on (user_id, 'merch_claim_reminder', local_date).
+    """
+    sent = 0
+    if not users:
+        return 0
+
+    user_ids = [str(u["id"]) for u in users]
+    now = datetime.utcnow()
+
+    try:
+        claims = supabase.client.table("merch_claims") \
+            .select("user_id,merch_type,awarded_at_level,created_at") \
+            .eq("status", "pending_address") \
+            .in_("user_id", user_ids) \
+            .execute()
+    except Exception as e:
+        logger.warning(f"[Nudge] merch_claim_reminder fetch failed: {e}")
+        return 0
+
+    # Index by user; pick oldest pending claim
+    oldest_by_user: Dict[str, dict] = {}
+    for row in (claims.data or []):
+        uid = row["user_id"]
+        existing = oldest_by_user.get(uid)
+        if not existing or row["created_at"] < existing["created_at"]:
+            oldest_by_user[uid] = row
+
+    target_day_offsets = {1, 3, 7}
+
+    for user in users:
+        user_id = str(user["id"])
+        claim = oldest_by_user.get(user_id)
+        if not claim:
+            continue
+
+        try:
+            created = datetime.fromisoformat(claim["created_at"].replace("Z", "+00:00"))
+        except Exception:
+            continue
+        days_since = (now.replace(tzinfo=created.tzinfo) - created).days
+        if days_since not in target_day_offsets:
+            continue
+
+        prefs = user.get("notification_preferences") or {}
+        if prefs.get("push_merch_alerts") is False:
+            continue
+        tz_str = user.get("timezone") or "UTC"
+        local_hour = datetime.now(_safe_zone(tz_str)).hour
+
+        # Send in late morning — 10 AM local
+        if local_hour != 10:
+            continue
+        if _is_in_quiet_hours(prefs, local_hour):
+            continue
+
+        merch_type = claim["merch_type"]
+        success = await _send_nudge(supabase, notif_svc, user, "merch_claim_reminder", {
+            "merch_name": _MERCH_DISPLAY_NAME.get(merch_type, merch_type),
+            "next_level": claim["awarded_at_level"],
+            "levels_away": 0,
+            "days": days_since,
+        })
+        if success:
+            sent += 1
+    return sent
+
+
+# ─── Level Milestone Celebration (migration 1935) ────────────────────────────
+
+_MILESTONE_LEVELS_FOR_CELEBRATION = {5, 10, 25, 50, 75, 100, 125, 150, 175, 200, 225, 250}
+
+
+def _summarize_rewards(items: list) -> str:
+    """Build a compact 'You got X × Y, Z × W' string from a rewards_snapshot list."""
+    friendly = {
+        "streak_shield": "Streak Shield",
+        "xp_token_2x": "2× XP Token",
+        "fitness_crate": "Fitness Crate",
+        "premium_crate": "Premium Crate",
+    }
+    parts: List[str] = []
+    has_merch = False
+    for item in items or []:
+        t = item.get("type")
+        if t == "merch":
+            has_merch = True
+            continue
+        q = item.get("quantity", 1)
+        name = friendly.get(t)
+        if name:
+            parts.append(f"{q}× {name}")
+    summary = " + ".join(parts[:3])  # keep push body short
+    if has_merch:
+        summary = (summary + " + FREE MERCH!") if summary else "FREE MERCH!"
+    return summary or "New rewards unlocked!"
+
+
+async def _job_level_milestone_celebration(supabase, notif_svc, users: List[dict]) -> int:
+    """
+    Celebrate when a user hits L5/10/25/50/75/100/125/150/175/200/225/250.
+    Fires within ~1 hour of the level-up via the level_up_events table.
+    Dedup per (user_id, 'level_milestone_celebration', local_date).
+    """
+    sent = 0
+    if not users:
+        return 0
+
+    user_ids = [str(u["id"]) for u in users]
+    cutoff = (datetime.utcnow() - timedelta(hours=2)).isoformat()
+
+    try:
+        result = (
+            supabase.client.table("level_up_events")
+            .select("user_id,level_reached,rewards_snapshot,merch_type,created_at,acknowledged_at")
+            .eq("is_milestone", True)
+            .gte("created_at", cutoff)
+            .in_("user_id", user_ids)
+            .execute()
+        )
+    except Exception as e:
+        logger.warning(f"[Nudge] level_milestone_celebration fetch failed: {e}")
+        return 0
+
+    # Pick one celebration per user (highest level reached in this window)
+    by_user: Dict[str, dict] = {}
+    for row in (result.data or []):
+        level = row.get("level_reached")
+        if level not in _MILESTONE_LEVELS_FOR_CELEBRATION:
+            continue
+        existing = by_user.get(row["user_id"])
+        if not existing or row["level_reached"] > existing["level_reached"]:
+            by_user[row["user_id"]] = row
+
+    for user in users:
+        user_id = str(user["id"])
+        row = by_user.get(user_id)
+        if not row:
+            continue
+
+        prefs = user.get("notification_preferences") or {}
+        # Gate via achievement-alerts toggle (existing) — no new toggle needed here
+        if prefs.get("push_achievement_alerts") is False:
+            continue
+
+        tz_str = user.get("timezone") or "UTC"
+        local_hour = datetime.now(_safe_zone(tz_str)).hour
+        if _is_in_quiet_hours(prefs, local_hour):
+            continue
+
+        summary = _summarize_rewards(row.get("rewards_snapshot") or [])
+
+        success = await _send_nudge(supabase, notif_svc, user, "level_milestone_celebration", {
+            "level": row["level_reached"],
+            "rewards_summary": summary,
+        })
+        if success:
+            sent += 1
+    return sent
+
+
+# ─── Week-1 Retention Nudge Ladder (W4) ──────────────────────────────────────
+
+async def _fetch_workouts_this_week(supabase, user_id: str) -> int:
+    """Count completed workouts since user's first_workout_completed_at
+    (or signup) — cheap way to branch completed-vs-stalled week-1 variants."""
+    try:
+        # Count all completed workout_logs — we only look at users < 7 days
+        # old anyway, so this is naturally bounded.
+        res = (
+            supabase.client.table("workout_logs")
+            .select("id", count="exact")
+            .eq("user_id", user_id)
+            .eq("status", "completed")
+            .execute()
+        )
+        return res.count or 0
+    except Exception:
+        return 0
+
+
+def _is_at_user_local_hour(user: dict, target_hour: int) -> bool:
+    """True if the user's current LOCAL hour matches target_hour (timezone-aware)."""
+    tz_str = user.get("timezone") or "UTC"
+    try:
+        return datetime.now(_safe_zone(tz_str)).hour == target_hour
+    except Exception:
+        return False
+
+
+async def _job_week1_day1(supabase, notif_svc, users: List[dict]) -> int:
+    """Day 1 after signup, at user's local 10 AM, if no workout completed yet."""
+    sent = 0
+    for user in users:
+        age_days = _user_account_age_days(user)
+        if age_days != 1:
+            continue
+        if not _is_at_user_local_hour(user, 10):
+            continue
+        prefs = user.get("notification_preferences") or {}
+        if _is_in_quiet_hours(prefs, 10):
+            continue
+        # Skip if they already did a workout (rare — their first workout would
+        # have fired the forecast sheet; save the push for stalled users).
+        count = await _fetch_workouts_this_week(supabase, str(user["id"]))
+        if count > 0:
+            continue
+        success = await _send_nudge(supabase, notif_svc, user, "week1_day1", {})
+        if success:
+            sent += 1
+    return sent
+
+
+async def _job_week1_day3(supabase, notif_svc, users: List[dict]) -> int:
+    """Day 3 post-signup at local 10 AM — completed or stalled variant."""
+    sent = 0
+    for user in users:
+        age_days = _user_account_age_days(user)
+        if age_days != 3:
+            continue
+        if not _is_at_user_local_hour(user, 10):
+            continue
+        prefs = user.get("notification_preferences") or {}
+        if _is_in_quiet_hours(prefs, 10):
+            continue
+        count = await _fetch_workouts_this_week(supabase, str(user["id"]))
+        nudge_type = "week1_day3_completed" if count >= 1 else "week1_day3_stalled"
+        success = await _send_nudge(supabase, notif_svc, user, nudge_type, {
+            "count": count,
+            "s": "s" if count != 1 else "",
+        })
+        if success:
+            sent += 1
+    return sent
+
+
+async def _job_week1_day5(supabase, notif_svc, users: List[dict]) -> int:
+    """Day 5 post-signup at local 7 PM — halfway-through-week-one check-in."""
+    sent = 0
+    for user in users:
+        age_days = _user_account_age_days(user)
+        if age_days != 5:
+            continue
+        if not _is_at_user_local_hour(user, 19):
+            continue
+        prefs = user.get("notification_preferences") or {}
+        if _is_in_quiet_hours(prefs, 19):
+            continue
+        count = await _fetch_workouts_this_week(supabase, str(user["id"]))
+        success = await _send_nudge(supabase, notif_svc, user, "week1_day5", {
+            "count": count,
+            "s": "s" if count != 1 else "",
+        })
+        if success:
+            sent += 1
+    return sent
+
+
+async def _job_week1_day7(supabase, notif_svc, users: List[dict]) -> int:
+    """Day 7 post-signup at local 9 AM — week 1 recap celebration."""
+    sent = 0
+    for user in users:
+        age_days = _user_account_age_days(user)
+        if age_days != 7:
+            continue
+        if not _is_at_user_local_hour(user, 9):
+            continue
+        prefs = user.get("notification_preferences") or {}
+        if _is_in_quiet_hours(prefs, 9):
+            continue
+        count = await _fetch_workouts_this_week(supabase, str(user["id"]))
+        success = await _send_nudge(supabase, notif_svc, user, "week1_day7", {
+            "count": count,
+            "s": "s" if count != 1 else "",
+        })
+        if success:
+            sent += 1
+    return sent
+
+
+async def _job_daily_crate_available(supabase, notif_svc, users: List[dict]) -> int:
+    """Remind users once/day that their daily crate is ready to open.
+
+    Runs in the same hourly cron. Fires at the user's configured reminder hour
+    (default 10 AM local), only if there's an unclaimed crate in user_daily_crates
+    for today. Skips quiet hours, respects the daily_crate_reminders pref toggle,
+    and dedups via push_nudge_log.
+
+    Payload:
+        type = daily_crate
+        crate_types = comma-separated list of available types (daily,streak,activity)
+        unclaimed_count = number of distinct dates with unclaimed crates
+    """
+    from services.notification_service_helpers import NotificationService
+
+    sent = 0
+    for user in users:
+        prefs = user.get("notification_preferences") or {}
+        # Preference gate — default True (opt-out)
+        if not prefs.get("daily_crate_reminders", True):
+            continue
+
+        # Global suppression gate (vacation + comeback). Crate reminders are
+        # non-critical, so they get suppressed during vacation mode.
+        if should_suppress_notification(user, "daily_crate", channel="push"):
+            continue
+
+        tz_str = user.get("timezone") or "UTC"
+        local_hour = _get_user_local_hour(tz_str)
+        reminder_hour = _parse_time_hour(prefs.get("daily_crate_reminder_time", "10:00"))
+        if local_hour != reminder_hour:
+            continue
+        if _is_in_quiet_hours(prefs, local_hour):
+            continue
+
+        user_id = str(user["id"])
+        local_date = _get_user_local_date(tz_str)
+
+        # Query unclaimed crates for today (and any earlier unclaimed dates)
+        try:
+            result = supabase.client.table("user_daily_crates") \
+                .select("crate_date, daily_crate_available, streak_crate_available, activity_crate_available") \
+                .eq("user_id", user_id) \
+                .is_("selected_crate", "null") \
+                .lte("crate_date", local_date) \
+                .order("crate_date", desc=True) \
+                .limit(9) \
+                .execute()
+            rows = result.data or []
+        except Exception as e:
+            logger.warning(f"⚠️ [Nudge] daily_crate query failed for {user_id}: {e}")
+            continue
+
+        # Filter to rows with at least one available type
+        unclaimed_rows = [
+            r for r in rows
+            if r.get("daily_crate_available") or r.get("streak_crate_available") or r.get("activity_crate_available")
+        ]
+        if not unclaimed_rows:
+            continue
+
+        # Daily cap + dedup (shared with other nudges)
+        daily_limit = prefs.get("daily_nudge_limit", 4)
+        if _count_nudges_today(supabase, user_id, local_date) >= daily_limit:
+            continue
+        if not _try_dedup_insert(supabase, user_id, "daily_crate", local_date):
+            continue
+
+        # Aggregate available types across all unclaimed rows
+        type_set = set()
+        for r in unclaimed_rows:
+            if r.get("activity_crate_available"):
+                type_set.add("activity")
+            if r.get("streak_crate_available"):
+                type_set.add("streak")
+            if r.get("daily_crate_available"):
+                type_set.add("daily")
+
+        count = len(unclaimed_rows)
+        # Copy tone: simple, evocative — no coach persona needed for a gamified reward
+        if count > 1:
+            title = "🎁 Your crates are waiting"
+            body = f"You have {count} unopened crates. Tap to collect your rewards."
+        else:
+            title = "🎁 Your daily crate is ready"
+            body = "Tap to open and collect your reward."
+
+        fcm_token = user.get("fcm_token")
+        if not fcm_token:
+            continue
+
+        try:
+            success = await notif_svc.send_notification(
+                fcm_token=fcm_token,
+                title=title,
+                body=body,
+                notification_type=NotificationService.TYPE_DAILY_CRATE,
+                data={
+                    "crate_types": ",".join(sorted(type_set)),
+                    "unclaimed_count": str(count),
+                    "crate_date": local_date,
+                },
+            )
+            if success:
+                sent += 1
+                logger.info(f"✅ [Nudge] daily_crate sent to {user_id} ({count} crates, types={sorted(type_set)})")
+        except Exception as e:
+            logger.error(f"❌ [Nudge] daily_crate send failed for {user_id}: {e}")
+
+    return sent
+
+
 # ─── Main Cron Endpoint ─────────────────────────────────────────────────────
 
 @router.post("/cron")
@@ -1468,6 +2038,19 @@ async def run_push_nudge_cron(
         ("time_capsule", _job_time_capsule(supabase, notif_svc, users)),
         ("chain_visual", _job_chain_visual(supabase, notif_svc, users)),
         ("recovery_complete", _job_recovery_complete(supabase, notif_svc, users)),
+        # ── Merch engagement (migration 1931) ──
+        ("merch_proximity", _job_merch_proximity(supabase, notif_svc, users)),
+        ("merch_unlocked", _job_merch_unlocked(supabase, notif_svc, users)),
+        ("merch_claim_reminder", _job_merch_claim_reminder(supabase, notif_svc, users)),
+        # ── Level milestone celebration (migration 1935) ──
+        ("level_milestone_celebration", _job_level_milestone_celebration(supabase, notif_svc, users)),
+        # ── Week-1 retention ladder (W4) ──
+        ("week1_day1", _job_week1_day1(supabase, notif_svc, users)),
+        ("week1_day3", _job_week1_day3(supabase, notif_svc, users)),
+        ("week1_day5", _job_week1_day5(supabase, notif_svc, users)),
+        ("week1_day7", _job_week1_day7(supabase, notif_svc, users)),
+        # ── Gamification ──
+        ("daily_crate", _job_daily_crate_available(supabase, notif_svc, users)),
     ]
 
     job_names = [j[0] for j in jobs]
@@ -1536,6 +2119,12 @@ async def test_nudge(
         "streak_countdown", "progress_milestone", "post_workout_nutrition", "coach_insight",
         "habit_streak_reward", "rest_day_tip", "progress_comparison", "time_capsule",
         "chain_visual", "recovery_complete",
+        # Merch engagement (migration 1931)
+        "merch_proximity", "merch_unlocked", "merch_claim_reminder",
+        # Level milestone celebration (migration 1935)
+        "level_milestone_celebration",
+        # Week-1 ladder (W4)
+        "week1_day1", "week1_day3_completed", "week1_day3_stalled", "week1_day5", "week1_day7",
     }
     if nudge_type not in allowed_nudge_types:
         raise HTTPException(status_code=400, detail=f"Invalid nudge_type. Allowed: {sorted(allowed_nudge_types)}")

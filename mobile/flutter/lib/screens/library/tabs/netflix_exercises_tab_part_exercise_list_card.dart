@@ -76,14 +76,10 @@ class _ExerciseListCard extends StatelessWidget {
                         size: 24,
                       ),
                     )
-                  : ClipRRect(
-                      borderRadius: BorderRadius.circular(10),
-                      child: Image.asset(
-                        'assets/icon/app_icon.png',
-                        width: 48,
-                        height: 48,
-                        fit: BoxFit.cover,
-                      ),
+                  : Icon(
+                      Icons.fitness_center,
+                      color: difficultyColor,
+                      size: 24,
                     ),
             ),
             const SizedBox(width: 12),

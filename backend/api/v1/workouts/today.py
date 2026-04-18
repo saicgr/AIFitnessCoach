@@ -251,9 +251,15 @@ def _get_user_workout_days(user: dict) -> List[int]:
         logger.warning(f"[WORKOUT DAYS] No workout_days found in user preferences, returning empty list")
         return []
 
-    # Convert from 1-indexed (Flutter: Mon=1..Sun=7) to 0-indexed (Python: Mon=0..Sun=6)
-    if any(d > 6 for d in selected_days):
-        selected_days = [d - 1 for d in selected_days if d > 0]
+    # Normalize to 0-indexed (Python weekday: Mon=0..Sun=6).
+    # Flutter sends 1-indexed (Mon=1..Sun=7). Older rows may already be 0-indexed.
+    # Detect by the presence of 7 (only valid in 1-indexed) or a 0 (only valid
+    # in 0-indexed). If ambiguous (all values in 1..6), assume 1-indexed since
+    # that is what current clients write.
+    has_seven = any(d == 7 for d in selected_days)
+    has_zero = any(d == 0 for d in selected_days)
+    if has_seven or (not has_zero):
+        selected_days = [d - 1 for d in selected_days if isinstance(d, int) and d > 0]
 
     return selected_days
 

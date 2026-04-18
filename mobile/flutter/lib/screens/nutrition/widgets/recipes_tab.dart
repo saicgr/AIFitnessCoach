@@ -154,26 +154,60 @@ class _RecipesTabState extends ConsumerState<RecipesTab>
           ),
         ),
 
-        // Floating Build FAB — sits above the root floating nav bar
+        // Floating Build FAB — sits above the root floating nav bar.
+        // Styled as a pill with a gradient + sparkle icon to signal AI creation
+        // rather than a random crossed-spoon glyph.
         Positioned(
           right: 20,
           bottom: 96,
-          child: FloatingActionButton.extended(
-            heroTag: 'recipes_build_fab',
-            onPressed: () async {
-              await Navigator.of(context).push(MaterialPageRoute(
-                  builder: (_) => RecipeCreateScreen(
-                      userId: widget.userId, isDark: widget.isDark)));
-              if (!mounted) return;
-              // Guarantee the nav bar is visible after returning from any
-              // sub-screen that may have hidden it.
-              ref.read(floatingNavBarVisibleProvider.notifier).state = true;
-            },
-            backgroundColor: accent,
-            foregroundColor: Colors.white,
-            icon: const Icon(Icons.restaurant_menu_rounded),
-            label: const Text('Build',
-                style: TextStyle(fontWeight: FontWeight.w700)),
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              borderRadius: BorderRadius.circular(28),
+              onTap: () async {
+                await Navigator.of(context).push(MaterialPageRoute(
+                    builder: (_) => RecipeCreateScreen(
+                        userId: widget.userId, isDark: widget.isDark)));
+                if (!mounted) return;
+                ref.read(floatingNavBarVisibleProvider.notifier).state = true;
+              },
+              child: Ink(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [accent, accent.withValues(alpha: 0.75)],
+                  ),
+                  borderRadius: BorderRadius.circular(28),
+                  boxShadow: [
+                    BoxShadow(
+                      color: accent.withValues(alpha: 0.35),
+                      blurRadius: 16,
+                      offset: const Offset(0, 6),
+                    ),
+                  ],
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: const [
+                      Icon(Icons.auto_awesome_rounded, color: Colors.white, size: 20),
+                      SizedBox(width: 8),
+                      Text(
+                        'Build',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 15,
+                          letterSpacing: 0.2,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
           ),
         ),
       ],

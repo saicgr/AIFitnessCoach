@@ -34,6 +34,10 @@ class _ExerciseActionButtonsState extends ConsumerState<_ExerciseActionButtons> 
         userRestSeconds: choice.userRestSeconds,
         userWeightLbs: choice.userWeightLbs,
         targetDays: choice.targetDays,
+        userTempo: choice.userTempo,
+        userNotes: choice.userNotes,
+        userBandColor: choice.userBandColor,
+        userRangeOfMotion: choice.userRangeOfMotion,
       );
       if (mounted) {
         setState(() { _showStaplePills = false; _isProcessing = false; });

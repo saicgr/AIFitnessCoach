@@ -27,6 +27,7 @@ class CoachIntent(str, Enum):
     RESCHEDULE = "reschedule"
     REPORT_INJURY = "report_injury"
     DELETE_WORKOUT = "delete_workout"
+    RECOMMEND_WORKOUT_CHANGE = "recommend_workout_change"
     QUESTION = "question"
     # Nutrition-related intents
     ANALYZE_FOOD = "analyze_food"

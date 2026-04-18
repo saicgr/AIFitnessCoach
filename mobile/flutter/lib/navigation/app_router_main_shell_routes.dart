@@ -68,7 +68,16 @@ List<RouteBase> _mainShellRoutes() => [
               ),
             ),
           ]),
-          // Branch 3: Profile
+          // Branch 3: Discover (W2) — percentile leaderboard + Rising Stars
+          StatefulShellBranch(routes: [
+            GoRoute(
+              path: '/discover',
+              pageBuilder: (context, state) => const NoTransitionPage(
+                child: DiscoverScreen(),
+              ),
+            ),
+          ]),
+          // Branch 4: Profile
           StatefulShellBranch(routes: [
             GoRoute(
               path: '/profile',

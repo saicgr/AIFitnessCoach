@@ -121,6 +121,15 @@ class _ComingSoonFeature {
 
 const _comingSoonFeatures = [
   _ComingSoonFeature(
+    icon: Icons.restaurant_menu_rounded,
+    color: AppColors.orange,
+    title: 'Food Preferences',
+    description:
+        'Meal pattern, allergens, cooking skill, budget, and dietary '
+        'restrictions — used to personalize AI meal suggestions and '
+        'recipe generation.',
+  ),
+  _ComingSoonFeature(
     icon: Icons.public_rounded,
     color: AppColors.cyan,
     title: 'Recipe Discovery Feed',

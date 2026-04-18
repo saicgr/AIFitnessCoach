@@ -7,6 +7,7 @@ import '../../../core/providers/favorites_provider.dart';
 import '../../../data/repositories/exercise_preferences_repository.dart';
 import '../../../core/services/posthog_service.dart';
 import '../../../widgets/pill_app_bar.dart';
+import 'widgets/empty_state_with_suggestions.dart';
 import 'widgets/exercise_picker_sheet.dart';
 
 /// Screen for managing favorite exercises.
@@ -90,53 +91,55 @@ class FavoriteExercisesScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildEmptyState(BuildContext context, WidgetRef ref, Color textMuted) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              Icons.favorite_border,
-              size: 72,
-              color: textMuted.withValues(alpha: 0.5),
-            ),
-            const SizedBox(height: 24),
-            Text(
-              'No Favorite Exercises',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.w600,
-                color: textMuted,
-              ),
-            ),
-            const SizedBox(height: 12),
-            Text(
-              'The AI will prioritize your favorites when generating workouts.',
-              style: TextStyle(
-                fontSize: 14,
-                color: textMuted.withValues(alpha: 0.7),
-              ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 24),
-            ElevatedButton.icon(
-              onPressed: () => _showAddExercisePicker(context, ref),
-              icon: const Icon(Icons.add),
-              label: const Text('Add Favorite'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.error,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-            ),
-          ],
+  Future<void> _quickAddSuggestion(
+    BuildContext context,
+    WidgetRef ref,
+    SuggestedExercise suggestion,
+  ) async {
+    final favoritesState = ref.read(favoritesProvider);
+    final isAlreadyFavorite = favoritesState.favorites
+        .any((f) => f.exerciseName.toLowerCase() == suggestion.name.toLowerCase());
+    if (isAlreadyFavorite) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('"${suggestion.name}" is already a favorite'),
+          backgroundColor: AppColors.error,
         ),
-      ),
+      );
+      return;
+    }
+
+    final success = await ref
+        .read(favoritesProvider.notifier)
+        .addFavorite(suggestion.name);
+
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            success
+                ? 'Added "${suggestion.name}" to favorites'
+                : 'Failed to add exercise',
+          ),
+          backgroundColor: success ? AppColors.success : AppColors.error,
+        ),
+      );
+    }
+  }
+
+  Widget _buildEmptyState(BuildContext context, WidgetRef ref, Color textMuted) {
+    return EmptyStateWithSuggestions(
+      heroIcon: Icons.favorite_rounded,
+      accentColor: AppColors.error,
+      heroTitle: 'Pick the exercises you love',
+      heroSubtitle:
+          'Favorites get priority when the AI builds your workouts. Tap any suggestion to add it instantly.',
+      sectionLabel: 'QUICK ADD',
+      primaryButtonLabel: 'Browse Full Library',
+      primaryButtonIcon: Icons.menu_book_rounded,
+      suggestions: kPopularFavorites,
+      onSuggestionTap: (s) => _quickAddSuggestion(context, ref, s),
+      onBrowseLibrary: () => _showAddExercisePicker(context, ref),
     );
   }
 

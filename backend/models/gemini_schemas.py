@@ -38,6 +38,7 @@ class CoachIntentEnum(str, Enum):
     RESCHEDULE = "reschedule"
     REPORT_INJURY = "report_injury"
     DELETE_WORKOUT = "delete_workout"
+    RECOMMEND_WORKOUT_CHANGE = "recommend_workout_change"
     QUESTION = "question"
     ANALYZE_FOOD = "analyze_food"
     NUTRITION_SUMMARY = "nutrition_summary"

@@ -22,6 +22,9 @@ class TTSService {
   bool _isInitialized = false;
   bool _isSpeaking = false;
 
+  /// Currently applied voice id — keeps us from re-applying on every speak().
+  String? _currentVoiceId;
+
   /// Initialize the TTS engine with default settings.
   Future<void> init() async {
     if (_isInitialized) return;
@@ -70,6 +73,76 @@ class TTSService {
       debugPrint('   [TTS] Initialized successfully with audio session');
     } catch (e) {
       debugPrint('   [TTS] Init error: $e');
+    }
+  }
+
+  /// Apply a coach voice preference.
+  ///
+  /// `voiceId` must be one of: 'default' | 'coach_voice_chad' | 'coach_voice_serena'.
+  /// Cross-platform voices are picked by searching getVoices() for a matching
+  /// en-US male/female voice, then tuning pitch + rate per persona.
+  /// Safe to call repeatedly; a no-op when the id hasn't changed.
+  Future<void> applyVoice(String voiceId) async {
+    if (!_isInitialized) await init();
+    if (_currentVoiceId == voiceId) return;
+    _currentVoiceId = voiceId;
+
+    try {
+      if (voiceId == 'coach_voice_chad') {
+        // Male, energetic — deeper pitch, slightly faster
+        await _selectVoiceByGender('male');
+        await _flutterTts.setPitch(0.85);
+        await _flutterTts.setSpeechRate(0.55);
+      } else if (voiceId == 'coach_voice_serena') {
+        // Female, calm — neutral pitch, slower
+        await _selectVoiceByGender('female');
+        await _flutterTts.setPitch(1.1);
+        await _flutterTts.setSpeechRate(0.45);
+      } else {
+        // default
+        await _flutterTts.setPitch(1.0);
+        await _flutterTts.setSpeechRate(0.5);
+        // Don't force a voice — let the OS pick its default
+      }
+      debugPrint('   [TTS] Voice set to: $voiceId');
+    } catch (e) {
+      debugPrint('   [TTS] applyVoice error: $e');
+    }
+  }
+
+  /// Heuristically pick an en-US voice matching a target gender.
+  /// Falls back silently when getVoices isn't supported on the platform.
+  Future<void> _selectVoiceByGender(String gender) async {
+    try {
+      final voices = await _flutterTts.getVoices;
+      if (voices == null || voices is! List) return;
+
+      // Expected shape: [{name: "...", locale: "en-US", gender: "male"/"female"}, ...]
+      final candidates = voices.where((v) {
+        if (v is! Map) return false;
+        final locale = v['locale']?.toString().toLowerCase() ?? '';
+        final name = v['name']?.toString().toLowerCase() ?? '';
+        if (!locale.startsWith('en')) return false;
+        // On Android, gender is in the map. On iOS, fall back to name heuristics.
+        final vGender = v['gender']?.toString().toLowerCase();
+        if (vGender != null && vGender == gender) return true;
+        // iOS name heuristics — common English voices
+        const maleNames = ['alex', 'daniel', 'fred', 'aaron', 'arthur', 'albert'];
+        const femaleNames = ['samantha', 'karen', 'moira', 'nicky', 'tessa', 'victoria', 'zoe', 'susan', 'ava'];
+        final pool = gender == 'male' ? maleNames : femaleNames;
+        return pool.any((n) => name.contains(n));
+      }).toList();
+
+      if (candidates.isEmpty) return;
+
+      final pick = candidates.first as Map;
+      await _flutterTts.setVoice({
+        'name': pick['name']?.toString() ?? '',
+        'locale': pick['locale']?.toString() ?? 'en-US',
+      });
+    } catch (e) {
+      // getVoices may not be supported on all platforms; not fatal.
+      debugPrint('   [TTS] _selectVoiceByGender fallback: $e');
     }
   }
 

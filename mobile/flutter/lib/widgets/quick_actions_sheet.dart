@@ -180,7 +180,7 @@ class _QuickActionsSheetState extends ConsumerState<_QuickActionsSheet> {
           return;
         case 'fasting':
           Navigator.pop(context);
-          context.push('/fasting');
+          context.go('/fasting');
           return;
         case 'weight':
           Navigator.pop(context);

@@ -31,6 +31,7 @@ import 'data/local/database_provider.dart';
 // to avoid ANR from heavy native ML runtime setup during app startup.
 import 'core/services/analytics_service.dart';
 import 'core/services/posthog_service.dart';
+import 'core/services/sentry_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -122,11 +123,16 @@ void main() async {
   AnalyticsService.init(container.read(posthogServiceProvider));
 
   // --- Launch the app immediately to start rendering UI ---
-  runApp(
-    UncontrolledProviderScope(
-      container: container,
-      child: const FitWizApp(),
-    ),
+  // Sentry wraps runApp so it can capture zone errors. No-op when DSN unset.
+  await SentryService.init(
+    appRunner: () async {
+      runApp(
+        UncontrolledProviderScope(
+          container: container,
+          child: const FitWizApp(),
+        ),
+      );
+    },
   );
 
   // --- Non-critical initializations deferred AFTER first frame renders ---

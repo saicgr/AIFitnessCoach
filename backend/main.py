@@ -494,6 +494,11 @@ async def lifespan(app: FastAPI):
         await GeminiService.shutdown_cache_manager()
 
 
+# Sentry init — see core/sentry.py. Silent no-op when SENTRY_DSN is unset.
+from core.sentry import init_sentry, set_user as sentry_set_user
+init_sentry(settings)
+
+
 # Create FastAPI app
 # Disable Swagger/OpenAPI docs in production to reduce attack surface
 app = FastAPI(

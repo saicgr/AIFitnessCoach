@@ -696,7 +696,7 @@ class _ChallengeCompareScreenState
           child: OutlinedButton.icon(
             onPressed: () {
               HapticFeedback.lightImpact();
-              context.push('/social');
+              context.go('/social');
             },
             icon: Icon(
               Icons.feed_rounded,

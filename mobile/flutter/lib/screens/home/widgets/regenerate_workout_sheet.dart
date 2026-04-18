@@ -9,6 +9,7 @@ import '../../../data/repositories/workout_repository.dart';
 import '../../../data/providers/today_workout_provider.dart';
 import '../../../data/repositories/auth_repository.dart';
 import '../../../widgets/glass_sheet.dart';
+import '../../../widgets/replace_or_add_workout_dialog.dart';
 import '../../../widgets/segmented_tab_bar.dart';
 import '../../../widgets/main_shell.dart';
 import 'components/components.dart';

@@ -1,7 +1,10 @@
+import 'dart:convert';
 import 'dart:math' as math;
+import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:flutter_body_atlas/flutter_body_atlas.dart';
 import '../../core/constants/app_colors.dart';
 import '../../data/models/workout.dart';
 
@@ -39,80 +42,110 @@ class WorkoutSummaryAdvanced extends StatelessWidget {
       );
     }
 
-    final sections = <Widget>[];
+    // ── Magazine layout: hero sections first, dense "Details" collapsed ──
+    final heroSections = <Widget>[];
     int delay = 0;
 
-    // 1. Performance comparison (only if there's a previous workout to compare)
-    if (data?.performanceComparison != null &&
-        data!.performanceComparison!.workoutComparison.hasPrevious) {
-      sections.add(
-        _PerformanceComparisonSection(
-          comparison: data!.performanceComparison!,
+    // 1. Coach narrative hero card (punchy one-liner).
+    heroSections.add(
+      _CoachHeroCard(
+        heroNarrative: data?.heroNarrative,
+        coachSummary: data?.coachSummary,
+        isDark: isDark,
+      ).animate().fadeIn(
+          duration: 400.ms, delay: Duration(milliseconds: delay)),
+    );
+    delay += 80;
+
+    // 2. KPI tiles row (Volume · PRs · Avg RIR · Rest Efficiency).
+    heroSections.add(
+      _KpiTileRow(
+        tiles: _buildKpiTiles(
+          data: data,
+          metadata: metadata,
           isDark: isDark,
-        ).animate().fadeIn(duration: 400.ms, delay: Duration(milliseconds: delay)),
+        ),
+        isDark: isDark,
+      ).animate().fadeIn(
+          duration: 400.ms, delay: Duration(milliseconds: delay)),
+    );
+    delay += 80;
+
+    // 3. Session Score concentric rings (replaces the 3-donut row).
+    // Rings map: outer = plan adherence, middle = intensity coverage,
+    // inner = rest compliance. Center shows the composite score.
+    heroSections.add(
+      _SessionScoreRings(
+        data: data,
+        metadata: metadata,
+        isDark: isDark,
+      ).animate().fadeIn(
+          duration: 400.ms, delay: Duration(milliseconds: delay)),
+    );
+    delay += 80;
+
+    // 4. Session timeline + muscle heatmap (side-by-side card).
+    if (_hasMetadata) {
+      heroSections.add(
+        _SessionTimelineAndHeatmap(
+          data: data,
+          metadata: metadata,
+          isDark: isDark,
+        ).animate().fadeIn(
+            duration: 400.ms, delay: Duration(milliseconds: delay)),
       );
       delay += 80;
     }
 
+    // 5. Per-Exercise Pyramid Deep Dive.
     if (_hasMetadata) {
-      final meta = metadata!;
-
-      // 1b. Per-Exercise Deep Dive (skip sets with no real exercise name)
-      final setsJson = _castList(meta['sets_json'])
+      final setsJson = _castList(metadata!['sets_json'])
           .where((s) {
             final name = s['exercise_name'] as String?;
             return name != null && name.isNotEmpty && name != 'Unknown';
           })
           .toList();
       if (setsJson.isNotEmpty) {
-        sections.add(
-          _PerExerciseDeepDiveSection(
+        heroSections.add(
+          _PyramidDeepDiveSection(
             setsJson: setsJson,
-            drinkEvents: _castList(meta['drink_events']),
             isDark: isDark,
-          ).animate().fadeIn(duration: 400.ms, delay: Duration(milliseconds: delay)),
+          ).animate().fadeIn(
+              duration: 400.ms, delay: Duration(milliseconds: delay)),
         );
         delay += 80;
       }
+    }
 
-      // 1c. Superset Details
+    // ── Everything else tucked under "More details" ─────────────────────
+    final detailSections = <Widget>[];
+    if (data?.performanceComparison != null &&
+        data!.performanceComparison!.workoutComparison.hasPrevious) {
+      detailSections.add(
+        _PerformanceComparisonSection(
+          comparison: data!.performanceComparison!,
+          isDark: isDark,
+        ),
+      );
+    }
+    if (_hasMetadata) {
+      final meta = metadata!;
       final supersets = _castList(meta['supersets']);
       if (supersets.isNotEmpty) {
-        sections.add(
-          _SupersetDetailsSection(
-            supersets: supersets,
-            isDark: isDark,
-          ).animate().fadeIn(duration: 400.ms, delay: Duration(milliseconds: delay)),
-        );
-        delay += 80;
+        detailSections
+            .add(_SupersetDetailsSection(supersets: supersets, isDark: isDark));
       }
-
-      // 1d. Exercise Order & Time
       final exerciseOrder = _castList(meta['exercise_order']);
       if (exerciseOrder.isNotEmpty) {
-        sections.add(
-          _ExerciseOrderSection(
-            exercises: exerciseOrder,
-            isDark: isDark,
-          ).animate().fadeIn(duration: 400.ms, delay: Duration(milliseconds: delay)),
-        );
-        delay += 80;
+        detailSections.add(
+            _ExerciseOrderSection(exercises: exerciseOrder, isDark: isDark));
       }
-
-      // 1e. Workout Exit Stats (quit early)
       final quitEarly = meta['quit_early'] as bool? ??
           (data?.completionMethod == 'quit_early');
       if (quitEarly) {
-        sections.add(
-          _WorkoutExitStatsSection(
-            metadata: meta,
-            isDark: isDark,
-          ).animate().fadeIn(duration: 400.ms, delay: Duration(milliseconds: delay)),
-        );
-        delay += 80;
+        detailSections
+            .add(_WorkoutExitStatsSection(metadata: meta, isDark: isDark));
       }
-
-      // 2. Warmup & Stretch
       final warmupExercises = _castList(meta['warmup_exercises']);
       final stretchExercises = _castList(meta['stretch_exercises']);
       final warmupStatus = meta['warmup_status'] as String?;
@@ -121,135 +154,69 @@ class WorkoutSummaryAdvanced extends StatelessWidget {
           stretchExercises.isNotEmpty ||
           warmupStatus != null ||
           stretchStatus != null) {
-        sections.add(
-          _WarmupStretchSection(
-            warmupExercises: warmupExercises,
-            stretchExercises: stretchExercises,
-            warmupStatus: warmupStatus,
-            stretchStatus: stretchStatus,
-            isDark: isDark,
-          ).animate().fadeIn(duration: 400.ms, delay: Duration(milliseconds: delay)),
-        );
-        delay += 80;
+        detailSections.add(_WarmupStretchSection(
+          warmupExercises: warmupExercises,
+          stretchExercises: stretchExercises,
+          warmupStatus: warmupStatus,
+          stretchStatus: stretchStatus,
+          isDark: isDark,
+        ));
       }
-
-      // 3. Rest analysis
       final restIntervals = _castList(meta['rest_intervals']);
       if (restIntervals.isNotEmpty) {
-        sections.add(
-          _RestAnalysisSection(
-            intervals: restIntervals,
-            isDark: isDark,
-          ).animate().fadeIn(duration: 400.ms, delay: Duration(milliseconds: delay)),
-        );
-        delay += 80;
+        detailSections.add(
+            _RestAnalysisSection(intervals: restIntervals, isDark: isDark));
       }
-
-      // 4. Hydration
       final drinkEvents = _castList(meta['drink_events']);
       final drinkIntake = meta['drink_intake_ml'] as int?;
       if (drinkEvents.isNotEmpty || (drinkIntake != null && drinkIntake > 0)) {
-        sections.add(
-          _HydrationSection(
-            drinkEvents: drinkEvents,
-            totalMl: drinkIntake ?? 0,
-            isDark: isDark,
-          ).animate().fadeIn(duration: 400.ms, delay: Duration(milliseconds: delay)),
-        );
-        delay += 80;
+        detailSections.add(_HydrationSection(
+          drinkEvents: drinkEvents,
+          totalMl: drinkIntake ?? 0,
+          isDark: isDark,
+        ));
       }
-
-      // 5. AI interactions
       final aiInteractions = meta['ai_interactions'] as Map<String, dynamic>?;
       if (aiInteractions != null && aiInteractions.isNotEmpty) {
-        sections.add(
-          _AIInteractionsSection(
-            interactions: aiInteractions,
-            isDark: isDark,
-          ).animate().fadeIn(duration: 400.ms, delay: Duration(milliseconds: delay)),
-        );
-        delay += 80;
+        detailSections.add(
+            _AIInteractionsSection(interactions: aiInteractions, isDark: isDark));
       }
-
-      // 6. Subjective feedback
       final feedback = meta['subjective_feedback'] as Map<String, dynamic>?;
       if (feedback != null && feedback.isNotEmpty) {
-        sections.add(
-          _SubjectiveFeedbackSection(
-            feedback: feedback,
-            isDark: isDark,
-          ).animate().fadeIn(duration: 400.ms, delay: Duration(milliseconds: delay)),
-        );
-        delay += 80;
+        detailSections.add(
+            _SubjectiveFeedbackSection(feedback: feedback, isDark: isDark));
       }
-
-      // 7. Increment settings
-      final incrementSettings = meta['increment_settings'] as Map<String, dynamic>?;
+      final incrementSettings =
+          meta['increment_settings'] as Map<String, dynamic>?;
       if (incrementSettings != null && incrementSettings.isNotEmpty) {
-        sections.add(
-          _SettingsUsedSection(
-            settings: incrementSettings,
-            isDark: isDark,
-          ).animate().fadeIn(duration: 400.ms, delay: Duration(milliseconds: delay)),
-        );
-        delay += 80;
+        detailSections.add(
+            _SettingsUsedSection(settings: incrementSettings, isDark: isDark));
       }
     }
-
-    // ── Sections derived from setLogs (always available if tracked) ──
     if (hasSetLogs) {
       final logs = data!.setLogs;
       final workingSets = logs.where((l) => l.setType == 'working').toList();
-
-      // Volume Breakdown per exercise
       if (workingSets.isNotEmpty) {
-        sections.add(
-          _VolumeBreakdownSection(
-            setLogs: workingSets,
-            isDark: isDark,
-          ).animate().fadeIn(duration: 400.ms, delay: Duration(milliseconds: delay)),
-        );
-        delay += 80;
+        detailSections.add(
+            _VolumeBreakdownSection(setLogs: workingSets, isDark: isDark));
       }
-
-      // Intensity Analysis (RPE / RIR)
       final logsWithRpe = workingSets.where((l) => l.rpe != null).toList();
       final logsWithRir = workingSets.where((l) => l.rir != null).toList();
       if (logsWithRpe.isNotEmpty || logsWithRir.isNotEmpty) {
-        sections.add(
-          _IntensityAnalysisSection(
-            setLogs: workingSets,
-            isDark: isDark,
-          ).animate().fadeIn(duration: 400.ms, delay: Duration(milliseconds: delay)),
-        );
-        delay += 80;
+        detailSections.add(
+            _IntensityAnalysisSection(setLogs: workingSets, isDark: isDark));
       }
-
-      // Estimated 1RM per exercise
       if (workingSets.any((l) => l.weightKg > 0 && l.repsCompleted > 0)) {
-        sections.add(
-          _Estimated1RMSection(
-            setLogs: workingSets,
-            isDark: isDark,
-          ).animate().fadeIn(duration: 400.ms, delay: Duration(milliseconds: delay)),
-        );
-        delay += 80;
+        detailSections.add(
+            _Estimated1RMSection(setLogs: workingSets, isDark: isDark));
       }
-
-      // Set Type Distribution
       if (logs.length > 1) {
-        sections.add(
-          _SetTypeDistributionSection(
-            setLogs: logs,
-            isDark: isDark,
-          ).animate().fadeIn(duration: 400.ms, delay: Duration(milliseconds: delay)),
-        );
-        delay += 80;
+        detailSections.add(
+            _SetTypeDistributionSection(setLogs: logs, isDark: isDark));
       }
     }
 
-    // If we gathered no sections at all, show the info banner
-    if (sections.isEmpty) {
+    if (heroSections.isEmpty && detailSections.isEmpty) {
       return Center(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 32),
@@ -263,8 +230,18 @@ class WorkoutSummaryAdvanced extends StatelessWidget {
       padding: EdgeInsets.fromLTRB(16, topPadding + 56, 16, 8),
       child: Column(
         children: [
-          ...sections,
-          // 9. Bottom padding for floating pill
+          for (int i = 0; i < heroSections.length; i++) ...[
+            heroSections[i],
+            if (i < heroSections.length - 1) const SizedBox(height: 12),
+          ],
+          if (detailSections.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            _CollapsibleDetails(
+              sections: detailSections,
+              isDark: isDark,
+            ).animate().fadeIn(
+                duration: 400.ms, delay: Duration(milliseconds: delay)),
+          ],
           const SizedBox(height: 100),
         ],
       ),
@@ -2694,3 +2671,2490 @@ class _InfoBanner extends StatelessWidget {
     );
   }
 }
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// MAGAZINE LAYOUT — hero widgets for the redesigned Advanced tab
+//
+// Composition (top to bottom):
+//   1. _CoachHeroCard        — punchy AI-generated one-liner
+//   2. _KpiTileRow            — 4 big-number tiles with ↑/↓ deltas vs last
+//   3. _IntensityDonutRow    — 3 donuts: Rest · RIR distribution · Plan adherence
+//   4. _SessionTimelineAndHeatmap — gantt of exercises side-by-side with a
+//                                   muscle body heatmap (flutter_body_atlas)
+//   5. _PyramidDeepDive      — per-exercise card with literal shape
+//                              matching the progression model
+//   6. _CollapsibleDetails   — disclosure wrapping the older dense sections
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/// Hero card — a single short narrative from the AI coach, anchored to real
+/// session deltas. Falls back to the first sentence of [coachSummary] when
+/// [heroNarrative] isn't available (old workouts, Gemini outage).
+class _CoachHeroCard extends StatelessWidget {
+  final String? heroNarrative;
+  final String? coachSummary;
+  final bool isDark;
+
+  const _CoachHeroCard({
+    required this.heroNarrative,
+    required this.coachSummary,
+    required this.isDark,
+  });
+
+  /// Extract the first sentence from long-form coach copy as a fallback
+  /// headline. Trims quotes and limits to 140 chars for safety.
+  static String? _firstSentence(String? raw) {
+    if (raw == null || raw.trim().isEmpty) return null;
+    var text = raw.trim().replaceAll(RegExp(r'^["\u201C]+|["\u201D]+$'), '');
+    // Strip any leading JSON-ish coach-review key so we always start at prose.
+    final jsonMatch = RegExp(r'"summary"\s*:\s*"([^"]+)"').firstMatch(text);
+    if (jsonMatch != null) text = jsonMatch.group(1)!;
+    final m = RegExp(r'^(.+?[.!?])\s').firstMatch(text);
+    final sentence = (m?.group(1) ?? text).trim();
+    return sentence.length > 140 ? '${sentence.substring(0, 137)}…' : sentence;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final narrative = (heroNarrative != null && heroNarrative!.trim().isNotEmpty)
+        ? heroNarrative!.trim()
+        : _firstSentence(coachSummary);
+    if (narrative == null) return const SizedBox.shrink();
+
+    final accent = isDark ? AppColors.purple : _darkenColor(AppColors.purple);
+    final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
+    final textPrimary =
+        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(20),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+        child: Container(
+          padding: const EdgeInsets.fromLTRB(18, 16, 18, 18),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                accent.withValues(alpha: isDark ? 0.22 : 0.14),
+                cyan.withValues(alpha: isDark ? 0.18 : 0.10),
+              ],
+            ),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: accent.withValues(alpha: 0.35),
+              width: 1,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: accent.withValues(alpha: isDark ? 0.24 : 0.14),
+                blurRadius: 24,
+                spreadRadius: -6,
+              ),
+            ],
+          ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: LinearGradient(
+                    colors: [accent, cyan],
+                  ),
+                ),
+                alignment: Alignment.center,
+                child: const Icon(Icons.auto_awesome,
+                    color: Colors.white, size: 20),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'COACH',
+                      style: TextStyle(
+                        fontSize: 10.5,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 1.4,
+                        color: accent,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      narrative,
+                      style: TextStyle(
+                        fontSize: 15,
+                        height: 1.35,
+                        fontWeight: FontWeight.w600,
+                        color: textPrimary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Darken a color by mixing with black (fallback replacement for the
+/// now-deprecated Color.withOpacity on white-ish accent colors in light mode).
+Color _darkenColor(Color c, [double amount = 0.25]) {
+  final hsl = HSLColor.fromColor(c);
+  return hsl.withLightness((hsl.lightness - amount).clamp(0.0, 1.0)).toColor();
+}
+
+// ────────────────────────────────────────────────────────────────────────────
+// 2. KPI TILE ROW — 4 big numbers with ↑/↓ deltas vs last session
+// ────────────────────────────────────────────────────────────────────────────
+
+/// Values needed to render a single KPI tile. Deltas are optional — absent
+/// when there is no previous session to compare against.
+class _KpiTileData {
+  final String label;
+  final String value;        // pre-formatted big number
+  final String? unit;        // suffix (e.g. 'lb', 'sets')
+  final double? deltaSigned; // +ve = improvement for this metric
+  final String? deltaLabel;  // pre-formatted delta string, e.g. '+1.2k'
+  final IconData icon;
+  final Color accent;
+  /// Human-friendly copy shown when [value] is a zero/null placeholder.
+  /// e.g. "First session — log another to see growth".
+  final String? zeroStateCopy;
+  /// Optional historical series for an inline sparkline. When only the
+  /// current + previous values are known (the common case today), pass
+  /// `[previous, current]` — the painter renders a two-point chart.
+  final List<double>? trendSeries;
+
+  const _KpiTileData({
+    required this.label,
+    required this.value,
+    required this.icon,
+    required this.accent,
+    this.unit,
+    this.deltaSigned,
+    this.deltaLabel,
+    this.zeroStateCopy,
+    this.trendSeries,
+  });
+}
+
+class _KpiTileRow extends StatelessWidget {
+  final List<_KpiTileData> tiles;
+  final bool isDark;
+
+  const _KpiTileRow({required this.tiles, required this.isDark});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        for (int i = 0; i < tiles.length; i++) ...[
+          Expanded(child: _KpiTileCard(data: tiles[i], isDark: isDark)),
+          if (i < tiles.length - 1) const SizedBox(width: 10),
+        ],
+      ],
+    );
+  }
+}
+
+class _KpiTileCard extends StatelessWidget {
+  final _KpiTileData data;
+  final bool isDark;
+
+  const _KpiTileCard({required this.data, required this.isDark});
+
+  @override
+  Widget build(BuildContext context) {
+    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final cardBorder =
+        isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+    final textPrimary =
+        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+
+    final deltaColor = data.deltaSigned == null
+        ? textMuted
+        : (data.deltaSigned! >= 0
+            ? (isDark ? AppColors.success : AppColorsLight.success)
+            : (isDark ? AppColors.error : AppColorsLight.error));
+    final deltaArrow = data.deltaSigned == null
+        ? null
+        : (data.deltaSigned! >= 0
+            ? Icons.arrow_upward_rounded
+            : Icons.arrow_downward_rounded);
+
+    return Container(
+      padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
+      decoration: BoxDecoration(
+        color: elevated,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: cardBorder),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Header: icon above label so the label gets the full tile
+          // width (previously icon+gap ate ~20px, clipping labels like
+          // "VOLUME" → "VOL..." on narrow tiles). Label can now wrap
+          // to a second line when needed for full legibility.
+          Icon(data.icon, size: 15, color: data.accent),
+          const SizedBox(height: 4),
+          Text(
+            data.label,
+            style: TextStyle(
+              fontSize: 10.5,
+              fontWeight: FontWeight.w700,
+              color: textMuted,
+              letterSpacing: 0.6,
+              height: 1.15,
+            ),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+          ),
+          const SizedBox(height: 8),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: RichText(
+              text: TextSpan(
+                children: [
+                  TextSpan(
+                    text: data.value,
+                    style: TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.w800,
+                      color: textPrimary,
+                      height: 1.0,
+                    ),
+                  ),
+                  if (data.unit != null)
+                    TextSpan(
+                      text: ' ${data.unit}',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: textMuted,
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 8),
+          // Delta CHIP — pill background so it reads as a "stamp" on
+          // the tile, not raw text. Falls back to a narrative zero-state
+          // copy when no comparison is available.
+          if (data.deltaLabel != null)
+            _DeltaChip(
+              icon: deltaArrow!,
+              label: data.deltaLabel!,
+              color: deltaColor,
+            )
+          else
+            Text(
+              data.zeroStateCopy ?? '—',
+              style: TextStyle(
+                fontSize: 10.5,
+                fontWeight: FontWeight.w500,
+                color: textMuted,
+                height: 1.25,
+                fontStyle: data.zeroStateCopy == null
+                    ? FontStyle.normal
+                    : FontStyle.italic,
+              ),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+          // Inline 2-point sparkline showing current vs previous. The
+          // tile architecture is also ready for a full historical
+          // series — pass `trendSeries` to render multi-point once a
+          // weekly-trend endpoint exists.
+          if (data.trendSeries != null && data.trendSeries!.length >= 2) ...[
+            const SizedBox(height: 8),
+            SizedBox(
+              height: 22,
+              child: CustomPaint(
+                painter: _KpiSparklinePainter(
+                  series: data.trendSeries!,
+                  color: data.accent,
+                  trackColor: textMuted.withValues(alpha: 0.25),
+                ),
+                size: Size.infinite,
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+/// Pill-shaped delta indicator with icon + text.
+class _DeltaChip extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final Color color;
+
+  const _DeltaChip({
+    required this.icon,
+    required this.label,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(6, 3, 8, 3),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.14),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 11, color: color),
+          const SizedBox(width: 3),
+          Flexible(
+            child: Text(
+              label,
+              style: TextStyle(
+                fontSize: 10.5,
+                fontWeight: FontWeight.w800,
+                color: color,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Minimal sparkline painter — straight polyline over a faint track.
+/// Works with any number of points ≥ 2. Current-value dot at the right.
+class _KpiSparklinePainter extends CustomPainter {
+  final List<double> series;
+  final Color color;
+  final Color trackColor;
+
+  _KpiSparklinePainter({
+    required this.series,
+    required this.color,
+    required this.trackColor,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (series.length < 2) return;
+    final minV = series.reduce((a, b) => a < b ? a : b);
+    final maxV = series.reduce((a, b) => a > b ? a : b);
+    final range = (maxV - minV).abs() < 1e-6 ? 1.0 : maxV - minV;
+    double xAt(int i) => (i / (series.length - 1)) * size.width;
+    double yAt(double v) =>
+        size.height - ((v - minV) / range) * size.height;
+
+    // Faint horizontal baseline
+    final linePaint = Paint()
+      ..color = trackColor
+      ..strokeWidth = 0.6;
+    canvas.drawLine(
+      Offset(0, size.height / 2),
+      Offset(size.width, size.height / 2),
+      linePaint,
+    );
+
+    // Polyline
+    final path = Path()..moveTo(xAt(0), yAt(series[0]));
+    for (var i = 1; i < series.length; i++) {
+      path.lineTo(xAt(i), yAt(series[i]));
+    }
+    canvas.drawPath(
+      path,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.8
+        ..strokeJoin = StrokeJoin.round
+        ..strokeCap = StrokeCap.round
+        ..color = color,
+    );
+
+    // Current-value dot on the right
+    canvas.drawCircle(
+      Offset(xAt(series.length - 1), yAt(series.last)),
+      2.2,
+      Paint()..color = color,
+    );
+  }
+
+  @override
+  bool shouldRepaint(_KpiSparklinePainter old) =>
+      old.series != series ||
+      old.color != color ||
+      old.trackColor != trackColor;
+}
+
+/// Build the four KPI tiles from the session summary. All four are always
+/// rendered (never hidden) so the row's visual weight stays consistent —
+/// missing data becomes an em-dash rather than an absent tile.
+List<_KpiTileData> _buildKpiTiles({
+  required WorkoutSummaryResponse? data,
+  required Map<String, dynamic>? metadata,
+  required bool isDark,
+}) {
+  final accent = isDark ? AppColors.purple : _darkenColor(AppColors.purple);
+  final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
+  final orange = isDark ? AppColors.orange : AppColorsLight.orange;
+  final success = isDark ? AppColors.success : AppColorsLight.success;
+
+  // Volume (current + delta)
+  final wc = data?.performanceComparison?.workoutComparison;
+  final volKg = wc?.currentTotalVolumeKg;
+  final volLb = volKg != null ? volKg * 2.20462 : null;
+  final volDeltaKg = wc?.volumeDiffKg;
+  final volDeltaLb = volDeltaKg != null ? volDeltaKg * 2.20462 : null;
+  String formatPounds(double v) {
+    if (v.abs() >= 10000) return '${(v / 1000).toStringAsFixed(1)}k';
+    if (v.abs() >= 1000) return '${(v / 1000).toStringAsFixed(2)}k';
+    return v.toStringAsFixed(0);
+  }
+
+  final prevVolKg = wc?.previousTotalVolumeKg;
+  final prevVolLb = prevVolKg != null ? prevVolKg * 2.20462 : null;
+  final volTile = _KpiTileData(
+    label: 'VOLUME',
+    value: volLb != null ? formatPounds(volLb) : '0',
+    unit: volLb != null ? 'lb' : null,
+    icon: Icons.bolt_rounded,
+    accent: accent,
+    deltaSigned: volDeltaLb,
+    deltaLabel: volDeltaLb != null
+        ? '${volDeltaLb >= 0 ? '+' : '−'}${formatPounds(volDeltaLb.abs())} lb vs last'
+        : null,
+    zeroStateCopy: volLb != null && prevVolLb == null
+        ? 'First session — log another to see growth'
+        : null,
+    trendSeries: (prevVolLb != null && volLb != null)
+        ? [prevVolLb, volLb]
+        : null,
+  );
+
+  // PRs hit
+  final prs = data?.personalRecords ?? const [];
+  final prTile = _KpiTileData(
+    label: 'PRs HIT',
+    value: '${prs.length}',
+    icon: Icons.emoji_events_rounded,
+    accent: prs.isEmpty ? (isDark ? AppColors.textMuted : AppColorsLight.textMuted) : orange,
+    deltaSigned: prs.isEmpty ? null : prs.length.toDouble(),
+    deltaLabel: prs.isEmpty ? null : '${prs.length} new this session',
+    zeroStateCopy: prs.isEmpty
+        ? 'No new records today — grind builds them'
+        : null,
+  );
+
+  // Avg RIR across working sets. Prefer performance_logs (backend), fall
+  // back to sets_json in metadata.
+  final rirValues = <int>[];
+  final perfLogs = data?.setLogs ?? const [];
+  for (final sl in perfLogs) {
+    if (sl.setType == 'working' && sl.rir != null) rirValues.add(sl.rir!);
+  }
+  if (rirValues.isEmpty && metadata != null) {
+    final setsJson = (metadata['sets_json'] is List)
+        ? metadata['sets_json'] as List
+        : const [];
+    for (final s in setsJson) {
+      if (s is Map<String, dynamic>) {
+        final rir = s['rir'];
+        if (rir is int) rirValues.add(rir);
+        if (rir is num) rirValues.add(rir.toInt());
+      }
+    }
+  }
+  final avgRir = rirValues.isEmpty
+      ? null
+      : rirValues.fold<int>(0, (a, b) => a + b) / rirValues.length;
+  // Lower RIR = higher intensity; display is neutral (no ↑/↓ vs last since
+  // we don't track RIR history cross-session yet).
+  final rirTile = _KpiTileData(
+    label: avgRir == null ? 'AVG EFFORT' : 'AVG EFFORT',
+    value: avgRir != null
+        ? (10 - avgRir).clamp(1, 10).toStringAsFixed(1)
+        : '—',
+    unit: avgRir != null ? 'RPE' : null,
+    icon: Icons.fitness_center_rounded,
+    accent: cyan,
+    deltaSigned: null,
+    deltaLabel: avgRir == null
+        ? null
+        : avgRir <= 1.5
+            ? 'mostly hard'
+            : avgRir <= 3
+                ? 'mostly moderate'
+                : 'mostly easy',
+    zeroStateCopy: avgRir == null
+        ? 'Tap effort on each set to see intensity'
+        : null,
+  );
+
+  // REST EFFICIENCY intentionally omitted from the KPI row — the same
+  // rest-quality signal is now rendered via the REST COMPLIANCE ring
+  // in the Session Score widget below, so the tile was a redundant
+  // second representation of the same concept. The computation logic
+  // still lives further down in _buildSessionScoreData().
+
+  return [volTile, prTile, rirTile];
+}
+
+// Small helper used by the Session Score to compute rest-efficiency
+// stats from metadata. Duplicated from the original Rest Efficiency
+// tile so the concentric rings can show the same on-target percentage.
+({int onTarget, int total, int tooShort, int tooLong}) _computeRestStats(
+  Map<String, dynamic>? metadata,
+) {
+  int onTarget = 0;
+  int tooShort = 0;
+  int tooLong = 0;
+  int total = 0;
+  if (metadata != null) {
+    final intervals = (metadata['rest_intervals'] is List)
+        ? metadata['rest_intervals'] as List
+        : const [];
+    for (final ri in intervals) {
+      if (ri is Map<String, dynamic>) {
+        final actual = (ri['rest_seconds'] as num?)?.toDouble();
+        final prescribed =
+            (ri['prescribed_rest_seconds'] as num?)?.toDouble();
+        if (actual == null || prescribed == null || prescribed <= 0) continue;
+        total++;
+        final delta = (actual - prescribed) / prescribed;
+        if (delta.abs() <= 0.15) {
+          onTarget++;
+        } else if (delta < 0) {
+          tooShort++;
+        } else {
+          tooLong++;
+        }
+      }
+    }
+  }
+  return (
+    onTarget: onTarget,
+    total: total,
+    tooShort: tooShort,
+    tooLong: tooLong
+  );
+}
+
+// ────────────────────────────────────────────────────────────────────────────
+// 3. INTENSITY DONUT ROW — Rest · RIR distribution · Plan adherence
+// ────────────────────────────────────────────────────────────────────────────
+
+/// A single ring painted as a stack of coloured arcs (Whoop-style). Every
+/// segment is given as (value, color). Values need not sum to 1 — they are
+/// proportionally normalised. A transparent "missing" segment fills the
+/// rest of the circumference.
+class _DonutPainter extends CustomPainter {
+  final List<_DonutSegment> segments;
+  final Color trackColor;
+  final double strokeWidth;
+
+  _DonutPainter({
+    required this.segments,
+    required this.trackColor,
+    // Kept as an optional override even though every current call site uses
+    // the default — future smaller donut placements (in collapsed detail
+    // rows) may want a thinner ring without changing the painter surface.
+    // ignore: unused_element_parameter
+    this.strokeWidth = 14,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = Offset(size.width / 2, size.height / 2);
+    final radius = (size.shortestSide - strokeWidth) / 2;
+    final rect = Rect.fromCircle(center: center, radius: radius);
+
+    // Track
+    final trackPaint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = strokeWidth
+      ..strokeCap = StrokeCap.round
+      ..color = trackColor;
+    canvas.drawCircle(center, radius, trackPaint);
+
+    // Segments
+    final total = segments.fold<double>(0, (sum, s) => sum + s.value);
+    if (total <= 0) return;
+    var start = -math.pi / 2;
+    for (final seg in segments) {
+      final sweep = (seg.value / total) * 2 * math.pi * 0.999;
+      if (sweep <= 0) continue;
+      final paint = Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = strokeWidth
+        ..strokeCap = StrokeCap.round
+        ..color = seg.color;
+      canvas.drawArc(rect, start, sweep, false, paint);
+      start += sweep;
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _DonutPainter old) =>
+      old.segments != segments ||
+      old.trackColor != trackColor ||
+      old.strokeWidth != strokeWidth;
+}
+
+class _DonutSegment {
+  final double value;
+  final Color color;
+  const _DonutSegment(this.value, this.color);
+}
+
+/// Card wrapping a single donut with a center label and a bottom caption.
+class _DonutCard extends StatelessWidget {
+  final String title;
+  final String centerBig;    // big number inside the ring
+  final String? centerSmall; // unit / smaller text under the big number
+  final String? caption;     // line under the ring (e.g. '11 / 12 on-target')
+  final List<_DonutSegment> segments;
+  final bool isDark;
+
+  const _DonutCard({
+    required this.title,
+    required this.centerBig,
+    required this.segments,
+    required this.isDark,
+    this.centerSmall,
+    this.caption,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final cardBorder =
+        isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+    final textPrimary =
+        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final track = isDark
+        ? Colors.white.withValues(alpha: 0.06)
+        : Colors.black.withValues(alpha: 0.06);
+
+    return Container(
+      padding: const EdgeInsets.fromLTRB(10, 12, 10, 12),
+      decoration: BoxDecoration(
+        color: elevated,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: cardBorder),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Let the title wrap to 2 lines so longer labels like
+          // "REST COMPLIANCE" and "PLAN ADHERENCE" aren't clipped to
+          // "REST COMPLI..." on narrow 3-column donut rows.
+          Text(
+            title,
+            style: TextStyle(
+              fontSize: 10.5,
+              fontWeight: FontWeight.w700,
+              color: textMuted,
+              letterSpacing: 0.8,
+              height: 1.15,
+            ),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 8),
+          AspectRatio(
+            aspectRatio: 1,
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                CustomPaint(
+                  painter: _DonutPainter(
+                    segments: segments,
+                    trackColor: track,
+                  ),
+                  size: const Size.square(90),
+                ),
+                Padding(
+                  // Keep the center content inside the ring so longer
+                  // labels like "MODERATE" scale down instead of
+                  // pushing past the donut stroke.
+                  padding: const EdgeInsets.symmetric(horizontal: 18),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Text(
+                          centerBig,
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w800,
+                            color: textPrimary,
+                            height: 1.0,
+                          ),
+                        ),
+                      ),
+                      if (centerSmall != null) ...[
+                        const SizedBox(height: 2),
+                        Text(
+                          centerSmall!,
+                          style: TextStyle(
+                            fontSize: 9.5,
+                            color: textMuted,
+                            fontWeight: FontWeight.w600,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          if (caption != null) ...[
+            const SizedBox(height: 8),
+            Text(
+              caption!,
+              style: TextStyle(
+                fontSize: 10.5,
+                color: textMuted,
+                fontWeight: FontWeight.w600,
+              ),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+/// Apple-Fitness-style concentric rings showing the whole session's
+/// "health" at a glance. Three rings from outer to inner:
+///   1. Plan adherence   (purple)  — % of planned exercises completed
+///   2. Intensity cover  (orange)  — % of working sets tagged with an
+///                                    effort level (non-null RIR)
+///   3. Rest compliance  (teal)    — % of rest intervals within ±15%
+///                                    of prescribed
+///
+/// Center shows a composite Session Score (0-100) plus a legend below.
+/// Replaces the old triple-donut row — consolidates the rest-compliance
+/// + rest-efficiency double-dipping and gives a single glanceable visual.
+class _SessionScoreRings extends StatelessWidget {
+  final WorkoutSummaryResponse? data;
+  final Map<String, dynamic>? metadata;
+  final bool isDark;
+
+  const _SessionScoreRings({
+    required this.data,
+    required this.metadata,
+    required this.isDark,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final cardBorder =
+        isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+    final textPrimary =
+        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final textSecondary =
+        isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+    final purple = isDark ? AppColors.purple : _darkenColor(AppColors.purple);
+    final orange = isDark ? AppColors.orange : AppColorsLight.orange;
+    final teal = isDark ? AppColors.cyan : AppColorsLight.cyan;
+    final track = isDark
+        ? Colors.white.withValues(alpha: 0.06)
+        : Colors.black.withValues(alpha: 0.06);
+
+    // ── Plan adherence ─────────────────────────────────────
+    final skippedIndices = (metadata?['skipped_exercise_indices'] is List)
+        ? (metadata!['skipped_exercise_indices'] as List).length
+        : 0;
+    final exerciseOrder = (metadata?['exercise_order'] is List)
+        ? metadata!['exercise_order'] as List
+        : const [];
+    final totalPlanned = exerciseOrder.length;
+    final completedCount = totalPlanned - skippedIndices;
+    final adherence =
+        totalPlanned == 0 ? null : completedCount / totalPlanned;
+
+    // ── Intensity coverage ─────────────────────────────────
+    // What fraction of working sets actually have an RIR value? A
+    // fully-logged session = 100%. Silent defaults / skipped prompts
+    // drag this down.
+    final perfLogs = data?.setLogs ?? const [];
+    int working = 0;
+    int rirLogged = 0;
+    for (final sl in perfLogs) {
+      if (sl.setType == 'working') {
+        working++;
+        if (sl.rir != null) rirLogged++;
+      }
+    }
+    // Stash the property in a local so Dart's null-flow-analysis can
+    // promote past the second `metadata[...]` access — instance fields
+    // can change between reads, so the compiler won't promote them.
+    final meta = metadata;
+    if (working == 0 && meta != null) {
+      final setsJson = (meta['sets_json'] is List)
+          ? meta['sets_json'] as List
+          : const [];
+      for (final s in setsJson) {
+        if (s is Map<String, dynamic>) {
+          working++;
+          if (s['rir'] is num) rirLogged++;
+        }
+      }
+    }
+    final intensityCoverage = working == 0 ? null : rirLogged / working;
+
+    // ── Rest compliance ────────────────────────────────────
+    final restStats = _computeRestStats(metadata);
+    final rest = restStats.total == 0
+        ? null
+        : restStats.onTarget / restStats.total;
+
+    // ── Composite Session Score (0-100) ────────────────────
+    // Weighted mean of the 3 available metrics. Missing metrics drop
+    // out rather than scoring 0.
+    final parts = <(double, double)>[]; // (value, weight)
+    if (adherence != null) parts.add((adherence, 0.4));
+    if (intensityCoverage != null) parts.add((intensityCoverage, 0.3));
+    if (rest != null) parts.add((rest, 0.3));
+    double? score;
+    if (parts.isNotEmpty) {
+      final totalWeight = parts.fold<double>(0, (a, p) => a + p.$2);
+      final weighted = parts.fold<double>(0, (a, p) => a + p.$1 * p.$2);
+      score = (weighted / totalWeight) * 100;
+    }
+
+    final scoreColor = score == null
+        ? textMuted
+        : score >= 85
+            ? AppColors.success
+            : score >= 65
+                ? orange
+                : const Color(0xFFEF4444);
+
+    return Container(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 14),
+      decoration: BoxDecoration(
+        color: elevated,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: cardBorder),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.radar_rounded, size: 14, color: textMuted),
+              const SizedBox(width: 6),
+              Text(
+                'SESSION SCORE',
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                  color: textMuted,
+                  letterSpacing: 0.8,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              // Rings visualization
+              SizedBox(
+                width: 148,
+                height: 148,
+                child: CustomPaint(
+                  painter: _SessionRingsPainter(
+                    adherence: adherence,
+                    intensity: intensityCoverage,
+                    rest: rest,
+                    adherenceColor: purple,
+                    intensityColor: orange,
+                    restColor: teal,
+                    trackColor: track,
+                  ),
+                  child: Center(
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 30),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              score == null
+                                  ? '—'
+                                  : score.round().toString(),
+                              style: TextStyle(
+                                fontSize: 36,
+                                fontWeight: FontWeight.w900,
+                                color: scoreColor,
+                                height: 1,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              'out of 100',
+                              style: TextStyle(
+                                fontSize: 9,
+                                color: textMuted,
+                                fontWeight: FontWeight.w600,
+                                letterSpacing: 0.6,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 16),
+              // Legend — 3 mini rows, one per ring
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    _RingLegendRow(
+                      color: purple,
+                      label: 'Plan',
+                      valueLabel: adherence == null
+                          ? 'No plan data'
+                          : '${(adherence * 100).round()}% · '
+                              '$completedCount / $totalPlanned exercises',
+                      textPrimary: textPrimary,
+                      textSecondary: textSecondary,
+                    ),
+                    const SizedBox(height: 10),
+                    _RingLegendRow(
+                      color: orange,
+                      label: 'Effort',
+                      valueLabel: intensityCoverage == null
+                          ? 'No working sets'
+                          : intensityCoverage >= 0.999
+                              ? 'Every set rated'
+                              : '${(intensityCoverage * 100).round()}% · '
+                                  '$rirLogged / $working sets rated',
+                      textPrimary: textPrimary,
+                      textSecondary: textSecondary,
+                    ),
+                    const SizedBox(height: 10),
+                    _RingLegendRow(
+                      color: teal,
+                      label: 'Rest',
+                      valueLabel: rest == null
+                          ? 'No rest data'
+                          : '${(rest * 100).round()}% on target · '
+                              '${restStats.tooShort} short · '
+                              '${restStats.tooLong} long',
+                      textPrimary: textPrimary,
+                      textSecondary: textSecondary,
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _RingLegendRow extends StatelessWidget {
+  final Color color;
+  final String label;
+  final String valueLabel;
+  final Color textPrimary;
+  final Color textSecondary;
+
+  const _RingLegendRow({
+    required this.color,
+    required this.label,
+    required this.valueLabel,
+    required this.textPrimary,
+    required this.textSecondary,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          margin: const EdgeInsets.only(top: 3),
+          width: 8,
+          height: 8,
+          decoration: BoxDecoration(
+            color: color,
+            shape: BoxShape.circle,
+            boxShadow: [
+              BoxShadow(
+                color: color.withValues(alpha: 0.45),
+                blurRadius: 6,
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label.toUpperCase(),
+                style: TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w800,
+                  color: textPrimary,
+                  letterSpacing: 0.8,
+                ),
+              ),
+              const SizedBox(height: 1),
+              Text(
+                valueLabel,
+                style: TextStyle(
+                  fontSize: 10.5,
+                  fontWeight: FontWeight.w500,
+                  color: textSecondary,
+                  height: 1.3,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _SessionRingsPainter extends CustomPainter {
+  final double? adherence;
+  final double? intensity;
+  final double? rest;
+  final Color adherenceColor;
+  final Color intensityColor;
+  final Color restColor;
+  final Color trackColor;
+
+  _SessionRingsPainter({
+    required this.adherence,
+    required this.intensity,
+    required this.rest,
+    required this.adherenceColor,
+    required this.intensityColor,
+    required this.restColor,
+    required this.trackColor,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = Offset(size.width / 2, size.height / 2);
+    const stroke = 10.0;
+    const gap = 4.0;
+    final outerR = size.shortestSide / 2 - stroke / 2;
+    final middleR = outerR - stroke - gap;
+    final innerR = middleR - stroke - gap;
+
+    void paintRing(double radius, double? value, Color color) {
+      if (radius <= 0) return;
+      final rect = Rect.fromCircle(center: center, radius: radius);
+      final trackPaint = Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = stroke
+        ..strokeCap = StrokeCap.round
+        ..color = trackColor;
+      canvas.drawCircle(center, radius, trackPaint);
+      if (value == null || value <= 0) return;
+      final sweep = (value.clamp(0.0, 1.0)) * 2 * math.pi * 0.999;
+      final paint = Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = stroke
+        ..strokeCap = StrokeCap.round
+        ..color = color;
+      canvas.drawArc(rect, -math.pi / 2, sweep, false, paint);
+    }
+
+    paintRing(outerR, adherence, adherenceColor);
+    paintRing(middleR, intensity, intensityColor);
+    paintRing(innerR, rest, restColor);
+  }
+
+  @override
+  bool shouldRepaint(_SessionRingsPainter old) =>
+      old.adherence != adherence ||
+      old.intensity != intensity ||
+      old.rest != rest ||
+      old.adherenceColor != adherenceColor ||
+      old.intensityColor != intensityColor ||
+      old.restColor != restColor ||
+      old.trackColor != trackColor;
+}
+
+/// Three donuts side by side. Each row is self-contained; computations
+/// tolerate missing or old data by falling back to an "—" display.
+class _IntensityDonutRow extends StatelessWidget {
+  final WorkoutSummaryResponse? data;
+  final Map<String, dynamic>? metadata;
+  final bool isDark;
+
+  const _IntensityDonutRow({
+    required this.data,
+    required this.metadata,
+    required this.isDark,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final success = isDark ? AppColors.success : AppColorsLight.success;
+    final warning = isDark ? AppColors.warning : AppColorsLight.warning;
+    final error = isDark ? AppColors.error : AppColorsLight.error;
+    final purple = isDark ? AppColors.purple : _darkenColor(AppColors.purple);
+    final muted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+
+    // ── Rest Compliance ──
+    int restTotal = 0;
+    int onTarget = 0;
+    int tooShort = 0;
+    int tooLong = 0;
+    final intervals = (metadata?['rest_intervals'] is List)
+        ? metadata!['rest_intervals'] as List
+        : const [];
+    for (final ri in intervals) {
+      if (ri is Map<String, dynamic>) {
+        final actual = (ri['rest_seconds'] as num?)?.toDouble();
+        final prescribed = (ri['prescribed_rest_seconds'] as num?)?.toDouble();
+        if (actual == null || prescribed == null || prescribed <= 0) continue;
+        restTotal++;
+        final delta = (actual - prescribed) / prescribed;
+        if (delta.abs() <= 0.15) {
+          onTarget++;
+        } else if (delta < 0) {
+          tooShort++;
+        } else {
+          tooLong++;
+        }
+      }
+    }
+    final restPct = restTotal == 0 ? null : (100 * onTarget / restTotal);
+    final restDonut = _DonutCard(
+      title: 'REST COMPLIANCE',
+      centerBig: restPct == null ? '—' : '${restPct.toStringAsFixed(0)}%',
+      centerSmall: restPct == null ? null : 'on target',
+      segments: restTotal == 0
+          ? [_DonutSegment(1, muted.withValues(alpha: 0.2))]
+          : [
+              _DonutSegment(onTarget.toDouble(), success),
+              _DonutSegment(tooShort.toDouble(), warning),
+              _DonutSegment(tooLong.toDouble(), error),
+            ],
+      caption: restTotal == 0
+          ? 'No rest data'
+          : '$onTarget on · $tooShort short · $tooLong long',
+      isDark: isDark,
+    );
+
+    // ── RIR Distribution ── group working sets into 0-1 / 2-3 / 4+ buckets.
+    int hard = 0;
+    int moderate = 0;
+    int easy = 0;
+    final perf = data?.setLogs ?? const [];
+    for (final sl in perf) {
+      if (sl.setType != 'working' || sl.rir == null) continue;
+      final r = sl.rir!;
+      if (r <= 1) {
+        hard++;
+      } else if (r <= 3) {
+        moderate++;
+      } else {
+        easy++;
+      }
+    }
+    // Metadata fallback (if perf logs empty)
+    if (hard + moderate + easy == 0) {
+      final setsJson = (metadata?['sets_json'] is List)
+          ? metadata!['sets_json'] as List
+          : const [];
+      for (final s in setsJson) {
+        if (s is Map<String, dynamic>) {
+          final r = (s['rir'] as num?)?.toInt();
+          if (r == null) continue;
+          if (r <= 1) {
+            hard++;
+          } else if (r <= 3) {
+            moderate++;
+          } else {
+            easy++;
+          }
+        }
+      }
+    }
+    final rirTotal = hard + moderate + easy;
+    // Center label describes the workout's dominant RIR bucket — users
+    // reported "MOD" as cryptic, so render the full word when it fits.
+    // Shortened "HARD" / "EASY" stay since they're already full words.
+    String rirLabel;
+    if (rirTotal == 0) {
+      rirLabel = '—';
+    } else if (hard >= moderate && hard >= easy) {
+      rirLabel = 'HARD';
+    } else if (moderate >= easy) {
+      rirLabel = 'MODERATE';
+    } else {
+      rirLabel = 'EASY';
+    }
+    final rirDonut = _DonutCard(
+      title: 'INTENSITY',
+      centerBig: rirLabel,
+      centerSmall: rirTotal == 0 ? null : '$rirTotal sets',
+      segments: rirTotal == 0
+          ? [_DonutSegment(1, muted.withValues(alpha: 0.2))]
+          : [
+              _DonutSegment(hard.toDouble(), error),
+              _DonutSegment(moderate.toDouble(), warning),
+              _DonutSegment(easy.toDouble(), success),
+            ],
+      caption: rirTotal == 0
+          ? 'No RIR logged'
+          : '$hard hard · $moderate mod · $easy easy',
+      isDark: isDark,
+    );
+
+    // ── Plan Adherence ── completed / modified / skipped
+    final skippedIndices = (metadata?['skipped_exercise_indices'] is List)
+        ? (metadata!['skipped_exercise_indices'] as List).length
+        : 0;
+    final exerciseOrder = (metadata?['exercise_order'] is List)
+        ? metadata!['exercise_order'] as List
+        : const [];
+    final totalPlanned = exerciseOrder.length;
+    final completedCount = totalPlanned - skippedIndices;
+    final adherencePct = totalPlanned == 0
+        ? null
+        : (100 * completedCount / totalPlanned).clamp(0.0, 100.0);
+    final planDonut = _DonutCard(
+      title: 'PLAN ADHERENCE',
+      centerBig:
+          adherencePct == null ? '—' : '${adherencePct.toStringAsFixed(0)}%',
+      centerSmall: totalPlanned == 0
+          ? null
+          : '$completedCount / $totalPlanned',
+      segments: totalPlanned == 0
+          ? [_DonutSegment(1, muted.withValues(alpha: 0.2))]
+          : [
+              _DonutSegment(completedCount.toDouble(), purple),
+              _DonutSegment(skippedIndices.toDouble(), muted),
+            ],
+      caption: totalPlanned == 0
+          ? 'No plan data'
+          : skippedIndices == 0
+              ? 'All exercises completed'
+              : '$skippedIndices skipped',
+      isDark: isDark,
+    );
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(child: restDonut),
+        const SizedBox(width: 10),
+        Expanded(child: rirDonut),
+        const SizedBox(width: 10),
+        Expanded(child: planDonut),
+      ],
+    );
+  }
+}
+
+// ────────────────────────────────────────────────────────────────────────────
+// 4. SESSION TIMELINE + MUSCLE HEATMAP (side by side)
+// ────────────────────────────────────────────────────────────────────────────
+
+/// Vertical gantt-style timeline. Each exercise is a block whose height is
+/// proportional to the time spent on that exercise (from
+/// `exercise_order[*].time_spent_seconds`). Rests between exercises render
+/// as thinner spacer blocks sized to the between-exercise rest seconds in
+/// `rest_intervals` (so skipped rests shrink to nothing and long pauses
+/// stand out visually).
+class _SessionTimeline extends StatelessWidget {
+  final Map<String, dynamic> metadata;
+  final bool isDark;
+
+  const _SessionTimeline({required this.metadata, required this.isDark});
+
+  @override
+  Widget build(BuildContext context) {
+    final exerciseOrder = (metadata['exercise_order'] is List)
+        ? metadata['exercise_order'] as List
+        : const [];
+    final restIntervals = (metadata['rest_intervals'] is List)
+        ? metadata['rest_intervals'] as List
+        : const [];
+    if (exerciseOrder.isEmpty) return const SizedBox.shrink();
+
+    final textPrimary =
+        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final accent = isDark ? AppColors.purple : _darkenColor(AppColors.purple);
+    final restColor = isDark
+        ? Colors.white.withValues(alpha: 0.08)
+        : Colors.black.withValues(alpha: 0.08);
+
+    // Build a map of between-exercise rest seconds keyed by the destination
+    // exercise's index (rest AFTER exercise i-1 arrives at exercise i).
+    final Map<int, int> betweenRestByDestIndex = {};
+    int? lastExerciseIndex;
+    for (final ri in restIntervals) {
+      if (ri is Map<String, dynamic>) {
+        final type = ri['rest_type'] as String?;
+        final actual = (ri['rest_seconds'] as num?)?.toInt() ?? 0;
+        final exId = ri['exercise_id'];
+        int? exIdx;
+        // Try to locate the destination exercise by id. Fall back to the
+        // position in exercise_order where the id first appears.
+        for (int i = 0; i < exerciseOrder.length; i++) {
+          final eo = exerciseOrder[i];
+          if (eo is Map<String, dynamic> && eo['exercise_id'] == exId) {
+            exIdx = i;
+            break;
+          }
+        }
+        if (type == 'between_exercises' && exIdx != null && exIdx != lastExerciseIndex) {
+          betweenRestByDestIndex[exIdx] =
+              (betweenRestByDestIndex[exIdx] ?? 0) + actual;
+          lastExerciseIndex = exIdx;
+        }
+      }
+    }
+
+    // Compute scale: total seconds to render.
+    int totalSeconds = 0;
+    for (final eo in exerciseOrder) {
+      if (eo is Map<String, dynamic>) {
+        totalSeconds += (eo['time_spent_seconds'] as num?)?.toInt() ?? 0;
+      }
+    }
+    totalSeconds += betweenRestByDestIndex.values.fold<int>(0, (a, b) => a + b);
+    if (totalSeconds <= 0) totalSeconds = 1; // avoid div/0
+
+    // Target vertical budget ~320 dp so a 5-exercise session is compact.
+    const maxHeight = 320.0;
+    const minBlockHeight = 22.0;
+    const minRestHeight = 6.0;
+    double secondsToHeight(int secs) {
+      if (secs <= 0) return 0;
+      return (secs / totalSeconds) * maxHeight;
+    }
+
+    final children = <Widget>[];
+    for (int i = 0; i < exerciseOrder.length; i++) {
+      final eo = exerciseOrder[i];
+      if (eo is! Map<String, dynamic>) continue;
+
+      final restBefore = betweenRestByDestIndex[i] ?? 0;
+      if (i > 0 && restBefore > 0) {
+        final h = secondsToHeight(restBefore).clamp(minRestHeight, 60.0);
+        children.add(Row(
+          children: [
+            const SizedBox(width: 52),
+            Container(
+              width: 3,
+              height: h,
+              decoration: BoxDecoration(
+                color: restColor,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(width: 10),
+            Text(
+              'rest ${_formatDuration(restBefore)}',
+              style: TextStyle(
+                fontSize: 10.5,
+                color: textMuted,
+                fontStyle: FontStyle.italic,
+              ),
+            ),
+          ],
+        ));
+      }
+
+      final secs = (eo['time_spent_seconds'] as num?)?.toInt() ?? 0;
+      final blockHeight = secondsToHeight(secs).clamp(minBlockHeight, 120.0);
+      final name = (eo['exercise_name'] as String?) ?? 'Exercise ${i + 1}';
+      // NOTE: using CrossAxisAlignment.center (not stretch). The Row sits
+      // inside an unbounded-height scroll view; stretch asks children
+      // to fill infinite height → "BoxConstraints forces an infinite
+      // height". The numbered badge self-centers via Center(), and the
+      // timeline block sets its own [blockHeight] — nothing needs to
+      // stretch vertically.
+      children.add(Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          SizedBox(
+            width: 28,
+            child: Center(
+              child: Container(
+                width: 24,
+                height: 24,
+                decoration: BoxDecoration(
+                  color: accent.withValues(alpha: 0.16),
+                  border: Border.all(color: accent.withValues(alpha: 0.5)),
+                  shape: BoxShape.circle,
+                ),
+                alignment: Alignment.center,
+                child: Text(
+                  '${i + 1}',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w800,
+                    color: accent,
+                  ),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            // Use a MIN-height constraint instead of a fixed height so
+            // the block is at least `blockHeight` tall (preserving the
+            // time-proportional visual) but can grow if the exercise
+            // name wraps or the duration label pushes past the floor.
+            // The previous fixed height caused the 5-10 px bottom
+            // overflows when a short-rest exercise couldn't fit its
+            // label text.
+            child: Container(
+              constraints: BoxConstraints(minHeight: blockHeight),
+              padding: const EdgeInsets.fromLTRB(10, 6, 10, 6),
+              decoration: BoxDecoration(
+                color: accent.withValues(alpha: isDark ? 0.14 : 0.10),
+                border: Border.all(color: accent.withValues(alpha: 0.35)),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    name,
+                    style: TextStyle(
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w700,
+                      color: textPrimary,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  if (blockHeight > 40) ...[
+                    const SizedBox(height: 2),
+                    Text(
+                      _formatDuration(secs),
+                      style: TextStyle(
+                        fontSize: 10.5,
+                        color: textMuted,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ),
+        ],
+      ));
+      children.add(const SizedBox(height: 6));
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Row(
+          children: [
+            Icon(Icons.timeline_rounded, size: 14, color: textMuted),
+            const SizedBox(width: 6),
+            Text(
+              'SESSION TIMELINE',
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+                color: textMuted,
+                letterSpacing: 0.8,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 10),
+        ...children,
+      ],
+    );
+  }
+
+  static String _formatDuration(int secs) {
+    if (secs < 60) return '${secs}s';
+    final m = secs ~/ 60;
+    final s = secs % 60;
+    return s == 0 ? '${m}m' : '${m}m ${s}s';
+  }
+}
+
+/// Muscle heatmap rendered with the shared [BodyAtlasView] (same asset as
+/// the Measurements screen). Each muscle is tinted from cool→warm based on
+/// its share of the session's total training volume, with muscles that
+/// received no work faded to a low-alpha grey so the whole silhouette still
+/// reads as a body rather than a scatter of colored dots.
+class _MuscleHeatmap extends StatelessWidget {
+  final WorkoutSummaryResponse? data;
+  final Map<String, dynamic>? metadata;
+  final bool isDark;
+
+  const _MuscleHeatmap({
+    required this.data,
+    required this.metadata,
+    required this.isDark,
+  });
+
+  /// Per-muscle volume in kg·reps, keyed by lowercased muscle token (e.g.
+  /// 'latissimus dorsi', 'chest', 'triceps brachii').
+  Map<String, double> _computeVolumePerMuscleToken() {
+    final Map<String, double> volumeByExercise = {};
+    final setsJson = (metadata?['sets_json'] is List)
+        ? metadata!['sets_json'] as List
+        : const [];
+    for (final s in setsJson) {
+      if (s is! Map<String, dynamic>) continue;
+      final name = (s['exercise_name'] as String?)?.trim().toLowerCase();
+      if (name == null || name.isEmpty) continue;
+      final weightKg = (s['weight_kg'] as num?)?.toDouble() ??
+          (s['weight'] as num?)?.toDouble() ??
+          0;
+      final reps = (s['reps'] as num?)?.toInt() ?? 0;
+      if (weightKg <= 0 || reps <= 0) continue;
+      volumeByExercise[name] = (volumeByExercise[name] ?? 0) + weightKg * reps;
+    }
+    // Fallback for pre-fix logs with `weight_lbs` only (not currently written
+    // by buildSetsJson but safer to tolerate).
+    if (volumeByExercise.isEmpty) {
+      for (final sl in data?.setLogs ?? const []) {
+        if (sl.setType != 'working' || sl.exerciseName.isEmpty) continue;
+        final key = sl.exerciseName.toLowerCase();
+        volumeByExercise[key] =
+            (volumeByExercise[key] ?? 0) + sl.weightKg * sl.repsCompleted;
+      }
+    }
+
+    // Map exercise_name → primary_muscle label from the plan, then extract
+    // parenthesized muscle tokens (same parsing as the swap-similarity fix).
+    // The backend sends `exercises_json` as a JSON STRING (not a List),
+    // so decode it here if needed — otherwise the `is List` check silently
+    // fell through to an empty plan and the Muscles-Hit atlas never
+    // rendered.
+    final rawExercisesJson = data?.workout['exercises_json'];
+    List plan = const [];
+    if (rawExercisesJson is List) {
+      plan = rawExercisesJson;
+    } else if (rawExercisesJson is String && rawExercisesJson.isNotEmpty) {
+      try {
+        final decoded = jsonDecode(rawExercisesJson);
+        if (decoded is List) plan = decoded;
+      } catch (_) {
+        // fall through with empty plan
+      }
+    }
+    final Map<String, double> byToken = {};
+    for (final entry in volumeByExercise.entries) {
+      final exerciseName = entry.key;
+      final vol = entry.value;
+      String? muscleLabel;
+      for (final ex in plan) {
+        if (ex is Map<String, dynamic>) {
+          final planName = (ex['name'] as String?)?.trim().toLowerCase();
+          if (planName == exerciseName) {
+            // Accept any of the three fields the backend might send —
+            // `primary_muscle` (detailed), `muscle_group` (category),
+            // or `body_part` (the field actually populated in
+            // exercises_json on the workouts endpoint). Without the
+            // body_part fallback the Muscles-Hit section rendered
+            // "No volume data yet" even for completed workouts.
+            muscleLabel = (ex['primary_muscle'] as String?) ??
+                (ex['muscle_group'] as String?) ??
+                (ex['body_part'] as String?);
+            break;
+          }
+        }
+      }
+      if (muscleLabel == null || muscleLabel.trim().isEmpty) continue;
+      final tokens = _extractMuscleTokens(muscleLabel);
+      if (tokens.isEmpty) continue;
+      // Split volume evenly across the primary muscle's listed anatomy.
+      final share = vol / tokens.length;
+      for (final t in tokens) {
+        byToken[t] = (byToken[t] ?? 0) + share;
+      }
+    }
+    return byToken;
+  }
+
+  /// Parse muscle descriptor label into anatomical tokens. Mirrors the
+  /// server-side helper in focus_validation_utils.py so the behavior is
+  /// consistent across client + server (e.g. "back (latissimus dorsi,
+  /// teres major)" → {'back', 'latissimus dorsi', 'teres major'}).
+  static Set<String> _extractMuscleTokens(String label) {
+    final text = label.trim().toLowerCase();
+    if (text.isEmpty) return {};
+    final match = RegExp(r'\(([^)]+)\)').firstMatch(text);
+    if (match == null) return {text};
+    final region = text.substring(0, match.start).trim();
+    final inner = match.group(1) ?? '';
+    final tokens = <String>{};
+    for (final t in inner.split(',')) {
+      final tt = t.trim();
+      if (tt.isNotEmpty) tokens.add(tt);
+    }
+    if (region.isNotEmpty) tokens.add(region);
+    return tokens;
+  }
+
+  /// Build the `colorMapping` expected by [BodyAtlasView]. Uses loose
+  /// substring matching between MuscleInfo names and our lowercased volume
+  /// tokens — sufficient for the common muscles (chest, lats, triceps,
+  /// etc.) without requiring an exhaustive anatomical lookup table.
+  Map<MuscleInfo, Color?> _buildColorMapping(
+    Map<String, double> volumeByToken,
+    bool isDark,
+  ) {
+    if (volumeByToken.isEmpty) return const {};
+    final maxVol = volumeByToken.values.fold<double>(0, math.max);
+    if (maxVol <= 0) return const {};
+
+    final cool = isDark
+        ? const Color(0xFF4FC3F7) // cyan
+        : const Color(0xFF0288D1);
+    final hot = isDark
+        ? const Color(0xFFFF7043) // orange
+        : const Color(0xFFD84315);
+    final idleTint = isDark
+        ? const Color(0xFF6B7280).withValues(alpha: 0.18)
+        : Colors.black.withValues(alpha: 0.12);
+
+    Color shadeFor(double share) {
+      // share in [0,1] — lerp cool→hot
+      final t = share.clamp(0.0, 1.0);
+      return Color.lerp(cool, hot, t)!
+          .withValues(alpha: (0.45 + 0.5 * t).clamp(0.0, 1.0));
+    }
+
+    // For each MuscleInfo, check if any volume-token substring-matches its
+    // name (case-insensitive both ways), then shade by the accumulated share.
+    final Map<MuscleInfo, Color?> mapping = {};
+    for (final m in MuscleCatalog.all) {
+      final muscleName = m.displayName.toLowerCase();
+      double share = 0;
+      volumeByToken.forEach((token, vol) {
+        if (muscleName.contains(token) || token.contains(muscleName)) {
+          share += vol / maxVol;
+        }
+      });
+      mapping[m] = share > 0 ? shadeFor(share.clamp(0, 1)) : idleTint;
+    }
+    return mapping;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final volumes = _computeVolumePerMuscleToken();
+    final mapping = _buildColorMapping(volumes, isDark);
+
+    if (mapping.isEmpty) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.accessibility_new_rounded, size: 14, color: textMuted),
+              const SizedBox(width: 6),
+              Text(
+                'MUSCLES HIT',
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                  color: textMuted,
+                  letterSpacing: 0.8,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Center(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 28),
+              child: Text(
+                'No volume data yet',
+                style: TextStyle(fontSize: 12, color: textMuted),
+              ),
+            ),
+          ),
+        ],
+      );
+    }
+
+    // Top 3 muscles by volume (for the caption under the body).
+    final sortedTokens = volumes.entries.toList()
+      ..sort((a, b) => b.value.compareTo(a.value));
+    final total = sortedTokens.fold<double>(0, (a, e) => a + e.value);
+    final topLabels = sortedTokens.take(3).map((e) {
+      final pct = total > 0 ? (100 * e.value / total).round() : 0;
+      return '${_capitalise(e.key)} $pct%';
+    }).join(' · ');
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Row(
+          children: [
+            Icon(Icons.accessibility_new_rounded, size: 14, color: textMuted),
+            const SizedBox(width: 6),
+            Text(
+              'MUSCLES HIT',
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+                color: textMuted,
+                letterSpacing: 0.8,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 10),
+        AspectRatio(
+          aspectRatio: 0.516, // SVG native aspect
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(12),
+            child: Padding(
+              padding: const EdgeInsets.all(4),
+              child: BodyAtlasView<MuscleInfo>(
+                view: AtlasAsset.musclesFront,
+                resolver: const MuscleResolver(),
+                colorMapping: mapping,
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          topLabels,
+          style: TextStyle(
+            fontSize: 11,
+            fontWeight: FontWeight.w600,
+            color: textMuted,
+          ),
+          textAlign: TextAlign.center,
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+        ),
+      ],
+    );
+  }
+
+  static String _capitalise(String s) =>
+      s.isEmpty ? s : '${s[0].toUpperCase()}${s.substring(1)}';
+}
+
+// ────────────────────────────────────────────────────────────────────────────
+// 5. PYRAMID DEEP DIVE — per-exercise card whose bar shape reads the
+//    progression model literally (🔺 Pyramid Up, ▬ Straight, 🔻 Reverse,
+//    ⬇ Drop, ▲▬ Top Set + Back-off, etc.). Nobody else in the strength
+//    tracker space renders the progression model as a visual shape.
+// ────────────────────────────────────────────────────────────────────────────
+
+class _PyramidDeepDiveSection extends StatelessWidget {
+  final List<Map<String, dynamic>> setsJson;
+  final bool isDark;
+
+  const _PyramidDeepDiveSection({
+    required this.setsJson,
+    required this.isDark,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    if (setsJson.isEmpty) return const SizedBox.shrink();
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final cardBorder =
+        isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+
+    // Group sets by exercise_name (preserve first-seen order).
+    final Map<String, List<Map<String, dynamic>>> grouped = {};
+    for (final s in setsJson) {
+      final name = (s['exercise_name'] as String?)?.trim();
+      if (name == null || name.isEmpty || name == 'Unknown') continue;
+      grouped.putIfAbsent(name, () => []).add(s);
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: elevated,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: cardBorder),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.fitness_center_rounded, size: 14, color: textMuted),
+              const SizedBox(width: 6),
+              Text(
+                'PER-EXERCISE DEEP DIVE',
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                  color: textMuted,
+                  letterSpacing: 0.8,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          for (final entry in grouped.entries) ...[
+            _PyramidExerciseCard(
+              exerciseName: entry.key,
+              sets: entry.value,
+              isDark: isDark,
+            ),
+            const SizedBox(height: 10),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _PyramidExerciseCard extends StatefulWidget {
+  final String exerciseName;
+  final List<Map<String, dynamic>> sets;
+  final bool isDark;
+
+  const _PyramidExerciseCard({
+    required this.exerciseName,
+    required this.sets,
+    required this.isDark,
+  });
+
+  @override
+  State<_PyramidExerciseCard> createState() => _PyramidExerciseCardState();
+}
+
+class _PyramidExerciseCardState extends State<_PyramidExerciseCard> {
+  bool _expanded = false;
+
+  /// Canonicalise the progression_model string into a known shape key.
+  String get _modelKey {
+    final raw = widget.sets
+        .map((s) => s['progression_model'] as String?)
+        .firstWhere((x) => x != null && x.isNotEmpty, orElse: () => null);
+    return (raw ?? 'straightSets').toString();
+  }
+
+  String get _modelLabel {
+    switch (_modelKey) {
+      case 'pyramidUp':
+        return 'Pyramid Up';
+      case 'reversePyramid':
+        return 'Reverse Pyramid';
+      case 'straightSets':
+        return 'Straight Sets';
+      case 'dropSets':
+        return 'Drop Sets';
+      case 'topSetBackOff':
+        return 'Top Set + Back-off';
+      case 'restPause':
+        return 'Rest-Pause';
+      case 'myoReps':
+        return 'Myo-Reps';
+      case 'endurance':
+        return 'Endurance';
+      default:
+        return _modelKey;
+    }
+  }
+
+  IconData get _modelIcon {
+    switch (_modelKey) {
+      case 'pyramidUp':
+        return Icons.trending_up_rounded;
+      case 'reversePyramid':
+        return Icons.trending_down_rounded;
+      case 'dropSets':
+        return Icons.stairs_rounded;
+      case 'topSetBackOff':
+        return Icons.push_pin_rounded;
+      case 'restPause':
+        return Icons.pause_circle_outline_rounded;
+      case 'myoReps':
+        return Icons.bolt_rounded;
+      case 'endurance':
+        return Icons.timer_outlined;
+      case 'straightSets':
+      default:
+        return Icons.horizontal_rule_rounded;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final accent = widget.isDark
+        ? AppColors.purple
+        : _darkenColor(AppColors.purple);
+    final textPrimary = widget.isDark
+        ? AppColors.textPrimary
+        : AppColorsLight.textPrimary;
+    final textMuted = widget.isDark
+        ? AppColors.textMuted
+        : AppColorsLight.textMuted;
+    final surface = widget.isDark
+        ? Colors.white.withValues(alpha: 0.03)
+        : Colors.black.withValues(alpha: 0.03);
+
+    // Sort sets by set_number for the shape rendering.
+    final sorted = [...widget.sets]..sort((a, b) =>
+        ((a['set_number'] as num?)?.toInt() ?? 0)
+            .compareTo((b['set_number'] as num?)?.toInt() ?? 0));
+
+    // Determine the weight range for bar scaling.
+    double maxWeight = 0;
+    for (final s in sorted) {
+      final w = (s['weight_kg'] as num?)?.toDouble() ??
+          (s['weight'] as num?)?.toDouble() ??
+          0;
+      if (w > maxWeight) maxWeight = w;
+    }
+    if (maxWeight <= 0) maxWeight = 1;
+
+    // 1RM estimate (Epley) in lbs from the best set.
+    double best1RM = 0;
+    for (final s in sorted) {
+      final w = (s['weight_kg'] as num?)?.toDouble() ??
+          (s['weight'] as num?)?.toDouble() ??
+          0;
+      final r = (s['reps'] as num?)?.toInt() ?? 0;
+      if (w > 0 && r > 0) {
+        final lb = w * 2.20462;
+        final est = r == 1 ? lb : lb * (1 + r / 30.0);
+        if (est > best1RM) best1RM = est;
+      }
+    }
+
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 180),
+      decoration: BoxDecoration(
+        color: surface,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      padding: const EdgeInsets.fromLTRB(12, 10, 10, 10),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      widget.exerciseName,
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                        color: textPrimary,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 2),
+                    Row(
+                      children: [
+                        Icon(_modelIcon, size: 11, color: accent),
+                        const SizedBox(width: 4),
+                        Text(
+                          _modelLabel,
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            color: accent,
+                          ),
+                        ),
+                        if (best1RM > 0) ...[
+                          Text(' · ',
+                              style: TextStyle(fontSize: 11, color: textMuted)),
+                          Text(
+                            'est. 1RM ${best1RM.toStringAsFixed(0)} lb',
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                              color: textMuted,
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              IconButton(
+                iconSize: 20,
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                onPressed: () => setState(() => _expanded = !_expanded),
+                icon: Icon(
+                  _expanded
+                      ? Icons.keyboard_arrow_up_rounded
+                      : Icons.keyboard_arrow_down_rounded,
+                  color: textMuted,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          // Shape: stacked bars per set, sorted top→bottom to visually match
+          // the progression. For Pyramid Up the heaviest set is the LAST one,
+          // so we render bottom→top (so the top bar is the lightest,
+          // producing an actual pyramid silhouette).
+          _PyramidShapeBars(
+            sets: sorted,
+            maxWeight: maxWeight,
+            modelKey: _modelKey,
+            isDark: widget.isDark,
+          ),
+          if (_expanded) ...[
+            const SizedBox(height: 10),
+            _PyramidSetTable(sets: sorted, isDark: widget.isDark),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+/// Renders per-set bars whose widths are proportional to weight (Pyramid Up
+/// naturally looks like a triangle, Reverse Pyramid like an inverted one,
+/// Straight Sets like flat slabs). Thin labels on each bar: weight × reps · RIR.
+class _PyramidShapeBars extends StatelessWidget {
+  final List<Map<String, dynamic>> sets;
+  final double maxWeight;
+  final String modelKey;
+  final bool isDark;
+
+  const _PyramidShapeBars({
+    required this.sets,
+    required this.maxWeight,
+    required this.modelKey,
+    required this.isDark,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final accent = isDark ? AppColors.purple : _darkenColor(AppColors.purple);
+    final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
+    final textPrimary =
+        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+
+    // Row order:
+    //   Pyramid Up: heaviest last → render in natural order so the BOTTOM
+    //     of the stack is the heaviest (biggest bar). That gives the
+    //     classic ▲ silhouette.
+    //   Reverse Pyramid: heaviest first → render natural order so the TOP
+    //     is heaviest (inverted ▼).
+    //   Drop Sets: same rendering; natural order (heavy first, thin drops).
+    //   Straight Sets: flat.
+    final ordered = modelKey == 'pyramidUp'
+        ? sets.reversed.toList() // widest bar at bottom → render top first
+        : [...sets];
+
+    Widget buildBar(Map<String, dynamic> s) {
+      final weightKg = (s['weight_kg'] as num?)?.toDouble() ??
+          (s['weight'] as num?)?.toDouble() ??
+          0;
+      final reps = (s['reps'] as num?)?.toInt() ?? 0;
+      final rir = (s['rir'] as num?)?.toInt();
+      final setNum = (s['set_number'] as num?)?.toInt() ?? 0;
+      final widthFrac =
+          (weightKg / maxWeight).clamp(0.08, 1.0); // always visible
+      final lb = weightKg * 2.20462;
+      final label = weightKg > 0 && reps > 0
+          ? '${lb.toStringAsFixed(0)} lb × $reps'
+          : reps > 0
+              ? 'BW × $reps'
+              : '—';
+      // AMRAP / failure rendered slightly different
+      final amrap = s['is_amrap'] == true;
+
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 2),
+        child: Row(
+          children: [
+            SizedBox(
+              width: 18,
+              child: Text(
+                '$setNum',
+                style: TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w700,
+                  color: textMuted,
+                ),
+              ),
+            ),
+            Expanded(
+              child: LayoutBuilder(builder: (context, c) {
+                final w = c.maxWidth * widthFrac;
+                return Align(
+                  alignment: Alignment.centerLeft,
+                  child: Container(
+                    width: w.clamp(40.0, c.maxWidth),
+                    height: 22,
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          accent.withValues(alpha: 0.32),
+                          accent.withValues(alpha: 0.18),
+                        ],
+                        begin: Alignment.centerLeft,
+                        end: Alignment.centerRight,
+                      ),
+                      border: Border.all(
+                        color: accent.withValues(alpha: 0.55),
+                      ),
+                      borderRadius: BorderRadius.circular(5),
+                    ),
+                    alignment: Alignment.centerLeft,
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          label,
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            color: textPrimary,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        if (amrap) ...[
+                          const SizedBox(width: 4),
+                          Text(
+                            'AMRAP',
+                            style: TextStyle(
+                              fontSize: 9,
+                              fontWeight: FontWeight.w800,
+                              color: cyan,
+                              letterSpacing: 0.6,
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                );
+              }),
+            ),
+            const SizedBox(width: 8),
+            SizedBox(
+              width: 40,
+              child: Text(
+                rir == null ? '—' : 'RIR $rir',
+                style: TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w700,
+                  color: textMuted,
+                ),
+                textAlign: TextAlign.right,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return Column(
+      children: [
+        for (final s in ordered) buildBar(s),
+      ],
+    );
+  }
+}
+
+/// Dense-detail disclosure: classic columnar table (Set / Prev / Target /
+/// Weight / Reps / RIR / RPE) used when the user taps to expand a card.
+class _PyramidSetTable extends StatelessWidget {
+  final List<Map<String, dynamic>> sets;
+  final bool isDark;
+
+  const _PyramidSetTable({required this.sets, required this.isDark});
+
+  @override
+  Widget build(BuildContext context) {
+    final headerStyle = TextStyle(
+      fontSize: 10,
+      fontWeight: FontWeight.w700,
+      color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
+      letterSpacing: 0.4,
+    );
+    final cellStyle = TextStyle(
+      fontSize: 11.5,
+      fontWeight: FontWeight.w600,
+      color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
+    );
+    String lb(double? kg) =>
+        kg == null || kg <= 0 ? '—' : (kg * 2.20462).toStringAsFixed(0);
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: DataTable(
+        columnSpacing: 16,
+        dataRowMinHeight: 26,
+        dataRowMaxHeight: 32,
+        headingRowHeight: 26,
+        columns: [
+          DataColumn(label: Text('Set', style: headerStyle)),
+          DataColumn(label: Text('Prev', style: headerStyle)),
+          DataColumn(label: Text('Target', style: headerStyle)),
+          DataColumn(label: Text('Weight', style: headerStyle)),
+          DataColumn(label: Text('Reps', style: headerStyle)),
+          DataColumn(label: Text('RIR', style: headerStyle)),
+          DataColumn(label: Text('RPE', style: headerStyle)),
+        ],
+        rows: [
+          for (final s in sets)
+            DataRow(cells: [
+              DataCell(Text('${(s['set_number'] as num?)?.toInt() ?? 0}',
+                  style: cellStyle)),
+              DataCell(Text(
+                  (() {
+                    final w = (s['previous_weight_kg'] as num?)?.toDouble();
+                    final r = (s['previous_reps'] as num?)?.toInt();
+                    return w != null && r != null
+                        ? '${lb(w)}×$r'
+                        : '—';
+                  })(),
+                  style: cellStyle)),
+              DataCell(Text(
+                  (() {
+                    final w = (s['target_weight_kg'] as num?)?.toDouble();
+                    final r = (s['target_reps'] as num?)?.toInt();
+                    return w != null && r != null
+                        ? '${lb(w)}×$r'
+                        : '—';
+                  })(),
+                  style: cellStyle)),
+              DataCell(Text(
+                  lb((s['weight_kg'] as num?)?.toDouble() ??
+                      (s['weight'] as num?)?.toDouble()),
+                  style: cellStyle)),
+              DataCell(Text('${(s['reps'] as num?)?.toInt() ?? 0}',
+                  style: cellStyle)),
+              DataCell(Text(
+                  (s['rir'] as num?) != null ? '${s['rir']}' : '—',
+                  style: cellStyle)),
+              DataCell(Text(
+                  (s['rpe'] as num?) != null
+                      ? (s['rpe'] as num).toStringAsFixed(1)
+                      : '—',
+                  style: cellStyle)),
+            ]),
+        ],
+      ),
+    );
+  }
+}
+
+/// Timeline + heatmap arranged side-by-side in a single card.
+class _SessionTimelineAndHeatmap extends StatelessWidget {
+  final WorkoutSummaryResponse? data;
+  final Map<String, dynamic>? metadata;
+  final bool isDark;
+
+  const _SessionTimelineAndHeatmap({
+    required this.data,
+    required this.metadata,
+    required this.isDark,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    if (metadata == null) return const SizedBox.shrink();
+    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final cardBorder =
+        isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: elevated,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: cardBorder),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            flex: 5,
+            child: _MuscleHeatmap(
+              data: data,
+              metadata: metadata,
+              isDark: isDark,
+            ),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            flex: 6,
+            child: _SessionTimeline(
+              metadata: metadata!,
+              isDark: isDark,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ────────────────────────────────────────────────────────────────────────────
+// 6. COLLAPSIBLE "MORE DETAILS" — all the historical dense sections tucked
+//    behind a single disclosure so the redesigned hero area stays tidy.
+// ────────────────────────────────────────────────────────────────────────────
+
+class _CollapsibleDetails extends StatefulWidget {
+  final List<Widget> sections;
+  final bool isDark;
+
+  const _CollapsibleDetails({required this.sections, required this.isDark});
+
+  @override
+  State<_CollapsibleDetails> createState() => _CollapsibleDetailsState();
+}
+
+class _CollapsibleDetailsState extends State<_CollapsibleDetails> {
+  bool _expanded = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final elevated = widget.isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final cardBorder =
+        widget.isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+    final textMuted =
+        widget.isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final textPrimary = widget.isDark
+        ? AppColors.textPrimary
+        : AppColorsLight.textPrimary;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: elevated,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: cardBorder),
+      ),
+      clipBehavior: Clip.hardEdge,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          InkWell(
+            onTap: () => setState(() => _expanded = !_expanded),
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(14, 12, 10, 12),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.unfold_more_rounded,
+                    size: 16,
+                    color: textMuted,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      _expanded ? 'Hide details' : 'More details',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                        color: textPrimary,
+                      ),
+                    ),
+                  ),
+                  Text(
+                    '${widget.sections.length}',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                      color: textMuted,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Icon(
+                    _expanded
+                        ? Icons.keyboard_arrow_up_rounded
+                        : Icons.keyboard_arrow_down_rounded,
+                    color: textMuted,
+                  ),
+                ],
+              ),
+            ),
+          ),
+          AnimatedCrossFade(
+            firstChild: const SizedBox(height: 0, width: double.infinity),
+            secondChild: Padding(
+              padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  for (int i = 0; i < widget.sections.length; i++) ...[
+                    widget.sections[i],
+                    if (i < widget.sections.length - 1)
+                      const SizedBox(height: 12),
+                  ],
+                ],
+              ),
+            ),
+            crossFadeState: _expanded
+                ? CrossFadeState.showSecond
+                : CrossFadeState.showFirst,
+            duration: const Duration(milliseconds: 220),
+          ),
+        ],
+      ),
+    );
+  }
+}
+

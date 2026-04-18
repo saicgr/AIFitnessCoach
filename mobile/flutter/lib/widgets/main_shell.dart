@@ -23,9 +23,11 @@ import 'app_tour/app_tour_overlay.dart';
 import 'floating_chat/floating_chat_bubble.dart';
 import 'floating_chat/floating_chat_overlay.dart';
 import 'level_up_dialog.dart';
+import 'streak_saved_dialog.dart';
 import 'morphing_tab_indicator.dart';
 import 'offline_banner.dart';
-import '../data/providers/xp_provider.dart' show xpProvider, levelUpEventProvider;
+import '../data/providers/xp_provider.dart' show xpProvider, levelUpEventProvider, dailyLoginResultProvider;
+import '../data/models/xp_event.dart' show DailyLoginResult;
 import '../data/models/user_xp.dart';
 import '../core/accessibility/accessibility_provider.dart';
 
@@ -247,6 +249,28 @@ class MainShell extends ConsumerWidget {
                 ref.read(xpProvider.notifier).clearLevelUp();
               },
               showProgression: showProg,
+            );
+          }
+        });
+      }
+    });
+
+    // Listen for streak-saved events (migration 1938 / W3).
+    // Fires once when daily-login response flags that a Streak Shield was
+    // auto-consumed to protect the streak. Celebrates the save instead of
+    // silently swallowing it.
+    ref.listen<DailyLoginResult?>(dailyLoginResultProvider, (previous, next) {
+      if (next == null) return;
+      final wasAlreadyShown = previous?.streakSavedByShield == true;
+      if (next.streakSavedByShield && !wasAlreadyShown) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (context.mounted) {
+            showStreakSavedDialog(
+              context,
+              savedStreakCount: next.savedStreakCount > 0
+                  ? next.savedStreakCount
+                  : next.currentStreak,
+              shieldsRemaining: next.shieldsRemaining,
             );
           }
         });

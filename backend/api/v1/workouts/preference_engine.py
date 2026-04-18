@@ -427,8 +427,7 @@ async def _fetch_preference_context(db, user_id: str) -> dict:
     try:
         # User profile + preferences (for workout_days)
         profile_result = db.client.table("users").select(
-            "fitness_level, primary_goal, intensity_preference, "
-            "progression_pace, equipment_details, preferences"
+            "fitness_level, primary_goal, equipment_details, preferences"
         ).eq("id", user_id).single().execute()
         context["user_profile"] = profile_result.data
 
@@ -491,7 +490,7 @@ def _get_upcoming_workouts(db, user_id: str, timezone_str: str = None) -> list[d
         tomorrow_str = get_user_today("UTC")
     try:
         result = db.client.table("workouts").select(
-            "id, scheduled_date, exercises_json, workout_name, status, is_completed, gym_profile_id"
+            "id, scheduled_date, exercises_json, name, status, is_completed, gym_profile_id"
         ).eq(
             "user_id", user_id
         ).gt(
@@ -655,7 +654,7 @@ async def inject_staple_into_workout(
             "new": staple_name,
             "workout_id": workout_id,
             "workout_date": workout.get("scheduled_date"),
-            "workout_name": workout.get("workout_name"),
+            "workout_name": workout.get("name"),
         }
     except Exception as e:
         logger.error(f"Error updating workout {workout_id}: {e}", exc_info=True)

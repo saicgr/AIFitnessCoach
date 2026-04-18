@@ -88,12 +88,18 @@ dependencies:
   device_info_plus: ^10.1.0
   package_info_plus: ^8.0.0
 
+  # Error tracking (runs alongside Firebase Crashlytics; no Discord changes)
+  sentry_flutter: ^8.9.0
+  sentry_dio: ^8.9.0
+
   # Barcode Scanning
   mobile_scanner: ^7.0.0
 
   # Image Picker (for food photos)
   image_picker: ^1.1.2
   image_cropper: ^8.0.2
+  # Pixel-level image manipulation (flip/rotate in progress photo editor)
+  image: ^4.3.0
   # In-app live camera preview (Snapchat-style capture in recipe import)
   camera: ^0.11.0
   speech_to_text: ^7.3.0

@@ -62,10 +62,10 @@ class QuizPrimaryGoal extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
-                      color: AppColors.orange.withValues(alpha: 0.15),
+                      color: AppColors.onboardingAccent.withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: Icon(Icons.auto_awesome, color: AppColors.orange, size: 24),
+                    child: Icon(Icons.auto_awesome, color: AppColors.onboardingAccent, size: 24),
                   ),
                   const SizedBox(width: 14),
                   Expanded(
@@ -91,7 +91,7 @@ class QuizPrimaryGoal extends StatelessWidget {
                 child: ElevatedButton(
                   onPressed: () => Navigator.pop(context),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.orange,
+                    backgroundColor: AppColors.onboardingAccent,
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -221,7 +221,7 @@ class _GlassPrimaryGoalCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final t = OnboardingTheme.of(context);
-    final color = option['color'] as Color? ?? AppColors.orange;
+    final color = option['color'] as Color? ?? AppColors.onboardingAccent;
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),

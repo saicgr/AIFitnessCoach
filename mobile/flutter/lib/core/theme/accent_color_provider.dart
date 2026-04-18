@@ -120,6 +120,31 @@ extension AccentColorExtension on AccentColor {
         return false;
     }
   }
+
+  /// Cosmetic ID that unlocks this color (null = free for everyone).
+  /// Mirrors the seeded cosmetics catalog (migration 1936).
+  String? get gatingCosmeticId {
+    switch (this) {
+      case AccentColor.indigo:
+        return 'theme_iron';
+      case AccentColor.amber:
+        return 'theme_gold';
+      default:
+        return null;
+    }
+  }
+
+  /// Level at which this color becomes available (null = from start).
+  int? get unlockLevel {
+    switch (this) {
+      case AccentColor.indigo:
+        return 10;
+      case AccentColor.amber:
+        return 75;
+      default:
+        return null;
+    }
+  }
 }
 
 /// Accent color provider - stores user's selected accent color

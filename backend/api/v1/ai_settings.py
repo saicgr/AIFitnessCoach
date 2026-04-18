@@ -29,6 +29,10 @@ class AISettingsBase(BaseModel):
     coach_persona_id: Optional[str] = Field(default=None, description="Selected coach persona ID (e.g., 'coach_mike', 'custom')")
     coach_name: Optional[str] = Field(default=None, description="Display name for the coach")
     is_custom_coach: Optional[bool] = Field(default=False, description="Whether using a custom coach configuration")
+    coach_voice_id: Optional[str] = Field(
+        default="default",
+        description="TTS voice. 'default' | 'coach_voice_chad' | 'coach_voice_serena'. Non-default requires owning the matching cosmetic."
+    )
 
     # Personality & Tone
     coaching_style: Optional[str] = Field(default="motivational", description="Coaching personality style")

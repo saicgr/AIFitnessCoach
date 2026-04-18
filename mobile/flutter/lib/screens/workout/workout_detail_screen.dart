@@ -38,6 +38,7 @@ import '../../models/equipment_item.dart';
 import '../../core/providers/environment_equipment_provider.dart';
 import 'widgets/edit_workout_equipment_sheet.dart';
 import '../../core/providers/avoided_provider.dart';
+import '../../core/providers/pending_workout_mutations_provider.dart';
 import '../../data/providers/today_workout_provider.dart';
 import 'widgets/workout_detail_helpers.dart';
 import 'widgets/workout_detail_ai_insights.dart';
@@ -47,6 +48,37 @@ part 'workout_detail_screen_ui.dart';
 part 'workout_detail_screen_ui_1.dart';
 part 'workout_detail_screen_ui_2.dart';
 part 'workout_detail_screen_warmup.dart';
+
+
+/// Merge optimistic pending entries into the main-section exercise list.
+///
+/// Dedupes by name so that when the silent refresh brings the canonical
+/// server row in, the optimistic copy drops cleanly. Preserves the order:
+/// real rows first, optimistic extras appended at the end where the user
+/// expects newly-added exercises to land.
+List<WorkoutExercise> _mergeOptimisticMainExercises(
+  List<WorkoutExercise> base,
+  List<Map<String, dynamic>> pending,
+) {
+  if (pending.isEmpty) return base;
+  final baseNames = base
+      .map((e) => (e.nameValue ?? '').toLowerCase())
+      .where((n) => n.isNotEmpty)
+      .toSet();
+  final extras = <WorkoutExercise>[];
+  for (final raw in pending) {
+    final name = raw['name']?.toString().toLowerCase();
+    if (name == null || baseNames.contains(name)) continue;
+    try {
+      extras.add(WorkoutExercise.fromJson(Map<String, dynamic>.from(raw)));
+    } catch (_) {
+      // If the optimistic payload is malformed, skip silently — the real
+      // row will arrive via the silent refresh shortly.
+    }
+  }
+  if (extras.isEmpty) return base;
+  return [...base, ...extras];
+}
 
 
 class WorkoutDetailScreen extends ConsumerStatefulWidget {
@@ -219,7 +251,53 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen>
     }
 
     final workout = _workout!;
-    final exercises = workout.exercises;
+
+    // Watch the pending-mutations provider so optimistic entries added from
+    // elsewhere (e.g. tapping a staple chip) appear immediately, and so we
+    // know when the API reconciliation has cleared them — that's our cue to
+    // pull the canonical data in from the server.
+    final pendingState = ref.watch(pendingWorkoutMutationsProvider);
+    final pendingMain =
+        pendingState.addsFor(workoutId: workout.id ?? '', section: 'main');
+    // When pending mutations just cleared (server confirmed the write),
+    // reload the workout + warmup/stretch data so the detail screen shows
+    // the canonical row. Guarded with a small microtask so we don't call
+    // setState during build.
+    ref.listen<PendingWorkoutMutationsState>(pendingWorkoutMutationsProvider,
+        (prev, next) {
+      final wid = _workout?.id;
+      if (wid == null) return;
+      bool hadBefore(String section) =>
+          (prev?.addsFor(workoutId: wid, section: section).isNotEmpty) ?? false;
+      bool hasNow(String section) =>
+          next.addsFor(workoutId: wid, section: section).isNotEmpty;
+      final clearedMain = hadBefore('main') && !hasNow('main');
+      final clearedWarmup = hadBefore('warmup') && !hasNow('warmup');
+      final clearedStretches =
+          hadBefore('stretches') && !hasNow('stretches');
+      if (clearedMain) {
+        // Pull the server's fresh main exercises.
+        Future.microtask(_loadWorkout);
+      }
+      if (clearedWarmup || clearedStretches) {
+        // Force the warmup/stretch helpers to re-fetch (they're lazy-loaded
+        // so wiping the cache here makes the next build re-query).
+        if (mounted) {
+          setState(() {
+            if (clearedWarmup) _warmupData = null;
+            if (clearedStretches) _stretchData = null;
+          });
+          Future.microtask(_loadWarmupAndStretches);
+        }
+      }
+    });
+
+    // Merge optimistic main-section entries (in addition to the helpers
+    // for warmup/stretches) so the main list reflects the just-tapped
+    // staple within one frame.
+    final exercises = pendingMain.isEmpty
+        ? workout.exercises
+        : _mergeOptimisticMainExercises(workout.exercises, pendingMain);
 
     return Scaffold(
       backgroundColor: backgroundColor,

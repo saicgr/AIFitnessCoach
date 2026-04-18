@@ -120,6 +120,46 @@ extension _EditPersonalInfoSheetStateUI on _EditPersonalInfoSheetState {
   }
 
 
+  Widget _buildUnitToggleChip({
+    required String label,
+    required bool isActive,
+    required Color accent,
+    required Color textMuted,
+    required VoidCallback? onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap == null
+          ? null
+          : () {
+              HapticFeedback.selectionClick();
+              onTap();
+            },
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+        decoration: BoxDecoration(
+          gradient: isActive
+              ? LinearGradient(
+                  colors: [accent, accent.withValues(alpha: 0.8)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                )
+              : null,
+          borderRadius: BorderRadius.circular(6),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 11,
+            fontWeight: FontWeight.w700,
+            color: isActive ? Colors.white : textMuted,
+          ),
+        ),
+      ),
+    );
+  }
+
+
   Widget _buildUnitInput({
     required String label,
     required double? value,
@@ -167,33 +207,33 @@ extension _EditPersonalInfoSheetStateUI on _EditPersonalInfoSheetState {
                       : Icons.monitor_weight_outlined),
               accent: cyan,
             ),
-            Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                GestureDetector(
-                  onTap: _isSaving ? null : () => onMetricChanged(true),
-                  child: Text(
-                    metricUnit,
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: isMetric ? FontWeight.w700 : FontWeight.normal,
-                      color: isMetric ? cyan : textMuted,
-                    ),
+            // Compact gradient unit toggle (matches onboarding _buildSmallUnitToggle)
+            Container(
+              padding: const EdgeInsets.all(2),
+              decoration: BoxDecoration(
+                color: elevatedColor,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: cardBorder),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _buildUnitToggleChip(
+                    label: metricUnit,
+                    isActive: isMetric,
+                    accent: cyan,
+                    textMuted: textMuted,
+                    onTap: _isSaving ? null : () => onMetricChanged(true),
                   ),
-                ),
-                Text(' / ', style: TextStyle(fontSize: 11, color: textMuted)),
-                GestureDetector(
-                  onTap: _isSaving ? null : () => onMetricChanged(false),
-                  child: Text(
-                    imperialUnit,
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: !isMetric ? FontWeight.w700 : FontWeight.normal,
-                      color: !isMetric ? cyan : textMuted,
-                    ),
+                  _buildUnitToggleChip(
+                    label: imperialUnit,
+                    isActive: !isMetric,
+                    accent: cyan,
+                    textMuted: textMuted,
+                    onTap: _isSaving ? null : () => onMetricChanged(false),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ],
         ),
@@ -209,6 +249,9 @@ extension _EditPersonalInfoSheetStateUI on _EditPersonalInfoSheetState {
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
             enabled: !_isSaving,
             style: const TextStyle(fontSize: 14),
+            scrollPadding: EdgeInsets.only(
+              bottom: MediaQuery.of(context).viewInsets.bottom + 120,
+            ),
             onChanged: (text) {
               if (text.isEmpty) {
                 onValueChanged(null);

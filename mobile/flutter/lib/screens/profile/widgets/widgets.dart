@@ -8,5 +8,6 @@ export 'equipment_card.dart';
 export 'training_setup_card.dart';
 export 'settings_card.dart';
 export 'editable_fitness_card.dart';
+export 'privacy_section.dart';
 export 'edit_personal_info_sheet.dart';
 export 'event_based_workout_card.dart';

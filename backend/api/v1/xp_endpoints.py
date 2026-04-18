@@ -1,7 +1,7 @@
 """Secondary endpoints for xp.  Sub-router included by main module.
 XP Events API - Daily Login, Streaks, Double XP Events
 """
-from typing import Optional
+from typing import Optional, List
 from datetime import datetime, timedelta
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from pydantic import BaseModel
@@ -32,6 +32,9 @@ from .xp_models import (
     ClaimDailyCrateResponse,
     UnclaimedCrateItem,
     UnclaimedCratesResponse,
+    MerchClaim,
+    MerchClaimListResponse,
+    SubmitMerchAddressRequest,
 )
 
 router = APIRouter()
@@ -1142,26 +1145,8 @@ async def get_level_info(
     for l in range(1, level):
         total_xp += _get_xp_for_level(l)
 
-    # Level milestone rewards (updated for new tier system)
-    milestone_rewards = {
-        5: "Streak Shield x1",
-        10: "2x XP Token",
-        15: "Fitness Crate x2",
-        20: "Streak Shield x2",
-        25: "2x XP Token x2",
-        30: "Premium Crate",
-        40: "Streak Shield x3",
-        50: "2x XP Token x3 + Premium Crate",
-        60: "Fitness Crate x5",
-        75: "Premium Crate x2",
-        100: "Elite Badge + Premium Crate x3",
-        125: "Master Badge + Master Crate",
-        150: "Champion Badge + Champion Crate x2",
-        175: "Legend Badge + Legend Crate x3",
-        200: "Mythic Badge + Mythic Crate x5",
-        225: "Immortal Badge + Immortal Crate x7",
-        250: "Transcendent Badge + Legendary Crate x10",
-    }
+    # Level milestone rewards (migration 1929: amped rewards + physical merch)
+    milestone_rewards = MILESTONE_REWARDS_DISPLAY
 
     return {
         "level": level,
@@ -1182,31 +1167,10 @@ async def get_all_levels(
     XP thresholds are read from the DB's calculate_level_from_xp function (single source of truth).
     Static data — frontend should cache this for the session.
     """
-    milestone_rewards = {
-        5: "Streak Shield x1",
-        10: "2x XP Token",
-        15: "Fitness Crate x2",
-        20: "Streak Shield x2",
-        25: "2x XP Token x2",
-        30: "Premium Crate",
-        40: "Streak Shield x3",
-        50: "2x XP Token x3 + Premium Crate",
-        60: "Fitness Crate x5",
-        75: "Premium Crate x2",
-        100: "Elite Badge + Premium Crate x3",
-        125: "Master Badge + Master Crate",
-        150: "Champion Badge + Champion Crate x2",
-        175: "Legend Badge + Legend Crate x3",
-        200: "Mythic Badge + Mythic Crate x5",
-        225: "Immortal Badge + Immortal Crate x7",
-        250: "Transcendent Badge + Legendary Crate x10",
-    }
-    milestone_icons = {
-        5: "🛡️", 10: "⚡", 15: "📦", 20: "🛡️", 25: "⚡",
-        30: "🎁", 40: "🛡️", 50: "🎁", 60: "📦", 75: "🎁",
-        100: "🎖️", 125: "🎖️", 150: "🎖️", 175: "🎖️",
-        200: "🎖️", 225: "🎖️", 250: "🏆",
-    }
+    milestone_rewards = MILESTONE_REWARDS_DISPLAY
+    milestone_icons = MILESTONE_ICONS
+    per_level_rewards = PER_LEVEL_REWARDS_DISPLAY
+    per_level_icons = PER_LEVEL_ICONS
 
     # Query XP thresholds from DB function (single source of truth)
     try:
@@ -1219,13 +1183,534 @@ async def get_all_levels(
 
     levels = []
     for level in range(1, 251):
+        reward = milestone_rewards.get(level) or per_level_rewards.get(level)
+        icon = milestone_icons.get(level) or per_level_icons.get(level)
         levels.append({
             "level": level,
             "name": _get_level_name(level),
             "title": _get_xp_title(level),
             "xp_required": db_levels.get(level, _get_xp_for_level(level)),
-            "milestone_reward": milestone_rewards.get(level),
-            "milestone_icon": milestone_icons.get(level),
+            "milestone_reward": reward,
+            "milestone_icon": icon,
+            "is_major_milestone": level in MAJOR_MILESTONE_LEVELS,
+            "merch_type": MERCH_TYPE_FOR_LEVEL.get(level),
         })
 
     return levels
+
+
+# =============================================================================
+# REWARD DISPLAY TABLES (migration 1929)
+# =============================================================================
+# These mirror the SQL function `distribute_level_rewards` — update both together.
+
+MAJOR_MILESTONE_LEVELS = {5, 10, 15, 20, 25, 30, 40, 50, 60, 75, 100, 125, 150, 175, 200, 225, 250}
+
+MERCH_TYPE_FOR_LEVEL = {
+    50: "sticker_pack",
+    100: "t_shirt",
+    150: "hoodie",
+    200: "full_merch_kit",
+    250: "signed_premium_kit",
+}
+
+# Levels to proactively nudge users toward (push + email): within 3 levels of next merch tier.
+MERCH_PROXIMITY_NUDGE_LEVELS = {97, 98, 99, 147, 148, 149, 197, 198, 199, 247, 248, 249}
+MERCH_NEXT_FOR_PROXIMITY = {
+    97: 100, 98: 100, 99: 100,
+    147: 150, 148: 150, 149: 150,
+    197: 200, 198: 200, 199: 200,
+    247: 250, 248: 250, 249: 250,
+}
+
+MILESTONE_REWARDS_DISPLAY = {
+    5:   '3x Streak Shield + 2x Fitness Crate + Premium Crate + 2x XP Token · "Rising Star" Animated Badge',
+    10:  '5x 2x XP Token + 3x Fitness Crate + 2x Premium Crate + 2x Streak Shield · "Iron Will" Animated Badge + Iron Accent Theme',
+    15:  "3x Fitness Crate + 2x Premium Crate + 2x 2x XP Token",
+    20:  "4x Streak Shield + 2x Premium Crate + 2x 2x XP Token",
+    25:  '4x 2x XP Token + 3x Premium Crate + 3x Fitness Crate · Bronze Animated Frame + "Dedicated" Chat Title',
+    30:  "5x 2x XP Token + 3x Premium Crate + 3x Fitness Crate + 3x Streak Shield",
+    40:  "5x Streak Shield + 4x Premium Crate + 4x 2x XP Token + 3x Fitness Crate",
+    50:  'FREE FitWiz Sticker Pack + 6x 2x XP Token + 5x Premium Crate + 5x Fitness Crate + 5x Streak Shield · Silver Frame + "Veteran" Chat Title + Alt Coach Voice',
+    60:  "7x Fitness Crate + 5x Premium Crate + 5x 2x XP Token + 5x Streak Shield",
+    75:  '7x Premium Crate + 5x 2x XP Token + 5x Fitness Crate · Gold Holographic Frame + "Elite" Chat Title + Gold Accent Theme + Elite Stats Card',
+    100: "Elite Badge + FREE FitWiz T-Shirt + 10x Premium Crate + 7x 2x XP Token + 7x Fitness Crate + 7x Streak Shield",
+    125: "Master Badge + 12x Premium Crate + 8x 2x XP Token + 8x Fitness Crate",
+    150: "Champion Badge + FREE FitWiz Hoodie + 15x Premium Crate + 10x 2x XP Token + 10x Fitness Crate + 10x Streak Shield",
+    175: "Legend Badge + 17x Premium Crate + 12x 2x XP Token + 12x Fitness Crate",
+    200: "Mythic Badge + FREE Full Merch Kit + 20x Premium Crate + 15x 2x XP Token + 15x Fitness Crate + 15x Streak Shield",
+    225: "Immortal Badge + 25x Premium Crate + 20x 2x XP Token + 20x Fitness Crate",
+    250: "Transcendent Badge + FREE Signed Premium Kit + 30x Premium Crate + 30x 2x XP Token + 30x Fitness Crate + 30x Streak Shield",
+}
+
+MILESTONE_ICONS = {
+    5: "⭐",    # Rising Star badge
+    10: "🏅", 15: "📦", 20: "🛡️",
+    25: "🖼️",   # animated frame
+    30: "🎁", 40: "🛡️",
+    50: "✨",    # sticker pack (first physical merch)
+    60: "📦",
+    75: "👑",   # holographic frame / elite
+    100: "👕",   # t-shirt
+    125: "🎖️",
+    150: "🧥",   # hoodie
+    175: "🎖️",
+    200: "🎁",   # full merch kit
+    225: "🎖️",
+    250: "🏆",   # signed premium kit
+}
+
+# Per-level (non-milestone) rewards matching the SQL function's tier case
+_PER_LEVEL_BY_ONES = {
+    1: ("1x 2x XP Token", "⚡"),
+    2: ("1x Streak Shield", "🛡️"),
+    3: ("2x Fitness Crate + 1x Streak Shield + 1x 2x XP Token", "📦"),  # BEEFED (migration 1934)
+    4: ("1x 2x XP Token", "⚡"),
+    5: ("3x Streak Shield + 2x 2x XP Token", "🛡️"),  # non-major L5s (85, 95, 105, ...)
+    6: ("2x 2x XP Token", "⚡"),
+    7: ("2x Fitness Crate + 2x Streak Shield + 1x 2x XP Token + 1x Premium Crate", "🎁"),  # BEEFED (migration 1934)
+    8: ("2x Streak Shield", "🛡️"),
+    9: ("2x 2x XP Token + 1x Fitness Crate", "⚡"),
+    0: ("3x Fitness Crate + 1x Premium Crate", "🎁"),  # non-major L0s (70, 80, 90, 110, ...)
+}
+
+PER_LEVEL_REWARDS_DISPLAY = {
+    level: _PER_LEVEL_BY_ONES[level % 10][0]
+    for level in range(2, 251)
+    if level not in MAJOR_MILESTONE_LEVELS
+}
+
+PER_LEVEL_ICONS = {
+    level: _PER_LEVEL_BY_ONES[level % 10][1]
+    for level in range(2, 251)
+    if level not in MAJOR_MILESTONE_LEVELS
+}
+
+
+# =============================================================================
+# MERCH CLAIMS ENDPOINTS (migration 1929)
+# =============================================================================
+
+def _merch_type_display_name(merch_type: str) -> str:
+    return {
+        "sticker_pack": "FitWiz Sticker Pack",
+        "shaker_bottle": "FitWiz Shaker Bottle",
+        "t_shirt": "FitWiz T-Shirt",
+        "hoodie": "FitWiz Hoodie",
+        "full_merch_kit": "Full Merch Kit (Tee + Hoodie + Shaker)",
+        "signed_premium_kit": "Signed Premium Kit",
+    }.get(merch_type, merch_type.replace("_", " ").title())
+
+
+def _merch_requires_size(merch_type: str) -> bool:
+    """Apparel items require a single size choice (used by ops /submit-address)."""
+    return merch_type in ("t_shirt", "hoodie")
+
+
+def _merch_requires_sizes_map(merch_type: str) -> bool:
+    """Bundle items require a sizes map (tshirt + hoodie)."""
+    return merch_type in ("full_merch_kit", "signed_premium_kit")
+
+
+@router.get("/merch-claims", response_model=MerchClaimListResponse)
+async def list_merch_claims(current_user=Depends(get_current_user)):
+    """List all merch claims for the current user (pending + submitted + shipped + delivered + cancelled)."""
+    try:
+        db = get_supabase_db()
+        user_id = current_user["id"]
+
+        result = db.client.rpc("get_user_merch_claims", {"p_user_id": user_id}).execute()
+        rows = result.data or []
+
+        claims = [MerchClaim(**row) for row in rows]
+        pending = sum(1 for c in claims if c.status == "pending_address")
+
+        return MerchClaimListResponse(
+            claims=claims,
+            pending_count=pending,
+            total_count=len(claims),
+        )
+
+    except Exception as e:
+        logger.error(f"[XP] Error listing merch claims: {e}", exc_info=True)
+        raise safe_internal_error(e, "xp")
+
+
+# =============================================================================
+# REFERRAL PROGRAM (migration 1932)
+# =============================================================================
+
+class ReferralApplyRequest(BaseModel):
+    code: str
+
+
+class ReferralSummaryResponse(BaseModel):
+    referral_code: str
+    pending_count: int
+    qualified_count: int
+    next_milestone: Optional[int] = None
+    next_merch_type: Optional[str] = None
+
+
+class ReferralApplyResponse(BaseModel):
+    success: bool
+    message: str
+    referrer_id: Optional[str] = None
+
+
+@router.get("/referrals/summary", response_model=ReferralSummaryResponse)
+async def get_referrals_summary(current_user=Depends(get_current_user)):
+    """Get the user's referral code + referral progress + next merch milestone."""
+    try:
+        db = get_supabase_db()
+        user_id = current_user["id"]
+        result = db.client.rpc("get_referral_summary", {"p_user_id": user_id}).execute()
+        if not result.data:
+            raise HTTPException(status_code=500, detail="Failed to load referral summary")
+        data = result.data[0] if isinstance(result.data, list) else result.data
+        return ReferralSummaryResponse(**data)
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"[Referrals] Error getting summary: {e}", exc_info=True)
+        raise safe_internal_error(e, "xp")
+
+
+@router.post("/referrals/apply", response_model=ReferralApplyResponse)
+async def apply_referral(
+    request: ReferralApplyRequest,
+    current_user=Depends(get_current_user),
+):
+    """
+    Apply a referral code during/after signup. Creates a pending referral_tracking row.
+    The referral is only qualified (triggering rewards) after the user completes
+    their first workout — see mark_referral_qualified.
+    """
+    try:
+        db = get_supabase_db()
+        user_id = current_user["id"]
+
+        result = db.client.rpc(
+            "apply_referral_code",
+            {"p_user_id": user_id, "p_code": request.code},
+        ).execute()
+
+        if not result.data:
+            raise HTTPException(status_code=500, detail="Referral RPC returned no data")
+
+        data = result.data[0] if isinstance(result.data, list) else result.data
+        return ReferralApplyResponse(
+            success=data.get("success", False),
+            message=data.get("message", ""),
+            referrer_id=data.get("referrer_id"),
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"[Referrals] Error applying code: {e}", exc_info=True)
+        raise safe_internal_error(e, "xp")
+
+
+# =============================================================================
+# COSMETICS (migration 1936)
+# =============================================================================
+
+@router.get("/cosmetics/catalog")
+async def get_cosmetics_catalog(current_user=Depends(get_current_user)):
+    """Static cosmetics catalog — client caches for the session."""
+    try:
+        db = get_supabase_db()
+        result = (
+            db.client.table("cosmetics")
+            .select("id,type,display_name,description,emoji,color_hex,gradient_hex,tier,is_animated,unlock_level")
+            .eq("is_active", True)
+            .order("unlock_level")
+            .execute()
+        )
+        return {"cosmetics": result.data or []}
+    except Exception as e:
+        logger.error(f"[Cosmetics] Error fetching catalog: {e}", exc_info=True)
+        raise safe_internal_error(e, "xp")
+
+
+@router.get("/cosmetics/me")
+async def get_my_cosmetics(current_user=Depends(get_current_user)):
+    """List the user's unlocked cosmetics + which one of each type is equipped."""
+    try:
+        db = get_supabase_db()
+        user_id = current_user["id"]
+        owned = (
+            db.client.table("user_cosmetics")
+            .select("cosmetic_id,unlocked_at,unlocked_at_level,is_equipped")
+            .eq("user_id", user_id)
+            .execute()
+        )
+        return {"cosmetics": owned.data or []}
+    except Exception as e:
+        logger.error(f"[Cosmetics] Error listing owned: {e}", exc_info=True)
+        raise safe_internal_error(e, "xp")
+
+
+class EquipCosmeticRequest(BaseModel):
+    cosmetic_id: str
+
+
+@router.post("/cosmetics/equip")
+async def equip_cosmetic_endpoint(
+    request: EquipCosmeticRequest,
+    current_user=Depends(get_current_user),
+):
+    """Equip a cosmetic. Automatically unequips any other cosmetic of the same type."""
+    try:
+        db = get_supabase_db()
+        user_id = current_user["id"]
+        result = db.client.rpc(
+            "equip_cosmetic",
+            {"p_user_id": user_id, "p_cosmetic_id": request.cosmetic_id},
+        ).execute()
+        data = result.data[0] if isinstance(result.data, list) else result.data
+        return data or {"cosmetic_id": request.cosmetic_id, "is_equipped": True}
+    except Exception as e:
+        logger.error(f"[Cosmetics] Error equipping: {e}", exc_info=True)
+        raise safe_internal_error(e, "xp")
+
+
+@router.post("/cosmetics/unequip")
+async def unequip_cosmetic_endpoint(
+    request: EquipCosmeticRequest,
+    current_user=Depends(get_current_user),
+):
+    """Unequip a cosmetic."""
+    try:
+        db = get_supabase_db()
+        user_id = current_user["id"]
+        db.client.rpc(
+            "unequip_cosmetic",
+            {"p_user_id": user_id, "p_cosmetic_id": request.cosmetic_id},
+        ).execute()
+        return {"cosmetic_id": request.cosmetic_id, "is_equipped": False}
+    except Exception as e:
+        logger.error(f"[Cosmetics] Error unequipping: {e}", exc_info=True)
+        raise safe_internal_error(e, "xp")
+
+
+# =============================================================================
+# LEVEL-UP EVENTS (migration 1935)
+# =============================================================================
+
+@router.get("/level-ups/unacknowledged")
+async def list_unacknowledged_level_ups(current_user=Depends(get_current_user)):
+    """
+    Return all level-up events that haven't been acknowledged. Frontend uses
+    this to show a persistent "You leveled up!" banner so users never miss a
+    reward moment, even if they closed the app mid-celebration.
+    """
+    try:
+        db = get_supabase_db()
+        user_id = current_user["id"]
+
+        result = (
+            db.client.table("level_up_events")
+            .select("id,level_reached,is_milestone,merch_type,rewards_snapshot,created_at")
+            .eq("user_id", user_id)
+            .is_("acknowledged_at", "null")
+            .order("level_reached", desc=False)
+            .execute()
+        )
+        rows = result.data or []
+        return {"events": rows, "count": len(rows)}
+    except Exception as e:
+        logger.error(f"[XP] Error listing level-up events: {e}", exc_info=True)
+        raise safe_internal_error(e, "xp")
+
+
+class AcknowledgeLevelUpsRequest(BaseModel):
+    event_ids: Optional[List[str]] = None  # None = ack all unacked for user
+
+
+@router.post("/level-ups/acknowledge")
+async def acknowledge_level_ups(
+    request: AcknowledgeLevelUpsRequest,
+    current_user=Depends(get_current_user),
+):
+    """
+    Mark level-up events as acknowledged (user has seen the celebration).
+    Pass specific event_ids, or null/empty to ack all outstanding.
+    """
+    try:
+        db = get_supabase_db()
+        user_id = current_user["id"]
+
+        result = db.client.rpc(
+            "acknowledge_level_up_events",
+            {"p_user_id": user_id, "p_event_ids": request.event_ids},
+        ).execute()
+
+        count = result.data if isinstance(result.data, int) else 0
+        if isinstance(result.data, list) and result.data:
+            count = result.data[0]
+        return {"acknowledged": count}
+    except Exception as e:
+        logger.error(f"[XP] Error acknowledging level-ups: {e}", exc_info=True)
+        raise safe_internal_error(e, "xp")
+
+
+@router.get("/referrals/list")
+async def list_referrals(current_user=Depends(get_current_user)):
+    """
+    List all referrals made by the current user, including qualified/pending status.
+    """
+    try:
+        db = get_supabase_db()
+        user_id = current_user["id"]
+
+        # Fetch referrals + joined user names
+        result = (
+            db.client.table("referral_tracking")
+            .select("id,referred_id,status,workouts_completed,created_at,updated_at")
+            .eq("referrer_id", user_id)
+            .order("created_at", desc=True)
+            .execute()
+        )
+
+        rows = result.data or []
+        return {"referrals": rows, "count": len(rows)}
+    except Exception as e:
+        logger.error(f"[Referrals] Error listing: {e}", exc_info=True)
+        raise safe_internal_error(e, "xp")
+
+
+@router.post("/merch-claims/{claim_id}/accept", response_model=MerchClaim)
+async def accept_merch_claim_endpoint(
+    claim_id: str,
+    current_user=Depends(get_current_user),
+):
+    """
+    Accept a merch reward. No address is collected in-app — the ops team
+    will email the user to collect shipping details when ready to ship.
+    Transitions: pending_address → awaiting_outreach.
+    """
+    try:
+        db = get_supabase_db()
+        user_id = current_user["id"]
+
+        result = db.client.rpc(
+            "accept_merch_claim",
+            {"p_claim_id": claim_id, "p_user_id": user_id},
+        ).execute()
+
+        if not result.data:
+            raise HTTPException(status_code=404, detail="Merch claim not found or not acceptable")
+
+        row = result.data[0] if isinstance(result.data, list) else result.data
+        logger.info(f"[XP] Merch claim accepted: claim={claim_id} user={user_id}")
+        return MerchClaim(**row)
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"[XP] Error accepting merch claim: {e}", exc_info=True)
+        raise safe_internal_error(e, "xp")
+
+
+@router.post("/merch-claims/{claim_id}/submit-address", response_model=MerchClaim)
+async def submit_merch_address(
+    claim_id: str,
+    request: SubmitMerchAddressRequest,
+    current_user=Depends(get_current_user),
+):
+    """
+    Submit shipping address for a pending merch claim.
+    Apparel merch (t_shirt, hoodie) requires `size`.
+    Kit merch (full_merch_kit, signed_premium_kit) requires a `sizes` map.
+    """
+    try:
+        db = get_supabase_db()
+        user_id = current_user["id"]
+
+        # Look up the claim to validate size requirements
+        existing = (
+            db.client.table("merch_claims")
+            .select("merch_type,status")
+            .eq("id", claim_id)
+            .eq("user_id", user_id)
+            .limit(1)
+            .execute()
+        )
+        if not existing.data:
+            raise HTTPException(status_code=404, detail="Merch claim not found")
+
+        merch_type = existing.data[0]["merch_type"]
+        status = existing.data[0]["status"]
+        if status not in ("pending_address", "address_submitted"):
+            raise HTTPException(status_code=400, detail=f"Claim is {status} and cannot be edited")
+
+        if _merch_requires_size(merch_type) and not request.size:
+            raise HTTPException(status_code=400, detail=f"{merch_type} requires a size")
+        if _merch_requires_sizes_map(merch_type):
+            if not request.sizes:
+                raise HTTPException(status_code=400, detail=f"{merch_type} requires a sizes map")
+            # full kit expects tshirt + hoodie; signed kit expects tshirt + hoodie
+            missing = [k for k in ("tshirt", "hoodie") if k not in request.sizes]
+            if missing:
+                raise HTTPException(status_code=400, detail=f"sizes missing keys: {missing}")
+
+        rpc_params = {
+            "p_claim_id": claim_id,
+            "p_user_id": user_id,
+            "p_full_name": request.full_name,
+            "p_address_line1": request.address_line1,
+            "p_address_line2": request.address_line2,
+            "p_city": request.city,
+            "p_state": request.state,
+            "p_postal_code": request.postal_code,
+            "p_country": request.country.upper(),
+            "p_phone": request.phone,
+            "p_size": request.size,
+            "p_sizes": request.sizes,
+            "p_notes": request.notes,
+        }
+        result = db.client.rpc("submit_merch_claim_address", rpc_params).execute()
+
+        if not result.data:
+            raise HTTPException(status_code=500, detail="Failed to submit address")
+
+        # RPC returns the updated row (possibly wrapped in a list)
+        row = result.data[0] if isinstance(result.data, list) else result.data
+        logger.info(f"[XP] Merch address submitted: claim={claim_id} user={user_id} type={merch_type}")
+        return MerchClaim(**row)
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"[XP] Error submitting merch address: {e}", exc_info=True)
+        raise safe_internal_error(e, "xp")
+
+
+@router.post("/merch-claims/{claim_id}/cancel", response_model=MerchClaim)
+async def cancel_merch_claim_endpoint(
+    claim_id: str,
+    current_user=Depends(get_current_user),
+):
+    """Cancel a pending merch claim. Cannot cancel shipped/delivered/already-cancelled claims."""
+    try:
+        db = get_supabase_db()
+        user_id = current_user["id"]
+
+        result = db.client.rpc(
+            "cancel_merch_claim",
+            {"p_claim_id": claim_id, "p_user_id": user_id},
+        ).execute()
+
+        if not result.data:
+            raise HTTPException(status_code=404, detail="Merch claim not found or not cancellable")
+
+        row = result.data[0] if isinstance(result.data, list) else result.data
+        logger.info(f"[XP] Merch claim cancelled: claim={claim_id} user={user_id}")
+        return MerchClaim(**row)
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"[XP] Error cancelling merch claim: {e}", exc_info=True)
+        raise safe_internal_error(e, "xp")

@@ -296,11 +296,25 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen> {
             headerExtra: _buildProgressIndicator(isDark),
             content: Column(
               children: [
-                // Show header + progress inline only on phone
-                if (!isFoldable) ...[
-                  _buildHeader(isDark, textPrimary, textSecondary),
-                  _buildProgressIndicator(isDark),
-                ],
+                // Show header + progress inline only on phone, and collapse them
+                // when the keyboard is open so the form fits above the keyboard
+                // and focus changes don't force the scroll view to jump between
+                // fields.
+                if (!isFoldable)
+                  AnimatedSize(
+                    duration: const Duration(milliseconds: 180),
+                    curve: Curves.easeOut,
+                    alignment: Alignment.topCenter,
+                    child: MediaQuery.of(context).viewInsets.bottom > 0
+                        ? const SizedBox.shrink()
+                        : Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              _buildHeader(isDark, textPrimary, textSecondary),
+                              _buildProgressIndicator(isDark),
+                            ],
+                          ),
+                  ),
 
                 // Body metrics form + rate selector
                 Expanded(

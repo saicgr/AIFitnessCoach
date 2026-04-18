@@ -1,8 +1,9 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../services/mood_workout_service.dart';
 import '../models/mood.dart';
 import '../models/workout.dart';
-import '../repositories/workout_repository.dart';
+import '../models/workout_style.dart';
 import '../services/api_client.dart';
 
 // ============================================
@@ -111,10 +112,10 @@ class MoodWorkoutState {
 // ============================================
 
 class MoodWorkoutNotifier extends StateNotifier<MoodWorkoutState> {
-  final WorkoutRepository _repository;
+  final MoodWorkoutService _service;
   final ApiClient _apiClient;
 
-  MoodWorkoutNotifier(this._repository, this._apiClient)
+  MoodWorkoutNotifier(this._service, this._apiClient)
       : super(const MoodWorkoutState());
 
   /// Select a mood for workout generation
@@ -134,10 +135,17 @@ class MoodWorkoutNotifier extends StateNotifier<MoodWorkoutState> {
     state = state.copyWith(clearMood: true, clearError: true);
   }
 
-  /// Generate a workout based on the selected mood
+  /// Generate a workout locally using [MoodWorkoutService]. Returns the
+  /// workout without persisting it — the UI layer inspects
+  /// [MoodWorkoutService.existingWorkoutsForToday] and decides whether to
+  /// Replace or Add before committing via [persistWorkout].
+  ///
+  /// [style], [difficulty], [duration] are user overrides from the mood
+  /// sheet's Advanced Options panel. When `null`, preset defaults apply.
   Future<Workout?> generateMoodWorkout({
-    int? durationMinutes,
-    String? deviceInfo,
+    WorkoutStyle? style,
+    String? difficulty,
+    int? duration,
   }) async {
     final mood = state.selectedMood;
     if (mood == null) {
@@ -153,66 +161,65 @@ class MoodWorkoutNotifier extends StateNotifier<MoodWorkoutState> {
       return null;
     }
 
-    debugPrint('🚀 [MoodWorkout] Starting generation for mood: ${mood.value}');
+    debugPrint('🚀 [MoodWorkout] Starting local generation for mood: '
+        '${mood.value}, style=${style?.value}, difficulty=$difficulty, '
+        'duration=$duration');
     state = state.copyWith(
       isGenerating: true,
       progress: 0.0,
-      currentStep: 0,
-      statusMessage: 'Starting ${mood.label.toLowerCase()} workout generation...',
+      currentStep: 1,
+      totalSteps: 1,
+      statusMessage: 'Generating your ${mood.label.toLowerCase()} workout...',
       clearError: true,
       clearWorkout: true,
     );
 
+    final sw = Stopwatch()..start();
     try {
-      Workout? finalWorkout;
+      final workout = await _service
+          .generateLocally(
+            mood: mood,
+            userId: userId,
+            style: style,
+            difficulty: difficulty,
+            duration: duration,
+          )
+          .timeout(const Duration(seconds: 5));
 
-      await for (final progress in _repository.generateMoodWorkoutStreaming(
-        userId: userId,
-        mood: mood,
-        durationMinutes: durationMinutes,
-        deviceInfo: deviceInfo,
-      )) {
-        // Update state with progress
-        state = state.copyWith(
-          currentStep: progress.step,
-          totalSteps: progress.totalSteps,
-          progress: progress.progress,
-          statusMessage: progress.message,
-          detail: progress.detail,
-          moodEmoji: progress.moodEmoji,
-          moodColor: progress.moodColor,
-        );
-
-        if (progress.hasError) {
-          debugPrint('❌ [MoodWorkout] Generation error: ${progress.message}');
-          state = state.copyWith(
-            isGenerating: false,
-            error: progress.message,
-          );
-          return null;
-        }
-
-        if (progress.isCompleted && progress.workout != null) {
-          finalWorkout = progress.workout;
-          debugPrint('✅ [MoodWorkout] Generation complete: ${finalWorkout?.name}');
-          state = state.copyWith(
-            isGenerating: false,
-            generatedWorkout: finalWorkout,
-            totalTimeMs: progress.totalTimeMs,
-            statusMessage: 'Workout ready!',
-          );
-        }
-      }
-
-      return finalWorkout;
-    } catch (e) {
-      debugPrint('❌ [MoodWorkout] Exception during generation: $e');
+      sw.stop();
+      state = state.copyWith(
+        isGenerating: false,
+        generatedWorkout: workout,
+        totalTimeMs: sw.elapsedMilliseconds,
+        statusMessage: 'Workout ready!',
+        progress: 1.0,
+      );
+      debugPrint('✅ [MoodWorkout] Local generation complete in '
+          '${sw.elapsedMilliseconds}ms');
+      return workout;
+    } catch (e, stack) {
+      debugPrint('❌ [MoodWorkout] Local generation failed: $e\n$stack');
       state = state.copyWith(
         isGenerating: false,
         error: 'Failed to generate workout: $e',
       );
       return null;
     }
+  }
+
+  /// Persist a previously-generated workout. Called after the Replace/Add
+  /// decision.
+  Future<void> persistWorkout(Workout workout) async {
+    final userId = await _apiClient.getUserId();
+    if (userId == null) return;
+    await _service.persist(workout, userId);
+  }
+
+  /// Fetch today's existing workouts so the UI can ask Replace vs Add.
+  Future<List<Workout>> existingTodayWorkouts() async {
+    final userId = await _apiClient.getUserId();
+    if (userId == null) return const [];
+    return _service.existingWorkoutsForToday(userId);
   }
 
   /// Reset state for a new generation
@@ -238,9 +245,9 @@ class MoodWorkoutNotifier extends StateNotifier<MoodWorkoutState> {
 /// Main mood workout provider
 final moodWorkoutProvider =
     StateNotifierProvider<MoodWorkoutNotifier, MoodWorkoutState>((ref) {
-  final repository = ref.watch(workoutRepositoryProvider);
+  final service = ref.watch(moodWorkoutServiceProvider);
   final apiClient = ref.watch(apiClientProvider);
-  return MoodWorkoutNotifier(repository, apiClient);
+  return MoodWorkoutNotifier(service, apiClient);
 });
 
 /// Currently selected mood (convenience provider)

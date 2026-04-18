@@ -152,7 +152,7 @@ mixin WorkoutUIBuildersMixin<T extends StatefulWidget> on State<T> {
   void minimizeWorkout();
   void initControllersForExercise(int exerciseIndex);
   bool isExerciseCompleted(int exerciseIndex);
-  void completeSet();
+  Future<void> completeSet();
   void handleSetCompletedV2(int setIndex);
   void updateCompletedSet(int setIndex, double weight, int reps);
   void deleteCompletedSet(int setIndex);

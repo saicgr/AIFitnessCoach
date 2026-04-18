@@ -8,12 +8,15 @@ import '../../../data/models/chat_message.dart';
 import '../../../data/models/coach_persona.dart';
 import '../../../data/repositories/chat_repository.dart';
 import '../../../data/services/haptic_service.dart';
+import '../../../data/models/cosmetic.dart';
+import '../../../data/providers/cosmetics_provider.dart';
 import '../../../widgets/coach_avatar.dart';
 import 'food_analysis_inline_card.dart';
 import 'food_analysis_result_card.dart';
 import 'form_check_result_card.dart';
 import 'form_comparison_result_card.dart';
 import 'fullscreen_image_viewer.dart';
+import 'proposed_change_card.dart';
 import 'report_message_sheet.dart';
 import 'voice_message_widget.dart';
 import 'chat_media_widgets.dart';
@@ -285,6 +288,15 @@ class ChatMessageBubble extends ConsumerWidget {
             ),
           if (!isUser && message.hasFormComparison)
             FormComparisonResultCard(data: message.actionData!),
+          if (!isUser && message.hasProposedChange)
+            ProposedChangeCard(
+              proposalId: message.proposalId!,
+              proposalToken: message.proposalToken ?? '',
+              summary: message.proposalSummary ?? 'Proposed change',
+              reason: message.proposalReason,
+              proposedAction: message.proposalProposedAction,
+              expiresAt: message.proposalExpiresAt,
+            ),
           if (!isUser && message.hasGeneratedWorkout)
             Padding(
               padding: const EdgeInsets.only(top: 12),
@@ -298,7 +310,7 @@ class ChatMessageBubble extends ConsumerWidget {
               mealType: message.loggedMealType,
               calories: message.loggedMealCalories,
             ),
-          // Timestamp + delivery status
+          // Timestamp + delivery status (assistant messages also show latency)
           Padding(
             padding: const EdgeInsets.only(top: 6),
             child: Row(
@@ -313,6 +325,15 @@ class ChatMessageBubble extends ConsumerWidget {
                         : AppColors.textMuted,
                   ),
                 ),
+                if (!isUser && message.responseTimeMs != null) ...[
+                  Text(
+                    ' · ${_formatResponseTime(message.responseTimeMs!)}',
+                    style: TextStyle(
+                      fontSize: 10,
+                      color: AppColors.textMuted,
+                    ),
+                  ),
+                ],
                 if (isUser) ...[
                   const SizedBox(width: 4),
                   _buildStatusIcon(message.status),
@@ -346,9 +367,64 @@ class ChatMessageBubble extends ConsumerWidget {
       child: bubbleContent,
     );
 
+    // Equipped chat title pill rendered above user messages (earned via cosmetics)
+    Widget? titlePill;
+    if (isUser) {
+      final cosmetics = ref.watch(cosmeticsProvider);
+      Cosmetic? equippedTitle;
+      for (final c in cosmetics.catalog) {
+        if (c.type == CosmeticType.chatTitle && (cosmetics.owned[c.id]?.isEquipped ?? false)) {
+          equippedTitle = c;
+          break;
+        }
+      }
+      if (equippedTitle != null) {
+        final primary = equippedTitle.color ?? AppColors.cyan;
+        titlePill = Padding(
+          padding: const EdgeInsets.only(bottom: 4, right: 4),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [primary, (equippedTitle.gradient ?? primary)],
+              ),
+              borderRadius: BorderRadius.circular(10),
+              boxShadow: [
+                BoxShadow(color: primary.withValues(alpha: 0.3), blurRadius: 4),
+              ],
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (equippedTitle.emoji != null) ...[
+                  Text(equippedTitle.emoji!, style: const TextStyle(fontSize: 11)),
+                  const SizedBox(width: 4),
+                ],
+                Text(
+                  equippedTitle.displayName,
+                  style: const TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.white,
+                    letterSpacing: 0.3,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      }
+    }
+
     return Align(
       alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
-      child: bubbleContent,
+      child: Column(
+        crossAxisAlignment: isUser ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+        children: [
+          if (titlePill != null) titlePill,
+          bubbleContent,
+        ],
+      ),
     );
   }
 
@@ -576,6 +652,19 @@ class ChatMessageBubble extends ConsumerWidget {
       final months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
       return '${months[time.month - 1]} ${time.day}, $timeStr';
     }
+  }
+
+  /// Format a user-perceived latency for display next to the timestamp.
+  /// Buckets: sub-second → "Xms", under a minute → "X.Xs", else "Xm Ys".
+  String _formatResponseTime(int ms) {
+    if (ms < 1000) return '${ms}ms';
+    if (ms < 60000) {
+      final seconds = ms / 1000.0;
+      return '${seconds.toStringAsFixed(1)}s';
+    }
+    final minutes = ms ~/ 60000;
+    final remSeconds = (ms % 60000) ~/ 1000;
+    return remSeconds == 0 ? '${minutes}m' : '${minutes}m ${remSeconds}s';
   }
 }
 

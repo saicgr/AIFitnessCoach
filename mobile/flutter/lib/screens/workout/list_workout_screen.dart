@@ -470,7 +470,7 @@ class _ListWorkoutScreenState extends ConsumerState<ListWorkoutScreen> {
 
           // History button
           GestureDetector(
-            onTap: () => context.push('/workouts'),
+            onTap: () => context.go('/workouts'),
             child: Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(

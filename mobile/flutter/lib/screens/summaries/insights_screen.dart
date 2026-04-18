@@ -14,6 +14,7 @@ import '../../core/services/posthog_service.dart';
 import '../../widgets/pill_app_bar.dart';
 import 'widgets/share_insights_sheet.dart';
 import 'widgets/share_weekly_summary_sheet.dart';
+import 'widgets/weekly_percentile_hero.dart';
 
 part 'insights_screen_part_period_selector.dart';
 part 'insights_screen_part_body_card.dart';
@@ -143,6 +144,9 @@ class _InsightsScreenState extends ConsumerState<InsightsScreen> {
                           physics: const AlwaysScrollableScrollPhysics(),
                           children: [
                             const SizedBox(height: 8),
+
+                            // W5: Weekly percentile hero — shows top N% badge
+                            const WeeklyPercentileHero(),
 
                             // Data cards
                             if (insightsState.report != null) ...[

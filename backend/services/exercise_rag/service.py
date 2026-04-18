@@ -159,7 +159,8 @@ class ExerciseRAGService:
             logger.warning("No exercises found in exercise_library_cleaned view")
             return 0
 
-        # Filter and deduplicate
+        # Filter and deduplicate (use dedup_key so Burpee / Burpee(1) collapse)
+        from .utils import dedup_key
         seen_names: set = set()
         exercises = []
         for ex in all_exercises:
@@ -171,10 +172,10 @@ class ExerciseRAGService:
                 continue
 
             exercise_name = ex.get("name", ex.get("exercise_name_cleaned", ex.get("exercise_name", "")))
-            lower_name = exercise_name.lower()
-            if lower_name in seen_names:
+            key = dedup_key(exercise_name)
+            if not key or key in seen_names:
                 continue
-            seen_names.add(lower_name)
+            seen_names.add(key)
             exercises.append(ex)
 
         logger.info(f"Found {len(exercises)} exercises to index (filtered from {len(all_exercises)})")
@@ -774,9 +775,11 @@ class ExerciseRAGService:
                         logger.debug(f"Filtered out '{meta.get('name')}' - warmup filler in {workout_type_preference} workout")
                         continue
 
-                # Clean name for display
+                # Clean name for display (also strip "(N)" import-duplicate suffix
+                # so base names match each other in the similarity check).
                 raw_name = meta.get("name", "Unknown")
-                exercise_name = clean_exercise_name_for_display(raw_name)
+                from .utils import strip_dedup_suffix
+                exercise_name = strip_dedup_suffix(clean_exercise_name_for_display(raw_name))
 
                 # Skip similar exercises
                 is_duplicate = False
@@ -1112,12 +1115,14 @@ class ExerciseRAGService:
     ) -> List[Dict[str, Any]]:
         """Use AI to select the best exercises from candidates."""
 
-        # Deduplicate candidates by name (keep first occurrence = highest similarity)
+        # Deduplicate candidates by name (keep first occurrence = highest similarity).
+        # dedup_key also strips "(N)" suffixes so Burpee / Burpee(1) collapse.
+        from .utils import dedup_key
         seen_cand_names = set()
         deduped = []
         for c in candidates:
-            key = c['name'].lower().strip()
-            if key not in seen_cand_names:
+            key = dedup_key(c['name'])
+            if key and key not in seen_cand_names:
                 seen_cand_names.add(key)
                 deduped.append(c)
         candidates = deduped
@@ -1226,7 +1231,9 @@ Select exactly {count} UNIQUE exercises that are SAFE for this user."""
             data = json.loads(content)
             selected_indices = data.get("selected_indices", [])
 
-            # Get selected exercises - ensure no duplicates
+            # Get selected exercises - ensure no duplicates. dedup_key strips
+            # "(N)" suffixes so Burpee / Burpee(1) collapse to one slot.
+            from .utils import dedup_key
             selected = []
             seen_indices = set()
             seen_names = set()
@@ -1238,10 +1245,10 @@ Select exactly {count} UNIQUE exercises that are SAFE for this user."""
                         continue
 
                     ex = candidates[idx - 1]
-                    exercise_name = ex.get('name', '').lower().strip()
+                    exercise_name = dedup_key(ex.get('name', ''))
 
                     # Skip if we've already selected an exercise with the same name
-                    if exercise_name in seen_names:
+                    if not exercise_name or exercise_name in seen_names:
                         logger.warning(f"AI returned duplicate exercise '{ex.get('name')}', skipping")
                         continue
 
@@ -1258,8 +1265,8 @@ Select exactly {count} UNIQUE exercises that are SAFE for this user."""
                     if len(selected) >= count:
                         break
                     if (i + 1) not in seen_indices:
-                        exercise_name = candidate.get('name', '').lower().strip()
-                        if exercise_name not in seen_names:
+                        exercise_name = dedup_key(candidate.get('name', ''))
+                        if exercise_name and exercise_name not in seen_names:
                             seen_indices.add(i + 1)
                             seen_names.add(exercise_name)
                             selected.append(self._format_exercise_for_workout(

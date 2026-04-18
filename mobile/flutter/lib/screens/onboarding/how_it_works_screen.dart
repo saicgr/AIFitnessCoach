@@ -369,12 +369,12 @@ class _HowItWorksScreenState extends ConsumerState<HowItWorksScreen>
                 gradient: LinearGradient(
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
-                  colors: [AppColors.orange, const Color(0xFFFF6B00)],
+                  colors: [AppColors.onboardingAccent, const Color(0xFFFF6B00)],
                 ),
                 borderRadius: BorderRadius.circular(20),
                 boxShadow: [
                   BoxShadow(
-                    color: AppColors.orange.withValues(
+                    color: AppColors.onboardingAccent.withValues(
                         alpha: 0.3 + (_pulseController.value * 0.15)),
                     blurRadius: 20 + (_pulseController.value * 8),
                     offset: const Offset(0, 8),
@@ -487,12 +487,12 @@ class _HowItWorksScreenState extends ConsumerState<HowItWorksScreen>
                 gradient: LinearGradient(
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
-                  colors: [AppColors.orange, const Color(0xFFFF6B00)],
+                  colors: [AppColors.onboardingAccent, const Color(0xFFFF6B00)],
                 ),
                 borderRadius: BorderRadius.circular(16),
                 boxShadow: [
                   BoxShadow(
-                    color: AppColors.orange.withValues(
+                    color: AppColors.onboardingAccent.withValues(
                         alpha: 0.3 + (_pulseController.value * 0.15)),
                     blurRadius: 16 + (_pulseController.value * 8),
                     offset: const Offset(0, 6),

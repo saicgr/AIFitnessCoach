@@ -152,18 +152,18 @@ class _HealthConnectScreenState extends ConsumerState<HealthConnectScreen> {
                 ),
               ),
 
-              // Scrollable content
+              // Static content
               Expanded(
-                child: SingleChildScrollView(
+                child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 24),
                   child: Column(
                     children: [
-                      const SizedBox(height: 24),
+                      const SizedBox(height: 16),
 
                       // --- Hero icon ---
                       _buildHeroIcon(isDark, greenAccent),
 
-                      const SizedBox(height: 24),
+                      const SizedBox(height: 16),
 
                       // --- Title ---
                       Text(
@@ -180,7 +180,7 @@ class _HealthConnectScreenState extends ConsumerState<HealthConnectScreen> {
                           .fadeIn(delay: 200.ms)
                           .slideY(begin: 0.08),
 
-                      const SizedBox(height: 8),
+                      const SizedBox(height: 6),
 
                       Text(
                         'Get more accurate coaching with real data',
@@ -193,13 +193,13 @@ class _HealthConnectScreenState extends ConsumerState<HealthConnectScreen> {
                           .animate()
                           .fadeIn(delay: 300.ms),
 
-                      const SizedBox(height: 20),
+                      const SizedBox(height: 16),
 
                       // --- Platform badge ---
                       _buildPlatformBadge(
                           isDark, textPrimary, greenAccent),
 
-                      const SizedBox(height: 28),
+                      const SizedBox(height: 20),
 
                       // --- Benefits list ---
                       _buildBenefitRow(
@@ -210,7 +210,7 @@ class _HealthConnectScreenState extends ConsumerState<HealthConnectScreen> {
                         textPrimary: textPrimary,
                         accentColor: greenAccent,
                       ),
-                      const SizedBox(height: 10),
+                      const SizedBox(height: 8),
                       _buildBenefitRow(
                         icon: Icons.fitness_center,
                         text: 'Import workouts from other apps',
@@ -219,7 +219,7 @@ class _HealthConnectScreenState extends ConsumerState<HealthConnectScreen> {
                         textPrimary: textPrimary,
                         accentColor: greenAccent,
                       ),
-                      const SizedBox(height: 10),
+                      const SizedBox(height: 8),
                       _buildBenefitRow(
                         icon: Icons.favorite,
                         text: 'See heart rate during workouts',
@@ -228,7 +228,7 @@ class _HealthConnectScreenState extends ConsumerState<HealthConnectScreen> {
                         textPrimary: textPrimary,
                         accentColor: greenAccent,
                       ),
-                      const SizedBox(height: 10),
+                      const SizedBox(height: 8),
                       _buildBenefitRow(
                         icon: Icons.auto_awesome,
                         text: 'Better AI coaching with your real data',
@@ -238,15 +238,9 @@ class _HealthConnectScreenState extends ConsumerState<HealthConnectScreen> {
                         accentColor: greenAccent,
                       ),
 
-                      const SizedBox(height: 28),
-
-                      // --- Social proof chip ---
-                      _buildSocialProofChip(isDark, greenAccent),
-
-                      const SizedBox(height: 16),
-
                       // --- Error message ---
                       if (_error != null) ...[
+                        const SizedBox(height: 12),
                         Container(
                           width: double.infinity,
                           padding: const EdgeInsets.all(12),
@@ -271,11 +265,11 @@ class _HealthConnectScreenState extends ConsumerState<HealthConnectScreen> {
                             ],
                           ),
                         ).animate().fadeIn().shake(hz: 2, offset: const Offset(2, 0)),
-                        const SizedBox(height: 16),
                       ],
 
                       // --- Success message ---
-                      if (_isSuccess)
+                      if (_isSuccess) ...[
+                        const SizedBox(height: 12),
                         Container(
                           width: double.infinity,
                           padding: const EdgeInsets.all(12),
@@ -300,8 +294,7 @@ class _HealthConnectScreenState extends ConsumerState<HealthConnectScreen> {
                             ],
                           ),
                         ).animate().fadeIn().scaleXY(begin: 0.95),
-
-                      const SizedBox(height: 24),
+                      ],
                     ],
                   ),
                 ),
@@ -432,40 +425,6 @@ class _HealthConnectScreenState extends ConsumerState<HealthConnectScreen> {
         .animate()
         .fadeIn(delay: Duration(milliseconds: delay))
         .slideX(begin: 0.04);
-  }
-
-  Widget _buildSocialProofChip(bool isDark, Color greenAccent) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      decoration: BoxDecoration(
-        color: greenAccent.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: greenAccent.withValues(alpha: 0.25),
-        ),
-      ),
-      child: Row(
-        children: [
-          Icon(Icons.verified, size: 20, color: greenAccent),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Text(
-              'Users who sync health data are 2x more likely to hit their goals',
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w500,
-                color: greenAccent,
-                height: 1.35,
-              ),
-            ),
-          ),
-        ],
-      ),
-    )
-        .animate()
-        .fadeIn(delay: 720.ms)
-        .slideY(begin: 0.06);
   }
 
   Widget _buildBottomButtons(

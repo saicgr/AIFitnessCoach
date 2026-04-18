@@ -48,6 +48,7 @@ class GroceryListService:
         # Manual blank list — no source required
         if not req.meal_plan_id and not req.source_recipe_id:
             return await self._create_blank_list(user_id, req)
+        return await self._build_from_source(user_id, req)
 
     async def _create_blank_list(self, user_id: str, req: GroceryListCreate) -> GroceryList:
         """Create an empty grocery list the user can populate manually."""
@@ -68,6 +69,8 @@ class GroceryListService:
             items=[], created_at=now_iso, updated_at=now_iso,
         )
 
+    async def _build_from_source(self, user_id: str, req: GroceryListCreate) -> GroceryList:
+        """Build a grocery list from a meal plan or a recipe source."""
         if req.meal_plan_id:
             recipe_ids, plan_label = self._recipes_in_plan(req.meal_plan_id)
             list_name = req.name or f"Grocery list for {plan_label}"

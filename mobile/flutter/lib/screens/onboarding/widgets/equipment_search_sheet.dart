@@ -1,5 +1,3 @@
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../../core/constants/app_colors.dart';
@@ -157,7 +155,7 @@ class _EquipmentSearchSheetState extends State<EquipmentSearchSheet> {
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: AppColors.orange),
+              borderSide: const BorderSide(color: AppColors.onboardingAccent),
             ),
           ),
           onSubmitted: (value) {
@@ -183,7 +181,7 @@ class _EquipmentSearchSheetState extends State<EquipmentSearchSheet> {
               }
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.orange,
+              backgroundColor: AppColors.onboardingAccent,
               foregroundColor: Colors.white,
             ),
             child: const Text('Add'),
@@ -222,41 +220,13 @@ class _EquipmentSearchSheetState extends State<EquipmentSearchSheet> {
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
     final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
-    final backgroundColor = isDark ? AppColors.pureBlack : AppColorsLight.pureWhite;
 
-    return ClipRRect(
-      borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
-        child: Container(
-          height: MediaQuery.of(context).size.height * 0.85,
-          decoration: BoxDecoration(
-            color: isDark
-                ? Colors.black.withValues(alpha: 0.4)
-                : Colors.white.withValues(alpha: 0.6),
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-            border: Border(
-              top: BorderSide(
-                color: isDark
-                    ? Colors.white.withValues(alpha: 0.2)
-                    : Colors.black.withValues(alpha: 0.1),
-                width: 0.5,
-              ),
-            ),
-          ),
-          child: Column(
+    // Glass background + drag handle come from the enclosing GlassSheet, so
+    // this widget renders only the sheet content.
+    return SizedBox(
+      height: MediaQuery.of(context).size.height * 0.85,
+      child: Column(
         children: [
-          // Handle bar
-          Container(
-            margin: const EdgeInsets.only(top: 12),
-            width: 40,
-            height: 4,
-            decoration: BoxDecoration(
-              color: cardBorder,
-              borderRadius: BorderRadius.circular(2),
-            ),
-          ),
-
           // Header
           Padding(
             padding: const EdgeInsets.all(20),
@@ -279,7 +249,7 @@ class _EquipmentSearchSheetState extends State<EquipmentSearchSheet> {
                         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                         decoration: BoxDecoration(
                           gradient: LinearGradient(
-                            colors: [AppColors.orange, AppColors.orange.withOpacity(0.8)],
+                            colors: [AppColors.onboardingAccent, AppColors.onboardingAccent.withOpacity(0.8)],
                             begin: Alignment.topLeft,
                             end: Alignment.bottomRight,
                           ),
@@ -387,10 +357,10 @@ class _EquipmentSearchSheetState extends State<EquipmentSearchSheet> {
                             // Pre-fill with search query
                             _showAddCustomEquipmentDialogWithText(_searchQuery);
                           },
-                          icon: const Icon(Icons.add_circle_outline, color: AppColors.orange),
+                          icon: const Icon(Icons.add_circle_outline, color: AppColors.onboardingAccent),
                           label: Text(
                             'Add "$_searchQuery"',
-                            style: const TextStyle(color: AppColors.orange),
+                            style: const TextStyle(color: AppColors.onboardingAccent),
                           ),
                         ),
                       ],
@@ -428,7 +398,7 @@ class _EquipmentSearchSheetState extends State<EquipmentSearchSheet> {
                 child: ElevatedButton(
                   onPressed: () => Navigator.of(context).pop(),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.orange,
+                    backgroundColor: AppColors.onboardingAccent,
                     foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -447,8 +417,6 @@ class _EquipmentSearchSheetState extends State<EquipmentSearchSheet> {
             ),
           ),
         ],
-          ),
-        ),
       ),
     );
   }
@@ -468,7 +436,7 @@ class _EquipmentSearchSheetState extends State<EquipmentSearchSheet> {
             color: isDark ? AppColors.glassSurface : AppColorsLight.glassSurface,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: AppColors.orange.withValues(alpha: 0.5),
+              color: AppColors.onboardingAccent.withValues(alpha: 0.5),
               width: 1,
               style: BorderStyle.solid,
             ),
@@ -479,12 +447,12 @@ class _EquipmentSearchSheetState extends State<EquipmentSearchSheet> {
                 width: 32,
                 height: 32,
                 decoration: BoxDecoration(
-                  color: AppColors.orange.withValues(alpha: 0.15),
+                  color: AppColors.onboardingAccent.withValues(alpha: 0.15),
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(
                   Icons.add,
-                  color: AppColors.orange,
+                  color: AppColors.onboardingAccent,
                   size: 18,
                 ),
               ),
@@ -498,7 +466,7 @@ class _EquipmentSearchSheetState extends State<EquipmentSearchSheet> {
                       style: TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.w600,
-                        color: AppColors.orange,
+                        color: AppColors.onboardingAccent,
                       ),
                     ),
                     Text(
@@ -513,7 +481,7 @@ class _EquipmentSearchSheetState extends State<EquipmentSearchSheet> {
               ),
               Icon(
                 Icons.chevron_right,
-                color: AppColors.orange.withValues(alpha: 0.7),
+                color: AppColors.onboardingAccent.withValues(alpha: 0.7),
                 size: 24,
               ),
             ],
@@ -542,7 +510,7 @@ class _EquipmentSearchSheetState extends State<EquipmentSearchSheet> {
           decoration: BoxDecoration(
             gradient: isSelected
                 ? LinearGradient(
-                    colors: [AppColors.orange, AppColors.orange.withOpacity(0.8)],
+                    colors: [AppColors.onboardingAccent, AppColors.onboardingAccent.withOpacity(0.8)],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   )
@@ -552,7 +520,7 @@ class _EquipmentSearchSheetState extends State<EquipmentSearchSheet> {
                 : (isDark ? AppColors.glassSurface : AppColorsLight.glassSurface),
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: isSelected ? AppColors.orange : cardBorder,
+              color: isSelected ? AppColors.onboardingAccent : cardBorder,
               width: isSelected ? 2 : 1,
             ),
           ),
@@ -584,7 +552,7 @@ class _EquipmentSearchSheetState extends State<EquipmentSearchSheet> {
                         decoration: BoxDecoration(
                           color: isSelected
                               ? Colors.white.withValues(alpha: 0.2)
-                              : AppColors.orange.withValues(alpha: 0.15),
+                              : AppColors.onboardingAccent.withValues(alpha: 0.15),
                           borderRadius: BorderRadius.circular(4),
                         ),
                         child: Text(
@@ -592,7 +560,7 @@ class _EquipmentSearchSheetState extends State<EquipmentSearchSheet> {
                           style: TextStyle(
                             fontSize: 9,
                             fontWeight: FontWeight.bold,
-                            color: isSelected ? Colors.white : AppColors.orange,
+                            color: isSelected ? Colors.white : AppColors.onboardingAccent,
                           ),
                         ),
                       ),

@@ -305,8 +305,9 @@ class StreakMilestone {
 
 /// Helper class to get rewards for any level
 class LevelRewards {
-  /// Milestone levels that have special cosmetic/merch rewards
-  static const milestones = [5, 10, 15, 25, 35, 50, 75, 100];
+  /// Milestone levels that have special cosmetic/merch rewards.
+  /// Must stay in sync with backend `MAJOR_MILESTONE_LEVELS` / `MERCH_TYPE_FOR_LEVEL`.
+  static const milestones = [5, 10, 15, 20, 25, 30, 40, 50, 60, 75, 100, 125, 150, 175, 200, 225, 250];
 
   /// Levels that give fitness crates (non-milestone, every 5 levels offset by 3)
   /// Example: 3, 8, 13, 18, 23, 28, etc.
@@ -351,61 +352,121 @@ class LevelRewards {
     }
   }
 
-  /// Get milestone reward for specific levels
+  /// Get milestone reward for specific levels.
+  /// Mirrors backend `MILESTONE_REWARDS_DISPLAY` / `MERCH_TYPE_FOR_LEVEL`.
   static LevelReward? _getMilestoneReward(int level) {
     switch (level) {
       case 5:
         return LevelReward.cosmetic(
-          name: '"Rising Star" Badge',
-          description: 'Your first milestone! New profile border unlocked.',
+          name: 'Rising Star Milestone',
+          description: '3x Streak Shield + 2x Fitness Crate + Premium Crate + 2x XP Token. '
+              '"Rising Star" animated badge unlocked — equip in Cosmetics.',
           icon: '⭐',
           cosmeticId: 'badge_rising_star',
         );
       case 10:
         return LevelReward.cosmetic(
-          name: 'Bronze Profile Frame',
-          description: 'A shiny new frame for your profile.',
-          icon: '🖼️',
-          cosmeticId: 'frame_bronze',
+          name: 'Iron Will Milestone',
+          description: '5x 2x XP Token + 3x Fitness Crate + 2x Premium Crate + 2x Streak Shield. '
+              '"Iron Will" animated badge + Iron accent theme unlocked.',
+          icon: '🏅',
+          cosmeticId: 'badge_iron_will_animated',
         );
       case 15:
         return LevelReward.cosmetic(
-          name: 'Exclusive Theme Colors',
-          description: 'Unlock new app theme color options.',
-          icon: '🎨',
-          cosmeticId: 'theme_exclusive',
+          name: 'Premium Crate Bundle',
+          description: '3x Fitness + 2x Premium + 2x 2x XP Token.',
+          icon: '📦',
+        );
+      case 20:
+        return LevelReward.cosmetic(
+          name: 'Streak Shield Stash',
+          description: '4x Streak Shield + 2x Premium Crate + 2x 2x XP Token.',
+          icon: '🛡️',
         );
       case 25:
         return LevelReward.cosmetic(
-          name: '"Dedicated" Animated Badge',
-          description: 'An animated badge showing your dedication.',
-          icon: '💫',
-          cosmeticId: 'badge_dedicated_animated',
+          name: 'Dedicated Milestone',
+          description: '4x 2x XP Token + 3x Premium Crate + 3x Fitness Crate. '
+              'Bronze animated frame + "Dedicated" chat title unlocked.',
+          icon: '🖼️',
+          cosmeticId: 'frame_bronze_animated',
         );
-      case 35:
+      case 30:
         return LevelReward.cosmetic(
-          name: 'Animated Profile Effects',
-          description: 'Your profile now has animated effects!',
-          icon: '✨',
-          cosmeticId: 'profile_effects_animated',
+          name: 'Milestone Crate Haul',
+          description: '5x 2x XP Token + 3x Premium Crate + more.',
+          icon: '🎁',
+        );
+      case 40:
+        return LevelReward.cosmetic(
+          name: 'Shield Wall Bundle',
+          description: '5x Streak Shield + 4x Premium Crate + more.',
+          icon: '🛡️',
         );
       case 50:
         return LevelReward.merch(
-          name: '"Veteran" Badge + FREE T-Shirt!',
-          description: 'Claim your free FitWiz T-Shirt in the Rewards tab.',
-          icon: '👕',
+          name: 'FREE Sticker Pack + Veteran Milestone',
+          description: 'Your first real merch — FitWiz sticker pack shipped to you. '
+              'Plus 6x 2x XP Token + 5x Premium Crate + 5x Fitness Crate + 5x Streak Shield. '
+              'Silver frame + "Veteran" chat title + alt coach voice unlocked.',
+          icon: '✨',
+        );
+      case 60:
+        return LevelReward.cosmetic(
+          name: 'Fitness Crate Avalanche',
+          description: '7x Fitness Crate + 5x Premium Crate + 5x 2x XP Token + more.',
+          icon: '📦',
         );
       case 75:
-        return LevelReward.merch(
-          name: '"Elite" Holographic Badge + FREE Shaker Bottle!',
-          description: 'Claim your free shaker bottle in the Rewards tab.',
-          icon: '🥤',
+        return LevelReward.cosmetic(
+          name: 'Elite Milestone',
+          description: '7x Premium Crate + 5x 2x XP Token + 5x Fitness Crate. '
+              'Gold holographic frame + "Elite" chat title + Gold accent theme + Elite stats card unlocked.',
+          icon: '👑',
+          cosmeticId: 'frame_gold_holographic',
         );
       case 100:
         return LevelReward.merch(
-          name: '"Legend" Badge + Full Merch Kit!',
-          description: 'Claim your FREE Hoodie + Merch Kit in the Rewards tab.',
-          icon: '👑',
+          name: 'Elite Badge + FREE FitWiz T-Shirt',
+          description: 'Real FitWiz t-shirt shipped to you, plus Elite status + premium crate bundle.',
+          icon: '👕',
+        );
+      case 125:
+        return LevelReward.cosmetic(
+          name: 'Master Badge',
+          description: '12x Premium Crate + 8x 2x XP Token + 8x Fitness Crate.',
+          icon: '🎖️',
+        );
+      case 150:
+        return LevelReward.merch(
+          name: 'Champion Badge + FREE FitWiz Hoodie',
+          description: 'Real FitWiz hoodie shipped to you, plus Champion status.',
+          icon: '🧥',
+        );
+      case 175:
+        return LevelReward.cosmetic(
+          name: 'Legend Badge',
+          description: '17x Premium Crate + 12x 2x XP Token + 12x Fitness Crate.',
+          icon: '🎖️',
+        );
+      case 200:
+        return LevelReward.merch(
+          name: 'Mythic Badge + FREE Full Merch Kit',
+          description: 'Tee + hoodie + shaker, shipped. Plus Mythic status.',
+          icon: '🎁',
+        );
+      case 225:
+        return LevelReward.cosmetic(
+          name: 'Immortal Badge',
+          description: '25x Premium Crate + 20x 2x XP Token + 20x Fitness Crate.',
+          icon: '🎖️',
+        );
+      case 250:
+        return LevelReward.merch(
+          name: 'Transcendent Badge + FREE Signed Premium Kit',
+          description: 'The ultimate — signed by the team, hand-packed, shipped.',
+          icon: '🏆',
         );
       default:
         return null;

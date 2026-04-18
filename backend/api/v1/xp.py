@@ -38,6 +38,10 @@ class DailyLoginResponse(BaseModel):
     multiplier: float
     message: str
     already_claimed: bool = False
+    # Migration 1938
+    streak_saved_by_shield: bool = False
+    shields_remaining: int = 0
+    saved_streak_count: int = 0
 
 
 class LoginStreakInfo(BaseModel):

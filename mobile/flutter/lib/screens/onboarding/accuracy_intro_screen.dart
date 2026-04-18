@@ -86,33 +86,24 @@ class _AccuracyIntroScreenState extends ConsumerState<AccuracyIntroScreen>
                 ),
               ),
 
-              // Content — centered when it fits, scrollable on shorter screens
+              // Static content — fits within the viewport
               Expanded(
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 24),
-                  child: LayoutBuilder(
-                    builder: (context, constraints) {
-                      return SingleChildScrollView(
-                        child: ConstrainedBox(
-                          constraints: BoxConstraints(minHeight: constraints.maxHeight),
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              _buildHeader(textPrimary, textSecondary, isDark),
-                              const SizedBox(height: 24),
-                              _buildComparisonSection(isDark, textPrimary, textSecondary),
-                              const SizedBox(height: 20),
-                              _buildInsightText(textSecondary, isDark),
-                              const SizedBox(height: 12),
-                              DidYouKnowChip(
-                                text:
-                                    'FitWiz uses AI + 200,000+ verified foods from 100+ country cuisines, plus barcode databases',
-                              ),
-                            ],
-                          ),
-                        ),
-                      );
-                    },
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      _buildHeader(textPrimary, textSecondary, isDark),
+                      const SizedBox(height: 24),
+                      _buildComparisonSection(isDark, textPrimary, textSecondary),
+                      const SizedBox(height: 20),
+                      _buildInsightText(textSecondary, isDark),
+                      const SizedBox(height: 12),
+                      DidYouKnowChip(
+                        text:
+                            'FitWiz uses AI + 200,000+ verified foods from 100+ country cuisines, plus barcode databases',
+                      ),
+                    ],
                   ),
                 ),
               ),

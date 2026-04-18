@@ -19,6 +19,10 @@ List<RouteBase> _settingsRoutes() => [
         builder: (context, state) => const AiCoachPage(),
       ),
       GoRoute(
+        path: '/settings/vacation-mode',
+        builder: (context, state) => const VacationModePage(),
+      ),
+      GoRoute(
         path: '/settings/appearance',
         builder: (context, state) => const AppearancePage(),
       ),
@@ -70,14 +74,15 @@ List<RouteBase> _settingsRoutes() => [
         },
       ),
 
-      // Legacy routes redirect to unified screen
+      // Legacy routes redirect to unified screen.
+      // Tab mapping: 0=Favorites, 1=Staples, 2=Avoided, 3=Queue, 4=Custom
       GoRoute(
         path: '/settings/favorite-exercises',
         redirect: (context, state) => '/settings/my-exercises?tab=0',
       ),
       GoRoute(
         path: '/settings/exercise-queue',
-        redirect: (context, state) => '/settings/my-exercises?tab=2',
+        redirect: (context, state) => '/settings/my-exercises?tab=3',
       ),
 
       // Training Methods (Set Progression reference)
@@ -95,7 +100,7 @@ List<RouteBase> _settingsRoutes() => [
       // Legacy routes redirect to unified screen
       GoRoute(
         path: '/settings/staple-exercises',
-        redirect: (context, state) => '/settings/my-exercises?tab=0',
+        redirect: (context, state) => '/settings/my-exercises?tab=1',
       ),
 
       // My 1RMs (Settings sub-screen for percentage-based training)
@@ -113,11 +118,11 @@ List<RouteBase> _settingsRoutes() => [
       // Legacy routes redirect to unified My Exercises screen
       GoRoute(
         path: '/settings/avoided-exercises',
-        redirect: (context, state) => '/settings/my-exercises?tab=1',
+        redirect: (context, state) => '/settings/my-exercises?tab=2',
       ),
       GoRoute(
         path: '/settings/avoided-muscles',
-        redirect: (context, state) => '/settings/my-exercises?tab=1',
+        redirect: (context, state) => '/settings/my-exercises?tab=2',
       ),
 
       // Help & Support

@@ -11,6 +11,7 @@ import '../../data/models/coach_persona.dart';
 import '../../data/repositories/chat_repository.dart';
 import '../../data/services/api_client.dart';
 import '../../data/services/notification_service.dart';
+import '../../data/services/tts_service.dart';
 import '../../widgets/pill_app_bar.dart';
 
 part 'ai_settings_screen_part_a_i_header_card.dart';
@@ -33,6 +34,7 @@ class AISettings {
   final String? coachPersonaId; // 'coach_mike', 'dr_sarah', 'custom', etc.
   final String? coachName; // Display name for the coach
   final bool isCustomCoach; // Whether using custom coach configuration
+  final String coachVoiceId; // 'default' | 'coach_voice_chad' | 'coach_voice_serena'
 
   // Personality & Tone
   final String coachingStyle; // "motivational", "professional", "friendly", "tough-love"
@@ -63,6 +65,7 @@ class AISettings {
     this.coachPersonaId,
     this.coachName,
     this.isCustomCoach = false,
+    this.coachVoiceId = 'default',
     this.coachingStyle = 'motivational',
     this.communicationTone = 'encouraging',
     this.encouragementLevel = 0.7,
@@ -90,6 +93,7 @@ class AISettings {
     String? coachPersonaId,
     String? coachName,
     bool? isCustomCoach,
+    String? coachVoiceId,
     String? coachingStyle,
     String? communicationTone,
     double? encouragementLevel,
@@ -110,6 +114,7 @@ class AISettings {
       coachPersonaId: coachPersonaId ?? this.coachPersonaId,
       coachName: coachName ?? this.coachName,
       isCustomCoach: isCustomCoach ?? this.isCustomCoach,
+      coachVoiceId: coachVoiceId ?? this.coachVoiceId,
       coachingStyle: coachingStyle ?? this.coachingStyle,
       communicationTone: communicationTone ?? this.communicationTone,
       encouragementLevel: encouragementLevel ?? this.encouragementLevel,
@@ -134,6 +139,7 @@ class AISettings {
       'coach_persona_id': coachPersonaId,
       'coach_name': coachName,
       'is_custom_coach': isCustomCoach,
+      'coach_voice_id': coachVoiceId,
       'coaching_style': coachingStyle,
       'communication_tone': communicationTone,
       'encouragement_level': encouragementLevel,
@@ -189,6 +195,7 @@ class AISettings {
       coachPersonaId: json['coach_persona_id'] as String?,
       coachName: json['coach_name'] as String?,
       isCustomCoach: json['is_custom_coach'] as bool? ?? false,
+      coachVoiceId: json['coach_voice_id'] as String? ?? 'default',
       coachingStyle: json['coaching_style'] as String? ?? 'motivational',
       communicationTone: json['communication_tone'] as String? ?? 'encouraging',
       encouragementLevel: (json['encouragement_level'] as num?)?.toDouble() ?? 0.7,
@@ -273,7 +280,10 @@ class AISettingsNotifier extends StateNotifier<AISettings> {
         final data = response.data as Map<String, dynamic>;
         state = AISettings.fromJson(data);
         _isLoaded = true;
-        debugPrint('✅ [AISettings] Loaded settings: ${state.coachingStyle}, ${state.communicationTone}');
+        // Apply the saved voice to the TTS engine so the next workout
+        // announcement uses it. Safe to call even on 'default'.
+        unawaited(TTSService().applyVoice(state.coachVoiceId));
+        debugPrint('✅ [AISettings] Loaded settings: ${state.coachingStyle}, ${state.communicationTone}, voice=${state.coachVoiceId}');
       }
     } catch (e) {
       debugPrint('❌ [AISettings] Error loading settings: $e');
@@ -356,6 +366,11 @@ class AISettingsNotifier extends StateNotifier<AISettings> {
 
   void updateCoachingStyle(String style) {
     state = state.copyWith(coachingStyle: style);
+    _saveSettings();
+  }
+
+  void updateCoachVoice(String voiceId) {
+    state = state.copyWith(coachVoiceId: voiceId);
     _saveSettings();
   }
 

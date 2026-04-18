@@ -49,7 +49,7 @@ class PlanPreviewScreen extends ConsumerWidget {
         child: SafeArea(
           child: FoldableQuizScaffold(
             headerTitle: 'Your Personalized Plan',
-            headerSubtitle: 'AI-generated \u2022 Adjusts as you progress',
+            headerSubtitle: 'Smart algorithm \u2022 Adjusts as you progress',
             headerExtra: _buildSummaryCard(isDark, textPrimary, textSecondary),
             headerOverlay: Padding(
               padding: const EdgeInsets.all(16),
@@ -97,7 +97,7 @@ class PlanPreviewScreen extends ConsumerWidget {
                             Icon(
                               Icons.auto_awesome_rounded,
                               size: 14,
-                              color: AppColors.orange,
+                              color: AppColors.onboardingAccent,
                             ).animate()
                               .fadeIn(delay: 200.ms)
                               .then()
@@ -105,7 +105,7 @@ class PlanPreviewScreen extends ConsumerWidget {
                             const SizedBox(width: 6),
                             Expanded(
                               child: Text(
-                                'AI-generated \u2022 Adjusts as you progress',
+                                'Smart algorithm \u2022 Adjusts as you progress',
                                 style: TextStyle(
                                   fontSize: 13,
                                   color: textSecondary,
@@ -167,10 +167,10 @@ class PlanPreviewScreen extends ConsumerWidget {
                         onStartNow();
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.orange,
+                        backgroundColor: AppColors.onboardingAccent,
                         foregroundColor: Colors.white,
                         elevation: 4,
-                        shadowColor: AppColors.orange.withValues(alpha: 0.4),
+                        shadowColor: AppColors.onboardingAccent.withValues(alpha: 0.4),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(16),
                         ),
@@ -205,15 +205,15 @@ class PlanPreviewScreen extends ConsumerWidget {
                             onContinue();
                           },
                           style: OutlinedButton.styleFrom(
-                            foregroundColor: AppColors.orange,
+                            foregroundColor: AppColors.onboardingAccent,
                             side: BorderSide(
-                              color: AppColors.orange,
+                              color: AppColors.onboardingAccent,
                               width: 2,
                             ),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(16),
                             ),
-                            backgroundColor: AppColors.orange.withValues(alpha: 0.08),
+                            backgroundColor: AppColors.onboardingAccent.withValues(alpha: 0.08),
                           ),
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.center,
@@ -287,7 +287,7 @@ class PlanPreviewScreen extends ConsumerWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             decoration: BoxDecoration(
-              color: AppColors.orange.withValues(alpha: 0.1),
+              color: AppColors.onboardingAccent.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(10),
             ),
             child: Row(
@@ -295,7 +295,7 @@ class PlanPreviewScreen extends ConsumerWidget {
                 Icon(
                   Icons.calendar_today_rounded,
                   size: 16,
-                  color: AppColors.orange,
+                  color: AppColors.onboardingAccent,
                 ),
                 const SizedBox(width: 8),
                 Expanded(
@@ -304,7 +304,7 @@ class PlanPreviewScreen extends ConsumerWidget {
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
-                      color: AppColors.orange,
+                      color: AppColors.onboardingAccent,
                     ),
                   ),
                 ),
@@ -353,7 +353,7 @@ class PlanPreviewScreen extends ConsumerWidget {
         Icon(
           icon,
           size: 20,
-          color: AppColors.orange,
+          color: AppColors.onboardingAccent,
         ),
         const SizedBox(width: 12),
         Expanded(
@@ -416,7 +416,7 @@ class PlanPreviewScreen extends ConsumerWidget {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
-                    color: AppColors.orange.withValues(alpha: 0.15),
+                    color: AppColors.onboardingAccent.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Row(
@@ -424,7 +424,7 @@ class PlanPreviewScreen extends ConsumerWidget {
                       Icon(
                         Icons.auto_awesome_rounded,
                         size: 12,
-                        color: AppColors.orange,
+                        color: AppColors.onboardingAccent,
                       ),
                       const SizedBox(width: 4),
                       Text(
@@ -432,7 +432,7 @@ class PlanPreviewScreen extends ConsumerWidget {
                         style: TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.w700,
-                          color: AppColors.orange,
+                          color: AppColors.onboardingAccent,
                         ),
                       ),
                     ],
@@ -446,7 +446,7 @@ class PlanPreviewScreen extends ConsumerWidget {
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w600,
-              color: AppColors.orange,
+              color: AppColors.onboardingAccent,
             ),
           ),
           const SizedBox(height: 14),
@@ -458,14 +458,14 @@ class PlanPreviewScreen extends ConsumerWidget {
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: AppColors.orange.withValues(alpha: 0.1),
+              color: AppColors.onboardingAccent.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Row(
               children: [
                 const Icon(
                   Icons.info_outline,
-                  color: AppColors.orange,
+                  color: AppColors.onboardingAccent,
                   size: 18,
                 ),
                 const SizedBox(width: 10),
@@ -477,7 +477,7 @@ class PlanPreviewScreen extends ConsumerWidget {
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w500,
-                      color: AppColors.orange,
+                      color: AppColors.onboardingAccent,
                     ),
                   ),
                 ),
@@ -513,7 +513,7 @@ class PlanPreviewScreen extends ConsumerWidget {
               height: 32,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: AppColors.orange.withValues(alpha: 0.15),
+                color: AppColors.onboardingAccent.withValues(alpha: 0.15),
               ),
               child: Center(
                 child: Text(
@@ -521,7 +521,7 @@ class PlanPreviewScreen extends ConsumerWidget {
                   style: const TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.bold,
-                    color: AppColors.orange,
+                    color: AppColors.onboardingAccent,
                   ),
                 ),
               ),
@@ -707,12 +707,12 @@ class PlanPreviewScreen extends ConsumerWidget {
                   Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: AppColors.orange.withValues(alpha: 0.15),
+                      color: AppColors.onboardingAccent.withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: const Icon(
                       Icons.auto_awesome_rounded,
-                      color: AppColors.orange,
+                      color: AppColors.onboardingAccent,
                       size: 24,
                     ),
                   ),
@@ -783,7 +783,7 @@ class PlanPreviewScreen extends ConsumerWidget {
                   Navigator.of(context).pop();
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.orange,
+                  backgroundColor: AppColors.onboardingAccent,
                   foregroundColor: Colors.white,
                   elevation: 0,
                   shape: RoundedRectangleBorder(
@@ -823,7 +823,7 @@ class PlanPreviewScreen extends ConsumerWidget {
         Icon(
           icon,
           size: 20,
-          color: AppColors.orange,
+          color: AppColors.onboardingAccent,
         ),
         const SizedBox(width: 12),
         Expanded(

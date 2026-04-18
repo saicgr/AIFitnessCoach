@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -58,11 +60,12 @@ const _kSplitInfoMap = <String, _SplitInfo>{
   ),
   'full_body': _SplitInfo(
     title: 'Full Body',
-    tagline: 'All muscles every session, 2–4 days/week',
+    tagline: 'All muscles every session, 1–4 days/week',
     description:
         'Every session trains all major muscle groups (chest, back, legs, shoulders, arms). '
         'Each workout uses compound movements — squats, deadlifts, bench press, rows — '
-        'so you hit every muscle frequently with less time in the gym.',
+        'so you hit every muscle frequently with less time in the gym. '
+        'The only split that still works if you can only train once per week.',
     schedule: [
       'Mon — Full Body (Squat · Press · Row · Core)',
       'Tue — Rest',
@@ -72,7 +75,7 @@ const _kSplitInfoMap = <String, _SplitInfo>{
       'Sat — Rest',
       'Sun — Rest',
     ],
-    bestFor: 'Beginners, people with 2–3 days available, or those returning after a break.',
+    bestFor: 'Beginners, anyone training 1–3 days/week, or returning after a break.',
     pros: [
       'Maximum muscle frequency per week',
       'Time-efficient — works on 2 days/week',
@@ -297,7 +300,7 @@ class _TrainingSplitScreenState extends ConsumerState<TrainingSplitScreen> {
     if (_selectedSplit == null || _selectedSplit == 'ai_decide') return true;
     switch (_selectedSplit) {
       case 'full_body':
-        return _daysPerWeek >= 2 && _daysPerWeek <= 4;
+        return _daysPerWeek >= 1 && _daysPerWeek <= 4;
       case 'upper_lower':
       case 'phul':
         return _daysPerWeek >= 4 && _daysPerWeek <= 5;
@@ -345,43 +348,31 @@ class _TrainingSplitScreenState extends ConsumerState<TrainingSplitScreen> {
 
     HapticFeedback.mediumImpact();
     setState(() => _isLoading = true);
+    final split = _selectedSplit ?? 'ai_decide';
 
-    try {
-      final split = _selectedSplit ?? 'ai_decide';
+    // Local save is fast (SharedPreferences) — await so the next screen sees it.
+    await ref.read(preAuthQuizProvider.notifier).setTrainingSplit(split);
 
-      // Save to pre-auth quiz provider (SharedPreferences)
-      await ref.read(preAuthQuizProvider.notifier).setTrainingSplit(split);
+    // Backend sync (PUT /users + refreshUser) is slow and the next screen
+    // doesn't depend on it — fire-and-forget so navigation is instant.
+    unawaited(
+      ref
+          .read(trainingPreferencesProvider.notifier)
+          .setTrainingSplit(split)
+          .catchError((Object e) {
+        debugPrint('   [TrainingSplit] Background sync error: $e');
+      }),
+    );
 
-      // Also sync to backend via training preferences provider
-      await ref.read(trainingPreferencesProvider.notifier).setTrainingSplit(split);
+    debugPrint('   [TrainingSplit] Saved split: $split');
 
-      debugPrint('   [TrainingSplit] Saved split: $split');
+    ref.read(posthogServiceProvider).capture(
+      eventName: 'onboarding_split_selected',
+      properties: {'split_name': split},
+    );
 
-      // Track split selection
-      ref.read(posthogServiceProvider).capture(
-        eventName: 'onboarding_split_selected',
-        properties: {
-          'split_name': split,
-        },
-      );
-
-      if (mounted) {
-        context.go('/ai-consent');
-      }
-    } catch (e) {
-      debugPrint('   [TrainingSplit] Error saving split: $e');
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to save: $e'),
-            backgroundColor: AppColors.error,
-          ),
-        );
-      }
-    } finally {
-      if (mounted) {
-        setState(() => _isLoading = false);
-      }
+    if (mounted) {
+      context.go('/ai-consent');
     }
   }
 
@@ -400,7 +391,16 @@ class _TrainingSplitScreenState extends ConsumerState<TrainingSplitScreen> {
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
 
-    return Scaffold(
+    // Cap OS-level text scaling on this dense onboarding screen so devices
+    // with "Large text" accessibility (e.g. S25 Ultra default) don't overflow
+    // the split cards. Users with scale < 1.0 still see smaller text.
+    final mq = MediaQuery.of(context);
+    final clampedScaler =
+        mq.textScaler.clamp(minScaleFactor: 0.85, maxScaleFactor: 1.0);
+
+    return MediaQuery(
+      data: mq.copyWith(textScaler: clampedScaler),
+      child: Scaffold(
       backgroundColor: isDark ? AppColors.pureBlack : AppColorsLight.pureWhite,
       body: Container(
         decoration: BoxDecoration(
@@ -488,9 +488,9 @@ class _TrainingSplitScreenState extends ConsumerState<TrainingSplitScreen> {
                         ),
                         const SizedBox(width: 10),
                         Text(
-                          'You selected $_daysPerWeek days/week',
+                          'You selected $_daysPerWeek ${_daysPerWeek == 1 ? 'day' : 'days'}/week',
                           style: TextStyle(
-                            fontSize: 14,
+                            fontSize: 13,
                             fontWeight: FontWeight.w500,
                             color: isDark ? AppColors.cyan : AppColorsLight.cyan,
                           ),
@@ -521,7 +521,7 @@ class _TrainingSplitScreenState extends ConsumerState<TrainingSplitScreen> {
                   _buildSplitOption(
                     id: 'full_body',
                     title: 'Full Body',
-                    description: 'Train all muscles each workout (2-4 days)',
+                    description: 'Train all muscles each workout (1-4 days)',
                     isDark: isDark,
                     delay: 350.ms,
                   ),
@@ -595,14 +595,14 @@ class _TrainingSplitScreenState extends ConsumerState<TrainingSplitScreen> {
                               const Icon(
                                 Icons.warning_amber_rounded,
                                 color: Colors.orange,
-                                size: 22,
+                                size: 18,
                               ),
-                              const SizedBox(width: 12),
+                              const SizedBox(width: 10),
                               Expanded(
                                 child: Text(
                                   'Schedule conflict',
                                   style: TextStyle(
-                                    fontSize: 14,
+                                    fontSize: 13,
                                     fontWeight: FontWeight.w700,
                                     color: Colors.orange,
                                   ),
@@ -610,11 +610,11 @@ class _TrainingSplitScreenState extends ConsumerState<TrainingSplitScreen> {
                               ),
                             ],
                           ),
-                          const SizedBox(height: 8),
+                          const SizedBox(height: 6),
                           Text(
-                            '${_getSplitName(_selectedSplit!)} requires ${_getRecommendedDaysForSplit(_selectedSplit)} days/week, but you selected $_daysPerWeek days/week.',
+                            '${_getSplitName(_selectedSplit!)} requires ${_getRecommendedDaysForSplit(_selectedSplit)} days/week, but you selected $_daysPerWeek ${_daysPerWeek == 1 ? 'day' : 'days'}/week.',
                             style: TextStyle(
-                              fontSize: 13,
+                              fontSize: 12,
                               color: textSecondary,
                               height: 1.4,
                             ),
@@ -643,12 +643,12 @@ class _TrainingSplitScreenState extends ConsumerState<TrainingSplitScreen> {
                               child: Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  const Icon(Icons.auto_fix_high_rounded, size: 18),
+                                  const Icon(Icons.auto_fix_high_rounded, size: 16),
                                   const SizedBox(width: 8),
                                   Text(
                                     'Update to ${_getRecommendedDaysForSplit(_selectedSplit)} days/week',
                                     style: const TextStyle(
-                                      fontSize: 14,
+                                      fontSize: 13,
                                       fontWeight: FontWeight.w600,
                                     ),
                                   ),
@@ -688,6 +688,7 @@ class _TrainingSplitScreenState extends ConsumerState<TrainingSplitScreen> {
           ),
         ),
       ),
+    ),
     );
   }
 
@@ -711,12 +712,12 @@ class _TrainingSplitScreenState extends ConsumerState<TrainingSplitScreen> {
       },
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
           color: isSelected
               ? AppColors.orange.withValues(alpha: 0.15)
               : (isDark ? AppColors.glassSurface : AppColorsLight.glassSurface),
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(14),
           border: Border.all(
             color: isSelected
                 ? AppColors.orange
@@ -728,8 +729,8 @@ class _TrainingSplitScreenState extends ConsumerState<TrainingSplitScreen> {
           children: [
             // Radio indicator
             Container(
-              width: 24,
-              height: 24,
+              width: 20,
+              height: 20,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 border: Border.all(
@@ -739,10 +740,10 @@ class _TrainingSplitScreenState extends ConsumerState<TrainingSplitScreen> {
                 color: isSelected ? AppColors.orange : Colors.transparent,
               ),
               child: isSelected
-                  ? const Icon(Icons.check, size: 16, color: Colors.white)
+                  ? const Icon(Icons.check, size: 14, color: Colors.white)
                   : null,
             ),
-            const SizedBox(width: 16),
+            const SizedBox(width: 12),
             // Text content
             Expanded(
               child: Column(
@@ -754,16 +755,17 @@ class _TrainingSplitScreenState extends ConsumerState<TrainingSplitScreen> {
                         child: Text(
                           title,
                           style: TextStyle(
-                            fontSize: 16,
+                            fontSize: 14,
                             fontWeight: FontWeight.w600,
                             color: isSelected ? AppColors.orange : textPrimary,
+                            height: 1.2,
                           ),
                         ),
                       ),
                       if (recommended) ...[
-                        const SizedBox(width: 8),
+                        const SizedBox(width: 6),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
                           decoration: BoxDecoration(
                             color: AppColors.orange.withValues(alpha: 0.2),
                             borderRadius: BorderRadius.circular(4),
@@ -771,7 +773,7 @@ class _TrainingSplitScreenState extends ConsumerState<TrainingSplitScreen> {
                           child: const Text(
                             'BEST',
                             style: TextStyle(
-                              fontSize: 10,
+                              fontSize: 9,
                               fontWeight: FontWeight.bold,
                               color: AppColors.orange,
                             ),
@@ -780,12 +782,13 @@ class _TrainingSplitScreenState extends ConsumerState<TrainingSplitScreen> {
                       ],
                     ],
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 2),
                   Text(
                     description,
                     style: TextStyle(
-                      fontSize: 14,
+                      fontSize: 12,
                       color: textSecondary,
+                      height: 1.3,
                     ),
                   ),
                 ],
@@ -793,7 +796,7 @@ class _TrainingSplitScreenState extends ConsumerState<TrainingSplitScreen> {
             ),
             // Info button — only for named splits
             if (hasInfo) ...[
-              const SizedBox(width: 8),
+              const SizedBox(width: 6),
               GestureDetector(
                 onTap: () {
                   HapticFeedback.lightImpact();
@@ -804,7 +807,7 @@ class _TrainingSplitScreenState extends ConsumerState<TrainingSplitScreen> {
                   padding: const EdgeInsets.all(4),
                   child: Icon(
                     Icons.info_outline_rounded,
-                    size: 22,
+                    size: 18,
                     color: isSelected
                         ? AppColors.orange
                         : (isDark ? const Color(0xFF71717A) : const Color(0xFF9CA3AF)),

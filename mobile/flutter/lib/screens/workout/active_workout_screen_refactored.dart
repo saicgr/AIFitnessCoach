@@ -256,9 +256,13 @@ class _ActiveWorkoutScreenState
   /// Override bar type per exercise (null = auto-detect from equipment field).
   final Map<int, String> _exerciseBarType = {};
 
-  // RPE/RIR and weight suggestion state
+  // RPE/RIR and weight suggestion state. Both start null — the old
+  // silent default of RIR=3 was writing "moderate" onto every set the
+  // user logged without ever being prompted, making the Advanced
+  // Summary look like bogus hardcoded data. Now each set opens the
+  // IntensityPromptSheet and the user must pick an effort.
   int? _lastSetRpe;
-  int? _lastSetRir = 3; // Default RIR 3 (moderate) for quick-select bar
+  int? _lastSetRir;
   WeightSuggestion? _currentWeightSuggestion;
   bool _isLoadingWeightSuggestion = false; // Loading state for AI suggestion
   SetLog? _pendingSetLog; // Set waiting for RPE/RIR input

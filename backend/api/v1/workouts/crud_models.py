@@ -109,6 +109,10 @@ class WorkoutCompletionResponse(BaseModel):
     fitness_score_updated: bool = False
     completion_method: str = "tracked"
     message: str = "Workout completed successfully"
+    # Workstream 1 (Day 0-7 retention): triggers the First Workout Forecast
+    # sheet on the frontend when true. Set to True when the user's
+    # users.first_workout_completed_at was NULL before this completion.
+    is_first_workout: bool = False
 
 
 class SetLogInfo(BaseModel):
@@ -128,7 +132,13 @@ class WorkoutSummaryResponse(BaseModel):
     workout: dict
     performance_comparison: Optional[PerformanceComparisonInfo] = None
     personal_records: List[PersonalRecordInfo] = []
+    # Long-form encouragement (2-3 sentences) shown in the Summary tab.
     coach_summary: Optional[str] = None
+    # Punchy one-liner (≤20 words) anchored to real session deltas.
+    # Rendered as the hero card on the Advanced tab — separate from
+    # coach_summary so we can keep that long-form copy unchanged while
+    # this field carries the short, sharp headline voice.
+    hero_narrative: Optional[str] = None
     completion_method: Optional[str] = None
     completed_at: Optional[str] = None
     set_logs: List[SetLogInfo] = []

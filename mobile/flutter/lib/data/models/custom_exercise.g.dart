@@ -83,7 +83,16 @@ CreateCustomExerciseRequest _$CreateCustomExerciseRequestFromJson(
   instructions: json['instructions'] as String?,
   defaultSets: (json['default_sets'] as num?)?.toInt() ?? 3,
   defaultReps: (json['default_reps'] as num?)?.toInt() ?? 10,
+  defaultRestSeconds: (json['default_rest_seconds'] as num?)?.toInt(),
   isCompound: json['is_compound'] as bool? ?? false,
+  defaultRpe: (json['default_rpe'] as num?)?.toInt(),
+  defaultTempo: json['default_tempo'] as String?,
+  defaultBandColor: json['default_band_color'] as String?,
+  defaultNotes: json['default_notes'] as String?,
+  defaultRangeOfMotion: json['default_range_of_motion'] as String?,
+  defaultInclinePercent: (json['default_incline_percent'] as num?)?.toDouble(),
+  defaultDurationSeconds: (json['default_duration_seconds'] as num?)?.toInt(),
+  defaultDistanceMiles: (json['default_distance_miles'] as num?)?.toDouble(),
 );
 
 Map<String, dynamic> _$CreateCustomExerciseRequestToJson(
@@ -95,7 +104,16 @@ Map<String, dynamic> _$CreateCustomExerciseRequestToJson(
   'instructions': instance.instructions,
   'default_sets': instance.defaultSets,
   'default_reps': instance.defaultReps,
+  'default_rest_seconds': instance.defaultRestSeconds,
   'is_compound': instance.isCompound,
+  'default_rpe': instance.defaultRpe,
+  'default_tempo': instance.defaultTempo,
+  'default_band_color': instance.defaultBandColor,
+  'default_notes': instance.defaultNotes,
+  'default_range_of_motion': instance.defaultRangeOfMotion,
+  'default_incline_percent': instance.defaultInclinePercent,
+  'default_duration_seconds': instance.defaultDurationSeconds,
+  'default_distance_miles': instance.defaultDistanceMiles,
 };
 
 CreateCompositeExerciseRequest _$CreateCompositeExerciseRequestFromJson(

@@ -107,6 +107,7 @@ INTENT_TO_AGENT = {
     CoachIntent.MODIFY_INTENSITY: AgentType.WORKOUT,
     CoachIntent.RESCHEDULE: AgentType.WORKOUT,
     CoachIntent.DELETE_WORKOUT: AgentType.WORKOUT,
+    CoachIntent.RECOMMEND_WORKOUT_CHANGE: AgentType.WORKOUT,
     CoachIntent.START_WORKOUT: AgentType.WORKOUT,
     CoachIntent.COMPLETE_WORKOUT: AgentType.WORKOUT,
     CoachIntent.GENERATE_QUICK_WORKOUT: AgentType.WORKOUT,

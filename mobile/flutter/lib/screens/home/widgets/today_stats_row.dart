@@ -203,7 +203,7 @@ class _NutritionPill extends ConsumerWidget {
     return _StatPillContainer(
       onTap: () {
         HapticService.light();
-        context.push('/nutrition');
+        context.go('/nutrition');
       },
       child: Column(
         mainAxisSize: MainAxisSize.min,

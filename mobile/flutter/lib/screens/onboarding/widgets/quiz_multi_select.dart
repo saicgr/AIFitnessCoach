@@ -103,7 +103,7 @@ class _GlassOptionCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final t = OnboardingTheme.of(context);
-    final color = option['color'] as Color? ?? AppColors.orange;
+    final color = option['color'] as Color? ?? AppColors.onboardingAccent;
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),

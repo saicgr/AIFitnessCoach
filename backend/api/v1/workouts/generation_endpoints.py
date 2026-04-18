@@ -377,15 +377,27 @@ async def generate_workout(request: Request, *, body: GenerateWorkoutRequest, ba
             # Determine focus area for RAG selection
             focus_area = body.focus_areas[0] if body.focus_areas else "full_body"
 
-            # Calculate exercise count based on duration and fitness level
-            target_duration = body.duration_minutes or 45
+            # Calculate exercise count based on duration and fitness level.
+            # Resolve target from request body → gym profile → user preferences
+            # so the user's saved workout_duration is honored when the client
+            # doesn't forward it.
+            resolved_duration = resolve_target_duration(
+                body_duration=body.duration_minutes,
+                body_duration_min=body.duration_minutes_min,
+                body_duration_max=body.duration_minutes_max,
+                gym_profile=gym_profile,
+                user=user,
+            )
+            target_duration = resolved_duration["target"]
+            target_duration_min = resolved_duration["min"]
+            target_duration_max = resolved_duration["max"]
 
             # Handle duration ranges (e.g., user selected "45-60 min" during onboarding)
             # Use the MAX duration for exercise cap to give appropriate variety for longer sessions
-            if body.duration_minutes_max:
-                effective_duration = body.duration_minutes_max
-            elif body.duration_minutes_min:
-                effective_duration = body.duration_minutes_min
+            if target_duration_max:
+                effective_duration = target_duration_max
+            elif target_duration_min:
+                effective_duration = target_duration_min
             else:
                 effective_duration = target_duration
 
@@ -495,7 +507,7 @@ async def generate_workout(request: Request, *, body: GenerateWorkoutRequest, ba
                     exercises=rag_exercises,
                     fitness_level=fitness_level or "intermediate",
                     goals=goals if isinstance(goals, list) else [],
-                    duration_minutes=body.duration_minutes or 45,
+                    duration_minutes=target_duration,
                     focus_areas=body.focus_areas if body.focus_areas else [focus_area],
                     intensity_preference=intensity_preference,
                     workout_type_preference=body.workout_type,
@@ -509,7 +521,7 @@ async def generate_workout(request: Request, *, body: GenerateWorkoutRequest, ba
                     fitness_level=fitness_level or "intermediate",
                     goals=goals if isinstance(goals, list) else [],
                     equipment=equipment if isinstance(equipment, list) else [],
-                    duration_minutes=body.duration_minutes or 45,
+                    duration_minutes=target_duration,
                     focus_areas=body.focus_areas,
                     avoid_name_words=avoid_name_words,
                     intensity_preference=intensity_preference,
@@ -645,7 +657,15 @@ async def generate_workout(request: Request, *, body: GenerateWorkoutRequest, ba
             # Filter similar exercises to ensure movement pattern diversity
             # This prevents workouts like "6 push-up variations" by limiting MAX 2 per pattern
             from services.exercise_rag.filters import is_similar_exercise, get_movement_pattern, filter_by_equipment
-            from services.exercise_rag.utils import infer_equipment_from_name
+            from services.exercise_rag.utils import infer_equipment_from_name, strip_dedup_suffix
+
+            # Pre-pass: strip "(N)" import-duplicate suffixes so base names match
+            # in the similarity check below (e.g. Burpee(1) → Burpee).
+            for _ex in exercises:
+                _raw = _ex.get("name") or _ex.get("exercise_name") or ""
+                _clean = strip_dedup_suffix(_raw)
+                if _clean and _clean != _raw:
+                    _ex["name"] = _clean
 
             # Phase 2: Deduplicate by movement pattern - MAX 2 exercises per pattern
             MAX_PER_PATTERN = 2
@@ -968,7 +988,7 @@ async def generate_workout(request: Request, *, body: GenerateWorkoutRequest, ba
         # Compute estimated calories using MET-based formula
         _user_weight_kg = float(user.get("weight_kg") or user.get("weight") or 70) if user else 70.0
         _user_weight_kg = max(30.0, min(_user_weight_kg, 250.0))
-        _effective_duration = workout_data.get("estimated_duration_minutes") or body.duration_minutes or 45
+        _effective_duration = workout_data.get("estimated_duration_minutes") or target_duration
         _met = _estimate_workout_met(exercises, workout_type, difficulty)
         _estimated_calories = round(_met * _user_weight_kg * (_effective_duration / 60.0))
         logger.info(f"[Calories] MET={_met:.1f}, weight={_user_weight_kg}kg, duration={_effective_duration}min -> {_estimated_calories} cal")
@@ -985,7 +1005,9 @@ async def generate_workout(request: Request, *, body: GenerateWorkoutRequest, ba
                 resolve_timezone(request, db, body.user_id),
             ),
             "exercises_json": exercises,
-            "duration_minutes": body.duration_minutes or 45,
+            "duration_minutes": target_duration,
+            "duration_minutes_min": target_duration_min,
+            "duration_minutes_max": target_duration_max,
             "estimated_calories": _estimated_calories,
             "generation_method": "ai",
             "generation_source": "gemini_generation",

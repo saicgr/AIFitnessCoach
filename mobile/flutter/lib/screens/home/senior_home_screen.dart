@@ -60,7 +60,7 @@ class _SeniorHomeScreenState extends ConsumerState<SeniorHomeScreen> {
         break;
       case 2:
         // Go to nutrition/food
-        context.push('/nutrition');
+        context.go('/nutrition');
         break;
       case 3:
         // Go to settings
@@ -217,7 +217,7 @@ class _SeniorHomeScreenState extends ConsumerState<SeniorHomeScreen> {
                       label: 'Food',
                       icon: Icons.restaurant,
                       iconColor: const Color(0xFF4CAF50),
-                      onPressed: () => context.push('/nutrition'),
+                      onPressed: () => context.go('/nutrition'),
                     ),
                   ),
                 ],

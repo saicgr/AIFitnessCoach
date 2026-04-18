@@ -475,6 +475,40 @@ async def update_user(user_id: str, user: UserUpdate,
             update_data["primary_goal"] = user.primary_goal
             logger.info(f"Updating primary_goal for user {user_id}: {user.primary_goal}")
 
+        # Vacation mode (migration 1941) — validate date window on write.
+        # NULL start/end are legal (immediate / open-ended vacations).
+        if user.in_vacation_mode is not None:
+            update_data["in_vacation_mode"] = user.in_vacation_mode
+            logger.info(f"Setting in_vacation_mode={user.in_vacation_mode} for user {user_id}")
+
+        if user.vacation_start_date is not None:
+            # Empty string → NULL (clear the date)
+            update_data["vacation_start_date"] = user.vacation_start_date or None
+
+        if user.vacation_end_date is not None:
+            update_data["vacation_end_date"] = user.vacation_end_date or None
+
+        # Cross-field validation: start <= end if both provided.
+        start_d = update_data.get("vacation_start_date") if "vacation_start_date" in update_data \
+            else existing.get("vacation_start_date")
+        end_d = update_data.get("vacation_end_date") if "vacation_end_date" in update_data \
+            else existing.get("vacation_end_date")
+        if start_d and end_d:
+            try:
+                from datetime import date as _date
+                sd = _date.fromisoformat(str(start_d)[:10])
+                ed = _date.fromisoformat(str(end_d)[:10])
+                if sd > ed:
+                    raise HTTPException(
+                        status_code=400,
+                        detail="vacation_start_date must be on or before vacation_end_date",
+                    )
+            except (ValueError, TypeError):
+                raise HTTPException(
+                    status_code=400,
+                    detail="vacation dates must be ISO format YYYY-MM-DD",
+                )
+
         # Handle muscle focus points (validate max 5 points)
         if user.muscle_focus_points is not None:
             total_points = sum(user.muscle_focus_points.values()) if user.muscle_focus_points else 0
@@ -877,4 +911,162 @@ async def full_reset(user_id: str,
         raise
     except Exception as e:
         logger.error(f"Failed to reset user: {e}", exc_info=True)
+        raise safe_internal_error(e, "users")
+
+
+# ============================================================
+# WEEK-1 COHORT (migration 1939 / W2)
+# ============================================================
+
+from pydantic import BaseModel as _BaseModelCohort
+
+
+class CohortResponse(_BaseModelCohort):
+    is_week_1: bool
+    day_number: int  # days since first_workout_completed_at (or created_at if null)
+    first_workout_at: Optional[str] = None
+    created_at: Optional[str] = None
+
+
+@router.get("/me/cohort", response_model=CohortResponse)
+async def get_my_cohort(current_user: dict = Depends(get_current_user)):
+    """
+    Return the user's week-1 cohort state.
+    Used by Flutter to conditionally surface week-1 UI (home rank card,
+    share prompts, forecast sheet triggers) for users in their first 7 days.
+    """
+    try:
+        db = get_supabase_db()
+        user_id = current_user["id"]
+
+        result = db.client.table("users") \
+            .select("created_at,first_workout_completed_at") \
+            .eq("id", user_id).limit(1).execute()
+
+        if not result.data:
+            return CohortResponse(is_week_1=False, day_number=0)
+
+        row = result.data[0]
+        created_at = row.get("created_at")
+        first_workout_at = row.get("first_workout_completed_at")
+
+        # Call the SQL RPC for authoritative week-1 answer
+        rpc = db.client.rpc("is_week_1_user", {"p_user_id": user_id}).execute()
+        is_week_1 = bool(rpc.data) if rpc.data is not None else False
+
+        # Compute day_number from the most relevant anchor
+        day_number = 0
+        try:
+            anchor_str = first_workout_at or created_at
+            if anchor_str:
+                anchor = datetime.fromisoformat(anchor_str.replace("Z", "+00:00"))
+                day_number = max((datetime.now(anchor.tzinfo) - anchor).days, 0)
+        except Exception:
+            day_number = 0
+
+        return CohortResponse(
+            is_week_1=is_week_1,
+            day_number=day_number,
+            first_workout_at=first_workout_at,
+            created_at=created_at,
+        )
+    except Exception as e:
+        raise safe_internal_error(e, "users")
+
+
+# ─── Privacy settings (leaderboard visibility) ─────────────────────────────
+# Backs the three toggles on the Profile → Privacy section.
+# Columns added in migration 1941. Leaderboard RPCs in migration 1942 respect them.
+
+class PrivacySettings(_BaseModelCohort):
+    show_on_leaderboard: bool
+    leaderboard_anonymous: bool
+    profile_stats_visible: bool
+
+
+@router.get("/me/privacy", response_model=PrivacySettings)
+async def get_my_privacy(current_user: dict = Depends(get_current_user)):
+    """Return the current user's leaderboard privacy flags."""
+    try:
+        db = get_supabase_db()
+        res = db.client.table("users") \
+            .select("show_on_leaderboard,leaderboard_anonymous,profile_stats_visible") \
+            .eq("id", current_user["id"]).limit(1).execute()
+        if not res.data:
+            # Defaults match migration 1941
+            return PrivacySettings(
+                show_on_leaderboard=True,
+                leaderboard_anonymous=False,
+                profile_stats_visible=True,
+            )
+        row = res.data[0]
+        return PrivacySettings(
+            show_on_leaderboard=bool(row.get("show_on_leaderboard", True)),
+            leaderboard_anonymous=bool(row.get("leaderboard_anonymous", False)),
+            profile_stats_visible=bool(row.get("profile_stats_visible", True)),
+        )
+    except Exception as e:
+        raise safe_internal_error(e, "users")
+
+
+@router.put("/me/privacy", response_model=PrivacySettings)
+async def update_my_privacy(
+    body: PrivacySettings,
+    current_user: dict = Depends(get_current_user),
+):
+    """Update the current user's leaderboard privacy flags."""
+    try:
+        db = get_supabase_db()
+        db.client.table("users").update({
+            "show_on_leaderboard":   body.show_on_leaderboard,
+            "leaderboard_anonymous": body.leaderboard_anonymous,
+            "profile_stats_visible": body.profile_stats_visible,
+        }).eq("id", current_user["id"]).execute()
+        return body
+    except Exception as e:
+        raise safe_internal_error(e, "users")
+
+
+@router.post("/me/fitness-snapshot")
+async def take_my_fitness_snapshot(
+    current_user: dict = Depends(get_current_user),
+):
+    """
+    Capture the current user's fitness shape for today (idempotent upsert).
+    Called by Flutter on app-open with a client-side 1x/day debounce via
+    SharedPreferences. Replaces the external daily cron — no scheduler needed
+    because inactive users don't need snapshots (they're not on leaderboards).
+    """
+    try:
+        db = get_supabase_db()
+        user_id = current_user["id"]
+
+        # Compute all six scores for today via the helpers from migration 1943.
+        # One round-trip: call get_user_fitness_profile(self, self) and upsert.
+        profile_res = db.client.rpc(
+            "get_user_fitness_profile",
+            {"p_target_user_id": user_id, "p_viewer_user_id": user_id},
+        ).execute()
+        row = profile_res.data[0] if isinstance(profile_res.data, list) and profile_res.data else (profile_res.data or {})
+
+        def _f(key: str) -> float:
+            v = row.get(key)
+            return 0.0 if v is None else float(v)
+
+        from datetime import date as _date
+        today = _date.today().isoformat()
+
+        db.client.table("fitness_profile_snapshots").upsert({
+            "user_id": user_id,
+            "snapshot_date": today,
+            "strength":    _f("target_strength"),
+            "muscle":      _f("target_muscle"),
+            "recovery":    _f("target_recovery"),
+            "consistency": _f("target_consistency"),
+            "endurance":   _f("target_endurance"),
+            "nutrition":   _f("target_nutrition"),
+        }, on_conflict="user_id,snapshot_date").execute()
+
+        return {"ok": True, "date": today}
+    except Exception as e:
         raise safe_internal_error(e, "users")

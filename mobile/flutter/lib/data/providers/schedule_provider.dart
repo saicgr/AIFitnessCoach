@@ -1,7 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../core/providers/user_provider.dart';
 import '../models/schedule_item.dart';
 import '../repositories/schedule_repository.dart';
 
@@ -41,7 +41,7 @@ final upNextScheduleProvider =
   // Watch refresh trigger so providers auto-refresh when it changes
   ref.watch(scheduleRefreshProvider);
 
-  final userId = Supabase.instance.client.auth.currentUser?.id;
+  final userId = ref.watch(currentUserIdProvider);
   if (userId == null) {
     debugPrint('⚠️ [ScheduleProvider] No user ID for up-next');
     return UpNextResponse(items: [], asOf: DateTime.now());
@@ -66,7 +66,7 @@ final dailyScheduleProvider = FutureProvider.autoDispose
   // Watch refresh trigger so providers auto-refresh when it changes
   ref.watch(scheduleRefreshProvider);
 
-  final userId = Supabase.instance.client.auth.currentUser?.id;
+  final userId = ref.watch(currentUserIdProvider);
   if (userId == null) {
     debugPrint('⚠️ [ScheduleProvider] No user ID for daily schedule');
     return DailyScheduleResponse(

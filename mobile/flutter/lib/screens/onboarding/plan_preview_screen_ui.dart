@@ -26,12 +26,12 @@ extension _PlanPreviewScreenExt on PlanPreviewScreen {
                   Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: AppColors.orange.withValues(alpha: 0.15),
+                      color: AppColors.onboardingAccent.withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: const Icon(
                       Icons.tune_rounded,
-                      color: AppColors.orange,
+                      color: AppColors.onboardingAccent,
                       size: 24,
                     ),
                   ),
@@ -133,7 +133,7 @@ extension _PlanPreviewScreenExt on PlanPreviewScreen {
                         onContinue(); // Trigger personalization flow
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.orange,
+                        backgroundColor: AppColors.onboardingAccent,
                         foregroundColor: Colors.white,
                         elevation: 0,
                         shape: RoundedRectangleBorder(

@@ -225,7 +225,7 @@ class _ExercisePreferencesCardState
                   title: 'Custom Exercises',
                   subtitle: 'Your personal exercise library',
                   trailing: '$customCount exercises',
-                  onTap: () => context.push('/settings/my-exercises?tab=3'),
+                  onTap: () => context.push('/settings/my-exercises?tab=4'),
                   isDark: isDark,
                   textPrimary: textPrimary,
                   textMuted: textMuted,

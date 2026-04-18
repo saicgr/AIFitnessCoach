@@ -20,6 +20,7 @@ import '../../../core/theme/theme_provider.dart';
 import '../../../core/theme/accent_color_provider.dart';
 import '../../../core/providers/week_start_provider.dart';
 import '../../../core/providers/weight_increments_provider.dart';
+import '../../../data/providers/cosmetics_provider.dart';
 import '../../../data/providers/xp_provider.dart';
 import '../../../widgets/weight_increments_sheet.dart';
 import '../../../data/models/ai_split_preset.dart';
@@ -83,7 +84,7 @@ class SettingsCard extends ConsumerWidget {
   }
 
   void _navigateToExerciseQueue(BuildContext context) {
-    context.push('/settings/my-exercises?tab=2');
+    context.push('/settings/my-exercises?tab=3');
   }
 
   void _navigateToWorkoutHistoryImport(BuildContext context) {
@@ -91,7 +92,7 @@ class SettingsCard extends ConsumerWidget {
   }
 
   void _navigateToStapleExercises(BuildContext context) {
-    context.push('/settings/my-exercises?tab=0');
+    context.push('/settings/my-exercises?tab=1');
   }
 
   void _showVariationSlider(BuildContext context, WidgetRef ref) {
@@ -156,11 +157,11 @@ class SettingsCard extends ConsumerWidget {
   }
 
   void _navigateToAvoidedExercises(BuildContext context) {
-    context.push('/settings/my-exercises?tab=1');
+    context.push('/settings/my-exercises?tab=2');
   }
 
   void _navigateToAvoidedMuscles(BuildContext context) {
-    context.push('/settings/my-exercises?tab=1');
+    context.push('/settings/my-exercises?tab=2');
   }
 
   void _navigateToDownloadedVideos(BuildContext context) {

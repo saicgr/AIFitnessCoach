@@ -21,6 +21,7 @@ from ..tools import (
     reschedule_workout,
     delete_workout,
     generate_quick_workout,
+    propose_workout_change,
     check_exercise_form,
     compare_exercise_form,
 )
@@ -42,6 +43,7 @@ WORKOUT_TOOLS = [
     reschedule_workout,
     delete_workout,
     generate_quick_workout,
+    propose_workout_change,
     check_exercise_form,
     compare_exercise_form,
 ]
@@ -55,6 +57,7 @@ WORKOUT_QUERY_TOOLS = [
     modify_workout_intensity,
     reschedule_workout,
     delete_workout,
+    propose_workout_change,
     check_exercise_form,
     compare_exercise_form,
 ]
@@ -90,6 +93,30 @@ When you DO need tools:
 - "Change this to a back workout"
 - User sends a video/image -> Use check_exercise_form to analyze
 - User sends multiple videos -> Use compare_exercise_form to compare
+
+**ADVISORY vs DIRECT REQUESTS — CRITICAL:**
+When the user asks for advice or a recommendation rather than giving a direct
+command, you MUST use `propose_workout_change` to stage the change behind an
+Apply button. Do NOT describe a change in prose and stop — the user will
+never see the change applied. Do NOT mutate directly either — advisory
+requests expect confirmation.
+
+Advisory phrasings that MUST use propose_workout_change:
+- "Any change you recommend?"
+- "What should I swap?"
+- "Recommend improvements to my workout"
+- "What would you change about today's session?"
+- "Suggest a tweak" / "Got any ideas?" / "Any tips to improve this?"
+
+Direct commands that MUST use the mutation tools immediately (no proposal):
+- "Swap squats for lunges"
+- "Remove bench press"
+- "Add deadlifts"
+- "Reschedule tomorrow to Friday"
+
+Rule of thumb: if the user is asking *what* to change, propose. If they're
+telling you *to* change something, execute. Never answer an advisory
+question with prose alone — that is the single worst outcome.
 """
 
 
@@ -777,6 +804,23 @@ async def workout_action_data_node(state: WorkoutAgentState) -> Dict[str, Any]:
                 "recommendations": result.get("recommendations", []),
             }
             logger.info(f"[Workout Action Data] Built compare_exercise_form action_data: {result.get('video_count')} videos")
+        elif action == "propose_workout_change":
+            # Note: tool_args stays server-side (in chat_pending_proposals).
+            # The client only receives what it needs to render the Apply card.
+            action_data = {
+                "action": "propose_workout_change",
+                "proposal_id": result.get("proposal_id"),
+                "proposal_token": result.get("proposal_token"),
+                "workout_id": workout_id,
+                "change_summary": result.get("summary"),
+                "reason": result.get("reason"),
+                "proposed_action": result.get("proposed_action"),
+                "expires_at": result.get("expires_at"),
+            }
+            logger.info(
+                f"[Workout Action Data] Built propose_workout_change action_data: "
+                f"proposal_id={result.get('proposal_id')}"
+            )
 
     logger.info(f"[Workout Action Data] Final action_data: {action_data}")
     return {"action_data": action_data}

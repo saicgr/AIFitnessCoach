@@ -1,11 +1,21 @@
 import 'package:flutter/material.dart';
 
-/// Mood types for quick workout generation.
+/// Mood types for local algorithmic workout generation.
+///
+/// Each mood has a recommended workout style + difficulty (see
+/// [MoodPreset]). Picking a mood from the sheet auto-applies those defaults
+/// but the user can override via Advanced Options.
 enum Mood {
   great('great', 'Great', 0xFF4CAF50),
   good('good', 'Good', 0xFF2196F3),
+  motivated('motivated', 'Motivated', 0xFFFF3D00),
+  angry('angry', 'Angry', 0xFFD32F2F),
+  calm('calm', 'Calm', 0xFF26A69A),
+  stressed('stressed', 'Stressed', 0xFF9C27B0),
+  anxious('anxious', 'Anxious', 0xFF7E57C2),
   tired('tired', 'Tired', 0xFFFF9800),
-  stressed('stressed', 'Stressed', 0xFF9C27B0);
+  low('low', 'Low', 0xFF546E7A),
+  focused('focused', 'Focused', 0xFF00BCD4);
 
   const Mood(this.value, this.label, this.colorValue);
 
@@ -18,33 +28,71 @@ enum Mood {
   String get emoji {
     switch (this) {
       case Mood.great:
-        return '\u{1F525}'; // fire
+        return '\u{1F525}'; // 🔥 fire
       case Mood.good:
-        return '\u{1F60A}'; // smiling face
-      case Mood.tired:
-        return '\u{1F634}'; // sleeping face
+        return '\u{1F60A}'; // 😊 smiling face
+      case Mood.motivated:
+        return '\u{1F4AA}'; // 💪 flexed biceps
+      case Mood.angry:
+        // Face with steam — reclaimed from stressed because it visually reads
+        // as angry, and stressed gets the sweatier 😰 below.
+        return '\u{1F624}'; // 😤
+      case Mood.calm:
+        return '\u{1F9D8}'; // 🧘 person in lotus
       case Mood.stressed:
-        return '\u{1F624}'; // face with steam
+        return '\u{1F630}'; // 😰 anxious face with sweat
+      case Mood.anxious:
+        return '\u{1FAE3}'; // 🫣 face with peeking eye
+      case Mood.tired:
+        return '\u{1F634}'; // 😴 sleeping face
+      case Mood.low:
+        return '\u{1F972}'; // 🥲 smiling face with tear
+      case Mood.focused:
+        return '\u{1F3AF}'; // 🎯 bullseye
     }
   }
 
   String get description {
     switch (this) {
       case Mood.great:
-        return 'High energy, challenging workout';
+        return 'High energy — push it';
       case Mood.good:
-        return 'Balanced, effective workout';
-      case Mood.tired:
-        return 'Recovery, mobility focus';
+        return 'Balanced and effective';
+      case Mood.motivated:
+        return 'Beast mode, heavy lifts';
+      case Mood.angry:
+        return 'Channel the fire — blow it out';
+      case Mood.calm:
+        return 'Flow and breathe';
       case Mood.stressed:
-        return 'Stress-relief, flowing workout';
+        return 'Release — slow the system down';
+      case Mood.anxious:
+        return 'Settle — steady rhythm';
+      case Mood.tired:
+        return 'Recover, mobility focus';
+      case Mood.low:
+        return 'Small wins to lift the day';
+      case Mood.focused:
+        return 'Dial in, structured session';
     }
   }
 
-  /// Get Mood from string value.
+  /// Get Mood from string value. Legacy aliases ('chill' → calm, 'energized'
+  /// → great, 'low_energy' → low, 'motivated' → motivated) are honored so
+  /// historic check-ins decode cleanly.
   static Mood fromString(String value) {
+    final normalized = value.toLowerCase().trim();
+    // Aliases for legacy values seen in older check-ins / backend prompts.
+    const aliases = {
+      'chill': 'calm',
+      'energized': 'great',
+      'low_energy': 'low',
+      'lowenergy': 'low',
+      'sad': 'low',
+    };
+    final canonical = aliases[normalized] ?? normalized;
     return Mood.values.firstWhere(
-      (m) => m.value == value.toLowerCase(),
+      (m) => m.value == canonical,
       orElse: () => Mood.good,
     );
   }

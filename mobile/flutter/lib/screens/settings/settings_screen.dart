@@ -24,6 +24,7 @@ import '../../data/services/haptic_service.dart';
 import '../../widgets/app_snackbar.dart';
 import '../../widgets/app_tour/app_tour_controller.dart';
 import '../../widgets/level_up_dialog.dart';
+import '../../data/models/user.dart' as app_user;
 import '../../data/models/user_xp.dart';
 import 'beast_mode_unlock_dialog.dart';
 import 'coming_soon_screen.dart';
@@ -336,6 +337,42 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     });
   }
 
+  // --- Helper: vacation mode subtitle ---
+  /// Returns "On (until Apr 25)", "Scheduled Apr 20", "On (open-ended)", or "Off".
+  String _vacationModeDisplay(app_user.User? user) {
+    if (user == null || user.inVacationMode != true) return 'Off';
+    DateTime? start;
+    DateTime? end;
+    try {
+      if (user.vacationStartDate != null && user.vacationStartDate!.isNotEmpty) {
+        start = DateTime.parse(user.vacationStartDate!);
+      }
+      if (user.vacationEndDate != null && user.vacationEndDate!.isNotEmpty) {
+        end = DateTime.parse(user.vacationEndDate!);
+      }
+    } catch (_) {
+      // Malformed date — fall through
+    }
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+
+    if (start != null && today.isBefore(start)) {
+      return 'Scheduled ${_shortDate(start)}';
+    }
+    if (end != null) {
+      if (today.isAfter(end)) return 'Ended ${_shortDate(end)}';
+      return 'On · until ${_shortDate(end)}';
+    }
+    return 'On · open-ended';
+  }
+
+  static const _monthsShort = [
+    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+  ];
+
+  String _shortDate(DateTime d) => '${_monthsShort[d.month - 1]} ${d.day}';
+
   // --- Helper: split display name ---
   String _splitDisplayName(String split) {
     switch (split) {
@@ -405,6 +442,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     // Training split + days display
     final splitName = _splitDisplayName(trainingPrefs.trainingSplit);
     final daysPerWeek = authState.user?.workoutsPerWeek ?? 4;
+
+    // Vacation mode subtitle — shows scheduled range, active state, or Off.
+    final vacationModeValue = _vacationModeDisplay(authState.user);
 
     // Build sections
     final sections = [
@@ -489,6 +529,14 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             value: 'Voice, audio, reminders',
             route: '/settings/sound-notifications',
             sectionKeys: const ['voice_announcements', 'audio_settings', 'notifications'],
+          ),
+          _SettingsRow(
+            icon: Icons.beach_access_rounded,
+            iconColor: const Color(0xFF4FC3F7),
+            title: 'Vacation Mode',
+            value: vacationModeValue,
+            route: '/settings/vacation-mode',
+            sectionKeys: const ['vacation', 'pause', 'notifications', 'comeback', 'away'],
           ),
           _SettingsRow(
             icon: Icons.alarm_rounded,

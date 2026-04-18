@@ -34,7 +34,7 @@ class MyProgramSummaryCard extends ConsumerWidget {
       child: GestureDetector(
         onTap: () {
           HapticService.light();
-          context.push('/profile?scrollTo=preferences');
+          context.go('/profile?scrollTo=preferences');
         },
         child: Container(
           padding: const EdgeInsets.all(12),

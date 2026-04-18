@@ -25,6 +25,7 @@ from core.rate_limiter import limiter
 from core.timezone_utils import get_user_today
 from services.email_service import get_email_service
 from services.email_helpers import first_name, time_band
+from services.notification_suppression import should_suppress_notification
 from models.email import UserStats, ScheduleState, TimeBand, CoachStyle
 
 logger = get_logger(__name__)
@@ -61,10 +62,89 @@ def _verify_cron_secret(request: Request, x_cron_secret: Optional[str] = None):
             raise HTTPException(status_code=403, detail="IP not allowed")
 
 
+# ─── Suppression cache (vacation + comeback) ────────────────────────────────
+
+# Per-process cache of user suppression state. Cleared lazily via TTL so we
+# don't hit the DB 24× per user per cron run. TTL is short enough that a user
+# toggling vacation mode sees effect on the next cron run.
+_SUPPRESSION_CACHE: Dict[str, Dict[str, Any]] = {}
+_SUPPRESSION_CACHE_AT: Optional[datetime] = None
+_SUPPRESSION_CACHE_TTL_SECONDS = 300  # 5 minutes
+
+
+def _get_user_suppression_state(supabase, user_id: str) -> Dict[str, Any]:
+    """Fetch vacation/comeback/timezone fields for one user, memoized per cron run.
+
+    Cache is per-process and TTL-bounded. Missing users return {} which the
+    suppression helper treats as "no suppression" — safe default.
+    """
+    global _SUPPRESSION_CACHE, _SUPPRESSION_CACHE_AT
+
+    now = datetime.now(timezone.utc)
+    if (
+        _SUPPRESSION_CACHE_AT is None
+        or (now - _SUPPRESSION_CACHE_AT).total_seconds() > _SUPPRESSION_CACHE_TTL_SECONDS
+    ):
+        _SUPPRESSION_CACHE = {}
+        _SUPPRESSION_CACHE_AT = now
+
+    cached = _SUPPRESSION_CACHE.get(user_id)
+    if cached is not None:
+        return cached
+
+    try:
+        r = supabase.client.table("users") \
+            .select(
+                "id, timezone, in_vacation_mode, vacation_start_date, vacation_end_date, "
+                "in_comeback_mode, comeback_week"
+            ) \
+            .eq("id", user_id) \
+            .limit(1) \
+            .execute()
+        state = r.data[0] if r.data else {}
+    except Exception as e:
+        # On lookup failure, fall open (don't block sends). The state is cached
+        # as empty so we don't retry on every call this cron run.
+        logger.warning(f"⚠️ [Email] suppression state lookup failed for {user_id}: {e}")
+        state = {}
+
+    _SUPPRESSION_CACHE[user_id] = state
+    return state
+
+
+def _is_email_suppressed(supabase, user_id: str, email_type: str) -> bool:
+    """Return True if vacation/comeback state should block this email.
+
+    The critical-email whitelist (billing, cancel lifecycle, trial_ending) is
+    enforced inside `should_suppress_notification` — those types always pass
+    through regardless of vacation state.
+    """
+    state = _get_user_suppression_state(supabase, user_id)
+    reason = should_suppress_notification(state, email_type, channel="email")
+    if reason:
+        logger.debug(f"🔕 [Email] Suppressed {email_type} for {user_id}: {reason}")
+        return True
+    return False
+
+
 # ─── Deduplication ──────────────────────────────────────────────────────────
 
 def _was_recently_sent(supabase, user_id: str, email_type: str, cooldown_days: int = DEFAULT_COOLDOWN_DAYS) -> bool:
-    """Return True if this email_type was sent to user_id within cooldown_days."""
+    """Return True if this email should be skipped for this user.
+
+    "Skipped" combines two reasons into one gate — all ~24 email jobs already
+    use this as `if _was_recently_sent(...): continue`, so adding vacation +
+    comeback suppression here covers every job with zero callsite changes:
+
+      1. Vacation mode is active (unless email_type is in CRITICAL_EMAIL_TYPES)
+      2. User is in comeback mode and email_type is in COMEBACK_SUPPRESSED_EMAIL
+      3. This email_type was sent to this user within cooldown_days (dedup)
+    """
+    # 1 + 2. Global suppression (vacation + comeback). Cached per run.
+    if _is_email_suppressed(supabase, user_id, email_type):
+        return True
+
+    # 3. Dedup window
     cutoff = (datetime.now(timezone.utc) - timedelta(days=cooldown_days)).isoformat()
     result = supabase.client.table("email_send_log") \
         .select("id") \
@@ -134,6 +214,16 @@ async def run_email_cron(
         ("cancel_offer_14d", _job_cancel_offer(supabase, email_svc, days=14, discount=20)),
         ("cancel_offer_60d", _job_cancel_offer(supabase, email_svc, days=60, discount=30)),
         ("cancel_sunset", _job_cancel_sunset(supabase, email_svc)),
+        # Merch milestone engagement (migration 1931)
+        ("merch_proximity", _job_merch_proximity_email(supabase, email_svc)),
+        ("merch_unlocked", _job_merch_unlocked_email(supabase, email_svc)),
+        ("merch_claim_reminder", _job_merch_claim_reminder_email(supabase, email_svc)),
+        ("level_milestone_celebration", _job_level_milestone_celebration_email(supabase, email_svc)),
+        # Week-1 ladder (W4)
+        ("week1_day1", _job_week1_day1_email(supabase, email_svc)),
+        ("week1_day3", _job_week1_day3_email(supabase, email_svc)),
+        ("week1_day5", _job_week1_day5_email(supabase, email_svc)),
+        ("week1_day7", _job_week1_day7_email(supabase, email_svc)),
     ]
 
     # Run all jobs concurrently
@@ -700,15 +790,41 @@ async def _job_weekly_summary(supabase, email_svc) -> int:
             if stats.time_band != TimeBand.MORNING:
                 continue
 
+            # W5: compute percentile via migration 1939 RPC. Falls back to
+            # None on any error so the email still sends without social proof.
+            percentile_val: Optional[float] = None
+            percentile_tier: Optional[str] = None
+            try:
+                # Week-start Monday (today's user-local Monday is today since we
+                # only send Monday mornings per line 701).
+                week_start_str = user_today.isoformat()
+                rpc = supabase.client.rpc(
+                    "compute_user_percentile",
+                    {
+                        "p_user_id": uid,
+                        "p_week_start": week_start_str,
+                        "p_board_type": "xp",
+                    },
+                ).execute()
+                pdata = rpc.data[0] if isinstance(rpc.data, list) and rpc.data else (rpc.data or {})
+                if pdata:
+                    percentile_val = float(pdata.get("percentile") or 0)
+                    percentile_tier = pdata.get("tier")
+            except Exception as e:
+                logger.warning(f"[W5] compute_user_percentile failed for {uid}: {e}")
+
             result = await email_svc.send_weekly_summary(
                 to_email=user["email"],
                 first_name_value=first_name(user),
                 stats=stats,
+                percentile=percentile_val,
+                percentile_tier=percentile_tier,
             )
             if result.get("success"):
                 _log_email_sent(supabase, uid, email_type, {
                     "workouts_this_week": stats.workouts_this_week,
                     "meals_this_week": stats.nutrition_days_logged_this_week,
+                    "percentile": percentile_val,
                 })
                 sent += 1
 
@@ -1569,3 +1685,491 @@ def _get_user_stats(supabase, user: Dict[str, Any]) -> UserStats:
         user_tz=user_tz,
         has_any_activity=(workouts_total > 0 or nut_days_logged > 0),
     )
+
+
+# ─── Week-1 Retention Email Jobs (W4) ───────────────────────────────────────
+
+async def _week1_count_workouts(supabase, user_id: str) -> int:
+    """Total completed workouts for a new user (bounded by account age < 7 days)."""
+    try:
+        res = (
+            supabase.client.table("workout_logs")
+            .select("id", count="exact")
+            .eq("user_id", user_id)
+            .eq("status", "completed")
+            .execute()
+        )
+        return res.count or 0
+    except Exception:
+        return 0
+
+
+def _days_since_signup(created_at: Any) -> int:
+    try:
+        if isinstance(created_at, str):
+            created = datetime.fromisoformat(created_at.replace("Z", "+00:00"))
+        else:
+            created = created_at
+        return (datetime.now(timezone.utc) - created).days
+    except Exception:
+        return -1
+
+
+async def _job_week1_email(
+    supabase, email_svc, day_target: int,
+) -> int:
+    """
+    Generic week-1 email sender for a specific day offset (1, 3, 5, 7).
+    Uses user's morning band (8-10 AM local) for Days 1/3/5, 9 AM for Day 7 recap.
+    Dedup via email_send_log with email_type = week1_day{N}.
+    """
+    day_to_type = {1: "week1_day1", 3: "week1_day3", 5: "week1_day5", 7: "week1_day7"}
+    email_type_base = day_to_type.get(day_target)
+    if email_type_base is None:
+        return 0
+
+    sent = 0
+    try:
+        # Target users created exactly `day_target` days ago (range: start-of-day window)
+        window_start = (datetime.now(timezone.utc) - timedelta(days=day_target + 1)).isoformat()
+        window_end = (datetime.now(timezone.utc) - timedelta(days=day_target)).isoformat()
+
+        users_res = (
+            supabase.client.table("users")
+            .select("id,email,name,timezone,created_at")
+            .gte("created_at", window_start)
+            .lt("created_at", window_end)
+            .execute()
+        )
+        for user in (users_res.data or []):
+            uid = user["id"]
+            # Gate: workout_reminders for day 1/3/5, achievement_emails for day 7
+            prefs_res = (
+                supabase.client.table("email_preferences")
+                .select("workout_reminders,achievement_emails")
+                .eq("user_id", uid).limit(1).execute()
+            )
+            pref = (prefs_res.data or [{}])[0]
+            if day_target == 7:
+                if pref.get("achievement_emails") is False:
+                    continue
+            else:
+                if pref.get("workout_reminders") is False:
+                    continue
+
+            count = await _week1_count_workouts(supabase, uid)
+            # Day 3 branches into completed vs stalled based on count
+            if day_target == 3:
+                email_type = "week1_day3_completed" if count >= 1 else "week1_day3_stalled"
+            else:
+                email_type = email_type_base
+
+            if _was_recently_sent(supabase, uid, email_type, cooldown_days=14):
+                continue
+
+            stats = _get_user_stats(supabase, user)
+
+            # Time band check — only send during the user's morning (TimeBand.MORNING)
+            # or evening for day 5 specifically (per plan, local 7 PM).
+            if day_target == 5:
+                if stats.time_band != TimeBand.EVENING:
+                    continue
+            else:
+                if stats.time_band != TimeBand.MORNING:
+                    continue
+
+            if day_target == 1:
+                result = await email_svc.send_week1_day1(
+                    to_email=user["email"], first_name_value=first_name(user), stats=stats,
+                )
+            elif day_target == 3:
+                if count >= 1:
+                    result = await email_svc.send_week1_day3_completed(
+                        to_email=user["email"], first_name_value=first_name(user),
+                        stats=stats, workouts_count=count,
+                    )
+                else:
+                    result = await email_svc.send_week1_day3_stalled(
+                        to_email=user["email"], first_name_value=first_name(user), stats=stats,
+                    )
+            elif day_target == 5:
+                result = await email_svc.send_week1_day5(
+                    to_email=user["email"], first_name_value=first_name(user),
+                    stats=stats, workouts_count=count,
+                )
+            elif day_target == 7:
+                result = await email_svc.send_week1_day7(
+                    to_email=user["email"], first_name_value=first_name(user),
+                    stats=stats, workouts_count=count,
+                )
+            else:
+                continue
+
+            if result.get("success"):
+                _log_email_sent(supabase, uid, email_type, {"count": count, "day": day_target})
+                sent += 1
+    except Exception as e:
+        logger.error(f"❌ week1 day{day_target} email job failed: {e}", exc_info=True)
+        raise
+
+    logger.info(f"🎯 week1_day{day_target}: {sent} emails sent")
+    return sent
+
+
+async def _job_week1_day1_email(supabase, email_svc):
+    return await _job_week1_email(supabase, email_svc, 1)
+
+
+async def _job_week1_day3_email(supabase, email_svc):
+    return await _job_week1_email(supabase, email_svc, 3)
+
+
+async def _job_week1_day5_email(supabase, email_svc):
+    return await _job_week1_email(supabase, email_svc, 5)
+
+
+async def _job_week1_day7_email(supabase, email_svc):
+    return await _job_week1_email(supabase, email_svc, 7)
+
+
+# ─── Merch Milestone Email Jobs (migration 1931) ────────────────────────────
+
+_MERCH_PROXIMITY_LEVELS = {47, 48, 49, 97, 98, 99, 147, 148, 149, 197, 198, 199, 247, 248, 249}
+_MERCH_NEXT_FOR_PROXIMITY = {
+    47: 50, 48: 50, 49: 50,
+    97: 100, 98: 100, 99: 100,
+    147: 150, 148: 150, 149: 150,
+    197: 200, 198: 200, 199: 200,
+    247: 250, 248: 250, 249: 250,
+}
+
+
+def _merch_type_for_level(level: int) -> Optional[str]:
+    return {
+        50: "sticker_pack", 100: "t_shirt", 150: "hoodie",
+        200: "full_merch_kit", 250: "signed_premium_kit",
+    }.get(level)
+
+
+async def _job_merch_proximity_email(supabase, email_svc) -> int:
+    """
+    Email users who are 1-3 levels away from a merch tier.
+    Cooldown: 7 days (don't spam the same user every day for 3 days).
+    Gate: email_preferences.achievement_emails (default True).
+    """
+    email_type = "merch_proximity"
+    sent = 0
+
+    try:
+        rows = supabase.client.table("user_xp") \
+            .select("user_id,current_level") \
+            .in_("current_level", list(_MERCH_PROXIMITY_LEVELS)) \
+            .execute()
+        if not rows.data:
+            return 0
+
+        by_user = {r["user_id"]: r["current_level"] for r in rows.data}
+        user_ids = list(by_user.keys())
+
+        for i in range(0, len(user_ids), BATCH_SIZE):
+            batch = user_ids[i:i + BATCH_SIZE]
+            users_result = supabase.client.table("users") \
+                .select("id,email,name,timezone") \
+                .in_("id", batch).execute()
+
+            prefs_result = supabase.client.table("email_preferences") \
+                .select("user_id,merch_emails") \
+                .in_("user_id", batch).execute()
+            prefs_map = {p["user_id"]: p for p in (prefs_result.data or [])}
+
+            for user in (users_result.data or []):
+                uid = user["id"]
+                pref = prefs_map.get(uid, {})
+                if pref.get("merch_emails") is False:
+                    continue
+                if _was_recently_sent(supabase, uid, email_type, cooldown_days=7):
+                    continue
+
+                level = by_user.get(uid)
+                next_merch = _MERCH_NEXT_FOR_PROXIMITY.get(level)
+                if not next_merch:
+                    continue
+                merch_type = _merch_type_for_level(next_merch)
+                if not merch_type:
+                    continue
+
+                stats = _get_user_stats(supabase, user)
+                if stats.time_band not in (TimeBand.MORNING, TimeBand.EVENING):
+                    continue  # only at coherent times
+
+                result = await email_svc.send_merch_proximity(
+                    to_email=user["email"],
+                    first_name_value=first_name(user),
+                    stats=stats,
+                    merch_type=merch_type,
+                    next_level=next_merch,
+                    levels_away=next_merch - level,
+                )
+                if result.get("success"):
+                    _log_email_sent(supabase, uid, email_type, {
+                        "current_level": level,
+                        "merch_type": merch_type,
+                    })
+                    sent += 1
+
+    except Exception as e:
+        logger.error(f"❌ merch_proximity job failed: {e}", exc_info=True)
+        raise
+
+    logger.info(f"🎯 merch_proximity: {sent} emails sent")
+    return sent
+
+
+async def _job_merch_unlocked_email(supabase, email_svc) -> int:
+    """
+    Email users whose merch claim was created in the last ~24h and is still pending_address.
+    Cooldown: 1 day per claim (use metadata).
+    """
+    email_type = "merch_unlocked"
+    sent = 0
+
+    try:
+        cutoff = (datetime.now(timezone.utc) - timedelta(hours=24)).isoformat()
+        claims = supabase.client.table("merch_claims") \
+            .select("id,user_id,merch_type,awarded_at_level,created_at") \
+            .eq("status", "pending_address") \
+            .gte("created_at", cutoff) \
+            .execute()
+        if not claims.data:
+            return 0
+
+        by_user: Dict[str, Dict[str, Any]] = {}
+        for c in claims.data:
+            by_user.setdefault(c["user_id"], c)
+
+        user_ids = list(by_user.keys())
+        for i in range(0, len(user_ids), BATCH_SIZE):
+            batch = user_ids[i:i + BATCH_SIZE]
+            users_result = supabase.client.table("users") \
+                .select("id,email,name,timezone") \
+                .in_("id", batch).execute()
+            prefs_result = supabase.client.table("email_preferences") \
+                .select("user_id,merch_emails") \
+                .in_("user_id", batch).execute()
+            prefs_map = {p["user_id"]: p for p in (prefs_result.data or [])}
+
+            for user in (users_result.data or []):
+                uid = user["id"]
+                pref = prefs_map.get(uid, {})
+                if pref.get("merch_emails") is False:
+                    continue
+                if _was_recently_sent(supabase, uid, email_type, cooldown_days=1):
+                    continue
+
+                claim = by_user[uid]
+                stats = _get_user_stats(supabase, user)
+
+                result = await email_svc.send_merch_unlocked(
+                    to_email=user["email"],
+                    first_name_value=first_name(user),
+                    stats=stats,
+                    merch_type=claim["merch_type"],
+                    awarded_at_level=claim["awarded_at_level"],
+                )
+                if result.get("success"):
+                    _log_email_sent(supabase, uid, email_type, {
+                        "claim_id": claim["id"],
+                        "merch_type": claim["merch_type"],
+                    })
+                    sent += 1
+
+    except Exception as e:
+        logger.error(f"❌ merch_unlocked job failed: {e}", exc_info=True)
+        raise
+
+    logger.info(f"🎯 merch_unlocked: {sent} emails sent")
+    return sent
+
+
+async def _job_level_milestone_celebration_email(supabase, email_svc) -> int:
+    """
+    Email users who hit a major XP milestone (L5/10/25/50/75/100/...) in the last 24h.
+    Cooldown: 1 day per user. Gate: email_preferences.achievement_emails != false.
+    Uses level_up_events (migration 1935) as the source of truth.
+    """
+    email_type = "level_milestone_celebration"
+    sent = 0
+    milestone_levels = {5, 10, 25, 50, 75, 100, 125, 150, 175, 200, 225, 250}
+
+    try:
+        cutoff = (datetime.now(timezone.utc) - timedelta(hours=24)).isoformat()
+        events = (
+            supabase.client.table("level_up_events")
+            .select("user_id,level_reached,rewards_snapshot,merch_type,created_at")
+            .eq("is_milestone", True)
+            .gte("created_at", cutoff)
+            .execute()
+        )
+        if not events.data:
+            return 0
+
+        # Highest-level event per user in the window
+        top_by_user: Dict[str, Dict[str, Any]] = {}
+        for row in events.data:
+            level = row.get("level_reached")
+            if level not in milestone_levels:
+                continue
+            existing = top_by_user.get(row["user_id"])
+            if not existing or level > existing["level_reached"]:
+                top_by_user[row["user_id"]] = row
+
+        if not top_by_user:
+            return 0
+
+        user_ids = list(top_by_user.keys())
+        friendly = {
+            "streak_shield": "Streak Shield",
+            "xp_token_2x": "2× XP Token",
+            "fitness_crate": "Fitness Crate",
+            "premium_crate": "Premium Crate",
+        }
+
+        for i in range(0, len(user_ids), BATCH_SIZE):
+            batch = user_ids[i:i + BATCH_SIZE]
+            users_result = supabase.client.table("users") \
+                .select("id,email,name,timezone").in_("id", batch).execute()
+            prefs_result = supabase.client.table("email_preferences") \
+                .select("user_id,achievement_emails").in_("user_id", batch).execute()
+            prefs_map = {p["user_id"]: p for p in (prefs_result.data or [])}
+
+            for user in (users_result.data or []):
+                uid = user["id"]
+                pref = prefs_map.get(uid, {})
+                if pref.get("achievement_emails") is False:
+                    continue
+                if _was_recently_sent(supabase, uid, email_type, cooldown_days=1):
+                    continue
+
+                row = top_by_user[uid]
+                items = row.get("rewards_snapshot") or []
+                parts: List[str] = []
+                has_merch = False
+                for item in items:
+                    if item.get("type") == "merch":
+                        has_merch = True
+                        continue
+                    name = friendly.get(item.get("type"))
+                    if name:
+                        parts.append(f"{item.get('quantity', 1)}× {name}")
+                summary = " + ".join(parts[:4])
+                if has_merch:
+                    summary = (summary + " + a FREE physical reward!") if summary else "a FREE physical reward!"
+
+                stats = _get_user_stats(supabase, user)
+
+                result = await email_svc.send_level_milestone_celebration(
+                    to_email=user["email"],
+                    first_name_value=first_name(user),
+                    stats=stats,
+                    level_reached=row["level_reached"],
+                    rewards_summary=summary or "New rewards in your inventory.",
+                    has_merch=has_merch,
+                )
+                if result.get("success"):
+                    _log_email_sent(supabase, uid, email_type, {
+                        "level": row["level_reached"],
+                        "has_merch": has_merch,
+                    })
+                    sent += 1
+
+    except Exception as e:
+        logger.error(f"❌ level_milestone_celebration job failed: {e}", exc_info=True)
+        raise
+
+    logger.info(f"🎯 level_milestone_celebration: {sent} emails sent")
+    return sent
+
+
+async def _job_merch_claim_reminder_email(supabase, email_svc) -> int:
+    """
+    Email users who have an unaccepted merch claim at D+2 / D+7 / D+14.
+    Cooldown: 3 days (prevent double-sends).
+    """
+    email_type = "merch_claim_reminder"
+    sent = 0
+
+    try:
+        now = datetime.now(timezone.utc)
+        target_days = {2, 7, 14}
+
+        claims = supabase.client.table("merch_claims") \
+            .select("id,user_id,merch_type,awarded_at_level,created_at") \
+            .eq("status", "pending_address") \
+            .execute()
+        if not claims.data:
+            return 0
+
+        oldest_by_user: Dict[str, Dict[str, Any]] = {}
+        for c in claims.data:
+            uid = c["user_id"]
+            if uid not in oldest_by_user or c["created_at"] < oldest_by_user[uid]["created_at"]:
+                oldest_by_user[uid] = c
+
+        # Filter to users whose days_waiting hits a target bucket
+        reminders: Dict[str, Dict[str, Any]] = {}
+        for uid, claim in oldest_by_user.items():
+            try:
+                created = datetime.fromisoformat(claim["created_at"].replace("Z", "+00:00"))
+            except Exception:
+                continue
+            days = (now - created).days
+            if days in target_days:
+                reminders[uid] = {**claim, "days_waiting": days}
+
+        if not reminders:
+            return 0
+
+        user_ids = list(reminders.keys())
+        for i in range(0, len(user_ids), BATCH_SIZE):
+            batch = user_ids[i:i + BATCH_SIZE]
+            users_result = supabase.client.table("users") \
+                .select("id,email,name,timezone") \
+                .in_("id", batch).execute()
+            prefs_result = supabase.client.table("email_preferences") \
+                .select("user_id,merch_emails") \
+                .in_("user_id", batch).execute()
+            prefs_map = {p["user_id"]: p for p in (prefs_result.data or [])}
+
+            for user in (users_result.data or []):
+                uid = user["id"]
+                pref = prefs_map.get(uid, {})
+                if pref.get("merch_emails") is False:
+                    continue
+                if _was_recently_sent(supabase, uid, email_type, cooldown_days=3):
+                    continue
+
+                claim = reminders[uid]
+                stats = _get_user_stats(supabase, user)
+
+                result = await email_svc.send_merch_claim_reminder(
+                    to_email=user["email"],
+                    first_name_value=first_name(user),
+                    stats=stats,
+                    merch_type=claim["merch_type"],
+                    awarded_at_level=claim["awarded_at_level"],
+                    days_waiting=claim["days_waiting"],
+                )
+                if result.get("success"):
+                    _log_email_sent(supabase, uid, email_type, {
+                        "claim_id": claim["id"],
+                        "days_waiting": claim["days_waiting"],
+                    })
+                    sent += 1
+
+    except Exception as e:
+        logger.error(f"❌ merch_claim_reminder job failed: {e}", exc_info=True)
+        raise
+
+    logger.info(f"🎯 merch_claim_reminder: {sent} emails sent")
+    return sent
+

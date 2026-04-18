@@ -15,10 +15,26 @@ import asyncio
 import logging
 
 from supabase_auth.errors import AuthRetryableError
+from postgrest.exceptions import APIError as PostgrestAPIError
 
 from core.supabase_client import get_supabase
 
 logger = logging.getLogger(__name__)
+
+
+def _is_transient_postgrest_error(err: PostgrestAPIError) -> bool:
+    """Detect upstream 5xx responses from PostgREST/Cloudflare.
+
+    PostgREST sets `code` to an int HTTP status when the upstream returns
+    non-JSON (e.g., Cloudflare 502 HTML), and to a PGRST* string for
+    application-level errors. Only 5xx is worth retrying.
+    """
+    code = err.code
+    if isinstance(code, int):
+        return 500 <= code < 600
+    if isinstance(code, str) and code.isdigit():
+        return 500 <= int(code) < 600
+    return False
 
 
 def _extract_bearer_token(authorization: Optional[str]) -> str:
@@ -152,7 +168,18 @@ async def get_current_user(
         # Use .execute() without .single() to avoid PostgREST PGRST116 error
         # when 0 rows are returned. The .single() call throws an exception
         # instead of returning empty data.
-        result = supabase.client.table("users").select("id, email").eq("auth_id", supabase_auth_id).execute()
+        # Retry once on transient upstream 5xx (e.g., Cloudflare 502 in front of Supabase).
+        result = None
+        for attempt in range(2):
+            try:
+                result = supabase.client.table("users").select("id, email").eq("auth_id", supabase_auth_id).execute()
+                break
+            except PostgrestAPIError as pg_err:
+                if attempt == 0 and _is_transient_postgrest_error(pg_err):
+                    logger.warning(f"PostgREST returned transient {pg_err.code}, retrying in 0.5s")
+                    await asyncio.sleep(0.5)
+                else:
+                    raise
 
         if not result.data:
             logger.error(f"User not found in database for auth_id: {supabase_auth_id}")
@@ -162,6 +189,13 @@ async def get_current_user(
             )
 
         user_row = result.data[0]
+        # Attach user to Sentry scope so any error captured for this request
+        # is tagged with the user id (no email — PII kept off by default).
+        try:
+            from core.sentry import set_user as _sentry_set_user
+            _sentry_set_user(str(user_row["id"]))
+        except Exception:
+            pass
         return {
             "id": user_row["id"],  # Backend user ID for foreign keys
             "email": user_row["email"],
@@ -178,6 +212,21 @@ async def get_current_user(
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail="Authentication service temporarily unavailable. Please try again.",
+        )
+    except PostgrestAPIError as e:
+        # Upstream 5xx from PostgREST (e.g., Cloudflare 502) after retry.
+        # Surface as 503 so the client retries instead of logging the user out.
+        if _is_transient_postgrest_error(e):
+            logger.error(f"PostgREST upstream unavailable after retry: code={e.code}")
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="Authentication service temporarily unavailable. Please try again.",
+            )
+        logger.error(f"PostgREST error during auth: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Failed to validate token",
+            headers={"WWW-Authenticate": "Bearer"},
         )
     except Exception as e:
         logger.error(f"Auth error: {e}", exc_info=True)

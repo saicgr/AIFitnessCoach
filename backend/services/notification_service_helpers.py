@@ -26,6 +26,7 @@ class NotificationService(NotificationServicePart2):
     TYPE_LIVE_CHAT_ENDED = "live_chat_ended"
     TYPE_TEST = "test"
     TYPE_DAILY_BUNDLE = "daily_bundle"
+    TYPE_DAILY_CRATE = "daily_crate"
 
     # Android notification channel IDs (must match Flutter side)
     CHANNEL_IDS = {
@@ -42,6 +43,7 @@ class NotificationService(NotificationServicePart2):
         TYPE_LIVE_CHAT_ENDED: "live_chat",
         TYPE_TEST: "test_notifications",
         TYPE_DAILY_BUNDLE: "daily_bundle",
+        TYPE_DAILY_CRATE: "daily_crate",
     }
 
     # Movement reminder message templates (variety to avoid notification fatigue)
@@ -120,7 +122,7 @@ class NotificationService(NotificationServicePart2):
 
     # Tier 4: 5 days missed - stronger emotional appeal
     INACTIVITY_NUDGE_5DAY = [
-        {"title": "Your dumbbells miss you!", "body": "5 days, {name}. Your equipment is gathering dust. One session changes everything!"},
+        {"title": "Your dumbbells are ready for you!", "body": "5 days, {name}. Your equipment is right where you left it. One session flips the momentum."},
         {"title": "5 days off...", "body": "Your workout plan is still here, waiting like a loyal friend. Just one session?"},
         {"title": "Remember your goals?", "body": "5 days off. That fire is still in you. Light it up with one session, {name}."},
         {"title": "We're still here!", "body": "5 days is just a pause, not a stop. Come crush one workout!"},
@@ -298,7 +300,7 @@ class NotificationService(NotificationServicePart2):
             {"title": "{coach_name}", "body": "Excuses or results. Pick one. {workout_name} is still available."},
             {"title": "{coach_name}", "body": "The day isn't over until {workout_name} is done. Get off the couch!"},
             {"title": "{coach_name}", "body": "{name}! I didn't program {workout_name} for it to sit there untouched!"},
-            {"title": "{coach_name}", "body": "Your {workout_name} is gathering dust. Is that who you want to be?"},
+            {"title": "{coach_name}", "body": "Still time today, {name}. Even 20 minutes of {workout_name} flips the day."},
         ],
 
         # --- Meal Logging Reminder ---
@@ -441,10 +443,10 @@ class NotificationService(NotificationServicePart2):
             {"title": "{coach_name}", "body": "Don't let {streak} days go to waste! A quick workout tonight saves your streak."},
         ],
         ("streak_countdown", "tough_love"): [
-            {"title": "{coach_name}", "body": "{streak} DAYS on the line, {name}! You didn't come this far to quit now. MOVE!"},
-            {"title": "{coach_name}", "body": "Your {streak}-day streak DIES tonight unless you act. No excuses!"},
-            {"title": "{coach_name}", "body": "{name}! {streak} days of discipline about to vanish. 10 minutes. That's ALL it takes!"},
-            {"title": "{coach_name}", "body": "FINAL CALL: {streak}-day streak expires tonight. Are you a quitter or a fighter?"},
+            {"title": "{coach_name}", "body": "{streak} days on the line tonight, {name}. You've built too much to let it slip."},
+            {"title": "{coach_name}", "body": "Streak's on the line tonight, {name}. 10 minutes keeps {streak} days alive."},
+            {"title": "{coach_name}", "body": "{name}! {streak} days of work — let's protect it. One set counts."},
+            {"title": "{coach_name}", "body": "Streak Shield or a quick session — either way, your {streak}-day streak survives tonight."},
         ],
 
         # --- Progress Milestone Teaser ---
@@ -603,7 +605,7 @@ class NotificationService(NotificationServicePart2):
             {"title": "{coach_name}", "body": "Almost there, {name}. Finish setup and your full plan builds in seconds."},
         ],
         ("onboarding_incomplete", "tough_love"): [
-            {"title": "{coach_name}", "body": "{name}, you started and stopped. Two minutes to finish. Do it."},
+            {"title": "{coach_name}", "body": "{name}, your plan is 2 minutes away from ready. Let's finish setting it up."},
         ],
 
         # --- Weekly Recap ---
@@ -642,15 +644,177 @@ class NotificationService(NotificationServicePart2):
         ("comeback", "tough_love"): [
             {"title": "{coach_name}", "body": "{name}. Don't disappear again. {coach_name} is watching."},
         ],
+
+        # ─── Merch Milestone Nudges (migration 1931) ──────────────────
+        # Placeholders: {coach_name}, {name}, {merch_name}, {levels_away}, {next_level}
+        #
+        # merch_proximity: user is 1-3 levels away from a merch tier
+        ("merch_proximity", "gentle"): [
+            {"title": "{coach_name}", "body": "{name}, you're {levels_away} levels from a FREE {merch_name}. You've got this!"},
+            {"title": "{coach_name}", "body": "So close to Level {next_level} — {merch_name} is almost yours, {name}."},
+            {"title": "{coach_name}", "body": "Hey {name}, only {levels_away} levels until your FREE {merch_name} ships to you."},
+        ],
+        ("merch_proximity", "balanced"): [
+            {"title": "🎁 {coach_name}", "body": "{levels_away} levels away from a FREE {merch_name}! Keep earning XP, {name}."},
+            {"title": "🎁 {coach_name}", "body": "{name}! Level {next_level} = FREE {merch_name} shipped to you. Go get it!"},
+            {"title": "🎁 {coach_name}", "body": "You're THIS close — {levels_away} levels and your {merch_name} is in the mail!"},
+        ],
+        ("merch_proximity", "tough_love"): [
+            {"title": "🎁 {coach_name}", "body": "{levels_away} levels between you and a FREE {merch_name}. DON'T quit now, {name}."},
+            {"title": "🎁 {coach_name}", "body": "Level {next_level} = real swag. You gonna earn it or not, {name}?"},
+            {"title": "🎁 {coach_name}", "body": "FREE {merch_name} is {levels_away} levels away. Stop scrolling, start earning."},
+        ],
+
+        # merch_unlocked: user just leveled up to a merch tier (L50/100/150/200/250)
+        ("merch_unlocked", "gentle"): [
+            {"title": "🎁 {coach_name}", "body": "Congrats {name}! You unlocked a FREE {merch_name}. Tap to accept and we'll reach out."},
+            {"title": "🎁 {coach_name}", "body": "{name}, you earned real merch! Your {merch_name} is waiting in the Rewards tab."},
+        ],
+        ("merch_unlocked", "balanced"): [
+            {"title": "🎁 FREE {merch_name}!", "body": "{name}, Level {next_level} means REAL swag. Tap to accept your {merch_name}!"},
+            {"title": "🎁 {coach_name}", "body": "You did it! {merch_name} UNLOCKED. Accept it in the Rewards tab."},
+        ],
+        ("merch_unlocked", "tough_love"): [
+            {"title": "🎁 {coach_name}", "body": "{name}. You earned it. {merch_name} UNLOCKED. Go claim it."},
+        ],
+
+        # merch_claim_reminder: claim pending_address for D+1/D+3/D+7
+        ("merch_claim_reminder", "gentle"): [
+            {"title": "🎁 {coach_name}", "body": "Friendly reminder, {name} — your FREE {merch_name} is waiting to be accepted."},
+            {"title": "🎁 {coach_name}", "body": "Don't forget: your {merch_name} is unclaimed. One tap to accept!"},
+        ],
+        ("merch_claim_reminder", "balanced"): [
+            {"title": "🎁 {merch_name}", "body": "Your FREE {merch_name} is still waiting! Tap Accept and we'll email you."},
+            {"title": "🎁 {coach_name}", "body": "{name}! Your {merch_name} is sitting unclaimed. Tap to accept it now."},
+        ],
+        ("merch_claim_reminder", "tough_love"): [
+            {"title": "🎁 {coach_name}", "body": "{name}. FREE {merch_name}. Unclaimed. WHY? Tap Accept."},
+        ],
+
+        # ─── Week-1 Retention Nudge Ladder (W4) ──────────────────────
+        # Fires on Day 1, 3 (completed/stalled variants), 5, 7 for new users.
+        # Placeholders: {coach_name}, {name}, {days_in}, {count} (workouts so far)
+        # Tone: compassionate — never tough_love regardless of user pref
+        # (enforced by account-age cap in push_nudge_cron.py).
+        ("week1_day1", "gentle"): [
+            {"title": "{coach_name}", "body": "{name}, {coach_name} here. Day 1 of your plan is ready — about 20 minutes when you've got a window."},
+            {"title": "{coach_name}", "body": "Welcome aboard, {name}! Your first workout is loaded. Take your time."},
+        ],
+        ("week1_day1", "balanced"): [
+            {"title": "{coach_name}", "body": "{name}, {coach_name} here. Day 1 of your plan is ready — 20 minutes. When you show up today, the pattern starts."},
+            {"title": "{coach_name}", "body": "Day 1, {name}. Your plan is warm. Even 10 minutes breaks the ice."},
+            {"title": "{coach_name}", "body": "{name}, today's the easy day to start. 20 min to first win."},
+        ],
+        ("week1_day1", "tough_love"): [
+            {"title": "{coach_name}", "body": "Day 1, {name}. {coach_name}'s ready. The plan's ready. Your turn."},
+        ],
+
+        ("week1_day3_completed", "gentle"): [
+            {"title": "{coach_name}", "body": "Three days in, {name}. You're doing this. {coach_name} is proud."},
+            {"title": "{coach_name}", "body": "Day 3 and you're still here, {name} — that's the hardest part."},
+        ],
+        ("week1_day3_completed", "balanced"): [
+            {"title": "🔥 {coach_name}", "body": "Three days in, {name}. Most people who make it past Day 3 are still here in month 3. You're building something."},
+            {"title": "{coach_name}", "body": "Day 3 check-in, {name}. {count} workout{s} logged — keep the thread going."},
+        ],
+        ("week1_day3_completed", "tough_love"): [
+            {"title": "{coach_name}", "body": "Day 3 done, {name}. Don't stop now — compound time starts at week 2."},
+        ],
+
+        ("week1_day3_stalled", "gentle"): [
+            {"title": "{coach_name}", "body": "Day 3, {name}. No judgment — life happens. Want to try 10 minutes? That's all it takes to break the ice."},
+            {"title": "{coach_name}", "body": "Checking in, {name}. Your plan is still waiting — a tiny workout beats none."},
+        ],
+        ("week1_day3_stalled", "balanced"): [
+            {"title": "{coach_name}", "body": "Day 3, {name}. No judgment — life happens. 10 minutes is all you need today."},
+            {"title": "{coach_name}", "body": "{name}, day 3 and you haven't started yet. {coach_name} has a 15-minute starter version if that helps."},
+        ],
+        ("week1_day3_stalled", "tough_love"): [
+            {"title": "{coach_name}", "body": "Day 3, {name}. No workout yet. Gentle push: open the app, pick the shortest session, hit start."},
+        ],
+
+        ("week1_day5", "gentle"): [
+            {"title": "{coach_name}", "body": "Halfway through week one, {name}. How are you feeling? {coach_name} is here."},
+            {"title": "{coach_name}", "body": "Day 5, {name}. Small wins stack up. You've got this."},
+        ],
+        ("week1_day5", "balanced"): [
+            {"title": "{coach_name}", "body": "Halfway through week one, {name}. {count} workout{s} in — here's your 30-day forecast when you open the app."},
+            {"title": "{coach_name}", "body": "Day 5, {name}. Your body's starting to learn the pattern. Keep going."},
+        ],
+        ("week1_day5", "tough_love"): [
+            {"title": "{coach_name}", "body": "Halfway, {name}. The pattern you build this week you'll still have in month 6."},
+        ],
+
+        ("week1_day7", "gentle"): [
+            {"title": "🎉 {coach_name}", "body": "One full week, {name}. That's a milestone. Open the app to see your recap."},
+            {"title": "{coach_name}", "body": "{name}, week 1 done. {coach_name} is proud. Here's what you built."},
+        ],
+        ("week1_day7", "balanced"): [
+            {"title": "🎉 {coach_name}", "body": "One full week, {name}. You've earned it. Here's your week in review."},
+            {"title": "🏅 {coach_name}", "body": "{name}! 7 days in. 80% of users who make it to day 7 stick with it long term — you're in."},
+        ],
+        ("week1_day7", "tough_love"): [
+            {"title": "🎉 {coach_name}", "body": "{name}, week 1 complete. Don't celebrate too long — week 2 builds on week 1."},
+        ],
+
+        # ─── Streak Saved (migration 1938 / W3) ───────────────────────
+        # Fires when auto-consumed streak_shield saved the user's streak.
+        # Placeholders: {coach_name}, {name}, {streak} (saved length), {shields} (remaining count)
+        ("streak_saved", "gentle"): [
+            {"title": "🛡️ Streak saved!", "body": "{name}, we used a Streak Shield — your {streak}-day streak is safe. {shields} shields left."},
+            {"title": "🛡️ {coach_name}", "body": "No worries, {name}. A Streak Shield kept your {streak}-day streak alive."},
+        ],
+        ("streak_saved", "balanced"): [
+            {"title": "🛡️ Streak saved!", "body": "{name}, a Streak Shield just saved your {streak}-day streak. Let's keep it going!"},
+            {"title": "🛡️ {coach_name}", "body": "Shield used. {streak}-day streak: still alive. Come back strong today, {name}."},
+        ],
+        ("streak_saved", "tough_love"): [
+            {"title": "🛡️ {coach_name}", "body": "{name}, shield used. {streak}-day streak stays. Don't rely on them — show up tomorrow."},
+        ],
+
+        # ─── Streak at Risk (Safe Variant) ─── for users who HAVE shields.
+        # Gentler tone because loss aversion is already handled by shield reserve.
+        ("streak_at_risk_safe", "gentle"): [
+            {"title": "🛡️ {coach_name}", "body": "Didn't train today, {name}? You've got shields — streak's safe tonight either way."},
+        ],
+        ("streak_at_risk_safe", "balanced"): [
+            {"title": "🛡️ {coach_name}", "body": "{name}, your {streak}-day streak is covered by shields tonight. Still — 20 minutes today keeps the flame lit."},
+        ],
+        ("streak_at_risk_safe", "tough_love"): [
+            {"title": "🛡️ {coach_name}", "body": "{streak} days, {name}. Shields in the tank — but use 'em as a backup, not a plan. Train today."},
+        ],
+
+        # ─── Level Milestone Celebration (migration 1936) ─────────────
+        # Placeholders: {coach_name}, {name}, {level}, {rewards_summary}
+        # Fires when user hits any major XP milestone (L5/10/25/50/75/100/...).
+        ("level_milestone_celebration", "gentle"): [
+            {"title": "🏅 Level {level}", "body": "Congrats, {name}! You hit Level {level}. Your rewards are in your inventory."},
+            {"title": "🏅 {coach_name}", "body": "Level {level} unlocked. {rewards_summary}"},
+            {"title": "🏅 {coach_name}", "body": "{name}, proud of you — Level {level} reached. Check your inventory."},
+        ],
+        ("level_milestone_celebration", "balanced"): [
+            {"title": "🏅 LEVEL {level}!", "body": "{name}, you did it. {rewards_summary} Tap to open your rewards."},
+            {"title": "🏅 {coach_name}", "body": "LEVEL {level} UNLOCKED! {rewards_summary}"},
+            {"title": "🏅 Level {level} · {coach_name}", "body": "{name}, real work = real rewards. {rewards_summary}"},
+        ],
+        ("level_milestone_celebration", "tough_love"): [
+            {"title": "🏅 {coach_name}", "body": "{name}. Level {level}. Don't celebrate too long. Back to work."},
+            {"title": "🏅 LEVEL {level}", "body": "{name}, you earned it. Now earn the next one."},
+        ],
     }
 
     # ─────────────────────────────────────────────────────────────────
-    # 3. Guilt Escalation Templates (Duolingo-style)
+    # 3. Comeback Nudge Templates (formerly GUILT_ESCALATION — renamed for tone)
     # ─────────────────────────────────────────────────────────────────
     # Keyed by (days_tier, intensity). Tiers: 1, 2, 3, 5, 7, 14 days inactive.
     # Placeholders: {coach_name}, {name}, {days}
+    # Research (Fitness behavior change meta-analysis): shame/guilt undermines
+    # motivation. Tough_love tier preserved for users who opt into it, but the
+    # harshest strings rewritten to be "hype" not "shame" — calling you forward,
+    # not calling you out. New-user intensity is auto-capped to balanced for
+    # accounts < 14 days old (see _send_nudge in push_nudge_cron).
 
-    GUILT_ESCALATION_TEMPLATES = {
+    COMEBACK_NUDGE_TEMPLATES = {
         # --- 1 Day Inactive ---
         (1, "gentle"): [
             {"title": "{coach_name}", "body": "Rest day? {coach_name} will be here when you're ready, {name}."},
@@ -705,10 +869,10 @@ class NotificationService(NotificationServicePart2):
             {"title": "{coach_name}", "body": "{name}, day 3 without training. Don't let a habit die. Show up today!"},
         ],
         (3, "tough_love"): [
-            {"title": "{coach_name}", "body": "THREE days?! {name}, we need to talk. Get your gear on. NOW!"},
-            {"title": "{coach_name}", "body": "3 days of excuses. {name}, is this who you want to be?!"},
-            {"title": "{coach_name}", "body": "Day 3. No workout. {coach_name} is NOT impressed, {name}!"},
-            {"title": "{coach_name}", "body": "THREE DAYS! The gym is starting to forget your name, {name}!"},
+            {"title": "{coach_name}", "body": "3 days, {name}. Enough recovery — your body's ready. Gear up."},
+            {"title": "{coach_name}", "body": "3 days off. {coach_name}'s got a plan that matches your energy today. Let's go."},
+            {"title": "{coach_name}", "body": "Day 3. {name}, you've got a comeback in you. Today's the day."},
+            {"title": "{coach_name}", "body": "3 days of rest banked. Time to cash it in — 20 minutes, that's it."},
         ],
 
         # --- 5 Days Inactive ---
@@ -725,15 +889,15 @@ class NotificationService(NotificationServicePart2):
             {"title": "{coach_name}", "body": "Day 5. Your gains are filing a missing person's report, {name}."},
         ],
         (5, "tough_love"): [
-            {"title": "{coach_name}", "body": "{coach_name} is about to call your emergency contact, {name}!"},
-            {"title": "{coach_name}", "body": "FIVE DAYS?! {name}, your muscles are atrophying as we speak!"},
-            {"title": "{coach_name}", "body": "5 days off. {name}, this is a full-blown crisis. GET MOVING!"},
-            {"title": "{coach_name}", "body": "Day 5 of nothing. {coach_name} didn't sign up for this, {name}!"},
+            {"title": "{coach_name}", "body": "5 days off — your body's rested, {name}. Let's use that energy."},
+            {"title": "{coach_name}", "body": "5 days. {coach_name} knows you've got a comeback in you."},
+            {"title": "{coach_name}", "body": "Day 5. The best time to train was 5 days ago. The next-best time is right now, {name}."},
+            {"title": "{coach_name}", "body": "5 days in the tank. {name}, one session and you're back."},
         ],
 
         # --- 7 Days Inactive ---
         (7, "gentle"): [
-            {"title": "{coach_name}", "body": "{coach_name} misses you, {name}. Your weights are gathering dust."},
+            {"title": "{coach_name}", "body": "{coach_name} misses you, {name}. Your weights are ready whenever you are."},
             {"title": "{coach_name}", "body": "A whole week! {coach_name} is still here for you, {name}."},
             {"title": "{coach_name}", "body": "It's been 7 days. No judgment. Just one workout to restart, {name}."},
             {"title": "{coach_name}", "body": "One week away. {coach_name} kept everything ready for your comeback!"},
@@ -745,10 +909,10 @@ class NotificationService(NotificationServicePart2):
             {"title": "{coach_name}", "body": "{name}, 7 days is a slump. {coach_name} has a comeback plan ready!"},
         ],
         (7, "tough_love"): [
-            {"title": "{coach_name}", "body": "{coach_name} has started training your replacement. Just kidding. Or am I?"},
-            {"title": "{coach_name}", "body": "ONE FULL WEEK, {name}! That's not a rest day — that's a surrender!"},
-            {"title": "{coach_name}", "body": "7 days of nothing. {name}, {coach_name} is DEEPLY disappointed."},
-            {"title": "{coach_name}", "body": "A WEEK?! {name}, do you even remember where the gym is?!"},
+            {"title": "{coach_name}", "body": "A week off, {name}. {coach_name} has been waiting — ready when you are."},
+            {"title": "{coach_name}", "body": "7 days. That's long enough to reset. Now let's rebuild, {name}."},
+            {"title": "{coach_name}", "body": "A full week. {coach_name}'s got a fresh plan designed for day 1 back. No ramp-up needed."},
+            {"title": "{coach_name}", "body": "7 days clean. {name}, come make today the comeback day."},
         ],
 
         # --- 14+ Days Inactive (Win-back) ---
@@ -765,10 +929,10 @@ class NotificationService(NotificationServicePart2):
             {"title": "{coach_name}", "body": "{days} days without training. {name}, {coach_name} has a recovery plan ready!"},
         ],
         (14, "tough_love"): [
-            {"title": "{coach_name}", "body": "{days} days. {coach_name} hasn't given up on you. Don't give up on yourself, {name}."},
-            {"title": "{coach_name}", "body": "{days} DAYS, {name}! This is your wake-up call. TODAY you change this."},
-            {"title": "{coach_name}", "body": "It's been {days} days. {name}, {coach_name} is still here. ARE YOU?!"},
-            {"title": "{coach_name}", "body": "{days} days of silence. {name}, get off the sidelines. NOW!"},
+            {"title": "{coach_name}", "body": "{days} days. {coach_name} hasn't given up on you. Today is a clean slate, {name}."},
+            {"title": "{coach_name}", "body": "{days} days in, {name}. This is your moment — {coach_name}'s ready to rebuild with you."},
+            {"title": "{coach_name}", "body": "{days} days. Your comeback story starts the second you open this app again."},
+            {"title": "{coach_name}", "body": "{days} days, {name}. One small win today — that's all it takes to restart."},
         ],
     }
 
@@ -1017,9 +1181,9 @@ class NotificationService(NotificationServicePart2):
                     tier = int(nudge_type.replace("guilt_day", ""))
                 except ValueError:
                     tier = 14
-                template_pool = self.GUILT_ESCALATION_TEMPLATES.get(
+                template_pool = self.COMEBACK_NUDGE_TEMPLATES.get(
                     (tier, accountability_intensity),
-                    self.GUILT_ESCALATION_TEMPLATES.get((14, "balanced"), [])
+                    self.COMEBACK_NUDGE_TEMPLATES.get((14, "balanced"), [])
                 )
             else:
                 template_pool = self.ACCOUNTABILITY_TEMPLATES.get(template_key, [])
@@ -1037,6 +1201,17 @@ class NotificationService(NotificationServicePart2):
                     "meal_type": context_dict.get("meal_type", "meal"),
                     "incomplete_count": context_dict.get("incomplete_count", 0),
                     "s": "s" if context_dict.get("incomplete_count", 0) != 1 else "",
+                    # merch + level-milestone placeholders
+                    "merch_name": context_dict.get("merch_name", "reward"),
+                    "next_level": context_dict.get("next_level", 0),
+                    "levels_away": context_dict.get("levels_away", 0),
+                    "level": context_dict.get("level", 0),
+                    "rewards_summary": context_dict.get("rewards_summary", ""),
+                    # streak_saved / streak_at_risk_safe placeholders (W3)
+                    "shields": context_dict.get("shields", 0),
+                    # Week-1 nudge placeholders (W4)
+                    "count": context_dict.get("count", 0),
+                    "days_in": context_dict.get("days_in", 0),
                 }
                 title = template["title"].format(**safe_context)
                 message_body = template["body"].format(**safe_context)
