@@ -14,7 +14,9 @@ import os
 from typing import Any, Optional
 
 from core.config import Settings
-from core.logger import logger
+from core.logger import get_logger
+
+logger = get_logger(__name__)
 
 
 def _before_send(event: dict, hint: dict) -> Optional[dict]:
