@@ -551,8 +551,12 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
 # Send server errors to Discord #alerts (500, 502, 503, 504 + unhandled exceptions)
 from services.discord_webhooks import notify_error as _discord_notify_error
 
-# Alert-worthy status codes: 5xx (server errors), 401 (auth issues), 429 (abuse)
-_ALERT_STATUS_CODES = {401, 404, 429, 500, 502, 503, 504}
+# Alert-worthy status codes: 5xx (server errors), 401 (auth issues), 429 (abuse).
+# 404s are excluded — they're "client asked for something that doesn't exist"
+# (deleted resource, missing exercise image, typo in URL), not a backend
+# problem worth paging oncall. Sentry's _before_send already filters 4xx out
+# of the error tracker, Discord must match.
+_ALERT_STATUS_CODES = {401, 429, 500, 502, 503, 504}
 
 @app.exception_handler(HTTPException)
 async def http_exception_handler(request: Request, exc: HTTPException):

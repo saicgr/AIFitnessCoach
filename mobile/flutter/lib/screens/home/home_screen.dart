@@ -39,7 +39,6 @@ import 'widgets/hero_workout_card.dart';
 import '../../core/providers/week_start_provider.dart';
 import 'widgets/hero_workout_carousel.dart';
 import 'widgets/sectioned_hero_area.dart';
-import 'widgets/home_rank_card.dart';
 import 'widgets/workout_category_pills.dart';
 import 'widgets/habits_section.dart';
 import 'widgets/body_metrics_section.dart';
@@ -853,10 +852,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                 child: MinimalHeader(),
               ),
 
-              // W2: Week-1 rank card — only renders when user is in first 7 days
-              const SliverToBoxAdapter(
-                child: HomeRankCard(),
-              ),
+              // Rank/percentile is now surfaced inside StackedBannerPanel as
+              // a BannerType.rankPercentile entry (stacks with Daily Crate,
+              // missed workouts, etc.) — no separate hero card.
 
               // Stacked notification-panel banners (all active, swipeable)
               const SliverToBoxAdapter(

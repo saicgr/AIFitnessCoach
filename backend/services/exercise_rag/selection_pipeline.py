@@ -12,13 +12,106 @@ from .filters import (
     filter_by_avoided_muscles,
     INJURY_CONTRAINDICATIONS,
 )
-from .difficulty import get_difficulty_score, get_exercise_difficulty_category
+from .difficulty import (
+    enforce_difficulty_ceiling,
+    get_difficulty_score,
+    get_exercise_difficulty_category,
+)
 
 logger = get_logger(__name__)
 
 
+def apply_difficulty_ceiling_filter(
+    candidates: List[Dict],
+    validated_fitness_level: str,
+    difficulty_adjustment: int = 0,
+) -> List[Dict]:
+    """HARD PRE-FILTER: drop exercises above the user's difficulty ceiling.
+
+    Phase 2J (Regenerate Workout Safety Fix): must be called BEFORE any
+    similarity/difficulty *scoring* so deranked elite moves cannot resurface
+    after re-ranking. Above-ceiling candidates are removed entirely.
+
+    Fail-closed: exercises with NULL / unrecognized difficulty are dropped.
+
+    Delegates to `difficulty.enforce_difficulty_ceiling()` for the actual
+    per-exercise decision (which prefers `safety_difficulty` from the Phase 3K
+    safety index and falls back to the legacy `difficulty` column).
+    """
+    before = len(candidates)
+    filtered = enforce_difficulty_ceiling(
+        candidates,
+        validated_fitness_level,
+        difficulty_adjustment,
+    )
+    after = len(filtered)
+    dropped = before - after
+
+    if dropped > 0:
+        logger.info(
+            f"🏋️ [Selection Pipeline] Hard difficulty filter: "
+            f"{before} -> {after} exercises "
+            f"({dropped} above-ceiling dropped, level={validated_fitness_level}, "
+            f"adjustment={difficulty_adjustment:+d})"
+        )
+    else:
+        logger.debug(
+            f"[Selection Pipeline] Hard difficulty filter: no exercises above ceiling "
+            f"(level={validated_fitness_level}, count={after})"
+        )
+
+    return filtered
+
+
 def apply_difficulty_scoring(candidates: List[Dict], validated_fitness_level: str, difficulty_adjustment: int):
-    """Apply difficulty compatibility score to candidates for ranking."""
+    """Hard-filter then rank candidates by difficulty compatibility.
+
+    Phase 2J (Regenerate Workout Safety Fix):
+    - FIRST applies a HARD pre-filter against `DIFFICULTY_CEILING` via
+      `enforce_difficulty_ceiling()`. Above-ceiling exercises (including NULL
+      / unrecognized difficulty — fail-closed) are REMOVED in place from
+      `candidates` so they cannot resurface after re-ranking. This fixes the
+      root cause of elite moves like "Front Lever Raise" landing in Beginner
+      plans: the previous implementation only deranked them.
+    - THEN blends `difficulty_score` (0.3 weight) with `similarity` (0.7) on
+      the surviving pool for ranking.
+
+    The ranking portion of this function is otherwise unchanged; the
+    DEPRECATION note applies only to its old sole-scoring role. If no
+    candidates survive the hard filter, the caller (Phase 3K / RAG service)
+    is responsible for escalating to safety-mode curation.
+
+    Mutates `candidates` in place (both for filtering and sorting) to preserve
+    the existing call-site contract in `service.py`.
+    """
+    # Step 1: HARD ceiling filter (fail-closed on NULL / unrecognized).
+    before = len(candidates)
+    filtered = enforce_difficulty_ceiling(
+        candidates,
+        validated_fitness_level,
+        difficulty_adjustment,
+    )
+    after = len(filtered)
+
+    # Mutate `candidates` in place so upstream callers that hold the same
+    # reference see the filtered pool (service.py line ~845 does exactly this).
+    if after != before:
+        candidates[:] = filtered
+        logger.info(
+            f"🏋️ [Difficulty Scoring] Hard ceiling pre-filter: "
+            f"{before} -> {after} candidates "
+            f"({before - after} above-ceiling dropped, "
+            f"level={validated_fitness_level}, adjustment={difficulty_adjustment:+d})"
+        )
+
+    if not candidates:
+        logger.warning(
+            f"⚠️  [Difficulty Scoring] No candidates survived hard ceiling filter "
+            f"(level={validated_fitness_level}). Caller must escalate to safety mode."
+        )
+        return
+
+    # Step 2: Rank the surviving pool.
     for candidate in candidates:
         original_similarity = candidate.get("similarity", 0.5)
         d_score = candidate.get("difficulty_score", 0.5)
@@ -76,7 +169,21 @@ def cap_bodyweight_exercises(candidates: List[Dict], equipment: List[str]) -> Li
 
 
 def apply_injury_filter(candidates: List[Dict], injuries: List[str]) -> List[Dict]:
-    """Filter candidates by injuries, with safety fallback."""
+    """DEPRECATED — legacy substring-match injury filter.
+
+    Phase 3K (Regenerate Workout Safety Fix) replaced this with
+    ``fetch_safe_candidates`` in ``service.py``, which queries
+    ``public.exercise_safety_index`` with hard SQL flags (fail-closed).
+
+    This function is kept callable for backwards compatibility with any callers
+    outside the main RAG pipeline (e.g. unit tests, legacy paths).  The
+    "least-risky fallback" behaviour has been REMOVED — if the filter leaves
+    zero candidates we now return [] so the caller can escalate to safety-mode
+    curation rather than silently serving unsafe exercises.
+
+    Do NOT use this in new code.  All new injury filtering MUST go through
+    ``fetch_safe_candidates`` / ``workout_safety_validator``.
+    """
     if not injuries:
         return candidates
 
@@ -85,31 +192,17 @@ def apply_injury_filter(candidates: List[Dict], injuries: List[str]) -> List[Dic
         logger.info(f"Pre-filtered {len(candidates)} candidates to {len(safe_candidates)} safe exercises")
         return safe_candidates
 
-    logger.warning(f"Injury filter too restrictive - all {len(candidates)} exercises flagged as unsafe")
-
-    active_patterns = set()
-    for injury in [inj.lower() for inj in injuries]:
-        for key, patterns in INJURY_CONTRAINDICATIONS.items():
-            if key in injury:
-                active_patterns.update(patterns)
-
-    def count_matches(candidate):
-        name_lower = candidate.get("name", "").lower()
-        target_lower = candidate.get("target_muscle", "").lower()
-        body_lower = candidate.get("body_part", "").lower()
-        count = 0
-        for pattern in active_patterns:
-            if pattern in name_lower or pattern in target_lower or pattern in body_lower:
-                count += 1
-        return count
-
-    candidates.sort(key=lambda c: (count_matches(c), -c.get("similarity", 0)))
-    if candidates:
-        min_matches = count_matches(candidates[0])
-        candidates = [c for c in candidates if count_matches(c) == min_matches]
-        logger.info(f"Selected {len(candidates)} least-risky exercises (match count: {min_matches})")
-
-    return candidates
+    # Fail-closed: removed "least-risky fallback" — return empty list so the
+    # caller (Phase 3K RAG path) knows the safe pool is empty and can escalate
+    # to safety-mode curation.  Silently serving the least-risky unsafe exercise
+    # is the behaviour that allowed "Front Lever Raise" into a Beginner plan.
+    logger.warning(
+        "❌ [InjuryFilter] No safe candidates after substring filter for injuries=%s. "
+        "Returning [] — caller must escalate to safety-mode curation. "
+        "NOTE: this is the deprecated legacy filter; use fetch_safe_candidates instead.",
+        injuries,
+    )
+    return []
 
 
 def apply_avoided_muscles_filter(candidates: List[Dict], avoided_muscles: Dict) -> List[Dict]:

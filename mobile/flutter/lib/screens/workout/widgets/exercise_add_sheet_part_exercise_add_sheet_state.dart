@@ -276,6 +276,7 @@ class _ExerciseAddSheetState extends ConsumerState<_ExerciseAddSheet>
       workoutId: widget.workoutId,
       exerciseName: exerciseName,
       exerciseId: exerciseId,
+      previewId: widget.previewId,
     );
 
     setState(() => _isAdding = false);

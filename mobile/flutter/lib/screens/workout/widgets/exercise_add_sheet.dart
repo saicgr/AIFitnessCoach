@@ -57,13 +57,20 @@ List<OfflineExercise> _convertCachedExercises(List<Map<String, dynamic>> rows) {
   }).toList();
 }
 
-/// Shows exercise add sheet with Library tab first, AI Suggestions second
+/// Shows exercise add sheet with Library tab first, AI Suggestions second.
+///
+/// When [previewId] is non-null the confirmed add is routed to
+/// `POST /api/v1/workouts/preview/add-exercise` so that only the short-lived
+/// preview cache is mutated, not the committed workout in the database. Pass
+/// this from [showWorkoutReviewSheet] when the sheet is open for an unapproved
+/// regeneration preview.
 Future<Workout?> showExerciseAddSheet(
   BuildContext context,
   WidgetRef ref, {
   required String workoutId,
   required String workoutType,
   List<String>? currentExerciseNames,
+  String? previewId,
 }) async {
   return await showGlassSheet<Workout>(
     context: context,
@@ -73,6 +80,7 @@ Future<Workout?> showExerciseAddSheet(
         workoutId: workoutId,
         workoutType: workoutType,
         currentExerciseNames: currentExerciseNames ?? [],
+        previewId: previewId,
       ),
     ),
   );
@@ -92,11 +100,15 @@ class _ExerciseAddSheet extends ConsumerStatefulWidget {
   final String workoutId;
   final String workoutType;
   final List<String> currentExerciseNames;
+  /// When non-null, adds are applied to the preview cache instead of the
+  /// committed workout. Forwarded to [WorkoutRepository.addExercise].
+  final String? previewId;
 
   const _ExerciseAddSheet({
     required this.workoutId,
     required this.workoutType,
     required this.currentExerciseNames,
+    this.previewId,
   });
 
   @override

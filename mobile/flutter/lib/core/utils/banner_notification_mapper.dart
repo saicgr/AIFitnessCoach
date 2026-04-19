@@ -11,6 +11,8 @@ class BannerNotificationMapper {
         return 'renewal';
       case BannerType.missedWorkout:
         return 'missed_workout';
+      case BannerType.rankPercentile:
+        return 'rank_percentile';
       case BannerType.dailyCrate:
         return 'daily_crate';
       case BannerType.doubleXP:

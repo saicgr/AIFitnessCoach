@@ -513,6 +513,7 @@ async def generate_workout(request: Request, *, body: GenerateWorkoutRequest, ba
                     workout_type_preference=body.workout_type,
                     avoid_name_words=avoid_name_words,
                     user_dob=user.get("date_of_birth") if user else None,
+                    injuries=injury_names if injury_names else None,
                 )
             else:
                 # Fallback to free-form generation if RAG returns no exercises

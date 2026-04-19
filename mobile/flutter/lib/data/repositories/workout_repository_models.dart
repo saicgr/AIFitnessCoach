@@ -359,8 +359,15 @@ class RegenerateProgress {
   /// Time elapsed since start in milliseconds
   final int elapsedMs;
 
-  /// The regenerated workout (only available when completed)
+  /// The regenerated workout (only available when completed).
+  /// NOTE: after the Phase 1C/1D preview refactor this is a *preview* workout,
+  /// not yet persisted to the DB. The caller must POST /regenerate-commit with
+  /// [previewId] to materialize it, or /regenerate-discard to release it.
   final Workout? workout;
+
+  /// Preview cache id returned on the final `done` SSE event. Required for
+  /// commit / discard / in-sheet swap/add. Null on non-terminal events.
+  final String? previewId;
 
   /// Total time for regeneration (server-side, only available when completed)
   final int? totalTimeMs;
@@ -378,6 +385,7 @@ class RegenerateProgress {
     this.detail,
     required this.elapsedMs,
     this.workout,
+    this.previewId,
     this.totalTimeMs,
     this.isCompleted = false,
     this.hasError = false,

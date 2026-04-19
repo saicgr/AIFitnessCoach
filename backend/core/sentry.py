@@ -20,16 +20,24 @@ logger = get_logger(__name__)
 
 
 def _before_send(event: dict, hint: dict) -> Optional[dict]:
-    """Drop expected 4xx HTTPExceptions so they don't count against quota."""
+    """Drop expected 4xx HTTPExceptions so they don't count against quota.
+
+    Uses `isinstance` so subclasses are correctly filtered — fastapi's
+    HTTPException extends Starlette's, and some middlewares surface the
+    Starlette flavor directly. `exc_type is HTTPException` missed those
+    (only the exact fastapi type matched), so 404s were still being
+    reported despite the intended filter.
+    """
     exc_info = (hint or {}).get("exc_info")
     if not exc_info:
         return event
     try:
-        from fastapi import HTTPException  # local import to avoid circulars
+        from fastapi import HTTPException as _FastApiHTTPException
+        from starlette.exceptions import HTTPException as _StarletteHTTPException
     except Exception:
         return event
-    exc_type, exc_value, _ = exc_info
-    if exc_type is HTTPException:
+    _, exc_value, _ = exc_info
+    if isinstance(exc_value, (_FastApiHTTPException, _StarletteHTTPException)):
         status = getattr(exc_value, "status_code", 500)
         if 400 <= status < 500:
             return None

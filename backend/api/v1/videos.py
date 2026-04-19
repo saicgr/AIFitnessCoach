@@ -427,7 +427,18 @@ async def get_image_by_exercise_name(exercise_name: str, gender: str = None,
                 }
 
         if not found_result:
-            raise HTTPException(status_code=404, detail="Image not found for exercise")
+            # Missing image isn't an error — it's a data state. Return 200
+            # with url=null so the client can render a placeholder silently
+            # instead of throwing DioException on every exercise the library
+            # hasn't been populated for. Also avoids filling Sentry/Discord
+            # with false-positive "Backend Error" alerts (404s aren't server
+            # errors, they're expected cache misses).
+            return {
+                "url": None,
+                "expires_in": None,
+                "exercise_name": exercise_name,
+                "source": "not_found",
+            }
 
         s3_path = found_result["image_s3_path"]
         found_exercise_name = found_result["exercise_name"]

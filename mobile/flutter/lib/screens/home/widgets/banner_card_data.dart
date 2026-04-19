@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 enum BannerType {
   renewal,
   missedWorkout,
+  rankPercentile,   // e.g. "Top 1% this week" — tap → Discover
   dailyCrate,
   doubleXP,
   week1Tip,

@@ -46,6 +46,10 @@ List<RouteBase> _settingsRoutes() => [
         path: '/settings/privacy-data',
         builder: (context, state) => const PrivacyDataPage(),
       ),
+      GoRoute(
+        path: '/settings/leaderboard-privacy',
+        builder: (context, state) => const LeaderboardPrivacyPage(),
+      ),
       // Beast Mode - Power user tools (hidden easter egg)
       GoRoute(
         path: '/settings/beast-mode',

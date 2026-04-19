@@ -8,6 +8,7 @@ import '../../../core/constants/app_links.dart';
 import '../../../core/utils/banner_notification_mapper.dart';
 import '../../notifications/notifications_screen.dart';
 import '../../../data/providers/billing_reminder_provider.dart';
+import '../../../data/providers/discover_provider.dart';
 import '../../../data/providers/scheduling_provider.dart';
 import '../../../data/providers/scores_provider.dart';
 import '../../../data/providers/week1_tips_provider.dart';
@@ -242,7 +243,31 @@ class _StackedBannerPanelState extends ConsumerState<StackedBannerPanel>
       ));
     }
 
-    // 3. Daily crate (includes accumulated unclaimed crates)
+    // 3. Leaderboard percentile banner — "Top N% this week" for anyone on the
+    // board. Taps through to Discover. Dismiss is per-session via the
+    // shared stackedBannerController, re-appears each session since the
+    // rank shifts daily.
+    final discoverSnap = ref.watch(discoverSnapshotProvider).valueOrNull;
+    if (discoverSnap != null && discoverSnap.yourRank > 0) {
+      final percentileShown = (100 - discoverSnap.yourPercentile)
+          .clamp(1, 99)
+          .toStringAsFixed(0);
+      banners.add(BannerCardData(
+        type: BannerType.rankPercentile,
+        id: 'rank_pct_${discoverSnap.weekStart}',
+        icon: Icons.bar_chart_rounded,
+        title: 'Top $percentileShown% this week',
+        subtitle:
+            '#${discoverSnap.yourRank} of ${discoverSnap.totalActive} active users · Tap to see Discover',
+        accentColor: AppColors.purple,
+        onTap: () {
+          HapticService.light();
+          context.go('/discover');
+        },
+      ));
+    }
+
+    // 4. Daily crate (includes accumulated unclaimed crates)
     final showCrate = ref.watch(showDailyCrateBannerProvider);
     final unclaimedCount = ref.watch(unclaimedCratesCountProvider);
     // Show banner if today's crate is available OR there are past unclaimed crates

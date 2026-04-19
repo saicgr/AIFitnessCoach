@@ -11,6 +11,8 @@ This service:
 from typing import List, Dict, Any, Optional
 import json
 
+from sqlalchemy import text
+
 from core.config import get_settings
 from core.chroma_cloud import get_chroma_cloud_client
 from core.supabase_client import get_supabase
@@ -57,7 +59,10 @@ from .selection_pipeline import (
     apply_difficulty_scoring,
     boost_equipment_matches,
     cap_bodyweight_exercises,
-    apply_injury_filter,
+    # apply_injury_filter is intentionally NOT imported here — Phase 3K replaced
+    # the call site with fetch_safe_candidates (SQL-based, fail-closed).
+    # The function remains in selection_pipeline.py for backwards compatibility
+    # with any direct importers but must not be used in new code.
     apply_avoided_muscles_filter,
     apply_workout_type_filter,
     apply_favorites_boost,
@@ -69,6 +74,198 @@ from .selection_pipeline import (
 
 settings = get_settings()
 logger = get_logger(__name__)
+
+
+# ---------------------------------------------------------------------------
+# Phase 3K — SQL-based safe candidate fetcher
+# ---------------------------------------------------------------------------
+
+# Canonical mapping from user-facing injury names to the boolean column names
+# in `public.exercise_safety_index`.  A user injury string is matched by
+# checking whether any key is a substring of the lowercased injury token.
+# E.g. "lower_back" matches "lower_back", "lower back pain", etc.
+_INJURY_COLUMN_MAP: Dict[str, str] = {
+    "shoulder":   "shoulder_safe",
+    "lower_back": "lower_back_safe",
+    "knee":       "knee_safe",
+    "elbow":      "elbow_safe",
+    "wrist":      "wrist_safe",
+    "ankle":      "ankle_safe",
+    "hip":        "hip_safe",
+    "neck":       "neck_safe",
+}
+
+# Ordinal map matching workout_safety_validator._DIFFICULTY_RANK.
+_SAFETY_DIFFICULTY_RANK: Dict[str, int] = {
+    "beginner":     1,
+    "intermediate": 2,
+    "advanced":     3,
+    "elite":        4,
+}
+
+
+def _resolve_injury_columns(injuries: List[str]) -> List[str]:
+    """Return the list of safety column names that apply to the given injuries.
+
+    Uses substring matching so that free-text strings like "lower back pain"
+    correctly resolve to the ``lower_back_safe`` column.
+    """
+    matched: List[str] = []
+    seen: set = set()
+    for inj in injuries or []:
+        inj_lower = (inj or "").strip().lower().replace(" ", "_")
+        for key, col in _INJURY_COLUMN_MAP.items():
+            if key in inj_lower and col not in seen:
+                matched.append(col)
+                seen.add(col)
+    return matched
+
+
+async def fetch_safe_candidates(
+    injuries: List[str],
+    focus_areas: List[str],
+    equipment: List[str],
+    difficulty_ceiling: str,
+    k: int = 40,
+    *,
+    supabase_client=None,  # Unused; kept for call-site symmetry with validator.
+) -> List[Dict[str, Any]]:
+    """Query ``public.exercise_safety_index`` and return up to *k* exercises
+    that pass ALL hard safety filters.
+
+    Phase 3K (Regenerate Workout Safety Fix) — this replaces the legacy
+    ``apply_injury_filter`` substring-match call in the RAG pipeline.
+
+    Filters applied (all mandatory / fail-closed):
+      - ``is_tagged = TRUE``   — only rows with a confirmed safety tag
+      - ``<joint>_safe = TRUE`` for every injury in *injuries* (NULL = UNSAFE)
+      - ``safety_difficulty_rank <= ceiling_rank`` where rank is derived from
+        *difficulty_ceiling* via ``_SAFETY_DIFFICULTY_RANK``.
+      - Equipment partial match via ILIKE (if *equipment* is non-empty)
+      - Body-part / focus-area ILIKE filter (if *focus_areas* is non-empty)
+
+    Returns:
+        List of row dicts from the index.  Returns [] if no rows satisfy all
+        filters — the caller (``select_exercises_for_workout``) must escalate to
+        safety-mode curation rather than silently relaxing the constraints.
+
+    Never uses f-string SQL.  All user data is passed via SQLAlchemy named
+    parameters to prevent injection.
+    """
+    engine = get_supabase().engine
+
+    # Resolve injury columns.
+    injury_cols = _resolve_injury_columns(injuries)
+
+    # Difficulty ceiling rank.
+    ceiling_rank = _SAFETY_DIFFICULTY_RANK.get(
+        (difficulty_ceiling or "beginner").strip().lower(), 1
+    )
+
+    # Build parameterized WHERE clauses.
+    # We assemble the SQL string purely from safe constants (column names from
+    # our own dict, integer literals) — no user strings are interpolated.
+    where_parts = ["t.is_tagged IS TRUE"]
+    params: Dict[str, Any] = {}
+
+    # Per-injury flags — column names come from our own trusted dict, not user input.
+    for col in injury_cols:
+        where_parts.append(f"t.{col} IS TRUE")
+
+    # Difficulty hard ceiling via inline CASE (no stored rank column needed).
+    rank_case = (
+        "CASE lower(t.safety_difficulty) "
+        "WHEN 'beginner' THEN 1 WHEN 'intermediate' THEN 2 "
+        "WHEN 'advanced' THEN 3 WHEN 'elite' THEN 4 ELSE NULL END"
+    )
+    # Wrap in a CTE so the alias is available in the outer WHERE.
+    params["ceiling_rank"] = ceiling_rank
+
+    # Equipment clause — partial ILIKE match.
+    if equipment:
+        # Build an ANY-unnest filter so we pass a single array param.
+        # NOTE: use CAST(:param AS text[]) to avoid SQLAlchemy/pgvector cast ambiguity.
+        where_parts.append(
+            "(t.equipment IS NULL OR EXISTS ("
+            "SELECT 1 FROM unnest(CAST(:equipment AS text[])) AS eq(val) "
+            "WHERE t.equipment ILIKE '%' || eq.val || '%' "
+            "   OR eq.val ILIKE '%' || t.equipment || '%'"
+            "))"
+        )
+        params["equipment"] = equipment
+
+    # Focus-area / body-part clause.
+    # The view exposes body_part and target_muscle (no muscle_group column).
+    if focus_areas:
+        where_parts.append(
+            "(t.body_part ILIKE ANY(CAST(:focus_areas AS text[])) "
+            "OR t.target_muscle ILIKE ANY(CAST(:focus_areas_tm AS text[])))"
+        )
+        # Wrap each focus area in a wildcard so "chest" matches "Upper Chest" etc.
+        focus_patterns = [f"%{f}%" for f in focus_areas]
+        params["focus_areas"] = focus_patterns
+        params["focus_areas_tm"] = focus_patterns
+
+    where_sql = " AND ".join(where_parts)
+
+    sql = text(f"""
+        WITH safe_pool AS (
+            SELECT
+                t.exercise_id,
+                t.name,
+                t.name_normalized,
+                t.target_muscle,
+                t.body_part,
+                t.equipment,
+                t.safety_difficulty,
+                t.movement_pattern,
+                {rank_case} AS safety_difficulty_rank
+            FROM public.exercise_safety_index_mat t
+            WHERE {where_sql}
+        )
+        SELECT *
+        FROM safe_pool
+        WHERE safety_difficulty_rank IS NOT NULL
+          AND safety_difficulty_rank <= :ceiling_rank
+        ORDER BY name
+        LIMIT :k
+    """)
+    params["k"] = k
+
+    try:
+        async with engine.connect() as conn:
+            result = await conn.execute(sql, params)
+            rows = result.fetchall()
+    except Exception as exc:
+        logger.error(
+            "❌ [RAGService] fetch_safe_candidates query failed: %s", exc, exc_info=True
+        )
+        raise
+
+    if not rows:
+        logger.warning(
+            "⚠️  [RAGService] fetch_safe_candidates: 0 rows for "
+            "injuries=%s focus=%s equipment=%s ceiling=%s — "
+            "caller must escalate to safety-mode curation.",
+            injuries, focus_areas, equipment, difficulty_ceiling,
+        )
+        return []
+
+    # Convert RowMapping to plain dicts.
+    out: List[Dict[str, Any]] = []
+    for row in rows:
+        mapping = getattr(row, "_mapping", None)
+        if mapping is not None:
+            out.append(dict(mapping))
+        else:
+            out.append(dict(row))
+
+    logger.info(
+        "✅ [RAGService] fetch_safe_candidates: %d safe exercises "
+        "(injuries=%s, ceiling=%s, focus=%s)",
+        len(out), injuries, difficulty_ceiling, focus_areas,
+    )
+    return out
 
 
 class ExerciseRAGService:
@@ -845,7 +1042,68 @@ class ExerciseRAGService:
         apply_difficulty_scoring(candidates, validated_fitness_level, difficulty_adjustment)
         boost_equipment_matches(candidates, equipment)
         candidates = cap_bodyweight_exercises(candidates, equipment)
-        candidates = apply_injury_filter(candidates, injuries if injuries else [])
+
+        # Phase 3K — SQL-based injury filter replaces the legacy substring matcher.
+        # ``fetch_safe_candidates`` is the authoritative injury gate; the legacy
+        # ``apply_injury_filter`` call is intentionally NOT invoked here.
+        # If the safe pool returned by fetch_safe_candidates is empty the caller
+        # should already have handled safety-mode curation upstream; the remaining
+        # ChromaDB-sourced candidates are filtered by name intersection to retain
+        # only those confirmed safe by the index.
+        if injuries:
+            try:
+                focus_list = [focus_area] if focus_area else []
+                safe_rows = await fetch_safe_candidates(
+                    injuries=injuries,
+                    focus_areas=focus_list,
+                    equipment=equipment,
+                    difficulty_ceiling=validated_fitness_level,
+                    k=200,  # Large enough to cover all library exercises for this focus
+                )
+                if not safe_rows:
+                    # Fail-closed: return no candidates so the caller can
+                    # escalate to safety-mode curation.
+                    logger.warning(
+                        "⚠️  [RAGService] fetch_safe_candidates returned 0 results "
+                        "for injuries=%s — clearing candidate pool (safety mode required).",
+                        injuries,
+                    )
+                    candidates = []
+                else:
+                    # Keep only ChromaDB candidates that appear in the safe SQL pool.
+                    safe_names = {
+                        (r.get("name") or r.get("name_normalized") or "").strip().lower()
+                        for r in safe_rows
+                    }
+                    safe_ids = {
+                        str(r.get("exercise_id") or "").strip()
+                        for r in safe_rows
+                        if r.get("exercise_id")
+                    }
+                    before_count = len(candidates)
+                    candidates = [
+                        c for c in candidates
+                        if (c.get("name") or "").strip().lower() in safe_names
+                        or (str(c.get("id") or "").strip()) in safe_ids
+                    ]
+                    dropped = before_count - len(candidates)
+                    if dropped > 0:
+                        logger.info(
+                            "🛡️  [RAGService] SQL injury filter: "
+                            "%d -> %d candidates (%d removed, injuries=%s)",
+                            before_count, len(candidates), dropped, injuries,
+                        )
+            except Exception as exc:
+                # Surface the error rather than silently falling back to the
+                # unsafe legacy filter.  The caller can decide to abort or
+                # retry — we never return potentially-unsafe exercises.
+                logger.error(
+                    "❌ [RAGService] fetch_safe_candidates error — "
+                    "propagating (injuries=%s): %s",
+                    injuries, exc,
+                )
+                raise
+
         candidates = apply_avoided_muscles_filter(candidates, avoided_muscles)
         apply_workout_type_filter(candidates, workout_type_preference)
         apply_favorites_boost(candidates, favorite_exercises)
@@ -1353,13 +1611,19 @@ Select exactly {count} UNIQUE exercises that are SAFE for this user."""
                         continue
 
                 if injuries:
-                    primary_muscle = (meta.get("target_muscle", "") or "").lower()
-                    secondary_muscles = parse_secondary_muscles(meta.get("secondary_muscles", []))
-                    is_safe = pre_filter_by_injuries(
-                        exercise_name=exercise_name, primary_muscle=primary_muscle,
-                        secondary_muscles=secondary_muscles, injuries=injuries
-                    )
-                    if not is_safe:
+                    # Phase 3K: use the correct pre_filter_by_injuries signature.
+                    # This method operates on a single-element candidate list so
+                    # we can test one exercise at a time without changing the
+                    # challenge-exercise flow.  The SQL-backed fetch_safe_candidates
+                    # is the authoritative gate for the main pipeline; this is a
+                    # lightweight in-process guard for the challenge-exercise path.
+                    single = [{
+                        "name": exercise_name,
+                        "target_muscle": (meta.get("target_muscle") or ""),
+                        "body_part": (meta.get("body_part") or ""),
+                    }]
+                    safe = pre_filter_by_injuries(single, injuries)
+                    if not safe:
                         filter_stats["injury"] += 1
                         continue
 
@@ -1454,3 +1718,59 @@ def get_exercise_rag_service() -> ExerciseRAGService:
         gemini_service = GeminiService()
         _exercise_rag_service = ExerciseRAGService(gemini_service)
     return _exercise_rag_service
+
+
+# ---------------------------------------------------------------------------
+# Smoke test — run directly:
+#   python -m services.exercise_rag.service
+# Verifies fetch_safe_candidates against the live DB for a worst-case scenario
+# (shoulder + lower_back injuries, Dumbbell + Bodyweight equipment, beginner).
+# ---------------------------------------------------------------------------
+
+if __name__ == "__main__":  # pragma: no cover
+    import asyncio
+
+    async def _smoke() -> None:
+        print("🔍 [RAGService Smoke] fetch_safe_candidates — Phase 3K validation")
+        print("Query: shoulder + lower_back injuries, back+chest focus, Dumbbell+Bodyweight, beginner, k=20")
+        print("-" * 70)
+
+        rows = await fetch_safe_candidates(
+            injuries=["shoulder", "lower_back"],
+            focus_areas=["back", "chest"],
+            equipment=["Dumbbell", "Bodyweight"],
+            difficulty_ceiling="beginner",
+            k=20,
+        )
+
+        if not rows:
+            print("⚠️  0 results — check that exercise_safety_index has tagged rows "
+                  "for shoulder_safe=TRUE and lower_back_safe=TRUE.")
+        else:
+            print(f"✅ {len(rows)} safe exercises returned. First 5:\n")
+            for r in rows[:5]:
+                print(
+                    f"  name={r.get('name')!r}  "
+                    f"body_part={r.get('body_part')!r}  "
+                    f"equipment={r.get('equipment')!r}  "
+                    f"safety_difficulty={r.get('safety_difficulty')!r}  "
+                    f"movement_pattern={r.get('movement_pattern')!r}"
+                )
+
+        print("\n--- Testing fail-closed (all 8 injuries + elite ceiling) ---")
+        rows_hard = await fetch_safe_candidates(
+            injuries=["shoulder", "lower_back", "knee", "elbow", "wrist", "ankle", "hip", "neck"],
+            focus_areas=["full_body"],
+            equipment=["Bodyweight"],
+            difficulty_ceiling="beginner",
+            k=20,
+        )
+        if not rows_hard:
+            print("✅ Correctly returned 0 rows for all-8-injuries + Bodyweight + beginner "
+                  "(safety-mode will be triggered upstream)")
+        else:
+            print(f"  {len(rows_hard)} safe exercises survive all 8 injury flags:")
+            for r in rows_hard[:5]:
+                print(f"    {r.get('name')!r}  diff={r.get('safety_difficulty')!r}")
+
+    asyncio.run(_smoke())

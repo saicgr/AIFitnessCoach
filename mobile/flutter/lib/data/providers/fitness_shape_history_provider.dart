@@ -5,10 +5,18 @@ import '../models/fitness_shape_history.dart';
 import '../services/api_client.dart';
 
 /// Time ranges the user can select on the peek-sheet scrubber.
-enum FitnessHistoryRange { oneMonth, threeMonths, sixMonths, oneYear, ytd }
+enum FitnessHistoryRange {
+  oneWeek,
+  oneMonth,
+  threeMonths,
+  sixMonths,
+  oneYear,
+  ytd,
+}
 
 extension FitnessHistoryRangeX on FitnessHistoryRange {
   String get label => switch (this) {
+        FitnessHistoryRange.oneWeek => '1W',
         FitnessHistoryRange.oneMonth => '1M',
         FitnessHistoryRange.threeMonths => '3M',
         FitnessHistoryRange.sixMonths => '6M',
@@ -20,6 +28,8 @@ extension FitnessHistoryRangeX on FitnessHistoryRange {
   int resolveDays() {
     final now = DateTime.now();
     switch (this) {
+      case FitnessHistoryRange.oneWeek:
+        return 7;
       case FitnessHistoryRange.oneMonth:
         return 30;
       case FitnessHistoryRange.threeMonths:
@@ -31,7 +41,7 @@ extension FitnessHistoryRangeX on FitnessHistoryRange {
       case FitnessHistoryRange.ytd:
         final jan1 = DateTime(now.year, 1, 1);
         final days = now.difference(jan1).inDays + 1;
-        return days < 7 ? 7 : days; // backend minimum is 7
+        return days < 7 ? 7 : days;
     }
   }
 }

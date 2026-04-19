@@ -19,6 +19,16 @@ class DiscoverSnapshot {
   final List<DiscoverRisingStar> risingStars;
   final List<DiscoverEntry> top10;
 
+  // Tier-persistence hero additions (migration 1951 + 1954 + 1957 backend).
+  // yourTierStreakWeeks: consecutive weeks viewer has held their tier-or-better
+  // on this board. 0 when not on the board or not in a qualifying tier.
+  // yourPeakTier: lifetime best tier ever achieved on this board.
+  // yourNextMilestoneWeeks/Xp: "N more for M XP" nudge copy in the hero.
+  final int yourTierStreakWeeks;
+  final String? yourPeakTier;
+  final int? yourNextMilestoneWeeks;
+  final int? yourNextMilestoneXp;
+
   const DiscoverSnapshot({
     required this.board,
     required this.scope,
@@ -34,6 +44,10 @@ class DiscoverSnapshot {
     this.nearYou = const [],
     this.risingStars = const [],
     this.top10 = const [],
+    this.yourTierStreakWeeks = 0,
+    this.yourPeakTier,
+    this.yourNextMilestoneWeeks,
+    this.yourNextMilestoneXp,
   });
 
   factory DiscoverSnapshot.fromJson(Map<String, dynamic> json) => DiscoverSnapshot(
@@ -57,6 +71,10 @@ class DiscoverSnapshot {
         top10: (json['top_10'] as List? ?? [])
             .map((j) => DiscoverEntry.fromJson(j as Map<String, dynamic>))
             .toList(),
+        yourTierStreakWeeks: json['your_tier_streak_weeks'] as int? ?? 0,
+        yourPeakTier: json['your_peak_tier'] as String?,
+        yourNextMilestoneWeeks: json['your_next_milestone_weeks'] as int?,
+        yourNextMilestoneXp: json['your_next_milestone_xp'] as int?,
       );
 }
 
@@ -69,6 +87,18 @@ class DiscoverEntry {
   final int rank;
   final double metricValue;
   final bool isCurrentUser;
+  final bool isAnonymous;            // server-driven; TRUE = user opted into anonymous mode
+  final int currentLevel;
+
+  // Row-engagement fields (migration 1956). All optional with safe defaults
+  // so old cached JSON payloads still decode into valid entries.
+  final int? previousRank;
+  final int? rankDelta;              // +positive = climbing, -neg = falling
+  final int currentStreak;
+  final bool prThisWeek;
+  final String? countryCode;         // ISO-2, null for anonymous users
+  final DateTime? lastActiveAt;
+  final String? peakTier;            // lifetime best tier (nullable)
 
   const DiscoverEntry({
     required this.userId,
@@ -78,6 +108,15 @@ class DiscoverEntry {
     required this.rank,
     required this.metricValue,
     this.isCurrentUser = false,
+    this.isAnonymous = false,
+    this.currentLevel = 1,
+    this.previousRank,
+    this.rankDelta,
+    this.currentStreak = 0,
+    this.prThisWeek = false,
+    this.countryCode,
+    this.lastActiveAt,
+    this.peakTier,
   });
 
   factory DiscoverEntry.fromJson(Map<String, dynamic> json) => DiscoverEntry(
@@ -88,11 +127,29 @@ class DiscoverEntry {
         rank: json['rank'] as int? ?? 0,
         metricValue: ((json['metric_value'] as num?) ?? 0).toDouble(),
         isCurrentUser: json['is_current_user'] as bool? ?? false,
+        isAnonymous: json['is_anonymous'] as bool? ?? false,
+        currentLevel: (json['current_level'] as int?) ?? 1,
+        previousRank: json['previous_rank'] as int?,
+        rankDelta: json['rank_delta'] as int?,
+        currentStreak: (json['current_streak'] as int?) ?? 0,
+        prThisWeek: (json['hit_pr_this_week'] as bool?) ?? false,
+        countryCode: json['country_code'] as String?,
+        lastActiveAt: _parseIsoDate(json['last_active_at']),
+        peakTier: json['peak_tier'] as String?,
       );
 
   String get bestName {
     final n = displayName ?? username;
     return (n == null || n.isEmpty) ? 'Athlete' : n;
+  }
+
+  /// Whether this user has been active within the last 24 hours. Powers the
+  /// green activity pulse dot. Null `lastActiveAt` (anonymous users or no
+  /// activity yet) renders as inactive.
+  bool get isActiveNow {
+    final t = lastActiveAt;
+    if (t == null) return false;
+    return DateTime.now().difference(t) < const Duration(hours: 24);
   }
 }
 
@@ -106,6 +163,15 @@ class DiscoverRisingStar {
   final int previousRank;
   final int rankDelta;
   final double metricValue;
+  final bool isAnonymous;
+  final int currentLevel;
+
+  // Row-engagement parity with DiscoverEntry
+  final int currentStreak;
+  final bool prThisWeek;
+  final String? countryCode;
+  final DateTime? lastActiveAt;
+  final String? peakTier;
 
   const DiscoverRisingStar({
     required this.userId,
@@ -116,6 +182,13 @@ class DiscoverRisingStar {
     required this.previousRank,
     required this.rankDelta,
     required this.metricValue,
+    this.isAnonymous = false,
+    this.currentLevel = 1,
+    this.currentStreak = 0,
+    this.prThisWeek = false,
+    this.countryCode,
+    this.lastActiveAt,
+    this.peakTier,
   });
 
   factory DiscoverRisingStar.fromJson(Map<String, dynamic> json) => DiscoverRisingStar(
@@ -127,10 +200,39 @@ class DiscoverRisingStar {
         previousRank: json['previous_rank'] as int? ?? 0,
         rankDelta: json['rank_delta'] as int? ?? 0,
         metricValue: ((json['metric_value'] as num?) ?? 0).toDouble(),
+        isAnonymous: json['is_anonymous'] as bool? ?? false,
+        currentLevel: (json['current_level'] as int?) ?? 1,
+        currentStreak: (json['current_streak'] as int?) ?? 0,
+        prThisWeek: (json['hit_pr_this_week'] as bool?) ?? false,
+        countryCode: json['country_code'] as String?,
+        lastActiveAt: _parseIsoDate(json['last_active_at']),
+        peakTier: json['peak_tier'] as String?,
       );
 
   String get bestName {
     final n = displayName ?? username;
     return (n == null || n.isEmpty) ? 'Athlete' : n;
   }
+
+  bool get isActiveNow {
+    final t = lastActiveAt;
+    if (t == null) return false;
+    return DateTime.now().difference(t) < const Duration(hours: 24);
+  }
+}
+
+/// Shared ISO date parser — accepts strings like "2026-04-14T12:00:00Z" or
+/// "2026-04-14". Returns null for null/empty/malformed inputs so the UI
+/// degrades gracefully to "unknown activity time".
+DateTime? _parseIsoDate(dynamic raw) {
+  if (raw == null) return null;
+  if (raw is DateTime) return raw;
+  if (raw is String && raw.isNotEmpty) {
+    try {
+      return DateTime.parse(raw).toLocal();
+    } catch (_) {
+      return null;
+    }
+  }
+  return null;
 }

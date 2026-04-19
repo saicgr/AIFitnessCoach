@@ -8,6 +8,7 @@ import 'package:go_router/go_router.dart';
 import 'package:confetti/confetti.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/providers/user_provider.dart';
+import '../../core/services/fitness_snapshot_service.dart';
 import '../../core/services/posthog_service.dart';
 import '../../core/providers/sound_preferences_provider.dart';
 import '../../core/utils/weight_utils.dart';
@@ -17,6 +18,9 @@ import '../../data/repositories/workout_repository.dart';
 import '../../data/services/api_client.dart';
 import '../../data/services/challenges_service.dart';
 import '../../data/services/personal_goals_service.dart';
+import '../../data/providers/discover_provider.dart';
+import '../../data/providers/fitness_profile_provider.dart';
+import '../../data/providers/fitness_shape_history_provider.dart';
 import '../../data/providers/scores_provider.dart';
 import '../../data/providers/subjective_feedback_provider.dart';
 import '../../data/providers/xp_provider.dart';
@@ -183,6 +187,17 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
   void initState() {
     super.initState();
     _extInitState();
+    // Silently invalidate leaderboard-derived providers so Discover and the
+    // fitness radar reflect this workout immediately on the next visit. No
+    // user action required — data just updates.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      ref.invalidate(discoverSnapshotProvider);
+      ref.invalidate(fitnessProfileProvider);
+      ref.invalidate(fitnessShapeHistoryProvider);
+      // Also capture a fresh snapshot for today (debounced 1x/day internally).
+      ref.read(fitnessSnapshotServiceProvider).ensureToday();
+    });
     // W1: fire the First Workout Forecast sheet ~2 seconds after mount
     // so confetti has started and the user sees their receipt briefly first.
     if (widget.isFirstWorkout) {

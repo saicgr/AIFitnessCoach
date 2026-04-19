@@ -27,8 +27,11 @@ import 'streak_saved_dialog.dart';
 import 'morphing_tab_indicator.dart';
 import 'offline_banner.dart';
 import '../data/providers/xp_provider.dart' show xpProvider, levelUpEventProvider, dailyLoginResultProvider;
+import '../data/providers/weekly_recap_provider.dart';
 import '../data/models/xp_event.dart' show DailyLoginResult;
 import '../data/models/user_xp.dart';
+import '../data/models/weekly_recap.dart';
+import 'weekly_recap_dialog.dart';
 import '../core/accessibility/accessibility_provider.dart';
 
 part 'main_shell_part_edge_panel_handle.dart';
@@ -253,6 +256,36 @@ class MainShell extends ConsumerWidget {
           }
         });
       }
+    });
+
+    // Listen for Weekly Recap gate — fires on first foreground after
+    // Monday 06:00 local time when the user has meaningful recap content
+    // from last week. Provider handles ack persistence (SharedPreferences)
+    // so the dialog can't re-fire the same ISO week. Suppressed when
+    // another modal is currently visible (level-up) — we retry next frame.
+    //
+    // Defensive try/catch around the whole flow: if the dialog throws for
+    // any reason we must not crash the entire main shell. Worst case, the
+    // user sees no recap modal that week.
+    ref.listen<WeeklyRecap?>(weeklyRecapGateProvider, (previous, next) {
+      if (next == null || previous != null) return;
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
+        try {
+          if (!context.mounted) return;
+          // If a level-up or other dialog is already up, skip this fire.
+          // The next listener tick (e.g. provider rebuild after dialog
+          // closes) will re-attempt.
+          final route = ModalRoute.of(context);
+          if (route == null || route.isCurrent != true) return;
+          await showWeeklyRecapDialog(
+            context: context,
+            recap: next,
+            ref: ref,
+          );
+        } catch (e, st) {
+          debugPrint('weeklyRecapDialog error: $e\n$st');
+        }
+      });
     });
 
     // Listen for streak-saved events (migration 1938 / W3).

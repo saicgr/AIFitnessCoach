@@ -200,11 +200,16 @@ class GymProfilesNotifier extends StateNotifier<AsyncValue<List<GymProfile>>> {
       }
     } catch (e, stack) {
       debugPrint('❌ [GymProfileProvider] Error loading profiles: $e');
+      // Notifier may have been disposed while the request was in flight
+      // (user navigated away before the connection timeout fired). Touching
+      // `state` after dispose throws "Tried to use GymProfilesNotifier after
+      // dispose was called" → short-circuit before reading or writing state.
+      if (_disposed) return;
       // Only set error state if we don't have cached data
       if (!state.hasValue) {
         state = AsyncValue.error(e, stack);
         // Auto-retry once after 3 seconds (handles cold-start failures)
-        if (!_disposed && !_hasAutoRetried) {
+        if (!_hasAutoRetried) {
           _hasAutoRetried = true;
           Future.delayed(const Duration(seconds: 3), () {
             if (!_disposed) _fetchFromApi(showLoading: false);

@@ -23,12 +23,19 @@ part 'exercise_swap_sheet_part_exercise_swap_sheet_state_ext.dart';
 part 'exercise_swap_sheet_part_exercise_option_card.dart';
 
 
-/// Shows exercise swap sheet with fast DB suggestions and optional AI picks
+/// Shows exercise swap sheet with fast DB suggestions and optional AI picks.
+///
+/// When [previewId] is non-null the confirmed swap is routed to
+/// `POST /api/v1/workouts/preview/swap-exercise` so that only the short-lived
+/// preview cache is mutated, not the committed workout in the database. Pass
+/// this from [showWorkoutReviewSheet] when the sheet is open for an unapproved
+/// regeneration preview.
 Future<Workout?> showExerciseSwapSheet(
   BuildContext context,
   WidgetRef ref, {
   required String workoutId,
   required WorkoutExercise exercise,
+  String? previewId,
 }) async {
   return await showGlassSheet<Workout>(
     context: context,
@@ -37,6 +44,7 @@ Future<Workout?> showExerciseSwapSheet(
       child: _ExerciseSwapSheet(
         workoutId: workoutId,
         exercise: exercise,
+        previewId: previewId,
       ),
     ),
   );
@@ -45,10 +53,14 @@ Future<Workout?> showExerciseSwapSheet(
 class _ExerciseSwapSheet extends ConsumerStatefulWidget {
   final String workoutId;
   final WorkoutExercise exercise;
+  /// When non-null, swaps are applied to the preview cache instead of the
+  /// committed workout. Forwarded to [WorkoutRepository.swapExercise].
+  final String? previewId;
 
   const _ExerciseSwapSheet({
     required this.workoutId,
     required this.exercise,
+    this.previewId,
   });
 
   @override

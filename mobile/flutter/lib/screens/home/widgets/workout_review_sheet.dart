@@ -1,21 +1,41 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../data/models/workout.dart';
 import '../../../data/models/exercise.dart';
+import '../../../data/repositories/workout_repository.dart';
 import '../../../widgets/exercise_image.dart';
 import '../../../widgets/glass_sheet.dart';
 import '../../../widgets/main_shell.dart';
 import '../../workout/widgets/exercise_swap_sheet.dart';
 import '../../workout/widgets/exercise_add_sheet.dart';
+import '../../workout/widgets/exercise_detail_sheet.dart';
 import 'components/components.dart';
 
-/// Shows workout review sheet after regeneration
-/// Returns the approved Workout or null if user goes back
+/// Shows workout review sheet after regeneration.
+///
+/// The sheet operates on a *preview* workout held in a short-lived backend
+/// cache keyed by [previewId]. The original (still-live) workout is
+/// [originalWorkoutId]. Closing the sheet:
+///   - via "Approve Plan" → commits the preview (supersedes the original) and
+///     returns the committed [Workout].
+///   - via "Back" / close icon / (any non-approve path) → discards the preview
+///     cache entry and returns null. The original workout is untouched.
+///
+/// Callers should refresh home caches / today-workout provider / Drift ONLY
+/// when the returned [Workout] is non-null. On null, the on-device view of the
+/// original workout is still authoritative.
+///
+/// Throws are caught internally and surfaced as snackbars + an inline banner
+/// with a "Try again" CTA; the sheet always pops either null or a committed
+/// workout (never a preview) to keep downstream callers simple.
 Future<Workout?> showWorkoutReviewSheet(
   BuildContext context,
   WidgetRef ref,
-  Workout generatedWorkout,
-) async {
+  Workout generatedWorkout, {
+  required String previewId,
+  required String originalWorkoutId,
+}) async {
   // Hide nav bar while sheet is open
   ref.read(floatingNavBarVisibleProvider.notifier).state = false;
 
@@ -23,7 +43,11 @@ Future<Workout?> showWorkoutReviewSheet(
     context: context,
     isDismissible: false,
     enableDrag: false,
-    builder: (context) => _WorkoutReviewSheet(workout: generatedWorkout),
+    builder: (context) => _WorkoutReviewSheet(
+      workout: generatedWorkout,
+      previewId: previewId,
+      originalWorkoutId: originalWorkoutId,
+    ),
   ).whenComplete(() {
     // Show nav bar when sheet is closed
     ref.read(floatingNavBarVisibleProvider.notifier).state = true;
@@ -32,8 +56,14 @@ Future<Workout?> showWorkoutReviewSheet(
 
 class _WorkoutReviewSheet extends ConsumerStatefulWidget {
   final Workout workout;
+  final String previewId;
+  final String originalWorkoutId;
 
-  const _WorkoutReviewSheet({required this.workout});
+  const _WorkoutReviewSheet({
+    required this.workout,
+    required this.previewId,
+    required this.originalWorkoutId,
+  });
 
   @override
   ConsumerState<_WorkoutReviewSheet> createState() =>
@@ -44,6 +74,17 @@ class _WorkoutReviewSheetState extends ConsumerState<_WorkoutReviewSheet> {
   late Workout _currentWorkout;
   bool _isSwapping = false;
   bool _isAdding = false;
+  // True while /regenerate-commit is in flight. Disables Approve so a
+  // double-tap can't fire the commit twice (commit itself is idempotent on
+  // preview_id, but defense-in-depth; also gates Back during commit).
+  bool _isApproving = false;
+  // True while /regenerate-discard is in flight. Kept brief — we don't block
+  // the user from leaving if the network lags; discard is fire-and-forget.
+  bool _isDiscarding = false;
+  // Non-null when a PREVIEW_EXPIRED / ORIGINAL_ALREADY_SUPERSEDED error came
+  // back during approval. Rendered as an inline banner at the top of the
+  // sheet so the user sees the state transition before their next action.
+  _ReviewBannerError? _bannerError;
 
   @override
   void initState() {
@@ -61,6 +102,7 @@ class _WorkoutReviewSheetState extends ConsumerState<_WorkoutReviewSheet> {
       ref,
       workoutId: _currentWorkout.id!,
       exercise: exercise,
+      previewId: widget.previewId,
     );
 
     if (mounted) {
@@ -69,6 +111,14 @@ class _WorkoutReviewSheetState extends ConsumerState<_WorkoutReviewSheet> {
         setState(() => _currentWorkout = updatedWorkout);
       }
     }
+  }
+
+  Future<void> _viewExerciseDetail(WorkoutExercise exercise) async {
+    await showExerciseDetailSheet(
+      context,
+      ref,
+      exercise: exercise,
+    );
   }
 
   Future<void> _addExercise() async {
@@ -83,6 +133,7 @@ class _WorkoutReviewSheetState extends ConsumerState<_WorkoutReviewSheet> {
       workoutType: _currentWorkout.type ?? 'strength',
       currentExerciseNames:
           _currentWorkout.exercises.map((e) => e.name).toList(),
+      previewId: widget.previewId,
     );
 
     if (mounted) {
@@ -93,12 +144,86 @@ class _WorkoutReviewSheetState extends ConsumerState<_WorkoutReviewSheet> {
     }
   }
 
-  void _goBack() {
+  /// Fire-and-forget discard, then close with null.
+  /// We briefly show a spinner so a user who taps Back immediately sees
+  /// something, but we don't block the pop on the network round-trip —
+  /// the preview TTL will evict the cache entry even if the request drops.
+  Future<void> _goBack() async {
+    // Guard: if an approve is already in flight, ignore Back so we don't end
+    // up racing a commit against a discard on the same preview_id.
+    if (_isApproving || _isDiscarding) return;
+
+    setState(() => _isDiscarding = true);
+    final repo = ref.read(workoutRepositoryProvider);
+    // Fire-and-forget; regenerateDiscard swallows its own errors.
+    // We intentionally do NOT await beyond a short window — the user wants
+    // to leave now, and discard is a cleanup hint, not a correctness gate.
+    unawaited(repo.regenerateDiscard(previewId: widget.previewId));
+    if (!mounted) return;
     Navigator.pop(context, null);
   }
 
-  void _approvePlan() {
-    Navigator.pop(context, _currentWorkout);
+  /// Approve: commit the preview to the DB and pop with the committed Workout.
+  /// On typed errors we surface a banner + snackbar and pop with null so the
+  /// caller can show the prompt to regenerate.
+  Future<void> _approvePlan() async {
+    if (_isApproving) return; // double-tap guard
+    setState(() {
+      _isApproving = true;
+      _bannerError = null;
+    });
+
+    final repo = ref.read(workoutRepositoryProvider);
+    try {
+      final committed = await repo.regenerateCommit(
+        previewId: widget.previewId,
+        originalWorkoutId: widget.originalWorkoutId,
+      );
+      if (!mounted) return;
+      Navigator.pop(context, committed);
+    } on PreviewExpiredException catch (e) {
+      debugPrint('⚠️ [ReviewSheet] Preview expired: $e');
+      if (!mounted) return;
+      _showSheetSnack('Preview expired — please regenerate');
+      // Render inline banner so if the user lingers they see context.
+      setState(() {
+        _isApproving = false;
+        _bannerError = _ReviewBannerError.previewExpired;
+      });
+      // Pop null so the parent can re-open the regenerate sheet with the
+      // same parameters (preserves form state).
+      await Future<void>.delayed(const Duration(milliseconds: 250));
+      if (!mounted) return;
+      Navigator.pop(context, null);
+    } on OriginalSupersededException catch (e) {
+      debugPrint('⚠️ [ReviewSheet] Original superseded: $e');
+      if (!mounted) return;
+      _showSheetSnack(
+          'This workout was modified elsewhere — please regenerate');
+      setState(() {
+        _isApproving = false;
+        _bannerError = _ReviewBannerError.originalSuperseded;
+      });
+      await Future<void>.delayed(const Duration(milliseconds: 250));
+      if (!mounted) return;
+      Navigator.pop(context, null);
+    } catch (e, stack) {
+      debugPrint('❌ [ReviewSheet] Approve failed: $e');
+      debugPrint('📍 Stack: $stack');
+      if (!mounted) return;
+      _showSheetSnack('Failed to save workout. Please try again.');
+      setState(() => _isApproving = false);
+    }
+  }
+
+  void _showSheetSnack(String message) {
+    final messenger = ScaffoldMessenger.maybeOf(context);
+    messenger?.showSnackBar(
+      SnackBar(
+        content: Text(message),
+        duration: const Duration(seconds: 3),
+      ),
+    );
   }
 
   @override
@@ -116,15 +241,80 @@ class _WorkoutReviewSheetState extends ConsumerState<_WorkoutReviewSheet> {
           children: [
             _buildHeader(colors),
             Divider(height: 1, color: colors.cardBorder),
+            // Inline error banner (PREVIEW_EXPIRED / ORIGINAL_ALREADY_SUPERSEDED)
+            // surfaces above the summary with a "Try again" CTA that pops the
+            // sheet with null so the parent can re-open the regenerate flow
+            // with the same preserved form parameters.
+            if (_bannerError != null) _buildErrorBanner(colors, _bannerError!),
             _buildWorkoutSummary(colors),
             Divider(height: 1, color: colors.cardBorder),
-            Expanded(
+            Flexible(
               child: _buildExerciseList(colors, exercises),
             ),
             _buildAddExerciseButton(colors),
             _buildBottomActions(colors),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildErrorBanner(SheetColors colors, _ReviewBannerError err) {
+    final (title, description) = switch (err) {
+      _ReviewBannerError.previewExpired => (
+          'Preview expired',
+          'The preview timed out before you approved. Tap "Try again" to regenerate.',
+        ),
+      _ReviewBannerError.originalSuperseded => (
+          'Workout changed',
+          'This workout was modified elsewhere. Tap "Try again" to regenerate against the latest version.',
+        ),
+    };
+    return Container(
+      margin: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: colors.orange.withOpacity(0.12),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: colors.orange.withOpacity(0.3)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(Icons.error_outline, color: colors.orange, size: 20),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    color: colors.textPrimary,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  description,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: colors.textSecondary,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          // "Try again" pops null; the parent (regenerate sheet) re-enables
+          // its UI and the user can press Regenerate with the same form
+          // state already in memory.
+          TextButton(
+            onPressed: () => Navigator.pop(context, null),
+            child: const Text('Try again'),
+          ),
+        ],
       ),
     );
   }
@@ -173,7 +363,13 @@ class _WorkoutReviewSheetState extends ConsumerState<_WorkoutReviewSheet> {
                 ),
               ),
               IconButton(
-                onPressed: _goBack,
+                // Close icon follows the same guards as the Back button so
+                // we can't fire a discard while a commit is in flight.
+                onPressed: (_isApproving || _isDiscarding)
+                    ? null
+                    : () {
+                        _goBack();
+                      },
                 icon: Icon(Icons.close, color: colors.textMuted),
               ),
             ],
@@ -320,6 +516,7 @@ class _WorkoutReviewSheetState extends ConsumerState<_WorkoutReviewSheet> {
     }
 
     return ListView.builder(
+      shrinkWrap: true,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       itemCount: exercises.length,
       itemBuilder: (context, index) {
@@ -330,6 +527,7 @@ class _WorkoutReviewSheetState extends ConsumerState<_WorkoutReviewSheet> {
           colors: colors,
           isSwapping: _isSwapping,
           onSwap: () => _swapExercise(exercise),
+          onTap: () => _viewExerciseDetail(exercise),
         );
       },
     );
@@ -383,13 +581,28 @@ class _WorkoutReviewSheetState extends ConsumerState<_WorkoutReviewSheet> {
       ),
       child: Row(
         children: [
-          // Back button
+          // Back button — disabled during approve so a user who double-taps
+          // can't race a discard against a commit on the same preview_id.
           Expanded(
             child: OutlinedButton.icon(
-              onPressed: _goBack,
-              icon: Icon(Icons.arrow_back, size: 18, color: colors.textPrimary),
+              onPressed: (_isApproving || _isDiscarding)
+                  ? null
+                  : () {
+                      _goBack();
+                    },
+              icon: _isDiscarding
+                  ? SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: colors.textPrimary,
+                      ),
+                    )
+                  : Icon(Icons.arrow_back,
+                      size: 18, color: colors.textPrimary),
               label: Text(
-                'Back',
+                _isDiscarding ? 'Closing...' : 'Back',
                 style: TextStyle(color: colors.textPrimary),
               ),
               style: OutlinedButton.styleFrom(
@@ -407,16 +620,33 @@ class _WorkoutReviewSheetState extends ConsumerState<_WorkoutReviewSheet> {
             ),
           ),
           const SizedBox(width: 12),
-          // Approve Plan button
+          // Approve Plan button — disabled + spinner while commit is in flight.
+          // The handler itself also early-returns on re-entry, so a rapid
+          // double-tap at the exact frame boundary is a no-op.
           Expanded(
             flex: 2,
             child: ElevatedButton.icon(
-              onPressed: _approvePlan,
-              icon: const Icon(Icons.check, size: 18),
-              label: const Text('Approve Plan'),
+              onPressed: _isApproving
+                  ? null
+                  : () {
+                      _approvePlan();
+                    },
+              icon: _isApproving
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
+                    )
+                  : const Icon(Icons.check, size: 18),
+              label: Text(_isApproving ? 'Saving...' : 'Approve Plan'),
               style: ElevatedButton.styleFrom(
                 backgroundColor: colors.success,
                 foregroundColor: Colors.white,
+                disabledBackgroundColor: colors.success.withOpacity(0.6),
+                disabledForegroundColor: Colors.white.withOpacity(0.9),
                 padding: const EdgeInsets.symmetric(vertical: 14),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
@@ -430,6 +660,18 @@ class _WorkoutReviewSheetState extends ConsumerState<_WorkoutReviewSheet> {
   }
 }
 
+/// Reasons the sheet surfaces an inline error banner at the top. Keeps the
+/// banner copy and "Try again" UX centralized — adding a new error code
+/// means extending this enum + its switch in _buildErrorBanner.
+enum _ReviewBannerError {
+  /// Backend returned 404 `PREVIEW_EXPIRED` on commit — TTL lapsed.
+  previewExpired,
+
+  /// Backend returned 409 `ORIGINAL_ALREADY_SUPERSEDED` on commit — the
+  /// original workout was mutated by another flow while the user reviewed.
+  originalSuperseded,
+}
+
 /// Individual exercise card for review
 class _ReviewExerciseCard extends StatelessWidget {
   final WorkoutExercise exercise;
@@ -437,6 +679,7 @@ class _ReviewExerciseCard extends StatelessWidget {
   final SheetColors colors;
   final bool isSwapping;
   final VoidCallback onSwap;
+  final VoidCallback onTap;
 
   const _ReviewExerciseCard({
     required this.exercise,
@@ -444,6 +687,7 @@ class _ReviewExerciseCard extends StatelessWidget {
     required this.colors,
     required this.isSwapping,
     required this.onSwap,
+    required this.onTap,
   });
 
   @override
@@ -454,13 +698,19 @@ class _ReviewExerciseCard extends StatelessWidget {
     // ExerciseImage fuzzy-fetch by name as a final fallback.
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: colors.glassSurface,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: colors.cardBorder),
       ),
-      child: Row(
+      clipBehavior: Clip.antiAlias,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.all(12),
+            child: Row(
         children: [
           ExerciseImage(
             exerciseName: exercise.name,
@@ -543,6 +793,9 @@ class _ReviewExerciseCard extends StatelessWidget {
             tooltip: 'Swap exercise',
           ),
         ],
+      ),
+          ),
+        ),
       ),
     );
   }

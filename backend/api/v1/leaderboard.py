@@ -405,6 +405,15 @@ class DiscoverLeaderboardEntry(_BaseModel):
     rank: int
     metric_value: float
     is_current_user: bool = False
+    is_anonymous: bool = False
+    current_level: int = 1
+    previous_rank: Optional[int] = None
+    rank_delta: Optional[int] = None
+    current_streak: int = 0
+    hit_pr_this_week: bool = False
+    country_code: Optional[str] = None
+    last_active_at: Optional[str] = None
+    peak_tier: Optional[str] = None
 
 
 class DiscoverRisingStar(_BaseModel):
@@ -416,6 +425,13 @@ class DiscoverRisingStar(_BaseModel):
     previous_rank: int
     rank_delta: int
     metric_value: float
+    is_anonymous: bool = False
+    current_level: int = 1
+    current_streak: int = 0
+    hit_pr_this_week: bool = False
+    country_code: Optional[str] = None
+    last_active_at: Optional[str] = None
+    peak_tier: Optional[str] = None
 
 
 class DiscoverSnapshot(_BaseModel):
@@ -433,6 +449,11 @@ class DiscoverSnapshot(_BaseModel):
     near_you: _List[DiscoverLeaderboardEntry] = []
     rising_stars: _List[DiscoverRisingStar] = []
     top_10: _List[DiscoverLeaderboardEntry] = []
+    # Hero engagement additions (tier streak line + peak history)
+    your_tier_streak_weeks: int = 0
+    your_peak_tier: Optional[str] = None
+    your_next_milestone_weeks: Optional[int] = None
+    your_next_milestone_xp: Optional[int] = None
 
 
 @router.get("/discover", response_model=DiscoverSnapshot)
@@ -455,6 +476,16 @@ async def get_discover_snapshot(
         today = _date.today()
         week_start = today - _dt.timedelta(days=today.weekday())
         week_start_str = week_start.isoformat()
+
+        # 0. Lazy self-trigger — fire the weekly snapshot + rewards pipeline
+        # for the previous ISO week if it hasn't been run yet. Idempotent and
+        # advisory-locked inside the RPC. Swallow errors so a pipeline failure
+        # never breaks Discover rendering.
+        try:
+            db.client.rpc("ensure_weekly_snapshot_fresh", {}).execute()
+        except Exception as _snap_err:
+            import logging as _log
+            _log.warning("ensure_weekly_snapshot_fresh failed: %s", _snap_err)
 
         # 1. Percentile + tier + user metric
         perc_res = db.client.rpc(
@@ -498,6 +529,15 @@ async def get_discover_snapshot(
                 rank=r.get("rank") or 0,
                 metric_value=float(r.get("metric_value") or 0),
                 is_current_user=bool(r.get("is_current_user")),
+                is_anonymous=bool(r.get("is_anonymous")),
+                current_level=int(r.get("current_level") or 1),
+                previous_rank=r.get("previous_rank"),
+                rank_delta=r.get("rank_delta"),
+                current_streak=int(r.get("current_streak") or 0),
+                hit_pr_this_week=bool(r.get("hit_pr_this_week")),
+                country_code=r.get("country_code"),
+                last_active_at=r.get("last_active_at"),
+                peak_tier=r.get("peak_tier"),
             )
             for r in (near_res.data or [])
         ]
@@ -523,6 +563,13 @@ async def get_discover_snapshot(
                 previous_rank=r.get("previous_rank") or 0,
                 rank_delta=r.get("rank_delta") or 0,
                 metric_value=float(r.get("metric_value") or 0),
+                is_anonymous=bool(r.get("is_anonymous")),
+                current_level=int(r.get("current_level") or 1),
+                current_streak=int(r.get("current_streak") or 0),
+                hit_pr_this_week=bool(r.get("hit_pr_this_week")),
+                country_code=r.get("country_code"),
+                last_active_at=r.get("last_active_at"),
+                peak_tier=r.get("peak_tier"),
             )
             for r in (rising_res.data or [])
         ]
@@ -556,12 +603,54 @@ async def get_discover_snapshot(
                         rank=r.get("rank") or 0,
                         metric_value=float(r.get("metric_value") or 0),
                         is_current_user=bool(r.get("is_current_user")),
+                        is_anonymous=bool(r.get("is_anonymous")),
+                        current_level=int(r.get("current_level") or 1),
+                        previous_rank=r.get("previous_rank"),
+                        rank_delta=r.get("rank_delta"),
+                        current_streak=int(r.get("current_streak") or 0),
+                        hit_pr_this_week=bool(r.get("hit_pr_this_week")),
+                        country_code=r.get("country_code"),
+                        last_active_at=r.get("last_active_at"),
+                        peak_tier=r.get("peak_tier"),
                     )
                     for r in (top_res.data or [])
                     if (r.get("rank") or 0) <= 10
                 ][:10]
         except Exception:
             top_10 = []
+
+        # 6. Hero tier-streak line — read current consecutive weeks + peak tier
+        # + next milestone info for the viewer. Cheap (2 tables, indexed
+        # point-reads). Swallow errors gracefully.
+        your_tier_streak_weeks = 0
+        your_peak_tier = None
+        your_next_milestone_weeks = None
+        your_next_milestone_xp = None
+        try:
+            ts_res = db.client.table("tier_streaks").select("current_weeks,tier").eq(
+                "user_id", user_id).eq("board_type", board).limit(1).execute()
+            ts_row = ts_res.data[0] if ts_res.data else None
+            if ts_row:
+                your_tier_streak_weeks = int(ts_row.get("current_weeks") or 0)
+            cum_res = db.client.table("user_tier_cumulative").select("peak_tier").eq(
+                "user_id", user_id).eq("board_type", board).limit(1).execute()
+            cum_row = cum_res.data[0] if cum_res.data else None
+            if cum_row:
+                your_peak_tier = cum_row.get("peak_tier")
+            if your_tier_streak_weeks > 0 and your_tier:
+                # Look up the next milestone in tier_persistence_xp
+                ms_res = db.client.table("tier_persistence_xp").select(
+                    "consecutive_weeks,xp"
+                ).eq("board_type", board).eq("tier", your_tier).gt(
+                    "consecutive_weeks", your_tier_streak_weeks
+                ).order("consecutive_weeks").limit(1).execute()
+                ms_row = ms_res.data[0] if ms_res.data else None
+                if ms_row:
+                    your_next_milestone_weeks = int(ms_row.get("consecutive_weeks") or 0)
+                    your_next_milestone_xp = int(ms_row.get("xp") or 0)
+        except Exception as _hero_err:
+            import logging as _log
+            _log.debug("hero tier-streak lookup failed: %s", _hero_err)
 
         return DiscoverSnapshot(
             board=board,
@@ -578,9 +667,183 @@ async def get_discover_snapshot(
             near_you=near_you,
             rising_stars=rising_stars,
             top_10=top_10,
+            your_tier_streak_weeks=your_tier_streak_weeks,
+            your_peak_tier=your_peak_tier,
+            your_next_milestone_weeks=your_next_milestone_weeks,
+            your_next_milestone_xp=your_next_milestone_xp,
         )
     except Exception as e:
         raise safe_internal_error(e, "leaderboard")
+
+
+# ─── Weekly Recap + admin snapshot backfill ────────────────────────────────
+
+class WeeklyRecapPeer(_BaseModel):
+    user_id: str
+    username: Optional[str] = None
+    display_name: Optional[str] = None
+    avatar_url: Optional[str] = None
+    previous_rank: Optional[int] = None
+    current_rank: Optional[int] = None
+
+
+class WeeklyRecapReward(_BaseModel):
+    kind: str
+    badge_id: Optional[str] = None
+    badge_name: Optional[str] = None
+    badge_icon: Optional[str] = None
+    rarity: Optional[str] = None
+    xp: int = 0
+    tier: Optional[str] = None
+    consecutive_weeks: Optional[int] = None
+
+
+class WeeklyRecapResponse(_BaseModel):
+    week_start: str
+    board_type: str
+    rank_current: Optional[int] = None
+    rank_previous: Optional[int] = None
+    rank_delta: Optional[int] = None
+    tier_current: Optional[str] = None
+    tier_previous: Optional[str] = None
+    xp_earned_this_week: int = 0
+    shields_used: int = 0
+    awards_unlocked: _List[WeeklyRecapReward] = []
+    passes: _List[WeeklyRecapPeer] = []
+    overtaken_by: _List[WeeklyRecapPeer] = []
+    consecutive_weeks_in_tier: int = 0
+    next_milestone_weeks: Optional[int] = None
+    next_milestone_xp: Optional[int] = None
+    # Present when user has selected a coach persona; filled at endpoint layer
+    coach_persona_message: Optional[str] = None
+
+
+@router.get("/weekly-recap", response_model=WeeklyRecapResponse)
+async def get_weekly_recap(
+    week_start: Optional[str] = Query(None),
+    board: str = Query("xp", pattern="^(xp|volume|streaks)$"),
+    current_user: dict = Depends(get_current_user),
+):
+    """
+    Returns the Monday-morning recap payload for the viewing user.
+
+    `week_start` defaults to the previous complete ISO week inside the RPC.
+    The response is empty-shaped (rank_current=None, rewards=[]) if the user
+    wasn't ranked last week — the client renders a friendlier fallback in
+    that case and won't show a modal.
+    """
+    try:
+        db = _get_supabase_db()
+        user_id = current_user["id"]
+        payload = {"p_user_id": user_id, "p_board_type": board}
+        if week_start:
+            payload["p_week_start"] = week_start
+        res = db.client.rpc("get_weekly_recap", payload).execute()
+        data = res.data if isinstance(res.data, dict) else {}
+
+        # Presign avatar URLs on peers
+        def _peer(raw: dict) -> WeeklyRecapPeer:
+            return WeeklyRecapPeer(
+                user_id=str(raw.get("user_id") or ""),
+                username=raw.get("username"),
+                display_name=raw.get("display_name"),
+                avatar_url=_presign_avatar(raw.get("avatar_url")),
+                previous_rank=raw.get("previous_rank"),
+                current_rank=raw.get("current_rank"),
+            )
+
+        passes = [_peer(r) for r in (data.get("passes") or [])]
+        overtaken = [_peer(r) for r in (data.get("overtaken_by") or [])]
+        awards = [
+            WeeklyRecapReward(
+                kind=r.get("kind") or "",
+                badge_id=r.get("badge_id"),
+                badge_name=r.get("badge_name"),
+                badge_icon=r.get("badge_icon"),
+                rarity=r.get("rarity"),
+                xp=int(r.get("xp") or 0),
+                tier=r.get("tier"),
+                consecutive_weeks=r.get("consecutive_weeks"),
+            )
+            for r in (data.get("awards_unlocked") or [])
+        ]
+
+        return WeeklyRecapResponse(
+            week_start=str(data.get("week_start") or ""),
+            board_type=str(data.get("board_type") or board),
+            rank_current=data.get("rank_current"),
+            rank_previous=data.get("rank_previous"),
+            rank_delta=data.get("rank_delta"),
+            tier_current=data.get("tier_current"),
+            tier_previous=data.get("tier_previous"),
+            xp_earned_this_week=int(data.get("xp_earned_this_week") or 0),
+            shields_used=int(data.get("shields_used") or 0),
+            awards_unlocked=awards,
+            passes=passes,
+            overtaken_by=overtaken,
+            consecutive_weeks_in_tier=int(data.get("consecutive_weeks_in_tier") or 0),
+            next_milestone_weeks=data.get("next_milestone_weeks"),
+            next_milestone_xp=data.get("next_milestone_xp"),
+            coach_persona_message=None,  # Client-side templated from coach persona
+        )
+    except Exception as e:
+        raise safe_internal_error(e, "leaderboard_recap")
+
+
+class AdminSnapshotRequest(_BaseModel):
+    week_start: str
+
+
+class AdminSnapshotResponse(_BaseModel):
+    week_start: str
+    rows_written: int
+    rewards_written_xp: int
+    rewards_written_volume: int
+    rewards_written_streaks: int
+
+
+@router.post("/admin/run-snapshot", response_model=AdminSnapshotResponse)
+async def admin_run_snapshot(
+    req: AdminSnapshotRequest,
+    current_user: dict = Depends(get_current_user),
+):
+    """
+    Manual snapshot + rewards backfill for a specific ISO week. Gated to
+    admin users (`is_admin = TRUE` on the users row). Idempotent: re-running
+    the same week is safe — weekly_tier_rewards_audit prevents double XP.
+    """
+    try:
+        db = _get_supabase_db()
+        # Admin guard — users.role is the canonical admin signal
+        me = db.client.table("users").select("role").eq(
+            "id", current_user["id"]).limit(1).execute()
+        role = (me.data or [{}])[0].get("role") or ""
+        if role != "admin":
+            raise HTTPException(status_code=403, detail="Admin only")
+
+        rows_res = db.client.rpc(
+            "snapshot_weekly_leaderboard", {"p_week_start": req.week_start}
+        ).execute()
+        rows_written = int(rows_res.data or 0) if rows_res.data is not None else 0
+
+        def _run(board: str) -> int:
+            r = db.client.rpc(
+                "award_tier_rewards_for_week",
+                {"p_week_start": req.week_start, "p_board_type": board, "p_scope": "global"},
+            ).execute()
+            return int(r.data or 0) if r.data is not None else 0
+
+        return AdminSnapshotResponse(
+            week_start=req.week_start,
+            rows_written=rows_written,
+            rewards_written_xp=_run("xp"),
+            rewards_written_volume=_run("volume"),
+            rewards_written_streaks=_run("streaks"),
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise safe_internal_error(e, "leaderboard_admin_snapshot")
 
 
 # ─── Discover peek: dual-overlay fitness profile (6-axis radar) ────────────

@@ -5,6 +5,8 @@ import '../../../core/constants/app_colors.dart';
 import '../../../data/models/nutrition_preferences.dart';
 import '../../../data/providers/nutrition_preferences_provider.dart';
 import '../../../data/services/haptic_service.dart';
+import '../../../widgets/glass_sheet.dart';
+import '../../../widgets/main_shell.dart' show floatingNavBarVisibleProvider;
 
 /// Compact streak badge pinned near the top of the nutrition Daily tab.
 ///
@@ -268,24 +270,28 @@ class _StreakCardBodyState extends ConsumerState<_StreakCardBody> {
   void _openDetailsSheet() {
     HapticService.light();
     final s = widget.streak;
-    showModalBottomSheet(
+    // Hide the floating bottom nav while the sheet is up; restore on close.
+    ref.read(floatingNavBarVisibleProvider.notifier).state = false;
+    showGlassSheet(
       context: context,
-      backgroundColor: widget.isDark ? AppColors.pureBlack : Colors.white,
-      isScrollControlled: false,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      builder: (ctx) => GlassSheet(
+        maxHeightFraction: 0.7,
+        child: _StreakDetailsSheet(
+          streak: s,
+          isDark: widget.isDark,
+          onUseFreeze: (s?.freezesAvailable ?? 0) > 0
+              ? () async {
+                  Navigator.of(ctx).pop();
+                  await _useFreeze();
+                }
+              : null,
+        ),
       ),
-      builder: (ctx) => _StreakDetailsSheet(
-        streak: s,
-        isDark: widget.isDark,
-        onUseFreeze: (s?.freezesAvailable ?? 0) > 0
-            ? () async {
-                Navigator.of(ctx).pop();
-                await _useFreeze();
-              }
-            : null,
-      ),
-    );
+    ).whenComplete(() {
+      if (mounted) {
+        ref.read(floatingNavBarVisibleProvider.notifier).state = true;
+      }
+    });
   }
 }
 
@@ -464,24 +470,15 @@ class _StreakDetailsSheet extends StatelessWidget {
     final fire = AppColors.orange;
     final ice = AppColors.cyan;
 
+    // Parent GlassSheet provides the top handle + blurred background.
     return SafeArea(
+      top: false,
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
+        padding: const EdgeInsets.fromLTRB(20, 4, 20, 24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Center(
-              child: Container(
-                width: 40,
-                height: 4,
-                margin: const EdgeInsets.only(bottom: 16),
-                decoration: BoxDecoration(
-                  color: textMuted.withValues(alpha: 0.3),
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-            ),
             Row(
               children: [
                 Icon(Icons.local_fire_department_rounded,

@@ -1,5 +1,49 @@
 part of 'workout_repository.dart';
 
+/// Thrown when the preview cache entry has expired (TTL lapsed or evicted)
+/// before the user hit Approve. Callers should prompt the user to regenerate.
+///
+/// Raised by [WorkoutRepositoryGeneration.regenerateCommit] on HTTP 404 with
+/// backend error code `PREVIEW_EXPIRED`.
+class PreviewExpiredException implements Exception {
+  final String previewId;
+  final String message;
+  PreviewExpiredException(this.previewId, [this.message = 'Preview expired']);
+  @override
+  String toString() => 'PreviewExpiredException($previewId): $message';
+}
+
+/// Thrown when the original workout was superseded (edited / replaced) by
+/// another flow between regeneration and the user hitting Approve. Callers
+/// should prompt the user to regenerate so the new base state is picked up.
+///
+/// Raised by [WorkoutRepositoryGeneration.regenerateCommit] on HTTP 409 with
+/// backend error code `ORIGINAL_ALREADY_SUPERSEDED`.
+class OriginalSupersededException implements Exception {
+  final String originalWorkoutId;
+  final String message;
+  OriginalSupersededException(this.originalWorkoutId,
+      [this.message = 'Original workout was superseded']);
+  @override
+  String toString() =>
+      'OriginalSupersededException($originalWorkoutId): $message';
+}
+
+/// Thrown when the requesting user does not own the preview cache entry, i.e.
+/// the preview_id belongs to a different user session.
+///
+/// Raised by exercise swap/add preview endpoints on HTTP 403 with backend
+/// error code `PREVIEW_NOT_OWNED`. Callers should discard the review sheet
+/// and prompt the user to regenerate.
+class PreviewNotOwnedException implements Exception {
+  final String previewId;
+  final String message;
+  PreviewNotOwnedException(this.previewId,
+      [this.message = 'Preview not owned by this user']);
+  @override
+  String toString() => 'PreviewNotOwnedException($previewId): $message';
+}
+
 /// Extension on WorkoutRepository for streaming generation, regeneration,
 /// and program management methods.
 extension WorkoutRepositoryGeneration on WorkoutRepository {
@@ -119,14 +163,29 @@ extension WorkoutRepositoryGeneration on WorkoutRepository {
                     elapsedMs: elapsedMs,
                   );
                 } else if (eventType == 'done') {
-                  // Workout complete
-                  final workout = Workout.fromJson(data);
+                  // Preview ready. Backend (Phase 1C) wraps the workout payload
+                  // under a `workout` key alongside a `preview_id`. We tolerate
+                  // both shapes for backward compatibility during rollout: if
+                  // `workout` key is absent, fall back to parsing the root
+                  // object as the Workout itself (legacy shape).
+                  final workoutJson = data['workout'] is Map<String, dynamic>
+                      ? data['workout'] as Map<String, dynamic>
+                      : data;
+                  final workout = Workout.fromJson(workoutJson);
+                  final previewId = data['preview_id'] as String?;
+                  if (previewId == null) {
+                    debugPrint(
+                        '⚠️ [Workout] Regenerate done event missing preview_id — '
+                        'backend may be running a pre-preview-refactor build. '
+                        'Commit/Discard will not be functional.');
+                  }
                   yield RegenerateProgress(
                     step: 4,
                     totalSteps: 4,
-                    message: 'Workout ready!',
+                    message: 'Preview ready!',
                     elapsedMs: elapsedMs,
                     workout: workout,
+                    previewId: previewId,
                     totalTimeMs: (data['total_time_ms'] as num?)?.toInt(),
                     isCompleted: true,
                   );
@@ -164,6 +223,100 @@ extension WorkoutRepositoryGeneration on WorkoutRepository {
         elapsedMs: DateTime.now().difference(startTime).inMilliseconds,
         hasError: true,
       );
+    }
+  }
+
+  /// Commit a previewed regeneration to the database.
+  ///
+  /// After a successful regenerate the backend holds the proposed workout in
+  /// a short-lived preview cache keyed by [previewId]. This call materializes
+  /// it: supersedes [originalWorkoutId] and makes the preview the new
+  /// `is_current=true` workout.
+  ///
+  /// Throws:
+  ///   - [PreviewExpiredException] on 404 `PREVIEW_EXPIRED` (preview TTL
+  ///     lapsed or was evicted). UI should offer "Regenerate again".
+  ///   - [OriginalSupersededException] on 409 `ORIGINAL_ALREADY_SUPERSEDED`
+  ///     (the workout was modified by another flow — settings update, swap,
+  ///     different regen — while the user sat on the review sheet). UI should
+  ///     offer "Regenerate again" so the new base state is used.
+  ///   - Generic [Exception] on other errors.
+  Future<Workout> regenerateCommit({
+    required String previewId,
+    required String originalWorkoutId,
+  }) async {
+    debugPrint(
+        '🔍 [Workout] Committing regenerate preview $previewId → $originalWorkoutId');
+    try {
+      final response = await apiClient.post(
+        '${ApiConstants.workouts}/regenerate-commit',
+        data: {
+          'preview_id': previewId,
+          'original_workout_id': originalWorkoutId,
+        },
+        options: Options(
+          sendTimeout: const Duration(seconds: 15),
+          receiveTimeout: const Duration(seconds: 30),
+        ),
+      );
+
+      if (response.statusCode == 200 && response.data != null) {
+        final committed =
+            Workout.fromJson(response.data as Map<String, dynamic>);
+        debugPrint('✅ [Workout] Regenerate commit succeeded: ${committed.id}');
+        return committed;
+      }
+      throw Exception(
+          'Regenerate commit unexpected status ${response.statusCode}');
+    } on DioException catch (e, stack) {
+      // Decode typed error codes from backend response body. Backend contract
+      // (Phase 1C): { "error_code": "PREVIEW_EXPIRED" | "ORIGINAL_ALREADY_SUPERSEDED",
+      //               "detail": "...human-readable..." }
+      final body = e.response?.data;
+      String? errorCode;
+      String? detail;
+      if (body is Map<String, dynamic>) {
+        errorCode = body['error_code'] as String?;
+        detail = body['detail'] as String? ?? body['message'] as String?;
+      }
+      final status = e.response?.statusCode;
+      debugPrint(
+          '❌ [Workout] Regenerate commit failed: status=$status code=$errorCode detail=$detail');
+      debugPrint('📍 Stack: $stack');
+
+      if (status == 404 && errorCode == 'PREVIEW_EXPIRED') {
+        throw PreviewExpiredException(
+            previewId, detail ?? 'Preview expired — please regenerate');
+      }
+      if (status == 409 && errorCode == 'ORIGINAL_ALREADY_SUPERSEDED') {
+        throw OriginalSupersededException(originalWorkoutId,
+            detail ?? 'Workout was modified elsewhere — please regenerate');
+      }
+      rethrow;
+    }
+  }
+
+  /// Discard a previewed regeneration. Fire-and-forget.
+  ///
+  /// Releases the preview cache entry on the backend so it doesn't linger
+  /// until TTL. Safe to call even if the preview has already expired — any
+  /// failure is logged but NOT thrown, because discard is always a cleanup
+  /// operation; the original workout remains `is_current=true` regardless.
+  Future<void> regenerateDiscard({required String previewId}) async {
+    debugPrint('🔍 [Workout] Discarding regenerate preview $previewId');
+    try {
+      await apiClient.post(
+        '${ApiConstants.workouts}/regenerate-discard',
+        data: {'preview_id': previewId},
+        options: Options(
+          sendTimeout: const Duration(seconds: 10),
+          receiveTimeout: const Duration(seconds: 10),
+        ),
+      );
+      debugPrint('✅ [Workout] Regenerate discard acknowledged for $previewId');
+    } catch (e) {
+      // Swallow — preview will expire via TTL anyway. Do not block UX.
+      debugPrint('⚠️ [Workout] Regenerate discard failed (non-fatal): $e');
     }
   }
 

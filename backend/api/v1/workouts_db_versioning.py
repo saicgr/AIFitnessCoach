@@ -155,6 +155,7 @@ async def regenerate_workout(request: Request, body: RegenerateWorkoutRequest, b
                     age=user_age,
                     activity_level=user_activity_level,
                     user_dob=user_dob,
+                    injuries=injuries if injuries else None,
                 )
             else:
                 logger.error("RAG returned no exercises for regeneration")

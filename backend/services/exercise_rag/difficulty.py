@@ -3,8 +3,18 @@ Exercise difficulty scoring, validation, and filtering utilities.
 
 Constants and functions for mapping exercise difficulty to numeric scales,
 validating fitness levels, and determining difficulty compatibility.
+
+Phase 2J (Regenerate Workout Safety Fix):
+- `enforce_difficulty_ceiling()` is the NEW hard filter. Use this in selection
+  pipelines to drop above-ceiling exercises entirely (fail-closed on NULL).
+- `is_exercise_too_difficult()` is the LEGACY permissive filter (only blocks
+  Elite-10 for beginners) retained for backwards compatibility with the
+  in-service RAG loop and existing tests. New callers should prefer
+  `enforce_difficulty_ceiling()`.
+- `apply_difficulty_scoring()` (in selection_pipeline.py) is DEPRECATED for
+  enforcement but kept for ranking. It must only run AFTER the hard filter.
 """
-from typing import Optional
+from typing import Any, Dict, List, Optional
 
 from core.logger import get_logger
 
@@ -148,7 +158,14 @@ def is_exercise_too_difficult(
     user_fitness_level: str,
     difficulty_adjustment: int = 0,
 ) -> bool:
-    """Check if an exercise is too difficult (only filters Elite 10 for beginners)."""
+    """LEGACY permissive filter: only blocks Elite (10) exercises for beginners.
+
+    Retained for backwards compatibility with `service.py`'s in-loop filtering
+    and existing tests. For new call sites prefer `enforce_difficulty_ceiling()`
+    which applies the full DIFFICULTY_CEILING strictly and fails closed on NULL.
+
+    Returns True iff the exercise should be blocked.
+    """
     exercise_difficulty_num = get_difficulty_numeric(exercise_difficulty)
     validated_level = validate_fitness_level(user_fitness_level)
 
@@ -168,3 +185,146 @@ def is_exercise_too_difficult_strict(
     max_difficulty = get_adjusted_difficulty_ceiling(user_fitness_level, difficulty_adjustment)
     exercise_difficulty_num = get_difficulty_numeric(exercise_difficulty)
     return exercise_difficulty_num > max_difficulty
+
+
+# ---------------------------------------------------------------------------
+# Phase 2J — hard difficulty ceiling enforcement
+# ---------------------------------------------------------------------------
+
+# Ordinal mapping for `safety_difficulty` (the new Phase 3 safety-index column).
+# This is separate from the fuzzy 1-10 legacy scale because the safety index
+# uses canonical tiers only.
+_SAFETY_DIFFICULTY_ORDINAL = {
+    "beginner": 3,
+    "intermediate": 6,
+    "advanced": 8,
+    "elite": 10,
+}
+
+# Sentinel for "ordinal could not be determined" — fail-closed.
+_UNKNOWN_DIFFICULTY_ORDINAL = 99
+
+
+def _exercise_difficulty_ordinal(exercise: Dict[str, Any]) -> int:
+    """Resolve an exercise's effective numeric difficulty for ceiling checks.
+
+    Resolution order (Phase 2J / coordinates with Phase 3K SQL filter):
+    1. `safety_difficulty` — the canonical tier from `exercise_safety_index`
+       (Phase 3K). If present, it wins.
+    2. Legacy `difficulty` — the noisy string/numeric field on
+       `exercise_library_cleaned`. Used during the transition period.
+    3. Missing/NULL → fail-closed: return a sentinel higher than any ceiling
+       so the exercise is dropped even for advanced users. The caller can log
+       and escalate to safety-mode curation.
+
+    This matches the intent in the plan's edge case #16:
+    "Exercise has NULL difficulty → treated as above-beginner-ceiling;
+     excluded from beginner plans."
+    """
+    if not isinstance(exercise, dict):
+        return _UNKNOWN_DIFFICULTY_ORDINAL
+
+    # 1. Prefer safety_difficulty (Phase 3K)
+    safety_val = exercise.get("safety_difficulty")
+    if safety_val is not None and safety_val != "":
+        key = str(safety_val).lower().strip()
+        if key in _SAFETY_DIFFICULTY_ORDINAL:
+            return _SAFETY_DIFFICULTY_ORDINAL[key]
+        # Unrecognized tier string → fail-closed, don't silently downgrade.
+        logger.warning(
+            f"[Difficulty] Unknown safety_difficulty='{safety_val}' on "
+            f"exercise '{exercise.get('name', '<unknown>')}'. Fail-closed."
+        )
+        return _UNKNOWN_DIFFICULTY_ORDINAL
+
+    # 2. Fall back to legacy `difficulty` column
+    legacy_val = exercise.get("difficulty")
+    if legacy_val is None or legacy_val == "":
+        # Fail-closed: no difficulty metadata at all.
+        return _UNKNOWN_DIFFICULTY_ORDINAL
+
+    # Known legacy value → resolve via string/numeric map.
+    # get_difficulty_numeric() falls back to 2 for unknown strings, which is
+    # NOT fail-closed. So we check explicitly first.
+    if isinstance(legacy_val, (int, float)):
+        return int(legacy_val)
+    key = str(legacy_val).lower().strip()
+    if key in DIFFICULTY_STRING_TO_NUM:
+        return DIFFICULTY_STRING_TO_NUM[key]
+
+    # Unrecognized legacy string → fail-closed.
+    logger.warning(
+        f"[Difficulty] Unknown legacy difficulty='{legacy_val}' on "
+        f"exercise '{exercise.get('name', '<unknown>')}'. Fail-closed."
+    )
+    return _UNKNOWN_DIFFICULTY_ORDINAL
+
+
+def enforce_difficulty_ceiling(
+    exercises: List[Dict[str, Any]],
+    user_difficulty: str,
+    difficulty_adjustment: int = 0,
+) -> List[Dict[str, Any]]:
+    """HARD FILTER: drop exercises whose difficulty exceeds the user's ceiling.
+
+    This is the Phase 2J replacement for the old "scoring penalty" behavior.
+    Above-ceiling exercises are removed entirely so they cannot resurface after
+    similarity re-ranking.
+
+    Rules:
+    - Strict inequality against `DIFFICULTY_CEILING[user_difficulty]`
+      (adjusted by `difficulty_adjustment` per `get_adjusted_difficulty_ceiling`).
+    - NULL/missing/unrecognized difficulty → dropped (fail-closed), consistent
+      with the plan's edge case handling for NULL difficulty.
+    - Prefers the new `safety_difficulty` field (Phase 3K safety index) when
+      present; falls back to the legacy `difficulty` column otherwise.
+
+    Args:
+        exercises: Candidate exercise dicts. Must be dicts; non-dicts are dropped.
+        user_difficulty: User's fitness level string ("beginner"/"intermediate"/
+            "advanced"). Normalized via `validate_fitness_level()`.
+        difficulty_adjustment: Optional feedback-based adjustment (-2 to +2).
+
+    Returns:
+        New list containing only exercises at or below the ceiling. May be
+        empty — the caller is responsible for escalation (e.g., safety-mode
+        curation in Phase 3K).
+    """
+    if not exercises:
+        return []
+
+    ceiling = get_adjusted_difficulty_ceiling(user_difficulty, difficulty_adjustment)
+    validated_level = validate_fitness_level(user_difficulty)
+
+    kept: List[Dict[str, Any]] = []
+    dropped_names: List[str] = []
+
+    for ex in exercises:
+        ordinal = _exercise_difficulty_ordinal(ex)
+        if ordinal > ceiling:
+            # Fail-closed: this includes both "elite for beginner" and
+            # "NULL difficulty" (ordinal == _UNKNOWN_DIFFICULTY_ORDINAL).
+            name = ex.get("name", "<unknown>") if isinstance(ex, dict) else "<non-dict>"
+            dropped_names.append(name)
+            continue
+        kept.append(ex)
+
+    if dropped_names:
+        # Truncate the logged names so we don't blow up log lines for large pools.
+        sample = dropped_names[:5]
+        more = f" (+{len(dropped_names) - len(sample)} more)" if len(dropped_names) > len(sample) else ""
+        logger.info(
+            f"🏋️ [Difficulty Ceiling] Dropped {len(dropped_names)} of "
+            f"{len(exercises)} exercises above ceiling "
+            f"(level={validated_level}, ceiling={ceiling}, adjustment={difficulty_adjustment:+d}). "
+            f"Examples: {sample}{more}"
+        )
+
+    if not kept:
+        logger.warning(
+            f"⚠️  [Difficulty Ceiling] All {len(exercises)} candidates dropped "
+            f"by hard ceiling (level={validated_level}, ceiling={ceiling}). "
+            f"Caller must escalate to safety-mode curation."
+        )
+
+    return kept

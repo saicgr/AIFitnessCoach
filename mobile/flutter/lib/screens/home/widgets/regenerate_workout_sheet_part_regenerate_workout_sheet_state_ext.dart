@@ -89,19 +89,45 @@ extension __RegenerateWorkoutSheetStateExt on _RegenerateWorkoutSheetState {
             _lastBackendUpdateAt = DateTime.now();
           });
 
-          // Show review sheet for user to approve
+          // Phase 1D: require preview_id to wire commit/discard. If the
+          // backend didn't return one (e.g. pre-1C deploy), we surface an
+          // error instead of silently falling through to a broken flow —
+          // the no-silent-fallbacks principle from user feedback.
+          final previewId = progress.previewId;
+          if (previewId == null) {
+            setState(() => _isRegenerating = false);
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text(
+                    'Preview not supported by server. Please update the app or contact support.'),
+                backgroundColor: AppColors.error,
+              ),
+            );
+            return;
+          }
+
+          // Show review sheet for user to approve. The sheet commits on
+          // Approve (returning a committed Workout) or discards on Back
+          // (returning null).
           final approvedWorkout = await showWorkoutReviewSheet(
             context,
             ref,
             progress.workout!,
+            previewId: previewId,
+            originalWorkoutId: widget.workout.id!,
           );
 
           if (approvedWorkout != null && mounted) {
-            // Ask user: replace existing or keep both?
+            // The commit has already materialized in the DB — original is
+            // superseded by approvedWorkout. Ask user whether to keep the
+            // old one visible alongside (un-supersede) or just replace.
             final shouldReplace = await _showReplaceOrAddDialog();
             if (!mounted) return;
 
             if (shouldReplace == null) {
+              // User dismissed the replace/add dialog AFTER commit. The
+              // supersede is already persisted; just re-enable UI. The
+              // default post-commit state == replace.
               setState(() => _isRegenerating = false);
               return;
             }
@@ -109,7 +135,7 @@ extension __RegenerateWorkoutSheetStateExt on _RegenerateWorkoutSheetState {
             if (shouldReplace) {
               WorkoutsNotifier.replaceInCache(widget.workout.id!, approvedWorkout);
             } else {
-              // Un-supersede old workout so both appear in carousel
+              // Un-supersede old workout so both appear in carousel.
               try {
                 final repo = ref.read(workoutRepositoryProvider);
                 await repo.unsupersedeWorkout(workoutId: widget.workout.id!);
@@ -123,7 +149,12 @@ extension __RegenerateWorkoutSheetStateExt on _RegenerateWorkoutSheetState {
             ref.read(workoutsProvider.notifier).silentRefresh();
             Navigator.pop(context, approvedWorkout);
           } else if (mounted) {
-            // User pressed Back - return to customize with form preserved
+            // User pressed Back → preview was discarded, original is still
+            // is_current=true. No-op on caches, just re-enable the form.
+            // (Previously we invalidated caches here too — that was wrong,
+            // because the original was already superseded mid-stream. After
+            // Phase 1C that mutation is gone, so refreshing would just
+            // bounce the home UI for no reason.)
             setState(() => _isRegenerating = false);
           }
           return;
@@ -221,15 +252,32 @@ extension __RegenerateWorkoutSheetStateExt on _RegenerateWorkoutSheetState {
             _lastBackendUpdateAt = DateTime.now();
           });
 
-          // Show review sheet for user to approve
+          // Phase 1D: require preview_id. Same contract as _regenerate().
+          final previewId = progress.previewId;
+          if (previewId == null) {
+            setState(() => _isRegenerating = false);
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text(
+                    'Preview not supported by server. Please update the app or contact support.'),
+                backgroundColor: AppColors.error,
+              ),
+            );
+            return;
+          }
+
+          // Show review sheet for user to approve. Commit/discard happens
+          // inside the sheet.
           final approvedWorkout = await showWorkoutReviewSheet(
             context,
             ref,
             progress.workout!,
+            previewId: previewId,
+            originalWorkoutId: widget.workout.id!,
           );
 
           if (approvedWorkout != null && mounted) {
-            // Ask user: replace existing or keep both?
+            // Commit already persisted. Ask user: replace existing or keep both?
             final shouldReplace = await _showReplaceOrAddDialog();
             if (!mounted) return;
 
@@ -255,7 +303,7 @@ extension __RegenerateWorkoutSheetStateExt on _RegenerateWorkoutSheetState {
             ref.read(workoutsProvider.notifier).silentRefresh();
             Navigator.pop(context, approvedWorkout);
           } else if (mounted) {
-            // User pressed Back - return to customize with form preserved
+            // Back path — preview discarded, original untouched, no refresh.
             setState(() => _isRegenerating = false);
           }
           return;

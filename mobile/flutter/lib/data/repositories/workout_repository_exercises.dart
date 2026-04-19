@@ -206,6 +206,16 @@ extension WorkoutRepositoryExercises on WorkoutRepository {
   /// Swap an exercise in a workout
   /// Swap an exercise in a workout. Returns (Workout?, errorMessage?).
   /// errorMessage is non-null only on failure, with a user-friendly description.
+  ///
+  /// When [previewId] is non-null, the swap is applied to the regeneration
+  /// preview cache via `POST /api/v1/workouts/preview/swap-exercise` instead of
+  /// the committed-workout endpoint. Backend returns the updated preview payload
+  /// with the same shape as a committed Workout. Typed exceptions are thrown for
+  /// preview-specific error codes so callers can distinguish them from generic
+  /// network failures:
+  ///   - [PreviewExpiredException] on 404 `PREVIEW_EXPIRED`
+  ///   - [PreviewNotOwnedException] on 403 `PREVIEW_NOT_OWNED`
+  /// See Phase 1C/1D of the regenerate safety plan.
   Future<(Workout?, String?)> swapExercise({
     required String workoutId,
     required String oldExerciseName,
@@ -214,10 +224,20 @@ extension WorkoutRepositoryExercises on WorkoutRepository {
     String swapSource = 'ai_suggestion',
     String? section,
     Map<String, double>? cardioParams,
+    String? previewId,
   }) async {
     try {
+      // Route to the preview endpoint when a preview_id is present so we
+      // mutate the short-lived cache entry rather than the committed workout.
+      final endpoint = previewId != null
+          ? '${ApiConstants.workouts}/preview/swap-exercise'
+          : '${ApiConstants.workouts}/swap-exercise';
+
+      debugPrint('🔍 [Workout] Swap exercise → $endpoint'
+          '${previewId != null ? ' [preview:$previewId]' : ''}');
+
       final response = await apiClient.post(
-        '${ApiConstants.workouts}/swap-exercise',
+        endpoint,
         data: {
           'workout_id': workoutId,
           'old_exercise_name': oldExerciseName,
@@ -225,6 +245,7 @@ extension WorkoutRepositoryExercises on WorkoutRepository {
           if (reason != null) 'reason': reason,
           'swap_source': swapSource,
           if (section != null) 'section': section,
+          if (previewId != null) 'preview_id': previewId,
           if (cardioParams != null) ...cardioParams,
         },
       );
@@ -235,6 +256,18 @@ extension WorkoutRepositoryExercises on WorkoutRepository {
       return (null, 'Server error (${response.statusCode}). Please try again.');
     } on DioException catch (e, stackTrace) {
       debugPrint('❌ [Workout] Error swapping exercise: $e\n$stackTrace');
+      // Typed exceptions for preview-specific error codes — callers (e.g. the
+      // review sheet) can catch these distinctly and surface targeted copy.
+      if (previewId != null) {
+        final status = e.response?.statusCode;
+        final errorCode = (e.response?.data as Map<String, dynamic>?)?['error_code'] as String?;
+        if (status == 404 && errorCode == 'PREVIEW_EXPIRED') {
+          throw PreviewExpiredException(previewId, e.message ?? 'Preview expired during swap');
+        }
+        if (status == 403 && errorCode == 'PREVIEW_NOT_OWNED') {
+          throw PreviewNotOwnedException(previewId, e.message ?? 'Preview not owned');
+        }
+      }
       if (e.response?.statusCode == 429) {
         return (null, 'Too many swaps. Please wait a moment and try again.');
       }
@@ -248,7 +281,16 @@ extension WorkoutRepositoryExercises on WorkoutRepository {
     }
   }
 
-  /// Add a new exercise to a workout
+  /// Add a new exercise to a workout.
+  ///
+  /// When [previewId] is non-null, the add is applied to the regeneration
+  /// preview cache via `POST /api/v1/workouts/preview/add-exercise` instead of
+  /// the committed-workout endpoint. Backend returns the updated preview payload
+  /// with the same shape as a committed Workout. Typed exceptions are thrown for
+  /// preview-specific error codes:
+  ///   - [PreviewExpiredException] on 404 `PREVIEW_EXPIRED`
+  ///   - [PreviewNotOwnedException] on 403 `PREVIEW_NOT_OWNED`
+  /// See Phase 1C/1D of the regenerate safety plan.
   Future<Workout?> addExercise({
     required String workoutId,
     required String exerciseName,
@@ -258,11 +300,18 @@ extension WorkoutRepositoryExercises on WorkoutRepository {
     int restSeconds = 60,
     String? section,
     Map<String, double>? cardioParams,
+    String? previewId,
   }) async {
+    // Route to the preview endpoint when a preview_id is present.
+    final endpoint = previewId != null
+        ? '${ApiConstants.workouts}/preview/add-exercise'
+        : '${ApiConstants.workouts}/add-exercise';
+
     try {
-      debugPrint('🔍 [Workout] Adding exercise "$exerciseName" (id: $exerciseId) to workout $workoutId');
+      debugPrint('🔍 [Workout] Adding exercise "$exerciseName" (id: $exerciseId) → $endpoint'
+          '${previewId != null ? ' [preview:$previewId]' : ''}');
       final response = await apiClient.post(
-        '${ApiConstants.workouts}/add-exercise',
+        endpoint,
         data: {
           'workout_id': workoutId,
           'exercise_name': exerciseName,
@@ -271,6 +320,7 @@ extension WorkoutRepositoryExercises on WorkoutRepository {
           'reps': reps,
           'rest_seconds': restSeconds,
           if (section != null) 'section': section,
+          if (previewId != null) 'preview_id': previewId,
           if (cardioParams != null) ...cardioParams,
         },
       );
@@ -279,8 +329,22 @@ extension WorkoutRepositoryExercises on WorkoutRepository {
         return Workout.fromJson(response.data as Map<String, dynamic>);
       }
       return null;
-    } catch (e) {
-      debugPrint('❌ [Workout] Error adding exercise: $e');
+    } on DioException catch (e, stackTrace) {
+      debugPrint('❌ [Workout] Error adding exercise: $e\n$stackTrace');
+      // Surface typed exceptions for preview-specific error codes.
+      if (previewId != null) {
+        final status = e.response?.statusCode;
+        final errorCode = (e.response?.data as Map<String, dynamic>?)?['error_code'] as String?;
+        if (status == 404 && errorCode == 'PREVIEW_EXPIRED') {
+          throw PreviewExpiredException(previewId, e.message ?? 'Preview expired during add');
+        }
+        if (status == 403 && errorCode == 'PREVIEW_NOT_OWNED') {
+          throw PreviewNotOwnedException(previewId, e.message ?? 'Preview not owned');
+        }
+      }
+      return null;
+    } catch (e, stackTrace) {
+      debugPrint('❌ [Workout] Error adding exercise: $e\n$stackTrace');
       return null;
     }
   }

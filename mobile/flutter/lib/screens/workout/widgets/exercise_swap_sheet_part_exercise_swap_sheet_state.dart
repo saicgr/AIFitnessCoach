@@ -462,6 +462,7 @@ class _ExerciseSwapSheetState extends ConsumerState<_ExerciseSwapSheet>
       newExerciseName: newExerciseName,
       reason: _selectedReason,
       swapSource: source,
+      previewId: widget.previewId,
     );
 
     setState(() => _isSwapping = false);

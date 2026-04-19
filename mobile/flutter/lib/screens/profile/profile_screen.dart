@@ -846,7 +846,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               // Placed directly below FITNESS because privacy belongs adjacent
               // to the data it controls.
               const PrivacySection(),
-              const SizedBox(height: 12),
+              const SizedBox(height: 8),
 
               // Reports & Insights button
               InkWell(
