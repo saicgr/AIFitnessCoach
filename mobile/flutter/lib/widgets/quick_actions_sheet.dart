@@ -47,7 +47,7 @@ class _QuickActionsSheet extends ConsumerStatefulWidget {
 }
 
 const _categories = <String, List<String>>{
-  'Track': ['weight', 'food', 'water', 'photo', 'mood', 'measure'],
+  'Track': ['weight', 'food', 'scan_food', 'scan_menu', 'water', 'photo', 'mood', 'measure'],
   'Workout': ['quick_workout', 'workout', 'steps', 'library'],
   // COMING SOON: 'fasting' removed — re-add when fasting feature launches
   'Plan & Review': ['schedule', 'habits', 'history', 'progress', 'stats', 'summaries', 'achievements'],
@@ -169,6 +169,14 @@ class _QuickActionsSheetState extends ConsumerState<_QuickActionsSheet> {
         case 'food':
           Navigator.pop(context);
           showLogMealSheet(context, widget.ref);
+          return;
+        case 'scan_food':
+          Navigator.pop(context);
+          showLogMealSheet(context, widget.ref, autoOpenMultiImage: true);
+          return;
+        case 'scan_menu':
+          Navigator.pop(context);
+          showLogMealSheet(context, widget.ref, autoOpenMenuScan: true);
           return;
         case 'quick_workout':
           final workout = await showQuickWorkoutSheet(context, widget.ref);

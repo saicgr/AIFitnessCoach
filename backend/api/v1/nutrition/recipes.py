@@ -661,6 +661,8 @@ async def log_recipe(
             ai_feedback=None,
             health_score=None,
             logged_at=user_tz_logged_at,
+            source_type="manual",
+            input_type="manual",
         )
 
         # Also update the food_logs table with recipe_id

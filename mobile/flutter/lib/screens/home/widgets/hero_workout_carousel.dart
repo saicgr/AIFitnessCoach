@@ -4,7 +4,6 @@ import 'package:go_router/go_router.dart';
 import '../../../core/theme/accent_color_provider.dart';
 import '../../../core/providers/user_provider.dart';
 import '../../../core/providers/week_start_provider.dart';
-import '../../../data/repositories/auth_repository.dart';
 import '../../../data/models/workout.dart';
 import '../../../data/repositories/workout_repository.dart';
 import '../../../data/providers/today_workout_provider.dart';
@@ -349,6 +348,20 @@ class _HeroWorkoutCarouselState extends ConsumerState<HeroWorkoutCarousel> {
                 carouselItems.insert(insertIdx, CarouselItem.workout(workout));
               }
             }
+          }
+        }
+
+        // Always surface the next scheduled workout — even when it's beyond
+        // the current display week — so the carousel never dead-ends on a
+        // "No workout yet" placeholder for users whose next session is in a
+        // future week (e.g. 1 workout/week schedules). Mirrors the Workouts
+        // tab's "NEXT WEEK'S WORKOUT" behavior.
+        if (nextWorkout != null && nextWorkout.id != null) {
+          final already = carouselItems.any(
+            (i) => i.isWorkout && i.workout?.id == nextWorkout.id,
+          );
+          if (!already) {
+            carouselItems.add(CarouselItem.workout(nextWorkout));
           }
         }
 

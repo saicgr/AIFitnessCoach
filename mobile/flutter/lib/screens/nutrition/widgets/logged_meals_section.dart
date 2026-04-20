@@ -5,6 +5,7 @@ import '../../../core/theme/accent_color_provider.dart';
 import '../../../data/models/nutrition.dart';
 import '../../../data/services/api_client.dart';
 import '../../../utils/time_formatters.dart';
+import '../../../widgets/fullscreen_image_viewer.dart';
 import '../../../widgets/glass_sheet.dart';
 import 'food_report_dialog.dart';
 import 'food_source_indicator.dart';
@@ -619,16 +620,46 @@ class LoggedMealsSection extends StatelessWidget {
                 shrinkWrap: true,
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 children: [
-                  // Photo thumbnail (for photo-logged meals)
+                  // Photo thumbnail (for photo-logged meals) — tap to maximize
                   if (meal.imageUrl != null) ...[
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(12),
-                      child: Image.network(
-                        meal.imageUrl!,
-                        height: 180,
-                        width: double.infinity,
-                        fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+                    GestureDetector(
+                      onTap: () => showFullscreenImage(
+                        ctx,
+                        networkUrl: meal.imageUrl,
+                        heroTag: 'meal_image_${meal.id}',
+                      ),
+                      child: Stack(
+                        children: [
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(12),
+                            child: Hero(
+                              tag: 'meal_image_${meal.id}',
+                              child: Image.network(
+                                meal.imageUrl!,
+                                height: 180,
+                                width: double.infinity,
+                                fit: BoxFit.cover,
+                                errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+                              ),
+                            ),
+                          ),
+                          Positioned(
+                            top: 8,
+                            right: 8,
+                            child: Container(
+                              padding: const EdgeInsets.all(6),
+                              decoration: BoxDecoration(
+                                color: Colors.black.withValues(alpha: 0.45),
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(
+                                Icons.fullscreen_rounded,
+                                color: Colors.white,
+                                size: 18,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                     const SizedBox(height: 12),
@@ -3266,6 +3297,8 @@ class _EditableFoodItemsListState extends State<_EditableFoodItemsList> {
                               style: TextStyle(
                                 fontSize: 14, fontWeight: FontWeight.w600, color: widget.textPrimary,
                               ),
+                              maxLines: 2,
+                              softWrap: true,
                               overflow: TextOverflow.ellipsis,
                             ),
                           ),

@@ -145,34 +145,37 @@ extension _LogMealSheetStateUI on _LogMealSheetState {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Action buttons row: icon buttons left, analyze pill right
+          // Action buttons row: icon buttons left, analyze pill right.
+          // Mic moved into the "What did you eat?" TextField as a suffix icon
+          // so this row can host a dedicated Menu scan button instead.
           Row(
             children: [
-              // Mic button
-              ActionIconButton(
-                icon: _isListening ? Icons.stop : Icons.mic,
-                isActive: _isListening,
-                onTap: _toggleVoiceInput,
-                isDark: isDark,
-                color: const Color(0xFFEF4444), // red
-              ),
-              const SizedBox(width: 2),
-
-              // Camera button
+              // Camera button — multi-photo capable scan.
               ActionIconButton(
                 icon: Icons.camera_alt,
-                onTap: () => _pickImage(ImageSource.camera),
+                onTap: () => _pickImages(ImageSource.camera),
                 isDark: isDark,
                 color: const Color(0xFF3B82F6), // blue
               ),
               const SizedBox(width: 2),
 
-              // Gallery button
+              // Gallery button — multi-photo capable scan.
               ActionIconButton(
                 icon: Icons.photo_library_outlined,
-                onTap: () => _pickImage(ImageSource.gallery),
+                onTap: () => _pickImages(ImageSource.gallery),
                 isDark: isDark,
                 color: const Color(0xFF8B5CF6), // purple
+              ),
+              const SizedBox(width: 2),
+
+              // Menu scan — takes one or more menu photos, routes to
+              // analyze_multi_food_images with analysis_mode="menu" and
+              // opens the MenuAnalysisSheet checklist on success.
+              ActionIconButton(
+                icon: Icons.menu_book_outlined,
+                onTap: _scanMenu,
+                isDark: isDark,
+                color: const Color(0xFFF59E0B), // amber
               ),
               const SizedBox(width: 2),
 
@@ -684,50 +687,11 @@ extension _LogMealSheetStateUI on _LogMealSheetState {
   }
 
   void _showFullScreenImage(BuildContext context, String? localPath, String? networkUrl) {
-    Navigator.of(context).push(
-      PageRouteBuilder(
-        opaque: false,
-        barrierColor: Colors.black87,
-        pageBuilder: (context, animation, secondaryAnimation) {
-          return FadeTransition(
-            opacity: animation,
-            child: Scaffold(
-              backgroundColor: Colors.black,
-              body: Stack(
-                children: [
-                  Center(
-                    child: Hero(
-                      tag: 'food_image_preview',
-                      child: InteractiveViewer(
-                        minScale: 0.5,
-                        maxScale: 4.0,
-                        child: localPath != null
-                            ? Image.file(File(localPath), fit: BoxFit.contain)
-                            : Image.network(networkUrl!, fit: BoxFit.contain),
-                      ),
-                    ),
-                  ),
-                  Positioned(
-                    top: MediaQuery.of(context).padding.top + 8,
-                    right: 12,
-                    child: GestureDetector(
-                      onTap: () => Navigator.of(context).pop(),
-                      child: Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: Colors.black.withValues(alpha: 0.5),
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(Icons.close, color: Colors.white, size: 24),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          );
-        },
-      ),
+    showFullscreenImage(
+      context,
+      localPath: localPath,
+      networkUrl: networkUrl,
+      heroTag: 'food_image_preview',
     );
   }
 

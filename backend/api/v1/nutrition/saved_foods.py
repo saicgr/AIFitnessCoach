@@ -534,6 +534,8 @@ async def relog_saved_food(
             ai_feedback=None,
             health_score=saved_food.get("overall_meal_score"),
             logged_at=user_tz_logged_at,
+            source_type="manual",
+            input_type="manual",
         )
 
         food_log_id = created_log.get('id') if created_log else "unknown"

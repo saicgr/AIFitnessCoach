@@ -20,6 +20,7 @@ import '../../../core/theme/accent_color_provider.dart';
 import '../../../data/models/exercise.dart';
 import '../../../widgets/glass_sheet.dart';
 import '../models/workout_state.dart';
+import 'pre_set_coaching_banner.dart';
 
 part 'set_tracking_table_part_set_number_badge.dart';
 
@@ -133,6 +134,20 @@ class SetTrackingTable extends StatefulWidget {
   /// Inline rest row widget (passed from parent to keep state management centralized)
   final Widget? inlineRestRowWidget;
 
+  // ========== Pre-Set Coaching Banner Props ==========
+
+  /// If non-null, shown above the first active set row as an AI-grounded
+  /// coaching insight. Passing null (parent decides: skip / dismissed /
+  /// first set already logged) hides the banner.
+  final String? preSetBannerMessage;
+
+  /// Fires when the user taps the banner's dismiss button.
+  final VoidCallback? onPreSetBannerDismissed;
+
+  /// Stable key used to drive the banner's entry animation — should change
+  /// when the message content changes (e.g. different exercise).
+  final String? preSetBannerAnimationKey;
+
   const SetTrackingTable({
     super.key,
     required this.exercise,
@@ -155,6 +170,9 @@ class SetTrackingTable extends StatefulWidget {
     this.onActiveRirChanged,
     this.showInlineRest = false,
     this.inlineRestRowWidget,
+    this.preSetBannerMessage,
+    this.onPreSetBannerDismissed,
+    this.preSetBannerAnimationKey,
   });
 
   @override
@@ -239,10 +257,39 @@ class _SetTrackingTableState extends State<SetTrackingTable> {
       }
     }
 
+    // Pre-Set banner: only show once, right before the first active row
+    // (so it appears above Set 1 at workout start, above Set N if Set 1-N-1
+    // are already done). Parent is responsible for null'ing the message once
+    // the first working set is logged — no additional guard here.
+    final bool hasBanner = widget.preSetBannerMessage != null &&
+        widget.preSetBannerMessage!.isNotEmpty &&
+        widget.onPreSetBannerDismissed != null;
+    int? bannerInsertIndex;
+    if (hasBanner) {
+      for (int i = 0; i < widget.sets.length; i++) {
+        if (widget.sets[i].isActive && !widget.sets[i].isCompleted) {
+          bannerInsertIndex = i;
+          break;
+        }
+      }
+    }
+
     // Build set rows with inline rest inserted at the right position
     final List<Widget> setRows = [];
     for (int index = 0; index < widget.sets.length; index++) {
       final set = widget.sets[index];
+
+      // Insert the coaching banner before the first active set row
+      if (hasBanner && bannerInsertIndex == index) {
+        final animKey = widget.preSetBannerAnimationKey ??
+            (widget.exercise.id ?? widget.exercise.name);
+        setRows.add(PreSetCoachingBanner(
+          key: ValueKey('pre_set_banner_$animKey'),
+          message: widget.preSetBannerMessage!,
+          onDismiss: widget.onPreSetBannerDismissed!,
+          animationKey: animKey,
+        ));
+      }
 
       // Only allow deletion for pending sets (not completed, not active)
       // Users can swipe to remove future sets they don't want to do

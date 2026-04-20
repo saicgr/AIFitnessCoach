@@ -12,7 +12,6 @@ import 'package:go_router/go_router.dart';
 import 'package:video_player/video_player.dart';
 
 import '../../core/constants/app_colors.dart';
-import '../../core/constants/workout_design.dart';
 import '../../core/models/set_progression.dart';
 import '../../core/providers/favorites_provider.dart';
 import '../../core/providers/sound_preferences_provider.dart';
@@ -23,6 +22,7 @@ import '../../core/providers/window_mode_provider.dart';
 import '../../core/providers/workout_mini_player_provider.dart';
 import '../../core/services/fatigue_service.dart';
 import '../../core/services/posthog_service.dart';
+import '../../core/services/pre_set_insight_engine.dart';
 import '../../core/services/weight_suggestion_service.dart';
 import '../../core/theme/accent_color_provider.dart';
 import '../../core/utils/default_weights.dart';
@@ -34,6 +34,7 @@ import '../../data/models/workout.dart';
 import '../../data/providers/gym_profile_provider.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../data/services/api_client.dart';
+import '../../data/services/exercise_history_batch_service.dart';
 import '../../data/services/pr_detection_service.dart';
 import '../../data/services/workout_notification_service.dart';
 import '../../screens/onboarding/widgets/foldable_quiz_scaffold.dart';
@@ -89,7 +90,7 @@ class ActiveWorkoutScreen extends ConsumerStatefulWidget {
 
 class _ActiveWorkoutScreenState
     extends ConsumerState<ActiveWorkoutScreen>
-    with PRManagerMixin, TimerRestMixin, AIFeaturesMixin, SetLoggingMixin, ExerciseNavigationMixin, WorkoutFlowMixin, WorkoutSheetsMixin, WorkoutUIBuildersMixin {
+    with WidgetsBindingObserver, PRManagerMixin, TimerRestMixin, AIFeaturesMixin, SetLoggingMixin, ExerciseNavigationMixin, WorkoutFlowMixin, WorkoutSheetsMixin, WorkoutUIBuildersMixin {
   // ── Concrete overrides for abstract declarations in mixins ──
   // These delegate to extension methods that provide the actual logic.
 
@@ -192,6 +193,10 @@ class _ActiveWorkoutScreenState
   bool _isResting = false;
   bool _isRestingBetweenExercises = false;
   bool _isPaused = false;
+  /// True while the app is in the background (paused/inactive/hidden).
+  /// Gates per-tick notification refresh so the shade entry doesn't
+  /// flicker back into view while the user is looking at the screen.
+  bool _isAppBackgrounded = false;
   bool _showInstructions = false;
   /// Whether to hide the AI Coach FAB for this session (user long-pressed to hide)
   bool _hideAICoachForSession = false;
@@ -200,7 +205,7 @@ class _ActiveWorkoutScreenState
   bool _showCoachTip = false;
   String? _coachTipMessage;
   // ignore: unused_field
-  bool _coachTipSent = false; // Legacy — tips now tracked per-exercise in AIFeaturesMixin
+  final bool _coachTipSent = false; // Legacy — tips now tracked per-exercise in AIFeaturesMixin
 
   // Video state
   VideoPlayerController? _videoController;
@@ -323,6 +328,21 @@ class _ActiveWorkoutScreenState
   // Reset when all exercises in the superset complete their set for the round
   final Map<int, Set<int>> _supersetRoundProgress = {};
 
+  // ── Pre-Set Coaching Banner state ──
+  // Stable per-workout timestamp — drives deterministic copy selection so
+  // banner text is stable across rebuilds inside one workout but varies
+  // across separate workouts.
+  final int _workoutStartEpochMs = DateTime.now().millisecondsSinceEpoch;
+  // Cached per-set history for each exercise name; populated by a single
+  // batch call at workout start.
+  Map<String, List<SessionSummary>> _preSetHistoryByExerciseName = const {};
+  bool _preSetHistoryLoaded = false;
+  // Exercise indices the user has explicitly dismissed the banner for.
+  final Set<int> _dismissedPreSetBannerIndices = {};
+  // Cached computed copy per exercise index (memoized so rebuilds don't
+  // re-run the pattern engine unnecessarily).
+  final Map<int, String?> _cachedPreSetCopy = {};
+
   // Pre-computed superset indices cache (groupId -> sorted exercise indices)
   // Built once in initState and when exercises change, avoids repeated iteration/sorting
   Map<int, List<int>> _supersetIndicesCache = {};
@@ -390,8 +410,6 @@ class _ActiveWorkoutScreenState
   @override set showCoachTip(bool value) => _showCoachTip = value;
   @override String? get coachTipMessage => _coachTipMessage;
   @override set coachTipMessage(String? value) => _coachTipMessage = value;
-  bool get coachTipSent => _coachTipSent;
-  set coachTipSent(bool value) => _coachTipSent = value;
   @override VideoPlayerController? get videoController => _videoController;
   @override set videoController(VideoPlayerController? value) => _videoController = value;
   @override bool get isVideoInitialized => _isVideoInitialized;
@@ -482,6 +500,7 @@ class _ActiveWorkoutScreenState
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _initializeWorkout();
     loadWarmupAndStretches();
     _startWarmupLoadingTimeout();
@@ -494,7 +513,44 @@ class _ActiveWorkoutScreenState
       if (!mounted) return;
       // initBleHrAutoReconnect();
       triggerWorkoutTour();
+      _prefetchPreSetHistory();
     });
+  }
+
+  /// Batch-fetch last-N-sessions history for every exercise in this workout.
+  /// Fires once on workout start; runs off the critical path so the screen
+  /// paints immediately. Banner renders as soon as this completes.
+  Future<void> _prefetchPreSetHistory() async {
+    if (_exercises.isEmpty) return;
+    try {
+      final apiClient = ref.read(apiClientProvider);
+      final userId = await apiClient.getUserId();
+      if (userId == null || !mounted) return;
+
+      final names = _exercises
+          .map((e) => e.name)
+          .where((n) => n.isNotEmpty)
+          .toSet() // dedupe (supersets might repeat a name)
+          .toList(growable: false);
+      if (names.isEmpty) return;
+
+      final service = ExerciseHistoryBatchService(apiClient);
+      final histories = await service.fetchBatch(
+        userId: userId,
+        exerciseNames: names,
+      );
+      if (!mounted) return;
+      setState(() {
+        _preSetHistoryByExerciseName = histories;
+        _preSetHistoryLoaded = true;
+        _cachedPreSetCopy.clear(); // invalidate so banners re-compute
+      });
+    } catch (e) {
+      // Service already logged with trace. Mark loaded=true so we stop
+      // pretending we're waiting — banner just won't render.
+      if (!mounted) return;
+      setState(() => _preSetHistoryLoaded = true);
+    }
   }
 
   /// If warmup loading takes too long, skip the loading screen
@@ -610,7 +666,13 @@ class _ActiveWorkoutScreenState
     _timerController = WorkoutTimerController();
     _timerController.onWorkoutTick = (_) {
       setState(() {});
-      updateWorkoutNotification();
+      // Only refresh the notification while the app is backgrounded.
+      // While foregrounded, the shade entry is hidden (cancelled in
+      // `didChangeAppLifecycleState(resumed)`) — re-firing it every
+      // second would cause it to flicker back into view.
+      if (_isAppBackgrounded) {
+        updateWorkoutNotification();
+      }
     };
     _timerController.onRestTick = (secondsRemaining) {
       setState(() {});
@@ -699,13 +761,57 @@ class _ActiveWorkoutScreenState
 
   @override
   void dispose() {
-    cancelWorkoutNotification();
+    WidgetsBinding.instance.removeObserver(this);
+    // When the user minimized (instead of ending), the mini-player provider
+    // now owns the notification lifecycle — don't cancel it here or the
+    // ongoing notification will disappear the instant the screen pops.
+    final minimized = ref.read(workoutMiniPlayerProvider).isMinimized;
+    if (!minimized) {
+      cancelWorkoutNotification();
+    }
     _timerController.dispose();
     _videoController?.dispose();
     _repsController.dispose();
     _repsRightController.dispose();
     _weightController.dispose();
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    // Only manage the ongoing notification while a workout is actually in
+    // progress — not during loading/error states with no exercises.
+    if (exercises.isEmpty) return;
+
+    switch (state) {
+      case AppLifecycleState.paused:
+      case AppLifecycleState.inactive:
+      case AppLifecycleState.hidden:
+        // App is going to the background while the user is mid-workout —
+        // promote the ongoing notification immediately so they don't have to
+        // wait for the next timer tick. Wire the remote-control callbacks
+        // so Pause/Resume from the shade reaches the real screen timer.
+        _isAppBackgrounded = true;
+        WorkoutNotificationService.instance.onPauseResumePressed = togglePause;
+        WorkoutNotificationService.instance.onStopPressed = () {
+          // "Stop" just brings the app forward (showsUserInterface=true on
+          // the action). The user completes the end-workout flow in-app so
+          // the session persists to the DB.
+        };
+        WorkoutNotificationService.instance.onNotificationTapped = () {};
+        updateWorkoutNotification();
+        break;
+      case AppLifecycleState.resumed:
+        // User is back in the app looking at the workout — the shade entry
+        // is redundant. Clear it so the two timers can't visibly desync.
+        _isAppBackgrounded = false;
+        cancelWorkoutNotification();
+        break;
+      case AppLifecycleState.detached:
+        _isAppBackgrounded = false;
+        break;
+    }
   }
 
   /// Go back to warmup phase from active workout
@@ -1133,7 +1239,7 @@ class _ActiveWorkoutScreenState
           // If a progression pattern wrote this setTarget, trust it directly
           final hasProgression = _exerciseProgressionPattern.containsKey(exerciseIndex);
           if (hasProgression && setTarget?.targetWeightKg != null && setTarget!.targetWeightKg! > 0) {
-            return setTarget!.targetWeightKg!;
+            return setTarget.targetWeightKg!;
           }
           // Otherwise: historical → previous session → equipment default
           final aiWt = setTarget?.targetWeightKg ?? exercise.weight?.toDouble();
@@ -1170,6 +1276,86 @@ class _ActiveWorkoutScreenState
     }
 
     return rows;
+  }
+
+  // ── Pre-Set Coaching Banner ─────────────────────────────────────────────
+
+  @override
+  String? preSetBannerMessageFor(int exerciseIndex) {
+    // History still loading — skip silently; will pop in when ready.
+    if (!_preSetHistoryLoaded) return null;
+    // User dismissed for this exercise this session.
+    if (_dismissedPreSetBannerIndices.contains(exerciseIndex)) return null;
+    if (exerciseIndex < 0 || exerciseIndex >= _exercises.length) return null;
+    // Hide once the first working set has been logged — banner is strictly
+    // "pre-Set-1". Warmup sets don't count toward this.
+    final logs = _completedSets[exerciseIndex] ?? const <SetLog>[];
+    final workingLogged = logs.any((l) =>
+        l.setType.toLowerCase() != 'warmup' && l.reps > 0);
+    if (workingLogged) return null;
+    // Setting toggle off → no banner.
+    if (!ref.read(preSetInsightEnabledProvider)) return null;
+
+    if (_cachedPreSetCopy.containsKey(exerciseIndex)) {
+      return _cachedPreSetCopy[exerciseIndex];
+    }
+
+    final exercise = _exercises[exerciseIndex];
+    final sessions = _preSetHistoryByExerciseName[exercise.name] ?? const [];
+    final pattern = _exerciseProgressionPattern[exerciseIndex]
+        ?? SetProgressionPattern.pyramidUp;
+
+    // Parse today's target rep range from setTargets[0] → exercise.reps → skip.
+    int? tmin;
+    int? tmax;
+    final firstWorking = (exercise.setTargets ?? const [])
+        .where((t) => !t.isWarmup && t.targetReps > 0)
+        .fold<SetTarget?>(null, (acc, t) => acc ?? t);
+    if (firstWorking != null) {
+      tmin = firstWorking.targetReps;
+      tmax = firstWorking.targetReps;
+    } else if (exercise.reps != null && exercise.reps! > 0) {
+      tmin = exercise.reps;
+      tmax = exercise.reps;
+    }
+    if (tmin == null || tmax == null) {
+      _cachedPreSetCopy[exerciseIndex] = null;
+      return null;
+    }
+
+    final isBodyweight = (exercise.weight == null || exercise.weight == 0) &&
+        (exercise.equipment == null ||
+         {'bodyweight', 'bodyweight_only', 'none', ''}
+            .contains(exercise.equipment!.toLowerCase()));
+
+    final now = DateTime.now();
+    final todayIso = DateTime(now.year, now.month, now.day)
+        .toIso8601String()
+        .split('T')
+        .first;
+
+    final input = ExerciseInsightInput(
+      exerciseId: exercise.id ?? exercise.name,
+      targetMinReps: tmin,
+      targetMaxReps: tmax,
+      pattern: pattern,
+      isBodyweight: isBodyweight,
+      useKg: _useKg,
+      todayIso: todayIso,
+      workoutStartEpochMs: _workoutStartEpochMs,
+      history: sessions,
+    );
+
+    final copy = PreSetInsightEngine.computeCopy(input);
+    _cachedPreSetCopy[exerciseIndex] = copy;
+    return copy;
+  }
+
+  @override
+  void dismissPreSetBanner(int exerciseIndex) {
+    if (_dismissedPreSetBannerIndices.add(exerciseIndex)) {
+      setState(() {});
+    }
   }
 
   @override

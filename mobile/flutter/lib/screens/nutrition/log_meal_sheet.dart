@@ -44,6 +44,8 @@ import 'widgets/portion_amount_input.dart';
 import 'widgets/post_meal_review_sheet.dart';
 import 'widgets/ai_coach_meal_suggestion_sheet.dart';
 import '../../widgets/floating_chat/floating_chat_overlay.dart';
+import '../../widgets/fullscreen_image_viewer.dart';
+import 'menu_analysis_sheet.dart';
 
 part 'log_meal_sheet_ui.dart';
 
@@ -53,7 +55,16 @@ part 'log_meal_sheet_ui_2.dart';
 
 /// Shows the log meal bottom sheet from anywhere in the app
 /// [initialMealType] - Optional meal type to pre-select (e.g., 'breakfast', 'lunch', 'dinner', 'snack')
-Future<void> showLogMealSheet(BuildContext context, WidgetRef ref, {String? initialMealType, bool autoOpenCamera = false, bool autoOpenBarcode = false, DateTime? selectedDate}) async {
+Future<void> showLogMealSheet(
+  BuildContext context,
+  WidgetRef ref, {
+  String? initialMealType,
+  bool autoOpenCamera = false,
+  bool autoOpenBarcode = false,
+  bool autoOpenMultiImage = false,
+  bool autoOpenMenuScan = false,
+  DateTime? selectedDate,
+}) async {
   debugPrint('showLogMealSheet: Starting with initialMealType=$initialMealType');
   final isDark = Theme.of(context).brightness == Brightness.dark;
 
@@ -96,6 +107,8 @@ Future<void> showLogMealSheet(BuildContext context, WidgetRef ref, {String? init
       initialMealType: mealType,
       autoOpenCamera: autoOpenCamera,
       autoOpenBarcode: autoOpenBarcode,
+      autoOpenMultiImage: autoOpenMultiImage,
+      autoOpenMenuScan: autoOpenMenuScan,
       selectedDate: selectedDate,
     ),
   );
@@ -112,6 +125,12 @@ class LogMealSheet extends ConsumerStatefulWidget {
   final MealType? initialMealType;
   final bool autoOpenCamera;
   final bool autoOpenBarcode;
+  /// Launch multi-image food scan picker immediately on open (from "Scan
+  /// Food" home shortcut).
+  final bool autoOpenMultiImage;
+  /// Launch menu-scan picker immediately on open (from "Scan Menu" home
+  /// shortcut).
+  final bool autoOpenMenuScan;
   final DateTime? selectedDate;
 
   const LogMealSheet({
@@ -121,6 +140,8 @@ class LogMealSheet extends ConsumerStatefulWidget {
     this.initialMealType,
     this.autoOpenCamera = false,
     this.autoOpenBarcode = false,
+    this.autoOpenMultiImage = false,
+    this.autoOpenMenuScan = false,
     this.selectedDate,
   });
 
@@ -165,6 +186,11 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet> {
   bool _hasLoggedThisSession = false;
   bool _isSaving = false;
   String _sourceType = 'text';
+  /// Specific input method — sent to backend so food_logs.input_type is
+  /// populated. Values match the migration-1960 CHECK allowlist: text, voice,
+  /// camera, gallery, barcode, menu_scan, buffet_scan, multi_image_scan,
+  /// chat, ai_suggestion, manual, image, copy, watch.
+  String _inputType = 'text';
   String? _capturedImagePath; // Local file path of the photo taken/picked for display in results
   int? _analysisElapsedMs;
 
@@ -207,6 +233,17 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet> {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) _openBarcodeScanner();
       });
+    } else if (widget.autoOpenMultiImage) {
+      // Launched from the "Scan Food" home shortcut — open gallery multi-pick
+      // straight away (matches the bottom-bar gallery button).
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _pickImages(ImageSource.gallery);
+      });
+    } else if (widget.autoOpenMenuScan) {
+      // Launched from the "Scan Menu" home shortcut.
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _scanMenu();
+      });
     }
   }
 
@@ -230,6 +267,7 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet> {
       _analysisElapsedMs = null;
       _capturedImagePath = null;
       _sourceType = 'text';
+      _inputType = 'text';
     });
   }
 

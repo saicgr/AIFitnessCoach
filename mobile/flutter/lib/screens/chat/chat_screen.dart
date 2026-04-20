@@ -745,15 +745,28 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
         break;
       }
     }
-    if (userMessage != null && userMessage.isNotEmpty) {
-      // Remove the error message and resend
-      final errorMsg = messages[errorIndex];
-      if (errorMsg.id != null) {
-        ref.read(chatMessagesProvider.notifier).deleteMessage(errorMsg.id!);
-      }
-      _textController.text = userMessage;
-      _sendMessage();
+    if (userMessage == null || userMessage.isEmpty) return;
+
+    // Remove the error bubble from local state unconditionally. Client-side
+    // error bubbles typically have no server id, so the old id-guarded
+    // deleteMessage path left the error bubble visible even after a successful
+    // retry — confusing because the chat then showed [user][error][user][reply].
+    final errorMsg = messages[errorIndex];
+    final notifier = ref.read(chatMessagesProvider.notifier);
+    final current = ref.read(chatMessagesProvider).valueOrNull ?? [];
+    final cleaned = current.where((m) => !identical(m, errorMsg) && !(
+        m.role == errorMsg.role &&
+        m.content == errorMsg.content &&
+        m.createdAt == errorMsg.createdAt)).toList();
+    if (cleaned.length != current.length) {
+      notifier.state = AsyncValue.data(cleaned);
     }
+    if (errorMsg.id != null) {
+      notifier.deleteMessage(errorMsg.id!); // Fire-and-forget server cleanup
+    }
+
+    _textController.text = userMessage;
+    _sendMessage();
   }
 
   /// Regenerate an AI response by removing it and resending the previous user message

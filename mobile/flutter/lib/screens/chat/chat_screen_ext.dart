@@ -575,6 +575,23 @@ extension __ChatScreenStateExt on _ChatScreenState {
                     );
                   },
                 ),
+                if (!isVideo) ...[
+                  const SizedBox(height: 8),
+                  _buildMiniPickerOption(
+                    ctx: ctx,
+                    icon: Icons.collections_outlined,
+                    label: 'Choose Multiple Photos',
+                    color: action.color,
+                    onTap: () {
+                      Navigator.pop(ctx);
+                      HapticService.selection();
+                      _handleMediaFromPill(
+                        ChatMediaMode.multipleImages,
+                        action.examplePrompt ?? '',
+                      );
+                    },
+                  ),
+                ],
                 const SizedBox(height: 12),
               ],
             ),
@@ -594,6 +611,20 @@ extension __ChatScreenStateExt on _ChatScreenState {
     }
 
     try {
+      // Multi-image path: Scan Food / Analyze Menu pills can accept multiple
+      // photos so the nutrition agent runs analyze_multi_food_images.
+      if (mode == ChatMediaMode.multipleImages) {
+        final mediaList = await MediaPickerHelper.pickMultipleImages(context: context);
+        if (mediaList.isEmpty) return;
+        if (!mounted) return;
+        if (mediaList.length == 1) {
+          await _sendMessageWithMedia(mediaList.first);
+        } else {
+          await _sendMessageWithMultiMedia(mediaList);
+        }
+        return;
+      }
+
       PickedMedia? media;
       switch (mode) {
         case ChatMediaMode.camera:
@@ -608,6 +639,9 @@ extension __ChatScreenStateExt on _ChatScreenState {
         case ChatMediaMode.recordVideo:
           media = await MediaPickerHelper.pickVideo(ImageSource.camera);
           break;
+        case ChatMediaMode.multipleImages:
+          // Already handled above.
+          return;
       }
 
       if (media != null && mounted) {

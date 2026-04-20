@@ -560,6 +560,7 @@ class SupabaseDB:
         image_url: Optional[str] = None,
         image_storage_key: Optional[str] = None,
         source_type: str = "text",
+        input_type: Optional[str] = None,
         **micronutrients,
     ) -> Optional[Dict[str, Any]]:
         """Create a food log entry from AI analysis."""
@@ -578,6 +579,7 @@ class SupabaseDB:
             image_url=image_url,
             image_storage_key=image_storage_key,
             source_type=source_type,
+            input_type=input_type,
             **micronutrients,
         )
 

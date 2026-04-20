@@ -207,6 +207,11 @@ mixin WorkoutUIBuildersMixin<T extends StatefulWidget> on State<T> {
   void showHideCoachDialog();
   String formatDuration(int seconds);
   List<SetRowData> buildSetRowsForExercise(int exerciseIndex);
+
+  // Pre-Set coaching banner (above Set 1). Returns null when nothing to say
+  // (no history, dismissed, specialty pattern, set already logged, etc.).
+  String? preSetBannerMessageFor(int exerciseIndex);
+  void dismissPreSetBanner(int exerciseIndex);
   Set<int> getCompletedExerciseIndices();
   List<ActionChipData> buildActionChipsForCurrentExercise();
 

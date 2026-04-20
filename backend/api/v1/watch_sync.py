@@ -382,13 +382,20 @@ async def _log_food_with_gemini(db, user_id: str, food_log: FoodLogRequest, devi
         carbs_g = food_log.carbs_g or 0
         fat_g = food_log.fat_g or 0
 
-    # Insert food log
+    # Insert food log. Normalize input_type to lowercase so the row matches the
+    # migration-1960 CHECK allowlist (watch-app historically sent "VOICE" /
+    # "MANUAL" uppercase). Also set source_type="watch" so analytics can
+    # distinguish watch-originated logs from phone logs.
+    normalized_input_type = (food_log.input_type or "voice").strip().lower()
+    if normalized_input_type not in {"voice", "manual"}:
+        normalized_input_type = "voice"
     db.table("food_logs").insert({
         "user_id": user_id,
         "food_name": food_name,
         "raw_input": food_log.raw_input,
-        "input_type": food_log.input_type,
-        "calories": calories,
+        "input_type": normalized_input_type,
+        "source_type": "watch",
+        "total_calories": calories,
         "protein_g": protein_g,
         "carbs_g": carbs_g,
         "fat_g": fat_g,

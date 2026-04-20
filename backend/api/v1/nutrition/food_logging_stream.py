@@ -580,6 +580,7 @@ async def log_food_from_image_streaming(
                 image_url=image_url,
                 image_storage_key=storage_key,
                 source_type="image",
+                input_type="image",
                 inflammation_score=inflammation_score,
                 is_ultra_processed=is_ultra_processed,
                 **micronutrients,
@@ -918,3 +919,301 @@ async def analyze_food_from_image_streaming(
     )
 
 
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Multi-image log: accepts 1..N photos and an analysis_mode ("auto", "plate",
+# "menu", or "buffet"). Plate mode auto-logs a single food_log row and returns
+# the standard LogFoodResponse shape. Menu and Buffet modes DO NOT auto-log —
+# they return structured dish/section data so the client can render the
+# MenuAnalysisSheet checklist and the user ticks off only the items they eat.
+# Those selected items are then persisted via /log-selected-items.
+# ─────────────────────────────────────────────────────────────────────────────
+
+@router.post("/log-multi-image-stream")
+@limiter.limit("6/minute")
+async def log_food_from_multi_image_streaming(
+    request: Request,
+    user_id: str = Form(...),
+    meal_type: str = Form(...),
+    analysis_mode: str = Form("auto"),
+    user_message: Optional[str] = Form(None),
+    input_type: Optional[str] = Form(None),
+    images: List[UploadFile] = File(...),
+    current_user: dict = Depends(get_current_user),
+):
+    """Log or analyze 1..N food images. Plate auto-logs; Menu/Buffet return structured data."""
+    ALLOWED_IMAGE_TYPES = {'image/jpeg', 'image/png', 'image/webp', 'image/heic'}
+    MAX_IMAGE_SIZE = 10 * 1024 * 1024
+    MAX_IMAGES = 10
+
+    if analysis_mode not in {"auto", "plate", "menu", "buffet"}:
+        raise HTTPException(status_code=400, detail="Invalid analysis_mode")
+    if not images:
+        raise HTTPException(status_code=400, detail="At least one image required")
+    if len(images) > MAX_IMAGES:
+        raise HTTPException(status_code=400, detail=f"Too many images (max {MAX_IMAGES})")
+
+    verify_user_ownership(current_user, user_id)
+
+    image_payloads: List[Tuple[bytes, str]] = []
+    for img in images:
+        if img.content_type and img.content_type not in ALLOWED_IMAGE_TYPES:
+            raise HTTPException(status_code=400, detail=f"Invalid image type: {img.content_type}")
+        data = await img.read()
+        if len(data) > MAX_IMAGE_SIZE:
+            raise HTTPException(status_code=400, detail=f"Image too large (max {MAX_IMAGE_SIZE // (1024*1024)}MB)")
+        image_payloads.append((data, img.content_type or 'image/jpeg'))
+
+    normalized_input_type = (input_type or '').strip().lower() or 'image'
+
+    async def generate_sse() -> AsyncGenerator[str, None]:
+        start_time = time.time()
+
+        def elapsed_ms() -> int:
+            return int((time.time() - start_time) * 1000)
+
+        def send_progress(step: int, total: int, message: str, detail: str = None):
+            data = {"type": "progress", "step": step, "total_steps": total,
+                    "message": message, "detail": detail, "elapsed_ms": elapsed_ms()}
+            return f"event: progress\ndata: {json.dumps(data)}\n\n"
+
+        def send_error(error: str):
+            return f"event: error\ndata: {json.dumps({'type': 'error', 'error': error, 'elapsed_ms': elapsed_ms()})}\n\n"
+
+        try:
+            n = len(image_payloads)
+            yield send_progress(1, 4, f"Uploading {n} photo{'s' if n != 1 else ''}...", None)
+
+            upload_tasks = [
+                upload_food_image_to_s3(
+                    file_bytes=data, user_id=user_id, content_type=mime,
+                    source="gallery" if normalized_input_type == "gallery" else "camera",
+                    meal_type=meal_type,
+                )
+                for data, mime in image_payloads
+            ]
+            upload_results = await asyncio.gather(*upload_tasks)
+            image_urls = [r[0] for r in upload_results]
+            storage_keys = [r[1] for r in upload_results]
+            mime_types = [mime for _, mime in image_payloads]
+
+            yield send_progress(2, 4, "Analyzing...", f"{n} image{'s' if n != 1 else ''}")
+
+            from services.vision_service import get_vision_service
+            vision = get_vision_service()
+
+            db = get_supabase_db()
+            user_tz = resolve_timezone(request, db, user_id)
+            user = db.get_user(user_id)
+            if user:
+                user = db.enrich_user_with_nutrition_targets(user)
+            nutrition_context = None
+            if user:
+                targets = {k: user.get(k) for k in [
+                    "daily_calorie_target", "daily_protein_target_g",
+                    "daily_carbs_target_g", "daily_fat_target_g",
+                ] if user.get(k) is not None}
+                if targets:
+                    nutrition_context = {"targets": targets}
+                    today = get_user_today(user_tz)
+                    daily_summary = db.get_daily_nutrition_summary(user_id, today)
+                    if daily_summary and daily_summary.get("total_calories"):
+                        nutrition_context["consumed_today"] = {
+                            "calories_consumed": daily_summary.get("total_calories", 0),
+                            "protein_consumed_g": daily_summary.get("total_protein_g", 0),
+                            "carbs_consumed_g": daily_summary.get("total_carbs_g", 0),
+                            "fat_consumed_g": daily_summary.get("total_fat_g", 0),
+                        }
+
+            analysis_result = await asyncio.wait_for(
+                vision.analyze_food_from_s3_keys(
+                    s3_keys=storage_keys, mime_types=mime_types,
+                    user_context=user_message, analysis_mode=analysis_mode,
+                    nutrition_context=nutrition_context,
+                ),
+                timeout=90,
+            )
+
+            if not analysis_result:
+                yield send_error("Could not analyze the images. Please try a clearer photo.")
+                return
+
+            actual_mode = analysis_result.get("analysis_type", analysis_mode)
+            logger.info(f"[STREAM multi] mode={actual_mode} user={user_id} images={n}")
+
+            if actual_mode == "plate":
+                yield send_progress(3, 4, "Calculating nutrition...", None)
+                bias = await get_user_calorie_bias(user_id)
+                if bias != 0:
+                    analysis_result = apply_calorie_bias(analysis_result, bias)
+
+                food_items = analysis_result.get("food_items", [])
+                total_calories = analysis_result.get("total_calories", 0)
+                protein_g = analysis_result.get("protein_g") or analysis_result.get("total_protein_g", 0.0)
+                carbs_g = analysis_result.get("carbs_g") or analysis_result.get("total_carbs_g", 0.0)
+                fat_g = analysis_result.get("fat_g") or analysis_result.get("total_fat_g", 0.0)
+                fiber_g = analysis_result.get("fiber_g", 0.0)
+                health_score = analysis_result.get("health_score")
+                ai_feedback = analysis_result.get("feedback")
+
+                yield send_progress(4, 4, "Saving your meal...", None)
+                stream_logged_at = get_user_now_iso(user_tz)
+                created_log = db.create_food_log(
+                    user_id=user_id, meal_type=meal_type, food_items=food_items,
+                    total_calories=total_calories, protein_g=protein_g, carbs_g=carbs_g,
+                    fat_g=fat_g, fiber_g=fiber_g, ai_feedback=ai_feedback,
+                    health_score=health_score, logged_at=stream_logged_at,
+                    image_url=image_urls[0], image_storage_key=storage_keys[0],
+                    source_type="image", input_type=normalized_input_type,
+                )
+
+                from api.v1.nutrition.summaries import invalidate_daily_summary_cache
+                await invalidate_daily_summary_cache(user_id)
+
+                response_data = {
+                    "success": True, "analysis_type": "plate",
+                    "food_log_id": created_log.get("id") if created_log else None,
+                    "food_items": food_items, "total_calories": total_calories,
+                    "protein_g": protein_g, "carbs_g": carbs_g, "fat_g": fat_g,
+                    "fiber_g": fiber_g, "ai_suggestion": ai_feedback,
+                    "health_score": health_score, "image_urls": image_urls,
+                    "total_time_ms": elapsed_ms(),
+                }
+                yield f"event: done\ndata: {json.dumps(response_data)}\n\n"
+                return
+
+            yield send_progress(3, 4, "Formatting results...", None)
+
+            flat_items: List[dict] = []
+            if actual_mode == "menu":
+                for section in analysis_result.get("sections", []) or []:
+                    section_name = section.get("section_name") or "Menu"
+                    for dish in section.get("dishes", []) or []:
+                        flat_items.append({
+                            "name": dish.get("name", "Unknown"), "section": section_name,
+                            "calories": dish.get("calories", 0),
+                            "protein_g": dish.get("protein_g", 0),
+                            "carbs_g": dish.get("carbs_g", 0),
+                            "fat_g": dish.get("fat_g", 0),
+                            "rating": dish.get("rating"),
+                            "rating_reason": dish.get("rating_reason"),
+                            "amount": dish.get("serving_description"),
+                            "price": dish.get("price"),
+                        })
+            else:
+                for dish in analysis_result.get("dishes", []) or []:
+                    flat_items.append({
+                        "name": dish.get("name", "Unknown"),
+                        "calories": dish.get("calories", 0),
+                        "protein_g": dish.get("protein_g", 0),
+                        "carbs_g": dish.get("carbs_g", 0),
+                        "fat_g": dish.get("fat_g", 0),
+                        "rating": dish.get("rating"),
+                        "rating_reason": dish.get("rating_reason"),
+                        "amount": dish.get("serving_description"),
+                    })
+
+            response_data = {
+                "success": True, "analysis_type": actual_mode,
+                "food_items": flat_items,
+                "sections": analysis_result.get("sections"),
+                "suggested_plate": analysis_result.get("suggested_plate"),
+                "recommended_order": analysis_result.get("recommended_order"),
+                "tips": analysis_result.get("tips", []),
+                "restaurant_name": analysis_result.get("restaurant_name"),
+                "image_urls": image_urls, "storage_keys": storage_keys,
+                "mime_types": mime_types, "total_time_ms": elapsed_ms(),
+            }
+            yield f"event: done\ndata: {json.dumps(response_data)}\n\n"
+
+        except asyncio.TimeoutError:
+            yield send_error("Analysis timed out. Try again with fewer or clearer photos.")
+        except Exception as e:
+            logger.error(f"[STREAM multi] error: {e}", exc_info=True)
+            yield send_error(str(e))
+
+    return StreamingResponse(
+        generate_sse(),
+        media_type="text/event-stream",
+        headers={"Cache-Control": "no-cache", "Connection": "keep-alive", "X-Accel-Buffering": "no"},
+    )
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Log the ticked items from a menu / buffet checklist as food_log rows.
+# One row per item so daily summaries / macro charts aggregate correctly.
+# ─────────────────────────────────────────────────────────────────────────────
+
+class SelectedItem(BaseModel):
+    name: str
+    calories: int = 0
+    protein_g: float = 0.0
+    carbs_g: float = 0.0
+    fat_g: float = 0.0
+    portion_multiplier: float = 1.0
+    amount: Optional[str] = None
+
+
+class LogSelectedItemsRequest(BaseModel):
+    user_id: str
+    meal_type: str
+    analysis_type: str
+    items: List[SelectedItem]
+    input_type: Optional[str] = None
+    image_url: Optional[str] = None
+    image_storage_key: Optional[str] = None
+
+
+@router.post("/log-selected-items")
+@limiter.limit("12/minute")
+async def log_selected_items(
+    request: Request,
+    body: LogSelectedItemsRequest,
+    current_user: dict = Depends(get_current_user),
+):
+    """Persist ticked items from a menu/buffet checklist. One food_log per item."""
+    verify_user_ownership(current_user, body.user_id)
+    if not body.items:
+        raise HTTPException(status_code=400, detail="No items to log")
+
+    source_type = {"menu": "menu", "buffet": "buffet", "plate": "image"}.get(body.analysis_type, "image")
+    input_type = (body.input_type or {
+        "menu": "menu_scan", "buffet": "buffet_scan", "plate": "multi_image_scan",
+    }.get(body.analysis_type, "image")).lower()
+
+    db = get_supabase_db()
+    user_tz = resolve_timezone(request, db, body.user_id)
+    logged_at = get_user_now_iso(user_tz)
+
+    created_ids: List[str] = []
+    try:
+        for item in body.items:
+            mult = max(0.0, item.portion_multiplier or 1.0)
+            food_items = [{
+                "name": item.name,
+                "calories": int(round(item.calories * mult)),
+                "protein_g": round(item.protein_g * mult, 1),
+                "carbs_g": round(item.carbs_g * mult, 1),
+                "fat_g": round(item.fat_g * mult, 1),
+                "amount": item.amount or "1 serving",
+            }]
+            row = db.create_food_log(
+                user_id=body.user_id, meal_type=body.meal_type, food_items=food_items,
+                total_calories=food_items[0]["calories"],
+                protein_g=food_items[0]["protein_g"],
+                carbs_g=food_items[0]["carbs_g"],
+                fat_g=food_items[0]["fat_g"],
+                fiber_g=0, ai_feedback=None, health_score=None, logged_at=logged_at,
+                image_url=body.image_url, image_storage_key=body.image_storage_key,
+                source_type=source_type, input_type=input_type,
+            )
+            if row and row.get("id"):
+                created_ids.append(row["id"])
+
+        from api.v1.nutrition.summaries import invalidate_daily_summary_cache
+        await invalidate_daily_summary_cache(body.user_id)
+    except Exception as e:
+        logger.error(f"[log-selected-items] error: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Failed to log items")
+
+    return {"success": True, "food_log_ids": created_ids, "count": len(created_ids)}

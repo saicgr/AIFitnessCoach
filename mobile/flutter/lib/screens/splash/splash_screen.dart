@@ -27,7 +27,7 @@ class _SplashScreenState extends State<SplashScreen>
     // Logo entrance: scale up + fade in
     _logoController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 800),
+      duration: const Duration(milliseconds: 500),
     );
 
     _scaleAnimation = Tween<double>(begin: 0.5, end: 1.0).animate(
@@ -56,12 +56,8 @@ class _SplashScreenState extends State<SplashScreen>
 
     // Start animations
     _logoController.forward();
-    Future.delayed(const Duration(milliseconds: 400), () {
-      if (mounted) {
-        _pulseController.repeat(reverse: true);
-        _shimmerController.repeat();
-      }
-    });
+    _pulseController.repeat(reverse: true);
+    _shimmerController.repeat();
   }
 
   @override
@@ -121,7 +117,7 @@ class _SplashScreenState extends State<SplashScreen>
                             boxShadow: [
                               BoxShadow(
                                 color: brandBlue
-                                    .withOpacity(_pulseAnimation.value),
+                                    .withValues(alpha: _pulseAnimation.value),
                                 blurRadius: 40,
                                 spreadRadius: 8,
                               ),
@@ -139,7 +135,7 @@ class _SplashScreenState extends State<SplashScreen>
                               borderRadius: BorderRadius.circular(22),
                               boxShadow: [
                                 BoxShadow(
-                                  color: brandBlue.withOpacity(0.3),
+                                  color: brandBlue.withValues(alpha: 0.3),
                                   blurRadius: 16,
                                   spreadRadius: 1,
                                 ),
@@ -285,7 +281,7 @@ class _ShimmerRingPainter extends CustomPainter {
       final t = i / steps;
       // Fade from full opacity in middle to 0 at edges
       final edgeFade = sin(t * pi);
-      paint.color = color.withOpacity(opacity * edgeFade);
+      paint.color = color.withValues(alpha: opacity * edgeFade);
 
       final angle = progress * 2 * pi + t * sweepAngle;
       final dx = center.dx + radius * cos(angle);

@@ -83,3 +83,36 @@ class FatigueAlertsNotifier extends StateNotifier<bool> {
     await prefs.setBool(_key, state);
   }
 }
+
+/// Whether the pre-set coaching insight banner is shown above Set 1 of each
+/// exercise during a workout. Persisted to SharedPreferences. Defaults to true.
+final preSetInsightEnabledProvider =
+    StateNotifierProvider<PreSetInsightNotifier, bool>((ref) {
+  return PreSetInsightNotifier();
+});
+
+class PreSetInsightNotifier extends StateNotifier<bool> {
+  static const _key = 'pre_set_insight_enabled';
+
+  PreSetInsightNotifier() : super(true) {
+    _load();
+  }
+
+  Future<void> _load() async {
+    final prefs = await SharedPreferences.getInstance();
+    state = prefs.getBool(_key) ?? true;
+  }
+
+  Future<void> toggle() async {
+    state = !state;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_key, state);
+  }
+
+  Future<void> setEnabled(bool enabled) async {
+    if (state == enabled) return;
+    state = enabled;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_key, state);
+  }
+}

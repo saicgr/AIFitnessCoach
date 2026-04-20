@@ -74,6 +74,11 @@ class NutritionDB(NutritionDBPart2, BaseDB):
         image_url: Optional[str] = None,
         image_storage_key: Optional[str] = None,
         source_type: str = "text",
+        # Specific input method used to create this log. Populated by every
+        # write path so analytics can distinguish voice / camera / gallery /
+        # menu_scan / buffet_scan / multi_image_scan / chat / ai_suggestion /
+        # barcode / manual / watch. Schema CHECK constraint enforces allowlist.
+        input_type: Optional[str] = None,
         user_query: Optional[str] = None,
         # Inflammation / ultra-processed tracking
         inflammation_score: Optional[int] = None,
@@ -120,6 +125,9 @@ class NutritionDB(NutritionDBPart2, BaseDB):
             "health_score": health_score,
             "source_type": source_type,
         }
+        if input_type:
+            # Normalize to lowercase to match CHECK constraint allowlist.
+            data["input_type"] = input_type.lower()
 
         # Set explicit logged_at timestamp if provided (timezone-aware)
         if logged_at:

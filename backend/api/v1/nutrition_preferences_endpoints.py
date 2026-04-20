@@ -464,6 +464,8 @@ async def log_meal_template(
             fiber_g=fiber_g,
             ai_feedback=f"Logged from template: {template.get('name')}",
             health_score=None,
+            source_type="manual",
+            input_type="manual",
         )
 
         food_log_id = food_log.get("id") if food_log else str(uuid.uuid4())

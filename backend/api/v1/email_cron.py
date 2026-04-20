@@ -1108,7 +1108,7 @@ async def _job_premium_idle(supabase, email_svc) -> int:
     try:
         subs_result = supabase.client.table("user_subscriptions") \
             .select("user_id, tier, status") \
-            .in_("status", ["active", "trialing"]) \
+            .in_("status", ["active", "trial"]) \
             .neq("tier", "free") \
             .execute()
         if not subs_result.data:
@@ -1226,7 +1226,7 @@ async def _run_cancel_job(
         target_start = (datetime.now(timezone.utc) - timedelta(days=days_since + 1)).isoformat()
         target_end = (datetime.now(timezone.utc) - timedelta(days=days_since - 1)).isoformat()
 
-        status_filter = "cancelled" if access_active else "expired"
+        status_filter = "canceled" if access_active else "expired"
         subs_result = supabase.client.table("user_subscriptions") \
             .select("user_id") \
             .eq("status", status_filter) \
@@ -1552,7 +1552,7 @@ def _get_user_stats(supabase, user: Dict[str, Any]) -> UserStats:
         week_cutoff = (datetime.now(timezone.utc) - timedelta(days=7)).date().isoformat()
         today_str = get_user_today(user_tz)
         nr = supabase.client.table("food_logs") \
-            .select("logged_at, calories, protein_g") \
+            .select("logged_at, total_calories, protein_g") \
             .eq("user_id", user_id) \
             .gte("logged_at", f"{week_cutoff}T00:00:00") \
             .execute()
@@ -1569,7 +1569,7 @@ def _get_user_stats(supabase, user: Dict[str, Any]) -> UserStats:
                     days.add(la.split("T")[0])
                     if la.startswith(today_str):
                         nut_today = True
-                c = r.get("calories")
+                c = r.get("total_calories")
                 if c is not None:
                     total_cal += int(c)
                     cal_count += 1

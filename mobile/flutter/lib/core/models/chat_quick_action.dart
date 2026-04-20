@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 enum ChatActionBehavior { sendPrompt, openMediaPicker }
 
-enum ChatMediaMode { camera, gallery, video, recordVideo }
+enum ChatMediaMode { camera, gallery, multipleImages, video, recordVideo }
 
 class ChatQuickAction {
   final String id;

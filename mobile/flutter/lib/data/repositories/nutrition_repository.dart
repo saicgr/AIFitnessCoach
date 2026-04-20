@@ -697,6 +697,156 @@ class NutritionRepository {
     }
   }
 
+  /// Stream progress while analyzing 1..N food photos. Backend decides the
+  /// analysis mode when `analysisMode="auto"` (classifies plate vs menu vs
+  /// buffet). Plate mode auto-logs one food_log row. Menu / buffet mode
+  /// returns structured dish data without logging — the caller renders the
+  /// MenuAnalysisSheet checklist and later calls [logSelectedMealItems] with
+  /// the ticked items.
+  Stream<MultiImageAnalysisProgress> analyzeFoodFromImagesStreaming({
+    required String userId,
+    required String mealType,
+    required List<File> imageFiles,
+    String analysisMode = 'auto',
+    String? userMessage,
+    String? inputType,
+  }) async* {
+    final startTime = DateTime.now();
+    try {
+      yield MultiImageAnalysisProgress(
+        step: 0,
+        totalSteps: 4,
+        message: 'Preparing ${imageFiles.length} photo${imageFiles.length == 1 ? '' : 's'}...',
+        elapsedMs: 0,
+      );
+
+      final baseUrl = _client.baseUrl;
+      final streamingDio = Dio(BaseOptions(
+        baseUrl: baseUrl,
+        connectTimeout: const Duration(seconds: 30),
+        receiveTimeout: const Duration(minutes: 2),
+        headers: {'Accept': 'text/event-stream', 'Cache-Control': 'no-cache'},
+      ));
+      final authHeaders = await _client.getAuthHeaders();
+      streamingDio.options.headers.addAll(authHeaders);
+
+      final multipart = <MapEntry<String, MultipartFile>>[];
+      for (var i = 0; i < imageFiles.length; i++) {
+        multipart.add(MapEntry(
+          'images',
+          await MultipartFile.fromFile(imageFiles[i].path, filename: 'food_$i.jpg'),
+        ));
+      }
+      final formData = FormData();
+      formData.fields.addAll([
+        MapEntry('user_id', userId),
+        MapEntry('meal_type', mealType),
+        MapEntry('analysis_mode', analysisMode),
+        if (userMessage != null && userMessage.isNotEmpty) MapEntry('user_message', userMessage),
+        if (inputType != null && inputType.isNotEmpty) MapEntry('input_type', inputType),
+      ]);
+      formData.files.addAll(multipart);
+
+      final response = await streamingDio.post(
+        '/nutrition/log-multi-image-stream',
+        data: formData,
+        options: Options(responseType: ResponseType.stream),
+      );
+      final responseBody = response.data as ResponseBody;
+
+      String eventType = '';
+      String eventData = '';
+      String buffer = '';
+
+      await for (final bytes in responseBody.stream) {
+        buffer += utf8.decode(bytes);
+        while (buffer.contains('\n')) {
+          final newlineIndex = buffer.indexOf('\n');
+          final line = buffer.substring(0, newlineIndex).trim();
+          buffer = buffer.substring(newlineIndex + 1);
+          if (line.isEmpty) {
+            if (eventType.isNotEmpty && eventData.isNotEmpty) {
+              try {
+                final data = jsonDecode(eventData) as Map<String, dynamic>;
+                final elapsedMs = DateTime.now().difference(startTime).inMilliseconds;
+                if (eventType == 'progress') {
+                  yield MultiImageAnalysisProgress(
+                    step: (data['step'] as num?)?.toInt() ?? 0,
+                    totalSteps: (data['total_steps'] as num?)?.toInt() ?? 4,
+                    message: data['message'] as String? ?? 'Analyzing...',
+                    detail: data['detail'] as String?,
+                    elapsedMs: elapsedMs,
+                  );
+                } else if (eventType == 'done') {
+                  yield MultiImageAnalysisProgress(
+                    step: 4,
+                    totalSteps: 4,
+                    message: 'Analysis complete!',
+                    elapsedMs: elapsedMs,
+                    isCompleted: true,
+                    result: data,
+                  );
+                } else if (eventType == 'error') {
+                  yield MultiImageAnalysisProgress(
+                    step: 0,
+                    totalSteps: 4,
+                    message: data['error'] as String? ?? 'Unknown error',
+                    elapsedMs: elapsedMs,
+                    hasError: true,
+                  );
+                }
+              } catch (e) {
+                debugPrint('⚠️ [Nutrition multi] SSE parse error: $e');
+              }
+              eventType = '';
+              eventData = '';
+            }
+            continue;
+          }
+          if (line.startsWith('event:')) {
+            eventType = line.substring(6).trim();
+          } else if (line.startsWith('data:')) {
+            eventData = line.substring(5).trim();
+          }
+        }
+      }
+    } catch (e) {
+      yield MultiImageAnalysisProgress(
+        step: 0,
+        totalSteps: 4,
+        message: 'Failed to analyze images: $e',
+        elapsedMs: DateTime.now().difference(startTime).inMilliseconds,
+        hasError: true,
+      );
+    }
+  }
+
+  /// Persist the items the user ticked off from a menu / buffet analysis.
+  /// One food_log row per item so daily aggregates stay correct.
+  Future<Map<String, dynamic>> logSelectedMealItems({
+    required String userId,
+    required String mealType,
+    required String analysisType, // "menu" | "buffet" | "plate"
+    required List<Map<String, dynamic>> items,
+    String? inputType,
+    String? imageUrl,
+    String? imageStorageKey,
+  }) async {
+    final response = await _client.post(
+      '/nutrition/log-selected-items',
+      data: {
+        'user_id': userId,
+        'meal_type': mealType,
+        'analysis_type': analysisType,
+        'items': items,
+        if (inputType != null) 'input_type': inputType,
+        if (imageUrl != null) 'image_url': imageUrl,
+        if (imageStorageKey != null) 'image_storage_key': imageStorageKey,
+      },
+    );
+    return Map<String, dynamic>.from(response.data as Map);
+  }
+
   /// Fetch typical-companion suggestions for a primary food.
   ///
   /// Backend merges the user's own cross-log co-occurrence history with a

@@ -45,33 +45,51 @@ extension ChatMessagesNotifierExt on ChatMessagesNotifier {
 
     // --- OFFLINE ROUTING ---
     if (!_isOnline()) {
-      if (_offlineCoach.isAvailable) {
-        // Inject system notification on first offline message
-        final hasOfflineNotification = currentMessages.any((m) =>
-            m.role == 'system' && m.content.contains('Offline Mode'));
-        if (!hasOfflineNotification) {
-          final offlineNotification = ChatMessage(
-            role: 'system',
-            content: 'Offline Mode — Using local AI. Features like workout generation, nutrition logging, and exercise library lookup are not available. Send a message to get started.',
+      try {
+        if (_offlineCoach.isAvailable) {
+          // Inject system notification on first offline message
+          final hasOfflineNotification = currentMessages.any((m) =>
+              m.role == 'system' && m.content.contains('Offline Mode'));
+          if (!hasOfflineNotification) {
+            final offlineNotification = ChatMessage(
+              role: 'system',
+              content: 'Offline Mode — Using local AI. Features like workout generation, nutrition logging, and exercise library lookup are not available. Send a message to get started.',
+              createdAt: DateTime.now().toIso8601String(),
+            );
+            final withNotification = [...messagesWithUser, offlineNotification];
+            state = AsyncValue.data(withNotification);
+          }
+          await _sendOfflineMessage(message, userId);
+        } else {
+          // No model loaded, show error
+          final errorMessage = ChatMessage(
+            role: 'assistant',
+            content: 'AI Coach needs an internet connection or a downloaded AI model to respond. Go to Settings \u2192 Offline Mode to download a model.',
             createdAt: DateTime.now().toIso8601String(),
           );
-          final withNotification = [...messagesWithUser, offlineNotification];
-          state = AsyncValue.data(withNotification);
+          state = AsyncValue.data([...messagesWithUser, errorMessage]);
         }
-        await _sendOfflineMessage(message, userId);
+      } catch (e, st) {
+        // If the offline path throws (model inference error, storage error,
+        // etc.), surface it as an error bubble so the user sees a failure
+        // instead of a silently wedged chat.
+        debugPrint('❌ [Chat] Offline send failed: $e');
+        debugPrint('❌ [Chat] Stack: $st');
+        if (mounted) {
+          _updateMessageStatus(userMessage, MessageStatus.error);
+          final errorMessage = ChatMessage(
+            role: 'error',
+            content: 'Offline coach failed to respond: ${e.toString().replaceFirst(RegExp(r'^Exception:\s*'), '')}',
+            createdAt: DateTime.now().toIso8601String(),
+          );
+          state = AsyncValue.data([...(state.valueOrNull ?? []), errorMessage]);
+        }
+      } finally {
+        // Guarantee the loading flag is cleared so future sends are not
+        // permanently blocked, regardless of which branch threw.
         _isLoading = false;
-        return;
-      } else {
-        // No model loaded, show error
-        final errorMessage = ChatMessage(
-          role: 'assistant',
-          content: 'AI Coach needs an internet connection or a downloaded AI model to respond. Go to Settings \u2192 Offline Mode to download a model.',
-          createdAt: DateTime.now().toIso8601String(),
-        );
-        state = AsyncValue.data([...messagesWithUser, errorMessage]);
-        _isLoading = false;
-        return;
       }
+      return;
     }
     // --- END OFFLINE ROUTING ---
 
@@ -80,15 +98,18 @@ extension ChatMessagesNotifierExt on ChatMessagesNotifier {
       syncPendingMessages(); // Fire and forget, don't await
     }
 
-    // Check if this looks like a quick workout request
+    // Check if this looks like a quick workout request. Assigned before the
+    // try block so the `finally` can see it, but the side-effecting
+    // _setAIGenerating call goes inside the try so an exception from the
+    // callback cannot leak past the `finally` that clears _isLoading.
     final messageLower = message.toLowerCase();
     final isQuickWorkoutRequest = ChatMessagesNotifier._quickWorkoutKeywords.any((kw) => messageLower.contains(kw));
-    if (isQuickWorkoutRequest) {
-      _setAIGenerating(true);
-      debugPrint('🏋️ [Chat] Quick workout request detected - setting loading state');
-    }
 
     try {
+      if (isQuickWorkoutRequest) {
+        _setAIGenerating(true);
+        debugPrint('🏋️ [Chat] Quick workout request detected - setting loading state');
+      }
       // Build conversation history for context. Filter to user/assistant only
       // — the backend rejects any other role (e.g. 'error' from a previous
       // failed send) with a Pydantic 422, which would permanently break chat
@@ -190,12 +211,75 @@ extension ChatMessagesNotifierExt on ChatMessagesNotifier {
       responseStopwatch.stop();
       if (!mounted) return;
 
-      // Mark user message as sent after successful API call
-      _updateMessageStatus(userMessage, MessageStatus.sent);
+      // Build the assistant bubble and commit it to state IMMEDIATELY, before
+      // any further awaits. Previously the tail order was
+      //   sent → await _processActionData → !mounted check → delivered → append
+      // which could leave the user bubble marked "sent" (single check) with NO
+      // assistant bubble rendered if anything in the middle early-returned
+      // (mount race, action_data side-effect, etc.). Appending first makes the
+      // visible response bulletproof against downstream processing.
+      final cleanedMessage = _stripActionDataFromMessage(response.message);
+      final assistantMessage = ChatMessage(
+        role: 'assistant',
+        content: cleanedMessage,
+        intent: response.intent,
+        agentType: response.agentType,
+        createdAt: DateTime.now().toIso8601String(),
+        actionData: response.actionData,
+        coachPersonaId: currentAISettings.coachPersonaId,
+        responseTimeMs: responseStopwatch.elapsedMilliseconds,
+      );
 
-      // Process action_data if present (await to ensure refresh completes)
-      await _processActionData(response.actionData);
-      if (!mounted) return;
+      final beforeAppend = state.valueOrNull ?? [];
+      // Dedup purpose: guard against the defensive race where loadHistory (or
+      // another code path) injected the SAME response from the server BEFORE
+      // this send's await returned. That injection, if it happens, lands
+      // within the send's lifetime — almost always a few seconds at most.
+      //
+      // We therefore only treat the last assistant bubble as a duplicate if
+      // (a) its content matches AND (b) it was created after this send's
+      // userMessage — i.e., it's part of the same turn, not a coincidental
+      // repeat of an old response the AI happened to produce again.
+      //
+      // This fixes two real edge cases the prior `content == cleanedMessage`
+      // check had:
+      //   1. If the AI legitimately repeats itself verbatim on a new turn
+      //      ("Great job!", "Keep it up!"), the append no longer gets dropped.
+      //   2. If the new response carries fresh action_data (e.g., a new
+      //      workout_id button) while text coincidentally matches an older
+      //      turn, we still render the new bubble with its action_data.
+      final lastAssistantIdx = beforeAppend.lastIndexWhere((m) => m.role == 'assistant');
+      bool isDuplicate = false;
+      if (lastAssistantIdx >= 0 &&
+          beforeAppend[lastAssistantIdx].content == cleanedMessage) {
+        final lastAsst = beforeAppend[lastAssistantIdx];
+        final lastAsstCreated = DateTime.tryParse(lastAsst.createdAt ?? '');
+        final userCreated = DateTime.tryParse(userMessage.createdAt ?? '');
+        if (lastAsstCreated != null &&
+            userCreated != null &&
+            lastAsstCreated.isAfter(userCreated)) {
+          isDuplicate = true;
+        }
+      }
+
+      final withUserDelivered = beforeAppend.map((m) {
+        if (m.createdAt == userMessage.createdAt &&
+            m.role == userMessage.role &&
+            m.content == userMessage.content) {
+          return m.copyWith(status: MessageStatus.delivered);
+        }
+        return m;
+      }).toList();
+
+      final newMessages = isDuplicate
+          ? withUserDelivered
+          : [...withUserDelivered, assistantMessage];
+      state = AsyncValue.data(newMessages);
+      await _saveToCache(userId, newMessages);
+
+      if (isDuplicate) {
+        debugPrint('⚠️ [Chat] Skipping duplicate assistant append — matching bubble already injected within this turn');
+      }
 
       // Debug logging for action_data (helps trace "Go to Workout" button issues)
       if (response.actionData != null) {
@@ -205,43 +289,18 @@ extension ChatMessagesNotifierExt on ChatMessagesNotifier {
       } else {
         debugPrint('🔍 [Chat] Response has no action_data');
       }
-
-      // Add assistant response with agent type AND action_data (for "Go to Workout" button)
-      // Strip any raw action_data JSON that the AI accidentally included in the message text
-      final cleanedMessage = _stripActionDataFromMessage(response.message);
-      final assistantMessage = ChatMessage(
-        role: 'assistant',
-        content: cleanedMessage,
-        intent: response.intent,
-        agentType: response.agentType,
-        createdAt: DateTime.now().toIso8601String(),
-        actionData: response.actionData, // Include action_data for UI buttons
-        coachPersonaId: currentAISettings.coachPersonaId,
-        responseTimeMs: responseStopwatch.elapsedMilliseconds,
-      );
-
-      // Debug: Check if hasGeneratedWorkout will be true
-      debugPrint('🎯 [Chat] assistantMessage.hasGeneratedWorkout: ${assistantMessage.hasGeneratedWorkout}');
       if (assistantMessage.hasGeneratedWorkout) {
         debugPrint('✅ [Chat] "Go to Workout" button should appear! workoutId: ${assistantMessage.workoutId}');
       }
 
-      // Mark user message as delivered (assistant responded)
-      _updateMessageStatus(userMessage, MessageStatus.delivered);
-
-      final updatedMessages = state.valueOrNull ?? [];
-
-      // Guard against duplicate assistant messages (e.g., if loadHistory
-      // already injected this response from the server before we got here)
-      final isDuplicate = updatedMessages.any((m) =>
-          m.role == 'assistant' && m.content == cleanedMessage);
-      if (isDuplicate) {
-        debugPrint('⚠️ [Chat] Skipping duplicate assistant message');
-      } else {
-        final newMessages = [...updatedMessages, assistantMessage];
-        state = AsyncValue.data(newMessages);
-        // Incrementally update cache with new messages (append, don't re-fetch)
-        await _saveToCache(userId, newMessages);
+      // Process action_data LAST. A failure here (navigation error, stale
+      // provider, etc.) must not hide the assistant response that's already
+      // rendered. Swallow and log instead of propagating to the outer catch.
+      try {
+        await _processActionData(response.actionData);
+      } catch (e, st) {
+        debugPrint('⚠️ [Chat] action_data processing failed (response still rendered): $e');
+        debugPrint('⚠️ [Chat] Stack: $st');
       }
     } catch (e, stackTrace) {
       debugPrint('❌ [Chat] Error sending message: $e');

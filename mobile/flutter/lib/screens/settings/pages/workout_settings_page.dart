@@ -158,6 +158,27 @@ class _WorkoutSettingsPageState extends ConsumerState<WorkoutSettingsPage> {
                     ),
                     iconColor: isDark ? AppColors.coral : AppColorsLight.coral,
                   ),
+                  SettingItemData(
+                    icon: Icons.auto_awesome_outlined,
+                    title: 'Pre-Set Insights',
+                    subtitle: ref.watch(preSetInsightEnabledProvider)
+                        ? 'ON — Data-grounded tip above Set 1'
+                        : 'OFF — No pre-set banner',
+                    onTap: () {
+                      ref.read(preSetInsightEnabledProvider.notifier).toggle();
+                    },
+                    trailing: Switch.adaptive(
+                      value: ref.watch(preSetInsightEnabledProvider),
+                      onChanged: (val) {
+                        ref
+                            .read(preSetInsightEnabledProvider.notifier)
+                            .setEnabled(val);
+                      },
+                      activeTrackColor:
+                          isDark ? AppColors.coral : AppColorsLight.coral,
+                    ),
+                    iconColor: isDark ? AppColors.coral : AppColorsLight.coral,
+                  ),
                 ],
               ),
 

@@ -57,6 +57,7 @@ class WorkoutNotificationService {
 
   bool _initialized = false;
   bool _isShowing = false;
+  bool _permissionGranted = true; // assume yes until we check
 
   /// External callbacks wired up by the active workout screen / provider.
   VoidCallback? onPauseResumePressed;
@@ -104,10 +105,21 @@ class WorkoutNotificationService {
           enableLights: false,
         ),
       );
+
+      // Android 13+ requires runtime POST_NOTIFICATIONS permission.
+      // If denied, we silently no-op in show() rather than spamming
+      // failed calls every second.
+      try {
+        final granted = await androidPlugin.requestNotificationsPermission();
+        _permissionGranted = granted ?? true;
+      } catch (e) {
+        debugPrint('⚠️ [WorkoutNotif] Permission request failed: $e');
+        _permissionGranted = true; // fail-open; show() will try and may fail
+      }
     }
 
     _initialized = true;
-    debugPrint('🏋️ [WorkoutNotif] Initialized');
+    debugPrint('🏋️ [WorkoutNotif] Initialized (permission=$_permissionGranted)');
   }
 
   // ---------------------------------------------------------------------------
@@ -126,6 +138,7 @@ class WorkoutNotificationService {
   }) async {
     if (!Platform.isAndroid) return;
     if (!_initialized) await initialize();
+    if (!_permissionGranted) return; // user denied POST_NOTIFICATIONS
 
     final pauseResumeLabel = isPaused ? 'Resume' : 'Pause';
     final pauseResumeIcon = isPaused
@@ -168,15 +181,18 @@ class WorkoutNotificationService {
 
     final details = NotificationDetails(android: androidDetails);
 
-    await _plugin.show(
-      _notificationId,
-      '$workoutName  ·  $exerciseProgress',
-      '${isPaused ? '⏸ Paused' : '🏋️ In Progress'}  ·  $currentExerciseName',
-      details,
-      payload: 'active_workout',
-    );
-
-    _isShowing = true;
+    try {
+      await _plugin.show(
+        _notificationId,
+        '$workoutName  ·  $exerciseProgress',
+        '${isPaused ? '⏸ Paused' : '🏋️ In Progress'}  ·  $currentExerciseName',
+        details,
+        payload: 'active_workout',
+      );
+      _isShowing = true;
+    } catch (e) {
+      debugPrint('⚠️ [WorkoutNotif] show() failed: $e');
+    }
   }
 
   /// Cancel / remove the persistent notification.

@@ -353,6 +353,8 @@ class _FoodItemRankingCardState extends State<_FoodItemRankingCard> {
                           child: Text(
                             widget.item.name,
                             style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: textPrimary),
+                            maxLines: 2,
+                            softWrap: true,
                             overflow: TextOverflow.ellipsis,
                           ),
                         ),

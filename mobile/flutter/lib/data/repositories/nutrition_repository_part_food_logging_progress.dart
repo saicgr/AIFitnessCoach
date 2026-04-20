@@ -117,6 +117,52 @@ class FoodLoggingProgress {
 }
 
 
+/// Progress event for multi-image food analysis. Carries the raw backend
+/// payload in [result] on completion so the caller can branch on
+/// `analysis_type` ("plate" / "menu" / "buffet") and render appropriately.
+class MultiImageAnalysisProgress {
+  final int step;
+  final int totalSteps;
+  final String message;
+  final String? detail;
+  final int elapsedMs;
+
+  /// Raw response payload from backend's `done` event. Includes:
+  /// - `analysis_type`: "plate" | "menu" | "buffet"
+  /// - `food_items`: flat list of dishes (for menu/buffet) or food items (plate)
+  /// - `sections`, `suggested_plate`, `recommended_order`, `tips` (menu/buffet)
+  /// - `food_log_id`, macros, `health_score`, `ai_suggestion` (plate auto-log)
+  /// - `image_urls`, `storage_keys`, `mime_types`
+  final Map<String, dynamic>? result;
+
+  final bool isCompleted;
+  final bool hasError;
+
+  MultiImageAnalysisProgress({
+    required this.step,
+    required this.totalSteps,
+    required this.message,
+    this.detail,
+    required this.elapsedMs,
+    this.result,
+    this.isCompleted = false,
+    this.hasError = false,
+  });
+
+  double get progress => totalSteps > 0 ? step / totalSteps : 0;
+  bool get isLoading => !isCompleted && !hasError;
+
+  String? get analysisType => result?['analysis_type'] as String?;
+  List<Map<String, dynamic>> get foodItems {
+    final raw = result?['food_items'] as List? ?? const [];
+    return raw.whereType<Map>().map((e) => Map<String, dynamic>.from(e)).toList();
+  }
+
+  @override
+  String toString() =>
+      'MultiImageAnalysisProgress(step: $step/$totalSteps, type: $analysisType, message: $message)';
+}
+
 /// Nutrition state
 class NutritionState {
   final bool isLoading;

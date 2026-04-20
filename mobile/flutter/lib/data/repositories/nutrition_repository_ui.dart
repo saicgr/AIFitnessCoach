@@ -441,6 +441,8 @@ extension NutritionRepositoryExt on NutritionRepository {
     required int totalFat,
     int? totalFiber,
     String sourceType = 'restaurant',
+    /// Specific input method (lowercase; see CHECK constraint for allowed values).
+    String? inputType,
     String? notes,
     // Micronutrients (optional)
     double? sodiumMg,
@@ -499,6 +501,7 @@ extension NutritionRepositoryExt on NutritionRepository {
           'total_fat': totalFat,
           if (totalFiber != null) 'total_fiber': totalFiber,
           'source_type': sourceType,
+          if (inputType != null) 'input_type': inputType,
           if (notes != null) 'notes': notes,
           if (imageUrl != null) 'image_url': imageUrl,
           if (imageStorageKey != null) 'image_storage_key': imageStorageKey,
@@ -581,6 +584,11 @@ extension NutritionRepositoryExt on NutritionRepository {
     required LogFoodResponse analyzedFood,
     double portionMultiplier = 1.0,
     String sourceType = 'text',
+    /// Specific input method — populates food_logs.input_type. Accepted values
+    /// match the backend CHECK constraint: text, voice, camera, gallery,
+    /// barcode, menu_scan, buffet_scan, multi_image_scan, chat, ai_suggestion,
+    /// manual, image, copy, watch.
+    String? inputType,
     List<FoodItemEdit> itemEdits = const [],
   }) async {
     debugPrint('💾 [Nutrition] Saving analyzed food for $userId');
@@ -628,6 +636,7 @@ extension NutritionRepositoryExt on NutritionRepository {
       totalFat: adjustedFat,
       totalFiber: adjustedFiber,
       sourceType: sourceType,
+      inputType: inputType,
       // Pass micronutrients from AI analysis
       sugarG: adjustedSugar,
       sodiumMg: adjustedSodium,

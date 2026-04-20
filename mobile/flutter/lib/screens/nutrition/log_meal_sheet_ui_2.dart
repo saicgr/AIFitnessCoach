@@ -53,13 +53,23 @@ extension __LogMealSheetStateExt2 on _LogMealSheetState {
                   ),
                   border: InputBorder.none,
                   contentPadding: const EdgeInsets.symmetric(vertical: 8),
+                  // Trailing: search when user has typed ≥3 chars, otherwise
+                  // a mic for voice input (moved inline from the bottom bar).
                   suffixIcon: _descriptionController.text.trim().length >= 3
                       ? IconButton(
                           icon: Icon(Icons.search, color: textMuted, size: 22),
                           onPressed: _triggerImmediateSearch,
                           tooltip: 'Search foods',
                         )
-                      : null,
+                      : IconButton(
+                          icon: Icon(
+                            _isListening ? Icons.stop_circle_outlined : Icons.mic_none_rounded,
+                            color: _isListening ? const Color(0xFFEF4444) : textMuted,
+                            size: 22,
+                          ),
+                          onPressed: _toggleVoiceInput,
+                          tooltip: _isListening ? 'Stop listening' : 'Voice input',
+                        ),
                 ),
               ),
               // Listening indicator

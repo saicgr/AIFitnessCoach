@@ -235,6 +235,9 @@ class LogTextRequest(BaseModel):
     description: str = Field(..., max_length=2000)
     meal_type: str = Field(..., max_length=20)
     mood_before: Optional[str] = None
+    # Distinguishes typed from dictated input. Populates food_logs.input_type.
+    # Allowed values match the CHECK constraint added in migration 1960.
+    input_type: Optional[str] = Field(default=None, max_length=30)
 
     @validator('user_id')
     def user_id_must_not_be_empty(cls, v):
@@ -254,6 +257,10 @@ class LogDirectRequest(BaseModel):
     total_fat: int
     total_fiber: Optional[int] = None
     source_type: str = Field(default="restaurant", max_length=50)
+    # Specific input method — populates food_logs.input_type. One of:
+    # text, voice, camera, gallery, barcode, menu_scan, buffet_scan,
+    # multi_image_scan, chat, ai_suggestion, manual, image, copy, watch.
+    input_type: Optional[str] = Field(default=None, max_length=30)
     notes: Optional[str] = Field(default=None, max_length=500)
     # Originating user input (e.g. dish name the user selected, restaurant item they picked).
     user_query: Optional[str] = Field(default=None, max_length=500)

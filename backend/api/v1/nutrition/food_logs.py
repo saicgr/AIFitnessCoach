@@ -419,6 +419,7 @@ async def copy_food_log(log_id: str, http_request: Request, meal_type: str = Que
             health_score=source.get("health_score"),
             logged_at=user_tz_logged_at,
             source_type=source.get("source_type", "text"),
+            input_type="copy",
             inflammation_score=source.get("inflammation_score"),
             is_ultra_processed=source.get("is_ultra_processed"),
         )

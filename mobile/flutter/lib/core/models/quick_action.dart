@@ -1,6 +1,17 @@
 import 'package:flutter/material.dart';
 
-enum QuickActionBehavior { route, waterQuickAdd, foodLog, weightLog, moodLog, fastingNav, quickWorkout, chat }
+enum QuickActionBehavior {
+  route,
+  waterQuickAdd,
+  foodLog,
+  foodScan,   // Opens LogMealSheet and immediately launches multi-image scan
+  menuScan,   // Opens LogMealSheet and immediately launches menu scan
+  weightLog,
+  moodLog,
+  fastingNav,
+  quickWorkout,
+  chat,
+}
 
 class QuickAction {
   final String id;
@@ -34,6 +45,20 @@ const quickActionRegistry = <String, QuickAction>{
     icon: Icons.restaurant_outlined,
     color: Color(0xFF22C55E),
     behavior: QuickActionBehavior.foodLog,
+  ),
+  'scan_food': QuickAction(
+    id: 'scan_food',
+    label: 'Scan Food',
+    icon: Icons.camera_alt_outlined,
+    color: Color(0xFF16A34A),
+    behavior: QuickActionBehavior.foodScan,
+  ),
+  'scan_menu': QuickAction(
+    id: 'scan_menu',
+    label: 'Scan Menu',
+    icon: Icons.menu_book_outlined,
+    color: Color(0xFFF59E0B),
+    behavior: QuickActionBehavior.menuScan,
   ),
   'water': QuickAction(
     id: 'water',
@@ -196,6 +221,7 @@ const quickActionRegistry = <String, QuickAction>{
 const defaultQuickActionOrder = [
   // COMING SOON: 'fasting' removed from default order — re-add when fasting feature launches
   'quick_workout', 'food', 'water', 'chat', 'weight', 'photo', 'measure', 'mood',
+  'scan_food', 'scan_menu',
   'history', 'steps', 'workout', 'programs', 'library', 'settings', 'schedule', 'habits',
   'progress', 'stats', 'achievements', 'hydration', 'summaries',
 ];

@@ -51,7 +51,12 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
         );
         return;
       }
-      setState(() => _isListening = true);
+      setState(() {
+        _isListening = true;
+        // Voice input is still text-shaped downstream, but analytics should
+        // distinguish dictation from typed text.
+        _inputType = 'voice';
+      });
       ref.read(posthogServiceProvider).capture(
         eventName: 'food_voice_input_used',
         properties: <String, Object>{},
@@ -502,6 +507,7 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
       mealType: mealType,
       analyzedFood: response,
       sourceType: sourceType,
+      inputType: _inputType,
       itemEdits: pendingEdits,
     ).then((savedResponse) {
       savedLogId = savedResponse.foodLogId;
@@ -734,6 +740,270 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
   }
 
 
+  /// Multi-image entry point for the food-log bottom bar's Camera / Gallery
+  /// buttons. Camera picks a single photo (one-shot UX). Gallery invokes
+  /// pickMultiImage (up to 5 photos). Both route through the new
+  /// /log-multi-image-stream endpoint with analysis_mode="auto" so the
+  /// backend classifier decides plate vs menu vs buffet.
+  Future<void> _pickImages(ImageSource source) async {
+    final picker = ImagePicker();
+    List<XFile> files = [];
+
+    if (source == ImageSource.camera) {
+      final one = await picker.pickImage(
+        source: ImageSource.camera,
+        maxWidth: 1600,
+        maxHeight: 1600,
+        imageQuality: 90,
+      );
+      if (one != null) files = [one];
+    } else {
+      files = await picker.pickMultiImage(imageQuality: 85);
+      if (files.length > 5) files = files.take(5).toList();
+    }
+    if (files.isEmpty) return;
+
+    await _analyzeMultiImages(
+      files: files,
+      analysisMode: 'auto',
+      inputType: source == ImageSource.camera ? 'camera' : 'gallery',
+      userMessage: _descriptionController.text.trim().isEmpty
+          ? null
+          : _descriptionController.text.trim(),
+    );
+  }
+
+  /// Menu scan — take or pick 1..N photos of a restaurant menu, send through
+  /// /log-multi-image-stream with analysis_mode="menu". On response, open
+  /// MenuAnalysisSheet for the user to tick items and log them.
+  Future<void> _scanMenu() async {
+    final picker = ImagePicker();
+    final source = await showModalBottomSheet<ImageSource>(
+      context: context,
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.camera_alt_outlined),
+              title: const Text('Take Menu Photo'),
+              onTap: () => Navigator.pop(ctx, ImageSource.camera),
+            ),
+            ListTile(
+              leading: const Icon(Icons.photo_library_outlined),
+              title: const Text('Choose Menu Photos'),
+              subtitle: const Text('Up to 5 pages of the same menu'),
+              onTap: () => Navigator.pop(ctx, ImageSource.gallery),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (source == null) return;
+
+    List<XFile> files = [];
+    if (source == ImageSource.camera) {
+      final one = await picker.pickImage(
+        source: ImageSource.camera,
+        maxWidth: 1600,
+        maxHeight: 1600,
+        imageQuality: 90,
+      );
+      if (one != null) files = [one];
+    } else {
+      files = await picker.pickMultiImage(imageQuality: 90);
+      if (files.length > 5) files = files.take(5).toList();
+    }
+    if (files.isEmpty) return;
+
+    await _analyzeMultiImages(
+      files: files,
+      analysisMode: 'menu',
+      inputType: 'menu_scan',
+    );
+  }
+
+  /// Shared core that runs the /log-multi-image-stream pipeline and dispatches
+  /// on the returned analysis_type:
+  ///   - "plate"  → close sheet (log already persisted), show snackbar
+  ///   - "menu"   → open MenuAnalysisSheet(analysisType: 'menu')
+  ///   - "buffet" → open MenuAnalysisSheet(analysisType: 'buffet')
+  Future<void> _analyzeMultiImages({
+    required List<XFile> files,
+    required String analysisMode,
+    required String inputType,
+    String? userMessage,
+  }) async {
+    final isGuest = ref.read(isGuestModeProvider);
+    if (isGuest) {
+      final canScan = await ref.read(guestUsageLimitsProvider.notifier).usePhotoScan();
+      if (!canScan) {
+        if (mounted) {
+          Navigator.pop(context);
+          GuestUpgradeSheet.show(context, feature: GuestFeatureLimit.photoScan);
+        }
+        return;
+      }
+    }
+
+    ref.read(posthogServiceProvider).capture(
+      eventName: 'food_multi_image_scan',
+      properties: <String, Object>{
+        'count': files.length,
+        'analysis_mode': analysisMode,
+        'input_type': inputType,
+      },
+    );
+
+    setState(() {
+      _isLoading = true;
+      _showLoadingIndicator = false;
+      _error = null;
+      _sourceType = analysisMode == 'menu' ? 'menu' : analysisMode == 'buffet' ? 'buffet' : 'image';
+      _inputType = inputType;
+      _capturedImagePath = files.first.path;
+      _currentStep = 0;
+      _progressMessage = 'Preparing ${files.length} photo${files.length == 1 ? '' : 's'}...';
+      _progressDetail = null;
+    });
+    _loadingDelayTimer?.cancel();
+    _loadingDelayTimer = Timer(const Duration(milliseconds: 500), () {
+      if (mounted && _isLoading) setState(() => _showLoadingIndicator = true);
+    });
+
+    try {
+      final repository = ref.read(nutritionRepositoryProvider);
+      MultiImageAnalysisProgress? finalProgress;
+
+      await for (final progress in repository.analyzeFoodFromImagesStreaming(
+        userId: widget.userId,
+        mealType: _selectedMealType.value,
+        imageFiles: files.map((x) => File(x.path)).toList(),
+        analysisMode: analysisMode,
+        userMessage: userMessage,
+        inputType: inputType,
+      )) {
+        if (!mounted) return;
+        if (progress.hasError) {
+          _loadingDelayTimer?.cancel();
+          setState(() {
+            _isLoading = false;
+            _showLoadingIndicator = false;
+            _error = progress.message;
+          });
+          return;
+        }
+        if (progress.isCompleted) {
+          finalProgress = progress;
+          setState(() => _analysisElapsedMs = progress.elapsedMs);
+          break;
+        }
+        setState(() {
+          _currentStep = progress.step;
+          _totalSteps = progress.totalSteps;
+          _progressMessage = progress.message;
+          _progressDetail = progress.detail;
+        });
+      }
+
+      _loadingDelayTimer?.cancel();
+      if (!mounted || finalProgress == null || finalProgress.result == null) {
+        setState(() {
+          _isLoading = false;
+          _showLoadingIndicator = false;
+          if (_error == null) _error = 'Analysis failed. Please try again.';
+        });
+        return;
+      }
+
+      final payload = finalProgress.result!;
+      final analysisType = (payload['analysis_type'] as String?) ?? 'plate';
+
+      setState(() {
+        _isLoading = false;
+        _showLoadingIndicator = false;
+      });
+
+      if (analysisType == 'plate') {
+        // Plate path already auto-logged. Surface confirmation and refresh.
+        ref.read(nutritionProvider.notifier).loadTodaySummary(widget.userId);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Logged ${files.length} photo${files.length == 1 ? '' : 's'} '
+                  '(${payload['total_calories'] ?? 0} kcal)'),
+            ),
+          );
+          Navigator.of(context).pop();
+        }
+        return;
+      }
+
+      // Menu / buffet: open MenuAnalysisSheet for the user to tick items.
+      final rawItems = (payload['food_items'] as List?) ?? const [];
+      if (rawItems.isEmpty) {
+        setState(() => _error = analysisType == 'menu'
+            ? "Couldn't read this menu — try a clearer photo."
+            : "Couldn't identify dishes — try a clearer photo.");
+        return;
+      }
+      final foodItems = rawItems
+          .whereType<Map>()
+          .map((e) => Map<String, dynamic>.from(e))
+          .toList();
+
+      final imageUrls = (payload['image_urls'] as List?)?.cast<String>() ?? const [];
+      final storageKeys = (payload['storage_keys'] as List?)?.cast<String>() ?? const [];
+
+      if (!mounted) return;
+      showModalBottomSheet<void>(
+        context: context,
+        isScrollControlled: true,
+        backgroundColor: Colors.transparent,
+        builder: (_) => MenuAnalysisSheet(
+          foodItems: foodItems,
+          analysisType: analysisType,
+          isDark: widget.isDark,
+          onLogItems: (selected) async {
+            try {
+              await repository.logSelectedMealItems(
+                userId: widget.userId,
+                mealType: _selectedMealType.value,
+                analysisType: analysisType,
+                items: selected,
+                inputType: analysisType == 'menu' ? 'menu_scan' : 'buffet_scan',
+                imageUrl: imageUrls.isNotEmpty ? imageUrls.first : null,
+                imageStorageKey: storageKeys.isNotEmpty ? storageKeys.first : null,
+              );
+              if (mounted) {
+                ref.read(nutritionProvider.notifier).loadTodaySummary(widget.userId);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Logged ${selected.length} item${selected.length == 1 ? '' : 's'}')),
+                );
+                Navigator.of(context).pop(); // close MenuAnalysisSheet
+                Navigator.of(context).pop(); // close LogMealSheet
+              }
+            } catch (e) {
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Failed to log: $e')),
+                );
+              }
+            }
+          },
+        ),
+      );
+    } catch (e) {
+      _loadingDelayTimer?.cancel();
+      setState(() {
+        _isLoading = false;
+        _showLoadingIndicator = false;
+        _error = e.toString();
+      });
+    }
+  }
+
+
   Future<void> _pickImage(ImageSource source) async {
     debugPrint('📸 [LogMeal] _pickImage started | source=${source.name}');
 
@@ -764,6 +1034,7 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
         _showLoadingIndicator = false;
         _error = null;
         _sourceType = 'image';
+        _inputType = source == ImageSource.camera ? 'camera' : 'gallery';
         _capturedImagePath = image.path;
         _currentStep = 0;
         _progressMessage = 'Preparing image...';
@@ -973,6 +1244,8 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
       _isLoading = true;
       _showLoadingIndicator = true;
       _error = null;
+      _sourceType = 'barcode';
+      _inputType = 'barcode';
     });
 
     try {

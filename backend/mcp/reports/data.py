@@ -406,8 +406,8 @@ def _collect_nutrition(user_id: str, start: date, end: date) -> Dict[str, Any]:
         lambda: client.table("food_logs")
         .select("*")
         .eq("user_id", user_id)
-        .gte("log_date", _iso(start))
-        .lte("log_date", _iso(end))
+        .gte("logged_at", _iso(start))
+        .lte("logged_at", _iso(end))
         .execute(),
         default=[],
     )
@@ -421,11 +421,11 @@ def _collect_nutrition(user_id: str, start: date, end: date) -> Dict[str, Any]:
     meal_calories: Dict[str, float] = defaultdict(float)
 
     for log in logs or []:
-        d = log.get("log_date") or (log.get("consumed_at") or "")[:10]
+        d = (log.get("logged_at") or "")[:10]
         if not d:
             continue
         try:
-            cals = float(log.get("calories") or 0)
+            cals = float(log.get("total_calories") or 0)
             protein = float(log.get("protein_g") or 0)
             carbs = float(log.get("carbs_g") or 0)
             fat = float(log.get("fat_g") or 0)

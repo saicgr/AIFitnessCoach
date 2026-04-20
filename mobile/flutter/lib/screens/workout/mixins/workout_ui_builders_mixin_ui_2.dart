@@ -369,6 +369,12 @@ extension WorkoutUIBuildersMixinUI2 on WorkoutUIBuildersMixin {
                                       viewingExerciseIndex == currentExerciseIndex &&
                                       !isRestingBetweenExercises,
                                     inlineRestRowWidget: buildInlineRestRowV2(),
+                                    // Pre-Set coaching banner (data-grounded insight above Set 1)
+                                    preSetBannerMessage: preSetBannerMessageFor(viewingExerciseIndex),
+                                    onPreSetBannerDismissed: () =>
+                                        dismissPreSetBanner(viewingExerciseIndex),
+                                    preSetBannerAnimationKey:
+                                        'pre_set_${exercises[viewingExerciseIndex].id}',
                                   ),
                                 ),
 
@@ -639,6 +645,11 @@ extension WorkoutUIBuildersMixinUI2 on WorkoutUIBuildersMixin {
                                 viewingExerciseIndex == currentExerciseIndex &&
                                 !isRestingBetweenExercises,
                             inlineRestRowWidget: buildInlineRestRowV2(),
+                            preSetBannerMessage: preSetBannerMessageFor(viewingExerciseIndex),
+                            onPreSetBannerDismissed: () =>
+                                dismissPreSetBanner(viewingExerciseIndex),
+                            preSetBannerAnimationKey:
+                                'pre_set_${exercises[viewingExerciseIndex].id}_landscape',
                           ),
                         ),
                       ),

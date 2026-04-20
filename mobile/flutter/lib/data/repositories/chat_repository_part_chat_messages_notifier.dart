@@ -25,6 +25,17 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
   // Pagination state (#16)
   int _currentOffset = 0;
   bool _hasMoreMessages = true;
+  // In-flight guard for loadOlderMessages — scroll listeners can fire dozens
+  // of times per second during a fling, so we dedupe by future to avoid
+  // spamming GET /chat/history and tripping the 30-req/min rate limit.
+  Future<void>? _loadOlderFuture;
+  // Gate: loadOlderMessages must not fire until the initial loadHistory has
+  // completed. Otherwise a user who scrolls during cold-start races the
+  // initial fetch (both hit /chat/history with different pagination) and the
+  // second reply overwrites the first. Flipped true when _doLoadHistory's
+  // fresh API fetch settles (success OR error — either way pagination owns
+  // the offset cursor from that point on).
+  bool _initialHistoryLoaded = false;
 
   // Offline message queue (#31)
   final List<String> _pendingOfflineMessages = [];
@@ -192,6 +203,10 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
       }
     } finally {
       _loadHistoryFuture = null;
+      // Open the gate for loadOlderMessages once the initial history fetch
+      // has settled (regardless of outcome). Before this point, the initial
+      // fetch owns the offset cursor; after, pagination can extend it.
+      _initialHistoryLoaded = true;
     }
   }
 
@@ -526,13 +541,23 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
   }
 
   /// Load older messages for infinite scroll (#16)
-  Future<void> loadOlderMessages() async {
-    if (!_hasMoreMessages || _isLoading) return;
+  Future<void> loadOlderMessages() {
+    if (!_hasMoreMessages || _isLoading) return Future.value();
+    // Don't paginate until the initial history fetch has settled — otherwise
+    // a user who scrolls during cold-start races loadHistory with a parallel
+    // offset=0 request, and the later reply clobbers the earlier state.
+    if (!_initialHistoryLoaded) return Future.value();
+    // Dedup concurrent scroll-driven calls onto the same in-flight future.
+    if (_loadOlderFuture != null) return _loadOlderFuture!;
+    _loadOlderFuture = _doLoadOlderMessages();
+    return _loadOlderFuture!;
+  }
 
-    final userId = await _apiClient.getUserId();
-    if (userId == null || !mounted) return;
-
+  Future<void> _doLoadOlderMessages() async {
     try {
+      final userId = await _apiClient.getUserId();
+      if (userId == null || !mounted) return;
+
       final olderMessages = await _repository.getChatHistory(
         userId,
         limit: 50,
@@ -555,6 +580,8 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
       }
     } catch (e) {
       debugPrint('❌ [Chat] Error loading older messages: $e');
+    } finally {
+      _loadOlderFuture = null;
     }
   }
 

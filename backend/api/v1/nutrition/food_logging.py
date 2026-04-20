@@ -198,6 +198,7 @@ async def log_food_from_image(
             image_url=image_url,
             image_storage_key=storage_key,
             source_type="image",
+            input_type="image",
             user_query=caption if caption else None,
             **micronutrients,
         )
@@ -468,6 +469,7 @@ async def log_food_from_text(body: LogTextRequest, background_tasks: BackgroundT
             health_score=health_score,
             logged_at=user_tz_logged_at,
             source_type="text",
+            input_type=body.input_type or "text",
             user_query=body.description,
             **micronutrients,
             **inference_patch,
@@ -649,6 +651,7 @@ async def log_food_direct(body: LogDirectRequest, request: Request, current_user
             image_url=body.image_url,
             image_storage_key=body.image_storage_key,
             source_type=body.source_type,
+            input_type=body.input_type,
             user_query=body.user_query,
             inflammation_score=body.inflammation_score,
             is_ultra_processed=body.is_ultra_processed,

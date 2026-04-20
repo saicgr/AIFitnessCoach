@@ -640,3 +640,136 @@ async def log_exercise_history_view(request: ViewLogRequest, current_user: dict 
         logger.warning(f"Failed to log exercise history view: {e}", exc_info=True)
         # Don't fail the request on logging errors
         return {"status": "error", "message": str(e)}
+
+
+# ============================================
+# Batch per-set history (for Pre-Set Insight banner)
+# ============================================
+
+class BatchSessionSet(BaseModel):
+    """One working set from a prior session, per-set granularity."""
+    weight_kg: float
+    reps: int
+    rpe: Optional[int] = None
+    rir: Optional[int] = None
+
+
+class BatchSessionSummary(BaseModel):
+    """One prior session's working sets for a single exercise."""
+    date: str  # YYYY-MM-DD
+    working_sets: List[BatchSessionSet]
+
+
+class BatchExerciseHistoryRequest(BaseModel):
+    user_id: str
+    exercise_names: List[str] = Field(..., min_length=1, max_length=30)
+    limit_per_exercise: int = Field(6, ge=1, le=20)
+    days_back: int = Field(84, ge=1, le=365)
+
+
+class BatchExerciseHistoryResponse(BaseModel):
+    """Map of exercise_name -> newest-first list of session summaries."""
+    histories: Dict[str, List[BatchSessionSummary]]
+
+
+@router.post("/batch", response_model=BatchExerciseHistoryResponse)
+async def get_batch_exercise_history(
+    request: BatchExerciseHistoryRequest,
+    current_user: dict = Depends(get_current_user),
+):
+    """
+    Per-set workout history for multiple exercises in a single call.
+
+    Used by the active-workout pre-set insight banner, which runs a local
+    pattern engine on the returned per-set data to produce a data-grounded
+    coaching line before Set 1 of each exercise.
+
+    Returns only working sets (filters warmups). Newest session first.
+    """
+    if str(current_user["id"]) != str(request.user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
+
+    db = get_supabase_db()
+
+    # Normalize names once for case-insensitive matching.
+    normalized = [n.lower() for n in request.exercise_names]
+    since = (datetime.utcnow().date() - timedelta(days=request.days_back)).isoformat()
+
+    try:
+        # One query to grab all candidate rows for every exercise at once.
+        # performance_logs is the source of truth for per-set data.
+        result = (
+            db.client.from_("performance_logs")
+            .select(
+                "exercise_name, set_number, reps_completed, weight_kg, rpe, rir, "
+                "set_type, recorded_at, workout_log_id"
+            )
+            .eq("user_id", request.user_id)
+            .in_("exercise_name", normalized)
+            .gte("recorded_at", since)
+            .order("recorded_at", desc=True)
+            .limit(request.limit_per_exercise * len(normalized) * 10)
+            .execute()
+        )
+        rows = result.data or []
+
+        # Group rows by (exercise_name_lower, workout_log_id) — a workout_log_id
+        # approximates "one session" for this exercise. Fall back to date if
+        # the id is missing for any row.
+        grouped: Dict[str, Dict[str, Dict[str, Any]]] = {n: {} for n in normalized}
+
+        for row in rows:
+            ex_name = (row.get("exercise_name") or "").lower()
+            if ex_name not in grouped:
+                continue
+            # Skip warmups
+            set_type = (row.get("set_type") or "working").lower()
+            if set_type == "warmup":
+                continue
+            reps = row.get("reps_completed")
+            if reps is None or int(reps) <= 0:
+                continue
+
+            session_key = row.get("workout_log_id") or (row.get("recorded_at") or "")[:10]
+            if not session_key:
+                continue
+
+            bucket = grouped[ex_name].setdefault(
+                session_key,
+                {"date": (row.get("recorded_at") or "")[:10], "sets": []},
+            )
+            # Keep the earliest recorded_at as the session date (sets inside
+            # a session can span seconds — any set's date is fine for our day-
+            # level gap logic).
+            bucket["sets"].append(
+                BatchSessionSet(
+                    weight_kg=float(row.get("weight_kg") or 0.0),
+                    reps=int(reps),
+                    rpe=int(row["rpe"]) if row.get("rpe") is not None else None,
+                    rir=int(row["rir"]) if row.get("rir") is not None else None,
+                )
+            )
+
+        # Build the response — keep the N most recent sessions per exercise,
+        # newest first. Order sets within a session by set_number when known
+        # (performance_logs may already be chronological, but we don't rely on that).
+        histories: Dict[str, List[BatchSessionSummary]] = {}
+        for original_name, normalized_name in zip(
+            request.exercise_names, normalized, strict=True
+        ):
+            bucket = grouped.get(normalized_name, {})
+            # Sort sessions by date desc
+            sorted_sessions = sorted(
+                bucket.values(), key=lambda x: x["date"], reverse=True
+            )[: request.limit_per_exercise]
+            histories[original_name] = [
+                BatchSessionSummary(date=s["date"], working_sets=s["sets"])
+                for s in sorted_sessions
+                if s["sets"]
+            ]
+
+        return BatchExerciseHistoryResponse(histories=histories)
+
+    except Exception as e:
+        logger.error(f"Batch exercise history failed: {e}", exc_info=True)
+        raise safe_internal_error(e, "exercise_history_batch")

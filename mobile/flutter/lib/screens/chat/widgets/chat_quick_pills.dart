@@ -111,6 +111,22 @@ class _ChatQuickPillsState extends ConsumerState<ChatQuickPills> {
                     );
                   },
                 ),
+                if (!isVideo) ...[
+                  const SizedBox(height: 8),
+                  _MiniPickerOption(
+                    icon: Icons.collections_outlined,
+                    label: 'Choose Multiple Photos',
+                    color: action.color,
+                    onTap: () {
+                      Navigator.pop(ctx);
+                      HapticService.selection();
+                      widget.onOpenMediaPicker(
+                        ChatMediaMode.multipleImages,
+                        action.examplePrompt ?? '',
+                      );
+                    },
+                  ),
+                ],
                 const SizedBox(height: 12),
               ],
             ),

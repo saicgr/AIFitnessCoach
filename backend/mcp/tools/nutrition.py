@@ -176,9 +176,9 @@ async def _get_recent_meals_impl(user: dict, limit: int = 10) -> Dict[str, Any]:
     limit = max(1, min(int(limit or 10), 50))
     try:
         result = db.client.table("food_logs") \
-            .select("id, food_name, meal_type, total_calories, protein_g, carbs_g, fat_g, consumed_at, created_at") \
+            .select("id, food_name, meal_type, total_calories, protein_g, carbs_g, fat_g, logged_at, created_at") \
             .eq("user_id", user["id"]) \
-            .order("consumed_at", desc=True) \
+            .order("logged_at", desc=True) \
             .limit(limit) \
             .execute()
     except Exception as e:

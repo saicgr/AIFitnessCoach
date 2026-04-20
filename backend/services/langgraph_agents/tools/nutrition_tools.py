@@ -447,7 +447,8 @@ async def parse_app_screenshot(
             fiber_g=fiber_g,
             health_score=health_score,
             ai_feedback=ai_feedback,
-            source_type="parse_app_screenshot",
+            source_type="image",
+            input_type="chat",
             user_query=user_message if user_message else None,
         )
 
@@ -612,7 +613,8 @@ async def parse_nutrition_label(
             fiber_g=fiber_g,
             health_score=health_score,
             ai_feedback=ai_feedback,
-            source_type="parse_nutrition_label",
+            source_type="image",
+            input_type="chat",
             user_query=product_name if product_name and product_name != "unknown" else (user_message if user_message else None),
         )
 
@@ -988,7 +990,8 @@ async def log_food_from_text(
             fiber_g=fiber_g,
             health_score=health_score,
             ai_feedback=ai_feedback,
-            source_type="chat",
+            source_type="text",
+            input_type="chat",
             user_query=food_description,
         )
 

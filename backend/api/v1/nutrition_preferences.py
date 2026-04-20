@@ -588,6 +588,8 @@ async def quick_log_saved_food(
             fiber_g=fiber_g,
             ai_feedback=None,  # No AI feedback for quick log
             health_score=None,
+            source_type="manual",
+            input_type="manual",
         )
 
         food_log_id = food_log.get("id") if food_log else str(uuid.uuid4())

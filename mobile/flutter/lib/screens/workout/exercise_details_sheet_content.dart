@@ -86,18 +86,8 @@ class _ExerciseDetailsSheetContentState
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // Drag handle
-              Container(
-                margin: const EdgeInsets.only(top: 12),
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: textMuted.withValues(alpha: 0.3),
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-
               // Header with title and close button
+              // (drag handle is rendered by the GlassSheet wrapper — do not duplicate here)
               Padding(
                 padding: const EdgeInsets.all(16),
                 child: Row(

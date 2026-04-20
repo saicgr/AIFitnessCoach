@@ -711,8 +711,18 @@ mixin WorkoutFlowMixin<T extends StatefulWidget> on State<T> {
   }
 
   /// Push the latest workout state to the persistent notification.
+  ///
+  /// Only pushes when the app is currently backgrounded. While the user is
+  /// looking at the workout screen, the shade entry is hidden by design —
+  /// re-firing it on every pause/exercise-change would cause it to pop back
+  /// into view every few seconds.
   void updateWorkoutNotification() {
     if (exercises.isEmpty) return;
+    final lifecycle = WidgetsBinding.instance.lifecycleState;
+    final isForeground = lifecycle == null ||
+        lifecycle == AppLifecycleState.resumed;
+    if (isForeground) return;
+
     final exerciseName = currentExerciseIndex < exercises.length
         ? exercises[currentExerciseIndex].name
         : 'Exercise';

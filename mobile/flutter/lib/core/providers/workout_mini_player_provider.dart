@@ -143,6 +143,15 @@ class WorkoutMiniPlayerNotifier extends StateNotifier<WorkoutMiniPlayerState> {
       isPaused: isPaused,
     );
 
+    // Wire notification actions as a remote control for the mini player.
+    // Stop deliberately routes through restore() (not close()) so the workout
+    // session isn't silently dropped — the user finishes the end flow in-app
+    // where DB persistence happens.
+    WorkoutNotificationService.instance.onPauseResumePressed = togglePause;
+    WorkoutNotificationService.instance.onStopPressed = restore;
+    WorkoutNotificationService.instance.onNotificationTapped = restore;
+    _pushNotification();
+
     // Start background timer if not paused
     if (!isPaused) {
       _startTimer();
@@ -162,6 +171,11 @@ class WorkoutMiniPlayerNotifier extends StateNotifier<WorkoutMiniPlayerState> {
 
     _stopTimer();
     state = state.copyWith(isMinimized: false);
+    // Cancel the ongoing notification — user is back in the app and
+    // should use the in-screen controls. The active workout screen's
+    // mixin will reshow the notification if they minimize again.
+    WorkoutNotificationService.instance.cancel();
+    WorkoutNotificationService.instance.clearCallbacks();
   }
 
   /// Close the workout completely
@@ -184,6 +198,7 @@ class WorkoutMiniPlayerNotifier extends StateNotifier<WorkoutMiniPlayerState> {
     } else {
       _startTimer();
     }
+    _pushNotification();
   }
 
   /// Update current exercise info
@@ -197,11 +212,32 @@ class WorkoutMiniPlayerNotifier extends StateNotifier<WorkoutMiniPlayerState> {
       currentExerciseImageUrl: exerciseImageUrl,
       currentExerciseIndex: exerciseIndex,
     );
+    _pushNotification();
   }
 
   /// Update completed sets
   void updateCompletedSets(Map<int, List<Map<String, dynamic>>> sets) {
     state = state.copyWith(completedSets: sets);
+  }
+
+  /// Push the current mini-player state to the ongoing Android notification.
+  /// No-op on iOS / when nothing is minimized.
+  void _pushNotification() {
+    if (!state.isMinimized) return;
+    final workout = state.workout;
+    if (workout == null) return;
+    try {
+      WorkoutNotificationService.instance.show(
+        workoutName: workout.name ?? 'Workout',
+        currentExerciseName: state.currentExerciseName ?? 'Exercise',
+        timerText: state.formattedTime,
+        exerciseProgress:
+            '${state.currentExerciseIndex + 1}/${state.totalExercises}',
+        isPaused: state.isPaused,
+      );
+    } catch (e) {
+      debugPrint('⚠️ [MiniPlayer] Notification push failed: $e');
+    }
   }
 
   /// Start the background timer
@@ -222,6 +258,8 @@ class WorkoutMiniPlayerNotifier extends StateNotifier<WorkoutMiniPlayerState> {
             isResting: newRest > 0,
           );
         }
+
+        _pushNotification();
       }
     });
   }
