@@ -277,7 +277,7 @@ class TestGetChainWithSteps:
 
         def mock_table_side_effect(table_name):
             mock_table = MagicMock()
-            if table_name == "skill_progression_chains":
+            if table_name == "exercise_progression_chains":
                 mock_table.select.return_value.eq.return_value.execute.return_value = mock_chain_result
             else:
                 mock_table.select.return_value.eq.return_value.order.return_value.execute.return_value = mock_steps_result
@@ -333,7 +333,7 @@ class TestGetChainSteps:
 
         def mock_table_side_effect(table_name):
             mock_table = MagicMock()
-            if table_name == "skill_progression_chains":
+            if table_name == "exercise_progression_chains":
                 mock_result = MagicMock()
                 mock_result.data = [{"id": mock_chain_id}]
                 mock_table.select.return_value.eq.return_value.execute.return_value = mock_result
@@ -368,7 +368,7 @@ class TestGetUserProgress:
         """Test successfully fetching user's progress on all chains."""
         chain = generate_mock_chain(chain_id=mock_chain_id)
         progress = generate_mock_progress(mock_user_id, mock_chain_id, current_step_order=2)
-        progress["skill_progression_chains"] = chain
+        progress["exercise_progression_chains"] = chain
         steps = [
             generate_mock_step(mock_chain_id, 2, "Knee Push-ups"),
             generate_mock_step(mock_chain_id, 3, "Full Push-ups"),
@@ -431,7 +431,7 @@ class TestStartChain:
 
         def mock_table_side_effect(table_name):
             mock_table = MagicMock()
-            if table_name == "skill_progression_chains":
+            if table_name == "exercise_progression_chains":
                 mock_result = MagicMock()
                 mock_result.data = [chain]
                 mock_table.select.return_value.eq.return_value.execute.return_value = mock_result
@@ -444,7 +444,7 @@ class TestStartChain:
                 mock_insert = MagicMock()
                 mock_insert.data = [created_progress]
                 mock_table.insert.return_value.execute.return_value = mock_insert
-            elif table_name == "skill_progression_steps":
+            elif table_name == "exercise_progression_steps":
                 mock_result = MagicMock()
                 mock_result.data = [first_step]
                 mock_table.select.return_value.eq.return_value.eq.return_value.execute.return_value = mock_result
@@ -475,7 +475,7 @@ class TestStartChain:
 
         def mock_table_side_effect(table_name):
             mock_table = MagicMock()
-            if table_name == "skill_progression_chains":
+            if table_name == "exercise_progression_chains":
                 mock_result = MagicMock()
                 mock_result.data = [chain]
                 mock_table.select.return_value.eq.return_value.execute.return_value = mock_result
@@ -541,7 +541,7 @@ class TestLogAttempt:
                 mock_update = MagicMock()
                 mock_update.data = [updated_progress]
                 mock_table.update.return_value.eq.return_value.execute.return_value = mock_update
-            elif table_name == "skill_progression_steps":
+            elif table_name == "exercise_progression_steps":
                 mock_result = MagicMock()
                 mock_result.data = [current_step]
                 mock_table.select.return_value.eq.return_value.eq.return_value.execute.return_value = mock_result
@@ -587,7 +587,7 @@ class TestLogAttempt:
                 mock_update = MagicMock()
                 mock_update.data = [updated_progress]
                 mock_table.update.return_value.eq.return_value.execute.return_value = mock_update
-            elif table_name == "skill_progression_steps":
+            elif table_name == "exercise_progression_steps":
                 def step_eq_side_effect(field, value):
                     mock_eq = MagicMock()
                     if value == 0:
@@ -645,7 +645,7 @@ class TestUnlockNextStep:
                 mock_update = MagicMock()
                 mock_update.data = [updated_progress]
                 mock_table.update.return_value.eq.return_value.execute.return_value = mock_update
-            elif table_name == "skill_progression_steps":
+            elif table_name == "exercise_progression_steps":
                 def step_eq_side_effect(field, value):
                     mock_eq = MagicMock()
                     if value == 0:
@@ -688,7 +688,7 @@ class TestUnlockNextStep:
                 mock_select = MagicMock()
                 mock_select.data = [progress]
                 mock_table.select.return_value.eq.return_value.eq.return_value.execute.return_value = mock_select
-            elif table_name == "skill_progression_steps":
+            elif table_name == "exercise_progression_steps":
                 mock_result = MagicMock()
                 mock_result.data = [current_step]
                 mock_table.select.return_value.eq.return_value.eq.return_value.execute.return_value = mock_result
@@ -727,7 +727,7 @@ class TestUnlockNextStep:
                 mock_update = MagicMock()
                 mock_update.data = [updated_progress]
                 mock_table.update.return_value.eq.return_value.execute.return_value = mock_update
-            elif table_name == "skill_progression_steps":
+            elif table_name == "exercise_progression_steps":
                 def step_eq_side_effect(field, value):
                     mock_eq = MagicMock()
                     if value == 4:
@@ -768,7 +768,7 @@ class TestGetUserSummary:
         """Test successfully fetching user skills summary."""
         chain = generate_mock_chain(chain_id=mock_chain_id, total_steps=5)
         progress = generate_mock_progress(mock_user_id, mock_chain_id, current_step_order=2)
-        progress["skill_progression_chains"] = chain
+        progress["exercise_progression_chains"] = chain
 
         all_chains = [
             generate_mock_chain(name="Push-up Progression"),
@@ -781,11 +781,11 @@ class TestGetUserSummary:
                 mock_result = MagicMock()
                 mock_result.data = [progress]
                 mock_table.select.return_value.eq.return_value.execute.return_value = mock_result
-            elif table_name == "skill_progression_steps":
+            elif table_name == "exercise_progression_steps":
                 mock_result = MagicMock()
                 mock_result.data = [{"exercise_name": "Knee Push-ups"}]
                 mock_table.select.return_value.eq.return_value.eq.return_value.execute.return_value = mock_result
-            elif table_name == "skill_progression_chains":
+            elif table_name == "exercise_progression_chains":
                 mock_result = MagicMock()
                 mock_result.data = all_chains
                 mock_table.select.return_value.execute.return_value = mock_result

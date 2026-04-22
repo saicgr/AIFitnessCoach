@@ -12,9 +12,11 @@ import '../../../core/providers/staples_provider.dart';
 import '../../../core/providers/exercise_queue_provider.dart';
 import '../../../core/providers/warmup_duration_provider.dart';
 import '../../../core/providers/weight_increments_provider.dart';
+import '../../../core/providers/workout_ui_mode_provider.dart';
 import '../../../data/services/haptic_service.dart';
 import '../../../widgets/glass_sheet.dart';
 import '../../../widgets/weight_increments_sheet.dart';
+import '../../settings/pages/workout_ui_mode_sheet.dart';
 
 /// Expandable card showing exercise preferences in the Workouts screen
 class ExercisePreferencesCard extends ConsumerStatefulWidget {
@@ -165,8 +167,21 @@ class _ExercisePreferencesCardState
             secondChild: Column(
               children: [
                 Divider(height: 1, color: cardBorder),
+                // Workout Mode — the active-workout UI tier (Easy | Advanced).
+                // Placed as the 1st option inside Exercise Preferences; it
+                // used to live in the Workouts-tab header and as a separate
+                // card in Profile, both removed in favor of a single
+                // canonical home inside preferences.
+                _buildWorkoutModeSection(
+                  context,
+                  isDark: isDark,
+                  textPrimary: textPrimary,
+                  textSecondary: textSecondary,
+                  textMuted: textMuted,
+                  cardBorder: cardBorder,
+                ),
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -528,6 +543,81 @@ class _ExercisePreferencesCardState
           ],
         ),
       ),
+      ),
+    );
+  }
+
+  /// Renders the "Workout Mode" section — header + inline segmented control.
+  /// Segmented control writes straight to `workoutUiModeProvider`; the info
+  /// icon opens the full explainer sheet (same one Settings launches).
+  Widget _buildWorkoutModeSection(
+    BuildContext context, {
+    required bool isDark,
+    required Color textPrimary,
+    required Color textSecondary,
+    required Color textMuted,
+    required Color cardBorder,
+  }) {
+    final mode = ref.watch(workoutUiModeProvider.select((s) => s.mode));
+    final description = switch (mode) {
+      WorkoutUiMode.easy =>
+        'Steppers + AI coach + notes + edit past sets. The default.',
+      // ignore: deprecated_member_use_from_same_package
+      WorkoutUiMode.simple =>
+        'Steppers + AI coach + notes + edit past sets. The default.',
+      WorkoutUiMode.advanced =>
+        'Everything — RIR, pyramid, supersets, increments.',
+    };
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  'WORKOUT MODE',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: 0.5,
+                    color: textMuted,
+                  ),
+                ),
+              ),
+              GestureDetector(
+                onTap: () {
+                  HapticService.selection();
+                  showWorkoutUiModeSheet(context);
+                },
+                child: Padding(
+                  padding: const EdgeInsets.all(4),
+                  child: Icon(
+                    Icons.info_outline_rounded,
+                    size: 16,
+                    color: textSecondary,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Text(
+            description,
+            style: TextStyle(
+              fontSize: 13,
+              color: textSecondary,
+              height: 1.35,
+            ),
+          ),
+          const SizedBox(height: 10),
+          const Align(
+            alignment: Alignment.centerLeft,
+            child: WorkoutUiModeSegmentedControl(height: 32),
+          ),
+        ],
       ),
     );
   }

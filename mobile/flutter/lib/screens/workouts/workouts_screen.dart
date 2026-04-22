@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
-import '../../core/providers/workout_ui_mode_provider.dart';
 import '../../core/theme/theme_colors.dart';
 import '../../data/models/workout.dart';
 import '../../data/models/workout_screen_summary.dart';
@@ -21,7 +20,6 @@ import '../../widgets/pill_swipe_navigation.dart';
 import '../home/widgets/cards/next_workout_card.dart';
 import '../home/widgets/cards/weekly_progress_card.dart';
 import '../home/widgets/hero_workout_card.dart';
-import '../settings/pages/workout_ui_mode_sheet.dart';
 import 'widgets/exercise_preferences_card.dart';
 import 'widgets/upcoming_workouts_sheet.dart';
 import 'widgets/previous_workouts_sheet.dart';
@@ -242,25 +240,8 @@ class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen>
             ),
               ],
             ),
-            // Workout-UI tier toggle. Parked directly under the title row so
-            // it stays within the floating header's frosted-glass rhythm
-            // (matches the same BackdropFilter blur + border alpha used by
-            // the title and Library pills). Right-aligned so it doesn't
-            // visually compete with the title pill.
-            const SizedBox(height: 8),
-            Align(
-              alignment: Alignment.centerRight,
-              child: WorkoutUiModeSegmentedControl(
-                compact: false,
-                height: 32,
-                onChanged: (mode) async {
-                  HapticService.light();
-                  await ref
-                      .read(workoutUiModeProvider.notifier)
-                      .setMode(mode);
-                },
-              ),
-            ),
+            // Tier toggle moved into Exercise Preferences → Workout Mode
+            // (1st option). Header stays focused on navigation only.
           ],
         ),
       ),

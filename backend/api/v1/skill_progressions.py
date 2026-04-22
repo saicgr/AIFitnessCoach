@@ -154,7 +154,7 @@ async def get_all_progression_chains(
 
     try:
         db = get_supabase_db()
-        query = db.client.table("skill_progression_chains").select("*")
+        query = db.client.table("exercise_progression_chains").select("*")
 
         if category:
             query = query.eq("category", category.value)
@@ -181,7 +181,7 @@ async def get_progression_chain(chain_id: str,
         db = get_supabase_db()
 
         # Get the chain
-        chain_result = db.client.table("skill_progression_chains").select("*").eq(
+        chain_result = db.client.table("exercise_progression_chains").select("*").eq(
             "id", chain_id
         ).execute()
 
@@ -191,7 +191,7 @@ async def get_progression_chain(chain_id: str,
         chain = _parse_chain(chain_result.data[0])
 
         # Get all steps for this chain
-        steps_result = db.client.table("skill_progression_steps").select("*").eq(
+        steps_result = db.client.table("exercise_progression_steps").select("*").eq(
             "chain_id", chain_id
         ).order("step_order").execute()
 
@@ -222,7 +222,7 @@ async def get_chain_steps(chain_id: str,
         db = get_supabase_db()
 
         # Verify chain exists
-        chain_result = db.client.table("skill_progression_chains").select("id").eq(
+        chain_result = db.client.table("exercise_progression_chains").select("id").eq(
             "id", chain_id
         ).execute()
 
@@ -230,7 +230,7 @@ async def get_chain_steps(chain_id: str,
             raise HTTPException(status_code=404, detail="Progression chain not found")
 
         # Get all steps
-        steps_result = db.client.table("skill_progression_steps").select("*").eq(
+        steps_result = db.client.table("exercise_progression_steps").select("*").eq(
             "chain_id", chain_id
         ).order("step_order").execute()
 
@@ -264,7 +264,7 @@ async def get_user_skill_progress(
         db = get_supabase_db()
 
         query = db.client.table("user_skill_progress").select(
-            "*, skill_progression_chains(*)"
+            "*, exercise_progression_chains(*)"
         ).eq("user_id", user_id)
 
         if active_only:
@@ -278,15 +278,15 @@ async def get_user_skill_progress(
 
             # Parse chain info
             chain = None
-            if p.get("skill_progression_chains"):
-                chain = _parse_chain(p["skill_progression_chains"])
+            if p.get("exercise_progression_chains"):
+                chain = _parse_chain(p["exercise_progression_chains"])
 
             # Get current and next step
             current_step = None
             next_step = None
 
             if chain:
-                steps_result = db.client.table("skill_progression_steps").select("*").eq(
+                steps_result = db.client.table("exercise_progression_steps").select("*").eq(
                     "chain_id", progress.chain_id
                 ).order("step_order").execute()
 
@@ -324,7 +324,7 @@ async def get_user_chain_progress(user_id: str, chain_id: str,
 
         # Get user progress
         progress_result = db.client.table("user_skill_progress").select(
-            "*, skill_progression_chains(*)"
+            "*, exercise_progression_chains(*)"
         ).eq("user_id", user_id).eq("chain_id", chain_id).execute()
 
         if not progress_result.data:
@@ -338,12 +338,12 @@ async def get_user_chain_progress(user_id: str, chain_id: str,
 
         # Parse chain
         chain = None
-        if p.get("skill_progression_chains"):
-            chain = _parse_chain(p["skill_progression_chains"])
+        if p.get("exercise_progression_chains"):
+            chain = _parse_chain(p["exercise_progression_chains"])
 
         # Get current step
         current_step = None
-        steps_result = db.client.table("skill_progression_steps").select("*").eq(
+        steps_result = db.client.table("exercise_progression_steps").select("*").eq(
             "chain_id", chain_id
         ).eq("step_order", progress.current_step_order).execute()
 
@@ -395,14 +395,14 @@ async def get_user_skills_summary(user_id: str,
 
         # Get all user progress with chain info
         progress_result = db.client.table("user_skill_progress").select(
-            "*, skill_progression_chains(*)"
+            "*, exercise_progression_chains(*)"
         ).eq("user_id", user_id).execute()
 
         active_progressions = []
         completed_progressions = []
 
         for p in progress_result.data:
-            chain_data = p.get("skill_progression_chains", {})
+            chain_data = p.get("exercise_progression_chains", {})
             if not chain_data:
                 continue
 
@@ -411,7 +411,7 @@ async def get_user_skills_summary(user_id: str,
             progress_percentage = min(100, (completed_steps / max(1, total_steps)) * 100)
 
             # Get current step name
-            current_step_result = db.client.table("skill_progression_steps").select(
+            current_step_result = db.client.table("exercise_progression_steps").select(
                 "exercise_name"
             ).eq("chain_id", p["chain_id"]).eq(
                 "step_order", p.get("current_step_order", 0)
@@ -442,7 +442,7 @@ async def get_user_skills_summary(user_id: str,
         started_chain_ids = [p["chain_id"] for p in progress_result.data]
 
         recommended = None
-        all_chains = db.client.table("skill_progression_chains").select("*").execute()
+        all_chains = db.client.table("exercise_progression_chains").select("*").execute()
         for c in all_chains.data:
             if c["id"] not in started_chain_ids:
                 recommended = _parse_chain(c)
@@ -480,7 +480,7 @@ async def start_progression_chain(user_id: str, chain_id: str,
         db = get_supabase_db()
 
         # Check if chain exists
-        chain_result = db.client.table("skill_progression_chains").select("*").eq(
+        chain_result = db.client.table("exercise_progression_chains").select("*").eq(
             "id", chain_id
         ).execute()
 
@@ -501,7 +501,7 @@ async def start_progression_chain(user_id: str, chain_id: str,
             )
 
         # Get the first step
-        first_step_result = db.client.table("skill_progression_steps").select("*").eq(
+        first_step_result = db.client.table("exercise_progression_steps").select("*").eq(
             "chain_id", chain_id
         ).eq("step_order", 0).execute()
 
@@ -596,7 +596,7 @@ async def log_skill_attempt(
         progress_data = progress_result.data[0]
 
         # Get current step for unlock criteria
-        current_step_result = db.client.table("skill_progression_steps").select("*").eq(
+        current_step_result = db.client.table("exercise_progression_steps").select("*").eq(
             "chain_id", chain_id
         ).eq("step_order", progress_data["current_step_order"]).execute()
 
@@ -644,7 +644,7 @@ async def log_skill_attempt(
         )
 
         # Check if there's a next step to unlock
-        next_step_result = db.client.table("skill_progression_steps").select("id").eq(
+        next_step_result = db.client.table("exercise_progression_steps").select("id").eq(
             "chain_id", chain_id
         ).eq("step_order", progress_data["current_step_order"] + 1).execute()
 
@@ -721,7 +721,7 @@ async def unlock_next_step(user_id: str, chain_id: str,
         current_step_order = progress_data["current_step_order"]
 
         # Get current step for unlock criteria
-        current_step_result = db.client.table("skill_progression_steps").select("*").eq(
+        current_step_result = db.client.table("exercise_progression_steps").select("*").eq(
             "chain_id", chain_id
         ).eq("step_order", current_step_order).execute()
 
@@ -745,7 +745,7 @@ async def unlock_next_step(user_id: str, chain_id: str,
             )
 
         # Get next step
-        next_step_result = db.client.table("skill_progression_steps").select("*").eq(
+        next_step_result = db.client.table("exercise_progression_steps").select("*").eq(
             "chain_id", chain_id
         ).eq("step_order", current_step_order + 1).execute()
 

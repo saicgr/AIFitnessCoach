@@ -139,28 +139,37 @@ class _YouOverviewTabState extends ConsumerState<YouOverviewTab> {
           // Recent trophy + active skill side-by-side. Each block silently
           // hides if there's nothing to show, so new users don't see
           // "—" chrome with no content underneath.
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Expanded(
-                child: _RecentTrophyCard(
-                  summary: _trophySummary,
-                  recent: _recentTrophies,
-                  fg: fg,
-                  accent: accent,
-                  isDark: isDark,
+          //
+          // `IntrinsicHeight` is required: the Row uses
+          // `CrossAxisAlignment.stretch` so both cards match heights, but
+          // inside a ListView the vertical axis is unbounded. Without
+          // IntrinsicHeight, stretch tries to expand to infinity and
+          // throws `BoxConstraints forces an infinite height`, which
+          // cascades into `parentDataDirty` assertions downstream.
+          IntrinsicHeight(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Expanded(
+                  child: _RecentTrophyCard(
+                    summary: _trophySummary,
+                    recent: _recentTrophies,
+                    fg: fg,
+                    accent: accent,
+                    isDark: isDark,
+                  ),
                 ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: _ActiveSkillCard(
-                  summary: _skillsSummary,
-                  fg: fg,
-                  accent: accent,
-                  isDark: isDark,
+                const SizedBox(width: 10),
+                Expanded(
+                  child: _ActiveSkillCard(
+                    summary: _skillsSummary,
+                    fg: fg,
+                    accent: accent,
+                    isDark: isDark,
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
           const SizedBox(height: 14),
           if (_latestSummary != null) ...[

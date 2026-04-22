@@ -20,9 +20,7 @@ import '../../widgets/glass_sheet.dart';
 import '../settings/sections/logout_section.dart';
 import '../settings/dialogs/export_dialog.dart';
 import '../settings/dialogs/import_dialog.dart';
-import '../settings/pages/workout_ui_mode_sheet.dart';
 import '../workouts/widgets/exercise_preferences_card.dart';
-import '../../core/providers/workout_ui_mode_provider.dart';
 import 'widgets/nutrition_fasting_card.dart';
 import 'widgets/widgets.dart';
 import '../../data/providers/synced_workouts_provider.dart';
@@ -830,11 +828,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 },
               ),
               const SizedBox(height: 12),
-              // Workout Mode — inline 3-way segmented control bound to the
-              // same workoutUiModeProvider as Settings, Workouts tab, and the
-              // active-workout top bar. Tap a segment to switch tiers instantly.
-              const _WorkoutUiModeProfileCard(),
-              const SizedBox(height: 12),
+              // Workout Mode tier toggle now lives inside ExercisePreferencesCard
+              // as the 1st option — single canonical home across Profile,
+              // Workouts, and Settings.
               ExercisePreferencesCard(key: _preferencesKey, margin: EdgeInsets.zero),
               const SizedBox(height: 12),
               const _TrainingFocusCard(),
@@ -912,92 +908,3 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   }
 }
 
-/// Inline profile card for the Easy / Simple / Advanced workout-UI tier.
-/// Shares `workoutUiModeProvider` with Settings, the Workouts-tab header, and
-/// the active-workout top bar so all four surfaces always agree.
-///
-/// Displays a label + current-tier subtitle + a segmented control so a user
-/// can switch tiers without leaving the profile screen. Tapping the row label
-/// (or a small info affordance) opens the full explainer sheet for beginners
-/// who want the tier descriptions before choosing.
-class _WorkoutUiModeProfileCard extends ConsumerWidget {
-  const _WorkoutUiModeProfileCard();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
-    final textPrimary =
-        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textSecondary =
-        isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
-
-    final mode = ref.watch(workoutUiModeProvider.select((s) => s.mode));
-    final subtitle = switch (mode) {
-      WorkoutUiMode.easy =>
-        'Steppers + AI coach + notes + edit past sets. The default.',
-      // ignore: deprecated_member_use_from_same_package
-      WorkoutUiMode.simple =>
-        'Steppers + AI coach + notes + edit past sets. The default.',
-      WorkoutUiMode.advanced =>
-        'Everything — RIR, pyramid, supersets, increments.',
-    };
-
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: elevated,
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  'Workout Mode',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: textPrimary,
-                  ),
-                ),
-              ),
-              // Small affordance that opens the full 3-card explainer — same
-              // sheet the Settings row launches. Keeps discoverability high
-              // for users who aren't sure what each tier changes.
-              GestureDetector(
-                onTap: () {
-                  HapticService.selection();
-                  showWorkoutUiModeSheet(context);
-                },
-                child: Padding(
-                  padding: const EdgeInsets.all(4),
-                  child: Icon(
-                    Icons.info_outline_rounded,
-                    size: 18,
-                    color: textSecondary,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 6),
-          Text(
-            subtitle,
-            style: TextStyle(
-              fontSize: 13,
-              color: textSecondary,
-              height: 1.35,
-            ),
-          ),
-          const SizedBox(height: 12),
-          // Segmented control — writes directly to the provider.
-          const WorkoutUiModeSegmentedControl(),
-        ],
-      ),
-    );
-  }
-}

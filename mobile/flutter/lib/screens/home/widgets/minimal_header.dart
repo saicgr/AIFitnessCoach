@@ -16,12 +16,13 @@ import '../../../widgets/app_tour/app_tour_controller.dart';
 ///
 /// Layout:
 /// ```
-/// [Gym Profile Switcher - collapsed tabs]  [edit] [settings] [Lvl+Streak pill] [bell]
+/// [Gym Profile Switcher - collapsed tabs]  [Lvl+Streak pill] [bell] [⋮]
 /// ```
 ///
-/// The level ring and active streak are now paired into a single pill —
-/// removes the duplicated streak banner below the header while keeping
-/// both signals glanceable from Home.
+/// Edit-home and Settings moved into the overflow (⋮) menu — they are
+/// weekly-frequency actions, not daily. The level ring + streak pill and
+/// notifications bell remain visible because they are glanceable status
+/// and time-sensitive respectively.
 class MinimalHeader extends ConsumerWidget {
   const MinimalHeader({super.key});
 
@@ -37,39 +38,64 @@ class MinimalHeader extends ConsumerWidget {
           const Expanded(
             child: GymProfileSwitcher(collapsed: true),
           ),
-          IconButton(
-            onPressed: () {
-              HapticService.light();
-              context.push('/settings/homescreen');
-            },
-            icon: Icon(
-              Icons.dashboard_customize_outlined,
-              size: 22,
-              color: isDark ? Colors.white70 : Colors.black54,
-            ),
-            padding: EdgeInsets.zero,
-            constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
-            tooltip: 'Edit Layout',
-          ),
-          IconButton(
-            onPressed: () {
-              HapticService.light();
-              context.push('/settings');
-            },
-            icon: Icon(
-              Icons.settings_outlined,
-              size: 22,
-              color: isDark ? Colors.white70 : Colors.black54,
-            ),
-            padding: EdgeInsets.zero,
-            constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
-            tooltip: 'Settings',
-          ),
           const _LevelStreakPill(),
           const SizedBox(width: 4),
           NotificationBellButton(isDark: isDark),
+          _OverflowMenuButton(isDark: isDark),
         ],
       ),
+    );
+  }
+}
+
+/// 3-dot overflow menu holding secondary header actions (Edit home, Settings).
+class _OverflowMenuButton extends StatelessWidget {
+  final bool isDark;
+  const _OverflowMenuButton({required this.isDark});
+
+  @override
+  Widget build(BuildContext context) {
+    final iconColor = isDark ? Colors.white70 : Colors.black54;
+    return PopupMenuButton<String>(
+      tooltip: 'More',
+      icon: Icon(Icons.more_vert, size: 22, color: iconColor),
+      padding: EdgeInsets.zero,
+      constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+      onOpened: HapticService.light,
+      onSelected: (value) {
+        HapticService.light();
+        switch (value) {
+          case 'edit_home':
+            context.push('/settings/homescreen');
+            break;
+          case 'settings':
+            context.push('/settings');
+            break;
+        }
+      },
+      itemBuilder: (context) => [
+        PopupMenuItem<String>(
+          value: 'edit_home',
+          child: Row(
+            children: [
+              Icon(Icons.dashboard_customize_outlined,
+                  size: 20, color: iconColor),
+              const SizedBox(width: 12),
+              const Text('Edit home screen'),
+            ],
+          ),
+        ),
+        PopupMenuItem<String>(
+          value: 'settings',
+          child: Row(
+            children: [
+              Icon(Icons.settings_outlined, size: 20, color: iconColor),
+              const SizedBox(width: 12),
+              const Text('Settings'),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }
@@ -216,7 +242,19 @@ class _LevelStreakPillState extends ConsumerState<_LevelStreakPill> {
           children: [
             levelRing,
             if (showStreak) ...[
-              const SizedBox(width: 4),
+              const SizedBox(width: 6),
+              Text(
+                '•',
+                style: TextStyle(
+                  color: isDark
+                      ? Colors.white.withValues(alpha: 0.35)
+                      : Colors.black.withValues(alpha: 0.3),
+                  fontWeight: FontWeight.w700,
+                  fontSize: 13,
+                  height: 1,
+                ),
+              ),
+              const SizedBox(width: 6),
               const Text('🔥', style: TextStyle(fontSize: 13)),
               const SizedBox(width: 2),
               Text(

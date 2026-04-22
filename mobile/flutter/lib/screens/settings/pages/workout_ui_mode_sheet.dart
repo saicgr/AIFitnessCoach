@@ -305,7 +305,14 @@ class WorkoutUiModeSegmentedControl extends ConsumerWidget {
       padding: const EdgeInsets.all(2),
       child: Row(
         mainAxisSize: MainAxisSize.min,
-        children: WorkoutUiMode.values.map((mode) {
+        // Only render live tiers. The deprecated `simple` value is kept in
+        // the enum for DB back-compat (normalized to `easy` at read-time) but
+        // must never appear in the UI — otherwise it renders as a duplicate
+        // "Easy" segment next to the real Easy.
+        children: WorkoutUiMode.values
+            // ignore: deprecated_member_use_from_same_package
+            .where((m) => m != WorkoutUiMode.simple)
+            .map((mode) {
           return _Segment(
             label: compact ? mode.shortLabel : mode.label,
             selected: current == mode,
