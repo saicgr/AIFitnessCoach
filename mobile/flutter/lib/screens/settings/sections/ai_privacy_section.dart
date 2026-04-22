@@ -1,73 +1,57 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../ai_settings/ai_settings_screen.dart';
 import '../widgets/widgets.dart';
 
-/// SharedPreferences key for AI data processing consent toggle.
-const String _kAIProcessingKey = 'ai_data_processing_enabled';
-
-/// The AI Privacy section containing data usage, processing toggle,
-/// medical disclaimer, and legal links.
-class AIPrivacySection extends StatefulWidget {
+/// The Privacy & Data section — surfaces real, server-enforced consent
+/// toggles (personalization + chat history) plus the medical disclaimer.
+///
+/// Prior versions wrote to SharedPreferences keys that no code ever read,
+/// which made the toggles placebo controls (a GDPR Art. 7(4) dark pattern).
+/// All toggles here are now backed by `user_ai_settings` and enforced by
+/// `services.consent_guard` on the backend.
+class AIPrivacySection extends ConsumerWidget {
   const AIPrivacySection({super.key});
 
-  @override
-  State<AIPrivacySection> createState() => _AIPrivacySectionState();
-}
-
-class _AIPrivacySectionState extends State<AIPrivacySection> {
-  bool _aiProcessingEnabled = true;
-  bool _loaded = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _loadPreference();
-  }
-
-  Future<void> _loadPreference() async {
-    final prefs = await SharedPreferences.getInstance();
-    if (mounted) {
-      setState(() {
-        _aiProcessingEnabled = prefs.getBool(_kAIProcessingKey) ?? true;
-        _loaded = true;
-      });
-    }
-  }
-
-  Future<void> _toggleAIProcessing(bool value) async {
+  Future<void> _togglePersonalization(WidgetRef ref, bool value) async {
     HapticFeedback.lightImpact();
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool(_kAIProcessingKey, value);
-    if (mounted) {
-      setState(() {
-        _aiProcessingEnabled = value;
-      });
-    }
+    final notifier = ref.read(aiSettingsProvider.notifier);
+    await notifier.updateAiDataProcessingEnabled(value);
+  }
+
+  Future<void> _toggleSaveChatHistory(WidgetRef ref, bool value) async {
+    HapticFeedback.lightImpact();
+    final notifier = ref.read(aiSettingsProvider.notifier);
+    await notifier.updateSaveChatHistory(value);
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
 
+    final settings = ref.watch(aiSettingsProvider);
+    final personalizationEnabled = settings.aiDataProcessingEnabled;
+    final saveChatHistory = settings.saveChatHistory;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const SectionHeader(
-          title: 'PRIVACY & AI DATA',
+          title: 'PRIVACY & DATA',
           subtitle: 'Control how your data is used',
         ),
         const SizedBox(height: 12),
 
-        // How AI Uses Your Data - navigation tile
+        // Data usage explainer — navigation tile
         _buildNavigationTile(
           icon: Icons.info_outlined,
-          title: 'How AI Uses Your Data',
+          title: 'How Your Data Is Used',
           subtitle: 'See what data is processed and how',
           color: AppColors.info,
           onTap: () => context.push('/settings/ai-data-usage'),
@@ -78,7 +62,7 @@ class _AIPrivacySectionState extends State<AIPrivacySection> {
 
         const SizedBox(height: 10),
 
-        // AI Data Processing toggle
+        // Personalization toggle — server-enforced kill switch
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           decoration: BoxDecoration(
@@ -105,7 +89,7 @@ class _AIPrivacySectionState extends State<AIPrivacySection> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'AI Data Processing',
+                      'Personalization',
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w500,
@@ -113,9 +97,9 @@ class _AIPrivacySectionState extends State<AIPrivacySection> {
                       ),
                     ),
                     Text(
-                      _aiProcessingEnabled
-                          ? 'AI personalizes your workouts'
-                          : 'AI personalization is paused',
+                      personalizationEnabled
+                          ? 'Your coach personalizes workouts and chat'
+                          : 'Personalization is paused — coach chat is disabled',
                       style: TextStyle(
                         fontSize: 11,
                         color: textMuted,
@@ -124,12 +108,68 @@ class _AIPrivacySectionState extends State<AIPrivacySection> {
                   ],
                 ),
               ),
-              if (_loaded)
-                Switch.adaptive(
-                  value: _aiProcessingEnabled,
-                  onChanged: _toggleAIProcessing,
-                  activeColor: AppColors.success,
+              Switch.adaptive(
+                value: personalizationEnabled,
+                onChanged: (v) => _togglePersonalization(ref, v),
+                activeColor: AppColors.success,
+              ),
+            ],
+          ),
+        ),
+
+        const SizedBox(height: 10),
+
+        // Save chat history toggle — server-enforced
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: cardBorder),
+          ),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: AppColors.info.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(10),
                 ),
+                child: Icon(
+                  Icons.chat_bubble_outline,
+                  color: AppColors.info,
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Save Chat History',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                        color: textPrimary,
+                      ),
+                    ),
+                    Text(
+                      saveChatHistory
+                          ? 'Messages are stored so your coach remembers context'
+                          : 'Messages are discarded after each reply',
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: textMuted,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Switch.adaptive(
+                value: saveChatHistory,
+                onChanged: (v) => _toggleSaveChatHistory(ref, v),
+                activeColor: AppColors.info,
+              ),
             ],
           ),
         ),

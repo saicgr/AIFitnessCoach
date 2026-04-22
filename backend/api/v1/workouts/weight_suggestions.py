@@ -254,6 +254,11 @@ def get_equipment_increment(equipment: str) -> float:
     return 2.5  # Default increment
 
 
+def is_bodyweight(equipment: str) -> bool:
+    """True for bodyweight exercises where weight increments don't apply."""
+    return "bodyweight" in (equipment or "").lower()
+
+
 def generate_rule_based_suggestion(
     request: WeightSuggestionRequest,
     equipment_increment: float
@@ -270,6 +275,20 @@ def generate_rule_based_suggestion(
 
     # Calculate rep performance ratio
     rep_ratio = current.reps_completed / current.target_reps if current.target_reps > 0 else 1.0
+
+    # Bodyweight exercises don't have a weight to load — short-circuit before
+    # any logic that multiplies/divides by `equipment_increment` (which is 0
+    # for bodyweight) so we never produce a NaN suggestion or divide by zero.
+    if equipment_increment <= 0:
+        return WeightSuggestionResponse(
+            suggested_weight=current.weight_kg,
+            weight_delta=0,
+            suggestion_type="maintain",
+            reason="Bodyweight exercise — focus on rep quality and tempo.",
+            encouragement="Own every rep!",
+            confidence=0.8,
+            ai_powered=False,
+        )
 
     # Determine effective RIR (convert RPE if needed)
     effective_rir = None
@@ -554,9 +573,12 @@ CRITICAL RULES FOR SET-TO-SET SUGGESTIONS:
 
         data = json.loads(content.strip())
 
-        # Validate and round to equipment increment
+        # Validate and round to equipment increment.
+        # Bodyweight exercises (increment=0) skip rounding entirely — there's
+        # no weight to round and `/ 0` would crash the request.
         suggested = data.get("suggested_weight", current.weight_kg)
-        suggested = round(suggested / equipment_increment) * equipment_increment
+        if equipment_increment > 0:
+            suggested = round(suggested / equipment_increment) * equipment_increment
         suggested = max(0, suggested)  # No negative weights
 
         delta = suggested - current.weight_kg

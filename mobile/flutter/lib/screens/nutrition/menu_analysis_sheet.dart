@@ -11,14 +11,25 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/theme/theme_colors.dart';
 import '../../data/providers/nutrition_preferences_provider.dart';
+import '../../data/repositories/nutrition_repository.dart';
 
 /// A full-screen modal bottom sheet that displays food analysis results
 /// with sorting, portion adjustment, and logging capabilities.
+///
+/// Supports progressive item loading: the sheet can be opened with items from
+/// page 1 and then be fed additional items as later pages complete backend
+/// analysis. Pass a [MenuAnalysisStreamingController] to enable this mode.
 class MenuAnalysisSheet extends ConsumerStatefulWidget {
   final List<Map<String, dynamic>> foodItems;
   final String analysisType; // "plate", "menu", or "buffet"
   final bool isDark;
   final void Function(List<Map<String, dynamic>>) onLogItems;
+
+  /// Optional controller that lets the caller append items as additional
+  /// pages finish processing on the backend. When non-null, the sheet shows
+  /// a "Scanning page X of N" header until [MenuAnalysisStreamingController.done]
+  /// is called.
+  final MenuAnalysisStreamingController? streamingController;
 
   const MenuAnalysisSheet({
     super.key,
@@ -26,10 +37,57 @@ class MenuAnalysisSheet extends ConsumerStatefulWidget {
     required this.analysisType,
     required this.isDark,
     required this.onLogItems,
+    this.streamingController,
   });
 
   @override
   ConsumerState<MenuAnalysisSheet> createState() => _MenuAnalysisSheetState();
+}
+
+/// Controller for progressively feeding items into an open [MenuAnalysisSheet]
+/// as backend page-scans complete. The caller constructs one of these, passes
+/// it to the sheet, then calls [appendItems] / [markPageError] / [markDone]
+/// as SSE events arrive. The sheet listens and updates itself.
+class MenuAnalysisStreamingController extends ChangeNotifier {
+  int _currentPage;
+  int _totalPages;
+  bool _done = false;
+  final List<int> _failedPages = [];
+  final List<Map<String, dynamic>> _pendingItems = [];
+
+  MenuAnalysisStreamingController({required int totalPages, int currentPage = 1})
+      : _totalPages = totalPages,
+        _currentPage = currentPage;
+
+  int get currentPage => _currentPage;
+  int get totalPages => _totalPages;
+  bool get isDone => _done;
+  List<int> get failedPages => List.unmodifiable(_failedPages);
+
+  /// Items appended since the last consumer read. Consumer drains by reading
+  /// this and clearing it during setState.
+  List<Map<String, dynamic>> consumePending() {
+    final copy = List<Map<String, dynamic>>.from(_pendingItems);
+    _pendingItems.clear();
+    return copy;
+  }
+
+  void appendItems(List<Map<String, dynamic>> items, {int? page, int? totalPages}) {
+    _pendingItems.addAll(items);
+    if (page != null) _currentPage = page;
+    if (totalPages != null) _totalPages = totalPages;
+    notifyListeners();
+  }
+
+  void markPageError(int page) {
+    _failedPages.add(page);
+    notifyListeners();
+  }
+
+  void markDone() {
+    _done = true;
+    notifyListeners();
+  }
 }
 
 enum _SortField { calories, protein, carbs, fat }
@@ -49,8 +107,34 @@ class _MenuAnalysisSheetState extends ConsumerState<MenuAnalysisSheet> {
   void initState() {
     super.initState();
     _items = _normalizeItems(widget.foodItems);
-    _selected = Set<int>.from(List.generate(_items.length, (i) => i));
+    // Start with nothing selected — user opts in per item. Auto-selecting all
+    // on a 30+ item menu makes the budget counters read as "way over" before
+    // the user has a chance to express intent.
+    _selected = <int>{};
     _multipliers = {};
+    widget.streamingController?.addListener(_onStreamingUpdate);
+  }
+
+  @override
+  void dispose() {
+    widget.streamingController?.removeListener(_onStreamingUpdate);
+    super.dispose();
+  }
+
+  void _onStreamingUpdate() {
+    final controller = widget.streamingController;
+    if (controller == null) return;
+    final newItems = controller.consumePending();
+    if (newItems.isEmpty && mounted) {
+      // Only progress / done state changed — still need a rebuild so the
+      // "Scanning page X of N" chip updates.
+      setState(() {});
+      return;
+    }
+    if (!mounted) return;
+    setState(() {
+      _items.addAll(_normalizeItems(newItems));
+    });
   }
 
   /// Normalize field names and defaults.
@@ -121,6 +205,18 @@ class _MenuAnalysisSheetState extends ConsumerState<MenuAnalysisSheet> {
       return _sortAsc ? va.compareTo(vb) : vb.compareTo(va);
     });
     return indices;
+  }
+
+  void _toggleSelectAll() {
+    setState(() {
+      if (_selected.length == _items.length) {
+        _selected.clear();
+      } else {
+        _selected
+          ..clear()
+          ..addAll(List.generate(_items.length, (i) => i));
+      }
+    });
   }
 
   void _handleLog() {
@@ -198,6 +294,20 @@ class _MenuAnalysisSheetState extends ConsumerState<MenuAnalysisSheet> {
                         ),
                       ),
                     ),
+                    if (!_logged && _items.isNotEmpty)
+                      TextButton(
+                        onPressed: _toggleSelectAll,
+                        style: TextButton.styleFrom(
+                          foregroundColor: AppColors.orange,
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                          minimumSize: const Size(0, 32),
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        ),
+                        child: Text(
+                          _selected.length == _items.length ? 'Clear all' : 'Select all',
+                          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                        ),
+                      ),
                     IconButton(
                       icon: Icon(Icons.close, color: colors.textMuted),
                       onPressed: () => Navigator.pop(context),
@@ -205,6 +315,11 @@ class _MenuAnalysisSheetState extends ConsumerState<MenuAnalysisSheet> {
                   ],
                 ),
               ),
+
+              // Per-page streaming progress (only while backend is still
+              // processing later pages).
+              if (widget.streamingController != null && !widget.streamingController!.isDone)
+                _buildScanProgressChip(colors, isDark),
 
               // Daily budget header
               _buildBudgetHeader(colors, isDark, targetCal, targetP, targetC, targetF),
@@ -234,11 +349,49 @@ class _MenuAnalysisSheetState extends ConsumerState<MenuAnalysisSheet> {
     );
   }
 
+  Widget _buildScanProgressChip(ThemeColors colors, bool isDark) {
+    final c = widget.streamingController!;
+    final failedNote = c.failedPages.isEmpty
+        ? ''
+        : ' · page${c.failedPages.length == 1 ? '' : 's'} ${c.failedPages.join(', ')} failed';
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(14, 0, 14, 8),
+      child: Row(
+        children: [
+          SizedBox(
+            width: 14,
+            height: 14,
+            child: CircularProgressIndicator(
+              strokeWidth: 2,
+              valueColor: AlwaysStoppedAnimation(AppColors.orange),
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              'Scanning page ${c.currentPage} of ${c.totalPages}...$failedNote',
+              style: TextStyle(fontSize: 12, color: colors.textSecondary),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildBudgetHeader(ThemeColors colors, bool isDark, int targetCal, int targetP, int targetC, int targetF) {
-    final remainCal = max(0, targetCal - _selectedCalTotal);
-    final remainP = max(0, targetP - _selectedProteinTotal);
-    final remainC = max(0, targetC - _selectedCarbsTotal);
-    final remainF = max(0, targetF - _selectedFatTotal);
+    // Subtract today's already-logged meals first, then the items the user has
+    // selected in this sheet. Allow negative — rendering an honest "over by X"
+    // is more useful than clamping to 0 which hides reality.
+    final summary = ref.watch(nutritionProvider).todaySummary;
+    final loggedCal = summary?.totalCalories ?? 0;
+    final loggedP = (summary?.totalProteinG ?? 0).round();
+    final loggedC = (summary?.totalCarbsG ?? 0).round();
+    final loggedF = (summary?.totalFatG ?? 0).round();
+
+    final remainCal = targetCal - loggedCal - _selectedCalTotal;
+    final remainP = targetP - loggedP - _selectedProteinTotal;
+    final remainC = targetC - loggedC - _selectedCarbsTotal;
+    final remainF = targetF - loggedF - _selectedFatTotal;
 
     return Container(
       margin: const EdgeInsets.fromLTRB(14, 0, 14, 8),
@@ -250,13 +403,22 @@ class _MenuAnalysisSheetState extends ConsumerState<MenuAnalysisSheet> {
           color: isDark ? AppColors.cardBorder : Colors.grey.shade200,
         ),
       ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
+      child: Column(
         children: [
-          _BudgetChip(label: 'Cal', value: remainCal, color: AppColors.coral),
-          _BudgetChip(label: 'P', value: remainP, color: AppColors.macroProtein),
-          _BudgetChip(label: 'C', value: remainC, color: AppColors.macroCarbs),
-          _BudgetChip(label: 'F', value: remainF, color: AppColors.macroFat),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              _BudgetChip(label: 'Cal', value: remainCal, color: AppColors.coral),
+              _BudgetChip(label: 'Protein', value: remainP, color: AppColors.macroProtein),
+              _BudgetChip(label: 'Carbs', value: remainC, color: AppColors.macroCarbs),
+              _BudgetChip(label: 'Fat', value: remainF, color: AppColors.macroFat),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'Daily budget after today\'s logged meals + selected items',
+            style: TextStyle(fontSize: 10, color: colors.textMuted),
+          ),
         ],
       ),
     );
@@ -418,6 +580,23 @@ class _MenuAnalysisSheetState extends ConsumerState<MenuAnalysisSheet> {
             ),
           ),
 
+          // Per-dish inflammation score chip — small, non-intrusive; only
+          // rendered when Gemini supplied a score (0-10). Colors match the
+          // food-history edit sheet for consistency.
+          if ((item['inflammation_score'] as num?) != null)
+            _MenuInflammationChip(score: (item['inflammation_score'] as num).toInt())
+          else
+            const SizedBox.shrink(),
+
+          // Per-dish AI coach tip — one crisp sentence from Gemini. Rendered
+          // only when present to avoid an empty pill on sparse responses.
+          if ((item['coach_tip'] as String?)?.trim().isNotEmpty ?? false)
+            _MenuCoachTipRow(
+              tip: (item['coach_tip'] as String).trim(),
+              isDark: isDark,
+              textPrimary: colors.textPrimary,
+            ),
+
           // Portion multiplier buttons
           if (!_logged && isSelected)
             Padding(
@@ -572,23 +751,29 @@ class _MenuAnalysisSheetState extends ConsumerState<MenuAnalysisSheet> {
 
 class _BudgetChip extends StatelessWidget {
   final String label;
-  final int value;
+  final int value; // positive = under budget; negative = over
   final Color color;
 
   const _BudgetChip({required this.label, required this.value, required this.color});
 
   @override
   Widget build(BuildContext context) {
+    final isOver = value < 0;
+    // Over-budget uses a single red so it's unmistakable across macros.
+    const overColor = Color(0xFFEF4444);
+    final displayColor = isOver ? overColor : color;
+    final magnitude = value.abs();
+
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
         Text(
-          '$value',
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: color),
+          '$magnitude',
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: displayColor),
         ),
         Text(
-          '$label left',
-          style: TextStyle(fontSize: 10, color: color.withValues(alpha: 0.7)),
+          isOver ? '$label over' : '$label left',
+          style: TextStyle(fontSize: 10, color: displayColor.withValues(alpha: 0.8)),
         ),
       ],
     );
@@ -614,6 +799,92 @@ class _MacroLabel extends StatelessWidget {
           TextSpan(
             text: ' $unit',
             style: TextStyle(fontSize: 10, color: color.withValues(alpha: 0.7)),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Compact inflammation score chip for each dish row. Matches the color ramp
+/// used in food_history_screen_part_frequent_food_chip.dart:_InflammationRow
+/// so users see the same tone everywhere (green 0-3, amber 4-6, red 7-10).
+class _MenuInflammationChip extends StatelessWidget {
+  final int score;
+  const _MenuInflammationChip({required this.score});
+
+  @override
+  Widget build(BuildContext context) {
+    final tone = score <= 3
+        ? const Color(0xFF10B981)
+        : score <= 6
+            ? const Color(0xFFF59E0B)
+            : const Color(0xFFEF4444);
+    final label = score <= 3
+        ? 'Anti-inflammatory'
+        : score <= 6
+            ? 'Mildly inflammatory'
+            : 'Highly inflammatory';
+    return Padding(
+      padding: const EdgeInsets.only(left: 30, top: 6),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+        decoration: BoxDecoration(
+          color: tone.withValues(alpha: 0.12),
+          borderRadius: BorderRadius.circular(6),
+          border: Border.all(color: tone.withValues(alpha: 0.35), width: 1),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              '$score',
+              style: TextStyle(color: tone, fontSize: 10, fontWeight: FontWeight.w800),
+            ),
+            const SizedBox(width: 4),
+            Text(
+              label,
+              style: TextStyle(color: tone, fontSize: 10, fontWeight: FontWeight.w600),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Per-dish AI coach tip row — one short sentence rendered below macros.
+/// Uses the AI-coach purple consistent with the log preview.
+class _MenuCoachTipRow extends StatelessWidget {
+  final String tip;
+  final bool isDark;
+  final Color textPrimary;
+
+  const _MenuCoachTipRow({
+    required this.tip,
+    required this.isDark,
+    required this.textPrimary,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    const accent = Color(0xFFA855F7); // purple-500 — matches AI coach visuals
+    return Padding(
+      padding: const EdgeInsets.only(left: 30, top: 6, right: 4),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(Icons.auto_awesome_rounded, size: 12, color: accent),
+          const SizedBox(width: 6),
+          Expanded(
+            child: Text(
+              tip,
+              style: TextStyle(
+                fontSize: 11,
+                height: 1.35,
+                color: textPrimary.withValues(alpha: 0.85),
+              ),
+            ),
           ),
         ],
       ),

@@ -17,6 +17,11 @@ class FuelTab extends StatefulWidget {
   final VoidCallback onRefreshMicronutrients;
   final bool isDark;
 
+  /// Optional initial inner section ('nutrients' or 'water'). When provided,
+  /// overrides the default Nutrients landing — used by the hydration-reminder
+  /// notification deep-link so tapping a water banner lands on the Water pill.
+  final String? initialSection;
+
   const FuelTab({
     super.key,
     required this.userId,
@@ -24,6 +29,7 @@ class FuelTab extends StatefulWidget {
     required this.isLoading,
     required this.onRefreshMicronutrients,
     required this.isDark,
+    this.initialSection,
   });
 
   @override
@@ -33,7 +39,9 @@ class FuelTab extends StatefulWidget {
 enum _FuelSection { nutrients, water }
 
 class _FuelTabState extends State<FuelTab> with AutomaticKeepAliveClientMixin {
-  _FuelSection _section = _FuelSection.nutrients;
+  late _FuelSection _section = widget.initialSection == 'water'
+      ? _FuelSection.water
+      : _FuelSection.nutrients;
 
   @override
   bool get wantKeepAlive => true;

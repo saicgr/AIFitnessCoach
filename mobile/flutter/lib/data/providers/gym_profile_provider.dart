@@ -11,6 +11,18 @@ import '../services/data_cache_service.dart';
 /// Survives provider invalidation and prevents loading flash
 List<GymProfile>? _gymProfilesInMemoryCache;
 
+/// True once the first cache-read has completed (hit or miss). Before this,
+/// a `data([])` state means "cache still loading"; after, it means "user
+/// really has no gyms". The header uses this to show a shimmer vs the
+/// "Add gym" CTA.
+bool _gymProfilesCacheChecked = false;
+
+/// Provider exposing whether the gym profile cache has been read at least
+/// once. Flipped to true by `_loadFromCache`.
+final gymProfilesCacheCheckedProvider = StateProvider<bool>((ref) {
+  return _gymProfilesCacheChecked;
+});
+
 /// Provider for the list of gym profiles for the current user
 ///
 /// Features:
@@ -86,10 +98,14 @@ class GymProfilesNotifier extends StateNotifier<AsyncValue<List<GymProfile>>> {
 
   GymProfilesNotifier(this._repository, this._userId, this._ref)
       : super(
-          // Start with in-memory cache if available (instant, no loading flash)
+          // Start with in-memory cache if available (instant, no loading flash).
+          // Otherwise seed with an empty list so the header can paint its
+          // empty-state placeholder immediately instead of flashing a
+          // "Loading gym…" spinner — the persistent-cache rehydration
+          // happens microseconds later and swaps in the real data.
           _gymProfilesInMemoryCache != null
               ? AsyncValue.data(_gymProfilesInMemoryCache!)
-              : const AsyncValue.loading(),
+              : const AsyncValue.data(<GymProfile>[]),
         ) {
     if (_userId != null) {
       // If we have in-memory cache, just fetch fresh data in background
@@ -97,7 +113,9 @@ class GymProfilesNotifier extends StateNotifier<AsyncValue<List<GymProfile>>> {
         debugPrint('⚡ [GymProfileProvider] Using in-memory cache (instant)');
         _fetchFromApi(showLoading: false);
       } else {
-        _loadWithCacheFirst();
+        // No in-memory cache — hydrate from persistent cache without
+        // flipping into `loading`, then revalidate in background.
+        _loadWithCacheFirst(showLoadingOnCacheMiss: false);
       }
     }
   }
@@ -108,8 +126,11 @@ class GymProfilesNotifier extends StateNotifier<AsyncValue<List<GymProfile>>> {
     debugPrint('🧹 [GymProfileProvider] In-memory cache cleared');
   }
 
-  /// Load profiles with cache-first pattern
-  Future<void> _loadWithCacheFirst() async {
+  /// Load profiles with cache-first pattern.
+  /// [showLoadingOnCacheMiss]: when false, the header paints its empty
+  /// state (no "Loading gym…" text) while we silently revalidate —
+  /// preferred for the cold-start home paint.
+  Future<void> _loadWithCacheFirst({bool showLoadingOnCacheMiss = true}) async {
     // Step 1: Try to load from cache first
     final cachedProfiles = await _loadFromCache();
     if (cachedProfiles != null && cachedProfiles.isNotEmpty) {
@@ -125,7 +146,8 @@ class GymProfilesNotifier extends StateNotifier<AsyncValue<List<GymProfile>>> {
     }
 
     // Step 2: Fetch fresh data from API in background
-    await _fetchFromApi(showLoading: cachedProfiles == null || cachedProfiles.isEmpty);
+    final cacheMiss = cachedProfiles == null || cachedProfiles.isEmpty;
+    await _fetchFromApi(showLoading: cacheMiss && showLoadingOnCacheMiss);
   }
 
   /// Load cached profiles from persistent storage
@@ -145,6 +167,16 @@ class GymProfilesNotifier extends StateNotifier<AsyncValue<List<GymProfile>>> {
       }
     } catch (e) {
       debugPrint('⚠️ [GymProfileProvider] Cache parse error: $e');
+    } finally {
+      // Regardless of hit/miss/parse-error, the cache has now been checked.
+      // The header uses this to differentiate "still loading" from "user
+      // really has no gyms" so we don't flash "Add gym" at cold start.
+      _gymProfilesCacheChecked = true;
+      try {
+        _ref.read(gymProfilesCacheCheckedProvider.notifier).state = true;
+      } catch (_) {
+        // Ref may be disposed (provider torn down); ignore.
+      }
     }
     return null;
   }

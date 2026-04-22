@@ -148,23 +148,27 @@ class ActiveWorkoutBodyV2 extends StatelessWidget {
 
             const SizedBox(height: 8),
 
-            // Set tracking table
+            // Set tracking table.
+            //
+            // No-scroll refactor (Task #15): `SetTrackingTable` now enforces
+            // its own fixed-height budget via `maxVisibleRows` + the shared
+            // `SetRail` + overflow sheet, so this viewport never scrolls. The
+            // `Expanded` gives the table the rest of the available vertical
+            // space; anything past the 4-row budget falls back to the rail.
             Expanded(
-              child: SingleChildScrollView(
-                child: SetTrackingTable(
-                  exercise: currentExercise,
-                  sets: sets,
-                  useKg: useKg,
-                  activeSetIndex: activeSetIndex,
-                  weightController: weightController,
-                  repsController: repsController,
-                  onSetCompleted: onSetCompleted,
-                  onSetUpdated: onSetUpdated,
-                  onAddSet: onAddSet,
-                  isLeftRightMode: isLeftRightMode,
-                  allSetsCompleted: allSetsCompleted,
-                  onSelectAllTapped: onSelectAllTapped,
-                ),
+              child: SetTrackingTable(
+                exercise: currentExercise,
+                sets: sets,
+                useKg: useKg,
+                activeSetIndex: activeSetIndex,
+                weightController: weightController,
+                repsController: repsController,
+                onSetCompleted: onSetCompleted,
+                onSetUpdated: onSetUpdated,
+                onAddSet: onAddSet,
+                isLeftRightMode: isLeftRightMode,
+                allSetsCompleted: allSetsCompleted,
+                onSelectAllTapped: onSelectAllTapped,
               ),
             ),
           ],

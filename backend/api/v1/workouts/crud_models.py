@@ -113,6 +113,15 @@ class WorkoutCompletionResponse(BaseModel):
     # sheet on the frontend when true. Set to True when the user's
     # users.first_workout_completed_at was NULL before this completion.
     is_first_workout: bool = False
+    # Server-side XP award guarantee (fixes the "completed workout but 0
+    # weekly XP" leaderboard bug). The server now awards the daily
+    # workout_complete XP inline on completion instead of depending on
+    # the client to call /xp/award-goal-xp. xp_awarded=True means the
+    # transaction was inserted on this request; =False means dedup
+    # (already claimed today) or a non-fatal error. Client treats this
+    # as authoritative — no need to duplicate the award call when True.
+    xp_awarded: bool = False
+    xp_amount: int = 0
 
 
 class SetLogInfo(BaseModel):

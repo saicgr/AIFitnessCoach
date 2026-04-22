@@ -710,6 +710,10 @@ class NutritionRepository {
     String analysisMode = 'auto',
     String? userMessage,
     String? inputType,
+    /// When true, backend analyzes but does NOT persist a food_log row for
+    /// plate-classified responses; the client is responsible for opening a
+    /// review UI and calling [logFoodDirect] on confirmation.
+    bool confirmBeforeLog = false,
   }) async* {
     final startTime = DateTime.now();
     try {
@@ -744,6 +748,7 @@ class NutritionRepository {
         MapEntry('analysis_mode', analysisMode),
         if (userMessage != null && userMessage.isNotEmpty) MapEntry('user_message', userMessage),
         if (inputType != null && inputType.isNotEmpty) MapEntry('input_type', inputType),
+        if (confirmBeforeLog) const MapEntry('confirm_before_log', 'true'),
       ]);
       formData.files.addAll(multipart);
 
@@ -776,6 +781,39 @@ class NutritionRepository {
                     message: data['message'] as String? ?? 'Analyzing...',
                     detail: data['detail'] as String?,
                     elapsedMs: elapsedMs,
+                  );
+                } else if (eventType == 'page') {
+                  final rawItems = (data['items'] as List?) ?? const [];
+                  final items = rawItems
+                      .whereType<Map>()
+                      .map((e) => Map<String, dynamic>.from(e))
+                      .toList();
+                  final pageNum = (data['page'] as num?)?.toInt() ?? 0;
+                  final totalPages = (data['total_pages'] as num?)?.toInt() ?? 0;
+                  yield MultiImageAnalysisProgress(
+                    step: pageNum,
+                    totalSteps: totalPages,
+                    message: 'Page $pageNum of $totalPages analyzed',
+                    elapsedMs: elapsedMs,
+                    isPageEvent: true,
+                    pageNumber: pageNum,
+                    totalPages: totalPages,
+                    pageItems: items,
+                    pageAnalysisType: data['analysis_type'] as String?,
+                    pageImageUrl: data['image_url'] as String?,
+                    pageStorageKey: data['storage_key'] as String?,
+                  );
+                } else if (eventType == 'page_error') {
+                  final pageNum = (data['page'] as num?)?.toInt() ?? 0;
+                  final totalPages = (data['total_pages'] as num?)?.toInt() ?? 0;
+                  yield MultiImageAnalysisProgress(
+                    step: pageNum,
+                    totalSteps: totalPages,
+                    message: 'Page $pageNum failed: ${data['error'] ?? 'unknown error'}',
+                    elapsedMs: elapsedMs,
+                    isPageError: true,
+                    pageNumber: pageNum,
+                    totalPages: totalPages,
                   );
                 } else if (eventType == 'done') {
                   yield MultiImageAnalysisProgress(

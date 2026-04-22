@@ -172,6 +172,21 @@ class LoggingMiddleware:
         # Set logging context for this request
         set_log_context(user_id=user_id, request_id=request_id)
 
+        # Mirror the logging context into Sentry's isolation scope so any
+        # exception raised during this request carries request_id, endpoint,
+        # method, query string, and user_id as searchable tags. Without this
+        # Sentry only showed the transaction name ("api.v1.foo") — not the
+        # parameters that made THIS request fail.
+        sentry_set_request_context(
+            request_id=request_id,
+            method=method,
+            path=path,
+            query=query,
+            user_agent=request.headers.get("user-agent"),
+        )
+        if raw_user_id:
+            sentry_set_user(raw_user_id)
+
         # Log request
         log_msg = f"{method} {path}"
         if query:
@@ -219,6 +234,7 @@ class LoggingMiddleware:
             raise
         finally:
             clear_log_context()
+            sentry_clear_request_context()
 
 
 async def _init_rag_service():
@@ -495,7 +511,12 @@ async def lifespan(app: FastAPI):
 
 
 # Sentry init — see core/sentry.py. Silent no-op when SENTRY_DSN is unset.
-from core.sentry import init_sentry, set_user as sentry_set_user
+from core.sentry import (
+    init_sentry,
+    set_user as sentry_set_user,
+    set_request_context as sentry_set_request_context,
+    clear_request_context as sentry_clear_request_context,
+)
 init_sentry(settings)
 
 

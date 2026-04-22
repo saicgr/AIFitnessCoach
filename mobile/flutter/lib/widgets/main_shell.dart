@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../core/constants/app_colors.dart';
+import '../core/providers/serious_mode_provider.dart';
 import '../core/providers/subscription_provider.dart';
 import '../data/services/recipe_notification_router.dart';
 import '../core/theme/theme_colors.dart';
@@ -27,6 +28,8 @@ import 'streak_saved_dialog.dart';
 import 'morphing_tab_indicator.dart';
 import 'offline_banner.dart';
 import '../data/providers/xp_provider.dart' show xpProvider, levelUpEventProvider, dailyLoginResultProvider;
+import '../data/models/gym_profile.dart';
+import '../data/providers/gym_profile_provider.dart';
 import '../data/providers/weekly_recap_provider.dart';
 import '../data/models/xp_event.dart' show DailyLoginResult;
 import '../data/models/user_xp.dart';
@@ -122,6 +125,12 @@ class EdgeHandlePositionNotifier extends StateNotifier<double> {
 }
 
 /// Main shell with floating bottom navigation bar
+/// Tracks whether the weekly-recap dialog has already fired in this app
+/// session. Module-level (not instance) because MainShell is a
+/// ConsumerWidget and rebuilds lose instance state. Provider-level ack
+/// (SharedPreferences) handles the cross-session "already seen this week".
+bool _weeklyRecapFired = false;
+
 class MainShell extends ConsumerWidget {
   /// StatefulNavigationShell for the main tab navigation (keeps tabs alive).
   final StatefulNavigationShell? navigationShell;
@@ -242,6 +251,12 @@ class MainShell extends ConsumerWidget {
     // Listen for level-up events from ANY screen (moved from home_screen.dart)
     ref.listen<LevelUpEvent?>(levelUpEventProvider, (previous, next) {
       if (next != null && previous == null) {
+        // Serious Mode suppresses celebration dialogs; XP is still awarded
+        // and the level state advances, we just skip the confetti pop-in.
+        if (ref.read(seriousModeProvider)) {
+          ref.read(xpProvider.notifier).clearLevelUp();
+          return;
+        }
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (context.mounted) {
             final showProg = ref.read(accessibilityProvider).showLevelUpProgression;
@@ -267,25 +282,49 @@ class MainShell extends ConsumerWidget {
     // Defensive try/catch around the whole flow: if the dialog throws for
     // any reason we must not crash the entire main shell. Worst case, the
     // user sees no recap modal that week.
+    // Weekly recap firing flow — two gates:
+    //   1. `weeklyRecapGateProvider` resolves to a meaningful recap
+    //   2. `gymProfilesProvider` has resolved (i.e. home chrome has
+    //      finished painting "Loading gym…"). Without (2), the 0.72-alpha
+    //      barrier lands on top of a still-loading header, so the user
+    //      sees a dimmed screen + a floating recap card and thinks the
+    //      app is broken.
+    //
+    // Both gates live behind the same `_weeklyRecapFired` guard so we
+    // fire exactly once per listener arm.
+    Future<void> tryFireWeeklyRecap() async {
+      if (_weeklyRecapFired) return;
+      final recap = ref.read(weeklyRecapGateProvider);
+      if (recap == null) return;
+      final gymState = ref.read(gymProfilesProvider);
+      if (gymState.isLoading) return; // wait for gym to resolve
+      if (!context.mounted) return;
+      final route = ModalRoute.of(context);
+      if (route == null || route.isCurrent != true) return;
+      _weeklyRecapFired = true;
+      try {
+        await showWeeklyRecapDialog(
+          context: context,
+          recap: recap,
+          ref: ref,
+        );
+      } catch (e, st) {
+        debugPrint('weeklyRecapDialog error: $e\n$st');
+      }
+    }
+
     ref.listen<WeeklyRecap?>(weeklyRecapGateProvider, (previous, next) {
       if (next == null || previous != null) return;
-      WidgetsBinding.instance.addPostFrameCallback((_) async {
-        try {
-          if (!context.mounted) return;
-          // If a level-up or other dialog is already up, skip this fire.
-          // The next listener tick (e.g. provider rebuild after dialog
-          // closes) will re-attempt.
-          final route = ModalRoute.of(context);
-          if (route == null || route.isCurrent != true) return;
-          await showWeeklyRecapDialog(
-            context: context,
-            recap: next,
-            ref: ref,
-          );
-        } catch (e, st) {
-          debugPrint('weeklyRecapDialog error: $e\n$st');
-        }
-      });
+      WidgetsBinding.instance.addPostFrameCallback((_) => tryFireWeeklyRecap());
+    });
+
+    // Re-arm when gym profiles transition from loading → data. Covers the
+    // common case: recap arrives BEFORE gym loads, first attempt bails out,
+    // then gym finishes and we fire.
+    ref.listen<AsyncValue<List<GymProfile>>>(gymProfilesProvider, (prev, next) {
+      if (prev?.isLoading == true && !next.isLoading) {
+        WidgetsBinding.instance.addPostFrameCallback((_) => tryFireWeeklyRecap());
+      }
     });
 
     // Listen for streak-saved events (migration 1938 / W3).

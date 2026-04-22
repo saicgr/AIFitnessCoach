@@ -65,6 +65,7 @@ def row_to_performance_log(row: dict) -> PerformanceLog:
         failed_at_rep=row.get("failed_at_rep"),
         notes=row.get("notes"),
         recorded_at=row.get("recorded_at"),
+        logging_mode=row.get("logging_mode"),
     )
 
 
@@ -149,6 +150,7 @@ async def create_performance_log(log: PerformanceLogCreate,
             "progression_model": log.progression_model,
             "set_duration_seconds": log.set_duration_seconds,
             "rest_duration_seconds": log.rest_duration_seconds,
+            "logging_mode": log.logging_mode,
         }
 
         created = db.create_performance_log(log_data)
@@ -197,6 +199,7 @@ async def create_performance_logs_bulk(
                 "progression_model": log.progression_model,
                 "set_duration_seconds": log.set_duration_seconds,
                 "rest_duration_seconds": log.rest_duration_seconds,
+                "logging_mode": log.logging_mode,
             }
             for log in logs
         ]

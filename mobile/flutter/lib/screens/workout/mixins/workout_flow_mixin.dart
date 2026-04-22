@@ -1,14 +1,19 @@
+import 'dart:async';
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart' show defaultTargetPlatform, TargetPlatform;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/models/set_progression.dart';
+import '../../../core/providers/active_workout_phase_provider.dart';
 import '../../../core/providers/weight_increments_provider.dart';
 import '../../../core/providers/workout_mini_player_provider.dart';
+import '../../../core/providers/workout_ui_mode_provider.dart';
 import '../../../core/services/posthog_service.dart';
+import '../../../core/services/workout_tour_steps.dart';
 import '../../../data/models/exercise.dart';
 import '../../../data/models/workout.dart';
 import '../../../data/providers/xp_provider.dart';
@@ -18,9 +23,9 @@ import '../../../core/providers/ble_heart_rate_provider.dart';
 import '../../../core/providers/heart_rate_provider.dart';
 import '../../../core/providers/warmup_duration_provider.dart';
 import '../../../data/services/ble_heart_rate_service.dart';
+import '../../../data/services/live_activity_service.dart';
 import '../../../data/services/workout_notification_service.dart';
 import '../../../widgets/app_snackbar.dart';
-import '../../../widgets/app_tour/app_tour_controller.dart';
 import '../../ai_settings/ai_settings_screen.dart';
 import '../controllers/workout_timer_controller.dart';
 import '../models/workout_state.dart';
@@ -100,6 +105,11 @@ mixin WorkoutFlowMixin<T extends StatefulWidget> on State<T> {
         'workout_id': (workoutWidget as dynamic).workout.id ?? '',
       },
     );
+
+    // Flip the shared phase flag so Easy/Simple/Advanced agree that
+    // warmup is done for this workout. Prevents warmup from re-triggering
+    // if the user tier-swaps mid-session.
+    ref.read(activeWorkoutWarmupDoneProvider.notifier).state = true;
 
     setState(() {
       currentPhase = WorkoutPhase.active;
@@ -274,7 +284,21 @@ mixin WorkoutFlowMixin<T extends StatefulWidget> on State<T> {
         completionResponse = await completionFuture;
         debugPrint('✅ Workout marked as complete');
 
-        ref.read(xpProvider.notifier).markWorkoutCompleted(workoutId: workout.id);
+        // If the server already awarded the workout_complete XP inline
+        // (new behavior — see backend/api/v1/workouts/crud_completion.py),
+        // we only need to refresh the client XP state from the server.
+        // Skip the redundant `/xp/award-goal-xp` POST — the server dedup
+        // would treat it as a no-op anyway. Fall back to the legacy
+        // client-driven call for older backends that don't set the flag.
+        if (completionResponse?.xpAwarded == true) {
+          debugPrint('✅ Server already awarded ${completionResponse!.xpAmount} XP — refreshing local state');
+          // Refresh XP from backend so UI (level ring, streak) updates.
+          unawaited(ref.read(xpProvider.notifier).loadUserXP(showLoading: false));
+        } else {
+          // Legacy path: client-driven XP award. Safe against older
+          // backends that didn't include xp_awarded in the response.
+          ref.read(xpProvider.notifier).markWorkoutCompleted(workoutId: workout.id);
+        }
 
         if (completionResponse != null && completionResponse.hasPRs) {
           personalRecords = completionResponse.personalRecords;
@@ -710,94 +734,92 @@ mixin WorkoutFlowMixin<T extends StatefulWidget> on State<T> {
     }
   }
 
-  /// Push the latest workout state to the persistent notification.
-  ///
-  /// Only pushes when the app is currently backgrounded. While the user is
-  /// looking at the workout screen, the shade entry is hidden by design —
-  /// re-firing it on every pause/exercise-change would cause it to pop back
-  /// into view every few seconds.
-  void updateWorkoutNotification() {
-    if (exercises.isEmpty) return;
-    final lifecycle = WidgetsBinding.instance.lifecycleState;
-    final isForeground = lifecycle == null ||
-        lifecycle == AppLifecycleState.resumed;
-    if (isForeground) return;
+  /// Build the current snapshot for the Live Activity / ongoing notification.
+  /// Returns null if we don't have enough state to surface a meaningful view.
+  WorkoutActivityState? buildLiveActivityState() {
+    if (exercises.isEmpty) return null;
+    final started = timerController.startedAt;
+    if (started == null) return null;
 
-    final exerciseName = currentExerciseIndex < exercises.length
-        ? exercises[currentExerciseIndex].name
-        : 'Exercise';
-    final progress = '${currentExerciseIndex + 1}/${exercises.length}';
-    final timerText = WorkoutTimerController.formatTime(timerController.workoutSeconds);
+    final safeIndex = currentExerciseIndex.clamp(0, exercises.length - 1);
+    final exercise = exercises[safeIndex];
+    final totalSetsForThisExercise = totalSetsPerExercise[safeIndex] ??
+        exercise.sets ??
+        3;
+    final completedThisExercise = (completedSets[safeIndex] ?? const []).length;
+    // Next set to log is completed+1 (1-based). Cap at total so we don't
+    // flash "Set 5/4" during the transition between exercises.
+    final currentSet = (completedThisExercise + 1)
+        .clamp(1, totalSetsForThisExercise);
+
     final workout = (workoutWidget as dynamic).workout as Workout;
-    WorkoutNotificationService.instance.show(
+
+    return WorkoutActivityState(
       workoutName: workout.name ?? 'Workout',
-      currentExerciseName: exerciseName,
-      timerText: timerText,
-      exerciseProgress: progress,
+      currentExercise: exercise.name,
+      currentExerciseIndex: safeIndex + 1,
+      totalExercises: exercises.length,
+      currentSet: currentSet,
+      totalSets: totalSetsForThisExercise,
+      isResting: isResting,
+      restEndsAt: isResting ? timerController.restEndsAt : null,
       isPaused: isPaused,
+      startedAt: started,
+      pausedDurationSeconds: timerController.totalPausedSeconds,
     );
   }
 
-  /// Cancel the persistent notification and clear callbacks.
+  /// Push the latest workout state to the Live Activity / ongoing notification.
+  ///
+  /// - iOS: always pushes — the Dynamic Island / Lock Screen surface lives
+  ///   outside the app viewport, so an update is always visible.
+  /// - Android: only pushes when the app is backgrounded. While the user is
+  ///   looking at the workout screen, the shade entry is redundant and
+  ///   re-firing it on every pause/exercise-change would pop it back into
+  ///   view constantly.
+  void updateWorkoutNotification() {
+    final state = buildLiveActivityState();
+    if (state == null) return;
+
+    // Android-only foreground suppression.
+    if (!_isIOS) {
+      final lifecycle = WidgetsBinding.instance.lifecycleState;
+      final isForeground = lifecycle == null ||
+          lifecycle == AppLifecycleState.resumed;
+      if (isForeground) return;
+    }
+
+    LiveActivityService.instance.update(state);
+  }
+
+  /// Cancel the persistent notification / Live Activity and clear callbacks.
   void cancelWorkoutNotification() {
     WorkoutNotificationService.instance.cancel();
     WorkoutNotificationService.instance.clearCallbacks();
+    // Best-effort end of any live iOS Activity; safe to call multiple times.
+    LiveActivityService.instance.end();
   }
 
-  /// Trigger the workout onboarding tour.
+  // Cheap platform check that doesn't require importing dart:io at the top
+  // (keeps the mixin lean for code that doesn't care about platform).
+  bool get _isIOS {
+    // Import pulled transitively via live_activity_service.dart.
+    return defaultTargetPlatform == TargetPlatform.iOS;
+  }
+
+  /// Tier-aware active-workout tour trigger.
+  ///
+  /// Reads [workoutUiModeProvider] and dispatches the correct step list
+  /// (Easy = 3 / Simple = 5 / Advanced = 7). Each tier has its own
+  /// `tour_seen_<tier>` SharedPreferences flag so graduating users see a
+  /// fresh tour at every tier. The mid-tour tier-switch listener lives at
+  /// the screen level (see `active_workout_screen_refactored.dart`
+  /// `initState` → `WorkoutTourSeenListener.attach` + the
+  /// `ref.listen(workoutUiModeProvider, ...)` that calls
+  /// [WorkoutTourService.abortIfTierTourRunning] then re-invokes this).
   void triggerWorkoutTour() {
-    final steps = [
-      AppTourStep(
-        id: 'workout_step_exercise',
-        targetKey: AppTourKeys.exerciseCardKey,
-        title: 'Current Exercise',
-        description: 'Follow along with the video. Tap Info for full details and instructions.',
-        position: TooltipPosition.below,
-      ),
-      AppTourStep(
-        id: 'workout_step_sets',
-        targetKey: AppTourKeys.setLoggingKey,
-        title: 'Log Your Sets',
-        description: 'Enter weight and reps, then check the box to complete each set. Your history saves automatically.',
-        position: TooltipPosition.below,
-      ),
-      AppTourStep(
-        id: 'workout_step_rir',
-        targetKey: AppTourKeys.rirBarKey,
-        title: 'Rate Your Effort (RIR)',
-        description: 'RIR = Reps In Reserve. How many more reps could you do? 0 means failure, 5+ means easy. This helps the AI adjust your future weights.',
-        position: TooltipPosition.below,
-      ),
-      AppTourStep(
-        id: 'workout_step_swap',
-        targetKey: AppTourKeys.swapExerciseKey,
-        title: "Can't Do This?",
-        description: 'Swap any exercise for a suitable alternative, create a superset, or switch sides with L/R.',
-        position: TooltipPosition.above,
-      ),
-      AppTourStep(
-        id: 'workout_step_rest',
-        targetKey: AppTourKeys.restTimerKey,
-        title: 'Rest Timer',
-        description: 'Starts automatically between sets. Skip it whenever you\'re ready to go again.',
-        position: TooltipPosition.below,
-      ),
-      AppTourStep(
-        id: 'workout_step_ai',
-        targetKey: AppTourKeys.workoutAiKey,
-        title: 'Your AI Coach',
-        description: 'Ask your coach anything mid-workout — form check, exercise alternatives, weight suggestions, or just how many sets you have left.',
-        position: TooltipPosition.above,
-        cornerRadius: 999,
-        highlightColors: const [
-          Color(0xFF9B59B6),
-          Color(0xFF00BCD4),
-          Color(0xFF3B82F6),
-          Color(0xFF9B59B6),
-        ],
-      ),
-    ];
-    ref.read(appTourControllerProvider.notifier).checkAndShow('workout_tour', steps);
+    final tier = ref.read(workoutUiModeProvider).mode;
+    WorkoutTourService.maybeShowForTier(ref, tier);
   }
 
   /// Attempt BLE HR auto-reconnect if enabled.

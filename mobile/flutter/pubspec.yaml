@@ -1,7 +1,7 @@
 name: fitwiz
 description: "AI-powered fitness coaching app with personalized workouts"
 publish_to: 'none'
-version: 1.2.3+109
+version: 1.2.5+111
 
 environment:
   sdk: ^3.10.1
@@ -157,6 +157,13 @@ dependencies:
   smooth_page_indicator: ^1.2.0+3
   visibility_detector: ^0.4.0+2
   flutter_timezone: ^5.0.2
+
+  # Live Activities (iOS Dynamic Island) + screen wake during workouts.
+  # Pinned to 2.4.3 — 2.4.4+ bumps permission_handler to ^12 which would
+  # cascade-break other permission flows in the app. 2.4.3 still supports
+  # iOS 16.1+ Dynamic Island.
+  live_activities: 2.4.3
+  wakelock_plus: ^1.2.8
 
 dev_dependencies:
   flutter_test:

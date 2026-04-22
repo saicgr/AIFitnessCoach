@@ -286,9 +286,15 @@ class _FloatingNavBarWithAI extends ConsumerWidget {
                   const SizedBox(width: 8),
                   _ExpandableNavItem(
                     key: AppTourKeys.profileNavKey,
-                    icon: Icons.person_outline,
-                    selectedIcon: Icons.person,
-                    label: 'Profile',
+                    // "You" hub — Strava/Nike pattern. Profile + all
+                    // gamification surfaces (trophies, XP, achievements,
+                    // skills, wrapped, rewards, inventory) collapse into
+                    // this single tab's top-tabs. Research (Material 3)
+                    // caps bottom nav at 5; we preserved that by renaming
+                    // rather than adding a 6th tab.
+                    icon: Icons.stars_outlined,
+                    selectedIcon: Icons.stars_rounded,
+                    label: 'You',
                     isSelected: selectedIndex == 4,
                     onTap: () => onItemTapped(4),
                     accentColor: accentColor,

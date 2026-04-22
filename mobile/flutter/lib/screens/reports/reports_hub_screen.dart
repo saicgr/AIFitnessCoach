@@ -609,18 +609,21 @@ class _SquircleCard extends ConsumerWidget {
               ),
               borderRadius: BorderRadius.circular(36),
               boxShadow: [
-                // Tighter ambient shadow + wider colored glow so the card
-                // feels like it floats over the backdrop.
+                // Ambient shadow — soft black drop, no colored spread.
+                // The previous colored glow (blur 36, spread -6) leaked past
+                // the carousel viewport and showed as colored boxes in the
+                // gaps between peek'd cards. A single narrow ambient shadow
+                // still floats the card without the color-bleed artifact.
                 BoxShadow(
                   color: Colors.black.withValues(alpha: 0.45),
                   blurRadius: 18,
                   offset: const Offset(0, 10),
                 ),
                 BoxShadow(
-                  color: report.accent.withValues(alpha: 0.45),
-                  blurRadius: 36,
-                  offset: const Offset(0, 18),
-                  spreadRadius: -6,
+                  color: report.accent.withValues(alpha: 0.20),
+                  blurRadius: 18,
+                  offset: const Offset(0, 10),
+                  spreadRadius: -10,
                 ),
               ],
             ),

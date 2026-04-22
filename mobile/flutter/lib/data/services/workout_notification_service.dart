@@ -129,21 +129,33 @@ class WorkoutNotificationService {
   /// Show or update the persistent workout notification.
   ///
   /// Call this every second (on timer tick) to keep the notification current.
+  ///
+  /// When [startedAt] is supplied the Android chronometer renders the elapsed
+  /// time natively (no per-second Dart push required for the clock). When
+  /// [completedExercises] is supplied an integer progress bar is drawn
+  /// against [totalExercises].
   Future<void> show({
     required String workoutName,
     required String currentExerciseName,
     required String timerText,
     required String exerciseProgress,
     required bool isPaused,
+    DateTime? startedAt,
+    int? completedExercises,
+    int? totalExercises,
   }) async {
     if (!Platform.isAndroid) return;
     if (!_initialized) await initialize();
     if (!_permissionGranted) return; // user denied POST_NOTIFICATIONS
 
     final pauseResumeLabel = isPaused ? 'Resume' : 'Pause';
-    final pauseResumeIcon = isPaused
-        ? 'ic_launcher_monochrome' // DrawableResourceAndroidIcon uses @drawable/
-        : 'ic_launcher_monochrome';
+    const pauseResumeIcon =
+        'ic_launcher_monochrome'; // DrawableResourceAndroidIcon uses @drawable/
+
+    final showChronometer = startedAt != null && !isPaused;
+    final progressKnown = completedExercises != null &&
+        totalExercises != null &&
+        totalExercises > 0;
 
     final androidDetails = AndroidNotificationDetails(
       _channelId,
@@ -156,10 +168,18 @@ class WorkoutNotificationService {
       playSound: false,
       enableVibration: false,
       onlyAlertOnce: true, // critical — prevents sound/vibration on every update
-      showWhen: false,
-      usesChronometer: false,
+      // Native chronometer handles the ticking clock — if startedAt is
+      // provided we anchor `when` to wall-clock start and let Android render
+      // elapsed time. Fallback to subText when we don't have a start time or
+      // the user is paused (chronometer has no "freeze" mode).
+      showWhen: showChronometer,
+      when: showChronometer ? startedAt.millisecondsSinceEpoch : null,
+      usesChronometer: showChronometer,
+      subText: showChronometer ? null : timerText,
+      showProgress: progressKnown,
+      maxProgress: progressKnown ? totalExercises : 0,
+      progress: progressKnown ? completedExercises : 0,
       icon: '@drawable/ic_launcher_monochrome',
-      subText: timerText,
       category: AndroidNotificationCategory.service,
       actions: <AndroidNotificationAction>[
         AndroidNotificationAction(
@@ -172,7 +192,7 @@ class WorkoutNotificationService {
         AndroidNotificationAction(
           _ActionIds.stop,
           'Stop',
-          icon: DrawableResourceAndroidBitmap('ic_launcher_monochrome'),
+          icon: DrawableResourceAndroidBitmap(pauseResumeIcon),
           showsUserInterface: true, // bring app to foreground on stop
           cancelNotification: false,
         ),

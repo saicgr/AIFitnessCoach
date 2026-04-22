@@ -84,7 +84,11 @@ from api.v1 import plateau  # Plateau detection (exercise + weight stalling)
 from api.v1 import email_cron  # Lifecycle email cron jobs
 from api.v1 import email_webhooks  # Resend webhook: bounce / complaint handling
 from api.v1 import push_nudge_cron  # Hourly accountability push nudge cron jobs
+from api.v1 import weekly_wrapped_cron  # Sunday Wrapped hourly cron (tz-aware fire)
 from api.v1 import fitness_profile_cron  # Daily radar-shape snapshotter
+from api.v1 import retention_cron  # Data retention sweeps (chat 12mo, etc.)
+from api.v1 import dsar  # Out-of-app GDPR/CCPA data request flow
+from api.v1 import export  # Authenticated in-app data export (csv/json/excel/parquet)
 from api.v1 import dashboard  # Weekly dashboard summary endpoint
 from api.v1 import home  # Home screen bootstrap (single-request aggregated data)
 from api.v1 import chat_proposals  # Apply / dismiss AI-proposed workout changes
@@ -382,8 +386,28 @@ router.include_router(email_webhooks.router, tags=["Email Webhooks"])
 # Hourly accountability push nudge cron (secured by X-Cron-Secret header)
 router.include_router(push_nudge_cron.router, prefix="/nudges", tags=["Push Nudge Cron"])
 
+# Sunday Wrapped hourly cron — fires the weekly recap push at each user's
+# local weekly_summary_time (default Sunday 7pm), writes the summary row +
+# voices the push via coach_voice.render("weekly_summary_push", ...).
+router.include_router(weekly_wrapped_cron.router, prefix="/weekly", tags=["Weekly Wrapped Cron"])
+
 # Daily fitness-shape snapshotter (secured by X-Cron-Secret header)
 router.include_router(fitness_profile_cron.router, tags=["Fitness Cron"])
+
+# Daily data-retention sweeps (chat_history 12mo, push_nudge_log 90d, etc.)
+# Secured by X-Cron-Secret header. Triggered by the same external scheduler
+# that pings /nudges/cron and /emails/cron — no separate Render Cron service.
+router.include_router(retention_cron.router, prefix="/retention", tags=["Retention Cron"])
+
+# Out-of-app GDPR/CCPA data request flow. PUBLIC — no auth, no JWT — so a
+# locked-out user can still exercise Art. 15/17/20 rights. Protected by
+# email-ownership verification tokens + per-email rate limit.
+router.include_router(dsar.router, prefix="/dsar", tags=["Data Rights (DSAR)"])
+
+# Authenticated in-app export (csv/json/excel/parquet). Companion to dsar —
+# same data-gathering service underneath, but served inline for logged-in
+# users from Settings → Data & Privacy. 1 export/hour rate-limited.
+router.include_router(export.router, tags=["Data Rights (DSAR)"])
 
 # Weekly dashboard summary (workout compliance, nutrition, readiness, measurements, goals)
 router.include_router(dashboard.router, prefix="/dashboard", tags=["Dashboard"])

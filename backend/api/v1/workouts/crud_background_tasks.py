@@ -481,6 +481,8 @@ async def populate_performance_logs(
                 is_completed = set_data.get("completed", True)
                 failed_at_rep = set_data.get("failed_at_rep")
                 notes = set_data.get("notes")
+                notes_audio_url = set_data.get("notes_audio_url")
+                notes_photo_urls = set_data.get("notes_photo_urls")
                 target_weight_kg = set_data.get("target_weight_kg")
                 target_reps = set_data.get("target_reps")
                 progression_model = set_data.get("progression_model")
@@ -518,6 +520,8 @@ async def populate_performance_logs(
                     "is_completed": is_completed,
                     "failed_at_rep": failed_at_rep,
                     "notes": notes,
+                    "notes_audio_url": notes_audio_url,
+                    "notes_photo_urls": notes_photo_urls if notes_photo_urls else None,
                     "recorded_at": recorded_at,
                     "target_weight_kg": float(target_weight_kg) if target_weight_kg is not None else None,
                     "target_reps": int(target_reps) if target_reps is not None else None,

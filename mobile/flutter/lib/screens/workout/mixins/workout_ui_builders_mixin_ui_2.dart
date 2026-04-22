@@ -327,108 +327,180 @@ extension WorkoutUIBuildersMixinUI2 on WorkoutUIBuildersMixin {
 
                         const SizedBox(height: 8),
 
-                        // Set tracking table with inline rest row
+                        // Progression strip — last 3 sessions + today's target.
+                        // Renders above the set table so users see their
+                        // trajectory (and today's goal) before logging set 1.
+                        // Auto-hides when we have no prior sessions for this
+                        // exercise (the PreSetCoachingBanner handles
+                        // first-time empty state inside the table).
+                        Builder(builder: (ctx) {
+                          final ex = exercises[viewingExerciseIndex];
+                          final sessions =
+                              preSetHistoryByExerciseName[ex.name] ?? const [];
+                          if (sessions.isEmpty) return const SizedBox.shrink();
+
+                          final firstSet = setRows.isNotEmpty ? setRows.first : null;
+                          final isBw = firstSet?.isBodyweight ?? false;
+                          final isTm = firstSet?.isTimedExercise ?? false;
+                          return ProgressionStrip(
+                            sessions: sessions,
+                            useKg: useKg,
+                            targetWeightKg: firstSet?.targetWeight,
+                            targetReps: firstSet?.targetReps,
+                            targetDurationSeconds:
+                                firstSet?.targetDurationSeconds ?? firstSet?.targetHoldSeconds,
+                            isBodyweight: isBw,
+                            isTimed: isTm,
+                            // Tap target pill → put the weight input in
+                            // "edit mode": select all text in the weight
+                            // controller + pop the soft keyboard. The set
+                            // table already binds the weight TextField to
+                            // weightController so changes here flow back
+                            // to the active row's target. This is the
+                            // "morph pill → editor → save on ✓" flow.
+                            onTargetTap: () {
+                              HapticFeedback.selectionClick();
+                              if (weightController.text.isNotEmpty) {
+                                weightController.selection = TextSelection(
+                                  baseOffset: 0,
+                                  extentOffset: weightController.text.length,
+                                );
+                              }
+                              // Nudge the field to open via SystemChannels —
+                              // mirrors the tap-on-input behavior without
+                              // having direct access to the table's internal
+                              // FocusNode. If the keyboard is already open
+                              // this is a no-op.
+                              SystemChannels.textInput
+                                  .invokeMethod<void>('TextInput.show');
+                            },
+                            // Tap prior-session pill → show the full set
+                            // breakdown for that day.
+                            onSessionTap: (session) {
+                              showSessionDetailSheet(
+                                context: ctx,
+                                session: session,
+                                useKg: useKg,
+                                isBodyweight: isBw,
+                                isTimed: isTm,
+                                exerciseName: ex.name,
+                              );
+                            },
+                          );
+                        }),
+
+                        // Set tracking table with inline rest row.
+                        //
+                        // No-scroll refactor (Task #15): the table itself now
+                        // enforces a fixed-height budget via `maxVisibleRows`
+                        // + the shared `SetRail` + overflow sheet. The
+                        // `Expanded` here hands the table the remaining
+                        // vertical space; anything past the 4-row budget
+                        // collapses into the rail (≥5 sets) or the overflow
+                        // sheet (≥12 sets). The Plate indicator + AI input
+                        // live below as direct siblings — they're always
+                        // visible and never pushed off-screen by a long set
+                        // list.
                         Expanded(
-                          child: SingleChildScrollView(
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Container(
-                                  key: AppTourKeys.setLoggingKey,
-                                  child: SetTrackingTable(
-                                    key: ValueKey('set_tracking_$viewingExerciseIndex'),
-                                  exercise: exercises[viewingExerciseIndex],
-                                  sets: setRows,
-                                  useKg: useKg,
-                                  activeSetIndex: completedSets[viewingExerciseIndex]?.length ?? 0,
-                                  weightController: weightController,
-                                  repsController: repsController,
-                                  repsRightController: isLeftRightMode ? repsRightController : null,
-                                  onSetCompleted: handleSetCompletedV2,
-                                  onSetUpdated: updateCompletedSet,
-                                  onAddSet: () => _setState(() {
-                                    totalSetsPerExercise[viewingExerciseIndex] =
-                                        (totalSetsPerExercise[viewingExerciseIndex] ?? 3) + 1;
-                                  }),
-                                  isLeftRightMode: isLeftRightMode,
-                                  allSetsCompleted: isExerciseCompleted(viewingExerciseIndex),
-                                  onSelectAllTapped: () {
-                                    // Toggle all sets completed
-                                    if (isExerciseCompleted(viewingExerciseIndex)) {
-                                      // Already complete - do nothing or show message
-                                      HapticFeedback.lightImpact();
-                                    }
-                                  },
-                                  onSetDeleted: (index) => deleteCompletedSet(index),
-                                  onToggleUnit: toggleUnit,
-                                  onRirTapped: (setIndex, currentRir) => showRirPicker(setIndex, currentRir),
-                                  activeRir: lastSetRir,
-                                  onActiveRirChanged: (rir) => _setState(() => lastSetRir = rir),
-                                  // Inline rest row - shows between completed and active sets
-                                  showInlineRest: showInlineRest &&
-                                      viewingExerciseIndex == currentExerciseIndex &&
-                                      !isRestingBetweenExercises,
-                                    inlineRestRowWidget: buildInlineRestRowV2(),
-                                    // Pre-Set coaching banner (data-grounded insight above Set 1)
-                                    preSetBannerMessage: preSetBannerMessageFor(viewingExerciseIndex),
-                                    onPreSetBannerDismissed: () =>
-                                        dismissPreSetBanner(viewingExerciseIndex),
-                                    preSetBannerAnimationKey:
-                                        'pre_set_${exercises[viewingExerciseIndex].id}',
-                                  ),
-                                ),
-
-                                // Barbell plate indicator (only for barbell exercises)
-                                if (isBarbell(exercises[viewingExerciseIndex].equipment, exerciseName: exercises[viewingExerciseIndex].name))
-                                  AnimatedBuilder(
-                                    animation: weightController,
-                                    builder: (context, _) {
-                                      final weight = double.tryParse(weightController.text) ?? 0;
-                                      // Use overridden bar type if set, otherwise auto-detect
-                                      final barEquipment = exerciseBarType[viewingExerciseIndex]
-                                          ?? exercises[viewingExerciseIndex].equipment;
-                                      final barWt = getBarWeight(barEquipment, useKg: useKg);
-                                      if (weight < barWt) return const SizedBox.shrink();
-                                      return Padding(
-                                        padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-                                        child: GestureDetector(
-                                          onTap: () => showBarTypeSelectorImpl(exercises[viewingExerciseIndex]),
-                                          child: BarbellPlateIndicator(
-                                            totalWeight: weight,
-                                            barWeight: barWt,
-                                            useKg: useKg,
-                                          ),
-                                        ),
-                                      );
-                                    },
-                                  ),
-
-                                // AI Text Input Bar (below set table, within scrollable area)
-                                const SizedBox(height: 16),
-                                Padding(
-                                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                                  child: AiTextInputBar(
-                                    workoutId: (workoutWidget as dynamic).workout.id ?? '',
-                                    useKg: useKg,
-                                    currentExerciseName: exercises.isNotEmpty
-                                        ? exercises[viewingExerciseIndex].name
-                                        : null,
-                                    currentExerciseIndex: viewingExerciseIndex,
-                                    lastSetWeight: completedSets[viewingExerciseIndex]?.isNotEmpty == true
-                                        ? completedSets[viewingExerciseIndex]!.last.weight
-                                        : null,
-                                    lastSetReps: completedSets[viewingExerciseIndex]?.isNotEmpty == true
-                                        ? completedSets[viewingExerciseIndex]!.last.reps
-                                        : null,
-                                    onExercisesParsed: (exercises) => handleParsedExercises(exercises),
-                                    onV2Parsed: (response) => handleV2Parsed(response),
-                                  ),
-                                ),
-                                const SizedBox(height: 16),
-                              ],
+                          child: Container(
+                            key: AppTourKeys.setLoggingKey,
+                            child: SetTrackingTable(
+                              key: ValueKey('set_tracking_$viewingExerciseIndex'),
+                              exercise: exercises[viewingExerciseIndex],
+                              sets: setRows,
+                              useKg: useKg,
+                              activeSetIndex: completedSets[viewingExerciseIndex]?.length ?? 0,
+                              weightController: weightController,
+                              repsController: repsController,
+                              repsRightController: isLeftRightMode ? repsRightController : null,
+                              onSetCompleted: handleSetCompletedV2,
+                              onSetUpdated: updateCompletedSet,
+                              onAddSet: () => _setState(() {
+                                totalSetsPerExercise[viewingExerciseIndex] =
+                                    (totalSetsPerExercise[viewingExerciseIndex] ?? 3) + 1;
+                              }),
+                              isLeftRightMode: isLeftRightMode,
+                              allSetsCompleted: isExerciseCompleted(viewingExerciseIndex),
+                              onSelectAllTapped: () {
+                                if (isExerciseCompleted(viewingExerciseIndex)) {
+                                  HapticFeedback.lightImpact();
+                                }
+                              },
+                              onSetDeleted: (index) => deleteCompletedSet(index),
+                              onToggleUnit: toggleUnit,
+                              onRirTapped: (setIndex, currentRir) => showRirPicker(setIndex, currentRir),
+                              activeRir: lastSetRir,
+                              onActiveRirChanged: (rir) => _setState(() => lastSetRir = rir),
+                              showInlineRest: showInlineRest &&
+                                  viewingExerciseIndex == currentExerciseIndex &&
+                                  !isRestingBetweenExercises,
+                              inlineRestRowWidget: buildInlineRestRowV2(),
+                              preSetBannerMessage: preSetBannerMessageFor(viewingExerciseIndex),
+                              onPreSetBannerDismissed: () =>
+                                  dismissPreSetBanner(viewingExerciseIndex),
+                              preSetBannerAnimationKey:
+                                  'pre_set_${exercises[viewingExerciseIndex].id}',
+                              // Rail-tap handler: the Advanced screen derives
+                              // `activeSetIndex` from `completedSets.length`,
+                              // so there's no separate "view set N" state to
+                              // flip. The table's internal `_focusOverride`
+                              // re-centers the render window; leaving this
+                              // null keeps write state untouched while still
+                              // letting the user peek any set via the rail.
+                              onJumpToSet: null,
                             ),
                           ),
                         ),
+
+                        // Barbell plate indicator (only for barbell exercises).
+                        // Outside the Expanded so it sits on top of the AI
+                        // input bar without being clipped by a long set list.
+                        if (isBarbell(exercises[viewingExerciseIndex].equipment, exerciseName: exercises[viewingExerciseIndex].name))
+                          AnimatedBuilder(
+                            animation: weightController,
+                            builder: (context, _) {
+                              final weight = double.tryParse(weightController.text) ?? 0;
+                              final barEquipment = exerciseBarType[viewingExerciseIndex]
+                                  ?? exercises[viewingExerciseIndex].equipment;
+                              final barWt = getBarWeight(barEquipment, useKg: useKg);
+                              if (weight < barWt) return const SizedBox.shrink();
+                              return Padding(
+                                padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                                child: GestureDetector(
+                                  onTap: () => showBarTypeSelectorImpl(exercises[viewingExerciseIndex]),
+                                  child: BarbellPlateIndicator(
+                                    totalWeight: weight,
+                                    barWeight: barWt,
+                                    useKg: useKg,
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+
+                        // AI Text Input Bar — always on screen (below the
+                        // table), never pushed off by a long set list.
+                        const SizedBox(height: 8),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          child: AiTextInputBar(
+                            workoutId: (workoutWidget as dynamic).workout.id ?? '',
+                            useKg: useKg,
+                            currentExerciseName: exercises.isNotEmpty
+                                ? exercises[viewingExerciseIndex].name
+                                : null,
+                            currentExerciseIndex: viewingExerciseIndex,
+                            lastSetWeight: completedSets[viewingExerciseIndex]?.isNotEmpty == true
+                                ? completedSets[viewingExerciseIndex]!.last.weight
+                                : null,
+                            lastSetReps: completedSets[viewingExerciseIndex]?.isNotEmpty == true
+                                ? completedSets[viewingExerciseIndex]!.last.reps
+                                : null,
+                            onExercisesParsed: (exercises) => handleParsedExercises(exercises),
+                            onV2Parsed: (response) => handleV2Parsed(response),
+                          ),
+                        ),
+                        const SizedBox(height: 8),
                       ],
                     ),
                   ),
@@ -610,9 +682,16 @@ extension WorkoutUIBuildersMixinUI2 on WorkoutUIBuildersMixin {
                       // Compact top bar: <- | Timer | Title | Set X/Y | x
                       buildLandscapeTopBar(isDark: isDark, accentColor: accentColor),
 
-                      // Set tracking table (gets most vertical space)
+                      // Set tracking table (gets most vertical space).
+                      //
+                      // No-scroll refactor (Task #15): landscape budget is
+                      // even tighter than iPhone SE portrait, so we lean on
+                      // the table's fixed-row windowing HARD here — only 3
+                      // rows in the focal window, with the rail picking up
+                      // the slack. Anything past the 3 rows collapses into
+                      // the rail (≥4 sets) or the overflow sheet (≥12 sets).
                       Expanded(
-                        child: SingleChildScrollView(
+                        child: Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 12),
                           child: SetTrackingTable(
                             key: ValueKey('set_tracking_landscape_$viewingExerciseIndex'),
@@ -650,6 +729,9 @@ extension WorkoutUIBuildersMixinUI2 on WorkoutUIBuildersMixin {
                                 dismissPreSetBanner(viewingExerciseIndex),
                             preSetBannerAnimationKey:
                                 'pre_set_${exercises[viewingExerciseIndex].id}_landscape',
+                            // Landscape: tighter budget, 3 visible rows instead of 4.
+                            maxVisibleRows: 3,
+                            onJumpToSet: null,
                           ),
                         ),
                       ),

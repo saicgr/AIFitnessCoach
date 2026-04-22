@@ -312,6 +312,153 @@ Rationale: ship the simplest paywall possible, gather 2–3 months of cohort dat
 
 ---
 
+## Regional Pricing Matrix (PPP-Adjusted)
+
+### Philosophy
+- **Code is currency-agnostic.** Paywall uses `pkg.storeProduct.priceString` — each store returns the localized price for the user's country automatically.
+- **All regional prices are set per country in App Store Connect + Google Play Console**, not in Dart code. `ProductPricing.products` map is dead fallback code (zero grep references).
+- **Tiers are grouped by purchasing power, not geography.** A country lands in Tier N based on local disposable income + competitor pricing, not continent.
+
+### Tier 1 — Full Price (high disposable income)
+**Countries:** US, UK, Canada, Australia, NZ, Ireland, Nordics (Norway/Sweden/Denmark/Finland), Switzerland, Germany, Netherlands, France, Austria, Belgium, Luxembourg
+
+| Market | Monthly | Yearly | USD equiv (monthly) |
+|---|---|---|---|
+| 🇺🇸 US | $4.99 | $49.99 | $4.99 |
+| 🇬🇧 UK | £3.99 | £37.99 | ~$5.00 |
+| 🇨🇦 Canada | C$6.99 | C$64.99 | ~$5.00 |
+| 🇦🇺 Australia | A$7.99 | A$74.99 | ~$5.20 |
+| 🇳🇿 New Zealand | NZ$7.99 | NZ$74.99 | ~$4.80 |
+| 🇪🇺 EU (Germany/France/NL/Austria/Belgium/Lux/Ireland) | €4.99 | €49.99 | ~$5.35 |
+| 🇨🇭 Switzerland | CHF 4.90 | CHF 49.00 | ~$5.55 |
+| 🇳🇴 Norway | NOK 55 | NOK 549 | ~$5.20 |
+| 🇸🇪 Sweden | SEK 59 | SEK 579 | ~$5.60 |
+| 🇩🇰 Denmark | DKK 37 | DKK 369 | ~$5.40 |
+| 🇫🇮 Finland | €4.99 | €49.99 | ~$5.35 |
+
+### Tier 2 — Southern Europe + Higher APAC
+**Countries:** Italy, Spain, Portugal, Greece, Japan, South Korea, Singapore, Hong Kong, Taiwan, UAE, Saudi Arabia, Israel
+
+| Market | Monthly | Yearly | USD equiv (monthly) |
+|---|---|---|---|
+| 🇮🇹 Italy | €4.49 | €44.99 | ~$4.80 |
+| 🇪🇸 Spain | €4.49 | €44.99 | ~$4.80 |
+| 🇵🇹 Portugal | €4.49 | €44.99 | ~$4.80 |
+| 🇬🇷 Greece | €4.49 | €44.99 | ~$4.80 |
+| 🇯🇵 Japan | ¥600 | ¥5,800 | ~$4.00 |
+| 🇰🇷 S. Korea | ₩6,500 | ₩64,000 | ~$4.80 |
+| 🇸🇬 Singapore | S$6.49 | S$64.99 | ~$4.85 |
+| 🇭🇰 Hong Kong | HK$35 | HK$349 | ~$4.50 |
+| 🇹🇼 Taiwan | NT$149 | NT$1,499 | ~$4.70 |
+| 🇦🇪 UAE | AED 17.99 | AED 179.99 | ~$4.90 |
+| 🇸🇦 Saudi Arabia | SAR 17.99 | SAR 179.99 | ~$4.80 |
+| 🇮🇱 Israel | ₪17.99 | ₪179.99 | ~$4.90 |
+
+### Tier 3 — Emerging Americas + E. Europe
+**Countries:** Mexico, Brazil, Argentina, Chile, Colombia, Peru, Poland, Czech, Hungary, Romania, Croatia, Bulgaria, Turkey
+
+| Market | Monthly | Yearly | USD equiv (monthly) |
+|---|---|---|---|
+| 🇲🇽 Mexico | MX$79 | MX$749 | ~$4.00 |
+| 🇧🇷 Brazil | R$19.99 | R$189 | ~$4.00 |
+| 🇦🇷 Argentina | AR$3,499 | AR$32,999 | ~$3.50 |
+| 🇨🇱 Chile | CLP 3,900 | CLP 36,999 | ~$4.10 |
+| 🇨🇴 Colombia | COP 17,900 | COP 169,900 | ~$4.20 |
+| 🇵🇪 Peru | PEN 14.99 | PEN 139.99 | ~$4.00 |
+| 🇵🇱 Poland | zł 16.99 | zł 159 | ~$4.10 |
+| 🇨🇿 Czech Republic | Kč 99 | Kč 949 | ~$4.20 |
+| 🇭🇺 Hungary | Ft 1,490 | Ft 13,990 | ~$4.00 |
+| 🇷🇴 Romania | lei 19.99 | lei 189 | ~$4.30 |
+| 🇭🇷 Croatia | kn 29 | kn 279 | ~$4.10 |
+| 🇧🇬 Bulgaria | лв 7.99 | лв 74.99 | ~$4.30 |
+| 🇹🇷 Turkey | ₺139 | ₺1,299 | ~$3.40 (frequent inflation resets) |
+
+### Tier 4 — India + Asia-Pacific + MENA + Africa
+**Countries:** India, Indonesia, Philippines, Vietnam, Thailand, Malaysia, Egypt, Morocco, South Africa, Nigeria, Kenya, Pakistan, Bangladesh, Sri Lanka
+
+| Market | Monthly | Yearly | USD equiv (monthly) |
+|---|---|---|---|
+| 🇮🇳 **India** | **₹249** | **₹1,999** | **~$3.00** |
+| 🇮🇩 Indonesia | Rp 45,000 | Rp 399,000 | ~$2.85 |
+| 🇵🇭 Philippines | ₱149 | ₱1,299 | ~$2.70 |
+| 🇻🇳 Vietnam | 59,000 VND | 499,000 VND | ~$2.40 |
+| 🇹🇭 Thailand | ฿99 | ฿899 | ~$2.85 |
+| 🇲🇾 Malaysia | RM 11.99 | RM 109 | ~$2.75 |
+| 🇪🇬 Egypt | EGP 99 | EGP 899 | ~$2.00 |
+| 🇲🇦 Morocco | MAD 29 | MAD 279 | ~$2.90 |
+| 🇿🇦 S. Africa | R49 | R449 | ~$2.65 |
+| 🇳🇬 Nigeria | ₦3,999 | ₦35,999 | ~$2.60 |
+| 🇰🇪 Kenya | KES 299 | KES 2,699 | ~$2.30 |
+| 🇵🇰 Pakistan | Rs 799 | Rs 6,999 | ~$2.85 |
+| 🇧🇩 Bangladesh | ৳299 | ৳2,699 | ~$2.70 |
+| 🇱🇰 Sri Lanka | Rs 799 | Rs 6,999 | ~$2.60 |
+
+### India pricing — special competitive note (post-Dec 2025)
+**Apple Fitness+ launched in India Dec 15, 2025 at ₹149/mo · ₹999/yr.**
+
+FitWiz at ₹249 is positioned as:
+- **2× Apple Fitness+** (~₹100 premium) — justified by AI-coach differentiator (Apple is class-library only, no AI chat, no food logging, no injury-aware planning, no Android)
+- **Under 50% of HealthifyMe Pro** (₹599) — closest AI-adjacent rival
+- **25% of Cult.fit Live** (₹999)
+- **Stays under ₹250 psychological threshold** (similar to "under $5" in US)
+
+**Alternative considered: ₹199.** Rejected because:
+- ₹249 generates 39% more profit/user on moderate Gemini use ($1.83 vs $1.32)
+- Conversion diff between ₹199 and ₹249 is negligible (both well below HealthifyMe ₹599)
+- ₹199 leaves thin margins on heavy users ($0.52/user/mo); ₹249 gives ~2× headroom ($1.04/user/mo)
+
+**Alternative considered: matching Apple at ₹149.** Rejected because:
+- Net after store cut + Gemini = $0.82/user/mo — one abuse user wipes out 5 moderate users
+- User cannot win on price vs Apple brand trust in India; must win on differentiation (AI)
+- ₹149 signals "me-too cheap class app" when FitWiz is a different product category (AI coach vs. class library)
+
+### Per-country breakeven math (fixed infra = $70/mo)
+How many subs to cover **all fixed infrastructure**, assuming moderate Gemini use:
+
+| Market | Net/user/mo | Subs to cover $70 |
+|---|---|---|
+| 🇺🇸 US @ $4.99 | $3.54 | **20 subs** |
+| 🇬🇧 UK @ £3.99 | ~$3.55 | **20 subs** |
+| 🇪🇺 EU @ €4.99 | ~$3.85 | **19 subs** |
+| 🇦🇺 Australia @ A$7.99 | ~$3.72 | **19 subs** |
+| 🇯🇵 Japan @ ¥600 | ~$2.70 | 26 subs |
+| 🇧🇷 Brazil @ R$19.99 | ~$2.70 | 26 subs |
+| 🇲🇽 Mexico @ MX$79 | ~$2.70 | 26 subs |
+| 🇮🇳 India @ ₹249 | $1.83 | 38 subs |
+| 🇮🇩 Indonesia @ Rp 45k | ~$1.70 | 42 subs |
+| 🇳🇬 Nigeria @ ₦3,999 | ~$1.50 | 47 subs |
+
+Since US/EU/UK/AU already cover fixed costs at ~20 subs, **all Tier 3/4 revenue is essentially pure marginal profit** once you have a modest Tier 1 base.
+
+### App Store tier mapping (for implementation)
+Both stores use **price tiers** (not custom prices). The stores round to the nearest available tier — if exact value isn't available, pick closest below target:
+
+| Target USD | Apple tier | Google Play tier |
+|---|---|---|
+| $4.99 | Tier 5 | $4.99 |
+| $3.99 | Tier 4 | $3.99 |
+| $2.99 | Tier 3 | $2.99 |
+| ₹299 (India) | Tier 59 | ₹299 |
+| ₹249 (India) | Tier 49 | ₹249 |
+| ₹149 (India) | Tier 29 | ₹149 |
+
+When entering India price in App Store Connect, pick the tier closest to ₹249. If only ₹199 or ₹299 available, default to ₹299 — India Apple Fitness+ is at the ₹149 tier, so ₹299 still creates clean separation.
+
+### Rollout sequence
+1. **Today:** Set Tier 4 (India + top 5 emerging markets) in both stores — highest revenue lift, easiest setup
+2. **This week:** Set Tier 3 (LatAm + E. Europe + Turkey)
+3. **Next week:** Set Tier 2 (S. Europe, Japan, Korea, Singapore)
+4. **Tier 1 is default** — no per-country override needed
+
+### Verification
+- Set Apple device country to India → paywall should show **₹249**
+- Set to US → **$4.99**
+- Set to UK → **£3.99**
+- RevenueCat dashboard → Customer → Country Override → check each tier loads correct localized `priceString`
+- Supabase `subscription_history.price` logs native currency + `currency` ISO code (not converted to USD server-side)
+
+---
+
 ## Future Tier: Ultra (Premium Plus) — Planned, Not Launched
 
 ### Status
@@ -387,6 +534,118 @@ Not planned for launch. `SubscriptionTier.lifetime` exists in code (`subscriptio
 
 ---
 
+## Future Tier: Family Plan — Deferred (Do Not Launch Yet)
+
+### Status
+Not planned for launch. No `SubscriptionTier.family` enum exists in code. Requires new schema, entitlement-sharing logic, and invitation flow — **3-4 weeks of engineering**.
+
+### Why not now (Apr 2026)
+Family plans are a **retention lever, not a growth lever**. At the current stage (<500 paying subs, $4.99 anchor, no PMF data), a family plan would:
+- Cannibalize individual revenue (a couple who'd pay 2× $4.99 = $9.98 downgrades to 1× $10.99 = $10.99 — almost flat revenue but you carry 2× Gemini cost)
+- Require 3-4 weeks of engineering (invitations, shared entitlements, multi-user auth, data isolation)
+- Likely net *less* revenue than 2-4 individual subs for the first 6 months
+- Signal "family-friendly app" when the product is single-user-personalized by design
+
+### Why fitness family plans generally fail
+- **Data is personalized per user** — your plan ≠ your spouse's plan. No "shared library" to pool.
+- **AI coaching can't be shared** — chat history, goals, injuries are individual
+- **Each user is a separate active cost** (Gemini $0.70-1.50/user/mo)
+- **Buying decisions are individual** — "I want to get in shape" is not "the family wants Netflix"
+- **Industry evidence:** Fitbod, MacroFactor, Apple Fitness+, Gravl, Strong, Hevy — **none** offer family plans. Only Apple Fitness+ includes family via Apple Family Sharing (native OS-level, not a separate SKU).
+
+### Math — why $10.99/4-user plan doesn't pencil
+
+Per-family-plan-subscription at $10.99:
+- Gross: $10.99
+- After 15% store cut: $9.34
+- After 4× Gemini ($0.70 moderate): **$6.54 net/mo**
+
+Compare to 4 individual Premium subscribers at $4.99:
+- 4 × ($4.99 × 0.85 – $0.70) = **$14.16 net/mo**
+
+**Family plan at $10.99 loses 54% of revenue** for the same active user count and Gemini cost.
+
+### Breakeven pricing table (4-user family vs 4 individuals @ $4.99)
+
+| Family price | Net after store | After 4× Gemini | Profit vs 4 individuals ($14.16) |
+|---|---|---|---|
+| $9.99 | $8.49 | $5.69 | –$8.47 (lose 60%) |
+| $10.99 | $9.34 | $6.54 | –$7.62 (lose 54%) |
+| $12.99 | $11.04 | $8.24 | –$5.92 (lose 42%) |
+| $14.99 | $12.74 | $9.94 | –$4.22 (lose 30%) |
+| $17.99 | $15.29 | $12.49 | –$1.67 (lose 12%) |
+| **$19.99** | **$16.99** | **$14.19** | **+$0.03 (breakeven)** |
+
+**True breakeven family price = $19.99/mo for 4 seats.** Anything lower only makes sense as an acquisition discount — worth it if it drives net-new users who wouldn't have subscribed solo.
+
+### Duo plan — the middle ground (2 seats)
+
+If we revisit family plans later, **Duo (2 seats) is more viable than Family (4 seats)** because the Gemini cost scales with seats but acquisition incrementality is higher for couples than for full families:
+
+| Duo price | Net after store | After 2× Gemini | Profit vs 2 individuals ($7.08) |
+|---|---|---|---|
+| $7.99 | $6.79 | $5.39 | –$1.69 (lose 24%) |
+| $8.99 | $7.64 | $6.24 | –$0.84 (lose 12%) |
+| **$9.99** | **$8.49** | **$7.09** | **+$0.01 (breakeven)** |
+
+**Duo at $9.99 = breakeven vs 2 individuals.** Only worth launching if the 2nd seat captures someone who wouldn't have paid on their own.
+
+### Industry benchmarks (2026)
+| App | Individual | Family | Seats | Per-seat family cost |
+|---|---|---|---|---|
+| Spotify | $10.99 | $16.99 | 6 | $2.83 |
+| Apple Music | $10.99 | $16.99 | 6 | $2.83 |
+| YouTube Premium | $13.99 | $22.99 | 5 | $4.60 |
+| Headspace | $12.99 | $19.99 | 6 | $3.33 |
+| **Apple Fitness+** | $9.99 | Native Family Sharing | 6 | $0 incremental |
+| **Fitbod** | $12.99 | ❌ none | — | — |
+| **MacroFactor** | $11.99 | ❌ none | — | — |
+| **Hevy / Strong / Gravl** | varies | ❌ none | — | — |
+
+### The free alternative — Apple/Google Family Sharing
+Before building a Family SKU, enable **native Family Sharing on the existing Premium SKU**:
+- **App Store Connect** → Subscriptions → `premium_monthly` → toggle "Family Sharing" → ON
+- **Google Play** → Subscriptions → `premium_monthly` → Family Library → enable
+- Zero engineering work
+- Primary subscriber's family members get Premium access via Apple Family / Google Family
+- You lose some per-family-unit revenue but gain engagement/retention without building a new tier
+- **Recommended default** whenever we're ready for any family behavior
+
+### Better alternatives to family plan for growth
+Ranked by ROI for the "earn money ASAP" goal:
+1. **India PPP pricing (₹249)** — free revenue lift, zero cannibalization
+2. **7-day trial on monthly plan** — +20-40% trial starts (today monthly has no trial)
+3. **Referral program** — "Invite a friend, both get 1 month free" — mimics family-plan virality without revenue cannibalization
+4. **Annual upsell at month 2** — converts monthly churners
+5. **Apple/Google Family Sharing toggle** — free "family" perk without new SKU
+6. Then, much later: Family/Duo SKU if data justifies
+
+### Launch prerequisites (when/if we ever ship a Family or Duo SKU)
+Don't build until:
+- [ ] 2,000+ paying individual subscribers (proves PMF, provides upsell base)
+- [ ] 3+ months of cohort retention data at current single-user pricing
+- [ ] User research shows ≥20% of users have a spouse/partner/family member who would use FitWiz
+- [ ] Premium price stable at $9.99+/mo (Family pricing ladder only reads as a deal when individual is higher)
+- [ ] Multi-user entitlement infrastructure built (invitation tokens, seat management, per-user data isolation)
+
+### If launched (recommended future specs)
+- **Duo (2 seats):** $9.99/mo — breakeven, good for couples, minimal engineering
+- **Family (4-6 seats):** $19.99/mo — breakeven at 4 seats, upside at 5-6 seats
+- **Yearly family:** $199.99/yr (~$16.67/mo, 17% savings)
+- **India Duo:** ₹399/mo (breakeven at ₹199 single)
+- **India Family:** ₹799/mo (breakeven at ₹199 × 4)
+
+### Implementation notes (when we build it)
+- New `SubscriptionTier.family` enum in `subscription_provider.dart`
+- New Supabase table `family_group_members (group_id, user_id, role, joined_at)`
+- Invitation endpoint: `POST /api/v1/subscriptions/family/invite` (generates single-use token, emails via Resend)
+- Entitlement check: user is Premium if they're in a `family_group_members` record with `status=active`
+- RevenueCat: new product `premium_family_monthly`, attach to new `family` entitlement
+- Paywall copy: 3rd column "Family Plan — $19.99/mo · up to 4 people"
+- Refund/cancel: removing primary cancels for all members (grace period recommended)
+
+---
+
 ## Future Tier: Free with Limits — Not Recommended
 
 A capped free tier (e.g., 3 workouts/mo, 5 photo logs, no chat) is plumbed in code via `SubscriptionTier.free` but **not implemented as a product**. Today `free` = "paywall was dismissed."
@@ -401,12 +660,14 @@ Premature freemium = revenue loss with no learning.
 
 ## Appendix: Files to update if price changes
 
-- `mobile/flutter/lib/core/providers/subscription_provider.dart:719-731` — `ProductPricing.products` fallback map (add `premium_plus_monthly` / `premium_plus_yearly` entries when Ultra launches)
-- `mobile/flutter/lib/core/providers/subscription_provider.dart:228-229` — Premium Plus product ID constants (already exist)
-- `mobile/flutter/lib/core/providers/subscription_provider.dart:234` — `premiumPlusEntitlement` key
-- RevenueCat dashboard — Offerings + pricing phases (source of truth for live price); create Premium Plus Offering when adding Ultra
-- App Store Connect + Google Play Console — product SKU prices
+- `mobile/flutter/lib/core/providers/subscription_provider.dart:719-731` — `ProductPricing.products` fallback map (add `premium_plus_monthly` / `premium_plus_yearly` entries when Ultra launches; add `premium_family_monthly` when Family launches)
+- `mobile/flutter/lib/core/providers/subscription_provider.dart:228-229` — Premium Plus product ID constants (already exist); Family product IDs need to be added
+- `mobile/flutter/lib/core/providers/subscription_provider.dart:234` — `premiumPlusEntitlement` key; `familyEntitlement` key needed when Family launches
+- `subscription_provider.dart` — add `SubscriptionTier.family` enum when launching Family/Duo
+- New Supabase migration — `family_group_members` table when Family launches
+- RevenueCat dashboard — Offerings + pricing phases (source of truth for live price); create Premium Plus Offering when adding Ultra; Family Offering when adding Family
+- App Store Connect + Google Play Console — product SKU prices; enable Family Sharing toggle on `premium_monthly` when we want native Apple/Google family behavior (no new SKU needed)
 - `/PRICING.md` (root) — refresh to match reality (currently shows $5.99/$9.99 — misleading)
 - `/SUBSCRIPTION_TIER_GUIDE.md` — same
 - `research/COMPETITIVE_ANALYSIS.md:91-93` — update "Your App" row
-- Paywall copy in `mobile/flutter/lib/screens/paywall/paywall_pricing_screen.dart` (rewrite as 3-column when Ultra launches)
+- Paywall copy in `mobile/flutter/lib/screens/paywall/paywall_pricing_screen.dart` (rewrite as 3-column when Ultra launches; 4-column if Family added on top)

@@ -321,6 +321,33 @@ async def update_food_log(log_id: str, body: UpdateFoodLogRequest, current_user:
         raise safe_internal_error(e, "nutrition")
 
 
+@router.get("/food-logs/{log_id}/image-url")
+async def refresh_food_log_image_url(log_id: str, current_user: dict = Depends(get_current_user)):
+    """Return a fresh 24-hour presigned URL for a food log's image.
+
+    Clients call this when a cached image URL has expired (Image.network
+    errorBuilder fires) to avoid showing a broken thumbnail indefinitely
+    on old logs. Returns 404 if the log has no image or doesn't belong to
+    this user.
+    """
+    user_id = current_user.get("id") or current_user.get("sub")
+    try:
+        db = get_supabase_db()
+        log = db.get_food_log(log_id)
+        if not log or log.get("user_id") != user_id:
+            raise HTTPException(status_code=404, detail="Food log not found")
+        image_url = log.get("image_url")
+        if not image_url:
+            raise HTTPException(status_code=404, detail="No image for this log")
+        fresh = resign_food_image_url(image_url)
+        return {"image_url": fresh}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to refresh food log image URL: {e}", exc_info=True)
+        raise safe_internal_error(e, "nutrition")
+
+
 @router.get("/food-logs/{log_id}/edits", response_model=List[FoodItemEditResponse])
 async def list_food_log_edits(log_id: str, current_user: dict = Depends(get_current_user)):
     """Return the per-field edit history for a food log (newest first)."""

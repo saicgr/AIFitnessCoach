@@ -3,6 +3,13 @@ Data Export Service for FitWiz.
 
 Exports user data to CSV, JSON, Excel, and Parquet formats.
 Supports export for data portability and re-import after account deletion.
+
+GDPR Art. 20 (data portability) requires that the export include *all*
+personal data held about the user, not just the headline fitness tables.
+That means chat transcripts, food logs, progress photos (URLs + metadata),
+nutrition summaries, user_ai_settings (so consent timestamps are auditable),
+injuries, habits, personal goals, measurements, hormonal/cycle logs,
+kegel logs, cardio sessions, and custom exercises.
 """
 import csv
 import io
@@ -19,9 +26,122 @@ from core.logger import get_logger
 
 logger = get_logger(__name__)
 
-# Export version for compatibility checking on import
-EXPORT_VERSION = "1.0"
+# Export version for compatibility checking on import.
+# Bumped to 2.0 when we expanded coverage to satisfy GDPR Art. 20 in full.
+EXPORT_VERSION = "2.0"
 APP_VERSION = "1.0.0"
+
+# Tables that may not exist in every environment (e.g. brand-new schemas
+# where a migration hasn't been applied). Missing tables return an empty
+# list rather than failing the whole export.
+_PORTABILITY_TABLES: List[Dict[str, Any]] = [
+    # (table, date_column used for range filter or None, row_limit)
+    {"name": "chat_history", "date_col": "timestamp", "limit": 10000},
+    {"name": "food_logs", "date_col": "logged_at", "limit": 10000},
+    {"name": "progress_photos", "date_col": "taken_at", "limit": 2000},
+    {"name": "nutrition_summaries", "date_col": "summary_date", "limit": 2000},
+    {"name": "user_ai_settings", "date_col": None, "limit": 10},
+    {"name": "injuries", "date_col": "reported_at", "limit": 500},
+    {"name": "habits", "date_col": None, "limit": 500},
+    {"name": "habit_completions", "date_col": "completed_at", "limit": 10000},
+    {"name": "personal_goals", "date_col": None, "limit": 500},
+    {"name": "user_measurements", "date_col": "recorded_at", "limit": 2000},
+    {"name": "hormonal_logs", "date_col": "logged_date", "limit": 2000},
+    {"name": "kegel_logs", "date_col": "logged_at", "limit": 2000},
+    {"name": "cardio_logs", "date_col": "logged_at", "limit": 5000},
+    {"name": "custom_exercises", "date_col": None, "limit": 500},
+    {"name": "water_intake", "date_col": "logged_at", "limit": 5000},
+    {"name": "mood_logs", "date_col": "logged_at", "limit": 2000},
+]
+
+
+def _fetch_portability_table(
+    db,
+    user_id: str,
+    table: str,
+    date_col: Optional[str],
+    start_date: Optional[str],
+    end_date: Optional[str],
+    limit: int,
+) -> List[Dict[str, Any]]:
+    """Fetch a user's rows from a given table with SELECT * semantics.
+
+    Missing tables (HTTP 404 / 42P01 undefined_table) degrade to an empty
+    list. We never raise — a partial export is strictly better than no
+    export for a GDPR DSAR deadline.
+    """
+    try:
+        query = db.client.table(table).select("*").eq("user_id", user_id)
+        if date_col and start_date:
+            query = query.gte(date_col, start_date)
+        if date_col and end_date:
+            # Inclusive end-of-day for date-only columns.
+            query = query.lte(date_col, end_date + "T23:59:59Z")
+        if date_col:
+            query = query.order(date_col, desc=True)
+        result = query.limit(limit).execute()
+        return result.data or []
+    except Exception as e:
+        # Table may not exist in this environment, or RLS denied access.
+        # Log and continue so the rest of the export completes.
+        msg = str(e)
+        if "42P01" in msg or "does not exist" in msg or "not found" in msg.lower():
+            logger.info(f"portability: table '{table}' not present — skipping")
+        else:
+            logger.warning(f"portability: failed to read '{table}' for user {user_id}: {e}")
+        return []
+
+
+def _collect_portability_tables(
+    user_id: str,
+    start_date: Optional[str],
+    end_date: Optional[str],
+) -> Dict[str, List[Dict[str, Any]]]:
+    """Fetch every portability table in one pass."""
+    db = get_supabase_db()
+    out: Dict[str, List[Dict[str, Any]]] = {}
+    for spec in _PORTABILITY_TABLES:
+        rows = _fetch_portability_table(
+            db,
+            user_id,
+            table=spec["name"],
+            date_col=spec["date_col"],
+            start_date=start_date,
+            end_date=end_date,
+            limit=spec["limit"],
+        )
+        out[spec["name"]] = rows
+        logger.info(f"  ✓ {spec['name']}: {len(rows)} rows")
+    return out
+
+
+def _rows_to_csv(rows: List[Dict[str, Any]]) -> str:
+    """Serialize a list of dicts to CSV. Handles variable-width rows by
+    collecting the union of all keys so no column is dropped.
+    Dict/list values are JSON-encoded so the export round-trips cleanly.
+    """
+    if not rows:
+        return ""
+    all_keys: List[str] = []
+    seen = set()
+    for row in rows:
+        for k in row.keys():
+            if k not in seen:
+                seen.add(k)
+                all_keys.append(k)
+    buf = io.StringIO()
+    writer = csv.DictWriter(buf, fieldnames=all_keys)
+    writer.writeheader()
+    for row in rows:
+        safe_row = {}
+        for k in all_keys:
+            v = row.get(k)
+            if isinstance(v, (dict, list)):
+                safe_row[k] = json.dumps(v, default=str)
+            else:
+                safe_row[k] = v
+        writer.writerow(safe_row)
+    return buf.getvalue()
 
 
 def export_user_data(
@@ -140,10 +260,20 @@ def export_user_data(
         zip_file.writestr("workout_logs.csv", logs_csv)
         export_counts["workout_logs"] = len(results["workout_logs"])
 
-        # 5. Performance logs (exercise sets)
+        # 5. Performance logs (exercise sets) — FitWiz-native schema
         sets_csv = _export_exercise_sets(results["performance_logs"])
         zip_file.writestr("exercise_sets.csv", sets_csv)
         export_counts["exercise_sets"] = len(results["performance_logs"])
+
+        # 5b. Strong-compatible CSV — same data, Hevy-importable schema.
+        # Shipped alongside (not instead of) the native format so users can
+        # pick the tool chain that fits: FitWiz import for round-trip,
+        # workouts_strong.csv for migrating to Hevy / community parsers.
+        strong_csv = _export_workouts_strong_format(
+            results["workouts"], results["performance_logs"]
+        )
+        zip_file.writestr("workouts_strong.csv", strong_csv)
+        export_counts["workouts_strong"] = len(results["performance_logs"])
 
         # 6. Strength records
         strength_csv = _export_strength_records(results["strength_records"])
@@ -160,9 +290,26 @@ def export_user_data(
         zip_file.writestr("streaks.csv", streaks_csv)
         export_counts["streaks"] = len(results["streaks"])
 
-        # 9. Metadata file (for import validation)
+        # 9. Everything else required for GDPR Art. 20 completeness.
+        # Each table is dumped as SELECT * -> CSV so we never silently
+        # lose a field that a later migration added.
+        logger.info("📊 Fetching portability tables (chat, food, photos, etc.)...")
+        extra = _collect_portability_tables(user_id, start_date, end_date)
+        for table_name, rows in extra.items():
+            zip_file.writestr(f"{table_name}.csv", _rows_to_csv(rows))
+            export_counts[table_name] = len(rows)
+
+        # 10. Metadata file (for import validation)
         metadata_csv = _export_metadata(user_id, export_counts, start_date, end_date)
         zip_file.writestr("_metadata.csv", metadata_csv)
+
+        # 11. README clarifying what each file contains. Helpful for users
+        # who open the archive outside the app — GDPR recommends exports
+        # be "structured, commonly used and machine-readable" *and* legible.
+        zip_file.writestr(
+            "README.txt",
+            _build_export_readme(export_counts, start_date, end_date),
+        )
 
     logger.info(f"✅ Data export complete for user {user_id} in {time.time() - total_start:.2f}s: {export_counts}")
 
@@ -227,6 +374,10 @@ def export_user_data_json(
             except Exception:
                 user[field] = []
 
+    # Fetch the additional portability tables (chat, food, photos, etc.)
+    # so the JSON export satisfies GDPR Art. 20 in full.
+    extra = _collect_portability_tables(user_id, start_date, end_date)
+
     export = {
         "profile": user,
         "body_metrics": results["metrics"],
@@ -236,6 +387,24 @@ def export_user_data_json(
         "strength_records": results["strength_records"],
         "achievements": results["achievements"],
         "streaks": results["streaks"],
+        # Full-fidelity portability data. Tables that don't exist in this
+        # environment simply appear as empty lists.
+        "chat_history": extra.get("chat_history", []),
+        "food_logs": extra.get("food_logs", []),
+        "progress_photos": extra.get("progress_photos", []),
+        "nutrition_summaries": extra.get("nutrition_summaries", []),
+        "user_ai_settings": extra.get("user_ai_settings", []),
+        "injuries": extra.get("injuries", []),
+        "habits": extra.get("habits", []),
+        "habit_completions": extra.get("habit_completions", []),
+        "personal_goals": extra.get("personal_goals", []),
+        "user_measurements": extra.get("user_measurements", []),
+        "hormonal_logs": extra.get("hormonal_logs", []),
+        "kegel_logs": extra.get("kegel_logs", []),
+        "cardio_logs": extra.get("cardio_logs", []),
+        "custom_exercises": extra.get("custom_exercises", []),
+        "water_intake": extra.get("water_intake", []),
+        "mood_logs": extra.get("mood_logs", []),
         "metadata": {
             "export_version": EXPORT_VERSION,
             "exported_at": datetime.utcnow().isoformat() + "Z",
@@ -243,6 +412,11 @@ def export_user_data_json(
             "original_user_id": user_id,
             "filter_start_date": start_date,
             "filter_end_date": end_date,
+            "coverage_note": (
+                "This export includes every table containing your personal "
+                "data as required by GDPR Art. 20. Tables not applicable "
+                "to your account appear as empty lists."
+            ),
         },
     }
 
@@ -265,6 +439,9 @@ def export_user_data_excel(
 
     user, results = _query_all_data(user_id, start_date, end_date)
 
+    # Add the full portability coverage so Excel matches JSON/CSV.
+    extra = _collect_portability_tables(user_id, start_date, end_date)
+
     output = io.BytesIO()
     with pd.ExcelWriter(output, engine="openpyxl") as writer:
         # Profile
@@ -280,6 +457,11 @@ def export_user_data_excel(
             "achievements": results["achievements"],
             "streaks": results["streaks"],
         }
+        # Merge in portability tables. Excel sheet names have a 31-char
+        # limit and can't contain []:*?/\ — truncate defensively.
+        for name, rows in extra.items():
+            safe_name = name.replace("/", "_")[:31]
+            sheet_map[safe_name] = rows
 
         for sheet_name, data in sheet_map.items():
             df = pd.DataFrame(data) if data else pd.DataFrame()
@@ -305,6 +487,8 @@ def export_user_data_parquet(
 
     user, results = _query_all_data(user_id, start_date, end_date)
 
+    extra = _collect_portability_tables(user_id, start_date, end_date)
+
     zip_buffer = io.BytesIO()
     with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zf:
         # Profile
@@ -323,6 +507,7 @@ def export_user_data_parquet(
             "achievements": results["achievements"],
             "streaks": results["streaks"],
         }
+        file_map.update(extra)
 
         for name, data in file_map.items():
             df = pd.DataFrame(data) if data else pd.DataFrame()
@@ -602,6 +787,89 @@ def _export_exercise_sets(performance_logs: List[Dict[str, Any]]) -> str:
     return output.getvalue()
 
 
+def _export_workouts_strong_format(
+    workouts: List[Dict[str, Any]],
+    performance_logs: List[Dict[str, Any]],
+) -> str:
+    """Export workouts + sets in the Strong app's exact CSV schema.
+
+    Why separate from `_export_exercise_sets` + `_export_workouts`: Strong's
+    CSV is the de-facto industry standard that tooling and competitor
+    importers (Hevy, community parsers on GitHub) already understand. Users
+    migrating between apps want *this exact layout*, not a FitWiz-native
+    one — even if ours captures more fields. The plain `exercise_sets.csv`
+    still ships for users who want FitWiz's richer schema.
+
+    Columns (ORDER MATTERS — Hevy's importer validates positionally on some
+    paths): Date, Workout Name, Duration, Exercise Name, Set Order, Weight,
+    Reps, Distance, Seconds, Notes, Workout No.
+
+    Source: https://help.hevyapp.com/hc/en-us/articles/38001424401943
+    """
+    output = io.StringIO()
+    writer = csv.writer(output)
+
+    writer.writerow([
+        "Date", "Workout Name", "Duration", "Exercise Name", "Set Order",
+        "Weight", "Reps", "Distance", "Seconds", "Notes", "Workout No",
+    ])
+
+    # Build a workout lookup by id so we can decorate each set row with its
+    # parent workout's Date/Name/Duration. `workouts` rows come in arbitrary
+    # order; avoid an O(n²) scan per set by indexing once.
+    wk_by_id: Dict[str, Dict[str, Any]] = {}
+    for w in workouts:
+        wid = str(w.get("id") or "")
+        if wid:
+            wk_by_id[wid] = w
+
+    # Assign a per-user-sequential "Workout No" matching Strong's behavior —
+    # sorted by workout date ascending, numbered from 1. Groups share a number
+    # when they're part of the same workout.
+    ordered_workouts = sorted(
+        wk_by_id.values(),
+        key=lambda w: (w.get("created_at") or w.get("date") or ""),
+    )
+    workout_no_by_id = {
+        str(w["id"]): idx + 1 for idx, w in enumerate(ordered_workouts) if w.get("id")
+    }
+
+    for log in performance_logs:
+        wid = str(log.get("workout_log_id") or log.get("workout_id") or "")
+        w = wk_by_id.get(wid, {})
+
+        # Strong uses "YYYY-MM-DD HH:MM:SS" for date. Fall back through the
+        # most-to-least authoritative source; performance_logs uses
+        # `recorded_at` (not logged_at) in this schema.
+        date_val = (
+            w.get("created_at")
+            or w.get("completed_at")
+            or w.get("date")
+            or log.get("recorded_at")
+            or log.get("logged_at")
+            or ""
+        )
+
+        # Duration in Strong = total workout minutes as an integer string.
+        duration_minutes = w.get("duration_minutes") or w.get("total_time_minutes") or ""
+
+        writer.writerow([
+            date_val,
+            w.get("name") or w.get("workout_name") or "",
+            duration_minutes,
+            log.get("exercise_name", ""),
+            log.get("set_number", ""),
+            log.get("weight_kg", ""),          # Strong stores user's chosen unit; we export kg
+            log.get("reps_completed", ""),
+            log.get("distance_m") or "",       # Strong's distance column (meters)
+            log.get("duration_seconds") or "", # Strong's seconds column (for timed)
+            log.get("notes", ""),
+            workout_no_by_id.get(wid, ""),
+        ])
+
+    return output.getvalue()
+
+
 def _export_strength_records(records: List[Dict[str, Any]]) -> str:
     """Export strength records to CSV string."""
     output = io.StringIO()
@@ -678,6 +946,66 @@ def _export_streaks(streaks: List[Dict[str, Any]]) -> str:
         ])
 
     return output.getvalue()
+
+
+def _build_export_readme(
+    counts: Dict[str, int],
+    start_date: Optional[str],
+    end_date: Optional[str],
+) -> str:
+    """Plain-text companion document explaining the archive contents.
+
+    GDPR Art. 20 calls for a "structured, commonly used and machine-readable
+    format" but users who open the ZIP directly should be able to understand
+    it without running code. This README is that bridge.
+    """
+    lines: List[str] = []
+    lines.append("FitWiz — Data Export")
+    lines.append("=" * 68)
+    lines.append(f"Generated:   {datetime.utcnow().isoformat()}Z")
+    lines.append(f"Version:     {EXPORT_VERSION}")
+    if start_date or end_date:
+        lines.append(f"Date range:  {start_date or 'beginning'} → {end_date or 'today'}")
+    lines.append("")
+    lines.append("This archive contains every personal record FitWiz holds")
+    lines.append("about your account, as required by GDPR Art. 20 (the right")
+    lines.append("to data portability) and CCPA/CPRA equivalents.")
+    lines.append("")
+    lines.append("Files:")
+    human_descriptions = {
+        "profile.csv": "Your account profile (name, email, fitness goals, equipment).",
+        "body_metrics.csv": "Weight, waist, body-fat %, HR, blood pressure history.",
+        "workouts.csv": "Scheduled and completed workouts (structure + exercises).",
+        "workout_logs.csv": "Completed workout sessions (duration, exit reason).",
+        "exercise_sets.csv": "Every set you have logged (weight, reps, RPE).",
+        "strength_records.csv": "Recorded personal records per exercise.",
+        "achievements.csv": "Trophies and milestones earned.",
+        "streaks.csv": "Current and longest streaks per tracked category.",
+        "chat_history.csv": "Every message you exchanged with the coach.",
+        "food_logs.csv": "Every food entry you logged (with macros + source).",
+        "progress_photos.csv": "Progress photo URLs, captions, and metadata.",
+        "nutrition_summaries.csv": "Daily calorie/macro roll-ups.",
+        "user_ai_settings.csv": "Your coaching preferences and consent timestamps.",
+        "injuries.csv": "Reported injuries and recovery notes.",
+        "habits.csv": "Custom habits you are tracking.",
+        "habit_completions.csv": "Individual habit check-ins.",
+        "personal_goals.csv": "Goals you have set (weight, strength, etc.).",
+        "user_measurements.csv": "Body measurements (neck, waist, hip, etc.).",
+        "hormonal_logs.csv": "Menstrual / hormonal cycle entries.",
+        "kegel_logs.csv": "Kegel exercise logs.",
+        "cardio_logs.csv": "Cardio sessions logged outside workouts.",
+        "custom_exercises.csv": "Exercises you added yourself.",
+        "water_intake.csv": "Hydration entries.",
+        "mood_logs.csv": "Mood / energy / stress check-ins.",
+        "_metadata.csv": "Version and per-table row counts for re-import.",
+    }
+    for fname, desc in human_descriptions.items():
+        key = fname.replace(".csv", "")
+        n = counts.get(key, 0)
+        lines.append(f"  - {fname:<28} {desc}  ({n} rows)")
+    lines.append("")
+    lines.append("Questions? Email privacy@fitwiz.app.")
+    return "\n".join(lines)
 
 
 def _export_metadata(

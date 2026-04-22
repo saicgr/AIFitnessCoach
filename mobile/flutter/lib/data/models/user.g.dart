@@ -43,6 +43,8 @@ User _$UserFromJson(Map<String, dynamic> json) => User(
   inVacationMode: json['in_vacation_mode'] as bool?,
   vacationStartDate: json['vacation_start_date'] as String?,
   vacationEndDate: json['vacation_end_date'] as String?,
+  workoutUiMode: json['workout_ui_mode'] as String?,
+  workoutUiModeUserExplicit: json['workout_ui_mode_user_explicit'] as bool?,
 );
 
 Map<String, dynamic> _$UserToJson(User instance) => <String, dynamic>{
@@ -81,6 +83,8 @@ Map<String, dynamic> _$UserToJson(User instance) => <String, dynamic>{
   'in_vacation_mode': instance.inVacationMode,
   'vacation_start_date': instance.vacationStartDate,
   'vacation_end_date': instance.vacationEndDate,
+  'workout_ui_mode': instance.workoutUiMode,
+  'workout_ui_mode_user_explicit': instance.workoutUiModeUserExplicit,
 };
 
 GoogleAuthRequest _$GoogleAuthRequestFromJson(Map<String, dynamic> json) =>

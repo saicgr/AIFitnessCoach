@@ -221,7 +221,7 @@
 
     <div class="container">
         <div class="effective-date">
-            <strong>Effective Date:</strong> February 1, 2026 &nbsp;|&nbsp; <strong>Last Updated:</strong> February 7, 2026
+            <strong>Effective Date:</strong> February 1, 2026 &nbsp;|&nbsp; <strong>Last Updated:</strong> April 21, 2026
         </div>
 
         <p>Welcome to FitWiz ("we," "our," or "us"). FitWiz is an AI-powered fitness coaching application that provides personalized workout plans, nutrition guidance, and health tracking. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our mobile application and related services (collectively, the "Service").</p>
@@ -376,14 +376,16 @@
         <!-- Section 3 -->
         <h2 id="ai-services">3. AI-Generated Content and Services</h2>
         <div class="highlight-box">
-            <p><strong>Important:</strong> FitWiz uses Google Gemini artificial intelligence to generate workout plans, nutrition advice, coaching responses, and exercise recommendations. You should be aware of the following:</p>
+            <p><strong>Important:</strong> FitWiz uses Google Gemini (via Google Cloud Vertex AI) to generate workout plans, nutrition advice, coaching responses, and exercise recommendations. You should be aware of the following:</p>
         </div>
         <ul>
-            <li><strong>AI Processing:</strong> Your fitness profile, health data, workout history, and chat messages are sent to Google Gemini AI to generate personalized responses. This data is transmitted securely to Google's servers for processing.</li>
+            <li><strong>What We Send:</strong> Your fitness profile, health data, workout history, chat messages, food photos, and exercise form videos are transmitted securely to our backend and forwarded to Google Cloud Vertex AI for processing.</li>
+            <li><strong>Zero Data Retention:</strong> Production AI traffic is routed through Google Cloud Vertex AI in zero-retention (ZDR) mode. Under this configuration, Google does not retain your prompts or responses beyond the request, and does not use your content to train or improve models. Our backend refuses to initialize in production without Vertex AI so the Developer API (which does not provide equivalent guarantees) is never used for user data.</li>
             <li><strong>Not Medical Advice:</strong> All AI-generated content is for informational and educational purposes only. It does not constitute medical advice, diagnosis, or treatment. Always consult a qualified healthcare professional before starting any exercise or nutrition program.</li>
             <li><strong>Content Accuracy:</strong> While we strive for accuracy, AI-generated workout and nutrition content may contain errors. We recommend verifying exercise form with qualified trainers and consulting healthcare providers for health-related decisions.</li>
             <li><strong>RAG System:</strong> We use a retrieval-augmented generation (RAG) system with an exercise and workout database to improve the relevance and accuracy of AI recommendations. Your queries are matched against our curated exercise database to provide better suggestions.</li>
             <li><strong>Multi-Agent System:</strong> Our AI coaching uses specialized agents for different domains (workout planning, nutrition, injury prevention, hydration) to provide comprehensive and contextual advice.</li>
+            <li><strong>Your Controls:</strong> You can disable personalization at any time under Settings &rarr; Privacy &amp; Data. When disabled, our backend refuses to forward your chats, photos, or videos to the Vertex AI endpoint. You can also turn off &ldquo;Save chat history&rdquo; to stop transcripts from being stored in our database.</li>
         </ul>
 
         <!-- Section 4 -->
@@ -414,6 +416,15 @@
             <p><strong>Health Connect/HealthKit Data Policy:</strong> Health data accessed through Health Connect or HealthKit is synced to our secure cloud database (Supabase) to enable cross-device access, AI-powered coaching, and historical trend tracking. Data is encrypted in transit (TLS) and at rest. This data is never sold to third parties, used for advertising, or shared outside the services necessary to provide app functionality. You can revoke Health Connect or HealthKit permissions at any time through your device settings.</p>
         </div>
 
+        <h3>4.1 Special Category (Art. 9) Health Data &mdash; Explicit Consent</h3>
+        <p>Weight, heart rate, sleep, menstrual cycle, hormonal, and other physiological measurements are <strong>special category data</strong> under GDPR Art. 9 and treated as health information under the California Confidentiality of Medical Information Act (CMIA). FitWiz processes this data only after you provide <strong>separate, explicit consent</strong> captured during onboarding and re-confirmed any time you enable Health Connect / HealthKit sync. That consent:</p>
+        <ul>
+            <li>Is granular &mdash; it is not bundled with acceptance of the Terms of Service;</li>
+            <li>Is recorded with a timestamp in your <code>user_ai_settings</code> profile so we can honor access and audit requests;</li>
+            <li>Can be withdrawn at any time from Settings &rarr; Privacy &amp; Data, which will immediately stop health-data ingestion and remove cached values on next sync.</li>
+        </ul>
+        <p><strong>HIPAA note for U.S. users:</strong> FitWiz is a consumer wellness application, not a HIPAA-covered entity or business associate. Health information you submit is protected by this policy and the CMIA but is not subject to HIPAA. Do not submit information from a HIPAA-covered relationship (e.g. uploading a provider&rsquo;s medical record) into FitWiz.</p>
+
         <!-- Section 5 -->
         <h2 id="third-party">5. Third-Party Services</h2>
         <p>FitWiz uses the following third-party services to deliver its functionality:</p>
@@ -430,55 +441,99 @@
             <tbody>
                 <tr>
                     <td>Supabase</td>
-                    <td>Supabase Inc.</td>
+                    <td>Supabase Inc. (USA)</td>
                     <td>Authentication, database, and user data storage</td>
                     <td>Account info, fitness data, workout history, chat messages</td>
                 </tr>
                 <tr>
-                    <td>Google Gemini AI</td>
-                    <td>Google LLC</td>
-                    <td>AI-powered workout generation, coaching, and nutrition advice</td>
-                    <td>Fitness profile, health data, chat messages, workout context</td>
+                    <td>Google Cloud Vertex AI (Gemini)</td>
+                    <td>Google LLC (USA)</td>
+                    <td>AI-powered workout generation, coaching, nutrition advice, food photo analysis, exercise form video analysis</td>
+                    <td>Fitness profile, health data, chat messages, food photos, form videos (transmitted under zero-retention configuration — not used for model training)</td>
+                </tr>
+                <tr>
+                    <td>Render</td>
+                    <td>Render Services Inc. (USA)</td>
+                    <td>Backend API hosting</td>
+                    <td>All request traffic passes through Render infrastructure</td>
                 </tr>
                 <tr>
                     <td>Firebase Cloud Messaging</td>
-                    <td>Google LLC</td>
+                    <td>Google LLC (USA)</td>
                     <td>Push notifications</td>
                     <td>Device tokens, notification content</td>
                 </tr>
                 <tr>
+                    <td>Firebase Crashlytics</td>
+                    <td>Google LLC (USA)</td>
+                    <td>Crash and stability reporting for the mobile app</td>
+                    <td>Stack traces, device model, OS version, anonymized user ID</td>
+                </tr>
+                <tr>
+                    <td>Sentry</td>
+                    <td>Functional Software Inc. d/b/a Sentry (USA)</td>
+                    <td>Error monitoring and performance tracing for the backend and mobile app</td>
+                    <td>Error messages, stack traces, request metadata, anonymized user ID</td>
+                </tr>
+                <tr>
+                    <td>PostHog</td>
+                    <td>PostHog Inc. (USA — <code>us.i.posthog.com</code>)</td>
+                    <td>Product analytics: feature usage, funnels, experiment assignment</td>
+                    <td>Anonymized user ID, event names, screen views, device and app metadata (no chat content, no health data)</td>
+                </tr>
+                <tr>
                     <td>RevenueCat</td>
-                    <td>RevenueCat Inc.</td>
+                    <td>RevenueCat Inc. (USA)</td>
                     <td>Subscription and in-app purchase management</td>
                     <td>User ID, purchase history, subscription status</td>
                 </tr>
                 <tr>
-                    <td>ChromaDB</td>
-                    <td>Chroma Inc.</td>
+                    <td>Resend</td>
+                    <td>Resend, Inc. (USA)</td>
+                    <td>Transactional and lifecycle email delivery</td>
+                    <td>Email address, first name, email template variables</td>
+                </tr>
+                <tr>
+                    <td>ChromaDB Cloud</td>
+                    <td>Chroma Inc. (USA)</td>
                     <td>Vector database for exercise and workout search (RAG)</td>
-                    <td>Exercise queries, workout preferences (anonymized)</td>
+                    <td>Exercise queries, workout preferences (de-identified)</td>
+                </tr>
+                <tr>
+                    <td>Amazon Web Services (S3)</td>
+                    <td>Amazon Web Services, Inc. (USA)</td>
+                    <td>Storage of user-uploaded food photos and form videos</td>
+                    <td>Image and video blobs, signed URLs</td>
                 </tr>
                 <tr>
                     <td>Health Connect / HealthKit</td>
-                    <td>Google / Apple</td>
+                    <td>Google LLC / Apple Inc. (USA)</td>
                     <td>Health and fitness data synchronization</td>
                     <td>Health metrics as described in Section 4</td>
                 </tr>
                 <tr>
-                    <td>Google Sign-In</td>
-                    <td>Google LLC</td>
+                    <td>Google Sign-In &amp; Apple Sign-In</td>
+                    <td>Google LLC / Apple Inc. (USA)</td>
                     <td>Social authentication</td>
                     <td>Email, name, profile photo</td>
                 </tr>
             </tbody>
         </table>
 
-        <p>Each third-party service operates under its own privacy policy. We encourage you to review their respective policies:</p>
+        <p>All sub-processors listed above process personal data on our behalf under written data processing agreements. Because several sub-processors are located in the United States, transfers of data from the EEA, UK, or Switzerland rely on the European Commission&rsquo;s Standard Contractual Clauses (2021/914) and, where applicable, the EU-U.S. Data Privacy Framework. You can request a copy of the SCCs we have in place by contacting us at <a href="mailto:privacy@fitwiz.app">privacy@fitwiz.app</a>.</p>
+
+        <p>Each sub-processor operates under its own privacy policy. We encourage you to review their respective policies:</p>
         <ul>
             <li><a href="https://supabase.com/privacy" target="_blank" rel="noopener">Supabase Privacy Policy</a></li>
-            <li><a href="https://policies.google.com/privacy" target="_blank" rel="noopener">Google Privacy Policy</a> (covers Gemini AI, Firebase, Google Sign-In)</li>
+            <li><a href="https://cloud.google.com/vertex-ai/docs/general/data-governance" target="_blank" rel="noopener">Google Cloud Vertex AI Data Governance</a></li>
+            <li><a href="https://policies.google.com/privacy" target="_blank" rel="noopener">Google Privacy Policy</a> (covers Firebase Cloud Messaging, Crashlytics, Google Sign-In)</li>
+            <li><a href="https://render.com/privacy" target="_blank" rel="noopener">Render Privacy Policy</a></li>
+            <li><a href="https://sentry.io/privacy/" target="_blank" rel="noopener">Sentry Privacy Policy</a></li>
+            <li><a href="https://posthog.com/privacy" target="_blank" rel="noopener">PostHog Privacy Policy</a></li>
             <li><a href="https://www.revenuecat.com/privacy" target="_blank" rel="noopener">RevenueCat Privacy Policy</a></li>
+            <li><a href="https://resend.com/legal/privacy-policy" target="_blank" rel="noopener">Resend Privacy Policy</a></li>
             <li><a href="https://www.trychroma.com/privacy" target="_blank" rel="noopener">ChromaDB Privacy Policy</a></li>
+            <li><a href="https://aws.amazon.com/privacy/" target="_blank" rel="noopener">AWS Privacy Notice</a></li>
         </ul>
 
         <!-- Section 6 -->
@@ -498,9 +553,10 @@
         <ul>
             <li><strong>Account Data:</strong> Retained until you delete your account.</li>
             <li><strong>Workout and Fitness Data:</strong> Retained until you delete your account or request deletion of specific data.</li>
-            <li><strong>Chat History:</strong> Retained for up to 12 months to provide continuity in AI coaching sessions, then automatically archived.</li>
+            <li><strong>Chat History:</strong> Retained for up to 12 months to provide continuity in AI coaching sessions. A scheduled job automatically deletes transcripts older than 12 months from the <code>chat_history</code> table. If you turn off &ldquo;Save chat history&rdquo; in settings, new messages are discarded immediately after each reply and never persisted.</li>
             <li><strong>Health Connect / HealthKit Data:</strong> Synced data is processed in real-time and cached locally on your device. Server-side health data is retained only as long as your account is active.</li>
-            <li><strong>Usage Analytics:</strong> Aggregated and anonymized analytics may be retained indefinitely for service improvement.</li>
+            <li><strong>Usage Analytics:</strong> Event-level analytics (PostHog) are retained for 24 months. Aggregated, non-identifying counts may be retained indefinitely for service improvement.</li>
+            <li><strong>Crash &amp; Error Logs:</strong> Sentry and Firebase Crashlytics retain stack traces and request metadata for 90 days.</li>
         </ul>
         <p>When you delete your account, we will delete or anonymize your personal data within 30 days, except where retention is required by law.</p>
 
@@ -527,7 +583,13 @@
             <li><strong>Withdraw Consent:</strong> You can withdraw consent for optional data collection (location, camera, microphone, Health Connect) at any time through your device settings.</li>
             <li><strong>Opt Out of Notifications:</strong> You can disable push notifications through app settings or your device settings.</li>
         </ul>
-        <p>To exercise any of these rights, contact us at <a href="mailto:privacy@fitwiz.app">privacy@fitwiz.app</a>. We will respond to your request within 30 days.</p>
+        <p>To exercise any of these rights, you have two options:</p>
+        <ul>
+            <li><strong>In-app:</strong> Settings &rarr; Privacy &amp; Data &rarr; Export / Delete your data.</li>
+            <li><strong>Out-of-app (no login required):</strong> Visit <a href="https://fitwiz.us/data-request">fitwiz.us/data-request</a>. We will email a verification link to prove email ownership, then deliver your export or confirm deletion. Use this if you cannot sign in.</li>
+            <li><strong>By email:</strong> <a href="mailto:privacy@fitwiz.app">privacy@fitwiz.app</a></li>
+        </ul>
+        <p>We respond within 30 days as required by GDPR Art. 12(3) and CCPA &sect; 1798.130.</p>
 
         <!-- Section 10 -->
         <h2 id="gdpr">10. GDPR Compliance (European Users)</h2>
@@ -553,7 +615,15 @@
         </ul>
 
         <h3>Data Protection Officer</h3>
-        <p>For GDPR-related inquiries, contact our data protection team at <a href="mailto:privacy@fitwiz.app">privacy@fitwiz.app</a>.</p>
+        <p>Our designated Data Protection Officer oversees GDPR compliance and responds to data subject requests. You can reach the DPO directly at <a href="mailto:dpo@fitwiz.app">dpo@fitwiz.app</a> or by postal mail to the address in Section 15. Please mark postal correspondence &ldquo;Attn: Data Protection Officer&rdquo;.</p>
+
+        <h3>EU &amp; UK Representative (GDPR Art. 27 / UK GDPR Art. 27)</h3>
+        <p>Because FitWiz is established outside the European Economic Area and the United Kingdom but offers services to individuals located in those regions, we have appointed a representative to act on our behalf for supervisory authority and data subject communications. Please contact:</p>
+        <ul>
+            <li><strong>EU representative:</strong> FitWiz EU Representative &mdash; <a href="mailto:eu-rep@fitwiz.app">eu-rep@fitwiz.app</a></li>
+            <li><strong>UK representative:</strong> FitWiz UK Representative &mdash; <a href="mailto:uk-rep@fitwiz.app">uk-rep@fitwiz.app</a></li>
+        </ul>
+        <p>If an appointed third-party representative has been engaged (e.g. a firm providing Art. 27 coverage), their name and postal address will be listed here and kept in sync with the filing on our <a href="https://fitwiz.app/legal/representatives" target="_blank" rel="noopener">representatives page</a>.</p>
 
         <!-- Section 11 -->
         <h2 id="ccpa">11. CCPA Compliance (California Residents)</h2>
@@ -612,9 +682,13 @@
         <div class="contact-box">
             <h3>Have Questions About Your Privacy?</h3>
             <p>We are here to help. Reach out to us at any time.</p>
+            <p><strong>Data controller:</strong> FitWiz, Inc. (a Delaware corporation)</p>
+            <p><strong>Registered address:</strong> 2810 N Church St, PMB 91960, Wilmington, DE 19802, United States</p>
             <p><strong>Privacy Inquiries:</strong> <a href="mailto:privacy@fitwiz.app">privacy@fitwiz.app</a></p>
-            <p><strong>General Support:</strong> <a href="mailto:support@fitwiz.us">support@fitwiz.us</a></p>
-            <p style="margin-top: 16px; font-size: 14px; color: var(--text-light);">FitWiz &mdash; AI-Powered Fitness Coaching</p>
+            <p><strong>Data Protection Officer:</strong> <a href="mailto:dpo@fitwiz.app">dpo@fitwiz.app</a></p>
+            <p><strong>EU / UK Art. 27 Representative:</strong> <a href="mailto:eu-rep@fitwiz.app">eu-rep@fitwiz.app</a> &middot; <a href="mailto:uk-rep@fitwiz.app">uk-rep@fitwiz.app</a></p>
+            <p><strong>General Support:</strong> <a href="mailto:support@fitwiz.app">support@fitwiz.app</a></p>
+            <p style="margin-top: 16px; font-size: 14px; color: var(--text-light);">FitWiz &mdash; Personalized Fitness Coaching</p>
         </div>
     </div>
 </body>

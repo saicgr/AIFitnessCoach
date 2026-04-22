@@ -56,6 +56,10 @@ class UserCreate(BaseModel):
     workout_type_preference: Optional[str] = Field(default=None, max_length=20)  # strength, cardio, mixed
     # Weight unit preference - 'kg' or 'lbs'
     weight_unit: Optional[str] = Field(default="kg", max_length=5)
+    # Active-workout UI tier: 'easy' | 'simple' | 'advanced'. NULL = derive from fitness_level on first app open.
+    workout_ui_mode: Optional[str] = Field(default=None, max_length=10)
+    # TRUE once user manually toggled their tier — prevents auto-defaulting from overriding their choice.
+    workout_ui_mode_user_explicit: Optional[bool] = None
 
 
 class NotificationPreferences(BaseModel):
@@ -188,6 +192,10 @@ class UserUpdate(BaseModel):
     in_vacation_mode: Optional[bool] = None
     vacation_start_date: Optional[str] = Field(default=None, max_length=10)
     vacation_end_date: Optional[str] = Field(default=None, max_length=10)
+    # Active-workout UI tier: 'easy' | 'simple' | 'advanced'. NULL = derive from fitness_level.
+    workout_ui_mode: Optional[str] = Field(default=None, max_length=10)
+    # TRUE once user manually toggled — prevents auto-defaulting from overriding.
+    workout_ui_mode_user_explicit: Optional[bool] = None
 
 
 class User(BaseModel):
@@ -250,3 +258,7 @@ class User(BaseModel):
     in_vacation_mode: bool = False
     vacation_start_date: Optional[str] = Field(default=None, max_length=10)
     vacation_end_date: Optional[str] = Field(default=None, max_length=10)
+    # Active-workout UI tier (migration add_workout_ui_mode_and_logging_mode).
+    # 'easy' | 'simple' | 'advanced'. NULL = derive from fitness_level.
+    workout_ui_mode: Optional[str] = Field(default=None, max_length=10)
+    workout_ui_mode_user_explicit: bool = False

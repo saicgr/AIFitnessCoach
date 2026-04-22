@@ -15,9 +15,31 @@ from core.activity_logger import log_user_activity, log_user_error
 from core.timezone_utils import resolve_timezone, get_user_today
 from core.auth import get_current_user
 from core.exceptions import safe_internal_error
+from services.consent_guard import has_health_data_consent
 
 router = APIRouter(prefix="/activity", tags=["Activity"])
 logger = get_logger(__name__)
+
+
+def _require_health_consent(user_id: str) -> None:
+    """Refuse to persist GDPR Art. 9 / special-category health data without
+    the user's explicit opt-in captured in user_ai_settings.health_data_consent.
+
+    This is the server-side complement to the onboarding Art. 9 consent
+    capture. The frontend should never hit this endpoint if consent is
+    off, but a defensive 403 here guarantees a hostile or stale client
+    cannot push HealthKit data into our database without opt-in.
+    """
+    if not has_health_data_consent(user_id):
+        raise HTTPException(
+            status_code=403,
+            detail=(
+                "Health data sync is disabled for this account. Enable "
+                "'Health data processing' in Settings → Privacy & Data to "
+                "allow FitWiz to store measurements from Health Connect "
+                "or HealthKit."
+            ),
+        )
 
 
 class DailyActivityInput(BaseModel):
@@ -132,6 +154,7 @@ async def sync_daily_activity(input: DailyActivityInput, current_user: dict = De
     """
     if str(current_user["id"]) != str(input.user_id):
         raise HTTPException(status_code=403, detail="Access denied")
+    _require_health_consent(str(input.user_id))
     logger.info(f"Syncing activity for user {input.user_id} on {input.activity_date}")
 
     db = get_supabase_db()
@@ -319,6 +342,7 @@ async def sync_batch_activity(activities: List[DailyActivityInput], current_user
     user_id = activities[0].user_id
     if str(current_user["id"]) != str(user_id):
         raise HTTPException(status_code=403, detail="Access denied")
+    _require_health_consent(str(user_id))
     logger.info(f"Batch syncing {len(activities)} activity records for user {user_id}")
 
     db = get_supabase_db()

@@ -148,6 +148,14 @@ class FoodDatabaseLookupService(FoodDatabaseLookupServicePart2):
             # catches most of these, but a slow typist can still trigger them.
             skip_fuzzy = len(q) < 3 or (' ' not in q and len(q) < 5)
 
+            # Short-circuit Phase 1 (exact) on prefixes that can never match an
+            # exact food name — "chci", "chcij" and the like burn a pooled DB
+            # connection, exhaust the semaphore, then time out under load and
+            # leak asyncpg `Connection._cancel` coroutines when wait_for
+            # cancels the task mid-session. An exact match needs at least 4
+            # chars to plausibly equal a real food_name_normalized row.
+            skip_exact = len(q) < 4 or (' ' not in q and len(q) < 5)
+
             # --- Phase 1: Exact match (BTREE + GIN array indexes, ~30ms) ---
             # Rewritten as UNION ALL of two indexable branches instead of a single
             # WHERE with `OR`. Postgres refuses to combine a btree hit on
@@ -157,7 +165,7 @@ class FoodDatabaseLookupService(FoodDatabaseLookupServicePart2):
             # to end. Budget 500ms — leaves 2.5s for Phases 1.5/2/3.
             try:
                 remaining = deadline - time.monotonic()
-                if remaining > 0.1:
+                if not skip_exact and remaining > 0.1:
                     p1_budget = min(0.5, remaining)
 
                     async def _phase1():

@@ -9,6 +9,8 @@ import '../../../data/providers/habits_provider.dart';
 import '../../../data/repositories/auth_repository.dart';
 import '../../../data/repositories/habit_repository.dart';
 import '../../../data/services/haptic_service.dart';
+import '../../nutrition/log_meal_sheet.dart';
+import 'components/quick_actions_row.dart';
 import 'habit_card.dart';
 
 /// Provider to fetch custom habits for home section
@@ -154,31 +156,47 @@ class HabitsSection extends ConsumerWidget {
                     habit: habit,
                     size: 140,
                     onTap: () {
+                      // Use context.go (not push) so we switch branches in
+                      // StatefulShellRoute — otherwise the floating nav stays
+                      // highlighted on Home while the user is now on /nutrition.
                       if (habit.route != null) {
-                        context.push(habit.route!);
+                        context.go(habit.route!);
                       } else {
-                        // Custom habit - navigate to habits screen
-                        context.push('/habits');
+                        context.go('/habits');
                       }
                     },
                     onLog: () {
+                      // Log button should open the LOGGING surface for that
+                      // habit, not just navigate. Food Log → log-meal sheet;
+                      // Water → water quick-add sheet (matches the Home
+                      // water tile's long-press UX). Workouts + custom →
+                      // navigate (same as card tap).
+                      if (habit.id == 'auto_food_log') {
+                        context.go('/nutrition');
+                        Future.microtask(() {
+                          if (context.mounted) showLogMealSheet(context, ref);
+                        });
+                        return;
+                      }
+                      if (habit.id == 'auto_water') {
+                        showWaterQuickAddSheet(context, ref);
+                        return;
+                      }
                       if (habit.route != null) {
-                        // Auto-tracked habit — navigate to log screen
-                        context.push(habit.route!);
-                      } else {
-                        // Custom habit — toggle via API
-                        final authState = ref.read(authStateProvider);
-                        final userId = authState.user?.id;
-                        if (userId == null) return;
-                        // Find matching custom habit to get its ID
-                        final customHabits = customHabitsAsync.valueOrNull ?? [];
-                        final match = customHabits.where((h) => h.name == habit.name).firstOrNull;
-                        if (match != null) {
-                          final repository = ref.read(habitRepositoryProvider);
-                          repository.toggleTodayHabit(userId, match.id, !habit.todayCompleted).then((_) {
-                            ref.invalidate(customHabitsHomeProvider);
-                          });
-                        }
+                        context.go(habit.route!);
+                        return;
+                      }
+                      // Custom habit — toggle via API
+                      final authState = ref.read(authStateProvider);
+                      final userId = authState.user?.id;
+                      if (userId == null) return;
+                      final customHabits = customHabitsAsync.valueOrNull ?? [];
+                      final match = customHabits.where((h) => h.name == habit.name).firstOrNull;
+                      if (match != null) {
+                        final repository = ref.read(habitRepositoryProvider);
+                        repository.toggleTodayHabit(userId, match.id, !habit.todayCompleted).then((_) {
+                          ref.invalidate(customHabitsHomeProvider);
+                        });
                       }
                     },
                   ),

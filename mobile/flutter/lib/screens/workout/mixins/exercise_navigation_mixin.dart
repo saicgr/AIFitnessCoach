@@ -420,6 +420,9 @@ mixin ExerciseNavigationMixin<T extends StatefulWidget> on State<T> {
       case 'more':
         showMoreMenu(currentExercise);
         break;
+      case 'adjust_today':
+        showQuickAdjustSheetForCurrentWorkout();
+        break;
     }
   }
 
@@ -435,6 +438,10 @@ mixin ExerciseNavigationMixin<T extends StatefulWidget> on State<T> {
   void showEquipmentProfileSheetImpl();
   void showProgressionSheetImpl();
   void showBarTypeSelectorImpl(WorkoutExercise exercise);
+  /// Open the quick-adjust sheet and apply the returned mutation to the
+  /// in-memory exercise list. Implementation lives in active_workout_screen
+  /// since it needs access to the setState + exercises list + workout id.
+  void showQuickAdjustSheetForCurrentWorkout();
 
   /// Confirm and delete an exercise from the workout
   void confirmDeleteExercise(int index) {

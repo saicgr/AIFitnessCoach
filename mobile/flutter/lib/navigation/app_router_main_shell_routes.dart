@@ -43,6 +43,14 @@ List<RouteBase> _mainShellRoutes() => [
                 final autoOpenCamera = state.uri.queryParameters['camera'] == 'true';
                 final autoOpenBarcode = state.uri.queryParameters['barcode'] == 'true';
                 final openCheckinLogId = state.uri.queryParameters['openCheckin'];
+                // Hydration-reminder deep-link carries ?fuelSection=water so we
+                // land on the Water pill inside the Fuel tab, not the default
+                // Nutrients view. Only 'water' | 'nutrients' are meaningful.
+                final rawFuelSection = state.uri.queryParameters['fuelSection'];
+                final initialFuelSection =
+                    (rawFuelSection == 'water' || rawFuelSection == 'nutrients')
+                        ? rawFuelSection
+                        : null;
                 return NoTransitionPage(
                   key: state.pageKey,
                   child: NutritionScreen(
@@ -51,6 +59,7 @@ List<RouteBase> _mainShellRoutes() => [
                     autoOpenCamera: autoOpenCamera,
                     autoOpenBarcode: autoOpenBarcode,
                     openCheckinLogId: openCheckinLogId,
+                    initialFuelSection: initialFuelSection,
                   ),
                 );
               },
@@ -77,14 +86,29 @@ List<RouteBase> _mainShellRoutes() => [
               ),
             ),
           ]),
-          // Branch 4: Profile
+          // Branch 4: You (formerly Profile) — hub screen wrapping the
+          // existing ProfileScreen as one of three top-tabs plus an
+          // Overview aggregation and a Stats & Rewards deep-link grid.
+          // Old `/profile` URL still works to preserve deep links — they
+          // land on the Profile tab inside the You hub.
           StatefulShellBranch(routes: [
             GoRoute(
               path: '/profile',
               pageBuilder: (context, state) {
                 final scrollTo = state.uri.queryParameters['scrollTo'];
+                final tabParam = state.uri.queryParameters['tab'];
+                // Route query ?tab=overview|profile|rewards to the right tab.
+                int initialTab = 1; // default to Profile when arriving via /profile
+                if (tabParam == 'overview') {
+                  initialTab = 0;
+                } else if (tabParam == 'rewards') {
+                  initialTab = 2;
+                }
                 return NoTransitionPage(
-                  child: ProfileScreen(scrollTo: scrollTo),
+                  child: YouHubScreen(
+                    initialTabIndex: initialTab,
+                    profileScrollTo: scrollTo,
+                  ),
                 );
               },
             ),

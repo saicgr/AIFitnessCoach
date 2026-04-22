@@ -9,6 +9,7 @@ import '../../core/constants/app_colors.dart';
 import '../../core/services/posthog_service.dart';
 import '../../data/services/health_service.dart';
 import '../../data/services/haptic_service.dart';
+import '../../screens/ai_settings/ai_settings_screen.dart';
 import '../../widgets/glass_back_button.dart';
 
 /// SharedPreferences key for tracking when the user skips health connect
@@ -55,6 +56,15 @@ class _HealthConnectScreenState extends ConsumerState<HealthConnectScreen> {
     });
 
     try {
+      // Capture GDPR Art. 9 explicit consent BEFORE requesting OS
+      // permissions. The backend records a consent timestamp on the
+      // user_ai_settings row so the opt-in is auditable, and all
+      // downstream health-sync endpoints (e.g. POST /activity/sync)
+      // refuse to accept data until this flag is true.
+      await ref
+          .read(aiSettingsProvider.notifier)
+          .updateHealthDataConsent(true);
+
       final connected = await ref.read(healthSyncProvider.notifier).connect();
 
       if (!mounted) return;

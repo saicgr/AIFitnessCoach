@@ -847,7 +847,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
           child: SafeArea(
             child: CustomScrollView(
             slivers: [
-              // Header: Always minimal
+              // Header: Always minimal (level ring now pairs streak count inline)
               const SliverToBoxAdapter(
                 child: MinimalHeader(),
               ),

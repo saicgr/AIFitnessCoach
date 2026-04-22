@@ -920,6 +920,46 @@ async def analyze_food_from_image_streaming(
 
 
 
+def _flatten_menu_items(analysis_result: dict, actual_mode: str) -> List[dict]:
+    """Normalize the Gemini menu/buffet response into a flat list of dish
+    dicts ready to ship to the MenuAnalysisSheet. Includes per-dish
+    inflammation_score + coach_tip so the sheet can surface them inline."""
+    flat_items: List[dict] = []
+    if actual_mode == "menu":
+        for section in analysis_result.get("sections", []) or []:
+            section_name = section.get("section_name") or "Menu"
+            for dish in section.get("dishes", []) or []:
+                flat_items.append({
+                    "name": dish.get("name", "Unknown"),
+                    "section": section_name,
+                    "calories": dish.get("calories", 0),
+                    "protein_g": dish.get("protein_g", 0),
+                    "carbs_g": dish.get("carbs_g", 0),
+                    "fat_g": dish.get("fat_g", 0),
+                    "rating": dish.get("rating"),
+                    "rating_reason": dish.get("rating_reason"),
+                    "amount": dish.get("serving_description"),
+                    "price": dish.get("price"),
+                    "inflammation_score": dish.get("inflammation_score"),
+                    "coach_tip": dish.get("coach_tip"),
+                })
+    else:
+        for dish in analysis_result.get("dishes", []) or []:
+            flat_items.append({
+                "name": dish.get("name", "Unknown"),
+                "calories": dish.get("calories", 0),
+                "protein_g": dish.get("protein_g", 0),
+                "carbs_g": dish.get("carbs_g", 0),
+                "fat_g": dish.get("fat_g", 0),
+                "rating": dish.get("rating"),
+                "rating_reason": dish.get("rating_reason"),
+                "amount": dish.get("serving_description"),
+                "inflammation_score": dish.get("inflammation_score"),
+                "coach_tip": dish.get("coach_tip"),
+            })
+    return flat_items
+
+
 # ─────────────────────────────────────────────────────────────────────────────
 # Multi-image log: accepts 1..N photos and an analysis_mode ("auto", "plate",
 # "menu", or "buffet"). Plate mode auto-logs a single food_log row and returns
@@ -927,6 +967,12 @@ async def analyze_food_from_image_streaming(
 # they return structured dish/section data so the client can render the
 # MenuAnalysisSheet checklist and the user ticks off only the items they eat.
 # Those selected items are then persisted via /log-selected-items.
+#
+# Menu + Buffet modes use PER-IMAGE streaming (one Gemini call per page) so
+# the client can render page 1 results before later pages finish. Each page
+# gets its own full token budget, which dramatically improves dish recall on
+# large multi-page menus. SSE events emitted: progress | page | page_error |
+# done | error.
 # ─────────────────────────────────────────────────────────────────────────────
 
 @router.post("/log-multi-image-stream")
@@ -938,6 +984,15 @@ async def log_food_from_multi_image_streaming(
     analysis_mode: str = Form("auto"),
     user_message: Optional[str] = Form(None),
     input_type: Optional[str] = Form(None),
+    # When true, plate mode RETURNS the analysis without writing to food_logs.
+    # The client is expected to render a review screen and POST to /food-logs
+    # (via logFoodDirect) only after the user confirms. Camera single-shot /
+    # text / voice paths already work this way; this flag lets multi-image
+    # gallery + camera follow the same human-consent flow instead of the
+    # legacy "auto-logged, then surprise snackbar" behavior users complained
+    # about. Default False preserves backwards compatibility for any caller
+    # that hasn't updated yet.
+    confirm_before_log: bool = Form(False),
     images: List[UploadFile] = File(...),
     current_user: dict = Depends(get_current_user),
 ):
@@ -1025,6 +1080,73 @@ async def log_food_from_multi_image_streaming(
                             "fat_consumed_g": daily_summary.get("total_fat_g", 0),
                         }
 
+            # Menu + buffet modes use per-image streaming for dramatically
+            # better perceived performance on multi-page scans: the first
+            # page's dishes reach the client in ~5-8s instead of waiting
+            # ~15-30s for all pages to finish as one batch. It also gives
+            # each page its own full token budget, boosting dish recall on
+            # large menus.
+            if analysis_mode in ("menu", "buffet"):
+                actual_mode = analysis_mode
+                logger.info(
+                    f"[STREAM multi] per-image streaming mode={actual_mode} "
+                    f"user={user_id} images={n}"
+                )
+                yield send_progress(3, 4, "Scanning pages...", f"{n} image{'s' if n != 1 else ''}")
+
+                all_items: List[dict] = []
+                successful_pages = 0
+                for idx, (s3_key, mime) in enumerate(zip(storage_keys, mime_types)):
+                    page_num = idx + 1
+                    try:
+                        per_image_result = await asyncio.wait_for(
+                            vision.analyze_food_from_s3_keys(
+                                s3_keys=[s3_key], mime_types=[mime],
+                                user_context=user_message, analysis_mode=actual_mode,
+                                nutrition_context=nutrition_context,
+                            ),
+                            timeout=60,
+                        )
+                        page_items = _flatten_menu_items(per_image_result, actual_mode)
+                        all_items.extend(page_items)
+                        successful_pages += 1
+                        page_event = {
+                            "type": "page",
+                            "analysis_type": actual_mode,
+                            "page": page_num,
+                            "total_pages": n,
+                            "items": page_items,
+                            "image_url": image_urls[idx],
+                            "storage_key": storage_keys[idx],
+                            "elapsed_ms": elapsed_ms(),
+                        }
+                        yield f"event: page\ndata: {json.dumps(page_event)}\n\n"
+                    except asyncio.TimeoutError:
+                        logger.warning(f"[STREAM multi] page {page_num} timed out")
+                        err_event = {"type": "page_error", "page": page_num,
+                                     "total_pages": n, "error": "timeout"}
+                        yield f"event: page_error\ndata: {json.dumps(err_event)}\n\n"
+                    except Exception as e:
+                        logger.error(f"[STREAM multi] page {page_num} failed: {e}", exc_info=True)
+                        err_event = {"type": "page_error", "page": page_num,
+                                     "total_pages": n, "error": str(e)}
+                        yield f"event: page_error\ndata: {json.dumps(err_event)}\n\n"
+
+                done_event = {
+                    "success": successful_pages > 0,
+                    "analysis_type": actual_mode,
+                    "food_items": all_items,
+                    "successful_pages": successful_pages,
+                    "total_pages": n,
+                    "image_urls": image_urls,
+                    "storage_keys": storage_keys,
+                    "mime_types": mime_types,
+                    "total_time_ms": elapsed_ms(),
+                }
+                yield f"event: done\ndata: {json.dumps(done_event)}\n\n"
+                return
+
+            # Auto + plate: one-shot batch analysis (unchanged).
             analysis_result = await asyncio.wait_for(
                 vision.analyze_food_from_s3_keys(
                     s3_keys=storage_keys, mime_types=mime_types,
@@ -1055,6 +1177,35 @@ async def log_food_from_multi_image_streaming(
                 fiber_g = analysis_result.get("fiber_g", 0.0)
                 health_score = analysis_result.get("health_score")
                 ai_feedback = analysis_result.get("feedback")
+                inflammation_score = analysis_result.get("inflammation_score")
+
+                # Human-consent branch: do NOT persist. Client renders a
+                # review sheet and posts to /food-logs (via logFoodDirect)
+                # once the user confirms. Sub-items can be removed during
+                # review — no more phantom "Sugary Fountain Drink" rows the
+                # user didn't agree to.
+                if confirm_before_log:
+                    yield send_progress(4, 4, "Ready for review...", None)
+                    response_data = {
+                        "success": True,
+                        "analysis_type": "plate",
+                        "is_analysis_only": True,
+                        "food_items": food_items,
+                        "total_calories": total_calories,
+                        "protein_g": protein_g,
+                        "carbs_g": carbs_g,
+                        "fat_g": fat_g,
+                        "fiber_g": fiber_g,
+                        "ai_suggestion": ai_feedback,
+                        "feedback": ai_feedback,
+                        "health_score": health_score,
+                        "inflammation_score": inflammation_score,
+                        "image_urls": image_urls,
+                        "storage_keys": storage_keys,
+                        "total_time_ms": elapsed_ms(),
+                    }
+                    yield f"event: done\ndata: {json.dumps(response_data)}\n\n"
+                    return
 
                 yield send_progress(4, 4, "Saving your meal...", None)
                 stream_logged_at = get_user_now_iso(user_tz)
@@ -1076,42 +1227,17 @@ async def log_food_from_multi_image_streaming(
                     "food_items": food_items, "total_calories": total_calories,
                     "protein_g": protein_g, "carbs_g": carbs_g, "fat_g": fat_g,
                     "fiber_g": fiber_g, "ai_suggestion": ai_feedback,
-                    "health_score": health_score, "image_urls": image_urls,
+                    "health_score": health_score,
+                    "inflammation_score": inflammation_score,
+                    "image_urls": image_urls,
                     "total_time_ms": elapsed_ms(),
                 }
                 yield f"event: done\ndata: {json.dumps(response_data)}\n\n"
                 return
 
+            # Auto-classified as menu/buffet after a batch call — flatten inline.
             yield send_progress(3, 4, "Formatting results...", None)
-
-            flat_items: List[dict] = []
-            if actual_mode == "menu":
-                for section in analysis_result.get("sections", []) or []:
-                    section_name = section.get("section_name") or "Menu"
-                    for dish in section.get("dishes", []) or []:
-                        flat_items.append({
-                            "name": dish.get("name", "Unknown"), "section": section_name,
-                            "calories": dish.get("calories", 0),
-                            "protein_g": dish.get("protein_g", 0),
-                            "carbs_g": dish.get("carbs_g", 0),
-                            "fat_g": dish.get("fat_g", 0),
-                            "rating": dish.get("rating"),
-                            "rating_reason": dish.get("rating_reason"),
-                            "amount": dish.get("serving_description"),
-                            "price": dish.get("price"),
-                        })
-            else:
-                for dish in analysis_result.get("dishes", []) or []:
-                    flat_items.append({
-                        "name": dish.get("name", "Unknown"),
-                        "calories": dish.get("calories", 0),
-                        "protein_g": dish.get("protein_g", 0),
-                        "carbs_g": dish.get("carbs_g", 0),
-                        "fat_g": dish.get("fat_g", 0),
-                        "rating": dish.get("rating"),
-                        "rating_reason": dish.get("rating_reason"),
-                        "amount": dish.get("serving_description"),
-                    })
+            flat_items = _flatten_menu_items(analysis_result, actual_mode)
 
             response_data = {
                 "success": True, "analysis_type": actual_mode,

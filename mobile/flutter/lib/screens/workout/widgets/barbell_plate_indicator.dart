@@ -57,11 +57,45 @@ double getBarWeight(String? equipment, {required bool useKg}) {
   return useKg ? 20.0 : 45.0;
 }
 
+/// Equipment strings that are explicitly non-barbell. When set, we must NOT
+/// fall through to name-based heuristics (otherwise "Bulgarian Split Squats"
+/// with equipment="bodyweight" gets misclassified as a barbell lift).
+const _nonBarbellEquipment = <String>[
+  'bodyweight', 'body weight', 'body-weight',
+  'dumbbell', 'dumbbells',
+  'kettlebell', 'kettlebells',
+  'machine', 'cable', 'cables',
+  'band', 'bands', 'resistance band', 'resistance bands',
+  'medicine ball', 'medicine_ball', 'med ball',
+  'stability ball', 'swiss ball', 'bosu',
+  'weight plate', 'weight_plate', 'plate',
+  'bench', 'box', 'foam roller', 'jump rope',
+  'trx', 'suspension',
+  'sandbag', 'sled', 'rope',
+  'none', 'no equipment',
+];
+
+/// Squat variants that are typically done with dumbbells or bodyweight, NOT
+/// barbell. Used to suppress the `name.contains('squat')` fallback.
+const _nonBarbellSquatVariants = <String>[
+  'goblet', 'dumbbell', 'kettlebell',
+  'bulgarian', 'split squat', 'split-squat',
+  'pistol', 'shrimp', 'cossack', 'sissy',
+  'wall sit', 'wall squat',
+  'bodyweight', 'air squat',
+  'jump squat', 'jumping squat',
+  'banded', 'resistance band',
+];
+
 /// Returns true if the equipment type uses a barbell.
 /// Also checks exercise name as fallback (e.g., "Barbell bench press"
 /// may have equipment=null but name clearly indicates barbell).
+///
+/// Invariant: when `equipment` is an explicit non-barbell value (like
+/// "bodyweight"), we return false without consulting the name heuristic —
+/// otherwise Bulgarian Split Squats / goblet squats get misclassified.
 bool isBarbell(String? equipment, {String? exerciseName}) {
-  final eq = (equipment ?? '').toLowerCase();
+  final eq = (equipment ?? '').trim().toLowerCase();
   if (eq.contains('barbell') ||
       eq.contains('ez bar') ||
       eq.contains('ez curl') ||
@@ -69,13 +103,21 @@ bool isBarbell(String? equipment, {String? exerciseName}) {
       eq.contains('smith')) {
     return true;
   }
-  // Fallback: check exercise name
+  // If equipment is an explicit non-barbell value, trust it — do NOT fall
+  // through to name-based guessing.
+  if (eq.isNotEmpty && _nonBarbellEquipment.any(eq.contains)) {
+    return false;
+  }
+  // Fallback: check exercise name only when equipment is null/empty/unknown.
   if (exerciseName != null) {
     final name = exerciseName.toLowerCase();
     if (name.contains('barbell') ||
         name.contains('bench press') ||
-        name.contains('deadlift') ||
-        name.contains('squat') && !name.contains('goblet') && !name.contains('dumbbell')) {
+        name.contains('deadlift')) {
+      return true;
+    }
+    if (name.contains('squat') &&
+        !_nonBarbellSquatVariants.any(name.contains)) {
       return true;
     }
   }

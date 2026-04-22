@@ -74,13 +74,19 @@ void showChatBottomSheet(BuildContext context, WidgetRef ref) {
   });
 }
 
-/// Shows the chat bottom sheet with no entry animation (for seamless minimize transition)
-void showChatBottomSheetNoAnimation(BuildContext context, WidgetRef ref) {
+/// Shows the chat bottom sheet with no entry animation (for seamless minimize transition).
+///
+/// Takes a [ProviderContainer] instead of a [WidgetRef]. The minimize flow
+/// pops the chat screen first (which disposes its WidgetRef) and then opens
+/// this sheet ~200ms later, so any captured WidgetRef would already be invalid.
+/// The container is owned by the root ProviderScope and stays alive across
+/// the navigation, so we read providers from it directly.
+void showChatBottomSheetWithContainer(
+  BuildContext context,
+  ProviderContainer container,
+) {
   // Hide nav bar while sheet is open
-  ref.read(floatingNavBarVisibleProvider.notifier).state = false;
-
-  // Get the container to pass to the sheet (needed for provider access)
-  final container = ProviderScope.containerOf(context);
+  container.read(floatingNavBarVisibleProvider.notifier).state = false;
 
   showModalBottomSheet(
     context: context,
@@ -104,9 +110,9 @@ void showChatBottomSheetNoAnimation(BuildContext context, WidgetRef ref) {
       ),
     ),
   ).whenComplete(() {
-    ref.read(floatingChatProvider.notifier).collapse();
+    container.read(floatingChatProvider.notifier).collapse();
     // Show nav bar when sheet is closed
-    ref.read(floatingNavBarVisibleProvider.notifier).state = true;
+    container.read(floatingNavBarVisibleProvider.notifier).state = true;
   });
 }
 

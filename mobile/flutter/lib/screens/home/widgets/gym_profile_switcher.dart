@@ -109,41 +109,39 @@ class _GymProfileSwitcherState extends ConsumerState<GymProfileSwitcher> {
     final profilesAsync = ref.watch(gymProfilesProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
+    // Before the first cache read completes, a `data([])` state means
+    // "cache still loading" — not "user has no gyms". Render an
+    // unobtrusive shimmer dot instead of the "Add gym" CTA so we don't
+    // flash a wrong empty state on cold start.
+    final cacheChecked = ref.watch(gymProfilesCacheCheckedProvider);
+
     return profilesAsync.when(
-      loading: () => _buildLoadingState(isDark),
+      loading: () => _buildShimmerDot(isDark),
       error: (error, _) => _buildErrorState(isDark, error),
       data: (profiles) {
         if (profiles.isEmpty) {
-          return _buildEmptyState(context, isDark);
+          return cacheChecked
+              ? _buildEmptyState(context, isDark)
+              : _buildShimmerDot(isDark);
         }
         return _buildProfileStrip(context, profiles, isDark);
       },
     );
   }
 
-  Widget _buildLoadingState(bool isDark) {
-    final color = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        SizedBox(
-          width: 14,
-          height: 14,
-          child: CircularProgressIndicator(
-            strokeWidth: 1.5,
-            color: color,
-          ),
-        ),
-        const SizedBox(width: 8),
-        Text(
-          'Loading gym...',
-          style: TextStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.w500,
-            color: color,
-          ),
-        ),
-      ],
+  /// Minimal shimmer placeholder — same footprint as a normal gym chip,
+  /// no alarming "Loading gym…" text. Used both for the provider loading
+  /// state and the pre-cache-check `data([])` state.
+  Widget _buildShimmerDot(bool isDark) {
+    final color = (isDark ? AppColors.textSecondary : AppColorsLight.textSecondary)
+        .withValues(alpha: 0.4);
+    return Container(
+      width: 60,
+      height: 20,
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.15),
+        borderRadius: BorderRadius.circular(10),
+      ),
     );
   }
 

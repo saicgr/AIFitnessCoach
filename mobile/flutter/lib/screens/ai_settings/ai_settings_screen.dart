@@ -60,6 +60,12 @@ class AISettings {
   // Privacy & Data
   final bool saveChatHistory;
   final bool useRAG;
+  // Server-enforced master switch. When false, the backend refuses to
+  // process outbound coaching requests for this user. Wired through
+  // user_ai_settings.ai_data_processing_enabled.
+  final bool aiDataProcessingEnabled;
+  // GDPR Art. 9 explicit consent for special-category health data.
+  final bool healthDataConsent;
 
   const AISettings({
     this.coachPersonaId,
@@ -87,6 +93,8 @@ class AISettings {
     this.showAICoachDuringWorkouts = true,
     this.saveChatHistory = true,
     this.useRAG = true,
+    this.aiDataProcessingEnabled = true,
+    this.healthDataConsent = false,
   });
 
   AISettings copyWith({
@@ -109,6 +117,8 @@ class AISettings {
     bool? showAICoachDuringWorkouts,
     bool? saveChatHistory,
     bool? useRAG,
+    bool? aiDataProcessingEnabled,
+    bool? healthDataConsent,
   }) {
     return AISettings(
       coachPersonaId: coachPersonaId ?? this.coachPersonaId,
@@ -130,6 +140,8 @@ class AISettings {
       showAICoachDuringWorkouts: showAICoachDuringWorkouts ?? this.showAICoachDuringWorkouts,
       saveChatHistory: saveChatHistory ?? this.saveChatHistory,
       useRAG: useRAG ?? this.useRAG,
+      aiDataProcessingEnabled: aiDataProcessingEnabled ?? this.aiDataProcessingEnabled,
+      healthDataConsent: healthDataConsent ?? this.healthDataConsent,
     );
   }
 
@@ -153,6 +165,8 @@ class AISettings {
       'show_ai_coach_during_workouts': showAICoachDuringWorkouts,
       'save_chat_history': saveChatHistory,
       'use_rag': useRAG,
+      'ai_data_processing_enabled': aiDataProcessingEnabled,
+      'health_data_consent': healthDataConsent,
       'default_agent': defaultAgent.name,
       'enabled_agents': enabledAgents.map((k, v) => MapEntry(k.name, v)),
     };
@@ -209,6 +223,8 @@ class AISettings {
       showAICoachDuringWorkouts: json['show_ai_coach_during_workouts'] as bool? ?? true,
       saveChatHistory: json['save_chat_history'] as bool? ?? true,
       useRAG: json['use_rag'] as bool? ?? true,
+      aiDataProcessingEnabled: json['ai_data_processing_enabled'] as bool? ?? true,
+      healthDataConsent: json['health_data_consent'] as bool? ?? false,
       defaultAgent: parseDefaultAgent(json['default_agent']),
       enabledAgents: parseEnabledAgents(json['enabled_agents']),
     );
@@ -441,8 +457,32 @@ class AISettingsNotifier extends StateNotifier<AISettings> {
     _saveSettings();
   }
 
+  /// Direct setter for the "Save chat history" toggle in Settings → Privacy.
+  /// Returns a future that resolves after the debounced save lands so the
+  /// UI can surface a snackbar without racing the backend.
+  Future<void> updateSaveChatHistory(bool value) async {
+    state = state.copyWith(saveChatHistory: value);
+    _saveSettings();
+  }
+
   void toggleUseRAG() {
     state = state.copyWith(useRAG: !state.useRAG);
+    _saveSettings();
+  }
+
+  /// Server-enforced master kill-switch for personalization. When set to
+  /// false, the backend's `consent_guard` refuses to forward chats, food
+  /// photos, or form videos to the models.
+  Future<void> updateAiDataProcessingEnabled(bool value) async {
+    state = state.copyWith(aiDataProcessingEnabled: value);
+    _saveSettings();
+  }
+
+  /// GDPR Art. 9 explicit consent for special-category health data
+  /// (weight, heart rate, sleep, menstrual/hormonal cycle). Captured in a
+  /// dedicated opt-in flow, not bundled with general ToS acceptance.
+  Future<void> updateHealthDataConsent(bool value) async {
+    state = state.copyWith(healthDataConsent: value);
     _saveSettings();
   }
 

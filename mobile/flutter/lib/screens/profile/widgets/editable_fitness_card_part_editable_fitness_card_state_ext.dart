@@ -1,5 +1,13 @@
 part of 'editable_fitness_card.dart';
 
+/// Display-only title-case: backend may persist enums lowercase (e.g.
+/// 'advanced'), but the profile card should read 'Advanced'. Never mutate the
+/// source value — apply at the Text widget boundary only.
+String _displayTitleCase(String s) {
+  if (s.isEmpty) return s;
+  return s[0].toUpperCase() + s.substring(1).toLowerCase();
+}
+
 /// Methods extracted from EditableFitnessCardState
 extension _EditableFitnessCardStateExt on EditableFitnessCardState {
 
@@ -59,7 +67,7 @@ extension _EditableFitnessCardStateExt on EditableFitnessCardState {
           icon: Icons.flag,
           iconColor: AppColors.green,
           label: 'Goal',
-          value: _selectedGoal,
+          value: _displayTitleCase(_selectedGoal),
           backgroundColor: elevated,
           textMutedColor: textMuted,
           onTap: () => _showFieldEditor(
@@ -76,7 +84,7 @@ extension _EditableFitnessCardStateExt on EditableFitnessCardState {
           icon: Icons.signal_cellular_alt,
           iconColor: AppColors.info,
           label: 'Level',
-          value: _selectedLevel,
+          value: _displayTitleCase(_selectedLevel),
           backgroundColor: elevated,
           textMutedColor: textMuted,
           onTap: () => _showFieldEditor(

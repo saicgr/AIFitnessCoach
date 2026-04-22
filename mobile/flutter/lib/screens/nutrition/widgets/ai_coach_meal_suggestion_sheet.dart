@@ -1073,21 +1073,31 @@ class _AiCoachMealSuggestionSheetState
                 }
               },
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
               Icon(pill.icon, size: 16, color: pill.color),
-              const SizedBox(width: 8),
+              const SizedBox(width: 6),
+              // FittedBox shrinks the label to fit before it wraps — keeps
+              // every pill on a single line at the cost of a ~1pt size drop
+              // on the longest labels ("What can I eat now?").
               Flexible(
-                child: Text(
-                  pill.label,
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: disabled
-                        ? colors.textMuted
-                        : colors.textPrimary,
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    pill.label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    softWrap: false,
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: disabled
+                          ? colors.textMuted
+                          : colors.textPrimary,
+                    ),
                   ),
                 ),
               ),
@@ -1457,7 +1467,10 @@ class _MorePillsSheetState extends State<_MorePillsSheet> {
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
               child: TextField(
                 controller: _searchCtl,
-                autofocus: true,
+                // No autofocus: opening this sheet just to browse the pill
+                // library shouldn't pop the keyboard. User taps the field to
+                // start typing a search.
+                autofocus: false,
                 textInputAction: TextInputAction.search,
                 onChanged: (v) => setState(() => _query = v),
                 style: TextStyle(fontSize: 14, color: colors.textPrimary),

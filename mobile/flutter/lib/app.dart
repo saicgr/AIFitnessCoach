@@ -333,7 +333,9 @@ class _FitWizAppState extends ConsumerState<FitWizApp> {
           router.go('/nutrition');
           break;
         case 'hydration_reminder':
-          router.go('/nutrition?tab=2');
+          // tab=3 is Fuel; fuelSection=water opens the Water pill directly
+          // so the user lands on the log-water affordance, not Patterns.
+          router.go('/nutrition?tab=3&fuelSection=water');
           break;
         case 'streak_alert':
           router.push('/achievements');
@@ -396,7 +398,11 @@ class _WorkoutMiniPlayerOverlay extends ConsumerWidget {
         // Workout mini player (when minimized).
         // IMPORTANT: Must be a direct Positioned child of this Stack,
         // otherwise it blocks all touch events on the content underneath.
-        if (miniPlayerState.isMinimized)
+        //
+        // Hidden while a modal route (bottom sheet / dialog) is on top —
+        // the overlay is mounted above the Navigator, so without this gate
+        // the pill would float above every sheet (see #4 in plans).
+        if (miniPlayerState.isMinimized && !miniPlayerState.suppressedForModal)
           Positioned(
             left: 16,
             right: 16,

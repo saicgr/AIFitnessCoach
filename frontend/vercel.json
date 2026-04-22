@@ -1,5 +1,17 @@
 {
   "rewrites": [
+    {
+      "source": "/data-request",
+      "destination": "https://aifitnesscoach-zqi3.onrender.com/api/v1/dsar/"
+    },
+    {
+      "source": "/data-request/:path*",
+      "destination": "https://aifitnesscoach-zqi3.onrender.com/api/v1/dsar/:path*"
+    },
+    {
+      "source": "/api/v1/dsar/:path*",
+      "destination": "https://aifitnesscoach-zqi3.onrender.com/api/v1/dsar/:path*"
+    },
     { "source": "/(.*)", "destination": "/" }
   ]
 }

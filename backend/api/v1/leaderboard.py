@@ -9,11 +9,36 @@ Endpoints:
 - POST /async-challenge - Create async "Beat Their Best" challenge
 """
 
+import logging as _root_logging
 from fastapi import APIRouter, Depends, HTTPException, Query
 from core.auth import get_current_user
 from core.exceptions import safe_internal_error
 from typing import Optional
 from datetime import datetime, timezone, timedelta
+
+_lb_logger = _root_logging.getLogger(__name__)
+
+
+def _call_supabase_rpc(db, rpc_name: str, params: dict):
+    """
+    Run a Supabase RPC and re-raise with explicit context on failure.
+
+    Cloudflare-fronted Supabase will occasionally return an HTML 5xx error page
+    (typically a 524 origin timeout). The supabase-py SDK then raises a
+    JSONDecodeError with no information about which RPC was being called. This
+    wrapper rewrites those errors so Sentry/logs can name the failing RPC and
+    distinguish upstream timeouts from real RPC errors.
+    """
+    try:
+        return db.client.rpc(rpc_name, params).execute()
+    except Exception as exc:
+        msg = str(exc)
+        likely_upstream = "cloudflare" in msg.lower() or "<html" in msg.lower()
+        kind = "upstream-cloudflare-timeout" if likely_upstream else "rpc-error"
+        _lb_logger.warning(
+            "leaderboard RPC %s failed (%s): %s", rpc_name, kind, msg[:300]
+        )
+        raise RuntimeError(f"leaderboard RPC {rpc_name} failed [{kind}]: {msg[:200]}") from exc
 
 from models.leaderboard import (
     GetLeaderboardRequest, GetUserRankRequest,
@@ -454,6 +479,12 @@ class DiscoverSnapshot(_BaseModel):
     your_peak_tier: Optional[str] = None
     your_next_milestone_weeks: Optional[int] = None
     your_next_milestone_xp: Optional[int] = None
+    # Unranked-user progress: the user's total XP transactions for the
+    # current week (login streak, meal logs, etc.) when they are NOT yet
+    # on the ranked board (no completed workout this week). Lets the
+    # hero card show "+5 XP this week so far — complete a workout to
+    # climb the board" instead of a bare "JOIN THE BOARD" prompt.
+    your_weekly_xp_unranked: int = 0
 
 
 @router.get("/discover", response_model=DiscoverSnapshot)
@@ -488,10 +519,11 @@ async def get_discover_snapshot(
             _log.warning("ensure_weekly_snapshot_fresh failed: %s", _snap_err)
 
         # 1. Percentile + tier + user metric
-        perc_res = db.client.rpc(
+        perc_res = _call_supabase_rpc(
+            db,
             "compute_user_percentile",
             {"p_user_id": user_id, "p_week_start": week_start_str, "p_board_type": board},
-        ).execute()
+        )
         pdata = perc_res.data[0] if isinstance(perc_res.data, list) and perc_res.data else (perc_res.data or {})
         your_rank = pdata.get("rank", 0) or 0
         your_percentile = float(pdata.get("percentile", 0) or 0)
@@ -500,17 +532,19 @@ async def get_discover_snapshot(
         total_active = pdata.get("total", 0) or 0
 
         # 2. Next tier progress
-        tier_res = db.client.rpc(
+        tier_res = _call_supabase_rpc(
+            db,
             "get_next_tier_progress",
             {"p_user_id": user_id, "p_week_start": week_start_str, "p_board_type": board},
-        ).execute()
+        )
         tdata = tier_res.data[0] if isinstance(tier_res.data, list) and tier_res.data else (tier_res.data or {})
         next_tier = tdata.get("next_tier")
         units_to_next = int(tdata.get("units_to_next", 0) or 0)
         metric_label = tdata.get("metric_label", "")
 
         # 3. Near You (5 above + you + 5 below)
-        near_res = db.client.rpc(
+        near_res = _call_supabase_rpc(
+            db,
             "get_near_you_leaderboard",
             {
                 "p_user_id": user_id,
@@ -519,7 +553,7 @@ async def get_discover_snapshot(
                 "p_scope": scope,
                 "p_window": 5,
             },
-        ).execute()
+        )
         near_you = [
             DiscoverLeaderboardEntry(
                 user_id=str(r.get("user_id")),
@@ -543,7 +577,8 @@ async def get_discover_snapshot(
         ]
 
         # 4. Rising Stars (top 3 biggest weekly improvers)
-        rising_res = db.client.rpc(
+        rising_res = _call_supabase_rpc(
+            db,
             "get_rising_stars",
             {
                 "p_week_start": week_start_str,
@@ -552,7 +587,7 @@ async def get_discover_snapshot(
                 "p_limit": 3,
                 "p_exclude_user": user_id,
             },
-        ).execute()
+        )
         rising_stars = [
             DiscoverRisingStar(
                 user_id=str(r.get("user_id")),
@@ -584,7 +619,8 @@ async def get_discover_snapshot(
                 top_10 = [e for e in near_you if e.rank <= 10]
             else:
                 # Call the SQL directly via raw query
-                top_res = db.client.rpc(
+                top_res = _call_supabase_rpc(
+                    db,
                     "get_near_you_leaderboard",
                     {
                         "p_user_id": user_id,
@@ -593,7 +629,7 @@ async def get_discover_snapshot(
                         "p_scope": scope,
                         "p_window": 9999,  # wide window → full board
                     },
-                ).execute()
+                )
                 top_10 = [
                     DiscoverLeaderboardEntry(
                         user_id=str(r.get("user_id")),
@@ -652,6 +688,29 @@ async def get_discover_snapshot(
             import logging as _log
             _log.debug("hero tier-streak lookup failed: %s", _hero_err)
 
+        # 7. Unranked-user progress: if the user isn't on the ranked board
+        # (no completed workout this week → rank=0), surface whatever weekly
+        # XP they've accrued from login streak / meal logs / etc. so the
+        # hero card can show "+N XP this week so far" instead of a bare
+        # "JOIN THE BOARD" prompt. Cheap SUM over a week-bounded index.
+        your_weekly_xp_unranked = 0
+        if not your_rank:
+            try:
+                xp_res = (
+                    db.client.from_("xp_transactions")
+                    .select("xp_amount")
+                    .eq("user_id", user_id)
+                    .gte("created_at", week_start_str)
+                    .execute()
+                )
+                your_weekly_xp_unranked = sum(
+                    int(r.get("xp_amount") or 0) for r in (xp_res.data or [])
+                )
+            except Exception as _xp_err:
+                import logging as _log
+                _log.debug("unranked weekly xp lookup failed: %s", _xp_err)
+                your_weekly_xp_unranked = 0
+
         return DiscoverSnapshot(
             board=board,
             scope=scope,
@@ -671,6 +730,7 @@ async def get_discover_snapshot(
             your_peak_tier=your_peak_tier,
             your_next_milestone_weeks=your_next_milestone_weeks,
             your_next_milestone_xp=your_next_milestone_xp,
+            your_weekly_xp_unranked=your_weekly_xp_unranked,
         )
     except Exception as e:
         raise safe_internal_error(e, "leaderboard")

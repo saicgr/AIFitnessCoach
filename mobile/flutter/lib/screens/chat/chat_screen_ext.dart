@@ -42,6 +42,10 @@ extension __ChatScreenStateExt on _ChatScreenState {
         });
       }
       await ref.read(chatMessagesProvider.notifier).sendMessageWithMedia(message, media);
+      // Send completed — but the user may have backgrounded or popped the
+      // chat screen during the upload/analysis. Guard every ref.read after
+      // the await so we don't crash a disposed Riverpod scope.
+      if (!mounted) return;
       ref.read(posthogServiceProvider).capture(
         eventName: 'chat_media_sent',
         properties: {'media_type': isVideo ? 'video' : 'image', 'message_length': message.length},
@@ -110,6 +114,9 @@ extension __ChatScreenStateExt on _ChatScreenState {
         }
       });
       await ref.read(chatMessagesProvider.notifier).sendMessageWithMultiMedia(message, mediaList);
+      // Same guard pattern as single-media path above — the multi-upload can
+      // take many seconds and the user may navigate away during it.
+      if (!mounted) return;
       ref.read(posthogServiceProvider).capture(
         eventName: 'chat_multi_media_sent',
         properties: {'media_count': mediaList.length, 'message_length': message.length},
@@ -200,12 +207,14 @@ extension __ChatScreenStateExt on _ChatScreenState {
         sourceType: 'image',
       );
 
+      // Bail out if the chat screen unmounted while logging — touching ref
+      // after dispose throws "Cannot use ref after the widget was disposed".
+      if (!mounted) return;
+
       // Refresh nutrition tab
       if (userId.isNotEmpty) {
         ref.read(nutritionProvider.notifier).loadTodaySummary(userId, forceRefresh: true);
       }
-
-      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Logged ${items.length} item${items.length == 1 ? '' : 's'} as $mealType'),
@@ -247,6 +256,9 @@ extension __ChatScreenStateExt on _ChatScreenState {
 
     try {
       await ref.read(chatMessagesProvider.notifier).sendMessage(message);
+      // Send completed — the user may have navigated away while we were
+      // waiting on the AI. Avoid touching ref after dispose.
+      if (!mounted) return;
       ref.read(posthogServiceProvider).capture(
         eventName: 'chat_message_sent',
         properties: {'message_length': message.length},

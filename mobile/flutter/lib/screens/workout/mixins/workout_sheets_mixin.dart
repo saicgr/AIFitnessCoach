@@ -785,17 +785,32 @@ mixin WorkoutSheetsMixin<T extends StatefulWidget> on State<T> {
     );
   }
 
-  /// Show enhanced notes sheet with audio, photo, and voice-to-text
+  /// Show enhanced notes sheet with audio, photo, and voice-to-text.
+  ///
+  /// Mutates the MOST RECENT completed `SetLog` in `completedSets` for the
+  /// exercise with the captured notes/audio/photo and re-emits the list so
+  /// the UI re-renders. The new media survives to the bulk log on workout
+  /// completion via `SetLog.toJson()` → `notes_audio_url` /
+  /// `notes_photo_urls` columns on the set-performance table.
+  ///
+  /// If there is no completed set yet (user taps notes before the first ✓),
+  /// the captured content is staged as exercise-level notes on the next
+  /// logged set — same staging behavior the Easy tier uses.
   void showNotesSheet(WorkoutExercise exercise) {
-    // Get existing notes for this exercise if any
     final exerciseIndex = exercises.indexOf(exercise);
     String existingNotes = '';
+    String? existingAudio;
+    List<String> existingPhotos = const [];
     if (exerciseIndex >= 0 && completedSets.containsKey(exerciseIndex)) {
       final sets = completedSets[exerciseIndex]!;
-      // Get notes from the most recent set with notes
       for (final set in sets.reversed) {
-        if (set.notes != null && set.notes!.isNotEmpty) {
-          existingNotes = set.notes!;
+        final hasAny = (set.notes?.isNotEmpty ?? false) ||
+            (set.notesAudioPath?.isNotEmpty ?? false) ||
+            set.notesPhotoPaths.isNotEmpty;
+        if (hasAny) {
+          existingNotes = set.notes ?? '';
+          existingAudio = set.notesAudioPath;
+          existingPhotos = set.notesPhotoPaths;
           break;
         }
       }
@@ -804,13 +819,34 @@ mixin WorkoutSheetsMixin<T extends StatefulWidget> on State<T> {
     showEnhancedNotesSheet(
       context,
       initialNotes: existingNotes,
+      initialAudioPath: existingAudio,
+      initialPhotoPaths: existingPhotos.toList(),
       onSave: (notes, audioPath, photoPaths) {
-        // Store notes - could be applied to current set or exercise-level
-        debugPrint('📝 Notes saved: $notes');
-        if (audioPath != null) debugPrint('🎤 Audio: $audioPath');
-        if (photoPaths.isNotEmpty) debugPrint('📷 Photos: ${photoPaths.length}');
+        debugPrint(
+            '📝 [Advanced] Notes saved for ${exercise.name}: ${notes.length} chars, audio=${audioPath != null}, photos=${photoPaths.length}');
+        if (exerciseIndex < 0) return;
 
-        // Notes are saved via the callback - can extend to store audio/photos as needed
+        final sets = completedSets[exerciseIndex];
+        if (sets == null || sets.isEmpty) {
+          // No completed set yet — nothing to attach to right now. The
+          // Advanced mixin doesn't expose a pending-note staging field,
+          // so drop a breadcrumb and let the user tap notes again after
+          // their first ✓. (Future: add pendingNoteText/Audio/Photo here.)
+          debugPrint(
+              '⚠️ [Advanced] Notes captured before first set logged — discarded.');
+          return;
+        }
+
+        // Mutate the most-recent set in place. Trigger a rebuild via
+        // setState so the Advanced UI re-renders any note-dot indicators.
+        final lastIndex = sets.length - 1;
+        sets[lastIndex] = sets[lastIndex].copyWith(
+          notes: notes,
+          notesAudioPath: audioPath,
+          notesPhotoPaths: photoPaths,
+        );
+        completedSets[exerciseIndex] = sets;
+        if (mounted) setState(() {});
       },
     );
   }

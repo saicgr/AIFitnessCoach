@@ -162,50 +162,63 @@ class _QuickActionsSheetState extends ConsumerState<_QuickActionsSheet> {
 
     Future<void> handleTap() async {
       HapticFeedback.lightImpact();
+
+      // Capture the root navigator's context BEFORE popping this sheet —
+      // after pop, the local `context` is defunct and showing a follow-up
+      // sheet silently no-ops (that's what made "Scan Menu" look broken).
+      final rootCtx = Navigator.of(context, rootNavigator: true).context;
+      final ref = widget.ref;
+
+      void runAfterPop(VoidCallback fn) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (rootCtx.mounted) fn();
+        });
+      }
+
       switch (action.id) {
         case 'water':
           _quickAddWater();
           return;
         case 'food':
           Navigator.pop(context);
-          showLogMealSheet(context, widget.ref);
+          runAfterPop(() => showLogMealSheet(rootCtx, ref));
           return;
         case 'scan_food':
           Navigator.pop(context);
-          showLogMealSheet(context, widget.ref, autoOpenMultiImage: true);
+          runAfterPop(() => showLogMealSheet(rootCtx, ref, autoOpenMultiImage: true));
           return;
         case 'scan_menu':
           Navigator.pop(context);
-          showLogMealSheet(context, widget.ref, autoOpenMenuScan: true);
+          runAfterPop(() => showLogMealSheet(rootCtx, ref, autoOpenMenuScan: true));
           return;
         case 'quick_workout':
           final workout = await showQuickWorkoutSheet(context, widget.ref);
           if (!mounted) return;
           Navigator.pop(context);
-          if (workout != null && context.mounted) {
-            context.push('/workout/${workout.id}', extra: workout);
+          if (workout != null) {
+            runAfterPop(() => rootCtx.push('/workout/${workout.id}', extra: workout));
           }
           return;
         case 'fasting':
           Navigator.pop(context);
-          context.go('/fasting');
+          runAfterPop(() => rootCtx.go('/fasting'));
           return;
         case 'weight':
           Navigator.pop(context);
-          showLogWeightSheet(context, widget.ref);
+          runAfterPop(() => showLogWeightSheet(rootCtx, ref));
           return;
         case 'mood':
           Navigator.pop(context);
-          showMoodPickerSheet(context, widget.ref);
+          runAfterPop(() => showMoodPickerSheet(rootCtx, ref));
           return;
         case 'chat':
           Navigator.pop(context);
-          context.push('/chat');
+          runAfterPop(() => rootCtx.push('/chat'));
           return;
         default:
           Navigator.pop(context);
           if (action.route != null) {
-            context.push(action.route!);
+            runAfterPop(() => rootCtx.push(action.route!));
           }
       }
     }
@@ -552,7 +565,7 @@ class _QuickActionsSheetState extends ConsumerState<_QuickActionsSheet> {
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
               child: Text(
-                'Drag to reorder. Top 4 appear in your shortcut bar.',
+                'Drag to reorder. Top 9 appear in your shortcut bar (slots 1–5 row 1, 6–9 row 2, slot 10 is More).',
                 style: TextStyle(fontSize: 13, color: textMuted),
               ),
             ),
@@ -588,23 +601,25 @@ class _QuickActionsSheetState extends ConsumerState<_QuickActionsSheet> {
                 itemBuilder: (context, index) {
                   final actionId = order[index];
                   final action = quickActionRegistry[actionId]!;
-                  final isTop4 = index < 4;
+                  // First 5 = row 1, next 4 = row 2 (slot 10 is the fixed More tile, not in this list).
+                  final isRow1 = index < 5;
+                  final isRow2 = index >= 5 && index < 9;
+                  final isVisibleInBar = isRow1 || isRow2;
 
                   return Container(
                     key: ValueKey(actionId),
                     margin: const EdgeInsets.only(bottom: 4),
                     decoration: BoxDecoration(
-                      color: isTop4
+                      color: isVisibleInBar
                           ? action.color.withValues(alpha: isDark ? 0.12 : 0.08)
                           : elevatedColor,
                       borderRadius: BorderRadius.circular(12),
-                      border: isTop4
+                      border: isVisibleInBar
                           ? Border.all(color: action.color.withValues(alpha: 0.3))
                           : null,
                     ),
                     child: Row(
                       children: [
-                        // Drag handle
                         ReorderableDragStartListener(
                           index: index,
                           child: Padding(
@@ -612,7 +627,6 @@ class _QuickActionsSheetState extends ConsumerState<_QuickActionsSheet> {
                             child: Icon(Icons.drag_handle, color: textMuted, size: 20),
                           ),
                         ),
-                        // Icon
                         Container(
                           width: 32,
                           height: 32,
@@ -623,19 +637,28 @@ class _QuickActionsSheetState extends ConsumerState<_QuickActionsSheet> {
                           child: Icon(action.icon, color: action.color, size: 18),
                         ),
                         const SizedBox(width: 12),
-                        // Label
                         Expanded(
-                          child: Text(
-                            action.label,
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                              color: textColor,
-                            ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                action.label,
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                  color: textColor,
+                                ),
+                              ),
+                              if (isVisibleInBar)
+                                Text(
+                                  isRow1 ? 'Row 1' : 'Row 2',
+                                  style: TextStyle(fontSize: 11, color: textMuted),
+                                ),
+                            ],
                           ),
                         ),
-                        // Badge for top 3
-                        if (isTop4)
+                        if (isVisibleInBar)
                           Container(
                             width: 24,
                             height: 24,

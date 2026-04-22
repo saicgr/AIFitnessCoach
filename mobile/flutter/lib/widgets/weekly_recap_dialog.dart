@@ -26,7 +26,10 @@ Future<void> showWeeklyRecapDialog({
     context: context,
     barrierLabel: 'Weekly Recap',
     barrierDismissible: false,
-    barrierColor: Colors.black.withValues(alpha: 0.88),
+    // 0.72 reads as celebratory but not "app is broken". 0.88 previously
+    // combined with a first-paint "Loading gym…" header produced a confusing
+    // dimmed screen — we now also defer the fire until gym resolves.
+    barrierColor: Colors.black.withValues(alpha: 0.72),
     transitionDuration: const Duration(milliseconds: 320),
     pageBuilder: (ctx, _, __) => _WeeklyRecapDialog(recap: recap),
     transitionBuilder: (ctx, anim, _, child) {
@@ -150,6 +153,21 @@ class _WeeklyRecapDialogState extends ConsumerState<_WeeklyRecapDialog>
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
+                      // Clear eyebrow title so the user immediately
+                      // recognizes this as the weekly celebration modal
+                      // rather than wondering what's dimming the screen.
+                      Center(
+                        child: Text(
+                          'WEEKLY RECAP',
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w800,
+                            color: textMuted,
+                            letterSpacing: 3,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 10),
                       _HeaderChip(tierColor: tierHeroColor),
                       const SizedBox(height: 14),
                       _BigRankRow(

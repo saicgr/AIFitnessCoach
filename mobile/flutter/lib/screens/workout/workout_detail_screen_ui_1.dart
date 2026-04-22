@@ -134,8 +134,20 @@ extension __WorkoutDetailScreenStateExt1 on _WorkoutDetailScreenState {
       _startSecondaryLoads();
     } catch (e) {
       debugPrint('❌ [WorkoutDetail] Failed to load workout ${widget.workoutId}: $e');
+      // 404 means the workout was deleted or the plan was regenerated since
+      // the cached ID in the hero carousel was captured. Surface a friendlier
+      // message AND invalidate the today-workout cache so Try Again picks up
+      // the fresh plan (no more chasing the phantom ID).
+      final is404 = e is DioException && e.response?.statusCode == 404;
+      if (is404) {
+        try {
+          ref.read(todayWorkoutProvider.notifier).invalidateAndRefresh();
+        } catch (_) {/* best effort — notifier may not be available */}
+      }
       setState(() {
-        _error = e.toString();
+        _error = is404
+            ? 'This workout no longer exists. Your plan may have been updated — tap Try Again to refresh.'
+            : e.toString();
         _isLoading = false;
       });
     }

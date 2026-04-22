@@ -227,16 +227,20 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   /// Minimize - shrink back to floating chat overlay with seamless animation
   void _minimizeToFloatingChat() {
     HapticService.light();
-    // Capture ref before pop since widget may unmount
-    final currentRef = ref;
-    final currentContext = context;
-    // Pop the full screen, then show floating chat after animation completes
-    Navigator.of(context).pop();
-    // Use WidgetsBinding to ensure the pop frame is fully processed
+    // Capture the navigator + provider container BEFORE popping. Once the
+    // widget unmounts, our `ref` becomes invalid (Riverpod throws "Cannot use
+    // ref after the widget was disposed" if accessed). The container survives
+    // the pop because it's owned by the ProviderScope above us, so we can
+    // safely use it from the delayed callback.
+    final navigator = Navigator.of(context);
+    final rootContext = navigator.context;
+    final container = ProviderScope.containerOf(context);
+
+    navigator.pop();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       Future.delayed(const Duration(milliseconds: 200), () {
-        if (currentContext.mounted) {
-          showChatBottomSheetNoAnimation(currentContext, currentRef);
+        if (rootContext.mounted) {
+          showChatBottomSheetWithContainer(rootContext, container);
         }
       });
     });
@@ -305,29 +309,62 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                   key: ValueKey('loading'),
                   child: CircularProgressIndicator(color: AppColors.cyan),
                 ),
-                error: (e, _) => Center(
-                  key: const ValueKey('error'),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(
-                        Icons.error_outline,
-                        color: AppColors.error,
-                        size: 48,
+                error: (e, _) {
+                  // Collapse noisy transport errors (DioException [connection
+                  // timeout / connection error / receive timeout]) into a
+                  // single user-readable line. Show the raw error only as a
+                  // muted subtitle so we don't lose debug signal.
+                  final errStr = e.toString();
+                  final isTransport = errStr.contains('DioException') ||
+                      errStr.contains('connection') ||
+                      errStr.contains('timeout') ||
+                      errStr.contains('SocketException');
+                  final headline = isTransport
+                      ? "Couldn't reach the coach."
+                      : 'Something went wrong loading your chat.';
+                  return Center(
+                    key: const ValueKey('error'),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 24),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(
+                            Icons.error_outline,
+                            color: AppColors.error,
+                            size: 48,
+                          ),
+                          const SizedBox(height: 16),
+                          Text(
+                            headline,
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            'Check your connection and try again.',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: AppColors.textMuted,
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          ElevatedButton(
+                            onPressed: () {
+                              HapticService.medium();
+                              ref.read(chatMessagesProvider.notifier).loadHistory();
+                            },
+                            child: const Text('Retry'),
+                          ),
+                        ],
                       ),
-                      const SizedBox(height: 16),
-                      Text('Failed to load messages: $e'),
-                      const SizedBox(height: 16),
-                      ElevatedButton(
-                        onPressed: () {
-                          HapticService.medium();
-                          ref.read(chatMessagesProvider.notifier).loadHistory();
-                        },
-                        child: const Text('Retry'),
-                      ),
-                    ],
-                  ),
-                ),
+                    ),
+                  );
+                },
                 data: (messages) {
                   if (messages.isEmpty) {
                     return EnhancedEmptyState(
@@ -785,6 +822,9 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     final aiMsg = messages[aiMsgIndex];
     if (aiMsg.id != null) {
       await ref.read(chatMessagesProvider.notifier).deleteMessage(aiMsg.id!);
+      // deleteMessage round-trips to the server. If the user popped the chat
+      // during that hop we must NOT touch ref or trigger _sendMessage again.
+      if (!mounted) return;
     } else {
       final current = ref.read(chatMessagesProvider).valueOrNull ?? [];
       final updated = current.where((m) => m != aiMsg).toList();

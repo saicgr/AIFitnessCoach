@@ -123,3 +123,87 @@ def clear_user() -> None:
         sentry_sdk.set_user(None)
     except Exception:
         pass
+
+
+def set_request_context(
+    *,
+    request_id: Optional[str] = None,
+    method: Optional[str] = None,
+    path: Optional[str] = None,
+    query: Optional[str] = None,
+    user_agent: Optional[str] = None,
+) -> None:
+    """
+    Attach request-scoped tags + context on the current Sentry scope.
+
+    Tags are queryable in Sentry's UI; context is expanded on the event. We
+    set both so that `request_id` can be searched AND shows up in the event
+    body for copy-paste into our Render log viewer. Safe no-op when Sentry
+    is not initialized — catches every exception so a broken integration
+    can never tank a request.
+    """
+    try:
+        import sentry_sdk
+        scope = sentry_sdk.get_isolation_scope()
+        if request_id:
+            scope.set_tag("request_id", request_id)
+        if method:
+            scope.set_tag("http.method", method)
+        if path:
+            scope.set_tag("endpoint", path)
+        if user_agent:
+            scope.set_context(
+                "request",
+                {
+                    "method": method,
+                    "url": path,
+                    "query_string": query or "",
+                    "headers": {"user-agent": user_agent},
+                },
+            )
+        else:
+            scope.set_context(
+                "request",
+                {"method": method, "url": path, "query_string": query or ""},
+            )
+    except Exception:
+        pass
+
+
+def clear_request_context() -> None:
+    """Clear per-request scope state at the end of a request."""
+    try:
+        import sentry_sdk
+        scope = sentry_sdk.get_isolation_scope()
+        scope.remove_tag("request_id")
+        scope.remove_tag("http.method")
+        scope.remove_tag("endpoint")
+    except Exception:
+        pass
+
+
+def capture_exception_with_context(
+    exc: BaseException,
+    *,
+    module: Optional[str] = None,
+    **extras: Any,
+) -> None:
+    """
+    Explicitly report an exception that we're about to swallow or wrap,
+    with an optional module tag and free-form extras. Use this from
+    `except Exception as e:` blocks that log-and-continue so Sentry still
+    sees the full stack instead of losing it to downstream re-raises.
+    """
+    try:
+        import sentry_sdk
+        with sentry_sdk.new_scope() as scope:
+            if module:
+                scope.set_tag("module", module)
+            for k, v in extras.items():
+                try:
+                    scope.set_extra(k, v)
+                except Exception:
+                    continue
+            sentry_sdk.capture_exception(exc)
+    except Exception:
+        pass

@@ -52,6 +52,11 @@ class NutritionScreen extends ConsumerStatefulWidget {
   /// we should re-open the post-meal review sheet bound to this food_log_id.
   final String? openCheckinLogId;
 
+  /// Optional initial inner section of the Fuel tab ('nutrients' or 'water').
+  /// Used by the hydration-reminder deep-link so tapping a water banner lands
+  /// on the Water pill, not the default Nutrients landing.
+  final String? initialFuelSection;
+
   const NutritionScreen({
     super.key,
     this.initialMeal,
@@ -59,6 +64,7 @@ class NutritionScreen extends ConsumerStatefulWidget {
     this.autoOpenCamera = false,
     this.autoOpenBarcode = false,
     this.openCheckinLogId,
+    this.initialFuelSection,
   });
 
   @override
@@ -118,6 +124,8 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
       ref.read(navBarLabelsExpandedProvider.notifier).state = false;
       // Listen for preferences to become available, then check for weekly check-in
       _setupWeeklyCheckinListener();
+      // Auto-refresh Vitamins & Minerals when a meal is logged/edited.
+      _setupMicronutrientInvalidationListener();
       // Auto-open log meal sheet if deep-linked with a meal type, camera, or barcode flag
       if (widget.initialMeal != null || widget.autoOpenCamera || widget.autoOpenBarcode) {
         final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -140,6 +148,28 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
         _checkAndShowWeeklyCheckin();
       }
     }, fireImmediately: true);
+  }
+
+  /// Re-fetch pinned nutrients whenever the day's meal set changes so the
+  /// Vitamins & Minerals card updates immediately after a log. Previously
+  /// the 5-min TTL on the in-memory micronutrient cache kept showing the
+  /// pre-log values until the user navigated away and back.
+  void _setupMicronutrientInvalidationListener() {
+    ref.listenManual<NutritionState>(nutritionProvider, (prev, next) {
+      if (_userId == null) return;
+      final prevCount = prev?.todaySummary?.meals.length ?? 0;
+      final nextCount = next.todaySummary?.meals.length ?? 0;
+      final prevKcal = prev?.todaySummary?.totalCalories ?? 0;
+      final nextKcal = next.todaySummary?.totalCalories ?? 0;
+      // Trigger on either a new meal row OR a macro delta on an existing
+      // meal (edits from the history sheet land on the same date). Bail
+      // if we're not viewing today — the cache only covers today anyway.
+      if ((nextCount != prevCount || nextKcal != prevKcal) && _isToday) {
+        final dateStr = DateFormat('yyyy-MM-dd').format(_selectedDate);
+        _cachedMicronutrientsTime = null; // force network call
+        _loadMicronutrients(_userId!, dateStr);
+      }
+    });
   }
 
   @override
@@ -304,8 +334,30 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
   }
 
   void _changeDate(int days) {
+    final newDate = _selectedDate.add(Duration(days: days));
+    final newDateStr = DateFormat('yyyy-MM-dd').format(newDate);
+    final prevDateStr = DateFormat('yyyy-MM-dd').format(_selectedDate);
     setState(() {
-      _selectedDate = _selectedDate.add(Duration(days: days));
+      _selectedDate = newDate;
+      // Clear the micronutrient UI so we don't flash yesterday's vitamins
+      // while the new date's data is fetching. The cache (keyed by
+      // userId:date) will serve instantly if we've seen this date before.
+      if (prevDateStr != newDateStr) {
+        _micronutrientSummary = null;
+      }
+    });
+    _loadDataForSelectedDate();
+  }
+
+  /// Jump to a specific calendar date (invoked by the date picker).
+  void _jumpToDate(DateTime target) {
+    final normalized = DateTime(target.year, target.month, target.day);
+    final prevDateStr = DateFormat('yyyy-MM-dd').format(_selectedDate);
+    final newDateStr = DateFormat('yyyy-MM-dd').format(normalized);
+    if (prevDateStr == newDateStr) return;
+    setState(() {
+      _selectedDate = normalized;
+      _micronutrientSummary = null;
     });
     _loadDataForSelectedDate();
   }
@@ -314,6 +366,11 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
     if (_userId == null) return;
     final dateStr = DateFormat('yyyy-MM-dd').format(_selectedDate);
     final notifier = ref.read(nutritionProvider.notifier);
+    // Always route through the date-specific variants. loadTodaySummary /
+    // loadRecentLogs have their own fast-path when the target IS today, so
+    // branching here only risks the stale-cache bug (loadSummaryForDate
+    // leaves yesterday in state.todaySummary; loadTodaySummary then
+    // short-circuits and never refetches).
     if (_isToday) {
       notifier.loadTodaySummary(_userId!);
       notifier.loadRecentLogs(_userId!);
@@ -412,6 +469,7 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
                             summary: state.todaySummary,
                             targets: state.targets,
                             micronutrients: _micronutrientSummary,
+                            isViewingToday: _isToday,
                             onRefresh: _loadData,
                             onLogMeal: (mealType) => _showLogMealSheet(isDark, mealType: mealType),
                             onDeleteMeal: (id) => _deleteMeal(id),
@@ -456,6 +514,7 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
                               }
                             },
                             isDark: isDark,
+                            initialSection: widget.initialFuelSection,
                           ),
                         ],
                       ),
@@ -492,27 +551,36 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
               final picked = await showDatePicker(
                 context: context,
                 initialDate: _selectedDate,
-                firstDate: DateTime(2020),
+                firstDate: DateTime.now().subtract(const Duration(days: 365)),
                 lastDate: DateTime.now(),
+                // Users often know the date by number rather than wanting to
+                // tap through a calendar grid — allow keyboard entry.
+                initialEntryMode: DatePickerEntryMode.calendar,
               );
               if (picked != null) {
-                setState(() => _selectedDate = picked);
-                _loadDataForSelectedDate();
+                _jumpToDate(picked);
               }
             },
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
               decoration: BoxDecoration(
                 color: elevated,
                 borderRadius: BorderRadius.circular(16),
               ),
-              child: Text(
-                _dateLabel,
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  color: textPrimary,
-                ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.calendar_today_outlined, size: 14, color: textSecondary),
+                  const SizedBox(width: 6),
+                  Text(
+                    _dateLabel,
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: textPrimary,
+                    ),
+                  ),
+                ],
               ),
             ),
           ),

@@ -68,6 +68,13 @@ class _AutoTargetCell extends StatelessWidget {
   final bool useKg;
   final bool isWarmup;
   final bool isDark;
+  /// When set, the cell renders a time-based target ("45s hold" / "5 min").
+  final int? targetHoldSeconds;
+  final int? targetDurationSeconds;
+  /// True for cardio/timed exercises — affects label ("hold" vs duration).
+  final bool isTimedExercise;
+  /// True when exercise uses no external load — render reps only, never "0 kg".
+  final bool isBodyweight;
 
   const _AutoTargetCell({
     this.targetWeight,
@@ -78,7 +85,26 @@ class _AutoTargetCell extends StatelessWidget {
     required this.useKg,
     this.isWarmup = false,
     this.isDark = true,
+    this.targetHoldSeconds,
+    this.targetDurationSeconds,
+    this.isTimedExercise = false,
+    this.isBodyweight = false,
   });
+
+  /// Format seconds as "45s" or "1:30" for ≥60s, "5 min" for clean minutes.
+  static String _formatSeconds(int seconds) {
+    if (seconds <= 0) return '';
+    if (seconds >= 60 && seconds % 60 == 0) {
+      final mins = seconds ~/ 60;
+      return '$mins min';
+    }
+    if (seconds >= 60) {
+      final m = seconds ~/ 60;
+      final s = seconds % 60;
+      return '$m:${s.toString().padLeft(2, '0')}';
+    }
+    return '${seconds}s';
+  }
 
   void _showRirExplanation(BuildContext context) {
     final isDarkTheme = Theme.of(context).brightness == Brightness.dark;
@@ -389,19 +415,45 @@ class _AutoTargetCell extends StatelessWidget {
     // Build target string
     String targetString = '';
 
-    if (targetWeight != null && targetReps != null) {
+    // ── Priority 1: Timed/hold target (planks, hollow body, walking, etc.)
+    // Per-set hold target beats everything else — e.g. Hollow Body Hold
+    // prescribes 30s→45s→45s→45s and that is the true per-set target.
+    final holdSecs = targetHoldSeconds;
+    final durSecs = targetDurationSeconds;
+    if ((holdSecs != null && holdSecs > 0) || (durSecs != null && durSecs > 0)) {
+      final secs = (holdSecs != null && holdSecs > 0) ? holdSecs : durSecs!;
+      final timeStr = _formatSeconds(secs);
+      // "45s hold" for static holds; plain duration for cardio (Walking 5 min).
+      final isHoldStyle = holdSecs != null && holdSecs > 0;
+      targetString = isWarmup
+          ? (isHoldStyle ? 'Warmup · $timeStr hold' : 'Warmup · $timeStr')
+          : (isHoldStyle ? '$timeStr hold' : timeStr);
+    }
+    // ── Priority 2: Weight × reps (standard strength prescription)
+    else if (targetWeight != null && targetWeight! > 0 && targetReps != null && !isBodyweight) {
       final displayWeight = useKg ? targetWeight! : WeightUtils.fromKgSnapped(targetWeight!, displayInLbs: true);
       targetString = '${displayWeight.toStringAsFixed(displayWeight % 1 == 0 ? 0 : 1)} ${useKg ? 'kg' : 'lb'} x $targetReps';
-    } else if (previousWeight != null && previousReps != null) {
+    }
+    // ── Priority 3: Bodyweight reps — never show "0 kg × 10", just reps.
+    else if (isBodyweight && targetReps != null) {
+      targetString = isWarmup ? 'Warmup · $targetReps reps' : '$targetReps reps';
+    }
+    // ── Priority 4: Previous session (weighted) — use last session's load.
+    else if (previousWeight != null && previousReps != null) {
       final displayWeight = useKg ? previousWeight! : WeightUtils.fromKgSnapped(previousWeight!, displayInLbs: true);
       targetString = '${displayWeight.toStringAsFixed(displayWeight % 1 == 0 ? 0 : 1)} ${useKg ? 'kg' : 'lb'} x $previousReps';
-    } else {
-      throw StateError(
-        'No weight data available for set target. '
-        'targetWeight: $targetWeight, targetReps: $targetReps, '
-        'previousWeight: $previousWeight, previousReps: $previousReps, '
-        'isWarmup: $isWarmup',
-      );
+    }
+    // ── Priority 5: Warmup without any numeric target — hint text.
+    else if (isWarmup) {
+      targetString = targetReps != null ? 'Warmup × $targetReps' : 'Warmup';
+    }
+    // ── Priority 6: Reps-only target (AMRAP or first-time weighted exercise)
+    else if (targetReps != null) {
+      targetString = '× $targetReps';
+    }
+    // ── No data of any kind — em-dash placeholder.
+    else {
+      targetString = '—';
     }
 
     return ClipRect(
@@ -1008,6 +1060,123 @@ class _RirBadge extends StatelessWidget {
             fontWeight: FontWeight.w700,
             color: textColor,
           ),
+        ),
+      ),
+    );
+  }
+}
+
+
+/// Inert em-dash cell used when a column is not applicable for this exercise
+/// (e.g. the weight column for bodyweight/timed exercises). Keeps the grid
+/// aligned without offering an input nobody can use.
+class _DashCell extends StatelessWidget {
+  const _DashCell();
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Container(
+      height: WorkoutDesign.inputFieldHeight,
+      decoration: BoxDecoration(
+        color: isDark
+            ? WorkoutDesign.inputField.withOpacity(0.15)
+            : Colors.grey.shade100,
+        borderRadius: BorderRadius.circular(WorkoutDesign.radiusSmall),
+        border: isDark ? null : Border.all(color: Colors.grey.shade300),
+      ),
+      child: Center(
+        child: Text(
+          '—',
+          style: WorkoutDesign.inputStyle.copyWith(
+            color: isDark ? WorkoutDesign.textMuted : Colors.grey.shade400,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+
+/// Read-only time-target readout for timed exercises (planks, walking,
+/// hollow body holds). Shows the per-set target (e.g. "45s") while pending
+/// and the logged duration once the set is completed.
+///
+/// The actual time capture happens in the TimedExerciseTimer sheet driven by
+/// the active-set flow — this widget is purely for the table row.
+class _TimedTargetCell extends StatelessWidget {
+  final int? targetHoldSeconds;
+  final int? targetDurationSeconds;
+  final int? actualDurationSeconds;
+  final bool isActive;
+  final bool isCompleted;
+  final bool isDark;
+
+  const _TimedTargetCell({
+    this.targetHoldSeconds,
+    this.targetDurationSeconds,
+    this.actualDurationSeconds,
+    this.isActive = false,
+    this.isCompleted = false,
+    this.isDark = true,
+  });
+
+  static String _fmt(int s) {
+    if (s <= 0) return '—';
+    if (s >= 60 && s % 60 == 0) return '${s ~/ 60}m';
+    if (s >= 60) return '${s ~/ 60}:${(s % 60).toString().padLeft(2, '0')}';
+    return '${s}s';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // Completed — show the actual duration the user logged.
+    if (isCompleted && actualDurationSeconds != null && actualDurationSeconds! > 0) {
+      return _CompletedValueCell(
+        value: _fmt(actualDurationSeconds!),
+        isCompleted: true,
+        isDark: isDark,
+      );
+    }
+    // Active set — show the target prominently with a subtle pulse background.
+    final target = (targetHoldSeconds != null && targetHoldSeconds! > 0)
+        ? targetHoldSeconds!
+        : (targetDurationSeconds ?? 0);
+    final label = _fmt(target);
+    return Container(
+      height: WorkoutDesign.inputFieldHeight,
+      decoration: BoxDecoration(
+        color: isActive
+            ? WorkoutDesign.accentBlue.withOpacity(0.15)
+            : (isDark
+                ? WorkoutDesign.inputField.withOpacity(0.3)
+                : Colors.grey.shade100),
+        borderRadius: BorderRadius.circular(WorkoutDesign.radiusSmall),
+        border: isDark ? null : Border.all(color: Colors.grey.shade300),
+      ),
+      child: Center(
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.timer_outlined,
+              size: 12,
+              color: isActive
+                  ? WorkoutDesign.accentBlue
+                  : (isDark ? WorkoutDesign.textMuted : Colors.grey.shade500),
+            ),
+            const SizedBox(width: 3),
+            Text(
+              label,
+              style: WorkoutDesign.inputStyle.copyWith(
+                fontSize: 13,
+                color: isActive
+                    ? WorkoutDesign.accentBlue
+                    : (isDark ? WorkoutDesign.textSecondary : Colors.grey.shade700),
+              ),
+            ),
+          ],
         ),
       ),
     );

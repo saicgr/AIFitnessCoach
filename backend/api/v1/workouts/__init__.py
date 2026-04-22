@@ -44,6 +44,8 @@ from .rest_suggestions import router as rest_suggestions_router
 from .fatigue_alerts import router as fatigue_alerts_router
 from .parse_input import router as parse_input_router
 from .exercise_tips import router as exercise_tips_router
+from .quick_adjust import router as quick_adjust_router
+from .set_note_media import router as set_note_media_router
 
 # Create the combined router
 router = APIRouter()
@@ -112,6 +114,12 @@ router.include_router(parse_input_router)
 
 # AI exercise-specific coach tips
 router.include_router(exercise_tips_router)
+
+# One-tap "adjust today" (soreness/energy/time-budget → in-place mutation)
+router.include_router(quick_adjust_router)
+
+# Per-set note media (audio voice-notes) presign endpoint
+router.include_router(set_note_media_router)
 
 # Re-export commonly used utilities
 from .utils import (

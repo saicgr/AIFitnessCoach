@@ -268,12 +268,51 @@ double _findClosest(double target, List<double> options) {
 
 // --- Detection helpers ---
 
+/// Equipment strings that are explicitly non-barbell. Must match the list in
+/// barbell_plate_indicator.dart — when equipment is one of these, do NOT fall
+/// through to the name-based barbell heuristic.
+const _nonBarbellEquipment = <String>[
+  'bodyweight', 'body weight', 'body-weight',
+  'dumbbell', 'dumbbells',
+  'kettlebell', 'kettlebells',
+  'machine', 'cable', 'cables',
+  'band', 'bands', 'resistance band', 'resistance bands',
+  'medicine ball', 'medicine_ball', 'med ball',
+  'stability ball', 'swiss ball', 'bosu',
+  'weight plate', 'weight_plate', 'plate',
+  'bench', 'box', 'foam roller', 'jump rope',
+  'trx', 'suspension',
+  'sandbag', 'sled', 'rope',
+  'none', 'no equipment',
+];
+
+/// Squat variants that are typically done with dumbbells or bodyweight, NOT
+/// barbell. Used to suppress the `name.contains('squat')` fallback.
+const _nonBarbellSquatVariants = <String>[
+  'goblet', 'dumbbell', 'kettlebell',
+  'bulgarian', 'split squat', 'split-squat',
+  'pistol', 'shrimp', 'cossack', 'sissy',
+  'wall sit', 'wall squat',
+  'bodyweight', 'air squat',
+  'jump squat', 'jumping squat',
+  'banded', 'resistance band',
+];
+
 bool _isBarbell(String eq, String name) {
-  return eq.contains('barbell') ||
-      name.contains('barbell') ||
+  if (eq.contains('barbell')) return true;
+  // If equipment is an explicit non-barbell value, trust it.
+  if (eq.isNotEmpty && _nonBarbellEquipment.any(eq.contains)) return false;
+  // Name-based fallback only when equipment is null/empty/unknown.
+  if (name.contains('barbell') ||
       name.contains('bench press') ||
-      name.contains('deadlift') ||
-      (name.contains('squat') && !name.contains('goblet') && !name.contains('dumbbell'));
+      name.contains('deadlift')) {
+    return true;
+  }
+  if (name.contains('squat') &&
+      !_nonBarbellSquatVariants.any(name.contains)) {
+    return true;
+  }
+  return false;
 }
 
 bool _isDumbbell(String eq, String name) {

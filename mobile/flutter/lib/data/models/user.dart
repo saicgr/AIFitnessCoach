@@ -66,6 +66,11 @@ class User extends Equatable {
   final String? vacationStartDate; // ISO date YYYY-MM-DD, null = active immediately
   @JsonKey(name: 'vacation_end_date')
   final String? vacationEndDate; // ISO date YYYY-MM-DD, null = open-ended
+  // Active-workout UI tier: 'easy' | 'simple' | 'advanced'. NULL = derive from fitnessLevel.
+  @JsonKey(name: 'workout_ui_mode')
+  final String? workoutUiMode;
+  @JsonKey(name: 'workout_ui_mode_user_explicit')
+  final bool? workoutUiModeUserExplicit;
 
   const User({
     required this.id,
@@ -103,6 +108,8 @@ class User extends Equatable {
     this.inVacationMode,
     this.vacationStartDate,
     this.vacationEndDate,
+    this.workoutUiMode,
+    this.workoutUiModeUserExplicit,
   });
 
   factory User.fromJson(Map<String, dynamic> json) => _$UserFromJson(json);
@@ -691,6 +698,8 @@ class User extends Equatable {
         inVacationMode,
         vacationStartDate,
         vacationEndDate,
+        workoutUiMode,
+        workoutUiModeUserExplicit,
       ];
 
   User copyWith({
@@ -728,6 +737,9 @@ class User extends Equatable {
     bool? inVacationMode,
     String? vacationStartDate,
     String? vacationEndDate,
+    String? workoutUiMode,
+    bool? workoutUiModeUserExplicit,
+    String? workoutWeightUnit,
   }) {
     return User(
       id: id ?? this.id,
@@ -764,6 +776,10 @@ class User extends Equatable {
       inVacationMode: inVacationMode ?? this.inVacationMode,
       vacationStartDate: vacationStartDate ?? this.vacationStartDate,
       vacationEndDate: vacationEndDate ?? this.vacationEndDate,
+      workoutUiMode: workoutUiMode ?? this.workoutUiMode,
+      workoutUiModeUserExplicit:
+          workoutUiModeUserExplicit ?? this.workoutUiModeUserExplicit,
+      workoutWeightUnit: workoutWeightUnit ?? this.workoutWeightUnit,
     );
   }
 }

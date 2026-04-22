@@ -43,6 +43,7 @@ from models.chat import ChatRequest, ChatResponse
 from services.gemini_service import GeminiService
 from services.rag_service import RAGService
 from services.langgraph_service import LangGraphCoachService
+from services.consent_guard import require_ai_processing_consent, should_save_chat_history
 from core.logger import get_logger, set_log_context
 from core.supabase_client import get_supabase
 from core.rate_limiter import limiter
@@ -204,6 +205,11 @@ async def send_message(
     """
     if str(current_user["id"]) != str(chat_request.user_id):
         raise HTTPException(status_code=403, detail="Access denied")
+
+    # Consent gate: refuse to process if the user has disabled personalization.
+    # This replaces the prior placebo toggle that only wrote to SharedPreferences.
+    consent_flags = require_ai_processing_consent(str(chat_request.user_id))
+
     logger.info(f"Chat request from user {chat_request.user_id}: {chat_request.message[:50]}...")
     if chat_request.current_workout:
         logger.debug(f"Current workout: {chat_request.current_workout.name} (id={chat_request.current_workout.id})")
@@ -263,21 +269,27 @@ async def send_message(
             _media_type = chat_request.media_ref.media_type
         elif chat_request.media_refs:
             _media_type = chat_request.media_refs[0].media_type
-        background_tasks.add_task(
-            _retry_task,
-            _save_chat_to_db,
-            chat_request.user_id,
-            chat_request.message,
-            response.message,
-            response.intent,
-            response.agent_type,
-            response.rag_context_used,
-            response.action_data,
-            _coach_persona_id,
-            _media_url,
-            _media_type,
-            task_name="save_chat_to_db",
-        )
+        # Only persist the transcript when the user has opted into chat
+        # history. `consent_flags` was loaded at the top of this handler so
+        # we already have the authoritative value — no extra DB round-trip.
+        if should_save_chat_history(consent_flags):
+            background_tasks.add_task(
+                _retry_task,
+                _save_chat_to_db,
+                chat_request.user_id,
+                chat_request.message,
+                response.message,
+                response.intent,
+                response.agent_type,
+                response.rag_context_used,
+                response.action_data,
+                _coach_persona_id,
+                _media_url,
+                _media_type,
+                task_name="save_chat_to_db",
+            )
+        else:
+            logger.info(f"save_chat_history disabled for user {chat_request.user_id} — skipping transcript write")
 
         background_tasks.add_task(
             _retry_task,
@@ -573,6 +585,10 @@ async def send_message_stream(
     if str(current_user["id"]) != str(chat_request.user_id):
         raise HTTPException(status_code=403, detail="Access denied")
 
+    # Consent gate — must fire before any Gemini call so disabling the
+    # toggle actually stops outbound traffic.
+    consent_flags = require_ai_processing_consent(str(chat_request.user_id))
+
     # Resolve timezone once for all premium gate calls in this request
     _stream_tz = resolve_timezone(request, get_supabase_db(), chat_request.user_id)
 
@@ -601,21 +617,25 @@ async def send_message_stream(
             # Track AI chat usage for daily budget
             background_tasks.add_task(track_premium_usage, chat_request.user_id, "ai_chat", _stream_tz)
 
-            # Schedule background tasks for DB persistence
+            # Schedule background tasks for DB persistence — honor the
+            # user's save_chat_history preference.
             _stream_coach_persona_id = chat_request.ai_settings.coach_persona_id if chat_request.ai_settings else None
-            background_tasks.add_task(
-                _retry_task,
-                _save_chat_to_db,
-                chat_request.user_id,
-                chat_request.message,
-                response.message,
-                response.intent,
-                response.agent_type,
-                response.rag_context_used,
-                response.action_data,
-                _stream_coach_persona_id,
-                task_name="save_chat_to_db",
-            )
+            if should_save_chat_history(consent_flags):
+                background_tasks.add_task(
+                    _retry_task,
+                    _save_chat_to_db,
+                    chat_request.user_id,
+                    chat_request.message,
+                    response.message,
+                    response.intent,
+                    response.agent_type,
+                    response.rag_context_used,
+                    response.action_data,
+                    _stream_coach_persona_id,
+                    task_name="save_chat_to_db",
+                )
+            else:
+                logger.info(f"save_chat_history disabled for user {chat_request.user_id} — skipping transcript write (stream)")
             background_tasks.add_task(
                 _retry_task,
                 _save_chat_analytics,

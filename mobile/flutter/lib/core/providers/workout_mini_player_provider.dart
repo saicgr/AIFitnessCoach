@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/models/workout.dart';
+import '../../data/services/live_activity_service.dart';
 import '../../data/services/workout_notification_service.dart';
 import '../services/posthog_service.dart';
 
@@ -40,6 +41,11 @@ class WorkoutMiniPlayerState {
   /// Whether workout is paused
   final bool isPaused;
 
+  /// True while a modal route (bottom sheet / dialog / popup) is on top of
+  /// the Navigator. The overlay uses this to hide the pill so it doesn't
+  /// z-float above modal sheets. Timer keeps running regardless.
+  final bool suppressedForModal;
+
   const WorkoutMiniPlayerState({
     this.isMinimized = false,
     this.workout,
@@ -52,6 +58,7 @@ class WorkoutMiniPlayerState {
     this.isResting = false,
     this.restSecondsRemaining = 0,
     this.isPaused = false,
+    this.suppressedForModal = false,
   });
 
   WorkoutMiniPlayerState copyWith({
@@ -66,6 +73,7 @@ class WorkoutMiniPlayerState {
     bool? isResting,
     int? restSecondsRemaining,
     bool? isPaused,
+    bool? suppressedForModal,
   }) {
     return WorkoutMiniPlayerState(
       isMinimized: isMinimized ?? this.isMinimized,
@@ -79,6 +87,7 @@ class WorkoutMiniPlayerState {
       isResting: isResting ?? this.isResting,
       restSecondsRemaining: restSecondsRemaining ?? this.restSecondsRemaining,
       isPaused: isPaused ?? this.isPaused,
+      suppressedForModal: suppressedForModal ?? this.suppressedForModal,
     );
   }
 
@@ -183,9 +192,18 @@ class WorkoutMiniPlayerNotifier extends StateNotifier<WorkoutMiniPlayerState> {
     debugPrint('🎬 [MiniPlayer] Closing workout');
     _stopTimer();
     state = state.clear();
-    // Cancel the persistent workout notification
+    // Cancel the persistent workout notification + iOS Live Activity.
     WorkoutNotificationService.instance.cancel();
     WorkoutNotificationService.instance.clearCallbacks();
+    unawaited(LiveActivityService.instance.end());
+  }
+
+  /// Hide the pill while a modal route (bottom sheet / dialog / popup) is
+  /// on the Navigator. Called from `WorkoutMiniPlayerRouteObserver`.
+  /// Does NOT affect the minimize/restore lifecycle — the timer keeps ticking.
+  void setSuppressedForModal(bool suppressed) {
+    if (state.suppressedForModal == suppressed) return;
+    state = state.copyWith(suppressedForModal: suppressed);
   }
 
   /// Toggle pause state
@@ -275,6 +293,7 @@ class WorkoutMiniPlayerNotifier extends StateNotifier<WorkoutMiniPlayerState> {
     _stopTimer();
     WorkoutNotificationService.instance.cancel();
     WorkoutNotificationService.instance.clearCallbacks();
+    unawaited(LiveActivityService.instance.end());
     super.dispose();
   }
 }

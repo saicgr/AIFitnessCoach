@@ -716,6 +716,19 @@ class AuthNotifier extends StateNotifier<AuthState> {
     }
   }
 
+  /// Optimistically flip the in-memory workout weight unit ('kg' or 'lbs')
+  /// without awaiting a server round-trip. Use when a UI affordance needs
+  /// the unit-flip to be reflected across consumers of
+  /// `workoutWeightUnitProvider` instantly (e.g. the active-workout screen's
+  /// displayWeight converter). The caller is responsible for calling
+  /// `updateUserProfile` in the background to persist.
+  void setWorkoutWeightUnitOptimistic(String unit) {
+    final u = state.user;
+    if (u == null) return;
+    final next = u.copyWith(workoutWeightUnit: unit);
+    state = state.copyWith(user: next);
+  }
+
   /// Update user profile fields
   /// [updates] - Map of field names to new values (e.g., {'weight_unit': 'lbs'})
   Future<void> updateUserProfile(Map<String, dynamic> updates) async {
@@ -730,13 +743,40 @@ class AuthNotifier extends StateNotifier<AuthState> {
         data: updates,
       );
 
-      // Refresh user data from server to get updated values
+      // Refresh user data from server, BUT re-apply the fields we just
+      // wrote so a lagging /users GET (read-after-write inconsistency on
+      // the backend) doesn't revert the value the user just picked.
       await refreshUser();
+      if (state.user != null) {
+        state = state.copyWith(user: _applyOverrides(state.user!, updates));
+      }
       debugPrint('✅ [Auth] Updated user profile: $updates');
     } catch (e) {
       debugPrint('❌ [Auth] Update user profile error: $e');
       rethrow;
     }
+  }
+
+  /// Re-apply outgoing `updates` on top of a freshly-fetched user so the
+  /// user's just-toggled preference isn't clobbered by stale server data.
+  /// Only handles keys the UI toggles inline; extend as new toggles need it.
+  app_user.User _applyOverrides(
+    app_user.User u,
+    Map<String, dynamic> updates,
+  ) {
+    var next = u;
+    if (updates.containsKey('workout_weight_unit')) {
+      next = next.copyWith(
+          workoutWeightUnit: updates['workout_weight_unit'] as String?);
+    }
+    if (updates.containsKey('weight_unit')) {
+      next = next.copyWith(weightUnit: updates['weight_unit'] as String?);
+    }
+    if (updates.containsKey('measurement_unit')) {
+      next = next.copyWith(
+          measurementUnit: updates['measurement_unit'] as String?);
+    }
+    return next;
   }
 
   /// Reset coach selection (for start over)

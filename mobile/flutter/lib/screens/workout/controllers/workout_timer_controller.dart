@@ -21,6 +21,12 @@ class WorkoutTimerController {
   int _initialRestDuration = 0;
   bool _isPaused = false;
 
+  // Wall-clock tracking for Live Activity native timer rendering.
+  DateTime? _startedAt;
+  DateTime? _pauseStartedAt;
+  int _totalPausedSeconds = 0;
+  DateTime? _restEndsAt;
+
   /// Current workout time in seconds
   int get workoutSeconds => _workoutSeconds;
 
@@ -32,6 +38,25 @@ class WorkoutTimerController {
 
   /// Whether the timer is paused
   bool get isPaused => _isPaused;
+
+  /// Wall-clock timestamp when the workout timer started. Null until
+  /// [startWorkoutTimer] is called. Used by [LiveActivityService] so the
+  /// Dynamic Island / lock-screen surface can render the clock natively.
+  DateTime? get startedAt => _startedAt;
+
+  /// Total seconds the user has spent in the paused state across all
+  /// pause cycles. Subtract from wall-clock elapsed to get true workout time.
+  int get totalPausedSeconds {
+    if (_isPaused && _pauseStartedAt != null) {
+      return _totalPausedSeconds +
+          DateTime.now().difference(_pauseStartedAt!).inSeconds;
+    }
+    return _totalPausedSeconds;
+  }
+
+  /// Wall-clock timestamp when the current rest period ends. Null when not
+  /// resting. Used for the native countdown in the Live Activity.
+  DateTime? get restEndsAt => _restEndsAt;
 
   /// Rest progress (1.0 = full, 0.0 = done)
   double get restProgress =>
@@ -51,6 +76,12 @@ class WorkoutTimerController {
   void startWorkoutTimer({int initialSeconds = 0}) {
     _workoutTimer?.cancel();
     _workoutSeconds = initialSeconds;
+    // Back-date startedAt so wall-clock elapsed == `initialSeconds` when
+    // restoring from mini-player.
+    _startedAt =
+        DateTime.now().subtract(Duration(seconds: initialSeconds));
+    _pauseStartedAt = null;
+    _totalPausedSeconds = 0;
     _workoutTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (!_isPaused) {
         _workoutSeconds++;
@@ -63,6 +94,7 @@ class WorkoutTimerController {
   void startRestTimer(int seconds) {
     _restSecondsRemaining = seconds;
     _initialRestDuration = seconds;
+    _restEndsAt = DateTime.now().add(Duration(seconds: seconds));
 
     _restTimer?.cancel();
     _restTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
@@ -93,6 +125,7 @@ class WorkoutTimerController {
     // Capture actual rest taken before zeroing (for skip vs complete tracking)
     _actualRestElapsed = _initialRestDuration - _restSecondsRemaining;
     _restSecondsRemaining = 0;
+    _restEndsAt = null;
 
     // Use HapticService for rest complete feedback
     HapticService.restTimerComplete();
@@ -112,18 +145,34 @@ class WorkoutTimerController {
     if (adjustment > 0) {
       _initialRestDuration = (_initialRestDuration + adjustment).clamp(1, 600);
     }
+    // Keep the wall-clock end-time in sync so Live Activity countdown matches.
+    _restEndsAt = DateTime.now().add(Duration(seconds: _restSecondsRemaining));
     onRestTick?.call(_restSecondsRemaining);
     HapticService.selection();
   }
 
   /// Toggle pause state
   void togglePause() {
-    _isPaused = !_isPaused;
+    _applyPause(!_isPaused);
     HapticService.selection();
   }
 
   /// Set pause state
   void setPaused(bool paused) {
+    _applyPause(paused);
+  }
+
+  /// Central pause handling — accumulates wall-clock paused time so
+  /// [totalPausedSeconds] stays accurate for the Live Activity.
+  void _applyPause(bool paused) {
+    if (paused == _isPaused) return;
+    if (paused) {
+      _pauseStartedAt = DateTime.now();
+    } else if (_pauseStartedAt != null) {
+      _totalPausedSeconds +=
+          DateTime.now().difference(_pauseStartedAt!).inSeconds;
+      _pauseStartedAt = null;
+    }
     _isPaused = paused;
   }
 

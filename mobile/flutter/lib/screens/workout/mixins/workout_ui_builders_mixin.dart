@@ -35,8 +35,11 @@ import '../widgets/exercise_info_sheet.dart';
 import '../widgets/fatigue_alert_modal.dart';
 import '../widgets/hydration_quick_actions.dart';
 import '../widgets/rest_timer_overlay.dart';
+import '../widgets/progression_strip.dart';
+import '../widgets/session_detail_sheet.dart';
 import '../widgets/set_tracking_overlay.dart';
 import '../widgets/set_tracking_table.dart';
+import '../../../core/services/pre_set_insight_engine.dart' show SessionSummary;
 import '../widgets/workout_bottom_bar.dart';
 import '../widgets/workout_top_bar_v2.dart';
 import '../widgets/workout_top_overlay.dart';
@@ -117,6 +120,12 @@ mixin WorkoutUIBuildersMixin<T extends StatefulWidget> on State<T> {
   bool get isDoneButtonPressed;
   set isDoneButtonPressed(bool value);
   int? get justCompletedSetIndex;
+
+  // Per-exercise session history, populated once at workout start by a
+  // batch call to /exercise-history/batch. Used by the progression strip
+  // above the set-tracking table. Empty map until load completes — the
+  // strip no-ops in that window.
+  Map<String, List<SessionSummary>> get preSetHistoryByExerciseName;
 
   // State specific to UI builders (not in other mixins)
   bool get showInstructions;

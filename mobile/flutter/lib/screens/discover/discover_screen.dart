@@ -417,9 +417,19 @@ class _RankHeroCard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final s = snapshot;
     final hasRank = s.yourRank > 0;
-    final percentileText = s.yourPercentile > 0
-        ? 'TOP ${(100 - s.yourPercentile).clamp(1, 99).toStringAsFixed(0)}%'
-        : 'JOIN THE BOARD';
+    // If the user has accrued any weekly XP (login streak, meal logs) but
+    // isn't yet ranked (no completed workout this week), soften the pill
+    // from the demanding "JOIN THE BOARD" to "NOT RANKED YET" so it reads
+    // as an in-progress status instead of a blank slate.
+    final String percentileText;
+    if (s.yourPercentile > 0) {
+      percentileText =
+          'TOP ${(100 - s.yourPercentile).clamp(1, 99).toStringAsFixed(0)}%';
+    } else if (!hasRank && s.yourWeeklyXpUnranked > 0) {
+      percentileText = 'NOT RANKED YET';
+    } else {
+      percentileText = 'JOIN THE BOARD';
+    }
 
     // Lifetime XP + level come from the XP system (user_xp table), not the
     // weekly leaderboard. We surface them here so the hero doesn't feel
@@ -525,15 +535,59 @@ class _RankHeroCard extends ConsumerWidget {
               style: TextStyle(fontSize: 13, color: textMuted, fontWeight: FontWeight.w500),
             ),
           ] else ...[
-            Text(
-              'Complete a workout this week',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: textColor),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              'Your rank + percentile appears once you\'re on the board',
-              style: TextStyle(fontSize: 13, color: textMuted, height: 1.3),
-            ),
+            // Surface the user's own weekly progress even though they're
+            // not on the board yet. Login streak + meal XP still count
+            // — the board gate is "1 completed workout this week", not
+            // "any weekly XP". Shows "You: 5 XP" so they feel seen.
+            if (s.yourWeeklyXpUnranked > 0) ...[
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.baseline,
+                textBaseline: TextBaseline.alphabetic,
+                children: [
+                  Text(
+                    'You · ',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                      color: textMuted,
+                    ),
+                  ),
+                  Text(
+                    '${s.yourWeeklyXpUnranked}',
+                    style: TextStyle(
+                      fontSize: 28,
+                      fontWeight: FontWeight.w900,
+                      color: textColor,
+                      height: 1.0,
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    'XP this week',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: textMuted,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 6),
+              Text(
+                'Complete a workout to climb the board',
+                style: TextStyle(fontSize: 13, color: textMuted, height: 1.3),
+              ),
+            ] else ...[
+              Text(
+                'Complete a workout this week',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: textColor),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'Your rank + percentile appears once you\'re on the board',
+                style: TextStyle(fontSize: 13, color: textMuted, height: 1.3),
+              ),
+            ],
           ],
           if (s.nextTier != null && s.unitsToNext > 0) ...[
             const SizedBox(height: 12),

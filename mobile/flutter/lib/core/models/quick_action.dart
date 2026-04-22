@@ -4,7 +4,7 @@ enum QuickActionBehavior {
   route,
   waterQuickAdd,
   foodLog,
-  foodScan,   // Opens LogMealSheet and immediately launches multi-image scan
+  foodScan,   // Opens LogMealSheet and immediately launches multi-image food scan
   menuScan,   // Opens LogMealSheet and immediately launches menu scan
   weightLog,
   moodLog,
@@ -49,7 +49,10 @@ const quickActionRegistry = <String, QuickAction>{
   'scan_food': QuickAction(
     id: 'scan_food',
     label: 'Scan Food',
-    icon: Icons.camera_alt_outlined,
+    // Distinct from Progress Photo (accessibility_new) and the bottom-bar
+    // camera button — "document scanner" reads as "scan this thing" in the
+    // Material set and pairs with the amber Scan Menu entry.
+    icon: Icons.document_scanner_outlined,
     color: Color(0xFF16A34A),
     behavior: QuickActionBehavior.foodScan,
   ),
@@ -69,8 +72,11 @@ const quickActionRegistry = <String, QuickAction>{
   ),
   'photo': QuickAction(
     id: 'photo',
+    // Keep this label ≤ 8 chars — the quick-actions grid cell (~65dp wide
+    // at fontSize 10) ellipsizes anything longer. Pair with the purple
+    // accessibility-stance icon so the "progress photo" meaning still reads.
     label: 'Photo',
-    icon: Icons.camera_alt_outlined,
+    icon: Icons.accessibility_new_outlined,
     color: Color(0xFFA855F7),
     behavior: QuickActionBehavior.route,
     route: '/stats?openPhoto=true',
@@ -218,10 +224,15 @@ const quickActionRegistry = <String, QuickAction>{
   ),
 };
 
+// Home shortcut bar layout: 2 rows × 5 slots.
+//   Row 1 (slots 1-5): first 5 entries below.
+//   Row 2 (slots 6-9): entries 6-9. Slot 10 is the fixed "More" tile.
+// Anything beyond index 8 lives in the full QuickActionsSheet (reached via More).
 const defaultQuickActionOrder = [
   // COMING SOON: 'fasting' removed from default order — re-add when fasting feature launches
-  'quick_workout', 'food', 'water', 'chat', 'weight', 'photo', 'measure', 'mood',
-  'scan_food', 'scan_menu',
-  'history', 'steps', 'workout', 'programs', 'library', 'settings', 'schedule', 'habits',
+  'quick_workout', 'food', 'water', 'chat', 'scan_food',   // row 1 (slots 1-5)
+  'weight', 'photo', 'measure', 'scan_menu',                // row 2 (slots 6-9); slot 10 = More
+  'mood', 'history', 'steps', 'workout', 'programs',
+  'library', 'settings', 'schedule', 'habits',
   'progress', 'stats', 'achievements', 'hydration', 'summaries',
 ];

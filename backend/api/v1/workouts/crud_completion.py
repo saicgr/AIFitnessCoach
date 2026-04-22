@@ -522,12 +522,34 @@ async def complete_workout(
             duration_seconds=duration_seconds,
         )
 
+        # Server-side guaranteed XP award (fixes the leaderboard "completed
+        # workout but 0 XP" bug — previously the Flutter client was the sole
+        # caller of /xp/award-goal-xp, and any network/app-crash between
+        # /complete and that call silently robbed the user of their 100 XP).
+        # Mirrors the dedup-by-source-and-day logic from api/v1/xp.py so the
+        # client's subsequent call becomes a harmless no-op.
+        xp_awarded_flag = False
+        xp_amount_awarded = 0
+        try:
+            xp_awarded_flag, xp_amount_awarded = _award_workout_complete_xp(
+                supabase=supabase,
+                request=request,
+                db=db,
+                user_id=user_id,
+                workout_id=workout_id,
+            )
+        except Exception as xp_err:
+            # XP award is non-critical to workout completion. Log, don't raise.
+            logger.warning(f"[XP] inline workout_complete award failed: {xp_err}", exc_info=True)
+
         return WorkoutCompletionResponse(
             workout=workout, personal_records=detected_prs,
             performance_comparison=performance_comparison,
             strength_scores_updated=True, fitness_score_updated=True,
             completion_method=completion_method, message=message,
             is_first_workout=is_first_workout,  # W1: trigger forecast sheet
+            xp_awarded=xp_awarded_flag,
+            xp_amount=xp_amount_awarded,
         )
 
     except HTTPException:
@@ -535,6 +557,108 @@ async def complete_workout(
     except Exception as e:
         logger.error(f"Failed to complete workout: {e}", exc_info=True)
         raise safe_internal_error(e, "crud")
+
+
+def _award_workout_complete_xp(
+    *, supabase, request: Request, db, user_id: str, workout_id: str,
+) -> tuple[bool, int]:
+    """
+    Guarantee a `workout_complete` XP transaction exists for today.
+
+    Returns `(awarded_this_call, xp_amount)`:
+      - `(True, amount)` if this call inserted the transaction
+      - `(False, 0)` if already claimed today (dedup hit) or on error
+      - `(False, 0)` if the RPC didn't produce a transaction row
+
+    Idempotency:
+      - Source string `daily_goal_workout_complete` + user-local "today"
+        window is the dedup key (mirrors api/v1/xp.py `award_goal_xp`).
+      - If the Flutter client also calls POST /xp/award-goal-xp after
+        /complete returns, that call will hit the same dedup and return
+        `already_claimed=True` — no double-award.
+
+    Also ensures a `user_xp` seed row exists so the `award_xp` RPC can
+    increment `total_xp`.
+    """
+    from core.timezone_utils import (
+        resolve_timezone,
+        get_user_today,
+        local_date_to_utc_range,
+    )
+
+    try:
+        user_tz = resolve_timezone(request, db, user_id)
+        today_str = get_user_today(user_tz)
+        today_start_iso, today_end_iso = local_date_to_utc_range(today_str, user_tz)
+
+        source = "daily_goal_workout_complete"
+        xp_amount = 100  # matches goal_xp_amounts["workout_complete"] in xp.py
+
+        # Seed user_xp row so award_xp RPC can update it
+        try:
+            supabase.table("user_xp").upsert(
+                {
+                    "user_id": user_id,
+                    "total_xp": 0,
+                    "current_level": 1,
+                    "title": "Novice",
+                    "trust_level": 1,
+                },
+                on_conflict="user_id",
+                ignore_duplicates=True,
+            ).execute()
+        except Exception as seed_err:
+            logger.warning(f"[XP] user_xp seed failed: {seed_err}")
+
+        # Dedup check: already awarded today?
+        existing = (
+            supabase.table("xp_transactions")
+            .select("id")
+            .eq("user_id", user_id)
+            .eq("source", source)
+            .gte("created_at", today_start_iso)
+            .lt("created_at", today_end_iso)
+            .execute()
+        )
+        if existing.data and len(existing.data) > 0:
+            logger.info(f"[XP] workout_complete already claimed today for user {user_id}")
+            return (False, 0)
+
+        # Call award_xp RPC (trust_level-aware; returns updated user_xp record)
+        supabase.rpc(
+            "award_xp",
+            {
+                "p_user_id": user_id,
+                "p_xp_amount": xp_amount,
+                "p_source": source,
+                "p_source_id": workout_id,
+                "p_description": "Daily goal: workout complete",
+                "p_is_verified": True,  # server-awarded = verified
+            },
+        ).execute()
+
+        # Read back the actual amount (accounts for trust-level multiplier)
+        actual_amount = xp_amount
+        try:
+            recent = (
+                supabase.table("xp_transactions")
+                .select("xp_amount")
+                .eq("user_id", user_id)
+                .eq("source", source)
+                .order("created_at", desc=True)
+                .limit(1)
+                .execute()
+            )
+            if recent.data:
+                actual_amount = int(recent.data[0].get("xp_amount") or xp_amount)
+        except Exception:
+            pass
+
+        logger.info(f"[XP] awarded {actual_amount} XP for workout_complete (user={user_id}, workout={workout_id})")
+        return (True, actual_amount)
+    except Exception as e:
+        logger.warning(f"[XP] _award_workout_complete_xp failed: {e}", exc_info=True)
+        return (False, 0)
 
 
 async def _maybe_send_first_workout_email(

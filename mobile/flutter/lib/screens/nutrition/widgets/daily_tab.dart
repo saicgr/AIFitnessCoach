@@ -40,6 +40,10 @@ class DailyTab extends ConsumerStatefulWidget {
   final VoidCallback? onSwitchToHydrationTab;
   final bool isDark;
   final bool calmMode;
+  /// When false, the streak / "start your streak" banner is suppressed —
+  /// showing a "log a meal today" CTA while the user is viewing a past day
+  /// is nonsensical.
+  final bool isViewingToday;
 
   const DailyTab({
     super.key,
@@ -47,6 +51,7 @@ class DailyTab extends ConsumerStatefulWidget {
     this.summary,
     this.targets,
     this.micronutrients,
+    this.isViewingToday = true,
     required this.onRefresh,
     required this.onLogMeal,
     required this.onDeleteMeal,
@@ -375,7 +380,10 @@ class _DailyTabState extends ConsumerState<DailyTab>
                 //    was buried) to this top-of-Daily position so users see
                 //    their streak every time they open the Nutrition tab.
                 //    Settings now holds only the Weekly Goal toggle.
-                if (widget.userId.isNotEmpty) ...[
+                //    Hidden on historical dates: "Log a meal today to get
+                //    started" is wrong copy when the user is viewing
+                //    yesterday or earlier.
+                if (widget.userId.isNotEmpty && widget.isViewingToday) ...[
                   NutritionStreakCard(
                     userId: widget.userId,
                     isDark: widget.isDark,

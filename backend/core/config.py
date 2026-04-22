@@ -22,10 +22,16 @@ class Settings(BaseSettings):
     gemini_model: str = "gemini-3-flash-preview"  # Can be overridden by GEMINI_MODEL env var
     gemini_embedding_model: str = "gemini-embedding-001"
     # Vertex AI (set GCP_PROJECT_ID and GCP_LOCATION env vars to enable)
+    # Production deployments MUST configure Vertex AI — the developer Gemini
+    # API does not guarantee zero data retention for prompts. See
+    # `core/gemini_client.py::get_genai_client`.
     gcp_project_id: Optional[str] = None
     gcp_location: str = "global"
     # Base64-encoded service account JSON
     gcp_credentials_json_b64: Optional[str] = None
+    # Emergency escape hatch. Never leave this true. Only flip for a short
+    # window under auditor supervision (e.g. Vertex outage).
+    allow_gemini_dev_api_in_prod: bool = False
     gemini_max_tokens: int = 2500
     gemini_temperature: float = 0.7
     # Context caching for faster workout generation (TTL in seconds, default 1 hour)

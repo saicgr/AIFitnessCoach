@@ -603,9 +603,29 @@ async def log_food_direct(body: LogDirectRequest, request: Request, current_user
             if value is not None:
                 micronutrients[field] = value
 
-        # Resolve timezone for logged_at timestamp
+        # Resolve timezone for logged_at timestamp.
+        # Client-supplied logged_at wins (used when user is viewing a past date
+        # in the Nutrition tab — the log must belong to that date, not "now").
+        # Guard against the future and ancient history: reject anything more
+        # than 1 hour ahead or older than 30 days.
         user_tz_logged_at = None
-        if request:
+        if body.logged_at:
+            try:
+                from datetime import datetime as _dt, timezone as _tz, timedelta as _td
+                parsed = _dt.fromisoformat(body.logged_at.replace("Z", "+00:00"))
+                if parsed.tzinfo is None:
+                    parsed = parsed.replace(tzinfo=_tz.utc)
+                now_utc = _dt.now(_tz.utc)
+                if parsed <= now_utc + _td(hours=1) and parsed >= now_utc - _td(days=30):
+                    user_tz_logged_at = body.logged_at
+                else:
+                    logger.warning(
+                        f"[LOG-DIRECT] Rejecting out-of-range logged_at={body.logged_at}; "
+                        f"falling back to server now"
+                    )
+            except Exception as e:
+                logger.warning(f"[LOG-DIRECT] Invalid logged_at '{body.logged_at}': {e}")
+        if not user_tz_logged_at and request:
             user_tz = resolve_timezone(request, db, body.user_id)
             user_tz_logged_at = get_user_now_iso(user_tz)
 

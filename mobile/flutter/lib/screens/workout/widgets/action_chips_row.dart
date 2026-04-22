@@ -352,6 +352,15 @@ class WorkoutActionChips {
     icon: Icons.more_horiz,
   );
 
+  /// One-tap "Adjust Today" — opens soreness/energy/time-budget sheet which
+  /// calls POST /workouts/{id}/quick-adjust. Surfaced on the active workout
+  /// header row so users don't have to find this via chat during a set.
+  static const adjustToday = ActionChipData(
+    id: 'adjust_today',
+    label: 'Adjust',
+    icon: Icons.tune_outlined,
+  );
+
   static ActionChipData leftRight({bool isActive = false}) => ActionChipData(
         id: 'lr',
         label: 'L/R',

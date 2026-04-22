@@ -64,13 +64,20 @@ def _setup_credentials() -> None:
 
 
 def get_genai_client() -> genai.Client:
-    """Return a google.genai Client. Uses Vertex AI if configured, else API key."""
+    """Return a google.genai Client.
+
+    Production deployments MUST use Vertex AI (zero data retention — prompts
+    are never retained or used to improve models). The developer Gemini API
+    key path is reserved for local development and will raise in production
+    unless `allow_gemini_dev_api_in_prod=True` is explicitly set (used only
+    for emergency debugging with auditor approval).
+    """
     settings = get_settings()
 
     if settings.gcp_project_id:
         _setup_credentials()
         logger.info(
-            f"Using Vertex AI: project={settings.gcp_project_id}, "
+            f"Using Vertex AI (ZDR): project={settings.gcp_project_id}, "
             f"location={settings.gcp_location}"
         )
         return genai.Client(
@@ -79,6 +86,23 @@ def get_genai_client() -> genai.Client:
             location=settings.gcp_location,
         )
 
+    # Fail closed in production. The developer Gemini API may ingest
+    # prompts for service improvement depending on account terms; we
+    # cannot accept that exposure silently for real user data.
+    if settings.environment == "production" and not getattr(
+        settings, "allow_gemini_dev_api_in_prod", False
+    ):
+        raise RuntimeError(
+            "Refusing to initialize Gemini client in production without "
+            "Vertex AI configuration. Set GCP_PROJECT_ID + GCP_LOCATION "
+            "(+ GCP_CREDENTIALS_JSON_B64) so all traffic routes through "
+            "the zero-data-retention Vertex endpoint."
+        )
+
+    logger.warning(
+        "Gemini client falling back to developer API key. This is intended "
+        "for local development only — never for production user data."
+    )
     return genai.Client(api_key=settings.gemini_api_key)
 
 

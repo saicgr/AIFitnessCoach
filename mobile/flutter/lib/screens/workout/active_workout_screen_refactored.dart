@@ -10,6 +10,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:video_player/video_player.dart';
+import 'package:wakelock_plus/wakelock_plus.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../core/models/set_progression.dart';
@@ -19,12 +20,16 @@ import '../../core/providers/tts_provider.dart';
 import '../../core/providers/user_provider.dart';
 import '../../core/providers/weight_increments_provider.dart';
 import '../../core/providers/window_mode_provider.dart';
+import '../../core/providers/active_workout_phase_provider.dart';
 import '../../core/providers/workout_mini_player_provider.dart';
+import '../../core/providers/workout_ui_mode_provider.dart';
 import '../../core/services/fatigue_service.dart';
 import '../../core/services/posthog_service.dart';
 import '../../core/services/pre_set_insight_engine.dart';
 import '../../core/services/weight_suggestion_service.dart';
+import '../../core/services/workout_tour_steps.dart';
 import '../../core/theme/accent_color_provider.dart';
+import '../../widgets/app_tour/app_tour_controller.dart';
 import '../../core/utils/default_weights.dart';
 import '../../data/models/exercise.dart';
 import '../../data/models/parsed_exercise.dart';
@@ -33,8 +38,10 @@ import '../../data/models/smart_weight_suggestion.dart';
 import '../../data/models/workout.dart';
 import '../../data/providers/gym_profile_provider.dart';
 import '../../data/repositories/auth_repository.dart';
+import '../../data/repositories/workout_repository.dart';
 import '../../data/services/api_client.dart';
 import '../../data/services/exercise_history_batch_service.dart';
+import '../../data/services/live_activity_service.dart';
 import '../../data/services/pr_detection_service.dart';
 import '../../data/services/workout_notification_service.dart';
 import '../../screens/onboarding/widgets/foldable_quiz_scaffold.dart';
@@ -44,6 +51,7 @@ import 'controllers/workout_timer_controller.dart';
 import 'foldable/foldable_warmup_layout.dart';
 import 'models/workout_state.dart';
 import 'widgets/action_chips_row.dart';
+import 'widgets/quick_adjust_sheet.dart';
 import 'widgets/ai_input_preview_sheet.dart';
 import 'widgets/barbell_plate_indicator.dart';
 import 'widgets/exercise_add_sheet.dart';
@@ -185,7 +193,75 @@ class _ActiveWorkoutScreenState
     );
   }
 
-  // Phase state
+  /// Override of [WorkoutFlowMixin.logAllSetPerformances] that stamps every
+  /// set-performance record with `logging_mode: 'advanced'`.
+  ///
+  /// The bulk endpoint payload is built locally (not from SetLog.toJson), so
+  /// we re-implement the record construction here and add the tier tag. Easy
+  /// and Simple screens are expected to provide their own overrides with
+  /// `'easy'` / `'simple'` respectively — that's how product measures tier
+  /// adoption via `performance_logs.logging_mode` without touching the
+  /// shared SetLoggingMixin path.
+  @override
+  Future<void> logAllSetPerformances(String workoutLogId, String userId) async {
+    final workoutRepo = ref.read(workoutRepositoryProvider);
+
+    final records = <Map<String, dynamic>>[];
+    for (int i = 0; i < exercises.length; i++) {
+      final exercise = exercises[i];
+      final sets = completedSets[i] ?? [];
+      final pattern = _exerciseProgressionPattern[i] ??
+          SetProgressionPattern.pyramidUp;
+
+      for (int j = 0; j < sets.length; j++) {
+        final setLog = sets[j];
+        final setTarget = exercise.getTargetForSet(j + 1);
+        records.add({
+          'workout_log_id': workoutLogId,
+          'user_id': userId,
+          'exercise_id':
+              exercise.exerciseId ?? exercise.libraryId ?? exercise.name,
+          'exercise_name': exercise.name,
+          'set_number': j + 1,
+          'reps_completed': setLog.reps,
+          'weight_kg': setLog.weight,
+          'is_completed': true,
+          'set_type': 'working',
+          if (setLog.rpe != null) 'rpe': setLog.rpe!.toDouble(),
+          if (setLog.rir != null) 'rir': setLog.rir,
+          if (setLog.notes != null && setLog.notes!.isNotEmpty)
+            'notes': setLog.notes,
+          if (setLog.aiInputSource != null && setLog.aiInputSource!.isNotEmpty)
+            'ai_input_source': setLog.aiInputSource,
+          'target_weight_kg':
+              setTarget?.targetWeightKg ?? exercise.weight?.toDouble(),
+          if ((setTarget?.targetReps ?? exercise.reps) != null)
+            'target_reps': setTarget?.targetReps ?? exercise.reps,
+          'progression_model': pattern.storageKey,
+          if (setLog.durationSeconds != null)
+            'set_duration_seconds': setLog.durationSeconds,
+          if (setLog.restDurationSeconds != null)
+            'rest_duration_seconds': setLog.restDurationSeconds,
+          // Tier analytics — Advanced viewport always tags as 'advanced'.
+          // Legacy rows (pre-tier) will remain NULL in the DB and are
+          // treated as 'advanced' in analytics per the plan.
+          'logging_mode': setLog.loggingMode ?? 'advanced',
+        });
+      }
+    }
+
+    if (records.isEmpty) {
+      debugPrint('💪 No sets to log');
+      return;
+    }
+    final inserted = await workoutRepo.logSetPerformancesBulk(records);
+    debugPrint(
+      '💪 Bulk-logged $inserted / ${records.length} set performances (advanced)',
+    );
+  }
+
+  // Phase state — default to warmup. initState overrides to `active` when
+  // a lower tier (Easy/Simple) has already passed warmup for this workout.
   WorkoutPhase _currentPhase = WorkoutPhase.warmup;
 
   // Workout state
@@ -347,6 +423,13 @@ class _ActiveWorkoutScreenState
   // Built once in initState and when exercises change, avoids repeated iteration/sorting
   Map<int, List<int>> _supersetIndicesCache = {};
 
+  // ── Tier-aware tour subscriptions ──
+  // Persists `tour_seen_<tier>` after the current tier's walkthrough finishes.
+  ProviderSubscription<AppTourState>? _tourSeenSub;
+  // Watches workout-UI tier changes; if the user flips tier mid-tour, aborts
+  // the current tour and re-fires the new tier's tour (if unseen).
+  ProviderSubscription<WorkoutUiModeState>? _tierSwitchSub;
+
   // ── Mixin @override getters/setters ──
   @override PRDetectionService get prDetectionService => _prDetectionService;
   @override List<WorkoutExercise> get exercises => _exercises;
@@ -421,6 +504,7 @@ class _ActiveWorkoutScreenState
   @override bool get isLoadingMedia => _isLoadingMedia;
   @override set isLoadingMedia(bool value) => _isLoadingMedia = value;
   @override Map<int, List<Map<String, dynamic>>> get previousSets => _previousSets;
+  @override Map<String, List<SessionSummary>> get preSetHistoryByExerciseName => _preSetHistoryByExerciseName;
   @override Map<int, RepProgressionType> get repProgressionPerExercise => _repProgressionPerExercise;
   @override bool get unitInitialized => _unitInitialized;
   @override SetLog? get pendingSetLog => _pendingSetLog;
@@ -501,6 +585,12 @@ class _ActiveWorkoutScreenState
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    // If the user swapped into Advanced mid-workout (from Easy / Simple —
+    // neither of which shows warmup) skip straight to the active phase so
+    // warmup doesn't re-trigger.
+    if (ref.read(activeWorkoutWarmupDoneProvider)) {
+      _currentPhase = WorkoutPhase.active;
+    }
     _initializeWorkout();
     loadWarmupAndStretches();
     _startWarmupLoadingTimeout();
@@ -512,9 +602,55 @@ class _ActiveWorkoutScreenState
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       if (!mounted) return;
       // initBleHrAutoReconnect();
+      _attachTierTourListeners();
       triggerWorkoutTour();
       _prefetchPreSetHistory();
     });
+  }
+
+  /// Wires the two tier-aware tour listeners:
+  /// 1. [WorkoutTourSeenListener] — writes `tour_seen_<tier>` when a tier
+  ///    tour is dismissed by the user (completion or Skip).
+  /// 2. A [ref.listenManual] on [workoutUiModeProvider] that aborts any
+  ///    in-flight tier tour when the user flips tier, and re-fires the new
+  ///    tier's tour if that tier's flag is still unseen.
+  ///
+  /// Both subscriptions are closed in [dispose].
+  void _attachTierTourListeners() {
+    _tourSeenSub = WorkoutTourSeenListener.attach(ref);
+
+    _tierSwitchSub = ref.listenManual<WorkoutUiModeState>(
+      workoutUiModeProvider,
+      (previous, next) async {
+        // Only act on actual tier changes — not loading / explicit-flag
+        // mutations.
+        if (previous == null) return;
+        if (previous.mode == next.mode) return;
+
+        final aborted = WorkoutTourService.abortIfTierTourRunning(ref);
+        // If nothing was aborted AND the new tier has already been seen,
+        // there's nothing to do — don't spam the user with a second tour on
+        // a simple settings tweak.
+        if (!mounted) return;
+        final alreadySeen = await WorkoutTourService.hasSeen(next.mode);
+        if (alreadySeen) {
+          if (aborted != null) {
+            debugPrint(
+              '🔍 [WorkoutTour] Aborted ${aborted.asString} tour; '
+              'new tier ${next.mode.asString} already seen — no re-fire',
+            );
+          }
+          return;
+        }
+
+        // Give the controller a beat to settle (abort → state = default),
+        // then re-fire for the new tier.
+        await Future<void>.delayed(const Duration(milliseconds: 50));
+        if (!mounted) return;
+        await WorkoutTourService.maybeShowForTier(ref, next.mode);
+      },
+      fireImmediately: false,
+    );
   }
 
   /// Batch-fetch last-N-sessions history for every exercise in this workout.
@@ -702,6 +838,21 @@ class _ActiveWorkoutScreenState
     // Start workout timer (restore time if returning from mini player)
     _timerController.startWorkoutTimer(initialSeconds: isRestoring ? miniPlayerState.workoutSeconds : 0);
 
+    // Keep the screen on while working out — ignore failure (plugin missing on
+    // non-mobile platforms, permission denied, etc.) so we never block the
+    // workout from starting.
+    unawaited(WakelockPlus.enable().catchError((e) {
+      debugPrint('⚠️ [Wakelock] enable failed: $e');
+    }));
+
+    // Start the Live Activity (iOS Dynamic Island) / upgraded ongoing
+    // notification (Android). Uses current state — will be refreshed on every
+    // set/exercise/pause/rest transition via updateWorkoutNotification().
+    final liveActivityState = buildLiveActivityState();
+    if (liveActivityState != null) {
+      unawaited(LiveActivityService.instance.start(liveActivityState));
+    }
+
     // Initialize and show the persistent workout notification
     _initWorkoutNotification();
 
@@ -740,6 +891,10 @@ class _ActiveWorkoutScreenState
             rpe: (map['rpe'] as num?)?.toInt(),
             rir: (map['rir'] as num?)?.toInt(),
             aiInputSource: map['aiInputSource'] as String?,
+            // Mini-player restore → user was in Advanced when they minimized
+            // (this screen is the Advanced viewport). Tag accordingly so the
+            // logging_mode on the bulk POST is correct.
+            loggingMode: (map['loggingMode'] as String?) ?? 'advanced',
           )).toList();
         }
       }
@@ -763,17 +918,26 @@ class _ActiveWorkoutScreenState
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     // When the user minimized (instead of ending), the mini-player provider
-    // now owns the notification lifecycle — don't cancel it here or the
-    // ongoing notification will disappear the instant the screen pops.
+    // now owns the notification / Live Activity lifecycle — don't cancel it
+    // here or the ongoing surface will disappear the instant the screen pops.
     final minimized = ref.read(workoutMiniPlayerProvider).isMinimized;
     if (!minimized) {
       cancelWorkoutNotification();
+      unawaited(LiveActivityService.instance.end());
     }
+    // Release screen-wake regardless of minimize state — if the user
+    // minimized to the mini-player, the mini-player screen takes over
+    // wakelock management if it needs to.
+    unawaited(WakelockPlus.disable().catchError((e) {
+      debugPrint('⚠️ [Wakelock] disable failed: $e');
+    }));
     _timerController.dispose();
     _videoController?.dispose();
     _repsController.dispose();
     _repsRightController.dispose();
     _weightController.dispose();
+    _tourSeenSub?.close();
+    _tierSwitchSub?.close();
     super.dispose();
   }
 
@@ -916,8 +1080,16 @@ class _ActiveWorkoutScreenState
 
     try {
       final apiClient = ref.read(apiClientProvider);
+      // Resolve the user goal from the provider BEFORE the userId await so we
+      // never touch `ref` again after a suspension point. Without this, if the
+      // user pops/minimizes the workout during getUserId(), the second
+      // ref.read for `activeGymProfileProvider` throws ref-after-disposed.
+      final goal = TrainingGoal.fromString(
+        ref.read(activeGymProfileProvider)?.goals.firstOrNull ?? 'hypertrophy',
+      );
+
       final userId = await apiClient.getUserId();
-      if (userId == null) return;
+      if (userId == null || !mounted) return;
 
       final suggestion = await WeightSuggestionService.getSmartWeight(
         dio: apiClient.dio,
@@ -925,9 +1097,7 @@ class _ActiveWorkoutScreenState
         exerciseId: exercise.exerciseId ?? exercise.libraryId ?? '',
         exerciseName: exercise.name,
         targetReps: exercise.reps ?? 10,
-        goal: TrainingGoal.fromString(
-          ref.read(activeGymProfileProvider)?.goals.firstOrNull ?? 'hypertrophy',
-        ),
+        goal: goal,
         equipment: exercise.equipment ?? 'dumbbell',
       );
 
@@ -1017,7 +1187,11 @@ class _ActiveWorkoutScreenState
                 exerciseName: exercise.name,);
       }
 
-      // Create a SetLog with AI input source for tracking
+      // Create a SetLog with AI input source for tracking.
+      // `loggingMode: 'advanced'` tags this record as belonging to the
+      // Advanced-tier UI for the cross-tier analytics the plan calls for
+      // (performance_logs.logging_mode column). Easy/Simple mirror this
+      // in their own tier paths.
       final setLog = SetLog(
         reps: aiSet.reps,
         weight: weight,
@@ -1025,6 +1199,7 @@ class _ActiveWorkoutScreenState
         targetReps: exercise.reps ?? aiSet.reps,
         notes: aiSet.notes,
         aiInputSource: aiSet.originalInput.isNotEmpty ? aiSet.originalInput : null,
+        loggingMode: 'advanced',
       );
 
       // Add to completed sets
@@ -1218,8 +1393,20 @@ class _ActiveWorkoutScreenState
         actualReps = completedSets[i].reps;
       }
 
-      // Calculate RIR: use AI value if available, otherwise calculate algorithmically
+      // Calculate RIR: use AI value if available, otherwise derive from RPE,
+      // otherwise fall back to the algorithmic pyramid.
+      //
+      // RIR ≈ 10 − RPE (standard RP-Strength mapping). The AI often emits
+      // `target_rpe` (1–10) but not `target_rir`, so without this mapping the
+      // pyramid intent gets dropped on the floor for Walking / Hollow Body
+      // Hold / anything where the prompt chose RPE over RIR.
+      int? rirFromRpe;
+      if (setTarget?.targetRpe != null && setTarget!.targetRpe! > 0) {
+        final rpe = setTarget.targetRpe!;
+        rirFromRpe = (10 - rpe).clamp(0, 5);
+      }
       final calculatedRir = setTarget?.targetRir ??
+          rirFromRpe ??
           _calculateRir(setTarget?.setType, currentWorkingIndex, totalWorkingSets);
 
       // Get actual RIR from completed set log
@@ -1228,11 +1415,25 @@ class _ActiveWorkoutScreenState
         actualRir = completedSets[i].rir;
       }
 
+      // Detect bodyweight / timed so the TARGET cell renders the right shape.
+      final eqLower = (exercise.equipment ?? '').toLowerCase();
+      final isBodyweightEx = eqLower.contains('bodyweight') ||
+          eqLower.contains('body weight') ||
+          eqLower == 'none' ||
+          eqLower == 'no equipment';
+      final isTimedEx = exercise.isTimedExercise;
+
       rows.add(SetRowData(
         setNumber: i + 1,
         isWarmup: setTarget?.isWarmup ?? false,
         isCompleted: isCompleted,
         isActive: isActive,
+        isTimedExercise: isTimedEx,
+        isBodyweight: isBodyweightEx,
+        // Per-set hold target (planks, hollow body) — the true target.
+        targetHoldSeconds: setTarget?.targetHoldSeconds ?? exercise.holdSeconds,
+        // Exercise-level duration (cardio-style warmups like Walking).
+        targetDurationSeconds: exercise.durationSeconds,
         // TARGET weight: use history → AI (if reliable) → equipment default
         // targetWeight is in kg internally — display layer converts to user's unit
         targetWeight: (() {
@@ -1279,25 +1480,55 @@ class _ActiveWorkoutScreenState
   }
 
   // ── Pre-Set Coaching Banner ─────────────────────────────────────────────
+  //
+  // The engine now exposes a per-set API (`PreSetInsightEngine.insightForSet`)
+  // that returns a fresh insight for every focal row — not just pre-Set-1.
+  // Behaviour summary:
+  //   • Set 0 (pre-Set-1): full exercise-level insight (same patterns as
+  //     before — "averaged 9 reps last session below 10-12 range, lighten up").
+  //   • Set N > 0: per-set signals (RIR-drift on that specific set last
+  //     session, rep-range miss on that set, PR-near using current stepper
+  //     context). Returns null if nothing to say → banner collapses.
+  //
+  // Caches and dismiss-tracking are now keyed by (exerciseIndex, setIndex)
+  // so dismissing set 3's banner doesn't silence set 4, and the cache never
+  // bleeds between sets. `_preSetHistoryByExerciseName` is still prefetched
+  // once per workout by `_prefetchPreSetHistory()` — no extra network calls.
+
+  /// Returns the 0-based index of the *next* working set to log for the
+  /// given exercise. Warmup sets don't advance this counter — they live on
+  /// the rail but don't gate the banner.
+  int _nextWorkingSetIndex(int exerciseIndex) {
+    final logs = _completedSets[exerciseIndex] ?? const <SetLog>[];
+    int count = 0;
+    for (final l in logs) {
+      if (l.setType.toLowerCase() == 'warmup') continue;
+      if (l.reps <= 0) continue;
+      count++;
+    }
+    return count;
+  }
 
   @override
   String? preSetBannerMessageFor(int exerciseIndex) {
     // History still loading — skip silently; will pop in when ready.
     if (!_preSetHistoryLoaded) return null;
-    // User dismissed for this exercise this session.
-    if (_dismissedPreSetBannerIndices.contains(exerciseIndex)) return null;
     if (exerciseIndex < 0 || exerciseIndex >= _exercises.length) return null;
-    // Hide once the first working set has been logged — banner is strictly
-    // "pre-Set-1". Warmup sets don't count toward this.
-    final logs = _completedSets[exerciseIndex] ?? const <SetLog>[];
-    final workingLogged = logs.any((l) =>
-        l.setType.toLowerCase() != 'warmup' && l.reps > 0);
-    if (workingLogged) return null;
     // Setting toggle off → no banner.
     if (!ref.read(preSetInsightEnabledProvider)) return null;
 
-    if (_cachedPreSetCopy.containsKey(exerciseIndex)) {
-      return _cachedPreSetCopy[exerciseIndex];
+    final setIndex = _nextWorkingSetIndex(exerciseIndex);
+    // Once the user finishes every set, the banner collapses permanently —
+    // there's no "next set" to coach.
+    final total = _totalSetsPerExercise[exerciseIndex] ?? 0;
+    if (total > 0 && setIndex >= total) return null;
+
+    // Per-set dismiss: dismissing set 3's banner doesn't silence set 4.
+    final dismissKey = exerciseIndex * 100 + setIndex;
+    if (_dismissedPreSetBannerIndices.contains(dismissKey)) return null;
+
+    if (_cachedPreSetCopy.containsKey(dismissKey)) {
+      return _cachedPreSetCopy[dismissKey];
     }
 
     final exercise = _exercises[exerciseIndex];
@@ -1319,7 +1550,7 @@ class _ActiveWorkoutScreenState
       tmax = exercise.reps;
     }
     if (tmin == null || tmax == null) {
-      _cachedPreSetCopy[exerciseIndex] = null;
+      _cachedPreSetCopy[dismissKey] = null;
       return null;
     }
 
@@ -1346,14 +1577,36 @@ class _ActiveWorkoutScreenState
       history: sessions,
     );
 
-    final copy = PreSetInsightEngine.computeCopy(input);
-    _cachedPreSetCopy[exerciseIndex] = copy;
+    // Supply current focal-set context for the PR-near signal when available.
+    // Advanced leaves the weight/reps steppers bound to live controllers —
+    // pull their numeric values and convert back to kg for the engine.
+    double? currentWeightKg;
+    int? currentReps;
+    if (exerciseIndex == _viewingExerciseIndex) {
+      final weightRaw = double.tryParse(_weightController.text);
+      if (weightRaw != null && weightRaw > 0) {
+        currentWeightKg = _useKg ? weightRaw : weightRaw * 0.453592;
+      }
+      final repsRaw = int.tryParse(_repsController.text);
+      if (repsRaw != null && repsRaw > 0) currentReps = repsRaw;
+    }
+
+    final copy = PreSetInsightEngine.insightForSet(
+      input: input,
+      setIndex: setIndex,
+      tone: InsightTone.advanced,
+      currentWeightKg: currentWeightKg,
+      currentReps: currentReps,
+    );
+    _cachedPreSetCopy[dismissKey] = copy;
     return copy;
   }
 
   @override
   void dismissPreSetBanner(int exerciseIndex) {
-    if (_dismissedPreSetBannerIndices.add(exerciseIndex)) {
+    final setIndex = _nextWorkingSetIndex(exerciseIndex);
+    final dismissKey = exerciseIndex * 100 + setIndex;
+    if (_dismissedPreSetBannerIndices.add(dismissKey)) {
       setState(() {});
     }
   }
@@ -1372,12 +1625,107 @@ class _ActiveWorkoutScreenState
     final incrementLabel = '±${incrementValue % 1 == 0 ? incrementValue.toInt() : incrementValue} $incrementUnit';
 
     return [
+      WorkoutActionChips.adjustToday,
       WorkoutActionChips.progression(label: pattern.chipLabel, icon: pattern.icon),
       WorkoutActionChips.superset,
       WorkoutActionChips.leftRight(isActive: _isLeftRightMode),
       WorkoutActionChips.incrementDisplay(label: incrementLabel),
       WorkoutActionChips.more,
     ];
+  }
+
+  /// Open the one-tap "Adjust Today" sheet, await server mutation, and
+  /// apply the result to the in-memory exercises list so the set table
+  /// re-renders with the trimmed/eased workout. Shows an undo toast with a
+  /// 5s window; undo restores the pre-adjustment snapshot.
+  @override
+  Future<void> showQuickAdjustSheetForCurrentWorkout() async {
+    final workoutId = widget.workout.id;
+    if (workoutId == null) return;
+
+    // Compute remaining indices (exercises with sets still not completed).
+    final remainingIndices = <int>[];
+    int estimatedSecondsRemaining = 0;
+    for (int i = 0; i < _exercises.length; i++) {
+      final totalSets = _totalSetsPerExercise[i] ?? (_exercises[i].sets ?? 3);
+      final completed = _completedSets[i]?.length ?? 0;
+      if (completed < totalSets) {
+        remainingIndices.add(i);
+        // 90s per set (work+rest) + 30s transition — matches server estimate.
+        estimatedSecondsRemaining += (totalSets - completed) * 90 + 30;
+      }
+    }
+    final estimatedMinutes =
+        (estimatedSecondsRemaining / 60).ceil().clamp(1, 240);
+
+    // Snapshot for undo. If the user taps undo within 5s we re-assign.
+    final snapshot = List<WorkoutExercise>.from(_exercises);
+    final snapshotTotalSets = Map<int, int>.from(_totalSetsPerExercise);
+
+    final result = await showQuickAdjustSheet(
+      context: context,
+      ref: ref,
+      workoutId: int.tryParse(workoutId) ?? 0,
+      remainingIndices: remainingIndices,
+      currentEstimatedMinutes: estimatedMinutes,
+    );
+
+    if (!mounted || result == null) return;
+
+    if (result.shouldReschedule) {
+      // Defer the reschedule flow to existing infra — show a confirm sheet.
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(result.coachMessage.isNotEmpty
+            ? result.coachMessage
+            : 'Reschedule today\'s workout?'),
+        duration: const Duration(seconds: 4),
+      ));
+      return;
+    }
+
+    // Apply the server's updated exercises list to in-memory state so the
+    // set-tracking table re-renders immediately.
+    if (result.updatedExercises != null && result.updatedExercises!.isNotEmpty) {
+      setState(() {
+        // Replace exercises with the server-updated list. We convert via the
+        // WorkoutExercise model so downstream widgets see the same shape.
+        _exercises = result.updatedExercises!
+            .map((e) => WorkoutExercise.fromJson(e))
+            .toList();
+        // Recompute total-sets map for the new list.
+        _totalSetsPerExercise.clear();
+        for (int i = 0; i < _exercises.length; i++) {
+          _totalSetsPerExercise[i] = _exercises[i].sets ?? 3;
+        }
+        // Keep viewing index in-bounds after possible trim.
+        if (_viewingExerciseIndex >= _exercises.length) {
+          _viewingExerciseIndex = _exercises.length - 1;
+        }
+        if (_currentExerciseIndex >= _exercises.length) {
+          _currentExerciseIndex = _exercises.length - 1;
+        }
+      });
+    }
+
+    // Non-blocking undo toast.
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text(result.coachMessage.isNotEmpty
+          ? result.coachMessage
+          : 'Workout adapted.'),
+      duration: const Duration(seconds: 5),
+      action: SnackBarAction(
+        label: 'Undo',
+        onPressed: () {
+          if (!mounted) return;
+          setState(() {
+            _exercises = snapshot;
+            _totalSetsPerExercise
+              ..clear()
+              ..addAll(snapshotTotalSets);
+          });
+        },
+      ),
+    ));
   }
 
   /// Show progression model selector bottom sheet.

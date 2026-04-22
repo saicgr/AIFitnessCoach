@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../core/observers/modal_route_observer.dart';
 import '../core/services/posthog_service.dart';
 import '../core/services/sentry_service.dart';
 import 'posthog_route_observer.dart';
@@ -39,7 +40,7 @@ import '../screens/onboarding/health_disclaimer_screen.dart';
 import '../screens/onboarding/training_split_screen.dart';
 import '../screens/onboarding/weight_projection_screen.dart';
 import '../screens/onboarding/workout_generation_screen.dart';
-import '../screens/profile/profile_screen.dart';
+import '../screens/you/you_hub_screen.dart';
 import '../screens/reports/reports_hub_screen.dart';
 import '../screens/summaries/insights_screen.dart';
 import '../screens/summaries/insights_detail_screen.dart';
@@ -49,7 +50,7 @@ import '../screens/social/social_screen.dart';
 import '../screens/social/shared_workout_detail_screen.dart';
 import '../screens/workouts/workouts_screen.dart';
 import '../screens/metrics/metrics_dashboard_screen.dart';
-import '../screens/workout/active_workout_screen_refactored.dart';
+import '../screens/workout/active_workout_entry.dart';
 import '../screens/workout/workout_complete_screen.dart';
 import '../screens/workout/workout_detail_screen.dart';
 import '../screens/workout/mood_workout_pre_start_screen.dart';
@@ -152,6 +153,7 @@ import '../screens/habits/habits_screen.dart';
 import '../screens/habits/habit_detail_screen.dart';
 import '../screens/wrapped/wrapped_viewer_screen.dart';
 import '../screens/wrapped/my_wrapped_screen.dart';
+import '../screens/wrapped/weekly_wrapped_screen.dart';
 import '../screens/onboarding/accuracy_intro_screen.dart';
 import '../screens/onboarding/health_connect_screen.dart';
 import '../screens/onboarding/feature_showcase_screen.dart';
@@ -493,6 +495,9 @@ final routerProvider = Provider<GoRouter>((ref) {
     refreshListenable: authNotifier,
     observers: [
       PosthogRouteObserver(posthog),
+      // Hides the workout mini-player pill whenever a modal route (bottom
+      // sheet / dialog / popup) is on top, so it doesn't z-float above sheets.
+      WorkoutMiniPlayerRouteObserver(ref),
       // No-op when Sentry is disabled; otherwise adds nav breadcrumbs.
       if (SentryService.isEnabled) SentryService.navigatorObserver(),
     ],

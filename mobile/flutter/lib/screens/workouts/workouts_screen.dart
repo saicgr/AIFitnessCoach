@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/providers/workout_ui_mode_provider.dart';
 import '../../core/theme/theme_colors.dart';
 import '../../data/models/workout.dart';
 import '../../data/models/workout_screen_summary.dart';
@@ -20,6 +21,7 @@ import '../../widgets/pill_swipe_navigation.dart';
 import '../home/widgets/cards/next_workout_card.dart';
 import '../home/widgets/cards/weekly_progress_card.dart';
 import '../home/widgets/hero_workout_card.dart';
+import '../settings/pages/workout_ui_mode_sheet.dart';
 import 'widgets/exercise_preferences_card.dart';
 import 'widgets/upcoming_workouts_sheet.dart';
 import 'widgets/previous_workouts_sheet.dart';
@@ -81,9 +83,11 @@ class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen>
             // Scrollable content
             CustomScrollView(
               slivers: [
-                // Top padding for floating header row
+                // Top padding for floating header (title row + tier pill).
+                // 56 previously covered just the title row; the added
+                // 32 pt tier pill + 8 pt spacer brings us to ~96.
                 SliverToBoxAdapter(
-                  child: SizedBox(height: MediaQuery.of(context).padding.top + 56),
+                  child: SizedBox(height: MediaQuery.of(context).padding.top + 96),
                 ),
 
                 // Content - render unconditionally using valueOrNull to avoid blocking on load
@@ -130,12 +134,15 @@ class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen>
       right: 0,
       child: Container(
         padding: EdgeInsets.only(top: topPadding + 8, left: 16, right: 16, bottom: 8),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Title pill — matches the Library pill's frosted-glass look
-            // (ClipRRect + BackdropFilter). Same height, padding, border,
-            // and font so the header reads as one consistent row.
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                // Title pill — matches the Library pill's frosted-glass look
+                // (ClipRRect + BackdropFilter). Same height, padding, border,
+                // and font so the header reads as one consistent row.
             ClipRRect(
               borderRadius: BorderRadius.circular(20),
               child: BackdropFilter(
@@ -232,6 +239,27 @@ class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen>
                   ),
                 ),
               ],
+            ),
+              ],
+            ),
+            // Workout-UI tier toggle. Parked directly under the title row so
+            // it stays within the floating header's frosted-glass rhythm
+            // (matches the same BackdropFilter blur + border alpha used by
+            // the title and Library pills). Right-aligned so it doesn't
+            // visually compete with the title pill.
+            const SizedBox(height: 8),
+            Align(
+              alignment: Alignment.centerRight,
+              child: WorkoutUiModeSegmentedControl(
+                compact: false,
+                height: 32,
+                onChanged: (mode) async {
+                  HapticService.light();
+                  await ref
+                      .read(workoutUiModeProvider.notifier)
+                      .setMode(mode);
+                },
+              ),
             ),
           ],
         ),

@@ -20,6 +20,7 @@ from core.rate_limiter import limiter
 from core.exceptions import safe_internal_error
 from core.timezone_utils import resolve_timezone, get_user_today
 from services.gemini_service import GeminiService
+from services.coach_voice import get_coach_voice, build_system_prompt
 from models.schemas import (
     WeeklySummary, WeeklySummaryCreate,
     NotificationPreferences, NotificationPreferencesUpdate
@@ -80,9 +81,12 @@ async def generate_weekly_summary(user_id: str, request: Request, week_start: Op
         user = db.get_user(user_id)
         user_name = user.get("name", "there") if user else "there"
 
-        # Generate AI content
+        # Generate AI content, narrated in the user's coach voice so the
+        # summary reads like the coach they chose — not generic fitness copy.
+        voice = await get_coach_voice(user_id, supabase=db)
         ai_content = await _generate_ai_summary(
-            gemini_service, user_name, stats, start_date, end_date
+            gemini_service, user_name, stats, start_date, end_date,
+            voice=voice,
         )
 
         # Create the summary record
@@ -369,11 +373,16 @@ async def _gather_week_stats(db, user_id: str, start_date: date, end_date: date)
         ).execute()
 
     def _fetch_readiness():
+        # `readiness_scores.measured_at` doesn't exist — the real timestamp
+        # column is `submitted_at`. This silently 500'd the weekly report
+        # endpoint for months because the old name was copy-pasted from
+        # `body_measurements`. `mood_emoji` was also missing from prod until
+        # migration 1875 landed.
         return db.client.table("readiness_scores").select(
-            "readiness_score, mood, mood_emoji, measured_at"
+            "readiness_score, mood, mood_emoji, submitted_at"
         ).eq("user_id", user_id).gte(
-            "measured_at", str(start_date)
-        ).lte("measured_at", str(end_date) + "T23:59:59").order("measured_at").execute()
+            "submitted_at", str(start_date)
+        ).lte("submitted_at", str(end_date) + "T23:59:59").order("submitted_at").execute()
 
     def _fetch_measurements():
         # Note: measurement delta is "latest vs previous" globally — not bounded
@@ -549,9 +558,18 @@ async def _gather_week_stats(db, user_id: str, start_date: date, end_date: date)
 
 async def _generate_ai_summary(
     gemini_service, user_name: str, stats: dict, start_date: date, end_date: date,
-    period_label: str = "weekly"
+    period_label: str = "weekly",
+    voice=None,
 ) -> dict:
-    """Generate AI-powered summary content for any time period."""
+    """Generate AI-powered summary content for any time period.
+
+    Args:
+        voice: Optional CoachVoice (from services.coach_voice.get_coach_voice).
+               When provided, Gemini is instructed to narrate in the user's
+               selected coach persona instead of the default "supportive AI
+               fitness coach" voice. Backward-compatible: callers that don't
+               pass a voice get the generic voice.
+    """
 
     # Build context for AI
     completion_rate = (stats["workouts_completed"] / stats["workouts_scheduled"] * 100) if stats["workouts_scheduled"] > 0 else 0
@@ -588,10 +606,22 @@ Scale your analysis to the {period_label} timeframe — look for trends and patt
 
 Respond ONLY with valid JSON, no markdown."""
 
+    # Build system prompt from coach voice when available so the generated
+    # narrative sounds like the user's selected persona (drill-sergeant,
+    # zen-master, etc.). Falls back to the generic voice for legacy callers.
+    if voice is not None:
+        system_prompt = (
+            build_system_prompt(voice, agent_role=f"{period_label} recap narrator")
+            + "\n\nIMPORTANT: Respond with valid JSON only. No markdown, no code blocks. "
+              "Stay in persona inside the JSON string values."
+        )
+    else:
+        system_prompt = "You are a supportive AI fitness coach. Respond with valid JSON only."
+
     try:
         content = await gemini_service.chat(
             user_message=prompt,
-            system_prompt="You are a supportive AI fitness coach. Respond with valid JSON only.",
+            system_prompt=system_prompt,
         )
 
         # Parse JSON response
@@ -954,10 +984,12 @@ async def generate_period_insight(
         # Gather stats for the full range
         stats = await _gather_week_stats(db, user_id, start, end)
 
-        # Generate AI content with the period label
+        # Generate AI content with the period label, voiced by the user's coach.
+        voice = await get_coach_voice(user_id, supabase=db)
         ai_content = await _generate_ai_summary(
             gemini_service, user_name, stats, start, end,
             period_label=period_label,
+            voice=voice,
         )
 
         payload = {

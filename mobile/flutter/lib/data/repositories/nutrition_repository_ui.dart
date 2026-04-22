@@ -3,6 +3,23 @@ part of 'nutrition_repository.dart';
 /// Methods extracted from NutritionRepository
 extension NutritionRepositoryExt on NutritionRepository {
 
+  /// Refresh the signed image URL for a specific food log. Used when
+  /// `Image.network` 403s on an expired presigned URL so the UI can retry
+  /// with a fresh 24-hour URL instead of falling back to the emoji
+  /// placeholder permanently.
+  Future<String?> refreshFoodLogImageUrl(String logId) async {
+    try {
+      final response = await _client.get('/nutrition/food-logs/$logId/image-url');
+      if (response.statusCode == 200 && response.data is Map) {
+        return (response.data as Map)['image_url'] as String?;
+      }
+      return null;
+    } catch (e) {
+      debugPrint('⚠️ [NutritionRepo] refreshFoodLogImageUrl failed for $logId: $e');
+      return null;
+    }
+  }
+
   /// Get food logs for a user
   Future<List<FoodLog>> getFoodLogs(
     String userId, {
@@ -444,6 +461,10 @@ extension NutritionRepositoryExt on NutritionRepository {
     /// Specific input method (lowercase; see CHECK constraint for allowed values).
     String? inputType,
     String? notes,
+    /// ISO-8601 timestamp for the food log. Pass the Nutrition-tab selected
+    /// date (with current local time) when the user is reviewing a past day —
+    /// otherwise the log lands on today by default.
+    String? loggedAt,
     // Micronutrients (optional)
     double? sodiumMg,
     double? sugarG,
@@ -503,6 +524,7 @@ extension NutritionRepositoryExt on NutritionRepository {
           'source_type': sourceType,
           if (inputType != null) 'input_type': inputType,
           if (notes != null) 'notes': notes,
+          if (loggedAt != null) 'logged_at': loggedAt,
           if (imageUrl != null) 'image_url': imageUrl,
           if (imageStorageKey != null) 'image_storage_key': imageStorageKey,
           if (aiFeedback != null) 'ai_feedback': aiFeedback,
@@ -589,6 +611,10 @@ extension NutritionRepositoryExt on NutritionRepository {
     /// barcode, menu_scan, buffet_scan, multi_image_scan, chat, ai_suggestion,
     /// manual, image, copy, watch.
     String? inputType,
+    /// ISO-8601 timestamp for the resulting food_log row. When the user is
+    /// viewing a past date, pass it so the meal lands on THAT date rather
+    /// than server-side "now".
+    String? loggedAt,
     List<FoodItemEdit> itemEdits = const [],
   }) async {
     debugPrint('💾 [Nutrition] Saving analyzed food for $userId');
@@ -637,6 +663,7 @@ extension NutritionRepositoryExt on NutritionRepository {
       totalFiber: adjustedFiber,
       sourceType: sourceType,
       inputType: inputType,
+      loggedAt: loggedAt,
       // Pass micronutrients from AI analysis
       sugarG: adjustedSugar,
       sodiumMg: adjustedSodium,

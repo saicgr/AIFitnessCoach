@@ -47,6 +47,18 @@ class AISettingsBase(BaseModel):
     injury_sensitivity: Optional[bool] = Field(default=True, description="Be mindful of injuries")
     save_chat_history: Optional[bool] = Field(default=True, description="Save chat history")
     use_rag: Optional[bool] = Field(default=True, description="Use RAG for context")
+    # Server-enforced consent toggles. These are NOT cosmetic — the chat and
+    # vision endpoints check them before any outbound Gemini call.
+    ai_data_processing_enabled: Optional[bool] = Field(
+        default=True,
+        description="Master kill-switch for AI personalization. When False, chat/vision endpoints refuse to process requests.",
+    )
+    health_data_consent: Optional[bool] = Field(
+        default=False,
+        description="GDPR Art. 9 explicit consent for processing special-category health data (weight, heart rate, sleep, menstrual/hormonal). Required before Health Connect / HealthKit sync is allowed.",
+    )
+    ai_data_processing_consented_at: Optional[datetime] = Field(default=None, description="When the user granted general AI processing consent")
+    health_data_consented_at: Optional[datetime] = Field(default=None, description="When the user granted Art. 9 health data consent")
     default_agent: Optional[str] = Field(default="coach", description="Default agent type")
     enabled_agents: Optional[dict] = Field(
         default={"coach": True, "nutrition": True, "workout": True, "injury": True, "hydration": True},
@@ -134,6 +146,12 @@ async def get_ai_settings(user_id: str, current_user: dict = Depends(get_current
             "injury_sensitivity": True,
             "save_chat_history": True,
             "use_rag": True,
+            # AI processing defaults to TRUE because the user must have tapped
+            # through the onboarding consent screen to reach this code path.
+            # Health data defaults to FALSE — explicit Art. 9 consent is
+            # captured separately before any HealthKit sync.
+            "ai_data_processing_enabled": True,
+            "health_data_consent": False,
             "default_agent": "coach",
             "enabled_agents": {"coach": True, "nutrition": True, "workout": True, "injury": True, "hydration": True},
         }
@@ -175,6 +193,16 @@ async def update_ai_settings(user_id: str, settings: AISettingsUpdate, current_u
             update_data[key] = value
 
         update_data["updated_at"] = datetime.utcnow().isoformat()
+
+        # Stamp consent timestamps on the server so users can't forge them.
+        # We record the timestamp whenever the consent flag is being set to
+        # TRUE, regardless of prior state, so the audit trail always shows
+        # the most recent affirmative opt-in.
+        _now_iso = datetime.utcnow().isoformat()
+        if settings_dict.get("ai_data_processing_enabled") is True:
+            update_data["ai_data_processing_consented_at"] = _now_iso
+        if settings_dict.get("health_data_consent") is True:
+            update_data["health_data_consented_at"] = _now_iso
 
         # Track changes in history
         if current.data and len(current.data) > 0:

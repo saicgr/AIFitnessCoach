@@ -808,6 +808,13 @@ class WorkoutCompletionResponse {
   /// first-ever completed workout — the frontend should fire the
   /// First Workout Forecast sheet after confetti.
   final bool isFirstWorkout;
+  /// Server-side XP award guarantee. When `xpAwarded == true`, the server
+  /// has already inserted the daily workout_complete XP transaction — the
+  /// client MUST skip its own `/xp/award-goal-xp` call to avoid redundant
+  /// network round-trips (the server dedup would treat it as a no-op
+  /// anyway, but skipping avoids the pointless request).
+  final bool xpAwarded;
+  final int xpAmount;
 
   const WorkoutCompletionResponse({
     required this.workout,
@@ -816,6 +823,8 @@ class WorkoutCompletionResponse {
     this.strengthScoresUpdated = false,
     this.message = 'Workout completed successfully',
     this.isFirstWorkout = false,
+    this.xpAwarded = false,
+    this.xpAmount = 0,
   });
 
   factory WorkoutCompletionResponse.fromJson(Map<String, dynamic> json) {
@@ -834,6 +843,8 @@ class WorkoutCompletionResponse {
       strengthScoresUpdated: json['strength_scores_updated'] as bool? ?? false,
       message: json['message'] as String? ?? 'Workout completed successfully',
       isFirstWorkout: json['is_first_workout'] as bool? ?? false,
+      xpAwarded: json['xp_awarded'] as bool? ?? false,
+      xpAmount: json['xp_amount'] as int? ?? 0,
     );
   }
 

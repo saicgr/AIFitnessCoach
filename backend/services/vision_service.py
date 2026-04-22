@@ -37,6 +37,50 @@ def _get_nutrition_cache() -> Optional[str]:
         return None
 
 
+def _count_dishes(result: dict) -> int:
+    """Count total dishes across sections (menu) or top-level (buffet)."""
+    total = 0
+    for section in result.get("sections", []) or []:
+        total += len(section.get("dishes", []) or [])
+    total += len(result.get("dishes", []) or [])
+    return total
+
+
+def _salvage_truncated_menu_json(content: str, analysis_mode: str) -> Optional[dict]:
+    """
+    Attempt to recover a partially-complete menu/buffet JSON response.
+
+    Gemini occasionally hits the output token cap mid-object. We chop the
+    trailing incomplete dish, re-close the arrays + outer object, and re-parse.
+    Returns the parsed dict on success, None if recovery isn't possible.
+    """
+    # Find the last complete dish by locating the last "},\n" or "}\n" followed
+    # by more text inside a dishes array. Strategy: find last complete "}" that
+    # belongs to a dish entry, then close any open arrays/objects after it.
+    last_close = content.rfind('}')
+    if last_close < 0:
+        return None
+
+    # Trim to just after the last complete brace, then close any unbalanced
+    # brackets/braces left open.
+    trimmed = content[: last_close + 1]
+    open_brackets = trimmed.count('[') - trimmed.count(']')
+    open_braces = trimmed.count('{') - trimmed.count('}')
+    if open_brackets < 0 or open_braces < 0:
+        return None
+
+    # Drop any trailing "," before close
+    trimmed = trimmed.rstrip()
+    if trimmed.endswith(','):
+        trimmed = trimmed[:-1]
+
+    candidate = trimmed + (']' * open_brackets) + ('}' * open_braces)
+    try:
+        return json.loads(candidate)
+    except json.JSONDecodeError:
+        return None
+
+
 class VisionService:
     """Service for analyzing images using Gemini Vision."""
 
@@ -504,8 +548,13 @@ Guidelines:
                 analysis_mode = await self._classify_food_images(image_parts)
                 logger.info(f"Auto-classified food images as: {analysis_mode}")
 
-            # Step 4: Build prompt based on mode
+            # Step 4: Build prompt based on mode.
+            # Menu + buffet modes use a trimmed inline schema to maximize dish
+            # capacity under the token cap, so we bypass the nutrition cache
+            # (which bakes in a heavier schema with recommended_order/tips/etc.)
             cache_name = _get_nutrition_cache()
+            if analysis_mode in ("menu", "buffet"):
+                cache_name = None
             nutrition_ctx_str = ""
             if nutrition_context:
                 nutrition_ctx_str = f"\nUser's nutrition context: {json.dumps(nutrition_context)}"
@@ -514,26 +563,11 @@ Guidelines:
             suggested_meal = self._get_suggested_meal_type()
 
             if analysis_mode == "buffet":
-                if cache_name:
-                    # Dynamic-only prompt (buffet schema + guidelines are in cache)
-                    prompt = f"""Analyze this buffet/food spread. For each dish visible:
-1. Identify the dish name
-2. Estimate calories and macros per single serving
-3. Rate as "green" (great for goals), "yellow" (moderate), or "red" (should skip) based on user's goals
+                prompt = f"""Analyze this buffet/food spread. Identify EVERY distinct dish visible — do not skip any.
+For each dish: name, calories, protein_g, carbs_g, fat_g per single serving, serving_description, rating ("green"/"yellow"/"red") for the user's goals with a brief reason (≤ 8 words), inflammation_score (0-10; 0-3 anti-inflammatory, 4-6 neutral/mild, 7-10 highly inflammatory — consider processing, omega-6 load, refined sugar, saturated fat, additives), and coach_tip (one crisp sentence ≤ 18 words: when to pick it or a smart swap, tailored to the user's nutrition context).
 {nutrition_ctx_str}{user_ctx_str}
 
-Suggest an optimal plate composition that fits within remaining daily budget.
-Use the buffet analysis JSON schema from your cached reference. Return valid JSON."""
-                else:
-                    prompt = f"""Analyze this buffet/food spread. For each dish visible:
-1. Identify the dish name
-2. Estimate calories and macros per single serving
-3. Rate as "green" (great for goals), "yellow" (moderate), or "red" (should skip) based on user's goals
-{nutrition_ctx_str}{user_ctx_str}
-
-Suggest an optimal plate composition that fits within remaining daily budget.
-
-Return JSON matching this schema:
+Return ONLY this JSON, no other keys:
 {{
     "analysis_type": "buffet",
     "dishes": [
@@ -545,41 +579,21 @@ Return JSON matching this schema:
             "fat_g": 0.0,
             "serving_description": "estimated serving size",
             "rating": "green",
-            "rating_reason": "why this rating"
+            "rating_reason": "short reason",
+            "inflammation_score": 0,
+            "coach_tip": "short sentence"
         }}
-    ],
-    "suggested_plate": {{
-        "items": [
-            {{"name": "dish name", "serving": "amount", "calories": 0, "protein_g": 0.0}}
-        ],
-        "total_calories": 0,
-        "total_protein_g": 0.0,
-        "total_carbs_g": 0.0,
-        "total_fat_g": 0.0
-    }},
-    "daily_budget_remaining": {{"calories": 0, "protein_g": 0.0}},
-    "tips": ["tip1", "tip2"]
+    ]
 }}"""
 
             elif analysis_mode == "menu":
-                if cache_name:
-                    # Dynamic-only prompt (menu schema + guidelines are in cache)
-                    prompt = f"""Analyze this restaurant menu. OCR extract dish names, estimate calories and macros.
-Rate each as green/yellow/red based on user's goals.
-Suggest a recommended order.
+                prompt = f"""Analyze this restaurant menu. OCR extract EVERY dish across ALL sections — do not skip any, do not truncate.
+For each dish: name, calories, protein_g, carbs_g, fat_g (estimate from description), price (number or null), rating ("green"/"yellow"/"red") for the user's goals with a brief reason (≤ 8 words), inflammation_score (0-10; 0-3 anti-inflammatory, 4-6 neutral/mild, 7-10 highly inflammatory), and coach_tip (≤ 18 words, tailored to user's goals — pick-or-skip with why).
 {nutrition_ctx_str}{user_ctx_str}
 
-Use the menu analysis JSON schema from your cached reference. Return valid JSON."""
-                else:
-                    prompt = f"""Analyze this restaurant menu. OCR extract dish names, estimate calories and macros.
-Rate each as green/yellow/red based on user's goals.
-Suggest a recommended order.
-{nutrition_ctx_str}{user_ctx_str}
-
-Return JSON:
+Return ONLY this JSON, no other keys:
 {{
     "analysis_type": "menu",
-    "restaurant_name": null,
     "sections": [
         {{
             "section_name": "section name",
@@ -592,22 +606,13 @@ Return JSON:
                     "carbs_g": 0.0,
                     "fat_g": 0.0,
                     "rating": "green",
-                    "rating_reason": "why this rating"
+                    "rating_reason": "short reason",
+                    "inflammation_score": 0,
+                    "coach_tip": "short sentence"
                 }}
             ]
         }}
-    ],
-    "recommended_order": {{
-        "items": [
-            {{"name": "dish name", "calories": 0, "protein_g": 0.0}}
-        ],
-        "total_calories": 0,
-        "total_protein_g": 0.0,
-        "total_carbs_g": 0.0,
-        "total_fat_g": 0.0
-    }},
-    "daily_budget_remaining": {{"calories": 0, "protein_g": 0.0}},
-    "tips": ["tip1", "tip2"]
+    ]
 }}"""
 
             else:
@@ -656,16 +661,22 @@ Guidelines:
 - Health score: 1-3 (poor), 4-6 (average), 7-8 (good), 9-10 (excellent)
 - Feedback should be constructive and encouraging"""
 
-            # Step 5: Call Gemini with all images
+            # Step 5: Call Gemini with all images.
+            # Menu + buffet need larger output headroom because responses can
+            # contain 30-60 dishes. Plate stays at 4k.
+            max_tokens = 16000 if analysis_mode in ("menu", "buffet") else 4000
             gen_config = types.GenerateContentConfig(
                 temperature=0.2,
                 response_mime_type="application/json",
-                max_output_tokens=4000,
+                max_output_tokens=max_tokens,
             )
             if cache_name:
                 gen_config.cached_content = cache_name
 
-            logger.info(f"Multi-image food analysis: mode={analysis_mode}, cache={'yes' if cache_name else 'no'}")
+            logger.info(
+                f"Multi-image food analysis: mode={analysis_mode}, "
+                f"cache={'yes' if cache_name else 'no'}, max_tokens={max_tokens}"
+            )
 
             response = await gemini_generate_with_retry(
                 model=self.model,
@@ -676,7 +687,23 @@ Guidelines:
 
             content = response.text.strip()
             logger.info(f"Multi-image food analysis response received ({len(content)} chars)")
-            result = json.loads(content)
+            try:
+                result = json.loads(content)
+            except json.JSONDecodeError as parse_err:
+                # Likely truncated JSON. Try to salvage for menu/buffet where we
+                # can drop the last incomplete dish and re-close the arrays.
+                if analysis_mode in ("menu", "buffet"):
+                    salvaged = _salvage_truncated_menu_json(content, analysis_mode)
+                    if salvaged is not None:
+                        logger.warning(
+                            f"Salvaged truncated {analysis_mode} JSON: "
+                            f"recovered {_count_dishes(salvaged)} dishes"
+                        )
+                        result = salvaged
+                    else:
+                        raise parse_err
+                else:
+                    raise parse_err
 
             # Normalize plate mode results for compatibility
             if analysis_mode == "plate":

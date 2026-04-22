@@ -27,6 +27,7 @@ class DataCacheService {
   static const int _todayWorkoutTtlMs = 24 * 60 * 60 * 1000; // 24 hours — survives overnight
   static const int _xpDataTtlMs = 12 * 60 * 60 * 1000; // 12 hours
   static const int _trophyTtlMs = 12 * 60 * 60 * 1000; // 12 hours
+  static const int _gymProfilesTtlMs = 24 * 60 * 60 * 1000; // 24 hours — gyms rarely change; revalidate silently in background
 
   /// Per-key TTL overrides
   static const Map<String, int> _ttlOverrides = {
@@ -35,6 +36,7 @@ class DataCacheService {
     xpDataKey: _xpDataTtlMs,
     xpStreakKey: _xpDataTtlMs,
     trophySummaryKey: _trophyTtlMs,
+    gymProfilesKey: _gymProfilesTtlMs,
   };
 
   DataCacheService._();

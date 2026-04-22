@@ -100,6 +100,20 @@ class AppTourController extends StateNotifier<AppTourState> {
     }
   }
 
+  /// Aborts the current tour WITHOUT persisting any "seen" flag. Used when
+  /// the user swaps workout-UI tiers mid-tour — the new tier's walkthrough
+  /// needs to re-fire from step 1 and the previous tier's tour should still
+  /// be re-eligible on its next visit.
+  ///
+  /// Difference vs [dismiss]: dismiss treats the tour as complete and writes
+  /// `has_seen_<tourId>`; abort silently resets state so no persistence
+  /// side-effects fire. Callers are responsible for starting the new tour
+  /// afterwards (if any).
+  void abort() {
+    if (!state.isVisible) return;
+    state = const AppTourState();
+  }
+
   /// Updates Supabase Auth user_metadata with the completed tour ID.
   /// Fire-and-forget — local prefs are the source of truth for speed.
   void _markSeenInCloud(String tourId) {
@@ -198,4 +212,20 @@ class AppTourKeys {
   static final workoutsTodayKey = GlobalKey(debugLabel: 'tour_workoutsToday');
   static final workoutsWeeklyKey = GlobalKey(debugLabel: 'tour_workoutsWeekly');
   static final workoutsLibraryKey = GlobalKey(debugLabel: 'tour_workoutsLibrary');
+
+  // Tier-aware Active-Workout tour targets (Easy / Simple / Advanced)
+  // These are declared up-front so tour step lists can reference stable keys.
+  // TODO(tier-ui): Attach these to the real widgets once the Easy / Simple
+  // active-workout screens ship (owned by another agent in this plan). Until
+  // then, the tier-aware trigger in workout_flow_mixin.dart reuses the
+  // Advanced-screen keys above for the Easy/Simple tours so the tour still
+  // spotlights visible targets on the currently-rendered Advanced screen.
+  static final easyExerciseHeaderKey = GlobalKey(debugLabel: 'tour_easyExerciseHeader');
+  static final easyStepperKey = GlobalKey(debugLabel: 'tour_easyStepper');
+  static final easyLogSetButtonKey = GlobalKey(debugLabel: 'tour_easyLogSetButton');
+  static final simpleRailKey = GlobalKey(debugLabel: 'tour_simpleRail');
+  static final simplePrevLineKey = GlobalKey(debugLabel: 'tour_simplePrevLine');
+  static final simpleRestBarKey = GlobalKey(debugLabel: 'tour_simpleRestBar');
+  static final simpleChatBarKey = GlobalKey(debugLabel: 'tour_simpleChatBar');
+  static final tierToggleKey = GlobalKey(debugLabel: 'tour_tierToggle');
 }

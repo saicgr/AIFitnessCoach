@@ -21,6 +21,15 @@ class SetLog {
   final int? restDurationSeconds; // Actual rest taken before this set (null for first set)
   final double? previousWeightKg; // Weight from previous session for this set
   final int? previousReps; // Reps from previous session for this set
+  // Active-workout UI tier the user was on when they finished this set.
+  // 'easy' | 'simple' | 'advanced'. NULL on legacy rows (treat as 'advanced').
+  final String? loggingMode;
+  // Optional audio note attached to this set. Local file path before upload,
+  // canonical S3 URL once persisted.
+  final String? notesAudioPath;
+  // Optional photo notes for this set. Same local-path → S3-URL lifecycle
+  // as `notesAudioPath`. Default: empty list.
+  final List<String> notesPhotoPaths;
 
   SetLog({
     required this.reps,
@@ -37,6 +46,9 @@ class SetLog {
     this.restDurationSeconds,
     this.previousWeightKg,
     this.previousReps,
+    this.loggingMode,
+    this.notesAudioPath,
+    this.notesPhotoPaths = const [],
   }) : completedAt = completedAt ?? DateTime.now();
 
   SetLog copyWith({
@@ -54,6 +66,9 @@ class SetLog {
     int? restDurationSeconds,
     double? previousWeightKg,
     int? previousReps,
+    String? loggingMode,
+    String? notesAudioPath,
+    List<String>? notesPhotoPaths,
   }) {
     return SetLog(
       reps: reps ?? this.reps,
@@ -70,6 +85,9 @@ class SetLog {
       restDurationSeconds: restDurationSeconds ?? this.restDurationSeconds,
       previousWeightKg: previousWeightKg ?? this.previousWeightKg,
       previousReps: previousReps ?? this.previousReps,
+      loggingMode: loggingMode ?? this.loggingMode,
+      notesAudioPath: notesAudioPath ?? this.notesAudioPath,
+      notesPhotoPaths: notesPhotoPaths ?? this.notesPhotoPaths,
     );
   }
 
@@ -89,6 +107,10 @@ class SetLog {
         if (restDurationSeconds != null) 'rest_duration_seconds': restDurationSeconds,
         if (previousWeightKg != null) 'previous_weight_kg': previousWeightKg,
         if (previousReps != null) 'previous_reps': previousReps,
+        if (loggingMode != null) 'logging_mode': loggingMode,
+        if (notesAudioPath != null && notesAudioPath!.isNotEmpty)
+          'notes_audio_url': notesAudioPath,
+        if (notesPhotoPaths.isNotEmpty) 'notes_photo_urls': notesPhotoPaths,
       };
 
   /// Create from JSON (database retrieval)
@@ -112,6 +134,12 @@ class SetLog {
       restDurationSeconds: json['rest_duration_seconds'] as int?,
       previousWeightKg: (json['previous_weight_kg'] as num?)?.toDouble(),
       previousReps: json['previous_reps'] as int?,
+      loggingMode: json['logging_mode'] as String?,
+      notesAudioPath: json['notes_audio_url'] as String?,
+      notesPhotoPaths: (json['notes_photo_urls'] as List?)
+              ?.map((e) => e.toString())
+              .toList() ??
+          const [],
     );
   }
 }

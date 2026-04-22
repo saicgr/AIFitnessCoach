@@ -42,10 +42,15 @@ Future<IntensityResult?> showIntensityPromptSheet(
     context: context,
     isDismissible: false, // Mandatory — can't tap outside to dismiss.
     enableDrag: false,
-    builder: (ctx) => _IntensityPromptSheet(
-      previousRpe: previousRpe,
-      exerciseName: exerciseName,
-      setNumber: setNumber,
+    opaque: true, // Opaque surface so workout table doesn't bleed through.
+    builder: (ctx) => GlassSheet(
+      opaque: true,
+      showHandle: false, // Mandatory prompt — no drag affordance.
+      child: _IntensityPromptSheet(
+        previousRpe: previousRpe,
+        exerciseName: exerciseName,
+        setNumber: setNumber,
+      ),
     ),
   );
 }
@@ -318,17 +323,17 @@ class _EffortTile extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 6),
         decoration: BoxDecoration(
           color: selected
-              ? color.withValues(alpha: 0.18)
+              ? color.withValues(alpha: 0.28)
               : (isDark
-                  ? Colors.white.withValues(alpha: 0.04)
-                  : Colors.black.withValues(alpha: 0.04)),
+                  ? Colors.white.withValues(alpha: 0.08)
+                  : Colors.black.withValues(alpha: 0.05)),
           borderRadius: BorderRadius.circular(14),
           border: Border.all(
             color: selected
                 ? color
                 : (isDark
-                    ? Colors.white.withValues(alpha: 0.08)
-                    : Colors.black.withValues(alpha: 0.08)),
+                    ? color.withValues(alpha: 0.25)
+                    : color.withValues(alpha: 0.30)),
             width: selected ? 1.8 : 1,
           ),
           boxShadow: selected

@@ -126,6 +126,13 @@ extension WorkoutRepositoryPerformance on WorkoutRepository {
     String? progressionModel,
     int? setDurationSeconds,
     int? restDurationSeconds,
+    // Active-workout UI tier the user was on when they tapped ✓.
+    // 'easy' | 'simple' | 'advanced'. NULL = unknown (legacy behavior).
+    String? loggingMode,
+    // Canonical S3 URLs for note media. Local paths must be uploaded via
+    // SetNoteMediaService before being passed here.
+    String? notesAudioUrl,
+    List<String>? notesPhotoUrls,
   }) async {
     try {
       debugPrint('🔍 [Workout] Logging set $setNumber ($setType) for $exerciseName');
@@ -150,6 +157,11 @@ extension WorkoutRepositoryPerformance on WorkoutRepository {
           if (progressionModel != null) 'progression_model': progressionModel,
           if (setDurationSeconds != null) 'set_duration_seconds': setDurationSeconds,
           if (restDurationSeconds != null) 'rest_duration_seconds': restDurationSeconds,
+          if (loggingMode != null) 'logging_mode': loggingMode,
+          if (notesAudioUrl != null && notesAudioUrl.isNotEmpty)
+            'notes_audio_url': notesAudioUrl,
+          if (notesPhotoUrls != null && notesPhotoUrls.isNotEmpty)
+            'notes_photo_urls': notesPhotoUrls,
         },
       );
       if (response.statusCode == 200) {

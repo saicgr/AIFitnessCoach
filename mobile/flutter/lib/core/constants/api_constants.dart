@@ -17,8 +17,10 @@ class ApiConstants {
   /// Full API base URL
   static String get apiBaseUrl => '$baseUrl$apiVersion';
 
-  /// Connection timeout
-  static const Duration connectTimeout = Duration(seconds: 15);
+  /// Connection timeout. 25s absorbs cold-start iOS/Android TCP+TLS handshake
+  /// latency on weak networks and carrier handoffs (DNS → TLS → connect) where
+  /// the connection itself — not the backend response — is what's slow.
+  static const Duration connectTimeout = Duration(seconds: 25);
 
   /// Read timeout
   static const Duration receiveTimeout = Duration(seconds: 30);

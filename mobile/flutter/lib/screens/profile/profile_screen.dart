@@ -3,7 +3,6 @@ import 'dart:io' show Platform;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import '../../widgets/pill_app_bar.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -21,12 +20,12 @@ import '../../widgets/glass_sheet.dart';
 import '../settings/sections/logout_section.dart';
 import '../settings/dialogs/export_dialog.dart';
 import '../settings/dialogs/import_dialog.dart';
+import '../settings/pages/workout_ui_mode_sheet.dart';
 import '../workouts/widgets/exercise_preferences_card.dart';
+import '../../core/providers/workout_ui_mode_provider.dart';
 import 'widgets/nutrition_fasting_card.dart';
 import 'widgets/widgets.dart';
 import '../../data/providers/synced_workouts_provider.dart';
-import '../../data/models/wrapped_summary.dart';
-import '../../data/providers/wrapped_provider.dart';
 import 'synced_workout_detail_screen.dart';
 
 part 'profile_screen_part_account_row_data.dart';
@@ -364,19 +363,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     Color textPrimary,
     Color textMuted,
   ) {
+    // Stats and Inventory live in the You hub → Stats & Rewards now.
     final rows = [
-      _AccountRowData(
-        icon: Icons.bar_chart_rounded,
-        iconColor: isDark ? AppColors.cyan : AppColorsLight.cyan,
-        title: 'Stats',
-        onTap: () => context.push('/stats'),
-      ),
-      _AccountRowData(
-        icon: Icons.inventory_2_outlined,
-        iconColor: isDark ? AppColors.orange : AppColorsLight.orange,
-        title: 'Inventory',
-        onTap: () => context.push('/inventory'),
-      ),
       _AccountRowData(
         icon: Icons.shield_outlined,
         iconColor: AppColors.info,
@@ -804,26 +792,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     return Scaffold(
       key: const ValueKey('profile_scaffold'),
       backgroundColor: backgroundColor,
-      appBar: PillAppBar(
-        title: 'Profile',
-        showBack: false,
-        actions: [
-          PillAppBarAction(
-            icon: Icons.bar_chart_rounded,
-            onTap: () {
-              HapticService.selection();
-              context.push('/stats');
-            },
-          ),
-          PillAppBarAction(
-            icon: Icons.settings_outlined,
-            onTap: () {
-              HapticService.selection();
-              context.push('/settings');
-            },
-          ),
-        ],
-      ),
       body: SafeArea(
         child: SingleChildScrollView(
           controller: _scrollController,
@@ -846,76 +814,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               // Placed directly below FITNESS because privacy belongs adjacent
               // to the data it controls.
               const PrivacySection(),
-              const SizedBox(height: 8),
-
-              // Reports & Insights button
-              InkWell(
-                onTap: () {
-                  HapticService.selection();
-                  context.push('/reports');
-                },
-                borderRadius: BorderRadius.circular(12),
-                child: Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                  decoration: BoxDecoration(
-                    color: elevated,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: cardBorder),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(Icons.summarize_outlined, color: AppColors.purple, size: 20),
-                      const SizedBox(width: 10),
-                      Text(
-                        'Reports & Insights',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: textPrimary,
-                        ),
-                      ),
-                      const Spacer(),
-                      Icon(Icons.chevron_right_rounded, color: textMuted, size: 20),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 8),
-              // View Stats button
-              InkWell(
-                onTap: () {
-                  HapticService.selection();
-                  context.push('/stats');
-                },
-                borderRadius: BorderRadius.circular(12),
-                child: Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                  decoration: BoxDecoration(
-                    color: elevated,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: cardBorder),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(Icons.bar_chart_rounded, color: AppColors.info, size: 20),
-                      const SizedBox(width: 10),
-                      Text(
-                        'View Stats',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: textPrimary,
-                        ),
-                      ),
-                      const Spacer(),
-                      Icon(Icons.chevron_right_rounded, color: textMuted, size: 20),
-                    ],
-                  ),
-                ),
-              ),
               const SizedBox(height: 24),
+              // Reports, Stats, Wrapped, Trophies, Achievements, Rewards,
+              // Inventory, Leaderboard, Skills — all moved to the You hub's
+              // Stats & Rewards tab. Single source of truth.
 
               // TRAINING
               _buildSectionLabel('TRAINING', AppColors.orange),
@@ -927,6 +829,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   _showCustomEquipmentSheet(context);
                 },
               ),
+              const SizedBox(height: 12),
+              // Workout Mode — inline 3-way segmented control bound to the
+              // same workoutUiModeProvider as Settings, Workouts tab, and the
+              // active-workout top bar. Tap a segment to switch tiers instantly.
+              const _WorkoutUiModeProfileCard(),
               const SizedBox(height: 12),
               ExercisePreferencesCard(key: _preferencesKey, margin: EdgeInsets.zero),
               const SizedBox(height: 12),
@@ -949,16 +856,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               ),
               const SizedBox(height: 24),
 
-              // MY WRAPPED
-              _buildSectionLabel('MY WRAPPED', AppColors.yellow),
-              const SizedBox(height: 8),
-              _WrappedSection(
-                elevated: elevated,
-                cardBorder: cardBorder,
-                textPrimary: textPrimary,
-                textMuted: textMuted,
-              ),
-              const SizedBox(height: 24),
+              // Wrapped moved to You hub → Stats & Rewards → Recaps & Perks.
 
               // NUTRITION
               _buildSectionLabel('NUTRITION', AppColors.green),
@@ -1009,6 +907,96 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+/// Inline profile card for the Easy / Simple / Advanced workout-UI tier.
+/// Shares `workoutUiModeProvider` with Settings, the Workouts-tab header, and
+/// the active-workout top bar so all four surfaces always agree.
+///
+/// Displays a label + current-tier subtitle + a segmented control so a user
+/// can switch tiers without leaving the profile screen. Tapping the row label
+/// (or a small info affordance) opens the full explainer sheet for beginners
+/// who want the tier descriptions before choosing.
+class _WorkoutUiModeProfileCard extends ConsumerWidget {
+  const _WorkoutUiModeProfileCard();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final textPrimary =
+        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textSecondary =
+        isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+
+    final mode = ref.watch(workoutUiModeProvider.select((s) => s.mode));
+    final subtitle = switch (mode) {
+      WorkoutUiMode.easy =>
+        'Steppers + AI coach + notes + edit past sets. The default.',
+      // ignore: deprecated_member_use_from_same_package
+      WorkoutUiMode.simple =>
+        'Steppers + AI coach + notes + edit past sets. The default.',
+      WorkoutUiMode.advanced =>
+        'Everything — RIR, pyramid, supersets, increments.',
+    };
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: elevated,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  'Workout Mode',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: textPrimary,
+                  ),
+                ),
+              ),
+              // Small affordance that opens the full 3-card explainer — same
+              // sheet the Settings row launches. Keeps discoverability high
+              // for users who aren't sure what each tier changes.
+              GestureDetector(
+                onTap: () {
+                  HapticService.selection();
+                  showWorkoutUiModeSheet(context);
+                },
+                child: Padding(
+                  padding: const EdgeInsets.all(4),
+                  child: Icon(
+                    Icons.info_outline_rounded,
+                    size: 18,
+                    color: textSecondary,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            subtitle,
+            style: TextStyle(
+              fontSize: 13,
+              color: textSecondary,
+              height: 1.35,
+            ),
+          ),
+          const SizedBox(height: 12),
+          // Segmented control — writes directly to the provider.
+          const WorkoutUiModeSegmentedControl(),
+        ],
       ),
     );
   }

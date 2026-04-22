@@ -281,9 +281,27 @@ class WindowModeNotifier extends StateNotifier<WindowModeState> {
     final previousMode = state.mode;
     final modeChanged = previousMode != mode;
 
+    // Short-circuit if nothing layout-meaningful actually changed. Without
+    // this guard the `WindowModeObserver.build` post-frame fires `state =`
+    // every frame; redundant notifications propagate to consumers that
+    // may be in the middle of unmount (e.g. when a sheet/dialog dismisses)
+    // and Riverpod crashes with `Element.markNeedsBuild` on a defunct
+    // ConsumerElement.
+    final bool meaningfullyChanged = state.mode != mode ||
+        state.sizeClass != sizeClass ||
+        (state.windowWidth - windowWidth).abs() > 0.5 ||
+        (state.windowHeight - windowHeight).abs() > 0.5 ||
+        state.isInSplitScreen != isInSplitScreen ||
+        state.isCompactMode != isCompactMode ||
+        state.isNarrowLayout != isNarrowLayout ||
+        state.foldablePosture != foldablePosture ||
+        state.isFoldable != isFoldable;
+
     // Debounce rapid updates
     _debounceTimer?.cancel();
     _debounceTimer = Timer(const Duration(milliseconds: 100), () {
+      if (!mounted) return;
+      if (!meaningfullyChanged) return;
       // Update state
       state = state.copyWith(
         mode: mode,
@@ -415,7 +433,8 @@ class _WindowModeObserverState extends ConsumerState<WindowModeObserver> with Wi
 
   @override
   Widget build(BuildContext context) {
-    // Update on every build to catch all size changes
+    // Update on every build to catch all size changes. Redundant-emit
+    // guard + `mounted` check live in the Notifier's Timer callback.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         _updateWindowMode();

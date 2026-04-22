@@ -202,21 +202,39 @@ class _HeroWorkoutCarouselState extends ConsumerState<HeroWorkoutCarousel> {
     // Also watch todayWorkoutProvider as fallback to ensure today's workout shows
     final todayWorkoutAsync = ref.watch(todayWorkoutProvider);
 
+    // Cache-first paint: if we have ANY cached user + today workout, paint
+    // the card immediately and let background refresh update silently.
+    // Only show the full skeleton when there's truly nothing to render.
+    final cachedUser = userAsync.valueOrNull;
+    final cachedToday = todayWorkoutAsync.valueOrNull;
+
+    // Show skeleton only when we have no cached data at all AND are loading.
+    if (cachedUser == null && userAsync.isLoading) {
+      return KeyedSubtree(
+        key: widget.carouselKey,
+        child: _buildLoadingState(isDark, accentColor),
+      );
+    }
+    if (userAsync.hasError && cachedUser == null) {
+      return KeyedSubtree(
+        key: widget.carouselKey,
+        child: _buildErrorState(isDark),
+      );
+    }
+
     return KeyedSubtree(
       key: widget.carouselKey,
-      child: userAsync.when(
-      loading: () => _buildLoadingState(isDark, accentColor),
-      error: (_, __) => _buildErrorState(isDark),
-      data: (user) {
+      child: Builder(builder: (context) {
+        final user = cachedUser;
         if (user == null) {
           return _buildNoWorkoutDaysState(isDark, accentColor);
         }
 
         final workoutDays = user.workoutDays;
 
-        // Wait for todayWorkoutProvider to complete initial load
-        // This prevents auto-triggering generation before we know if workouts exist
-        if (todayWorkoutAsync.isLoading && !todayWorkoutAsync.hasValue) {
+        // If today workout hasn't resolved yet AND we have no cached value,
+        // show skeleton. Otherwise paint the card with whatever we have.
+        if (todayWorkoutAsync.isLoading && cachedToday == null) {
           return _buildLoadingState(isDark, accentColor);
         }
 

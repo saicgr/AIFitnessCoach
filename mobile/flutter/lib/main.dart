@@ -16,6 +16,7 @@ import 'core/providers/subscription_provider.dart';
 import 'data/services/data_cache_service.dart';
 import 'data/services/haptic_service.dart';
 import 'data/services/image_url_cache.dart';
+import 'data/services/live_activity_service.dart';
 import 'data/services/notification_service.dart';
 import 'data/services/widget_action_headless_service.dart';
 import 'data/services/background_sync_service.dart';
@@ -68,6 +69,16 @@ void main() async {
         message.contains('Failed to interpolate TextStyles') ||
         message.contains('Error thrown resolving an image codec') ||
         details.library == 'rendering library';
+    // Dump FULL stack + widget trace for semantics noise so we can see
+    // the exact render object triggering it (`!semantics.parentDataDirty`
+    // usually truncates in release). Only in debug mode.
+    if (message.contains('parentDataDirty')) {
+      debugPrint('=== parentDataDirty ===');
+      debugPrint(details.toStringShort());
+      debugPrint(details.stack?.toString() ?? '(no stack)');
+      debugPrint(details.context?.toDescription() ?? '(no context)');
+      debugPrint('========================');
+    }
     if (isRenderingError) {
       // Non-fatal: log but don't crash
       if (firebaseReady) FirebaseCrashlytics.instance.recordFlutterError(details);
@@ -183,6 +194,13 @@ Future<void> _initNonCriticalServices(
 
   await BackgroundSyncService.initialize().then<void>((_) {}).catchError((e) {
     debugPrint('⚠️ BackgroundSyncService initialization failed: $e');
+  });
+
+  // Live Activities (iOS) + ongoing workout notification (Android).
+  // init() is idempotent and also clears any orphan iOS activities from
+  // a previous (possibly crashed) session.
+  await LiveActivityService.instance.init().catchError((e) {
+    debugPrint('⚠️ LiveActivityService initialization failed: $e');
   });
 
   // Warm the Drift database (non-blocking, lazy open in background)

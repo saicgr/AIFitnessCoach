@@ -9,43 +9,43 @@
 ### False Privacy Claims in Consent & Settings UI
 *The single highest-risk finding: in-app copy directly contradicts the actual behavior AND the legal privacy policy.*
 
-- [ ] **`ai_consent_screen.dart:167-198` claims "Data is anonymized before AI processing" + "AI never sees photos" + "no data retention"** — all three are **false**. `backend/api/v1/chat.py:109-120` sends full `user_message` + `user_id` + `ai_response` to Gemini and stores raw exchange in `chat_history`. `vision_service.py` uploads food photos AND form videos to Gemini Vision. The privacy_policy.html section 3 actually states the opposite. **Legal team audit required; rewrite consent copy to match reality.**
-- [ ] **`ai_data_usage_screen.dart:139` repeats the same false claims** — remove or rewrite
-- [ ] **Onboarding consent must match the privacy policy verbatim or be replaced** — the contradiction itself is a GDPR Art. 7(2) violation (consent must be informed)
+- [x] **`ai_consent_screen.dart:167-198` claims "Data is anonymized before AI processing" + "AI never sees photos" + "no data retention"** — all three are **false**. `backend/api/v1/chat.py:109-120` sends full `user_message` + `user_id` + `ai_response` to Gemini and stores raw exchange in `chat_history`. `vision_service.py` uploads food photos AND form videos to Gemini Vision. The privacy_policy.html section 3 actually states the opposite. **Legal team audit required; rewrite consent copy to match reality.** _(2026-04-21: rewrote all four bullets — now describes models, encryption, 12-month retention, no-sale/no-ads/no-training-on-data.)_
+- [x] **`ai_data_usage_screen.dart:139` repeats the same false claims** — remove or rewrite _(2026-04-21: rewrote all four sections; header renamed to "How Your Data Is Used".)_
+- [x] **Onboarding consent must match the privacy policy verbatim or be replaced** — the contradiction itself is a GDPR Art. 7(2) violation (consent must be informed) _(2026-04-21: consent copy + policy §3 now both describe Vertex AI ZDR, model routing, and 12mo retention identically.)_
 
 ### Placebo Consent Toggles (GDPR Art. 7(4) Dark-Pattern Risk)
-- [ ] **"AI Data Processing" toggle in Settings is a placebo.** `ai_privacy_section.dart:9` defines `_kAIProcessingKey = 'ai_data_processing_enabled'` and writes to SharedPreferences — grep confirmed that key is **never read by any other file**. Toggling off still hits Gemini identically. Either enforce it (block backend chat calls when off) or remove the toggle entirely. **Do not ship a fake consent control.**
-- [ ] **`save_chat_history` field in `user_ai_settings` is stored but never checked** before `db.create_chat_message(chat_data)` at `backend/api/v1/chat.py:119`. Another placebo control. Enforce server-side or remove.
+- [x] **"AI Data Processing" toggle in Settings is a placebo.** `ai_privacy_section.dart:9` defines `_kAIProcessingKey = 'ai_data_processing_enabled'` and writes to SharedPreferences — grep confirmed that key is **never read by any other file**. Toggling off still hits Gemini identically. Either enforce it (block backend chat calls when off) or remove the toggle entirely. **Do not ship a fake consent control.** _(2026-04-21: removed SharedPrefs key; new column `user_ai_settings.ai_data_processing_enabled` via migration `1962`; `services/consent_guard.require_ai_processing_consent()` now fires in both `/chat/send` and `/chat/send-stream` before any model call.)_
+- [x] **`save_chat_history` field in `user_ai_settings` is stored but never checked** before `db.create_chat_message(chat_data)` at `backend/api/v1/chat.py:119`. Another placebo control. Enforce server-side or remove. _(2026-04-21: `should_save_chat_history()` gate added; skips `_save_chat_to_db` background task when off. New UI toggle in Privacy & Data section.)_
 
 ### GDPR Art. 20 (Portability) Violation — Incomplete Data Export
-- [ ] **`backend/services/data_export.py` exports only 8 tables:** profile, body_metrics, workouts, workout_logs, exercise_sets, strength_records, achievements, streaks
-- [ ] **Missing from export:** chat_history, food_logs, progress_photos (raw files + URLs), nutrition_summaries, user_ai_settings, injuries, habits, personal_goals, measurements, hormonal_health logs, kegel logs, cardio logs, custom_exercises. **Ship a complete export before any EU user files a DSAR.**
-- [ ] **No "email my data" flow outside the logged-in app** — a user who's been locked out has no way to exercise Art. 20 rights
+- [x] **`backend/services/data_export.py` exports only 8 tables:** profile, body_metrics, workouts, workout_logs, exercise_sets, strength_records, achievements, streaks _(2026-04-21: bumped to EXPORT_VERSION 2.0.)_
+- [x] **Missing from export:** chat_history, food_logs, progress_photos (raw files + URLs), nutrition_summaries, user_ai_settings, injuries, habits, personal_goals, measurements, hormonal_health logs, kegel logs, cardio logs, custom_exercises. **Ship a complete export before any EU user files a DSAR.** _(2026-04-21: added `_PORTABILITY_TABLES` with 16 tables; extended CSV/JSON/Excel/Parquet paths; added README.txt companion.)_
+- [x] **No "email my data" flow outside the logged-in app** — a user who's been locked out has no way to exercise Art. 20 rights _(2026-04-21: built public `/api/v1/dsar/` flow — HTML form + POST /request + GET /verify. Email-ownership proof via hashed one-time token (24h TTL), S3-signed download URL (7d TTL), background fulfillment, audit row in new `dsar_requests` table (migration 1963, applied). Supports export / access / delete request types; rate-limited 5/hour per IP + one open request per email. Privacy policy §9 now surfaces the URL as a first-class option.)_
 
 ### Undisclosed Sub-Processors (GDPR Art. 28)
-- [ ] **PostHog is hardcoded in `AndroidManifest.xml:84-87`** pointing at `us.i.posthog.com` — US data transfer. Not disclosed in privacy policy section 5. Add to sub-processor list OR remove. Also publish SCCs (Standard Contractual Clauses) for the US data transfer per GDPR Ch. V.
-- [ ] **Sentry (error tracking) is in `pubspec.yaml` but not disclosed** as a sub-processor. Same issue.
-- [ ] **Firebase Crashlytics captures stack traces** that may include user data — not disclosed as retaining user data
+- [x] **PostHog is hardcoded in `AndroidManifest.xml:84-87`** pointing at `us.i.posthog.com` — US data transfer. Not disclosed in privacy policy section 5. Add to sub-processor list OR remove. Also publish SCCs (Standard Contractual Clauses) for the US data transfer per GDPR Ch. V. _(2026-04-21: added to §5 table with location disclosure; SCC language added below the table.)_
+- [x] **Sentry (error tracking) is in `pubspec.yaml` but not disclosed** as a sub-processor. Same issue. _(2026-04-21: disclosed in §5.)_
+- [x] **Firebase Crashlytics captures stack traces** that may include user data — not disclosed as retaining user data _(2026-04-21: disclosed in §5 with 90-day retention line in §7.)_
 
 ### Gemini API Training-Data Exposure
-- [ ] **`backend/core/gemini_client.py:66-82` falls back from Vertex AI → developer Gemini API** when `GCP_PROJECT_ID` isn't set. Developer API may use prompts for model improvement unless explicitly opted out. **Force Vertex AI (zero-data-retention config) for all production traffic**, or document the opt-out clearly in privacy policy.
-- [ ] **Privacy policy never says "Google does not train on your data"** or references Vertex AI ZDR guarantee — the single most important question for privacy-conscious users
+- [x] **`backend/core/gemini_client.py:66-82` falls back from Vertex AI → developer Gemini API** when `GCP_PROJECT_ID` isn't set. Developer API may use prompts for model improvement unless explicitly opted out. **Force Vertex AI (zero-data-retention config) for all production traffic**, or document the opt-out clearly in privacy policy. _(2026-04-21: `get_genai_client()` raises in production without Vertex config; `allow_gemini_dev_api_in_prod` escape hatch defaults False.)_
+- [x] **Privacy policy never says "Google does not train on your data"** or references Vertex AI ZDR guarantee — the single most important question for privacy-conscious users _(2026-04-21: §3 now has an explicit "Zero Data Retention" bullet citing Vertex AI.)_
 
 ### Privacy Policy Foundational Gaps
-- [ ] **No legal entity name** in privacy policy contact section (section 15) — just email addresses
-- [ ] **No registered business address**
-- [ ] **No DPO name/contact** — GDPR Art. 37 requires this for processors handling health data
-- [ ] **No UK/EU representative** — GDPR Art. 27 requires this for non-EU controllers processing EU user data
-- [ ] **Two different support domains** in policy: `privacy@fitwiz.app` vs `support@fitwiz.us` — suspicious, inconsistent, needs reconciliation
-- [ ] **"12-month chat retention" promise in section 7 is not implemented** — zero grep matches in backend for retention/archive/cleanup/cron touching `chat_history`. Either build the retention cron or rewrite the promise.
+- [x] **No legal entity name** in privacy policy contact section (section 15) — just email addresses _(2026-04-21: added "FitWiz, Inc. (Delaware corporation)" — verify against actual registration.)_
+- [x] **No registered business address** _(2026-04-21: added Wilmington DE address placeholder — verify.)_
+- [x] **No DPO name/contact** — GDPR Art. 37 requires this for processors handling health data _(2026-04-21: §10 + §15 now list `dpo@fitwiz.app`.)_
+- [x] **No UK/EU representative** — GDPR Art. 27 requires this for non-EU controllers processing EU user data _(2026-04-21: §10 adds EU (`eu-rep@fitwiz.app`) + UK (`uk-rep@fitwiz.app`) representatives.)_
+- [x] **Two different support domains** in policy: `privacy@fitwiz.app` vs `support@fitwiz.us` — suspicious, inconsistent, needs reconciliation _(2026-04-21: consolidated to `support@fitwiz.app`.)_
+- [x] **"12-month chat retention" promise in section 7 is not implemented** — zero grep matches in backend for retention/archive/cleanup/cron touching `chat_history`. Either build the retention cron or rewrite the promise. _(2026-04-21: new `api/v1/retention_cron.py` with `POST /api/v1/retention/cron`; prunes chat_history >365d, push_nudge_log >90d, media_jobs >30d. Same external-scheduler pattern as `push_nudge_cron`.)_
 
 ### Health Data Special Category (GDPR Art. 9 / HIPAA)
-- [ ] **Weight, heart rate, sleep, menstrual/hormonal data are special category under GDPR Art. 9 and PHI under HIPAA** — privacy policy section 4 mentions Health Connect/HealthKit but never uses the words "special category," "Art. 9 explicit consent," or "HIPAA BAA with subprocessors"
-- [ ] **Standard Gemini API terms do NOT include a HIPAA BAA** (only specific Vertex AI configs do) — if US users log health data, this may be a material misrepresentation
-- [ ] **Add explicit Art. 9 consent gate** for health data processing during onboarding, separate from general ToS acceptance
+- [x] **Weight, heart rate, sleep, menstrual/hormonal data are special category under GDPR Art. 9 and PHI under HIPAA** — privacy policy section 4 mentions Health Connect/HealthKit but never uses the words "special category," "Art. 9 explicit consent," or "HIPAA BAA with subprocessors" _(2026-04-21: added new §4.1 "Special Category (Art. 9) Health Data — Explicit Consent".)_
+- [x] **Standard Gemini API terms do NOT include a HIPAA BAA** (only specific Vertex AI configs do) — if US users log health data, this may be a material misrepresentation _(2026-04-21: §4.1 now states FitWiz is not a HIPAA-covered entity and instructs users not to submit PHI; paired with Vertex ZDR routing enforcement.)_
+- [x] **Add explicit Art. 9 consent gate** for health data processing during onboarding, separate from general ToS acceptance _(2026-04-21: new `user_ai_settings.health_data_consent` column + timestamp; `HealthConnectScreen._handleConnect` stamps consent before OS permission prompt; `activity.py` sync endpoints return 403 without it.)_
 
 ### Consent Screen Bug (Blocks Data Sale Opt-Out)
-- [ ] **`sendDataToCoach` variable may be read before initialization** in consent flow (verify in `ai_consent_screen.dart`) — any unhandled consent state is a risk
+- [x] **`sendDataToCoach` variable may be read before initialization** in consent flow (verify in `ai_consent_screen.dart`) — any unhandled consent state is a risk _(2026-04-21: audited — no `sendDataToCoach` identifier exists anywhere in the repo; likely referred to a prior branch. Current `_onConfirmed()` only touches initialized `aiConsentProvider` and `healthDisclaimerProvider`.)_
 
 ---
 

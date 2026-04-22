@@ -462,6 +462,124 @@ class _GridActionItem extends StatelessWidget {
 }
 
 
+/// Shared water quick-add sheet. Public so other entry points (Habits
+/// section's "Log Now" button) can open the same picker the home grid uses
+/// — consistent UX, single source of truth for sizes/copy.
+///
+/// Sizes must match [_WaterGridActionItemState._waterSizes]; kept in lock-step
+/// by mirroring the list here and gated behind the same hydrationProvider
+/// quickLog call.
+Future<void> showWaterQuickAddSheet(BuildContext context, WidgetRef ref) async {
+  HapticService.medium();
+  final isDark = Theme.of(context).brightness == Brightness.dark;
+  final textColor = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+  final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+
+  const sizes = <({int ml, String label, IconData icon})>[
+    (ml: 250, label: '250ml', icon: Icons.local_cafe_outlined),
+    (ml: 500, label: '500ml', icon: Icons.water_drop_outlined),
+    (ml: 750, label: '750ml', icon: Icons.water_drop),
+    (ml: 1000, label: '1L', icon: Icons.waves),
+  ];
+
+  ref.read(floatingNavBarVisibleProvider.notifier).state = false;
+  try {
+    await showGlassSheet(
+      context: context,
+      builder: (sheetContext) => GlassSheet(
+        child: SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const SizedBox(height: 16),
+              Text(
+                'Log Water',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                  color: textColor,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Select amount to log',
+                style: TextStyle(fontSize: 14, color: textMuted),
+              ),
+              const SizedBox(height: 20),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Row(
+                  children: sizes.map((size) {
+                    return Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 4),
+                        child: _WaterSizeOption(
+                          ml: size.ml,
+                          label: size.label,
+                          icon: size.icon,
+                          isDark: isDark,
+                          onTap: () async {
+                            Navigator.pop(sheetContext);
+                            final userId = await ref.read(apiClientProvider).getUserId();
+                            if (userId == null) return;
+                            final success = await ref
+                                .read(hydrationProvider.notifier)
+                                .quickLog(
+                                  userId: userId,
+                                  drinkType: 'water',
+                                  amountMl: size.ml,
+                                );
+                            if (success && context.mounted) {
+                              HapticService.success();
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Row(
+                                    children: [
+                                      const Icon(Icons.check_circle,
+                                          color: Colors.white, size: 20),
+                                      const SizedBox(width: 8),
+                                      Text('+${size.ml}ml water logged'),
+                                    ],
+                                  ),
+                                  backgroundColor: quickActionRegistry['water']!.color,
+                                  behavior: SnackBarBehavior.floating,
+                                  margin: const EdgeInsets.only(bottom: 80, left: 16, right: 16),
+                                  duration: const Duration(seconds: 2),
+                                ),
+                              );
+                            }
+                          },
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                ),
+              ),
+              const SizedBox(height: 16),
+              TextButton(
+                onPressed: () {
+                  Navigator.pop(sheetContext);
+                  context.go('/nutrition?tab=2');
+                },
+                child: Text(
+                  'Open Hydration Tracker',
+                  style: TextStyle(
+                    color: quickActionRegistry['water']!.color,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+            ],
+          ),
+        ),
+      ),
+    );
+  } finally {
+    ref.read(floatingNavBarVisibleProvider.notifier).state = true;
+  }
+}
+
 /// Water grid action item with tap to add default and long-press for options
 class _WaterGridActionItem extends ConsumerStatefulWidget {
   final bool isDark;

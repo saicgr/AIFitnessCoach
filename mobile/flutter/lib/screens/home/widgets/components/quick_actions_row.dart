@@ -41,7 +41,14 @@ Widget buildQuickActionWidget(String actionId, bool isDark, BuildContext context
         iconColor: quickActionRegistry['food']!.color,
         onTap: () {
           HapticService.light();
-          showLogMealSheet(context, ref);
+          // Switch to Nutrition branch BEFORE showing the log sheet so the
+          // floating nav reflects where the user actually is. When they
+          // dismiss the sheet they land on the Nutrition tab (with the
+          // just-logged meal visible) instead of being thrown back to Home.
+          context.go('/nutrition');
+          Future.microtask(() {
+            if (context.mounted) showLogMealSheet(context, ref);
+          });
         },
         isDark: isDark,
       );
@@ -150,8 +157,10 @@ class QuickActionsRow extends StatelessWidget {
   }
 }
 
-/// Compact quick actions: single row of pinned actions + "+" button
-/// When expanded preference is on, shows a second row with actions #5–#9
+/// Compact quick actions: 2 rows × 5 slots. Both rows are always visible.
+/// Row 1: actions 1-5 (from [pinnedQuickActionsProvider]).
+/// Row 2: actions 6-9 (from [secondRowActionsProvider]) + the fixed More tile
+/// at slot 10, which opens the full QuickActionsSheet for the long-tail actions.
 class CompactQuickActionsRow extends ConsumerWidget {
   const CompactQuickActionsRow({super.key});
 
@@ -159,8 +168,7 @@ class CompactQuickActionsRow extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final pinnedActions = ref.watch(pinnedQuickActionsProvider);
-    final isExpanded = ref.watch(quickActionsExpandedProvider);
-    final secondRow = isExpanded ? ref.watch(secondRowActionsProvider) : <QuickAction>[];
+    final secondRow = ref.watch(secondRowActionsProvider);
     final cardBg = isDark
         ? Colors.black.withValues(alpha: 0.05)
         : Colors.black.withValues(alpha: 0.03);
@@ -176,29 +184,27 @@ class CompactQuickActionsRow extends ConsumerWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Row 1: pinned actions + More button
+            // Row 1: slots 1-5 (pinned actions).
             Row(
               children: [
                 for (int i = 0; i < pinnedActions.length; i++) ...[
                   if (i > 0) const SizedBox(width: 4),
                   Expanded(child: buildQuickActionWidget(pinnedActions[i].id, isDark, context, ref)),
                 ],
-                const SizedBox(width: 4),
+              ],
+            ),
+            const SizedBox(height: 4),
+            // Row 2: slots 6-9 (second row) + slot 10 = More (fixed).
+            Row(
+              children: [
+                for (int i = 0; i < secondRow.length; i++) ...[
+                  if (i > 0) const SizedBox(width: 4),
+                  Expanded(child: buildQuickActionWidget(secondRow[i].id, isDark, context, ref)),
+                ],
+                if (secondRow.isNotEmpty) const SizedBox(width: 4),
                 Expanded(child: _MoreActionsButton(isDark: isDark)),
               ],
             ),
-            // Row 2: next 5 actions (when expanded)
-            if (isExpanded && secondRow.isNotEmpty) ...[
-              const SizedBox(height: 4),
-              Row(
-                children: [
-                  for (int i = 0; i < secondRow.length; i++) ...[
-                    if (i > 0) const SizedBox(width: 4),
-                    Expanded(child: buildQuickActionWidget(secondRow[i].id, isDark, context, ref)),
-                  ],
-                ],
-              ),
-            ],
           ],
         ),
       ),

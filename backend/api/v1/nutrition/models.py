@@ -310,6 +310,11 @@ class LogDirectRequest(BaseModel):
     is_ultra_processed: Optional[bool] = None
     # Pre-save per-field edits made in the Log Meal sheet before this save
     item_edits: Optional[List[FoodItemEdit]] = None
+    # Explicit timestamp for the log. When the user is viewing a past date in
+    # the Nutrition tab and taps "Log food," the entry must land on THAT date
+    # — not "now". Expected ISO-8601 (e.g., "2026-04-20T15:30:00"). If
+    # omitted, server defaults to user-tz "now" (preserves legacy behavior).
+    logged_at: Optional[str] = Field(default=None, max_length=40)
 
     @validator('user_id')
     def user_id_must_not_be_empty(cls, v):

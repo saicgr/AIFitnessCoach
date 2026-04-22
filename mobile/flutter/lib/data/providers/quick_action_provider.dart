@@ -71,10 +71,11 @@ class QuickActionsExpandedNotifier extends StateNotifier<bool> {
   }
 }
 
+/// Row 1 of the shortcut bar — first 5 actions in the user's order.
 final pinnedQuickActionsProvider = Provider<List<QuickAction>>((ref) {
   final order = ref.watch(quickActionOrderProvider);
   return order
-      .take(4)
+      .take(5)
       .map((id) => quickActionRegistry[id]!)
       .toList();
 });
@@ -86,11 +87,13 @@ final orderedQuickActionsProvider = Provider<List<QuickAction>>((ref) {
       .toList();
 });
 
+/// Row 2 of the shortcut bar — actions 6-9. Slot 10 is the fixed "More" tile
+/// rendered separately in [quick_actions_row.dart].
 final secondRowActionsProvider = Provider<List<QuickAction>>((ref) {
   final order = ref.watch(quickActionOrderProvider);
   return order
-      .skip(4)
-      .take(5)
+      .skip(5)
+      .take(4)
       .map((id) => quickActionRegistry[id]!)
       .toList();
 });

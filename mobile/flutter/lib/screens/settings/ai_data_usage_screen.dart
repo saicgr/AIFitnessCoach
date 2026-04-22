@@ -24,7 +24,7 @@ class AIDataUsageScreen extends ConsumerWidget {
     return Scaffold(
       backgroundColor: backgroundColor,
       appBar: const PillAppBar(
-        title: 'How AI Uses Your Data',
+        title: 'How Your Data Is Used',
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
@@ -56,7 +56,7 @@ class AIDataUsageScreen extends ConsumerWidget {
                   ),
                   const SizedBox(height: 16),
                   Text(
-                    'Your Privacy Matters',
+                    'How Your Data Is Used',
                     style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
@@ -65,7 +65,7 @@ class AIDataUsageScreen extends ConsumerWidget {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'We anonymize your data before any AI processing. Here\'s exactly what happens with your information.',
+                    'FitWiz sends your fitness profile, chats, food photos, and form videos to models that generate personalized guidance. Here is exactly what happens.',
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 14,
@@ -79,20 +79,21 @@ class AIDataUsageScreen extends ConsumerWidget {
 
             const SizedBox(height: 24),
 
-            // What AI Sees
+            // What the models receive
             _buildSection(
               context,
               icon: Icons.visibility_outlined,
               iconColor: AppColors.success,
-              title: 'What AI Sees',
-              subtitle: 'Anonymized fitness data only',
+              title: 'What Models Receive',
+              subtitle: 'Everything needed to coach you',
               items: const [
-                'Fitness level (beginner, intermediate, advanced)',
-                'Workout goals (build muscle, lose weight, etc.)',
-                'Available equipment',
-                'Workout history (exercises, sets, reps, weights)',
-                'Body metrics (height range, weight range)',
-                'Exercise preferences and limitations',
+                'Your fitness profile (age, height, weight, goals, equipment)',
+                'Workout history (exercises, sets, reps, weights, RPE)',
+                'Body metrics, injuries, and stated limitations',
+                'Full chat messages you send to your coach',
+                'Food photos you upload for calorie and macro estimation',
+                'Exercise form videos you upload for technique feedback',
+                'Your account ID (so your coach can retrieve your history and context)',
               ],
               elevated: elevated,
               cardBorder: cardBorder,
@@ -103,21 +104,20 @@ class AIDataUsageScreen extends ConsumerWidget {
 
             const SizedBox(height: 16),
 
-            // What AI Never Sees
+            // What never leaves
             _buildSection(
               context,
               icon: Icons.visibility_off_outlined,
               iconColor: AppColors.error,
-              title: 'What AI Never Sees',
-              subtitle: 'Personal identifiers are stripped',
+              title: 'What Never Leaves Our Servers',
+              subtitle: 'Data we do not share with the models',
               items: const [
-                'Your name or display name',
-                'Email address',
-                'Exact date of birth (only age range)',
-                'Location or IP address',
+                'Your email address and full name',
                 'Payment or billing information',
-                'Photos or profile images',
+                'Device location and IP address',
+                'Profile photos (unless you share one in chat)',
                 'Social connections or friends',
+                'Authentication credentials and tokens',
               ],
               elevated: elevated,
               cardBorder: cardBorder,
@@ -134,13 +134,14 @@ class AIDataUsageScreen extends ConsumerWidget {
               icon: Icons.lock_outlined,
               iconColor: AppColors.info,
               title: 'How Data is Protected',
-              subtitle: 'Multiple layers of protection',
+              subtitle: 'Technical safeguards in place',
               items: const [
-                'Data is anonymized before AI processing',
-                'No personal data is stored by the AI provider',
-                'Real-time processing only - no data retention',
-                'Encrypted connections for all data transfer',
-                'Regular security audits and updates',
+                'TLS/HTTPS encryption for all data in transit',
+                'Encryption at rest in our database',
+                'Production traffic runs in zero-retention mode — your messages are not retained or used to train outside models',
+                'Row-level security and signed tokens on every request',
+                'Chat history retained up to 12 months, then auto-deleted',
+                'You can clear chat history or delete your account at any time',
               ],
               elevated: elevated,
               cardBorder: cardBorder,
@@ -159,10 +160,12 @@ class AIDataUsageScreen extends ConsumerWidget {
               title: 'Your Controls',
               subtitle: 'You are in charge of your data',
               items: const [
-                'Toggle AI data processing on/off anytime',
-                'Request full data deletion from Settings > Account',
-                'Export your data in portable format',
-                'Review and modify stored preferences',
+                'Toggle personalization on or off in Settings → Privacy',
+                'When off, chats and photos stop being sent to the models',
+                'Turn off "Save chat history" to stop storing transcripts',
+                'Export all your data (JSON / CSV / Excel) from Settings',
+                'Delete your account — personal data is removed within 30 days',
+                'Revoke Health Connect / HealthKit permission anytime',
               ],
               elevated: elevated,
               cardBorder: cardBorder,

@@ -337,6 +337,86 @@ def validate_set_targets_strict(exercises: List[Dict], user_context: Dict = None
     logger.info(f"   F (failure): {set_type_counts['failure']}")
     logger.info(f"   A (amrap): {set_type_counts['amrap']}")
 
+    # ──────────────────────────────────────────────────────────────────────
+    # Normalize cardio / timed exercises.
+    #
+    # Problem: the prompt-engineering path allows the LLM to emit a cardio
+    # warmup (e.g. Walking, duration_seconds=300) inside a strength workout's
+    # exercises_json as `{sets: 4, reps: 1}`. That misrenders on the client
+    # as a 4x1 rep-and-weight row with no meaningful target.
+    #
+    # Fix policy: for any exercise with `duration_seconds > 0` and either
+    # (a) muscle_group == cardiovascular, or (b) equipment == bodyweight AND
+    # the first set is warmup, collapse to `sets=1, reps=1` with one set
+    # target carrying the duration. The frontend handles these via
+    # TimedExerciseTimer and the new TARGET cell in set_tracking_table.dart.
+    # ──────────────────────────────────────────────────────────────────────
+    _cardio_muscle_groups = {'cardiovascular', 'cardio', 'heart', 'endurance'}
+    for exercise in exercises:
+        if not isinstance(exercise, dict):
+            continue
+        ex_name = exercise.get('name', 'Unknown')
+        duration_seconds = exercise.get('duration_seconds')
+        hold_seconds = exercise.get('hold_seconds')
+        muscle_group = (exercise.get('muscle_group') or '').lower()
+        equipment = (exercise.get('equipment') or '').lower()
+        is_timed_flag = bool(exercise.get('is_timed'))
+
+        # Classify as cardio-timed: has a real duration, and the intent is
+        # cardiovascular (explicit muscle_group or clearly time-based warmup).
+        is_cardio_timed = (
+            isinstance(duration_seconds, (int, float))
+            and duration_seconds > 0
+            and (muscle_group in _cardio_muscle_groups or is_timed_flag)
+        )
+        # Static hold exercise (planks, wall sits, hollow holds).
+        is_static_hold = (
+            isinstance(hold_seconds, (int, float)) and hold_seconds > 0
+        )
+
+        if not (is_cardio_timed or is_static_hold):
+            continue
+
+        targets = exercise.get('set_targets', [])
+        if not isinstance(targets, list):
+            continue
+
+        # For cardio/duration exercises, one set is the right shape — collapse
+        # the padded 4×1 structure the LLM emits into a single timed set.
+        if is_cardio_timed and len(targets) > 1:
+            logger.info(
+                f"⏱️ [cardio-timed] Collapsing '{ex_name}' from {len(targets)} "
+                f"sets to 1 (duration={duration_seconds}s, muscle_group={muscle_group})"
+            )
+            first = targets[0] if isinstance(targets[0], dict) else {}
+            collapsed = {
+                'set_number': 1,
+                'set_type': 'working',
+                'target_reps': 1,
+                'target_weight_kg': None,
+                'target_rpe': first.get('target_rpe') or 6,
+                'target_rir': first.get('target_rir'),
+                'target_duration_seconds': int(duration_seconds),
+            }
+            exercise['set_targets'] = [collapsed]
+            exercise['sets'] = 1
+            exercise['reps'] = 1
+            # Mark explicitly so downstream consumers (mobile, summary) can
+            # branch without re-deriving from muscle_group.
+            exercise['is_timed'] = True
+            continue
+
+        # For static holds, propagate target_hold_seconds into each set if
+        # Gemini emitted the exercise-level `hold_seconds` but not per-set
+        # targets. Leaves existing per-set hold targets untouched.
+        if is_static_hold:
+            for idx, st in enumerate(targets):
+                if not isinstance(st, dict):
+                    continue
+                if st.get('target_hold_seconds') in (None, 0):
+                    st['target_hold_seconds'] = int(hold_seconds)
+            exercise['is_timed'] = True
+
     logger.info(f"✅ [set_targets] All {len(exercises)} exercises have valid set_targets with proper set_type!")
     return exercises
 

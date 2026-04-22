@@ -480,6 +480,27 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
   }
 
 
+  /// Build the `logged_at` ISO string for the current log. When the sheet was
+  /// opened from Nutrition → (past date), we pin the date portion to that
+  /// day while preserving the current wall-clock time (so ordering within
+  /// the day still makes sense). Returns null for "log on today" (backend
+  /// default), which avoids pointless round-trip values for the common case.
+  String? _buildLoggedAtForSelectedDate() {
+    final sel = widget.selectedDate;
+    if (sel == null) return null;
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final selDay = DateTime(sel.year, sel.month, sel.day);
+    if (selDay == today) return null; // common case: today — let backend default
+    // Compose: selected date + current time-of-day (so logs stay in submit
+    // order for the user's "day of eating" view).
+    final combined = DateTime(
+      sel.year, sel.month, sel.day,
+      now.hour, now.minute, now.second,
+    );
+    return combined.toIso8601String();
+  }
+
   Future<void> _handleLog() async {
     if (_analyzedResponse == null || _hasLoggedThisSession) return;
 
@@ -500,6 +521,13 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
     // pruned by _handleFoodItemRemoved.
     final pendingEdits = _pendingItemEdits.values.expand((e) => e).toList();
 
+    // If this sheet was opened while the user was viewing a past date in the
+    // Nutrition tab, stamp the log with that date (current wall-clock time
+    // of day, but the date portion pinned to the user's selected day).
+    // Without this pin, the meal lands on TODAY and never appears where the
+    // user expects it.
+    final loggedAtIso = _buildLoggedAtForSelectedDate();
+
     // Start the save — capture the food_log_id for post-meal review
     String? savedLogId;
     final saveFuture = repository.logFoodDirect(
@@ -508,6 +536,7 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
       analyzedFood: response,
       sourceType: sourceType,
       inputType: _inputType,
+      loggedAt: loggedAtIso,
       itemEdits: pendingEdits,
     ).then((savedResponse) {
       savedLogId = savedResponse.foodLogId;
@@ -741,22 +770,16 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
 
 
   /// Multi-image entry point for the food-log bottom bar's Camera / Gallery
-  /// buttons. Camera picks a single photo (one-shot UX). Gallery invokes
-  /// pickMultiImage (up to 5 photos). Both route through the new
-  /// /log-multi-image-stream endpoint with analysis_mode="auto" so the
-  /// backend classifier decides plate vs menu vs buffet.
+  /// buttons. Camera now supports multi-shot via [_captureMultipleFromCamera]
+  /// (take a photo → "Add another?" prompt → repeat). Gallery invokes
+  /// pickMultiImage. Both route through /log-multi-image-stream with
+  /// analysis_mode="auto" so the backend classifier decides plate vs menu vs buffet.
   Future<void> _pickImages(ImageSource source) async {
     final picker = ImagePicker();
     List<XFile> files = [];
 
     if (source == ImageSource.camera) {
-      final one = await picker.pickImage(
-        source: ImageSource.camera,
-        maxWidth: 1600,
-        maxHeight: 1600,
-        imageQuality: 90,
-      );
-      if (one != null) files = [one];
+      files = await _captureMultipleFromCamera(maxCount: 5, noun: 'photo');
     } else {
       files = await picker.pickMultiImage(imageQuality: 85);
       if (files.length > 5) files = files.take(5).toList();
@@ -773,43 +796,161 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
     );
   }
 
-  /// Menu scan — take or pick 1..N photos of a restaurant menu, send through
-  /// /log-multi-image-stream with analysis_mode="menu". On response, open
-  /// MenuAnalysisSheet for the user to tick items and log them.
-  Future<void> _scanMenu() async {
+  /// Take multiple photos in sequence from the camera. After each shot, prompts
+  /// the user to add another or finish. Cancelling the camera mid-loop (system
+  /// back / cancel button) exits the loop gracefully, preserving already-taken
+  /// photos.
+  Future<List<XFile>> _captureMultipleFromCamera({
+    required int maxCount,
+    required String noun,
+  }) async {
     final picker = ImagePicker();
-    final source = await showModalBottomSheet<ImageSource>(
-      context: context,
-      builder: (ctx) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              leading: const Icon(Icons.camera_alt_outlined),
-              title: const Text('Take Menu Photo'),
-              onTap: () => Navigator.pop(ctx, ImageSource.camera),
-            ),
-            ListTile(
-              leading: const Icon(Icons.photo_library_outlined),
-              title: const Text('Choose Menu Photos'),
-              subtitle: const Text('Up to 5 pages of the same menu'),
-              onTap: () => Navigator.pop(ctx, ImageSource.gallery),
-            ),
-          ],
-        ),
-      ),
-    );
-    if (source == null) return;
-
-    List<XFile> files = [];
-    if (source == ImageSource.camera) {
-      final one = await picker.pickImage(
+    final files = <XFile>[];
+    while (files.length < maxCount) {
+      final shot = await picker.pickImage(
         source: ImageSource.camera,
         maxWidth: 1600,
         maxHeight: 1600,
         imageQuality: 90,
       );
-      if (one != null) files = [one];
+      if (shot == null) break;
+      files.add(shot);
+      if (files.length >= maxCount) break;
+      if (!mounted) break;
+      final addAnother = await _showAddAnotherPrompt(noun: noun, count: files.length);
+      if (addAnother != true) break;
+    }
+    return files;
+  }
+
+  /// Glass bottom sheet offering "Add another {noun}" or "Done — Analyze N".
+  /// Returns true if user wants to add another, false if done, null if dismissed.
+  Future<bool?> _showAddAnotherPrompt({required String noun, required int count}) async {
+    final amber = const Color(0xFFF59E0B);
+    return showGlassSheet<bool>(
+      context: context,
+      builder: (ctx) {
+        final colors = ThemeColors.of(ctx);
+        final isDark = colors.isDark;
+        return GlassSheet(
+          child: SafeArea(
+            top: false,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(4, 4, 4, 16),
+                    child: Text(
+                      '$count $noun${count == 1 ? '' : 's'} captured',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                        color: colors.textPrimary,
+                      ),
+                    ),
+                  ),
+                  _GlassMenuOption(
+                    icon: Icons.add_a_photo_outlined,
+                    label: 'Add another $noun',
+                    color: amber,
+                    isDark: isDark,
+                    onTap: () => Navigator.pop(ctx, true),
+                  ),
+                  const SizedBox(height: 10),
+                  _GlassMenuOption(
+                    icon: Icons.check_circle_outline,
+                    label: 'Done — Analyze $count $noun${count == 1 ? '' : 's'}',
+                    color: const Color(0xFF16A34A),
+                    isDark: isDark,
+                    onTap: () => Navigator.pop(ctx, false),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  /// Menu scan — take or pick 1..N photos of a restaurant menu, send through
+  /// /log-multi-image-stream with analysis_mode="menu". On response, open
+  /// MenuAnalysisSheet for the user to tick items and log them.
+  Future<void> _scanMenu() async {
+    final picker = ImagePicker();
+    final amber = const Color(0xFFF59E0B);
+    final source = await showGlassSheet<ImageSource>(
+      context: context,
+      builder: (ctx) {
+        final colors = ThemeColors.of(ctx);
+        final isDark = colors.isDark;
+        return GlassSheet(
+          child: SafeArea(
+            top: false,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(4, 4, 4, 16),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 36,
+                          height: 36,
+                          decoration: BoxDecoration(
+                            color: amber.withValues(alpha: 0.15),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Icon(Icons.menu_book_outlined, size: 20, color: amber),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            'Scan Menu',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w700,
+                              color: colors.textPrimary,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  _GlassMenuOption(
+                    icon: Icons.camera_alt_outlined,
+                    label: 'Take Menu Photo',
+                    color: amber,
+                    isDark: isDark,
+                    onTap: () => Navigator.pop(ctx, ImageSource.camera),
+                  ),
+                  const SizedBox(height: 10),
+                  _GlassMenuOption(
+                    icon: Icons.collections_outlined,
+                    label: 'Choose Menu Photos',
+                    subtitle: 'Up to 5 pages of the same menu',
+                    color: amber,
+                    isDark: isDark,
+                    onTap: () => Navigator.pop(ctx, ImageSource.gallery),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+    if (source == null) return;
+
+    List<XFile> files = [];
+    if (source == ImageSource.camera) {
+      files = await _captureMultipleFromCamera(maxCount: 5, noun: 'page');
     } else {
       files = await picker.pickMultiImage(imageQuality: 90);
       if (files.length > 5) files = files.take(5).toList();
@@ -875,6 +1016,60 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
       final repository = ref.read(nutritionRepositoryProvider);
       MultiImageAnalysisProgress? finalProgress;
 
+      // Progressive streaming state: when the backend emits the first `page`
+      // event for menu/buffet mode, we open the MenuAnalysisSheet and hand it
+      // a streaming controller. Later pages are appended via the controller.
+      MenuAnalysisStreamingController? streamingController;
+      bool sheetOpened = false;
+      String? pageAnalysisType;
+
+      Future<void> openSheetWithInitialItems(
+        List<Map<String, dynamic>> initial,
+        String type,
+        MenuAnalysisStreamingController controller,
+      ) async {
+        setState(() {
+          _isLoading = false;
+          _showLoadingIndicator = false;
+        });
+        await showModalBottomSheet<void>(
+          context: context,
+          isScrollControlled: true,
+          backgroundColor: Colors.transparent,
+          builder: (_) => MenuAnalysisSheet(
+            foodItems: initial,
+            analysisType: type,
+            isDark: widget.isDark,
+            streamingController: controller,
+            onLogItems: (selected) async {
+              try {
+                await repository.logSelectedMealItems(
+                  userId: widget.userId,
+                  mealType: _selectedMealType.value,
+                  analysisType: type,
+                  items: selected,
+                  inputType: type == 'menu' ? 'menu_scan' : 'buffet_scan',
+                );
+                if (mounted) {
+                  ref.read(nutritionProvider.notifier).loadTodaySummary(widget.userId);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Logged ${selected.length} item${selected.length == 1 ? '' : 's'}')),
+                  );
+                  Navigator.of(context).pop();
+                  Navigator.of(context).pop();
+                }
+              } catch (e) {
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Failed to log: $e')),
+                  );
+                }
+              }
+            },
+          ),
+        );
+      }
+
       await for (final progress in repository.analyzeFoodFromImagesStreaming(
         userId: widget.userId,
         mealType: _selectedMealType.value,
@@ -882,10 +1077,18 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
         analysisMode: analysisMode,
         userMessage: userMessage,
         inputType: inputType,
+        // Auto / plate modes go through a human-consent review step:
+        // backend returns analysis only; client renders _buildNutritionPreview
+        // and the user taps "Log This Meal" to persist. Menu/buffet still
+        // use MenuAnalysisSheet's existing selection flow (which is itself a
+        // review step) and don't need this flag.
+        confirmBeforeLog: analysisMode != 'menu' && analysisMode != 'buffet',
       )) {
         if (!mounted) return;
+
         if (progress.hasError) {
           _loadingDelayTimer?.cancel();
+          streamingController?.markDone();
           setState(() {
             _isLoading = false;
             _showLoadingIndicator = false;
@@ -893,6 +1096,38 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
           });
           return;
         }
+
+        if (progress.isPageEvent) {
+          pageAnalysisType = progress.pageAnalysisType ?? pageAnalysisType;
+          if (!sheetOpened) {
+            sheetOpened = true;
+            _loadingDelayTimer?.cancel();
+            streamingController = MenuAnalysisStreamingController(
+              totalPages: progress.totalPages ?? files.length,
+              currentPage: progress.pageNumber ?? 1,
+            );
+            // Open the sheet with page 1 items; don't await since later pages
+            // continue streaming into the controller.
+            final typeForSheet = pageAnalysisType ?? 'menu';
+            // Fire-and-forget so the stream loop keeps consuming.
+            openSheetWithInitialItems(progress.pageItems, typeForSheet, streamingController!);
+          } else {
+            streamingController?.appendItems(
+              progress.pageItems,
+              page: progress.pageNumber,
+              totalPages: progress.totalPages,
+            );
+          }
+          continue;
+        }
+
+        if (progress.isPageError) {
+          if (progress.pageNumber != null) {
+            streamingController?.markPageError(progress.pageNumber!);
+          }
+          continue;
+        }
+
         if (progress.isCompleted) {
           finalProgress = progress;
           setState(() => _analysisElapsedMs = progress.elapsedMs);
@@ -907,6 +1142,19 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
       }
 
       _loadingDelayTimer?.cancel();
+
+      // Progressive path: sheet is open and controller is managing items.
+      // Just mark controller done and return; the sheet handles its own
+      // lifecycle from here.
+      if (sheetOpened) {
+        streamingController?.markDone();
+        setState(() {
+          _isLoading = false;
+          _showLoadingIndicator = false;
+        });
+        return;
+      }
+
       if (!mounted || finalProgress == null || finalProgress.result == null) {
         setState(() {
           _isLoading = false;
@@ -925,7 +1173,66 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
       });
 
       if (analysisType == 'plate') {
-        // Plate path already auto-logged. Surface confirmation and refresh.
+        final isAnalysisOnly = payload['is_analysis_only'] == true;
+
+        if (isAnalysisOnly) {
+          // Human-consent path: backend returned analysis but did NOT write
+          // a food_log row. Build a LogFoodResponse the review UI expects
+          // and hand off to the same preview widget text/voice/single-camera
+          // paths use. "Log This Meal" in that preview calls _handleLog()
+          // which posts to /food-logs (via logFoodDirect) with any item
+          // edits the user made here. No more auto-logged surprises.
+          final imageUrlsRaw = (payload['image_urls'] as List?) ?? const [];
+          final firstImageUrl = imageUrlsRaw.isNotEmpty ? imageUrlsRaw.first as String? : null;
+          final storageKeysRaw = (payload['storage_keys'] as List?) ?? const [];
+          final firstStorageKey = storageKeysRaw.isNotEmpty ? storageKeysRaw.first as String? : null;
+
+          final previewJson = <String, dynamic>{
+            'success': true,
+            'food_items': payload['food_items'] ?? const [],
+            'total_calories': payload['total_calories'] ?? 0,
+            'protein_g': payload['protein_g'] ?? 0,
+            'carbs_g': payload['carbs_g'] ?? 0,
+            'fat_g': payload['fat_g'] ?? 0,
+            'fiber_g': payload['fiber_g'],
+            'ai_suggestion': payload['ai_suggestion'] ?? payload['feedback'],
+            'health_score': payload['health_score'],
+            'inflammation_score': payload['inflammation_score'],
+            'image_url': firstImageUrl,
+            'image_storage_key': firstStorageKey,
+            'source_type': 'image',
+          };
+
+          LogFoodResponse? parsed;
+          try {
+            parsed = LogFoodResponse.fromJson(previewJson);
+          } catch (e) {
+            debugPrint('❌ [LogMeal] Failed to parse plate preview payload: $e');
+          }
+
+          if (parsed == null || (parsed.foodItems.isEmpty && parsed.totalCalories == 0)) {
+            setState(() {
+              _error = "Couldn't identify food in these photos — try a clearer shot.";
+            });
+            return;
+          }
+
+          setState(() {
+            _analyzedResponse = parsed;
+            _sourceType = 'image';
+            // Keep _capturedImagePath as the LOCAL file path set at :976
+            // — the preview widget uses Image.file() when it's set. The S3
+            // URL is already in parsed.imageUrl which the preview falls back
+            // to if the local path is missing. Overwriting with an http URL
+            // here would crash Image.file(File(httpUrl)).
+            _originalFoodItems = List<FoodItemRanking>.from(parsed!.foodItems);
+            _pendingItemEdits.clear();
+            _analysisElapsedMs = (payload['total_time_ms'] as num?)?.toInt() ?? _analysisElapsedMs;
+          });
+          return; // _buildNutritionPreview now renders with review + "Log This Meal"
+        }
+
+        // Legacy / fallback path: backend auto-logged. Refresh and close.
         ref.read(nutritionProvider.notifier).loadTodaySummary(widget.userId);
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -939,7 +1246,7 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
         return;
       }
 
-      // Menu / buffet: open MenuAnalysisSheet for the user to tick items.
+      // Non-progressive fallback: auto-classified menu/buffet from batch path.
       final rawItems = (payload['food_items'] as List?) ?? const [];
       if (rawItems.isEmpty) {
         setState(() => _error = analysisType == 'menu'
@@ -1353,4 +1660,89 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
     });
   }
 
+}
+
+/// Glass-styled row used inside the Scan Menu GlassSheet.
+class _GlassMenuOption extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String? subtitle;
+  final Color color;
+  final bool isDark;
+  final VoidCallback onTap;
+
+  const _GlassMenuOption({
+    required this.icon,
+    required this.label,
+    this.subtitle,
+    required this.color,
+    required this.isDark,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = ThemeColors.of(context);
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(14),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+          decoration: BoxDecoration(
+            color: isDark
+                ? Colors.white.withValues(alpha: 0.06)
+                : Colors.black.withValues(alpha: 0.04),
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(
+              color: isDark
+                  ? Colors.white.withValues(alpha: 0.10)
+                  : Colors.black.withValues(alpha: 0.06),
+            ),
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(icon, size: 20, color: color),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      label,
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: colors.textPrimary,
+                      ),
+                    ),
+                    if (subtitle != null) ...[
+                      const SizedBox(height: 2),
+                      Text(
+                        subtitle!,
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: colors.textMuted,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              Icon(Icons.chevron_right, color: colors.textMuted, size: 20),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 }

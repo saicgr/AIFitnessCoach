@@ -120,6 +120,11 @@ class FoodLoggingProgress {
 /// Progress event for multi-image food analysis. Carries the raw backend
 /// payload in [result] on completion so the caller can branch on
 /// `analysis_type` ("plate" / "menu" / "buffet") and render appropriately.
+///
+/// Menu + buffet modes additionally emit per-page events: one [isPageEvent]
+/// with [pageItems] filled as each page finishes Gemini analysis on the
+/// backend. The caller can open the MenuAnalysisSheet on the first page event
+/// and append items progressively as later pages arrive.
 class MultiImageAnalysisProgress {
   final int step;
   final int totalSteps;
@@ -138,6 +143,16 @@ class MultiImageAnalysisProgress {
   final bool isCompleted;
   final bool hasError;
 
+  /// Per-page fields (populated when [isPageEvent] or [isPageError] is true).
+  final bool isPageEvent;
+  final bool isPageError;
+  final int? pageNumber;
+  final int? totalPages;
+  final List<Map<String, dynamic>> pageItems;
+  final String? pageAnalysisType;
+  final String? pageImageUrl;
+  final String? pageStorageKey;
+
   MultiImageAnalysisProgress({
     required this.step,
     required this.totalSteps,
@@ -147,6 +162,14 @@ class MultiImageAnalysisProgress {
     this.result,
     this.isCompleted = false,
     this.hasError = false,
+    this.isPageEvent = false,
+    this.isPageError = false,
+    this.pageNumber,
+    this.totalPages,
+    this.pageItems = const [],
+    this.pageAnalysisType,
+    this.pageImageUrl,
+    this.pageStorageKey,
   });
 
   double get progress => totalSteps > 0 ? step / totalSteps : 0;
@@ -164,12 +187,21 @@ class MultiImageAnalysisProgress {
 }
 
 /// Nutrition state
+///
+/// `loadedSummaryDate` / `loadedLogsDate` (yyyy-MM-dd in the user's local
+/// timezone) record which date the currently cached `todaySummary` /
+/// `recentLogs` actually belong to. They exist so that switching dates
+/// (Today → Yesterday → back to Today) doesn't serve the wrong day from the
+/// in-memory cache — the short-circuit in `_shouldSkipLoad` must verify both
+/// user AND date.
 class NutritionState {
   final bool isLoading;
   final String? error;
   final DailyNutritionSummary? todaySummary;
   final NutritionTargets? targets;
   final List<FoodLog> recentLogs;
+  final String? loadedSummaryDate;
+  final String? loadedLogsDate;
 
   const NutritionState({
     this.isLoading = false,
@@ -177,6 +209,8 @@ class NutritionState {
     this.todaySummary,
     this.targets,
     this.recentLogs = const [],
+    this.loadedSummaryDate,
+    this.loadedLogsDate,
   });
 
   NutritionState copyWith({
@@ -185,6 +219,8 @@ class NutritionState {
     DailyNutritionSummary? todaySummary,
     NutritionTargets? targets,
     List<FoodLog>? recentLogs,
+    String? loadedSummaryDate,
+    String? loadedLogsDate,
   }) {
     return NutritionState(
       isLoading: isLoading ?? this.isLoading,
@@ -192,6 +228,8 @@ class NutritionState {
       todaySummary: todaySummary ?? this.todaySummary,
       targets: targets ?? this.targets,
       recentLogs: recentLogs ?? this.recentLogs,
+      loadedSummaryDate: loadedSummaryDate ?? this.loadedSummaryDate,
+      loadedLogsDate: loadedLogsDate ?? this.loadedLogsDate,
     );
   }
 }
@@ -239,10 +277,18 @@ class NutritionNotifier extends StateNotifier<NutritionState> {
     debugPrint('⚡ [Nutrition] Pre-seeded from bootstrap');
   }
 
-  /// Check if we should skip loading (data is fresh - less than 5 minutes old)
-  bool _shouldSkipLoad(String userId) {
+  /// Check if we should skip loading (data is fresh - less than 5 minutes old).
+  ///
+  /// [forDate] — the date the caller is asking about (yyyy-MM-dd, local tz).
+  /// The cache is only usable when the requested date matches the last-loaded
+  /// date; cross-date calls (e.g. toggling from Yesterday back to Today) must
+  /// fall through to the network even when the TTL hasn't elapsed.
+  bool _shouldSkipLoad(String userId, {String? forDate, String? forLoadedDate}) {
     if (_lastLoadedUserId != userId) return false;
     if (_lastLoadTime == null) return false;
+    if (forDate != null && forLoadedDate != null && forDate != forLoadedDate) {
+      return false;
+    }
     final elapsed = DateTime.now().difference(_lastLoadTime!);
     return elapsed.inMinutes < 5;  // Cache for 5 minutes to improve navigation speed
   }
@@ -263,17 +309,22 @@ class NutritionNotifier extends StateNotifier<NutritionState> {
   ///      from disk), keep it and silently swallow the error. Only surface
   ///      the error banner when we have nothing else to show.
   Future<void> loadTodaySummary(String userId, {bool forceRefresh = false}) async {
-    // (1) In-memory freshness short-circuit. Still clear stale error so
-    // Try Again doesn't get stuck with the cache-skip path.
-    if (!forceRefresh && _shouldSkipLoad(userId) && state.todaySummary != null) {
+    final localDate = Tz.localDate();
+
+    // (1) In-memory freshness short-circuit. Require BOTH user AND date
+    // match — otherwise we'd serve yesterday's summary (left in state by a
+    // prior loadSummaryForDate call) as today's.
+    if (!forceRefresh &&
+        _shouldSkipLoad(userId,
+            forDate: localDate, forLoadedDate: state.loadedSummaryDate) &&
+        state.todaySummary != null &&
+        state.loadedSummaryDate == localDate) {
       debugPrint('🥗 [NutritionProvider] Skipping loadTodaySummary - data is fresh');
       if (state.error != null) {
         state = state.copyWith(error: null);
       }
       return;
     }
-
-    final localDate = Tz.localDate();
 
     // (2) Disk seed. Only when in-memory is empty AND we're not force-
     // refreshing (force = user explicitly asked for fresh data).
@@ -290,6 +341,7 @@ class NutritionNotifier extends StateNotifier<NutritionState> {
         state = state.copyWith(
           isLoading: false,
           todaySummary: cached,
+          loadedSummaryDate: localDate,
         );
       }
       // else: keep isLoading=true, the network call below will resolve it
@@ -307,7 +359,11 @@ class NutritionNotifier extends StateNotifier<NutritionState> {
         '🥗 [NutritionProvider] loadTodaySummary network: ${stopwatch.elapsedMilliseconds}ms '
         '(meals=${summary.meals.length}, kcal=${summary.totalCalories})',
       );
-      state = state.copyWith(isLoading: false, todaySummary: summary);
+      state = state.copyWith(
+        isLoading: false,
+        todaySummary: summary,
+        loadedSummaryDate: localDate,
+      );
       _lastLoadedUserId = userId;
       _lastLoadTime = DateTime.now();
 
@@ -369,13 +425,37 @@ class NutritionNotifier extends StateNotifier<NutritionState> {
 
   /// Load nutrition summary for a specific date (used when navigating dates)
   Future<void> loadSummaryForDate(String userId, DateTime date) async {
-    state = state.copyWith(isLoading: true, error: null);
+    final dateStr = '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+
+    // Cache match: same user, same date, fresh → skip.
+    if (_shouldSkipLoad(userId,
+            forDate: dateStr, forLoadedDate: state.loadedSummaryDate) &&
+        state.todaySummary != null &&
+        state.loadedSummaryDate == dateStr) {
+      return;
+    }
+
+    // Clear stale data from a different date BEFORE the fetch so the UI
+    // doesn't render the wrong day while the network call is in flight.
+    state = state.copyWith(
+      isLoading: true,
+      error: null,
+      todaySummary: state.loadedSummaryDate == dateStr ? state.todaySummary : null,
+    );
     try {
-      final dateStr = '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
       final summary = await _repository.getDailySummary(userId, date: dateStr);
-      state = state.copyWith(isLoading: false, todaySummary: summary);
+      state = state.copyWith(
+        isLoading: false,
+        todaySummary: summary,
+        loadedSummaryDate: dateStr,
+      );
       _lastLoadedUserId = userId;
       _lastLoadTime = DateTime.now();
+      // Disk cache holds a single summary per user and is keyed to today's
+      // local date (see `_NutritionDiskCache.read`). We deliberately DON'T
+      // write non-today summaries here — doing so would overwrite the
+      // today-cold-start payload with stale data. Historical dates simply
+      // re-fetch on revisit (typical usage is infrequent).
     } catch (e) {
       state = state.copyWith(isLoading: false, error: e.toString());
     }
@@ -383,10 +463,15 @@ class NutritionNotifier extends StateNotifier<NutritionState> {
 
   /// Load food logs for a specific date
   Future<void> loadLogsForDate(String userId, DateTime date) async {
+    final dateStr = '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+    // Clear logs from a different date so we don't render stale rows while
+    // fetching.
+    if (state.loadedLogsDate != dateStr) {
+      state = state.copyWith(recentLogs: const [], loadedLogsDate: dateStr);
+    }
     try {
-      final dateStr = '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
       final logs = await _repository.getFoodLogs(userId, fromDate: dateStr, toDate: dateStr);
-      state = state.copyWith(recentLogs: logs);
+      state = state.copyWith(recentLogs: logs, loadedLogsDate: dateStr);
     } catch (e) {
       debugPrint('Error loading food logs for date: $e');
     }
@@ -407,17 +492,25 @@ class NutritionNotifier extends StateNotifier<NutritionState> {
     }
   }
 
-  /// Load recent food logs
+  /// Load recent food logs (for Today).
+  ///
+  /// `recentLogs` is shared with `loadLogsForDate` — so if a prior call loaded
+  /// yesterday's logs, skipping here would show yesterday's rows as "today's."
+  /// Gate on the loaded date matching today's local date.
   Future<void> loadRecentLogs(String userId, {int limit = 50, bool forceRefresh = false}) async {
-    // Skip if data is fresh
-    if (!forceRefresh && _shouldSkipLoad(userId) && state.recentLogs.isNotEmpty) {
+    final todayStr = Tz.localDate();
+    if (!forceRefresh &&
+        _shouldSkipLoad(userId,
+            forDate: todayStr, forLoadedDate: state.loadedLogsDate) &&
+        state.recentLogs.isNotEmpty &&
+        state.loadedLogsDate == todayStr) {
       debugPrint('🥗 [NutritionProvider] Skipping loadRecentLogs - data is fresh');
       return;
     }
 
     try {
       final logs = await _repository.getFoodLogs(userId, limit: limit);
-      state = state.copyWith(recentLogs: logs);
+      state = state.copyWith(recentLogs: logs, loadedLogsDate: todayStr);
     } catch (e) {
       debugPrint('Error loading recent food logs: $e');
     }

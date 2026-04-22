@@ -394,6 +394,23 @@ List<RouteBase> _utilityRoutes() => [
           );
         },
       ),
+      // Weekly Wrapped — Sunday recap with next-week preview.
+      // Invoked via push notification deep link (weekStart=YYYY-MM-DD) or
+      // in-app from the You/Progress hub.
+      GoRoute(
+        path: '/weekly-wrapped',
+        pageBuilder: (context, state) {
+          final weekStart = state.uri.queryParameters['week_start'];
+          return CustomTransitionPage(
+            key: state.pageKey,
+            child: WeeklyWrappedScreen(weekStart: weekStart),
+            transitionsBuilder:
+                (context, animation, secondaryAnimation, child) {
+              return FadeTransition(opacity: animation, child: child);
+            },
+          );
+        },
+      ),
       // Fitness Wrapped - Monthly recap story viewer
       GoRoute(
         path: '/wrapped/:periodKey',

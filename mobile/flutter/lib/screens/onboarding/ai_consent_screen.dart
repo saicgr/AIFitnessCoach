@@ -163,8 +163,8 @@ class _AiConsentScreenState extends ConsumerState<AiConsentScreen> {
                   _buildSectionLabel('Your Data', Icons.lock_outline, isDark ? AppColors.cyan : AppColorsLight.cyan, isDark, textPrimary, 0),
                   const SizedBox(height: 4),
                   _buildCompactPoint(
-                    icon: Icons.shield_outlined,
-                    text: 'Data is anonymized before AI processing',
+                    icon: Icons.cloud_sync_outlined,
+                    text: 'Your chats, food photos, and form videos are sent securely to models that generate personalized guidance',
                     delay: 50,
                     isDark: isDark,
                     textPrimary: textPrimary,
@@ -172,8 +172,8 @@ class _AiConsentScreenState extends ConsumerState<AiConsentScreen> {
                   ),
                   const SizedBox(height: 4),
                   _buildCompactPoint(
-                    icon: Icons.visibility_off_outlined,
-                    text: 'AI sees fitness data only, never personal details',
+                    icon: Icons.lock_outline,
+                    text: 'Encrypted in transit and at rest; access is restricted to the services needed to run the app',
                     delay: 100,
                     isDark: isDark,
                     textPrimary: textPrimary,
@@ -181,8 +181,8 @@ class _AiConsentScreenState extends ConsumerState<AiConsentScreen> {
                   ),
                   const SizedBox(height: 4),
                   _buildCompactPoint(
-                    icon: Icons.toggle_on_outlined,
-                    text: 'Review, export, or delete your data anytime',
+                    icon: Icons.history_toggle_off_outlined,
+                    text: 'Chat history kept up to 12 months, then automatically deleted. Export or delete anytime.',
                     delay: 150,
                     isDark: isDark,
                     textPrimary: textPrimary,
@@ -191,7 +191,7 @@ class _AiConsentScreenState extends ConsumerState<AiConsentScreen> {
                   const SizedBox(height: 4),
                   _buildCompactPoint(
                     icon: Icons.block_outlined,
-                    text: 'Your data is never sold to third parties',
+                    text: 'Never sold to third parties, never used for advertising, never used to train outside models',
                     delay: 175,
                     isDark: isDark,
                     textPrimary: textPrimary,

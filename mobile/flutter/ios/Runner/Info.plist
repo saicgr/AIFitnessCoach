@@ -85,6 +85,10 @@
 			<string>fetch</string>
 			<string>remote-notification</string>
 		</array>
+		<!-- Live Activities (Dynamic Island + Lock Screen) for active workouts.
+		     Paired with the FitWizLiveActivity Widget Extension target. -->
+		<key>NSSupportsLiveActivities</key>
+		<true/>
 		<key>com.posthog.posthog.API_KEY</key>
 		<string>phc_4bE9QftoDcFxLm7xb46uZ8QeB0i9lCZ8YXgBpqm0mAJ</string>
 		<key>com.posthog.posthog.POSTHOG_HOST</key>

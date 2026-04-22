@@ -179,6 +179,32 @@ class ApiClient with WidgetsBindingObserver {
       ),
     );
 
+    // Connect-timeout retry interceptor — only retries TCP connect failures
+    // (cold iOS/Android network init, carrier handoff, Wi-Fi↔cellular switch).
+    // Never retries receive-timeouts or 4xx/5xx — those are real errors.
+    _dio.interceptors.add(
+      InterceptorsWrapper(
+        onError: (error, handler) async {
+          if (error.type == DioExceptionType.connectionTimeout) {
+            final retried = error.requestOptions.extra['_connectRetried'] == true;
+            if (!retried) {
+              error.requestOptions.extra['_connectRetried'] = true;
+              debugPrint('🔄 [API] Connect timeout, retrying once after 1s...');
+              await Future.delayed(const Duration(seconds: 1));
+              try {
+                final retryResponse = await _dio.fetch(error.requestOptions);
+                return handler.resolve(retryResponse);
+              } catch (retryError) {
+                debugPrint('❌ [API] Connect retry failed: $retryError');
+                // fall through to reporting the original error
+              }
+            }
+          }
+          return handler.next(error);
+        },
+      ),
+    );
+
     // Auth interceptor — always uses the CURRENT Supabase session token
     _dio.interceptors.add(
       InterceptorsWrapper(

@@ -41,12 +41,12 @@ const Map<MeasurementType, Offset> _bodyAnchor = {
 /// Ghost-mode tint for the body atlas — every muscle painted with this
 /// color so the whole figure reads as a soft faded silhouette rather than
 /// an anatomical chart. BodyAtlasView layers overlapping muscle paths, so
-/// alpha stacks; in dark mode a pure-white tint at even ~0.2 alpha ends up
-/// rendering as a near-solid white figure. Using a mid-gray (not white) at
-/// lower alpha keeps the silhouette visible without blowing out.
-// Why: reported bug — dark-mode measurements body appeared "completely white".
+/// alpha stacks; in dark mode a pure-white or mid-gray tint at any alpha
+/// still accumulates toward near-white. Use a dark slate so stacking deepens
+/// the silhouette against the dark background instead of bleaching it.
+// Why: previous mid-gray tint still rendered washed-out-white in dark mode.
 Color _ghostTint(bool isDark) => isDark
-    ? const Color(0xFF6B7280).withValues(alpha: 0.35)
+    ? const Color(0xFF1F2937).withValues(alpha: 0.55)
     : Colors.black.withValues(alpha: 0.18);
 
 /// Build the `colorMapping` for [BodyAtlasView] that tints every muscle

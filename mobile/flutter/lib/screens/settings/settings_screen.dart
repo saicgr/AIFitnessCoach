@@ -30,8 +30,11 @@ import 'beast_mode_unlock_dialog.dart';
 import 'coming_soon_screen.dart';
 import 'meal_reminders_settings_screen.dart';
 import '../../core/services/posthog_service.dart';
+import 'pages/workout_ui_mode_sheet.dart';
 import 'sections/sections.dart';
 import 'widgets/widgets.dart';
+import '../../core/providers/workout_ui_mode_provider.dart';
+import '../../core/theme/accent_color_provider.dart';
 
 part 'settings_screen_part_social_icon.dart';
 
@@ -200,6 +203,13 @@ const Map<String, List<String>> _settingsSearchIndex = {
     'change coach', 'different coach', 'coach personality',
     'ai personality', 'trainer voice', 'virtual coach',
     'chatbot', 'bot voice', 'assistant voice',
+  ],
+  'workout_mode': [
+    'workout mode', 'ui mode', 'tier', 'easy mode', 'simple mode',
+    'advanced mode', 'beginner mode', 'beginner', 'first time',
+    'new to gym', 'simpler', 'fewer buttons', 'bigger buttons',
+    'rir', 'drop sets', 'pyramid', 'plate', 'less overwhelming',
+    'overwhelming', 'too many buttons',
   ],
   'training': [
     'training', 'progression', 'pace', 'workout type', 'cardio',
@@ -446,11 +456,38 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     // Vacation mode subtitle — shows scheduled range, active state, or Off.
     final vacationModeValue = _vacationModeDisplay(authState.user);
 
+    // Workout-UI mode (Easy / Simple / Advanced) — shared with Profile,
+    // Workouts tab, and the active-workout top bar via workoutUiModeProvider.
+    final workoutUiMode = ref.watch(workoutUiModeProvider.select((s) => s.mode));
+    final workoutUiModeSubtitle = switch (workoutUiMode) {
+      WorkoutUiMode.easy => 'Easy · Full tracking',
+      // ignore: deprecated_member_use_from_same_package
+      WorkoutUiMode.simple => 'Easy · Full tracking',
+      WorkoutUiMode.advanced => 'Advanced · All tools',
+    };
+    final workoutUiModeAccent =
+        AccentColorScope.of(context).getColor(isDark);
+
     // Build sections
     final sections = [
       _SettingsSection(
         label: 'TRAINING',
         rows: [
+          _SettingsRow(
+            icon: Icons.dashboard_customize_outlined,
+            iconColor: workoutUiModeAccent,
+            title: 'Workout Mode',
+            value: workoutUiModeSubtitle,
+            sectionKeys: const [
+              'training',
+              'workout_mode',
+              'easy',
+              'simple',
+              'advanced',
+              'beginner',
+            ],
+            onTap: () => showWorkoutUiModeSheet(context),
+          ),
           _SettingsRow(
             icon: Icons.speed,
             iconColor: isDark ? AppColors.orange : AppColorsLight.orange,

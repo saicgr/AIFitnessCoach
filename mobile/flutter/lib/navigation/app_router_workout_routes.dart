@@ -192,8 +192,9 @@ List<RouteBase> _workoutRoutes() => [
               ),
             );
           }
-          // Use video-based workout screen with set tracking overlay
-          return ActiveWorkoutScreen(
+          // Gate picks the active-workout tier (Easy/Simple/Advanced) from
+          // workoutUiModeProvider so all three tiers share one route.
+          return ActiveWorkoutEntry(
             workout: workout,
             challengeId: challengeId,
             challengeData: challengeData,

@@ -29,6 +29,12 @@ class DiscoverSnapshot {
   final int? yourNextMilestoneWeeks;
   final int? yourNextMilestoneXp;
 
+  /// Total weekly XP the viewer has accrued from login streak / meal logs
+  /// when they are NOT yet on the ranked board (rank=0, no completed
+  /// workout this week). Surfaces as "+N XP this week so far" so the hero
+  /// card shows the user their progress even before they're ranked.
+  final int yourWeeklyXpUnranked;
+
   const DiscoverSnapshot({
     required this.board,
     required this.scope,
@@ -48,6 +54,7 @@ class DiscoverSnapshot {
     this.yourPeakTier,
     this.yourNextMilestoneWeeks,
     this.yourNextMilestoneXp,
+    this.yourWeeklyXpUnranked = 0,
   });
 
   factory DiscoverSnapshot.fromJson(Map<String, dynamic> json) => DiscoverSnapshot(
@@ -75,6 +82,7 @@ class DiscoverSnapshot {
         yourPeakTier: json['your_peak_tier'] as String?,
         yourNextMilestoneWeeks: json['your_next_milestone_weeks'] as int?,
         yourNextMilestoneXp: json['your_next_milestone_xp'] as int?,
+        yourWeeklyXpUnranked: json['your_weekly_xp_unranked'] as int? ?? 0,
       );
 }
 

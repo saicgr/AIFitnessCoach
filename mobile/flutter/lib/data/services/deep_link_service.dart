@@ -109,7 +109,9 @@ class DeepLinkService {
         router.go('/home');
         break;
 
-      // Hydration routes
+      // Hydration routes — tab=3 is the Fuel tab; fuelSection=water opens the
+      // Water pill directly so the user can log water in one tap (previously
+      // landed on tab=2 which is Patterns, not a loggable surface).
       case 'hydration/add':
         final rawAmount = queryParams['amount'] ?? '250';
         if (!_isValidNumericRange(rawAmount, min: 1, max: 5000)) {
@@ -118,11 +120,11 @@ class DeepLinkService {
         }
         final amount = int.parse(rawAmount);
         _quickAddWater(amount, ref);
-        router.go('/nutrition?tab=2');
+        router.go('/nutrition?tab=3&fuelSection=water');
         break;
 
       case 'hydration':
-        router.go('/nutrition?tab=2');
+        router.go('/nutrition?tab=3&fuelSection=water');
         break;
 
       // Nutrition routes
