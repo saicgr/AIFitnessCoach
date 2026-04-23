@@ -553,7 +553,9 @@ class WarmupExercise(BaseModel):
     rest_seconds: int = Field(default=10, ge=0, le=300)
     equipment: str = Field(default="none", max_length=100)
     muscle_group: str = Field(..., max_length=50)
-    notes: Optional[str] = Field(default=None, max_length=500)
+    # Matches WorkoutExerciseItem.notes — same instruction-text payload
+    # flows through warmup updates.
+    notes: Optional[str] = Field(default=None, max_length=2000)
     incline_percent: Optional[float] = Field(default=None, ge=0, le=30)
     speed_mph: Optional[float] = Field(default=None, ge=0, le=15)
     rpm: Optional[int] = Field(default=None, ge=0, le=200)
@@ -599,7 +601,9 @@ class StretchExercise(BaseModel):
     rest_seconds: int = Field(default=0, ge=0, le=300)
     equipment: str = Field(default="none", max_length=100)
     muscle_group: str = Field(..., max_length=50)
-    notes: Optional[str] = Field(default=None, max_length=500)
+    # Matches WorkoutExerciseItem.notes — same instruction-text payload
+    # flows through stretch updates.
+    notes: Optional[str] = Field(default=None, max_length=2000)
     incline_percent: Optional[float] = Field(default=None, ge=0, le=30)
     speed_mph: Optional[float] = Field(default=None, ge=0, le=15)
     rpm: Optional[int] = Field(default=None, ge=0, le=200)
@@ -679,7 +683,13 @@ class WorkoutExerciseItem(BaseModel):
     reps: int = Field(default=10, ge=1, le=100)
     weight: Optional[float] = Field(default=None, ge=0, le=1000)
     rest_seconds: int = Field(default=60, ge=0, le=600)
-    notes: Optional[str] = Field(default=None, max_length=500)
+    # 2000-char cap: this field carries full step-by-step exercise
+    # instructions (4–6 numbered steps) plus AI-appended set tags like
+    # "Final set: AMRAP". Even a moderately verbose lat-pulldown writeup
+    # blows past the old 500-char limit and triggered a 422 on PUT
+    # /workouts/{id}/exercises (see Apr-22 prod logs). Cardio session
+    # notes already use 2000.
+    notes: Optional[str] = Field(default=None, max_length=2000)
     target_muscles: Optional[List[str]] = Field(default=None, max_length=20)
     equipment: Optional[str] = Field(default=None, max_length=100)
 
