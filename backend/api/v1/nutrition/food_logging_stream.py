@@ -521,6 +521,12 @@ async def log_food_from_image_streaming(
             # Extract inflammation fields from analysis
             inflammation_score = food_analysis.get('inflammation_score')
             is_ultra_processed = food_analysis.get('is_ultra_processed')
+            # New in migration 1978 — structured drivers + added sugar.
+            inflammation_triggers = food_analysis.get('inflammation_triggers')
+            added_sugar_g = food_analysis.get('added_sugar_g')
+            glycemic_load = food_analysis.get('glycemic_load')
+            fodmap_rating = food_analysis.get('fodmap_rating')
+            fodmap_reason = food_analysis.get('fodmap_reason')
 
             # Enrich image analysis with contextual coach tips
             ai_suggestion = food_analysis.get('feedback')
@@ -583,6 +589,11 @@ async def log_food_from_image_streaming(
                 input_type="image",
                 inflammation_score=inflammation_score,
                 is_ultra_processed=is_ultra_processed,
+                inflammation_triggers=inflammation_triggers,
+                added_sugar_g=added_sugar_g,
+                glycemic_load=glycemic_load,
+                fodmap_rating=fodmap_rating,
+                fodmap_reason=fodmap_reason,
                 **micronutrients,
             )
 
@@ -1227,6 +1238,13 @@ async def log_food_from_multi_image_streaming(
                 ai_feedback = analysis_result.get("feedback")
                 inflammation_score = analysis_result.get("inflammation_score")
                 is_ultra_processed = analysis_result.get("is_ultra_processed")
+                # Migration 1978: carry structured drivers + added sugar + GL/FODMAP
+                # so the review sheet + saved row both have the complete signal set.
+                inflammation_triggers = analysis_result.get("inflammation_triggers")
+                added_sugar_g = analysis_result.get("added_sugar_g")
+                glycemic_load = analysis_result.get("glycemic_load")
+                fodmap_rating = analysis_result.get("fodmap_rating")
+                fodmap_reason = analysis_result.get("fodmap_reason")
 
                 # Human-consent branch: do NOT persist. Client renders a
                 # review sheet and posts to /food-logs (via logFoodDirect)
@@ -1268,6 +1286,11 @@ async def log_food_from_multi_image_streaming(
                     source_type="image", input_type=normalized_input_type,
                     inflammation_score=inflammation_score,
                     is_ultra_processed=is_ultra_processed,
+                    inflammation_triggers=inflammation_triggers,
+                    added_sugar_g=added_sugar_g,
+                    glycemic_load=glycemic_load,
+                    fodmap_rating=fodmap_rating,
+                    fodmap_reason=fodmap_reason,
                 )
 
                 from api.v1.nutrition.summaries import invalidate_daily_summary_cache
@@ -1345,6 +1368,9 @@ class SelectedItem(BaseModel):
     glycemic_load: Optional[int] = None
     fodmap_rating: Optional[str] = None
     fodmap_reason: Optional[str] = None
+    # Structured inflammation drivers + added sugar (migration 1978).
+    inflammation_triggers: Optional[List[str]] = None
+    added_sugar_g: Optional[float] = None
     rating: Optional[str] = None
     rating_reason: Optional[str] = None
     coach_tip: Optional[str] = None
@@ -1437,6 +1463,9 @@ async def log_selected_items(
                 glycemic_load=item.glycemic_load,
                 fodmap_rating=item.fodmap_rating,
                 fodmap_reason=item.fodmap_reason,
+                # New in migration 1978 — structured drivers + added sugar.
+                inflammation_triggers=item.inflammation_triggers,
+                added_sugar_g=item.added_sugar_g,
             )
             if row and row.get("id"):
                 created_ids.append(row["id"])

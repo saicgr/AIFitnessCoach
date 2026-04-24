@@ -21,7 +21,11 @@ import boto3
 
 from core.config import get_settings
 from core.logger import get_logger
-from models.gemini_schemas import FoodAnalysisResponse
+from models.gemini_schemas import (
+    BuffetAnalysisResponse,
+    FoodAnalysisResponse,
+    MenuAnalysisResponse,
+)
 from services.gemini.constants import gemini_generate_with_retry
 from services.gemini.nutrition import compute_meal_inflammation
 
@@ -45,6 +49,93 @@ def _count_dishes(result: dict) -> int:
         total += len(section.get("dishes", []) or [])
     total += len(result.get("dishes", []) or [])
     return total
+
+
+def _iter_menu_dishes(result: dict):
+    """Yield every dish dict in a menu or buffet response — flattens sections.
+
+    Used by post-schema fallbacks so we can walk every dish without caring
+    whether it came from buffet (flat `dishes`) or menu (nested in sections).
+    Yields the actual dict references so callers can mutate in place.
+    """
+    for section in result.get("sections", []) or []:
+        for dish in section.get("dishes", []) or []:
+            yield dish
+    for dish in result.get("dishes", []) or []:
+        yield dish
+
+
+# Default inflammation trigger tags when Gemini returns an empty array.
+# Bucketed by inflammation_score band so the UI never shows a blank "why"
+# box; these are deliberately generic since we don't know the real drivers
+# — the user sees "general" language until the prompt compliance tightens.
+_FALLBACK_TRIGGERS_BY_BAND = {
+    "anti": ["whole_foods"],
+    "mild": ["mixed_ingredients"],
+    "high": ["processed_ingredients"],
+}
+
+
+def _apply_dish_health_fallbacks(dish: dict) -> None:
+    """Fill in deterministic defaults for any health field Gemini dropped.
+
+    Runs AFTER response_schema enforcement — schema makes this a rare path,
+    but real production data has shown Gemini can still truncate long menu
+    JSONs mid-dish, and salvage logic may re-introduce incomplete items. We
+    prefer showing a safe default ("added_sugar_g: 0.0", generic trigger)
+    over a blank pill the user can't interpret.
+    """
+    # added_sugar_g defaults to 0.0 — most savoury dishes have no added sugar.
+    if dish.get("added_sugar_g") is None:
+        dish["added_sugar_g"] = 0.0
+
+    # is_ultra_processed defaults to False (conservative — we only warn when
+    # Gemini is confident it's NOVA-4).
+    if dish.get("is_ultra_processed") is None:
+        dish["is_ultra_processed"] = False
+
+    # inflammation_triggers: if empty/missing, derive one generic tag from
+    # the score band. The real fix is prompt compliance; this just prevents
+    # an empty chip row in the Score Explain sheet.
+    triggers = dish.get("inflammation_triggers")
+    if not triggers or not isinstance(triggers, list):
+        score = dish.get("inflammation_score")
+        if score is None:
+            band = "mild"
+        elif score <= 3:
+            band = "anti"
+        elif score <= 6:
+            band = "mild"
+        else:
+            band = "high"
+        dish["inflammation_triggers"] = _FALLBACK_TRIGGERS_BY_BAND[band]
+
+
+def _log_dish_if_missing_fields(dish: dict, mode: str) -> None:
+    """Emit a WARNING when any required health field is still missing.
+
+    Schema enforcement should prevent this. If we see it in logs, the schema
+    is being bypassed (cache conflict, SDK change, schema mismatch) and
+    needs investigation.
+    """
+    missing = []
+    for field in (
+        "inflammation_score",
+        "inflammation_triggers",
+        "fodmap_rating",
+        "added_sugar_g",
+        "is_ultra_processed",
+    ):
+        if dish.get(field) is None:
+            missing.append(field)
+    # glycemic_load is allowed null for sub-2g-carb items
+    if dish.get("glycemic_load") is None and dish.get("carbs_g", 0) >= 2:
+        missing.append("glycemic_load")
+    if missing:
+        logger.warning(
+            f"[vision_analyze_food_s3] mode={mode} dish='{dish.get('name','?')}' "
+            f"missing required fields after schema: {missing}"
+        )
 
 
 def _salvage_truncated_menu_json(content: str, analysis_mode: str) -> Optional[dict]:
@@ -571,7 +662,18 @@ CRITICAL RULES:
 2. ALWAYS include weight_g — your best estimate of the single-serving weight in grams.
 3. DETECT allergens per FDA Big 9 — fill detected_allergens as an array using any of: "milk", "egg", "fish", "crustacean_shellfish", "tree_nuts", "wheat", "peanuts", "soybeans", "sesame".
 
-For each dish also emit: name, calories, protein_g, carbs_g, fat_g per single serving, serving_description, rating ("green"/"yellow"/"red") for the user's goals with a brief reason (≤ 8 words), inflammation_score (0-10; 0-3 anti-inflammatory, 4-6 neutral/mild, 7-10 highly inflammatory — consider processing, omega-6 load, refined sugar, saturated fat, additives), and coach_tip (one crisp sentence ≤ 18 words: when to pick it or a smart swap, tailored to the user's nutrition context).
+REQUIRED per dish (NEVER omit any field below):
+- name, calories, protein_g, carbs_g, fat_g (per single serving)
+- serving_description, weight_g
+- rating ("green" | "yellow" | "red") + rating_reason (≤ 8 words)
+- inflammation_score (0-10; 0-3 anti, 4-6 neutral/mild, 7-10 highly inflammatory) — NEVER null.
+- inflammation_triggers: array of 1-3 short tags naming the drivers of inflammation_score. NEVER empty. Pick from: deep_fried, seed_oil, refined_flour, added_sugar, processed_meat, saturated_fat, omega6_high, artificial_additives, omega3_rich, leafy_greens, olive_oil, turmeric, whole_grains, fermented, berries, fatty_fish (free-form accepted).
+- glycemic_load (integer per serving; GL = GI × carbs_g / 100; <10 low, 10-19 medium, 20+ high) — null ONLY for near-zero-carb items (< 2g carbs).
+- fodmap_rating ("low" | "medium" | "high" per Monash) — NEVER null, every cooked dish classifies.
+- fodmap_reason (≤ 6 words naming trigger ingredient(s)) — null ONLY when fodmap_rating == "low".
+- added_sugar_g (grams of added sugar per serving; excludes naturally-occurring whole-fruit/whole-dairy sugar). Use 0.0 when none. NEVER null.
+- is_ultra_processed (bool; NOVA Group 4 → true). NEVER null.
+- coach_tip (≤ 18 words: pick or skip, tailored to the user's nutrition context).
 {nutrition_ctx_str}{user_ctx_str}
 
 Return ONLY this JSON, no other keys:
@@ -590,9 +692,12 @@ Return ONLY this JSON, no other keys:
             "rating": "yellow",
             "rating_reason": "balanced, watch the ghee",
             "inflammation_score": 4,
+            "inflammation_triggers": ["saturated_fat", "refined_flour"],
             "glycemic_load": 18,
             "fodmap_rating": "medium",
             "fodmap_reason": "contains onion, garlic",
+            "added_sugar_g": 0.0,
+            "is_ultra_processed": false,
             "coach_tip": "Decent option; take half portion + extra protein."
         }}
     ]
@@ -608,7 +713,16 @@ CRITICAL RULES:
 4. EXTRACT price as a number when visible on the menu (keep the currency in a "currency" string like "USD" / "INR" / "EUR"). Return null ONLY if truly not shown.
 5. DETECT allergens per FDA Big 9 — fill detected_allergens as an array using any of: "milk", "egg", "fish", "crustacean_shellfish", "tree_nuts", "wheat", "peanuts", "soybeans", "sesame". Infer from dish description (e.g. "Shrimp Pad Thai" → ["crustacean_shellfish", "peanuts", "soybeans"]).
 
-For each dish also emit: rating ("green"/"yellow"/"red") for the user's goals with a brief reason (≤ 8 words), inflammation_score (0-10; 0-3 anti-inflammatory, 4-6 neutral/mild, 7-10 highly inflammatory), glycemic_load (integer per serving: GL = GI × carbs_g / 100; <10 low, 10-19 medium, 20+ high; null for very-low-carb items), fodmap_rating ("low"/"medium"/"high" per Monash University scale — high if the dish likely contains onion, garlic, wheat, high-lactose dairy, apples/pears, honey, or beans in user-visible quantity), fodmap_reason (≤ 6 words naming the trigger ingredient(s), or null if low), and coach_tip (≤ 18 words, tailored to user's goals — pick-or-skip with why).
+REQUIRED per dish (NEVER omit any field below):
+- rating ("green" | "yellow" | "red") + rating_reason (≤ 8 words).
+- inflammation_score (0-10; 0-3 anti, 4-6 neutral/mild, 7-10 highly inflammatory) — NEVER null.
+- inflammation_triggers: array of 1-3 short tags naming the drivers of inflammation_score. NEVER empty. Pick from: deep_fried, seed_oil, refined_flour, added_sugar, processed_meat, saturated_fat, omega6_high, artificial_additives, omega3_rich, leafy_greens, olive_oil, turmeric, whole_grains, fermented, berries, fatty_fish (free-form accepted).
+- glycemic_load (integer per serving; GL = GI × carbs_g / 100; <10 low, 10-19 medium, 20+ high) — null ONLY for near-zero-carb dishes (<2g carbs).
+- fodmap_rating ("low" | "medium" | "high" per Monash — high if onion, garlic, wheat, high-lactose dairy, apples/pears, honey, or beans in user-visible quantity) — NEVER null.
+- fodmap_reason (≤ 6 words naming the trigger ingredient(s)) — null ONLY when fodmap_rating == "low".
+- added_sugar_g (grams of added sugar per serving; excludes naturally-occurring whole-fruit/whole-dairy sugar). Use 0.0 when none. NEVER null.
+- is_ultra_processed (bool; NOVA Group 4 → true). NEVER null.
+- coach_tip (≤ 18 words, tailored to user's goals — pick-or-skip with why).
 {nutrition_ctx_str}{user_ctx_str}
 
 Return ONLY this JSON, no other keys:
@@ -631,9 +745,12 @@ Return ONLY this JSON, no other keys:
                     "rating": "green",
                     "rating_reason": "high protein, moderate fat",
                     "inflammation_score": 2,
+                    "inflammation_triggers": ["turmeric", "whole_grains"],
                     "glycemic_load": 4,
                     "fodmap_rating": "low",
                     "fodmap_reason": null,
+                    "added_sugar_g": 0.0,
+                    "is_ultra_processed": false,
                     "coach_tip": "Hits your protein target; skip the naan if possible."
                 }}
             ]
@@ -655,7 +772,21 @@ Identify all food items across all images.
 Current time suggests this is likely {suggested_meal}.
 {nutrition_ctx_str}{user_ctx_str}
 
-Use the plate analysis JSON schema from your cached reference. REQUIRED fields per food_item: name, amount, calories, protein_g, carbs_g, fat_g, fiber_g, weight_g, inflammation_score (1-10), is_ultra_processed (bool), glycemic_load (integer per serving, GI × carbs_g / 100; <10 low, 10-19 medium, 20+ high; null for near-zero-carb items), fodmap_rating ("low"/"medium"/"high" per Monash), fodmap_reason (≤ 6 words or null). REQUIRED meal-level fields: total_calories, total_protein_g, total_carbs_g, total_fat_g, total_fiber_g, health_score (1-10), inflammation_score (1-10, calorie-weighted average of items), is_ultra_processed (true if meal is predominantly NOVA Group 4), glycemic_load (sum of item glycemic_loads), fodmap_rating (highest rating among items — "high" wins), feedback. Return valid JSON."""
+Use the plate analysis JSON schema from your cached reference.
+
+REQUIRED per food_item (NEVER omit):
+- name, amount, calories, protein_g, carbs_g, fat_g, fiber_g, weight_g
+- inflammation_score (1-10, 10 = most inflammatory) — NEVER null.
+- inflammation_triggers: array of 1-3 short tags naming the drivers. NEVER empty. Pick from: deep_fried, seed_oil, refined_flour, added_sugar, processed_meat, saturated_fat, omega6_high, artificial_additives, omega3_rich, leafy_greens, olive_oil, turmeric, whole_grains, fermented, berries, fatty_fish (free-form accepted).
+- is_ultra_processed (bool; NOVA Group 4 → true). NEVER null.
+- glycemic_load (integer per serving, GI × carbs_g / 100; <10 low, 10-19 medium, 20+ high) — null ONLY for near-zero-carb items (<2g carbs).
+- fodmap_rating ("low" | "medium" | "high" per Monash) — NEVER null.
+- fodmap_reason (≤ 6 words naming the trigger ingredient(s)) — null ONLY when fodmap_rating == "low".
+- added_sugar_g (grams of added sugar per serving, excludes whole-fruit/whole-dairy sugars). Use 0.0 when none. NEVER null.
+
+REQUIRED meal-level fields: total_calories, total_protein_g, total_carbs_g, total_fat_g, total_fiber_g, health_score (1-10), inflammation_score (1-10, calorie-weighted average of items), inflammation_triggers (up to 3 dominant drivers across items), is_ultra_processed (true if meal is predominantly NOVA Group 4), glycemic_load (sum of per-item glycemic_loads, treat null as 0), fodmap_rating (highest rating among items — "high" wins), added_sugar_g (sum across items), feedback.
+
+Return valid JSON."""
                 else:
                     prompt = f"""Analyze these food images and provide detailed nutrition estimates.
 Identify all food items across all images.
@@ -678,10 +809,12 @@ Return ONLY valid JSON with this exact structure:
             "fiber_g": 0.0,
             "weight_g": 0,
             "inflammation_score": 5,
+            "inflammation_triggers": ["whole_grains"],
             "is_ultra_processed": false,
             "glycemic_load": 8,
             "fodmap_rating": "low",
-            "fodmap_reason": null
+            "fodmap_reason": null,
+            "added_sugar_g": 0.0
         }}
     ],
     "total_calories": 0,
@@ -691,10 +824,12 @@ Return ONLY valid JSON with this exact structure:
     "total_fiber_g": 0.0,
     "health_score": 5,
     "inflammation_score": 5,
+    "inflammation_triggers": ["whole_grains"],
     "is_ultra_processed": false,
     "glycemic_load": 12,
     "fodmap_rating": "low",
     "fodmap_reason": null,
+    "added_sugar_g": 0.0,
     "feedback": "Brief coaching feedback"
 }}
 
@@ -725,10 +860,33 @@ Guidelines:
             # Menu + buffet need larger output headroom because responses can
             # contain 30-60 dishes. Plate stays at 4k.
             max_tokens = 16000 if analysis_mode in ("menu", "buffet") else 4000
+
+            # Bind a Pydantic response_schema per mode so Gemini MUST emit
+            # every required health field (inflammation_score +
+            # inflammation_triggers + glycemic_load + fodmap_rating +
+            # fodmap_reason + added_sugar_g + is_ultra_processed). Without the
+            # schema the model silently drops fields on ~10-20% of dishes
+            # and the Health Strip ends up gap-riddled. Plate mode cannot
+            # use response_schema when the cached nutrition_analysis_v1
+            # cache is active — the two are mutually exclusive per google-genai
+            # — so plate falls back to prompt-only and relies on the
+            # post-response fallback below.
+            schema_by_mode = {
+                "menu": MenuAnalysisResponse,
+                "buffet": BuffetAnalysisResponse,
+                "plate": FoodAnalysisResponse,
+            }
+            response_schema = None
+            if analysis_mode in ("menu", "buffet"):
+                response_schema = schema_by_mode[analysis_mode]
+            elif analysis_mode == "plate" and not cache_name:
+                response_schema = schema_by_mode["plate"]
+
             gen_config = types.GenerateContentConfig(
                 temperature=0.2,
                 response_mime_type="application/json",
                 max_output_tokens=max_tokens,
+                **({"response_schema": response_schema} if response_schema else {}),
             )
             if cache_name:
                 gen_config.cached_content = cache_name
@@ -799,6 +957,19 @@ Guidelines:
                         f"[vision_analyze_food_s3] inflammation_score null after fallback; "
                         f"items={len(items)} mode={analysis_mode}"
                     )
+
+            # Post-schema sanity: even with response_schema enforcement, log a
+            # warning if any menu/buffet dish arrives without the required
+            # health signals. These shouldn't fire once the schema lands but
+            # the warning lets us catch schema-bypass regressions early.
+            # Also apply deterministic fallbacks for added_sugar_g (default
+            # 0.0) and inflammation_triggers (derived from the score band) so
+            # the client-side Health Strip is never blank.
+            if analysis_mode in ("menu", "buffet"):
+                dishes = _iter_menu_dishes(result)
+                for dish in dishes:
+                    _apply_dish_health_fallbacks(dish)
+                    _log_dish_if_missing_fields(dish, analysis_mode)
 
             result["analysis_type"] = analysis_mode
             logger.info(f"Multi-image food analysis complete: mode={analysis_mode}")

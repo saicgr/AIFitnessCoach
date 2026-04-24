@@ -108,7 +108,37 @@ async def google_auth(request: Request, body: GoogleAuthRequest,
             "apps": ["fitwiz"],  # Track which apps this user uses
         }
 
-        created = db.create_user(new_user_data)
+        try:
+            created = db.create_user(new_user_data)
+        except Exception as create_err:
+            # Idempotency guard: two in-flight /auth/google requests can both
+            # read "no existing user" before either finishes inserting, which
+            # used to yield two DB rows for the same auth_id. With the new
+            # UNIQUE (auth_id) constraint, the loser of that race throws a
+            # unique-violation here. Treat that as success: re-read and
+            # return the winning row. Also covers any Postgres code 23505
+            # bubbled up through supabase-py as an APIError or ValueError.
+            err_str = str(create_err)
+            is_unique_violation = (
+                "23505" in err_str
+                or "duplicate key" in err_str.lower()
+                or "users_auth_id_unique" in err_str
+                or "users_auth_id_key" in err_str
+            )
+            if not is_unique_violation:
+                raise
+            logger.warning(
+                "[AUTH-RACE] create_user hit unique(auth_id) collision for "
+                f"{supabase_user_id}; returning existing row. err={err_str!r}"
+            )
+            existing = db.get_user_by_auth_id(supabase_user_id)
+            if not existing:
+                # Constraint fired but lookup failed — shouldn't happen
+                # except under replication lag. Surface as 500 so caller
+                # retries rather than getting a bogus empty user.
+                raise
+            return row_to_user(existing)
+
         logger.info(f"New user created via Google OAuth: id={created['id']}, email={email}, role={created.get('role', 'user')}")
 
         # Send welcome email in background (non-blocking)

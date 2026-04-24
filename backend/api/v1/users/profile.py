@@ -125,7 +125,27 @@ async def get_user_by_auth(auth_id: str,
         row = db.get_user_by_auth_id(auth_id)
 
         if not row:
-            logger.warning(f"User not found by auth_id: {auth_id}")
+            # Diagnostic: a 404 here was the first visible symptom of the
+            # duplicate-user bug in April 2026. Log enough context to
+            # correlate the missing row with what the caller's JWT thinks
+            # it is, and cross-check by email in case the DB row exists
+            # under a different auth_id.
+            token_email = verified_token.get("email")
+            by_email = None
+            try:
+                by_email = db.get_user_by_email(token_email) if token_email else None
+            except Exception as lookup_err:
+                logger.warning(
+                    f"[BY-AUTH-404] by-email fallback failed: {lookup_err!r}"
+                )
+            logger.warning(
+                "[BY-AUTH-404] User not found by auth_id=%s | token_email=%s | "
+                "row_found_by_email=%s (auth_id on that row=%s)",
+                auth_id,
+                token_email,
+                bool(by_email),
+                (by_email or {}).get("auth_id"),
+            )
             raise HTTPException(status_code=404, detail="User not found")
 
         logger.debug(f"User found by auth_id: id={row.get('id')}, auth_id={auth_id}")

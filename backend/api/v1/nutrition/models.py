@@ -33,6 +33,13 @@ class FoodLogResponse(BaseModel):
     # Inflammation / ultra-processed tracking
     inflammation_score: Optional[int] = None
     is_ultra_processed: Optional[bool] = None
+    # Structured inflammation drivers (migration 1978). 1-3 short tags like
+    # 'deep_fried', 'refined_flour', 'added_sugar'. Powers the chip-badges
+    # shown in Menu Analysis → Score Explain sheet for inflammation.
+    inflammation_triggers: Optional[List[str]] = None
+    # Added sugar in grams per serving (migration 1978). Excludes naturally
+    # -occurring sugars in whole fruit/dairy. WHO adult daily limit = 25g.
+    added_sugar_g: Optional[float] = None
     # Diabetes + FODMAP health-condition scoring (migration 1977). GL scale:
     # <10 low, 10-19 medium, 20+ high. FODMAP: low | medium | high (Monash).
     glycemic_load: Optional[int] = None
@@ -313,6 +320,9 @@ class LogDirectRequest(BaseModel):
     # Inflammation / ultra-processed tracking
     inflammation_score: Optional[int] = None
     is_ultra_processed: Optional[bool] = None
+    # Structured inflammation drivers + added-sugar (migration 1978).
+    inflammation_triggers: Optional[List[str]] = None
+    added_sugar_g: Optional[float] = None
     # Diabetes + FODMAP tracking (see migration 1977 + food_logs FoodLogResponse)
     glycemic_load: Optional[int] = None
     fodmap_rating: Optional[str] = None
@@ -368,6 +378,8 @@ class LogFoodResponse(BaseModel):
     source_type: Optional[str] = None
     inflammation_score: Optional[int] = None
     is_ultra_processed: Optional[bool] = None
+    inflammation_triggers: Optional[List[str]] = None
+    added_sugar_g: Optional[float] = None
     glycemic_load: Optional[int] = None
     fodmap_rating: Optional[str] = None
     fodmap_reason: Optional[str] = None

@@ -191,7 +191,18 @@ class FoodItemSchema(BaseModel):
     weight_per_unit_g: Optional[float] = Field(default=None, description="Weight per unit for countable items")
     goal_score: Optional[int] = Field(default=None, description="Score 1-10 based on user goals")
     inflammation_score: Optional[int] = Field(default=None, description="Inflammation score 1-10, 10 = most inflammatory")
+    # Structured drivers of inflammation_score. 1-3 short tags like
+    # 'deep_fried', 'refined_flour', 'added_sugar', 'omega3_rich',
+    # 'leafy_greens'. Surfaced as chip-badges in the Score Explain sheet.
+    inflammation_triggers: Optional[List[str]] = Field(default=None, description="1-3 short tags naming drivers of inflammation_score (e.g. deep_fried, refined_flour, added_sugar). Pick from: deep_fried, seed_oil, refined_flour, added_sugar, processed_meat, saturated_fat, omega6_high, artificial_additives, omega3_rich, leafy_greens, olive_oil, turmeric, whole_grains, fermented, berries, fatty_fish.")
     is_ultra_processed: Optional[bool] = Field(default=None, description="True if NOVA Group 4 ultra-processed food")
+    # Added sugar is the single most actionable nutrition signal; surface it
+    # as a first-class field so the Health Strip can render it on its own pill.
+    # WHO adult daily limit = 25 g; the UI colours pills accordingly.
+    added_sugar_g: Optional[float] = Field(default=None, description="Grams of added sugar per serving (excludes naturally-occurring sugars in whole fruit/dairy). Use 0.0 for no added sugar, never null.")
+    glycemic_load: Optional[int] = Field(default=None, description="Glycemic load per serving (GI × carbs_g / 100). <10 low, 10-19 medium, 20+ high. Null ONLY for near-zero-carb items (<2g carbs).")
+    fodmap_rating: Optional[str] = Field(default=None, description="Monash FODMAP classification: 'low' | 'medium' | 'high'. Required for every cooked dish.")
+    fodmap_reason: Optional[str] = Field(default=None, description="≤6 words naming the FODMAP trigger(s). Null only when fodmap_rating == 'low'.")
 
 
 class FoodAnalysisResponse(BaseModel):
@@ -245,6 +256,70 @@ class FoodAnalysisResponse(BaseModel):
     plate_description: Optional[str] = Field(default=None, description="Brief visual description of the plate/scene for image analysis, max 100 chars. e.g. 'A South Indian breakfast with steamed idlis, sambar, and chutneys'")
     inflammation_score: Optional[int] = Field(default=None, description="Meal-level inflammation score 1-10, calorie-weighted average of items")
     is_ultra_processed: Optional[bool] = Field(default=None, description="True if meal contains predominantly NOVA Group 4 ultra-processed foods")
+    # Meal-level roll-ups (mirror the per-item fields above).
+    inflammation_triggers: Optional[List[str]] = Field(default=None, description="Up to 3 dominant inflammation drivers across the meal.")
+    added_sugar_g: Optional[float] = Field(default=None, description="Total added sugar across the meal in grams.")
+    glycemic_load: Optional[int] = Field(default=None, description="Sum of per-item glycemic_loads (treat null as 0).")
+    fodmap_rating: Optional[str] = Field(default=None, description="Highest FODMAP rating across items (high > medium > low).")
+    fodmap_reason: Optional[str] = Field(default=None, description="Concatenated trigger reasons across items.")
+
+
+# =============================================================================
+# MENU / BUFFET ANALYSIS SCHEMAS
+# =============================================================================
+#
+# These are passed as `response_schema` to Gemini so every dish returned from
+# a menu or buffet scan is guaranteed to carry the full health-signal set —
+# inflammation_score + inflammation_triggers + glycemic_load + fodmap_rating
+# + fodmap_reason + added_sugar_g + is_ultra_processed. Without a schema
+# Gemini silently drops fields and the Health Strip ends up with gaps.
+
+
+class MenuDishSchema(BaseModel):
+    """Schema for a single dish parsed from a menu or buffet image.
+
+    Kept separate from FoodItemSchema (plate mode) because menu dishes carry
+    restaurant-specific context (price / currency / section / allergens)
+    that plate items don't have.
+    """
+    name: str = Field(..., description="Dish name as shown on the menu.")
+    calories: int = Field(..., description="Calories per single serving.")
+    protein_g: float = Field(..., description="Protein grams per serving.")
+    carbs_g: float = Field(..., description="Carb grams per serving.")
+    fat_g: float = Field(..., description="Fat grams per serving.")
+    weight_g: Optional[float] = Field(default=None, description="Estimated serving weight in grams.")
+    serving_description: Optional[str] = Field(default=None, description="Human-readable portion description (e.g. '1 cup, heaping').")
+    price: Optional[float] = Field(default=None, description="Listed menu price; null if not visible on the menu.")
+    currency: Optional[str] = Field(default=None, description="ISO-ish currency code (USD/EUR/INR). Null if no price.")
+    detected_allergens: Optional[List[str]] = Field(default=None, description="FDA Big 9 allergens detected: milk, egg, fish, crustacean_shellfish, tree_nuts, wheat, peanuts, soybeans, sesame.")
+    rating: str = Field(..., description="Goal-fit: 'green' | 'yellow' | 'red'.")
+    rating_reason: Optional[str] = Field(default=None, description="≤8 words justifying the goal-fit rating.")
+    inflammation_score: int = Field(..., description="Per-serving inflammation score 0-10. 0-3 anti, 4-6 neutral, 7-10 highly inflammatory. NEVER null.")
+    inflammation_triggers: List[str] = Field(..., description="1-3 short tags naming drivers of inflammation_score (pick from deep_fried, seed_oil, refined_flour, added_sugar, processed_meat, saturated_fat, omega6_high, artificial_additives, omega3_rich, leafy_greens, olive_oil, turmeric, whole_grains, fermented, berries, fatty_fish; free-form accepted). NEVER empty.")
+    glycemic_load: Optional[int] = Field(default=None, description="Per-serving GL (GI × carbs_g / 100). Null ONLY if carbs_g < 2.")
+    fodmap_rating: str = Field(..., description="Monash FODMAP classification: 'low' | 'medium' | 'high'. Required for every dish.")
+    fodmap_reason: Optional[str] = Field(default=None, description="≤6 words naming the FODMAP trigger(s). Null ONLY when fodmap_rating == 'low'.")
+    added_sugar_g: float = Field(..., description="Added sugar grams per serving (excludes whole-fruit / whole-dairy sugars). Use 0.0 when there is none; never null.")
+    is_ultra_processed: bool = Field(..., description="True iff the dish is predominantly NOVA Group 4 (industrial emulsifiers, HFCS, isolates, etc.).")
+    coach_tip: Optional[str] = Field(default=None, description="≤18 words: pick-or-skip guidance tailored to the user's goals.")
+
+
+class BuffetAnalysisResponse(BaseModel):
+    """Schema for buffet-mode multi-dish analysis — flat list of dishes."""
+    analysis_type: str = Field(default="buffet", description="Always 'buffet'.")
+    dishes: List[MenuDishSchema] = Field(..., description="Every distinct dish visible in the buffet. Do not skip any.")
+
+
+class MenuSectionSchema(BaseModel):
+    """One section of a menu (appetizers / mains / desserts / etc.)."""
+    section_name: str = Field(..., description="Normalised section: breakfast | appetizers | mains | sides | desserts | drinks | specials | uncategorized.")
+    dishes: List[MenuDishSchema] = Field(..., description="Dishes within this section.")
+
+
+class MenuAnalysisResponse(BaseModel):
+    """Schema for menu-mode analysis — sections containing dishes."""
+    analysis_type: str = Field(default="menu", description="Always 'menu'.")
+    sections: List[MenuSectionSchema] = Field(..., description="All sections of the menu; extract EVERY dish across ALL sections.")
 
 
 # =============================================================================

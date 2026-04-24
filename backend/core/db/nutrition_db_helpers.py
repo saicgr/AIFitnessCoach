@@ -87,6 +87,11 @@ class NutritionDB(NutritionDBPart2, BaseDB):
         glycemic_load: Optional[int] = None,
         fodmap_rating: Optional[str] = None,
         fodmap_reason: Optional[str] = None,
+        # Structured inflammation drivers + added-sugar (migration 1978).
+        # inflammation_triggers is a short array of tags like
+        # ['deep_fried', 'refined_flour']; added_sugar_g is grams per serving.
+        inflammation_triggers: Optional[List[str]] = None,
+        added_sugar_g: Optional[float] = None,
         # Passive mood inference (rules_v1). Null when no rule matched or
         # confidence was below the persistence threshold.
         mood_after_inferred: Optional[str] = None,
@@ -160,6 +165,15 @@ class NutritionDB(NutritionDBPart2, BaseDB):
             data["fodmap_rating"] = fodmap_rating
         if fodmap_reason is not None:
             data["fodmap_reason"] = fodmap_reason
+
+        # Inflammation triggers + added sugar (migration 1978). Triggers ride
+        # alongside inflammation_score so the Score Explain sheet can render
+        # "why" chips without a second query; added sugar is surfaced on its
+        # own health pill and powers WHO daily-limit comparisons.
+        if inflammation_triggers is not None:
+            data["inflammation_triggers"] = inflammation_triggers
+        if added_sugar_g is not None:
+            data["added_sugar_g"] = added_sugar_g
 
         # Passive mood inference columns
         if mood_after_inferred is not None:

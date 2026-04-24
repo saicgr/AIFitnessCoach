@@ -675,6 +675,11 @@ async def log_food_direct(body: LogDirectRequest, request: Request, current_user
             user_query=body.user_query,
             inflammation_score=body.inflammation_score,
             is_ultra_processed=body.is_ultra_processed,
+            inflammation_triggers=body.inflammation_triggers,
+            added_sugar_g=body.added_sugar_g,
+            glycemic_load=body.glycemic_load,
+            fodmap_rating=body.fodmap_rating,
+            fodmap_reason=body.fodmap_reason,
             **micronutrients,
         )
 
@@ -741,6 +746,11 @@ async def log_food_direct(body: LogDirectRequest, request: Request, current_user
             source_type=body.source_type,
             inflammation_score=body.inflammation_score,
             is_ultra_processed=body.is_ultra_processed,
+            inflammation_triggers=body.inflammation_triggers,
+            added_sugar_g=body.added_sugar_g,
+            glycemic_load=body.glycemic_load,
+            fodmap_rating=body.fodmap_rating,
+            fodmap_reason=body.fodmap_reason,
         )
     except Exception as e:
         logger.error(f"Error logging food directly: {e}", exc_info=True)
