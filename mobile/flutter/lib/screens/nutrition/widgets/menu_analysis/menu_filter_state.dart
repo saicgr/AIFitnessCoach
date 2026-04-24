@@ -33,6 +33,19 @@ class MenuFilterState {
   /// Free-text search over dish name + coach tip. Lowercased.
   final String searchQuery;
 
+  /// Diabetes filter: max glycemic load per serving. 9 ≈ "low only", 19 ≈
+  /// "low or medium", null = no bound. Items with null glycemic_load pass
+  /// through (we don't penalize Gemini's "unknown" as failure).
+  final double? maxGlycemicLoad;
+
+  /// IBS / FODMAP filter: highest rating allowed. 'low' keeps only low,
+  /// 'medium' keeps low+medium, 'high' (or null) keeps everything.
+  final String? fodmapMax;
+
+  /// Ultra-processed toggle. When true, hide items flagged
+  /// `is_ultra_processed == true`.
+  final bool hideUltraProcessed;
+
   const MenuFilterState({
     this.healthRatings = const {},
     this.inflammationBuckets = const {},
@@ -44,6 +57,9 @@ class MenuFilterState {
     this.hideAllergenDishes = false,
     this.sections = const {},
     this.searchQuery = '',
+    this.maxGlycemicLoad,
+    this.fodmapMax,
+    this.hideUltraProcessed = false,
   });
 
   static const empty = MenuFilterState();
@@ -58,7 +74,10 @@ class MenuFilterState {
       maxPriceUsd != null ||
       hideAllergenDishes ||
       sections.isNotEmpty ||
-      searchQuery.isNotEmpty;
+      searchQuery.isNotEmpty ||
+      maxGlycemicLoad != null ||
+      fodmapMax != null ||
+      hideUltraProcessed;
 
   MenuFilterState copyWith({
     Set<String>? healthRatings,
@@ -76,6 +95,11 @@ class MenuFilterState {
     bool clearMaxFatG = false,
     bool clearMaxCalories = false,
     bool clearMaxPriceUsd = false,
+    double? maxGlycemicLoad,
+    String? fodmapMax,
+    bool? hideUltraProcessed,
+    bool clearMaxGlycemicLoad = false,
+    bool clearFodmapMax = false,
   }) {
     return MenuFilterState(
       healthRatings: healthRatings ?? this.healthRatings,
@@ -88,6 +112,9 @@ class MenuFilterState {
       hideAllergenDishes: hideAllergenDishes ?? this.hideAllergenDishes,
       sections: sections ?? this.sections,
       searchQuery: searchQuery ?? this.searchQuery,
+      maxGlycemicLoad: clearMaxGlycemicLoad ? null : (maxGlycemicLoad ?? this.maxGlycemicLoad),
+      fodmapMax: clearFodmapMax ? null : (fodmapMax ?? this.fodmapMax),
+      hideUltraProcessed: hideUltraProcessed ?? this.hideUltraProcessed,
     );
   }
 
@@ -109,6 +136,21 @@ class MenuFilterState {
     if (maxPriceUsd != null && item.price != null && item.price! > maxPriceUsd!) {
       return false;
     }
+    // Diabetes: drop items whose glycemic_load exceeds the user's bound.
+    // Unknown GL (null) passes — Gemini didn't compute it; don't penalise
+    // the user by hiding items we can't judge.
+    if (maxGlycemicLoad != null && item.glycemicLoad != null && item.glycemicLoad! > maxGlycemicLoad!) {
+      return false;
+    }
+    // FODMAP: keep only items whose rating is ≤ the user's ceiling. Unknown
+    // fodmap_rating passes.
+    if (fodmapMax != null && item.fodmapRating != null) {
+      const rank = {'low': 0, 'medium': 1, 'high': 2};
+      final cap = rank[fodmapMax] ?? 2;
+      final got = rank[item.fodmapRating] ?? 0;
+      if (got > cap) return false;
+    }
+    if (hideUltraProcessed && item.isUltraProcessed == true) return false;
     if (hideAllergenDishes && profile != null && !profile.isEmpty) {
       final hits = profile.matchesForDish(
         dishName: item.name,

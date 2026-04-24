@@ -352,14 +352,28 @@ class _MenuAnalysisSheetState extends ConsumerState<MenuAnalysisSheet> {
     final payload = <Map<String, dynamic>>[];
     for (final item in _items) {
       if (!_selected.contains(item.id)) continue;
+      // Every health-condition score that Gemini computed for this dish must
+      // ride along into food_logs — otherwise the user logs the meal and
+      // loses the inflammation / diabetes / FODMAP context they just saw.
+      // See migration 1908 (inflammation) + 1977 (diabetes + FODMAP).
       payload.add({
         'name': item.name,
         'calories': item.scaledCalories.round(),
         'protein_g': double.parse(item.scaledProteinG.toStringAsFixed(1)),
         'carbs_g': double.parse(item.scaledCarbsG.toStringAsFixed(1)),
         'fat_g': double.parse(item.scaledFatG.toStringAsFixed(1)),
+        if (item.fiberG != null) 'fiber_g': double.parse((item.fiberG! * item.portionMultiplier).toStringAsFixed(1)),
+        if (item.weightG != null) 'weight_g': item.scaledWeightG!.round(),
         if (item.portionMultiplier != 1.0) 'portion_multiplier': item.portionMultiplier,
         if (item.amount != null) 'amount': item.amount,
+        if (item.inflammationScore != null) 'inflammation_score': item.inflammationScore,
+        if (item.isUltraProcessed != null) 'is_ultra_processed': item.isUltraProcessed,
+        if (item.glycemicLoad != null) 'glycemic_load': item.glycemicLoad,
+        if (item.fodmapRating != null) 'fodmap_rating': item.fodmapRating,
+        if (item.fodmapReason != null) 'fodmap_reason': item.fodmapReason,
+        if (item.rating != null) 'rating': item.rating,
+        if (item.ratingReason != null) 'rating_reason': item.ratingReason,
+        if (item.coachTip != null) 'coach_tip': item.coachTip,
       });
     }
     widget.onLogItems(payload);
@@ -424,7 +438,9 @@ class _MenuAnalysisSheetState extends ConsumerState<MenuAnalysisSheet> {
   Widget build(BuildContext context) {
     final colors = ThemeColors.of(context);
     return GlassSheet(
-      maxHeightFraction: 0.95,
+      // Fill the full screen so the Log pill at the bottom hugs the home
+      // indicator / bezel instead of floating with a 5% gap above it.
+      maxHeightFraction: 1.0,
       child: Column(
         children: [
           _header(colors),
@@ -827,18 +843,15 @@ class _MenuAnalysisSheetState extends ConsumerState<MenuAnalysisSheet> {
   }
 
   Widget _recommendedCard(RecommendedItem pick, int rank, int total) {
-    return Stack(
+    // Rank badge + explain button sit on their OWN row above the card so they
+    // never overlap the card's built-in "Moderate"/"Skip" rating pill on the
+    // right edge of the title. Prior Positioned(top:8,right:8) overlay
+    // collided with the rating pill visually on every recommended item.
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        MenuAnalysisItemCard(
-          item: pick.item,
-          isSelected: _selected.contains(pick.item.id),
-          allergenProfile: _allergenProfile(),
-          onToggle: (v) => _toggleItem(pick.item, v),
-          onPortionChanged: (m) => _updatePortion(pick.item, m),
-        ),
-        Positioned(
-          right: 8,
-          top: 8,
+        Padding(
+          padding: const EdgeInsets.only(left: 10, right: 4, top: 2, bottom: 2),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -848,13 +861,18 @@ class _MenuAnalysisSheetState extends ConsumerState<MenuAnalysisSheet> {
                   color: AppColors.orange,
                   borderRadius: BorderRadius.circular(6),
                 ),
-                child: Text('#$rank', style: const TextStyle(
-                  fontSize: 10, fontWeight: FontWeight.w900, color: Colors.white,
-                )),
+                child: Text(
+                  '#$rank',
+                  style: const TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w900,
+                    color: Colors.white,
+                  ),
+                ),
               ),
-              const SizedBox(width: 4),
+              const SizedBox(width: 6),
               Material(
-                color: Colors.white.withValues(alpha: 0.15),
+                color: Colors.white.withValues(alpha: 0.08),
                 shape: const CircleBorder(),
                 child: InkWell(
                   customBorder: const CircleBorder(),
@@ -869,6 +887,13 @@ class _MenuAnalysisSheetState extends ConsumerState<MenuAnalysisSheet> {
               ),
             ],
           ),
+        ),
+        MenuAnalysisItemCard(
+          item: pick.item,
+          isSelected: _selected.contains(pick.item.id),
+          allergenProfile: _allergenProfile(),
+          onToggle: (v) => _toggleItem(pick.item, v),
+          onPortionChanged: (m) => _updatePortion(pick.item, m),
         ),
       ],
     );
@@ -1005,10 +1030,17 @@ class _MenuAnalysisSheetState extends ConsumerState<MenuAnalysisSheet> {
 
   Widget _bottomBar(ThemeColors colors) {
     final totals = _selectedTotals;
+    final hasSelection = _selected.isNotEmpty;
+    // Glass sheet already fills maxHeightFraction of the screen; we just
+    // need to respect the platform gesture-inset without doubling it. Use
+    // SafeArea with minimum:bottom=0 so on devices that don't have a home
+    // indicator (older Androids, web) we hug the screen edge; on modern
+    // iPhones the native bottom inset (~34pt) is respected.
     return SafeArea(
       top: false,
+      minimum: EdgeInsets.zero,
       child: Container(
-        padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+        padding: const EdgeInsets.fromLTRB(16, 6, 16, 2),
         decoration: BoxDecoration(
           color: Colors.black.withValues(alpha: 0.35),
           border: Border(top: BorderSide(color: Colors.white.withValues(alpha: 0.08))),
@@ -1016,35 +1048,42 @@ class _MenuAnalysisSheetState extends ConsumerState<MenuAnalysisSheet> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Row(
-              children: [
-                Text(
-                  '${_selected.length} selected',
-                  style: TextStyle(
-                    fontSize: 12, fontWeight: FontWeight.w700,
-                    color: colors.textPrimary,
+            // Macro-totals row is only meaningful once the user has picked
+            // at least one dish. Hiding it while empty removes ~30px of dead
+            // space that pushed the Log pill further from the bezel.
+            if (hasSelection) ...[
+              Row(
+                children: [
+                  Text(
+                    '${_selected.length} selected',
+                    style: TextStyle(
+                      fontSize: 12, fontWeight: FontWeight.w700,
+                      color: colors.textPrimary,
+                    ),
                   ),
-                ),
-                const Spacer(),
-                Text(
-                  '${totals.cal.round()} cal  ${totals.protein.toStringAsFixed(0)}g P  '
-                  '${totals.carbs.toStringAsFixed(0)}g C  ${totals.fat.toStringAsFixed(0)}g F'
-                  '${totals.price != null ? '  ·  \$${totals.price!.toStringAsFixed(2)}' : ''}',
-                  style: TextStyle(
-                    fontSize: 11, fontWeight: FontWeight.w600,
-                    color: colors.textSecondary,
+                  const Spacer(),
+                  Text(
+                    '${totals.cal.round()} cal  ${totals.protein.toStringAsFixed(0)}g P  '
+                    '${totals.carbs.toStringAsFixed(0)}g C  ${totals.fat.toStringAsFixed(0)}g F'
+                    '${totals.price != null ? '  ·  \$${totals.price!.toStringAsFixed(2)}' : ''}',
+                    style: TextStyle(
+                      fontSize: 11, fontWeight: FontWeight.w600,
+                      color: colors.textSecondary,
+                    ),
                   ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
+                ],
+              ),
+              const SizedBox(height: 6),
+            ],
             SizedBox(
               width: double.infinity,
               child: FilledButton.icon(
                 icon: Icon(_logged ? Icons.check : Icons.add_circle_outline),
                 label: Text(_logged
                     ? 'Logged'
-                    : 'Log ${_selected.length} item${_selected.length == 1 ? '' : 's'}'),
+                    : hasSelection
+                        ? 'Log ${_selected.length} item${_selected.length == 1 ? '' : 's'}'
+                        : 'Select dishes to log'),
                 onPressed: (_selected.isEmpty || _logged) ? null : _handleLog,
                 style: FilledButton.styleFrom(
                   backgroundColor: AppColors.orange,

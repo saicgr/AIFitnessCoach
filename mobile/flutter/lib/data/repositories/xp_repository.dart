@@ -1,7 +1,9 @@
+import 'dart:async';
 import 'package:flutter/foundation.dart';
 import '../models/user_xp.dart';
 import '../models/trophy.dart';
 import '../models/xp_event.dart';
+import '../../core/services/sentry_service.dart';
 import '../../utils/tz.dart';
 import '../services/api_client.dart';
 
@@ -229,44 +231,74 @@ class XPRepository {
   // Rewards
   // =========================================================================
 
-  /// Get available rewards for user
+  /// Get available rewards for user.
+  ///
+  /// Previously swallowed all errors (including 404s for the endpoint not
+  /// existing) and returned `[]`, which is exactly what hid the missing
+  /// backend route for months. Now rethrows and surfaces to Sentry so we
+  /// see regressions immediately — per feedback_no_silent_fallbacks.md.
   Future<List<Map<String, dynamic>>> getAvailableRewards(String userId) async {
     try {
       final response = await _client.get('/progress/rewards/$userId/available');
       return List<Map<String, dynamic>>.from(response.data);
-    } catch (e) {
+    } catch (e, stack) {
       debugPrint('Error getting available rewards: $e');
-      return [];
+      unawaited(SentryService.captureError(
+        e,
+        stack,
+        hint: 'GET /progress/rewards/$userId/available failed',
+        tags: {'subsystem': 'rewards', 'stage': 'fetch_available'},
+      ));
+      rethrow;
     }
   }
 
-  /// Claim a reward
-  Future<bool> claimReward(String userId, String rewardId, {String? email}) async {
+  /// Claim a reward. Response varies by reward kind:
+  ///   - daily_crate: `{success, reward_type, crate_type, reward: {type, amount}}`
+  ///   - consumable:  `{success, reward_type, message, level_reached, items}`
+  ///   - merch:       `{success, reward_type: "merch", redirect: "merch_address", claim_id}`
+  /// The screen branches on `response['reward_type']` / `response['redirect']`.
+  Future<Map<String, dynamic>?> claimReward(String userId, String rewardId, {String? email}) async {
     try {
-      await _client.post(
+      final response = await _client.post(
         '/progress/rewards/$userId/claim',
         data: {
           'reward_id': rewardId,
           if (email != null) 'delivery_email': email,
         },
       );
-      return true;
-    } catch (e) {
+      final data = response.data;
+      return data is Map ? Map<String, dynamic>.from(data) : null;
+    } catch (e, stack) {
       debugPrint('Error claiming reward: $e');
-      return false;
+      unawaited(SentryService.captureError(
+        e,
+        stack,
+        hint: 'POST /progress/rewards/$userId/claim failed',
+        tags: {'subsystem': 'rewards', 'stage': 'claim', 'reward_id': rewardId},
+      ));
+      return null;
     }
   }
 
-  /// Get claimed rewards history
+  /// Get claimed rewards history. Same silent-swallow → rethrow treatment
+  /// as getAvailableRewards.
   Future<List<Map<String, dynamic>>> getClaimedRewards(String userId) async {
     try {
       final response = await _client.get('/progress/rewards/$userId/claimed');
       return List<Map<String, dynamic>>.from(response.data);
-    } catch (e) {
+    } catch (e, stack) {
       debugPrint('Error getting claimed rewards: $e');
-      return [];
+      unawaited(SentryService.captureError(
+        e,
+        stack,
+        hint: 'GET /progress/rewards/$userId/claimed failed',
+        tags: {'subsystem': 'rewards', 'stage': 'fetch_claimed'},
+      ));
+      rethrow;
     }
   }
+
 
   // =========================================================================
   // Daily Login & XP Events

@@ -1333,8 +1333,21 @@ class SelectedItem(BaseModel):
     protein_g: float = 0.0
     carbs_g: float = 0.0
     fat_g: float = 0.0
+    fiber_g: Optional[float] = None
+    weight_g: Optional[int] = None
     portion_multiplier: float = 1.0
     amount: Optional[str] = None
+    # Health-condition scoring forwarded from the MenuAnalysisSheet. Without
+    # these, the user loses the Gemini-computed context (inflammation, diabetes
+    # impact, FODMAP) the moment they log the meal.
+    inflammation_score: Optional[int] = None
+    is_ultra_processed: Optional[bool] = None
+    glycemic_load: Optional[int] = None
+    fodmap_rating: Optional[str] = None
+    fodmap_reason: Optional[str] = None
+    rating: Optional[str] = None
+    rating_reason: Optional[str] = None
+    coach_tip: Optional[str] = None
 
 
 class LogSelectedItemsRequest(BaseModel):
@@ -1378,24 +1391,52 @@ async def log_selected_items(
     created_ids: List[str] = []
     try:
         for item in body.items:
-            mult = max(0.0, item.portion_multiplier or 1.0)
-            food_items = [{
+            # Note: the client already scales calories/protein/carbs/fat by the
+            # portion multiplier before sending — see `_handleLog` in
+            # menu_analysis_sheet.dart. We DON'T re-scale here (would double-
+            # apply) unless the client explicitly sends a non-1.0 multiplier
+            # with UNSCALED macros (legacy path). Gate on that.
+            mult = 1.0 if (item.portion_multiplier or 1.0) == 1.0 else float(item.portion_multiplier)
+            # Ride fiber / weight / coach_tip + health scores into the
+            # stored food_items JSON so food history can show the dish
+            # context per item (multiple items per row is possible).
+            food_item = {
                 "name": item.name,
-                "calories": int(round(item.calories * mult)),
-                "protein_g": round(item.protein_g * mult, 1),
-                "carbs_g": round(item.carbs_g * mult, 1),
-                "fat_g": round(item.fat_g * mult, 1),
+                "calories": int(round(item.calories * mult)) if mult != 1.0 else item.calories,
+                "protein_g": round(item.protein_g * mult, 1) if mult != 1.0 else item.protein_g,
+                "carbs_g": round(item.carbs_g * mult, 1) if mult != 1.0 else item.carbs_g,
+                "fat_g": round(item.fat_g * mult, 1) if mult != 1.0 else item.fat_g,
                 "amount": item.amount or "1 serving",
-            }]
+            }
+            if item.fiber_g is not None:
+                food_item["fiber_g"] = round(item.fiber_g * mult, 1) if mult != 1.0 else item.fiber_g
+            if item.weight_g is not None:
+                food_item["weight_g"] = int(round(item.weight_g * mult)) if mult != 1.0 else item.weight_g
+            if item.coach_tip:
+                food_item["coach_tip"] = item.coach_tip
+            if item.rating:
+                food_item["rating"] = item.rating
+            if item.rating_reason:
+                food_item["rating_reason"] = item.rating_reason
+
+            food_items = [food_item]
             row = db.create_food_log(
                 user_id=body.user_id, meal_type=body.meal_type, food_items=food_items,
                 total_calories=food_items[0]["calories"],
                 protein_g=food_items[0]["protein_g"],
                 carbs_g=food_items[0]["carbs_g"],
                 fat_g=food_items[0]["fat_g"],
-                fiber_g=0, ai_feedback=None, health_score=None, logged_at=logged_at,
+                fiber_g=food_items[0].get("fiber_g") or 0,
+                ai_feedback=item.coach_tip, health_score=None, logged_at=logged_at,
                 image_url=body.image_url, image_storage_key=body.image_storage_key,
                 source_type=source_type, input_type=input_type,
+                # Forward every health-condition score so the DB row captures
+                # what the user saw on the menu-analysis card.
+                inflammation_score=item.inflammation_score,
+                is_ultra_processed=item.is_ultra_processed,
+                glycemic_load=item.glycemic_load,
+                fodmap_rating=item.fodmap_rating,
+                fodmap_reason=item.fodmap_reason,
             )
             if row and row.get("id"):
                 created_ids.append(row["id"])

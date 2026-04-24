@@ -645,18 +645,26 @@ class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen>
           },
         ),
         const SizedBox(height: 8),
-        SizedBox(
-          height: 136,
-          child: ListView.separated(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            itemCount: synced.length,
-            separatorBuilder: (_, __) => const SizedBox(width: 10),
-            itemBuilder: (context, index) => _WorkoutsTabSyncedCard(
-              workout: synced[index],
+        // Adaptive height — scales with OS text size + clamps so the
+        // "Apple Health" footer label can't clip on iPhone SE or at 1.3x
+        // Dynamic Type. Matches the Profile-tab strip fix.
+        Builder(builder: (ctx) {
+          final textScale = MediaQuery.textScalerOf(ctx).scale(1.0);
+          final height = (156 * textScale).clamp(156.0, 210.0);
+          return SizedBox(
+            height: height,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              itemCount: synced.length,
+              separatorBuilder: (_, __) => const SizedBox(width: 10),
+              itemBuilder: (context, index) => _WorkoutsTabSyncedCard(
+                workout: synced[index],
+                height: height,
+              ),
             ),
-          ),
-        ),
+          );
+        }),
         const SizedBox(height: 24),
       ],
     );
@@ -1019,13 +1027,17 @@ class _PreviousSessionCard extends StatelessWidget {
 
 /// Kind-tinted synced-workout card for the Workouts tab strip. Keeps the
 /// visual system consistent with the Profile tab's `_SyncedWorkoutCard`.
-class _WorkoutsTabSyncedCard extends StatelessWidget {
+class _WorkoutsTabSyncedCard extends ConsumerWidget {
   final Workout workout;
+  final double height;
 
-  const _WorkoutsTabSyncedCard({required this.workout});
+  const _WorkoutsTabSyncedCard({
+    required this.workout,
+    required this.height,
+  });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final metadata = workout.generationMetadata ?? {};
     final kind = SyncedKind.fromString(
@@ -1045,18 +1057,33 @@ class _WorkoutsTabSyncedCard extends StatelessWidget {
     final chips = _chipsFor(kind, metadata, workout);
     final dateLabel = _formatDateShort(workout.scheduledDate);
 
+    // Primary = real source-app title (e.g. "Imported Cardio Workout"),
+    // kind label rendered as a small tag chip above. Matches Profile tab.
+    final primaryTitle = (workout.name?.trim().isNotEmpty ?? false)
+        ? workout.name!.trim()
+        : kind.label;
+    final kindTag = (workout.name?.trim().isNotEmpty ?? false) &&
+            kind != SyncedKind.other
+        ? kind.label
+        : null;
+
     return GestureDetector(
       onTap: () {
         HapticService.selection();
-        Navigator.of(context).push(
+        ref.read(floatingNavBarVisibleProvider.notifier).state = false;
+        Navigator.of(context)
+            .push(
           MaterialPageRoute(
             builder: (_) => SyncedWorkoutDetailScreen(workout: workout),
           ),
-        );
+        )
+            .whenComplete(() {
+          ref.read(floatingNavBarVisibleProvider.notifier).state = true;
+        });
       },
       child: Container(
-        width: 176,
-        height: 136,
+        width: 180,
+        height: height,
         decoration: BoxDecoration(
           color: palette.bg(isDark),
           borderRadius: BorderRadius.circular(16),
@@ -1084,38 +1111,80 @@ class _WorkoutsTabSyncedCard extends StatelessWidget {
               padding: const EdgeInsets.all(12),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.max,
                 children: [
-                  KindAvatar(kind: kind, size: 40),
-                  const SizedBox(height: 10),
-                  Text(
-                    kind == SyncedKind.other
-                        ? (workout.name ?? 'Workout')
-                        : kind.label,
-                    style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w700,
-                      color: textPrimary,
-                      height: 1.1,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    '$dateLabel${workout.durationMinutes != null ? ' · ${workout.durationMinutes} min' : ''}',
-                    style: TextStyle(fontSize: 11, color: textMuted),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      KindAvatar(kind: kind, size: 36),
+                      if (kindTag != null) ...[
+                        const SizedBox(width: 8),
+                        Flexible(
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 6, vertical: 3),
+                            decoration: BoxDecoration(
+                              color: palette.fg.withValues(alpha: 0.18),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Text(
+                              kindTag.toUpperCase(),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: 9,
+                                fontWeight: FontWeight.w800,
+                                letterSpacing: 0.6,
+                                color: palette.fg,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
                   ),
                   const SizedBox(height: 8),
-                  if (chips.isNotEmpty)
-                    Row(
-                      children: [
-                        for (int i = 0; i < chips.length; i++) ...[
-                          if (i > 0) const SizedBox(width: 10),
-                          chips[i],
+                  Flexible(
+                    child: SingleChildScrollView(
+                      physics: const NeverScrollableScrollPhysics(),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            primaryTitle,
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w700,
+                              color: textPrimary,
+                              height: 1.15,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            '$dateLabel${workout.durationMinutes != null ? ' · ${workout.durationMinutes} min' : ''}',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(fontSize: 11, color: textMuted),
+                          ),
+                          if (chips.isNotEmpty) ...[
+                            const SizedBox(height: 6),
+                            Row(
+                              children: [
+                                for (int i = 0; i < chips.length; i++) ...[
+                                  if (i > 0) const SizedBox(width: 8),
+                                  Flexible(child: chips[i]),
+                                ],
+                              ],
+                            ),
+                          ],
                         ],
-                      ],
+                      ),
                     ),
-                  const Spacer(),
+                  ),
+                  const SizedBox(height: 6),
                   Text(
                     sourceApp,
                     style: TextStyle(

@@ -75,7 +75,9 @@ from api.v1 import habits  # Simple habit tracking (not eating outside, no doord
 from api.v1 import watch_sync  # WearOS watch sync (batch sync, activity goals)
 from api.v1 import weight_increments  # Equipment-specific weight increment preferences
 from api.v1 import trophies  # Trophy room and achievement system
+from api.v1 import progress_rewards  # Unified rewards aggregator (crates + merch + level-up consumables)
 from api.v1 import masteries  # Levelled mastery badges (Badge Hub grid)
+from api.v1 import personal_bests  # Personal Bests grid (heaviest lift / longest session / most volume)
 from api.v1 import gym_profiles  # Multi-gym profile system (Robinhood-style switcher)
 from api.v1 import xp  # XP events, daily login, streaks, double XP
 from api.v1 import warmup_preferences  # Custom warmup/stretch preferences and pre/post workout routines
@@ -362,8 +364,19 @@ router.include_router(weight_increments.router, prefix="/weight-increments", tag
 # Trophy room and achievement system (trophies, progress, summary)
 router.include_router(trophies.router, prefix="/progress", tags=["Trophies"])
 
+# Unified rewards aggregator — merges unopened daily crates, pending merch
+# claims, and unacknowledged level-up consumable drops into a single list
+# Flutter's Rewards screen can render. Endpoints:
+#   GET  /progress/rewards/{user_id}/available
+#   GET  /progress/rewards/{user_id}/claimed
+#   POST /progress/rewards/{user_id}/claim
+router.include_router(progress_rewards.router, prefix="/progress/rewards", tags=["Progress Rewards"])
+
 # Masteries — levelled badge grid for the Badge Hub (Steps Lv.6 etc.)
 router.include_router(masteries.router, tags=["Masteries"])
+
+# Personal Bests grid for the Badge Hub (Heaviest Lift / Longest Session / Most Volume)
+router.include_router(personal_bests.router, tags=["Personal Bests"])
 
 # Multi-gym profile system (Robinhood-style switcher for different gyms/locations)
 router.include_router(gym_profiles.router, prefix="/gym-profiles", tags=["Gym Profiles"])

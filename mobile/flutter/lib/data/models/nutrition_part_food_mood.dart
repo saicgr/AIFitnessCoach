@@ -87,6 +87,13 @@ class FoodLog {
   final int? inflammationScore;
   @JsonKey(name: 'is_ultra_processed')
   final bool? isUltraProcessed;
+  // Diabetes + FODMAP health-condition scoring (see migration 1977).
+  @JsonKey(name: 'glycemic_load')
+  final int? glycemicLoad;
+  @JsonKey(name: 'fodmap_rating')
+  final String? fodmapRating;
+  @JsonKey(name: 'fodmap_reason')
+  final String? fodmapReason;
   @JsonKey(name: 'image_url')
   final String? imageUrl;
   /// How this log was captured — 'image' | 'barcode' | 'text' | 'chat' |
@@ -131,6 +138,9 @@ class FoodLog {
     this.vitaminDIu,
     this.inflammationScore,
     this.isUltraProcessed,
+    this.glycemicLoad,
+    this.fodmapRating,
+    this.fodmapReason,
     this.imageUrl,
     this.sourceType,
     this.userQuery,

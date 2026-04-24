@@ -27,6 +27,7 @@ import '../../core/constants/synced_workout_kinds.dart';
 import '../../core/theme/accent_color_provider.dart';
 import '../../widgets/synced/kind_avatar.dart';
 import '../../widgets/synced/metric_chip.dart';
+import '../../widgets/main_shell.dart' show floatingNavBarVisibleProvider;
 import 'synced_workout_detail_screen.dart';
 
 part 'profile_screen_part_account_row_data.dart';

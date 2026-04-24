@@ -30,7 +30,9 @@ import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/theme/accent_color_provider.dart';
 import '../../data/providers/masteries_provider.dart';
+import '../../data/providers/personal_bests_provider.dart';
 import '../../data/providers/xp_provider.dart';
+import '../../data/repositories/auth_repository.dart';
 import '../../data/services/haptic_service.dart';
 import '../../widgets/glass_sheet.dart';
 import '../../widgets/pill_app_bar.dart';
@@ -54,19 +56,27 @@ class _BadgeHubScreenState extends ConsumerState<BadgeHubScreen> {
     super.initState();
     // Ensure the trophy + XP data is fresh when this screen opens. The
     // first-time landing from the You hub won't have loaded these yet.
+    // Pass userId explicitly — the xp notifier exits early if
+    // _currentUserId hasn't been set by a prior call, which caused the
+    // "Log your first workout" empty state to stick for users who
+    // already had earned trophies in the DB.
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(xpProvider.notifier).loadAll();
-      ref.read(xpProvider.notifier).loadTrophies();
-      ref.read(xpProvider.notifier).loadTrophySummary();
+      final uid = ref.read(authStateProvider).user?.id;
+      if (uid == null) return;
+      ref.read(xpProvider.notifier).loadAll(userId: uid);
+      ref.read(xpProvider.notifier).loadTrophies(userId: uid);
+      ref.read(xpProvider.notifier).loadTrophySummary(userId: uid);
     });
   }
 
   Future<void> _refresh() async {
+    final uid = ref.read(authStateProvider).user?.id;
     await Future.wait([
-      ref.read(xpProvider.notifier).loadTrophies(),
-      ref.read(xpProvider.notifier).loadTrophySummary(),
+      if (uid != null) ref.read(xpProvider.notifier).loadTrophies(userId: uid),
+      if (uid != null) ref.read(xpProvider.notifier).loadTrophySummary(userId: uid),
     ]);
     ref.invalidate(masteriesProvider);
+    ref.invalidate(personalBestsProvider);
   }
 
   void _showHowItWorks(BuildContext context, bool isDark) {
@@ -132,17 +142,7 @@ class _BadgeHubScreenState extends ConsumerState<BadgeHubScreen> {
     final inProgress = ref.watch(inProgressTrophiesProvider);
     final summary = ref.watch(trophySummaryProvider);
     final masteriesAsync = ref.watch(masteriesProvider);
-
-    // Personal-best trophies — filter by strength category until a
-    // dedicated PR catalogue ships. Keeps the section populated with the
-    // most PR-shaped earned trophies.
-    final personalBests = allTrophies
-        .where((t) {
-          final c = t.trophy.category.toLowerCase();
-          return c == 'strength' || c == 'performance';
-        })
-        .take(6)
-        .toList();
+    final personalBestsAsync = ref.watch(personalBestsProvider);
 
     return Scaffold(
       backgroundColor: bg,
@@ -205,7 +205,14 @@ class _BadgeHubScreenState extends ConsumerState<BadgeHubScreen> {
             const SizedBox(height: 10),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: PersonalBestsGrid(trophies: personalBests),
+              child: personalBestsAsync.when(
+                data: (pb) => PersonalBestsGrid(data: pb),
+                loading: () => const PersonalBestsGrid(
+                  data: null,
+                  loading: true,
+                ),
+                error: (_, __) => const PersonalBestsGrid(data: null),
+              ),
             ),
             const SizedBox(height: 24),
 

@@ -33,6 +33,11 @@ class FoodLogResponse(BaseModel):
     # Inflammation / ultra-processed tracking
     inflammation_score: Optional[int] = None
     is_ultra_processed: Optional[bool] = None
+    # Diabetes + FODMAP health-condition scoring (migration 1977). GL scale:
+    # <10 low, 10-19 medium, 20+ high. FODMAP: low | medium | high (Monash).
+    glycemic_load: Optional[int] = None
+    fodmap_rating: Optional[str] = None
+    fodmap_reason: Optional[str] = None
     image_url: Optional[str] = None
     # Origin-of-log tracking
     source_type: Optional[str] = None  # 'image' | 'barcode' | 'text' | 'chat' | 'restaurant' | 'parse_app_screenshot' | 'parse_nutrition_label'
@@ -308,6 +313,10 @@ class LogDirectRequest(BaseModel):
     # Inflammation / ultra-processed tracking
     inflammation_score: Optional[int] = None
     is_ultra_processed: Optional[bool] = None
+    # Diabetes + FODMAP tracking (see migration 1977 + food_logs FoodLogResponse)
+    glycemic_load: Optional[int] = None
+    fodmap_rating: Optional[str] = None
+    fodmap_reason: Optional[str] = None
     # Pre-save per-field edits made in the Log Meal sheet before this save
     item_edits: Optional[List[FoodItemEdit]] = None
     # Explicit timestamp for the log. When the user is viewing a past date in
@@ -359,6 +368,9 @@ class LogFoodResponse(BaseModel):
     source_type: Optional[str] = None
     inflammation_score: Optional[int] = None
     is_ultra_processed: Optional[bool] = None
+    glycemic_load: Optional[int] = None
+    fodmap_rating: Optional[str] = None
+    fodmap_reason: Optional[str] = None
 
 
 class FoodReviewRequest(BaseModel):

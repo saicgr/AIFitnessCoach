@@ -20,8 +20,10 @@ import '../../data/providers/xp_provider.dart';
 import '../../data/repositories/measurements_repository.dart';
 import '../../data/repositories/progress_photos_repository.dart';
 import '../../data/services/api_client.dart';
-import '../../utils/share_report_helper.dart';
+import '../../core/providers/user_provider.dart';
+import '../../core/theme/accent_color_provider.dart';
 import '../../widgets/glass_sheet.dart';
+import '../reports/widgets/report_share_sheet.dart';
 import '../../widgets/pill_app_bar.dart';
 import '../../widgets/segmented_tab_bar.dart';
 import '../../widgets/main_shell.dart';
@@ -93,6 +95,59 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen>
       ref.read(progressPhotosNotifierProvider(userId).notifier).loadAll();
       ref.read(measurementsProvider.notifier).loadAllMeasurements(userId);
     }
+  }
+
+  /// Opens the unified ReportShareSheet for the Progress screen. We use
+  /// `periodInsights` as the report type since Progress is scoped to the
+  /// current month and funnels the same four headline stats (workouts,
+  /// minutes, calories, streak) that the Insights screen does.
+  Future<void> _openShareSheet() async {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final accent = AccentColorScope.of(context).getColor(isDark);
+    final user = ref.read(currentUserProvider).asData?.value;
+    final scores = ref.read(scoresProvider);
+    final overview = scores.overview;
+    final periodLabel =
+        DateFormat('MMM yyyy').format(DateTime.now()).toUpperCase();
+
+    // Pull primary stats from the scores overview when available; otherwise
+    // the share card hero falls back to "—". We prefer the strength score as
+    // the hero because Progress is primarily a scores surface.
+    final stats = <String, dynamic>{};
+    final highlights = <ReportHighlight>[];
+    if (overview != null) {
+      stats['hero_value'] = overview.overallStrengthScore;
+      stats['hero_unit'] = 'strength';
+      highlights.add(ReportHighlight(
+        label: 'STRENGTH',
+        value: '${overview.overallStrengthScore}',
+      ));
+      if (overview.prCount30Days > 0) {
+        highlights.add(ReportHighlight(
+          label: 'PRS (30D)',
+          value: '${overview.prCount30Days}',
+        ));
+      }
+      if (overview.overallFitnessScore != null) {
+        highlights.add(ReportHighlight(
+          label: 'FITNESS',
+          value: '${overview.overallFitnessScore}',
+        ));
+      }
+    }
+
+    final data = ReportShareData(
+      reportType: ReportType.periodInsights,
+      title: 'Progress',
+      periodLabel: periodLabel,
+      primaryStats: stats,
+      highlights: highlights,
+      userDisplayName: user?.displayName,
+      accentColor: accent,
+      deepLinkUrl: null,
+    );
+    if (!mounted) return;
+    await ReportShareSheet.show(context, data: data);
   }
 
   @override
@@ -216,14 +271,7 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen>
           actions: [
             PillAppBarAction(
               icon: Icons.ios_share_rounded,
-              onTap: _userId == null
-                  ? null
-                  : () => shareReportScreen(
-                        context: context,
-                        repaintKey: _reportKey,
-                        caption: 'Check out my FitWiz progress!',
-                        subject: 'My FitWiz Progress',
-                      ),
+              onTap: _userId == null ? null : _openShareSheet,
             ),
             PillAppBarAction(
               icon: Icons.compare_arrows,

@@ -12,6 +12,7 @@ import '../../data/providers/health_import_provider.dart';
 import '../../data/repositories/workout_repository.dart';
 import '../../data/services/haptic_service.dart';
 import '../../widgets/charts/workout_metric_chart.dart';
+import '../../widgets/main_shell.dart' show floatingNavBarVisibleProvider;
 import '../../widgets/pill_app_bar.dart';
 import '../../widgets/synced/kind_avatar.dart';
 import '../../widgets/synced/metric_chip.dart';
@@ -41,7 +42,28 @@ class _SyncedWorkoutDetailScreenState
   void initState() {
     super.initState();
     _workout = widget.workout;
+    // Hide the floating pill nav bar while the detail is on top. It's
+    // owned by MainShell, which persists behind pushed routes. Restored
+    // in dispose(). Defense-in-depth alongside the caller's own hide
+    // in profile_screen_part_account_row_data.dart.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      ref.read(floatingNavBarVisibleProvider.notifier).state = false;
+    });
     _maybeOpportunisticallyEnrich();
+  }
+
+  @override
+  void dispose() {
+    // Best-effort restore. When the caller (profile row) wraps push with
+    // whenComplete, this is redundant but safe — setting the provider to
+    // the same value is a no-op.
+    try {
+      ref.read(floatingNavBarVisibleProvider.notifier).state = true;
+    } catch (_) {
+      // Provider may be unavailable during teardown; swallow.
+    }
+    super.dispose();
   }
 
   Future<void> _maybeOpportunisticallyEnrich() async {
@@ -58,7 +80,11 @@ class _SyncedWorkoutDetailScreenState
     try {
       final startIso = (meta['start_time_iso'] as String?) ?? endIso;
       final start = (startIso != null ? DateTime.tryParse(startIso) : null) ?? end;
-      final kind = meta['hc_activity_kind'] as String? ?? 'other';
+      // Apple Health imports don't persist hc_activity_kind; fall back to
+      // the legacy workout.type so iOS re-enrich isn't silently skipped.
+      final kind = (meta['hc_activity_kind'] as String?)
+          ?? _workout.type
+          ?? 'other';
       final sourceApp = meta['source_app'] as String?;
       final ok = await ref
           .read(healthImportProvider.notifier)
@@ -179,12 +205,23 @@ class _SyncedWorkoutDetailScreenState
     final palette = kind.palette(isDark);
     final background = isDark ? AppColors.pureBlack : AppColorsLight.pureWhite;
 
+    // Primary title = the name the source app persisted (e.g.
+    // "Imported Cardio Workout", "Morning Run"). The kind label (e.g.
+    // "Walking") is rendered as a small tag chip below so both the
+    // user-visible name and the activity category are shown.
+    final hasRealName = (_workout.name?.trim().isNotEmpty ?? false);
+    final primaryTitle = hasRealName ? _workout.name!.trim() : kind.label;
+    final showKindChip = hasRealName && kind != SyncedKind.other;
+
+    // Sparse data detection — if *none* of the detail samples landed,
+    // every detail section collapses to SizedBox.shrink() and the user
+    // sees an apparently empty page. Show a clear banner instead.
+    final hasAnyDetail = _metadataHasAnyDetail(metadata);
+
     return Scaffold(
       backgroundColor: background,
       appBar: PillAppBar(
-        title: kind == SyncedKind.other
-            ? (_workout.name ?? 'Workout')
-            : kind.label,
+        title: primaryTitle,
         actions: [
           PillAppBarAction(
             icon: Icons.delete_outline_rounded,
@@ -195,6 +232,14 @@ class _SyncedWorkoutDetailScreenState
       body: ListView(
         padding: const EdgeInsets.only(bottom: 40),
         children: [
+          if (showKindChip)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 4, 16, 0),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: _KindChip(kind: kind, palette: palette),
+              ),
+            ),
           _HeroBanner(
             kind: kind,
             workout: _workout,
@@ -204,6 +249,8 @@ class _SyncedWorkoutDetailScreenState
           _SourceRow(metadata: metadata),
           const SizedBox(height: 16),
           if (_enriching) const _EnrichingBanner(),
+          if (!_enriching && !hasAnyDetail)
+            _SparseDataBanner(metadata: metadata),
           _HeartRateSection(metadata: metadata, palette: palette),
           _HeartRateZonesStrip(metadata: metadata),
           _PaceSpeedSection(metadata: metadata, palette: palette),
@@ -220,6 +267,128 @@ class _SyncedWorkoutDetailScreenState
           ),
           _ActivityInfoCard(workout: _workout, metadata: metadata),
         ],
+      ),
+    );
+  }
+
+  static bool _metadataHasAnyDetail(Map<String, dynamic> meta) {
+    bool nonEmptyList(dynamic v) => v is List && v.isNotEmpty;
+    bool nonEmptyMap(dynamic v) => v is Map && v.isNotEmpty;
+    return nonEmptyList(meta['hr_samples']) ||
+        nonEmptyList(meta['pace_samples']) ||
+        nonEmptyList(meta['cadence_samples']) ||
+        nonEmptyMap(meta['hr_zones_pct']) ||
+        nonEmptyList(meta['splits']) ||
+        (meta['elevation_gain_m'] as num? ?? 0) > 0 ||
+        (meta['avg_heart_rate'] as num? ?? 0) > 0 ||
+        (meta['training_load_trimp'] != null);
+  }
+}
+
+/// Small pill chip showing the activity "kind" (Walking / Cycling …)
+/// beneath the real workout name.
+class _KindChip extends StatelessWidget {
+  final SyncedKind kind;
+  final KindPalette palette;
+
+  const _KindChip({required this.kind, required this.palette});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      decoration: BoxDecoration(
+        color: palette.fg.withValues(alpha: 0.14),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: palette.fg.withValues(alpha: 0.3)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(kind.icon, size: 12, color: palette.fg),
+          const SizedBox(width: 6),
+          Text(
+            kind.label,
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+              color: palette.fg,
+              letterSpacing: 0.3,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Shown when the imported workout lacks any sample-level metadata — a
+/// summary-only row (common for Zepp/Amazfit → Apple Health where Zepp
+/// publishes a HKWorkout but no HR samples). Tells the user *why* the
+/// detail view is sparse instead of silently showing an empty page.
+class _SparseDataBanner extends StatelessWidget {
+  final Map<String, dynamic> metadata;
+
+  const _SparseDataBanner({required this.metadata});
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textPrimary = isDark ? Colors.white : AppColorsLight.textPrimary;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final sourceApp = metadata['source_app'] as String?
+        ?? metadata['source_app_name'] as String?
+        ?? (Theme.of(context).platform == TargetPlatform.iOS
+            ? 'Apple Health'
+            : 'Health Connect');
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+      child: Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: const Color(0xFFF59E0B).withValues(alpha: isDark ? 0.12 : 0.10),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: const Color(0xFFF59E0B).withValues(alpha: 0.35),
+          ),
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Icon(
+              Icons.info_outline_rounded,
+              size: 18,
+              color: Color(0xFFF59E0B),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Only a summary was shared from $sourceApp',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      color: textPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Heart rate, cadence, splits, and zones require a direct '
+                    'device connection. If your watch syncs only to its own '
+                    'app, detailed samples may not reach $sourceApp.',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: textMuted,
+                      height: 1.35,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

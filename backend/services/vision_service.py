@@ -590,6 +590,9 @@ Return ONLY this JSON, no other keys:
             "rating": "yellow",
             "rating_reason": "balanced, watch the ghee",
             "inflammation_score": 4,
+            "glycemic_load": 18,
+            "fodmap_rating": "medium",
+            "fodmap_reason": "contains onion, garlic",
             "coach_tip": "Decent option; take half portion + extra protein."
         }}
     ]
@@ -605,7 +608,7 @@ CRITICAL RULES:
 4. EXTRACT price as a number when visible on the menu (keep the currency in a "currency" string like "USD" / "INR" / "EUR"). Return null ONLY if truly not shown.
 5. DETECT allergens per FDA Big 9 — fill detected_allergens as an array using any of: "milk", "egg", "fish", "crustacean_shellfish", "tree_nuts", "wheat", "peanuts", "soybeans", "sesame". Infer from dish description (e.g. "Shrimp Pad Thai" → ["crustacean_shellfish", "peanuts", "soybeans"]).
 
-For each dish also emit: rating ("green"/"yellow"/"red") for the user's goals with a brief reason (≤ 8 words), inflammation_score (0-10; 0-3 anti-inflammatory, 4-6 neutral/mild, 7-10 highly inflammatory), and coach_tip (≤ 18 words, tailored to user's goals — pick-or-skip with why).
+For each dish also emit: rating ("green"/"yellow"/"red") for the user's goals with a brief reason (≤ 8 words), inflammation_score (0-10; 0-3 anti-inflammatory, 4-6 neutral/mild, 7-10 highly inflammatory), glycemic_load (integer per serving: GL = GI × carbs_g / 100; <10 low, 10-19 medium, 20+ high; null for very-low-carb items), fodmap_rating ("low"/"medium"/"high" per Monash University scale — high if the dish likely contains onion, garlic, wheat, high-lactose dairy, apples/pears, honey, or beans in user-visible quantity), fodmap_reason (≤ 6 words naming the trigger ingredient(s), or null if low), and coach_tip (≤ 18 words, tailored to user's goals — pick-or-skip with why).
 {nutrition_ctx_str}{user_ctx_str}
 
 Return ONLY this JSON, no other keys:
@@ -628,6 +631,9 @@ Return ONLY this JSON, no other keys:
                     "rating": "green",
                     "rating_reason": "high protein, moderate fat",
                     "inflammation_score": 2,
+                    "glycemic_load": 4,
+                    "fodmap_rating": "low",
+                    "fodmap_reason": null,
                     "coach_tip": "Hits your protein target; skip the naan if possible."
                 }}
             ]
@@ -649,7 +655,7 @@ Identify all food items across all images.
 Current time suggests this is likely {suggested_meal}.
 {nutrition_ctx_str}{user_ctx_str}
 
-Use the plate analysis JSON schema from your cached reference. REQUIRED fields per food_item: name, amount, calories, protein_g, carbs_g, fat_g, fiber_g, weight_g, inflammation_score (1-10), is_ultra_processed (bool). REQUIRED meal-level fields: total_calories, total_protein_g, total_carbs_g, total_fat_g, total_fiber_g, health_score (1-10), inflammation_score (1-10, calorie-weighted average of items), is_ultra_processed (true if meal is predominantly NOVA Group 4), feedback. Return valid JSON."""
+Use the plate analysis JSON schema from your cached reference. REQUIRED fields per food_item: name, amount, calories, protein_g, carbs_g, fat_g, fiber_g, weight_g, inflammation_score (1-10), is_ultra_processed (bool), glycemic_load (integer per serving, GI × carbs_g / 100; <10 low, 10-19 medium, 20+ high; null for near-zero-carb items), fodmap_rating ("low"/"medium"/"high" per Monash), fodmap_reason (≤ 6 words or null). REQUIRED meal-level fields: total_calories, total_protein_g, total_carbs_g, total_fat_g, total_fiber_g, health_score (1-10), inflammation_score (1-10, calorie-weighted average of items), is_ultra_processed (true if meal is predominantly NOVA Group 4), glycemic_load (sum of item glycemic_loads), fodmap_rating (highest rating among items — "high" wins), feedback. Return valid JSON."""
                 else:
                     prompt = f"""Analyze these food images and provide detailed nutrition estimates.
 Identify all food items across all images.
@@ -672,7 +678,10 @@ Return ONLY valid JSON with this exact structure:
             "fiber_g": 0.0,
             "weight_g": 0,
             "inflammation_score": 5,
-            "is_ultra_processed": false
+            "is_ultra_processed": false,
+            "glycemic_load": 8,
+            "fodmap_rating": "low",
+            "fodmap_reason": null
         }}
     ],
     "total_calories": 0,
@@ -683,6 +692,9 @@ Return ONLY valid JSON with this exact structure:
     "health_score": 5,
     "inflammation_score": 5,
     "is_ultra_processed": false,
+    "glycemic_load": 12,
+    "fodmap_rating": "low",
+    "fodmap_reason": null,
     "feedback": "Brief coaching feedback"
 }}
 
@@ -697,8 +709,16 @@ Guidelines:
   8-9 moderately inflammatory (processed meats, fast food, sugary drinks, packaged snacks, instant noodles)
   10 highly inflammatory (deep-fried ultra-processed combos, trans-fat items, candy+soda meals)
 - is_ultra_processed: true if the food would be NOVA Group 4 (industrial emulsifiers, hydrogenated oils, artificial sweeteners, HFCS, protein isolates, modified starches). Homemade/whole foods are false.
+- Glycemic load per item = GI × carbs_g / 100, rounded to nearest int. Examples: white rice 1 cup ≈ 23 (high), oatmeal 1 cup ≈ 13 (medium), broccoli 1 cup ≈ 1 (low). Null if the item is essentially carb-free (meat, oil, cheese).
+- FODMAP rating per item (Monash University scale):
+  low = meat, eggs, rice, oats, most nuts and seeds, hard cheeses, banana (unripe), berries, oranges, cucumber, carrot, zucchini, spinach
+  medium = avocado (small), sweet potato, almond (serving-dependent), certain dairy portions
+  high = onion, garlic, wheat/rye/barley pasta & bread, high-lactose dairy (milk, ice cream), apples, pears, mango, honey, beans/lentils in large quantity, cauliflower
+  fodmap_reason names the primary trigger(s) in ≤ 6 words, or null when rating is low.
 - Meal-level inflammation_score = calorie-weighted average of per-item scores, rounded to nearest int.
 - Meal-level is_ultra_processed = true if any item is ultra-processed AND their combined calories dominate.
+- Meal-level glycemic_load = sum of per-item glycemic_loads (treat null as 0).
+- Meal-level fodmap_rating = highest rating among items (high > medium > low). fodmap_reason = concat of triggers across items.
 - Feedback should be constructive and encouraging"""
 
             # Step 5: Call Gemini with all images.

@@ -22,9 +22,11 @@ class InProgressStrip extends ConsumerWidget {
 
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final accent = AccentColorScope.of(context).getColor(isDark);
+    final textScale = MediaQuery.textScalerOf(context).scale(1.0);
+    final height = (148 * textScale).clamp(148.0, 200.0);
 
     return SizedBox(
-      height: 148,
+      height: height,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -106,19 +108,21 @@ class _InProgressCard extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 10),
-              Text(
-                progress.trophy.name,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  color:
-                      isDark ? Colors.white : AppColorsLight.textPrimary,
-                  fontSize: 13,
-                  fontWeight: FontWeight.w700,
-                  height: 1.25,
+              Flexible(
+                child: Text(
+                  progress.trophy.name,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color:
+                        isDark ? Colors.white : AppColorsLight.textPrimary,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    height: 1.25,
+                  ),
                 ),
               ),
-              const Spacer(),
+              const SizedBox(height: 8),
               ClipRRect(
                 borderRadius: BorderRadius.circular(4),
                 child: LinearProgressIndicator(

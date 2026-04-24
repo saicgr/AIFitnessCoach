@@ -79,13 +79,39 @@ class _RewardsScreenState extends ConsumerState<RewardsScreen>
     final rewardId = reward['id'] as String?;
     if (rewardId == null) return;
 
-    // Show email input dialog for gift cards
     final rewardType = reward['reward_type'] as String? ?? '';
-    String? email;
 
+    // Merch isn't claim-in-place — redirect straight to the existing merch
+    // address submission screen so the user can finish the claim there.
+    // The backend's /claim endpoint will ALSO return `redirect: merch_address`
+    // if we POST it, but we save a round trip by short-circuiting here.
+    if (rewardType == 'merch') {
+      final claimId = (reward['metadata'] as Map?)?['claim_id'] as String?;
+      if (mounted) {
+        // The /merch-claims screen shows the list; user taps the specific
+        // claim to open its address form. If we had a direct deep link
+        // /merch-claims/$claimId we'd use it, but the list is fine.
+        context.push('/merch-claims');
+      }
+      // Log an analytics + breadcrumb trail so we can see how users
+      // actually flow from Rewards → Merch.
+      ref.read(posthogServiceProvider).capture(
+        eventName: 'rewards_merch_redirect',
+        properties: <String, Object>{
+          'claim_id': claimId ?? '',
+          'reward_id': rewardId,
+        },
+      );
+      return;
+    }
+
+    // Legacy gift card path kept for forward-compat — the current backend
+    // doesn't emit reward_type=='gift_card' but if/when it does, we already
+    // collect the delivery email.
+    String? email;
     if (rewardType == 'gift_card') {
       email = await _showEmailDialog();
-      if (email == null) return; // User cancelled
+      if (email == null) return;
     }
 
     try {
@@ -95,18 +121,47 @@ class _RewardsScreenState extends ConsumerState<RewardsScreen>
 
       if (userId == null) return;
 
-      final success = await repository.claimReward(userId, rewardId, email: email);
+      final result = await repository.claimReward(userId, rewardId, email: email);
 
-      if (success) {
-        if (mounted) {
-          AppSnackBar.success(context, 'Reward claimed! ${email != null ? 'Check your email.' : ''}');
-        }
-        await _loadRewards(); // Refresh
-      } else {
+      if (result == null || result['success'] != true) {
         if (mounted) {
           AppSnackBar.error(context, 'Failed to claim reward. Please try again.');
         }
+        return;
       }
+
+      if (!mounted) return;
+
+      // Tailor the success copy to the reward kind. Daily crates announce
+      // the drop amount; consumables confirm what hit the inventory;
+      // gift cards mention the email.
+      final resultType = result['reward_type'] as String? ?? rewardType;
+      if (resultType == 'daily_crate') {
+        final rewardPayload = result['reward'] as Map?;
+        final amount = rewardPayload?['amount'] ?? 0;
+        final kind = (rewardPayload?['type'] as String?)?.replaceAll('_', ' ') ?? 'XP';
+        AppSnackBar.success(context, 'Crate opened — +$amount $kind');
+      } else if (resultType == 'consumable') {
+        final items = result['items'] as List? ?? const [];
+        final summary = items.isEmpty
+            ? 'Added to your inventory'
+            : items.map((i) {
+                final m = i is Map ? i : const {};
+                final qty = m['quantity'] ?? 1;
+                final t = (m['type'] ?? '').toString().replaceAll('_', ' ');
+                return '+$qty $t';
+              }).join(' · ');
+        AppSnackBar.success(context, summary);
+      } else {
+        AppSnackBar.success(
+          context,
+          'Reward claimed!${email != null ? ' Check your email.' : ''}',
+        );
+      }
+      await _loadRewards();
+      // Poke the XP/overview providers so the You card "1 ready" counter
+      // refreshes immediately rather than waiting for the next cold start.
+      ref.invalidate(unclaimedCratesProvider);
     } catch (e) {
       if (mounted) {
         AppSnackBar.error(context, 'Error: $e');

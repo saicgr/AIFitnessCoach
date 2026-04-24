@@ -1,12 +1,10 @@
 import 'dart:math' as math;
-import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/providers/serious_mode_provider.dart';
 import '../../../core/theme/accent_color_provider.dart';
 import '../../../data/providers/xp_provider.dart';
-import '../../../data/services/api_client.dart';
 import '../../../data/services/haptic_service.dart';
 import 'components/components.dart';
 import 'gym_profile_switcher.dart';
@@ -113,68 +111,10 @@ class _LevelStreakPill extends ConsumerStatefulWidget {
 }
 
 class _LevelStreakPillState extends ConsumerState<_LevelStreakPill> {
-  int? _streakDays;
-  bool _streakLoaded = false;
-
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) => _loadStreak());
-  }
-
-  Future<void> _loadStreak() async {
-    try {
-      final api = ref.read(apiClientProvider);
-      final userId = await api.getUserId();
-      if (userId == null) {
-        if (mounted) setState(() => _streakLoaded = true);
-        return;
-      }
-      final res = await api.dio.get(
-        '/achievements/user/$userId/streaks',
-        options: Options(
-          sendTimeout: const Duration(seconds: 4),
-          receiveTimeout: const Duration(seconds: 6),
-          validateStatus: (s) => s != null && s < 500,
-        ),
-      );
-      List? list;
-      final data = res.data;
-      if (data is List) list = data;
-      if (data is Map && data['streaks'] is List) list = data['streaks'] as List;
-
-      int? pick;
-      if (list != null && list.isNotEmpty) {
-        Map<String, dynamic>? workout;
-        Map<String, dynamic>? fallback;
-        for (final raw in list) {
-          if (raw is! Map) continue;
-          final m = raw.cast<String, dynamic>();
-          final count = (m['current_streak'] as num?)?.toInt() ?? 0;
-          if (count <= 0) continue;
-          final type = m['streak_type'] as String? ?? '';
-          if (type == 'workout' || type == 'workouts') {
-            workout = m;
-          } else {
-            fallback ??= m;
-          }
-        }
-        final best = workout ?? fallback;
-        if (best != null) {
-          pick = (best['current_streak'] as num?)?.toInt();
-        }
-      }
-
-      if (mounted) {
-        setState(() {
-          _streakDays = pick;
-          _streakLoaded = true;
-        });
-      }
-    } catch (_) {
-      if (mounted) setState(() => _streakLoaded = true);
-    }
-  }
+  // Source of truth for streak = the XP login streak (same as the XP Goals
+  // screen's "Login Streak" banner), read directly from xpProvider. Prior
+  // revision fetched the workout streak from /achievements/streaks which
+  // disagreed with the XP Goals number (home said 9, XP Goals said 12).
 
   @override
   Widget build(BuildContext context) {
@@ -184,9 +124,10 @@ class _LevelStreakPillState extends ConsumerState<_LevelStreakPill> {
     final progress = xpState.progressFraction.clamp(0.0, 1.0);
     final serious = ref.watch(seriousModeProvider);
 
-    // Streak segment hidden in Serious Mode (less game-y chrome).
-    final showStreak =
-        !serious && _streakLoaded && (_streakDays ?? 0) > 0;
+    // Streak segment = XP login streak. Matches the XP Goals screen's
+    // banner exactly. Hidden in Serious Mode (less game-y chrome).
+    final streakDays = ref.watch(xpCurrentStreakProvider);
+    final showStreak = !serious && streakDays > 0;
 
     final levelRing = SizedBox(
       width: 36,
@@ -216,9 +157,9 @@ class _LevelStreakPillState extends ConsumerState<_LevelStreakPill> {
     return GestureDetector(
       onTap: () {
         HapticService.light();
-        // Route to the consolidated You hub (Overview tab) — level + streak
-        // share the same destination now that they're paired in the UI.
-        context.go('/profile?tab=overview');
+        // Level ring + streak pill → XP Goals screen (level progress +
+        // login streak + daily/weekly/monthly goals).
+        context.push('/xp-goals');
       },
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 180),
@@ -258,7 +199,7 @@ class _LevelStreakPillState extends ConsumerState<_LevelStreakPill> {
               const Text('🔥', style: TextStyle(fontSize: 13)),
               const SizedBox(width: 2),
               Text(
-                '$_streakDays',
+                '$streakDays',
                 style: TextStyle(
                   color: isDark ? Colors.white : const Color(0xFF0A0A0A),
                   fontWeight: FontWeight.w800,

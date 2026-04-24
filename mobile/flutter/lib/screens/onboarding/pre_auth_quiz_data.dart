@@ -68,6 +68,9 @@ class PreAuthQuizData {
   final String? plankCapacity;     // '<15sec', '15-30sec', '31-60sec', '1-2min', '2+min'
   final String? squatCapacity;     // '0-10', '11-25', '26-40', '40+'
   final String? cardioCapacity;    // '<5min', '5-15min', '15-30min', '30+min'
+  // Captured at personal info step — TRUE if user identified as a personal trainer.
+  // Warm-lead segment for Reppora alpha launch invites.
+  final bool? isTrainer;
 
   /// Computed age from dateOfBirth
   int? get age {
@@ -129,6 +132,7 @@ class PreAuthQuizData {
     this.plankCapacity,
     this.squatCapacity,
     this.cardioCapacity,
+    this.isTrainer,
   });
 
   String? get goal => goals?.isNotEmpty == true ? goals!.first : null;
@@ -194,6 +198,7 @@ class PreAuthQuizData {
     String? plankCapacity,
     String? squatCapacity,
     String? cardioCapacity,
+    bool? isTrainer,
   }) {
     return PreAuthQuizData(
       goals: goals ?? this.goals,
@@ -243,6 +248,7 @@ class PreAuthQuizData {
       plankCapacity: plankCapacity ?? this.plankCapacity,
       squatCapacity: squatCapacity ?? this.squatCapacity,
       cardioCapacity: cardioCapacity ?? this.cardioCapacity,
+      isTrainer: isTrainer ?? this.isTrainer,
     );
   }
 
@@ -295,6 +301,7 @@ class PreAuthQuizData {
         'plankCapacity': plankCapacity,
         'squatCapacity': squatCapacity,
         'cardioCapacity': cardioCapacity,
+        'isTrainer': isTrainer,
       };
 
   factory PreAuthQuizData.fromJson(Map<String, dynamic> json) => PreAuthQuizData(
@@ -350,6 +357,7 @@ class PreAuthQuizData {
         plankCapacity: json['plankCapacity'] as String?,
         squatCapacity: json['squatCapacity'] as String?,
         cardioCapacity: json['cardioCapacity'] as String?,
+        isTrainer: json['isTrainer'] as bool?,
       );
 }
 
@@ -430,6 +438,7 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
     final plankCapacity = prefs.getString('preAuth_plankCapacity');
     final squatCapacity = prefs.getString('preAuth_squatCapacity');
     final cardioCapacity = prefs.getString('preAuth_cardioCapacity');
+    final isTrainer = prefs.getBool('preAuth_isTrainer');
 
     state = PreAuthQuizData(
       goals: goals,
@@ -479,6 +488,7 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
       plankCapacity: plankCapacity,
       squatCapacity: squatCapacity,
       cardioCapacity: cardioCapacity,
+      isTrainer: isTrainer,
     );
     _isLoaded = true;
   }
@@ -514,6 +524,12 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('preAuth_activityLevel', level);
     state = state.copyWith(activityLevel: level);
+  }
+
+  Future<void> setIsTrainer(bool isTrainer) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('preAuth_isTrainer', isTrainer);
+    state = state.copyWith(isTrainer: isTrainer);
   }
 
   Future<void> setBodyMetrics({
@@ -745,6 +761,7 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
       'preAuth_muscleFocusPoints', 'preAuth_pushupCapacity',
       'preAuth_pullupCapacity', 'preAuth_plankCapacity',
       'preAuth_squatCapacity', 'preAuth_cardioCapacity',
+      'preAuth_isTrainer',
     ];
     for (final key in keysToRemove) {
       await prefs.remove(key);

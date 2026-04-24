@@ -161,7 +161,6 @@ class FloatingChatBubble extends ConsumerWidget {
                         enableTapToView: false,
                       )
                     : Container(
-                        key: AppTourKeys.aiChatKey,
                         width: 56,
                         height: 56,
                         decoration: BoxDecoration(

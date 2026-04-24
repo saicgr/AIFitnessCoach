@@ -24,7 +24,7 @@ class TrainingIntensityRepository {
   Future<List<UserExercise1RM>> getUserOneRMs(String userId) async {
     try {
       final response = await _apiClient.get(
-        '${ApiConstants.baseUrl}/training/1rm/$userId',
+        '${ApiConstants.apiBaseUrl}/training/1rm/$userId',
       );
 
       if (response.statusCode == 200 && response.data is List) {
@@ -43,7 +43,7 @@ class TrainingIntensityRepository {
   Future<UserExercise1RM?> getOneRM(String userId, String exerciseName) async {
     try {
       final response = await _apiClient.get(
-        '${ApiConstants.baseUrl}/training/1rm/$userId/${Uri.encodeComponent(exerciseName)}',
+        '${ApiConstants.apiBaseUrl}/training/1rm/$userId/${Uri.encodeComponent(exerciseName)}',
       );
 
       if (response.statusCode == 200 && response.data is Map<String, dynamic>) {
@@ -67,7 +67,7 @@ class TrainingIntensityRepository {
   }) async {
     try {
       final response = await _apiClient.post(
-        '${ApiConstants.baseUrl}/training/1rm',
+        '${ApiConstants.apiBaseUrl}/training/1rm',
         data: {
           'user_id': userId,
           'exercise_name': exerciseName,
@@ -93,7 +93,7 @@ class TrainingIntensityRepository {
   Future<bool> deleteOneRM(String userId, String exerciseName) async {
     try {
       final response = await _apiClient.delete(
-        '${ApiConstants.baseUrl}/training/1rm/$userId/${Uri.encodeComponent(exerciseName)}',
+        '${ApiConstants.apiBaseUrl}/training/1rm/$userId/${Uri.encodeComponent(exerciseName)}',
       );
       return response.statusCode == 200;
     } catch (e) {
@@ -110,7 +110,7 @@ class TrainingIntensityRepository {
   Future<TrainingIntensitySettings> getIntensitySettings(String userId) async {
     try {
       final response = await _apiClient.get(
-        '${ApiConstants.baseUrl}/training/intensity/$userId',
+        '${ApiConstants.apiBaseUrl}/training/intensity/$userId',
       );
 
       if (response.statusCode == 200 && response.data is Map<String, dynamic>) {
@@ -130,7 +130,7 @@ class TrainingIntensityRepository {
   }) async {
     try {
       final response = await _apiClient.post(
-        '${ApiConstants.baseUrl}/training/intensity',
+        '${ApiConstants.apiBaseUrl}/training/intensity',
         data: {
           'user_id': userId,
           'intensity_percent': intensityPercent,
@@ -155,7 +155,7 @@ class TrainingIntensityRepository {
   }) async {
     try {
       final response = await _apiClient.post(
-        '${ApiConstants.baseUrl}/training/intensity/exercise',
+        '${ApiConstants.apiBaseUrl}/training/intensity/exercise',
         data: {
           'user_id': userId,
           'exercise_name': exerciseName,
@@ -180,7 +180,7 @@ class TrainingIntensityRepository {
   }) async {
     try {
       final response = await _apiClient.delete(
-        '${ApiConstants.baseUrl}/training/intensity/exercise/$userId/${Uri.encodeComponent(exerciseName)}',
+        '${ApiConstants.apiBaseUrl}/training/intensity/exercise/$userId/${Uri.encodeComponent(exerciseName)}',
       );
       return response.statusCode == 200;
     } catch (e) {
@@ -201,7 +201,7 @@ class TrainingIntensityRepository {
   }) async {
     try {
       final response = await _apiClient.post(
-        '${ApiConstants.baseUrl}/training/calculate-weight',
+        '${ApiConstants.apiBaseUrl}/training/calculate-weight',
         data: {
           'one_rep_max_kg': oneRepMaxKg,
           'intensity_percent': intensityPercent,
@@ -227,7 +227,7 @@ class TrainingIntensityRepository {
   }) async {
     try {
       final response = await _apiClient.post(
-        '${ApiConstants.baseUrl}/training/workout-weights',
+        '${ApiConstants.apiBaseUrl}/training/workout-weights',
         data: {
           'user_id': userId,
           'exercises': exercises,
@@ -260,7 +260,7 @@ class TrainingIntensityRepository {
   }) async {
     try {
       final response = await _apiClient.post(
-        '${ApiConstants.baseUrl}/training/auto-populate/$userId?days_lookback=$daysLookback&min_confidence=$minConfidence',
+        '${ApiConstants.apiBaseUrl}/training/auto-populate/$userId?days_lookback=$daysLookback&min_confidence=$minConfidence',
         data: {},
       );
 
@@ -284,7 +284,7 @@ class TrainingIntensityRepository {
     String? primaryExerciseName,
   }) async {
     try {
-      String url = '${ApiConstants.baseUrl}/training/linked-exercises/$userId';
+      String url = '${ApiConstants.apiBaseUrl}/training/linked-exercises/$userId';
       if (primaryExerciseName != null) {
         url += '?primary_exercise_name=${Uri.encodeComponent(primaryExerciseName)}';
       }
@@ -314,7 +314,7 @@ class TrainingIntensityRepository {
   }) async {
     try {
       final response = await _apiClient.post(
-        '${ApiConstants.baseUrl}/training/linked-exercises',
+        '${ApiConstants.apiBaseUrl}/training/linked-exercises',
         data: {
           'user_id': userId,
           'primary_exercise_name': primaryExerciseName,
@@ -345,7 +345,7 @@ class TrainingIntensityRepository {
   }) async {
     try {
       final response = await _apiClient.put(
-        '${ApiConstants.baseUrl}/training/linked-exercises/$linkId',
+        '${ApiConstants.apiBaseUrl}/training/linked-exercises/$linkId',
         data: {
           'user_id': userId,
           if (strengthMultiplier != null) 'strength_multiplier': strengthMultiplier,
@@ -371,7 +371,7 @@ class TrainingIntensityRepository {
   }) async {
     try {
       final response = await _apiClient.delete(
-        '${ApiConstants.baseUrl}/training/linked-exercises/$linkId?user_id=$userId',
+        '${ApiConstants.apiBaseUrl}/training/linked-exercises/$linkId?user_id=$userId',
       );
       return response.statusCode == 200;
     } catch (e) {
@@ -388,7 +388,7 @@ class TrainingIntensityRepository {
   }) async {
     try {
       final response = await _apiClient.get(
-        '${ApiConstants.baseUrl}/training/linked-exercises/$userId/suggestions/${Uri.encodeComponent(primaryExerciseName)}?limit=$limit',
+        '${ApiConstants.apiBaseUrl}/training/linked-exercises/$userId/suggestions/${Uri.encodeComponent(primaryExerciseName)}?limit=$limit',
       );
 
       if (response.statusCode == 200 && response.data is List) {

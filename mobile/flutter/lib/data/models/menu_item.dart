@@ -38,6 +38,17 @@ class MenuItem {
   final int? inflammationScore;
   final bool? isUltraProcessed;
 
+  /// Per-serving glycemic load (GI × carbs_g / 100). <10 low, 10-19 medium,
+  /// 20+ high. Null = not computed (usually carb-free items like meat/oil).
+  final int? glycemicLoad;
+
+  /// Monash-scale FODMAP rating: `'low' | 'medium' | 'high'`. Null = unknown.
+  final String? fodmapRating;
+
+  /// Short explanation of the FODMAP trigger(s) when rating >= medium,
+  /// e.g. "contains onion, garlic". Null for low-FODMAP items.
+  final String? fodmapReason;
+
   final String? coachTip;
 
   /// Menu price when detectable on the page. Null = not listed.
@@ -74,6 +85,9 @@ class MenuItem {
     this.ratingReason,
     this.inflammationScore,
     this.isUltraProcessed,
+    this.glycemicLoad,
+    this.fodmapRating,
+    this.fodmapReason,
     this.coachTip,
     this.price,
     this.currency,
@@ -89,6 +103,16 @@ class MenuItem {
   double get scaledCarbsG => carbsG * portionMultiplier;
   double get scaledFatG => fatG * portionMultiplier;
   double? get scaledWeightG => weightG == null ? null : weightG! * portionMultiplier;
+
+  /// Derive a portion multiplier from a user-entered target weight in grams.
+  /// If we don't know the base `weightG` we can't map → returns null so the
+  /// caller falls back to the discrete multiplier stepper.
+  double? multiplierForWeight(double targetGrams) {
+    if (weightG == null || weightG! <= 0) return null;
+    final mult = targetGrams / weightG!;
+    // Clamp to sane bounds so the UI can't drive us to 0× / 20×.
+    return mult.clamp(0.25, 5.0).toDouble();
+  }
 
   MenuItem copyWith({
     double? portionMultiplier,
@@ -109,6 +133,9 @@ class MenuItem {
       ratingReason: ratingReason,
       inflammationScore: inflammationScore,
       isUltraProcessed: isUltraProcessed,
+      glycemicLoad: glycemicLoad,
+      fodmapRating: fodmapRating,
+      fodmapReason: fodmapReason,
       coachTip: coachTip,
       price: price,
       currency: currency,
@@ -146,6 +173,9 @@ class MenuItem {
       ratingReason: json['rating_reason'] as String?,
       inflammationScore: intN(json['inflammation_score']),
       isUltraProcessed: json['is_ultra_processed'] as bool?,
+      glycemicLoad: intN(json['glycemic_load']),
+      fodmapRating: json['fodmap_rating'] as String?,
+      fodmapReason: json['fodmap_reason'] as String?,
       coachTip: json['coach_tip'] as String?,
       price: numN(json['price']),
       currency: json['currency'] as String?,

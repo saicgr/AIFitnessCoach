@@ -81,13 +81,21 @@ class _My1RMsScreenState extends ConsumerState<My1RMsScreen> {
                         textPrimary, textMuted, elevated, cardBorder),
                   ),
                 ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => _showAddOneRMSheet(context),
-        backgroundColor: AppColors.cyan,
-        foregroundColor: Colors.white,
-        icon: const Icon(Icons.add),
-        label: const Text('Add 1RM'),
-      ),
+      // Hide the FAB on empty state and while loading — the primary CTA
+      // lives INSIDE the empty state as a FilledButton so there aren't
+      // two competing affordances floating on an otherwise blank screen.
+      floatingActionButton: (oneRMsState.isLoading ||
+              _isAutoPopulating ||
+              oneRMsState.oneRMs.isEmpty)
+          ? null
+          : FloatingActionButton.extended(
+              onPressed: () => _showAddOneRMSheet(context),
+              backgroundColor: AppColors.cyan,
+              foregroundColor: Colors.white,
+              icon: const Icon(Icons.add),
+              label: const Text('Add 1RM'),
+            ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
     );
   }
 
@@ -97,47 +105,82 @@ class _My1RMsScreenState extends ConsumerState<My1RMsScreen> {
     Color textPrimary,
     Color textMuted,
   ) {
+    // Scale the header-to-CTA gap with text scaler so large accessibility
+    // settings don't cram the icon/title/buttons together.
+    final scaler = MediaQuery.textScalerOf(context);
+    final headerGap = scaler.scale(24.0).clamp(24.0, 40.0);
+
     return Center(
-      child: Padding(
+      child: SingleChildScrollView(
         padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.fitness_center,
-              size: 80,
-              color: textMuted.withValues(alpha: 0.5),
-            ),
-            const SizedBox(height: 24),
-            Text(
-              'No 1RMs Recorded',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.w600,
-                color: textPrimary,
+        child: ConstrainedBox(
+          // Cap CTA column width so the FilledButton doesn't stretch to
+          // absurd widths on tablets.
+          constraints: const BoxConstraints(maxWidth: 360),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.fitness_center,
+                size: 80,
+                color: textMuted.withValues(alpha: 0.5),
               ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Add your max lifts to get personalized weight recommendations based on your training intensity.',
-              style: TextStyle(
-                fontSize: 14,
-                color: textMuted,
+              SizedBox(height: headerGap),
+              Text(
+                'No 1RMs Recorded',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w600,
+                  color: textPrimary,
+                ),
+                textAlign: TextAlign.center,
               ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 24),
-            OutlinedButton.icon(
-              onPressed: _autoPopulate,
-              icon: const Icon(Icons.auto_awesome),
-              label: const Text('Auto-populate from workout history'),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: AppColors.cyan,
-                side: BorderSide(color: AppColors.cyan),
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              const SizedBox(height: 8),
+              Text(
+                'Add your max lifts to get personalized weight recommendations based on your training intensity.',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: textMuted,
+                ),
+                textAlign: TextAlign.center,
               ),
-            ),
-          ],
+              SizedBox(height: headerGap),
+              // Primary CTA — auto-populate is the much higher-leverage
+              // first action for a brand-new user with existing workout
+              // history. Disabled while the request is in flight.
+              SizedBox(
+                width: double.infinity,
+                child: FilledButton.icon(
+                  onPressed: _isAutoPopulating ? null : _autoPopulate,
+                  icon: const Icon(Icons.auto_awesome),
+                  label: const Text('Auto-populate from workout history'),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: AppColors.cyan,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 24,
+                      vertical: 14,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              // Secondary CTA — manual entry.
+              TextButton.icon(
+                onPressed: _isAutoPopulating
+                    ? null
+                    : () => _showAddOneRMSheet(context),
+                icon: const Icon(Icons.add),
+                label: const Text('Add manually'),
+                style: TextButton.styleFrom(
+                  foregroundColor: textMuted,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

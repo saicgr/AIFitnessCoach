@@ -8,7 +8,7 @@ Handles:
 - Generating celebration messages
 """
 from typing import Dict, List, Optional, Tuple
-from datetime import datetime, date, timedelta
+from datetime import datetime, date, timedelta, timezone
 from dataclasses import dataclass, field
 from decimal import Decimal
 import logging
@@ -124,9 +124,11 @@ class PersonalRecordsService:
             improvement_percent = round((improvement_kg / best_existing_1rm) * 100, 2)
 
             if last_pr_date:
-                if isinstance(last_pr_date, str):
-                    last_pr_date = datetime.fromisoformat(last_pr_date.replace("Z", "+00:00"))
-                time_since_last_pr = (datetime.now(last_pr_date.tzinfo) - last_pr_date).days
+                # _parse_date always returns an aware UTC datetime,
+                # so subtracting from `datetime.now(timezone.utc)` is safe
+                # whether the stored value was naive, ISO-Z, or datetime.
+                last_pr_date = self._parse_date(last_pr_date)
+                time_since_last_pr = (datetime.now(timezone.utc) - last_pr_date).days
 
         return PRComparison(
             is_pr=is_pr,
@@ -262,7 +264,7 @@ class PersonalRecordsService:
                 "current_pr_streak": 0,
             }
 
-        now = datetime.now()
+        now = datetime.now(timezone.utc)
         period_start = now - timedelta(days=period_days)
 
         # Count PRs in period
@@ -499,17 +501,26 @@ class PersonalRecordsService:
 
     @staticmethod
     def _parse_date(date_value) -> datetime:
-        """Parse various date formats to datetime."""
+        """Parse various date formats to an aware UTC datetime.
+
+        Supabase returns timestamps as ISO strings with a trailing
+        "Z" or "+00:00" — those are tz-aware once parsed. Naive
+        inputs (plain date, naive datetime, bare date string) are
+        attached to UTC so downstream arithmetic against
+        ``datetime.now(timezone.utc)`` never throws
+        "can't subtract offset-naive and offset-aware datetimes".
+        """
         if isinstance(date_value, datetime):
-            return date_value
+            return date_value if date_value.tzinfo else date_value.replace(tzinfo=timezone.utc)
         if isinstance(date_value, date):
-            return datetime.combine(date_value, datetime.min.time())
+            return datetime.combine(date_value, datetime.min.time()).replace(tzinfo=timezone.utc)
         if isinstance(date_value, str):
             try:
-                return datetime.fromisoformat(date_value.replace("Z", "+00:00"))
+                dt = datetime.fromisoformat(date_value.replace("Z", "+00:00"))
             except ValueError:
-                return datetime.now()
-        return datetime.now()
+                return datetime.now(timezone.utc)
+            return dt if dt.tzinfo else dt.replace(tzinfo=timezone.utc)
+        return datetime.now(timezone.utc)
 
 
 # Singleton instance

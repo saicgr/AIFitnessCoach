@@ -525,6 +525,7 @@ async def fitbit_webhook_receive(
 @router.post("/apple-health/push")
 async def apple_health_push(
     body: AppleHealthPushRequest,
+    background_tasks: BackgroundTasks,
     current_user: dict = Depends(get_current_user),
 ):
     """HealthKit bridge (Flutter ``health`` package) posts workouts here.
@@ -570,6 +571,15 @@ async def apple_health_push(
             }).eq("id", acct.data[0]["id"]).execute()
     except Exception as e:
         logger.warning(f"[apple_health] last_sync update failed: {e}")
+
+    # Trophies + masteries — run in background so the sync response
+    # returns immediately. Helper is self-guarded; trophy path can't 500
+    # the sync.
+    if inserted_cardio or inserted_strength:
+        from services.mastery_writes import check_all_trophies_and_masteries
+        background_tasks.add_task(
+            check_all_trophies_and_masteries, str(user_id)
+        )
 
     logger.info(
         f"🍎 [apple_health] push user={user_id} activities={len(body.activities)} "

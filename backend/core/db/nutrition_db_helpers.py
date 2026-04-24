@@ -83,6 +83,10 @@ class NutritionDB(NutritionDBPart2, BaseDB):
         # Inflammation / ultra-processed tracking
         inflammation_score: Optional[int] = None,
         is_ultra_processed: Optional[bool] = None,
+        # Diabetes + FODMAP health-condition scoring (migration 1977)
+        glycemic_load: Optional[int] = None,
+        fodmap_rating: Optional[str] = None,
+        fodmap_reason: Optional[str] = None,
         # Passive mood inference (rules_v1). Null when no rule matched or
         # confidence was below the persistence threshold.
         mood_after_inferred: Optional[str] = None,
@@ -147,6 +151,15 @@ class NutritionDB(NutritionDBPart2, BaseDB):
             data["inflammation_score"] = inflammation_score
         if is_ultra_processed is not None:
             data["is_ultra_processed"] = is_ultra_processed
+
+        # Diabetes + FODMAP (migration 1977). Guarded so older code paths
+        # that don't populate these still work.
+        if glycemic_load is not None:
+            data["glycemic_load"] = glycemic_load
+        if fodmap_rating is not None:
+            data["fodmap_rating"] = fodmap_rating
+        if fodmap_reason is not None:
+            data["fodmap_reason"] = fodmap_reason
 
         # Passive mood inference columns
         if mood_after_inferred is not None:

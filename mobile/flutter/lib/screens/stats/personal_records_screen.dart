@@ -11,8 +11,8 @@ import '../../data/models/training_intensity.dart';
 import '../../data/providers/scores_provider.dart';
 import '../../core/providers/training_intensity_provider.dart';
 import '../../data/services/haptic_service.dart';
-import '../../utils/share_report_helper.dart';
 import '../../widgets/pill_app_bar.dart';
+import '../reports/widgets/report_share_sheet.dart';
 
 // ============================================================================
 // Sort Mode
@@ -100,11 +100,11 @@ class _PersonalRecordsScreenState extends ConsumerState<PersonalRecordsScreen> {
         actions: [
           PillAppBarAction(
             icon: Icons.ios_share_rounded,
-            onTap: () => shareReportScreen(
-              context: context,
-              repaintKey: _reportKey,
-              caption: 'My FitWiz personal records',
-              subject: 'My PRs',
+            onTap: () => _openShareSheet(
+              prStats: prStats,
+              grouped: grouped,
+              useKg: useKg,
+              accentColor: accentColor,
             ),
           ),
         ],
@@ -159,6 +159,56 @@ class _PersonalRecordsScreenState extends ConsumerState<PersonalRecordsScreen> {
               ),
             ),
     );
+  }
+
+  // ──────────────────────────────────────────────────────────────────────────
+  // Share
+  // ──────────────────────────────────────────────────────────────────────────
+
+  /// Opens the unified ReportShareSheet with a PR-specific payload.
+  /// Top 5 PRs become highlight rows; hero number is the PR count.
+  Future<void> _openShareSheet({
+    required PRStats? prStats,
+    required List<_ExercisePREntry> grouped,
+    required bool useKg,
+    required Color accentColor,
+  }) async {
+    HapticService.light();
+    final currentUser = ref.read(currentUserProvider).asData?.value;
+
+    // Top 5 lifts by estimated 1RM → highlights. The screen already sorted
+    // and deduped via _groupAndFilter, so we can just take(5).
+    final topFive = grouped.take(5).map((e) {
+      final kg = e.oneRm?.oneRepMaxKg ?? e.bestPr.estimated1rmKg;
+      // Render each lift in the user's preferred unit so the share card
+      // matches what they see on the source screen.
+      final v = useKg ? kg : kg * 2.20462;
+      final unit = useKg ? 'kg' : 'lb';
+      return ReportHighlight(
+        label: e.bestPr.exerciseDisplayName,
+        value: '${v.round()} $unit',
+      );
+    }).toList();
+
+    final topLiftLabel = topFive.isNotEmpty ? topFive.first.label : null;
+    final periodLabel =
+        DateFormat('MMM yyyy').format(DateTime.now()).toUpperCase();
+
+    final data = ReportShareData(
+      reportType: ReportType.personalRecords,
+      title: 'Personal Records',
+      periodLabel: periodLabel,
+      primaryStats: {
+        'pr_count': prStats?.totalPrs ?? grouped.length,
+        if (topLiftLabel != null) 'top_lift': topLiftLabel,
+      },
+      highlights: topFive,
+      userDisplayName: currentUser?.displayName,
+      accentColor: accentColor,
+      deepLinkUrl: null,
+    );
+    if (!mounted) return;
+    await ReportShareSheet.show(context, data: data);
   }
 
   // ──────────────────────────────────────────────────────────────────────────

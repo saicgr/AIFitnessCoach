@@ -20,9 +20,11 @@ class MyBadgesShowcase extends StatelessWidget {
   Widget build(BuildContext context) {
     final hasBadges = earned.isNotEmpty;
     final recent = earned.take(6).toList();
+    final textScale = MediaQuery.textScalerOf(context).scale(1.0);
+    final height = (180 * textScale).clamp(180.0, 240.0);
 
     return Container(
-      height: 180,
+      height: height,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(18),
         gradient: const LinearGradient(

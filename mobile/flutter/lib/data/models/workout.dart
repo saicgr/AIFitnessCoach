@@ -6,19 +6,27 @@ import 'exercise.dart';
 
 part 'workout.g.dart';
 
-/// Parse generation_metadata which can be String or Map from API
+/// Parse generation_metadata which can be Map, a JSON string, or — in some
+/// older rows — a JSON string that itself decodes to *another* JSON string
+/// (double-encoded: the Supabase jsonb column was populated with
+/// `json.dumps(json.dumps(...))` somewhere up the write path). We unwrap
+/// up to two layers so every downstream consumer gets a usable map.
 Map<String, dynamic>? _parseGenerationMetadata(dynamic value) {
   if (value == null) return null;
-  if (value is Map<String, dynamic>) return value;
-  if (value is String) {
-    if (value.isEmpty) return null;
-    try {
-      final decoded = jsonDecode(value);
-      if (decoded is Map<String, dynamic>) return decoded;
-      return null;
-    } catch (_) {
-      return null;
+  dynamic current = value;
+  for (var i = 0; i < 3; i++) {
+    if (current is Map<String, dynamic>) return current;
+    if (current is Map) return current.cast<String, dynamic>();
+    if (current is String) {
+      if (current.isEmpty) return null;
+      try {
+        current = jsonDecode(current);
+      } catch (_) {
+        return null;
+      }
+      continue;
     }
+    return null;
   }
   return null;
 }

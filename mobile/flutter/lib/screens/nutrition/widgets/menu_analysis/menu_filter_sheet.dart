@@ -81,7 +81,7 @@ class _MenuFilterSheetState extends State<MenuFilterSheet> {
             _section(
               'Health',
               child: _chipGroup(
-                options: const {'green': 'Good', 'yellow': 'Moderate', 'red': 'Limit'},
+                options: const {'green': 'Good', 'yellow': 'Moderate', 'red': 'Skip'},
                 selected: _state.healthRatings,
                 onToggle: (v) {
                   final next = {..._state.healthRatings};
@@ -155,6 +155,85 @@ class _MenuFilterSheetState extends State<MenuFilterSheet> {
                 onChanged: (v) => setState(() => _state = _state.copyWith(
                   maxPriceUsd: v, clearMaxPriceUsd: v == null,
                 )),
+              ),
+            ),
+            // Diabetes / blood-sugar filter — single cap on glycemic load.
+            // Tap a tier; tap again to clear. <10 low-impact, <20 includes
+            // moderate, 40 is the upper bound of what a realistic dish can
+            // carry per serving.
+            _section(
+              'Diabetes / blood sugar',
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _chipGroup(
+                    options: const {
+                      '9': 'Low GL only (under 10)',
+                      '19': 'Low or medium (under 20)',
+                      '40': 'Any (hide only extreme spikes)',
+                    },
+                    selected: _state.maxGlycemicLoad == null
+                        ? const {}
+                        : {_state.maxGlycemicLoad!.round().toString()},
+                    onToggle: (v) {
+                      final parsed = double.tryParse(v);
+                      final already = _state.maxGlycemicLoad?.round() == parsed?.round();
+                      setState(() => _state = _state.copyWith(
+                            maxGlycemicLoad: already ? null : parsed,
+                            clearMaxGlycemicLoad: already,
+                          ));
+                    },
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Glycemic load per serving — lower = steadier energy, fewer spikes.',
+                    style: TextStyle(fontSize: 11, color: AppColors.textMuted),
+                  ),
+                ],
+              ),
+            ),
+            // FODMAP filter for IBS-sensitive users.
+            _section(
+              'FODMAP (IBS)',
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _chipGroup(
+                    options: const {
+                      'low': 'Low FODMAP only',
+                      'medium': 'Low or medium',
+                      'high': 'Any (default)',
+                    },
+                    selected: _state.fodmapMax == null
+                        ? const {}
+                        : {_state.fodmapMax!},
+                    onToggle: (v) {
+                      final already = _state.fodmapMax == v;
+                      setState(() => _state = _state.copyWith(
+                            fodmapMax: already ? null : v,
+                            clearFodmapMax: already,
+                          ));
+                    },
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Skip onion, garlic, wheat, dairy-heavy dishes if they trigger you.',
+                    style: TextStyle(fontSize: 11, color: AppColors.textMuted),
+                  ),
+                ],
+              ),
+            ),
+            _section(
+              'Processing',
+              child: SwitchListTile.adaptive(
+                contentPadding: EdgeInsets.zero,
+                title: const Text('Hide ultra-processed dishes', style: TextStyle(fontSize: 13)),
+                subtitle: const Text(
+                  'NOVA Group 4 — industrial emulsifiers, HFCS, artificial sweeteners.',
+                  style: TextStyle(fontSize: 11),
+                ),
+                value: _state.hideUltraProcessed,
+                onChanged: (v) => setState(() => _state = _state.copyWith(hideUltraProcessed: v)),
               ),
             ),
             if (sections.length > 1)
@@ -241,6 +320,18 @@ class _MenuFilterSheetState extends State<MenuFilterSheet> {
     );
   }
 
+  /// Range slider with an explicit on/off toggle so the user can tell at a
+  /// glance whether a bound is active. The three prior visual states —
+  /// "off", "on at min", "on at max" — all looked identical (slider handle
+  /// on a full orange track with a bare label). Now:
+  ///
+  ///   • OFF: track is greyed out, handle reads "Off", toggle shows unset.
+  ///   • ON:  track orange, handle shows the numeric value AND it's repeated
+  ///          in the header (e.g. "Min protein: 35 g"), toggle shows set.
+  ///
+  /// Tapping the toggle enables the filter with the last-moved value (or
+  /// the sensible midpoint on first-enable). Dragging the thumb while OFF
+  /// auto-enables and commits the dragged value.
   Widget _rangeSlider({
     required String label,
     required double? value,
@@ -249,7 +340,14 @@ class _MenuFilterSheetState extends State<MenuFilterSheet> {
     required String unit,
     required ValueChanged<double?> onChanged,
   }) {
-    final current = value ?? max;
+    final enabled = value != null;
+    // First-enable default sits at the midpoint — neither too permissive
+    // nor too strict. User can immediately drag from there.
+    final midpoint = ((min + max) / 2).roundToDouble();
+    final current = (value ?? midpoint).clamp(min, max).toDouble();
+    final offColor = AppColors.textMuted.withValues(alpha: 0.6);
+    final activeColor = AppColors.orange;
+
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Column(
@@ -258,30 +356,53 @@ class _MenuFilterSheetState extends State<MenuFilterSheet> {
           Row(
             children: [
               Expanded(
-                child: Text(
-                  value == null ? label : '$label: ${_fmt(current, unit)}',
-                  style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+                child: RichText(
+                  text: TextSpan(
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      color: enabled ? activeColor : offColor,
+                    ),
+                    children: [
+                      TextSpan(text: label),
+                      TextSpan(
+                        text: enabled ? ' · ${_fmt(current, unit)}' : ' · Off',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w600,
+                          color: enabled ? activeColor : offColor,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
-              if (value != null)
-                TextButton(
-                  onPressed: () => onChanged(null),
-                  style: TextButton.styleFrom(
-                    minimumSize: Size.zero,
-                    padding: const EdgeInsets.symmetric(horizontal: 8),
-                  ),
-                  child: const Text('Off', style: TextStyle(fontSize: 11)),
-                ),
+              Switch.adaptive(
+                value: enabled,
+                activeColor: activeColor,
+                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                onChanged: (v) => onChanged(v ? midpoint : null),
+              ),
             ],
           ),
           SliderTheme(
-            data: SliderTheme.of(context).copyWith(trackHeight: 3),
+            data: SliderTheme.of(context).copyWith(
+              trackHeight: 3,
+              disabledActiveTrackColor: offColor.withValues(alpha: 0.3),
+              disabledInactiveTrackColor: offColor.withValues(alpha: 0.15),
+              disabledThumbColor: offColor,
+            ),
             child: Slider(
-              value: current.clamp(min, max).toDouble(),
+              value: current,
               min: min,
               max: max,
+              // When off, dragging the thumb turns it on at the dragged value
+              // instead of doing nothing — users expect motion to "work".
               onChanged: (v) => onChanged(v),
-              activeColor: AppColors.orange,
+              activeColor: activeColor,
+              inactiveColor: enabled ? null : offColor.withValues(alpha: 0.2),
+              thumbColor: enabled ? activeColor : offColor,
+              label: _fmt(current, unit),
+              divisions: max <= 10 ? max.toInt() : null,
             ),
           ),
         ],

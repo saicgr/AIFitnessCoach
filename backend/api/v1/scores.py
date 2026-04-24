@@ -24,7 +24,7 @@ from .scores_models import *  # noqa: F401, F403
 from .scores_endpoints import router as _endpoints_router
 
 
-from datetime import datetime, date, timedelta
+from datetime import datetime, date, timedelta, timezone
 from typing import Optional, List, Dict, Any
 from fastapi import APIRouter, HTTPException, Query, Depends, BackgroundTasks, Request
 from core.auth import get_current_user, verify_user_ownership
@@ -71,6 +71,122 @@ router = APIRouter()
 # ============================================================================
 # Helper Functions
 # ============================================================================
+
+
+def _coerce_sets_json(raw) -> Any:
+    """Workout_logs.sets_json is jsonb but occasionally arrives as str."""
+    if raw is None:
+        return None
+    if isinstance(raw, (list, dict)):
+        return raw
+    if isinstance(raw, str):
+        try:
+            return json.loads(raw)
+        except Exception:
+            return None
+    return None
+
+
+def _weight_kg(item: dict) -> float:
+    """Extract weight in kg (prefers weight_kg, converts lbs when needed)."""
+    w = item.get("weight_kg")
+    if isinstance(w, (int, float)) and w > 0:
+        return float(w)
+    lb = item.get("weight_lbs")
+    if lb is None:
+        lb = item.get("weight_lb")
+    if isinstance(lb, (int, float)) and lb > 0:
+        return float(lb) / 2.20462
+    return 0.0
+
+
+def _flatten_logs_for_strength(log_rows: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    """Flatten workout_logs.sets_json rows into the per-exercise shape
+    StrengthCalculatorService.calculate_all_muscle_scores expects:
+
+        [{exercise_name, weight_kg, reps, sets}, ...]
+
+    Handles the three sets_json shapes in production:
+      A) Per-set rows with exercise_name embedded — group by name, keep the
+         best set's (weight, reps) and count sets.
+      B) Exercise summary with integer sets count and top-level weight/reps.
+      C) Nested list: {name, sets: [ {weight, reps}, ... ]}
+    """
+    # First pass: accumulate per-exercise best set + set count across ALL logs
+    best: Dict[str, Dict[str, Any]] = {}
+
+    def _consider(name: str, weight_kg: float, reps: int, set_count: int):
+        if not name or weight_kg <= 0 or reps <= 0 or set_count <= 0:
+            return
+        key = name.strip().lower()
+        score = weight_kg * reps
+        prev = best.get(key)
+        if prev is None or score > prev["_score"]:
+            best[key] = {
+                "exercise_name": name,
+                "weight_kg": weight_kg,
+                "reps": int(reps),
+                "sets": int(set_count),
+                "_score": score,
+            }
+        else:
+            # Same exercise logged again — accumulate the set count so the
+            # downstream weekly_sets aggregation reflects real volume.
+            prev["sets"] = int(prev["sets"]) + int(set_count)
+
+    for row in log_rows:
+        payload = _coerce_sets_json(row.get("sets_json"))
+        if not isinstance(payload, list):
+            # Shape wrapped in a dict under "exercises"
+            if isinstance(payload, dict):
+                payload = payload.get("exercises") or []
+            else:
+                continue
+            if not isinstance(payload, list):
+                continue
+
+        for el in payload:
+            if not isinstance(el, dict):
+                continue
+            name = el.get("name") or el.get("exercise_name") or ""
+            sets_field = el.get("sets")
+
+            if isinstance(sets_field, list):
+                # Shape C: nested sets — find the best set, count len.
+                best_w, best_r = 0.0, 0
+                for s in sets_field:
+                    if not isinstance(s, dict):
+                        continue
+                    sw = _weight_kg(s)
+                    sr = s.get("reps") or s.get("reps_completed")
+                    if not (isinstance(sr, (int, float)) and sr > 0):
+                        continue
+                    if sw * sr > best_w * best_r:
+                        best_w, best_r = sw, int(sr)
+                _consider(name, best_w, best_r, len(sets_field))
+                continue
+
+            # Shape B: integer set count.
+            if isinstance(sets_field, (int, float)) and sets_field > 0:
+                set_count = int(sets_field)
+                w_kg = _weight_kg(el)
+                reps = el.get("reps")
+                if isinstance(reps, (int, float)) and reps > 0:
+                    _consider(name, w_kg, int(reps), set_count)
+                continue
+
+            # Shape A fallback: per-set row missing a sets field — 1 set.
+            w_kg = _weight_kg(el)
+            reps = el.get("reps") or el.get("reps_completed")
+            if isinstance(reps, (int, float)) and reps > 0 and w_kg > 0:
+                _consider(name, w_kg, int(reps), 1)
+
+    out = []
+    for entry in best.values():
+        entry.pop("_score", None)
+        out.append(entry)
+    return out
+
 
 def get_user_body_info(user_data: dict) -> tuple[float, str]:
     """
@@ -729,40 +845,27 @@ async def calculate_strength_scores(
 
     bodyweight, gender = get_user_body_info(user_response.data)
 
-    # Get workout data from last 90 days
-    start_date = (today - timedelta(days=90)).isoformat()
+    # Get workout data from last 90 days — PROD schema note:
+    # `workouts.completed` does NOT exist and `workouts.exercises` is
+    # frequently empty on logged (post-hoc) sessions. The source of
+    # truth for volume is `workout_logs.sets_json`, the same jsonb
+    # column used by personal_bests and heatmap aggregations.
+    cutoff = datetime.now(timezone.utc) - timedelta(days=90)
 
-    workouts_response = db.client.table("workouts").select(
-        "id, exercises, completed_at"
+    logs_response = db.client.table("workout_logs").select(
+        "sets_json, completed_at"
     ).eq(
         "user_id", user_id
     ).eq(
-        "completed", True
+        "status", "completed"
     ).gte(
-        "scheduled_date", start_date
+        "completed_at", cutoff.isoformat()
     ).execute()
 
-    # Extract exercise performances
-    workout_data = []
-    for workout in (workouts_response.data or []):
-        exercises = workout.get("exercises", [])
-        for exercise in exercises:
-            if isinstance(exercise, dict):
-                # Get best set for this exercise
-                sets = exercise.get("sets", [])
-                if sets:
-                    best_set = max(
-                        (s for s in sets if s.get("completed", True)),
-                        key=lambda s: float(s.get("weight_kg", 0)) * int(s.get("reps", 0)),
-                        default=None,
-                    )
-                    if best_set:
-                        workout_data.append({
-                            "exercise_name": exercise.get("name", ""),
-                            "weight_kg": float(best_set.get("weight_kg", 0)),
-                            "reps": int(best_set.get("reps", 0)),
-                            "sets": len(sets),
-                        })
+    # Extract exercise performances from sets_json. We emit one row per
+    # exercise per log in the shape calculate_all_muscle_scores expects:
+    #   { exercise_name, weight_kg, reps, sets }
+    workout_data = _flatten_logs_for_strength(logs_response.data or [])
 
     # Calculate scores for all muscle groups
     muscle_scores = strength_service.calculate_all_muscle_scores(

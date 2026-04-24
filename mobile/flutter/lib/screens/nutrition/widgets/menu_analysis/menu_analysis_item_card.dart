@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../data/models/allergen.dart';
 import '../../../../data/models/menu_item.dart';
+import '../score_explain_sheet.dart';
 
 /// Single dish row in the Menu Analysis sheet. Shows:
 ///  • Checkbox + name + portion weight
@@ -96,17 +97,34 @@ class MenuAnalysisItemCard extends StatelessWidget {
                               ),
                             ),
                           ),
-                          if (item.rating != null) _RatingPill(rating: item.rating!),
+                          if (item.rating != null)
+                            _RatingPill(
+                              rating: item.rating!,
+                              onTap: () => ScoreExplainSheet.show(
+                                context,
+                                kind: ScoreKind.rating,
+                                value: item.rating,
+                                reason: item.ratingReason ?? item.coachTip,
+                              ),
+                            ),
                         ],
                       ),
                       if (item.weightG != null || item.amount != null)
                         Padding(
                           padding: const EdgeInsets.only(top: 2),
                           child: Text(
-                            _subtitle(item),
+                            _subtitlePortion(item),
                             style: TextStyle(fontSize: 11, color: textMuted),
                           ),
                         ),
+                      // Tappable score chips (inflammation / glycemic load /
+                      // FODMAP / ultra-processed) — each opens the shared
+                      // ScoreExplainSheet with the dish's context. Wrap so
+                      // long dish names don't elbow chips off the row.
+                      if (_hasAnyScore(item)) ...[
+                        const SizedBox(height: 4),
+                        _ScoreChipRow(item: item),
+                      ],
                       const SizedBox(height: 6),
                       _MacroLine(item: item, color: textSecondary),
                       if (item.coachTip != null && item.coachTip!.isNotEmpty) ...[
@@ -135,7 +153,7 @@ class MenuAnalysisItemCard extends StatelessWidget {
                       ],
                       const SizedBox(height: 6),
                       _PortionStepper(
-                        multiplier: item.portionMultiplier,
+                        item: item,
                         onChanged: onPortionChanged,
                       ),
                     ],
@@ -149,7 +167,9 @@ class MenuAnalysisItemCard extends StatelessWidget {
     );
   }
 
-  static String _subtitle(MenuItem item) {
+  /// Portion descriptor only — no inflammation copy (that moved to its own
+  /// tappable chip on the ScoreChipRow below).
+  static String _subtitlePortion(MenuItem item) {
     final parts = <String>[];
     if (item.weightG != null) {
       parts.add('${item.scaledWeightG!.round()} g');
@@ -157,15 +177,128 @@ class MenuAnalysisItemCard extends StatelessWidget {
     if (item.amount != null && item.amount!.isNotEmpty) {
       parts.add(item.amount!);
     }
-    if (item.inflammationScore != null) {
-      final label = item.inflammationScore! <= 3
-          ? 'anti-inflammatory'
-          : item.inflammationScore! <= 6
-              ? 'mildly inflammatory'
-              : 'highly inflammatory';
-      parts.add('$label (${item.inflammationScore!}/10)');
-    }
     return parts.join(' · ');
+  }
+
+  static bool _hasAnyScore(MenuItem item) =>
+      item.inflammationScore != null ||
+      item.glycemicLoad != null ||
+      item.fodmapRating != null ||
+      item.isUltraProcessed == true;
+}
+
+/// Inline row of tappable score chips shown beneath each menu item.
+///
+/// Every chip opens [ScoreExplainSheet] so the user can learn what the
+/// score means without leaving the sheet. Chips are compact — we trust
+/// the colour + short label and let the explain sheet carry the detail.
+class _ScoreChipRow extends StatelessWidget {
+  final MenuItem item;
+  const _ScoreChipRow({required this.item});
+
+  @override
+  Widget build(BuildContext context) {
+    return Wrap(
+      spacing: 4,
+      runSpacing: 4,
+      children: [
+        if (item.inflammationScore != null)
+          _ScoreChip(
+            label: '🔥 ${item.inflammationScore}/10',
+            color: item.inflammationScore! >= 7
+                ? AppColors.error
+                : item.inflammationScore! >= 4
+                    ? AppColors.orange
+                    : AppColors.success,
+            onTap: () => ScoreExplainSheet.show(
+              context,
+              kind: ScoreKind.inflammation,
+              value: item.inflammationScore,
+              reason: item.ratingReason,
+            ),
+          ),
+        if (item.glycemicLoad != null)
+          _ScoreChip(
+            label: 'GL ${item.glycemicLoad}',
+            color: item.glycemicLoad! >= 20
+                ? AppColors.error
+                : item.glycemicLoad! >= 10
+                    ? AppColors.orange
+                    : AppColors.success,
+            onTap: () => ScoreExplainSheet.show(
+              context,
+              kind: ScoreKind.glycemicLoad,
+              value: item.glycemicLoad,
+            ),
+          ),
+        if (item.fodmapRating != null)
+          _ScoreChip(
+            label: 'FODMAP ${item.fodmapRating!.toUpperCase()}',
+            color: item.fodmapRating == 'high'
+                ? AppColors.error
+                : item.fodmapRating == 'medium'
+                    ? AppColors.orange
+                    : AppColors.success,
+            onTap: () => ScoreExplainSheet.show(
+              context,
+              kind: ScoreKind.fodmap,
+              value: item.fodmapRating,
+              reason: item.fodmapReason,
+            ),
+          ),
+        if (item.isUltraProcessed == true)
+          _ScoreChip(
+            label: 'Ultra-processed',
+            color: AppColors.error,
+            onTap: () => ScoreExplainSheet.show(
+              context,
+              kind: ScoreKind.ultraProcessed,
+              value: true,
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+class _ScoreChip extends StatelessWidget {
+  final String label;
+  final Color color;
+  final VoidCallback onTap;
+  const _ScoreChip({required this.label, required this.color, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(6),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+          decoration: BoxDecoration(
+            color: color.withValues(alpha: 0.12),
+            borderRadius: BorderRadius.circular(6),
+            border: Border.all(color: color.withValues(alpha: 0.35), width: 0.7),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w700,
+                  color: color,
+                ),
+              ),
+              const SizedBox(width: 3),
+              Icon(Icons.info_outline, size: 10, color: color.withValues(alpha: 0.7)),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }
 
@@ -239,7 +372,8 @@ class _MacroLine extends StatelessWidget {
 
 class _RatingPill extends StatelessWidget {
   final String rating;
-  const _RatingPill({required this.rating});
+  final VoidCallback? onTap;
+  const _RatingPill({required this.rating, this.onTap});
   @override
   Widget build(BuildContext context) {
     Color color;
@@ -255,23 +389,44 @@ class _RatingPill extends StatelessWidget {
         break;
       case 'red':
         color = AppColors.error;
-        label = 'Limit';
+        // "Skip" matches the AI recommendation copy ("Skip; contains...")
+        // already rendered in the card body. "Limit" was ambiguous — could
+        // be read as "eat a small amount" when the intent here is "avoid".
+        label = 'Skip';
         break;
       default:
         return const SizedBox.shrink();
     }
-    return Container(
+    final pill = Container(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.15),
         borderRadius: BorderRadius.circular(6),
         border: Border.all(color: color.withValues(alpha: 0.4), width: 0.8),
       ),
-      child: Text(
-        label,
-        style: TextStyle(
-          fontSize: 10, fontWeight: FontWeight.w700, color: color,
-        ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 10, fontWeight: FontWeight.w700, color: color,
+            ),
+          ),
+          if (onTap != null) ...[
+            const SizedBox(width: 3),
+            Icon(Icons.info_outline, size: 10, color: color.withValues(alpha: 0.7)),
+          ],
+        ],
+      ),
+    );
+    if (onTap == null) return pill;
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(6),
+        child: pill,
       ),
     );
   }
@@ -308,15 +463,66 @@ class _AllergenWarning extends StatelessWidget {
   }
 }
 
-class _PortionStepper extends StatelessWidget {
-  final double multiplier;
+/// Portion control with two linked affordances:
+///   • Discrete multiplier stepper (−/1×/+) — quick half/full/double taps.
+///   • Tap-to-edit weight in grams — morphs the "180 g" chip into a TextField
+///     so the user can type exactly what they're eating. Saves on ✓.
+///
+/// Per feedback_inline_editing.md: prefer tap-to-edit over modal sheets when
+/// the value is already visible on screen. When the dish has no baseline
+/// `weightG`, the grams editor hides and we fall back to multiplier-only.
+class _PortionStepper extends StatefulWidget {
+  final MenuItem item;
   final ValueChanged<double> onChanged;
-  const _PortionStepper({required this.multiplier, required this.onChanged});
+  const _PortionStepper({required this.item, required this.onChanged});
 
   static const _steps = [0.5, 0.75, 1.0, 1.25, 1.5, 2.0];
 
   @override
+  State<_PortionStepper> createState() => _PortionStepperState();
+}
+
+class _PortionStepperState extends State<_PortionStepper> {
+  bool _editing = false;
+  final TextEditingController _controller = TextEditingController();
+  final FocusNode _focusNode = FocusNode();
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    _focusNode.dispose();
+    super.dispose();
+  }
+
+  void _startEdit() {
+    final current = widget.item.scaledWeightG?.round();
+    _controller.text = current == null ? '' : current.toString();
+    _controller.selection = TextSelection(baseOffset: 0, extentOffset: _controller.text.length);
+    setState(() => _editing = true);
+    WidgetsBinding.instance.addPostFrameCallback((_) => _focusNode.requestFocus());
+  }
+
+  void _saveEdit() {
+    final grams = double.tryParse(_controller.text.trim());
+    if (grams != null && grams > 0) {
+      final mult = widget.item.multiplierForWeight(grams);
+      if (mult != null) widget.onChanged(mult);
+    }
+    setState(() => _editing = false);
+  }
+
+  void _cancelEdit() {
+    setState(() => _editing = false);
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final item = widget.item;
+    final hasWeight = item.weightG != null && item.weightG! > 0;
+    final steps = _PortionStepper._steps;
+    final idx = steps.indexWhere((s) => (s - item.portionMultiplier).abs() < 0.01);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -324,30 +530,114 @@ class _PortionStepper extends StatelessWidget {
           'Portion',
           style: TextStyle(
             fontSize: 10, fontWeight: FontWeight.w600,
-            color: Theme.of(context).brightness == Brightness.dark
-                ? AppColors.textMuted
-                : AppColorsLight.textMuted,
+            color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
           ),
         ),
         const SizedBox(width: 6),
         _roundBtn(Icons.remove, () {
-          final idx = _steps.indexWhere((s) => (s - multiplier).abs() < 0.01);
-          if (idx > 0) onChanged(_steps[idx - 1]);
+          if (idx > 0) widget.onChanged(steps[idx - 1]);
         }),
         Container(
           constraints: const BoxConstraints(minWidth: 40),
           alignment: Alignment.center,
           padding: const EdgeInsets.symmetric(horizontal: 6),
           child: Text(
-            _formatMultiplier(multiplier),
+            _formatMultiplier(item.portionMultiplier),
             style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800),
           ),
         ),
         _roundBtn(Icons.add, () {
-          final idx = _steps.indexWhere((s) => (s - multiplier).abs() < 0.01);
-          if (idx >= 0 && idx < _steps.length - 1) onChanged(_steps[idx + 1]);
+          if (idx >= 0 && idx < steps.length - 1) widget.onChanged(steps[idx + 1]);
         }),
+        if (hasWeight) ...[
+          const SizedBox(width: 10),
+          Container(width: 1, height: 14, color: (isDark ? AppColors.cardBorder : Colors.grey.shade300)),
+          const SizedBox(width: 10),
+          if (_editing)
+            _weightEditor(isDark)
+          else
+            _weightChip(isDark, item.scaledWeightG!.round()),
+        ],
       ],
+    );
+  }
+
+  Widget _weightChip(bool isDark, int grams) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: _startEdit,
+        borderRadius: BorderRadius.circular(6),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+          decoration: BoxDecoration(
+            color: AppColors.orange.withValues(alpha: 0.12),
+            borderRadius: BorderRadius.circular(6),
+            border: Border.all(color: AppColors.orange.withValues(alpha: 0.35), width: 0.7),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                '$grams g',
+                style: const TextStyle(
+                  fontSize: 11, fontWeight: FontWeight.w800, color: AppColors.orange,
+                ),
+              ),
+              const SizedBox(width: 4),
+              Icon(Icons.edit_outlined, size: 11, color: AppColors.orange.withValues(alpha: 0.8)),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _weightEditor(bool isDark) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+      decoration: BoxDecoration(
+        color: AppColors.orange.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(color: AppColors.orange, width: 1),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          SizedBox(
+            width: 48,
+            child: TextField(
+              controller: _controller,
+              focusNode: _focusNode,
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              textAlign: TextAlign.center,
+              onSubmitted: (_) => _saveEdit(),
+              style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: AppColors.orange),
+              decoration: const InputDecoration(
+                isDense: true,
+                contentPadding: EdgeInsets.symmetric(vertical: 2),
+                border: InputBorder.none,
+                suffixText: 'g',
+                suffixStyle: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: AppColors.orange),
+              ),
+            ),
+          ),
+          InkWell(
+            onTap: _cancelEdit,
+            child: const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 2),
+              child: Icon(Icons.close, size: 14, color: AppColors.orange),
+            ),
+          ),
+          InkWell(
+            onTap: _saveEdit,
+            child: const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 2),
+              child: Icon(Icons.check, size: 14, color: AppColors.orange),
+            ),
+          ),
+        ],
+      ),
     );
   }
 

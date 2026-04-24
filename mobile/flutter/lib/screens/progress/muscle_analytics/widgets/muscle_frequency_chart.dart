@@ -13,7 +13,6 @@ class MuscleFrequencyChart extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final sortedFrequencies = frequency.sortedByFrequency;
 
     if (sortedFrequencies.isEmpty) {
@@ -31,14 +30,15 @@ class MuscleFrequencyChart extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Legend
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
+            // Legend — Wrap so it reflows to 2 rows on narrow screens
+            // (iPhone SE ≤ 360 dp) instead of overflowing by 5.7 px.
+            Wrap(
+              alignment: WrapAlignment.center,
+              spacing: 10,
+              runSpacing: 6,
+              children: const [
                 _LegendItem(color: Colors.green, label: 'Optimal (1-3x/wk)'),
-                const SizedBox(width: 12),
                 _LegendItem(color: Colors.orange, label: 'Low (<1x/wk)'),
-                const SizedBox(width: 12),
                 _LegendItem(color: Colors.red, label: 'High (>4x/wk)'),
               ],
             ),
@@ -124,99 +124,98 @@ class _FrequencyBar extends StatelessWidget {
     final maxFreq = 5.0;
     final barWidth = (frequency / maxFreq).clamp(0.05, 1.0);
 
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isNarrow = screenWidth < 380;
+
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6),
       child: Row(
         children: [
-          // Muscle name - responsive width
-          Builder(
-            builder: (context) {
-              final screenWidth = MediaQuery.of(context).size.width;
-              final labelWidth = screenWidth < 380 ? 80.0 : 100.0;
-              return SizedBox(
-                width: labelWidth,
-                child: Text(
-                  muscleGroup,
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    fontWeight: FontWeight.w500,
-                    fontSize: screenWidth < 380 ? 12 : 14,
-                  ),
-                  overflow: TextOverflow.ellipsis,
-                ),
-              );
-            },
+          // Muscle name — shrinks with ellipsis instead of hard-fixed width
+          // so the trailing icon never gets clipped on narrow / text-scaled
+          // layouts.
+          Flexible(
+            flex: 2,
+            child: Text(
+              muscleGroup,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                fontWeight: FontWeight.w500,
+                fontSize: isNarrow ? 12 : 14,
+              ),
+              overflow: TextOverflow.ellipsis,
+              maxLines: 1,
+            ),
           ),
           const SizedBox(width: 8),
 
           // Bar
           Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            flex: 5,
+            child: Stack(
               children: [
-                Stack(
-                  children: [
-                    // Background
-                    Container(
-                      height: 20,
-                      decoration: BoxDecoration(
-                        color: theme.colorScheme.surfaceContainerHighest,
-                        borderRadius: BorderRadius.circular(4),
-                      ),
+                // Background
+                Container(
+                  height: 20,
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.surfaceContainerHighest,
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                ),
+                // Filled bar
+                FractionallySizedBox(
+                  widthFactor: barWidth,
+                  child: Container(
+                    height: 20,
+                    decoration: BoxDecoration(
+                      color: barColor,
+                      borderRadius: BorderRadius.circular(4),
                     ),
-                    // Filled bar
-                    FractionallySizedBox(
-                      widthFactor: barWidth,
-                      child: Container(
-                        height: 20,
-                        decoration: BoxDecoration(
-                          color: barColor,
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                        child: Center(
-                          child: frequency >= 0.5
-                              ? Text(
-                                  '${frequency.toStringAsFixed(1)}x',
-                                  style: theme.textTheme.labelSmall?.copyWith(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                )
-                              : null,
-                        ),
-                      ),
+                    child: Center(
+                      child: frequency >= 0.5
+                          ? Text(
+                              '${frequency.toStringAsFixed(1)}x',
+                              style: theme.textTheme.labelSmall?.copyWith(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                              maxLines: 1,
+                            )
+                          : null,
                     ),
-                  ],
+                  ),
                 ),
               ],
             ),
           ),
           const SizedBox(width: 8),
 
-          // Frequency value if bar too small
-          if (frequency < 0.5)
-            SizedBox(
-              width: 40,
-              child: Text(
-                '${frequency.toStringAsFixed(1)}x',
-                style: theme.textTheme.labelMedium?.copyWith(
-                  color: barColor,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-
-          // Status icon
+          // Trailing slot — single 32 dp cell that shows either the
+          // small-frequency label (when bar is too small to label inline)
+          // or the status icon. Never both, which was the source of the
+          // 5.7 px overflow.
           SizedBox(
-            width: 24,
-            child: Icon(
-              status == 'optimal'
-                  ? Icons.check_circle
-                  : status == 'undertrained'
-                      ? Icons.arrow_downward
-                      : Icons.arrow_upward,
-              size: 18,
-              color: barColor,
-            ),
+            width: 32,
+            child: frequency < 0.5
+                ? Text(
+                    '${frequency.toStringAsFixed(1)}x',
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      color: barColor,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 1,
+                    textAlign: TextAlign.center,
+                  )
+                : Icon(
+                    status == 'optimal'
+                        ? Icons.check_circle
+                        : status == 'undertrained'
+                            ? Icons.arrow_downward
+                            : Icons.arrow_upward,
+                    size: 18,
+                    color: barColor,
+                  ),
           ),
         ],
       ),

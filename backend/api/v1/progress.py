@@ -16,7 +16,8 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from core.auth import get_current_user
 from core.exceptions import safe_internal_error
 from typing import List, Optional, Dict, Any
-from datetime import datetime, date, timedelta
+from datetime import datetime, date, timedelta, timezone
+import json
 from pydantic import BaseModel, Field
 from enum import Enum
 
@@ -377,25 +378,66 @@ async def get_progress_summary(
         db = get_supabase_db()
         loop = asyncio.get_event_loop()
 
-        # Define each independent query as a callable for run_in_executor
-        def _fetch_summary():
-            return db.client.rpc(
-                "get_user_progress_summary",
-                {"p_user_id": user_id}
-            ).execute()
+        # All arithmetic is performed Python-side to avoid calling the
+        # broken `get_user_progress_summary` RPC (which internally raises
+        # `unit "week" not supported` via an INTERVAL 'N week' literal).
+        now_utc = datetime.now(timezone.utc)
+        four_weeks_ago_date = (now_utc - timedelta(days=28)).date().isoformat()
+        eight_weeks_ago = (now_utc - timedelta(days=56)).isoformat()
+        four_weeks_ago = (now_utc - timedelta(days=28)).isoformat()
+        thirty_days_ago = (now_utc - timedelta(days=30)).isoformat()
+
+        # ──────────────────────────────────────────────────────────────
+        # Independent fetchers (run in a thread pool so they can be
+        # gathered concurrently — supabase-py is synchronous).
+        # ──────────────────────────────────────────────────────────────
+        def _fetch_workout_counts():
+            # Completed workouts — for total_workouts + first/last dates.
+            return db.client.table("workouts") \
+                .select("scheduled_date, completed_at") \
+                .eq("user_id", user_id) \
+                .eq("is_completed", True) \
+                .execute()
+
+        def _fetch_recent_logs():
+            # Logs newer than 8 weeks ago — drive both total_volume_kg and
+            # the 4-weeks-vs-prior-4-weeks increase calc in one pull.
+            return db.client.table("workout_logs") \
+                .select("sets_json, completed_at") \
+                .eq("user_id", user_id) \
+                .eq("status", "completed") \
+                .gte("completed_at", eight_weeks_ago) \
+                .execute()
+
+        def _fetch_total_prs():
+            return db.client.table("personal_records") \
+                .select("id", count="exact") \
+                .eq("user_id", user_id) \
+                .execute()
+
+        def _fetch_completed_dates_28d():
+            # Used for avg_weekly_workouts + current_streak.
+            return db.client.table("workouts") \
+                .select("completed_at, scheduled_date") \
+                .eq("user_id", user_id) \
+                .eq("is_completed", True) \
+                .gte("scheduled_date", (now_utc - timedelta(days=60)).date().isoformat()) \
+                .execute()
 
         def _fetch_muscle_groups():
             return db.client.table("muscle_group_weekly_volume") \
                 .select("muscle_group, total_sets, total_volume_kg") \
                 .eq("user_id", user_id) \
-                .gte("week_start", (datetime.now() - timedelta(weeks=4)).date().isoformat()) \
+                .gte("week_start", four_weeks_ago_date) \
                 .execute()
 
         def _fetch_recent_prs():
+            # PROD schema: personal_records has weight_kg + reps, NOT
+            # record_value/record_unit. Select the real columns.
             return db.client.table("personal_records") \
-                .select("exercise_name, record_value, record_unit, achieved_at") \
+                .select("exercise_name, weight_kg, reps, achieved_at") \
                 .eq("user_id", user_id) \
-                .gte("achieved_at", (datetime.now() - timedelta(days=30)).isoformat()) \
+                .gte("achieved_at", thirty_days_ago) \
                 .order("achieved_at", desc=True) \
                 .limit(5) \
                 .execute()
@@ -408,17 +450,96 @@ async def get_progress_summary(
                 .limit(1) \
                 .execute()
 
-        # Run all 4 independent queries in parallel
-        summary_result, muscle_result, prs_result, best_week_result = await asyncio.gather(
-            loop.run_in_executor(_db_executor, _fetch_summary),
+        (
+            workouts_result,
+            logs_result,
+            prs_count_result,
+            dates_result,
+            muscle_result,
+            prs_result,
+            best_week_result,
+        ) = await asyncio.gather(
+            loop.run_in_executor(_db_executor, _fetch_workout_counts),
+            loop.run_in_executor(_db_executor, _fetch_recent_logs),
+            loop.run_in_executor(_db_executor, _fetch_total_prs),
+            loop.run_in_executor(_db_executor, _fetch_completed_dates_28d),
             loop.run_in_executor(_db_executor, _fetch_muscle_groups),
             loop.run_in_executor(_db_executor, _fetch_recent_prs),
             loop.run_in_executor(_db_executor, _fetch_best_week),
         )
 
-        summary_data = summary_result.data[0] if summary_result.data else {}
+        # ── total_workouts + first/last dates ───────────────────────
+        workout_rows = workouts_result.data or []
+        total_workouts = len(workout_rows)
+        scheduled_dates = [r["scheduled_date"] for r in workout_rows if r.get("scheduled_date")]
+        completed_ats = [r["completed_at"] for r in workout_rows if r.get("completed_at")]
+        first_workout_date = min(scheduled_dates) if scheduled_dates else None
+        last_workout_date = max(completed_ats) if completed_ats else None
 
-        # Aggregate muscle data
+        # ── volume totals + recent/prior 4-week buckets ─────────────
+        recent_vol_kg = 0.0   # last 28d
+        prior_vol_kg = 0.0    # 28–56d ago
+        total_vol_kg_8w = 0.0
+        for row in logs_result.data or []:
+            completed_at = row.get("completed_at")
+            vol = _volume_from_sets_json_kg(row.get("sets_json"))
+            total_vol_kg_8w += vol
+            if not completed_at:
+                continue
+            if completed_at >= four_weeks_ago:
+                recent_vol_kg += vol
+            else:
+                prior_vol_kg += vol
+
+        if prior_vol_kg > 0:
+            volume_increase_percent = ((recent_vol_kg - prior_vol_kg) / prior_vol_kg) * 100
+        else:
+            volume_increase_percent = 100.0 if recent_vol_kg > 0 else 0.0
+
+        # total_volume_kg: sum across the 8-week sample we pulled.
+        total_volume_kg = total_vol_kg_8w
+
+        # ── total PRs ────────────────────────────────────────────────
+        total_prs = getattr(prs_count_result, "count", None)
+        if total_prs is None:
+            total_prs = len(prs_count_result.data or [])
+
+        # ── avg_weekly_workouts + current_streak ────────────────────
+        date_rows = dates_result.data or []
+        # Unique completed dates in the user's last 28 days window
+        distinct_dates = set()
+        all_distinct_dates = set()
+        cutoff_28d = (now_utc - timedelta(days=28)).date()
+        for r in date_rows:
+            dt_str = r.get("completed_at") or r.get("scheduled_date")
+            if not dt_str:
+                continue
+            try:
+                d_obj = datetime.fromisoformat(dt_str.replace("Z", "+00:00")).date()
+            except Exception:
+                continue
+            all_distinct_dates.add(d_obj)
+            if d_obj >= cutoff_28d:
+                distinct_dates.add(d_obj)
+
+        avg_weekly_workouts = round(len(distinct_dates) / 4.0, 2)
+
+        # Current streak — count consecutive days back from today, allowing
+        # 1-day rest gaps (so Mon–Wed–Fri still counts as a 3-day streak).
+        today = now_utc.date()
+        sorted_dates_desc = sorted(all_distinct_dates, reverse=True)
+        current_streak = 0
+        if sorted_dates_desc and (today - sorted_dates_desc[0]).days <= 1:
+            current_streak = 1
+            prev = sorted_dates_desc[0]
+            for d_obj in sorted_dates_desc[1:]:
+                if (prev - d_obj).days <= 2:  # allow 1 rest day between
+                    current_streak += 1
+                    prev = d_obj
+                else:
+                    break
+
+        # ── muscle_group_breakdown ──────────────────────────────────
         muscle_breakdown = {}
         for row in muscle_result.data or []:
             mg = row["muscle_group"]
@@ -427,16 +548,18 @@ async def get_progress_summary(
             muscle_breakdown[mg]["total_sets"] += row.get("total_sets", 0)
             muscle_breakdown[mg]["total_volume_kg"] += float(row.get("total_volume_kg", 0))
 
+        # ── recent_prs — map weight_kg/reps onto the old contract ───
         recent_prs = [
             {
                 "exercise_name": pr["exercise_name"],
-                "record_value": pr["record_value"],
-                "record_unit": pr.get("record_unit", "kg"),
-                "achieved_at": pr["achieved_at"]
+                "weight_kg": float(pr.get("weight_kg") or 0),
+                "reps": int(pr.get("reps") or 0),
+                "achieved_at": pr["achieved_at"],
             }
             for pr in prs_result.data or []
         ]
 
+        # ── best_week ───────────────────────────────────────────────
         best_week = None
         if best_week_result.data:
             bw = best_week_result.data[0]
@@ -449,14 +572,14 @@ async def get_progress_summary(
 
         return ProgressSummaryResponse(
             user_id=user_id,
-            total_workouts=summary_data.get("total_workouts", 0),
-            total_volume_kg=float(summary_data.get("total_volume_kg", 0)),
-            total_prs=summary_data.get("total_prs", 0),
-            first_workout_date=summary_data.get("first_workout_date"),
-            last_workout_date=summary_data.get("last_workout_date"),
-            volume_increase_percent=float(summary_data.get("volume_increase_percent", 0)),
-            avg_weekly_workouts=float(summary_data.get("avg_weekly_workouts", 0)),
-            current_streak=summary_data.get("current_streak", 0),
+            total_workouts=total_workouts,
+            total_volume_kg=round(total_volume_kg, 2),
+            total_prs=int(total_prs or 0),
+            first_workout_date=first_workout_date,
+            last_workout_date=last_workout_date,
+            volume_increase_percent=round(volume_increase_percent, 2),
+            avg_weekly_workouts=avg_weekly_workouts,
+            current_streak=current_streak,
             muscle_group_breakdown=list(muscle_breakdown.values()),
             recent_prs=recent_prs,
             best_week=best_week
@@ -534,6 +657,85 @@ async def get_available_muscle_groups(user_id: str,
 # ============================================
 # Helper Functions
 # ============================================
+
+
+def _coerce_jsonb(raw: Any) -> Any:
+    """sets_json is jsonb but sometimes comes back as a string."""
+    if raw is None:
+        return None
+    if isinstance(raw, (list, dict)):
+        return raw
+    if isinstance(raw, str):
+        try:
+            return json.loads(raw)
+        except Exception:
+            return None
+    return None
+
+
+def _weight_kg_from_item(item: dict) -> float:
+    """Pull weight in kg from a set/exercise row. Accepts
+    weight_kg directly, else converts lbs fields."""
+    w = item.get("weight_kg")
+    if isinstance(w, (int, float)) and w > 0:
+        return float(w)
+    lb = item.get("weight_lbs")
+    if lb is None:
+        lb = item.get("weight_lb")
+    if isinstance(lb, (int, float)) and lb > 0:
+        return float(lb) / 2.20462
+    return 0.0
+
+
+def _volume_from_sets_json_kg(raw: Any) -> float:
+    """Mirror of personal_bests._volume_from_sets_json but outputs kg.
+
+    Handles the three production shapes for workout_logs.sets_json:
+      A) per-set rows (post-completion logging)
+      B) exercise summaries where `sets` is an integer set-count
+      C) nested-list under an exercise dict
+    """
+    payload = _coerce_jsonb(raw)
+    if payload is None:
+        return 0.0
+
+    total_kg = 0.0
+
+    def _add_row(item: dict) -> None:
+        nonlocal total_kg
+        w_kg = _weight_kg_from_item(item)
+        reps = item.get("reps")
+        if not (isinstance(reps, (int, float)) and reps > 0):
+            return
+        if w_kg <= 0:
+            return
+        sets_val = item.get("sets")
+        set_count = 1
+        if isinstance(sets_val, (int, float)) and sets_val > 0:
+            set_count = int(sets_val)
+        total_kg += w_kg * float(reps) * float(set_count)
+
+    if isinstance(payload, list):
+        for el in payload:
+            if not isinstance(el, dict):
+                continue
+            sets_field = el.get("sets")
+            if isinstance(sets_field, list):
+                for s in sets_field:
+                    if isinstance(s, dict):
+                        _add_row({**s, "sets": 1})
+                continue
+            if "reps" in el and (
+                "weight_kg" in el or "weight_lbs" in el or "weight_lb" in el
+            ):
+                _add_row(el)
+    elif isinstance(payload, dict):
+        arr = payload.get("exercises") or payload.get("sets")
+        if isinstance(arr, list):
+            return _volume_from_sets_json_kg(arr)
+
+    return total_kg
+
 
 def _get_cutoff_date(time_range: TimeRange) -> Optional[date]:
     """Get the cutoff date based on time range."""

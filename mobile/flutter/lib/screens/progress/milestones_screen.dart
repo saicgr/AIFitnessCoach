@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:share_plus/share_plus.dart';
+import 'package:intl/intl.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/providers/user_provider.dart';
+import '../../core/theme/accent_color_provider.dart';
 import '../../widgets/app_loading.dart';
 import '../../widgets/pill_app_bar.dart';
 import '../../data/models/milestone.dart';
@@ -11,6 +13,7 @@ import '../../data/services/haptic_service.dart';
 import '../../widgets/glass_sheet.dart';
 import '../../widgets/segmented_tab_bar.dart';
 import '../../core/services/posthog_service.dart';
+import '../reports/widgets/report_share_sheet.dart';
 import 'widgets/milestone_celebration_dialog.dart';
 
 part 'milestones_screen_ui.dart';
@@ -138,12 +141,55 @@ class _MilestonesScreenState extends ConsumerState<MilestonesScreen>
               'platform': platform,
             },
           );
-          final shareText = milestone.milestone?.shareMessage ??
-              'I just achieved ${milestone.milestone?.name} in FitWiz!';
-          await Share.share(shareText);
+          if (!mounted) return;
+          await _openMilestoneShareSheet(milestone);
         },
       ),
     );
+  }
+
+  /// Opens the unified ReportShareSheet for a single achieved milestone.
+  /// Hero number is the milestone's point value; highlight row shows the
+  /// tier + the total points earned across the journey for social proof.
+  Future<void> _openMilestoneShareSheet(UserMilestone milestone) async {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final accent = AccentColorScope.of(context).getColor(isDark);
+    final user = ref.read(currentUserProvider).asData?.value;
+    final state = ref.read(milestonesProvider);
+    final def = milestone.milestone;
+    final tier = def?.tier;
+    final periodLabel =
+        DateFormat('MMM yyyy').format(DateTime.now()).toUpperCase();
+
+    final highlights = <ReportHighlight>[];
+    if (tier != null) {
+      highlights.add(
+        ReportHighlight(label: 'TIER', value: tier.displayName.toUpperCase()),
+      );
+    }
+    highlights.add(
+      ReportHighlight(label: 'POINTS', value: '${def?.points ?? 0}'),
+    );
+    highlights.add(
+      ReportHighlight(label: 'TOTAL', value: '${state.totalPoints}'),
+    );
+
+    final data = ReportShareData(
+      reportType: ReportType.milestones,
+      title: def?.name ?? 'Milestone',
+      periodLabel: periodLabel,
+      primaryStats: {
+        'hero_value': '${def?.points ?? 0}',
+        'hero_unit': 'points',
+        if (tier != null) 'tier': tier.displayName,
+      },
+      highlights: highlights,
+      userDisplayName: user?.displayName,
+      accentColor: accent,
+      deepLinkUrl: null,
+    );
+    if (!mounted) return;
+    await ReportShareSheet.show(context, data: data);
   }
 
   List<MilestoneProgress> _filterByCategory(List<MilestoneProgress> milestones) {

@@ -92,6 +92,73 @@ async def get_user_milestones(user_id: str,
         verify_user_ownership(current_user, user_id)
         progress = await milestone_service.get_milestone_progress(user_id)
 
+        # ────────────────────────────────────────────────────────────
+        # Dedup seed rows: the DB has multiple milestone_definitions
+        # with the same (name, category, threshold), so the service
+        # returns duplicate MilestoneProgress cards ("First Workout"
+        # appears 3x). Collapse them here without touching the service.
+        # ────────────────────────────────────────────────────────────
+        def _dedup(items):
+            seen_keys = set()
+            intermediate = []
+            for m in items or []:
+                mdef = m.milestone
+                key = (
+                    getattr(mdef, "name", None),
+                    getattr(mdef, "category", None),
+                    getattr(mdef, "threshold", None),
+                )
+                if key in seen_keys:
+                    continue
+                seen_keys.add(key)
+                intermediate.append(m)
+            # Second pass: collapse by name alone, keep the highest
+            # progress_percentage card (best candidate for "next").
+            by_name = {}
+            for m in intermediate:
+                name = getattr(m.milestone, "name", None) or id(m)
+                prior = by_name.get(name)
+                if prior is None or (
+                    (m.progress_percentage or 0) > (prior.progress_percentage or 0)
+                ):
+                    by_name[name] = m
+            return list(by_name.values())
+
+        progress.upcoming = sorted(
+            _dedup(progress.upcoming),
+            key=lambda x: x.progress_percentage or 0,
+            reverse=True,
+        )
+
+        # Dedup achieved by name, keeping the most recent achieved_at.
+        by_name_ach = {}
+        for m in progress.achieved or []:
+            name = getattr(m.milestone, "name", None) or id(m)
+            prior = by_name_ach.get(name)
+            if prior is None or (
+                (m.achieved_at or datetime.min) > (prior.achieved_at or datetime.min)
+            ):
+                by_name_ach[name] = m
+        progress.achieved = list(by_name_ach.values())
+
+        # Supplement total_achieved with user_achievements (trophies are
+        # stored in a separate table from user_milestones but the UI
+        # counter should reflect everything the user has earned).
+        try:
+            from core.db import get_supabase_db
+            ua_resp = get_supabase_db().client.table("user_achievements") \
+                .select("id", count="exact") \
+                .eq("user_id", user_id) \
+                .execute()
+            extra_count = getattr(ua_resp, "count", None)
+            if extra_count is None:
+                extra_count = len(ua_resp.data or [])
+        except Exception as ua_err:
+            logger.warning(f"Could not fetch user_achievements count: {ua_err}")
+            extra_count = 0
+
+        progress.total_achieved = len(progress.achieved) + int(extra_count or 0)
+
         # Log milestone view
         await log_user_activity(
             user_id=user_id,

@@ -50,8 +50,13 @@ class ChallengesStrip extends ConsumerWidget {
       ),
     ];
 
+    // Adaptive height — scales with user text size so the JOIN button
+    // can't overflow when iOS/Android Dynamic Type is cranked up.
+    final textScale = MediaQuery.textScalerOf(context).scale(1.0);
+    final height = (180 * textScale).clamp(180.0, 240.0);
+
     return SizedBox(
-      height: 170,
+      height: height,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -119,7 +124,6 @@ class _ChallengeCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Emoji badge
           Text(
             data.emoji,
             style: TextStyle(
@@ -134,27 +138,37 @@ class _ChallengeCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 4),
-          Text(
-            data.title,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 13,
-              fontWeight: FontWeight.w800,
-              height: 1.2,
+          Flexible(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  data.title,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w800,
+                    height: 1.2,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  data.endsLabel,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.85),
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
             ),
           ),
-          const SizedBox(height: 2),
-          Text(
-            data.endsLabel,
-            style: TextStyle(
-              color: Colors.white.withValues(alpha: 0.85),
-              fontSize: 11,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          const Spacer(),
+          const SizedBox(height: 8),
           SizedBox(
             width: double.infinity,
             child: Material(
@@ -178,6 +192,8 @@ class _ChallengeCard extends StatelessWidget {
                   ),
                   child: const Text(
                     'JOIN',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: 12,

@@ -38,6 +38,9 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen> {
   String? _weightDirection;
   double? _weightChangeAmount;
   String? _weightChangeRate;
+  // Captured for the Reppora alpha launch warm-lead segment.
+  // Persists to users.is_trainer (migration 100).
+  bool _isTrainer = false;
 
   @override
   void initState() {
@@ -59,6 +62,7 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen> {
       _weightDirection = quizData.weightDirection;
       _weightChangeAmount = quizData.weightChangeAmount;
       _weightChangeRate = quizData.weightChangeRate;
+      _isTrainer = quizData.isTrainer ?? false;
     });
   }
 
@@ -204,6 +208,7 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen> {
             weightChangeAmount: _weightChangeAmount,
             weightChangeRate: _weightChangeRate,
           );
+      await ref.read(preAuthQuizProvider.notifier).setIsTrainer(_isTrainer);
 
       // Save to backend - this updates the user's profile
       final apiClient = ref.read(apiClientProvider);
@@ -219,6 +224,7 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen> {
             'height_cm': _heightCm,
             'weight_kg': _weightKg,
             'target_weight_kg': _goalWeightKg ?? _weightKg,
+            'is_trainer': _isTrainer,
           },
         );
         debugPrint('✅ [PersonalInfo] Saved personal info to backend');
@@ -354,6 +360,7 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen> {
                           compact: isFoldable,
                         ),
                       ),
+                      _buildTrainerToggle(isDark, textPrimary, textSecondary),
                     ],
                   ),
                 ),
@@ -495,6 +502,70 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen> {
           ),
         ),
       ],
+    );
+  }
+
+  /// Trainer self-identification toggle.
+  /// Captured silently — no Reppora pitch shown — just sets users.is_trainer
+  /// for the future Reppora alpha launch warm-lead segment.
+  Widget _buildTrainerToggle(bool isDark, Color textPrimary, Color textSecondary) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(24, 8, 24, 0),
+      child: InkWell(
+        onTap: () {
+          HapticFeedback.selectionClick();
+          setState(() => _isTrainer = !_isTrainer);
+        },
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          decoration: BoxDecoration(
+            color: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.04),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: _isTrainer
+                  ? const Color(0xFFF97316)
+                  : (isDark ? Colors.white : Colors.black).withValues(alpha: 0.08),
+              width: _isTrainer ? 1.5 : 1,
+            ),
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'I train others',
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                        color: textPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      'Personal trainer, coach, or training others',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Switch.adaptive(
+                value: _isTrainer,
+                onChanged: (v) {
+                  HapticFeedback.selectionClick();
+                  setState(() => _isTrainer = v);
+                },
+                activeColor: const Color(0xFFF97316),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 

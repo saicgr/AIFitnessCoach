@@ -15,11 +15,13 @@ from core.auth import get_current_user, verify_user_ownership
 from core.exceptions import safe_internal_error
 from core.timezone_utils import user_today_date
 from typing import List, Optional, Dict, Any
-from datetime import datetime, date, timedelta
+from datetime import datetime, date, timedelta, timezone
 from pydantic import BaseModel, Field
 from enum import Enum
+import json
 
 from core.logger import get_logger
+from services.strength_calculator_service import StrengthCalculatorService
 
 router = APIRouter(prefix="/muscle-analytics", tags=["Muscle Analytics"])
 logger = get_logger(__name__)
@@ -292,33 +294,146 @@ async def get_muscle_heatmap_data(
         except Exception as rpc_error:
             logger.warning(f"RPC failed, using fallback query: {rpc_error}", exc_info=True)
 
-        # Fallback: Query muscle_training_frequency view
-        query = db.client.from_("muscle_training_frequency") \
-            .select("*") \
-            .eq("user_id", user_id)
+        # Fallback: aggregate from workout_logs.sets_json (the real
+        # source of truth — the `muscle_training_frequency` view
+        # depends on `workout_sets`, which returns empty in prod).
+        now_utc = datetime.now(timezone.utc)
+        cutoff_dt = now_utc - timedelta(days=days_back)
 
-        result = query.execute()
-        data = result.data or []
+        logs_result = db.client.table("workout_logs").select(
+            "id, sets_json, completed_at"
+        ).eq(
+            "user_id", user_id
+        ).eq(
+            "status", "completed"
+        ).gte(
+            "completed_at", cutoff_dt.isoformat()
+        ).execute()
 
-        # Calculate max volume for normalization
-        volumes = [float(r.get("total_volume_last_30_days_kg", 0) or 0) for r in data]
-        max_volume = max(volumes) if volumes else 1
+        log_rows = logs_result.data or []
 
-        muscles = []
-        for row in data:
-            volume = float(row.get("total_volume_last_30_days_kg", 0) or 0)
-            intensity = volume / max_volume if max_volume > 0 else 0
+        # Aggregate per primary-muscle-group: sets, volume_kg, unique
+        # workout ids, last_trained. Uses the strength calculator's
+        # authoritative muscle map so heatmap + strength stay aligned.
+        strength_service = StrengthCalculatorService()
+        agg: Dict[str, Dict[str, Any]] = {}
+
+        def _coerce(raw):
+            if raw is None:
+                return None
+            if isinstance(raw, (list, dict)):
+                return raw
+            if isinstance(raw, str):
+                try:
+                    return json.loads(raw)
+                except Exception:
+                    return None
+            return None
+
+        def _w_kg(item: dict) -> float:
+            w = item.get("weight_kg")
+            if isinstance(w, (int, float)) and w > 0:
+                return float(w)
+            lb = item.get("weight_lbs") or item.get("weight_lb")
+            if isinstance(lb, (int, float)) and lb > 0:
+                return float(lb) / 2.20462
+            return 0.0
+
+        for row in log_rows:
+            log_id = row.get("id")
+            completed_at = row.get("completed_at")
+            payload = _coerce(row.get("sets_json"))
+            if isinstance(payload, dict):
+                payload = payload.get("exercises") or []
+            if not isinstance(payload, list):
+                continue
+
+            for ex in payload:
+                if not isinstance(ex, dict):
+                    continue
+                name = ex.get("name") or ex.get("exercise_name") or ""
+                if not name:
+                    continue
+                muscle_groups = strength_service.get_exercise_muscle_groups(name)
+                if not muscle_groups:
+                    continue
+                primary = muscle_groups[0]
+
+                # Figure out volume + set count for this exercise.
+                sets_field = ex.get("sets")
+                set_count = 0
+                volume_kg = 0.0
+                if isinstance(sets_field, list):
+                    set_count = len(sets_field)
+                    for s in sets_field:
+                        if not isinstance(s, dict):
+                            continue
+                        w = _w_kg(s)
+                        r = s.get("reps") or s.get("reps_completed") or 0
+                        if isinstance(r, (int, float)) and r > 0 and w > 0:
+                            volume_kg += w * float(r)
+                elif isinstance(sets_field, (int, float)) and sets_field > 0:
+                    set_count = int(sets_field)
+                    w = _w_kg(ex)
+                    r = ex.get("reps") or 0
+                    if isinstance(r, (int, float)) and r > 0 and w > 0:
+                        volume_kg += w * float(r) * float(set_count)
+                else:
+                    # Per-set row (shape A) with no `sets` field.
+                    set_count = 1
+                    w = _w_kg(ex)
+                    r = ex.get("reps") or ex.get("reps_completed") or 0
+                    if isinstance(r, (int, float)) and r > 0 and w > 0:
+                        volume_kg += w * float(r)
+
+                if set_count <= 0 and volume_kg <= 0:
+                    continue
+
+                bucket = agg.setdefault(primary, {
+                    "sets_count": 0,
+                    "volume_kg": 0.0,
+                    "workout_ids": set(),
+                    "last_trained": None,
+                })
+                bucket["sets_count"] += set_count
+                bucket["volume_kg"] += volume_kg
+                if log_id is not None:
+                    bucket["workout_ids"].add(log_id)
+                if completed_at and (
+                    bucket["last_trained"] is None
+                    or completed_at > bucket["last_trained"]
+                ):
+                    bucket["last_trained"] = completed_at
+
+        max_volume = max((b["volume_kg"] for b in agg.values()), default=0.0)
+        if max_volume <= 0:
+            max_volume = 1.0  # avoid div-by-zero; intensities stay 0
+
+        muscles: List[MuscleHeatmapItem] = []
+        for mg, stats in agg.items():
+            intensity = stats["volume_kg"] / max_volume if max_volume > 0 else 0
             color, hex_color = get_intensity_color(intensity)
+            days_since = None
+            if stats["last_trained"]:
+                try:
+                    last_dt = datetime.fromisoformat(
+                        str(stats["last_trained"]).replace("Z", "+00:00")
+                    )
+                    if last_dt.tzinfo is None:
+                        last_dt = last_dt.replace(tzinfo=timezone.utc)
+                    days_since = (now_utc - last_dt).days
+                except Exception:
+                    days_since = None
 
             muscles.append(MuscleHeatmapItem(
-                muscle_group=row.get("muscle_group", ""),
-                intensity=intensity,
+                muscle_group=mg,
+                intensity=round(intensity, 4),
                 intensity_score=int(intensity * 100),
-                sets_count=row.get("workout_count_last_30_days", 0),
-                volume_kg=round(volume, 2),
-                workout_count=row.get("workout_count_last_30_days", 0),
-                last_trained=row.get("last_workout_date"),
-                days_since_training=row.get("days_since_last_training"),
+                sets_count=stats["sets_count"],
+                volume_kg=round(stats["volume_kg"], 2),
+                workout_count=len(stats["workout_ids"]),
+                last_trained=stats["last_trained"],
+                days_since_training=days_since,
                 color=color,
                 hex_color=hex_color,
             ))
@@ -336,7 +451,7 @@ async def get_muscle_heatmap_data(
             least_trained=least_trained,
             total_sets=sum(m.sets_count for m in muscles),
             total_volume_kg=round(sum(m.volume_kg for m in muscles), 2),
-            max_volume_kg=round(max_volume, 2),
+            max_volume_kg=round(max_volume if max_volume > 1 else 0.0, 2),
         )
 
     except Exception as e:

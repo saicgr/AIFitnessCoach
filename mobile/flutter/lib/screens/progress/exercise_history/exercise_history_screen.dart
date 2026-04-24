@@ -9,8 +9,10 @@ import '../../../data/providers/exercise_history_provider.dart';
 import '../../../data/providers/scores_provider.dart';
 import '../../../data/repositories/exercise_history_repository.dart';
 import '../../../data/services/api_client.dart';
-import '../../../utils/share_report_helper.dart';
+import '../../../core/providers/user_provider.dart';
+import '../../../core/theme/accent_color_provider.dart';
 import '../../../widgets/pill_app_bar.dart';
+import '../../reports/widgets/report_share_sheet.dart';
 
 /// Main screen showing list of most performed exercises and personal records
 /// Two-tab layout: "Exercises" tab and "PRs" tab
@@ -64,12 +66,7 @@ class _ExerciseHistoryScreenState extends ConsumerState<ExerciseHistoryScreen>
         actions: [
           PillAppBarAction(
             icon: Icons.ios_share_rounded,
-            onTap: () => shareReportScreen(
-              context: context,
-              repaintKey: _reportKey,
-              caption: 'My FitWiz exercise history',
-              subject: 'My Exercise Report',
-            ),
+            onTap: _openShareSheet,
           ),
         ],
       ),
@@ -100,6 +97,41 @@ class _ExerciseHistoryScreenState extends ConsumerState<ExerciseHistoryScreen>
         ),
       ),
     );
+  }
+
+  /// Opens the unified ReportShareSheet for exercise history. Hero number is
+  /// the total number of distinct exercises; highlights are the top 5 most-
+  /// performed (by session count) so recipients see real data points.
+  Future<void> _openShareSheet() async {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final accent = AccentColorScope.of(context).getColor(isDark);
+    final user = ref.read(currentUserProvider).asData?.value;
+    final async = ref.read(mostPerformedExercisesProvider);
+    final list = async.asData?.value ?? const <MostPerformedExercise>[];
+    // Top 5 most-performed by times_performed → highlights.
+    final topFive = list.take(5).map((e) {
+      return ReportHighlight(
+        label: e.exerciseName,
+        value: '${e.timesPerformed}×',
+      );
+    }).toList();
+    final periodLabel =
+        DateFormat('MMM yyyy').format(DateTime.now()).toUpperCase();
+    final data = ReportShareData(
+      reportType: ReportType.exerciseHistory,
+      title: 'Exercise History',
+      periodLabel: periodLabel,
+      primaryStats: {
+        'exercises_count': list.length,
+        if (list.isNotEmpty) 'top_exercise': list.first.exerciseName,
+      },
+      highlights: topFive,
+      userDisplayName: user?.displayName,
+      accentColor: accent,
+      deepLinkUrl: null,
+    );
+    if (!mounted) return;
+    await ReportShareSheet.show(context, data: data);
   }
 
   Widget _buildExercisesTab(ThemeData theme) {

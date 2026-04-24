@@ -196,6 +196,9 @@ class UserUpdate(BaseModel):
     workout_ui_mode: Optional[str] = Field(default=None, max_length=10)
     # TRUE once user manually toggled — prevents auto-defaulting from overriding.
     workout_ui_mode_user_explicit: Optional[bool] = None
+    # Captured at onboarding — TRUE if user identified as a personal trainer.
+    # Used as warm-lead segment for Reppora alpha launch invites.
+    is_trainer: Optional[bool] = None
 
 
 class User(BaseModel):
@@ -262,3 +265,6 @@ class User(BaseModel):
     # 'easy' | 'simple' | 'advanced'. NULL = derive from fitness_level.
     workout_ui_mode: Optional[str] = Field(default=None, max_length=10)
     workout_ui_mode_user_explicit: bool = False
+    # TRUE if user identified as a personal trainer at onboarding (migration 100).
+    # Warm-lead segment for Reppora alpha launch invites.
+    is_trainer: bool = False

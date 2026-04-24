@@ -8,11 +8,13 @@ import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../core/constants/app_colors.dart';
+import '../../core/providers/user_provider.dart';
 import '../../core/services/posthog_service.dart';
+import '../../core/theme/accent_color_provider.dart';
 import '../../data/services/haptic_service.dart';
-import '../../utils/share_report_helper.dart';
 import '../../widgets/pill_app_bar.dart';
 import 'report_thumbnail_provider.dart';
+import 'widgets/report_share_sheet.dart';
 
 /// Reports Hub — one catalog of every shareable report in the app.
 ///
@@ -43,7 +45,12 @@ class _ReportsHubScreenState extends ConsumerState<ReportsHubScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(posthogServiceProvider).capture(eventName: 'reports_hub_viewed');
+      if (!mounted) return;
+      try {
+        ref.read(posthogServiceProvider).capture(eventName: 'reports_hub_viewed');
+      } catch (e) {
+        debugPrint('[ReportsHubScreen] PostHog capture failed: $e');
+      }
     });
     _loadFavorites();
   }
@@ -225,6 +232,73 @@ class _ReportsHubScreenState extends ConsumerState<ReportsHubScreen> {
 
 enum _Section { training, body, lifestyle }
 
+/// Maps a hub route to the canonical [ReportType] the share sheet expects.
+/// Centralized here so both views (carousel + list) agree on the label/payload
+/// mapping without duplicating the switch.
+ReportType _reportTypeForRoute(String route) {
+  switch (route) {
+    case '/summaries':
+      return ReportType.periodInsights;
+    case '/stats/personal-records':
+      return ReportType.personalRecords;
+    case '/stats/muscle-analytics':
+      return ReportType.muscleAnalytics;
+    case '/settings/my-1rms':
+      return ReportType.oneRm;
+    case '/stats/exercise-history':
+      return ReportType.exerciseHistory;
+    case '/stats/milestones':
+      return ReportType.milestones;
+    case '/progress-charts':
+      return ReportType.progressCharts;
+    case '/measurements':
+      return ReportType.bodyMeasurements;
+    case '/nutrition':
+      return ReportType.nutrition;
+    case '/achievements':
+      return ReportType.achievements;
+    default:
+      return ReportType.periodInsights;
+  }
+}
+
+/// Build a [ReportShareData] payload from a hub row. The hub only knows the
+/// title, period, and the optional thumbnail line — no per-screen analytics.
+/// That's fine: the share templates fall back gracefully when highlights
+/// are empty (receipt + stat-grid show ShareLockOverlay; classic + wrapped
+/// render with "—" placeholders).
+ReportShareData _buildHubShareData({
+  required _ReportDef report,
+  required DateTime month,
+  required Color accentColor,
+  required String? userDisplayName,
+  ReportThumbnailData? thumb,
+}) {
+  final period = DateFormat('MMM yyyy').format(month).toUpperCase();
+  final stats = <String, dynamic>{};
+  final highlights = <ReportHighlight>[];
+  if (thumb != null) {
+    // The thumbnail primary string is the hub's headline stat; prefer it as
+    // the hero so capture + on-screen label stay visually aligned.
+    stats['hero_value'] = thumb.primary;
+    if (thumb.secondary != null) {
+      highlights.add(
+        ReportHighlight(label: 'DETAIL', value: thumb.secondary!),
+      );
+    }
+  }
+  return ReportShareData(
+    reportType: _reportTypeForRoute(report.route),
+    title: report.title,
+    periodLabel: period,
+    primaryStats: stats,
+    highlights: highlights,
+    accentColor: accentColor,
+    userDisplayName: userDisplayName,
+    deepLinkUrl: null,
+  );
+}
+
 /// Declarative record of one report in the hub. Consumed by both views.
 class _ReportDef {
   final _Section section;
@@ -303,22 +377,31 @@ class _CarouselViewState extends ConsumerState<_CarouselView> {
     setState(() => _monthOffset += delta);
   }
 
-  /// Render the visible report card to a PNG image and open the system
-  /// share sheet so recipients see a visual, not just plain text.
-  Future<void> _shareReport(_ReportDef report, DateTime month, int pageIndex) async {
-    final monthLabel = DateFormat('MMMM yyyy').format(month);
+  /// Opens the unified [ReportShareSheet] gallery with a payload derived from
+  /// the card's hub metadata + live thumbnail summary. No per-screen capture
+  /// anymore — the sheet renders its own templates from the report payload.
+  Future<void> _shareReport(_ReportDef report, DateTime month) async {
     ref.read(posthogServiceProvider).capture(
       eventName: 'reports_hub_share_tapped',
       properties: {'route': report.route, 'month_offset': _monthOffset},
     );
-    final key = _repaintKeys[pageIndex];
-    if (key == null) return;
-    await shareReportScreen(
-      context: context,
-      repaintKey: key,
-      caption: 'My FitWiz ${report.title} — $monthLabel',
-      subject: '${report.title} — $monthLabel',
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final accent =
+        AccentColorScope.of(context).getColor(isDark);
+    final thumbAsync = ref.read(reportThumbnailProvider(
+      ReportThumbnailKey(route: report.route, month: month),
+    ));
+    final displayName =
+        ref.read(currentUserProvider).asData?.value?.displayName;
+    final data = _buildHubShareData(
+      report: report,
+      month: month,
+      accentColor: accent,
+      userDisplayName: displayName,
+      thumb: thumbAsync.asData?.value,
     );
+    if (!mounted) return;
+    await ReportShareSheet.show(context, data: data);
   }
 
   @override
@@ -425,7 +508,7 @@ class _CarouselViewState extends ConsumerState<_CarouselView> {
                     HapticService.selection();
                     context.push(r.route);
                   },
-                  onShare: () => _shareReport(r, _currentMonth, index),
+                  onShare: () => _shareReport(r, _currentMonth),
                   onMaximize: () {
                     HapticService.selection();
                     context.push(r.route);
@@ -1096,7 +1179,7 @@ class _TallyIndicator extends StatelessWidget {
 // List view — grouped rows. Clean (no share pill).
 // ─────────────────────────────────────────────────────────────────────────
 
-class _ListView extends StatelessWidget {
+class _ListView extends ConsumerWidget {
   final List<_ReportDef> reports;
   final bool isDark;
   final Set<String> favorites;
@@ -1110,9 +1193,33 @@ class _ListView extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     List<_ReportDef> inSection(_Section s) =>
         reports.where((r) => r.section == s).toList();
+
+    // Shared share handler — every list row funnels through this so the
+    // payload construction stays identical to the carousel path.
+    Future<void> shareRow(_ReportDef r) async {
+      final month = DateTime(DateTime.now().year, DateTime.now().month, 1);
+      final accent = AccentColorScope.of(context).getColor(isDark);
+      final thumbAsync = ref.read(reportThumbnailProvider(
+        ReportThumbnailKey(route: r.route, month: month),
+      ));
+      final displayName =
+          ref.read(currentUserProvider).asData?.value?.displayName;
+      final data = _buildHubShareData(
+        report: r,
+        month: month,
+        accentColor: accent,
+        userDisplayName: displayName,
+        thumb: thumbAsync.asData?.value,
+      );
+      ref.read(posthogServiceProvider).capture(
+        eventName: 'reports_hub_list_share_tapped',
+        properties: {'route': r.route},
+      );
+      await ReportShareSheet.show(context, data: data);
+    }
 
     return ListView(
       padding: EdgeInsets.fromLTRB(
@@ -1127,6 +1234,7 @@ class _ListView extends StatelessWidget {
                 isDark: isDark,
                 isFavorited: favorites.contains(e.value.route),
                 onToggleFavorite: () => onToggleFavorite(e.value.route),
+                onShare: () => shareRow(e.value),
               )
                   .animate()
                   .fadeIn(delay: (50 + 30 * e.key).ms)
@@ -1141,6 +1249,7 @@ class _ListView extends StatelessWidget {
                 isDark: isDark,
                 isFavorited: favorites.contains(e.value.route),
                 onToggleFavorite: () => onToggleFavorite(e.value.route),
+                onShare: () => shareRow(e.value),
               )
                   .animate()
                   .fadeIn(delay: (150 + 30 * e.key).ms)
@@ -1155,6 +1264,7 @@ class _ListView extends StatelessWidget {
                 isDark: isDark,
                 isFavorited: favorites.contains(e.value.route),
                 onToggleFavorite: () => onToggleFavorite(e.value.route),
+                onShare: () => shareRow(e.value),
               )
                   .animate()
                   .fadeIn(delay: (220 + 30 * e.key).ms)
@@ -1194,12 +1304,14 @@ class _ListCard extends StatelessWidget {
   final bool isDark;
   final bool isFavorited;
   final VoidCallback onToggleFavorite;
+  final VoidCallback onShare;
 
   const _ListCard({
     required this.report,
     required this.isDark,
     required this.isFavorited,
     required this.onToggleFavorite,
+    required this.onShare,
   });
 
   @override
@@ -1270,6 +1382,24 @@ class _ListCard extends StatelessWidget {
                           ),
                         ),
                       ],
+                    ),
+                  ),
+                  // Per-row share affordance — user explicitly requested
+                  // every list row gets a share button that opens the
+                  // unified ReportShareSheet.
+                  IconButton(
+                    onPressed: () {
+                      HapticService.light();
+                      onShare();
+                    },
+                    padding: const EdgeInsets.all(6),
+                    constraints:
+                        const BoxConstraints(minWidth: 32, minHeight: 32),
+                    visualDensity: VisualDensity.compact,
+                    icon: Icon(
+                      Icons.ios_share_rounded,
+                      color: textMuted,
+                      size: 18,
                     ),
                   ),
                   // Compact heart — keeps the list clean while still letting

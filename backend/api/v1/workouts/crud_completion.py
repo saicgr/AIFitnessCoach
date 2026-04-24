@@ -500,6 +500,15 @@ async def complete_workout(
         background_tasks.add_task(_send_post_workout_nutrition_nudge, user_id=user_id, workout_name=workout_name)
         background_tasks.add_task(_send_streak_celebration_if_milestone, user_id=user_id)
 
+        # Background: Trophies + masteries recompute. Previously neither
+        # fired after complete_workout — users could finish 10 sessions
+        # and still see Lv.0 / "No badges". Helper swallows its own
+        # errors so it can never break the Save response.
+        from services.mastery_writes import check_all_trophies_and_masteries
+        background_tasks.add_task(
+            check_all_trophies_and_masteries, user_id
+        )
+
         if detected_prs:
             pr_count = len(detected_prs)
             message = f"Workout completed! You set {pr_count} new personal record{'s' if pr_count > 1 else ''}!"

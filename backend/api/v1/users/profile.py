@@ -480,6 +480,9 @@ async def update_user(user_id: str, user: UserUpdate,
         if user.in_vacation_mode is not None:
             update_data["in_vacation_mode"] = user.in_vacation_mode
             logger.info(f"Setting in_vacation_mode={user.in_vacation_mode} for user {user_id}")
+        if user.is_trainer is not None:
+            update_data["is_trainer"] = user.is_trainer
+            logger.info(f"Setting is_trainer={user.is_trainer} for user {user_id}")
 
         if user.vacation_start_date is not None:
             # Empty string → NULL (clear the date)

@@ -9,6 +9,7 @@ import '../../../widgets/fullscreen_image_viewer.dart';
 import '../../../widgets/glass_sheet.dart';
 import 'food_report_dialog.dart';
 import 'food_source_indicator.dart';
+import 'score_explain_sheet.dart';
 
 class LoggedMealsSection extends StatelessWidget {
   final List<FoodLog> meals;
@@ -725,10 +726,21 @@ class LoggedMealsSection extends StatelessWidget {
                     ),
                   ],
 
-                  // Meal-level Inflammation Score
+                  // Meal-level Inflammation Score. Wrapped in InkWell so the
+                  // entire card tap opens the ScoreExplainSheet — keeps the
+                  // info icon for familiarity but also makes the whole
+                  // coloured block a tap target (easier on small thumbs).
                   if (meal.inflammationScore != null) ...[
                     const SizedBox(height: 4),
-                    Container(
+                    InkWell(
+                      borderRadius: BorderRadius.circular(12),
+                      onTap: () => ScoreExplainSheet.show(
+                        context,
+                        kind: ScoreKind.inflammation,
+                        value: meal.inflammationScore,
+                        reason: meal.aiFeedback,
+                      ),
+                      child: Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
                         color: _inflammationColor(meal.inflammationScore!).withValues(alpha: 0.1),
@@ -793,32 +805,87 @@ class LoggedMealsSection extends StatelessWidget {
                         ],
                       ),
                     ),
+                    ),
                   ],
 
                   // Ultra-processed meal-level badge
                   if (meal.isUltraProcessed == true) ...[
                     const SizedBox(height: 4),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                      decoration: BoxDecoration(
-                        color: Colors.red.withValues(alpha: 0.08),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: Colors.red.withValues(alpha: 0.2)),
+                    InkWell(
+                      borderRadius: BorderRadius.circular(12),
+                      onTap: () => ScoreExplainSheet.show(
+                        context,
+                        kind: ScoreKind.ultraProcessed,
+                        value: true,
                       ),
-                      child: Row(
-                        children: [
-                          Icon(Icons.warning_amber_rounded, size: 18, color: Colors.red),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text('Contains ultra-processed items',
-                              style: TextStyle(fontSize: 12, color: Colors.red, fontWeight: FontWeight.w500)),
-                          ),
-                          GestureDetector(
-                            onTap: () => _showUltraProcessedInfo(context),
-                            child: Icon(Icons.info_outline, size: 16, color: Colors.red.withValues(alpha: 0.7)),
-                          ),
-                        ],
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: Colors.red.withValues(alpha: 0.08),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: Colors.red.withValues(alpha: 0.2)),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(Icons.warning_amber_rounded, size: 18, color: Colors.red),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text('Contains ultra-processed items',
+                                style: TextStyle(fontSize: 12, color: Colors.red, fontWeight: FontWeight.w500)),
+                            ),
+                            Icon(Icons.info_outline, size: 16, color: Colors.red.withValues(alpha: 0.7)),
+                          ],
+                        ),
                       ),
+                    ),
+                  ],
+
+                  // Diabetes (glycemic load) + FODMAP pills — new scores from
+                  // migration 1977. Rendered as tappable chips side-by-side
+                  // underneath the inflammation+ultra-processed blocks so
+                  // every score is one tap away from an explanation.
+                  if (meal.glycemicLoad != null || meal.fodmapRating != null) ...[
+                    const SizedBox(height: 4),
+                    Wrap(
+                      spacing: 6,
+                      runSpacing: 6,
+                      children: [
+                        if (meal.glycemicLoad != null)
+                          _GlFodmapChip(
+                            label: 'GL ${meal.glycemicLoad}',
+                            color: meal.glycemicLoad! >= 20
+                                ? AppColors.error
+                                : meal.glycemicLoad! >= 10
+                                    ? AppColors.orange
+                                    : AppColors.success,
+                            sublabel: meal.glycemicLoad! >= 20
+                                ? 'High'
+                                : meal.glycemicLoad! >= 10
+                                    ? 'Medium'
+                                    : 'Low',
+                            onTap: () => ScoreExplainSheet.show(
+                              context,
+                              kind: ScoreKind.glycemicLoad,
+                              value: meal.glycemicLoad,
+                            ),
+                          ),
+                        if (meal.fodmapRating != null)
+                          _GlFodmapChip(
+                            label: 'FODMAP',
+                            color: meal.fodmapRating == 'high'
+                                ? AppColors.error
+                                : meal.fodmapRating == 'medium'
+                                    ? AppColors.orange
+                                    : AppColors.success,
+                            sublabel: meal.fodmapRating!.toUpperCase(),
+                            onTap: () => ScoreExplainSheet.show(
+                              context,
+                              kind: ScoreKind.fodmap,
+                              value: meal.fodmapRating,
+                              reason: meal.fodmapReason,
+                            ),
+                          ),
+                      ],
                     ),
                   ],
 
@@ -4368,4 +4435,73 @@ class _FoodGroup extends StatelessWidget {
   }
 
   String _formatTime(DateTime t) => TimeFormatters.logTime(t);
+}
+
+/// Compact tappable chip used for GL / FODMAP badges beneath the
+/// inflammation block on each food-history meal card. Opens the
+/// shared [ScoreExplainSheet] so users can always learn what a pill
+/// means without leaving the screen.
+class _GlFodmapChip extends StatelessWidget {
+  final String label;
+  final String sublabel;
+  final Color color;
+  final VoidCallback onTap;
+
+  const _GlFodmapChip({
+    required this.label,
+    required this.sublabel,
+    required this.color,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(10),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+          decoration: BoxDecoration(
+            color: color.withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: color.withValues(alpha: 0.3)),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w800,
+                  color: color,
+                ),
+              ),
+              const SizedBox(width: 6),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Text(
+                  sublabel,
+                  style: TextStyle(
+                    fontSize: 9,
+                    fontWeight: FontWeight.w900,
+                    color: color,
+                    letterSpacing: 0.5,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 4),
+              Icon(Icons.info_outline, size: 12, color: color.withValues(alpha: 0.7)),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 }
