@@ -1,0 +1,15 @@
+{
+  "applinks": {
+    "details": [
+      {
+        "appIDs": ["REPLACE_WITH_TEAM_ID.com.fitwiz.app"],
+        "components": [
+          {
+            "/": "/invite/*",
+            "comment": "Referral invite links — captured by IncomingLinkService (Flutter) → PendingReferralService → applied automatically after sign-in."
+          }
+        ]
+      }
+    ]
+  }
+}

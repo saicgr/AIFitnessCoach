@@ -25,8 +25,10 @@ import '../../services/menu_recommendation_service.dart';
 import '../../widgets/glass_sheet.dart';
 import 'widgets/menu_analysis/macro_budget_ring.dart';
 import 'widgets/menu_analysis/menu_analysis_item_card.dart';
+import 'widgets/menu_analysis/diet_heuristics.dart';
 import 'widgets/menu_analysis/menu_filter_sheet.dart';
 import 'widgets/menu_analysis/menu_filter_state.dart';
+import 'widgets/menu_analysis/sort_options_sheet.dart';
 import 'widgets/menu_analysis/recommendation_explain_sheet.dart';
 
 /// Streaming controller retained from v1 so existing callers don't break.
@@ -278,8 +280,12 @@ class _MenuAnalysisSheetState extends ConsumerState<MenuAnalysisSheet> {
     return sorted;
   }
 
-  bool get _showFlatList =>
-      _filter.hasAnyFilter || _sort.length > 0;
+  /// Switch to a single flat "Results" list only when the user is narrowing
+  /// the menu via filters/search. Sort alone keeps the section layout —
+  /// sort is applied within each section, and the Recommended block stays
+  /// visible so the user doesn't lose their curated picks just because
+  /// they asked to re-rank by Protein.
+  bool get _showFlatList => _filter.hasAnyFilter;
 
   // ───────────────────────── totals ─────────────────────────
 
@@ -317,16 +323,6 @@ class _MenuAnalysisSheetState extends ConsumerState<MenuAnalysisSheet> {
       final idx = _items.indexWhere((i) => i.id == item.id);
       if (idx >= 0) _items[idx] = _items[idx].copyWith(portionMultiplier: multiplier);
     });
-  }
-
-  void _toggleSort(SortField field) {
-    HapticFeedback.selectionClick();
-    setState(() => _sort = _sort.tap(field));
-  }
-
-  Future<void> _longPressSort(SortField field) async {
-    HapticFeedback.mediumImpact();
-    setState(() => _sort = _sort.addTiebreaker(field));
   }
 
   Future<void> _openFilterSheet() async {
@@ -438,9 +434,10 @@ class _MenuAnalysisSheetState extends ConsumerState<MenuAnalysisSheet> {
   Widget build(BuildContext context) {
     final colors = ThemeColors.of(context);
     return GlassSheet(
-      // Fill the full screen so the Log pill at the bottom hugs the home
-      // indicator / bezel instead of floating with a 5% gap above it.
-      maxHeightFraction: 1.0,
+      // Match the food log sheet proportions — leaves room for the Dynamic
+      // Island / notch on top while keeping a tall working surface. The
+      // drag handle and glass blur are preserved at this height.
+      maxHeightFraction: 0.92,
       child: Column(
         children: [
           _header(colors),
@@ -678,82 +675,109 @@ class _MenuAnalysisSheetState extends ConsumerState<MenuAnalysisSheet> {
             ],
           ),
           const SizedBox(height: 6),
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(
-              children: [
-                Text('Sort:', style: TextStyle(fontSize: 11, color: colors.textMuted)),
-                const SizedBox(width: 6),
-                for (final field in SortField.values)
-                  Padding(
-                    padding: const EdgeInsets.only(right: 6),
-                    child: _sortPill(field, colors),
-                  ),
-              ],
-            ),
-          ),
+          // Single Sort button — opens SortOptionsSheet. Replaces the old
+          // cramped inline strip of 8+ sort pills that didn't scale when
+          // new health-signal sort dimensions landed.
+          _sortButton(colors),
         ],
       ),
     );
   }
 
-  Widget _sortPill(SortField field, ThemeColors colors) {
-    final index = _sort.indexOf(field);
-    final isActive = index >= 0;
-    final dir = _sort.directionOf(field);
-    return GestureDetector(
-      onTap: () => _toggleSort(field),
-      onLongPress: () => _longPressSort(field),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-        decoration: BoxDecoration(
-          color: isActive
-              ? AppColors.orange.withValues(alpha: 0.15)
-              : Colors.white.withValues(alpha: 0.05),
-          borderRadius: BorderRadius.circular(8),
-          border: isActive
-              ? Border.all(color: AppColors.orange.withValues(alpha: 0.4))
-              : null,
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (isActive && _sort.length > 1) ...[
-              Container(
-                width: 14, height: 14, alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  color: AppColors.orange,
-                  shape: BoxShape.circle,
-                ),
-                child: Text('${index + 1}', style: const TextStyle(
-                  fontSize: 9, fontWeight: FontWeight.w900, color: Colors.white,
-                )),
-              ),
-              const SizedBox(width: 4),
-            ],
-            Text(
-              field.label,
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: isActive ? FontWeight.w700 : FontWeight.w500,
-                color: isActive ? AppColors.orange : colors.textSecondary,
-              ),
+  /// Compact button that summarises the current sort (primary field +
+  /// direction + tiebreaker count) and opens the full sort sheet on tap.
+  Widget _sortButton(ThemeColors colors) {
+    final hasSort = !_sort.isEmpty;
+    final primary = hasSort ? _sort.specs.first : null;
+    final extraCount = hasSort ? _sort.specs.length - 1 : 0;
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: Material(
+        color: hasSort
+            ? AppColors.orange.withValues(alpha: 0.15)
+            : Colors.white.withValues(alpha: 0.05),
+        borderRadius: BorderRadius.circular(10),
+        child: InkWell(
+          onTap: _openSortSheet,
+          borderRadius: BorderRadius.circular(10),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(10),
+              border: hasSort
+                  ? Border.all(color: AppColors.orange.withValues(alpha: 0.4))
+                  : null,
             ),
-            if (isActive) ...[
-              const SizedBox(width: 2),
-              Icon(
-                dir == SortDirection.asc ? Icons.arrow_upward : Icons.arrow_downward,
-                size: 12, color: AppColors.orange,
-              ),
-            ],
-          ],
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.swap_vert,
+                    size: 16,
+                    color: hasSort ? AppColors.orange : colors.textSecondary),
+                const SizedBox(width: 6),
+                Text(
+                  hasSort ? 'Sort: ${primary!.field.label}' : 'Sort',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    color: hasSort ? AppColors.orange : colors.textSecondary,
+                  ),
+                ),
+                if (hasSort) ...[
+                  const SizedBox(width: 4),
+                  Icon(
+                    primary!.direction == SortDirection.asc
+                        ? Icons.arrow_upward
+                        : Icons.arrow_downward,
+                    size: 12,
+                    color: AppColors.orange,
+                  ),
+                ],
+                if (extraCount > 0) ...[
+                  const SizedBox(width: 6),
+                  Text(
+                    '+$extraCount more',
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.orange.withValues(alpha: 0.8),
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
         ),
       ),
     );
   }
 
+  Future<void> _openSortSheet() async {
+    HapticFeedback.lightImpact();
+    final result = await SortOptionsSheet.show(context, initial: _sort);
+    if (result != null) setState(() => _sort = result);
+  }
+
   Widget _activeFilterChips() {
     final chips = <_ActiveChip>[];
+    // Smart presets + diets first — those are the top-of-sheet selections
+    // the user picked, so showing them first matches where their attention is.
+    for (final id in _filter.smartPresets) {
+      final preset = SmartPresets.byId(id);
+      if (preset == null) continue;
+      chips.add(_ActiveChip('${preset.emoji} ${preset.label}', () => setState(() {
+        final next = {..._filter.smartPresets}..remove(id);
+        _filter = _filter.copyWith(smartPresets: next);
+      })));
+    }
+    for (final tag in _filter.diets) {
+      final label = DietHeuristics.labels[tag];
+      if (label == null) continue;
+      chips.add(_ActiveChip(label, () => setState(() {
+        final next = {..._filter.diets}..remove(tag);
+        _filter = _filter.copyWith(diets: next);
+      })));
+    }
     for (final r in _filter.healthRatings) {
       chips.add(_ActiveChip('Health: $r', () => setState(() {
         final next = {..._filter.healthRatings}..remove(r);
@@ -1031,68 +1055,60 @@ class _MenuAnalysisSheetState extends ConsumerState<MenuAnalysisSheet> {
   Widget _bottomBar(ThemeColors colors) {
     final totals = _selectedTotals;
     final hasSelection = _selected.isNotEmpty;
-    // Glass sheet already fills maxHeightFraction of the screen; we just
-    // need to respect the platform gesture-inset without doubling it. Use
-    // SafeArea with minimum:bottom=0 so on devices that don't have a home
-    // indicator (older Androids, web) we hug the screen edge; on modern
-    // iPhones the native bottom inset (~34pt) is respected.
-    return SafeArea(
-      top: false,
-      minimum: EdgeInsets.zero,
-      child: Container(
-        padding: const EdgeInsets.fromLTRB(16, 6, 16, 2),
-        decoration: BoxDecoration(
-          color: Colors.black.withValues(alpha: 0.35),
-          border: Border(top: BorderSide(color: Colors.white.withValues(alpha: 0.08))),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Macro-totals row is only meaningful once the user has picked
-            // at least one dish. Hiding it while empty removes ~30px of dead
-            // space that pushed the Log pill further from the bezel.
-            if (hasSelection) ...[
-              Row(
-                children: [
-                  Text(
-                    '${_selected.length} selected',
-                    style: TextStyle(
-                      fontSize: 12, fontWeight: FontWeight.w700,
-                      color: colors.textPrimary,
-                    ),
+    // GlassSheet already appends a bottom spacer equal to the home-indicator
+    // inset. Wrapping in SafeArea here would double that padding and push
+    // the Log pill ~34pt above the bezel. Render the bar flush — the parent
+    // sheet handles the gesture-area clearance.
+    return Container(
+      padding: const EdgeInsets.fromLTRB(16, 6, 16, 2),
+      decoration: BoxDecoration(
+        color: Colors.black.withValues(alpha: 0.35),
+        border: Border(top: BorderSide(color: Colors.white.withValues(alpha: 0.08))),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (hasSelection) ...[
+            Row(
+              children: [
+                Text(
+                  '${_selected.length} selected',
+                  style: TextStyle(
+                    fontSize: 12, fontWeight: FontWeight.w700,
+                    color: colors.textPrimary,
                   ),
-                  const Spacer(),
-                  Text(
-                    '${totals.cal.round()} cal  ${totals.protein.toStringAsFixed(0)}g P  '
-                    '${totals.carbs.toStringAsFixed(0)}g C  ${totals.fat.toStringAsFixed(0)}g F'
-                    '${totals.price != null ? '  ·  \$${totals.price!.toStringAsFixed(2)}' : ''}',
-                    style: TextStyle(
-                      fontSize: 11, fontWeight: FontWeight.w600,
-                      color: colors.textSecondary,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 6),
-            ],
-            SizedBox(
-              width: double.infinity,
-              child: FilledButton.icon(
-                icon: Icon(_logged ? Icons.check : Icons.add_circle_outline),
-                label: Text(_logged
-                    ? 'Logged'
-                    : hasSelection
-                        ? 'Log ${_selected.length} item${_selected.length == 1 ? '' : 's'}'
-                        : 'Select dishes to log'),
-                onPressed: (_selected.isEmpty || _logged) ? null : _handleLog,
-                style: FilledButton.styleFrom(
-                  backgroundColor: AppColors.orange,
-                  padding: const EdgeInsets.symmetric(vertical: 12),
                 ),
+                const Spacer(),
+                Text(
+                  '${totals.cal.round()} cal  ${totals.protein.toStringAsFixed(0)}g P  '
+                  '${totals.carbs.toStringAsFixed(0)}g C  ${totals.fat.toStringAsFixed(0)}g F'
+                  '${totals.price != null ? '  ·  \$${totals.price!.toStringAsFixed(2)}' : ''}',
+                  style: TextStyle(
+                    fontSize: 11, fontWeight: FontWeight.w600,
+                    color: colors.textSecondary,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 6),
+          ],
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton.icon(
+              icon: Icon(_logged ? Icons.check : Icons.add_circle_outline),
+              label: Text(_logged
+                  ? 'Logged'
+                  : hasSelection
+                      ? 'Log ${_selected.length} item${_selected.length == 1 ? '' : 's'}'
+                      : 'Select dishes to log'),
+              onPressed: (_selected.isEmpty || _logged) ? null : _handleLog,
+              style: FilledButton.styleFrom(
+                backgroundColor: AppColors.orange,
+                padding: const EdgeInsets.symmetric(vertical: 12),
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

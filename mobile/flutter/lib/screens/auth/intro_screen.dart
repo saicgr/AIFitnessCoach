@@ -93,6 +93,28 @@ class _IntroScreenState extends State<IntroScreen>
     }
   }
 
+  /// Tapping the header "Get Started" pill should skip the carousel
+  /// progression and drop the user straight onto the final welcome panel
+  /// ("Ready to transform your fitness?"), which already exists as
+  /// [_ExpandedWelcome]. That panel has the primary "Get Started" CTA
+  /// (→ /pre-auth-quiz) and the secondary "Already have an account? Sign In"
+  /// link, so the user lands with both paths visible in one tap instead of
+  /// bouncing through an extra sign-in screen.
+  void _jumpToWelcome() {
+    HapticFeedback.mediumImpact();
+    _autoRotateTimer?.cancel();
+    // Jump the PageView to the last page silently (hidden behind the
+    // expanding card) so when the user hits Back from the welcome panel,
+    // the carousel still feels coherent.
+    _pageController.jumpToPage(_lastIndex);
+    setState(() {
+      _currentPage = _lastIndex;
+      _pageOffset = _lastIndex.toDouble();
+      _isExpanded = true;
+    });
+    _expandController.forward();
+  }
+
   void _collapseAndGoBack() {
     _isCollapsing = true;
     // Jump to page 0 while still expanded (card covers screen, user can't see the jump)
@@ -339,32 +361,77 @@ class _IntroScreenState extends State<IntroScreen>
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
+                          // Both header pills share the exact same shape:
+                          // fixed 40pt height, 16pt horizontal padding,
+                          // 24pt radius, identical fill (white@0.15) and
+                          // border (white@0.25). Version sits inline after
+                          // "FitWiz" so the left pill stays single-line and
+                          // the same height as Continue.
                           GestureDetector(
                             onTap: _showSupportSheet,
                             child: Container(
+                              height: 40,
+                              alignment: Alignment.center,
                               decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(24), border: Border.all(color: Colors.white.withValues(alpha: 0.25))),
-                              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                              padding: const EdgeInsets.symmetric(horizontal: 16),
                               child: Row(mainAxisSize: MainAxisSize.min, children: [
-                                ClipOval(child: Image.asset('assets/images/app_icon.png', width: 24, height: 24, errorBuilder: (_, __, ___) => const Icon(Icons.fitness_center, color: Colors.white, size: 20))),
+                                ClipOval(child: Image.asset('assets/images/app_icon.png', width: 22, height: 22, errorBuilder: (_, __, ___) => const Icon(Icons.fitness_center, color: Colors.white, size: 18))),
                                 const SizedBox(width: 8),
-                                Column(
-                                  mainAxisSize: MainAxisSize.min,
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    const Text('FitWiz', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold, height: 1.2)),
-                                    if (_appVersion.isNotEmpty)
-                                      Text('v$_appVersion', style: TextStyle(color: Colors.white.withValues(alpha: 0.6), fontSize: 10, fontWeight: FontWeight.w500, height: 1.2)),
-                                  ],
+                                const Text(
+                                  'FitWiz',
+                                  style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w700, height: 1.0),
                                 ),
+                                if (_appVersion.isNotEmpty) ...[
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    'v$_appVersion',
+                                    style: TextStyle(
+                                      color: Colors.white.withValues(alpha: 0.6),
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w500,
+                                      height: 1.0,
+                                    ),
+                                  ),
+                                ],
                               ]),
                             ),
                           ),
+                          // Get Started expands the carousel straight to
+                          // the final welcome panel ("Ready to transform
+                          // your fitness?"), which itself routes to quiz
+                          // or sign-in. One tap lands on the decision
+                          // screen instead of bouncing through an extra
+                          // generic "Continue" page. Matches the FitWiz
+                          // pill's fill + border for visual balance.
                           GestureDetector(
-                            onTap: () => context.push('/sign-in?returning=true'),
+                            onTap: _jumpToWelcome,
                             child: Container(
-                              decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(24), border: Border.all(color: Colors.white.withValues(alpha: 0.25))),
-                              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-                              child: const Text('Sign In', style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w600)),
+                              height: 40,
+                              alignment: Alignment.center,
+                              decoration: BoxDecoration(
+                                color: Colors.white.withValues(alpha: 0.15),
+                                borderRadius: BorderRadius.circular(24),
+                                border: Border.all(color: Colors.white.withValues(alpha: 0.25)),
+                              ),
+                              padding: const EdgeInsets.symmetric(horizontal: 16),
+                              // "Continue →" rather than "Get Started"
+                              // because the very next screen's primary CTA
+                              // is literally labelled "Get Started" — the
+                              // header shouldn't duplicate that verb. An
+                              // arrow signals forward motion without
+                              // claiming an action name the destination
+                              // screen owns.
+                              child: const Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    'Continue',
+                                    style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w700, height: 1.0),
+                                  ),
+                                  SizedBox(width: 6),
+                                  Icon(Icons.arrow_forward_rounded, color: Colors.white, size: 16),
+                                ],
+                              ),
                             ),
                           ),
                         ],
@@ -375,9 +442,16 @@ class _IntroScreenState extends State<IntroScreen>
               ),
 
             // ── Text above carousel ──
+            // Header is: SafeArea top + 12pt vertical padding + 40pt pill
+            // + 12pt vertical padding = topPad + 64. Headline used to
+            // start at topPad + 56 which overlapped the pills on most
+            // phones (esp. small Dynamic-Island devices where topPad is
+            // larger). Bump to topPad + 76 so the first headline baseline
+            // sits a consistent ~12pt below the bottom of the pills on
+            // every carousel page.
             if (uiFade > 0)
               Positioned(
-                top: topPad + 56, left: 24, right: 24,
+                top: topPad + 76, left: 24, right: 24,
                 child: Opacity(
                   opacity: uiFade,
                   child: AnimatedSwitcher(

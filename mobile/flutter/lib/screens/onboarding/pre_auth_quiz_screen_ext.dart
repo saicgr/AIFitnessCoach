@@ -1,5 +1,22 @@
 part of 'pre_auth_quiz_screen.dart';
 
+/// Map a selected fitness level to a reasonable default training-experience
+/// bucket. IDs must match `_experienceOptions` in `quiz_fitness_level.dart`.
+/// Used to pre-fill the second question on the combined Level+Experience
+/// screen so the user sees a sensible default they can still change.
+String? _defaultExperienceForLevel(String level) {
+  switch (level) {
+    case 'beginner':
+      return 'less_than_6_months';
+    case 'intermediate':
+      return '6_months_to_2_years';
+    case 'advanced':
+      return '2_to_5_years';
+    default:
+      return null;
+  }
+}
+
 /// Methods extracted from _PreAuthQuizScreenState
 extension __PreAuthQuizScreenStateExt on _PreAuthQuizScreenState {
 
@@ -413,7 +430,13 @@ extension __PreAuthQuizScreenStateExt on _PreAuthQuizScreenState {
           selectedLevel: _selectedLevel,
           selectedExperience: _selectedTrainingExperience,
           selectedActivityLevel: _selectedActivityLevel,
-          onLevelChanged: (level) => setState(() => _selectedLevel = level),
+          onLevelChanged: (level) => setState(() {
+            _selectedLevel = level;
+            // Seed a reasonable experience bucket only if the user hasn't
+            // picked one yet — they can still override. Mapping:
+            //   beginner → <6mo, intermediate → 6mo-2yrs, advanced → 2-5yrs.
+            _selectedTrainingExperience ??= _defaultExperienceForLevel(level);
+          }),
           onExperienceChanged: (exp) => setState(() => _selectedTrainingExperience = exp),
           onActivityLevelChanged: (level) => setState(() => _selectedActivityLevel = level),
           showHeader: showHeader,

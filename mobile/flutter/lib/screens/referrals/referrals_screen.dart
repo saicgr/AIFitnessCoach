@@ -8,6 +8,7 @@ import '../../core/theme/accent_color_provider.dart';
 import '../../data/models/referral_summary.dart';
 import '../../data/providers/referral_provider.dart';
 import '../../data/services/haptic_service.dart';
+import '../../data/services/pending_referral_service.dart';
 import '../../widgets/glass_back_button.dart';
 
 class ReferralsScreen extends ConsumerWidget {
@@ -98,6 +99,14 @@ class ReferralsScreen extends ConsumerWidget {
                             textMuted: textMuted,
                           ),
                           const SizedBox(height: 16),
+                          _EnterCodeCard(
+                            accent: accent,
+                            elevated: elevated,
+                            border: border,
+                            textColor: textColor,
+                            textMuted: textMuted,
+                          ),
+                          const SizedBox(height: 16),
                           _NextTierCard(
                             summary: s,
                             accent: accent,
@@ -177,7 +186,7 @@ class _CodeCard extends StatelessWidget {
   void _share() {
     HapticService.light();
     final msg = "Join me on FitWiz — use my code ${summary.referralCode} for a welcome bonus. "
-        "Download: https://fitwiz.app/invite/${summary.referralCode}";
+        "Download: https://fitwiz.us/invite/${summary.referralCode}";
     Share.share(msg, subject: 'FitWiz invite');
   }
 
@@ -595,6 +604,213 @@ class _ErrorCard extends StatelessWidget {
             icon: const Icon(Icons.refresh),
             label: const Text('Retry'),
             style: TextButton.styleFrom(foregroundColor: accent),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Manual "have a code from someone" redemption row. Post-signup path —
+/// the pre-auth flow (deep link or onboarding chip) covers the happy
+/// case; this covers everyone who heard about a code AFTER signing up.
+///
+/// Backend rule: a user can only BE referred once. The apply endpoint
+/// returns `success=false` + a human message (e.g. "You've already used
+/// a referral code") on retry — we surface it verbatim.
+class _EnterCodeCard extends ConsumerStatefulWidget {
+  final Color accent, elevated, border, textColor, textMuted;
+  const _EnterCodeCard({
+    required this.accent,
+    required this.elevated,
+    required this.border,
+    required this.textColor,
+    required this.textMuted,
+  });
+
+  @override
+  ConsumerState<_EnterCodeCard> createState() => _EnterCodeCardState();
+}
+
+class _EnterCodeCardState extends ConsumerState<_EnterCodeCard> {
+  final _controller = TextEditingController();
+  bool _expanded = false;
+  bool _submitting = false;
+  String? _error;
+  String? _successMessage;
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  Future<void> _submit() async {
+    final normalized = PendingReferralService.normalize(_controller.text);
+    if (normalized == null) {
+      setState(() => _error = "Invalid code. Check letters and numbers.");
+      return;
+    }
+    setState(() {
+      _submitting = true;
+      _error = null;
+      _successMessage = null;
+    });
+    try {
+      final r = await ref.read(referralApplyProvider.notifier).apply(normalized);
+      if (!mounted) return;
+      if (r.success) {
+        HapticService.success();
+        setState(() {
+          _successMessage = r.message.isNotEmpty
+              ? r.message
+              : "Code applied! You'll both earn rewards once you complete your first workout.";
+          _controller.clear();
+        });
+        // Refresh the summary card so qualified_count updates.
+        ref.invalidate(referralSummaryProvider);
+      } else {
+        setState(() => _error = r.message.isNotEmpty
+            ? r.message
+            : "Couldn't apply that code. Try another or contact support.");
+      }
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _error = "Network error. Try again in a moment.");
+    } finally {
+      if (mounted) setState(() => _submitting = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: widget.elevated,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: widget.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: () {
+              HapticService.light();
+              setState(() => _expanded = !_expanded);
+            },
+            child: Row(
+              children: [
+                Icon(Icons.card_giftcard_rounded, color: widget.accent, size: 22),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Have a code from a friend?',
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.bold,
+                          color: widget.textColor,
+                        ),
+                      ),
+                      Text(
+                        _successMessage ?? 'Redeem it here — both of you get XP and a crate.',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: _successMessage != null
+                              ? AppColors.green
+                              : widget.textMuted,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Icon(
+                  _expanded ? Icons.expand_less : Icons.expand_more,
+                  color: widget.textMuted,
+                ),
+              ],
+            ),
+          ),
+          AnimatedSize(
+            duration: const Duration(milliseconds: 200),
+            curve: Curves.easeOut,
+            child: _expanded
+                ? Padding(
+                    padding: const EdgeInsets.only(top: 14),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        TextField(
+                          controller: _controller,
+                          enabled: !_submitting,
+                          textCapitalization: TextCapitalization.characters,
+                          textAlign: TextAlign.center,
+                          inputFormatters: [
+                            LengthLimitingTextInputFormatter(12),
+                            FilteringTextInputFormatter.allow(
+                              RegExp(r'[a-zA-Z0-9]'),
+                            ),
+                            TextInputFormatter.withFunction((old, newVal) =>
+                                newVal.copyWith(text: newVal.text.toUpperCase())),
+                          ],
+                          style: TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 4,
+                            color: widget.textColor,
+                            fontFamily: 'monospace',
+                          ),
+                          decoration: InputDecoration(
+                            hintText: 'ABC123',
+                            hintStyle: TextStyle(
+                              color: widget.textMuted.withValues(alpha: 0.4),
+                              letterSpacing: 4,
+                            ),
+                            errorText: _error,
+                            filled: true,
+                            fillColor: widget.elevated,
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: BorderSide(color: widget.border),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: BorderSide(color: widget.accent, width: 2),
+                            ),
+                          ),
+                          onChanged: (_) {
+                            if (_error != null) setState(() => _error = null);
+                          },
+                          onSubmitted: (_) => _submit(),
+                        ),
+                        const SizedBox(height: 12),
+                        ElevatedButton.icon(
+                          onPressed: _submitting ? null : _submit,
+                          icon: _submitting
+                              ? const SizedBox(
+                                  width: 16,
+                                  height: 16,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: Colors.white,
+                                  ),
+                                )
+                              : const Icon(Icons.check_rounded, size: 18),
+                          label: Text(_submitting ? 'Applying…' : 'Apply code'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: widget.accent,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                          ),
+                        ),
+                      ],
+                    ),
+                  )
+                : const SizedBox.shrink(),
           ),
         ],
       ),

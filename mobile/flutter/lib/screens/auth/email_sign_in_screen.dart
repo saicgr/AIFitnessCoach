@@ -8,6 +8,7 @@ import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../onboarding/widgets/onboarding_theme.dart';
+import 'widgets/pre_auth_referral_chip.dart';
 
 /// Glassmorphic email sign-in screen
 class EmailSignInScreen extends ConsumerStatefulWidget {
@@ -491,6 +492,13 @@ class _EmailSignInScreenState extends ConsumerState<EmailSignInScreen> {
                     ),
                   ],
                 ).animate().fadeIn(delay: 500.ms),
+
+                // Optional: user can enter a referral code; stored pre-auth
+                // and applied automatically after sign-up completes.
+                if (_isSignUp) ...[
+                  const SizedBox(height: 8),
+                  const PreAuthReferralChip(),
+                ],
 
                 const SizedBox(height: 24),
               ],

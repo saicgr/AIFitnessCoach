@@ -16,6 +16,7 @@ import About from './pages/About';
 import Contact from './pages/Contact';
 import Changelog from './pages/Changelog';
 import DeleteAccount from './pages/DeleteAccount';
+import Invite from './pages/Invite';
 import Onboarding from './pages/Onboarding';
 import OnboardingSelector from './pages/OnboardingSelector';
 import ConversationalOnboarding from './pages/ConversationalOnboarding';
@@ -91,6 +92,10 @@ function App() {
         <Route path="/contact" element={<Contact />} />
         <Route path="/changelog" element={<Changelog />} />
         <Route path="/delete-account" element={<DeleteAccount />} />
+        {/* Referral invite landing page. iOS/Android opens the app via
+            the `fitwiz://` scheme if installed (see Invite.tsx); desktop
+            or not-installed → show the code + store CTAs. */}
+        <Route path="/invite/:code" element={<Invite />} />
         {/* Legacy landing page */}
         <Route path="/app" element={<Landing />} />
         {/* Protected home (dashboard) */}

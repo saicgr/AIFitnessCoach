@@ -1,5 +1,6 @@
 import '../../../../data/models/allergen.dart';
 import '../../../../data/models/menu_item.dart';
+import 'diet_heuristics.dart';
 
 /// Immutable snapshot of everything the filter sheet can toggle.
 ///
@@ -46,6 +47,16 @@ class MenuFilterState {
   /// `is_ultra_processed == true`.
   final bool hideUltraProcessed;
 
+  /// Quick-filter preset ids active (e.g. 'high_protein', 'light').
+  /// See [SmartPresets.all] — ids map to predicates. Multi-select; a dish
+  /// must satisfy EVERY active preset (AND semantics — "light AND high
+  /// protein" is the intuitive meaning when both chips are on).
+  final Set<String> smartPresets;
+
+  /// Active diet tags (e.g. 'vegetarian', 'keto'). Multi-select; a dish
+  /// must satisfy EVERY active diet (so "Vegan AND Gluten-free" works).
+  final Set<String> diets;
+
   const MenuFilterState({
     this.healthRatings = const {},
     this.inflammationBuckets = const {},
@@ -60,6 +71,8 @@ class MenuFilterState {
     this.maxGlycemicLoad,
     this.fodmapMax,
     this.hideUltraProcessed = false,
+    this.smartPresets = const {},
+    this.diets = const {},
   });
 
   static const empty = MenuFilterState();
@@ -77,7 +90,23 @@ class MenuFilterState {
       searchQuery.isNotEmpty ||
       maxGlycemicLoad != null ||
       fodmapMax != null ||
-      hideUltraProcessed;
+      hideUltraProcessed ||
+      smartPresets.isNotEmpty ||
+      diets.isNotEmpty;
+
+  /// True if any filter that lives under the "Advanced" disclosure is
+  /// currently set. Used by the filter sheet to auto-open Advanced so the
+  /// user can see (and undo) what's active — hiding their own state behind
+  /// a collapsed section would feel broken.
+  bool get hasAdvanced =>
+      inflammationBuckets.isNotEmpty ||
+      minProteinG != null ||
+      maxCarbsG != null ||
+      maxFatG != null ||
+      maxCalories != null ||
+      maxGlycemicLoad != null ||
+      fodmapMax != null ||
+      sections.isNotEmpty;
 
   MenuFilterState copyWith({
     Set<String>? healthRatings,
@@ -100,6 +129,8 @@ class MenuFilterState {
     bool? hideUltraProcessed,
     bool clearMaxGlycemicLoad = false,
     bool clearFodmapMax = false,
+    Set<String>? smartPresets,
+    Set<String>? diets,
   }) {
     return MenuFilterState(
       healthRatings: healthRatings ?? this.healthRatings,
@@ -115,12 +146,28 @@ class MenuFilterState {
       maxGlycemicLoad: clearMaxGlycemicLoad ? null : (maxGlycemicLoad ?? this.maxGlycemicLoad),
       fodmapMax: clearFodmapMax ? null : (fodmapMax ?? this.fodmapMax),
       hideUltraProcessed: hideUltraProcessed ?? this.hideUltraProcessed,
+      smartPresets: smartPresets ?? this.smartPresets,
+      diets: diets ?? this.diets,
     );
   }
 
   /// Apply every filter in a single pass. Returns true if item survives.
   /// Ordered so the cheapest checks short-circuit first.
   bool accepts(MenuItem item, {UserAllergenProfile? profile}) {
+    // Smart presets + diets run first — they're goal-oriented filters the
+    // user sees at the top of the sheet, so if a dish fails them it should
+    // drop out before the power-user numeric clauses get checked.
+    if (smartPresets.isNotEmpty) {
+      for (final id in smartPresets) {
+        final preset = SmartPresets.byId(id);
+        if (preset != null && !preset.matches(item)) return false;
+      }
+    }
+    if (diets.isNotEmpty) {
+      for (final tag in diets) {
+        if (!DietHeuristics.matches(item, tag)) return false;
+      }
+    }
     if (sections.isNotEmpty && !sections.contains(item.section)) return false;
     if (healthRatings.isNotEmpty && !healthRatings.contains(item.rating)) {
       return false;

@@ -224,6 +224,7 @@ class ApiClient with WidgetsBindingObserver {
               return handler.next(error);
             }
             final retryCount = error.requestOptions.extra['_retryCount'] as int? ?? 0;
+            bool refreshFailedFatally = false;
             if (retryCount < 2) {
               try {
                 debugPrint('🔄 [API] 401 received (attempt ${retryCount + 1}/2), refreshing token...');
@@ -244,12 +245,24 @@ class ApiClient with WidgetsBindingObserver {
                 }
               } catch (refreshError) {
                 debugPrint('❌ [API] Retry ${retryCount + 1} refresh failed: $refreshError');
+                // Dead session — e.g. Supabase returns "Session from session_id
+                // claim in JWT does not exist" (403) when the session was
+                // terminated server-side (admin action, user signed out on
+                // another device, project auth reset, etc.). refreshSession()
+                // itself fails in that case, so no amount of retries will
+                // recover. Force a full sign-out so the auth state listener
+                // routes the user back to /intro instead of leaving the app
+                // firing stale 401s forever.
+                refreshFailedFatally = true;
               }
             }
 
-            // All refresh attempts exhausted -- force sign-out to avoid broken state
-            if (retryCount >= 2) {
-              debugPrint('🚪 [API] All refresh attempts failed, signing out to reset auth state');
+            // Either (a) refresh threw fatally, or (b) we burned through 2
+            // retries and the server still says 401. Both mean the session
+            // is dead — force sign-out so the auth listener clears state and
+            // re-routes to /intro.
+            if (refreshFailedFatally || retryCount >= 2) {
+              debugPrint('🚪 [API] Session unrecoverable, signing out to reset auth state');
               try {
                 await Supabase.instance.client.auth.signOut();
                 // The onAuthStateChange listener will handle clearing stored tokens
@@ -259,7 +272,9 @@ class ApiClient with WidgetsBindingObserver {
                 await clearAuth();
               }
             } else {
-              // Only clear auth if we didn't even get to retry
+              // Only clear auth if we didn't even get to retry (no token at
+              // all in storage). Shouldn't normally land here; keep as a
+              // defensive fallback.
               debugPrint('🚪 [API] Clearing auth after failed refresh');
               await clearAuth();
             }

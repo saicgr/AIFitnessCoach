@@ -10,11 +10,7 @@ import '../../core/constants/app_colors.dart';
 import '../../widgets/glass_sheet.dart';
 import '../../core/services/analytics_service.dart';
 import '../../core/services/posthog_service.dart';
-import '../../data/repositories/auth_repository.dart';
-import '../../data/repositories/onboarding_repository.dart';
-import '../../data/services/api_client.dart';
 import '../../data/services/template_workout_generator.dart';
-import '../../core/constants/api_constants.dart';
 import 'widgets/quiz_progress_bar.dart';
 import 'widgets/quiz_header.dart';
 import 'widgets/quiz_continue_button.dart';
@@ -172,29 +168,24 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
     );
     _questionController.forward();
 
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _checkAndResetIfNeeded();
-    });
-  }
-
-  Future<void> _checkAndResetIfNeeded() async {
-    final quizData = ref.read(preAuthQuizProvider);
-    final authState = ref.read(authStateProvider);
-
-    if (authState.status == AuthStatus.authenticated &&
-        authState.user != null &&
-        !quizData.isComplete) {
-      debugPrint('Resetting backend onboarding data...');
-      ref.read(onboardingStateProvider.notifier).reset();
-
-      try {
-        final apiClient = ref.read(apiClientProvider);
-        await apiClient.post('${ApiConstants.users}/${authState.user!.id}/reset-onboarding');
-      } catch (e) {
-        debugPrint('Failed to reset backend onboarding: $e');
-        // Don't navigate away on failure - the user is already on the quiz
-      }
-    }
+    // Do NOT auto-reset the user's onboarding on every quiz visit.
+    //
+    // History: this callback used to POST /reset-onboarding unconditionally
+    // whenever the user was authenticated but local quiz state was
+    // incomplete. That meant any returning user who happened to land on
+    // /pre-auth-quiz — e.g. via a failed session-restore lookup, a deep
+    // link, or the Intro carousel's new "Get Started" button — had their
+    // server-side onboarding_completed flag wiped and their workouts
+    // deleted. The net effect was users re-doing onboarding after every
+    // sign-in, which is exactly the bug we're fixing here.
+    //
+    // The server's onboarding flags are authoritative. The app router
+    // (_getNextOnboardingStep in app_router.dart) reads them and skips
+    // the quiz entirely for completed users. No client-side nuke needed.
+    //
+    // For the legitimate "restart onboarding" path (Settings → Reset),
+    // that flow should call the reset endpoint directly from its own
+    // handler — not via this screen's initState.
   }
 
   @override
@@ -626,6 +617,11 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
           _selectedDays = days;
           if (_selectedWorkoutDays.length > days) {
             _selectedWorkoutDays.clear();
+          }
+          if (days == 7) {
+            _selectedWorkoutDays
+              ..clear()
+              ..addAll(const [0, 1, 2, 3, 4, 5, 6]);
           }
         });
       },

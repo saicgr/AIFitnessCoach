@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/constants/app_colors.dart';
+import '../../../data/models/menu_item.dart';
 import '../../../widgets/glass_sheet.dart';
 
 /// Reusable bottom sheet that explains what a health-related score means
@@ -14,10 +15,11 @@ import '../../../widgets/glass_sheet.dart';
 /// title chip, gradient scale, bullet list — is shared.
 enum ScoreKind {
   rating, // green / yellow / red health pill
-  inflammation, // 0-10 scale
+  inflammation, // 0-10 scale + structured triggers
   glycemicLoad, // 0-40+ scale
   fodmap, // low / medium / high
   ultraProcessed, // bool NOVA Group 4 flag
+  addedSugar, // grams per serving, vs WHO 25g/day adult limit
 }
 
 class ScoreExplainSheet extends StatelessWidget {
@@ -33,13 +35,22 @@ class ScoreExplainSheet extends StatelessWidget {
 
   /// Short context from the AI (e.g. the `rating_reason`, `fodmap_reason`,
   /// or `coach_tip`) so the user sees WHY this dish earned this score.
+  /// Used by FODMAP + rating + ultraProcessed. For inflammation, prefer
+  /// the structured [triggers] list — `reason` is ignored when [triggers]
+  /// is non-empty because free-text goal-fit copy would mislead the user.
   final String? reason;
+
+  /// Structured inflammation drivers (e.g. ['deep_fried', 'refined_flour']).
+  /// When non-null + non-empty, rendered as chip-badges in the "why" box
+  /// for [ScoreKind.inflammation]. Ignored for other kinds.
+  final List<String>? triggers;
 
   const ScoreExplainSheet({
     super.key,
     required this.kind,
     this.value,
     this.reason,
+    this.triggers,
   });
 
   /// Convenience launcher — every tap target across the app routes here.
@@ -48,12 +59,15 @@ class ScoreExplainSheet extends StatelessWidget {
     required ScoreKind kind,
     Object? value,
     String? reason,
+    List<String>? triggers,
   }) {
     return showGlassSheet<void>(
       context: context,
       builder: (_) => GlassSheet(
         maxHeightFraction: 0.78,
-        child: ScoreExplainSheet(kind: kind, value: value, reason: reason),
+        child: ScoreExplainSheet(
+          kind: kind, value: value, reason: reason, triggers: triggers,
+        ),
       ),
     );
   }
@@ -111,7 +125,19 @@ class ScoreExplainSheet extends StatelessWidget {
               content.subtitle,
               style: TextStyle(fontSize: 13, color: textSecondary, height: 1.35),
             ),
-            if (reason != null && reason!.isNotEmpty) ...[
+            // Inflammation has its own "Why" panel: a chip row of the
+            // structured triggers Gemini emitted. These are the ingredients /
+            // properties of THIS dish that pushed the score — which is the
+            // question users are actually asking when they tap the pill.
+            if (kind == ScoreKind.inflammation &&
+                triggers != null &&
+                triggers!.isNotEmpty) ...[
+              const SizedBox(height: 14),
+              _TriggersBox(triggers: triggers!, accent: content.accent),
+            ]
+            // Other kinds still use the free-text reason box (FODMAP
+            // trigger ingredients, rating reason, etc.).
+            else if (reason != null && reason!.isNotEmpty) ...[
               const SizedBox(height: 14),
               Container(
                 padding: const EdgeInsets.all(12),
@@ -379,7 +405,168 @@ class ScoreExplainSheet extends StatelessWidget {
           ],
           footer: 'Large population studies link >30% daily calories from NOVA 4 to worse cardiometabolic health.',
         );
+
+      case ScoreKind.addedSugar:
+        // Added sugar in grams per serving. Anchored to WHO's adult daily
+        // limit of 25 g — anything above 15 g in a single dish is "most of
+        // your day's budget in one sitting" territory.
+        final g = (value is num) ? (value as num).toDouble() : double.tryParse('$value') ?? -1;
+        final idx = g < 0
+            ? -1
+            : g < 5
+                ? 0
+                : g < 15
+                    ? 1
+                    : 2;
+        final pctDay = g < 0 ? null : ((g / 25.0) * 100).round();
+        final footerText = pctDay == null
+            ? 'WHO recommends adults cap added sugar at 25 g/day (about 6 teaspoons). This excludes whole-fruit sugar.'
+            : 'That is about $pctDay% of WHO\'s 25 g/day limit for adults. Whole-fruit sugar is NOT counted here.';
+        return _SheetContent(
+          icon: Icons.icecream_rounded,
+          title: g < 0 ? 'Added sugar' : 'Added sugar: ${_fmtGrams(g)}',
+          subtitle:
+              "Added sugar is sugar the kitchen added during cooking (syrups, honey, cane sugar, HFCS) — "
+              "NOT the sugar that lives naturally in whole fruit, milk, or plain yoghurt. "
+              "It's the single most actionable lever for weight, energy, and skin.",
+          accent: g >= 15
+              ? AppColors.error
+              : g >= 5
+                  ? AppColors.orange
+                  : AppColors.success,
+          currentLabel: g < 0
+              ? null
+              : g < 5
+                  ? 'LOW'
+                  : g < 15
+                      ? 'MODERATE'
+                      : 'HIGH',
+          activeIndex: idx,
+          levels: const [
+            _Level(
+              color: AppColors.success,
+              label: 'Low  (under 5 g)',
+              body: 'Most savoury dishes, plain dairy, whole fruit. No meaningful blood-sugar impact.',
+            ),
+            _Level(
+              color: AppColors.orange,
+              label: 'Moderate  (5 – 14 g)',
+              body: 'Sweetened yogurt, a small pastry, half a sports drink. A reasonable treat — not daily.',
+            ),
+            _Level(
+              color: AppColors.error,
+              label: 'High  (15 g+)',
+              body: 'Desserts, sugary drinks, candy, many breakfast cereals. Spikes insulin, crashes energy.',
+            ),
+          ],
+          footer: footerText,
+        );
     }
+  }
+}
+
+String _fmtGrams(double g) {
+  // Integer display when the value is effectively a whole number so
+  // "24 g" reads cleanly in the chip; preserve one decimal otherwise.
+  if ((g - g.roundToDouble()).abs() < 0.05) return '${g.round()} g';
+  return '${g.toStringAsFixed(1)} g';
+}
+
+/// Compact row of chip-badges used inside the inflammation panel. Each
+/// chip shows the human label of one trigger; positive drivers (omega-3,
+/// leafy greens, etc.) render green so the user can tell which ingredients
+/// are helping vs hurting without reading copy.
+class _TriggersBox extends StatelessWidget {
+  final List<String> triggers;
+  final Color accent;
+  const _TriggersBox({required this.triggers, required this.accent});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
+      decoration: BoxDecoration(
+        color: accent.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: accent.withValues(alpha: 0.2), width: 0.8),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.auto_awesome, size: 14, color: accent),
+              const SizedBox(width: 6),
+              Text(
+                'Why this score',
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w800,
+                  color: accent,
+                  letterSpacing: 0.6,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 6,
+            runSpacing: 6,
+            children: [
+              for (final tag in triggers)
+                _TriggerChip(
+                  label: InflammationTriggers.label(tag),
+                  positive: InflammationTriggers.isPositive(tag),
+                ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _TriggerChip extends StatelessWidget {
+  final String label;
+  final bool positive;
+  const _TriggerChip({required this.label, required this.positive});
+
+  @override
+  Widget build(BuildContext context) {
+    // Anti-inflammatory drivers render green; inflammatory drivers render
+    // red. User can tell at a glance which ingredients pulled the score up
+    // vs pushed it down without reading additional copy.
+    final bg = positive
+        ? AppColors.success.withValues(alpha: 0.15)
+        : AppColors.error.withValues(alpha: 0.12);
+    final fg = positive ? AppColors.success : AppColors.error;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: fg.withValues(alpha: 0.35), width: 0.6),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            positive ? Icons.arrow_downward : Icons.arrow_upward,
+            size: 10,
+            color: fg,
+          ),
+          const SizedBox(width: 4),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+              color: fg,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
 

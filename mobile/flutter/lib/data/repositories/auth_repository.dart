@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io' show Platform;
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -10,6 +11,7 @@ import '../providers/consistency_provider.dart';
 import '../providers/fasting_provider.dart';
 import '../providers/gym_profile_provider.dart';
 import '../providers/nutrition_preferences_provider.dart';
+import '../providers/referral_provider.dart';
 import '../providers/scores_provider.dart';
 import '../providers/today_workout_provider.dart';
 import '../providers/xp_provider.dart';
@@ -20,6 +22,7 @@ import '../repositories/workout_repository.dart';
 import '../services/api_client.dart';
 import '../services/data_cache_service.dart';
 import '../services/device_info_service.dart';
+import '../services/pending_referral_service.dart';
 import '../services/wearable_service.dart';
 
 /// Auth state
@@ -536,6 +539,31 @@ class AuthNotifier extends StateNotifier<AuthState> {
     }
   }
 
+  /// Apply any referral code captured pre-auth (deep link, onboarding
+  /// paste, manual entry from a friend). Called after every successful
+  /// sign-in / sign-up. Silent on failure — the user can still redeem
+  /// manually from Settings → Invite Friends → Enter a code.
+  Future<void> _flushPendingReferral() async {
+    try {
+      final code = await PendingReferralService.read();
+      if (code == null || code.isEmpty) return;
+      debugPrint('🔍 [Auth] Flushing pending referral code: $code');
+      final result = await _ref
+          .read(referralApplyProvider.notifier)
+          .apply(code);
+      if (result.success) {
+        await PendingReferralService.clear();
+        debugPrint('✅ [Auth] Applied pending referral: $code');
+      } else {
+        debugPrint('⚠️ [Auth] Referral apply failed: ${result.message}');
+        // Leave pending so user can retry from Settings; only clear on
+        // explicit success or on sign-out.
+      }
+    } catch (e) {
+      debugPrint('⚠️ [Auth] Failed to flush pending referral: $e');
+    }
+  }
+
   /// Fire-and-forget device info update after successful auth
   void _updateDeviceInfo(String userId) {
     final service = DeviceInfoService(_repository._apiClient);
@@ -591,6 +619,8 @@ class AuthNotifier extends StateNotifier<AuthState> {
       }
       state = AuthState(status: AuthStatus.authenticated, user: user);
       _updateDeviceInfo(user.id);
+      // Fire-and-forget referral flush — never block auth UX on this.
+      unawaited(_flushPendingReferral());
     } catch (e) {
       state = AuthState(
         status: AuthStatus.error,
@@ -611,6 +641,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
       }
       state = AuthState(status: AuthStatus.authenticated, user: user);
       _updateDeviceInfo(user.id);
+      unawaited(_flushPendingReferral());
     } catch (e) {
       state = AuthState(
         status: AuthStatus.error,
@@ -629,6 +660,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
       }
       state = AuthState(status: AuthStatus.authenticated, user: user);
       _updateDeviceInfo(user.id);
+      unawaited(_flushPendingReferral());
     } catch (e) {
       state = AuthState(
         status: AuthStatus.error,
@@ -653,6 +685,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
     try {
       await _repository.signOut();
       await _clearPreAuthQuiz();
+      await PendingReferralService.clear();
       // Reset live XP state — the provider persists (not autoDispose), so
       // stale userXp/lastLevelUp would survive logout and cause false
       // level-up animations on re-login.

@@ -13,6 +13,10 @@ enum SortField {
   fat,
   health,
   inflammation,
+  glycemicLoad,
+  fodmap,
+  addedSugar,
+  ultraProcessed,
   price,
   weight;
 
@@ -24,17 +28,26 @@ enum SortField {
       case SortField.fat: return 'Fat';
       case SortField.health: return 'Health';
       case SortField.inflammation: return 'Inflammation';
+      case SortField.glycemicLoad: return 'Blood sugar';
+      case SortField.fodmap: return 'FODMAP';
+      case SortField.addedSugar: return 'Added sugar';
+      case SortField.ultraProcessed: return 'Ultra-processed';
       case SortField.price: return 'Price';
       case SortField.weight: return 'Weight';
     }
   }
 
-  /// Default direction when a user taps a fresh pill. Macros default
-  /// DESC (more is better); inflammation + price default ASC (less is
-  /// better). Health defaults DESC (better ratings first).
+  /// Default direction when a user taps a fresh pill. Macros + health
+  /// default DESC (more/better is better); health-cost dimensions
+  /// (inflammation / GL / FODMAP / added sugar / ultra-processed / price /
+  /// weight) default ASC so "less is better" lands at the top.
   SortDirection get defaultDirection {
     switch (this) {
       case SortField.inflammation:
+      case SortField.glycemicLoad:
+      case SortField.fodmap:
+      case SortField.addedSugar:
+      case SortField.ultraProcessed:
       case SortField.price:
       case SortField.weight:
         return SortDirection.asc;
@@ -99,15 +112,26 @@ class SortSpecList {
     return null;
   }
 
-  /// One-tap semantics: if `field` is already the primary sort, reverse
-  /// its direction. Otherwise reset to a single-entry list with `field`
-  /// as the new primary (classic tap-to-sort behavior).
+  /// Three-state cycle when the user keeps tapping the same primary pill:
+  ///
+  ///   off → default direction → reversed direction → off
+  ///
+  /// Lets the user disable a sort without having to find a separate
+  /// "clear" affordance. Tapping a different field resets to a single
+  /// entry with `field` as the new primary.
   SortSpecList tap(SortField field) {
     if (specs.isNotEmpty && specs.first.field == field) {
-      return SortSpecList([
-        specs.first.copyWith(direction: specs.first.direction.reversed),
-        ...specs.skip(1),
-      ]);
+      final current = specs.first.direction;
+      final isDefault = current == field.defaultDirection;
+      if (isDefault) {
+        // Second tap: flip to the reversed direction.
+        return SortSpecList([
+          specs.first.copyWith(direction: current.reversed),
+          ...specs.skip(1),
+        ]);
+      }
+      // Third tap: drop the primary. Tiebreakers (if any) get promoted.
+      return SortSpecList(specs.skip(1).toList());
     }
     return SortSpecList([SortSpec(field, field.defaultDirection)]);
   }

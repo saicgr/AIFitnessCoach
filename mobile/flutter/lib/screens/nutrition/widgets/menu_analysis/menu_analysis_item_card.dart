@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../data/models/allergen.dart';
 import '../../../../data/models/menu_item.dart';
+import '../health_breakdown_sheet.dart';
 import '../score_explain_sheet.dart';
 
 /// Single dish row in the Menu Analysis sheet. Shows:
@@ -117,13 +118,16 @@ class MenuAnalysisItemCard extends StatelessWidget {
                             style: TextStyle(fontSize: 11, color: textMuted),
                           ),
                         ),
-                      // Tappable score chips (inflammation / glycemic load /
-                      // FODMAP / ultra-processed) — each opens the shared
-                      // ScoreExplainSheet with the dish's context. Wrap so
-                      // long dish names don't elbow chips off the row.
-                      if (_hasAnyScore(item)) ...[
-                        const SizedBox(height: 4),
-                        _ScoreChipRow(item: item),
+                      // Horizontally-scrollable Health Strip — one labeled
+                      // pill per signal (inflammation / blood sugar / FODMAP /
+                      // added sugar / ultra-processed). Tap a pill → scoped
+                      // explain sheet; tap the trailing "Full breakdown" pill
+                      // → HealthBreakdownSheet with every signal at once.
+                      // Collapses to "✨ All scores green" when nothing is
+                      // worth flagging so clean dishes read clean.
+                      if (_HealthStrip.hasAnySignal(item)) ...[
+                        const SizedBox(height: 6),
+                        _HealthStrip(item: item),
                       ],
                       const SizedBox(height: 6),
                       _MacroLine(item: item, color: textSecondary),
@@ -180,92 +184,294 @@ class MenuAnalysisItemCard extends StatelessWidget {
     return parts.join(' · ');
   }
 
-  static bool _hasAnyScore(MenuItem item) =>
-      item.inflammationScore != null ||
-      item.glycemicLoad != null ||
-      item.fodmapRating != null ||
-      item.isUltraProcessed == true;
 }
 
-/// Inline row of tappable score chips shown beneath each menu item.
+/// Horizontally-scrollable row of labeled health-signal pills.
 ///
-/// Every chip opens [ScoreExplainSheet] so the user can learn what the
-/// score means without leaving the sheet. Chips are compact — we trust
-/// the colour + short label and let the explain sheet carry the detail.
-class _ScoreChipRow extends StatelessWidget {
+/// One pill per signal (inflammation / blood sugar / FODMAP / added sugar /
+/// ultra-processed). Each pill shows emoji + short label + value and is
+/// colored green / amber / red by severity. Tap a pill → [ScoreExplainSheet]
+/// scoped to that signal; tap the trailing "Full breakdown" pill →
+/// [HealthBreakdownSheet] with every signal in one sheet.
+///
+/// Design decisions (see feedback_multiscore_display.md):
+///   • LABELED, not dots. Users must know what each pill means without
+///     tapping. Unlabeled dots were rejected.
+///   • Horizontal scroll, not Wrap. Card height stays constant regardless
+///     of how many signals a dish has.
+///   • "All clean" collapse. If every rendered pill would be green we
+///     render a single "✨ All scores green" badge instead — reduces noise
+///     on healthy dishes and draws attention to problem dishes.
+///   • ultra-processed pill ONLY when true (no point bragging about
+///     not being processed).
+///   • Inflammation tap passes structured `triggers` (not `ratingReason`)
+///     so the Score Explain sheet shows ingredient drivers — the core
+///     correctness fix.
+class _HealthStrip extends StatelessWidget {
   final MenuItem item;
-  const _ScoreChipRow({required this.item});
+  const _HealthStrip({required this.item});
+
+  /// True if we have ANY signal worth rendering. Cheap gate used by the
+  /// parent card to skip the strip entirely when Gemini dropped everything.
+  static bool hasAnySignal(MenuItem i) =>
+      i.inflammationScore != null ||
+      i.glycemicLoad != null ||
+      i.fodmapRating != null ||
+      i.addedSugarG != null ||
+      i.isUltraProcessed == true;
 
   @override
   Widget build(BuildContext context) {
-    return Wrap(
-      spacing: 4,
-      runSpacing: 4,
-      children: [
-        if (item.inflammationScore != null)
-          _ScoreChip(
-            label: '🔥 ${item.inflammationScore}/10',
-            color: item.inflammationScore! >= 7
-                ? AppColors.error
-                : item.inflammationScore! >= 4
-                    ? AppColors.orange
-                    : AppColors.success,
-            onTap: () => ScoreExplainSheet.show(
-              context,
-              kind: ScoreKind.inflammation,
-              value: item.inflammationScore,
-              reason: item.ratingReason,
-            ),
-          ),
-        if (item.glycemicLoad != null)
-          _ScoreChip(
-            label: 'GL ${item.glycemicLoad}',
-            color: item.glycemicLoad! >= 20
-                ? AppColors.error
-                : item.glycemicLoad! >= 10
-                    ? AppColors.orange
-                    : AppColors.success,
-            onTap: () => ScoreExplainSheet.show(
-              context,
-              kind: ScoreKind.glycemicLoad,
-              value: item.glycemicLoad,
-            ),
-          ),
-        if (item.fodmapRating != null)
-          _ScoreChip(
-            label: 'FODMAP ${item.fodmapRating!.toUpperCase()}',
-            color: item.fodmapRating == 'high'
-                ? AppColors.error
-                : item.fodmapRating == 'medium'
-                    ? AppColors.orange
-                    : AppColors.success,
-            onTap: () => ScoreExplainSheet.show(
-              context,
-              kind: ScoreKind.fodmap,
-              value: item.fodmapRating,
-              reason: item.fodmapReason,
-            ),
-          ),
-        if (item.isUltraProcessed == true)
-          _ScoreChip(
-            label: 'Ultra-processed',
-            color: AppColors.error,
-            onTap: () => ScoreExplainSheet.show(
-              context,
-              kind: ScoreKind.ultraProcessed,
-              value: true,
-            ),
-          ),
-      ],
+    final pills = _buildPills(context);
+    if (pills.isEmpty) return const SizedBox.shrink();
+
+    // Collapse to a single "All clean" badge when every visible pill is
+    // green. Avoids drowning the card in 4+ green pills for healthy dishes.
+    final allGreen = pills.every((p) => p.severity == _PillSeverity.good);
+    if (allGreen && pills.length >= 3) {
+      return _AllCleanBadge(onTap: () => _openBreakdown(context));
+    }
+
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      physics: const BouncingScrollPhysics(),
+      child: Row(
+        children: [
+          for (final p in pills) ...[
+            p.widget,
+            const SizedBox(width: 6),
+          ],
+          // Trailing "Full breakdown →" opens the all-signals sheet. Kept
+          // at the end so horizontal scroll reveals it naturally.
+          _BreakdownPill(onTap: () => _openBreakdown(context)),
+        ],
+      ),
     );
+  }
+
+  void _openBreakdown(BuildContext context) {
+    HealthBreakdownSheet.show(context, item: item);
+  }
+
+  List<_PillSpec> _buildPills(BuildContext context) {
+    final specs = <_PillSpec>[];
+
+    // Inflammation — always informative. Tap passes structured triggers.
+    if (item.inflammationScore != null) {
+      final s = item.inflammationScore!;
+      final sev = s >= 7
+          ? _PillSeverity.bad
+          : s >= 4
+              ? _PillSeverity.mid
+              : _PillSeverity.good;
+      specs.add(_PillSpec(
+        severity: sev,
+        widget: _HealthPill(
+          emoji: '🔥',
+          label: 'Inflammation',
+          value: '$s/10',
+          severity: sev,
+          onTap: () => ScoreExplainSheet.show(
+            context,
+            kind: ScoreKind.inflammation,
+            value: s,
+            triggers: item.inflammationTriggers,
+          ),
+        ),
+      ));
+    }
+
+    // Blood sugar (glycemic load).
+    if (item.glycemicLoad != null) {
+      final gl = item.glycemicLoad!;
+      final sev = gl >= 20
+          ? _PillSeverity.bad
+          : gl >= 10
+              ? _PillSeverity.mid
+              : _PillSeverity.good;
+      specs.add(_PillSpec(
+        severity: sev,
+        widget: _HealthPill(
+          emoji: '🩸',
+          label: 'Blood sugar',
+          value: '$gl',
+          severity: sev,
+          onTap: () => ScoreExplainSheet.show(
+            context,
+            kind: ScoreKind.glycemicLoad,
+            value: gl,
+          ),
+        ),
+      ));
+    }
+
+    // FODMAP.
+    if (item.fodmapRating != null) {
+      final r = item.fodmapRating!;
+      final sev = r == 'high'
+          ? _PillSeverity.bad
+          : r == 'medium'
+              ? _PillSeverity.mid
+              : _PillSeverity.good;
+      specs.add(_PillSpec(
+        severity: sev,
+        widget: _HealthPill(
+          emoji: '🧡',
+          label: 'FODMAP',
+          value: _titleCase(r),
+          severity: sev,
+          onTap: () => ScoreExplainSheet.show(
+            context,
+            kind: ScoreKind.fodmap,
+            value: r,
+            reason: item.fodmapReason,
+          ),
+        ),
+      ));
+    }
+
+    // Added sugar (grams per serving). WHO daily limit = 25 g.
+    if (item.addedSugarG != null) {
+      final g = item.addedSugarG!;
+      final sev = g >= 15
+          ? _PillSeverity.bad
+          : g >= 5
+              ? _PillSeverity.mid
+              : _PillSeverity.good;
+      specs.add(_PillSpec(
+        severity: sev,
+        widget: _HealthPill(
+          emoji: '🍬',
+          label: 'Added sugar',
+          value: _fmtSugar(g),
+          severity: sev,
+          onTap: () => ScoreExplainSheet.show(
+            context,
+            kind: ScoreKind.addedSugar,
+            value: g,
+          ),
+        ),
+      ));
+    }
+
+    // Ultra-processed — only when true. No pill for "not processed".
+    if (item.isUltraProcessed == true) {
+      specs.add(_PillSpec(
+        severity: _PillSeverity.bad,
+        widget: _HealthPill(
+          emoji: '🏭',
+          label: 'Ultra-processed',
+          value: 'Yes',
+          severity: _PillSeverity.bad,
+          onTap: () => ScoreExplainSheet.show(
+            context,
+            kind: ScoreKind.ultraProcessed,
+            value: true,
+          ),
+        ),
+      ));
+    }
+
+    return specs;
+  }
+
+  static String _titleCase(String s) =>
+      s.isEmpty ? s : (s[0].toUpperCase() + s.substring(1));
+
+  static String _fmtSugar(double g) {
+    if ((g - g.roundToDouble()).abs() < 0.05) return '${g.round()} g';
+    return '${g.toStringAsFixed(1)} g';
   }
 }
 
-class _ScoreChip extends StatelessWidget {
+enum _PillSeverity { good, mid, bad }
+
+class _PillSpec {
+  final _PillSeverity severity;
+  final Widget widget;
+  _PillSpec({required this.severity, required this.widget});
+}
+
+/// Individual labeled pill: `[emoji] [label] [value]` on a severity-colored
+/// background. Kept visually distinct from filter chips (rounder, brighter
+/// border) so users read it as "health signal" not "filter".
+class _HealthPill extends StatelessWidget {
+  final String emoji;
   final String label;
-  final Color color;
+  final String value;
+  final _PillSeverity severity;
   final VoidCallback onTap;
-  const _ScoreChip({required this.label, required this.color, required this.onTap});
+  const _HealthPill({
+    required this.emoji,
+    required this.label,
+    required this.value,
+    required this.severity,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final c = _severityColor(severity);
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(20),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+          decoration: BoxDecoration(
+            color: c.withValues(alpha: 0.14),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: c.withValues(alpha: 0.45), width: 0.8),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(emoji, style: const TextStyle(fontSize: 12)),
+              const SizedBox(width: 5),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                  color: c,
+                ),
+              ),
+              const SizedBox(width: 5),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                decoration: BoxDecoration(
+                  color: c.withValues(alpha: 0.22),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  value,
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w900,
+                    color: c,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  static Color _severityColor(_PillSeverity s) {
+    switch (s) {
+      case _PillSeverity.good: return AppColors.success;
+      case _PillSeverity.mid: return AppColors.orange;
+      case _PillSeverity.bad: return AppColors.error;
+    }
+  }
+}
+
+class _BreakdownPill extends StatelessWidget {
+  final VoidCallback onTap;
+  const _BreakdownPill({required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -273,27 +479,75 @@ class _ScoreChip extends StatelessWidget {
       color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(6),
+        borderRadius: BorderRadius.circular(20),
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
           decoration: BoxDecoration(
-            color: color.withValues(alpha: 0.12),
-            borderRadius: BorderRadius.circular(6),
-            border: Border.all(color: color.withValues(alpha: 0.35), width: 0.7),
+            color: Colors.white.withValues(alpha: 0.06),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: Colors.white.withValues(alpha: 0.18),
+              width: 0.8,
+            ),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
-                label,
+                'Full breakdown',
                 style: TextStyle(
-                  fontSize: 10,
+                  fontSize: 11,
                   fontWeight: FontWeight.w700,
-                  color: color,
+                  color: AppColors.textSecondary,
                 ),
               ),
               const SizedBox(width: 3),
-              Icon(Icons.info_outline, size: 10, color: color.withValues(alpha: 0.7)),
+              Icon(Icons.chevron_right, size: 14, color: AppColors.textMuted),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _AllCleanBadge extends StatelessWidget {
+  final VoidCallback onTap;
+  const _AllCleanBadge({required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(20),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+          decoration: BoxDecoration(
+            color: AppColors.success.withValues(alpha: 0.12),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: AppColors.success.withValues(alpha: 0.4),
+              width: 0.8,
+            ),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text('✨', style: TextStyle(fontSize: 12)),
+              const SizedBox(width: 5),
+              Text(
+                'All scores green',
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w800,
+                  color: AppColors.success,
+                ),
+              ),
+              const SizedBox(width: 4),
+              Icon(Icons.chevron_right,
+                  size: 14, color: AppColors.success.withValues(alpha: 0.7)),
             ],
           ),
         ),

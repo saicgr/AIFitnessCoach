@@ -59,6 +59,11 @@ class OnboardingTheme {
   /// Green accent for selection confirmation (checkmarks, counters, badges).
   Color get selectionAccent => const Color(0xFF34C759);
 
+  /// Red accent for caution / warning selections (injuries, limitations).
+  /// Semantically distinct from `selectionAccent` — "you have an injury here"
+  /// reads as a warning, not a positive confirmation.
+  Color get warningAccent => const Color(0xFFFF3B30);
+
   /// Badge background for "Recommended" / "BEST" labels.
   Color get badgeBg => selectionAccent.withValues(alpha: 0.15);
 
@@ -76,6 +81,13 @@ class OnboardingTheme {
       ? [selectionAccent.withValues(alpha: 0.18), selectionAccent.withValues(alpha: 0.08)]
       : [selectionAccent.withValues(alpha: 0.10), selectionAccent.withValues(alpha: 0.05)];
 
+  /// Selected card gradient for caution/warning state — red-tinted. Used
+  /// by injury/limitation chips where "selected" means "this is a problem
+  /// area" rather than "good choice."
+  List<Color> get cardWarningSelectedGradient => isDark
+      ? [warningAccent.withValues(alpha: 0.22), warningAccent.withValues(alpha: 0.10)]
+      : [warningAccent.withValues(alpha: 0.14), warningAccent.withValues(alpha: 0.06)];
+
   // ── Borders ───────────────────────────────────────────────────────
 
   Color get borderDefault => isDark
@@ -86,6 +98,11 @@ class OnboardingTheme {
   Color get borderSelected => isDark
       ? selectionAccent.withValues(alpha: 0.50)
       : selectionAccent.withValues(alpha: 0.35);
+
+  /// Selected border for caution/warning state — red-tinted.
+  Color get borderWarningSelected => isDark
+      ? warningAccent.withValues(alpha: 0.60)
+      : warningAccent.withValues(alpha: 0.45);
 
   Color get borderSubtle => isDark
       ? Colors.white.withValues(alpha: 0.10)

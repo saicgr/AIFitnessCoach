@@ -6,7 +6,8 @@ import '../../screens/onboarding/pre_auth_quiz_screen.dart';
 /// Generates template-based workout previews using user's quiz selections
 ///
 /// This provides instant workout previews without waiting for AI generation.
-/// Templates are designed based on primary goal, fitness level, and equipment available.
+/// Templates are designed based on primary goal, fitness level, equipment,
+/// and — critically — the user's declared injuries/limitations.
 class TemplateWorkoutGenerator {
   /// Generate a sample workout based on quiz data
   static Workout generateTemplateWorkout(PreAuthQuizData quizData) {
@@ -15,22 +16,47 @@ class TemplateWorkoutGenerator {
     final equipment = quizData.equipment ?? [];
     final duration = quizData.workoutDuration ?? 45;
 
-    // Determine workout name based on primary goal and day pattern
-    final workoutName = _getWorkoutName(primaryGoal, quizData.daysPerWeek ?? 3);
+    // "['none']" means the user explicitly declared no injuries. Filter it out
+    // so downstream logic treats the list as empty. An actually empty list also
+    // means no injuries. Either way, the avoid-list is empty → no filtering.
+    final limitations = (quizData.limitations ?? const <String>[])
+        .where((l) => l.isNotEmpty && l != 'none' && l != 'other')
+        .toList();
 
-    // Generate exercises based on selections
-    final exercises = _generateExercises(
+    // Generate raw exercise candidates based on goal + equipment.
+    final rawExercises = _generateExercises(
       primaryGoal: primaryGoal,
       fitnessLevel: fitnessLevel,
       equipment: equipment,
       duration: duration,
     );
 
-    // Calculate estimated duration based on exercises
-    final estimatedDuration = _calculateDuration(exercises);
+    // Filter out anything stressing a declared injury, then top up with
+    // safe substitutes if filtering left us below the per-duration target.
+    final filtered = _applyInjuryFilter(
+      rawExercises,
+      limitations: limitations,
+      fitnessLevel: fitnessLevel,
+      duration: duration,
+      primaryGoal: primaryGoal,
+    );
 
-    // Convert exercises to JSON format expected by Workout model
-    final exercisesJson = exercises.map((e) => e.toJson()).toList();
+    // If injuries caused significant swaps, reflect it in the workout name
+    // so the preview visibly honors what the user just told us.
+    final removedCount = rawExercises.length - rawExercises
+        .where((e) => filtered.any((f) => f.nameValue == e.nameValue))
+        .length;
+    final heavilyModified =
+        limitations.isNotEmpty && removedCount >= (rawExercises.length / 2).ceil();
+
+    final workoutName = _getWorkoutName(
+      primaryGoal,
+      quizData.daysPerWeek ?? 3,
+      modifiedForInjury: heavilyModified ? limitations.first : null,
+    );
+
+    final estimatedDuration = _calculateDuration(filtered);
+    final exercisesJson = filtered.map((e) => e.toJson()).toList();
 
     return Workout(
       id: 'preview_${DateTime.now().millisecondsSinceEpoch}',
@@ -45,7 +71,20 @@ class TemplateWorkoutGenerator {
     );
   }
 
-  static String _getWorkoutName(String primaryGoal, int daysPerWeek) {
+  static String _getWorkoutName(
+    String primaryGoal,
+    int daysPerWeek, {
+    String? modifiedForInjury,
+  }) {
+    final base = _baseWorkoutName(primaryGoal, daysPerWeek);
+    if (modifiedForInjury == null) return base;
+    final humanized = _humanizeInjury(modifiedForInjury);
+    // Prefix to make the modification visible without clobbering the original
+    // split label. Example: "Day 1: Modified Push — Lower-Back-Safe".
+    return 'Day 1: Modified ${_goalLabel(primaryGoal)} — $humanized-Safe';
+  }
+
+  static String _baseWorkoutName(String primaryGoal, int daysPerWeek) {
     if (daysPerWeek <= 2) {
       return 'Full Body Workout';
     } else if (daysPerWeek == 3) {
@@ -68,6 +107,44 @@ class TemplateWorkoutGenerator {
     }
   }
 
+  static String _goalLabel(String primaryGoal) {
+    switch (primaryGoal) {
+      case 'strength':
+        return 'Strength';
+      case 'hypertrophy':
+        return 'Push';
+      case 'balanced':
+        return 'Upper Body';
+      case 'endurance':
+        return 'Circuit';
+      default:
+        return 'Workout';
+    }
+  }
+
+  static String _humanizeInjury(String id) {
+    switch (id) {
+      case 'lower_back':
+        return 'Lower-Back';
+      case 'knees':
+        return 'Knee';
+      case 'shoulders':
+        return 'Shoulder';
+      case 'wrists':
+        return 'Wrist';
+      case 'elbows':
+        return 'Elbow';
+      case 'hips':
+        return 'Hip';
+      case 'ankles':
+        return 'Ankle';
+      case 'neck':
+        return 'Neck';
+      default:
+        return id[0].toUpperCase() + id.substring(1);
+    }
+  }
+
   static String _getWorkoutType(String primaryGoal) {
     switch (primaryGoal) {
       case 'strength':
@@ -81,6 +158,169 @@ class TemplateWorkoutGenerator {
       default:
         return 'hypertrophy';
     }
+  }
+
+  /// Exercise-name → injuries-it-stresses map. Listed per exercise (not per
+  /// injury) because it's easier to audit when adding a new movement. Derived
+  /// from general coaching heuristics (axial-loaded → lower back/hips/neck,
+  /// weight-bearing knee flexion → knees, overhead pressing → shoulders,
+  /// loaded wrist extension → wrists, deep elbow flexion under load →
+  /// elbows, impact plyometrics → ankles).
+  static const Map<String, Set<String>> _exerciseInjuryMap = {
+    // Lower-body compound / loaded
+    'Barbell Back Squat': {'lower_back', 'knees', 'hips', 'neck'},
+    'Goblet Squat': {'lower_back', 'knees'},
+    'Bodyweight Squats': {'knees'},
+    'Smith Machine Squat': {'lower_back', 'knees'},
+    'Leg Press': {'knees', 'lower_back'},
+    'Leg Extensions': {'knees'},
+    'Leg Curls': {},
+    // Hip hinge
+    'Romanian Deadlift': {'lower_back', 'hips'},
+    'Dumbbell Romanian Deadlift': {'lower_back', 'hips'},
+    'Kettlebell Deadlift': {'lower_back', 'hips'},
+    'Single-Leg Deadlifts': {'lower_back', 'hips', 'ankles'},
+    // Unilateral / impact
+    'Dumbbell Walking Lunges': {'knees', 'ankles'},
+    'Walking Lunges': {'knees', 'ankles'},
+    'Kettlebell Lunges': {'knees', 'ankles'},
+    'Barbell Lunges': {'knees', 'lower_back', 'hips'},
+    // Upper push
+    'Barbell Bench Press': {'shoulders', 'wrists'},
+    'Smith Machine Bench Press': {'shoulders', 'wrists'},
+    'Dumbbell Bench Press': {'shoulders'},
+    'Dumbbell Floor Press': {},
+    'Push-ups': {'wrists', 'shoulders'},
+    'Diamond Push-ups': {'wrists', 'elbows'},
+    'Pike Push-ups': {'shoulders', 'wrists'},
+    'Banded Push-ups': {'wrists', 'shoulders'},
+    // Overhead
+    'Barbell Overhead Press': {'shoulders', 'lower_back', 'neck'},
+    'Dumbbell Shoulder Press': {'shoulders'},
+    'Kettlebell Press': {'shoulders'},
+    'Dumbbell Thrusters': {'shoulders', 'knees'},
+    'Kettlebell Clean & Press': {'shoulders', 'lower_back'},
+    // Lateral / isolation
+    'Dumbbell Lateral Raises': {'shoulders'},
+    'Kettlebell Lateral Raises': {'shoulders'},
+    'Cable Lateral Raises': {'shoulders'},
+    'Band Lateral Raises': {'shoulders'},
+    'Arm Circles': {'shoulders'},
+    // Arms
+    'Barbell Bicep Curls': {'elbows', 'wrists'},
+    'EZ Bar Bicep Curls': {'elbows'},
+    'Dumbbell Bicep Curls': {},
+    'Band Bicep Curls': {},
+    'EZ Bar Skull Crushers': {'elbows'},
+    'Tricep Dips': {'shoulders', 'elbows', 'wrists'},
+    'Cable Tricep Pushdowns': {'elbows'},
+    'Dumbbell Tricep Extensions': {'elbows'},
+    // Pull
+    'Barbell Bent-Over Rows': {'lower_back'},
+    'Dumbbell Rows': {},
+    'Kettlebell Rows': {},
+    'Cable Seated Rows': {},
+    'Machine Rows': {},
+    'Inverted Rows': {},
+    'Band Rows': {},
+    'Lat Pulldowns': {'shoulders'},
+    'Cable Lat Pulldowns': {'shoulders'},
+    'Pull-ups': {'shoulders', 'elbows'},
+    'Chin-ups': {'shoulders', 'elbows'},
+    // Chest accessory
+    'Dumbbell Chest Flyes': {'shoulders'},
+    'Cable Chest Flyes': {'shoulders'},
+    // Conditioning / plyo
+    'Jumping Jacks': {'ankles', 'knees'},
+    'Mountain Climbers': {'wrists', 'knees'},
+    'Burpees': {'wrists', 'knees', 'ankles', 'lower_back'},
+    'Kettlebell Swings': {'lower_back', 'hips'},
+    'Kettlebell Snatches': {'lower_back', 'shoulders'},
+    'Plank': {'wrists'},
+    'Banded Squats': {'knees'},
+    'Dumbbell Squats': {'knees'},
+  };
+
+  /// Injury-safe substitutes grouped by what they target and which
+  /// injuries they tolerate. Used when filtering removes too many.
+  /// Each tuple: (name, sets, reps, restSec, safeFor).
+  static const List<(String, int, int, int, Set<String>)> _safeSubstitutes = [
+    // Core / posterior chain safe for almost everything
+    ('Glute Bridges', 3, 15, 45, {'lower_back', 'knees', 'hips', 'ankles', 'wrists', 'elbows'}),
+    ('Hip Thrusts (Bodyweight)', 3, 15, 45, {'knees', 'ankles', 'wrists', 'elbows'}),
+    ('Bird Dog', 3, 10, 30, {'lower_back', 'knees', 'hips', 'ankles', 'shoulders'}),
+    ('Dead Bug', 3, 10, 30, {'lower_back', 'knees', 'hips', 'ankles', 'wrists'}),
+    ('Side Plank', 3, 30, 30, {'lower_back', 'knees', 'ankles', 'wrists'}),
+    ('Seated Dumbbell Curls', 3, 12, 45, {'lower_back', 'knees', 'ankles', 'hips', 'shoulders'}),
+    ('Seated Dumbbell Shoulder Press', 3, 10, 60, {'lower_back', 'knees', 'ankles', 'hips'}),
+    ('Seated Cable Rows', 3, 12, 45, {'knees', 'ankles', 'hips', 'wrists'}),
+    ('Standing Calf Raises', 3, 15, 30, {'lower_back', 'knees', 'wrists', 'elbows', 'shoulders'}),
+    ('Wall Sits', 3, 30, 30, {'lower_back', 'wrists', 'elbows', 'shoulders', 'ankles'}),
+    ('Banded Pull-Aparts', 3, 15, 30, {'lower_back', 'knees', 'ankles', 'hips', 'wrists', 'elbows'}),
+    ('Farmer\'s Carry', 3, 30, 45, {'knees', 'shoulders', 'elbows'}),
+  ];
+
+  /// Drop anything in `rawExercises` that stresses a declared injury, then
+  /// top up with safe substitutes if the filtered list is too short.
+  /// Uses a hash of (primaryGoal + first limitation + rawExercises.length)
+  /// to stably-randomize which substitutes get picked — avoids the same
+  /// 3 substitutes appearing for every user with the same injury.
+  static List<WorkoutExercise> _applyInjuryFilter(
+    List<WorkoutExercise> rawExercises, {
+    required List<String> limitations,
+    required String fitnessLevel,
+    required int duration,
+    required String primaryGoal,
+  }) {
+    if (limitations.isEmpty) {
+      // Still apply duration cap.
+      final max = _getMaxExercisesForDuration(duration);
+      return rawExercises.take(max).toList();
+    }
+
+    final avoidSet = limitations.toSet();
+    final kept = <WorkoutExercise>[];
+    for (final ex in rawExercises) {
+      final stresses = _exerciseInjuryMap[ex.nameValue ?? ''] ?? const <String>{};
+      final conflict = stresses.intersection(avoidSet).isNotEmpty;
+      if (!conflict) kept.add(ex);
+    }
+
+    // Minimum acceptable size — match original generator's duration cap or 3.
+    final maxAllowed = _getMaxExercisesForDuration(duration);
+    final minTarget = primaryGoal == 'endurance' ? 4 : 4;
+
+    if (kept.length < minTarget) {
+      // Pick substitutes that are safe for ALL selected injuries, using a
+      // deterministic hash so two different users with the same setup get
+      // slightly different workouts.
+      final safePool = _safeSubstitutes.where((sub) {
+        final blockedBy = avoidSet.difference(sub.$5);
+        return blockedBy.isEmpty;
+      }).toList();
+
+      // Rotate pool by a cheap hash of the goal + first injury so users don't
+      // all see the same top-3 substitutes.
+      final seed =
+          (primaryGoal.hashCode ^ limitations.first.hashCode ^ rawExercises.length) &
+              0x7fffffff;
+      final rotated = [
+        ...safePool.skip(seed % (safePool.isEmpty ? 1 : safePool.length)),
+        ...safePool.take(seed % (safePool.isEmpty ? 1 : safePool.length)),
+      ];
+
+      for (final sub in rotated) {
+        if (kept.length >= minTarget) break;
+        // De-dupe by name so we don't append something already present.
+        if (kept.any((e) => e.nameValue == sub.$1)) continue;
+        kept.add(_createExercise(sub.$1, sub.$2, sub.$3, sub.$4));
+      }
+    }
+
+    if (kept.length > maxAllowed) {
+      return kept.take(maxAllowed).toList();
+    }
+    return kept;
   }
 
   static List<WorkoutExercise> _generateExercises({
@@ -106,10 +346,6 @@ class TemplateWorkoutGenerator {
     final hasLatPulldown = equipment.contains('lat_pulldown');
     final hasSeatedRow = equipment.contains('seated_row_machine');
     final hasSmithMachine = equipment.contains('smith_machine');
-
-    // Gym tier classification
-    final hasFullGym = (hasBarbell && hasCables && hasLegPress) || equipment.contains('commercial_gym');
-    final hasHomeGym = hasBarbell && hasDumbbells && (hasSquatRack || hasBench);
 
     // Determine rep ranges based on primary goal
     final (sets, reps) = _getSetRepScheme(primaryGoal, fitnessLevel);
@@ -324,12 +560,6 @@ class TemplateWorkoutGenerator {
       }
       exercises.add(_createExercise('Plank', 3, 30, 30));
       exercises.add(_createExercise('Burpees', 3, 10, 30));
-    }
-
-    // If we have too many exercises for the duration, trim them
-    final maxExercises = _getMaxExercisesForDuration(duration);
-    if (exercises.length > maxExercises) {
-      return exercises.take(maxExercises).toList();
     }
 
     return exercises;

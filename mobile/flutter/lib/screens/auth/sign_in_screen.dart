@@ -17,6 +17,7 @@ import '../../data/services/api_client.dart';
 import '../onboarding/pre_auth_quiz_screen.dart';
 import '../onboarding/widgets/foldable_quiz_scaffold.dart';
 import '../onboarding/widgets/onboarding_theme.dart';
+import 'widgets/pre_auth_referral_chip.dart';
 
 /// Glassmorphic sign-in screen shown after quiz and preview
 class SignInScreen extends ConsumerStatefulWidget {
@@ -239,30 +240,46 @@ class _SignInScreenState extends ConsumerState<SignInScreen>
       padding: const EdgeInsets.symmetric(vertical: 12),
       child: Row(
         children: [
-          // Glassmorphic back button — only jump back to quiz if user actually started it
+          // Glassmorphic "← Back" pill — matches the back affordance on
+          // the /intro welcome panel (arrow + text label) so the two
+          // entry screens feel like one flow instead of two unrelated
+          // pages with mismatched chrome.
           GestureDetector(
             onTap: () => context.go(
               (!widget.forceReturning && quizStarted) ? '/pre-auth-quiz' : '/intro',
             ),
             child: ClipRRect(
-              borderRadius: BorderRadius.circular(22),
+              borderRadius: BorderRadius.circular(20),
               child: BackdropFilter(
                 filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
                 child: Container(
-                  width: 44,
-                  height: 44,
                   decoration: BoxDecoration(
                     color: t.isDark
                         ? Colors.white.withValues(alpha: 0.10)
                         : Colors.black.withValues(alpha: 0.06),
-                    borderRadius: BorderRadius.circular(22),
+                    borderRadius: BorderRadius.circular(20),
                     border: Border.all(
                       color: t.isDark
                           ? Colors.white.withValues(alpha: 0.18)
                           : Colors.black.withValues(alpha: 0.15),
                     ),
                   ),
-                  child: Icon(Icons.arrow_back_ios_rounded, color: t.textPrimary, size: 18),
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.arrow_back_rounded, color: t.textPrimary, size: 18),
+                      const SizedBox(width: 6),
+                      Text(
+                        'Back',
+                        style: TextStyle(
+                          color: t.textPrimary,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -339,10 +356,16 @@ class _SignInScreenState extends ConsumerState<SignInScreen>
         quizData.fitnessLevel != null ||
         quizData.daysPerWeek != null ||
         (quizData.equipment?.isNotEmpty ?? false));
-    final title = quizStarted ? 'Almost There!' : 'Welcome Back';
+    // Intro carousel now routes *everyone* here via a single "Continue"
+    // button, so the copy must work for both new sign-ups and returning
+    // sign-ins. "Let's get started" + "Sign in or create an account"
+    // stays neutral; "Continue with Google/Email" below handles both
+    // paths transparently (the backend upserts on first Google auth;
+    // the email screen has its own Sign In / Sign Up toggle).
+    final title = quizStarted ? 'Almost There!' : "Let's get started";
     final subtitle = quizStarted
         ? 'Sign in to save your personalized plan and start your fitness journey'
-        : 'Sign in to continue your fitness journey';
+        : 'Sign in or create an account to continue';
     return Column(
       children: [
         // Pulsing app icon
@@ -608,6 +631,12 @@ class _SignInScreenState extends ConsumerState<SignInScreen>
             ),
           ),
         ).animate().fadeIn(delay: 800.ms),
+
+        const SizedBox(height: 14),
+
+        // Referral code capture — stored pre-auth, auto-applied after
+        // sign-in completes (see AuthStateNotifier._flushPendingReferral).
+        const PreAuthReferralChip(),
       ],
     );
   }

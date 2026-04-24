@@ -214,6 +214,14 @@ class _QuizLimitationsState extends State<QuizLimitations> {
 
   Widget _buildLimitationChip(OnboardingTheme t, String id, String label, Duration delay) {
     final isSelected = widget.selectedLimitations.contains(id);
+    // "None" is a positive confirmation ("I have no injuries") — keep it green.
+    // All other chips represent an actual injury/limitation → render red when
+    // selected so the UI semantically reads as a caution flag, not praise.
+    final isWarning = id != 'none';
+    final selectedGradient =
+        isWarning ? t.cardWarningSelectedGradient : t.cardSelectedGradient;
+    final selectedBorder =
+        isWarning ? t.borderWarningSelected : t.borderSelected;
 
     return GestureDetector(
       onTap: () {
@@ -267,13 +275,13 @@ class _QuizLimitationsState extends State<QuizLimitations> {
                   ? LinearGradient(
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
-                      colors: t.cardSelectedGradient,
+                      colors: selectedGradient,
                     )
                   : null,
               color: isSelected ? null : t.cardFill,
               borderRadius: BorderRadius.circular(24),
               border: Border.all(
-                color: isSelected ? t.borderSelected : t.borderDefault,
+                color: isSelected ? selectedBorder : t.borderDefault,
                 width: isSelected ? 2 : 1,
               ),
             ),

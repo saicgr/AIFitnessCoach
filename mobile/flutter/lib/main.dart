@@ -16,6 +16,7 @@ import 'core/providers/subscription_provider.dart';
 import 'data/services/data_cache_service.dart';
 import 'data/services/haptic_service.dart';
 import 'data/services/image_url_cache.dart';
+import 'data/services/incoming_link_service.dart';
 import 'data/services/live_activity_service.dart';
 import 'data/services/notification_service.dart';
 import 'data/services/widget_action_headless_service.dart';
@@ -201,6 +202,15 @@ Future<void> _initNonCriticalServices(
   // a previous (possibly crashed) session.
   await LiveActivityService.instance.init().catchError((e) {
     debugPrint('⚠️ LiveActivityService initialization failed: $e');
+  });
+
+  // Universal Links / App Links ingress for referral invites. Reads
+  // cold-start URI and subscribes to warm-start stream. If the user
+  // wasn't signed-in when the link arrived, PendingReferralService
+  // holds the code until AuthStateNotifier's post-signin flush picks
+  // it up.
+  await IncomingLinkService.initialize(container).catchError((e) {
+    debugPrint('⚠️ IncomingLinkService initialization failed: $e');
   });
 
   // Warm the Drift database (non-blocking, lazy open in background)

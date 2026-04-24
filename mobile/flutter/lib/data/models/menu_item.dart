@@ -38,6 +38,13 @@ class MenuItem {
   final int? inflammationScore;
   final bool? isUltraProcessed;
 
+  /// Structured drivers of the inflammation score. 1-3 short tags like
+  /// 'deep_fried', 'refined_flour', 'added_sugar'. Powers the chip-badges
+  /// in ScoreExplainSheet when the user taps the inflammation pill.
+  /// Human labels are resolved via `InflammationTriggers.label()` in this
+  /// file so the tag strings stay stable across backend + DB + UI.
+  final List<String>? inflammationTriggers;
+
   /// Per-serving glycemic load (GI × carbs_g / 100). <10 low, 10-19 medium,
   /// 20+ high. Null = not computed (usually carb-free items like meat/oil).
   final int? glycemicLoad;
@@ -48,6 +55,11 @@ class MenuItem {
   /// Short explanation of the FODMAP trigger(s) when rating >= medium,
   /// e.g. "contains onion, garlic". Null for low-FODMAP items.
   final String? fodmapReason;
+
+  /// Grams of added sugar per serving. Excludes naturally-occurring
+  /// whole-fruit / whole-dairy sugars. WHO adult daily limit = 25 g; the
+  /// Health Strip colours its pill green / amber / red against that.
+  final double? addedSugarG;
 
   final String? coachTip;
 
@@ -85,9 +97,11 @@ class MenuItem {
     this.ratingReason,
     this.inflammationScore,
     this.isUltraProcessed,
+    this.inflammationTriggers,
     this.glycemicLoad,
     this.fodmapRating,
     this.fodmapReason,
+    this.addedSugarG,
     this.coachTip,
     this.price,
     this.currency,
@@ -133,9 +147,11 @@ class MenuItem {
       ratingReason: ratingReason,
       inflammationScore: inflammationScore,
       isUltraProcessed: isUltraProcessed,
+      inflammationTriggers: inflammationTriggers,
       glycemicLoad: glycemicLoad,
       fodmapRating: fodmapRating,
       fodmapReason: fodmapReason,
+      addedSugarG: addedSugarG,
       coachTip: coachTip,
       price: price,
       currency: currency,
@@ -173,9 +189,15 @@ class MenuItem {
       ratingReason: json['rating_reason'] as String?,
       inflammationScore: intN(json['inflammation_score']),
       isUltraProcessed: json['is_ultra_processed'] as bool?,
+      // inflammation_triggers arrives as a JSON array; tolerate null + non-list
+      // defensively so a legacy saved menu without the field doesn't crash.
+      inflammationTriggers: (json['inflammation_triggers'] as List?)
+          ?.map((e) => e.toString())
+          .toList(),
       glycemicLoad: intN(json['glycemic_load']),
       fodmapRating: json['fodmap_rating'] as String?,
       fodmapReason: json['fodmap_reason'] as String?,
+      addedSugarG: numN(json['added_sugar_g']),
       coachTip: json['coach_tip'] as String?,
       price: numN(json['price']),
       currency: json['currency'] as String?,
@@ -201,6 +223,10 @@ class MenuItem {
 
   /// Comparable extractor used by `SortSpecList.comparator` so the sheet
   /// can sort by any field without if/else forests at call sites.
+  /// Missing data defaults to a neutral midpoint so dishes without a signal
+  /// don't sort to the top/bottom and dominate the list. Ultra-processed
+  /// sorts false-first (0) so clean dishes surface when the user picks that
+  /// dimension asc; FODMAP uses the 0/1/2 rank of low/medium/high.
   Comparable<dynamic>? sortValue(SortField field) {
     switch (field) {
       case SortField.calories: return scaledCalories;
@@ -209,8 +235,21 @@ class MenuItem {
       case SortField.fat: return scaledFatG;
       case SortField.health: return _ratingRank(rating);
       case SortField.inflammation: return inflammationScore ?? 5;
+      case SortField.glycemicLoad: return glycemicLoad ?? 10;
+      case SortField.fodmap: return _fodmapRank(fodmapRating);
+      case SortField.addedSugar: return addedSugarG ?? 0.0;
+      case SortField.ultraProcessed: return (isUltraProcessed == true) ? 1 : 0;
       case SortField.price: return price;
       case SortField.weight: return scaledWeightG;
+    }
+  }
+
+  static int _fodmapRank(String? r) {
+    switch (r) {
+      case 'low': return 0;
+      case 'medium': return 1;
+      case 'high': return 2;
+      default: return 1; // unknown → neutral middle so it doesn't dominate
     }
   }
 
@@ -250,4 +289,75 @@ String displaySectionName(String section) {
     case 'uncategorized':
     default: return 'Other';
   }
+}
+
+/// Human-label + directional metadata for the canonical inflammation trigger
+/// tags Gemini emits per dish (see `MenuItem.inflammationTriggers`).
+///
+/// Tags are stored verbatim so backend + DB + UI stay in sync, but the user
+/// never sees the raw snake_case — this helper provides:
+///   • `label(tag)`  → short Title-Case string for chip badges
+///   • `isPositive(tag)` → true if the tag reflects an anti-inflammatory
+///     driver (omega-3, leafy greens, turmeric, whole grains, fermented,
+///     berries, fatty fish, olive oil) so the chip renders green instead of
+///     red; otherwise the driver is pushing the score up and renders red.
+///
+/// Unknown tags fall back to a de-snake-cased Title Case label + a neutral
+/// amber colour so free-form Gemini strings still display cleanly.
+class InflammationTriggers {
+  InflammationTriggers._();
+
+  static const Map<String, String> _labels = {
+    'deep_fried': 'Deep-fried',
+    'seed_oil': 'Seed oil',
+    'refined_flour': 'Refined flour',
+    'added_sugar': 'Added sugar',
+    'processed_meat': 'Processed meat',
+    'saturated_fat': 'Saturated fat',
+    'omega6_high': 'High omega-6',
+    'artificial_additives': 'Additives',
+    'omega3_rich': 'Omega-3 rich',
+    'leafy_greens': 'Leafy greens',
+    'olive_oil': 'Olive oil',
+    'turmeric': 'Turmeric',
+    'whole_grains': 'Whole grains',
+    'fermented': 'Fermented',
+    'berries': 'Berries',
+    'fatty_fish': 'Fatty fish',
+    // Fallback defaults written by the backend schema-sanity layer when
+    // Gemini drops the array entirely (see _apply_dish_health_fallbacks).
+    'whole_foods': 'Whole foods',
+    'mixed_ingredients': 'Mixed ingredients',
+    'processed_ingredients': 'Processed ingredients',
+  };
+
+  static const Set<String> _positiveTags = {
+    'omega3_rich',
+    'leafy_greens',
+    'olive_oil',
+    'turmeric',
+    'whole_grains',
+    'fermented',
+    'berries',
+    'fatty_fish',
+    'whole_foods',
+  };
+
+  /// Map a raw tag to its display label. Unknown tags are de-snake-cased
+  /// and Title-Cased so free-form Gemini output still reads cleanly.
+  static String label(String tag) {
+    final hit = _labels[tag.toLowerCase()];
+    if (hit != null) return hit;
+    return tag
+        .split(RegExp(r'[_\s]+'))
+        .where((w) => w.isNotEmpty)
+        .map((w) => '${w[0].toUpperCase()}${w.substring(1).toLowerCase()}')
+        .join(' ');
+  }
+
+  /// True when the tag drives inflammation DOWN (anti-inflammatory signal).
+  /// The Score Explain sheet renders positive tags in green and the rest in
+  /// red so the user can tell at a glance which ingredients are helping vs
+  /// hurting.
+  static bool isPositive(String tag) => _positiveTags.contains(tag.toLowerCase());
 }

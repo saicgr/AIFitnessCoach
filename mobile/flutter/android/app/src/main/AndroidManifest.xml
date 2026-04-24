@@ -119,6 +119,24 @@
                 <data android:scheme="fitwiz"/>
             </intent-filter>
 
+            <!-- App Links: https://fitwiz.us/invite/{code} routes through
+                 IncomingLinkService. autoVerify requires Digital Asset Links
+                 at https://fitwiz.us/.well-known/assetlinks.json (hosted via
+                 frontend/public/.well-known/ on Vercel). Bundle / package
+                 id `com.fitwiz.app` stays as-is — that's the app identity,
+                 not the web host. -->
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <category android:name="android.intent.category.BROWSABLE"/>
+                <data android:scheme="https"
+                      android:host="fitwiz.us"
+                      android:pathPrefix="/invite"/>
+                <data android:scheme="http"
+                      android:host="fitwiz.us"
+                      android:pathPrefix="/invite"/>
+            </intent-filter>
+
             <!-- Long-press app-icon shortcuts (Android 7.1+) — staged
                  alongside the meal-suggestion widget (see Settings →
                  Coming Soon). Uncomment to surface on the launcher.

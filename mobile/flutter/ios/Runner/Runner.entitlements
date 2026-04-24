@@ -20,5 +20,16 @@
 	     Personal Teams can't use this capability, and we don't need it
 	     for local-only Live Activity updates. If you upgrade to a paid
 	     Apple Developer account, re-add: aps-environment = development. -->
+	<!-- Universal Links for referral invites + future web → app handoffs.
+	     Server side: /.well-known/apple-app-site-association is hosted at
+	     https://fitwiz.us via frontend/public/.well-known/ (served by
+	     Vercel). Without that file this entitlement is inert — the app
+	     won't intercept the link and Safari will open the web page
+	     instead. Bundle ID `com.fitwiz.app` is intentional and unrelated
+	     to the web host. -->
+	<key>com.apple.developer.associated-domains</key>
+	<array>
+		<string>applinks:fitwiz.us</string>
+	</array>
 </dict>
 </plist>
