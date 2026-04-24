@@ -35,6 +35,9 @@ from .xp_models import (
     MerchClaim,
     MerchClaimListResponse,
     SubmitMerchAddressRequest,
+    ReferralApplyRequest,
+    ReferralSummaryResponse,
+    ReferralApplyResponse,
 )
 
 router = APIRouter()
@@ -126,10 +129,6 @@ CRATE_REWARDS = {
         {"type": "streak_shield", "amount": 3, "weight": 5},
     ],
 }
-
-
-class OpenCrateRequest(BaseModel):
-    crate_type: str  # 'fitness_crate' or 'premium_crate'
 
 
 @router.post("/open-crate")
@@ -224,29 +223,6 @@ async def open_crate(
 # =============================================================================
 # DAILY CRATE SYSTEM
 # =============================================================================
-
-class DailyCratesResponse(BaseModel):
-    daily_crate_available: bool = True
-    streak_crate_available: bool = False
-    activity_crate_available: bool = False
-    selected_crate: Optional[str] = None
-    reward: Optional[dict] = None
-    claimed: bool = False
-    claimed_at: Optional[str] = None
-    crate_date: str
-
-
-class ClaimDailyCrateRequest(BaseModel):
-    crate_type: str  # 'daily', 'streak', or 'activity'
-    crate_date: Optional[str] = None  # ISO date e.g. '2026-04-05'; defaults to today
-
-
-class ClaimDailyCrateResponse(BaseModel):
-    success: bool
-    crate_type: Optional[str] = None
-    reward: Optional[dict] = None
-    message: str
-
 
 @router.get("/daily-crates", response_model=DailyCratesResponse)
 async def get_daily_crates(
@@ -1339,24 +1315,6 @@ async def list_merch_claims(current_user=Depends(get_current_user)):
 # =============================================================================
 # REFERRAL PROGRAM (migration 1932)
 # =============================================================================
-
-class ReferralApplyRequest(BaseModel):
-    code: str
-
-
-class ReferralSummaryResponse(BaseModel):
-    referral_code: str
-    pending_count: int
-    qualified_count: int
-    next_milestone: Optional[int] = None
-    next_merch_type: Optional[str] = None
-
-
-class ReferralApplyResponse(BaseModel):
-    success: bool
-    message: str
-    referrer_id: Optional[str] = None
-
 
 @router.get("/referrals/summary", response_model=ReferralSummaryResponse)
 async def get_referrals_summary(current_user=Depends(get_current_user)):

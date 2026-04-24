@@ -148,6 +148,32 @@ class StructuredFormatter(logging.Formatter):
         return base_msg
 
 
+class _HealthCheckAccessFilter(logging.Filter):
+    """Drop successful health-check access logs from uvicorn.
+
+    Render's load balancer hits `GET /` every minute and various uptime
+    monitors hit `/health`, `/favicon.ico`, and `/robots.txt`. Those lines
+    crowd out real traffic. 4xx/5xx responses still pass through.
+    """
+
+    _SILENT_PATTERNS = (
+        '"GET / HTTP',
+        '"GET /health HTTP',
+        '"GET /favicon.ico HTTP',
+        '"GET /robots.txt HTTP',
+    )
+
+    def filter(self, record: logging.LogRecord) -> bool:
+        try:
+            msg = record.getMessage()
+        except Exception:
+            return True
+        if not any(p in msg for p in self._SILENT_PATTERNS):
+            return True
+        # Only silence successful responses; let errors through.
+        return not (" 200 " in msg or " 204 " in msg or " 304 " in msg)
+
+
 def setup_logging(level: str = "INFO", use_json: bool = True) -> None:
     """
     Configure root logger.
@@ -162,6 +188,13 @@ def setup_logging(level: str = "INFO", use_json: bool = True) -> None:
     # Silence noisy third-party loggers
     logging.getLogger("httpx").setLevel(logging.WARNING)
     logging.getLogger("httpcore").setLevel(logging.WARNING)
+
+    # Drop successful health-check access logs from uvicorn's access logger.
+    # These come from the worker (not our LoggingMiddleware) and look like
+    # `INFO:     1.2.3.4:0 - "GET / HTTP/1.1" 200 OK`.
+    _health_filter = _HealthCheckAccessFilter()
+    for name in ("uvicorn.access", "gunicorn.access"):
+        logging.getLogger(name).addFilter(_health_filter)
 
     # Remove existing handlers
     for handler in root_logger.handlers[:]:

@@ -20,69 +20,9 @@ logger = get_logger(__name__)
 router = APIRouter(prefix="/xp", tags=["XP & Progression"])
 
 
-# =============================================================================
-# MODELS
-# =============================================================================
-
-class DailyLoginResponse(BaseModel):
-    is_first_login: bool
-    streak_broken: bool
-    current_streak: int
-    longest_streak: int
-    total_logins: int
-    daily_xp: int
-    first_login_xp: int
-    streak_milestone_xp: int
-    total_xp_awarded: int
-    active_events: Optional[List[dict]] = None
-    multiplier: float
-    message: str
-    already_claimed: bool = False
-    # Migration 1938
-    streak_saved_by_shield: bool = False
-    shields_remaining: int = 0
-    saved_streak_count: int = 0
-
-
-class LoginStreakInfo(BaseModel):
-    current_streak: int
-    longest_streak: int
-    total_logins: int
-    last_login_date: Optional[str] = None
-    first_login_at: Optional[str] = None
-    streak_start_date: Optional[str] = None
-    has_logged_in_today: bool
-
-
-class XPEvent(BaseModel):
-    id: str
-    event_name: str
-    event_type: str
-    description: Optional[str] = None
-    xp_multiplier: float
-    start_at: datetime
-    end_at: datetime
-    is_active: bool
-    applies_to: List[str]
-    icon_name: Optional[str] = None
-    banner_color: Optional[str] = None
-
-
-class CreateEventRequest(BaseModel):
-    event_name: str = "Double XP Weekend"
-    event_type: str = "weekend_bonus"
-    multiplier: float = 2.0
-    duration_hours: int = 48
-
-
-class BonusTemplate(BaseModel):
-    id: str
-    bonus_type: str
-    base_xp: int
-    description: Optional[str] = None
-    streak_multiplier: bool
-    max_streak_multiplier: int
-    is_active: bool
+# Models live in xp_models.py; star-imported above. Do NOT re-declare them
+# here — a local redefinition silently diverges from xp_endpoints' copy and
+# breaks field validators (see process_daily_login 500, Apr 2026).
 
 
 # =============================================================================
@@ -471,18 +411,6 @@ async def increment_checkpoint_workout(
         raise safe_internal_error(e, "xp")
 
 
-class AwardGoalXPRequest(BaseModel):
-    goal_type: str  # 'weight_log', 'meal_log', 'workout_complete', 'protein_goal'
-    source_id: Optional[str] = None  # Optional ID of the source (e.g., workout ID)
-
-
-class AwardGoalXPResponse(BaseModel):
-    success: bool
-    xp_awarded: int
-    message: str
-    already_claimed: bool = False
-
-
 @router.post("/award-goal-xp", response_model=AwardGoalXPResponse)
 async def award_goal_xp(
     request: AwardGoalXPRequest,
@@ -618,17 +546,6 @@ async def award_goal_xp(
         raise safe_internal_error(e, "xp")
 
 
-class DailyGoalsStatusResponse(BaseModel):
-    weight_log: bool = False
-    meal_log: bool = False
-    workout_complete: bool = False
-    protein_goal: bool = False
-    body_measurements: bool = False
-    steps_goal: bool = False
-    hydration_goal: bool = False
-    calorie_goal: bool = False
-
-
 @router.get("/daily-goals-status", response_model=DailyGoalsStatusResponse)
 async def get_daily_goals_status(
     request: Request,
@@ -706,23 +623,6 @@ FIRST_TIME_BONUSES = {
     "first_comment": 15,
     "first_share": 25,              # First Post Shared
 }
-
-
-class FirstTimeBonusRequest(BaseModel):
-    bonus_type: str
-
-
-class FirstTimeBonusResponse(BaseModel):
-    awarded: bool
-    xp: int
-    bonus_type: str
-    message: str
-
-
-class FirstTimeBonusInfo(BaseModel):
-    bonus_type: str
-    xp_awarded: int
-    awarded_at: str
 
 
 @router.post("/award-first-time-bonus", response_model=FirstTimeBonusResponse)
@@ -882,18 +782,6 @@ async def get_available_first_time_bonuses(
 # CONSUMABLES SYSTEM
 # =============================================================================
 
-class UseConsumableRequest(BaseModel):
-    item_type: str  # 'streak_shield', 'xp_token_2x', 'fitness_crate', 'premium_crate'
-
-
-class ConsumablesResponse(BaseModel):
-    streak_shield: int = 0
-    xp_token_2x: int = 0
-    fitness_crate: int = 0
-    premium_crate: int = 0
-    active_2x_until: Optional[str] = None
-
-
 @router.get("/consumables", response_model=ConsumablesResponse)
 async def get_consumables(
     current_user=Depends(get_current_user)
@@ -947,22 +835,6 @@ async def get_consumables(
 # =============================================================================
 # WEEKLY SUMMARY — hero metric for the XP card (Phase 2b)
 # =============================================================================
-
-
-class WeeklySummaryResponse(BaseModel):
-    """Weekly XP snapshot powering the XP-card hero row.
-
-    * `this_week_xp` / `last_week_xp` frame the delta chip.
-    * `sparkline_7day` gives seven values — index 0 = six days ago (oldest),
-      index 6 = today. Always exactly seven entries so the frontend can
-      render a fixed-width sparkline without padding logic.
-    * `next_nudge` is a short key the UI maps to copy like
-      "Log breakfast = +20 XP". Empty string if nothing useful is pending.
-    """
-    this_week_xp: int
-    last_week_xp: int
-    sparkline_7day: List[int]
-    next_nudge: str
 
 
 @router.get("/weekly-summary", response_model=WeeklySummaryResponse)
@@ -1068,20 +940,6 @@ async def get_weekly_xp_summary(
 # =============================================================================
 # NEXT LEVEL PREVIEW — what's on the other side of the progress bar
 # =============================================================================
-
-
-class NextLevelRewardBlock(BaseModel):
-    kind: str            # 'functional' | 'cosmetic' | 'merch' | 'pricing'
-    label: str           # Human-readable reward name
-    icon: str            # Material icon key — maps to a Flutter Icons entry
-    tier: str            # 'silver' | 'gold' | 'platinum' — drives card styling
-
-
-class NextLevelPreviewResponse(BaseModel):
-    level: int
-    xp_in_level: int
-    xp_to_next: int
-    reward: NextLevelRewardBlock
 
 
 # Config-driven reward catalogue. Keyed by the *next* level (i.e. what the

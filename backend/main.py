@@ -143,6 +143,11 @@ class LoggingMiddleware:
         re.IGNORECASE,
     )
 
+    # Paths hit by infra (Render health checks, uptime monitors, browsers
+    # requesting icons). Successful GETs on these are suppressed from INFO
+    # logs to keep the stream readable; failures still log at WARN/ERROR.
+    _SILENT_GET_PATHS = frozenset({"/", "/health", "/favicon.ico", "/robots.txt"})
+
     def __init__(self, app: ASGIApp):
         self.app = app
 
@@ -187,11 +192,14 @@ class LoggingMiddleware:
         if raw_user_id:
             sentry_set_user(raw_user_id)
 
+        is_silent = method == "GET" and path in self._SILENT_GET_PATHS
+
         # Log request
         log_msg = f"{method} {path}"
         if query:
             log_msg += f"?{query}"
-        logger.info(log_msg)
+        if not is_silent:
+            logger.info(log_msg)
 
         status_code = 500  # default in case send never called
 
@@ -209,7 +217,8 @@ class LoggingMiddleware:
             await self.app(scope, receive, send_with_logging)
             duration = (time.time() - start_time) * 1000
             if status_code < 400 or status_code == 404:
-                logger.info(f"Response: {status_code} ({duration:.0f}ms)")
+                if not is_silent:
+                    logger.info(f"Response: {status_code} ({duration:.0f}ms)")
             elif status_code >= 500:
                 logger.error(f"Response: {status_code} ({duration:.0f}ms)")
             else:
