@@ -23,6 +23,7 @@ from core.config import get_settings
 from core.logger import get_logger
 from models.gemini_schemas import FoodAnalysisResponse
 from services.gemini.constants import gemini_generate_with_retry
+from services.gemini.nutrition import compute_meal_inflammation
 
 logger = get_logger(__name__)
 settings = get_settings()
@@ -564,7 +565,13 @@ Guidelines:
 
             if analysis_mode == "buffet":
                 prompt = f"""Analyze this buffet/food spread. Identify EVERY distinct dish visible — do not skip any.
-For each dish: name, calories, protein_g, carbs_g, fat_g per single serving, serving_description, rating ("green"/"yellow"/"red") for the user's goals with a brief reason (≤ 8 words), inflammation_score (0-10; 0-3 anti-inflammatory, 4-6 neutral/mild, 7-10 highly inflammatory — consider processing, omega-6 load, refined sugar, saturated fat, additives), and coach_tip (one crisp sentence ≤ 18 words: when to pick it or a smart swap, tailored to the user's nutrition context).
+
+CRITICAL RULES:
+1. NUTRITION MUST NOT BE ROUND — derive calories from realistic portion weight (weight_g × kcal/g). Acceptable: 387, 462, 518. NOT acceptable: 400, 450, 500 every time. Decimal precision for macros (42.6 not 40.0).
+2. ALWAYS include weight_g — your best estimate of the single-serving weight in grams.
+3. DETECT allergens per FDA Big 9 — fill detected_allergens as an array using any of: "milk", "egg", "fish", "crustacean_shellfish", "tree_nuts", "wheat", "peanuts", "soybeans", "sesame".
+
+For each dish also emit: name, calories, protein_g, carbs_g, fat_g per single serving, serving_description, rating ("green"/"yellow"/"red") for the user's goals with a brief reason (≤ 8 words), inflammation_score (0-10; 0-3 anti-inflammatory, 4-6 neutral/mild, 7-10 highly inflammatory — consider processing, omega-6 load, refined sugar, saturated fat, additives), and coach_tip (one crisp sentence ≤ 18 words: when to pick it or a smart swap, tailored to the user's nutrition context).
 {nutrition_ctx_str}{user_ctx_str}
 
 Return ONLY this JSON, no other keys:
@@ -572,23 +579,33 @@ Return ONLY this JSON, no other keys:
     "analysis_type": "buffet",
     "dishes": [
         {{
-            "name": "dish name",
-            "calories": 0,
-            "protein_g": 0.0,
-            "carbs_g": 0.0,
-            "fat_g": 0.0,
-            "serving_description": "estimated serving size",
-            "rating": "green",
-            "rating_reason": "short reason",
-            "inflammation_score": 0,
-            "coach_tip": "short sentence"
+            "name": "Chicken Biryani",
+            "calories": 538,
+            "protein_g": 28.4,
+            "carbs_g": 62.1,
+            "fat_g": 19.3,
+            "weight_g": 240,
+            "serving_description": "1 cup, heaping",
+            "detected_allergens": ["milk"],
+            "rating": "yellow",
+            "rating_reason": "balanced, watch the ghee",
+            "inflammation_score": 4,
+            "coach_tip": "Decent option; take half portion + extra protein."
         }}
     ]
 }}"""
 
             elif analysis_mode == "menu":
                 prompt = f"""Analyze this restaurant menu. OCR extract EVERY dish across ALL sections — do not skip any, do not truncate.
-For each dish: name, calories, protein_g, carbs_g, fat_g (estimate from description), price (number or null), rating ("green"/"yellow"/"red") for the user's goals with a brief reason (≤ 8 words), inflammation_score (0-10; 0-3 anti-inflammatory, 4-6 neutral/mild, 7-10 highly inflammatory), and coach_tip (≤ 18 words, tailored to user's goals — pick-or-skip with why).
+
+CRITICAL RULES:
+1. NUTRITION MUST NOT BE ROUND — derive calories from realistic portion weight (weight_g × kcal/g). Acceptable values: 387, 462, 518. NOT acceptable: 400, 450, 500 every time. Same rule for protein_g / carbs_g / fat_g — decimal precision expected (e.g. 42.6, not 40.0).
+2. ALWAYS include weight_g — your best estimate of the dish's serving weight in grams (typical restaurant portions: naan 80-100g, curry bowl 200-300g, rice 150-250g, entrée protein 150-250g, salad 150-250g, soup 240-300g).
+3. NORMALIZE section_name to ONE of: "breakfast" | "appetizers" | "mains" | "sides" | "desserts" | "drinks" | "specials" | "uncategorized". Map restaurant labels like "Starters" → "appetizers", "Entrées" → "mains", "Beverages" → "drinks".
+4. EXTRACT price as a number when visible on the menu (keep the currency in a "currency" string like "USD" / "INR" / "EUR"). Return null ONLY if truly not shown.
+5. DETECT allergens per FDA Big 9 — fill detected_allergens as an array using any of: "milk", "egg", "fish", "crustacean_shellfish", "tree_nuts", "wheat", "peanuts", "soybeans", "sesame". Infer from dish description (e.g. "Shrimp Pad Thai" → ["crustacean_shellfish", "peanuts", "soybeans"]).
+
+For each dish also emit: rating ("green"/"yellow"/"red") for the user's goals with a brief reason (≤ 8 words), inflammation_score (0-10; 0-3 anti-inflammatory, 4-6 neutral/mild, 7-10 highly inflammatory), and coach_tip (≤ 18 words, tailored to user's goals — pick-or-skip with why).
 {nutrition_ctx_str}{user_ctx_str}
 
 Return ONLY this JSON, no other keys:
@@ -596,19 +613,22 @@ Return ONLY this JSON, no other keys:
     "analysis_type": "menu",
     "sections": [
         {{
-            "section_name": "section name",
+            "section_name": "mains",
             "dishes": [
                 {{
-                    "name": "dish name",
-                    "price": null,
-                    "calories": 0,
-                    "protein_g": 0.0,
-                    "carbs_g": 0.0,
-                    "fat_g": 0.0,
+                    "name": "Tandoori Chicken Half",
+                    "price": 14.95,
+                    "currency": "USD",
+                    "calories": 487,
+                    "protein_g": 48.3,
+                    "carbs_g": 6.2,
+                    "fat_g": 28.7,
+                    "weight_g": 220,
+                    "detected_allergens": ["milk"],
                     "rating": "green",
-                    "rating_reason": "short reason",
-                    "inflammation_score": 0,
-                    "coach_tip": "short sentence"
+                    "rating_reason": "high protein, moderate fat",
+                    "inflammation_score": 2,
+                    "coach_tip": "Hits your protein target; skip the naan if possible."
                 }}
             ]
         }}
@@ -618,14 +638,18 @@ Return ONLY this JSON, no other keys:
             else:
                 # plate mode (default)
                 if cache_name:
-                    # Dynamic-only prompt (plate schema + guidelines are in cache)
+                    # Dynamic-only prompt (plate schema + guidelines are in cache).
+                    # The cached system-instruction covers health score + portion
+                    # rules; the inflammation rubric is in the cache too as of the
+                    # nutrition_analysis_v1 build. Dynamic prompt just has to name
+                    # the fields so the model doesn't silently drop them.
                     prompt = f"""Analyze these food images and provide detailed nutrition estimates.
 Identify all food items across all images.
 
 Current time suggests this is likely {suggested_meal}.
 {nutrition_ctx_str}{user_ctx_str}
 
-Use the plate analysis JSON schema from your cached reference. Return valid JSON."""
+Use the plate analysis JSON schema from your cached reference. REQUIRED fields per food_item: name, amount, calories, protein_g, carbs_g, fat_g, fiber_g, weight_g, inflammation_score (1-10), is_ultra_processed (bool). REQUIRED meal-level fields: total_calories, total_protein_g, total_carbs_g, total_fat_g, total_fiber_g, health_score (1-10), inflammation_score (1-10, calorie-weighted average of items), is_ultra_processed (true if meal is predominantly NOVA Group 4), feedback. Return valid JSON."""
                 else:
                     prompt = f"""Analyze these food images and provide detailed nutrition estimates.
 Identify all food items across all images.
@@ -644,7 +668,11 @@ Return ONLY valid JSON with this exact structure:
             "calories": 0,
             "protein_g": 0.0,
             "carbs_g": 0.0,
-            "fat_g": 0.0
+            "fat_g": 0.0,
+            "fiber_g": 0.0,
+            "weight_g": 0,
+            "inflammation_score": 5,
+            "is_ultra_processed": false
         }}
     ],
     "total_calories": 0,
@@ -653,12 +681,24 @@ Return ONLY valid JSON with this exact structure:
     "total_fat_g": 0.0,
     "total_fiber_g": 0.0,
     "health_score": 5,
+    "inflammation_score": 5,
+    "is_ultra_processed": false,
     "feedback": "Brief coaching feedback"
 }}
 
 Guidelines:
 - Be realistic with portion estimates
 - Health score: 1-3 (poor), 4-6 (average), 7-8 (good), 9-10 (excellent)
+- Inflammation score (1-10, 10 = most inflammatory):
+  1-2 strongly anti-inflammatory (wild salmon, turmeric, berries, leafy greens, olive oil)
+  3-4 mildly anti-inflammatory (most vegetables, whole grains, nuts, legumes, plain yogurt)
+  5 neutral (plain eggs, plain rice, plain chicken breast, milk)
+  6-7 mildly inflammatory (white bread, red meat, cheese, fried foods, butter)
+  8-9 moderately inflammatory (processed meats, fast food, sugary drinks, packaged snacks, instant noodles)
+  10 highly inflammatory (deep-fried ultra-processed combos, trans-fat items, candy+soda meals)
+- is_ultra_processed: true if the food would be NOVA Group 4 (industrial emulsifiers, hydrogenated oils, artificial sweeteners, HFCS, protein isolates, modified starches). Homemade/whole foods are false.
+- Meal-level inflammation_score = calorie-weighted average of per-item scores, rounded to nearest int.
+- Meal-level is_ultra_processed = true if any item is ultra-processed AND their combined calories dominate.
 - Feedback should be constructive and encouraging"""
 
             # Step 5: Call Gemini with all images.
@@ -721,6 +761,24 @@ Guidelines:
                 result["carbs_g"] = result.get("total_carbs_g", 0.0)
                 result["fat_g"] = result.get("total_fat_g", 0.0)
                 result["fiber_g"] = result.get("total_fiber_g", 0.0)
+
+                # Meal-level inflammation fallback. Gemini sometimes fills
+                # per-item scores but drops the meal-level aggregate on
+                # plate mode (especially with the cached schema). Compute
+                # the calorie-weighted average from per-item scores when
+                # meal-level is null so the client can always show the badge.
+                items = result.get("food_items") or []
+                if result.get("inflammation_score") is None:
+                    meal_infl, meal_upf = compute_meal_inflammation(items)
+                    if meal_infl is not None:
+                        result["inflammation_score"] = meal_infl
+                    if result.get("is_ultra_processed") is None and meal_upf is not None:
+                        result["is_ultra_processed"] = meal_upf
+                if result.get("inflammation_score") is None:
+                    logger.warning(
+                        f"[vision_analyze_food_s3] inflammation_score null after fallback; "
+                        f"items={len(items)} mode={analysis_mode}"
+                    )
 
             result["analysis_type"] = analysis_mode
             logger.info(f"Multi-image food analysis complete: mode={analysis_mode}")

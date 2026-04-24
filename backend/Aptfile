@@ -7,3 +7,5 @@ libffi-dev
 shared-mime-info
 fonts-liberation
 fonts-dejavu
+# python-magic MIME sniffer (workout-history import format detection).
+libmagic1

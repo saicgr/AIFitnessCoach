@@ -9,6 +9,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/animations/app_animations.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/theme/theme_colors.dart';
+import '../../core/providers/subscription_provider.dart';
 import '../../core/providers/window_mode_provider.dart';
 import '../../core/providers/workout_mini_player_provider.dart';
 import '../../data/models/home_layout.dart';
@@ -192,6 +193,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     if (state == AppLifecycleState.resumed) {
       // Auto-refresh when returning to app (with rate limiting)
       _autoRefreshIfNeeded();
+      // Pull latest CustomerInfo from RevenueCat so subscription state
+      // reflects any out-of-app changes the user made (e.g. cancelling
+      // from Google Play's Subscriptions page while the app was
+      // backgrounded). Internally 30s-debounced — safe to fire often.
+      unawaited(
+        ref.read(subscriptionProvider.notifier).refreshFromRevenueCat(),
+      );
     }
   }
 

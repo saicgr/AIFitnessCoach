@@ -55,6 +55,61 @@ _PORTABILITY_TABLES: List[Dict[str, Any]] = [
 ]
 
 
+# Category catalog shared with the frontend. Each key maps to the set of
+# output files (CSV name / JSON field / Excel sheet / Parquet file) that
+# belong to it. `profile` is always emitted — the export is useless without
+# the user record.
+#
+# When adding a table, list it under exactly one category so toggle state is
+# unambiguous. Keys must stay in sync with
+# mobile/flutter/lib/data/models/export_categories.dart.
+EXPORT_CATEGORIES: Dict[str, List[str]] = {
+    "workouts": [
+        "workouts",
+        "workout_logs",
+        "exercise_sets",        # derived from performance_logs
+        "workouts_strong",      # derived from workouts + performance_logs
+    ],
+    "strength": ["strength_records"],
+    "body": ["body_metrics", "user_measurements"],
+    "achievements": ["achievements", "streaks"],
+    "nutrition": ["food_logs", "nutrition_summaries", "water_intake"],
+    "chat": ["chat_history"],
+    "photos": ["progress_photos"],
+    "health": [
+        "injuries",
+        "mood_logs",
+        "hormonal_logs",
+        "kegel_logs",
+        "cardio_logs",
+    ],
+    "goals": ["habits", "habit_completions", "personal_goals"],
+    "custom": ["custom_exercises", "user_ai_settings"],
+}
+
+ALL_CATEGORY_KEYS = set(EXPORT_CATEGORIES.keys())
+
+
+def _parse_categories(categories: Optional[str]) -> set:
+    """Parse a comma-separated categories query param into a set of keys.
+
+    None / empty → all categories. Unknown keys are ignored silently so a
+    typo or stale client cannot break export for everyone.
+    """
+    if not categories:
+        return set(ALL_CATEGORY_KEYS)
+    requested = {c.strip() for c in categories.split(",") if c.strip()}
+    return requested & ALL_CATEGORY_KEYS or set(ALL_CATEGORY_KEYS)
+
+
+def _files_for_categories(selected: set) -> set:
+    """Flatten the category catalog into the set of output file keys."""
+    allowed: set = set()
+    for key in selected:
+        allowed.update(EXPORT_CATEGORIES.get(key, []))
+    return allowed
+
+
 def _fetch_portability_table(
     db,
     user_id: str,
@@ -148,6 +203,7 @@ def export_user_data(
     user_id: str,
     start_date: Optional[str] = None,
     end_date: Optional[str] = None,
+    categories: Optional[str] = None,
 ) -> bytes:
     """
     Export all user data to a ZIP file containing CSV files.
@@ -156,11 +212,18 @@ def export_user_data(
         user_id: The user ID to export data for
         start_date: Optional start date filter (YYYY-MM-DD format)
         end_date: Optional end date filter (YYYY-MM-DD format)
+        categories: Optional comma-separated category keys (see
+            EXPORT_CATEGORIES). None/empty → include all.
 
     Returns the ZIP file as bytes.
     """
     total_start = time.time()
-    logger.info(f"🔄 Starting data export for user: {user_id}, date_range: {start_date} to {end_date}")
+    selected = _parse_categories(categories)
+    allowed_files = _files_for_categories(selected)
+    logger.info(
+        f"🔄 Starting data export for user: {user_id}, "
+        f"date_range: {start_date} to {end_date}, categories: {sorted(selected)}"
+    )
 
     db = get_supabase_db()
 
@@ -240,55 +303,66 @@ def export_user_data(
     with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
         export_counts = {}
 
+        def _include(file_key: str) -> bool:
+            return file_key in allowed_files
+
         # 1. Profile data (always included, no date filter)
         profile_csv = _export_profile(user)
         zip_file.writestr("profile.csv", profile_csv)
         export_counts["profile"] = 1
 
         # 2. Body metrics
-        metrics_csv = _export_body_metrics(results["metrics"])
-        zip_file.writestr("body_metrics.csv", metrics_csv)
-        export_counts["body_metrics"] = len(results["metrics"])
+        if _include("body_metrics"):
+            metrics_csv = _export_body_metrics(results["metrics"])
+            zip_file.writestr("body_metrics.csv", metrics_csv)
+            export_counts["body_metrics"] = len(results["metrics"])
 
         # 3. Workouts
-        workouts_csv = _export_workouts(results["workouts"])
-        zip_file.writestr("workouts.csv", workouts_csv)
-        export_counts["workouts"] = len(results["workouts"])
+        if _include("workouts"):
+            workouts_csv = _export_workouts(results["workouts"])
+            zip_file.writestr("workouts.csv", workouts_csv)
+            export_counts["workouts"] = len(results["workouts"])
 
         # 4. Workout logs
-        logs_csv = _export_workout_logs(results["workout_logs"])
-        zip_file.writestr("workout_logs.csv", logs_csv)
-        export_counts["workout_logs"] = len(results["workout_logs"])
+        if _include("workout_logs"):
+            logs_csv = _export_workout_logs(results["workout_logs"])
+            zip_file.writestr("workout_logs.csv", logs_csv)
+            export_counts["workout_logs"] = len(results["workout_logs"])
 
         # 5. Performance logs (exercise sets) — FitWiz-native schema
-        sets_csv = _export_exercise_sets(results["performance_logs"])
-        zip_file.writestr("exercise_sets.csv", sets_csv)
-        export_counts["exercise_sets"] = len(results["performance_logs"])
+        if _include("exercise_sets"):
+            sets_csv = _export_exercise_sets(results["performance_logs"])
+            zip_file.writestr("exercise_sets.csv", sets_csv)
+            export_counts["exercise_sets"] = len(results["performance_logs"])
 
         # 5b. Strong-compatible CSV — same data, Hevy-importable schema.
         # Shipped alongside (not instead of) the native format so users can
         # pick the tool chain that fits: FitWiz import for round-trip,
         # workouts_strong.csv for migrating to Hevy / community parsers.
-        strong_csv = _export_workouts_strong_format(
-            results["workouts"], results["performance_logs"]
-        )
-        zip_file.writestr("workouts_strong.csv", strong_csv)
-        export_counts["workouts_strong"] = len(results["performance_logs"])
+        if _include("workouts_strong"):
+            strong_csv = _export_workouts_strong_format(
+                results["workouts"], results["performance_logs"]
+            )
+            zip_file.writestr("workouts_strong.csv", strong_csv)
+            export_counts["workouts_strong"] = len(results["performance_logs"])
 
         # 6. Strength records
-        strength_csv = _export_strength_records(results["strength_records"])
-        zip_file.writestr("strength_records.csv", strength_csv)
-        export_counts["strength_records"] = len(results["strength_records"])
+        if _include("strength_records"):
+            strength_csv = _export_strength_records(results["strength_records"])
+            zip_file.writestr("strength_records.csv", strength_csv)
+            export_counts["strength_records"] = len(results["strength_records"])
 
         # 7. Achievements
-        achievements_csv = _export_achievements(results["achievements"])
-        zip_file.writestr("achievements.csv", achievements_csv)
-        export_counts["achievements"] = len(results["achievements"])
+        if _include("achievements"):
+            achievements_csv = _export_achievements(results["achievements"])
+            zip_file.writestr("achievements.csv", achievements_csv)
+            export_counts["achievements"] = len(results["achievements"])
 
         # 8. Streaks
-        streaks_csv = _export_streaks(results["streaks"])
-        zip_file.writestr("streaks.csv", streaks_csv)
-        export_counts["streaks"] = len(results["streaks"])
+        if _include("streaks"):
+            streaks_csv = _export_streaks(results["streaks"])
+            zip_file.writestr("streaks.csv", streaks_csv)
+            export_counts["streaks"] = len(results["streaks"])
 
         # 9. Everything else required for GDPR Art. 20 completeness.
         # Each table is dumped as SELECT * -> CSV so we never silently
@@ -296,6 +370,8 @@ def export_user_data(
         logger.info("📊 Fetching portability tables (chat, food, photos, etc.)...")
         extra = _collect_portability_tables(user_id, start_date, end_date)
         for table_name, rows in extra.items():
+            if not _include(table_name):
+                continue
             zip_file.writestr(f"{table_name}.csv", _rows_to_csv(rows))
             export_counts[table_name] = len(rows)
 
@@ -354,14 +430,19 @@ def export_user_data_json(
     user_id: str,
     start_date: Optional[str] = None,
     end_date: Optional[str] = None,
+    categories: Optional[str] = None,
 ) -> dict:
     """
     Export all user data as a JSON-serializable dict.
 
-    Returns dict with all data categories as lists of dicts.
+    Returns dict with all data categories as lists of dicts. Keys outside
+    `categories` are omitted entirely (not emptied) so the payload reflects
+    the user's choice.
     """
     total_start = time.time()
-    logger.info(f"Starting JSON export for user: {user_id}")
+    selected = _parse_categories(categories)
+    allowed_files = _files_for_categories(selected)
+    logger.info(f"Starting JSON export for user: {user_id}, categories: {sorted(selected)}")
 
     user, results = _query_all_data(user_id, start_date, end_date)
 
@@ -378,8 +459,11 @@ def export_user_data_json(
     # so the JSON export satisfies GDPR Art. 20 in full.
     extra = _collect_portability_tables(user_id, start_date, end_date)
 
-    export = {
-        "profile": user,
+    # Profile is always included. Every other field is gated by the
+    # category selection so the JSON payload actually reflects the user's
+    # toggles — returning an empty list would imply "you have no data" which
+    # is misleading when the data just wasn't requested.
+    candidates = {
         "body_metrics": results["metrics"],
         "workouts": results["workouts"],
         "workout_logs": results["workout_logs"],
@@ -387,8 +471,6 @@ def export_user_data_json(
         "strength_records": results["strength_records"],
         "achievements": results["achievements"],
         "streaks": results["streaks"],
-        # Full-fidelity portability data. Tables that don't exist in this
-        # environment simply appear as empty lists.
         "chat_history": extra.get("chat_history", []),
         "food_logs": extra.get("food_logs", []),
         "progress_photos": extra.get("progress_photos", []),
@@ -405,19 +487,25 @@ def export_user_data_json(
         "custom_exercises": extra.get("custom_exercises", []),
         "water_intake": extra.get("water_intake", []),
         "mood_logs": extra.get("mood_logs", []),
-        "metadata": {
-            "export_version": EXPORT_VERSION,
-            "exported_at": datetime.utcnow().isoformat() + "Z",
-            "app_version": APP_VERSION,
-            "original_user_id": user_id,
-            "filter_start_date": start_date,
-            "filter_end_date": end_date,
-            "coverage_note": (
-                "This export includes every table containing your personal "
-                "data as required by GDPR Art. 20. Tables not applicable "
-                "to your account appear as empty lists."
-            ),
-        },
+    }
+    export: dict = {"profile": user}
+    for key, value in candidates.items():
+        if key in allowed_files:
+            export[key] = value
+
+    export["metadata"] = {
+        "export_version": EXPORT_VERSION,
+        "exported_at": datetime.utcnow().isoformat() + "Z",
+        "app_version": APP_VERSION,
+        "original_user_id": user_id,
+        "filter_start_date": start_date,
+        "filter_end_date": end_date,
+        "selected_categories": sorted(selected),
+        "coverage_note": (
+            "This export includes every table containing your personal "
+            "data as required by GDPR Art. 20. Tables not applicable "
+            "to your account appear as empty lists."
+        ),
     }
 
     logger.info(f"JSON export complete for user {user_id} in {time.time() - total_start:.2f}s")
@@ -428,6 +516,7 @@ def export_user_data_excel(
     user_id: str,
     start_date: Optional[str] = None,
     end_date: Optional[str] = None,
+    categories: Optional[str] = None,
 ) -> bytes:
     """
     Export all user data as an Excel (.xlsx) file with one sheet per data type.
@@ -435,7 +524,9 @@ def export_user_data_excel(
     Returns .xlsx bytes.
     """
     total_start = time.time()
-    logger.info(f"Starting Excel export for user: {user_id}")
+    selected = _parse_categories(categories)
+    allowed_files = _files_for_categories(selected)
+    logger.info(f"Starting Excel export for user: {user_id}, categories: {sorted(selected)}")
 
     user, results = _query_all_data(user_id, start_date, end_date)
 
@@ -444,7 +535,7 @@ def export_user_data_excel(
 
     output = io.BytesIO()
     with pd.ExcelWriter(output, engine="openpyxl") as writer:
-        # Profile
+        # Profile (always included)
         pd.DataFrame([user]).to_excel(writer, sheet_name="profile", index=False)
 
         # Data categories
@@ -464,6 +555,8 @@ def export_user_data_excel(
             sheet_map[safe_name] = rows
 
         for sheet_name, data in sheet_map.items():
+            if sheet_name not in allowed_files:
+                continue
             df = pd.DataFrame(data) if data else pd.DataFrame()
             df.to_excel(writer, sheet_name=sheet_name, index=False)
 
@@ -476,6 +569,7 @@ def export_user_data_parquet(
     user_id: str,
     start_date: Optional[str] = None,
     end_date: Optional[str] = None,
+    categories: Optional[str] = None,
 ) -> bytes:
     """
     Export all user data as a ZIP of Parquet files (one per data type).
@@ -483,7 +577,9 @@ def export_user_data_parquet(
     Returns ZIP bytes.
     """
     total_start = time.time()
-    logger.info(f"Starting Parquet export for user: {user_id}")
+    selected = _parse_categories(categories)
+    allowed_files = _files_for_categories(selected)
+    logger.info(f"Starting Parquet export for user: {user_id}, categories: {sorted(selected)}")
 
     user, results = _query_all_data(user_id, start_date, end_date)
 
@@ -491,7 +587,7 @@ def export_user_data_parquet(
 
     zip_buffer = io.BytesIO()
     with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zf:
-        # Profile
+        # Profile (always included)
         df = pd.DataFrame([user])
         buf = io.BytesIO()
         df.to_parquet(buf, engine="pyarrow", index=False)
@@ -510,6 +606,8 @@ def export_user_data_parquet(
         file_map.update(extra)
 
         for name, data in file_map.items():
+            if name not in allowed_files:
+                continue
             df = pd.DataFrame(data) if data else pd.DataFrame()
             buf = io.BytesIO()
             df.to_parquet(buf, engine="pyarrow", index=False)

@@ -81,6 +81,13 @@ class _StackedBannerPanelState extends ConsumerState<StackedBannerPanel>
   // Week 1 tip same-day dismiss state
   bool _week1TipDismissedToday = false;
 
+  // Daily crate same-day dismiss state. Without this the crate banner
+  // re-appeared every app restart because the session-only
+  // `stackedBannerControllerProvider` loses state when the widget tree is
+  // rebuilt from scratch. Persisted per-day so the banner naturally comes
+  // back tomorrow if a new crate is still unclaimed.
+  bool _dailyCrateDismissedToday = false;
+
   // Session flag: when dismiss-all is used, suppress ALL banners until
   // the widget is remounted (e.g. user navigates away and back).
   bool _allBannersDismissed = false;
@@ -162,6 +169,11 @@ class _StackedBannerPanelState extends ConsumerState<StackedBannerPanel>
     // Check if week1 tip was dismissed today
     final week1Dismissed = prefs.getString('week1_tip_dismissed_$todayKey');
 
+    // Check if the daily-crate banner was dismissed today. Uses the same
+    // per-day key pattern as week1 so the banner naturally re-appears
+    // tomorrow if a new crate is still unclaimed.
+    final dailyCrateDismissed = prefs.getBool('daily_crate_dismissed_$todayKey') ?? false;
+
     // Discord community banner state
     final discordJoined = prefs.getBool('discord_joined') ?? false;
     final discordDismissedStr = prefs.getString('discord_banner_dismissed');
@@ -185,6 +197,7 @@ class _StackedBannerPanelState extends ConsumerState<StackedBannerPanel>
         _wrappedDismissedMap = wrappedMap;
         _dismissedMissedWorkoutIds = prunedMissedIds.toSet();
         _week1TipDismissedToday = week1Dismissed != null;
+        _dailyCrateDismissedToday = dailyCrateDismissed;
         _discordJoined = discordJoined;
         _discordLastShown = discordLastShown;
         _instagramFollowed = instagramFollowed;
@@ -270,8 +283,11 @@ class _StackedBannerPanelState extends ConsumerState<StackedBannerPanel>
     // 4. Daily crate (includes accumulated unclaimed crates)
     final showCrate = ref.watch(showDailyCrateBannerProvider);
     final unclaimedCount = ref.watch(unclaimedCratesCountProvider);
-    // Show banner if today's crate is available OR there are past unclaimed crates
-    if (showCrate || unclaimedCount > 0) {
+    // Show banner if today's crate is available OR there are past unclaimed
+    // crates — UNLESS the user explicitly dismissed it today, in which case
+    // it stays hidden until tomorrow (the per-day SharedPreferences key
+    // automatically expires on date rollover).
+    if ((showCrate || unclaimedCount > 0) && !_dailyCrateDismissedToday) {
       final displayCount = unclaimedCount > 0 ? unclaimedCount : 1;
       banners.add(BannerCardData(
         type: BannerType.dailyCrate,
@@ -911,6 +927,16 @@ class _StackedBannerPanelState extends ConsumerState<StackedBannerPanel>
       final todayKey = '${today.year}-${today.month}-${today.day}';
       await prefs.setString('week1_tip_dismissed_$todayKey', banner.id);
       if (mounted) setState(() => _week1TipDismissedToday = true);
+    } else if (banner.type == BannerType.dailyCrate) {
+      // Persist dismissal for today only — the same per-day key pattern as
+      // week1 tips. Without this the daily crate banner reappeared on every
+      // app restart because the in-session
+      // `stackedBannerControllerProvider` was the only thing remembering it.
+      final prefs = await SharedPreferences.getInstance();
+      final today = DateTime.now();
+      final todayKey = '${today.year}-${today.month}-${today.day}';
+      await prefs.setBool('daily_crate_dismissed_$todayKey', true);
+      if (mounted) setState(() => _dailyCrateDismissedToday = true);
     } else if (banner.type == BannerType.missedWorkout) {
       final prefs = await SharedPreferences.getInstance();
       _dismissedMissedWorkoutIds.add(banner.id);

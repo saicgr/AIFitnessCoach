@@ -356,10 +356,20 @@ List<RouteBase> _workoutRoutes() => [
         },
       ),
 
-      // Trophy Room - View all trophies with XP/Level progress
+      // Trophy Room - Flat catalogue of all trophies (legacy grid view).
+      // New entry point is /badge-hub, but /trophy-room stays as the
+      // "all available badges" footer link so deep links from older
+      // notifications / share URLs don't 404.
       GoRoute(
         path: '/trophy-room',
         builder: (context, state) => const TrophyRoomScreen(),
+      ),
+
+      // Badge Hub — Garmin-style gallery (MY BADGES / IN PROGRESS /
+      // CHALLENGES / PERSONAL BESTS / MASTERIES / ALL AVAILABLE).
+      GoRoute(
+        path: '/badge-hub',
+        builder: (context, state) => const BadgeHubScreen(),
       ),
 
       // XP Leaderboard

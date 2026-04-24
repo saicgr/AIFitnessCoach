@@ -18,12 +18,15 @@ import '../../widgets/app_snackbar.dart';
 import '../../widgets/dismissed_banners_section.dart';
 import '../../widgets/glass_sheet.dart';
 import '../settings/sections/logout_section.dart';
-import '../settings/dialogs/export_dialog.dart';
-import '../settings/dialogs/import_dialog.dart';
 import '../workouts/widgets/exercise_preferences_card.dart';
 import 'widgets/nutrition_fasting_card.dart';
 import 'widgets/widgets.dart';
 import '../../data/providers/synced_workouts_provider.dart';
+import '../../data/models/workout.dart';
+import '../../core/constants/synced_workout_kinds.dart';
+import '../../core/theme/accent_color_provider.dart';
+import '../../widgets/synced/kind_avatar.dart';
+import '../../widgets/synced/metric_chip.dart';
 import 'synced_workout_detail_screen.dart';
 
 part 'profile_screen_part_account_row_data.dart';
@@ -444,6 +447,13 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   }
 
   // --- Your Data group card ---
+  //
+  // Export / Import / Workout-history-import previously lived here *and* on
+  // Privacy & Data — three entry points to the same dialogs. The Privacy &
+  // Data screen is the canonical home (it owns the Data Management
+  // section), so this group is now a single deep-link row. Workout-history
+  // import is a frequently-used flow for new users, so it gets its own row
+  // rather than being buried one tap deeper.
   Widget _buildYourDataGroupCard(
     bool isDark,
     Color elevated,
@@ -451,20 +461,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     Color textPrimary,
     Color textMuted,
   ) {
-    final accentColor = isDark ? AppColors.info : AppColorsLight.info;
-
     final rows = [
       _AccountRowData(
-        icon: Icons.file_download_outlined,
-        iconColor: accentColor,
-        title: 'Export Data',
-        onTap: () => showExportDialog(context, ref),
-      ),
-      _AccountRowData(
-        icon: Icons.file_upload_outlined,
-        iconColor: isDark ? AppColors.purple : AppColorsLight.purple,
-        title: 'Import Data',
-        onTap: () => showImportDialog(context, ref),
+        icon: Icons.shield_moon_outlined,
+        iconColor: isDark ? AppColors.info : AppColorsLight.info,
+        title: 'Privacy & Data',
+        onTap: () => context.push('/settings/privacy-data'),
       ),
       _AccountRowData(
         icon: Icons.history_outlined,
@@ -867,9 +869,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   isDark, elevated, cardBorder, textPrimary, textMuted),
               const SizedBox(height: 24),
 
-              // YOUR DATA
+              // DATA & PRIVACY
               _buildSectionLabel(
-                'YOUR DATA',
+                'DATA & PRIVACY',
                 isDark ? AppColors.info : AppColorsLight.info,
               ),
               const SizedBox(height: 8),

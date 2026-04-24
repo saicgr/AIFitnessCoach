@@ -1,0 +1,33 @@
+[
+  {
+    "logId": 98765432,
+    "activityName": "Run",
+    "activityTypeId": 90009,
+    "averageHeartRate": 152,
+    "calories": 485,
+    "duration": 1860000,
+    "activeDuration": 1800000,
+    "steps": 5512,
+    "startTime": "03/28/25 17:29:00",
+    "distance": 5.6,
+    "distanceUnit": "Kilometer"
+  },
+  {
+    "logId": 98765433,
+    "activityName": "Walk",
+    "activityTypeId": 90013,
+    "averageHeartRate": 102,
+    "calories": 140,
+    "duration": 1800000,
+    "steps": 2200,
+    "startTime": "03/29/25 12:05:00",
+    "distance": 1.25,
+    "distanceUnit": "Mile"
+  },
+  {
+    "logId": 98765434,
+    "activityName": "Weight Training",
+    "duration": 2400000,
+    "startTime": "03/30/25 18:00:00"
+  }
+]

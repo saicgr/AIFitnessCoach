@@ -62,10 +62,44 @@ class _WorkoutSettingsPageState extends ConsumerState<WorkoutSettingsPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // ── Workout Settings ──
+              // ── Program ──
               SectionHeader(
-                title: 'WORKOUT SETTINGS',
-                subtitle: 'Configure progression and scheduling',
+                title: 'PROGRAM',
+                subtitle: 'What you train and when',
+              ),
+              const SizedBox(height: 12),
+              SettingsCard(
+                items: [
+                  SettingItemData(
+                    icon: Icons.fitness_center,
+                    title: 'Workout Type',
+                    subtitle: 'Strength, cardio, or mixed',
+                    isWorkoutTypeSelector: true,
+                    iconColor: isDark ? AppColors.cyan : AppColorsLight.cyan,
+                  ),
+                  SettingItemData(
+                    icon: Icons.view_week,
+                    title: 'Training Split',
+                    subtitle: 'Push/Pull/Legs, Full Body, etc.',
+                    isTrainingSplitSelector: true,
+                    iconColor: isDark ? AppColors.waterBlue : AppColorsLight.waterBlue,
+                  ),
+                  SettingItemData(
+                    icon: Icons.calendar_month,
+                    title: 'Workout Days',
+                    subtitle: 'Which days you train',
+                    isWorkoutDaysSelector: true,
+                    iconColor: isDark ? AppColors.orange : AppColorsLight.orange,
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 24),
+
+              // ── Progression & Load ──
+              SectionHeader(
+                title: 'PROGRESSION & LOAD',
+                subtitle: 'How heavy and how fast you progress',
               ),
               const SizedBox(height: 12),
               SettingsCard(
@@ -92,54 +126,25 @@ class _WorkoutSettingsPageState extends ConsumerState<WorkoutSettingsPage> {
                     iconColor: isDark ? AppColors.green : AppColorsLight.green,
                   ),
                   SettingItemData(
-                    icon: Icons.fitness_center,
-                    title: 'Workout Type',
-                    subtitle: 'Strength, cardio, or mixed',
-                    isWorkoutTypeSelector: true,
-                    iconColor: isDark ? AppColors.cyan : AppColorsLight.cyan,
-                  ),
-                  SettingItemData(
-                    icon: Icons.view_week,
-                    title: 'Training Split',
-                    subtitle: 'Push/Pull/Legs, Full Body, etc.',
-                    isTrainingSplitSelector: true,
-                    iconColor: isDark ? AppColors.waterBlue : AppColorsLight.waterBlue,
-                  ),
-                  SettingItemData(
-                    icon: Icons.calendar_month,
-                    title: 'Workout Days',
-                    subtitle: 'Which days you train',
-                    isWorkoutDaysSelector: true,
-                    iconColor: isDark ? AppColors.orange : AppColorsLight.orange,
-                  ),
-                  SettingItemData(
                     icon: Icons.tune,
                     title: 'Weekly Variety',
                     subtitle: 'How much exercises change each week',
                     isVariationSlider: true,
                     iconColor: isDark ? AppColors.purple : AppColorsLight.purple,
                   ),
-                  SettingItemData(
-                    icon: Icons.show_chart,
-                    title: 'Progress Charts',
-                    subtitle: 'Visualize strength & volume over time',
-                    isProgressChartsScreen: true,
-                    iconColor: isDark ? AppColors.green : AppColorsLight.green,
-                  ),
-                  SettingItemData(
-                    icon: Icons.swap_horiz,
-                    title: 'Workout Weight Unit',
-                    subtitle: ref.watch(workoutWeightUnitProvider) == 'kg' ? 'Kilograms (kg)' : 'Pounds (lbs)',
-                    onTap: () => _showWorkoutWeightUnitSelector(context, ref),
-                    iconColor: isDark ? AppColors.orange : AppColorsLight.orange,
-                  ),
-                  SettingItemData(
-                    icon: Icons.tune,
-                    title: 'Weight Increments',
-                    subtitle: 'Step size: ${ref.watch(weightIncrementsProvider).unit.toUpperCase()} · Tap to customize',
-                    onTap: () => showWeightIncrementsSheet(context),
-                    iconColor: isDark ? AppColors.textSecondary : AppColorsLight.textSecondary,
-                  ),
+                ],
+              ),
+
+              const SizedBox(height: 24),
+
+              // ── Live Coaching ──
+              SectionHeader(
+                title: 'LIVE COACHING',
+                subtitle: 'What happens during a workout',
+              ),
+              const SizedBox(height: 12),
+              SettingsCard(
+                items: [
                   SettingItemData(
                     icon: Icons.monitor_heart_outlined,
                     title: 'Fatigue Detection',
@@ -179,6 +184,53 @@ class _WorkoutSettingsPageState extends ConsumerState<WorkoutSettingsPage> {
                     ),
                     iconColor: isDark ? AppColors.coral : AppColorsLight.coral,
                   ),
+                  SettingItemData(
+                    icon: Icons.checklist_rounded,
+                    title: 'Incomplete Exercise Warning',
+                    subtitle: !_skipWarningDismissed
+                        ? 'ON — Warns before finishing with unlogged sets'
+                        : 'OFF — No warning on incomplete logs',
+                    onTap: () => _toggleSkipWarning(_skipWarningDismissed),
+                    trailing: Switch.adaptive(
+                      value: !_skipWarningDismissed,
+                      onChanged: _toggleSkipWarning,
+                    ),
+                    iconColor: isDark ? AppColors.orange : AppColorsLight.orange,
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 24),
+
+              // ── Units & Tracking ──
+              SectionHeader(
+                title: 'UNITS & TRACKING',
+                subtitle: 'How weights are displayed and logged',
+              ),
+              const SizedBox(height: 12),
+              SettingsCard(
+                items: [
+                  SettingItemData(
+                    icon: Icons.swap_horiz,
+                    title: 'Workout Weight Unit',
+                    subtitle: ref.watch(workoutWeightUnitProvider) == 'kg' ? 'Kilograms (kg)' : 'Pounds (lbs)',
+                    onTap: () => _showWorkoutWeightUnitSelector(context, ref),
+                    iconColor: isDark ? AppColors.orange : AppColorsLight.orange,
+                  ),
+                  SettingItemData(
+                    icon: Icons.tune,
+                    title: 'Weight Increments',
+                    subtitle: 'Step size: ${ref.watch(weightIncrementsProvider).unit.toUpperCase()} · Tap to customize',
+                    onTap: () => showWeightIncrementsSheet(context),
+                    iconColor: isDark ? AppColors.textSecondary : AppColorsLight.textSecondary,
+                  ),
+                  SettingItemData(
+                    icon: Icons.show_chart,
+                    title: 'Progress Charts',
+                    subtitle: 'Visualize strength & volume over time',
+                    isProgressChartsScreen: true,
+                    iconColor: isDark ? AppColors.green : AppColorsLight.green,
+                  ),
                 ],
               ),
 
@@ -206,33 +258,6 @@ class _WorkoutSettingsPageState extends ConsumerState<WorkoutSettingsPage> {
                     subtitle: 'Add past workouts for better AI weights',
                     isWorkoutHistoryImport: true,
                     iconColor: isDark ? AppColors.textSecondary : AppColorsLight.textSecondary,
-                  ),
-                  SettingItemData(
-                    icon: Icons.swap_horiz,
-                    title: 'Workout Weight Unit',
-                    subtitle: ref.watch(workoutWeightUnitProvider) == 'kg' ? 'Kilograms (kg)' : 'Pounds (lbs)',
-                    onTap: () => _showWorkoutWeightUnitSelector(context, ref),
-                    iconColor: isDark ? AppColors.orange : AppColorsLight.orange,
-                  ),
-                  SettingItemData(
-                    icon: Icons.tune,
-                    title: 'Weight Increments',
-                    subtitle: 'Step size: ${ref.watch(weightIncrementsProvider).unit.toUpperCase()} · Tap to customize',
-                    onTap: () => showWeightIncrementsSheet(context),
-                    iconColor: isDark ? AppColors.textSecondary : AppColorsLight.textSecondary,
-                  ),
-                  SettingItemData(
-                    icon: Icons.checklist_rounded,
-                    title: 'Incomplete Exercise Warning',
-                    subtitle: !_skipWarningDismissed
-                        ? 'ON — Warns before finishing with unlogged sets'
-                        : 'OFF — No warning on incomplete logs',
-                    onTap: () => _toggleSkipWarning(_skipWarningDismissed),
-                    trailing: Switch.adaptive(
-                      value: !_skipWarningDismissed,
-                      onChanged: _toggleSkipWarning,
-                    ),
-                    iconColor: isDark ? AppColors.orange : AppColorsLight.orange,
                   ),
                 ],
               ),

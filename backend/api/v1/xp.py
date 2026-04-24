@@ -944,5 +944,247 @@ async def get_consumables(
 
 
 
+# =============================================================================
+# WEEKLY SUMMARY — hero metric for the XP card (Phase 2b)
+# =============================================================================
+
+
+class WeeklySummaryResponse(BaseModel):
+    """Weekly XP snapshot powering the XP-card hero row.
+
+    * `this_week_xp` / `last_week_xp` frame the delta chip.
+    * `sparkline_7day` gives seven values — index 0 = six days ago (oldest),
+      index 6 = today. Always exactly seven entries so the frontend can
+      render a fixed-width sparkline without padding logic.
+    * `next_nudge` is a short key the UI maps to copy like
+      "Log breakfast = +20 XP". Empty string if nothing useful is pending.
+    """
+    this_week_xp: int
+    last_week_xp: int
+    sparkline_7day: List[int]
+    next_nudge: str
+
+
+@router.get("/weekly-summary", response_model=WeeklySummaryResponse)
+async def get_weekly_xp_summary(
+    user_id: Optional[str] = Query(default=None),
+    current_user=Depends(get_current_user),
+):
+    """Aggregate XP earned this week, last week, and per-day for 7 days.
+
+    Implementation note: runs a single ranged query on `xp_transactions`
+    over the last 14 days and buckets rows locally. A server-side aggregate
+    RPC would be marginally faster but forking RPCs for every dashboard
+    card is worse debt than a 14-day row scan — the table is indexed on
+    user_id + created_at.
+    """
+    try:
+        db = get_supabase_db()
+        target_user_id = user_id or current_user["id"]
+
+        # Only allow the caller to read their own summary. Matches the RLS
+        # policy on `xp_transactions` so a malformed service-role query
+        # still returns the right slice.
+        if target_user_id != current_user["id"]:
+            raise HTTPException(status_code=403, detail="Cannot read another user's XP summary")
+
+        # Compute UTC windows — the UI reframes in local tz via the date
+        # column when needed. Sparkline is 7 days inclusive of today.
+        now = datetime.utcnow()
+        start_14d = (now - timedelta(days=14)).isoformat()
+
+        result = db.client.table("xp_transactions").select(
+            "xp_amount, created_at"
+        ).eq("user_id", target_user_id).gte("created_at", start_14d).execute()
+
+        rows = result.data or []
+
+        # Bucket into per-day totals (UTC day-boundaries). Good-enough for
+        # a weekly-XP card; the absolute timestamps still respect the tz.
+        today = now.date()
+        by_day: dict[date, int] = {}
+        for row in rows:
+            ts = row.get("created_at")
+            amt = int(row.get("xp_amount") or 0)
+            if not ts or amt == 0:
+                continue
+            try:
+                d = datetime.fromisoformat(ts.replace("Z", "+00:00")).date()
+            except Exception:
+                continue
+            by_day[d] = by_day.get(d, 0) + amt
+
+        # Sparkline: oldest-first so the UI can map index → day ago.
+        sparkline = [by_day.get(today - timedelta(days=i), 0) for i in range(6, -1, -1)]
+
+        this_week_xp = sum(
+            amt for d, amt in by_day.items() if d > today - timedelta(days=7)
+        )
+        last_week_xp = sum(
+            amt for d, amt in by_day.items()
+            if today - timedelta(days=14) < d <= today - timedelta(days=7)
+        )
+
+        # Nudge selection — prioritise the fastest XP-earning action the
+        # user hasn't completed today. Kept as a small deterministic switch
+        # (not LLM) so the label is predictable and testable.
+        # `log_breakfast` is the default because it's universally available
+        # and cheap. Phase 2b UI can expand this pool.
+        nudge = ""
+        try:
+            # Check if user has any food log today
+            start_today = datetime.combine(today, datetime.min.time()).isoformat()
+            food_res = db.client.table("food_logs").select(
+                "id", count="exact"
+            ).eq("user_id", target_user_id).gte("logged_at", start_today).limit(1).execute()
+            logged_food_today = (food_res.count or 0) > 0
+            if not logged_food_today:
+                nudge = "log_breakfast"
+            else:
+                # Fall through: check if they logged a workout today
+                wk_res = db.client.table("workout_logs").select(
+                    "id", count="exact"
+                ).eq("user_id", target_user_id).gte("completed_at", start_today).limit(1).execute()
+                if (wk_res.count or 0) == 0:
+                    nudge = "log_workout"
+        except Exception as e:
+            # Nudge is best-effort — never block the summary on it.
+            logger.debug(f"[XP] weekly-summary nudge probe failed: {e}")
+
+        return WeeklySummaryResponse(
+            this_week_xp=this_week_xp,
+            last_week_xp=last_week_xp,
+            sparkline_7day=sparkline,
+            next_nudge=nudge,
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"[XP] Error computing weekly summary: {e}", exc_info=True)
+        raise safe_internal_error(e, "xp")
+
+
+# =============================================================================
+# NEXT LEVEL PREVIEW — what's on the other side of the progress bar
+# =============================================================================
+
+
+class NextLevelRewardBlock(BaseModel):
+    kind: str            # 'functional' | 'cosmetic' | 'merch' | 'pricing'
+    label: str           # Human-readable reward name
+    icon: str            # Material icon key — maps to a Flutter Icons entry
+    tier: str            # 'silver' | 'gold' | 'platinum' — drives card styling
+
+
+class NextLevelPreviewResponse(BaseModel):
+    level: int
+    xp_in_level: int
+    xp_to_next: int
+    reward: NextLevelRewardBlock
+
+
+# Config-driven reward catalogue. Keyed by the *next* level (i.e. what the
+# user is currently progressing toward). Intermediate levels fall back to
+# the generic cosmetic tier so the preview row is never empty.
+#
+# Source-of-truth rule: any change here must land with the same copy in the
+# Flutter-side catalogue (`data/models/level_reward.dart` or the level-up
+# celebration sheet) so the preview and the actual ceremony stay in sync.
+_LEVEL_REWARDS: dict[int, dict] = {
+    2:  {"kind": "cosmetic",   "label": "New avatar frame",              "icon": "shield_rounded",           "tier": "silver"},
+    3:  {"kind": "cosmetic",   "label": "Bronze progress badge",         "icon": "workspace_premium",        "tier": "silver"},
+    4:  {"kind": "cosmetic",   "label": "Profile accent palette",        "icon": "palette_outlined",         "tier": "silver"},
+    5:  {"kind": "functional", "label": "Second coach persona",          "icon": "switch_account_outlined",  "tier": "gold"},
+    6:  {"kind": "cosmetic",   "label": "Silver progress badge",         "icon": "workspace_premium",        "tier": "silver"},
+    7:  {"kind": "cosmetic",   "label": "Themed app icon",               "icon": "apps_outlined",            "tier": "silver"},
+    8:  {"kind": "cosmetic",   "label": "Custom streak flame color",     "icon": "local_fire_department",    "tier": "silver"},
+    9:  {"kind": "cosmetic",   "label": "Gold progress badge",           "icon": "workspace_premium",        "tier": "gold"},
+    10: {"kind": "functional", "label": "Muscle-volume heatmap",         "icon": "insights_rounded",         "tier": "gold"},
+    15: {"kind": "functional", "label": "Auto rest-day rescheduling",    "icon": "event_repeat_rounded",     "tier": "gold"},
+    20: {"kind": "merch",      "label": "Physical sticker pack",         "icon": "local_shipping_outlined",  "tier": "platinum"},
+    25: {"kind": "pricing",    "label": "Retention pricing unlock",      "icon": "sell_outlined",            "tier": "platinum"},
+    50: {"kind": "merch",      "label": "FitWiz t-shirt",                "icon": "checkroom_outlined",       "tier": "platinum"},
+    100:{"kind": "merch",      "label": "FitWiz hoodie",                 "icon": "checkroom_outlined",       "tier": "platinum"},
+}
+
+_FALLBACK_REWARD = {
+    "kind": "cosmetic",
+    "label": "New cosmetic unlock",
+    "icon": "auto_awesome_outlined",
+    "tier": "silver",
+}
+
+
+def _reward_for_next_level(next_level: int) -> NextLevelRewardBlock:
+    """Pick the reward for the *next* level.
+
+    Exact match → use the configured reward.
+    No match → walk down to the most recent milestone ≤ next_level; if the
+    last milestone's tier implies ongoing unlocks (merch / pricing keep
+    their appeal between drops), we re-use its label. Otherwise fall back
+    to the generic cosmetic entry so the card never reads blank.
+    """
+    if next_level in _LEVEL_REWARDS:
+        return NextLevelRewardBlock(**_LEVEL_REWARDS[next_level])
+    # For "in-between" levels, keep the reward preview motivating by using
+    # the generic cosmetic tier rather than repeating the last milestone —
+    # users would otherwise see "Physical sticker pack" for Lv 21–24 which
+    # is misleading.
+    return NextLevelRewardBlock(**_FALLBACK_REWARD)
+
+
+@router.get("/next-level-preview", response_model=NextLevelPreviewResponse)
+async def get_next_level_preview(
+    user_id: Optional[str] = Query(default=None),
+    current_user=Depends(get_current_user),
+):
+    """Return current level, progress, and the reward for the next level.
+
+    Single source of truth for the XP-card "next-level unlock" chip. The UI
+    renders whichever tier/kind the server picks — it never hardcodes.
+    """
+    try:
+        db = get_supabase_db()
+        target_user_id = user_id or current_user["id"]
+
+        if target_user_id != current_user["id"]:
+            raise HTTPException(status_code=403, detail="Cannot read another user's XP")
+
+        result = db.client.table("user_xp").select(
+            "current_level, xp_in_current_level, xp_to_next_level"
+        ).eq("user_id", target_user_id).single().execute()
+
+        row = result.data or {}
+        level = int(row.get("current_level") or 1)
+        xp_in = int(row.get("xp_in_current_level") or 0)
+        xp_to_next = int(row.get("xp_to_next_level") or 150)
+
+        return NextLevelPreviewResponse(
+            level=level,
+            xp_in_level=xp_in,
+            xp_to_next=xp_to_next,
+            reward=_reward_for_next_level(level + 1),
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        # If the user has no `user_xp` row yet (fresh signup before the
+        # first XP-earning action), return the L1→L2 preview with zeroes
+        # instead of a 500. The preview card is a motivational affordance,
+        # not a hard requirement.
+        msg = str(e).lower()
+        if "no rows" in msg or "not found" in msg:
+            return NextLevelPreviewResponse(
+                level=1,
+                xp_in_level=0,
+                xp_to_next=150,
+                reward=_reward_for_next_level(2),
+            )
+        logger.error(f"[XP] Error computing next-level preview: {e}", exc_info=True)
+        raise safe_internal_error(e, "xp")
+
+
 # Include secondary endpoints
 router.include_router(_endpoints_router)

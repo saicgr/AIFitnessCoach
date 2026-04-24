@@ -43,6 +43,9 @@ async def run_media_job(job_id: str):
             # === AI_EXERCISE_IMPORT_BRANCH ===
             elif job_type == "custom_exercise_import":
                 result = await _execute_custom_exercise_import(job)
+            # === WORKOUT_HISTORY_IMPORT_BRANCH ===
+            elif job_type == "workout_history_import":
+                result = await _execute_workout_history_import(job)
             else:
                 raise ValueError(f"Unknown media job type: {job_type}")
 
@@ -294,6 +297,30 @@ async def _execute_custom_exercise_import(job: dict) -> dict:
         "keyframe_confidences": keyframe_confidences,
         "duplicate": duplicate,
     }
+
+
+# === WORKOUT_HISTORY_IMPORT_BRANCH ===
+async def _execute_workout_history_import(job: dict) -> dict:
+    """Run bulk workout-history + cardio + program-template import for a
+    media_analysis_jobs row.
+
+    Input contract: job['s3_keys'][0] is the uploaded file s3_key; job['params']:
+      {
+        "user_id": "...",
+        "unit_hint": "kg" | "lb",            # user-specified at upload time
+        "timezone_hint": "America/Chicago",  # user-specified (null = UTC)
+        "source_app_hint": "hevy" | ... | null,  # optional override for detector
+        "filename": "workout_history.csv",
+        "dry_run": false,                    # true = preview only, no DB writes
+      }
+
+    Returns the import summary dict (persisted into result_json).
+    """
+    from services.workout_import.service import WorkoutHistoryImporter
+
+    importer = WorkoutHistoryImporter()
+    summary = await importer.run(job)
+    return summary
 
 
 async def resume_pending_media_jobs():

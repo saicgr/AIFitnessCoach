@@ -1,0 +1,26 @@
+{
+  "program": {"name": "Juggernaut Method"},
+  "sessions": [
+    {
+      "date": "2026-03-10T17:00:00",
+      "name": "Wave 1 - Squat",
+      "exercises": [
+        {
+          "name": "Back Squat",
+          "sets": [
+            {"weight": 225, "reps": 8, "rpe": 7, "type": "working"},
+            {"weight": 245, "reps": 8, "rpe": 8, "type": "working"},
+            {"weight": 265, "reps": 8, "rpe": 9, "type": "working"}
+          ]
+        },
+        {
+          "name": "Paused Bench",
+          "sets": [
+            {"weight": 185, "reps": 5, "type": "working"},
+            {"weight": 205, "reps": 5, "type": "working"}
+          ]
+        }
+      ]
+    }
+  ]
+}

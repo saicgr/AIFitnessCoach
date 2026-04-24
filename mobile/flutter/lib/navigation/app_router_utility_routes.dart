@@ -25,6 +25,18 @@ List<RouteBase> _utilityRoutes() => [
         path: '/measurements',
         builder: (context, state) => const MeasurementsScreen(),
       ),
+
+      // Body Analyzer — consolidated /100 + rings + posture + retune
+      GoRoute(
+        path: '/body-analyzer',
+        builder: (context, state) => const BodyAnalyzerScreen(),
+      ),
+
+      // Cycle-aware reminder settings
+      GoRoute(
+        path: '/settings/cycle',
+        builder: (context, state) => const CycleSettingsScreen(),
+      ),
       GoRoute(
         path: '/measurements/derived/:type',
         builder: (context, state) {

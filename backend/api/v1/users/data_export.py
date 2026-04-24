@@ -22,6 +22,7 @@ async def export_user_data(
     format: str = "csv",
     start_date: Optional[str] = None,
     end_date: Optional[str] = None,
+    categories: Optional[str] = None,
     current_user: dict = Depends(get_current_user),
 ):
     """
@@ -31,10 +32,16 @@ async def export_user_data(
     - format: Export format - "csv" (ZIP of CSVs), "json", "xlsx", or "parquet" (ZIP of Parquet files). Default: "csv"
     - start_date: Optional ISO date string (YYYY-MM-DD) for filtering data from this date
     - end_date: Optional ISO date string (YYYY-MM-DD) for filtering data until this date
+    - categories: Optional comma-separated list of category keys (workouts,
+      strength, body, achievements, nutrition, chat, photos, health, goals,
+      custom). Profile is always included. Omitted / empty → all categories.
     """
     import time
     start_time = time.time()
-    logger.info(f"Starting data export for user: id={user_id}, format={format}, date_range={start_date} to {end_date}")
+    logger.info(
+        f"Starting data export for user: id={user_id}, format={format}, "
+        f"date_range={start_date} to {end_date}, categories={categories}"
+    )
 
     if format not in ("csv", "json", "xlsx", "parquet"):
         raise HTTPException(status_code=400, detail=f"Unsupported export format: {format}. Use csv, json, xlsx, or parquet.")
@@ -55,7 +62,9 @@ async def export_user_data(
 
         if format == "json":
             from services.data_export import export_user_data_json
-            data = export_user_data_json(user_id, start_date=start_date, end_date=end_date)
+            data = export_user_data_json(
+                user_id, start_date=start_date, end_date=end_date, categories=categories
+            )
             from fastapi.responses import JSONResponse
             elapsed = time.time() - start_time
             logger.info(f"JSON export complete for user {user_id} in {elapsed:.2f}s")
@@ -68,7 +77,9 @@ async def export_user_data(
 
         elif format == "xlsx":
             from services.data_export import export_user_data_excel
-            xlsx_bytes = export_user_data_excel(user_id, start_date=start_date, end_date=end_date)
+            xlsx_bytes = export_user_data_excel(
+                user_id, start_date=start_date, end_date=end_date, categories=categories
+            )
             elapsed = time.time() - start_time
             logger.info(f"Excel export complete for user {user_id} in {elapsed:.2f}s, size: {len(xlsx_bytes)} bytes")
             return StreamingResponse(
@@ -82,7 +93,9 @@ async def export_user_data(
 
         elif format == "parquet":
             from services.data_export import export_user_data_parquet
-            parquet_bytes = export_user_data_parquet(user_id, start_date=start_date, end_date=end_date)
+            parquet_bytes = export_user_data_parquet(
+                user_id, start_date=start_date, end_date=end_date, categories=categories
+            )
             elapsed = time.time() - start_time
             logger.info(f"Parquet export complete for user {user_id} in {elapsed:.2f}s, size: {len(parquet_bytes)} bytes")
             return StreamingResponse(
@@ -97,7 +110,9 @@ async def export_user_data(
         else:
             # Default: CSV ZIP
             from services.data_export import export_user_data as do_export
-            zip_bytes = do_export(user_id, start_date=start_date, end_date=end_date)
+            zip_bytes = do_export(
+                user_id, start_date=start_date, end_date=end_date, categories=categories
+            )
             elapsed = time.time() - start_time
             logger.info(f"CSV export complete for user {user_id} in {elapsed:.2f}s, size: {len(zip_bytes)} bytes")
             return StreamingResponse(

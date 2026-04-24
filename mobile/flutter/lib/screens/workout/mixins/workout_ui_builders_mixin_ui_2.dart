@@ -81,6 +81,25 @@ extension WorkoutUIBuildersMixinUI2 on WorkoutUIBuildersMixin {
                   ),
                 ),
 
+                // Live stats strip — Duration / Calories / Volume.
+                // Isolated in its own RepaintBoundary so the per-second
+                // timer tick doesn't force the exercise body to repaint.
+                RepaintBoundary(
+                  child: Builder(
+                    builder: (_) {
+                      final allSets = <SetLog>[
+                        for (final entry in completedSets.values) ...entry,
+                      ];
+                      return WorkoutStatsStrip(
+                        workoutSeconds: timerController.workoutSeconds,
+                        setLogs: allSets,
+                        useKg: useKg,
+                        isDark: isDark,
+                      );
+                    },
+                  ),
+                ),
+
                 // Swipeable exercise content area
                 Expanded(
                   child: GestureDetector(

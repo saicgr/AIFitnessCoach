@@ -77,6 +77,41 @@ Widget buildQuickActionWidget(String actionId, bool isDark, BuildContext context
         },
         isDark: isDark,
       );
+    case 'scan_food':
+      return _GridActionItem(
+        icon: quickActionRegistry['scan_food']!.icon,
+        label: quickActionRegistry['scan_food']!.label,
+        iconColor: quickActionRegistry['scan_food']!.color,
+        onTap: () {
+          HapticService.light();
+          // Mirror the working flow from the More sheet: hop to Nutrition
+          // first so the user lands there after the sheet closes, then
+          // open the log-meal sheet with the multi-image camera path armed.
+          context.go('/nutrition');
+          Future.microtask(() {
+            if (context.mounted) {
+              showLogMealSheet(context, ref, autoOpenMultiImage: true);
+            }
+          });
+        },
+        isDark: isDark,
+      );
+    case 'scan_menu':
+      return _GridActionItem(
+        icon: quickActionRegistry['scan_menu']!.icon,
+        label: quickActionRegistry['scan_menu']!.label,
+        iconColor: quickActionRegistry['scan_menu']!.color,
+        onTap: () {
+          HapticService.light();
+          context.go('/nutrition');
+          Future.microtask(() {
+            if (context.mounted) {
+              showLogMealSheet(context, ref, autoOpenMenuScan: true);
+            }
+          });
+        },
+        isDark: isDark,
+      );
     default:
       final action = quickActionRegistry[actionId];
       if (action == null) return const SizedBox.shrink();
@@ -86,7 +121,18 @@ Widget buildQuickActionWidget(String actionId, bool isDark, BuildContext context
         iconColor: action.color,
         onTap: () {
           HapticService.light();
-          context.push(action.route!);
+          // Guard against registry entries that use a non-route behavior
+          // (e.g. foodScan / menuScan) but were never explicit-cased here.
+          // Without this, action.route! would throw and the tap would
+          // silently fail from the user's POV.
+          final route = action.route;
+          if (route == null || route.isEmpty) {
+            debugPrint(
+              '⚠️ [QuickActions] No route / case handler for "$actionId" — tap ignored',
+            );
+            return;
+          }
+          context.push(route);
         },
         isDark: isDark,
       );

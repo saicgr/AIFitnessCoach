@@ -12,7 +12,9 @@ import 'package:flutter/material.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../data/models/exercise.dart';
+import '../models/workout_state.dart';
 import '../shared/pre_set_insight_banner.dart';
+import '../widgets/workout_stats_strip.dart';
 import 'easy_active_workout_state_models.dart';
 import 'widgets/easy_chat_pill.dart';
 import 'widgets/easy_completed_dots.dart';
@@ -78,6 +80,11 @@ class EasyActiveWorkoutView extends StatelessWidget {
   /// Quit the whole workout — confirms + pops back to the list.
   final VoidCallback? onQuitWorkout;
 
+  /// Every completed set across every exercise in this session. Flattened
+  /// view of `_perExercise.values.expand((e) => e.completed)`. Drives the
+  /// live Calories + Volume numbers in the stats strip.
+  final List<SetLog> allCompletedSets;
+
   const EasyActiveWorkoutView({
     super.key,
     required this.exercise,
@@ -111,6 +118,7 @@ class EasyActiveWorkoutView extends StatelessWidget {
     this.hasNote = false,
     this.onSkipToNext,
     this.onQuitWorkout,
+    this.allCompletedSets = const [],
   });
 
   @override
@@ -127,6 +135,12 @@ class EasyActiveWorkoutView extends StatelessWidget {
             onQuit: onQuitWorkout,
             onSkipToNext: onSkipToNext,
             exercise: exercise,
+          ),
+          WorkoutStatsStrip(
+            workoutSeconds: workoutSeconds,
+            setLogs: allCompletedSets,
+            useKg: useKg,
+            isDark: isDark,
           ),
           EasyExerciseHeader(
             exercise: exercise,

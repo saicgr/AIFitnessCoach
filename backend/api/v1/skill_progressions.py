@@ -45,13 +45,40 @@ logger = get_logger(__name__)
 # Helper Functions
 # ============================================
 
+def _normalize_category(raw: str) -> str:
+    """Map legacy/dirty DB category values onto the SkillCategory enum.
+
+    The `skill_progression_chains.category` column accepts any text at the DB
+    level; some seed rows landed with exercise-style labels ('pushup',
+    'pullup', 'squat') instead of the plane-of-motion enum
+    ('push'/'pull'/'legs'). Those rows throw pydantic enum errors on read,
+    500-ing the entire `/summary` endpoint for every user. Normalize at
+    parse-time so a dirty row can't take the API down.
+    """
+    if not isinstance(raw, str):
+        return "push"
+    key = raw.strip().lower()
+    alias = {
+        "pushup": "push", "push-up": "push", "push_up": "push", "pushups": "push",
+        "pullup": "pull", "pull-up": "pull", "pull_up": "pull", "pullups": "pull",
+        "squat": "legs", "squats": "legs", "leg": "legs", "lower": "legs",
+        "ab": "core", "abs": "core", "abdominal": "core", "abdominals": "core",
+        "handstand": "balance", "balancing": "balance",
+        "stretch": "flexibility", "stretching": "flexibility", "mobility": "flexibility",
+    }
+    if key in alias:
+        return alias[key]
+    valid = {"push", "pull", "legs", "core", "balance", "flexibility"}
+    return key if key in valid else "push"
+
+
 def _parse_chain(data: dict) -> ProgressionChain:
     """Parse a progression chain from database row."""
     return ProgressionChain(
         id=str(data["id"]),
         name=data["name"],
         description=data["description"],
-        category=data["category"],
+        category=_normalize_category(data["category"]),
         icon=data.get("icon"),
         target_muscles=data.get("target_muscles", []),
         estimated_weeks_to_master=data.get("estimated_weeks_to_master"),
@@ -424,7 +451,7 @@ async def get_user_skills_summary(user_id: str,
             summary = SkillProgressSummary(
                 chain_id=str(p["chain_id"]),
                 chain_name=chain_data["name"],
-                category=chain_data["category"],
+                category=_normalize_category(chain_data["category"]),
                 current_step_name=current_step_name,
                 progress_percentage=progress_percentage,
                 total_steps=total_steps,

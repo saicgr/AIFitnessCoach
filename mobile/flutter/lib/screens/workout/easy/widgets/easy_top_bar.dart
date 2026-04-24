@@ -192,7 +192,7 @@ class _TierPill extends ConsumerWidget {
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
-          children: const [WorkoutUiMode.easy, WorkoutUiMode.advanced].map((m) {
+          children: WorkoutUiMode.activeValues.map((m) {
           final selected = m == currentMode;
           // Selected segment shows the full label ("Easy" / "Simple" /
           // "Advanced") so the user always knows what mode they're in.

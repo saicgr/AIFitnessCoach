@@ -47,6 +47,15 @@ NutritionPreferences _$NutritionPreferencesFromJson(
           ?.map((e) => e as String)
           .toList() ??
       const [],
+  customAllergens:
+      (json['custom_allergens'] as List<dynamic>?)
+          ?.map((e) => e as String)
+          .toList() ??
+      const [],
+  inflammationSensitivity:
+      (json['inflammation_sensitivity'] as num?)?.toInt() ?? 3,
+  mealBudgetUsd: (json['meal_budget_usd'] as num?)?.toDouble(),
+  dailyFoodBudgetUsd: (json['daily_food_budget_usd'] as num?)?.toDouble(),
   mealPattern: json['meal_pattern'] as String? ?? '3_meals',
   cookingSkill: json['cooking_skill'] as String? ?? 'intermediate',
   cookingTimeMinutes: (json['cooking_time_minutes'] as num?)?.toInt() ?? 30,
@@ -119,6 +128,10 @@ Map<String, dynamic> _$NutritionPreferencesToJson(
   'allergies': instance.allergies,
   'dietary_restrictions': instance.dietaryRestrictions,
   'disliked_foods': instance.dislikedFoods,
+  'custom_allergens': instance.customAllergens,
+  'inflammation_sensitivity': instance.inflammationSensitivity,
+  'meal_budget_usd': instance.mealBudgetUsd,
+  'daily_food_budget_usd': instance.dailyFoodBudgetUsd,
   'meal_pattern': instance.mealPattern,
   'cooking_skill': instance.cookingSkill,
   'cooking_time_minutes': instance.cookingTimeMinutes,

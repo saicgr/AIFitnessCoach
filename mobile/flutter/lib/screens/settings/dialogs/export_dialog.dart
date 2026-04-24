@@ -6,6 +6,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 import '../../../core/constants/api_constants.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../data/models/export_categories.dart';
 import '../../../data/services/api_client.dart';
 import '../widgets/widgets.dart';
 
@@ -36,14 +37,30 @@ void showExportDialog(BuildContext context, WidgetRef ref) {
   showDialog(
     context: context,
     builder: (context) => _ExportDataDialog(
-      onExport: (startDate, endDate, format) async {
+      onExport: (startDate, endDate, format, categories) async {
         Navigator.pop(context);
         if (format == ExportFormat.plainText) {
+          // Plain-text export is a legible workout log — it ignores
+          // category selection because the backend renders a single
+          // human-readable transcript, not a table-per-category archive.
           await _exportDataAsText(context, ref, startDate: startDate, endDate: endDate);
         } else if (format == ExportFormat.json || format == ExportFormat.excel || format == ExportFormat.parquet) {
-          await _exportDataWithFormat(context, ref, format: format, startDate: startDate, endDate: endDate);
+          await _exportDataWithFormat(
+            context,
+            ref,
+            format: format,
+            startDate: startDate,
+            endDate: endDate,
+            categories: categories,
+          );
         } else {
-          await _exportData(context, ref, startDate: startDate, endDate: endDate);
+          await _exportData(
+            context,
+            ref,
+            startDate: startDate,
+            endDate: endDate,
+            categories: categories,
+          );
         }
       },
     ),
@@ -55,6 +72,7 @@ Future<void> _exportData(
   WidgetRef ref, {
   String? startDate,
   String? endDate,
+  Set<String>? categories,
 }) async {
   final isDark = Theme.of(context).brightness == Brightness.dark;
   final navigator = Navigator.of(context);
@@ -111,6 +129,9 @@ Future<void> _exportData(
     final queryParams = <String, String>{};
     if (startDate != null) queryParams['start_date'] = startDate;
     if (endDate != null) queryParams['end_date'] = endDate;
+    if (categories != null && categories.isNotEmpty) {
+      queryParams['categories'] = categories.join(',');
+    }
 
     final queryString = queryParams.isNotEmpty
         ? '?${queryParams.entries.map((e) => '${e.key}=${e.value}').join('&')}'
@@ -374,6 +395,7 @@ Future<void> _exportDataWithFormat(
   required ExportFormat format,
   String? startDate,
   String? endDate,
+  Set<String>? categories,
 }) async {
   final isDark = Theme.of(context).brightness == Brightness.dark;
   final navigator = Navigator.of(context);
@@ -451,6 +473,9 @@ Future<void> _exportDataWithFormat(
     final queryParams = <String, String>{'format': formatParam};
     if (startDate != null) queryParams['start_date'] = startDate;
     if (endDate != null) queryParams['end_date'] = endDate;
+    if (categories != null && categories.isNotEmpty) {
+      queryParams['categories'] = categories.join(',');
+    }
 
     final queryString = '?${queryParams.entries.map((e) => '${e.key}=${e.value}').join('&')}';
 

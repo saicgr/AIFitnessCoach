@@ -145,49 +145,52 @@ class _EasyHelpSheetState extends ConsumerState<EasyHelpSheet> {
               style: TextStyle(
                   fontSize: 15, height: 1.4, color: fg.withValues(alpha: 0.82))),
           const SizedBox(height: 22),
-          Row(
-            children: [
-              Expanded(
-                child: OutlinedButton(
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                    widget.onSkipToNext();
-                  },
-                  style: OutlinedButton.styleFrom(
-                    minimumSize: const Size.fromHeight(44),
-                    side: BorderSide(color: fg.withValues(alpha: 0.14)),
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14)),
-                  ),
-                  child: Text('Skip to next exercise',
-                      style: TextStyle(color: fg.withValues(alpha: 0.78))),
-                ),
+          // Primary action first (full width), then a muted secondary below.
+          // "Skip to next exercise" doesn't fit in a half-width button without
+          // wrapping, which reads as a layout bug.
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: () {
+                // Haptic fires in parallel; advancing slides doesn't
+                // need to await it (keeps context-sync analyzer happy).
+                HapticService.instance.tap();
+                if (isLast) {
+                  Navigator.of(context).pop();
+                } else {
+                  setState(() => _step++);
+                }
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: accent,
+                foregroundColor: isDark ? Colors.black : Colors.white,
+                minimumSize: const Size.fromHeight(44),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14)),
               ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: ElevatedButton(
-                  onPressed: () {
-                    // Haptic fires in parallel; advancing slides doesn't
-                    // need to await it (keeps context-sync analyzer happy).
-                    HapticService.instance.tap();
-                    if (isLast) {
-                      Navigator.of(context).pop();
-                    } else {
-                      setState(() => _step++);
-                    }
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: accent,
-                    foregroundColor: isDark ? Colors.black : Colors.white,
-                    minimumSize: const Size.fromHeight(44),
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14)),
-                  ),
-                  child: Text(isLast ? 'Got it' : 'Next',
-                      style: const TextStyle(fontWeight: FontWeight.w700)),
-                ),
+              child: Text(isLast ? 'Got it' : 'Next',
+                  style: const TextStyle(fontWeight: FontWeight.w700)),
+            ),
+          ),
+          const SizedBox(height: 8),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                widget.onSkipToNext();
+              },
+              style: OutlinedButton.styleFrom(
+                minimumSize: const Size.fromHeight(44),
+                side: BorderSide(color: fg.withValues(alpha: 0.14)),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14)),
               ),
-            ],
+              child: Text('Skip to next exercise',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(color: fg.withValues(alpha: 0.78))),
+            ),
           ),
           const SizedBox(height: 8),
           Align(

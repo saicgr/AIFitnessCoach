@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/providers/video_cache_provider.dart';
 import '../../../data/services/video_cache_service.dart';
@@ -14,8 +15,6 @@ class DownloadedVideosScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final backgroundColor = isDark ? AppColors.nearBlack : AppColorsLight.pureWhite;
-    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
 
     final cacheState = ref.watch(videoCacheProvider);
 
@@ -39,7 +38,7 @@ class DownloadedVideosScreen extends ConsumerWidget {
           // Video list
           Expanded(
             child: cacheState.cachedVideoCount == 0
-                ? _EmptyState(textMuted: textMuted)
+                ? const _EmptyState()
                 : ListView.builder(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     itemCount: cacheState.cachedVideos.length,
@@ -243,15 +242,20 @@ class _StorageInfoCard extends StatelessWidget {
 
 /// Empty state when no videos are downloaded
 class _EmptyState extends StatelessWidget {
-  final Color textMuted;
-
-  const _EmptyState({required this.textMuted});
+  const _EmptyState();
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final textPrimary =
+        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textSecondary =
+        isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+
     return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32),
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(24),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -271,16 +275,137 @@ class _EmptyState extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              'Download exercise videos from the library to watch them offline.',
+              'Save exercise videos for offline viewing — great for the gym when WiFi is spotty.',
               style: TextStyle(
                 fontSize: 14,
-                color: textMuted.withOpacity(0.7),
+                color: textMuted.withOpacity(0.8),
               ),
               textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 24),
+            _HowToCard(
+              textPrimary: textPrimary,
+              textSecondary: textSecondary,
+              textMuted: textMuted,
+              isDark: isDark,
+            ),
+            const SizedBox(height: 24),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: () {
+                  HapticFeedback.lightImpact();
+                  context.push('/library');
+                },
+                icon: const Icon(Icons.video_library_outlined, size: 20),
+                label: const Text(
+                  'Browse Exercise Library',
+                  style: TextStyle(fontWeight: FontWeight.w600),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.cyan,
+                  foregroundColor: Colors.black,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  elevation: 0,
+                ),
+              ),
             ),
           ],
         ),
       ),
+    );
+  }
+}
+
+/// Step-by-step card explaining how to download a video
+class _HowToCard extends StatelessWidget {
+  final Color textPrimary;
+  final Color textSecondary;
+  final Color textMuted;
+  final bool isDark;
+
+  const _HowToCard({
+    required this.textPrimary,
+    required this.textSecondary,
+    required this.textMuted,
+    required this.isDark,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: elevated,
+        borderRadius: BorderRadius.circular(16),
+        border: isDark ? null : Border.all(color: AppColorsLight.cardBorder),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'HOW TO DOWNLOAD',
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+              color: textMuted,
+              letterSpacing: 1.2,
+            ),
+          ),
+          const SizedBox(height: 12),
+          _step(1, 'Open the Library and tap any exercise', textPrimary, textSecondary),
+          const SizedBox(height: 10),
+          _step(2, 'Wait for the video preview to load', textPrimary, textSecondary),
+          const SizedBox(height: 10),
+          _step(
+            3,
+            'Tap the "Download" button to save it offline',
+            textPrimary,
+            textSecondary,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _step(int n, String label, Color primary, Color secondary) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          width: 22,
+          height: 22,
+          decoration: BoxDecoration(
+            color: AppColors.cyan.withOpacity(0.18),
+            shape: BoxShape.circle,
+          ),
+          alignment: Alignment.center,
+          child: Text(
+            '$n',
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+              color: AppColors.cyan,
+            ),
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Text(
+            label,
+            style: TextStyle(
+              fontSize: 13,
+              height: 1.4,
+              color: primary,
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

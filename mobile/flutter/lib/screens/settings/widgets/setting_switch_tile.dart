@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/accent_color_provider.dart';
 
 /// A setting tile with an integrated switch for boolean options.
 ///
@@ -42,6 +43,11 @@ class SettingSwitchTile extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    // Honour the user's accent — previously hardcoded cyan thumb on the
+    // theme's default purple track produced a two-tone switch that clashed
+    // with the rest of the settings surface. Matching thumb + tinted track
+    // keeps the pill reading as a single accent colour.
+    final accent = AccentColorScope.of(context).getColor(isDark);
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -74,10 +80,11 @@ class SettingSwitchTile extends StatelessWidget {
               ],
             ),
           ),
-          Switch(
+          Switch.adaptive(
             value: value,
             onChanged: enabled ? onChanged : null,
-            activeThumbColor: AppColors.cyan,
+            activeThumbColor: accent,
+            activeTrackColor: accent.withValues(alpha: 0.5),
           ),
         ],
       ),

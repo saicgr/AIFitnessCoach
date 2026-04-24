@@ -96,20 +96,22 @@ class HealthImportNotifier extends StateNotifier<HealthImportState> {
     }
   }
 
-  /// Enrich a specific pending import with heart-rate data.
+  /// Enrich a specific pending import with the full set of Health Connect /
+  /// HealthKit metrics captured during the workout window — HR series +
+  /// zones, pace/speed/cadence samples, vitals, splits, TRIMP/effort.
   Future<void> enrichCurrentWorkoutHR(int index) async {
     if (index < 0 || index >= state.pendingImports.length) return;
 
     try {
       final pending = state.pendingImports[index];
-      final enriched =
-          await _importService.enrichWithHeartRate(pending, _healthService);
+      final enriched = await _importService.enrichWithFullMetrics(
+          pending, _healthService);
 
       final updated = List<PendingWorkoutImport>.from(state.pendingImports);
       updated[index] = enriched;
       state = state.copyWith(pendingImports: updated);
     } catch (e) {
-      debugPrint('⚠️ [HealthImport] Error enriching HR at index $index: $e');
+      debugPrint('⚠️ [HealthImport] Error enriching at index $index: $e');
     }
   }
 
@@ -128,33 +130,35 @@ class HealthImportNotifier extends StateNotifier<HealthImportState> {
         throw Exception('User not authenticated');
       }
 
-      // Use custom name or build from activity type.
+      // Enrich if we haven't already (covers auto-import flows that skipped
+      // the explicit enrichCurrentWorkoutHR call).
+      var enriched = pending;
+      if (pending.hrSamples.isEmpty && pending.paceSamples.isEmpty) {
+        try {
+          enriched = await _importService.enrichWithFullMetrics(
+              pending, _healthService);
+        } catch (e) {
+          debugPrint('⚠️ [HealthImport] Enrichment failed, importing raw: $e');
+        }
+      }
+
+      // Kind-based name ("Walking", "Cycling"); preserve caller override.
       final workoutName = (customName != null && customName.trim().isNotEmpty)
           ? customName.trim()
-          : _buildWorkoutName(pending.activityType);
+          : _buildWorkoutName(enriched.activityKind);
 
-      // Build generation metadata with available health data.
-      final metadata = <String, dynamic>{};
-      if (pending.avgHeartRate != null) {
-        metadata['avg_heart_rate'] = pending.avgHeartRate;
+      // Exhaustive metadata (HR series, zones, pace, cadence, splits,
+      // vitals, training load) — serialized by PendingWorkoutImport.
+      final metadata = enriched.toMetadata();
+      // Back-compat keys read by pre-rewrite UI.
+      if (enriched.caloriesBurned != null) {
+        metadata['calories_burned'] = enriched.caloriesBurned;
       }
-      if (pending.maxHeartRate != null) {
-        metadata['max_heart_rate'] = pending.maxHeartRate;
+      if (enriched.distanceMeters != null) {
+        metadata['distance_meters'] = enriched.distanceMeters;
       }
-      if (pending.minHeartRate != null) {
-        metadata['min_heart_rate'] = pending.minHeartRate;
-      }
-      if (pending.sourceName != null) {
-        metadata['source_app'] = pending.sourceName;
-      }
-      if (pending.caloriesBurned != null) {
-        metadata['calories_burned'] = pending.caloriesBurned;
-      }
-      if (pending.distanceMeters != null) {
-        metadata['distance_meters'] = pending.distanceMeters;
-      }
-      if (pending.totalSteps != null) {
-        metadata['total_steps'] = pending.totalSteps;
+      if (enriched.totalSteps != null) {
+        metadata['total_steps'] = enriched.totalSteps;
       }
 
       // 1. Create the workout via API.
@@ -241,6 +245,13 @@ class HealthImportNotifier extends StateNotifier<HealthImportState> {
     }
   }
 
+  /// Remove a UUID from the dedup tracker so the workout re-appears on
+  /// the next Health Connect sync. Called when the user deletes a synced
+  /// workout from the detail screen.
+  Future<void> unmarkImported(String uuid) async {
+    await _importService.unmark(uuid);
+  }
+
   /// Skip a pending workout without importing it. It will not appear again.
   Future<void> skipWorkout(PendingWorkoutImport pending) async {
     await _importService.markImported(pending.uuid);
@@ -267,25 +278,27 @@ class HealthImportNotifier extends StateNotifier<HealthImportState> {
         final userId = await _apiClient.getUserId();
         if (userId == null) break;
 
-        final workoutName = _buildWorkoutName(pending.activityType);
-        final metadata = <String, dynamic>{};
-        if (pending.avgHeartRate != null) {
-          metadata['avg_heart_rate'] = pending.avgHeartRate;
+        // Enrich if needed (HR series, zones, pace, cadence, splits, vitals).
+        var enriched = pending;
+        if (pending.hrSamples.isEmpty && pending.paceSamples.isEmpty) {
+          try {
+            enriched = await _importService.enrichWithFullMetrics(
+                pending, _healthService);
+          } catch (e) {
+            debugPrint('⚠️ [HealthImport] Enrichment failed mid-batch: $e');
+          }
         }
-        if (pending.maxHeartRate != null) {
-          metadata['max_heart_rate'] = pending.maxHeartRate;
+
+        final workoutName = _buildWorkoutName(enriched.activityKind);
+        final metadata = enriched.toMetadata();
+        if (enriched.caloriesBurned != null) {
+          metadata['calories_burned'] = enriched.caloriesBurned;
         }
-        if (pending.caloriesBurned != null) {
-          metadata['calories_burned'] = pending.caloriesBurned;
+        if (enriched.distanceMeters != null) {
+          metadata['distance_meters'] = enriched.distanceMeters;
         }
-        if (pending.distanceMeters != null) {
-          metadata['distance_meters'] = pending.distanceMeters;
-        }
-        if (pending.sourceName != null) {
-          metadata['source_app'] = pending.sourceName;
-        }
-        if (pending.totalSteps != null) {
-          metadata['total_steps'] = pending.totalSteps;
+        if (enriched.totalSteps != null) {
+          metadata['total_steps'] = enriched.totalSteps;
         }
 
         // Create workout
@@ -294,11 +307,11 @@ class HealthImportNotifier extends StateNotifier<HealthImportState> {
           data: {
             'user_id': userId,
             'name': workoutName,
-            'type': pending.activityType,
+            'type': enriched.activityType,
             'difficulty': 'intermediate',
-            'scheduled_date': pending.startTime.toIso8601String(),
+            'scheduled_date': enriched.startTime.toIso8601String(),
             'exercises_json': '[]',
-            'duration_minutes': pending.durationMinutes,
+            'duration_minutes': enriched.durationMinutes,
             'generation_method': 'health_connect_import',
             'generation_source': 'health_connect',
             'generation_metadata': jsonEncode(metadata),
@@ -335,19 +348,115 @@ class HealthImportNotifier extends StateNotifier<HealthImportState> {
     return successCount;
   }
 
-  /// Build a user-friendly workout name from activity type.
-  String _buildWorkoutName(String activityType) {
-    switch (activityType) {
-      case 'strength':
-        return 'Imported Strength Workout';
-      case 'cardio':
-        return 'Imported Cardio Workout';
-      case 'flexibility':
-        return 'Imported Flexibility Workout';
+  /// Build a user-friendly workout name from the granular kind.
+  ///
+  /// Uses the kind (e.g. `walking`) rather than the legacy bucket
+  /// (`cardio`) so cards read "Walking" / "Running" / "Cycling", not
+  /// the generic "Imported Cardio Workout".
+  String _buildWorkoutName(String kind) {
+    switch (kind) {
+      case 'walking':
+        return 'Walking';
+      case 'running':
+        return 'Running';
+      case 'cycling':
+        return 'Cycling';
+      case 'swimming':
+        return 'Swimming';
+      case 'rowing':
+        return 'Rowing';
+      case 'hiking':
+        return 'Hiking';
+      case 'elliptical':
+        return 'Elliptical';
+      case 'stairs':
+        return 'Stair Climb';
+      case 'skating':
+        return 'Skating';
+      case 'dance':
+        return 'Dance';
+      case 'yoga':
+        return 'Yoga';
+      case 'pilates':
+        return 'Pilates';
       case 'hiit':
-        return 'Imported HIIT Workout';
+        return 'HIIT';
+      case 'tennis':
+        return 'Tennis';
+      case 'basketball':
+        return 'Basketball';
+      case 'football':
+        return 'Football';
+      case 'soccer':
+        return 'Soccer';
+      case 'strength':
+        return 'Strength Session';
       default:
-        return 'Imported Workout';
+        return 'Workout';
+    }
+  }
+
+  /// Re-enrich an already-imported workout (by id) from Health Connect —
+  /// fetches metrics for the stored window and merges into the workout's
+  /// `generation_metadata`. No-op if the workout is not a Health Connect
+  /// import or the window is outside the platform's retention.
+  Future<bool> reEnrichImportedWorkout(
+    String workoutId,
+    DateTime startTime,
+    DateTime endTime, {
+    String? sourceName,
+    String? activityKind,
+  }) async {
+    try {
+      // Reconstruct a PendingWorkoutImport stub — we only need the window +
+      // kind to run enrichment; uuid is irrelevant at this path.
+      final stub = PendingWorkoutImport(
+        uuid: 'reenrich-$workoutId',
+        activityType: 'cardio',
+        activityKind: activityKind ?? 'other',
+        startTime: startTime,
+        endTime: endTime,
+        durationMinutes: endTime.difference(startTime).inMinutes,
+        sourceName: sourceName,
+      );
+      final enriched = await _importService.enrichWithFullMetrics(
+          stub, _healthService);
+      final merged = enriched.toMetadata();
+      if (enriched.caloriesBurned != null) {
+        merged['calories_burned'] = enriched.caloriesBurned;
+      }
+      if (enriched.distanceMeters != null) {
+        merged['distance_meters'] = enriched.distanceMeters;
+      }
+      if (enriched.totalSteps != null) {
+        merged['total_steps'] = enriched.totalSteps;
+      }
+
+      // Fetch the current metadata via GET so we can merge, then PATCH.
+      final current = await _apiClient.get(
+        '${ApiConstants.workouts}/$workoutId',
+      );
+      final raw = current.data['generation_metadata'];
+      Map<String, dynamic> existing = {};
+      if (raw is String && raw.isNotEmpty) {
+        try {
+          final decoded = jsonDecode(raw);
+          if (decoded is Map<String, dynamic>) existing = decoded;
+        } catch (_) {}
+      } else if (raw is Map<String, dynamic>) {
+        existing = raw;
+      }
+      final finalMetadata = {...existing, ...merged};
+
+      await _apiClient.put(
+        '${ApiConstants.workouts}/$workoutId',
+        data: {'generation_metadata': jsonEncode(finalMetadata)},
+      );
+      debugPrint('✅ [HealthImport] Re-enriched workout $workoutId');
+      return true;
+    } catch (e) {
+      debugPrint('❌ [HealthImport] Re-enrich failed for $workoutId: $e');
+      return false;
     }
   }
 }

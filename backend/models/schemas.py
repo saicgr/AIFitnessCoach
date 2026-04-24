@@ -201,6 +201,7 @@ class GenerateWorkoutRequest(BaseModel):
     skip_comeback: Optional[bool] = Field(default=None, description="If True, skip comeback mode adjustments even if user qualifies")
     adjacent_day_exercises: Optional[List[str]] = Field(default=None, description="Exercises from adjacent-day workouts to avoid for variety")
     batch_offset: int = Field(default=0, ge=0, description="Offset index for batch generation to ensure exercise variety across days")
+    force_non_preferred_day: bool = Field(default=False, description="Set True when the user deliberately chose a date outside their preferred workout days (e.g., 'do this today' on a rest day). Bypasses the preferred-day gate.")
 
 
 class GenerateWeeklyRequest(BaseModel):
@@ -320,6 +321,8 @@ class RegenerateWorkoutRequest(BaseModel):
     ai_prompt: Optional[str] = Field(default=None, max_length=2000)  # Optional AI prompt for context
     dumbbell_count: Optional[int] = Field(default=None, ge=1, le=10)  # Number of dumbbells available
     kettlebell_count: Optional[int] = Field(default=None, ge=1, le=10)  # Number of kettlebells available
+    new_scheduled_date: Optional[str] = Field(default=None, max_length=20, description="If set (YYYY-MM-DD), move the regenerated workout to this date instead of keeping the original's date. Used by 'Do this today' in the Regenerate sheet.")
+    force_non_preferred_day: bool = Field(default=False, description="Required to be True when new_scheduled_date falls outside the user's preferred workout days.")
 
 
 class UpdateProgramRequest(BaseModel):

@@ -1,6 +1,6 @@
 """Streaming food logging and analysis endpoints."""
 from datetime import datetime, timedelta
-from typing import List, Optional, AsyncGenerator, Tuple
+from typing import Any, List, Optional, AsyncGenerator, Tuple
 import uuid
 import base64
 import json
@@ -920,14 +920,55 @@ async def analyze_food_from_image_streaming(
 
 
 
+_ALLOWED_SECTIONS = {
+    "breakfast", "appetizers", "mains", "sides",
+    "desserts", "drinks", "specials", "uncategorized",
+}
+
+_SECTION_ALIASES = {
+    # Map common restaurant wording to the canonical enum so the client
+    # can render stable section groups without guessing.
+    "starter": "appetizers", "starters": "appetizers",
+    "small plates": "appetizers", "appetizer": "appetizers",
+    "entree": "mains", "entrees": "mains", "entrée": "mains",
+    "entrées": "mains", "main course": "mains", "main courses": "mains",
+    "mains": "mains", "main": "mains",
+    "side": "sides", "side dishes": "sides", "accompaniments": "sides",
+    "dessert": "desserts", "sweets": "desserts",
+    "beverage": "drinks", "beverages": "drinks", "drinks": "drinks",
+    "cocktails": "drinks", "wine": "drinks",
+    "brunch": "breakfast", "breakfast": "breakfast",
+    "special": "specials", "chef's specials": "specials", "specials": "specials",
+}
+
+
+def _normalize_section(raw: Any) -> str:
+    """Map any Gemini section label onto the canonical enum the sheet
+    groups by. Unknown labels fall through to 'uncategorized' rather
+    than leaking raw free-form text."""
+    if not raw:
+        return "uncategorized"
+    key = str(raw).strip().lower()
+    if key in _ALLOWED_SECTIONS:
+        return key
+    if key in _SECTION_ALIASES:
+        return _SECTION_ALIASES[key]
+    # Check substring hits so "Grill & Mains" → "mains".
+    for alias, canonical in _SECTION_ALIASES.items():
+        if alias in key:
+            return canonical
+    return "uncategorized"
+
+
 def _flatten_menu_items(analysis_result: dict, actual_mode: str) -> List[dict]:
     """Normalize the Gemini menu/buffet response into a flat list of dish
     dicts ready to ship to the MenuAnalysisSheet. Includes per-dish
-    inflammation_score + coach_tip so the sheet can surface them inline."""
+    inflammation_score, coach_tip, weight_g, detected_allergens, and
+    price/currency so the sheet can surface them inline."""
     flat_items: List[dict] = []
     if actual_mode == "menu":
         for section in analysis_result.get("sections", []) or []:
-            section_name = section.get("section_name") or "Menu"
+            section_name = _normalize_section(section.get("section_name"))
             for dish in section.get("dishes", []) or []:
                 flat_items.append({
                     "name": dish.get("name", "Unknown"),
@@ -936,10 +977,13 @@ def _flatten_menu_items(analysis_result: dict, actual_mode: str) -> List[dict]:
                     "protein_g": dish.get("protein_g", 0),
                     "carbs_g": dish.get("carbs_g", 0),
                     "fat_g": dish.get("fat_g", 0),
+                    "weight_g": dish.get("weight_g"),
                     "rating": dish.get("rating"),
                     "rating_reason": dish.get("rating_reason"),
                     "amount": dish.get("serving_description"),
                     "price": dish.get("price"),
+                    "currency": dish.get("currency"),
+                    "detected_allergens": dish.get("detected_allergens") or [],
                     "inflammation_score": dish.get("inflammation_score"),
                     "coach_tip": dish.get("coach_tip"),
                 })
@@ -951,9 +995,11 @@ def _flatten_menu_items(analysis_result: dict, actual_mode: str) -> List[dict]:
                 "protein_g": dish.get("protein_g", 0),
                 "carbs_g": dish.get("carbs_g", 0),
                 "fat_g": dish.get("fat_g", 0),
+                "weight_g": dish.get("weight_g"),
                 "rating": dish.get("rating"),
                 "rating_reason": dish.get("rating_reason"),
                 "amount": dish.get("serving_description"),
+                "detected_allergens": dish.get("detected_allergens") or [],
                 "inflammation_score": dish.get("inflammation_score"),
                 "coach_tip": dish.get("coach_tip"),
             })
@@ -1139,9 +1185,11 @@ async def log_food_from_multi_image_streaming(
                     "successful_pages": successful_pages,
                     "total_pages": n,
                     "image_urls": image_urls,
+                    "menu_photo_urls": image_urls,  # alias for client readability
                     "storage_keys": storage_keys,
                     "mime_types": mime_types,
                     "total_time_ms": elapsed_ms(),
+                    "elapsed_seconds": round(elapsed_ms() / 1000.0, 2),
                 }
                 yield f"event: done\ndata: {json.dumps(done_event)}\n\n"
                 return
@@ -1178,6 +1226,7 @@ async def log_food_from_multi_image_streaming(
                 health_score = analysis_result.get("health_score")
                 ai_feedback = analysis_result.get("feedback")
                 inflammation_score = analysis_result.get("inflammation_score")
+                is_ultra_processed = analysis_result.get("is_ultra_processed")
 
                 # Human-consent branch: do NOT persist. Client renders a
                 # review sheet and posts to /food-logs (via logFoodDirect)
@@ -1200,6 +1249,7 @@ async def log_food_from_multi_image_streaming(
                         "feedback": ai_feedback,
                         "health_score": health_score,
                         "inflammation_score": inflammation_score,
+                        "is_ultra_processed": is_ultra_processed,
                         "image_urls": image_urls,
                         "storage_keys": storage_keys,
                         "total_time_ms": elapsed_ms(),
@@ -1216,6 +1266,8 @@ async def log_food_from_multi_image_streaming(
                     health_score=health_score, logged_at=stream_logged_at,
                     image_url=image_urls[0], image_storage_key=storage_keys[0],
                     source_type="image", input_type=normalized_input_type,
+                    inflammation_score=inflammation_score,
+                    is_ultra_processed=is_ultra_processed,
                 )
 
                 from api.v1.nutrition.summaries import invalidate_daily_summary_cache
@@ -1229,6 +1281,7 @@ async def log_food_from_multi_image_streaming(
                     "fiber_g": fiber_g, "ai_suggestion": ai_feedback,
                     "health_score": health_score,
                     "inflammation_score": inflammation_score,
+                    "is_ultra_processed": is_ultra_processed,
                     "image_urls": image_urls,
                     "total_time_ms": elapsed_ms(),
                 }
@@ -1247,8 +1300,12 @@ async def log_food_from_multi_image_streaming(
                 "recommended_order": analysis_result.get("recommended_order"),
                 "tips": analysis_result.get("tips", []),
                 "restaurant_name": analysis_result.get("restaurant_name"),
-                "image_urls": image_urls, "storage_keys": storage_keys,
-                "mime_types": mime_types, "total_time_ms": elapsed_ms(),
+                "image_urls": image_urls,
+                "menu_photo_urls": image_urls,
+                "storage_keys": storage_keys,
+                "mime_types": mime_types,
+                "total_time_ms": elapsed_ms(),
+                "elapsed_seconds": round(elapsed_ms() / 1000.0, 2),
             }
             yield f"event: done\ndata: {json.dumps(response_data)}\n\n"
 
@@ -1295,9 +1352,16 @@ class LogSelectedItemsRequest(BaseModel):
 async def log_selected_items(
     request: Request,
     body: LogSelectedItemsRequest,
+    background: BackgroundTasks,
     current_user: dict = Depends(get_current_user),
 ):
-    """Persist ticked items from a menu/buffet checklist. One food_log per item."""
+    """Persist ticked items from a menu/buffet checklist. One food_log per item.
+
+    Also flips `liked=true` on the corresponding `menu_items` ChromaDB
+    entries (background task, best-effort) so the recommendation
+    pipeline can use "foods you've liked at other places" as a
+    semantic signal on future menu scans.
+    """
     verify_user_ownership(current_user, body.user_id)
     if not body.items:
         raise HTTPException(status_code=400, detail="No items to log")
@@ -1341,5 +1405,23 @@ async def log_selected_items(
     except Exception as e:
         logger.error(f"[log-selected-items] error: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail="Failed to log items")
+
+    # Background: flip `liked=true` on matching menu_items entries for
+    # menu/buffet logs. Plate logs don't come from a menu scan so they
+    # don't need this annotation.
+    if body.analysis_type in ("menu", "buffet"):
+        async def _mark_liked_bg():
+            try:
+                from services.menu_items_rag_service import get_menu_items_rag
+                rag = get_menu_items_rag()
+                for item in body.items:
+                    try:
+                        await rag.mark_liked(user_id=body.user_id, dish_name=item.name)
+                    except Exception:
+                        # Single dish mark_liked failure shouldn't block the others.
+                        continue
+            except Exception as exc:
+                logger.warning(f"[menu_items] mark_liked sweep failed: {exc}", exc_info=True)
+        background.add_task(_mark_liked_bg)
 
     return {"success": True, "food_log_ids": created_ids, "count": len(created_ids)}

@@ -209,6 +209,26 @@ class _MeasurementsScreenState extends ConsumerState<MeasurementsScreen> {
                             onChanged: _setViewMode,
                           ),
                           const SizedBox(width: 8),
+                          // Body Analyzer entry
+                          GestureDetector(
+                            onTap: () => context.go('/body-analyzer'),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFB24BF3).withValues(alpha: 0.12),
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(
+                                  color: const Color(0xFFB24BF3).withValues(alpha: 0.35),
+                                ),
+                              ),
+                              child: const Icon(
+                                Icons.analytics_rounded,
+                                color: Color(0xFFB24BF3),
+                                size: 18,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
                           // Export button
                           GestureDetector(
                             onTap: () => _showExportSheet(context),

@@ -136,63 +136,90 @@ class _GroceryListsIndexScreenState extends ConsumerState<GroceryListsIndexScree
           ),
           const SizedBox(height: 8),
           Expanded(
-            child: asyncLists.when(
-              loading: () => const Center(child: CircularProgressIndicator()),
-              error: (e, _) => Center(
-                child: Padding(
-                  padding: const EdgeInsets.all(24),
-                  child: Text('Error: $e', style: TextStyle(color: muted), textAlign: TextAlign.center),
-                ),
-              ),
-              data: (lists) {
-                if (lists.isEmpty) {
-                  return Center(
-                    child: Padding(
-                      padding: const EdgeInsets.all(24),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(Icons.shopping_cart_outlined, size: 64, color: accent.withValues(alpha: 0.4)),
-                          const SizedBox(height: 12),
-                          Text('No lists yet', style: TextStyle(color: text, fontSize: 18, fontWeight: FontWeight.w700)),
-                          const SizedBox(height: 6),
-                          Text('Tap + to create a list, or add one from a recipe.',
-                              textAlign: TextAlign.center, style: TextStyle(color: muted)),
-                        ],
-                      ),
-                    ),
-                  );
-                }
-                return ListView.separated(
-                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 80),
-                  itemCount: lists.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 8),
-                  itemBuilder: (_, i) {
-                    final l = lists[i];
-                    return Container(
-                      decoration: BoxDecoration(color: surface, borderRadius: BorderRadius.circular(12)),
-                      child: ListTile(
-                        leading: CircleAvatar(
-                          backgroundColor: accent.withValues(alpha: 0.18),
-                          child: Icon(Icons.shopping_cart, color: accent, size: 18),
-                        ),
-                        title: Text(l.name ?? 'Untitled', style: TextStyle(color: text, fontWeight: FontWeight.w700)),
-                        subtitle: Text('${l.checkedCount} of ${l.itemCount} checked',
-                            style: TextStyle(color: muted, fontSize: 11)),
-                        trailing: Icon(Icons.chevron_right, color: muted),
-                        onTap: () {
-                          Navigator.of(context).push(MaterialPageRoute(builder: (_) =>
-                              GroceryListScreen(listId: l.id, userId: userId, isDark: isDark)));
-                        },
-                      ),
-                    );
-                  },
+            // Stale-while-refresh: render cached lists immediately if we
+            // have them (tab re-entry hits the keep-alive cache); spinner
+            // only flashes on the very first ever load for this user.
+            child: Builder(builder: (_) {
+              final cached = asyncLists.valueOrNull;
+              if (cached != null) {
+                return _buildListsBody(context, cached, text, muted, surface, accent);
+              }
+              if (asyncLists.hasError) {
+                return Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(24),
+                    child: Text('Error: ${asyncLists.error}',
+                        style: TextStyle(color: muted),
+                        textAlign: TextAlign.center),
+                  ),
                 );
-              },
-            ),
+              }
+              return const Center(child: CircularProgressIndicator());
+            }),
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildListsBody(
+    BuildContext context,
+    List<GroceryListSummary> lists,
+    Color text,
+    Color muted,
+    Color surface,
+    Color accent,
+  ) {
+    if (lists.isEmpty) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.shopping_cart_outlined,
+                  size: 64, color: accent.withValues(alpha: 0.4)),
+              const SizedBox(height: 12),
+              Text('No lists yet',
+                  style: TextStyle(
+                      color: text,
+                      fontSize: 18,
+                      fontWeight: FontWeight.w700)),
+              const SizedBox(height: 6),
+              Text('Tap + to create a list, or add one from a recipe.',
+                  textAlign: TextAlign.center, style: TextStyle(color: muted)),
+            ],
+          ),
+        ),
+      );
+    }
+    return ListView.separated(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 80),
+      itemCount: lists.length,
+      separatorBuilder: (_, __) => const SizedBox(height: 8),
+      itemBuilder: (_, i) {
+        final l = lists[i];
+        return Container(
+          decoration: BoxDecoration(
+              color: surface, borderRadius: BorderRadius.circular(12)),
+          child: ListTile(
+            leading: CircleAvatar(
+              backgroundColor: accent.withValues(alpha: 0.18),
+              child: Icon(Icons.shopping_cart, color: accent, size: 18),
+            ),
+            title: Text(l.name ?? 'Untitled',
+                style: TextStyle(color: text, fontWeight: FontWeight.w700)),
+            subtitle: Text('${l.checkedCount} of ${l.itemCount} checked',
+                style: TextStyle(color: muted, fontSize: 11)),
+            trailing: Icon(Icons.chevron_right, color: muted),
+            onTap: () {
+              Navigator.of(context).push(MaterialPageRoute(
+                  builder: (_) => GroceryListScreen(
+                      listId: l.id, userId: widget.userId, isDark: widget.isDark)));
+            },
+          ),
+        );
+      },
     );
   }
 }

@@ -128,6 +128,7 @@ class _SupersetToggleTile extends StatelessWidget {
             value: value,
             onChanged: onChanged,
             activeThumbColor: AppColors.cyan,
+            activeTrackColor: AppColors.cyan.withValues(alpha: 0.5),
           ),
         ],
       ),

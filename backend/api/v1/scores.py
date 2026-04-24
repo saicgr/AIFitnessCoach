@@ -893,5 +893,76 @@ async def get_personal_records(
 
 
 
+# =============================================================================
+# Weekly volume per muscle — feeds the Flutter weekly-volume bars widget.
+# =============================================================================
+
+class WeeklyVolumeEntry(BaseModel):
+    muscle_group: str
+    weekly_sets: int
+    weekly_volume_kg: float
+    cap_sets: Optional[int] = None
+    pct_of_cap: Optional[float] = None
+
+
+class WeeklyVolumePerMuscleResponse(BaseModel):
+    muscles: List[WeeklyVolumeEntry]
+
+
+@router.get("/weekly-volume-per-muscle", response_model=WeeklyVolumePerMuscleResponse, tags=["Strength"])
+async def weekly_volume_per_muscle(current_user: dict = Depends(get_current_user)):
+    """Per-muscle weekly sets / volume + strain cap context.
+
+    Reads existing `strength_scores` (latest row per muscle) and
+    `muscle_volume_caps` so the UI can render bars with "at cap" shading
+    without issuing two round-trips.
+    """
+    try:
+        db = get_supabase_db()
+        user_id = current_user["id"]
+
+        # Latest strength_scores row per muscle_group. Supabase-Python has no
+        # DISTINCT-ON; order + group in app code.
+        rows = db.client.table("strength_scores").select(
+            "muscle_group, weekly_sets, weekly_volume_kg, calculated_at"
+        ).eq("user_id", user_id).order(
+            "calculated_at", desc=True
+        ).execute()
+        latest_by_muscle: Dict[str, Dict[str, Any]] = {}
+        for row in rows.data or []:
+            mg = row.get("muscle_group")
+            if mg and mg not in latest_by_muscle:
+                latest_by_muscle[mg] = row
+
+        caps: Dict[str, int] = {}
+        try:
+            cap_rows = db.client.table("muscle_volume_caps").select(
+                "muscle_group, max_weekly_sets"
+            ).eq("user_id", user_id).execute()
+            for c in cap_rows.data or []:
+                caps[c["muscle_group"]] = int(c["max_weekly_sets"] or 0)
+        except Exception:
+            # Table may not exist in some environments; fall back to no caps.
+            caps = {}
+
+        entries: List[WeeklyVolumeEntry] = []
+        for muscle, row in latest_by_muscle.items():
+            sets = int(row.get("weekly_sets") or 0)
+            volume = float(row.get("weekly_volume_kg") or 0)
+            cap = caps.get(muscle)
+            pct = (sets / cap) if cap and cap > 0 else None
+            entries.append(WeeklyVolumeEntry(
+                muscle_group=muscle,
+                weekly_sets=sets,
+                weekly_volume_kg=volume,
+                cap_sets=cap,
+                pct_of_cap=pct,
+            ))
+        entries.sort(key=lambda e: e.muscle_group)
+        return WeeklyVolumePerMuscleResponse(muscles=entries)
+    except Exception as e:
+        raise safe_internal_error(e, "weekly_volume_per_muscle")
+
+
 # Include secondary endpoints
 router.include_router(_endpoints_router)

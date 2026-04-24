@@ -4,11 +4,19 @@ import '../data/services/connectivity_service.dart';
 import '../data/services/sync_engine.dart';
 import '../screens/settings/sync_details_screen.dart';
 
+/// Tracks the dead-letter count at the moment the user dismissed the red
+/// sync-failure banner. The banner re-appears if the count climbs above
+/// this value — so new failures always notify, but acknowledged ones stay
+/// hidden for the session. Resets on app restart (deliberate: don't let
+/// a dismissed banner hide a stuck queue forever).
+final _dismissedFailureThresholdProvider = StateProvider<int>((ref) => 0);
+
 /// Animated banner shown at the top of the screen when the device is offline,
 /// when pending sync items are being processed, or when sync items have failed.
 ///
 /// Priority: red (sync failed) > orange (offline) > blue (syncing)
 /// - Red background with error icon when dead letter items exist while online
+///   (user-dismissible; re-appears if new failures land)
 /// - Orange background with cloud_off icon when offline
 /// - Blue background with sync icon when syncing pending changes
 /// - Auto-hides with slide animation when status resolves
@@ -19,6 +27,7 @@ class OfflineBanner extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final connectivityAsync = ref.watch(connectivityStatusProvider);
     final syncState = ref.watch(syncEngineProvider);
+    final dismissedThreshold = ref.watch(_dismissedFailureThresholdProvider);
 
     final isOffline = connectivityAsync.maybeWhen(
       data: (s) => s == ConnectivityStatus.offline,
@@ -28,7 +37,10 @@ class OfflineBanner extends ConsumerWidget {
     final hasPending = syncState.pendingCount > 0;
     final isSyncing = syncState.isSyncing;
     final deadLetterCount = syncState.deadLetterCount;
-    final hasSyncFailures = deadLetterCount > 0 && !isOffline;
+    // Only show the red banner if there are MORE failures than the user
+    // has already acknowledged. New failures always re-notify.
+    final hasSyncFailures =
+        deadLetterCount > dismissedThreshold && !isOffline;
 
     // Determine what to show (priority: red > orange > blue)
     final bool showBanner =
@@ -107,6 +119,33 @@ class OfflineBanner extends ConsumerWidget {
                               Icons.chevron_right_rounded,
                               color: Colors.white,
                               size: 16,
+                            ),
+                          ],
+                          if (hasSyncFailures) ...[
+                            const SizedBox(width: 4),
+                            // Tappable dismiss affordance. InkResponse swallows
+                            // the tap so the parent GestureDetector doesn't also
+                            // navigate to Sync Details.
+                            Semantics(
+                              label: 'Dismiss sync failure banner',
+                              button: true,
+                              child: InkResponse(
+                                radius: 18,
+                                onTap: () {
+                                  ref
+                                      .read(_dismissedFailureThresholdProvider
+                                          .notifier)
+                                      .state = deadLetterCount;
+                                },
+                                child: const Padding(
+                                  padding: EdgeInsets.all(4),
+                                  child: Icon(
+                                    Icons.close_rounded,
+                                    color: Colors.white,
+                                    size: 16,
+                                  ),
+                                ),
+                              ),
                             ),
                           ],
                         ],

@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<TrainingCenterDatabase xmlns="http://www.garmin.com/xmlschemas/TrainingCenterDatabase/v2">
+ <Activities>
+  <Activity Sport="Biking">
+   <Id>2025-03-28T17:29:00Z</Id>
+   <Lap StartTime="2025-03-28T17:29:00Z">
+    <TotalTimeSeconds>3600</TotalTimeSeconds>
+    <DistanceMeters>28000</DistanceMeters>
+    <Calories>680</Calories>
+    <AverageHeartRateBpm><Value>142</Value></AverageHeartRateBpm>
+    <MaximumHeartRateBpm><Value>172</Value></MaximumHeartRateBpm>
+    <Track>
+     <Trackpoint>
+      <Time>2025-03-28T17:29:00Z</Time>
+      <Position><LatitudeDegrees>37.7749</LatitudeDegrees><LongitudeDegrees>-122.4194</LongitudeDegrees></Position>
+      <HeartRateBpm><Value>120</Value></HeartRateBpm>
+      <Cadence>85</Cadence>
+     </Trackpoint>
+     <Trackpoint>
+      <Time>2025-03-28T17:59:00Z</Time>
+      <Position><LatitudeDegrees>37.7800</LatitudeDegrees><LongitudeDegrees>-122.4250</LongitudeDegrees></Position>
+      <HeartRateBpm><Value>160</Value></HeartRateBpm>
+      <Cadence>90</Cadence>
+     </Trackpoint>
+    </Track>
+   </Lap>
+   <Lap StartTime="2025-03-28T18:29:00Z">
+    <TotalTimeSeconds>1800</TotalTimeSeconds>
+    <DistanceMeters>14000</DistanceMeters>
+    <Calories>320</Calories>
+    <AverageHeartRateBpm><Value>135</Value></AverageHeartRateBpm>
+    <MaximumHeartRateBpm><Value>158</Value></MaximumHeartRateBpm>
+   </Lap>
+  </Activity>
+ </Activities>
+</TrainingCenterDatabase>

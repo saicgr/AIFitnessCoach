@@ -14,6 +14,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../data/models/exercise.dart';
 import '../../../../core/services/haptic_service.dart';
+import '../../../../widgets/exercise_image.dart';
 
 class EasyExerciseHeader extends ConsumerWidget {
   final WorkoutExercise exercise;
@@ -198,12 +199,12 @@ class _Thumbnail extends StatelessWidget {
   Widget build(BuildContext context) {
     final bg = (isDark ? Colors.white : Colors.black).withValues(alpha: 0.04);
     final border = (isDark ? Colors.white : Colors.black).withValues(alpha: 0.10);
-    // Canonical resolution used across the app: static image > animated gif >
-    // video-poster fallback. The backend populates `imageS3Path` for almost
-    // every library exercise; gifUrl/videoUrl are only set for AI-imported
-    // custom ones. Easy was ignoring imageS3Path, which is why beginners
-    // always saw the placeholder dumbbell icon.
-    final url = exercise.imageS3Path ?? exercise.gifUrl ?? exercise.videoUrl;
+    // Use the shared ExerciseImage widget so imageS3Path keys without a full
+    // URL, or expired presigned URLs, round-trip through the
+    // `/exercise-images/{name}` endpoint instead of silently failing in
+    // Image.network — which is why the dumbbell placeholder was sticky.
+    final preResolved =
+        exercise.imageS3Path ?? exercise.gifUrl ?? exercise.videoUrl;
 
     return Container(
       decoration: BoxDecoration(
@@ -212,37 +213,18 @@ class _Thumbnail extends StatelessWidget {
         border: Border.all(color: border),
       ),
       clipBehavior: Clip.antiAlias,
-      child: (url != null && url.isNotEmpty)
-          ? Image.network(
-              url,
-              fit: BoxFit.cover,
-              loadingBuilder: (ctx, child, progress) {
-                if (progress == null) return child;
-                return Center(
-                  child: SizedBox(
-                    width: 28,
-                    height: 28,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2.4,
-                      color:
-                          (isDark ? Colors.white : Colors.black).withValues(alpha: 0.4),
-                    ),
-                  ),
-                );
-              },
-              errorBuilder: (ctx, err, stack) => _placeholderIcon(isDark),
-            )
-          : _placeholderIcon(isDark),
+      child: ExerciseImage(
+        exerciseName: exercise.name,
+        imageUrl: preResolved,
+        width: double.infinity,
+        height: double.infinity,
+        borderRadius: 0,
+        backgroundColor: Colors.transparent,
+        iconColor:
+            (isDark ? Colors.white : Colors.black).withValues(alpha: 0.22),
+      ),
     );
   }
-
-  Widget _placeholderIcon(bool isDark) => Center(
-        child: Icon(
-          Icons.fitness_center_rounded,
-          size: 56,
-          color: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.22),
-        ),
-      );
 }
 
 class _LinkChip extends StatelessWidget {

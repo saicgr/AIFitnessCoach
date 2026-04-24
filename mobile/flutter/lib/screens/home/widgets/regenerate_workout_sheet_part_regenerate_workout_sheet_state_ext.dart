@@ -50,6 +50,20 @@ extension __RegenerateWorkoutSheetStateExt on _RegenerateWorkoutSheetState {
 
       final repo = ref.read(workoutRepositoryProvider);
 
+      // "Do this today": hand the backend today's YYYY-MM-DD and flag force
+      // so the preferred-day gate accepts the move. When the chip stays on
+      // "Keep original", leave both null so the server preserves the date.
+      String? newScheduledDate;
+      bool forceNonPreferredDay = false;
+      if (_moveToToday) {
+        final now = DateTime.now();
+        newScheduledDate =
+            '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
+        final todayIdx = now.weekday - 1;
+        forceNonPreferredDay =
+            _userWorkoutDays.isNotEmpty && !_userWorkoutDays.contains(todayIdx);
+      }
+
       // Use streaming for real-time progress updates
       await for (final progress in repo.regenerateWorkoutStreaming(
         workoutId: widget.workout.id!,
@@ -65,6 +79,8 @@ extension __RegenerateWorkoutSheetStateExt on _RegenerateWorkoutSheetState {
             _selectedEquipment.contains('Dumbbells') ? _dumbbellCount : null,
         kettlebellCount:
             _selectedEquipment.contains('Kettlebell') ? _kettlebellCount : null,
+        newScheduledDate: newScheduledDate,
+        forceNonPreferredDay: forceNonPreferredDay,
       )) {
         if (!mounted) return;
 
@@ -212,6 +228,18 @@ extension __RegenerateWorkoutSheetStateExt on _RegenerateWorkoutSheetState {
       final suggestion = _aiSuggestions[_selectedSuggestionIndex!];
       final repo = ref.read(workoutRepositoryProvider);
 
+      // Mirror the Customize-tab "Do this today" behavior for AI suggestions.
+      String? newScheduledDate;
+      bool forceNonPreferredDay = false;
+      if (_moveToToday) {
+        final now = DateTime.now();
+        newScheduledDate =
+            '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
+        final todayIdx = now.weekday - 1;
+        forceNonPreferredDay =
+            _userWorkoutDays.isNotEmpty && !_userWorkoutDays.contains(todayIdx);
+      }
+
       // Use streaming for real-time progress updates
       await for (final progress in repo.regenerateWorkoutStreaming(
         workoutId: widget.workout.id!,
@@ -228,6 +256,8 @@ extension __RegenerateWorkoutSheetStateExt on _RegenerateWorkoutSheetState {
             ? null
             : _aiPromptController.text.trim(),
         workoutName: suggestion['name'] as String?,
+        newScheduledDate: newScheduledDate,
+        forceNonPreferredDay: forceNonPreferredDay,
       )) {
         if (!mounted) return;
 

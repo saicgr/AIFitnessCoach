@@ -42,7 +42,17 @@ echo -e "${YELLOW}Building app bundle (${BUILD_MODE})...${NC}"
 # RevenueCat Google API key
 REVENUECAT_GOOGLE_KEY="goog_oWxJnYQrUSCtIxMqTPcEPfWgBxq"
 
-$FLUTTER_PATH build appbundle --${BUILD_MODE} --dart-define=ENV=prod --dart-define=REVENUECAT_GOOGLE_KEY=$REVENUECAT_GOOGLE_KEY
+# Sentry DSN. Defaults to the production DSN baked into
+# `lib/core/config/environment_config.dart`. Override here or via the
+# SENTRY_DSN env var when pointing a build at a dev/staging Sentry project
+# (e.g. when diagnosing an issue without polluting production Issues).
+SENTRY_DEFINE=""
+if [ -n "$SENTRY_DSN" ]; then
+    SENTRY_DEFINE="--dart-define=SENTRY_DSN=$SENTRY_DSN"
+    echo -e "${CYAN}Overriding SENTRY_DSN from env var${NC}"
+fi
+
+$FLUTTER_PATH build appbundle --${BUILD_MODE} --dart-define=ENV=prod --dart-define=REVENUECAT_GOOGLE_KEY=$REVENUECAT_GOOGLE_KEY $SENTRY_DEFINE
 
 # Locate the output
 if [ "$BUILD_MODE" = "release" ]; then

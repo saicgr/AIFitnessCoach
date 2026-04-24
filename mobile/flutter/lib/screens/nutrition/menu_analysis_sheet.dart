@@ -1,53 +1,35 @@
-/// Full-screen modal bottom sheet for analyzing menus, buffets, and large
-/// plate scans (6+ items). Supports sorting, filtering, portion adjustment,
-/// and batch logging.
+/// Full-screen glassmorphic sheet for analyzing menus, buffets, and large
+/// plate scans. v2 redesign — sections, filters, multi-sort, search,
+/// circular budget rings, recommended picks, allergen warnings,
+/// portion stepper, menu photo strip, elapsed time, and bookmark-to-
+/// history. See plan at
+/// /Users/saichetangrandhe/.claude/plans/i-love-menu-analysis-ticklish-scroll.md
 library;
 
-import 'dart:math';
+import 'dart:async';
 
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../core/theme/theme_colors.dart';
+import '../../data/models/allergen.dart';
+import '../../data/models/menu_item.dart';
+import '../../data/models/sort_spec.dart';
 import '../../data/providers/nutrition_preferences_provider.dart';
 import '../../data/repositories/nutrition_repository.dart';
+import '../../data/services/api_client.dart';
+import '../../services/menu_recommendation_service.dart';
+import '../../widgets/glass_sheet.dart';
+import 'widgets/menu_analysis/macro_budget_ring.dart';
+import 'widgets/menu_analysis/menu_analysis_item_card.dart';
+import 'widgets/menu_analysis/menu_filter_sheet.dart';
+import 'widgets/menu_analysis/menu_filter_state.dart';
+import 'widgets/menu_analysis/recommendation_explain_sheet.dart';
 
-/// A full-screen modal bottom sheet that displays food analysis results
-/// with sorting, portion adjustment, and logging capabilities.
-///
-/// Supports progressive item loading: the sheet can be opened with items from
-/// page 1 and then be fed additional items as later pages complete backend
-/// analysis. Pass a [MenuAnalysisStreamingController] to enable this mode.
-class MenuAnalysisSheet extends ConsumerStatefulWidget {
-  final List<Map<String, dynamic>> foodItems;
-  final String analysisType; // "plate", "menu", or "buffet"
-  final bool isDark;
-  final void Function(List<Map<String, dynamic>>) onLogItems;
-
-  /// Optional controller that lets the caller append items as additional
-  /// pages finish processing on the backend. When non-null, the sheet shows
-  /// a "Scanning page X of N" header until [MenuAnalysisStreamingController.done]
-  /// is called.
-  final MenuAnalysisStreamingController? streamingController;
-
-  const MenuAnalysisSheet({
-    super.key,
-    required this.foodItems,
-    required this.analysisType,
-    required this.isDark,
-    required this.onLogItems,
-    this.streamingController,
-  });
-
-  @override
-  ConsumerState<MenuAnalysisSheet> createState() => _MenuAnalysisSheetState();
-}
-
-/// Controller for progressively feeding items into an open [MenuAnalysisSheet]
-/// as backend page-scans complete. The caller constructs one of these, passes
-/// it to the sheet, then calls [appendItems] / [markPageError] / [markDone]
-/// as SSE events arrive. The sheet listens and updates itself.
+/// Streaming controller retained from v1 so existing callers don't break.
 class MenuAnalysisStreamingController extends ChangeNotifier {
   int _currentPage;
   int _totalPages;
@@ -64,8 +46,6 @@ class MenuAnalysisStreamingController extends ChangeNotifier {
   bool get isDone => _done;
   List<int> get failedPages => List.unmodifiable(_failedPages);
 
-  /// Items appended since the last consumer read. Consumer drains by reading
-  /// this and clearing it during setState.
   List<Map<String, dynamic>> consumePending() {
     final copy = List<Map<String, dynamic>>.from(_pendingItems);
     _pendingItems.clear();
@@ -90,761 +70,987 @@ class MenuAnalysisStreamingController extends ChangeNotifier {
   }
 }
 
-enum _SortField { calories, protein, carbs, fat }
+class MenuAnalysisSheet extends ConsumerStatefulWidget {
+  final List<Map<String, dynamic>> foodItems;
+  final String analysisType;
+  final bool isDark;
+  final void Function(List<Map<String, dynamic>>) onLogItems;
+  final MenuAnalysisStreamingController? streamingController;
+
+  /// URLs of the menu pages Gemini actually parsed. Rendered as a photo
+  /// strip in the header so the user can verify the AI saw the right
+  /// images.
+  final List<String> menuPhotoUrls;
+
+  /// Gemini elapsed time in seconds — shown as a subtle counts-line
+  /// entry ("23 items · 6 sections · 1.8s"). Falls back to null when
+  /// not available (older invocations).
+  final double? elapsedSeconds;
+
+  /// Optional restaurant name Gemini surfaced — helps when saving to
+  /// history as "Indian place near work".
+  final String? restaurantName;
+
+  const MenuAnalysisSheet({
+    super.key,
+    required this.foodItems,
+    required this.analysisType,
+    required this.isDark,
+    required this.onLogItems,
+    this.streamingController,
+    this.menuPhotoUrls = const [],
+    this.elapsedSeconds,
+    this.restaurantName,
+  });
+
+  /// Preserve the v1 call pattern — used by log-meal + chat flows.
+  static Future<void> show(
+    BuildContext context, {
+    required List<Map<String, dynamic>> foodItems,
+    required String analysisType,
+    required bool isDark,
+    required void Function(List<Map<String, dynamic>>) onLogItems,
+    MenuAnalysisStreamingController? streamingController,
+    List<String> menuPhotoUrls = const [],
+    double? elapsedSeconds,
+    String? restaurantName,
+  }) {
+    return showGlassSheet<void>(
+      context: context,
+      builder: (_) => MenuAnalysisSheet(
+        foodItems: foodItems,
+        analysisType: analysisType,
+        isDark: isDark,
+        onLogItems: onLogItems,
+        streamingController: streamingController,
+        menuPhotoUrls: menuPhotoUrls,
+        elapsedSeconds: elapsedSeconds,
+        restaurantName: restaurantName,
+      ),
+    );
+  }
+
+  @override
+  ConsumerState<MenuAnalysisSheet> createState() => _MenuAnalysisSheetState();
+}
 
 class _MenuAnalysisSheetState extends ConsumerState<MenuAnalysisSheet> {
-  late List<Map<String, dynamic>> _items;
-  late Set<int> _selected;
-  late Map<int, double> _multipliers;
+  late List<MenuItem> _items;
+  final Set<String> _selected = {};
+  SortSpecList _sort = SortSpecList.empty;
+  MenuFilterState _filter = MenuFilterState.empty;
+  RecommendationResult? _recommendation;
+  bool _searchOpen = false;
+  final TextEditingController _searchController = TextEditingController();
+  Timer? _searchDebounce;
+  bool _showRecommended = true;
+  final Map<String, bool> _sectionExpanded = {};
   bool _logged = false;
-  _SortField? _sortField;
-  bool _sortAsc = true;
-
-  static const _presets = [0.5, 0.75, 1.0, 1.25, 1.5, 2.0];
-  static const _presetLabels = ['1/2', '3/4', '1x', '1 1/4', '1 1/2', '2x'];
+  bool _bookmarking = false;
 
   @override
   void initState() {
     super.initState();
-    _items = _normalizeItems(widget.foodItems);
-    // Start with nothing selected — user opts in per item. Auto-selecting all
-    // on a 30+ item menu makes the budget counters read as "way over" before
-    // the user has a chance to express intent.
-    _selected = <int>{};
-    _multipliers = {};
+    _items = _itemsFromMaps(widget.foodItems);
+    // Default: hide dishes matching the user's allergens if any are set.
+    // Resolved after first build via addPostFrameCallback because we need
+    // `ref`.
+    WidgetsBinding.instance.addPostFrameCallback((_) => _initAllergenDefault());
     widget.streamingController?.addListener(_onStreamingUpdate);
+    _refreshRecommendation();
   }
 
   @override
   void dispose() {
     widget.streamingController?.removeListener(_onStreamingUpdate);
+    _searchController.dispose();
+    _searchDebounce?.cancel();
     super.dispose();
+  }
+
+  void _initAllergenDefault() {
+    if (!mounted) return;
+    final state = ref.read(nutritionPreferencesProvider);
+    final prefs = state.preferences;
+    final hasAllergens = prefs != null &&
+        (prefs.allergies.isNotEmpty || prefs.customAllergens.isNotEmpty);
+    if (hasAllergens && !_filter.hideAllergenDishes) {
+      setState(() => _filter = _filter.copyWith(hideAllergenDishes: true));
+    }
+  }
+
+  List<MenuItem> _itemsFromMaps(List<Map<String, dynamic>> raw) {
+    final photoFallback =
+        widget.menuPhotoUrls.isNotEmpty ? widget.menuPhotoUrls.first : null;
+    return [
+      for (int i = 0; i < raw.length; i++)
+        MenuItem.fromJson(raw[i], id: 'item_$i', fallbackImageUrl: photoFallback),
+    ];
   }
 
   void _onStreamingUpdate() {
     final controller = widget.streamingController;
-    if (controller == null) return;
-    final newItems = controller.consumePending();
-    if (newItems.isEmpty && mounted) {
-      // Only progress / done state changed — still need a rebuild so the
-      // "Scanning page X of N" chip updates.
+    if (controller == null || !mounted) return;
+    final pending = controller.consumePending();
+    if (pending.isNotEmpty) {
+      final more = [
+        for (int i = 0; i < pending.length; i++)
+          MenuItem.fromJson(
+            pending[i],
+            id: 'item_${_items.length + i}',
+            fallbackImageUrl: widget.menuPhotoUrls.isNotEmpty ? widget.menuPhotoUrls.first : null,
+          ),
+      ];
+      setState(() => _items = [..._items, ...more]);
+      _refreshRecommendation();
+    } else {
       setState(() {});
-      return;
     }
+  }
+
+  // ───────────────────────── recommendation ─────────────────────────
+
+  Future<void> _refreshRecommendation() async {
+    // Local scoring only in this pass; pre-fetched ChromaDB semantic
+    // matches stay an empty list if the pre-fetch endpoint hasn't run.
+    // Pipeline handles empty gracefully.
     if (!mounted) return;
-    setState(() {
-      _items.addAll(_normalizeItems(newItems));
-    });
+    final state = ref.read(nutritionPreferencesProvider);
+    final prefs = state.preferences;
+    final summary = ref.read(nutritionProvider).todaySummary;
+
+    final ctx = RecommendationContext(
+      calorieTarget: state.currentCalorieTarget.toDouble(),
+      proteinTarget: state.currentProteinTarget.toDouble(),
+      carbsTarget: state.currentCarbsTarget.toDouble(),
+      fatTarget: state.currentFatTarget.toDouble(),
+      consumedCalories: (summary?.totalCalories ?? 0).toDouble(),
+      consumedProteinG: (summary?.totalProteinG ?? 0).toDouble(),
+      consumedCarbsG: (summary?.totalCarbsG ?? 0).toDouble(),
+      consumedFatG: (summary?.totalFatG ?? 0).toDouble(),
+      dietaryRestrictions: prefs?.dietaryRestrictions ?? const [],
+      dislikedFoods: prefs?.dislikedFoods ?? const [],
+      allergenProfile: UserAllergenProfile(
+        allergens: Allergen.parseAll(prefs?.allergies ?? const []),
+        customAllergens: prefs?.customAllergens ?? const [],
+      ),
+      inflammationSensitivity: prefs?.inflammationSensitivity ?? 3,
+      mealBudgetUsd: prefs?.mealBudgetUsd,
+      todayItemNames: summary?.meals
+              .expand((m) => m.foodItems.map((f) => f.name))
+              .toList() ??
+          const [],
+      coldStart: (summary?.meals.length ?? 0) < 5,
+    );
+
+    final result = const MenuRecommendationService().recommend(
+      items: _items,
+      context: ctx,
+      topK: 3,
+    );
+    if (mounted) setState(() => _recommendation = result);
   }
 
-  /// Normalize field names and defaults.
-  List<Map<String, dynamic>> _normalizeItems(List<Map<String, dynamic>> raw) {
-    return raw.map((item) {
-      final normalized = Map<String, dynamic>.from(item);
-      // Normalize macro names
-      normalized['protein'] = (item['protein_g'] as num? ?? item['protein'] as num? ?? 0).toInt();
-      normalized['carbs'] = (item['carbs_g'] as num? ?? item['carbs'] as num? ?? 0).toInt();
-      normalized['fat'] = (item['fat_g'] as num? ?? item['fat'] as num? ?? 0).toInt();
-      normalized['calories'] = (item['calories'] as num? ?? 0).toInt();
-      normalized['weight_g'] ??= 100;
-      return normalized;
-    }).toList();
+  // ───────────────────────── filtered + sorted ─────────────────────────
+
+  List<MenuItem> get _filteredItems {
+    final prefs = ref.read(nutritionPreferencesProvider).preferences;
+    final profile = UserAllergenProfile(
+      allergens: Allergen.parseAll(prefs?.allergies ?? const []),
+      customAllergens: prefs?.customAllergens ?? const [],
+    );
+    var filtered = _items.where((i) => _filter.accepts(i, profile: profile)).toList();
+    if (_sort.isEmpty) return filtered;
+    filtered.sort(_sort.comparator<MenuItem>((item, field) => item.sortValue(field)));
+    return filtered;
   }
 
-  double _mult(int i) => _multipliers[i] ?? 1.0;
-
-  int _adj(int i, String key) {
-    final raw = (_items[i][key] as num? ?? 0).toDouble();
-    return max(0, (raw * _mult(i)).round());
-  }
-
-  int get _selectedCalTotal {
-    int t = 0;
-    for (final i in _selected) {
-      t += _adj(i, 'calories');
+  /// Items grouped by section (for non-filtered/non-searched state).
+  Map<String, List<MenuItem>> get _itemsBySection {
+    final grouped = <String, List<MenuItem>>{};
+    for (final item in _filteredItems) {
+      grouped.putIfAbsent(item.section, () => []).add(item);
     }
-    return t;
-  }
-
-  int get _selectedProteinTotal {
-    int t = 0;
-    for (final i in _selected) {
-      t += _adj(i, 'protein');
+    final sorted = <String, List<MenuItem>>{};
+    for (final key in kCanonicalSectionOrder) {
+      if (grouped.containsKey(key)) sorted[key] = grouped[key]!;
     }
-    return t;
+    return sorted;
   }
 
-  int get _selectedCarbsTotal {
-    int t = 0;
-    for (final i in _selected) {
-      t += _adj(i, 'carbs');
-    }
-    return t;
-  }
+  bool get _showFlatList =>
+      _filter.hasAnyFilter || _sort.length > 0;
 
-  int get _selectedFatTotal {
-    int t = 0;
-    for (final i in _selected) {
-      t += _adj(i, 'fat');
-    }
-    return t;
-  }
+  // ───────────────────────── totals ─────────────────────────
 
-  List<int> get _sortedIndices {
-    final indices = List.generate(_items.length, (i) => i);
-    if (_sortField == null) return indices;
-    indices.sort((a, b) {
-      final key = switch (_sortField!) {
-        _SortField.calories => 'calories',
-        _SortField.protein => 'protein',
-        _SortField.carbs => 'carbs',
-        _SortField.fat => 'fat',
-      };
-      final va = _adj(a, key);
-      final vb = _adj(b, key);
-      return _sortAsc ? va.compareTo(vb) : vb.compareTo(va);
-    });
-    return indices;
-  }
-
-  void _toggleSelectAll() {
-    setState(() {
-      if (_selected.length == _items.length) {
-        _selected.clear();
-      } else {
-        _selected
-          ..clear()
-          ..addAll(List.generate(_items.length, (i) => i));
+  _Totals get _selectedTotals {
+    double cal = 0, p = 0, c = 0, f = 0, price = 0;
+    bool anyPrice = false;
+    for (final item in _items) {
+      if (!_selected.contains(item.id)) continue;
+      cal += item.scaledCalories;
+      p += item.scaledProteinG;
+      c += item.scaledCarbsG;
+      f += item.scaledFatG;
+      if (item.price != null) {
+        price += item.price!;
+        anyPrice = true;
       }
+    }
+    return _Totals(cal: cal, protein: p, carbs: c, fat: f, price: anyPrice ? price : null);
+  }
+
+  // ───────────────────────── actions ─────────────────────────
+
+  void _toggleItem(MenuItem item, bool? selected) {
+    setState(() {
+      if (selected ?? !_selected.contains(item.id)) {
+        _selected.add(item.id);
+      } else {
+        _selected.remove(item.id);
+      }
+    });
+  }
+
+  void _updatePortion(MenuItem item, double multiplier) {
+    setState(() {
+      final idx = _items.indexWhere((i) => i.id == item.id);
+      if (idx >= 0) _items[idx] = _items[idx].copyWith(portionMultiplier: multiplier);
+    });
+  }
+
+  void _toggleSort(SortField field) {
+    HapticFeedback.selectionClick();
+    setState(() => _sort = _sort.tap(field));
+  }
+
+  Future<void> _longPressSort(SortField field) async {
+    HapticFeedback.mediumImpact();
+    setState(() => _sort = _sort.addTiebreaker(field));
+  }
+
+  Future<void> _openFilterSheet() async {
+    HapticFeedback.lightImpact();
+    final result = await MenuFilterSheet.show(
+      context,
+      initial: _filter,
+      allItems: _items,
+      resultCount: _filteredItems.length,
+    );
+    if (result != null) setState(() => _filter = result);
+  }
+
+  void _onSearchChanged(String v) {
+    _searchDebounce?.cancel();
+    _searchDebounce = Timer(const Duration(milliseconds: 300), () {
+      if (mounted) setState(() => _filter = _filter.copyWith(searchQuery: v));
     });
   }
 
   void _handleLog() {
     if (_logged || _selected.isEmpty) return;
-    final items = _selected.map((i) {
-      final item = _items[i];
-      final m = _mult(i);
-      return <String, dynamic>{
-        'name': item['name'] ?? 'Unknown',
-        'calories': _adj(i, 'calories'),
-        'protein_g': _adj(i, 'protein'),
-        'carbs_g': _adj(i, 'carbs'),
-        'fat_g': _adj(i, 'fat'),
-        if (m != 1.0) 'portion_multiplier': m,
-      };
-    }).toList();
-    widget.onLogItems(items);
+    final payload = <Map<String, dynamic>>[];
+    for (final item in _items) {
+      if (!_selected.contains(item.id)) continue;
+      payload.add({
+        'name': item.name,
+        'calories': item.scaledCalories.round(),
+        'protein_g': double.parse(item.scaledProteinG.toStringAsFixed(1)),
+        'carbs_g': double.parse(item.scaledCarbsG.toStringAsFixed(1)),
+        'fat_g': double.parse(item.scaledFatG.toStringAsFixed(1)),
+        if (item.portionMultiplier != 1.0) 'portion_multiplier': item.portionMultiplier,
+        if (item.amount != null) 'amount': item.amount,
+      });
+    }
+    widget.onLogItems(payload);
     setState(() => _logged = true);
   }
+
+  Future<void> _bookmarkAnalysis() async {
+    if (_bookmarking) return;
+    final controller = TextEditingController(text: widget.restaurantName ?? '');
+    final title = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Save this menu'),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          maxLength: 60,
+          decoration: const InputDecoration(hintText: 'e.g. Indian place near work'),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, controller.text.trim()),
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    );
+    if (title == null || !mounted) return;
+
+    setState(() => _bookmarking = true);
+    try {
+      final api = ref.read(apiClientProvider);
+      await api.post('/nutrition/menu-analyses', data: {
+        'title': title.isEmpty ? null : title,
+        'restaurant_name': widget.restaurantName,
+        'analysis_type': widget.analysisType,
+        'sections': <Map<String, dynamic>>[],
+        'food_items': widget.foodItems,
+        'menu_photo_urls': widget.menuPhotoUrls,
+        'elapsed_seconds': widget.elapsedSeconds,
+      });
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text('Saved to your menu history'),
+      ));
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text('Couldn\'t save: $e'),
+          backgroundColor: AppColors.error,
+        ));
+      }
+    } finally {
+      if (mounted) setState(() => _bookmarking = false);
+    }
+  }
+
+  // ───────────────────────── build ─────────────────────────
 
   @override
   Widget build(BuildContext context) {
     final colors = ThemeColors.of(context);
-    final isDark = widget.isDark;
-    final prefs = ref.watch(nutritionPreferencesProvider);
+    return GlassSheet(
+      maxHeightFraction: 0.95,
+      child: Column(
+        children: [
+          _header(colors),
+          Expanded(
+            child: ListView(
+              padding: const EdgeInsets.symmetric(horizontal: 14),
+              children: [
+                _budgetRings(colors),
+                if (widget.menuPhotoUrls.isNotEmpty) _photoStrip(),
+                _countsLine(colors),
+                _searchAndControls(colors),
+                if (_filter.hasAnyFilter) _activeFilterChips(),
+                if (_recommendation != null &&
+                    _recommendation!.picks.isNotEmpty &&
+                    !_showFlatList)
+                  _recommendedSection(colors),
+                const SizedBox(height: 6),
+                if (_showFlatList)
+                  _flatList(colors)
+                else
+                  ..._itemsBySection.entries.map((e) => _sectionBlock(e.key, e.value, colors)),
+                const SizedBox(height: 80),
+              ],
+            ),
+          ),
+          _bottomBar(colors),
+        ],
+      ),
+    );
+  }
 
-    final targetCal = prefs.currentCalorieTarget;
-    final targetP = prefs.currentProteinTarget;
-    final targetC = prefs.currentCarbsTarget;
-    final targetF = prefs.currentFatTarget;
-
+  Widget _header(ThemeColors colors) {
     final title = switch (widget.analysisType) {
       'menu' => 'Menu Analysis',
       'buffet' => 'Buffet Analysis',
       _ => 'Food Analysis',
     };
-
-    return DraggableScrollableSheet(
-      initialChildSize: 0.9,
-      minChildSize: 0.5,
-      maxChildSize: 0.95,
-      builder: (context, scrollController) {
-        return Container(
-          decoration: BoxDecoration(
-            color: isDark ? AppColors.nearBlack : Colors.white,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-          ),
-          child: Column(
-            children: [
-              // Drag handle
-              Center(
-                child: Container(
-                  margin: const EdgeInsets.only(top: 10, bottom: 6),
-                  width: 36,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: colors.textMuted.withValues(alpha: 0.3),
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-              ),
-
-              // Header
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        title,
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                          color: colors.textPrimary,
-                        ),
-                      ),
-                    ),
-                    if (!_logged && _items.isNotEmpty)
-                      TextButton(
-                        onPressed: _toggleSelectAll,
-                        style: TextButton.styleFrom(
-                          foregroundColor: AppColors.orange,
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                          minimumSize: const Size(0, 32),
-                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                        ),
-                        child: Text(
-                          _selected.length == _items.length ? 'Clear all' : 'Select all',
-                          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
-                        ),
-                      ),
-                    IconButton(
-                      icon: Icon(Icons.close, color: colors.textMuted),
-                      onPressed: () => Navigator.pop(context),
-                    ),
-                  ],
-                ),
-              ),
-
-              // Per-page streaming progress (only while backend is still
-              // processing later pages).
-              if (widget.streamingController != null && !widget.streamingController!.isDone)
-                _buildScanProgressChip(colors, isDark),
-
-              // Daily budget header
-              _buildBudgetHeader(colors, isDark, targetCal, targetP, targetC, targetF),
-
-              // Sort chips row
-              _buildSortChips(colors, isDark),
-
-              // Item list
-              Expanded(
-                child: ListView.builder(
-                  controller: scrollController,
-                  padding: const EdgeInsets.symmetric(horizontal: 14),
-                  itemCount: _sortedIndices.length,
-                  itemBuilder: (context, index) {
-                    final i = _sortedIndices[index];
-                    return _buildItemTile(i, colors, isDark);
-                  },
-                ),
-              ),
-
-              // Sticky bottom bar
-              _buildBottomBar(colors, isDark),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildScanProgressChip(ThemeColors colors, bool isDark) {
-    final c = widget.streamingController!;
-    final failedNote = c.failedPages.isEmpty
-        ? ''
-        : ' · page${c.failedPages.length == 1 ? '' : 's'} ${c.failedPages.join(', ')} failed';
     return Padding(
-      padding: const EdgeInsets.fromLTRB(14, 0, 14, 8),
+      padding: const EdgeInsets.fromLTRB(20, 4, 12, 4),
       child: Row(
         children: [
-          SizedBox(
-            width: 14,
-            height: 14,
-            child: CircularProgressIndicator(
-              strokeWidth: 2,
-              valueColor: AlwaysStoppedAnimation(AppColors.orange),
-            ),
-          ),
-          const SizedBox(width: 10),
           Expanded(
             child: Text(
-              'Scanning page ${c.currentPage} of ${c.totalPages}...$failedNote',
-              style: TextStyle(fontSize: 12, color: colors.textSecondary),
+              title,
+              style: TextStyle(
+                fontSize: 20, fontWeight: FontWeight.w800,
+                color: colors.textPrimary,
+              ),
             ),
+          ),
+          IconButton(
+            tooltip: 'Save menu',
+            icon: _bookmarking
+                ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
+                : Icon(Icons.bookmark_add_outlined, color: colors.textSecondary),
+            onPressed: _bookmarkAnalysis,
+          ),
+          IconButton(
+            icon: Icon(Icons.close, color: colors.textMuted),
+            onPressed: () => Navigator.pop(context),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildBudgetHeader(ThemeColors colors, bool isDark, int targetCal, int targetP, int targetC, int targetF) {
-    // Subtract today's already-logged meals first, then the items the user has
-    // selected in this sheet. Allow negative — rendering an honest "over by X"
-    // is more useful than clamping to 0 which hides reality.
+  Widget _budgetRings(ThemeColors colors) {
+    final state = ref.watch(nutritionPreferencesProvider);
     final summary = ref.watch(nutritionProvider).todaySummary;
-    final loggedCal = summary?.totalCalories ?? 0;
-    final loggedP = (summary?.totalProteinG ?? 0).round();
-    final loggedC = (summary?.totalCarbsG ?? 0).round();
-    final loggedF = (summary?.totalFatG ?? 0).round();
-
-    final remainCal = targetCal - loggedCal - _selectedCalTotal;
-    final remainP = targetP - loggedP - _selectedProteinTotal;
-    final remainC = targetC - loggedC - _selectedCarbsTotal;
-    final remainF = targetF - loggedF - _selectedFatTotal;
+    final totals = _selectedTotals;
+    final consumedCal = (summary?.totalCalories ?? 0) + totals.cal;
+    final consumedP = (summary?.totalProteinG ?? 0) + totals.protein;
+    final consumedC = (summary?.totalCarbsG ?? 0) + totals.carbs;
+    final consumedF = (summary?.totalFatG ?? 0) + totals.fat;
 
     return Container(
-      margin: const EdgeInsets.fromLTRB(14, 0, 14, 8),
-      padding: const EdgeInsets.all(10),
+      margin: const EdgeInsets.symmetric(vertical: 8),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: isDark ? AppColors.elevated : Colors.grey.shade50,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: isDark ? AppColors.cardBorder : Colors.grey.shade200,
-        ),
+        color: Colors.white.withValues(alpha: 0.04),
+        borderRadius: BorderRadius.circular(14),
       ),
-      child: Column(
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              _BudgetChip(label: 'Cal', value: remainCal, color: AppColors.coral),
-              _BudgetChip(label: 'Protein', value: remainP, color: AppColors.macroProtein),
-              _BudgetChip(label: 'Carbs', value: remainC, color: AppColors.macroCarbs),
-              _BudgetChip(label: 'Fat', value: remainF, color: AppColors.macroFat),
-            ],
-          ),
-          const SizedBox(height: 6),
-          Text(
-            'Daily budget after today\'s logged meals + selected items',
-            style: TextStyle(fontSize: 10, color: colors.textMuted),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSortChips(ThemeColors colors, bool isDark) {
-    Widget chip(String label, _SortField field) {
-      final isActive = _sortField == field;
-      return GestureDetector(
-        onTap: () => setState(() {
-          if (_sortField == field) {
-            _sortAsc = !_sortAsc;
-          } else {
-            _sortField = field;
-            _sortAsc = false; // default desc (highest first)
-          }
-        }),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-          decoration: BoxDecoration(
-            color: isActive
-                ? AppColors.orange.withValues(alpha: 0.15)
-                : (isDark ? Colors.white.withValues(alpha: 0.06) : Colors.grey.shade100),
-            borderRadius: BorderRadius.circular(8),
-            border: isActive ? Border.all(color: AppColors.orange.withValues(alpha: 0.4)) : null,
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                label,
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: isActive ? FontWeight.w700 : FontWeight.w500,
-                  color: isActive ? AppColors.orange : colors.textSecondary,
-                ),
-              ),
-              if (isActive) ...[
-                const SizedBox(width: 2),
-                Icon(
-                  _sortAsc ? Icons.arrow_upward : Icons.arrow_downward,
-                  size: 12,
-                  color: AppColors.orange,
-                ),
-              ],
-            ],
-          ),
-        ),
-      );
-    }
-
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(14, 0, 14, 8),
       child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          Text('Sort:', style: TextStyle(fontSize: 12, color: colors.textMuted)),
-          const SizedBox(width: 8),
-          chip('Calories', _SortField.calories),
-          const SizedBox(width: 6),
-          chip('Protein', _SortField.protein),
-          const SizedBox(width: 6),
-          chip('Carbs', _SortField.carbs),
-          const SizedBox(width: 6),
-          chip('Fat', _SortField.fat),
+          MacroBudgetRing(
+            label: 'Cal',
+            consumed: consumedCal.toDouble(),
+            target: state.currentCalorieTarget.toDouble(),
+            color: AppColors.coral,
+          ),
+          MacroBudgetRing(
+            label: 'Protein',
+            consumed: consumedP,
+            target: state.currentProteinTarget.toDouble(),
+            color: AppColors.macroProtein,
+            unit: 'g',
+          ),
+          MacroBudgetRing(
+            label: 'Carbs',
+            consumed: consumedC,
+            target: state.currentCarbsTarget.toDouble(),
+            color: AppColors.macroCarbs,
+            unit: 'g',
+          ),
+          MacroBudgetRing(
+            label: 'Fat',
+            consumed: consumedF,
+            target: state.currentFatTarget.toDouble(),
+            color: AppColors.macroFat,
+            unit: 'g',
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildItemTile(int i, ThemeColors colors, bool isDark) {
-    final item = _items[i];
-    final name = item['name'] as String? ?? 'Unknown';
-    final amount = item['amount'] as String? ?? item['serving_size'] as String? ?? '';
-    final isSelected = _selected.contains(i);
-    final m = _mult(i);
-    final rating = item['rating'] as String?;
-
-    final cal = _adj(i, 'calories');
-    final protein = _adj(i, 'protein');
-    final carbs = _adj(i, 'carbs');
-    final fat = _adj(i, 'fat');
-
-    return Container(
-      margin: const EdgeInsets.only(bottom: 6),
-      padding: const EdgeInsets.all(10),
-      decoration: BoxDecoration(
-        color: isSelected
-            ? (isDark ? Colors.white.withValues(alpha: 0.04) : Colors.grey.shade50)
-            : Colors.transparent,
-        borderRadius: BorderRadius.circular(10),
-        border: isSelected
-            ? Border.all(color: isDark ? AppColors.cardBorder : Colors.grey.shade200)
-            : null,
+  Widget _photoStrip() {
+    return SizedBox(
+      height: 64,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        itemCount: widget.menuPhotoUrls.length,
+        separatorBuilder: (_, __) => const SizedBox(width: 8),
+        padding: const EdgeInsets.symmetric(vertical: 6),
+        itemBuilder: (_, i) {
+          return GestureDetector(
+            onTap: () => _openPhotoViewer(widget.menuPhotoUrls[i]),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: CachedNetworkImage(
+                imageUrl: widget.menuPhotoUrls[i],
+                width: 52, height: 52, fit: BoxFit.cover,
+                placeholder: (_, __) => Container(width: 52, height: 52, color: Colors.black26),
+                errorWidget: (_, __, ___) => Container(
+                  width: 52, height: 52, color: Colors.black26,
+                  child: const Icon(Icons.broken_image_outlined, size: 18, color: Colors.white54),
+                ),
+              ),
+            ),
+          );
+        },
       ),
+    );
+  }
+
+  void _openPhotoViewer(String url) {
+    showDialog(
+      context: context,
+      builder: (_) => Dialog(
+        insetPadding: const EdgeInsets.all(16),
+        backgroundColor: Colors.black,
+        child: InteractiveViewer(
+          child: CachedNetworkImage(imageUrl: url, fit: BoxFit.contain),
+        ),
+      ),
+    );
+  }
+
+  Widget _countsLine(ThemeColors colors) {
+    final sectionCount = _items.map((i) => i.section).toSet().length;
+    final elapsed = widget.elapsedSeconds == null
+        ? ''
+        : ' · ${widget.elapsedSeconds!.toStringAsFixed(1)}s';
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      child: Text(
+        '${_items.length} items · $sectionCount section${sectionCount == 1 ? '' : 's'}$elapsed',
+        style: TextStyle(fontSize: 11, color: colors.textMuted),
+      ),
+    );
+  }
+
+  Widget _searchAndControls(ThemeColors colors) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 6),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Name row + checkbox
           Row(
             children: [
-              SizedBox(
-                width: 22,
-                height: 22,
-                child: Checkbox(
-                  value: isSelected,
-                  onChanged: _logged
-                      ? null
-                      : (val) => setState(() {
-                            if (val == true) {
-                              _selected.add(i);
-                            } else {
-                              _selected.remove(i);
-                            }
-                          }),
-                  materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                  visualDensity: VisualDensity.compact,
-                  activeColor: AppColors.orange,
-                  side: BorderSide(color: colors.textMuted, width: 1.5),
-                ),
-              ),
-              const SizedBox(width: 8),
               Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      name,
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                        color: colors.textPrimary,
-                      ),
-                    ),
-                    if (amount.isNotEmpty)
-                      Text(
-                        amount,
-                        style: TextStyle(fontSize: 11, color: colors.textMuted),
-                      ),
-                  ],
-                ),
-              ),
-              if (rating != null) _buildRatingBadge(rating, isDark),
-            ],
-          ),
-
-          // Macros row
-          Padding(
-            padding: const EdgeInsets.only(left: 30, top: 6),
-            child: Row(
-              children: [
-                _MacroLabel(label: '$cal', unit: 'cal', color: AppColors.coral),
-                const SizedBox(width: 10),
-                _MacroLabel(label: '$protein', unit: 'g P', color: AppColors.macroProtein),
-                const SizedBox(width: 10),
-                _MacroLabel(label: '$carbs', unit: 'g C', color: AppColors.macroCarbs),
-                const SizedBox(width: 10),
-                _MacroLabel(label: '$fat', unit: 'g F', color: AppColors.macroFat),
-              ],
-            ),
-          ),
-
-          // Per-dish inflammation score chip — small, non-intrusive; only
-          // rendered when Gemini supplied a score (0-10). Colors match the
-          // food-history edit sheet for consistency.
-          if ((item['inflammation_score'] as num?) != null)
-            _MenuInflammationChip(score: (item['inflammation_score'] as num).toInt())
-          else
-            const SizedBox.shrink(),
-
-          // Per-dish AI coach tip — one crisp sentence from Gemini. Rendered
-          // only when present to avoid an empty pill on sparse responses.
-          if ((item['coach_tip'] as String?)?.trim().isNotEmpty ?? false)
-            _MenuCoachTipRow(
-              tip: (item['coach_tip'] as String).trim(),
-              isDark: isDark,
-              textPrimary: colors.textPrimary,
-            ),
-
-          // Portion multiplier buttons
-          if (!_logged && isSelected)
-            Padding(
-              padding: const EdgeInsets.only(left: 30, top: 6),
-              child: Row(
-                children: List.generate(_presets.length, (pi) {
-                  final isActive = m == _presets[pi];
-                  return Padding(
-                    padding: const EdgeInsets.only(right: 4),
-                    child: GestureDetector(
-                      onTap: () => setState(() => _multipliers[i] = _presets[pi]),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: isActive
-                              ? AppColors.orange.withValues(alpha: 0.15)
-                              : (isDark ? Colors.white.withValues(alpha: 0.06) : Colors.grey.shade100),
-                          borderRadius: BorderRadius.circular(6),
-                          border: isActive
-                              ? Border.all(color: AppColors.orange.withValues(alpha: 0.4))
-                              : null,
+                child: _searchOpen
+                    ? TextField(
+                        controller: _searchController,
+                        autofocus: true,
+                        onChanged: _onSearchChanged,
+                        decoration: InputDecoration(
+                          isDense: true,
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                          hintText: 'Search dishes…',
+                          prefixIcon: const Icon(Icons.search, size: 18),
+                          suffixIcon: IconButton(
+                            icon: const Icon(Icons.close, size: 18),
+                            onPressed: () => setState(() {
+                              _searchOpen = false;
+                              _searchController.clear();
+                              _filter = _filter.copyWith(searchQuery: '');
+                            }),
+                          ),
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                         ),
-                        child: Text(
-                          _presetLabels[pi],
-                          style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: isActive ? FontWeight.w700 : FontWeight.w500,
-                            color: isActive ? AppColors.orange : colors.textMuted,
+                      )
+                    : InkWell(
+                        onTap: () => setState(() => _searchOpen = true),
+                        borderRadius: BorderRadius.circular(12),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.05),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(Icons.search, size: 18, color: colors.textMuted),
+                              const SizedBox(width: 6),
+                              Text('Search dishes', style: TextStyle(fontSize: 13, color: colors.textMuted)),
+                            ],
                           ),
                         ),
                       ),
-                    ),
-                  );
-                }),
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildRatingBadge(String rating, bool isDark) {
-    final Color color;
-    final String label;
-    switch (rating.toLowerCase()) {
-      case 'green':
-        color = const Color(0xFF4CAF50);
-        label = 'Good';
-      case 'red':
-        color = const Color(0xFFE91E63);
-        label = 'Limit';
-      default:
-        color = const Color(0xFFFF9800);
-        label = 'Moderate';
-    }
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(6),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: color),
-      ),
-    );
-  }
-
-  Widget _buildBottomBar(ThemeColors colors, bool isDark) {
-    return Container(
-      padding: EdgeInsets.fromLTRB(16, 10, 16, MediaQuery.of(context).padding.bottom + 10),
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.elevated : Colors.white,
-        border: Border(
-          top: BorderSide(
-            color: isDark ? AppColors.cardBorder : Colors.grey.shade200,
-          ),
-        ),
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // Summary
-          Row(
-            children: [
-              Text(
-                '${_selected.length} selected',
-                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: colors.textSecondary),
               ),
               const SizedBox(width: 8),
-              Text('\u00b7', style: TextStyle(color: colors.textMuted)),
-              const SizedBox(width: 8),
-              Text(
-                '$_selectedCalTotal cal',
-                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.coral),
-              ),
-              const SizedBox(width: 8),
-              Text(
-                '${_selectedProteinTotal}g P',
-                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.macroProtein),
-              ),
-              const SizedBox(width: 8),
-              Text(
-                '${_selectedCarbsTotal}g C',
-                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.macroCarbs),
-              ),
-              const SizedBox(width: 8),
-              Text(
-                '${_selectedFatTotal}g F',
-                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.macroFat),
+              Material(
+                color: AppColors.orange.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(12),
+                child: InkWell(
+                  onTap: _openFilterSheet,
+                  borderRadius: BorderRadius.circular(12),
+                  child: Container(
+                    padding: const EdgeInsets.all(10),
+                    child: Icon(Icons.tune, size: 20, color: AppColors.orange),
+                  ),
+                ),
               ),
             ],
           ),
-          const SizedBox(height: 8),
-          // Log button
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton.icon(
-              onPressed: _logged || _selected.isEmpty ? null : _handleLog,
-              icon: Icon(
-                _logged ? Icons.check_circle : Icons.add_circle_outline,
-                size: 18,
-              ),
-              label: Text(
-                _logged
-                    ? 'Logged'
-                    : 'Log ${_selected.length} Item${_selected.length == 1 ? '' : 's'}',
-              ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.orange,
-                foregroundColor: Colors.white,
-                disabledBackgroundColor: _logged
-                    ? AppColors.green.withValues(alpha: 0.15)
-                    : (isDark ? Colors.white.withValues(alpha: 0.06) : Colors.grey.shade200),
-                disabledForegroundColor: _logged ? AppColors.green : colors.textMuted,
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                textStyle: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
+          const SizedBox(height: 6),
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: [
+                Text('Sort:', style: TextStyle(fontSize: 11, color: colors.textMuted)),
+                const SizedBox(width: 6),
+                for (final field in SortField.values)
+                  Padding(
+                    padding: const EdgeInsets.only(right: 6),
+                    child: _sortPill(field, colors),
+                  ),
+              ],
             ),
           ),
         ],
       ),
     );
   }
-}
 
-class _BudgetChip extends StatelessWidget {
-  final String label;
-  final int value; // positive = under budget; negative = over
-  final Color color;
-
-  const _BudgetChip({required this.label, required this.value, required this.color});
-
-  @override
-  Widget build(BuildContext context) {
-    final isOver = value < 0;
-    // Over-budget uses a single red so it's unmistakable across macros.
-    const overColor = Color(0xFFEF4444);
-    final displayColor = isOver ? overColor : color;
-    final magnitude = value.abs();
-
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Text(
-          '$magnitude',
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: displayColor),
-        ),
-        Text(
-          isOver ? '$label over' : '$label left',
-          style: TextStyle(fontSize: 10, color: displayColor.withValues(alpha: 0.8)),
-        ),
-      ],
-    );
-  }
-}
-
-class _MacroLabel extends StatelessWidget {
-  final String label;
-  final String unit;
-  final Color color;
-
-  const _MacroLabel({required this.label, required this.unit, required this.color});
-
-  @override
-  Widget build(BuildContext context) {
-    return RichText(
-      text: TextSpan(
-        children: [
-          TextSpan(
-            text: label,
-            style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: color),
-          ),
-          TextSpan(
-            text: ' $unit',
-            style: TextStyle(fontSize: 10, color: color.withValues(alpha: 0.7)),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-/// Compact inflammation score chip for each dish row. Matches the color ramp
-/// used in food_history_screen_part_frequent_food_chip.dart:_InflammationRow
-/// so users see the same tone everywhere (green 0-3, amber 4-6, red 7-10).
-class _MenuInflammationChip extends StatelessWidget {
-  final int score;
-  const _MenuInflammationChip({required this.score});
-
-  @override
-  Widget build(BuildContext context) {
-    final tone = score <= 3
-        ? const Color(0xFF10B981)
-        : score <= 6
-            ? const Color(0xFFF59E0B)
-            : const Color(0xFFEF4444);
-    final label = score <= 3
-        ? 'Anti-inflammatory'
-        : score <= 6
-            ? 'Mildly inflammatory'
-            : 'Highly inflammatory';
-    return Padding(
-      padding: const EdgeInsets.only(left: 30, top: 6),
+  Widget _sortPill(SortField field, ThemeColors colors) {
+    final index = _sort.indexOf(field);
+    final isActive = index >= 0;
+    final dir = _sort.directionOf(field);
+    return GestureDetector(
+      onTap: () => _toggleSort(field),
+      onLongPress: () => _longPressSort(field),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
         decoration: BoxDecoration(
-          color: tone.withValues(alpha: 0.12),
-          borderRadius: BorderRadius.circular(6),
-          border: Border.all(color: tone.withValues(alpha: 0.35), width: 1),
+          color: isActive
+              ? AppColors.orange.withValues(alpha: 0.15)
+              : Colors.white.withValues(alpha: 0.05),
+          borderRadius: BorderRadius.circular(8),
+          border: isActive
+              ? Border.all(color: AppColors.orange.withValues(alpha: 0.4))
+              : null,
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
+            if (isActive && _sort.length > 1) ...[
+              Container(
+                width: 14, height: 14, alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: AppColors.orange,
+                  shape: BoxShape.circle,
+                ),
+                child: Text('${index + 1}', style: const TextStyle(
+                  fontSize: 9, fontWeight: FontWeight.w900, color: Colors.white,
+                )),
+              ),
+              const SizedBox(width: 4),
+            ],
             Text(
-              '$score',
-              style: TextStyle(color: tone, fontSize: 10, fontWeight: FontWeight.w800),
+              field.label,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: isActive ? FontWeight.w700 : FontWeight.w500,
+                color: isActive ? AppColors.orange : colors.textSecondary,
+              ),
             ),
-            const SizedBox(width: 4),
-            Text(
-              label,
-              style: TextStyle(color: tone, fontSize: 10, fontWeight: FontWeight.w600),
+            if (isActive) ...[
+              const SizedBox(width: 2),
+              Icon(
+                dir == SortDirection.asc ? Icons.arrow_upward : Icons.arrow_downward,
+                size: 12, color: AppColors.orange,
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _activeFilterChips() {
+    final chips = <_ActiveChip>[];
+    for (final r in _filter.healthRatings) {
+      chips.add(_ActiveChip('Health: $r', () => setState(() {
+        final next = {..._filter.healthRatings}..remove(r);
+        _filter = _filter.copyWith(healthRatings: next);
+      })));
+    }
+    for (final b in _filter.inflammationBuckets) {
+      chips.add(_ActiveChip('$b inflam.', () => setState(() {
+        final next = {..._filter.inflammationBuckets}..remove(b);
+        _filter = _filter.copyWith(inflammationBuckets: next);
+      })));
+    }
+    if (_filter.minProteinG != null) {
+      chips.add(_ActiveChip('P > ${_filter.minProteinG!.round()}g',
+          () => setState(() => _filter = _filter.copyWith(clearMinProteinG: true))));
+    }
+    if (_filter.maxCarbsG != null) {
+      chips.add(_ActiveChip('C < ${_filter.maxCarbsG!.round()}g',
+          () => setState(() => _filter = _filter.copyWith(clearMaxCarbsG: true))));
+    }
+    if (_filter.maxFatG != null) {
+      chips.add(_ActiveChip('F < ${_filter.maxFatG!.round()}g',
+          () => setState(() => _filter = _filter.copyWith(clearMaxFatG: true))));
+    }
+    if (_filter.maxCalories != null) {
+      chips.add(_ActiveChip('Cal < ${_filter.maxCalories!.round()}',
+          () => setState(() => _filter = _filter.copyWith(clearMaxCalories: true))));
+    }
+    if (_filter.maxPriceUsd != null) {
+      chips.add(_ActiveChip('\$ < ${_filter.maxPriceUsd!.toStringAsFixed(0)}',
+          () => setState(() => _filter = _filter.copyWith(clearMaxPriceUsd: true))));
+    }
+    if (_filter.hideAllergenDishes) {
+      chips.add(_ActiveChip('No allergens',
+          () => setState(() => _filter = _filter.copyWith(hideAllergenDishes: false))));
+    }
+    for (final s in _filter.sections) {
+      chips.add(_ActiveChip(displaySectionName(s), () => setState(() {
+        final next = {..._filter.sections}..remove(s);
+        _filter = _filter.copyWith(sections: next);
+      })));
+    }
+    if (_filter.searchQuery.isNotEmpty) {
+      chips.add(_ActiveChip('"${_filter.searchQuery}"', () {
+        _searchController.clear();
+        setState(() => _filter = _filter.copyWith(searchQuery: ''));
+      }));
+    }
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Wrap(
+        spacing: 6,
+        runSpacing: 4,
+        children: [
+          for (final c in chips)
+            InputChip(
+              label: Text(c.label, style: const TextStyle(fontSize: 11)),
+              deleteIcon: const Icon(Icons.close, size: 14),
+              onDeleted: c.onRemove,
+              visualDensity: VisualDensity.compact,
+            ),
+          ActionChip(
+            label: const Text('Clear all', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700)),
+            onPressed: () => setState(() => _filter = MenuFilterState.empty),
+            visualDensity: VisualDensity.compact,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _recommendedSection(ThemeColors colors) {
+    final rec = _recommendation!;
+    return _collapsibleSection(
+      title: 'Recommended for you',
+      icon: Icons.auto_awesome,
+      titleColor: AppColors.orange,
+      subtitleCount: rec.picks.length,
+      expanded: _showRecommended,
+      onToggle: () => setState(() => _showRecommended = !_showRecommended),
+      children: [
+        for (int i = 0; i < rec.picks.length; i++) _recommendedCard(rec.picks[i], i + 1, rec.picks.length),
+      ],
+      colors: colors,
+    );
+  }
+
+  Widget _recommendedCard(RecommendedItem pick, int rank, int total) {
+    return Stack(
+      children: [
+        MenuAnalysisItemCard(
+          item: pick.item,
+          isSelected: _selected.contains(pick.item.id),
+          allergenProfile: _allergenProfile(),
+          onToggle: (v) => _toggleItem(pick.item, v),
+          onPortionChanged: (m) => _updatePortion(pick.item, m),
+        ),
+        Positioned(
+          right: 8,
+          top: 8,
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  color: AppColors.orange,
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Text('#$rank', style: const TextStyle(
+                  fontSize: 10, fontWeight: FontWeight.w900, color: Colors.white,
+                )),
+              ),
+              const SizedBox(width: 4),
+              Material(
+                color: Colors.white.withValues(alpha: 0.15),
+                shape: const CircleBorder(),
+                child: InkWell(
+                  customBorder: const CircleBorder(),
+                  onTap: () => RecommendationExplainSheet.show(
+                    context, pick: pick, rank: rank, totalAccepted: total,
+                  ),
+                  child: const Padding(
+                    padding: EdgeInsets.all(4),
+                    child: Icon(Icons.question_mark, size: 10),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  UserAllergenProfile _allergenProfile() {
+    final prefs = ref.read(nutritionPreferencesProvider).preferences;
+    return UserAllergenProfile(
+      allergens: Allergen.parseAll(prefs?.allergies ?? const []),
+      customAllergens: prefs?.customAllergens ?? const [],
+    );
+  }
+
+  Widget _sectionBlock(String section, List<MenuItem> items, ThemeColors colors) {
+    final expanded = _sectionExpanded[section] ?? true;
+    return _collapsibleSection(
+      title: displaySectionName(section),
+      icon: null,
+      subtitleCount: items.length,
+      expanded: expanded,
+      onToggle: () => setState(() => _sectionExpanded[section] = !expanded),
+      children: [
+        for (final item in items)
+          MenuAnalysisItemCard(
+            item: item,
+            isSelected: _selected.contains(item.id),
+            allergenProfile: _allergenProfile(),
+            onToggle: (v) => _toggleItem(item, v),
+            onPortionChanged: (m) => _updatePortion(item, m),
+          ),
+      ],
+      colors: colors,
+    );
+  }
+
+  Widget _flatList(ThemeColors colors) {
+    final items = _filteredItems;
+    if (items.isEmpty) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 32),
+        child: Center(child: Text(
+          'No dishes match your filters',
+          style: TextStyle(color: colors.textMuted),
+        )),
+      );
+    }
+    return _collapsibleSection(
+      title: 'Results',
+      icon: null,
+      subtitleCount: items.length,
+      expanded: true,
+      onToggle: () {},
+      children: [
+        for (final item in items)
+          MenuAnalysisItemCard(
+            item: item,
+            isSelected: _selected.contains(item.id),
+            allergenProfile: _allergenProfile(),
+            onToggle: (v) => _toggleItem(item, v),
+            onPortionChanged: (m) => _updatePortion(item, m),
+          ),
+      ],
+      colors: colors,
+    );
+  }
+
+  Widget _collapsibleSection({
+    required String title,
+    required IconData? icon,
+    Color? titleColor,
+    required int subtitleCount,
+    required bool expanded,
+    required VoidCallback onToggle,
+    required List<Widget> children,
+    required ThemeColors colors,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        InkWell(
+          onTap: onToggle,
+          borderRadius: BorderRadius.circular(8),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 2),
+            child: Row(
+              children: [
+                if (icon != null) ...[
+                  Icon(icon, size: 16, color: titleColor ?? colors.textSecondary),
+                  const SizedBox(width: 6),
+                ],
+                Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 14, fontWeight: FontWeight.w800,
+                    color: titleColor ?? colors.textPrimary,
+                  ),
+                ),
+                const SizedBox(width: 6),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                  decoration: BoxDecoration(
+                    color: (titleColor ?? colors.textMuted).withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Text(
+                    subtitleCount.toString(),
+                    style: TextStyle(
+                      fontSize: 10, fontWeight: FontWeight.w800,
+                      color: titleColor ?? colors.textSecondary,
+                    ),
+                  ),
+                ),
+                const Spacer(),
+                AnimatedRotation(
+                  duration: const Duration(milliseconds: 180),
+                  turns: expanded ? 0.5 : 0,
+                  child: Icon(Icons.keyboard_arrow_up, size: 20, color: colors.textMuted),
+                ),
+              ],
+            ),
+          ),
+        ),
+        AnimatedSize(
+          duration: const Duration(milliseconds: 220),
+          curve: Curves.easeInOut,
+          alignment: Alignment.topCenter,
+          child: expanded
+              ? Column(children: children)
+              : const SizedBox.shrink(),
+        ),
+      ],
+    );
+  }
+
+  Widget _bottomBar(ThemeColors colors) {
+    final totals = _selectedTotals;
+    return SafeArea(
+      top: false,
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+        decoration: BoxDecoration(
+          color: Colors.black.withValues(alpha: 0.35),
+          border: Border(top: BorderSide(color: Colors.white.withValues(alpha: 0.08))),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Row(
+              children: [
+                Text(
+                  '${_selected.length} selected',
+                  style: TextStyle(
+                    fontSize: 12, fontWeight: FontWeight.w700,
+                    color: colors.textPrimary,
+                  ),
+                ),
+                const Spacer(),
+                Text(
+                  '${totals.cal.round()} cal  ${totals.protein.toStringAsFixed(0)}g P  '
+                  '${totals.carbs.toStringAsFixed(0)}g C  ${totals.fat.toStringAsFixed(0)}g F'
+                  '${totals.price != null ? '  ·  \$${totals.price!.toStringAsFixed(2)}' : ''}',
+                  style: TextStyle(
+                    fontSize: 11, fontWeight: FontWeight.w600,
+                    color: colors.textSecondary,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton.icon(
+                icon: Icon(_logged ? Icons.check : Icons.add_circle_outline),
+                label: Text(_logged
+                    ? 'Logged'
+                    : 'Log ${_selected.length} item${_selected.length == 1 ? '' : 's'}'),
+                onPressed: (_selected.isEmpty || _logged) ? null : _handleLog,
+                style: FilledButton.styleFrom(
+                  backgroundColor: AppColors.orange,
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                ),
+              ),
             ),
           ],
         ),
@@ -853,41 +1059,23 @@ class _MenuInflammationChip extends StatelessWidget {
   }
 }
 
-/// Per-dish AI coach tip row — one short sentence rendered below macros.
-/// Uses the AI-coach purple consistent with the log preview.
-class _MenuCoachTipRow extends StatelessWidget {
-  final String tip;
-  final bool isDark;
-  final Color textPrimary;
-
-  const _MenuCoachTipRow({
-    required this.tip,
-    required this.isDark,
-    required this.textPrimary,
+class _Totals {
+  final double cal;
+  final double protein;
+  final double carbs;
+  final double fat;
+  final double? price;
+  const _Totals({
+    required this.cal,
+    required this.protein,
+    required this.carbs,
+    required this.fat,
+    required this.price,
   });
+}
 
-  @override
-  Widget build(BuildContext context) {
-    const accent = Color(0xFFA855F7); // purple-500 — matches AI coach visuals
-    return Padding(
-      padding: const EdgeInsets.only(left: 30, top: 6, right: 4),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(Icons.auto_awesome_rounded, size: 12, color: accent),
-          const SizedBox(width: 6),
-          Expanded(
-            child: Text(
-              tip,
-              style: TextStyle(
-                fontSize: 11,
-                height: 1.35,
-                color: textPrimary.withValues(alpha: 0.85),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+class _ActiveChip {
+  final String label;
+  final VoidCallback onRemove;
+  _ActiveChip(this.label, this.onRemove);
 }

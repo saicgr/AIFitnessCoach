@@ -31,33 +31,44 @@ Future<void> showWeeklyCheckinSheet(BuildContext context, WidgetRef ref) async {
   // Hide nav bar while sheet is open
   ref.read(floatingNavBarVisibleProvider.notifier).state = false;
 
-  final result = await showGlassSheet<bool>(
-    context: context,
-    builder: (context) => GlassSheet(
-      child: WeeklyCheckinSheet(userId: userId, isDark: isDark, isFirstTime: isFirstTime),
-    ),
-  );
+  try {
+    final result = await showGlassSheet<bool>(
+      context: context,
+      builder: (context) => GlassSheet(
+        child: WeeklyCheckinSheet(
+            userId: userId, isDark: isDark, isFirstTime: isFirstTime),
+      ),
+    );
 
-  // Track dismiss without completing — increment DB counter
-  if (result != true) {
-    final prefsState = ref.read(nutritionPreferencesProvider);
-    if (prefsState.preferences != null) {
-      final currentCount = prefsState.preferences!.weeklyCheckinDismissCount;
-      try {
-        await ref.read(nutritionPreferencesProvider.notifier).savePreferences(
-          userId: userId,
-          preferences: prefsState.preferences!.copyWith(
-            weeklyCheckinDismissCount: currentCount + 1,
-          ),
-        );
-      } catch (e) {
-        debugPrint('⚠️ [WeeklyCheckin] Failed to save dismiss count: $e');
+    // Track dismiss without completing — increment DB counter
+    if (result != true) {
+      final prefsState = ref.read(nutritionPreferencesProvider);
+      if (prefsState.preferences != null) {
+        final currentCount = prefsState.preferences!.weeklyCheckinDismissCount;
+        try {
+          await ref.read(nutritionPreferencesProvider.notifier).savePreferences(
+                userId: userId,
+                preferences: prefsState.preferences!.copyWith(
+                  weeklyCheckinDismissCount: currentCount + 1,
+                ),
+              );
+        } catch (e) {
+          debugPrint('⚠️ [WeeklyCheckin] Failed to save dismiss count: $e');
+        }
       }
     }
+  } finally {
+    // CRITICAL: restore the floating nav bar no matter how the sheet exits.
+    // Previously if the user minimized/swiped-dismissed the sheet while the
+    // caller widget was being torn down, or if anything between here and the
+    // old trailing `state = true` threw, the nav bar stayed hidden forever.
+    // try/finally guarantees the restore runs; the inner try/catch protects
+    // against the ProviderContainer being disposed (can happen if the app
+    // is backgrounded mid-dismiss).
+    try {
+      ref.read(floatingNavBarVisibleProvider.notifier).state = true;
+    } catch (_) {/* container already disposed — nothing to do */}
   }
-
-  // Show nav bar when sheet is closed
-  ref.read(floatingNavBarVisibleProvider.notifier).state = true;
 }
 
 /// Weekly check-in sheet with MacroFactor-style adaptive TDEE and recommendations

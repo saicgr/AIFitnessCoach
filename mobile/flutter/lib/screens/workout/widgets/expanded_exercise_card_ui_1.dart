@@ -317,17 +317,8 @@ extension _ExpandedExerciseCardStateUI1 on _ExpandedExerciseCardState {
           children: [
             // Note: Drag handle is now a separate strip on the left side of the card
             // when reorderIndex is provided (see build method)
-            // Exercise Image
-            Container(
-              width: 60,
-              height: 60,
-              decoration: BoxDecoration(
-                color: glassSurface,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              clipBehavior: Clip.hardEdge,
-              child: _buildImage(glassSurface, textMuted, accentColor),
-            ),
+            // Exercise Image (with muscle-group anatomy badge overlay)
+            _buildExerciseThumbnail(exercise, glassSurface, textMuted, accentColor),
             const SizedBox(width: 12),
 
             // Exercise Info
@@ -427,6 +418,65 @@ extension _ExpandedExerciseCardStateUI1 on _ExpandedExerciseCardState {
             _buildExerciseOptionsMenu(context, accentColor),
           ],
         ),
+      ),
+    );
+  }
+
+
+  /// 60×60 exercise thumbnail with an optional muscle-group anatomy badge
+  /// pinned to the bottom-right corner (matches the pattern used in the
+  /// exercise library so users get a quick visual cue of the primary muscle).
+  Widget _buildExerciseThumbnail(
+    WorkoutExercise exercise,
+    Color glassSurface,
+    Color textMuted,
+    Color accentColor,
+  ) {
+    final muscleAsset = _muscleAssetForExercise(exercise);
+
+    return Container(
+      width: 60,
+      height: 60,
+      decoration: BoxDecoration(
+        color: glassSurface,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      clipBehavior: Clip.hardEdge,
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          _buildImage(glassSurface, textMuted, accentColor),
+          if (muscleAsset != null)
+            Positioned(
+              right: 3,
+              bottom: 3,
+              child: Container(
+                width: 22,
+                height: 22,
+                padding: const EdgeInsets.all(1.5),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.25),
+                      blurRadius: 3,
+                      offset: const Offset(0, 1),
+                    ),
+                  ],
+                ),
+                child: ClipOval(
+                  child: Image.asset(
+                    muscleAsset,
+                    fit: BoxFit.cover,
+                    cacheWidth: 44,
+                    cacheHeight: 44,
+                    errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+                  ),
+                ),
+              ),
+            ),
+        ],
       ),
     );
   }

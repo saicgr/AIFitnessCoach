@@ -234,10 +234,11 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet> {
         if (mounted) _openBarcodeScanner();
       });
     } else if (widget.autoOpenMultiImage) {
-      // Launched from the "Scan Food" home shortcut — open gallery multi-pick
-      // straight away (matches the bottom-bar gallery button).
+      // Launched from the "Scan Food" home shortcut — present the same
+      // Camera vs Gallery picker that Scan Menu uses (both paths support
+      // multi-image: camera via capture loop, gallery via multi-pick).
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) _pickImages(ImageSource.gallery);
+        if (mounted) _pickFoodImagesWithSourceChoice();
       });
     } else if (widget.autoOpenMenuScan) {
       // Launched from the "Scan Menu" home shortcut.
@@ -575,7 +576,12 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet> {
     );
   }
 
-  Future<bool?> _showProductConfirmation(BarcodeProduct product) {
+  /// Shows the barcode-product confirmation dialog.
+  ///
+  /// Returns the user's chosen servings count on confirm (defaults to 1.0),
+  /// or `null` if cancelled. Caller must pass this back to the log endpoint
+  /// so totals reflect what the user actually ate.
+  Future<double?> _showProductConfirmation(BarcodeProduct product) {
     final isDark = widget.isDark;
     final nearBlack = isDark ? AppColors.nearBlack : AppColorsLight.nearWhite;
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
@@ -585,9 +591,37 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet> {
         ? Colors.white.withValues(alpha: 0.05)
         : Colors.black.withValues(alpha: 0.04);
 
-    return showDialog<bool>(
+    // Derived 1-10 scores from OFF metadata. Kept in-widget (no server trip)
+    // because the mappings are deterministic and this dialog blocks the log
+    // path — a round-trip here would add latency the user has no reason for.
+    // Inflammation mapping mirrors backend/api/v1/nutrition/barcode.py's
+    // nova_to_inflammation dict so the preview matches what gets persisted.
+    int? inflammationScore;
+    final novaGroup = product.novaGroup;
+    if (novaGroup != null) {
+      const novaToInflammation = {1: 3, 2: 4, 3: 6, 4: 8};
+      inflammationScore = novaToInflammation[novaGroup] ?? 5;
+    }
+    final isUltraProcessed = novaGroup == 4;
+
+    // Nutri-Score grade → 1-10 health score. The grade is a validated
+    // composite score (macros + fibre + fruit-veg + sodium + saturates)
+    // published by Santé publique France, so it's the right anchor for the
+    // same 1-10 rubric the AI uses for text/photo meals.
+    int? healthScore;
+    final grade = product.nutriscoreGrade?.toLowerCase();
+    if (grade != null) {
+      const gradeToHealth = {'a': 9, 'b': 7, 'c': 5, 'd': 3, 'e': 2};
+      healthScore = gradeToHealth[grade];
+    }
+
+    // Servings is mutable in the dialog — start at 1, user can step or type.
+    double servings = 1.0;
+
+    return showDialog<double>(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
         backgroundColor: nearBlack,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         titlePadding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
@@ -696,58 +730,111 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet> {
                   ),
                 ],
 
-                // Serving size info
-                if (product.servingSizeG != null || product.servingSize != null) ...[
-                  const SizedBox(height: 8),
-                  Text(
-                    'Serving: ${product.servingSize ?? '${product.servingSizeG!.toInt()}g'}',
-                    style: TextStyle(fontSize: 12, color: textMuted),
+                // Health + inflammation score badges (derived on-device from
+                // OFF metadata; mirrors what text/photo flows surface). Placed
+                // before the stepper so the user sees quality at a glance
+                // before choosing servings.
+                if (healthScore != null || inflammationScore != null) ...[
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      if (healthScore != null) ...[
+                        _ScorePill(
+                          label: 'Health',
+                          score: healthScore,
+                          isDark: isDark,
+                          positiveIsHigh: true,
+                        ),
+                        const SizedBox(width: 8),
+                      ],
+                      if (inflammationScore != null)
+                        _ScorePill(
+                          label: 'Inflammation',
+                          score: inflammationScore,
+                          isDark: isDark,
+                          positiveIsHigh: false,
+                          badge: isUltraProcessed ? 'UPF' : null,
+                        ),
+                    ],
                   ),
                 ],
+
+                // Servings stepper — per feedback_inline_editing.md we
+                // prefer in-place editing over modals. Multiplier feeds the
+                // totals row below and the dialog's return value so the
+                // backend logs exactly what the user chose.
+                const SizedBox(height: 12),
+                _ServingsStepper(
+                  value: servings,
+                  servingLabel: product.servingSize ??
+                      (product.servingSizeG != null
+                          ? '${product.servingSizeG!.toInt()}g'
+                          : '100g'),
+                  isDark: isDark,
+                  accent: accentColor,
+                  onChanged: (next) => setDialogState(() => servings = next),
+                ),
 
                 const SizedBox(height: 12),
                 Divider(color: textMuted.withValues(alpha: 0.2)),
                 const SizedBox(height: 8),
 
-                // Nutrition per 100g
-                Text('Nutrition per 100g',
-                    style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        color: textMuted)),
-                const SizedBox(height: 6),
-                NutritionInfoRow(
-                  label: 'Calories',
-                  value: '${product.caloriesPer100g.toInt()} kcal',
-                  isDark: isDark,
-                ),
-                NutritionInfoRow(
-                  label: 'Protein',
-                  value: '${product.proteinPer100g.toStringAsFixed(1)}g',
-                  isDark: isDark,
-                ),
-                NutritionInfoRow(
-                  label: 'Carbs',
-                  value: '${product.carbsPer100g.toStringAsFixed(1)}g',
-                  isDark: isDark,
-                ),
-                NutritionInfoRow(
-                  label: 'Fat',
-                  value: '${product.fatPer100g.toStringAsFixed(1)}g',
-                  isDark: isDark,
-                ),
-                if (product.fiberPer100g > 0)
-                  NutritionInfoRow(
-                    label: 'Fiber',
-                    value: '${product.fiberPer100g.toStringAsFixed(1)}g',
-                    isDark: isDark,
-                  ),
-                if (product.sugarPer100g > 0)
-                  NutritionInfoRow(
-                    label: 'Sugar',
-                    value: '${product.sugarPer100g.toStringAsFixed(1)}g',
-                    isDark: isDark,
-                  ),
+                // Nutrition for the user's chosen serving count.
+                Builder(builder: (_) {
+                  final perServingG = product.servingSizeG ?? 100.0;
+                  final mult = (servings * perServingG) / 100.0;
+                  final totalCalories = (product.caloriesPer100g * mult).round();
+                  final totalProtein = product.proteinPer100g * mult;
+                  final totalCarbs = product.carbsPer100g * mult;
+                  final totalFat = product.fatPer100g * mult;
+                  final totalFiber = product.fiberPer100g * mult;
+                  final totalSugar = product.sugarPer100g * mult;
+                  final servingsLabel =
+                      servings == 1.0 ? '1 serving' : '${_trimServings(servings)} servings';
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Nutrition for $servingsLabel',
+                          style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: textMuted)),
+                      const SizedBox(height: 6),
+                      NutritionInfoRow(
+                        label: 'Calories',
+                        value: '$totalCalories kcal',
+                        isDark: isDark,
+                      ),
+                      NutritionInfoRow(
+                        label: 'Protein',
+                        value: '${totalProtein.toStringAsFixed(1)}g',
+                        isDark: isDark,
+                      ),
+                      NutritionInfoRow(
+                        label: 'Carbs',
+                        value: '${totalCarbs.toStringAsFixed(1)}g',
+                        isDark: isDark,
+                      ),
+                      NutritionInfoRow(
+                        label: 'Fat',
+                        value: '${totalFat.toStringAsFixed(1)}g',
+                        isDark: isDark,
+                      ),
+                      if (product.fiberPer100g > 0)
+                        NutritionInfoRow(
+                          label: 'Fiber',
+                          value: '${totalFiber.toStringAsFixed(1)}g',
+                          isDark: isDark,
+                        ),
+                      if (product.sugarPer100g > 0)
+                        NutritionInfoRow(
+                          label: 'Sugar',
+                          value: '${totalSugar.toStringAsFixed(1)}g',
+                          isDark: isDark,
+                        ),
+                    ],
+                  );
+                }),
 
                 // Micronutrients (collapsible)
                 if (product.hasMicronutrients) ...[
@@ -828,17 +915,26 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet> {
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context, false),
+            onPressed: () => Navigator.pop(context, null),
             child: Text('Cancel', style: TextStyle(color: textMuted)),
           ),
           ElevatedButton(
-            onPressed: () => Navigator.pop(context, true),
+            onPressed: () => Navigator.pop(context, servings),
             style: ElevatedButton.styleFrom(backgroundColor: accentColor),
             child: const Text('Log This'),
           ),
         ],
       ),
+      ),
     );
+  }
+
+  /// Trim trailing `.0` from integer servings so the UI shows `2 servings`
+  /// instead of `2.0 servings`, while still showing `1.5 servings` for
+  /// fractional values.
+  String _trimServings(double v) {
+    if (v == v.roundToDouble()) return v.toInt().toString();
+    return v.toStringAsFixed(1);
   }
 
   // ─── Build ─────────────────────────────────────────────────────
@@ -935,6 +1031,11 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet> {
                       progressMessage: _progressMessage,
                       progressDetail: _progressDetail,
                       isDark: isDark,
+                      analysisType: _sourceType == 'menu'
+                          ? 'menu'
+                          : _sourceType == 'buffet'
+                              ? 'buffet'
+                              : 'plate',
                     ),
                   )
                 else if (_analyzedResponse != null)
@@ -1086,5 +1187,245 @@ class _BarcodeMicronutrientsSectionState extends State<_BarcodeMicronutrientsSec
     }
 
     return rows;
+  }
+}
+
+/// Compact 1-10 score badge used in the barcode confirmation dialog.
+///
+/// [positiveIsHigh] flips the palette: for "Health", 10 is green; for
+/// "Inflammation", 10 is red.
+class _ScorePill extends StatelessWidget {
+  final String label;
+  final int score;
+  final bool isDark;
+  final bool positiveIsHigh;
+  final String? badge;
+
+  const _ScorePill({
+    required this.label,
+    required this.score,
+    required this.isDark,
+    required this.positiveIsHigh,
+    this.badge,
+  });
+
+  Color _color() {
+    final effective = positiveIsHigh ? score : (11 - score);
+    if (effective >= 8) return const Color(0xFF2ECC71); // green
+    if (effective >= 5) return const Color(0xFFF5A623); // amber
+    return const Color(0xFFE74C3C); // red
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final color = _color();
+    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: color.withValues(alpha: 0.4)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            '$score',
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w700,
+              color: color,
+            ),
+          ),
+          Text(
+            '/10',
+            style: TextStyle(fontSize: 10, color: color.withValues(alpha: 0.75)),
+          ),
+          const SizedBox(width: 6),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w500,
+              color: textPrimary,
+            ),
+          ),
+          if (badge != null) ...[
+            const SizedBox(width: 6),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.2),
+                borderRadius: BorderRadius.circular(4),
+              ),
+              child: Text(
+                badge!,
+                style: TextStyle(
+                  fontSize: 9,
+                  fontWeight: FontWeight.w700,
+                  color: textMuted,
+                ),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+/// Inline-editable servings stepper for the barcode confirmation dialog.
+///
+/// Renders `−  [typed field] ×  label  +` where the label is the product's
+/// native serving description ("30g", "1 bar") so the user reasons in real
+/// units, not abstract servings. Clamped to [0.25, 10.0]; fractional values
+/// are allowed so users can log "half a bar".
+class _ServingsStepper extends StatefulWidget {
+  final double value;
+  final String servingLabel;
+  final bool isDark;
+  final Color accent;
+  final ValueChanged<double> onChanged;
+
+  const _ServingsStepper({
+    required this.value,
+    required this.servingLabel,
+    required this.isDark,
+    required this.accent,
+    required this.onChanged,
+  });
+
+  @override
+  State<_ServingsStepper> createState() => _ServingsStepperState();
+}
+
+class _ServingsStepperState extends State<_ServingsStepper> {
+  static const _min = 0.25;
+  static const _max = 10.0;
+  static const _step = 0.25;
+
+  late TextEditingController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController(text: _format(widget.value));
+  }
+
+  @override
+  void didUpdateWidget(covariant _ServingsStepper oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.value != widget.value) {
+      final expected = _format(widget.value);
+      if (_controller.text != expected) {
+        _controller.text = expected;
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  String _format(double v) {
+    if (v == v.roundToDouble()) return v.toInt().toString();
+    return v.toStringAsFixed(2).replaceAll(RegExp(r'0+$'), '').replaceAll(RegExp(r'\.$'), '');
+  }
+
+  void _clampAndEmit(double v) {
+    final clamped = v.clamp(_min, _max).toDouble();
+    _controller.text = _format(clamped);
+    widget.onChanged(clamped);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final textPrimary = widget.isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textMuted = widget.isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final surface = widget.isDark
+        ? Colors.white.withValues(alpha: 0.06)
+        : Colors.black.withValues(alpha: 0.05);
+
+    Widget roundBtn(IconData icon, VoidCallback onTap) => InkResponse(
+          radius: 20,
+          onTap: onTap,
+          child: Container(
+            width: 32,
+            height: 32,
+            decoration: BoxDecoration(
+              color: surface,
+              shape: BoxShape.circle,
+            ),
+            alignment: Alignment.center,
+            child: Icon(icon, size: 18, color: textPrimary),
+          ),
+        );
+
+    return Row(
+      children: [
+        Text(
+          'Servings',
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+            color: textMuted,
+          ),
+        ),
+        const Spacer(),
+        roundBtn(
+          Icons.remove_rounded,
+          () => _clampAndEmit(widget.value - _step),
+        ),
+        const SizedBox(width: 8),
+        SizedBox(
+          width: 56,
+          child: TextField(
+            controller: _controller,
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w600,
+              color: textPrimary,
+            ),
+            decoration: InputDecoration(
+              isDense: true,
+              contentPadding: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
+              filled: true,
+              fillColor: surface,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: BorderSide.none,
+              ),
+            ),
+            onSubmitted: (raw) {
+              final parsed = double.tryParse(raw);
+              if (parsed != null) _clampAndEmit(parsed);
+            },
+            onEditingComplete: () {
+              final parsed = double.tryParse(_controller.text);
+              if (parsed != null) _clampAndEmit(parsed);
+            },
+          ),
+        ),
+        const SizedBox(width: 8),
+        roundBtn(
+          Icons.add_rounded,
+          () => _clampAndEmit(widget.value + _step),
+        ),
+        const SizedBox(width: 10),
+        Flexible(
+          child: Text(
+            '× ${widget.servingLabel}',
+            style: TextStyle(fontSize: 12, color: textMuted),
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+      ],
+    );
   }
 }

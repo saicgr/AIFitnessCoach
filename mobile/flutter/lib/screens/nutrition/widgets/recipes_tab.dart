@@ -98,6 +98,10 @@ class _RecipesTabState extends ConsumerState<RecipesTab>
           onRefresh: () async {
             ref.invalidate(upcomingSchedulesProvider(widget.userId));
             ref.invalidate(activeCookEventsProvider(widget.userId));
+            // Now that the list provider is keep-alive, pull-to-refresh is
+            // the explicit "give me fresh data" gesture — invalidate it too.
+            ref.invalidate(myRecipesListProvider);
+            ref.invalidate(recipeSearchProvider);
           },
           child: CustomScrollView(
             slivers: [
@@ -1139,40 +1143,47 @@ class _MyRecipesGrid extends ConsumerWidget {
         isFavorite: favoritesOnly ? true : null,
         sortBy: sortBy,
       )));
-      return searchAsync.when(
-        loading: () => const Center(
-            child: Padding(
-                padding: EdgeInsets.all(40),
-                child: CircularProgressIndicator())),
-        error: (e, _) => _ErrorView(message: e.toString(), isDark: isDark),
-        data: (resp) => _renderGrid(
+      // Stale-while-refresh: render cached items the moment we have them,
+      // even if Riverpod is still re-fetching after an invalidation. Only
+      // show the spinner on the very first load for this arg combo.
+      final cached = searchAsync.valueOrNull;
+      if (cached != null) {
+        return _renderGrid(
           context,
-          resp.items,
-          isEmptyHint:
-              hasQuery ? 'No matches in your recipes' : 'No recipes match these filters',
+          cached.items,
+          isEmptyHint: hasQuery
+              ? 'No matches in your recipes'
+              : 'No recipes match these filters',
           widgetRef: ref,
-        ),
+        );
+      }
+      if (searchAsync.hasError) {
+        return _ErrorView(
+            message: searchAsync.error.toString(), isDark: isDark);
+      }
+      return const Center(
+        child: Padding(
+            padding: EdgeInsets.all(40), child: CircularProgressIndicator()),
       );
     }
 
-    // Default fast path — simple category filter, uses the cheap list endpoint.
-    final repo = ref.watch(nutritionRepositoryProvider);
-    return FutureBuilder<RecipesResponse>(
-      future: repo.getRecipes(userId: userId, category: category, limit: 100),
-      builder: (ctx, snap) {
-        if (snap.connectionState == ConnectionState.waiting) {
-          return const Center(
-            child: Padding(
-                padding: EdgeInsets.all(40),
-                child: CircularProgressIndicator()),
-          );
-        }
-        if (snap.hasError) {
-          return _ErrorView(message: snap.error.toString(), isDark: isDark);
-        }
-        final items = snap.data?.items ?? const <RecipeSummary>[];
-        return _renderGrid(context, items, widgetRef: ref);
-      },
+    // Default fast path — cheap /recipes endpoint, cached via Riverpod so
+    // tab re-entry / filter-chip toggles don't re-fetch. Renders cached data
+    // immediately while any background refresh runs silently (no spinner
+    // flash on every rebuild like the old FutureBuilder had).
+    final listAsync = ref.watch(myRecipesListProvider(
+      MyRecipesListArgs(userId: userId, category: category),
+    ));
+    final cached = listAsync.valueOrNull;
+    if (cached != null) {
+      return _renderGrid(context, cached.items, widgetRef: ref);
+    }
+    if (listAsync.hasError) {
+      return _ErrorView(message: listAsync.error.toString(), isDark: isDark);
+    }
+    return const Center(
+      child: Padding(
+          padding: EdgeInsets.all(40), child: CircularProgressIndicator()),
     );
   }
 
@@ -1285,7 +1296,9 @@ class _MyRecipesGrid extends ConsumerWidget {
       final repo = ref.read(nutritionRepositoryProvider);
       await repo.deleteRecipe(userId: userId, recipeId: s.id);
       if (!context.mounted) return;
-      // Invalidate the search/list providers to refresh the grid
+      // Invalidate both the keep-alive list cache AND the search cache so
+      // the deleted row disappears from the grid immediately.
+      ref.invalidate(myRecipesListProvider);
       ref.invalidate(recipeSearchProvider);
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Recipe deleted'), duration: Duration(seconds: 2)),

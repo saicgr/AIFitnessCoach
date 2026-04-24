@@ -547,6 +547,44 @@ class WorkoutRepository {
       ..sort((a, b) => (b.scheduledDate ?? '').compareTo(a.scheduledDate ?? ''));
   }
 
+  /// Shallow-merge [patch] into the workout's `generation_metadata`, then
+  /// PATCH the serialized JSON string back to the API.
+  ///
+  /// Used by the synced-workout detail screen for in-place RPE/notes edits
+  /// and by the opportunistic re-enrichment path. Keys already on the
+  /// existing metadata are preserved (only overwritten by matching keys in
+  /// [patch]).
+  Future<void> updateGenerationMetadata(
+    String workoutId,
+    Map<String, dynamic> patch,
+  ) async {
+    try {
+      final current = await _apiClient.get(
+        '${ApiConstants.workouts}/$workoutId',
+      );
+      final raw = current.data['generation_metadata'];
+      Map<String, dynamic> existing = {};
+      if (raw is String && raw.isNotEmpty) {
+        try {
+          final decoded = jsonDecode(raw);
+          if (decoded is Map<String, dynamic>) existing = decoded;
+        } catch (_) {}
+      } else if (raw is Map<String, dynamic>) {
+        existing = raw;
+      }
+      final merged = {...existing, ...patch};
+
+      await _apiClient.put(
+        '${ApiConstants.workouts}/$workoutId',
+        data: {'generation_metadata': jsonEncode(merged)},
+      );
+      debugPrint('✅ [Workout] Updated metadata for $workoutId (${patch.keys.length} keys)');
+    } catch (e) {
+      debugPrint('❌ [Workout] updateGenerationMetadata failed: $e');
+      rethrow;
+    }
+  }
+
 }
 
 /// Calculate estimated 1RM using Brzycki formula

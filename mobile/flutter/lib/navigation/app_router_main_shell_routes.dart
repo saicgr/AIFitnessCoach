@@ -125,6 +125,11 @@ List<RouteBase> _mainShellRoutes() => [
           return ComprehensiveStatsScreen(openPhotoSheet: openPhoto, initialTab: initialTab);
         },
       ),
+      // Synced workouts history (full screen, no bottom nav)
+      GoRoute(
+        path: '/profile/synced-workouts',
+        builder: (context, state) => const SyncedWorkoutsHistoryScreen(),
+      ),
       // Redirect /progress to /stats
       GoRoute(
         path: '/progress',

@@ -326,12 +326,70 @@ extension _ComparisonViewStateUI on _ComparisonViewState {
 
 
   Widget _buildAiSummaryOverlay(Color bgColor) {
-    final textColor = bgColor.computeLuminance() < 0.5 ? Colors.white : Colors.black;
+    // FitBudd-style gradient narrative card. Replaces the prior 60-px
+    // italic overlay so the Progress Summary actually reads as a summary,
+    // not a caption.
     return Container(
-      constraints: const BoxConstraints(maxHeight: 60), width: double.infinity,
-      color: bgColor.withOpacity(0.9),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      child: Text(_aiSummary ?? '', maxLines: 3, overflow: TextOverflow.ellipsis, style: TextStyle(color: textColor.withOpacity(0.85), fontSize: 10, fontStyle: FontStyle.italic, height: 1.3)),
+      width: double.infinity,
+      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Color(0xFFF8A5C2), Color(0xFFB24BF3)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.18),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(4),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: const Icon(
+                  Icons.trending_up_rounded,
+                  color: Colors.white,
+                  size: 14,
+                ),
+              ),
+              const SizedBox(width: 8),
+              const Text(
+                'Progress Summary',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            _aiSummary ?? '',
+            maxLines: 5,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              color: Colors.white.withValues(alpha: 0.95),
+              fontSize: 11,
+              height: 1.35,
+            ),
+          ),
+        ],
+      ),
     );
   }
 

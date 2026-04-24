@@ -8,10 +8,14 @@ import '../../core/providers/auth_provider.dart';
 import '../../data/models/progress_photos.dart';
 import '../../data/repositories/measurements_repository.dart';
 import '../../data/providers/scores_provider.dart';
+import '../../data/providers/consistency_provider.dart';
 import '../../data/repositories/progress_photos_repository.dart';
 import '../../widgets/pill_app_bar.dart';
 import 'comparison_layouts.dart';
 import 'comparison_export_service.dart';
+import 'share_templates/progress_share_data.dart';
+import 'share_templates/progress_share_gallery_screen.dart';
+import 'share_templates/progress_share_templates.dart';
 import 'widgets/ghost_overlay_widget.dart';
 import 'widgets/comparison_enums.dart';
 import 'widgets/comparison_supporting_widgets.dart';
@@ -91,6 +95,12 @@ class _ComparisonViewState extends ConsumerState<ComparisonView> {
   // Per-photo date overrides (only affects rendered chip, not the underlying photo)
   final Map<int, DateTime> _dateOverrides = {};
 
+  // CTA preset (e.g., "START NOW" pill on the bottom image)
+  bool _showCta = false;
+  String _ctaText = 'START NOW';
+  String _ctaStyle = 'pill_light';
+  Offset _ctaPosition = const Offset(-1, -1); // sentinel = use default
+
   @override
   void initState() {
     super.initState();
@@ -146,6 +156,12 @@ class _ComparisonViewState extends ConsumerState<ComparisonView> {
       for (final entry in _settings.dateOverrides.entries) {
         final dt = DateTime.tryParse(entry.value);
         if (dt != null) _dateOverrides[entry.key] = dt;
+      }
+      _showCta = _settings.showCta;
+      _ctaText = _settings.ctaText;
+      _ctaStyle = _settings.ctaStyle;
+      if (_settings.ctaPosition != null && _settings.ctaPosition!.length == 2) {
+        _ctaPosition = Offset(_settings.ctaPosition![0], _settings.ctaPosition![1]);
       }
     }
     if (existing.aiSummary != null) {
@@ -259,6 +275,11 @@ class _ComparisonViewState extends ConsumerState<ComparisonView> {
         }
       },
       actions: [
+        PillAppBarAction(
+          icon: Icons.auto_awesome,
+          visible: _currentStep == 2 && !_isSaving && _selectedPhotos.length >= 2,
+          onTap: _openViralGallery,
+        ),
         PillAppBarAction(
           icon: Icons.save_outlined,
           visible: _currentStep == 2 && !_isSaving,
@@ -378,6 +399,7 @@ class _ComparisonViewState extends ConsumerState<ComparisonView> {
 
     return Column(
       children: [
+        _buildTemplatesStrip(colorScheme),
         Expanded(
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -420,6 +442,7 @@ class _ComparisonViewState extends ConsumerState<ComparisonView> {
                         if (_settings.showAiSummary && _aiSummary != null)
                           Positioned(left: 0, right: 0, bottom: 0, child: _buildAiSummaryOverlay(bgColor)),
                         if (_settings.showDates) _buildDateOverlays(),
+                        if (_showCta) _buildCtaOverlay(bgColor),
                         if (_settings.showLogo)
                           Positioned(
                             left: _logoPosition.dx, top: _logoPosition.dy,
@@ -723,6 +746,8 @@ class _ComparisonViewState extends ConsumerState<ComparisonView> {
           ComparisonToolbarChip(label: 'AI Summary', icon: Icons.auto_fix_high, isActive: _settings.showAiSummary, isLoading: _isLoadingAiSummary, colorScheme: colorScheme, onTap: _handleAiSummaryToggle),
           const SizedBox(width: 8),
           ComparisonToolbarChip(label: 'Ghost', icon: Icons.layers_outlined, isActive: _ghostOverlayEnabled, colorScheme: colorScheme, onTap: () => setState(() => _ghostOverlayEnabled = !_ghostOverlayEnabled)),
+          const SizedBox(width: 8),
+          ComparisonToolbarChip(label: 'CTA', icon: Icons.flash_on, isActive: _showCta, colorScheme: colorScheme, onTap: () => setState(() { _showCta = !_showCta; if (_showCta) _ctaPosition = const Offset(-1, -1); })),
           const SizedBox(width: 16),
           _buildBgColorPicker(colorScheme),
           const SizedBox(width: 16),
@@ -732,6 +757,7 @@ class _ComparisonViewState extends ConsumerState<ComparisonView> {
         _buildDatePositionPills(colorScheme),
         _buildStyleControls(colorScheme),
         _buildGhostOpacitySlider(colorScheme),
+        _buildCtaControls(colorScheme),
       ])),
     );
   }
@@ -958,6 +984,8 @@ class _ComparisonViewState extends ConsumerState<ComparisonView> {
         datePosition: _datePosition.name, photoShape: _photoShape.name, squircleRadius: _squircleRadius,
         photoBorderEnabled: _photoBorderEnabled, photoBorderColor: _borderColorToHex(_photoBorderColor), photoBorderWidth: _photoBorderWidth, photoSpacing: _photoSpacing,
         showUsername: _showUsername, logoVariant: _logoVariant, dateOverrides: dateOverridesMap,
+        showCta: _showCta, ctaText: _ctaText, ctaStyle: _ctaStyle,
+        ctaPosition: _ctaPosition.dx >= 0 ? [_ctaPosition.dx, _ctaPosition.dy] : null,
       );
       final labels = _selectedLayout.getLabels(_selectedPhotos.length);
       final photosJsonList = _selectedPhotos.asMap().entries.map((entry) => {'photo_id': entry.value.id, 'order': entry.key, 'label': labels[min(entry.key, labels.length - 1)]}).toList();
@@ -975,6 +1003,453 @@ class _ComparisonViewState extends ConsumerState<ComparisonView> {
     }
   }
 
+  // ---------------------------------------------------------------------------
+  // CTA overlay ("START NOW" pill preset)
+  // ---------------------------------------------------------------------------
+
+  Widget _buildCtaOverlay(Color bgColor) {
+    return Positioned.fill(child: LayoutBuilder(builder: (context, constraints) {
+      const pillW = 160.0;
+      const pillH = 40.0;
+      final defaultPos = Offset(
+        (constraints.maxWidth - pillW) / 2,
+        constraints.maxHeight - pillH - _computeCanvasPhotoPadding().bottom - 24,
+      );
+      final pos = _ctaPosition.dx < 0 ? defaultPos : _ctaPosition;
+      final maxX = max(0.0, constraints.maxWidth - pillW);
+      final maxY = max(0.0, constraints.maxHeight - pillH);
+      final clamped = Offset(pos.dx.clamp(0.0, maxX), pos.dy.clamp(0.0, maxY));
+      return Stack(children: [
+        Positioned(
+          left: clamped.dx, top: clamped.dy,
+          child: GestureDetector(
+            onPanUpdate: (d) => setState(() {
+              final cur = _ctaPosition.dx < 0 ? defaultPos : _ctaPosition;
+              _ctaPosition = Offset(
+                (cur.dx + d.delta.dx).clamp(0.0, maxX),
+                (cur.dy + d.delta.dy).clamp(0.0, maxY),
+              );
+            }),
+            onTap: _editCtaText,
+            child: _renderCtaPill(),
+          ),
+        ),
+      ]);
+    }));
+  }
+
+  Widget _renderCtaPill() {
+    final text = _ctaText.isEmpty ? 'START NOW' : _ctaText;
+    switch (_ctaStyle) {
+      case 'pill_dark':
+        return _ctaPill(
+          bg: Colors.black, fg: Colors.white, text: text,
+          leading: const Icon(Icons.play_arrow_rounded, size: 20, color: Colors.white),
+        );
+      case 'arrow':
+        return _ctaPill(
+          bg: Colors.white, fg: Colors.black, text: text,
+          trailing: const Icon(Icons.arrow_forward_rounded, size: 20, color: Colors.black),
+        );
+      case 'neon':
+        return Container(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              begin: Alignment.topLeft, end: Alignment.bottomRight,
+              colors: [Color(0xFFFF4D8D), Color(0xFFFF8A00), Color(0xFFFFD600)],
+            ),
+            borderRadius: BorderRadius.circular(999),
+            boxShadow: [BoxShadow(color: const Color(0xFFFF4D8D).withOpacity(0.6), blurRadius: 18, spreadRadius: 1)],
+          ),
+          child: Row(mainAxisSize: MainAxisSize.min, children: [
+            const Icon(Icons.link, size: 18, color: Colors.white),
+            const SizedBox(width: 6),
+            Text(text, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 14, letterSpacing: 1)),
+          ]),
+        );
+      case 'ticket':
+        return ClipPath(
+          clipper: _TicketClipper(),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
+            color: const Color(0xFFFFD166),
+            child: Row(mainAxisSize: MainAxisSize.min, children: [
+              const Icon(Icons.bolt, size: 18, color: Colors.black),
+              const SizedBox(width: 6),
+              Text(text, style: const TextStyle(color: Colors.black, fontWeight: FontWeight.w900, fontSize: 14, letterSpacing: 1.5)),
+            ]),
+          ),
+        );
+      case 'pill_light':
+      default:
+        return _ctaPill(
+          bg: Colors.white, fg: Colors.black, text: text,
+          leading: Container(
+            width: 20, height: 20,
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                begin: Alignment.topLeft, end: Alignment.bottomRight,
+                colors: [Color(0xFFFF6B6B), Color(0xFFFF9F43)],
+              ),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(Icons.link, size: 12, color: Colors.white),
+          ),
+        );
+    }
+  }
+
+  Widget _ctaPill({
+    required Color bg, required Color fg, required String text,
+    Widget? leading, Widget? trailing,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(999),
+        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.25), blurRadius: 8, offset: const Offset(0, 2))],
+      ),
+      child: Row(mainAxisSize: MainAxisSize.min, children: [
+        if (leading != null) ...[leading, const SizedBox(width: 8)],
+        Text(text, style: TextStyle(color: fg, fontWeight: FontWeight.w800, fontSize: 14, letterSpacing: 1.2)),
+        if (trailing != null) ...[const SizedBox(width: 8), trailing],
+      ]),
+    );
+  }
+
+  Future<void> _editCtaText() async {
+    final controller = TextEditingController(text: _ctaText);
+    final result = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('CTA label'),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          maxLength: 20,
+          textCapitalization: TextCapitalization.characters,
+          decoration: const InputDecoration(hintText: 'START NOW'),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+          FilledButton(onPressed: () => Navigator.pop(ctx, controller.text.trim()), child: const Text('Save')),
+        ],
+      ),
+    );
+    if (result != null && mounted) {
+      setState(() => _ctaText = result.isEmpty ? 'START NOW' : result);
+    }
+  }
+
+  Widget _buildCtaControls(ColorScheme colorScheme) {
+    const presets = <MapEntry<String, (String, IconData)>>[
+      MapEntry('pill_light', ('Light', Icons.light_mode)),
+      MapEntry('pill_dark', ('Dark', Icons.dark_mode)),
+      MapEntry('arrow', ('Arrow', Icons.arrow_forward_rounded)),
+      MapEntry('neon', ('Neon', Icons.auto_awesome)),
+      MapEntry('ticket', ('Ticket', Icons.local_activity_outlined)),
+    ];
+    return AnimatedSize(
+      duration: const Duration(milliseconds: 200),
+      curve: Curves.easeInOut,
+      child: _showCta
+          ? Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(children: [
+                  Text('CTA', style: TextStyle(fontSize: 11, color: colorScheme.onSurfaceVariant, fontWeight: FontWeight.w500)),
+                  const SizedBox(width: 8),
+                  GestureDetector(
+                    onTap: _editCtaText,
+                    child: Container(
+                      height: 28,
+                      padding: const EdgeInsets.symmetric(horizontal: 10),
+                      decoration: BoxDecoration(
+                        color: colorScheme.surfaceContainerHigh,
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      child: Row(mainAxisSize: MainAxisSize.min, children: [
+                        Icon(Icons.edit_outlined, size: 12, color: colorScheme.onSurfaceVariant),
+                        const SizedBox(width: 4),
+                        Text(_ctaText, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: colorScheme.onSurface)),
+                      ]),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  ...presets.map((p) {
+                    final isActive = _ctaStyle == p.key;
+                    return Padding(
+                      padding: const EdgeInsets.only(right: 6),
+                      child: GestureDetector(
+                        onTap: () => setState(() => _ctaStyle = p.key),
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 150),
+                          height: 28,
+                          padding: const EdgeInsets.symmetric(horizontal: 8),
+                          decoration: BoxDecoration(
+                            color: isActive ? colorScheme.primaryContainer : Colors.transparent,
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(color: isActive ? colorScheme.primary : colorScheme.outlineVariant, width: 1),
+                          ),
+                          child: Row(mainAxisSize: MainAxisSize.min, children: [
+                            Icon(p.value.$2, size: 13, color: isActive ? colorScheme.onPrimaryContainer : colorScheme.onSurfaceVariant),
+                            const SizedBox(width: 4),
+                            Text(p.value.$1, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w500, color: isActive ? colorScheme.onPrimaryContainer : colorScheme.onSurfaceVariant)),
+                          ]),
+                        ),
+                      ),
+                    );
+                  }),
+                  const SizedBox(width: 8),
+                  TextButton.icon(
+                    onPressed: () => setState(() => _ctaPosition = const Offset(-1, -1)),
+                    icon: Icon(Icons.restart_alt, size: 14, color: colorScheme.onSurfaceVariant),
+                    label: Text('Reset', style: TextStyle(fontSize: 11, color: colorScheme.onSurfaceVariant)),
+                    style: TextButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(horizontal: 6),
+                      minimumSize: Size.zero,
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    ),
+                  ),
+                ]),
+              ),
+            )
+          : const SizedBox.shrink(),
+    );
+  }
+
+  /// Compact horizontal strip of viral template previews, placed above the
+  /// customization canvas on Step 3. Shows the first 5 templates as live
+  /// thumbnails + a "See all" tile that opens the full gallery grid.
+  Widget _buildTemplatesStrip(ColorScheme colorScheme) {
+    if (_selectedPhotos.length < 2) return const SizedBox.shrink();
+    final shareData = _buildProgressShareData();
+    if (shareData == null) return const SizedBox.shrink();
+
+    // Preview subset — the rest live in "See all".
+    const previewKinds = <ProgressTemplateKind>[
+      ProgressTemplateKind.igStoryCta,
+      ProgressTemplateKind.wrapped,
+      ProgressTemplateKind.tradingCard,
+      ProgressTemplateKind.magazineCover,
+      ProgressTemplateKind.retro80s,
+    ];
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 6),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(children: [
+            Icon(Icons.auto_awesome, size: 14, color: colorScheme.primary),
+            const SizedBox(width: 6),
+            Text('Templates', style: TextStyle(
+              fontSize: 13, fontWeight: FontWeight.w700, color: colorScheme.onSurface,
+            )),
+            const SizedBox(width: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              decoration: BoxDecoration(
+                color: colorScheme.primary.withOpacity(0.12),
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: Text('${ProgressTemplateKind.values.length} viral',
+                style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: colorScheme.primary, letterSpacing: 0.5),
+              ),
+            ),
+            const Spacer(),
+            TextButton(
+              onPressed: _openViralGallery,
+              style: TextButton.styleFrom(
+                padding: const EdgeInsets.symmetric(horizontal: 6),
+                minimumSize: Size.zero,
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
+              child: Row(mainAxisSize: MainAxisSize.min, children: [
+                Text('See all', style: TextStyle(
+                  fontSize: 12, fontWeight: FontWeight.w700, color: colorScheme.primary,
+                )),
+                const SizedBox(width: 2),
+                Icon(Icons.chevron_right, size: 16, color: colorScheme.primary),
+              ]),
+            ),
+          ]),
+          const SizedBox(height: 8),
+          SizedBox(
+            height: 96,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              itemCount: previewKinds.length + 1,
+              separatorBuilder: (_, __) => const SizedBox(width: 10),
+              itemBuilder: (context, i) {
+                if (i == previewKinds.length) {
+                  return _buildSeeAllCard(colorScheme);
+                }
+                return _buildTemplateThumb(previewKinds[i], shareData, colorScheme);
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTemplateThumb(
+    ProgressTemplateKind kind,
+    ProgressShareData data,
+    ColorScheme colorScheme,
+  ) {
+    return GestureDetector(
+      onTap: () => _openTemplatePreview(kind, data),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Container(
+          width: 54, height: 76,
+          decoration: BoxDecoration(
+            color: Colors.black,
+            borderRadius: BorderRadius.circular(8),
+            boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.2), blurRadius: 4, offset: const Offset(0, 2))],
+          ),
+          clipBehavior: Clip.antiAlias,
+          child: FittedBox(
+            fit: BoxFit.cover,
+            child: SizedBox(
+              width: kProgressShareCanvas.width,
+              height: kProgressShareCanvas.height,
+              child: _buildTemplateWidget(kind, data, showWatermark: false),
+            ),
+          ),
+        ),
+        const SizedBox(height: 4),
+        SizedBox(
+          width: 54,
+          child: Text(
+            kind.label,
+            maxLines: 1, overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              fontSize: 10, fontWeight: FontWeight.w600,
+              color: colorScheme.onSurfaceVariant,
+            ),
+          ),
+        ),
+      ]),
+    );
+  }
+
+  Widget _buildSeeAllCard(ColorScheme colorScheme) {
+    return GestureDetector(
+      onTap: _openViralGallery,
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Container(
+          width: 54, height: 76,
+          decoration: BoxDecoration(
+            color: colorScheme.primary.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: colorScheme.primary.withOpacity(0.4), width: 1.2),
+          ),
+          child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+            Icon(Icons.apps_rounded, size: 22, color: colorScheme.primary),
+            const SizedBox(height: 4),
+            Text('+${ProgressTemplateKind.values.length - 5}',
+              style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: colorScheme.primary),
+            ),
+          ]),
+        ),
+        const SizedBox(height: 4),
+        SizedBox(
+          width: 54,
+          child: Text('See all',
+            maxLines: 1, overflow: TextOverflow.ellipsis,
+            style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: colorScheme.primary),
+          ),
+        ),
+      ]),
+    );
+  }
+
+  /// Build the actual viral template widget for the given kind.
+  /// Kept inline so the editor-page strip doesn't need to import the gallery
+  /// screen's private state.
+  Widget _buildTemplateWidget(
+    ProgressTemplateKind kind,
+    ProgressShareData data, {
+    required bool showWatermark,
+  }) {
+    switch (kind) {
+      case ProgressTemplateKind.igStoryCta:
+        return IgStoryCtaTemplate(data: data, ctaText: _ctaText, showWatermark: showWatermark);
+      case ProgressTemplateKind.wrapped:
+        return WrappedTemplate(data: data, showWatermark: showWatermark);
+      case ProgressTemplateKind.receipt:
+        return ReceiptTemplate(data: data, showWatermark: showWatermark);
+      case ProgressTemplateKind.tradingCard:
+        return TradingCardTemplate(data: data, showWatermark: showWatermark);
+      case ProgressTemplateKind.newspaper:
+        return NewspaperTemplate(data: data, showWatermark: showWatermark);
+      case ProgressTemplateKind.polaroidDiary:
+        return PolaroidDiaryTemplate(data: data, showWatermark: showWatermark);
+      case ProgressTemplateKind.magazineCover:
+        return MagazineCoverTemplate(data: data, showWatermark: showWatermark);
+      case ProgressTemplateKind.retro80s:
+        return Retro80sTemplate(data: data, showWatermark: showWatermark);
+      case ProgressTemplateKind.neonTabloid:
+        return NeonTabloidTemplate(data: data, showWatermark: showWatermark);
+      case ProgressTemplateKind.swissEditorial:
+        return SwissEditorialTemplate(data: data, showWatermark: showWatermark);
+      case ProgressTemplateKind.achievementUnlocked:
+        return AchievementUnlockedTemplate(data: data, showWatermark: showWatermark);
+      case ProgressTemplateKind.calendarGrid:
+        return CalendarGridTemplate(data: data, showWatermark: showWatermark);
+      case ProgressTemplateKind.progressBar:
+        return ProgressBarTemplate(data: data, showWatermark: showWatermark);
+      case ProgressTemplateKind.tapeMeasure:
+        return TapeMeasureTemplate(data: data, showWatermark: showWatermark);
+      case ProgressTemplateKind.transformationTuesday:
+        return TransformationTuesdayTemplate(data: data, showWatermark: showWatermark);
+      case ProgressTemplateKind.timelineRuler:
+        return TimelineRulerTemplate(data: data, showWatermark: showWatermark);
+    }
+  }
+
+  void _openTemplatePreview(ProgressTemplateKind kind, ProgressShareData data) {
+    Navigator.of(context).push(MaterialPageRoute(
+      builder: (_) => ProgressShareGalleryScreen(
+        data: data,
+        ctaText: _ctaText,
+        initialKind: kind,
+      ),
+    ));
+  }
+
+  ProgressShareData? _buildProgressShareData() {
+    if (_selectedPhotos.length < 2) return null;
+    final before = _selectedPhotos.first;
+    final after = _selectedPhotos.last;
+    final authState = ref.read(authStateProvider);
+    return ProgressShareData(
+      before: before,
+      after: after,
+      beforeDate: _dateOverrides[0] ?? before.takenAt,
+      afterDate: _dateOverrides[_selectedPhotos.length - 1] ?? after.takenAt,
+      beforeWeightKg: _resolvePhotoWeight(before),
+      afterWeightKg: _resolvePhotoWeight(after),
+      username: authState.user?.username,
+      totalWorkouts: ref.read(prStatsProvider)?.totalPrs ?? 0,
+      currentStreak: ref.read(currentStreakProvider),
+      useKg: true,
+    );
+  }
+
+  void _openViralGallery() {
+    final data = _buildProgressShareData();
+    if (data == null) return;
+    Navigator.of(context).push(MaterialPageRoute(
+      builder: (_) => ProgressShareGalleryScreen(data: data, ctaText: _ctaText),
+    ));
+  }
+
   Future<void> _shareComparison() async {
     if (_selectedPhotoIndex >= 0) { setState(() => _selectedPhotoIndex = -1); await Future.delayed(const Duration(milliseconds: 50)); }
     try {
@@ -983,4 +1458,27 @@ class _ComparisonViewState extends ConsumerState<ComparisonView> {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to share: $e'), backgroundColor: Theme.of(context).colorScheme.error));
     }
   }
+}
+
+/// Ticket-stub clipper for the CTA pill "Ticket" style — notches on the sides.
+class _TicketClipper extends CustomClipper<Path> {
+  @override
+  Path getClip(Size size) {
+    const r = 8.0;
+    final path = Path();
+    path.moveTo(r, 0);
+    path.lineTo(size.width - r, 0);
+    path.quadraticBezierTo(size.width, 0, size.width, r);
+    path.arcToPoint(Offset(size.width, size.height - r), radius: const Radius.circular(r), clockwise: false);
+    path.quadraticBezierTo(size.width, size.height, size.width - r, size.height);
+    path.lineTo(r, size.height);
+    path.quadraticBezierTo(0, size.height, 0, size.height - r);
+    path.arcToPoint(Offset(0, r), radius: const Radius.circular(r), clockwise: false);
+    path.quadraticBezierTo(0, 0, r, 0);
+    path.close();
+    return path;
+  }
+
+  @override
+  bool shouldReclip(covariant CustomClipper<Path> oldClipper) => false;
 }

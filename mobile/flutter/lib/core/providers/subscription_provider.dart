@@ -1,13 +1,16 @@
 import 'dart:async';
 import 'dart:io';
+import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
+import 'package:sentry_flutter/sentry_flutter.dart' show SentryLevel;
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../data/services/api_client.dart';
 import '../constants/api_constants.dart';
 import '../services/posthog_service.dart';
+import '../services/sentry_service.dart';
 
 /// Subscription tier enum
 enum SubscriptionTier {
@@ -242,9 +245,17 @@ class SubscriptionNotifier extends StateNotifier<SubscriptionState> {
           ? ApiConstants.revenueCatAppleApiKey
           : ApiConstants.revenueCatGoogleApiKey;
 
-      // Skip configuration if API key is empty or placeholder
+      // Skip configuration if API key is empty or placeholder. In prod this
+      // means the build is broken (missing --dart-define) and no purchase can
+      // complete — surface it to Sentry so we notice without relying on
+      // support tickets.
       if (apiKey.isEmpty || apiKey == 'test_key_placeholder') {
         debugPrint('⚠️ RevenueCat: Skipping - no API key configured');
+        unawaited(SentryService.captureMessage(
+          'RevenueCat API key missing at configure',
+          level: SentryLevel.warning,
+          tags: {'subsystem': 'billing', 'stage': 'configure', 'platform': Platform.isIOS ? 'ios' : 'android'},
+        ));
         return;
       }
 
@@ -254,13 +265,32 @@ class SubscriptionNotifier extends StateNotifier<SubscriptionState> {
       await Purchases.configure(PurchasesConfiguration(apiKey));
       _revenueCatInitialized = true;
       debugPrint('✅ RevenueCat configured successfully');
-    } catch (e) {
+      SentryService.addBreadcrumb(
+        message: 'RevenueCat configured',
+        category: 'billing',
+      );
+    } catch (e, stack) {
       debugPrint('❌ Failed to configure RevenueCat: $e');
+      unawaited(SentryService.captureError(
+        e,
+        stack,
+        hint: 'RevenueCat SDK configure failed',
+        tags: {'subsystem': 'billing', 'stage': 'configure'},
+      ));
     }
   }
 
-  /// Initialize with user ID and fetch subscription from RevenueCat + backend
+  /// Initialize with user ID and fetch subscription from RevenueCat + backend.
+  ///
+  /// Idempotent — calling twice with the same userId while already configured
+  /// is a no-op. This is safe to call from both app startup (if a session
+  /// already exists) and the auth-state listener on signIn.
   Future<void> initialize(String userId, {ApiClient? apiClient}) async {
+    if (_userId == userId && state.isRevenueCatConfigured && !state.isLoading) {
+      // Already initialized for this user — skip redundant RevenueCat login
+      // + backend fetch to avoid thrashing on rapid auth-state events.
+      return;
+    }
     _userId = userId;
     state = state.copyWith(isLoading: true);
 
@@ -273,23 +303,50 @@ class SubscriptionNotifier extends StateNotifier<SubscriptionState> {
         try {
           await Purchases.logIn(userId);
           debugPrint('✅ RevenueCat logged in with user: $userId');
+          SentryService.addBreadcrumb(
+            message: 'RevenueCat login',
+            category: 'billing',
+            data: {'user_id': userId},
+          );
 
           // Get customer info from RevenueCat
           final customerInfo = await Purchases.getCustomerInfo();
           _updateStateFromCustomerInfo(customerInfo);
 
-          // Fetch and cache offerings for dynamic pricing
+          // Fetch and cache offerings for dynamic pricing. Without offerings
+          // the paywall falls back to hardcoded prices — user-visible — so
+          // we capture to Sentry.
           try {
             final offerings = await Purchases.getOfferings();
             state = state.copyWith(offerings: offerings);
             debugPrint('✅ RevenueCat offerings fetched: ${offerings.current?.availablePackages.length ?? 0} packages');
-          } catch (e) {
+            SentryService.addBreadcrumb(
+              message: 'Offerings loaded',
+              category: 'billing',
+              data: {
+                'package_count': offerings.current?.availablePackages.length ?? 0,
+                'current_offering': offerings.current?.identifier ?? '<null>',
+              },
+            );
+          } catch (e, stack) {
             debugPrint('⚠️ Failed to fetch offerings: $e');
+            unawaited(SentryService.captureError(
+              e,
+              stack,
+              hint: 'RevenueCat getOfferings failed',
+              tags: {'subsystem': 'billing', 'stage': 'offerings'},
+            ));
           }
 
           state = state.copyWith(isRevenueCatConfigured: true);
-        } catch (e) {
+        } catch (e, stack) {
           debugPrint('⚠️ RevenueCat login failed: $e');
+          unawaited(SentryService.captureError(
+            e,
+            stack,
+            hint: 'RevenueCat Purchases.logIn failed — user purchases will not link to Supabase ID',
+            tags: {'subsystem': 'billing', 'stage': 'login', 'user_id': userId},
+          ));
           // Fall back to backend/local
         }
       }
@@ -298,8 +355,14 @@ class SubscriptionNotifier extends StateNotifier<SubscriptionState> {
       if (_apiClient != null || apiClient != null) {
         try {
           await _fetchSubscriptionFromBackend(apiClient ?? _apiClient!);
-        } catch (e) {
+        } catch (e, stack) {
           debugPrint('⚠️ Backend subscription fetch failed: $e');
+          unawaited(SentryService.captureError(
+            e,
+            stack,
+            hint: 'Backend /subscriptions/\$userId fetch failed during initialize',
+            tags: {'subsystem': 'billing', 'stage': 'backend_fetch'},
+          ));
         }
       }
 
@@ -309,12 +372,102 @@ class SubscriptionNotifier extends StateNotifier<SubscriptionState> {
       }
 
       state = state.copyWith(isLoading: false);
-    } catch (e) {
+
+      // Tag every subsequent Sentry event in this session with the user's
+      // tier so we can filter for "billing errors affecting premium users".
+      unawaited(SentryService.setTag('subscription_tier', state.tier.name));
+      unawaited(SentryService.setTag('revenue_cat_configured', state.isRevenueCatConfigured ? 'true' : 'false'));
+    } catch (e, stack) {
       debugPrint('Failed to initialize subscription: $e');
+      unawaited(SentryService.captureError(
+        e,
+        stack,
+        hint: 'Subscription initialize() unexpected failure',
+        tags: {'subsystem': 'billing', 'stage': 'initialize'},
+      ));
       await checkSubscriptionStatus();
       state = state.copyWith(isLoading: false);
     }
   }
+
+  /// Reset subscription state on sign-out and log the user out of RevenueCat.
+  ///
+  /// Without this, User A's RevenueCat customer ID stays cached on the
+  /// device. When User B signs in on the same device, their purchases (or
+  /// lack thereof) get attached to User A's RevenueCat account — a real
+  /// support-ticket generator.
+  Future<void> resetOnSignOut() async {
+    _userId = null;
+
+    // Reset the in-memory state back to defaults so the next user doesn't
+    // briefly see the previous user's tier before initialize() runs.
+    state = const SubscriptionState();
+
+    // Clear the cached tier from SharedPreferences too — otherwise the
+    // fallback in checkSubscriptionStatus() would restore the stale tier.
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove('subscription_tier');
+      await prefs.remove('is_lifetime_member');
+    } catch (_) {
+      // Non-fatal — worst case the next sign-in's initialize() overwrites.
+    }
+
+    if (_revenueCatInitialized) {
+      try {
+        await Purchases.logOut();
+        debugPrint('✅ RevenueCat logged out');
+        SentryService.addBreadcrumb(
+          message: 'RevenueCat logout',
+          category: 'billing',
+        );
+      } catch (e) {
+        // RevenueCat throws if the current user is already anonymous —
+        // that's fine, not an error worth capturing.
+        debugPrint('ℹ️ RevenueCat logOut no-op (likely already anonymous): $e');
+      }
+    }
+
+    unawaited(SentryService.setTag('subscription_tier', 'free'));
+    unawaited(SentryService.setTag('revenue_cat_configured', 'false'));
+  }
+
+  /// Pull the latest CustomerInfo from RevenueCat without a full backend
+  /// re-sync. Used by app-resume hooks so that if the user cancelled their
+  /// subscription from the Play Store while the app was backgrounded, we
+  /// reflect it on resume instead of waiting for a cold start.
+  ///
+  /// Debounced internally — won't hit the SDK more than once per 30 seconds.
+  Future<void> refreshFromRevenueCat() async {
+    if (!_revenueCatInitialized) return;
+    final now = DateTime.now();
+    if (_lastResumeRefresh != null &&
+        now.difference(_lastResumeRefresh!) < _resumeRefreshInterval) {
+      return;
+    }
+    _lastResumeRefresh = now;
+
+    try {
+      final customerInfo = await Purchases.getCustomerInfo();
+      _updateStateFromCustomerInfo(customerInfo);
+      SentryService.addBreadcrumb(
+        message: 'Resume refresh',
+        category: 'billing',
+        data: {'tier': state.tier.name},
+      );
+    } catch (e, stack) {
+      debugPrint('⚠️ Resume refresh failed: $e');
+      unawaited(SentryService.captureError(
+        e,
+        stack,
+        hint: 'RevenueCat getCustomerInfo failed on app resume',
+        tags: {'subsystem': 'billing', 'stage': 'resume_refresh'},
+      ));
+    }
+  }
+
+  DateTime? _lastResumeRefresh;
+  static const Duration _resumeRefreshInterval = Duration(seconds: 30);
 
   /// Update state from RevenueCat CustomerInfo
   void _updateStateFromCustomerInfo(CustomerInfo customerInfo) {
@@ -382,6 +535,19 @@ class SubscriptionNotifier extends StateNotifier<SubscriptionState> {
     }
 
     debugPrint('✅ Subscription updated from RevenueCat: tier=$tier, trial=$isTrialActive, lifetime=$isLifetime');
+    SentryService.addBreadcrumb(
+      message: 'State updated from CustomerInfo',
+      category: 'billing',
+      data: {
+        'tier': tier.name,
+        'trial': isTrialActive,
+        'lifetime': isLifetime,
+        'entitlement_active_count': entitlements.length,
+      },
+    );
+    // Keep the session tier tag current so billing-error Sentry events are
+    // filterable by user tier.
+    unawaited(SentryService.setTag('subscription_tier', tier.name));
   }
 
   Future<void> _saveToLocalStorage(SubscriptionTier tier) async {
@@ -449,7 +615,16 @@ class SubscriptionNotifier extends StateNotifier<SubscriptionState> {
   /// Get lifetime member tier (if applicable)
   LifetimeMemberTier? get lifetimeMemberTier => state.lifetimeMemberTier;
 
-  /// Fetch subscription status from backend
+  /// Fetch subscription status from backend.
+  ///
+  /// Rules:
+  /// - If RevenueCat already hydrated state (`isRevenueCatConfigured == true`),
+  ///   the backend is supplementary — we do not overwrite RC's tier.
+  /// - A 404 means "backend has no record for this user yet" (brand-new user
+  ///   whose webhook hasn't fired). Treat as soft-miss: do nothing, do not
+  ///   capture to Sentry, let RevenueCat / default Free tier stand.
+  /// - Any other error (5xx, timeout, parse failure) is logged to Sentry but
+  ///   we do NOT regress a known-good premium tier to Free.
   Future<void> _fetchSubscriptionFromBackend(ApiClient apiClient) async {
     if (_userId == null) return;
 
@@ -481,8 +656,18 @@ class SubscriptionNotifier extends StateNotifier<SubscriptionState> {
 
         await _saveToLocalStorage(tier);
       }
+    } on DioException catch (e) {
+      // 404 = no server-side subscription record yet. Expected for brand-new
+      // users whose RevenueCat webhook hasn't fired. Don't rethrow, don't
+      // capture — RevenueCat (or free default) remains source of truth.
+      if (e.response?.statusCode == 404) {
+        debugPrint('ℹ️ Backend has no subscription record yet for user $_userId (404) — leaving state as-is');
+        return;
+      }
+      debugPrint('❌ Backend /subscriptions/\$userId fetch failed: ${e.response?.statusCode} $e');
+      rethrow;
     } catch (e) {
-      debugPrint('Failed to fetch subscription from backend: $e');
+      debugPrint('❌ Backend /subscriptions/\$userId fetch failed: $e');
       rethrow;
     }
   }
@@ -581,47 +766,123 @@ class SubscriptionNotifier extends StateNotifier<SubscriptionState> {
   /// Purchase a subscription via RevenueCat
   Future<bool> purchase(String productId) async {
     state = state.copyWith(isLoading: true, error: null);
+    SentryService.addBreadcrumb(
+      message: 'Purchase started',
+      category: 'billing',
+      data: {'product_id': productId},
+    );
 
     try {
-      if (_revenueCatInitialized) {
-        // Get offerings from RevenueCat
-        final offerings = await Purchases.getOfferings();
-
-        if (offerings.current == null) {
-          throw Exception('No offerings available');
-        }
-
-        // Find the package matching our product ID
-        Package? package;
-        for (final pkg in offerings.current!.availablePackages) {
-          if (pkg.storeProduct.identifier == productId) {
-            package = pkg;
-            break;
-          }
-        }
-
-        if (package == null) {
-          throw Exception('Product not found: $productId');
-        }
-
-        // Make the purchase
-        final customerInfo = await Purchases.purchasePackage(package);
-
-        // Update state from the result (purchasePackage returns CustomerInfo directly)
-        _updateStateFromCustomerInfo(customerInfo);
-
-        state = state.copyWith(isLoading: false);
-        _posthog?.capture(eventName: 'subscription_purchased', properties: {'product_id': productId});
-        _posthog?.identify(userId: _userId ?? '', userProperties: {'subscription_tier': state.tier.name});
-        _posthog?.group(groupType: 'subscription', groupKey: state.tier.name);
-        debugPrint('✅ Purchase successful: $productId');
-        return true;
-      } else {
+      if (!_revenueCatInitialized) {
         debugPrint('⚠️ RevenueCat not configured — purchase unavailable');
+        unawaited(SentryService.captureMessage(
+          'Purchase attempted but RevenueCat not configured',
+          level: SentryLevel.warning,
+          tags: {'subsystem': 'billing', 'stage': 'purchase', 'product_id': productId},
+        ));
         state = state.copyWith(isLoading: false, error: 'Purchase service not configured');
         return false;
       }
-    } on PlatformException catch (e) {
+
+      // Pre-flight guard: on an emulator without Play Services, or on devices
+      // where Play Store / App Store is disabled, Purchases.canMakePayments()
+      // returns false. Surface a clear message instead of bouncing back to
+      // home silently when purchasePackage() throws. This is what makes the
+      // emulator vs real-device difference visible during QA.
+      try {
+        final canPay = await Purchases.canMakePayments();
+        if (!canPay) {
+          debugPrint('⚠️ canMakePayments=false — device cannot complete in-app purchases');
+          unawaited(SentryService.captureMessage(
+            'Purchase blocked: canMakePayments=false',
+            level: SentryLevel.info,
+            tags: {'subsystem': 'billing', 'stage': 'purchase', 'reason': 'cannot_make_payments'},
+          ));
+          state = state.copyWith(
+            isLoading: false,
+            error: "In-app purchases aren't available on this device. Install FitWiz from the Play Store with a Google account that has a valid payment method.",
+          );
+          return false;
+        }
+      } catch (_) {
+        // Some platforms throw; treat as "probably fine, let the real
+        // purchase call surface the actual error".
+      }
+
+      // Get offerings from RevenueCat
+      final offerings = await Purchases.getOfferings();
+
+      if (offerings.current == null) {
+        unawaited(SentryService.captureMessage(
+          'Purchase failed: no current offering configured in RevenueCat',
+          level: SentryLevel.error,
+          tags: {'subsystem': 'billing', 'stage': 'purchase', 'reason': 'no_current_offering'},
+        ));
+        throw Exception('No offerings available');
+      }
+
+      // Find the package matching our product ID
+      Package? package;
+      for (final pkg in offerings.current!.availablePackages) {
+        if (pkg.storeProduct.identifier == productId) {
+          package = pkg;
+          break;
+        }
+      }
+
+      if (package == null) {
+        // Product ID drift between Play Console / RevenueCat / app constants.
+        // This is a config bug, not a user issue — capture loudly.
+        unawaited(SentryService.captureMessage(
+          'Purchase failed: product not found in current offering',
+          level: SentryLevel.error,
+          tags: {'subsystem': 'billing', 'stage': 'purchase', 'product_id': productId, 'reason': 'product_not_found'},
+          extra: {
+            'available_products': offerings.current!.availablePackages
+                .map((p) => p.storeProduct.identifier)
+                .toList(),
+            'current_offering': offerings.current!.identifier,
+          },
+        ));
+        throw Exception('Product not found: $productId');
+      }
+
+      // Make the purchase
+      final customerInfo = await Purchases.purchasePackage(package);
+
+      // Update state from the result (purchasePackage returns CustomerInfo directly)
+      _updateStateFromCustomerInfo(customerInfo);
+
+      state = state.copyWith(isLoading: false);
+      _posthog?.capture(eventName: 'subscription_purchased', properties: {'product_id': productId});
+      _posthog?.identify(userId: _userId ?? '', userProperties: {'subscription_tier': state.tier.name});
+      _posthog?.group(groupType: 'subscription', groupKey: state.tier.name);
+      debugPrint('✅ Purchase successful: $productId');
+      SentryService.addBreadcrumb(
+        message: 'Purchase succeeded',
+        category: 'billing',
+        data: {'product_id': productId, 'new_tier': state.tier.name},
+      );
+
+      // Post-success backend reconcile. RevenueCat's webhook usually updates
+      // the backend within a few seconds, but webhook queues can back up
+      // right at launch. Re-fetching here guarantees backend-gated features
+      // (e.g. /workouts with premium-only AI) agree with the app's tier
+      // even if the webhook is slow.
+      if (_apiClient != null) {
+        unawaited(_fetchSubscriptionFromBackend(_apiClient).catchError((e, stack) {
+          debugPrint('⚠️ Post-purchase backend reconcile failed (non-fatal): $e');
+          SentryService.captureError(
+            e,
+            stack is StackTrace ? stack : null,
+            hint: 'Post-purchase backend reconcile failed',
+            tags: {'subsystem': 'billing', 'stage': 'post_purchase_reconcile', 'product_id': productId},
+          );
+        }));
+      }
+
+      return true;
+    } on PlatformException catch (e, stack) {
       final errorCode = PurchasesErrorHelper.getErrorCode(e);
       if (errorCode == PurchasesErrorCode.purchaseCancelledError) {
         _posthog?.capture(eventName: 'subscription_purchase_cancelled', properties: {'product_id': productId});
@@ -631,14 +892,31 @@ class SubscriptionNotifier extends StateNotifier<SubscriptionState> {
       }
       _posthog?.capture(eventName: 'subscription_purchase_failed', properties: {'product_id': productId, 'error_message': e.toString()});
       debugPrint('❌ Purchase failed: $e');
+      unawaited(SentryService.captureError(
+        e,
+        stack,
+        hint: 'Play Billing / StoreKit PlatformException during purchasePackage',
+        tags: {
+          'subsystem': 'billing',
+          'stage': 'purchase',
+          'product_id': productId,
+          'error_code': errorCode.name,
+        },
+      ));
       state = state.copyWith(
         isLoading: false,
         error: 'Purchase failed. Please try again.',
       );
       return false;
-    } catch (e) {
+    } catch (e, stack) {
       _posthog?.capture(eventName: 'subscription_purchase_failed', properties: {'product_id': productId, 'error_message': e.toString()});
       debugPrint('❌ Purchase failed: $e');
+      unawaited(SentryService.captureError(
+        e,
+        stack,
+        hint: 'Unexpected exception during purchase() flow',
+        tags: {'subsystem': 'billing', 'stage': 'purchase', 'product_id': productId},
+      ));
       state = state.copyWith(
         isLoading: false,
         error: 'Purchase failed: $e',
@@ -670,8 +948,14 @@ class SubscriptionNotifier extends StateNotifier<SubscriptionState> {
         state = state.copyWith(isLoading: false);
         return false;
       }
-    } catch (e) {
+    } catch (e, stack) {
       debugPrint('❌ Restore failed: $e');
+      unawaited(SentryService.captureError(
+        e,
+        stack,
+        hint: 'Purchases.restorePurchases() failed',
+        tags: {'subsystem': 'billing', 'stage': 'restore'},
+      ));
       state = state.copyWith(
         isLoading: false,
         error: 'Restore failed: $e',

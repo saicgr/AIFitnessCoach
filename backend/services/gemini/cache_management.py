@@ -500,8 +500,11 @@ Create engaging, creative names that:
 
                     logger.info(f"[Cache] Nutrition analysis cache expiring (age: {age_seconds:.0f}s), refreshing...")
 
-                # Check server-side for existing cache
-                existing = self._find_existing_server_cache("nutrition_analysis")
+                # Check server-side for an existing v2 cache. Using the exact
+                # version string so a pre-existing v1 cache (without the
+                # inflammation/UPF rubrics) won't get adopted — v1 callers were
+                # dropping inflammation_score for plate mode.
+                existing = self._find_existing_server_cache("nutrition_analysis_v2")
                 if existing:
                     type(self)._nutrition_analysis_cache = existing.name
                     expire_time = getattr(existing, 'expire_time', None)
@@ -520,7 +523,9 @@ Create engaging, creative names that:
                 cache = client.caches.create(
                     model=self.model,
                     config=types.CreateCachedContentConfig(
-                        display_name="nutrition_analysis_v1",
+                        # v2: adds inflammation + is_ultra_processed rubrics so
+                        # plate-mode responses carry the fields (2026-04-23).
+                        display_name="nutrition_analysis_v2",
                         system_instruction=system_instruction,
                         contents=[static_content],
                         ttl="3600s",

@@ -41,6 +41,7 @@ import '../widgets/set_tracking_overlay.dart';
 import '../widgets/set_tracking_table.dart';
 import '../../../core/services/pre_set_insight_engine.dart' show SessionSummary;
 import '../widgets/workout_bottom_bar.dart';
+import '../widgets/workout_stats_strip.dart';
 import '../widgets/workout_top_bar_v2.dart';
 import '../widgets/workout_top_overlay.dart';
 import '../../../core/providers/window_mode_provider.dart';

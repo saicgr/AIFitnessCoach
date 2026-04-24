@@ -876,6 +876,82 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
     );
   }
 
+  /// Scan Food entry — presents Camera vs Gallery picker (matching the
+  /// `_scanMenu` pattern), then delegates to `_pickImages(source)` which
+  /// supports multi-image on both sources (camera capture loop + gallery
+  /// multi-pick). Wired from the home-grid "Scan Food" quick-action.
+  Future<void> _pickFoodImagesWithSourceChoice() async {
+    final green = const Color(0xFF16A34A);
+    final source = await showGlassSheet<ImageSource>(
+      context: context,
+      builder: (ctx) {
+        final colors = ThemeColors.of(ctx);
+        final isDark = colors.isDark;
+        return GlassSheet(
+          child: SafeArea(
+            top: false,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(4, 4, 4, 16),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 36,
+                          height: 36,
+                          decoration: BoxDecoration(
+                            color: green.withValues(alpha: 0.15),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Icon(Icons.document_scanner_outlined,
+                              size: 20, color: green),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            'Scan Food',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w700,
+                              color: colors.textPrimary,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  _GlassMenuOption(
+                    icon: Icons.camera_alt_outlined,
+                    label: 'Take Food Photo',
+                    subtitle: 'Up to 5 shots — add another between photos',
+                    color: green,
+                    isDark: isDark,
+                    onTap: () => Navigator.pop(ctx, ImageSource.camera),
+                  ),
+                  const SizedBox(height: 10),
+                  _GlassMenuOption(
+                    icon: Icons.collections_outlined,
+                    label: 'Choose Food Photos',
+                    subtitle: 'Pick up to 5 from your library',
+                    color: green,
+                    isDark: isDark,
+                    onTap: () => Navigator.pop(ctx, ImageSource.gallery),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+    if (source == null || !mounted) return;
+    await _pickImages(source);
+  }
+
   /// Menu scan — take or pick 1..N photos of a restaurant menu, send through
   /// /log-multi-image-stream with analysis_mode="menu". On response, open
   /// MenuAnalysisSheet for the user to tick items and log them.
@@ -1566,14 +1642,15 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
       );
 
       if (mounted) {
-        final confirmed = await _showProductConfirmation(product);
-        debugPrint('🔍 [LogMeal] Product confirmation | confirmed=$confirmed');
-        if (confirmed == true) {
-          debugPrint('🔍 [LogMeal] Logging barcode food | mealType=${_selectedMealType.value}');
+        final servings = await _showProductConfirmation(product);
+        debugPrint('🔍 [LogMeal] Product confirmation | servings=$servings');
+        if (servings != null) {
+          debugPrint('🔍 [LogMeal] Logging barcode food | mealType=${_selectedMealType.value} | servings=$servings');
           final response = await repository.logFoodFromBarcode(
             userId: widget.userId,
             barcode: barcode,
             mealType: _selectedMealType.value,
+            servings: servings,
           );
 
           if (mounted) {

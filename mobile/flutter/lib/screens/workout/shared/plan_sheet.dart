@@ -13,6 +13,7 @@ import 'package:flutter/material.dart';
 
 import '../../../core/theme/accent_color_provider.dart';
 import '../../../data/models/exercise.dart';
+import '../../../widgets/exercise_image.dart';
 import '../../../widgets/glass_sheet.dart';
 import '../models/workout_state.dart';
 
@@ -192,37 +193,20 @@ class _PlanRow extends StatelessWidget {
   }
 
   Widget _thumb() {
-    final url =
-        exercise.imageS3Path ?? exercise.gifUrl ?? exercise.videoUrl ?? '';
-    if (url.isEmpty) {
-      return Container(
-        width: 40,
-        height: 40,
-        decoration: BoxDecoration(
-          color: (isDark ? Colors.white : Colors.black).withOpacity(0.06),
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: Icon(Icons.fitness_center,
-            size: 18,
-            color: (isDark ? Colors.white : Colors.black).withOpacity(0.3)),
-      );
-    }
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(8),
-      child: Image.network(
-        url,
-        width: 40,
-        height: 40,
-        fit: BoxFit.cover,
-        errorBuilder: (_, __, ___) => Container(
-          width: 40,
-          height: 40,
-          color: (isDark ? Colors.white : Colors.black).withOpacity(0.06),
-          child: Icon(Icons.broken_image,
-              size: 16,
-              color: (isDark ? Colors.white : Colors.black).withOpacity(0.3)),
-        ),
-      ),
+    // imageS3Path on the workout payload is often a raw S3 key (not a URL) or
+    // a presigned URL that has already expired. Go through ExerciseImage so
+    // the `/exercise-images/{name}` endpoint can mint a fresh presigned URL
+    // when the pre-resolved value isn't usable.
+    final preResolved =
+        exercise.imageS3Path ?? exercise.gifUrl ?? exercise.videoUrl;
+    return ExerciseImage(
+      exerciseName: exercise.name,
+      imageUrl: preResolved,
+      width: 40,
+      height: 40,
+      borderRadius: 8,
+      backgroundColor: (isDark ? Colors.white : Colors.black).withOpacity(0.06),
+      iconColor: (isDark ? Colors.white : Colors.black).withOpacity(0.3),
     );
   }
 }

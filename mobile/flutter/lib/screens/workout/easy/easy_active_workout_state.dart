@@ -629,6 +629,9 @@ class EasyActiveWorkoutScreenState
       onSkipToNext:
           _currentIndex < _exercises.length - 1 ? _skipToNextExercise : null,
       onQuitWorkout: _quitWorkout,
+      allCompletedSets: [
+        for (final s in _perExercise.values) ...s.completed,
+      ],
     );
   }
 }

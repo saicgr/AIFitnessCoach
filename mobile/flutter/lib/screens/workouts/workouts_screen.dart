@@ -7,9 +7,14 @@ import '../../core/constants/app_colors.dart';
 import '../../core/theme/theme_colors.dart';
 import '../../data/models/workout.dart';
 import '../../data/models/workout_screen_summary.dart';
+import '../../core/constants/synced_workout_kinds.dart';
+import '../../data/providers/synced_workouts_provider.dart';
 import '../../data/providers/today_workout_provider.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../data/repositories/workout_repository.dart';
+import '../../widgets/synced/kind_avatar.dart';
+import '../../widgets/synced/metric_chip.dart';
+import '../profile/synced_workout_detail_screen.dart';
 import '../../data/models/gym_profile.dart';
 import '../../data/providers/gym_profile_provider.dart';
 import '../../data/services/haptic_service.dart';
@@ -398,7 +403,12 @@ class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen>
         ),
         const SizedBox(height: 24),
 
-        // Previous Sessions
+        // Synced Workouts (Health Connect / Apple Health) — same rich
+        // visual system as the Profile tab. Excluded from Previous Sessions
+        // below so they don't appear twice.
+        _buildSyncedWorkoutsSection(context, isDark, textSecondary),
+
+        // Previous Sessions (excludes Health Connect imports)
         _buildSectionHeader(
           'PREVIOUS SESSIONS',
           textSecondary,
@@ -611,6 +621,47 @@ class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen>
   }
 
   /// Build previous sessions section - shows last 3 completed workouts
+  /// Synced Workouts section — horizontally scrollable row of kind-tinted
+  /// cards, matching the Profile-tab treatment. Hidden when the user has no
+  /// Health Connect / Apple Health imports yet.
+  Widget _buildSyncedWorkoutsSection(
+    BuildContext context,
+    bool isDark,
+    Color textSecondary,
+  ) {
+    final synced = ref.watch(syncedWorkoutsProvider);
+    if (synced.isEmpty) return const SizedBox.shrink();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildSectionHeader(
+          'SYNCED WORKOUTS',
+          textSecondary,
+          actionText: 'See all',
+          onAction: () {
+            HapticService.light();
+            context.push('/profile/synced-workouts');
+          },
+        ),
+        const SizedBox(height: 8),
+        SizedBox(
+          height: 136,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            itemCount: synced.length,
+            separatorBuilder: (_, __) => const SizedBox(width: 10),
+            itemBuilder: (context, index) => _WorkoutsTabSyncedCard(
+              workout: synced[index],
+            ),
+          ),
+        ),
+        const SizedBox(height: 24),
+      ],
+    );
+  }
+
   Widget _buildPreviousSessions(
     BuildContext context,
     List<Workout> workouts,
@@ -618,9 +669,12 @@ class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen>
     Color textPrimary,
     Color textSecondary,
   ) {
-    // Get completed workouts, sorted by completion/scheduled date (most recent first)
+    // Get completed workouts, sorted by completion/scheduled date (most recent first).
+    // Exclude Health Connect imports — they render in their own section above.
     final completedWorkouts = workouts
-        .where((w) => w.isCompleted == true)
+        .where((w) =>
+            w.isCompleted == true &&
+            w.generationMethod != 'health_connect_import')
         .toList()
       ..sort((a, b) {
         final dateA = DateTime.tryParse(a.scheduledDate ?? '') ?? DateTime(1900);
@@ -960,6 +1014,222 @@ class _PreviousSessionCard extends StatelessWidget {
         ),
       ),
     );
+  }
+}
+
+/// Kind-tinted synced-workout card for the Workouts tab strip. Keeps the
+/// visual system consistent with the Profile tab's `_SyncedWorkoutCard`.
+class _WorkoutsTabSyncedCard extends StatelessWidget {
+  final Workout workout;
+
+  const _WorkoutsTabSyncedCard({required this.workout});
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final metadata = workout.generationMetadata ?? {};
+    final kind = SyncedKind.fromString(
+      metadata['hc_activity_kind'] as String? ?? workout.type,
+    );
+    final palette = kind.palette(isDark);
+    final textPrimary =
+        isDark ? Colors.white : AppColorsLight.textPrimary;
+    final textMuted =
+        isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final sourceApp = metadata['source_app'] as String?
+        ?? metadata['source_app_name'] as String?
+        ?? (Theme.of(context).platform == TargetPlatform.iOS
+            ? 'Apple Health'
+            : 'Health Connect');
+
+    final chips = _chipsFor(kind, metadata, workout);
+    final dateLabel = _formatDateShort(workout.scheduledDate);
+
+    return GestureDetector(
+      onTap: () {
+        HapticService.selection();
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (_) => SyncedWorkoutDetailScreen(workout: workout),
+          ),
+        );
+      },
+      child: Container(
+        width: 176,
+        height: 136,
+        decoration: BoxDecoration(
+          color: palette.bg(isDark),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: palette.fg.withValues(alpha: isDark ? 0.28 : 0.35),
+          ),
+        ),
+        child: Stack(
+          children: [
+            Positioned(
+              right: -10,
+              bottom: -14,
+              child: IgnorePointer(
+                child: Transform.rotate(
+                  angle: -0.21,
+                  child: Icon(
+                    kind.icon,
+                    size: 96,
+                    color: palette.fg.withValues(alpha: 0.12),
+                  ),
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  KindAvatar(kind: kind, size: 40),
+                  const SizedBox(height: 10),
+                  Text(
+                    kind == SyncedKind.other
+                        ? (workout.name ?? 'Workout')
+                        : kind.label,
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w700,
+                      color: textPrimary,
+                      height: 1.1,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    '$dateLabel${workout.durationMinutes != null ? ' · ${workout.durationMinutes} min' : ''}',
+                    style: TextStyle(fontSize: 11, color: textMuted),
+                  ),
+                  const SizedBox(height: 8),
+                  if (chips.isNotEmpty)
+                    Row(
+                      children: [
+                        for (int i = 0; i < chips.length; i++) ...[
+                          if (i > 0) const SizedBox(width: 10),
+                          chips[i],
+                        ],
+                      ],
+                    ),
+                  const Spacer(),
+                  Text(
+                    sourceApp,
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w600,
+                      color: palette.fg
+                          .withValues(alpha: isDark ? 0.9 : 0.8),
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  List<Widget> _chipsFor(
+    SyncedKind kind,
+    Map<String, dynamic> metadata,
+    Workout workout,
+  ) {
+    final out = <Widget>[];
+    for (final key in kind.heroMetricOrder) {
+      final chip = _chipForKey(key, metadata, workout);
+      if (chip != null) {
+        out.add(chip);
+        if (out.length >= 2) break;
+      }
+    }
+    return out;
+  }
+
+  Widget? _chipForKey(
+    String key,
+    Map<String, dynamic> metadata,
+    Workout workout,
+  ) {
+    switch (key) {
+      case 'distance_m':
+        final m = (metadata['distance_m'] ?? metadata['distance_meters']) as num?;
+        if (m == null || m <= 0) return null;
+        final miles = m.toDouble() * 0.000621371;
+        return MetricChip(
+          dotColor: MetricColors.distance,
+          value: miles < 0.03
+              ? '${m.round()}'
+              : miles.toStringAsFixed(miles >= 10 ? 1 : 2),
+          unit: miles < 0.03 ? 'm' : 'mi',
+        );
+      case 'calories_active':
+        final c = (metadata['calories_active'] ?? metadata['calories_burned']) as num?;
+        if (c == null || c <= 0) return null;
+        return MetricChip(
+          dotColor: MetricColors.calories,
+          value: c.round().toString(),
+          unit: 'kcal',
+        );
+      case 'steps':
+        final s = (metadata['steps'] ?? metadata['total_steps']) as num?;
+        if (s == null || s <= 0) return null;
+        return MetricChip(
+          dotColor: MetricColors.steps,
+          value: s >= 1000
+              ? '${(s / 1000).toStringAsFixed(1)}k'
+              : s.round().toString(),
+          unit: 'steps',
+        );
+      case 'avg_heart_rate':
+        final h = metadata['avg_heart_rate'] as num?;
+        if (h == null || h <= 0) return null;
+        return MetricChip(
+          dotColor: MetricColors.heartRate,
+          value: h.round().toString(),
+          unit: 'bpm',
+        );
+      case 'duration':
+        if (workout.durationMinutes == null) return null;
+        final m = workout.durationMinutes!;
+        return MetricChip(
+          dotColor: MetricColors.duration,
+          value: m >= 60 ? '${m ~/ 60}h ${m % 60}m' : '${m}m',
+        );
+      case 'elevation_gain_m':
+        final e = metadata['elevation_gain_m'] as num?;
+        if (e == null || e <= 0) return null;
+        return MetricChip(
+          dotColor: MetricColors.elevation,
+          value: e.round().toString(),
+          unit: 'm gain',
+        );
+      case 'avg_speed_mps':
+        final v = metadata['avg_speed_mps'] as num?;
+        if (v == null || v <= 0) return null;
+        return MetricChip(
+          dotColor: MetricColors.pace,
+          value: (v.toDouble() * 2.23694).toStringAsFixed(1),
+          unit: 'mph',
+        );
+    }
+    return null;
+  }
+
+  String _formatDateShort(String? iso) {
+    if (iso == null || iso.isEmpty) return '';
+    final dt = DateTime.tryParse(iso);
+    if (dt == null) return iso;
+    const months = [
+      'Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'
+    ];
+    return '${months[dt.month - 1]} ${dt.day}';
   }
 }
 

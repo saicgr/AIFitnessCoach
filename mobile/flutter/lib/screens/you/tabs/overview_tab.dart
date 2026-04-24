@@ -1,22 +1,22 @@
 /// Overview tab body for the You hub.
 ///
 /// The at-a-glance landing screen. Pulls the headline number from each of
-/// the 8 consolidated surfaces (XP, Trophies, Achievements/Streaks, Skills,
+/// the consolidated surfaces (XP, Trophies, Achievements/Streaks, Skills,
 /// Wrapped, Rewards, Inventory-via-rewards-count, Leaderboard) and renders
 /// them as a single scrollable dashboard. Tapping any card deep-links to
 /// the detail screen for that surface.
 ///
-/// Data sources (all fired in parallel, each block renders independent
-/// skeletons on failure so one blip doesn't blank the tab):
-///   • /xp/goals                                    → level + XP bar
-///   • /achievements/user/{id}/streaks              → active streaks row
-///   • /summaries/user/{id}/latest                  → last weekly recap
-///   • /trophies/{id}/summary + /trophies/{id}/recent
-///                                                  → earned-of-total + latest trophy
-///   • /skill-progressions/user/{id}/summary        → active skill step
-///   • /xp/unclaimed-crates                         → rewards ready count
-///   • /leaderboard/rank                            → social percentile
+/// Data sources:
+///   • `userXpProvider` (backed by `/progress/xp/{id}`)   → level + XP bar
+///   • `unclaimedCratesCountProvider` (repo-backed)       → rewards ready count
+///   • /achievements/user/{id}/streaks                    → active streaks row
+///   • /summaries/user/{id}/latest                        → last weekly recap
+///   • /trophies/{id}/summary + /trophies/{id}/recent     → earned-of-total + latest trophy
+///   • /skill-progressions/user/{id}/summary              → active skill step
+///   • /leaderboard/unlock-status → /leaderboard/rank     → social percentile (or unlock progress)
 library;
+
+import 'dart:async';
 
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
@@ -26,7 +26,9 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/providers/serious_mode_provider.dart';
 import '../../../core/theme/accent_color_provider.dart';
+import '../../../data/providers/xp_provider.dart';
 import '../../../data/services/api_client.dart';
+import '../../../widgets/xp_hero_tile.dart';
 
 class YouOverviewTab extends ConsumerStatefulWidget {
   const YouOverviewTab({super.key});
@@ -36,13 +38,15 @@ class YouOverviewTab extends ConsumerStatefulWidget {
 }
 
 class _YouOverviewTabState extends ConsumerState<YouOverviewTab> {
-  Map<String, dynamic>? _xp;
   List<dynamic>? _streaks;
   Map<String, dynamic>? _latestSummary;
   Map<String, dynamic>? _trophySummary;
   List<dynamic>? _recentTrophies;
   Map<String, dynamic>? _skillsSummary;
-  int? _unclaimedRewards;
+  // Leaderboard state: null = still loading, unlocked=false → show unlock
+  // progress, unlocked=true → show percentile / rank.
+  bool? _leaderboardUnlocked;
+  int _workoutsNeeded = 10;
   double? _percentile;
   bool _loading = true;
 
@@ -59,53 +63,63 @@ class _YouOverviewTabState extends ConsumerState<YouOverviewTab> {
       final userId = await api.getUserId();
       if (userId == null) return;
 
+      // Kick off the XP refresh via the canonical provider. It hits
+      // `/progress/xp/{userId}` and updates `userXpProvider` which the
+      // `_LevelCard` widget watches directly — no map plumbing needed.
+      // `unclaimedCratesCountProvider` wraps the repository's crates call,
+      // so the old broken `/xp/unclaimed-crates` fetch is gone too.
+      unawaited(ref.read(xpProvider.notifier).loadUserXP(userId: userId));
+
+      // 15s receive-timeout: the leaderboard snapshot + achievements summary
+      // queries are heavier than the rest; 8s starved them into `—` states.
       final opts = Options(
         sendTimeout: const Duration(seconds: 5),
-        receiveTimeout: const Duration(seconds: 8),
+        receiveTimeout: const Duration(seconds: 15),
         validateStatus: (s) => s != null && s < 500,
       );
 
       final futures = await Future.wait([
-        api.dio.get('/xp/goals',
-            queryParameters: {'user_id': userId}, options: opts),
         api.dio.get('/achievements/user/$userId/streaks', options: opts),
         api.dio.get('/summaries/user/$userId/latest', options: opts),
-        api.dio.get('/trophies/$userId/summary', options: opts),
-        api.dio.get('/trophies/$userId/recent',
+        api.dio.get('/progress/trophies/$userId/summary', options: opts),
+        api.dio.get('/progress/trophies/$userId/recent',
             queryParameters: {'limit': 1}, options: opts),
         api.dio.get('/skill-progressions/user/$userId/summary', options: opts),
-        api.dio.get('/xp/unclaimed-crates', options: opts),
-        api.dio.get('/leaderboard/rank',
+        api.dio.get('/leaderboard/unlock-status',
             queryParameters: {'user_id': userId}, options: opts),
       ]);
 
-      if (futures[0].statusCode == 200 && futures[0].data is Map) {
-        _xp = (futures[0].data as Map).cast<String, dynamic>();
-      }
-      if (futures[1].statusCode == 200) {
-        final data = futures[1].data;
+      if (futures[0].statusCode == 200) {
+        final data = futures[0].data;
         if (data is List) _streaks = data;
         if (data is Map && data['streaks'] is List) _streaks = data['streaks'] as List;
       }
+      if (futures[1].statusCode == 200 && futures[1].data is Map) {
+        _latestSummary = (futures[1].data as Map).cast<String, dynamic>();
+      }
       if (futures[2].statusCode == 200 && futures[2].data is Map) {
-        _latestSummary = (futures[2].data as Map).cast<String, dynamic>();
+        _trophySummary = (futures[2].data as Map).cast<String, dynamic>();
       }
-      if (futures[3].statusCode == 200 && futures[3].data is Map) {
-        _trophySummary = (futures[3].data as Map).cast<String, dynamic>();
+      if (futures[3].statusCode == 200 && futures[3].data is List) {
+        _recentTrophies = futures[3].data as List;
       }
-      if (futures[4].statusCode == 200 && futures[4].data is List) {
-        _recentTrophies = futures[4].data as List;
+      if (futures[4].statusCode == 200 && futures[4].data is Map) {
+        _skillsSummary = (futures[4].data as Map).cast<String, dynamic>();
       }
       if (futures[5].statusCode == 200 && futures[5].data is Map) {
-        _skillsSummary = (futures[5].data as Map).cast<String, dynamic>();
-      }
-      if (futures[6].statusCode == 200 && futures[6].data is Map) {
-        final m = (futures[6].data as Map).cast<String, dynamic>();
-        _unclaimedRewards = (m['count'] as num?)?.toInt();
-      }
-      if (futures[7].statusCode == 200 && futures[7].data is Map) {
-        final m = (futures[7].data as Map).cast<String, dynamic>();
-        _percentile = (m['percentile'] as num?)?.toDouble();
+        final m = (futures[5].data as Map).cast<String, dynamic>();
+        _leaderboardUnlocked = m['is_unlocked'] as bool? ?? false;
+        _workoutsNeeded = (m['workouts_needed'] as num?)?.toInt() ?? 10;
+        // Only fetch the rank if the user has actually unlocked it —
+        // otherwise /leaderboard/rank 404s and writes nothing.
+        if (_leaderboardUnlocked == true) {
+          final rankRes = await api.dio.get('/leaderboard/rank',
+              queryParameters: {'user_id': userId}, options: opts);
+          if (rankRes.statusCode == 200 && rankRes.data is Map) {
+            final rm = (rankRes.data as Map).cast<String, dynamic>();
+            _percentile = (rm['percentile'] as num?)?.toDouble();
+          }
+        }
       }
     } catch (_) {
       // Per-block error handling — overview renders whatever data it got.
@@ -132,9 +146,12 @@ class _YouOverviewTabState extends ConsumerState<YouOverviewTab> {
       child: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          // Level card stays in both modes — XP trajectory is a neutral
-          // metric, not pure gamification flair.
-          _LevelCard(xp: _xp, fg: fg, accent: accent, muted: serious),
+          // Hero XP tile — three rows (weekly XP + sparkline, level +
+          // progress + reward preview, streak + nudge). Reads directly
+          // from `userXpProvider` + `weeklyXpSummaryProvider` +
+          // `nextLevelPreviewProvider` so every surface that renders it
+          // stays in sync with the rest of the app.
+          XpHeroTile(muted: serious),
           const SizedBox(height: 14),
           // Recent trophy + active skill side-by-side. Each block silently
           // hides if there's nothing to show, so new users don't see
@@ -180,7 +197,6 @@ class _YouOverviewTabState extends ConsumerState<YouOverviewTab> {
             children: [
               Expanded(
                 child: _RewardsReadyCard(
-                  count: _unclaimedRewards,
                   fg: fg,
                   accent: accent,
                   isDark: isDark,
@@ -189,6 +205,8 @@ class _YouOverviewTabState extends ConsumerState<YouOverviewTab> {
               const SizedBox(width: 10),
               Expanded(
                 child: _LeaderboardCard(
+                  unlocked: _leaderboardUnlocked,
+                  workoutsNeeded: _workoutsNeeded,
                   percentile: _percentile,
                   fg: fg,
                   accent: accent,
@@ -220,87 +238,6 @@ class _YouOverviewTabState extends ConsumerState<YouOverviewTab> {
   }
 }
 
-class _LevelCard extends StatelessWidget {
-  final Map<String, dynamic>? xp;
-  final Color fg;
-  final Color accent;
-  final bool muted;
-  const _LevelCard({
-    required this.xp,
-    required this.fg,
-    required this.accent,
-    this.muted = false,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final level = (xp?['level'] as num?)?.toInt() ?? 1;
-    final currentXp = (xp?['current_xp'] as num?)?.toInt() ??
-        (xp?['xp_total'] as num?)?.toInt() ??
-        0;
-    final xpToNext = (xp?['xp_to_next_level'] as num?)?.toInt() ?? 100;
-    final progress = xpToNext > 0 ? (currentXp % xpToNext) / xpToNext : 0.0;
-
-    final bgAlpha = muted ? 0.04 : 0.12;
-    final borderAlpha = muted ? 0.15 : 0.35;
-    final iconColor = muted ? fg.withValues(alpha: 0.4) : accent;
-
-    return GestureDetector(
-      onTap: () {
-        HapticFeedback.selectionClick();
-        context.push('/xp-goals');
-      },
-      child: Container(
-        padding: const EdgeInsets.all(18),
-        decoration: BoxDecoration(
-          color: muted
-              ? fg.withValues(alpha: bgAlpha)
-              : accent.withValues(alpha: bgAlpha),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: muted
-                ? fg.withValues(alpha: borderAlpha)
-                : accent.withValues(alpha: borderAlpha),
-          ),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Text(
-                  'Level $level',
-                  style: TextStyle(
-                    color: fg,
-                    fontSize: 28,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-                const Spacer(),
-                Icon(Icons.bolt_rounded, color: iconColor, size: 24),
-              ],
-            ),
-            const SizedBox(height: 10),
-            ClipRRect(
-              borderRadius: BorderRadius.circular(8),
-              child: LinearProgressIndicator(
-                value: progress.clamp(0.0, 1.0),
-                minHeight: 8,
-                backgroundColor: fg.withValues(alpha: 0.1),
-                valueColor: AlwaysStoppedAnimation<Color>(accent),
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              '$currentXp XP • ${xpToNext > 0 ? (xpToNext - (currentXp % xpToNext)) : 0} to Level ${level + 1}',
-              style: TextStyle(color: fg.withValues(alpha: 0.7), fontSize: 12),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
 
 class _WeeklyRecapTeaser extends StatelessWidget {
   final Map<String, dynamic> summary;
@@ -565,21 +502,22 @@ class _ActiveSkillCard extends StatelessWidget {
   }
 }
 
-class _RewardsReadyCard extends StatelessWidget {
-  final int? count;
+/// Rewards-ready headline tile. Reads `unclaimedCratesCountProvider`
+/// (canonical, repo-backed) rather than the removed `/xp/unclaimed-crates`
+/// raw endpoint call.
+class _RewardsReadyCard extends ConsumerWidget {
   final Color fg;
   final Color accent;
   final bool isDark;
   const _RewardsReadyCard({
-    required this.count,
     required this.fg,
     required this.accent,
     required this.isDark,
   });
 
   @override
-  Widget build(BuildContext context) {
-    final ready = count ?? 0;
+  Widget build(BuildContext context, WidgetRef ref) {
+    final ready = ref.watch(unclaimedCratesCountProvider);
     return _HeadlineTile(
       leadingIcon: Icons.card_giftcard_rounded,
       title: 'REWARDS',
@@ -594,12 +532,23 @@ class _RewardsReadyCard extends StatelessWidget {
   }
 }
 
+/// Leaderboard headline tile with three legible states:
+///   • unlocked + percentile known → "Top N%" / "on global leaderboard"
+///   • locked                      → progress-to-unlock ("7 more workouts")
+///   • unknown (unlock-status failed) → generic leaderboard launcher
+///
+/// Phase 1 just stops showing `—` forever. Phase 3 redesigns this to a
+/// challenge-based card (auto-enrolled weekly challenge by default).
 class _LeaderboardCard extends StatelessWidget {
+  final bool? unlocked;
+  final int workoutsNeeded;
   final double? percentile;
   final Color fg;
   final Color accent;
   final bool isDark;
   const _LeaderboardCard({
+    required this.unlocked,
+    required this.workoutsNeeded,
     required this.percentile,
     required this.fg,
     required this.accent,
@@ -610,7 +559,16 @@ class _LeaderboardCard extends StatelessWidget {
   Widget build(BuildContext context) {
     String headline;
     String sub;
-    if (percentile != null) {
+    if (unlocked == false) {
+      // Locked: surface exactly how far the user is from unlocking instead
+      // of leaving them staring at "—". Copy reads naturally for 1 vs N.
+      headline = workoutsNeeded == 1
+          ? '1 to unlock'
+          : '$workoutsNeeded to unlock';
+      sub = workoutsNeeded == 1
+          ? 'Log 1 more workout'
+          : 'Log $workoutsNeeded more workouts';
+    } else if (percentile != null) {
       final topPct = (100 - percentile!).toStringAsFixed(0);
       headline = 'Top $topPct%';
       sub = 'on global leaderboard';

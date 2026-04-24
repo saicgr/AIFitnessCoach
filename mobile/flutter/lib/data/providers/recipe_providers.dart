@@ -16,6 +16,7 @@ import '../models/recipe.dart';
 import '../models/recipe_share.dart';
 import '../models/recipe_version.dart';
 import '../models/scheduled_recipe.dart';
+import '../repositories/nutrition_repository.dart';
 import '../repositories/recipe_repository.dart';
 
 // ============================================================
@@ -111,6 +112,10 @@ final recipeSearchProvider =
   if (args.query.trim().length < 2) {
     return const RecipesResponse(items: [], totalCount: 0);
   }
+  // Keep result cached after the widget un-watches so tab re-entry or re-
+  // applying the same filter combo shows instantly. Without this every
+  // return to the Recipes tab re-fetched and flashed a spinner.
+  ref.keepAlive();
   return ref.watch(recipeRepositoryProvider).search(
         args.userId,
         query: args.query,
@@ -121,6 +126,43 @@ final recipeSearchProvider =
         sourceTypeIn: args.sourceTypeIn,
         isFavorite: args.isFavorite,
         sortBy: args.sortBy,
+      );
+});
+
+// ============================================================
+// My Recipes list (fast-path — cheap /recipes endpoint, no search)
+// ============================================================
+
+/// Args for the plain list endpoint. Keyed on (userId, category) so the same
+/// tab re-enter or filter-chip switch rehydrates from cache instead of
+/// firing a fresh network round-trip.
+class MyRecipesListArgs {
+  final String userId;
+  final String? category;
+  const MyRecipesListArgs({required this.userId, this.category});
+
+  @override
+  bool operator ==(Object other) =>
+      other is MyRecipesListArgs &&
+      other.userId == userId &&
+      other.category == category;
+
+  @override
+  int get hashCode => Object.hash(userId, category);
+}
+
+/// Replaces the `FutureBuilder` that used to live inside `_MyRecipesGrid` —
+/// that path rebuilt a new Future on every widget rebuild (typing in filters,
+/// selecting pills, keyboard appearing), so the grid flashed a spinner on
+/// every state change. Riverpod caches the response under the args key and
+/// `ref.keepAlive()` keeps it warm between Nutrition-tab visits.
+final myRecipesListProvider = FutureProvider.autoDispose
+    .family<RecipesResponse, MyRecipesListArgs>((ref, args) {
+  ref.keepAlive();
+  return ref.watch(nutritionRepositoryProvider).getRecipes(
+        userId: args.userId,
+        category: args.category,
+        limit: 100,
       );
 });
 
@@ -143,6 +185,7 @@ class DiscoverArgs {
 
 final discoverRecipesProvider =
     FutureProvider.autoDispose.family<RecipesResponse, DiscoverArgs>((ref, args) {
+  ref.keepAlive();
   return ref.watch(recipeRepositoryProvider).listDiscover(
         category: args.category,
         sort: args.sort,
@@ -152,6 +195,7 @@ final discoverRecipesProvider =
 /// Favorites list for a given user (server-backed).
 final favoriteRecipesProvider =
     FutureProvider.autoDispose.family<RecipesResponse, String>((ref, userId) {
+  ref.keepAlive();
   return ref.watch(recipeRepositoryProvider).listFavorites(userId);
 });
 
@@ -197,11 +241,13 @@ final simulatePlanProvider =
 
 final upcomingSchedulesProvider =
     FutureProvider.autoDispose.family<List<UpcomingScheduledFire>, String>((ref, userId) {
+  ref.keepAlive();
   return ref.watch(recipeRepositoryProvider).upcomingSchedules(userId, days: 7);
 });
 
 final allSchedulesProvider =
     FutureProvider.autoDispose.family<List<ScheduledRecipeLog>, String>((ref, userId) {
+  ref.keepAlive();
   return ref.watch(recipeRepositoryProvider).listSchedules(userId, enabledOnly: false);
 });
 
@@ -211,6 +257,7 @@ final allSchedulesProvider =
 
 final activeCookEventsProvider =
     FutureProvider.autoDispose.family<List<ActiveCookEvent>, String>((ref, userId) {
+  ref.keepAlive();
   return ref.watch(recipeRepositoryProvider).activeCookEvents(userId);
 });
 
@@ -220,11 +267,13 @@ final activeCookEventsProvider =
 
 final groceryListsProvider =
     FutureProvider.autoDispose.family<List<GroceryListSummary>, String>((ref, userId) {
+  ref.keepAlive();
   return ref.watch(recipeRepositoryProvider).listGroceryLists(userId);
 });
 
 final groceryListByIdProvider =
     FutureProvider.autoDispose.family<GroceryList, String>((ref, listId) {
+  ref.keepAlive();
   return ref.watch(recipeRepositoryProvider).getGroceryList(listId);
 });
 

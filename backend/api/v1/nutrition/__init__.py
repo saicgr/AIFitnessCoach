@@ -35,6 +35,7 @@ from api.v1.nutrition import (
     food_search,
     food_logging,
     food_logging_stream,
+    menu_analyses,
     saved_foods,
     recipes,
     micronutrients,
@@ -75,6 +76,7 @@ router.include_router(barcode.router)
 router.include_router(food_search.router)
 router.include_router(food_logging.router)
 router.include_router(food_logging_stream.router)
+router.include_router(menu_analyses.router)
 router.include_router(saved_foods.router)
 
 # Recipes Tab v1 — LITERAL-path recipe routers MUST be registered BEFORE

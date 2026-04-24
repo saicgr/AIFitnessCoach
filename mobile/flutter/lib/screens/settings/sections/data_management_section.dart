@@ -6,6 +6,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/providers/subscription_provider.dart';
 import '../dialogs/export_dialog.dart';
 import '../dialogs/import_dialog.dart';
+import '../export_data_screen.dart';
 import '../subscription/subscription_history_screen.dart';
 import '../subscription/request_refund_screen.dart';
 import '../widgets/widgets.dart';
@@ -65,19 +66,34 @@ class DataManagementSection extends ConsumerWidget {
             ),
             SettingItemData(
               icon: Icons.file_download_outlined,
-              title: 'Export Data',
-              subtitle: 'Download your workout data',
+              title: 'Export FitWiz Data',
+              subtitle: 'Download your workout + nutrition data',
               onTap: () => showExportDialog(context, ref),
             ),
             SettingItemData(
+              icon: Icons.ios_share,
+              title: 'Export My Workouts',
+              subtitle: 'Hevy / Strong / Fitbod / PDF / GPX — take it anywhere',
+              onTap: () => _navigateToWorkoutExport(context),
+            ),
+            SettingItemData(
               icon: Icons.file_upload_outlined,
-              title: 'Import Data',
-              subtitle: 'Restore from backup',
+              title: 'Import FitWiz Data',
+              subtitle: 'Restore from a FitWiz backup ZIP',
               onTap: () => showImportDialog(context, ref),
             ),
           ],
         ),
       ],
+    );
+  }
+
+  void _navigateToWorkoutExport(BuildContext context) {
+    Navigator.push(
+      context,
+      AppPageRoute(
+        builder: (context) => const ExportDataScreen(),
+      ),
     );
   }
 

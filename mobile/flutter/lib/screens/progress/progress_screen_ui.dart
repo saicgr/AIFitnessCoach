@@ -159,6 +159,10 @@ extension _ProgressScreenStateUI on _ProgressScreenState {
           .loadAll(),
       child: CustomScrollView(
         slivers: [
+          // Body Analyzer entry (gradient CTA above photo stats)
+          SliverToBoxAdapter(
+            child: _buildBodyAnalyzerCta(),
+          ),
           // Stats Card
           SliverToBoxAdapter(
             child: _buildPhotoStatsCard(state),
@@ -220,6 +224,64 @@ extension _ProgressScreenStateUI on _ProgressScreenState {
     );
   }
 
+
+  Widget _buildBodyAnalyzerCta() {
+    // Discovery card for the Body Analyzer screen. Placed above the photo
+    // stats card so users arriving on Progress see the affordance right
+    // after their photos.
+    return GestureDetector(
+      onTap: () => context.go('/body-analyzer'),
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [Color(0xFFF8A5C2), Color(0xFFB24BF3)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.2),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Icon(Icons.analytics_rounded, color: Colors.white),
+            ),
+            const SizedBox(width: 12),
+            const Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Body Analyzer',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 14,
+                    ),
+                  ),
+                  SizedBox(height: 2),
+                  Text(
+                    'AI /100 rating, body-fat rings & posture feedback',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 11,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const Icon(Icons.chevron_right, color: Colors.white),
+          ],
+        ),
+      ),
+    );
+  }
 
   Widget _buildPhotoStatsCard(ProgressPhotosState state) {
     final stats = state.stats;

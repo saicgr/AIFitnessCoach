@@ -29,3 +29,51 @@ services:
       - key: SUPABASE_KEY
         sync: false
 
+  # Two-way OAuth sync cron. Every 15 min: drains oauth_sync_webhook_events
+  # queue + pulls accounts whose last_sync_at is older than 15 min. See
+  # backend/services/sync/sync_orchestrator.py for the main entry point.
+  #
+  # Requires these additional env vars (all set via Render dashboard, sync: false):
+  #   OAUTH_TOKEN_ENCRYPTION_KEY  (Fernet key)
+  #   STRAVA_CLIENT_ID / STRAVA_CLIENT_SECRET / STRAVA_VERIFY_TOKEN
+  #   GARMIN_CLIENT_ID / GARMIN_CLIENT_SECRET
+  #   FITBIT_CLIENT_ID / FITBIT_CLIENT_SECRET
+  #   PELOTON_EMAIL / PELOTON_PASSWORD (optional)
+  - type: cron
+    name: fitwiz-sync
+    schedule: "*/15 * * * *"
+    env: python
+    region: ohio
+    plan: starter
+    branch: main
+    rootDir: backend
+    buildCommand: chmod +x build.sh && ./build.sh
+    startCommand: python -m services.sync.sync_orchestrator --once
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.11"
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_KEY
+        sync: false
+      - key: OAUTH_TOKEN_ENCRYPTION_KEY
+        sync: false
+      - key: STRAVA_CLIENT_ID
+        sync: false
+      - key: STRAVA_CLIENT_SECRET
+        sync: false
+      - key: STRAVA_VERIFY_TOKEN
+        sync: false
+      - key: GARMIN_CLIENT_ID
+        sync: false
+      - key: GARMIN_CLIENT_SECRET
+        sync: false
+      - key: FITBIT_CLIENT_ID
+        sync: false
+      - key: FITBIT_CLIENT_SECRET
+        sync: false
+      - key: PELOTON_EMAIL
+        sync: false
+      - key: PELOTON_PASSWORD
+        sync: false
+

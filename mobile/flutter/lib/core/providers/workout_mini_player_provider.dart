@@ -156,9 +156,13 @@ class WorkoutMiniPlayerNotifier extends StateNotifier<WorkoutMiniPlayerState> {
     // Stop deliberately routes through restore() (not close()) so the workout
     // session isn't silently dropped — the user finishes the end flow in-app
     // where DB persistence happens.
+    //
+    // Body-tap (no action id) is wired separately in app.dart so it can both
+    // restore *and* push '/active-workout' — tapping just restore() when the
+    // user is on the home screen leaves them staring at home instead of
+    // their ongoing workout, which reads like the workout vanished.
     WorkoutNotificationService.instance.onPauseResumePressed = togglePause;
     WorkoutNotificationService.instance.onStopPressed = restore;
-    WorkoutNotificationService.instance.onNotificationTapped = restore;
     _pushNotification();
 
     // Start background timer if not paused

@@ -761,62 +761,104 @@ async def delete_photo_comparison(
 @router.post("/ai-summary", response_model=AiSummaryResponse)
 @limiter.limit("5/minute")
 async def generate_ai_summary(request: Request, data: AiSummaryRequest, current_user: dict = Depends(get_current_user)):
-    """Generate an AI progress summary by analyzing before/after photos."""
+    """Generate an AI progress summary by analyzing before/after photos.
+
+    Uses the structured-output helper in services/gemini/progress_narrative.py
+    (Pydantic schema + async retry + 24 h Redis cache). Replaces the prior
+    inline sync/manual-JSON implementation.
+    """
     try:
-        from google.genai import types
-        from services.gemini.constants import gemini_generate_with_retry_sync
-        import httpx
+        from services.gemini.progress_narrative import generate_progress_narrative
 
-        settings = get_settings()
-
-        # Download both images
-        async with httpx.AsyncClient() as http_client:
-            before_resp = await http_client.get(data.before_photo_url)
-            after_resp = await http_client.get(data.after_photo_url)
-
-        duration_text = f"{data.days_between} days"
-        if data.days_between >= 30:
-            months = data.days_between // 30
-            duration_text = f"{months} month{'s' if months > 1 else ''}"
-
-        weight_text = ""
-        if data.weight_change_kg is not None:
-            sign = "+" if data.weight_change_kg > 0 else ""
-            weight_text = f" The person's weight changed by {sign}{data.weight_change_kg:.1f} kg."
-
-        prompt = f"""Analyze these two fitness progress photos taken {duration_text} apart.{weight_text}
-Describe visible changes in 1-2 sentences focusing on: muscle development, body composition, posture improvements.
-Be encouraging but honest. If changes are subtle, acknowledge effort and consistency.
-Return ONLY a JSON object: {{"summary": "your analysis here"}}"""
-
-        response = gemini_generate_with_retry_sync(
-            model=settings.gemini_model,
-            contents=[
-                types.Part.from_bytes(data=before_resp.content, mime_type="image/jpeg"),
-                types.Part.from_bytes(data=after_resp.content, mime_type="image/jpeg"),
-                prompt,
-            ],
-            config=types.GenerateContentConfig(
-                temperature=0.7,
-                max_output_tokens=200,
-            ),
-            method_name="progress_photos",
+        narrative = await generate_progress_narrative(
+            before_photo_url=data.before_photo_url,
+            after_photo_url=data.after_photo_url,
+            days_between=data.days_between,
+            weight_change_kg=data.weight_change_kg,
+            user_id=current_user.get("id"),
         )
-
-        text = response.text.strip()
-        # Try to parse JSON from response
-        if text.startswith('```'):
-            text = text.split('\n', 1)[1].rsplit('```', 1)[0].strip()
-
-        try:
-            result = json.loads(text)
-            summary = result.get('summary', text)
-        except json.JSONDecodeError:
-            summary = text
-
-        return AiSummaryResponse(summary=summary)
+        return AiSummaryResponse(summary=narrative.summary_text)
     except Exception as e:
         raise safe_internal_error(e, "generate_ai_summary")
+
+
+class GenerateComparisonSummaryResponse(BaseModel):
+    comparison_id: str
+    summary: str
+    midsection_change: str = ""
+    upper_body_change: str = ""
+    lower_body_change: str = ""
+    overall_verdict: str = ""
+
+
+@router.post("/photo-comparisons/{comparison_id}/generate-summary", response_model=GenerateComparisonSummaryResponse)
+@limiter.limit("5/minute")
+async def generate_comparison_summary(
+    comparison_id: str,
+    request: Request,
+    current_user: dict = Depends(get_current_user),
+):
+    """Generate + persist the AI summary for an existing photo_comparisons row.
+
+    Resolves the two referenced photos (signed S3 URLs), calls the
+    structured Gemini helper, writes `ai_summary` back to the row, returns
+    the rich multi-region breakdown so the UI can render region chips too.
+    """
+    try:
+        from services.gemini.progress_narrative import generate_progress_narrative
+
+        db = get_supabase_db()
+        user_id = current_user["id"]
+
+        # Load comparison row (ownership enforced)
+        comp = db.client.table("photo_comparisons").select(
+            "id, user_id, before_photo_id, after_photo_id, days_between, weight_change_kg"
+        ).eq("id", comparison_id).eq("user_id", user_id).maybe_single().execute()
+        if not comp or not comp.data:
+            raise HTTPException(status_code=404, detail="Comparison not found")
+        row = comp.data
+
+        # Load both photos
+        photos = db.client.table("progress_photos").select(
+            "id, storage_key, photo_url"
+        ).in_("id", [row["before_photo_id"], row["after_photo_id"]]).execute()
+        photo_by_id = {p["id"]: p for p in (photos.data or [])}
+        before = photo_by_id.get(row["before_photo_id"])
+        after = photo_by_id.get(row["after_photo_id"])
+        if not before or not after:
+            raise HTTPException(status_code=404, detail="Linked photo(s) missing")
+
+        before_signed = _presign_photo(dict(before)) if before.get("storage_key") else before
+        after_signed = _presign_photo(dict(after)) if after.get("storage_key") else after
+        before_url = before_signed.get("photo_url")
+        after_url = after_signed.get("photo_url")
+        if not before_url or not after_url:
+            raise HTTPException(status_code=400, detail="Photo URLs unavailable")
+
+        narrative = await generate_progress_narrative(
+            before_photo_url=before_url,
+            after_photo_url=after_url,
+            days_between=int(row.get("days_between") or 0),
+            weight_change_kg=row.get("weight_change_kg"),
+            user_id=user_id,
+        )
+
+        db.client.table("photo_comparisons").update({
+            "ai_summary": narrative.summary_text,
+        }).eq("id", comparison_id).execute()
+
+        return GenerateComparisonSummaryResponse(
+            comparison_id=comparison_id,
+            summary=narrative.summary_text,
+            midsection_change=narrative.midsection_change,
+            upper_body_change=narrative.upper_body_change,
+            lower_body_change=narrative.lower_body_change,
+            overall_verdict=narrative.overall_verdict,
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise safe_internal_error(e, "generate_comparison_summary")
 
 
 # ============================================================================

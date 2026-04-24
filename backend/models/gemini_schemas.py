@@ -21,7 +21,7 @@ Usage:
 """
 
 from pydantic import BaseModel, Field
-from typing import Optional, List
+from typing import Optional, List, Dict
 from enum import Enum
 
 
@@ -649,3 +649,194 @@ class WorkoutInsightsResponse(BaseModel):
     """
     headline: str = Field(..., description="Motivational headline (3-5 words max)")
     sections: List[WorkoutInsightSection] = Field(..., description="Exactly 2 insight sections")
+
+
+# =============================================================================
+# BODY ANALYZER SCHEMAS
+# =============================================================================
+
+class PostureFindingSchema(BaseModel):
+    """One observed postural issue. Severity drives which correctives we inject.
+
+    `corrective_exercise_tag` MUST match one of the six values accepted by
+    the exercise_library.corrective_for[] column — otherwise the
+    `apply-posture-correctives` endpoint can't resolve exercises.
+    """
+    issue: str = Field(
+        ...,
+        description=(
+            "Posture issue code. One of: forward_head_posture, rounded_shoulders, "
+            "anterior_pelvic_tilt, uneven_shoulders, knee_valgus, scapular_winging."
+        ),
+    )
+    severity: int = Field(..., ge=1, le=3, description="1=mild, 2=moderate, 3=severe")
+    description: str = Field(..., description="Short human-readable description, ≤20 words")
+    corrective_exercise_tag: str = Field(
+        ...,
+        description="Must equal one of the `corrective_for` array values on exercise_library.",
+    )
+
+
+class BodyAnalyzerGeminiResponse(BaseModel):
+    """Structured output for the Body Analyzer screen.
+
+    Gemini fills these from progress photos + stored body measurements.
+    Downstream code persists this to `body_analyzer_snapshots` and may
+    seed users.muscle_focus_points on first run.
+    """
+    overall_rating: int = Field(..., ge=0, le=100, description="Composite fitness score 0–100")
+    body_type: str = Field(
+        ...,
+        description="One of: ectomorph, mesomorph, endomorph, balanced",
+    )
+    body_fat_pct: float = Field(..., ge=3, le=60, description="Estimated body-fat %")
+    muscle_mass_pct: float = Field(..., ge=10, le=70, description="Estimated skeletal-muscle %")
+    symmetry_score: int = Field(..., ge=0, le=100, description="Left-right symmetry")
+    feedback_paragraph: str = Field(
+        ...,
+        description=(
+            "Concise 3–5 sentence narrative: what's strong, what lags, and the "
+            "user's physique archetype. No hype; describe observations."
+        ),
+    )
+    improvement_tips: List[str] = Field(
+        default_factory=list,
+        description="3–5 actionable, specific tips (e.g. 'Add 4 sets/wk of rear-delt work').",
+    )
+    posture_findings: List[PostureFindingSchema] = Field(
+        default_factory=list,
+        description="Posture issues visible in the photos.",
+    )
+    priority_muscles: List[str] = Field(
+        default_factory=list,
+        description=(
+            "Muscle groups that most need emphasis, subset of: chest, back, "
+            "shoulders, biceps, triceps, quads, hamstrings, glutes, calves, core."
+        ),
+    )
+
+
+class PhotoMeasurementEstimate(BaseModel):
+    """One photo-derived body measurement."""
+    metric: str = Field(
+        ...,
+        description="One of: waist_cm, chest_cm, hip_cm, neck_cm, shoulder_cm, thigh_left_cm, thigh_right_cm, bicep_left_cm, bicep_right_cm",
+    )
+    value_cm: float = Field(..., gt=0, le=250, description="Estimated value in centimetres")
+    confidence: float = Field(..., ge=0, le=1, description="Confidence 0–1")
+    method: str = Field(
+        default="photo_ratio",
+        description="How the estimate was derived: photo_ratio | photo_scale_reference | photo_height_anchor",
+    )
+
+
+class PhotoMeasurementExtractionResponse(BaseModel):
+    """Batch of photo-derived measurements returned by Gemini Vision."""
+    estimates: List[PhotoMeasurementEstimate] = Field(default_factory=list)
+    scale_reference_detected: bool = Field(
+        default=False,
+        description="True if Gemini located a hand/credit-card/doorframe to calibrate with.",
+    )
+    overall_confidence: float = Field(..., ge=0, le=1)
+
+
+# =============================================================================
+# PROGRESS PHOTO COMPARISON (before/after narrative) SCHEMA
+# =============================================================================
+
+class ProgressPhotoComparisonResponse(BaseModel):
+    """Structured narrative comparing two progress photos.
+
+    `summary_text` is the public-facing sentence; the region-specific fields
+    let the UI later surface region chips (midsection / upper / lower) without
+    a second Gemini call.
+    """
+    summary_text: str = Field(
+        ...,
+        description="1–3 sentence narrative describing visible change. Honest, encouraging, specific.",
+    )
+    midsection_change: str = Field(default="", description="Observation about midsection.")
+    upper_body_change: str = Field(default="", description="Observation about upper body.")
+    lower_body_change: str = Field(default="", description="Observation about lower body.")
+    overall_verdict: str = Field(
+        default="",
+        description="One-word verdict: improved | maintained | regressed | inconclusive",
+    )
+
+
+# =============================================================================
+# PROGRAM RETUNE PROPOSAL SCHEMA
+# =============================================================================
+
+class ProgramRetuneProposalResponse(BaseModel):
+    """Concrete deltas Gemini proposes after a Body Analyzer run.
+
+    These fields are applied directly to `public.users` columns so the next
+    AI-generated workout / meal plan reflects the user's physique — no
+    separate program-mutation table or code path.
+
+    Bounds are enforced at schema level so the model can never propose an
+    unsafe adjustment (e.g. +1000 kcal/day or −20% intensity in one step).
+    """
+    muscle_focus_points_proposed: Dict[str, int] = Field(
+        default_factory=dict,
+        description=(
+            "New muscle_focus_points allocation. Values 0–5, total ≤5 across all keys. "
+            "Keys match users.muscle_focus_points muscle names."
+        ),
+    )
+    training_intensity_percent_delta: int = Field(
+        default=0, ge=-15, le=15,
+        description="Percent-point shift in users.training_intensity_percent.",
+    )
+    rest_days_per_week_suggested: int = Field(
+        default=2, ge=1, le=4, description="Suggested rest days per week.",
+    )
+    daily_calorie_target_delta: int = Field(
+        default=0, ge=-400, le=400, description="Calorie target delta (kcal).",
+    )
+    daily_protein_target_g_delta: int = Field(
+        default=0, ge=-40, le=40, description="Protein target delta (g).",
+    )
+    daily_carbs_target_g_delta: int = Field(
+        default=0, ge=-80, le=80, description="Carbs target delta (g).",
+    )
+    daily_fat_target_g_delta: int = Field(
+        default=0, ge=-30, le=30, description="Fat target delta (g).",
+    )
+    priority_muscles: List[str] = Field(
+        default_factory=list,
+        description="Muscle groups to emphasize in the next program (subset of strength_scores muscle enum).",
+    )
+    posture_corrective_tags: List[str] = Field(
+        default_factory=list,
+        description=(
+            "Subset of: forward_head_posture, rounded_shoulders, anterior_pelvic_tilt, "
+            "uneven_shoulders, knee_valgus, scapular_winging."
+        ),
+    )
+    reasoning: str = Field(..., description="Plain-language justification shown to the user.")
+    confidence: float = Field(..., ge=0, le=1, description="Model confidence 0–1.")
+
+
+# =============================================================================
+# AUDIO COACH SCHEMA
+# =============================================================================
+
+class AudioCoachScriptResponse(BaseModel):
+    """Short (≤60 words) personalised script the TTS service will voice.
+
+    Kept tiny on purpose — users should hear 15–20 s, not a monologue.
+    """
+    script_text: str = Field(
+        ...,
+        description=(
+            "Coach-persona-voiced script ≤60 words. Include the user's first name. "
+            "Reference one concrete recent signal (streak day count, PR, weight change, "
+            "upcoming workout target). End with a forward-looking sentence."
+        ),
+    )
+    tone: str = Field(
+        default="encouraging",
+        description="One of: encouraging, celebratory, gentle_nudge, informational",
+    )

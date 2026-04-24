@@ -343,6 +343,10 @@ class ComparisonSettings {
   final bool showUsername;
   final String logoVariant; // 'auto', 'original', 'light', 'dark'
   final Map<int, String> dateOverrides; // per-photo ISO8601 date override
+  final bool showCta;
+  final String ctaText;
+  final String ctaStyle; // 'pill_light' | 'pill_dark' | 'arrow' | 'neon' | 'ticket'
+  final List<double>? ctaPosition; // [dx, dy] overlay offset
 
   const ComparisonSettings({
     this.layout = 'side_by_side',
@@ -370,6 +374,10 @@ class ComparisonSettings {
     this.showUsername = false,
     this.logoVariant = 'auto',
     this.dateOverrides = const {},
+    this.showCta = false,
+    this.ctaText = 'START NOW',
+    this.ctaStyle = 'pill_light',
+    this.ctaPosition,
   });
 
   Map<String, dynamic> toJson() => {
@@ -401,6 +409,10 @@ class ComparisonSettings {
     'logoVariant': logoVariant,
     if (dateOverrides.isNotEmpty)
       'dateOverrides': dateOverrides.map((k, v) => MapEntry(k.toString(), v)),
+    'showCta': showCta,
+    'ctaText': ctaText,
+    'ctaStyle': ctaStyle,
+    if (ctaPosition != null) 'ctaPosition': ctaPosition,
   };
 
   factory ComparisonSettings.fromJson(Map<String, dynamic> json) {
@@ -438,6 +450,12 @@ class ComparisonSettings {
         ?.map((e) => (e as num).toDouble())
         .toList();
 
+    // Parse ctaPosition
+    final rawCtaPos = json['ctaPosition'] as List?;
+    final ctaPosition = rawCtaPos
+        ?.map((e) => (e as num).toDouble())
+        .toList();
+
     // Parse enabledStatCategories
     final rawCategories = json['enabledStatCategories'] as List?;
     final enabledStatCategories = rawCategories
@@ -471,6 +489,10 @@ class ComparisonSettings {
       showUsername: json['showUsername'] as bool? ?? false,
       logoVariant: json['logoVariant'] as String? ?? 'auto',
       dateOverrides: dateOverrides,
+      showCta: json['showCta'] as bool? ?? false,
+      ctaText: json['ctaText'] as String? ?? 'START NOW',
+      ctaStyle: json['ctaStyle'] as String? ?? 'pill_light',
+      ctaPosition: ctaPosition,
     );
   }
 
@@ -500,6 +522,10 @@ class ComparisonSettings {
     bool? showUsername,
     String? logoVariant,
     Map<int, String>? dateOverrides,
+    bool? showCta,
+    String? ctaText,
+    String? ctaStyle,
+    List<double>? ctaPosition,
   }) {
     return ComparisonSettings(
       layout: layout ?? this.layout,
@@ -527,6 +553,10 @@ class ComparisonSettings {
       showUsername: showUsername ?? this.showUsername,
       logoVariant: logoVariant ?? this.logoVariant,
       dateOverrides: dateOverrides ?? this.dateOverrides,
+      showCta: showCta ?? this.showCta,
+      ctaText: ctaText ?? this.ctaText,
+      ctaStyle: ctaStyle ?? this.ctaStyle,
+      ctaPosition: ctaPosition ?? this.ctaPosition,
     );
   }
 }

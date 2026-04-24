@@ -202,13 +202,13 @@ async def get_all_trophies(
 
         # Get user's earned trophies
         earned_result = db.client.table("user_achievements") \
-            .select("achievement_id, achieved_at, trigger_value, trigger_details") \
+            .select("achievement_id, earned_at, trigger_value, trigger_details") \
             .eq("user_id", user_id) \
             .execute()
 
         earned_map = {
             row["achievement_id"]: {
-                "earned_at": row.get("achieved_at"),
+                "earned_at": row.get("earned_at"),
                 "trigger_value": row.get("trigger_value"),
             }
             for row in (earned_result.data or [])
@@ -321,7 +321,7 @@ async def get_earned_trophies(user_id: str,
         earned_result = db.client.table("user_achievements") \
             .select("*, achievement_types(*)") \
             .eq("user_id", user_id) \
-            .order("achieved_at", desc=True) \
+            .order("earned_at", desc=True) \
             .execute()
 
         result = []
@@ -353,13 +353,13 @@ async def get_earned_trophies(user_id: str,
                 )
 
             earned_at = datetime.now()
-            if row.get("achieved_at"):
+            if row.get("earned_at"):
                 try:
                     earned_at = datetime.fromisoformat(
-                        row["achieved_at"].replace("Z", "+00:00")
+                        row["earned_at"].replace("Z", "+00:00")
                     )
                 except Exception as e:
-                    logger.debug(f"Failed to parse achieved_at date: {e}")
+                    logger.debug(f"Failed to parse earned_at date: {e}")
 
             result.append(UserTrophy(
                 id=row.get("id", ""),
@@ -401,8 +401,8 @@ async def get_recent_trophies(
         earned_result = db.client.table("user_achievements") \
             .select("*, achievement_types(*)") \
             .eq("user_id", user_id) \
-            .gte("achieved_at", cutoff) \
-            .order("achieved_at", desc=True) \
+            .gte("earned_at", cutoff) \
+            .order("earned_at", desc=True) \
             .limit(limit) \
             .execute()
 
@@ -435,13 +435,13 @@ async def get_recent_trophies(
                 )
 
             earned_at = datetime.now()
-            if row.get("achieved_at"):
+            if row.get("earned_at"):
                 try:
                     earned_at = datetime.fromisoformat(
-                        row["achieved_at"].replace("Z", "+00:00")
+                        row["earned_at"].replace("Z", "+00:00")
                     )
                 except Exception as e:
-                    logger.debug(f"Failed to parse achieved_at date: {e}")
+                    logger.debug(f"Failed to parse earned_at date: {e}")
 
             result.append(UserTrophy(
                 id=row.get("id", ""),
@@ -491,6 +491,136 @@ async def mark_trophies_notified(
 
     except Exception as e:
         logger.error(f"Failed to mark trophies as notified: {e}", exc_info=True)
+        raise safe_internal_error(e, "trophies")
+
+
+# ============================================
+# Celebration Ceremony Endpoints
+# ============================================
+#
+# `last_celebration_ack_at` is a simple cursor on `users` (migration 1969).
+# On app resume, the client asks for trophies with earned_at > cursor,
+# renders a swipeable stack, then POSTs ack to move the cursor forward.
+# Debouncing prevents the same trophy from ever playing twice.
+
+
+class PendingCelebration(BaseModel):
+    """One trophy ready to celebrate."""
+    trophy_id: str
+    name: str
+    description: str
+    icon: str
+    tier: str
+    level: Optional[int] = None
+    xp_reward: int = 0
+    earned_at: datetime
+
+
+class PendingCelebrationsResponse(BaseModel):
+    pending: List[PendingCelebration]
+    count: int
+
+
+@router.get(
+    "/trophies/{user_id}/pending-celebrations",
+    response_model=PendingCelebrationsResponse,
+)
+async def get_pending_celebrations(
+    user_id: str,
+    limit: int = Query(10, ge=1, le=30),
+    current_user: dict = Depends(get_current_user),
+):
+    """Return trophies earned since the user's last celebration ack.
+
+    Limit defaults to 10 — the ceremony UI queues a swipeable stack but we
+    never want to surface hundreds at once (would drown a returning user).
+    """
+    if current_user["id"] != user_id:
+        raise HTTPException(status_code=403, detail="Cannot read another user's celebrations")
+
+    try:
+        db = get_supabase_db()
+
+        # Pull the cursor. First-time users may have NULL — in that case
+        # we only surface trophies from the last 7 days, so we don't
+        # dump their entire history onto their screen.
+        user_row = db.client.table("users").select(
+            "last_celebration_ack_at"
+        ).eq("id", user_id).single().execute()
+        cursor = None
+        if user_row.data:
+            cursor = user_row.data.get("last_celebration_ack_at")
+
+        if not cursor:
+            cursor = (datetime.now() - timedelta(days=7)).isoformat()
+
+        earned = db.client.table("user_achievements") \
+            .select("*, achievement_types(*)") \
+            .eq("user_id", user_id) \
+            .gt("earned_at", cursor) \
+            .order("earned_at", desc=False) \
+            .limit(limit) \
+            .execute()
+
+        pending: List[PendingCelebration] = []
+        for row in (earned.data or []):
+            atype = row.get("achievement_types") or {}
+            earned_at = datetime.now()
+            if row.get("earned_at"):
+                try:
+                    earned_at = datetime.fromisoformat(
+                        row["earned_at"].replace("Z", "+00:00")
+                    )
+                except Exception:
+                    pass
+            pending.append(PendingCelebration(
+                trophy_id=atype.get("id") or row.get("achievement_id", ""),
+                name=atype.get("name", "Trophy earned"),
+                description=atype.get("description", ""),
+                icon=atype.get("icon", "🏆"),
+                tier=atype.get("tier", "bronze"),
+                level=atype.get("tier_level"),
+                xp_reward=atype.get("xp_reward") or 0,
+                earned_at=earned_at,
+            ))
+
+        return PendingCelebrationsResponse(pending=pending, count=len(pending))
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to fetch pending celebrations: {e}", exc_info=True)
+        raise safe_internal_error(e, "trophies")
+
+
+class AckCelebrationRequest(BaseModel):
+    # Optional — client may send the ISO timestamp of the last shown
+    # trophy so the cursor only advances as far as the user actually saw.
+    # If omitted, the server bumps to "now" which is fine for the common
+    # case (they swiped through all pending celebrations).
+    ack_timestamp: Optional[str] = None
+
+
+@router.post("/trophies/{user_id}/ack-celebration")
+async def ack_celebration(
+    user_id: str,
+    request: AckCelebrationRequest,
+    current_user: dict = Depends(get_current_user),
+):
+    """Bump the celebration ack cursor so the same trophies don't replay."""
+    if current_user["id"] != user_id:
+        raise HTTPException(status_code=403, detail="Cannot ack another user's celebrations")
+
+    try:
+        db = get_supabase_db()
+        ack_ts = request.ack_timestamp or datetime.utcnow().isoformat()
+        db.client.table("users").update({
+            "last_celebration_ack_at": ack_ts,
+        }).eq("id", user_id).execute()
+        return {"success": True, "ack_at": ack_ts}
+
+    except Exception as e:
+        logger.error(f"Failed to ack celebrations: {e}", exc_info=True)
         raise safe_internal_error(e, "trophies")
 
 

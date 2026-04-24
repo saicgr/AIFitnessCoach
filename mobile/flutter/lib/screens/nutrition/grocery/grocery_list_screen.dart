@@ -10,6 +10,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/theme/accent_color_provider.dart';
 import '../../../data/models/grocery_list.dart';
 import '../../../data/repositories/recipe_repository.dart';
+import '../../../widgets/pill_app_bar.dart';
 
 class GroceryListScreen extends ConsumerStatefulWidget {
   final String listId;
@@ -73,6 +74,75 @@ class _GroceryListScreenState extends ConsumerState<GroceryListScreen> {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Copied to clipboard')));
     }
+  }
+
+  /// Consolidated overflow menu. Previous UI leaked two top-bar icons (the
+  /// mystery eye + the overflow dots); this collapses every secondary action
+  /// into one sheet so the app bar reads clean.
+  Future<void> _showMoreMenu(BuildContext ctx, Color muted, Color text) async {
+    HapticFeedback.lightImpact();
+    await showModalBottomSheet<void>(
+      context: ctx,
+      backgroundColor: widget.isDark ? AppColors.elevated : AppColorsLight.elevated,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (sheetCtx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(height: 8),
+            Container(
+              width: 36,
+              height: 4,
+              decoration: BoxDecoration(
+                color: muted.withValues(alpha: 0.3),
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(height: 8),
+            ListTile(
+              leading: Icon(
+                _showStaples ? Icons.visibility_off : Icons.visibility,
+                color: text,
+              ),
+              title: Text(
+                _showStaples ? 'Hide pantry staples' : 'Show pantry staples',
+                style: TextStyle(color: text),
+              ),
+              subtitle: Text(
+                _showStaples
+                    ? 'Hiding keeps the list focused on what you actually need'
+                    : 'Also show items you likely already have (salt, oil, etc.)',
+                style: TextStyle(color: muted, fontSize: 12),
+              ),
+              onTap: () {
+                Navigator.pop(sheetCtx);
+                setState(() => _showStaples = !_showStaples);
+              },
+            ),
+            const Divider(height: 1),
+            ListTile(
+              leading: Icon(Icons.content_copy, color: text),
+              title: Text('Copy as text', style: TextStyle(color: text)),
+              onTap: () {
+                Navigator.pop(sheetCtx);
+                _export('text');
+              },
+            ),
+            ListTile(
+              leading: Icon(Icons.ios_share, color: text),
+              title: Text('Share as CSV', style: TextStyle(color: text)),
+              onTap: () {
+                Navigator.pop(sheetCtx);
+                _export('csv');
+              },
+            ),
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
+    );
   }
 
   Future<void> _showAddItemSheet() async {
@@ -288,23 +358,12 @@ class _GroceryListScreenState extends ConsumerState<GroceryListScreen> {
 
     return Scaffold(
       backgroundColor: bg,
-      appBar: AppBar(
-        backgroundColor: bg, elevation: 0,
-        title: Text(_list?.name ?? 'Grocery list', style: TextStyle(color: text)),
-        iconTheme: IconThemeData(color: text),
+      appBar: PillAppBar(
+        title: _list?.name ?? 'Grocery list',
         actions: [
-          IconButton(
-            tooltip: _showStaples ? 'Hide staples' : 'Show staples',
-            icon: Icon(_showStaples ? Icons.visibility_off : Icons.visibility, color: muted),
-            onPressed: () => setState(() => _showStaples = !_showStaples),
-          ),
-          PopupMenuButton<String>(
-            icon: Icon(Icons.more_vert, color: muted),
-            itemBuilder: (_) => const [
-              PopupMenuItem(value: 'text', child: Text('Copy as text')),
-              PopupMenuItem(value: 'csv', child: Text('Share as CSV')),
-            ],
-            onSelected: _export,
+          PillAppBarAction(
+            icon: Icons.more_horiz,
+            onTap: () => _showMoreMenu(context, muted, text),
           ),
         ],
       ),
@@ -330,7 +389,39 @@ class _GroceryListScreenState extends ConsumerState<GroceryListScreen> {
         ? _list!.items
         : _list!.items.where((i) => !i.isStapleSuppressed).toList();
     if (items.isEmpty) {
-      return Center(child: Text('No items', style: TextStyle(color: muted)));
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(32),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.shopping_basket_outlined,
+                size: 64,
+                color: muted.withValues(alpha: 0.5),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'No items yet',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                  color: muted,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Tap the + button below to add ingredients.',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 13,
+                  color: muted.withValues(alpha: 0.8),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
     }
     final byAisle = <Aisle, List<GroceryListItem>>{};
     for (final i in items) {

@@ -2,7 +2,12 @@ part of 'export_dialog.dart';
 
 
 class _ExportDataDialog extends StatefulWidget {
-  final Future<void> Function(String? startDate, String? endDate, ExportFormat format) onExport;
+  final Future<void> Function(
+    String? startDate,
+    String? endDate,
+    ExportFormat format,
+    Set<String> categories,
+  ) onExport;
 
   const _ExportDataDialog({required this.onExport});
 
@@ -16,6 +21,12 @@ class _ExportDataDialogState extends State<_ExportDataDialog> {
   ExportFormat _selectedFormat = ExportFormat.csvZip;
   DateTime? _customStartDate;
   DateTime? _customEndDate;
+
+  // All categories selected by default. User can toggle individually or use
+  // the Select all / Clear shortcut above the chip cloud.
+  late final Set<String> _selectedCategories = {
+    for (final c in kExportCategories) c.key,
+  };
 
   String _getTimeRangeLabel(ExportTimeRange range) {
     switch (range) {
@@ -236,7 +247,7 @@ class _ExportDataDialogState extends State<_ExportDataDialog> {
           Icon(Icons.file_download_outlined, color: AppColors.cyan, size: 24),
           const SizedBox(width: 12),
           Text(
-            'Export Data',
+            'Export FitWiz Data',
             style: TextStyle(
               color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
             ),
@@ -530,33 +541,104 @@ class _ExportDataDialogState extends State<_ExportDataDialog> {
 
             const SizedBox(height: 20),
 
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    'Data to export',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w600,
+                      color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
+                    ),
+                  ),
+                ),
+                // Select-all toggle — flips between "Select all" and "Clear"
+                // so the user can wipe their selection in one tap without
+                // burying the action behind a separate button. Profile is
+                // never affected (always included server-side).
+                TextButton(
+                  onPressed: () {
+                    setState(() {
+                      if (_selectedCategories.length == kExportCategories.length) {
+                        _selectedCategories.clear();
+                      } else {
+                        _selectedCategories
+                          ..clear()
+                          ..addAll(kExportCategories.map((c) => c.key));
+                      }
+                    });
+                  },
+                  style: TextButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    minimumSize: const Size(0, 32),
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
+                  child: Text(
+                    _selectedCategories.length == kExportCategories.length
+                        ? 'Clear'
+                        : 'Select all',
+                    style: TextStyle(color: AppColors.cyan, fontSize: 12),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 4),
             Text(
-              'Data to export:',
+              'Profile is always included.',
               style: TextStyle(
-                fontWeight: FontWeight.w600,
-                color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
+                fontSize: 11,
+                color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
               ),
             ),
-            const SizedBox(height: 8),
-            DialogBulletPoint(
-              text: 'Workout history and progress',
-              color: AppColors.cyan,
-              isDark: isDark,
-            ),
-            DialogBulletPoint(
-              text: 'Personal records',
-              color: AppColors.cyan,
-              isDark: isDark,
-            ),
-            DialogBulletPoint(
-              text: 'Body measurements',
-              color: AppColors.cyan,
-              isDark: isDark,
-            ),
-            DialogBulletPoint(
-              text: 'Profile settings (always included)',
-              color: AppColors.cyan,
-              isDark: isDark,
+            const SizedBox(height: 10),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: kExportCategories.map((category) {
+                final isSelected = _selectedCategories.contains(category.key);
+                return FilterChip(
+                  label: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        category.icon,
+                        size: 14,
+                        color: isSelected
+                            ? Colors.white
+                            : (isDark ? AppColors.textSecondary : AppColorsLight.textSecondary),
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        category.label,
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: isSelected
+                              ? Colors.white
+                              : (isDark ? AppColors.textSecondary : AppColorsLight.textSecondary),
+                        ),
+                      ),
+                    ],
+                  ),
+                  tooltip: category.description,
+                  selected: isSelected,
+                  onSelected: (selected) {
+                    setState(() {
+                      if (selected) {
+                        _selectedCategories.add(category.key);
+                      } else {
+                        _selectedCategories.remove(category.key);
+                      }
+                    });
+                  },
+                  showCheckmark: false,
+                  selectedColor: AppColors.cyan,
+                  backgroundColor: isDark ? AppColors.cardBorder : AppColorsLight.cardBorder,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  side: BorderSide.none,
+                );
+              }).toList(),
             ),
 
             const SizedBox(height: 12),
@@ -589,13 +671,24 @@ class _ExportDataDialogState extends State<_ExportDataDialog> {
           ),
         ),
         TextButton(
-          onPressed: () {
-            final (startDate, endDate) = _getDateRange();
-            widget.onExport(startDate, endDate, _selectedFormat);
-          },
+          onPressed: _selectedCategories.isEmpty
+              ? null
+              : () {
+                  final (startDate, endDate) = _getDateRange();
+                  widget.onExport(
+                    startDate,
+                    endDate,
+                    _selectedFormat,
+                    _selectedCategories,
+                  );
+                },
           child: Text(
             'Export',
-            style: TextStyle(color: AppColors.cyan),
+            style: TextStyle(
+              color: _selectedCategories.isEmpty
+                  ? (isDark ? AppColors.textMuted : AppColorsLight.textMuted)
+                  : AppColors.cyan,
+            ),
           ),
         ),
       ],

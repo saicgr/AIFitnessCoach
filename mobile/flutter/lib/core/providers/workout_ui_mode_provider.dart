@@ -18,6 +18,11 @@ enum WorkoutUiMode {
   simple,
   advanced;
 
+  /// Tiers that should appear in UI controls. Excludes the retired `simple`
+  /// value which is kept only for DB back-compat — iterating raw `.values`
+  /// would render a duplicate "Easy" segment.
+  static const List<WorkoutUiMode> activeValues = [easy, advanced];
+
   /// Parse from the backend/SharedPreferences string form.
   /// Legacy `'simple'` is normalized to [easy].
   /// Unknown / null / empty → null (caller decides default).

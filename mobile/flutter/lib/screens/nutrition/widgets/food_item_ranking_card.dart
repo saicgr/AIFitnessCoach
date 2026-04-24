@@ -167,7 +167,15 @@ class _FoodItemRankingCardState extends State<_FoodItemRankingCard> {
     _activePreset = 'M';
     _weightController = TextEditingController(text: _currentWeight.round().toString());
     _countController = TextEditingController(text: _currentCount.toString());
-    _displayMode = _PortionDisplayMode.weight;
+    // Photo/camera items arrive as "5 pieces" / "2 tbsp" / "0.5 cup" with no
+    // explicit gram weight or per-gram nutrition. Defaulting to weight mode
+    // would show a misleading "100 g" placeholder. When count is known and
+    // weight isn't, open in count mode.
+    final hasCount = widget.item.count != null;
+    final hasExplicitWeight = widget.item.weightG != null;
+    _displayMode = (hasCount && !hasExplicitWeight)
+        ? _PortionDisplayMode.count
+        : _PortionDisplayMode.weight;
   }
 
   @override
@@ -382,7 +390,16 @@ class _FoodItemRankingCardState extends State<_FoodItemRankingCard> {
                         ],
                       ],
                     ),
-                    if (canScale)
+                    // Always show the inline portion adjuster when we have
+                    // any quantity we can scale from. For items without
+                    // usdaData/aiPerGram, _updateWeight/_updateCount fall
+                    // back to proportional scaling of the AI-estimated
+                    // macros — the same treatment text-logged foods get.
+                    // Only a fully-unscalable item (no weight AND no count)
+                    // keeps the read-only text line.
+                    if (canScale ||
+                        widget.item.weightG != null ||
+                        widget.item.count != null)
                       Padding(
                         padding: const EdgeInsets.only(top: 4),
                         child: _buildPortionAdjuster(glassSurface, textPrimary, textMuted, teal, isEstimated),
@@ -632,13 +649,27 @@ class _FoodItemRankingCardState extends State<_FoodItemRankingCard> {
       );
     }
 
-    return Row(
-      children: [
-        toggleButton('Weight', _PortionDisplayMode.weight, borderRadius: const BorderRadius.only(topLeft: Radius.circular(6), bottomLeft: Radius.circular(6))),
-        toggleButton('Count', _PortionDisplayMode.count),
-        toggleButton('Both', _PortionDisplayMode.both, borderRadius: const BorderRadius.only(topRight: Radius.circular(6), bottomRight: Radius.circular(6))),
-      ],
-    );
+    // Only expose Weight / Both tabs when we actually have a gram weight
+    // to edit against. For AI-estimated count-only items (e.g. "5 pieces"
+    // with no weight), weight mode would edit a fake 100 g placeholder.
+    final hasWeightBaseline = widget.item.weightG != null || widget.item.canScale;
+    final hasCount = widget.item.count != null;
+
+    if (hasWeightBaseline && hasCount) {
+      return Row(
+        children: [
+          toggleButton('Weight', _PortionDisplayMode.weight, borderRadius: const BorderRadius.only(topLeft: Radius.circular(6), bottomLeft: Radius.circular(6))),
+          toggleButton('Count', _PortionDisplayMode.count),
+          toggleButton('Both', _PortionDisplayMode.both, borderRadius: const BorderRadius.only(topRight: Radius.circular(6), bottomRight: Radius.circular(6))),
+        ],
+      );
+    }
+    // Weight-only (no count from AI): single tab, no meaningful toggle.
+    if (hasWeightBaseline) {
+      return const SizedBox.shrink();
+    }
+    // Count-only: single tab, no meaningful toggle.
+    return const SizedBox.shrink();
   }
 
   /// Inline-editable P / C / F chips. Shown only when onFieldEdited is wired.

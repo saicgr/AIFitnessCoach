@@ -1,14 +1,21 @@
 import 'dart:async';
+import 'dart:math';
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
+import 'analysis_loading_copy.dart';
 
-/// A dynamic loading indicator that feels alive even when waiting
+/// A dynamic loading indicator that feels alive even when waiting.
+///
+/// Per-mode copy: pass `analysisType` as 'plate' | 'menu' | 'buffet' (or
+/// 'auto') so the headline phases + subtitle tips match what the user
+/// actually uploaded. Without this, every upload feels identical.
 class FoodAnalysisLoadingIndicator extends StatefulWidget {
   final int currentStep;
   final int totalSteps;
   final String progressMessage;
   final String? progressDetail;
   final bool isDark;
+  final String analysisType;
 
   const FoodAnalysisLoadingIndicator({
     super.key,
@@ -17,6 +24,7 @@ class FoodAnalysisLoadingIndicator extends StatefulWidget {
     required this.progressMessage,
     this.progressDetail,
     required this.isDark,
+    this.analysisType = 'plate',
   });
 
   @override
@@ -35,38 +43,20 @@ class _FoodAnalysisLoadingIndicatorState extends State<FoodAnalysisLoadingIndica
   Timer? _tipTimer;
   Timer? _elapsedTimer;
 
-  int _tipIndex = 0;
-  int _phaseIndex = 0;
-  int _emojiIndex = 0;
   int _lastStep = 0;
   int _elapsedSeconds = 0;
 
-  // Pre-step phase messages shown in rotation while waiting for the first
-  // server progress event. Keeps the screen feeling alive during cold-start
-  // latency instead of freezing on "Starting analysis...".
-  static const _preStepPhases = [
-    ('Starting analysis', '🔍'),
-    ('Waking up the AI chef', '👨‍🍳'),
-    ('Examining your meal', '🍽️'),
-    ('Identifying ingredients', '🥗'),
-    ('Estimating portions', '⚖️'),
-    ('Looking up nutrition data', '📊'),
-    ('Crunching the numbers', '🧮'),
-    ('Almost there', '✨'),
-  ];
-
-  static const _tips = [
-    'Did you know? Protein keeps you full longer',
-    'Fun fact: Your body burns calories digesting food',
-    'Tip: Eating slowly helps you feel satisfied',
-    'Tracking meals builds awareness',
-    'Small choices add up to big results',
-    'Fiber is your gut\'s best friend',
-    'Hydration boosts metabolism',
-    'Consistency beats perfection',
-    'Protein helps build and repair muscle',
-    'Healthy fats are essential for brain function',
-  ];
+  // Index queues for no-repeat-within-5 rotation. We pull from the head,
+  // shuffle fresh indices to the back when exhausted, and never show the
+  // same copy line twice in a 5-step window.
+  late List<LoadingPhase> _phasesBank;
+  late List<String> _tipsBank;
+  final List<int> _phaseQueue = [];
+  final List<int> _tipQueue = [];
+  int _phaseIndex = 0;
+  int _tipIndex = 0;
+  int _stillWorkingIndex = 0;
+  final Random _rand = Random();
 
   @override
   void initState() {
@@ -96,24 +86,62 @@ class _FoodAnalysisLoadingIndicatorState extends State<FoodAnalysisLoadingIndica
     ]).animate(CurvedAnimation(parent: _stepBounceController, curve: Curves.easeOut));
 
     _lastStep = widget.currentStep;
+    _phasesBank = AnalysisLoadingCopy.phasesFor(widget.analysisType);
+    _tipsBank = AnalysisLoadingCopy.tipsFor(widget.analysisType);
+    _phaseIndex = _nextPhaseIndex();
+    _tipIndex = _nextTipIndex();
 
     _phaseTimer = Timer.periodic(const Duration(milliseconds: 1800), (_) {
       if (!mounted) return;
-      setState(() {
-        _phaseIndex = (_phaseIndex + 1) % _preStepPhases.length;
-        _emojiIndex = _phaseIndex;
-      });
+      setState(() => _phaseIndex = _nextPhaseIndex());
     });
 
     _tipTimer = Timer.periodic(const Duration(milliseconds: 3500), (_) {
       if (!mounted) return;
-      setState(() => _tipIndex = (_tipIndex + 1) % _tips.length);
+      setState(() => _tipIndex = _nextTipIndex());
     });
 
     _elapsedTimer = Timer.periodic(const Duration(seconds: 1), (_) {
       if (!mounted) return;
-      setState(() => _elapsedSeconds++);
+      setState(() {
+        _elapsedSeconds++;
+        // Rotate "still working" copy every 4s past the 15s mark so the
+        // long wait feels like narration, not a timer stuck on one line.
+        if (_elapsedSeconds >= 15 && _elapsedSeconds % 4 == 0) {
+          _stillWorkingIndex =
+              (_stillWorkingIndex + 1) % AnalysisLoadingCopy.stillWorkingLines.length;
+        }
+      });
     });
+  }
+
+  /// Shuffle-bag rotation: refill a queue of all indices when empty,
+  /// pop from the head, guarantees we see every line before repeating.
+  int _nextPhaseIndex() {
+    if (_phaseQueue.isEmpty) {
+      final indices = List<int>.generate(_phasesBank.length, (i) => i)..shuffle(_rand);
+      // Avoid immediate repeat of the currently-shown phase.
+      if (indices.first == _phaseIndex && indices.length > 1) {
+        final swap = indices[1];
+        indices[1] = indices[0];
+        indices[0] = swap;
+      }
+      _phaseQueue.addAll(indices);
+    }
+    return _phaseQueue.removeAt(0);
+  }
+
+  int _nextTipIndex() {
+    if (_tipQueue.isEmpty) {
+      final indices = List<int>.generate(_tipsBank.length, (i) => i)..shuffle(_rand);
+      if (indices.first == _tipIndex && indices.length > 1) {
+        final swap = indices[1];
+        indices[1] = indices[0];
+        indices[0] = swap;
+      }
+      _tipQueue.addAll(indices);
+    }
+    return _tipQueue.removeAt(0);
   }
 
   @override
@@ -122,6 +150,16 @@ class _FoodAnalysisLoadingIndicatorState extends State<FoodAnalysisLoadingIndica
     if (widget.currentStep != _lastStep) {
       _lastStep = widget.currentStep;
       _stepBounceController.forward(from: 0);
+    }
+    // If the caller switched mode mid-flight (e.g. backend classified auto→menu)
+    // rebuild the banks and reshuffle so copy matches the new mode.
+    if (widget.analysisType != oldWidget.analysisType) {
+      _phasesBank = AnalysisLoadingCopy.phasesFor(widget.analysisType);
+      _tipsBank = AnalysisLoadingCopy.tipsFor(widget.analysisType);
+      _phaseQueue.clear();
+      _tipQueue.clear();
+      _phaseIndex = _nextPhaseIndex();
+      _tipIndex = _nextTipIndex();
     }
   }
 
@@ -147,12 +185,13 @@ class _FoodAnalysisLoadingIndicatorState extends State<FoodAnalysisLoadingIndica
     final progress = isPreStep ? 0.0 : widget.currentStep / widget.totalSteps;
 
     // Prefer the backend's real message once steps arrive; otherwise rotate
-    // through the pre-step phases so the user always sees movement.
-    final phase = _preStepPhases[_phaseIndex];
+    // through mode-specific phases so the user always sees movement
+    // and menu/buffet/plate each feel distinct.
+    final phase = _phasesBank[_phaseIndex % _phasesBank.length];
     final displayMessage = isPreStep
         ? phase.$1
         : (widget.progressMessage.isNotEmpty ? widget.progressMessage : phase.$1);
-    final displayEmoji = _preStepPhases[_emojiIndex].$2;
+    final displayEmoji = phase.$2;
 
     return Center(
       child: Padding(
@@ -370,8 +409,8 @@ class _FoodAnalysisLoadingIndicatorState extends State<FoodAnalysisLoadingIndica
             AnimatedSwitcher(
               duration: const Duration(milliseconds: 400),
               child: Text(
-                _tips[_tipIndex],
-                key: ValueKey(_tipIndex),
+                _tipsBank[_tipIndex % _tipsBank.length],
+                key: ValueKey('$_tipIndex-${_tipsBank.length}'),
                 style: TextStyle(
                   fontSize: 12,
                   color: textMuted,
@@ -386,14 +425,18 @@ class _FoodAnalysisLoadingIndicatorState extends State<FoodAnalysisLoadingIndica
             // passing and nothing is frozen.
             if (_elapsedSeconds >= 3) ...[
               const SizedBox(height: 10),
-              Text(
-                _elapsedSeconds >= 15
-                    ? 'Still working… ${_elapsedSeconds}s'
-                    : '${_elapsedSeconds}s elapsed',
-                style: TextStyle(
-                  fontSize: 11,
-                  color: textMuted.withValues(alpha: 0.8),
-                  fontFeatures: const [FontFeature.tabularFigures()],
+              AnimatedSwitcher(
+                duration: const Duration(milliseconds: 300),
+                child: Text(
+                  _elapsedSeconds >= 15
+                      ? '${AnalysisLoadingCopy.stillWorkingLines[_stillWorkingIndex]}… ${_elapsedSeconds}s'
+                      : '${_elapsedSeconds}s elapsed',
+                  key: ValueKey('elapsed-$_elapsedSeconds-$_stillWorkingIndex'),
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: textMuted.withValues(alpha: 0.8),
+                    fontFeatures: const [FontFeature.tabularFigures()],
+                  ),
                 ),
               ),
             ],

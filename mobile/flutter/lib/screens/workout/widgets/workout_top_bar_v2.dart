@@ -229,10 +229,7 @@ class _TierToggle extends ConsumerWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          for (final tier in const [
-            WorkoutUiMode.easy,
-            WorkoutUiMode.advanced,
-          ])
+          for (final tier in WorkoutUiMode.activeValues)
             _TierSegment(
               // Selected segment shows the full word so the user always
               // knows what mode they're in; inactive stays a single

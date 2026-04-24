@@ -8,6 +8,11 @@ python-multipart>=0.0.18
 # google-genai>=1.56.0 required by langchain-google-genai 4.x for Gemini 3 thought_signature support
 google-genai>=1.56.0,<2.0.0
 
+# Google Cloud Text-to-Speech — powers the daily audio coach brief
+# (services/audio_coach.py). Lazy-imported; the service degrades to
+# script-only if the dep is unavailable, so adding this is non-breaking.
+google-cloud-texttospeech>=2.17.0,<3.0.0
+
 # RAG & Vector Store
 langchain>=0.3.0
 # langchain-core>=1.2.5 required by langchain-google-genai 4.x
@@ -87,3 +92,22 @@ pypdf>=4.0.0
 python-docx>=1.1.0
 # HTML stripping for URL source (falls back to stdlib html.parser if import fails at runtime)
 beautifulsoup4>=4.12.0
+
+# ─── Workout-history / program-template import pipeline ─────────────────────
+# Covers Hevy / Strong / Fitbod / Jefit / FitNotes / Garmin FIT / Apple Health /
+# Strava / Peloton / Fitbit / Nike ingestion + Jeff Nippard / RP / Nuckols /
+# Wendler / nSuns / GZCLP / Metallicadpa / Starting Strength creator programs,
+# plus two-way OAuth sync + export back out (PDF / XLSX / GPX / TCX).
+xlrd>=2.0.1                    # legacy .xls binary Excel (some older creator sheets)
+chardet>=5.2.0                 # CSV encoding auto-detection (UTF-8/16, Windows-1252, ISO-8859-1)
+dateparser>=1.2.0              # Hevy / year-less / locale date parsing
+python-magic>=0.4.27           # MIME sniffing via libmagic (needs apt libmagic1 on Render)
+lxml>=5.2.0                    # streaming Apple Health XML (500MB+ files)
+fitparse>=1.2.0                # Garmin .FIT binary decoder
+gpxpy>=1.6.2                   # Strava / Nike / Runkeeper GPX cardio files
+stravalib>=1.7.0               # Strava OAuth + activity API
+fitbit>=0.3.1                  # Fitbit Web API
+garminconnect>=0.2.19          # Garmin Connect (consumer OAuth1; personal-use only)
+reportlab>=4.2.0               # PDF export for the reverse-direction pipeline
+polyline>=2.0.0                # Decode Google encoded polylines → GPX waypoints
+cryptography>=42.0.0           # AES-GCM Fernet token encryption for oauth_sync_accounts

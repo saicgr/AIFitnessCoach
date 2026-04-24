@@ -75,6 +75,8 @@ extension WorkoutRepositoryGeneration on WorkoutRepository {
     String? workoutName,
     int? dumbbellCount,
     int? kettlebellCount,
+    String? newScheduledDate,
+    bool forceNonPreferredDay = false,
   }) async* {
     debugPrint('🚀 [Workout] Starting streaming regeneration for workout $workoutId');
     final startTime = DateTime.now();
@@ -123,6 +125,8 @@ extension WorkoutRepositoryGeneration on WorkoutRepository {
           if (workoutName != null && workoutName.isNotEmpty) 'workout_name': workoutName,
           if (dumbbellCount != null) 'dumbbell_count': dumbbellCount,
           if (kettlebellCount != null) 'kettlebell_count': kettlebellCount,
+          if (newScheduledDate != null) 'new_scheduled_date': newScheduledDate,
+          if (forceNonPreferredDay) 'force_non_preferred_day': true,
         },
         options: Options(
           responseType: ResponseType.stream,

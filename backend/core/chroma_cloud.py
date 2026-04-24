@@ -32,6 +32,14 @@ class ChromaCloudClient:
         self.workout_collection_name = "workout_plans"
         self.custom_inputs_collection_name = "custom_workout_inputs"
         self.saved_foods_collection_name = "saved_foods"
+        self.menu_items_collection_name = "menu_items"
+        # Per-user historical performance — one doc per (user, exercise, date)
+        # session. Populated by services.workout_import.rag_indexer. Queried by
+        # chat agents when users ask about their own strength history.
+        self.user_exercise_history_collection_name = "user_exercise_history"
+        # Per-user cardio history — one doc per cardio session. Populated by
+        # the cardio import pipeline + OAuth sync workers.
+        self.user_cardio_history_collection_name = "user_cardio_history"
 
     def get_or_create_collection(self, collection_name: str):
         """Get or create a collection in Chroma Cloud."""
@@ -61,6 +69,22 @@ class ChromaCloudClient:
     def get_saved_foods_collection(self):
         """Get the saved foods collection (favorite recipes)."""
         return self.get_or_create_collection(self.saved_foods_collection_name)
+
+    def get_menu_items_collection(self):
+        """Get the menu_items collection — per-user parsed menu dishes
+        indexed for cross-menu semantic similarity recall during
+        recommendation pre-fetch."""
+        return self.get_or_create_collection(self.menu_items_collection_name)
+
+    def get_user_exercise_history_collection(self):
+        """Per-user strength history — one doc per (user, exercise, date)
+        session summarizing sets + top set for RAG recall."""
+        return self.get_or_create_collection(self.user_exercise_history_collection_name)
+
+    def get_user_cardio_history_collection(self):
+        """Per-user cardio history — one doc per session with pace / distance
+        / HR summary for RAG recall."""
+        return self.get_or_create_collection(self.user_cardio_history_collection_name)
 
     def add_documents(
         self,

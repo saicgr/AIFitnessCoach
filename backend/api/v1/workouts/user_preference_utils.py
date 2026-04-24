@@ -183,6 +183,115 @@ async def get_user_strength_history(user_id: str) -> dict:
     return strength_history
 
 
+async def get_user_cardio_history(user_id: str) -> Dict[str, Dict[str, Any]]:
+    """
+    Aggregate user's cardio history per activity_type for workout generation +
+    chat coach context. Mirrors the shape of get_user_strength_history() so
+    downstream consumers can treat the two uniformly.
+
+    Returns a dict keyed by activity_type with:
+      - max_distance_m         — longest recorded distance (meters)
+      - total_sessions         — count of sessions
+      - total_duration_seconds — lifetime duration at this activity
+      - recent_avg_pace_seconds_per_km — avg over last 10 sessions (None if < 3)
+      - last_performed         — ISO date of most recent session
+      - last_distance_m        — distance of most recent session
+      - last_duration_seconds  — duration of most recent session
+
+    Reads directly from `cardio_logs` (migration 1965). Returns {} on failure
+    so callers can always chain `.get("run", {})` safely.
+    """
+    history: Dict[str, Dict[str, Any]] = {}
+
+    try:
+        db = get_supabase_db()
+
+        result = (
+            db.client.table("cardio_logs")
+            .select("activity_type, duration_seconds, distance_m, avg_pace_seconds_per_km, performed_at")
+            .eq("user_id", user_id)
+            .order("performed_at", desc=True)
+            .limit(500)  # 500 cardio sessions covers ~2 years of a 5x/wk runner
+            .execute()
+        )
+
+        # Group rows by activity_type. Rows arrive newest-first so the first
+        # row per type is automatically `last_performed`.
+        by_type: Dict[str, list] = {}
+        for row in result.data or []:
+            t = row.get("activity_type")
+            if not t:
+                continue
+            by_type.setdefault(t, []).append(row)
+
+        for activity_type, rows in by_type.items():
+            max_distance = 0.0
+            total_duration = 0
+            pace_values: list[float] = []
+            for idx, r in enumerate(rows):
+                d = r.get("distance_m")
+                if d is not None:
+                    try:
+                        d_f = float(d)
+                        if d_f > max_distance:
+                            max_distance = d_f
+                    except (ValueError, TypeError):
+                        pass
+                dur = r.get("duration_seconds")
+                if dur is not None:
+                    try:
+                        total_duration += int(dur)
+                    except (ValueError, TypeError):
+                        pass
+                # Recent-pace window — first 10 rows (most recent). Skip
+                # junk-short sessions (<500m) so the mean isn't skewed by
+                # warmup jogs or stroller walks.
+                if idx < 10:
+                    pace = r.get("avg_pace_seconds_per_km")
+                    distance_m = r.get("distance_m") or 0
+                    try:
+                        distance_m = float(distance_m)
+                    except (ValueError, TypeError):
+                        distance_m = 0
+                    if pace is not None and distance_m >= 500:
+                        try:
+                            pace_values.append(float(pace))
+                        except (ValueError, TypeError):
+                            pass
+
+            recent_avg_pace: Optional[float] = None
+            # Need at least 3 samples for a meaningful recent average — two
+            # outliers can drag a 2-sample mean way off.
+            if len(pace_values) >= 3:
+                recent_avg_pace = round(sum(pace_values) / len(pace_values), 2)
+
+            last = rows[0] if rows else {}
+            last_performed = last.get("performed_at")
+            if last_performed:
+                last_performed = str(last_performed)[:10]
+
+            history[activity_type] = {
+                "max_distance_m": round(max_distance, 2),
+                "total_sessions": len(rows),
+                "total_duration_seconds": total_duration,
+                "recent_avg_pace_seconds_per_km": recent_avg_pace,
+                "last_performed": last_performed,
+                "last_distance_m": float(last.get("distance_m") or 0) if last.get("distance_m") is not None else None,
+                "last_duration_seconds": int(last.get("duration_seconds") or 0) if last.get("duration_seconds") is not None else None,
+            }
+
+        logger.info(
+            f"Loaded cardio history for user {user_id}: "
+            f"{len(history)} activity types, "
+            f"{sum(h['total_sessions'] for h in history.values())} total sessions"
+        )
+        return history
+
+    except Exception as e:
+        logger.debug(f"Could not get cardio history for user {user_id}: {e}")
+        return {}
+
+
 async def get_user_personal_bests(user_id: str) -> Dict[str, Dict]:
     """Get user's personal records (PRs) per exercise from the personal_records table."""
     prs: Dict[str, Dict] = {}

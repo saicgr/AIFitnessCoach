@@ -11,7 +11,7 @@ import asyncio
 from datetime import datetime
 from typing import AsyncGenerator
 
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Depends, Request, HTTPException
 from core.auth import get_current_user
 from fastapi.responses import StreamingResponse
 
@@ -87,6 +87,39 @@ async def generate_workout_streaming(request: Request, body: GenerateWorkoutRequ
     db = get_supabase_db()
     _user_tz = resolve_timezone(request, db, body.user_id)
     scheduled_date = body.scheduled_date or get_user_today(_user_tz)
+
+    # Preferred-day gate: reject requests whose scheduled_date falls outside the
+    # user's configured workout days unless the caller explicitly opted in via
+    # force_non_preferred_day (e.g., "Do this today" in the Regenerate sheet).
+    # Without this gate, any stale client or accidental call plants a workout on
+    # a rest day and the home carousel dutifully surfaces it as TODAY.
+    if not body.force_non_preferred_day:
+        from .today import _get_user_workout_days, _calculate_next_workout_date
+        _gate_user = db.get_user(body.user_id)
+        if _gate_user:
+            _selected_days = _get_user_workout_days(_gate_user)
+            if _selected_days:
+                try:
+                    _weekday = datetime.strptime(scheduled_date, "%Y-%m-%d").weekday()
+                except ValueError:
+                    _weekday = None
+                if _weekday is not None and _weekday not in _selected_days:
+                    _today_str = get_user_today(_user_tz)
+                    _suggested = _calculate_next_workout_date(_selected_days, user_today_str=_today_str)
+                    logger.info(
+                        f"[PreferredDayGate] Rejecting /generate-stream for user={body.user_id} "
+                        f"scheduled_date={scheduled_date} (weekday={_weekday}, preferred={_selected_days}); "
+                        f"suggested_date={_suggested}"
+                    )
+                    raise HTTPException(
+                        status_code=409,
+                        detail={
+                            "error": "not_a_workout_day",
+                            "scheduled_date": scheduled_date,
+                            "suggested_date": _suggested,
+                            "selected_days": _selected_days,
+                        },
+                    )
 
     # Resolve gym_profile_id early for dedup checks. None is a valid outcome:
     # legacy users or users mid-onboarding may not have an active profile yet,

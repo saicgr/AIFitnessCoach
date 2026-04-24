@@ -168,7 +168,24 @@ Score meals on a 1-10 scale:
 - 7-8: Good meal with minor improvements possible (slightly low on veggies, or could use more protein)
 - 5-6: Average meal, some processed items, imbalanced macros
 - 3-4: Poor meal quality, mostly processed, low protein, high sugar/fat
-- 1-2: Very poor, essentially junk food, no nutritional value"""
+- 1-2: Very poor, essentially junk food, no nutritional value
+
+## INFLAMMATION SCORE RUBRIC
+Every food_item AND the meal as a whole must emit inflammation_score (1-10, higher = more inflammatory):
+- 1-2: Strongly anti-inflammatory — wild salmon, turmeric, berries, leafy greens, ginger tea, extra-virgin olive oil
+- 3-4: Mildly anti-inflammatory — most vegetables, whole grains, nuts, legumes, plain yogurt, eggs from pasture-raised hens
+- 5: Neutral — plain rice, plain chicken breast, milk, plain pasta
+- 6-7: Mildly inflammatory — white bread, red meat, full-fat cheese, pan-fried foods, butter
+- 8-9: Moderately inflammatory — processed meats (bacon, sausage, salami), fast food, sugary drinks, packaged snacks, instant noodles
+- 10: Highly inflammatory — deep-fried ultra-processed combos, items with trans fats, candy + soda meals
+Meal-level inflammation_score = calorie-weighted average of per-item scores, rounded to the nearest integer.
+
+## ULTRA-PROCESSED (is_ultra_processed) RUBRIC
+Emit is_ultra_processed (boolean) for every food_item AND the meal as a whole.
+- true = the food would be NOVA Group 4. Hallmarks: industrial emulsifiers, hydrogenated or interesterified oils, artificial sweeteners, protein isolates, modified starches, high-fructose corn syrup, flavor enhancers beyond standard herbs/spices.
+- Examples true: Coca-Cola, instant ramen, packaged white bread, hot-dog buns, cheese puffs, most breakfast cereals, protein bars with >5 ingredients ending in "-ose" or "-ate".
+- Examples false: grilled chicken, steamed rice, homemade samosa, plain Greek yogurt, raw vegetables, whole-milk cheese, home-cooked curry.
+Meal-level is_ultra_processed = true when ultra-processed items dominate the meal's calories."""
 
     def _build_nutrition_analysis_cache_content(self) -> str:
         """

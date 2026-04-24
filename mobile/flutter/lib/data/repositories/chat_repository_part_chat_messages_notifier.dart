@@ -863,6 +863,29 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
           debugPrint('🍽️ [Chat] Failed to refresh nutrition: $e');
         }
         break;
+      case 'export_data':
+        // AI coach offered to export the user's data — navigate to the
+        // export screen with the suggested format preselected. The screen
+        // reads `format` on init; anything the UI doesn't recognize falls
+        // back to the default (hevy CSV). Map a couple of AI-speak aliases
+        // back to our canonical format keys.
+        final formatRaw = (actionData['format'] as String?)?.toLowerCase().trim();
+        const aliasMap = {
+          'hevy_csv': 'hevy',
+          'strong_csv': 'strong',
+          'fitbod_csv': 'fitbod',
+          'excel': 'xlsx',
+          'spreadsheet': 'xlsx',
+          'pdf_report': 'pdf',
+        };
+        final formatKey = aliasMap[formatRaw] ?? formatRaw;
+        debugPrint('📤 [Chat] export_data → navigating to export screen (format=$formatKey)');
+        // Use GoRouter push with extra so the screen can preselect the format.
+        _router.push(
+          '/settings/export-workouts',
+          extra: {'format': formatKey},
+        );
+        break;
       case 'open_grocery_list':
         // Emitted by the build_grocery_list nutrition agent tool. The tool
         // already persisted the list; we just hand the list_id off via the

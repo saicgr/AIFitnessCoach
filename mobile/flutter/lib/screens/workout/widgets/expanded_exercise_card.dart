@@ -15,6 +15,7 @@ import '../../../data/models/exercise.dart';
 import '../../../data/services/api_client.dart';
 import '../../../data/services/haptic_service.dart';
 import '../../../widgets/glass_sheet.dart';
+import '../../library/providers/muscle_group_images_provider.dart';
 import 'exercise_options_info_sheet.dart';
 
 part 'expanded_exercise_card_ui_1.dart';
@@ -571,6 +572,84 @@ class _ExpandedExerciseCardState extends ConsumerState<ExpandedExerciseCard> {
     }
     // Limit length
     return muscle.length > 15 ? '${muscle.substring(0, 15)}...' : muscle;
+  }
+
+  /// Resolve the muscle anatomy asset for an exercise, matching the library's
+  /// muscle-group imagery. Returns null for unmappable muscles (e.g.
+  /// "cardiovascular", "full body") so the badge is simply hidden.
+  static const Map<String, String> _muscleAliases = {
+    'chest': 'Chest',
+    'pecs': 'Chest',
+    'pectorals': 'Chest',
+    'pectoralis': 'Chest',
+    'pectoralis major': 'Chest',
+    'back': 'Back',
+    'lats': 'Back',
+    'latissimus': 'Back',
+    'latissimus dorsi': 'Back',
+    'upper back': 'Back',
+    'mid back': 'Back',
+    'middle back': 'Back',
+    'rhomboids': 'Back',
+    'traps': 'Back',
+    'trapezius': 'Back',
+    'shoulder': 'Shoulders',
+    'shoulders': 'Shoulders',
+    'delts': 'Shoulders',
+    'deltoid': 'Shoulders',
+    'deltoids': 'Shoulders',
+    'arm': 'Arms',
+    'arms': 'Arms',
+    'bicep': 'Biceps',
+    'biceps': 'Biceps',
+    'tricep': 'Triceps',
+    'triceps': 'Triceps',
+    'forearm': 'Forearms',
+    'forearms': 'Forearms',
+    'leg': 'Legs',
+    'legs': 'Legs',
+    'quad': 'Quadriceps',
+    'quads': 'Quadriceps',
+    'quadriceps': 'Quadriceps',
+    'hamstring': 'Hamstrings',
+    'hamstrings': 'Hamstrings',
+    'hams': 'Hamstrings',
+    'glute': 'Glutes',
+    'glutes': 'Glutes',
+    'gluteus': 'Glutes',
+    'gluteus maximus': 'Glutes',
+    'calf': 'Calves',
+    'calves': 'Calves',
+    'gastrocnemius': 'Calves',
+    'core': 'Core',
+    'abs': 'Core',
+    'ab': 'Core',
+    'abdominals': 'Core',
+    'abdominal': 'Core',
+    'obliques': 'Core',
+    'lower back': 'Lower Back',
+    'erector spinae': 'Lower Back',
+    'hips': 'Hips',
+    'hip': 'Hips',
+    'hip flexors': 'Hips',
+    'adductors': 'Hips',
+    'abductors': 'Hips',
+  };
+
+  String? _muscleAssetForExercise(WorkoutExercise exercise) {
+    final raw = (exercise.primaryMuscle ?? exercise.muscleGroup ?? '').trim();
+    if (raw.isEmpty) return null;
+
+    // Take the first muscle if comma-separated, then strip parentheticals.
+    var muscle = raw.split(',').first.trim();
+    final parenMatch = RegExp(r'^([^(]+)').firstMatch(muscle);
+    if (parenMatch != null) muscle = parenMatch.group(1)!.trim();
+
+    final canonical = _muscleAliases[muscle.toLowerCase()];
+    if (canonical != null) return muscleGroupAssets[canonical];
+
+    // Fallback: try direct match against the asset map keys.
+    return muscleGroupAssets[muscle];
   }
 
   String _shortenEquipment(String equipment) {

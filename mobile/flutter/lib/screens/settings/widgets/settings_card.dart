@@ -479,6 +479,7 @@ class SettingsCard extends ConsumerWidget {
               'phul': 'PHUL',
               'arnold_split': 'Arnold Split',
               'hyrox': 'HYROX',
+              'ai_decide': 'AI Decides',
               'dont_know': 'AI Decides',
             };
             trailing = Row(

@@ -194,6 +194,8 @@ async def update_workout(workout_id: str, workout: WorkoutUpdate,
             update_data["exercises"] = exercises
         if workout.last_modified_method is not None:
             update_data["last_modified_method"] = workout.last_modified_method
+        if workout.generation_metadata is not None:
+            update_data["generation_metadata"] = workout.generation_metadata
 
         if update_data:
             update_data["last_modified_at"] = datetime.now().isoformat()

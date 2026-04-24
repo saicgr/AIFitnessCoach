@@ -132,9 +132,12 @@ class _HeroWorkoutCarouselState extends ConsumerState<HeroWorkoutCarousel> {
   /// Pick the default-focused carousel card in priority order. Treats
   /// `isCompleted == null` as actionable (freshly-generated, never-attempted
   /// workouts have null state — the old `== false` check silently skipped them).
-  /// First match wins: today → next future → any placeholder → index 0.
+  /// Priority: today's real workout → today's placeholder → next future →
+  /// any placeholder → index 0. A real workout on today (including rescheduled
+  /// "Do this today" ones on non-preferred days) always wins over a preferred-day
+  /// placeholder that sits on the same date.
   int _pickInitialIndex(List<CarouselItem> items, DateTime today) {
-    int? todayIdx, futureIdx, placeholderIdx;
+    int? todayWorkoutIdx, todayPlaceholderIdx, futureIdx, placeholderIdx;
     final todayKey = _dateKey(today);
     for (int i = 0; i < items.length; i++) {
       final item = items[i];
@@ -142,15 +145,22 @@ class _HeroWorkoutCarouselState extends ConsumerState<HeroWorkoutCarousel> {
           (item.isWorkout && item.workout!.isCompleted != true);
       if (!actionable) continue;
       final d = item.date;
-      if (d != null && _dateKey(d) == todayKey) {
-        todayIdx ??= i;
+      final isToday = d != null && _dateKey(d) == todayKey;
+      if (isToday && item.isWorkout) {
+        todayWorkoutIdx ??= i;
+      } else if (isToday && item.isPlaceholder) {
+        todayPlaceholderIdx ??= i;
       } else if (d != null && d.isAfter(today)) {
         futureIdx ??= i;
       } else if (item.isPlaceholder) {
         placeholderIdx ??= i;
       }
     }
-    return todayIdx ?? futureIdx ?? placeholderIdx ?? 0;
+    return todayWorkoutIdx ??
+        todayPlaceholderIdx ??
+        futureIdx ??
+        placeholderIdx ??
+        0;
   }
 
   /// Get workout dates for this week (including past days for missed workout viewing).

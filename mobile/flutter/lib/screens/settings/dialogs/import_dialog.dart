@@ -20,7 +20,7 @@ void showImportDialog(BuildContext context, WidgetRef ref) {
           Icon(Icons.file_upload_outlined, color: AppColors.purple, size: 24),
           const SizedBox(width: 12),
           Text(
-            'Import Data',
+            'Import FitWiz Data',
             style: TextStyle(
               color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
             ),
@@ -44,7 +44,7 @@ void showImportDialog(BuildContext context, WidgetRef ref) {
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    'This will replace your current data',
+                    'This will replace your current FitWiz data',
                     style: TextStyle(
                       fontWeight: FontWeight.w600,
                       color: AppColors.orange,
@@ -57,7 +57,7 @@ void showImportDialog(BuildContext context, WidgetRef ref) {
           ),
           const SizedBox(height: 16),
           Text(
-            'Select a previously exported ZIP file to restore your data. The import will use whatever data is available in the file.',
+            'Select a previously exported FitWiz ZIP file to restore your data. The import will use whatever data is available in the file.',
             style: TextStyle(
               color: isDark ? AppColors.textSecondary : AppColorsLight.textSecondary,
             ),
@@ -120,7 +120,7 @@ Future<void> _importData(BuildContext context, WidgetRef ref) async {
               const SizedBox(width: 12),
               Expanded(
                 child: Text(
-                  'Import Data',
+                  'Import FitWiz Data',
                   style: TextStyle(
                     color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
                   ),

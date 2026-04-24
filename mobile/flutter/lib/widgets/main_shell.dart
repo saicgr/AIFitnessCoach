@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -25,9 +26,10 @@ import 'floating_chat/floating_chat_bubble.dart';
 import 'floating_chat/floating_chat_overlay.dart';
 import 'level_up_dialog.dart';
 import 'streak_saved_dialog.dart';
-import 'morphing_tab_indicator.dart';
 import 'offline_banner.dart';
 import '../data/providers/xp_provider.dart' show xpProvider, levelUpEventProvider, dailyLoginResultProvider;
+import '../data/providers/pending_celebrations_provider.dart';
+import 'trophy_ceremony_overlay.dart';
 import '../data/models/gym_profile.dart';
 import '../data/providers/gym_profile_provider.dart';
 import '../data/providers/weekly_recap_provider.dart';
@@ -247,6 +249,41 @@ class MainShell extends ConsumerWidget {
         }
       },
     );
+
+    // Celebration ceremony — replay any trophies earned since the user's
+    // last ack cursor. Fires on login (user becomes non-null) + on
+    // explicit refresh triggers. Ack advances the cursor so the same
+    // trophy never plays twice. Runs after frame so it never fights with
+    // the shell's initial layout.
+    ref.listen<PendingCelebrationsState>(pendingCelebrationsProvider, (prev, next) {
+      if (next.pending.isEmpty) return;
+      final wasEmpty = prev == null || prev.pending.isEmpty;
+      if (!wasEmpty) return; // Already showing
+      if (ref.read(seriousModeProvider)) {
+        // Serious Mode suppresses celebrations — silently ack so they
+        // don't stack up forever.
+        ref.read(pendingCelebrationsProvider.notifier).ack();
+        return;
+      }
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
+        if (!context.mounted) return;
+        await showTrophyCeremony(
+          context: context,
+          trophies: next.pending,
+        );
+        await ref.read(pendingCelebrationsProvider.notifier).ack();
+      });
+    });
+
+    // Kick off an initial pending-celebrations refresh once per shell
+    // mount. Later refreshes should be triggered by whatever awards a
+    // trophy (trophy_triggers.py invokes FCM / websocket), but the
+    // app-open case is the important retention moment here.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (context.mounted) {
+        ref.read(pendingCelebrationsProvider.notifier).refresh();
+      }
+    });
 
     // Listen for level-up events from ANY screen (moved from home_screen.dart)
     ref.listen<LevelUpEvent?>(levelUpEventProvider, (previous, next) {

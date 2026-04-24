@@ -26,6 +26,9 @@ from api.v1 import sauna  # Sauna session logging
 from api.v1 import progress_photos  # Progress photos with before/after comparisons
 from api.v1 import scores  # Strength scores, readiness scores, personal records
 from api.v1 import workout_history  # Manual workout history import for AI learning
+from api.v1 import workout_history_file  # File-upload import (Hevy/Strong/Fitbod/Nippard/etc.)
+from api.v1 import workout_export  # Per-format reverse-direction export (Hevy/Strong/Fitbod/JSON/Parquet/XLSX/PDF/TCX/GPX)
+from api.v1 import cardio_logs  # Cardio session logging + bulk import (Strava/Peloton/Garmin/etc.)
 from api.v1 import exercise_preferences  # Staple exercises and variation control
 from api.v1 import training_intensity  # Percentage-based 1RM training
 from api.v1 import layouts  # Home screen layout customization
@@ -64,12 +67,15 @@ from api.v1 import kegel  # Kegel/pelvic floor exercises and preferences
 from api.v1 import weekly_plans  # Holistic weekly plans (workouts + nutrition + fasting)
 from api.v1 import chat_reports  # Chat message reporting for AI coach feedback quality
 from api.v1 import live_chat  # Live chat support with human agents
+from api.v1 import body_analyzer  # Body Analyzer + program retune proposals
+from api.v1 import audio_coach  # Daily personalised audio brief
 from api.v1 import inflammation  # Food inflammation analysis from barcode scans
 from api.v1 import admin  # Admin backend for live chat management and support
 from api.v1 import habits  # Simple habit tracking (not eating outside, no doordash, etc.)
 from api.v1 import watch_sync  # WearOS watch sync (batch sync, activity goals)
 from api.v1 import weight_increments  # Equipment-specific weight increment preferences
 from api.v1 import trophies  # Trophy room and achievement system
+from api.v1 import masteries  # Levelled mastery badges (Badge Hub grid)
 from api.v1 import gym_profiles  # Multi-gym profile system (Robinhood-style switcher)
 from api.v1 import xp  # XP events, daily login, streaks, double XP
 from api.v1 import warmup_preferences  # Custom warmup/stretch preferences and pre/post workout routines
@@ -77,6 +83,7 @@ from api.v1 import custom_exercises  # User-defined custom exercises with media 
 from api.v1 import media_jobs  # Top-level media_analysis_jobs polling (cross-feature)
 from api.v1 import daily_schedule  # Daily schedule planner
 from api.v1 import sync  # Offline sync bulk upload and import
+from api.v1 import oauth_sync  # OAuth two-way sync (Strava / Garmin / Fitbit / Apple Health / Peloton)
 from api.v1 import exercise_popularity  # Collaborative filtering exercise scores
 from api.v1 import beast_mode  # Beast mode custom training preferences
 from api.v1 import wrapped  # Fitness Wrapped monthly recap cards
@@ -211,6 +218,17 @@ router.include_router(scores.router, prefix="/scores", tags=["Scores"])
 # Workout history import for AI learning (manual entry of past workouts)
 router.include_router(workout_history.router, tags=["Workout History"])
 
+# File-upload import flow on top of WorkoutHistoryImporter — Hevy, Strong,
+# Fitbod, Jefit, Nippard, RP, Wendler 5/3/1, nSuns, GZCLP, etc. Shares the same
+# `/workout-history` prefix as the manual-entry router; the two registrations
+# don't collide because their path suffixes are disjoint.
+router.include_router(workout_history_file.router, tags=["Workout History Import"])
+
+router.include_router(workout_export.router, tags=["Workout Export"])
+
+# Cardio session logs — sibling to workout_history for cardio imports (Strava/Peloton/Garmin).
+router.include_router(cardio_logs.router, tags=["Cardio Logs"])
+
 # Exercise preferences: staple exercises, variation control, week comparison
 router.include_router(exercise_preferences.router, tags=["Exercise Preferences"])
 
@@ -344,6 +362,9 @@ router.include_router(weight_increments.router, prefix="/weight-increments", tag
 # Trophy room and achievement system (trophies, progress, summary)
 router.include_router(trophies.router, prefix="/progress", tags=["Trophies"])
 
+# Masteries — levelled badge grid for the Badge Hub (Steps Lv.6 etc.)
+router.include_router(masteries.router, tags=["Masteries"])
+
 # Multi-gym profile system (Robinhood-style switcher for different gyms/locations)
 router.include_router(gym_profiles.router, prefix="/gym-profiles", tags=["Gym Profiles"])
 
@@ -364,6 +385,12 @@ router.include_router(daily_schedule.router, prefix="/daily-schedule", tags=["Da
 
 # Offline sync bulk upload and import (dead letter recovery, data export/import)
 router.include_router(sync.router, tags=["Sync"])
+
+# OAuth two-way sync — Strava / Garmin / Fitbit / Apple Health / Peloton.
+# Same `/sync` prefix as offline-sync but non-colliding paths:
+# /sync/oauth/{provider}/{begin,callback}, /sync/accounts, /sync/webhooks/*,
+# /sync/apple-health/push, /sync/{id}/manual-sync.
+router.include_router(oauth_sync.router, tags=["OAuth Sync"])
 
 # Exercise popularity scores for collaborative filtering
 router.include_router(exercise_popularity.router, tags=["Exercise Popularity"])
@@ -421,3 +448,9 @@ router.include_router(
     prefix="/users/me/mcp-integrations",
     tags=["MCP Integrations"],
 )
+
+# Body Analyzer — Gemini-driven body-composition feedback + program retune
+router.include_router(body_analyzer.router, prefix="/body-analyzer", tags=["Body Analyzer"])
+
+# Audio Coach — daily personalised TTS brief
+router.include_router(audio_coach.router, prefix="/audio-coach", tags=["Audio Coach"])

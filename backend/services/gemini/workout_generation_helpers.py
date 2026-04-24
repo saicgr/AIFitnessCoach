@@ -50,6 +50,10 @@ class WorkoutGenerationMixin(WorkoutGenerationMixinPart2):
         set_type_context: Optional[str] = None,
         primary_goal: Optional[str] = None,
         muscle_focus_points: Optional[Dict[str, int]] = None,
+        # Body Analyzer bridge — the generator doesn't parse it, it's pasted
+        # into the prompt so Gemini can tune rep ranges / accessory work to
+        # the user's current composition + posture.
+        body_analyzer_context: Optional[str] = None,
         training_split: Optional[str] = None,
         workout_days: Optional[List[int]] = None,
         # Fitness Assessment fields - for smarter workout personalization
@@ -581,6 +585,12 @@ This is a RETURN-TO-TRAINING workout - safety and gradual progression are CRITIC
             logger.info(f"[Gemini Service] Including workout patterns context with set/rep limits and historical data")
             workout_patterns_instruction = workout_patterns_context
 
+        # Body Analyzer context — appended verbatim when provided.
+        body_analyzer_instruction = ""
+        if body_analyzer_context and body_analyzer_context.strip():
+            logger.info("[Gemini Service] Including Body Analyzer context (composition + posture)")
+            body_analyzer_instruction = "\n\n" + body_analyzer_context
+
         # Build favorite workouts context for inspiration
         favorite_workouts_instruction = ""
         if favorite_workouts_context and favorite_workouts_context.strip():
@@ -798,7 +808,7 @@ This assessment data reflects the user's ACTUAL capabilities - use it to create 
 - Goals: {safe_join_list(goals, 'General fitness')}
 - Available Equipment: {safe_join_list(equipment, 'Bodyweight only')}
 - Focus Areas: {safe_join_list(focus_areas, 'Full body')}
-- Workout Type: {workout_type}{environment_instruction}{age_activity_context}{training_split_instruction}{fitness_assessment_instruction}{safety_instruction}{workout_type_instruction}{custom_program_instruction}{custom_exercises_instruction}{equipment_details_instruction}{preference_constraints_instruction}{comeback_instruction}{progression_philosophy_instruction}{workout_patterns_instruction}{favorite_workouts_instruction}{primary_goal_instruction}{muscle_focus_instruction}
+- Workout Type: {workout_type}{environment_instruction}{age_activity_context}{training_split_instruction}{fitness_assessment_instruction}{safety_instruction}{workout_type_instruction}{custom_program_instruction}{custom_exercises_instruction}{equipment_details_instruction}{preference_constraints_instruction}{comeback_instruction}{progression_philosophy_instruction}{workout_patterns_instruction}{favorite_workouts_instruction}{primary_goal_instruction}{muscle_focus_instruction}{body_analyzer_instruction}
 
 ⚠️ CRITICAL - MUSCLE GROUP TARGETING:
 {focus_instruction if focus_instruction else 'Select a balanced mix of exercises.'}

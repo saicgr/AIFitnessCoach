@@ -399,7 +399,10 @@ class _TrainingFocusCard extends ConsumerWidget {
 }
 
 
-/// Horizontally scrollable row of synced (Health Connect / Apple Health) workouts.
+/// Horizontally scrollable row of synced (Health Connect / Apple Health)
+/// workouts. Each card is tinted by the workout's granular kind (walking =
+/// green, cycling = blue…). A dashed "See all" card trails the list and
+/// opens the full history screen.
 class _SyncedWorkoutsRow extends ConsumerWidget {
   final Color elevated;
   final Color cardBorder;
@@ -412,30 +415,6 @@ class _SyncedWorkoutsRow extends ConsumerWidget {
     required this.textPrimary,
     required this.textMuted,
   });
-
-  IconData _iconForType(String? type) {
-    switch (type?.toLowerCase()) {
-      case 'strength':
-        return Icons.fitness_center;
-      case 'cardio':
-      case 'running':
-        return Icons.directions_run;
-      case 'cycling':
-        return Icons.directions_bike;
-      case 'swimming':
-        return Icons.pool;
-      case 'yoga':
-      case 'flexibility':
-      case 'stretching':
-        return Icons.self_improvement;
-      case 'hiit':
-        return Icons.local_fire_department;
-      case 'walking':
-        return Icons.directions_walk;
-      default:
-        return Icons.sync_rounded;
-    }
-  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -452,100 +431,394 @@ class _SyncedWorkoutsRow extends ConsumerWidget {
         ),
         child: Text(
           'No synced workouts yet',
-          style: TextStyle(
-            fontSize: 13,
-            color: textMuted,
-          ),
+          style: TextStyle(fontSize: 13, color: textMuted),
           textAlign: TextAlign.center,
         ),
       );
     }
 
+    final count = syncedWorkouts.length;
     return SizedBox(
-      height: 100,
+      height: 136,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
-        itemCount: syncedWorkouts.length,
+        itemCount: count + 1, // +1 for "See all" trailing card
         separatorBuilder: (_, __) => const SizedBox(width: 10),
         itemBuilder: (context, index) {
-          final workout = syncedWorkouts[index];
-          final metadata = workout.generationMetadata ?? {};
-          final sourceApp = metadata['source_app_name'] as String?;
-          final dateStr = workout.scheduledDate?.split('T')[0] ?? '';
-
-          return GestureDetector(
-            onTap: () {
-              HapticService.selection();
-              Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (_) => SyncedWorkoutDetailScreen(workout: workout),
-                ),
-              );
-            },
-            child: Container(
-              width: 150,
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: elevated,
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: cardBorder),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Icon(
-                        _iconForType(workout.type),
-                        size: 16,
-                        color: textPrimary,
-                      ),
-                      const SizedBox(width: 6),
-                      Expanded(
-                        child: Text(
-                          workout.name ?? 'Workout',
-                          style: TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
-                            color: textPrimary,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 6),
-                  if (dateStr.isNotEmpty)
-                    Text(
-                      dateStr,
-                      style: TextStyle(fontSize: 11, color: textMuted),
-                    ),
-                  if (workout.durationMinutes != null) ...[
-                    const SizedBox(height: 2),
-                    Text(
-                      '${workout.durationMinutes} min',
-                      style: TextStyle(fontSize: 11, color: textMuted),
-                    ),
-                  ],
-                  const Spacer(),
-                  if (sourceApp != null)
-                    Text(
-                      sourceApp,
-                      style: TextStyle(
-                        fontSize: 10,
-                        color: textMuted.withValues(alpha: 0.7),
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                ],
-              ),
-            ),
-          );
+          if (index == count) {
+            return _SeeAllSyncedCard(count: count);
+          }
+          return _SyncedWorkoutCard(workout: syncedWorkouts[index]);
         },
       ),
     );
   }
+}
+
+class _SyncedWorkoutCard extends StatelessWidget {
+  final Workout workout;
+
+  const _SyncedWorkoutCard({required this.workout});
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final metadata = workout.generationMetadata ?? {};
+    final kindRaw = metadata['hc_activity_kind'] as String? ?? workout.type;
+    final kind = SyncedKind.fromString(kindRaw);
+    final palette = kind.palette(isDark);
+    final sourceApp = metadata['source_app'] as String?
+        ?? metadata['source_app_name'] as String?
+        ?? (Theme.of(context).platform == TargetPlatform.iOS
+            ? 'Apple Health'
+            : 'Health Connect');
+    final textPrimary = isDark ? Colors.white : AppColorsLight.textPrimary;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final dateLabel = _formatDateShort(workout.scheduledDate);
+    final metricChips = _topMetricsFor(kind, metadata, workout);
+
+    return GestureDetector(
+      onTap: () {
+        HapticService.selection();
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (_) => SyncedWorkoutDetailScreen(workout: workout),
+          ),
+        );
+      },
+      child: Container(
+        width: 176,
+        height: 136,
+        decoration: BoxDecoration(
+          color: palette.bg(isDark),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: palette.fg.withValues(alpha: isDark ? 0.28 : 0.35),
+            width: 1,
+          ),
+        ),
+        child: Stack(
+          children: [
+            // Watermark icon — reinforces the kind visually
+            Positioned(
+              right: -10,
+              bottom: -14,
+              child: IgnorePointer(
+                child: Transform.rotate(
+                  angle: -0.21,
+                  child: Icon(
+                    kind.icon,
+                    size: 96,
+                    color: palette.fg.withValues(alpha: 0.12),
+                  ),
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  KindAvatar(kind: kind, size: 40),
+                  const SizedBox(height: 10),
+                  Text(
+                    kind == SyncedKind.other
+                        ? (workout.name ?? 'Workout')
+                        : kind.label,
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w700,
+                      color: textPrimary,
+                      height: 1.1,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    '$dateLabel${workout.durationMinutes != null ? ' · ${workout.durationMinutes} min' : ''}',
+                    style: TextStyle(fontSize: 11, color: textMuted),
+                  ),
+                  const SizedBox(height: 8),
+                  if (metricChips.isNotEmpty)
+                    Row(
+                      children: [
+                        for (int i = 0; i < metricChips.length; i++) ...[
+                          if (i > 0) const SizedBox(width: 10),
+                          metricChips[i],
+                        ],
+                      ],
+                    ),
+                  const Spacer(),
+                  Text(
+                    sourceApp,
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w600,
+                      color: palette.fg.withValues(alpha: isDark ? 0.9 : 0.8),
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Pick up to two best-available metric chips for the card using the
+  /// kind's default metric priority, falling back gracefully when data is
+  /// missing.
+  List<Widget> _topMetricsFor(
+    SyncedKind kind,
+    Map<String, dynamic> metadata,
+    Workout workout,
+  ) {
+    final results = <Widget>[];
+    for (final key in kind.heroMetricOrder) {
+      final chip = _chipForMetric(key, metadata, workout);
+      if (chip != null) {
+        results.add(chip);
+        if (results.length >= 2) break;
+      }
+    }
+    return results;
+  }
+
+  Widget? _chipForMetric(
+    String key,
+    Map<String, dynamic> metadata,
+    Workout workout,
+  ) {
+    switch (key) {
+      case 'distance_m':
+        final m = (metadata['distance_m'] ?? metadata['distance_meters']) as num?;
+        if (m == null || m <= 0) return null;
+        return MetricChip(
+          dotColor: MetricColors.distance,
+          value: _formatDistance(m.toDouble()),
+          unit: _distanceUnitLabel(),
+        );
+      case 'calories_active':
+        final c = (metadata['calories_active'] ?? metadata['calories_burned']) as num?;
+        if (c == null || c <= 0) return null;
+        return MetricChip(
+          dotColor: MetricColors.calories,
+          value: _formatInt(c),
+          unit: 'kcal',
+        );
+      case 'steps':
+        final s = (metadata['steps'] ?? metadata['total_steps']) as num?;
+        if (s == null || s <= 0) return null;
+        return MetricChip(
+          dotColor: MetricColors.steps,
+          value: _formatInt(s),
+          unit: 'steps',
+        );
+      case 'avg_heart_rate':
+        final h = metadata['avg_heart_rate'] as num?;
+        if (h == null || h <= 0) return null;
+        return MetricChip(
+          dotColor: MetricColors.heartRate,
+          value: _formatInt(h),
+          unit: 'bpm',
+        );
+      case 'max_heart_rate':
+        final h = metadata['max_heart_rate'] as num?;
+        if (h == null || h <= 0) return null;
+        return MetricChip(
+          dotColor: MetricColors.heartRate,
+          value: _formatInt(h),
+          unit: 'peak',
+        );
+      case 'duration':
+        if (workout.durationMinutes == null) return null;
+        return MetricChip(
+          dotColor: MetricColors.duration,
+          value: _formatDuration(workout.durationMinutes!),
+        );
+      case 'elevation_gain_m':
+        final e = metadata['elevation_gain_m'] as num?;
+        if (e == null || e <= 0) return null;
+        return MetricChip(
+          dotColor: MetricColors.elevation,
+          value: _formatInt(e),
+          unit: 'm gain',
+        );
+      case 'avg_speed_mps':
+        final s = metadata['avg_speed_mps'] as num?;
+        if (s == null || s <= 0) return null;
+        return MetricChip(
+          dotColor: MetricColors.pace,
+          value: (s.toDouble() * 2.23694).toStringAsFixed(1),
+          unit: 'mph',
+        );
+      case 'pace_sec_per_km':
+        final p = metadata['pace_sec_per_km'] as num?;
+        if (p == null || p <= 0) return null;
+        return MetricChip(
+          dotColor: MetricColors.pace,
+          value: _formatPacePerMile(p.toDouble()),
+          unit: '/mi',
+        );
+      case 'avg_respiratory_rate':
+        final r = metadata['avg_respiratory_rate'] as num?;
+        if (r == null || r <= 0) return null;
+        return MetricChip(
+          dotColor: MetricColors.respRate,
+          value: _formatInt(r),
+          unit: 'br/min',
+        );
+      default:
+        return null;
+    }
+  }
+
+  String _formatDateShort(String? iso) {
+    if (iso == null || iso.isEmpty) return '';
+    final dt = DateTime.tryParse(iso);
+    if (dt == null) return iso;
+    final months = [
+      'Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'
+    ];
+    return '${months[dt.month - 1]} ${dt.day}';
+  }
+
+  String _formatDistance(double meters) {
+    // Default to miles for US; meters fallback if very short.
+    if (meters < 50) return '${meters.round()}m';
+    final miles = meters * 0.000621371;
+    return miles.toStringAsFixed(miles >= 10 ? 1 : 2);
+  }
+
+  String _distanceUnitLabel() => 'mi';
+
+  String _formatInt(num v) {
+    if (v >= 1000) return '${(v / 1000).toStringAsFixed(v >= 10000 ? 0 : 1)}k';
+    return v.round().toString();
+  }
+
+  String _formatDuration(int minutes) {
+    if (minutes >= 60) {
+      final h = minutes ~/ 60;
+      final m = minutes % 60;
+      return m == 0 ? '${h}h' : '${h}h ${m}m';
+    }
+    return '${minutes}m';
+  }
+
+  String _formatPacePerMile(double secPerKm) {
+    // secPerKm → sec per mile
+    final secPerMi = secPerKm * 1.609344;
+    final m = (secPerMi ~/ 60).toInt();
+    final s = (secPerMi % 60).round();
+    return '$m:${s.toString().padLeft(2, '0')}';
+  }
+}
+
+/// Trailing "See all" card that opens the full synced-workout history
+/// screen. Shares dimensions with the main cards so the strip stays clean.
+class _SeeAllSyncedCard extends StatelessWidget {
+  final int count;
+
+  const _SeeAllSyncedCard({required this.count});
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final accent = AccentColorScope.of(context).getColor(isDark);
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final elevated =
+        isDark ? AppColors.elevated : AppColorsLight.elevated;
+
+    return GestureDetector(
+      onTap: () {
+        HapticService.selection();
+        context.push('/profile/synced-workouts');
+      },
+      child: CustomPaint(
+        painter: _DashedBorderPainter(color: accent, radius: 16),
+        child: Container(
+          width: 176,
+          height: 136,
+          decoration: BoxDecoration(
+            color: elevated.withValues(alpha: 0.4),
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  color: accent.withValues(alpha: 0.16),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  Icons.arrow_forward_rounded,
+                  color: accent,
+                  size: 26,
+                ),
+              ),
+              const SizedBox(height: 10),
+              Text(
+                'See all',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                  color: accent,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                '$count session${count == 1 ? '' : 's'}',
+                style: TextStyle(fontSize: 11, color: textMuted),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _DashedBorderPainter extends CustomPainter {
+  final Color color;
+  final double radius;
+
+  _DashedBorderPainter({required this.color, required this.radius});
+
+  static const double _dashLen = 6;
+  static const double _gapLen = 4;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color.withValues(alpha: 0.8)
+      ..strokeWidth = 1.5
+      ..style = PaintingStyle.stroke;
+    final rrect = RRect.fromRectAndRadius(
+      Offset.zero & size,
+      Radius.circular(radius),
+    );
+    final path = Path()..addRRect(rrect);
+    final metrics = path.computeMetrics();
+    for (final m in metrics) {
+      double d = 0;
+      while (d < m.length) {
+        final end = (d + _dashLen).clamp(0, m.length).toDouble();
+        canvas.drawPath(m.extractPath(d, end), paint);
+        d = end + _gapLen;
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _DashedBorderPainter old) =>
+      old.color != color || old.radius != radius;
 }
 

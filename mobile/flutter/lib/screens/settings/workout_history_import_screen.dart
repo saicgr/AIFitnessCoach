@@ -1,10 +1,21 @@
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../../core/providers/user_provider.dart';
+import '../../core/theme/accent_color_provider.dart';
+import '../../data/repositories/auth_repository.dart';
+import '../../data/repositories/workout_history_import_file_repository.dart';
 import '../../data/repositories/workout_history_repository.dart';
 import '../../data/services/api_client.dart';
-import '../../data/repositories/auth_repository.dart';
+import '../../data/services/haptic_service.dart';
+import '../../widgets/glass_sheet.dart';
 import '../../widgets/pill_app_bar.dart';
+import 'widgets/unresolved_exercises_bulk_sheet.dart';
+import 'widgets/workout_import_preview_sheet.dart';
+import 'widgets/workout_import_progress_sheet.dart';
+import 'widgets/workout_import_summary_sheet.dart';
 
 /// Screen for importing past workout history to seed AI learning.
 /// Addresses the "weird weights" issue by allowing users to input
@@ -30,6 +41,7 @@ class _WorkoutHistoryImportScreenState
   List<WorkoutHistoryRecord> _recentHistory = [];
 
   WorkoutHistoryRepository? _repository;
+  WorkoutHistoryImportFileRepository? _fileRepository;
 
   @override
   void initState() {
@@ -38,6 +50,7 @@ class _WorkoutHistoryImportScreenState
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final apiClient = ref.read(apiClientProvider);
       _repository = WorkoutHistoryRepository(apiClient);
+      _fileRepository = WorkoutHistoryImportFileRepository(apiClient);
       _loadData();
     });
   }
@@ -145,6 +158,125 @@ class _WorkoutHistoryImportScreenState
     }
   }
 
+  // ─────────────────────── File-import flow ────────────────────────────
+
+  /// End-to-end file import flow:
+  ///   1. Pick file → options sheet (unit + source hint)
+  ///   2. POST /import/preview → preview sheet
+  ///   3. POST /import/file → progress sheet (polls media-jobs)
+  ///   4. Summary sheet → optional bulk-remap follow-up
+  Future<void> _runFileImport() async {
+    HapticService.light();
+    final authState = ref.read(authStateProvider);
+    final user = authState.user;
+    if (user == null || _fileRepository == null) return;
+
+    // 1. Pick file. withData:true guarantees `file.bytes` is populated on web
+    //    and on platforms where the picker normally returns a path only.
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.any,
+      withData: true,
+      allowMultiple: false,
+    );
+    if (result == null || result.files.isEmpty) return;
+    final picked = result.files.first;
+    final bytes = picked.bytes;
+    if (bytes == null) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Could not read that file.')),
+      );
+      return;
+    }
+
+    // 2. Collect unit + source hint. Default unit = workout unit preference.
+    final defaultUnit = ref.read(workoutWeightUnitProvider).toLowerCase();
+    final opts = await _pickImportOptions(defaultUnit: defaultUnit);
+    if (opts == null) return;
+
+    // 3. Preview (sync dry-run).
+    setState(() => _isLoading = true);
+    try {
+      final preview = await _fileRepository!.previewFile(
+        bytes: bytes,
+        filename: picked.name,
+        unitHint: opts.unit,
+        timezoneHint: DateTime.now().timeZoneName,
+        sourceAppHint: opts.sourceAppHint,
+      );
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+
+      final confirmed = await showWorkoutImportPreviewSheet(
+        context: context,
+        preview: preview,
+        filename: picked.name,
+      );
+      if (!confirmed) return;
+
+      // 4. Enqueue the real job.
+      setState(() => _isLoading = true);
+      final jobId = await _fileRepository!.uploadFile(
+        bytes: bytes,
+        filename: picked.name,
+        unitHint: opts.unit,
+        timezoneHint: DateTime.now().timeZoneName,
+        sourceAppHint: opts.sourceAppHint,
+      );
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+
+      // 5. Progress sheet (polls every 1.5s).
+      final finalJob = await showWorkoutImportProgressSheet(
+        context: context,
+        jobId: jobId,
+        repository: _fileRepository!,
+        sourceAppLabel: _formatSourceApp(preview.sourceApp),
+      );
+      if (finalJob == null || !mounted) return;
+
+      // 6. Summary sheet.
+      final summary = await showWorkoutImportSummarySheet(
+        context: context,
+        job: finalJob,
+      );
+
+      // 7. Refresh strength summaries so the list reflects the new data.
+      _loadData();
+
+      if (!mounted) return;
+      if (summary?.fixUnresolved == true) {
+        await showUnresolvedExercisesBulkSheet(
+          context: context,
+          repository: _fileRepository!,
+          userId: user.id,
+        );
+        _loadData();
+      }
+      // NOTE: program activation — when the backend adds a dedicated
+      // /program/activate endpoint we'll wire it here. For now the toggle
+      // value just surfaces whether the user wanted activation.
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Import failed: $e')),
+      );
+    }
+  }
+
+  Future<_ImportOptions?> _pickImportOptions({required String defaultUnit}) {
+    return showGlassSheet<_ImportOptions>(
+      context: context,
+      builder: (ctx) => GlassSheet(
+        maxHeightFraction: 0.68,
+        child: _ImportOptionsSheet(defaultUnit: defaultUnit),
+      ),
+    );
+  }
+
+  // ───────────────────────── Build ─────────────────────────────────────
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -159,6 +291,11 @@ class _WorkoutHistoryImportScreenState
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  // File-import section — ABOVE the manual entry form so
+                  // it's the first thing users see.
+                  _FileImportSection(onPickFile: _runFileImport),
+                  const SizedBox(height: 24),
+
                   // Info card
                   Card(
                     color: colorScheme.primaryContainer,
@@ -394,6 +531,232 @@ class _WorkoutHistoryImportScreenState
             ),
     );
   }
+
+  static String _formatSourceApp(String slug) {
+    if (slug.isEmpty || slug == 'unknown') return 'export';
+    return slug
+        .split('_')
+        .map((p) => p.isEmpty ? '' : '${p[0].toUpperCase()}${p.substring(1)}')
+        .join(' ');
+  }
+}
+
+// ───────────────────────── Widgets ──────────────────────────────────────
+
+/// The "Import from file" card that sits above the manual entry form.
+class _FileImportSection extends StatelessWidget {
+  const _FileImportSection({required this.onPickFile});
+  final VoidCallback onPickFile;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final accent = AccentColorScope.of(context).getColor(isDark);
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(20),
+        gradient: LinearGradient(
+          colors: [
+            accent.withValues(alpha: 0.18),
+            accent.withValues(alpha: 0.06),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        border: Border.all(color: accent.withValues(alpha: 0.35)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: accent.withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(Icons.folder_open_rounded, color: accent),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  'Import from file',
+                  style: theme.textTheme.titleLarge
+                      ?.copyWith(fontWeight: FontWeight.w800),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Export from Hevy, Strong, Fitbod, Jeff Nippard, Renaissance '
+            'Periodization, Wendler 5/3/1, Apple Health, Garmin, Strava, '
+            'Peloton, and more.',
+            style: theme.textTheme.bodyMedium,
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'Supports CSV, XLSX, XLSM, JSON, Parquet, PDF, FIT, XML, ZIP.',
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+          ),
+          const SizedBox(height: 12),
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton.icon(
+              style: FilledButton.styleFrom(backgroundColor: accent),
+              onPressed: onPickFile,
+              icon: const Icon(Icons.upload_file_rounded),
+              label: const Text('Choose File'),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// The unit + source-hint sheet shown after file selection.
+class _ImportOptions {
+  const _ImportOptions({required this.unit, this.sourceAppHint});
+  final String unit;
+  final String? sourceAppHint;
+}
+
+class _ImportOptionsSheet extends StatefulWidget {
+  const _ImportOptionsSheet({required this.defaultUnit});
+  final String defaultUnit;
+
+  @override
+  State<_ImportOptionsSheet> createState() => _ImportOptionsSheetState();
+}
+
+class _ImportOptionsSheetState extends State<_ImportOptionsSheet> {
+  late String _unit;
+  String _hint = 'auto';
+
+  // Source hint slugs must match detect() / adapter module names.
+  static const _sources = <({String slug, String label})>[
+    (slug: 'auto', label: 'Auto-detect'),
+    (slug: 'hevy', label: 'Hevy'),
+    (slug: 'strong', label: 'Strong'),
+    (slug: 'fitbod', label: 'Fitbod'),
+    (slug: 'jefit', label: 'Jefit'),
+    (slug: 'fitnotes', label: 'FitNotes'),
+    (slug: 'garmin', label: 'Garmin'),
+    (slug: 'apple_health', label: 'Apple Health'),
+    (slug: 'strava', label: 'Strava'),
+    (slug: 'peloton', label: 'Peloton'),
+    (slug: 'nippard', label: 'Jeff Nippard'),
+    (slug: 'rp', label: 'Renaissance Periodization'),
+    (slug: 'wendler_531', label: 'Wendler 5/3/1'),
+    (slug: 'nsuns', label: 'nSuns'),
+    (slug: 'gzclp', label: 'GZCLP'),
+    (slug: 'starting_strength', label: 'Starting Strength'),
+    (slug: 'stronglifts', label: 'StrongLifts'),
+    (slug: 'generic_sheet', label: 'Other / generic spreadsheet'),
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    // Normalize 'lbs' → 'lb' to match backend contract.
+    _unit = widget.defaultUnit.startsWith('lb') ? 'lb' : 'kg';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final accent = AccentColorScope.of(context).getColor(isDark);
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 4, 20, 16),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Before we parse…', style: theme.textTheme.titleLarge),
+          const SizedBox(height: 4),
+          Text(
+            'Which unit is the weight column in? And if you know the source app, select it — helps disambiguate sibling formats (Hevy vs. Strong CSVs).',
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+          ),
+          const SizedBox(height: 16),
+          Text('Weight unit', style: theme.textTheme.titleSmall),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Expanded(
+                child: RadioListTile<String>(
+                  title: const Text('Pounds (lb)'),
+                  value: 'lb',
+                  groupValue: _unit,
+                  onChanged: (v) => setState(() => _unit = v ?? 'lb'),
+                ),
+              ),
+              Expanded(
+                child: RadioListTile<String>(
+                  title: const Text('Kilograms (kg)'),
+                  value: 'kg',
+                  groupValue: _unit,
+                  onChanged: (v) => setState(() => _unit = v ?? 'kg'),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text('Source app', style: theme.textTheme.titleSmall),
+          const SizedBox(height: 4),
+          Flexible(
+            child: SingleChildScrollView(
+              child: DropdownButtonFormField<String>(
+                initialValue: _hint,
+                items: [
+                  for (final s in _sources)
+                    DropdownMenuItem(value: s.slug, child: Text(s.label)),
+                ],
+                onChanged: (v) => setState(() => _hint = v ?? 'auto'),
+                decoration: const InputDecoration(
+                  border: OutlineInputBorder(),
+                  isDense: true,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton(
+              style: FilledButton.styleFrom(backgroundColor: accent),
+              onPressed: () {
+                HapticService.light();
+                Navigator.of(context).pop(_ImportOptions(
+                  unit: _unit,
+                  sourceAppHint: _hint == 'auto' ? null : _hint,
+                ));
+              },
+              child: const Text('Preview import'),
+            ),
+          ),
+          const SizedBox(height: 4),
+          Center(
+            child: TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Cancel'),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 class _StrengthSummaryTile extends StatelessWidget {
@@ -498,3 +861,4 @@ class _HistoryRecordTile extends StatelessWidget {
     );
   }
 }
+

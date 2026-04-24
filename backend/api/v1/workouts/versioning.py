@@ -45,6 +45,66 @@ from .utils import (
 router = APIRouter()
 logger = get_logger(__name__)
 
+
+def _resolve_regenerate_target_date(
+    body: RegenerateWorkoutRequest,
+    existing: dict,
+    user: dict,
+    user_tz: str = "UTC",
+) -> str:
+    """Decide the scheduled_date a regenerated workout should land on.
+
+    Default is the original workout's scheduled_date. If the request passes
+    ``new_scheduled_date`` (e.g., "Do this today"), we use that instead, but
+    only after verifying it's a preferred workout day — unless the caller
+    explicitly set ``force_non_preferred_day`` (user deliberately chose a
+    rest day).
+
+    IMPORTANT: when ``new_scheduled_date`` is provided it comes as a plain
+    ``YYYY-MM-DD`` (user's local date). We convert to the noon-UTC ISO
+    timestamp the rest of the codebase uses so timezone-aware range queries
+    in /today match correctly. Storing plain midnight UTC would put
+    e.g. a CST user's "today" workout into the previous local day.
+
+    Raises HTTPException(409, {error, scheduled_date, suggested_date}) when
+    the target date is not a preferred day and force wasn't granted. The
+    streaming variant catches this and converts to an SSE error event.
+    """
+    # When no new date is supplied, preserve whatever format the existing row
+    # already uses (full ISO datetime from earlier writes).
+    if not body.new_scheduled_date:
+        return existing.get("scheduled_date")
+
+    target_date_str = body.new_scheduled_date[:10]
+    if not body.force_non_preferred_day:
+        from .today import _get_user_workout_days, _calculate_next_workout_date
+        selected_days = _get_user_workout_days(user)
+        if selected_days:
+            try:
+                weekday = datetime.strptime(target_date_str, "%Y-%m-%d").weekday()
+            except ValueError:
+                weekday = None
+            if weekday is not None and weekday not in selected_days:
+                today_str = datetime.utcnow().strftime("%Y-%m-%d")
+                suggested = _calculate_next_workout_date(selected_days, user_today_str=today_str)
+                logger.info(
+                    f"[PreferredDayGate] Rejecting /regenerate new_scheduled_date={target_date_str} "
+                    f"(weekday={weekday}, preferred={selected_days}); suggested_date={suggested}"
+                )
+                raise HTTPException(
+                    status_code=409,
+                    detail={
+                        "error": "not_a_workout_day",
+                        "scheduled_date": target_date_str,
+                        "suggested_date": suggested,
+                        "selected_days": selected_days,
+                    },
+                )
+    # Normalize to the noon-UTC ISO used by the rest of the codebase.
+    from core.timezone_utils import target_date_to_utc_iso
+    return target_date_to_utc_iso(target_date_str, user_tz)
+
+
 # ---------------------------------------------------------------------------
 # Injury normalization helpers (reused from Phase 2I alias map)
 # ---------------------------------------------------------------------------
@@ -328,6 +388,12 @@ async def regenerate_workout(request: RegenerateWorkoutRequest,
         if not user:
             raise HTTPException(status_code=404, detail="User not found")
 
+        # Gate "Do this today" (or any new_scheduled_date) against preferred workout days.
+        # Returns the date that should actually be written; raises 409 on rejection.
+        from core.timezone_utils import resolve_timezone
+        _regen_tz = resolve_timezone(None, db, request.user_id)
+        target_scheduled_date = _resolve_regenerate_target_date(request, existing, user, _regen_tz)
+
         # Determine generation parameters
         # Use user-selected settings if provided, otherwise fall back to user profile
         fitness_level = request.fitness_level or user.get("fitness_level") or "intermediate"
@@ -493,7 +559,7 @@ async def regenerate_workout(request: RegenerateWorkoutRequest,
             "name": workout_name,
             "type": workout_type,
             "difficulty": difficulty,
-            "scheduled_date": existing.get("scheduled_date"),  # Keep same date
+            "scheduled_date": target_scheduled_date,
             "exercises_json": exercises,
             "duration_minutes": target_duration,
             "equipment": json.dumps(equipment) if equipment else "[]",  # Store user-selected equipment
@@ -612,7 +678,7 @@ async def regenerate_workout(request: RegenerateWorkoutRequest,
             "name": workout_name,
             "type": workout_type,
             "difficulty": difficulty,
-            "scheduled_date": existing.get("scheduled_date"),
+            "scheduled_date": target_scheduled_date,
             "exercises_json": exercises,
             "duration_minutes": target_duration,
             "equipment": new_workout_data["equipment"],
@@ -794,6 +860,18 @@ async def regenerate_workout_streaming(request: Request, body: RegenerateWorkout
             user = db.get_user(body.user_id)
             if not user:
                 yield send_error("User not found")
+                return
+
+            # Gate "Do this today" / new_scheduled_date against preferred workout days.
+            # SSE cannot return a 409 — convert the HTTPException into an SSE error
+            # event the client can decode and turn into a user-visible dialog.
+            try:
+                from core.timezone_utils import resolve_timezone
+                _stream_regen_tz = resolve_timezone(request, db, body.user_id)
+                target_scheduled_date = _resolve_regenerate_target_date(body, existing, user, _stream_regen_tz)
+            except HTTPException as gate_err:
+                detail = gate_err.detail if isinstance(gate_err.detail, dict) else {"error": str(gate_err.detail)}
+                yield f"event: error\ndata: {json.dumps({'type': 'error', 'error': 'not_a_workout_day', 'detail': detail, 'elapsed_ms': elapsed_ms()})}\n\n"
                 return
 
             # Parse user data
@@ -1071,7 +1149,7 @@ async def regenerate_workout_streaming(request: Request, body: RegenerateWorkout
                 "name": workout_name,
                 "type": workout_type,
                 "difficulty": difficulty,
-                "scheduled_date": existing.get("scheduled_date"),
+                "scheduled_date": target_scheduled_date,
                 "exercises_json": exercises,
                 "duration_minutes": target_duration,
                 "equipment": json.dumps(equipment) if equipment else "[]",
@@ -1108,7 +1186,7 @@ async def regenerate_workout_streaming(request: Request, body: RegenerateWorkout
                 "name": workout_name,
                 "type": workout_type,
                 "difficulty": difficulty,
-                "scheduled_date": existing.get("scheduled_date"),
+                "scheduled_date": target_scheduled_date,
                 "exercises_json": exercises,
                 "duration_minutes": target_duration,
                 "equipment": new_workout_data["equipment"],

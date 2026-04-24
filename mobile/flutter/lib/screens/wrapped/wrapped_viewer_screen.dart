@@ -13,6 +13,7 @@ import 'cards/records_card.dart';
 import 'cards/time_card.dart';
 import 'cards/personality_card.dart';
 import 'cards/summary_card.dart';
+import 'cards/trophies_card.dart';
 import 'wrapped_share_sheet.dart';
 
 /// Full-screen story viewer for Fitness Wrapped.
@@ -118,6 +119,10 @@ class _WrappedViewerScreenState extends ConsumerState<WrappedViewerScreen> {
       WrappedFavoritesCard(data: data, showWatermark: false),
       WrappedConsistencyCard(data: data, showWatermark: false),
       WrappedRecordsCard(data: data, showWatermark: false),
+      // Trophies card sits between records and time — shares the
+      // celebration-ceremony visual language so returning users see the
+      // badges they earned during the Wrapped period as part of the recap.
+      WrappedTrophiesCard(data: data, showWatermark: false),
       WrappedTimeCard(data: data, showWatermark: false),
       WrappedPersonalityCard(data: data, showWatermark: false),
       WrappedSummaryCard(data: data, showWatermark: false),

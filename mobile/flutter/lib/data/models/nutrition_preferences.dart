@@ -61,6 +61,16 @@ class NutritionPreferences {
   @JsonKey(name: 'disliked_foods')
   final List<String> dislikedFoods;
 
+  // Menu-analysis personalization (added 2026-04-23)
+  @JsonKey(name: 'custom_allergens')
+  final List<String> customAllergens;
+  @JsonKey(name: 'inflammation_sensitivity')
+  final int inflammationSensitivity;  // 1–5; 1 indifferent, 5 strict
+  @JsonKey(name: 'meal_budget_usd')
+  final double? mealBudgetUsd;
+  @JsonKey(name: 'daily_food_budget_usd')
+  final double? dailyFoodBudgetUsd;
+
   // Meal patterns
   @JsonKey(name: 'meal_pattern')
   final String mealPattern;
@@ -150,6 +160,10 @@ class NutritionPreferences {
     this.allergies = const [],
     this.dietaryRestrictions = const [],
     this.dislikedFoods = const [],
+    this.customAllergens = const [],
+    this.inflammationSensitivity = 3,
+    this.mealBudgetUsd,
+    this.dailyFoodBudgetUsd,
     this.mealPattern = '3_meals',
     this.cookingSkill = 'intermediate',
     this.cookingTimeMinutes = 30,
@@ -251,6 +265,10 @@ class NutritionPreferences {
     List<String>? allergies,
     List<String>? dietaryRestrictions,
     List<String>? dislikedFoods,
+    List<String>? customAllergens,
+    int? inflammationSensitivity,
+    double? mealBudgetUsd,
+    double? dailyFoodBudgetUsd,
     String? mealPattern,
     String? cookingSkill,
     int? cookingTimeMinutes,
@@ -300,6 +318,10 @@ class NutritionPreferences {
       allergies: allergies ?? this.allergies,
       dietaryRestrictions: dietaryRestrictions ?? this.dietaryRestrictions,
       dislikedFoods: dislikedFoods ?? this.dislikedFoods,
+      customAllergens: customAllergens ?? this.customAllergens,
+      inflammationSensitivity: inflammationSensitivity ?? this.inflammationSensitivity,
+      mealBudgetUsd: mealBudgetUsd ?? this.mealBudgetUsd,
+      dailyFoodBudgetUsd: dailyFoodBudgetUsd ?? this.dailyFoodBudgetUsd,
       mealPattern: mealPattern ?? this.mealPattern,
       cookingSkill: cookingSkill ?? this.cookingSkill,
       cookingTimeMinutes: cookingTimeMinutes ?? this.cookingTimeMinutes,

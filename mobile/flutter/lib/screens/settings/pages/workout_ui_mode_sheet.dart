@@ -23,13 +23,15 @@ import '../../../data/services/haptic_service.dart';
 /// Entry point — mirrors the codebase's `showReplayTutorialsSheet` style.
 /// Pass `context` from a ConsumerStatefulWidget's `build`.
 Future<void> showWorkoutUiModeSheet(BuildContext context) {
-  final isDark = Theme.of(context).brightness == Brightness.dark;
   return showModalBottomSheet<void>(
     context: context,
-    backgroundColor: isDark ? AppColors.pureBlack : AppColorsLight.pureWhite,
+    // Transparent + clipBehavior so the BackdropFilter inside renders the
+    // frosted-glass effect over whatever is behind the sheet.
+    backgroundColor: Colors.transparent,
     isScrollControlled: true,
+    clipBehavior: Clip.antiAlias,
     shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
     ),
     builder: (_) => const _WorkoutUiModeSheet(),
   );
@@ -46,74 +48,102 @@ class _WorkoutUiModeSheet extends ConsumerWidget {
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final accent = AccentColorScope.of(context).getColor(isDark);
 
-    final current = ref.watch(workoutUiModeProvider.select((s) => s.mode));
+    // Read the mode and normalize the deprecated `simple` tier to `easy` so
+    // the segmented control always matches exactly one segment (otherwise the
+    // filled "Easy" pill disappears and the control looks broken).
+    final rawMode = ref.watch(workoutUiModeProvider.select((s) => s.mode));
+    // ignore: deprecated_member_use_from_same_package
+    final current =
+        // ignore: deprecated_member_use_from_same_package
+        rawMode == WorkoutUiMode.simple ? WorkoutUiMode.easy : rawMode;
 
-    return SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Drag handle — identical geometry to _showReplayTutorialsSheet.
-            Center(
-              child: Container(
-                width: 36,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: textMuted.withValues(alpha: 0.3),
-                  borderRadius: BorderRadius.circular(2),
-                ),
+    // Frosted-glass backdrop — matches the visual language used by the rest
+    // of the bottom sheets in this app (exercise_detail_sheet, etc.).
+    return ClipRRect(
+      borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 22, sigmaY: 22),
+        child: Container(
+          decoration: BoxDecoration(
+            color: isDark
+                ? Colors.black.withValues(alpha: 0.55)
+                : Colors.white.withValues(alpha: 0.75),
+            borderRadius:
+                const BorderRadius.vertical(top: Radius.circular(24)),
+            border: Border(
+              top: BorderSide(
+                color: isDark
+                    ? Colors.white.withValues(alpha: 0.12)
+                    : Colors.black.withValues(alpha: 0.08),
+                width: 0.5,
               ),
             ),
-            const SizedBox(height: 16),
-            Text(
-              'Workout Mode',
-              style: TextStyle(
-                fontSize: 17,
-                fontWeight: FontWeight.bold,
-                color: textPrimary,
+          ),
+          child: SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Center(
+                    child: Container(
+                      width: 36,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: textMuted.withValues(alpha: 0.3),
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Workout Mode',
+                    style: TextStyle(
+                      fontSize: 17,
+                      fontWeight: FontWeight.bold,
+                      color: textPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Pick the level of detail you want while logging sets. You can change this any time.',
+                    style: TextStyle(
+                        fontSize: 13, color: textMuted, height: 1.35),
+                  ),
+                  const SizedBox(height: 16),
+                  _TierCard(
+                    mode: WorkoutUiMode.easy,
+                    icon: Icons.spa_outlined,
+                    title: 'Easy',
+                    description:
+                        "Polished default. Steppers, AI coach, rest timer, notes with audio + photo, tap-to-edit past sets. Perfect for most sessions.",
+                    selected: current == WorkoutUiMode.easy,
+                    accent: accent,
+                    isDark: isDark,
+                    onTap: () => _pick(context, ref, WorkoutUiMode.easy),
+                  ),
+                  const SizedBox(height: 10),
+                  _TierCard(
+                    mode: WorkoutUiMode.advanced,
+                    icon: Icons.tune_rounded,
+                    title: 'Advanced',
+                    description:
+                        'Everything — warmup/stretch phases, RPE/RIR, pyramid, supersets, drop sets, ±2.5 kg increments, plate chart.',
+                    selected: current == WorkoutUiMode.advanced,
+                    accent: accent,
+                    isDark: isDark,
+                    onTap: () => _pick(context, ref, WorkoutUiMode.advanced),
+                  ),
+                  const SizedBox(height: 18),
+                  WorkoutUiModeSegmentedControl(
+                    onChanged: (mode) => _pick(context, ref, mode),
+                  ),
+                  const SizedBox(height: 4),
+                ],
               ),
             ),
-            const SizedBox(height: 4),
-            Text(
-              'Pick the level of detail you want while logging sets. You can change this any time.',
-              style: TextStyle(fontSize: 13, color: textMuted, height: 1.35),
-            ),
-            const SizedBox(height: 16),
-
-            _TierCard(
-              mode: WorkoutUiMode.easy,
-              icon: Icons.spa_outlined,
-              title: 'Easy',
-              description:
-                  "Polished default. Steppers, AI coach, rest timer, notes with audio + photo, tap-to-edit past sets. Perfect for most sessions.",
-              selected: current == WorkoutUiMode.easy,
-              accent: accent,
-              isDark: isDark,
-              onTap: () => _pick(context, ref, WorkoutUiMode.easy),
-            ),
-            const SizedBox(height: 10),
-            _TierCard(
-              mode: WorkoutUiMode.advanced,
-              icon: Icons.tune_rounded,
-              title: 'Advanced',
-              description:
-                  'Everything — warmup/stretch phases, RPE/RIR, pyramid, supersets, drop sets, ±2.5 kg increments, plate chart.',
-              selected: current == WorkoutUiMode.advanced,
-              accent: accent,
-              isDark: isDark,
-              onTap: () => _pick(context, ref, WorkoutUiMode.advanced),
-            ),
-            const SizedBox(height: 18),
-
-            // Segmented footer — the same selector that lives on every other
-            // entry point, so users learn one control and use it everywhere.
-            WorkoutUiModeSegmentedControl(
-              onChanged: (mode) => _pick(context, ref, mode),
-            ),
-            const SizedBox(height: 4),
-          ],
+          ),
         ),
       ),
     );
@@ -289,7 +319,13 @@ class WorkoutUiModeSegmentedControl extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final accent = AccentColorScope.of(context).getColor(isDark);
-    final current = ref.watch(workoutUiModeProvider.select((s) => s.mode));
+    final rawMode = ref.watch(workoutUiModeProvider.select((s) => s.mode));
+    // Normalize the deprecated `simple` tier to `easy` so the selection state
+    // always lands on a visible segment — otherwise no pill reads as filled.
+    // ignore: deprecated_member_use_from_same_package
+    final current =
+        // ignore: deprecated_member_use_from_same_package
+        rawMode == WorkoutUiMode.simple ? WorkoutUiMode.easy : rawMode;
 
     final border = (isDark ? Colors.white : Colors.black).withValues(
       alpha: 0.14,
@@ -305,14 +341,7 @@ class WorkoutUiModeSegmentedControl extends ConsumerWidget {
       padding: const EdgeInsets.all(2),
       child: Row(
         mainAxisSize: MainAxisSize.min,
-        // Only render live tiers. The deprecated `simple` value is kept in
-        // the enum for DB back-compat (normalized to `easy` at read-time) but
-        // must never appear in the UI — otherwise it renders as a duplicate
-        // "Easy" segment next to the real Easy.
-        children: WorkoutUiMode.values
-            // ignore: deprecated_member_use_from_same_package
-            .where((m) => m != WorkoutUiMode.simple)
-            .map((mode) {
+        children: WorkoutUiMode.activeValues.map((mode) {
           return _Segment(
             label: compact ? mode.shortLabel : mode.label,
             selected: current == mode,

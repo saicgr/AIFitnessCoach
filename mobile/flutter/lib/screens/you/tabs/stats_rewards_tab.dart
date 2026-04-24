@@ -11,6 +11,8 @@
 /// fall back to "—" on a single card — never blank the whole page.
 library;
 
+import 'dart:async';
+
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -20,6 +22,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/theme/accent_color_provider.dart';
 import '../../../data/providers/xp_provider.dart';
 import '../../../data/services/api_client.dart';
+import '../../../widgets/xp_hero_tile.dart';
 
 class YouStatsRewardsTab extends ConsumerStatefulWidget {
   const YouStatsRewardsTab({super.key});
@@ -35,7 +38,10 @@ class _YouStatsRewardsTabState extends ConsumerState<YouStatsRewardsTab> {
   Map<String, dynamic>? _achievementsSummary;
   Map<String, dynamic>? _skillsSummary;
   Map<String, dynamic>? _latestSummary;
-  int? _unclaimedRewards;
+  // Leaderboard state — null while the unlock-status call is in flight.
+  // `false` = locked, show progress-to-unlock. `true` = call `/rank` next.
+  bool? _leaderboardUnlocked;
+  int _workoutsNeeded = 10;
   int? _userRank;
   double? _userPercentile;
   bool _loading = true;
@@ -56,19 +62,27 @@ class _YouStatsRewardsTabState extends ConsumerState<YouStatsRewardsTab> {
         return;
       }
 
+      // Kick off XP + unclaimed-crates refreshes through the canonical
+      // provider stack. The `Rewards` tile below now watches
+      // `unclaimedCratesCountProvider` directly, and the PROGRESS group
+      // already watches `xpProvider` — so we stop making raw calls to the
+      // non-existent `/xp/unclaimed-crates` endpoint here.
+      unawaited(ref.read(xpProvider.notifier).loadUserXP(userId: userId));
+
+      // 15s receive — the leaderboard snapshot + achievements summary
+      // queries are the heaviest; 8s starved them into permanent "—".
       final opts = Options(
         sendTimeout: const Duration(seconds: 5),
-        receiveTimeout: const Duration(seconds: 8),
+        receiveTimeout: const Duration(seconds: 15),
         validateStatus: (s) => s != null && s < 500,
       );
 
       final futures = await Future.wait([
-        api.dio.get('/trophies/$userId/summary', options: opts),
+        api.dio.get('/progress/trophies/$userId/summary', options: opts),
         api.dio.get('/achievements/user/$userId/summary', options: opts),
         api.dio.get('/skill-progressions/user/$userId/summary', options: opts),
         api.dio.get('/summaries/user/$userId/latest', options: opts),
-        api.dio.get('/xp/unclaimed-crates', options: opts),
-        api.dio.get('/leaderboard/rank',
+        api.dio.get('/leaderboard/unlock-status',
             queryParameters: {'user_id': userId}, options: opts),
       ]);
 
@@ -86,12 +100,19 @@ class _YouStatsRewardsTabState extends ConsumerState<YouStatsRewardsTab> {
       }
       if (futures[4].statusCode == 200 && futures[4].data is Map) {
         final m = (futures[4].data as Map).cast<String, dynamic>();
-        _unclaimedRewards = (m['count'] as num?)?.toInt();
-      }
-      if (futures[5].statusCode == 200 && futures[5].data is Map) {
-        final m = (futures[5].data as Map).cast<String, dynamic>();
-        _userRank = (m['rank'] as num?)?.toInt();
-        _userPercentile = (m['percentile'] as num?)?.toDouble();
+        _leaderboardUnlocked = m['is_unlocked'] as bool? ?? false;
+        _workoutsNeeded = (m['workouts_needed'] as num?)?.toInt() ?? 10;
+        // Only fetch the rank once unlock is confirmed — otherwise /rank
+        // 404s and the card would sit at "—" forever.
+        if (_leaderboardUnlocked == true) {
+          final rankRes = await api.dio.get('/leaderboard/rank',
+              queryParameters: {'user_id': userId}, options: opts);
+          if (rankRes.statusCode == 200 && rankRes.data is Map) {
+            final rm = (rankRes.data as Map).cast<String, dynamic>();
+            _userRank = (rm['rank'] as num?)?.toInt();
+            _userPercentile = (rm['percentile'] as num?)?.toDouble();
+          }
+        }
       }
     } catch (_) {
       // Each card renders its own fallback — a global error banner would
@@ -120,8 +141,11 @@ class _YouStatsRewardsTabState extends ConsumerState<YouStatsRewardsTab> {
           // PROGRESS — the "where am I on the journey" group
           _SectionLabel(label: 'PROGRESS', fg: fg),
           const SizedBox(height: 10),
-          _ProgressGroup(
-            xp: ref.watch(xpProvider),
+          // Hero XP tile takes over the primary-tile slot. Skills +
+          // Achievements continue to render below as secondary metrics.
+          const XpHeroTile(),
+          const SizedBox(height: 10),
+          _ProgressSecondaryRow(
             skills: _skillsSummary,
             achievements: _achievementsSummary,
             fg: fg,
@@ -147,7 +171,6 @@ class _YouStatsRewardsTabState extends ConsumerState<YouStatsRewardsTab> {
           const SizedBox(height: 10),
           _RecapsPerksGroup(
             latestSummary: _latestSummary,
-            unclaimedRewards: _unclaimedRewards,
             fg: fg,
             accent: accent,
             isDark: isDark,
@@ -158,6 +181,8 @@ class _YouStatsRewardsTabState extends ConsumerState<YouStatsRewardsTab> {
           _SectionLabel(label: 'SOCIAL', fg: fg),
           const SizedBox(height: 10),
           _SocialGroup(
+            unlocked: _leaderboardUnlocked,
+            workoutsNeeded: _workoutsNeeded,
             rank: _userRank,
             percentile: _userPercentile,
             fg: fg,
@@ -198,16 +223,17 @@ class _SectionLabel extends StatelessWidget {
 // metric — everything else is secondary context.
 // =========================================================================
 
-class _ProgressGroup extends StatelessWidget {
-  final XPState xp;
+/// Secondary row under the XP hero — Skills + Achievements side-by-side.
+/// Kept as a plain Row (no PrimaryTile) because the hero card now owns
+/// the "level/progress" headline slot.
+class _ProgressSecondaryRow extends StatelessWidget {
   final Map<String, dynamic>? skills;
   final Map<String, dynamic>? achievements;
   final Color fg;
   final Color accent;
   final bool isDark;
 
-  const _ProgressGroup({
-    required this.xp,
+  const _ProgressSecondaryRow({
     required this.skills,
     required this.achievements,
     required this.fg,
@@ -217,10 +243,6 @@ class _ProgressGroup extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final level = xp.currentLevel;
-    final progress = xp.progressFraction.clamp(0.0, 1.0);
-    final xpToNext = xp.xpToNextLevel;
-
     final activeList = skills?['active_progressions'] as List?;
     final activeChains = activeList?.length ?? 0;
     final completedChains =
@@ -238,56 +260,37 @@ class _ProgressGroup extends StatelessWidget {
     final achievementsPoints =
         (achievements?['total_points'] as num?)?.toInt();
 
-    return Column(
+    return Row(
       children: [
-        _PrimaryTile(
-          icon: Icons.bolt_rounded,
-          title: 'Level $level',
-          subtitle: xpToNext > 0
-              ? '${(progress * 100).toInt()}% to Level ${level + 1}'
-              : 'Maxed',
-          progress: progress,
-          fg: fg,
-          accent: accent,
-          isDark: isDark,
-          route: '/xp-goals',
+        Expanded(
+          child: _MetricTile(
+            icon: Icons.timeline_rounded,
+            title: 'Skills',
+            headline: skills == null ? '—' : '$activeChains active',
+            sub: activeSkillName ??
+                (completedChains > 0 ? '$completedChains done' : 'Start a chain'),
+            fg: fg,
+            accent: accent,
+            isDark: isDark,
+            route: '/skills',
+          ),
         ),
-        const SizedBox(height: 10),
-        Row(
-          children: [
-            Expanded(
-              child: _MetricTile(
-                icon: Icons.timeline_rounded,
-                title: 'Skills',
-                headline: skills == null
-                    ? '—'
-                    : '$activeChains active',
-                sub: activeSkillName ??
-                    (completedChains > 0 ? '$completedChains done' : 'Start a chain'),
-                fg: fg,
-                accent: accent,
-                isDark: isDark,
-                route: '/skills',
-              ),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: _MetricTile(
-                icon: Icons.verified_rounded,
-                title: 'Achievements',
-                headline: achievementsEarned != null
-                    ? '$achievementsEarned earned'
-                    : '—',
-                sub: achievementsPoints != null
-                    ? '$achievementsPoints pts'
-                    : 'Milestones',
-                fg: fg,
-                accent: accent,
-                isDark: isDark,
-                route: '/achievements',
-              ),
-            ),
-          ],
+        const SizedBox(width: 10),
+        Expanded(
+          child: _MetricTile(
+            icon: Icons.verified_rounded,
+            title: 'Achievements',
+            headline: achievementsEarned != null
+                ? '$achievementsEarned earned'
+                : '—',
+            sub: achievementsPoints != null
+                ? '$achievementsPoints pts'
+                : 'Milestones',
+            fg: fg,
+            accent: accent,
+            isDark: isDark,
+            route: '/achievements',
+          ),
         ),
       ],
     );
@@ -327,12 +330,15 @@ class _RecognitionGroup extends StatelessWidget {
       title: 'Trophies',
       subtitle: (earned != null && total != null)
           ? '$earned of $total earned${points != null ? ' · $points pts' : ''}'
-          : 'View your trophy room',
+          : 'View your badges',
       progress: progress,
       fg: fg,
       accent: accent,
       isDark: isDark,
-      route: '/trophy-room',
+      // Route to the Garmin-style Badge Hub (gallery) instead of the
+      // flat trophy-room grid. The grid is still reachable as "All
+      // available badges" from the hub footer.
+      route: '/badge-hub',
     );
   }
 }
@@ -343,29 +349,33 @@ class _RecognitionGroup extends StatelessWidget {
 // low-weight vs the primary progress/recognition sections.
 // =========================================================================
 
-class _RecapsPerksGroup extends StatelessWidget {
+class _RecapsPerksGroup extends ConsumerWidget {
   final Map<String, dynamic>? latestSummary;
-  final int? unclaimedRewards;
   final Color fg;
   final Color accent;
   final bool isDark;
 
   const _RecapsPerksGroup({
     required this.latestSummary,
-    required this.unclaimedRewards,
     required this.fg,
     required this.accent,
     required this.isDark,
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final workouts = (latestSummary?['workouts_completed'] as num?)?.toInt();
     final prs = (latestSummary?['prs_achieved'] as num?)?.toInt();
     final weekStart = latestSummary?['week_start'] as String?;
     final wrappedRoute = (weekStart != null && weekStart.isNotEmpty)
         ? '/weekly-wrapped?week_start=$weekStart'
         : '/weekly-wrapped';
+
+    // Unclaimed-crate count now flows from `unclaimedCratesCountProvider`
+    // (canonical, repo-backed). The old `/xp/unclaimed-crates` raw call
+    // was removed because that endpoint doesn't exist — it silently 404'd
+    // and left this tile showing "View perks" forever.
+    final unclaimedRewards = ref.watch(unclaimedCratesCountProvider);
 
     return Column(
       children: [
@@ -391,17 +401,17 @@ class _RecapsPerksGroup extends StatelessWidget {
               child: _MetricTile(
                 icon: Icons.card_giftcard_rounded,
                 title: 'Rewards',
-                headline: unclaimedRewards != null && unclaimedRewards! > 0
+                headline: unclaimedRewards > 0
                     ? '$unclaimedRewards ready'
                     : 'View perks',
-                sub: unclaimedRewards != null && unclaimedRewards! > 0
+                sub: unclaimedRewards > 0
                     ? 'Tap to claim'
                     : 'Redeem benefits',
                 fg: fg,
                 accent: accent,
                 isDark: isDark,
                 route: '/rewards',
-                highlight: (unclaimedRewards ?? 0) > 0,
+                highlight: unclaimedRewards > 0,
               ),
             ),
             const SizedBox(width: 10),
@@ -429,6 +439,8 @@ class _RecapsPerksGroup extends StatelessWidget {
 // =========================================================================
 
 class _SocialGroup extends StatelessWidget {
+  final bool? unlocked;
+  final int workoutsNeeded;
   final int? rank;
   final double? percentile;
   final Color fg;
@@ -436,6 +448,8 @@ class _SocialGroup extends StatelessWidget {
   final bool isDark;
 
   const _SocialGroup({
+    required this.unlocked,
+    required this.workoutsNeeded,
     required this.rank,
     required this.percentile,
     required this.fg,
@@ -445,16 +459,34 @@ class _SocialGroup extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final rankLabel = rank != null ? '#$rank' : '—';
-    final percentileLabel = percentile != null
-        ? 'Top ${(100 - percentile!).toStringAsFixed(0)}%'
-        : 'See where you stand';
+    // Three distinct states so the tile never renders "—" without a reason.
+    // Phase 3 will replace this with a challenge-based tile by default.
+    final String headline;
+    final String sub;
+    if (unlocked == false) {
+      headline = workoutsNeeded == 1
+          ? '1 to unlock'
+          : '$workoutsNeeded to unlock';
+      sub = workoutsNeeded == 1
+          ? 'Log 1 more workout'
+          : 'Log $workoutsNeeded more workouts';
+    } else if (rank != null) {
+      headline = '#$rank';
+      sub = percentile != null
+          ? 'Top ${(100 - percentile!).toStringAsFixed(0)}%'
+          : 'On global leaderboard';
+    } else {
+      // Unlock-status fetch failed or user is unlocked but /rank didn't
+      // return a row yet — treat as unknown rather than shouting "—".
+      headline = 'Leaderboard';
+      sub = 'See where you stand';
+    }
 
     return _MetricTile(
       icon: Icons.leaderboard_rounded,
       title: 'Leaderboard',
-      headline: rankLabel,
-      sub: percentileLabel,
+      headline: headline,
+      sub: sub,
       fg: fg,
       accent: accent,
       isDark: isDark,

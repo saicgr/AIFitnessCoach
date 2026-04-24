@@ -234,11 +234,23 @@ def _is_today_a_workout_day(selected_days: List[int], user_today_str: str) -> bo
 
 
 def _get_user_workout_days(user: dict) -> List[int]:
-    """Extract user's workout days from preferences.
+    """Extract user's workout days from preferences as 0-indexed (Mon=0..Sun=6).
 
-    Flutter stores days as 1-indexed (Mon=1..Sun=7).
-    Python's date.weekday() uses 0-indexed (Mon=0..Sun=6).
-    This function normalizes to 0-indexed for Python compatibility.
+    Current Flutter clients write 0-indexed values:
+      - workout_days_sheet.dart documents "0=Monday, 6=Sunday"
+      - settings_card workout days picker uses value: 0..6 for Mon..Sun
+      - profile editor saves _selectedDays (0-indexed) directly
+
+    Flutter's user.workoutDays getter only subtracts 1 when a value > 6 is seen,
+    so ambiguous values in [1..6] are treated as 0-indexed. Backend must match
+    that convention — otherwise profile shows one set of days while the
+    generator schedules a different set (observed with reviewer@fitwiz.us
+    whose stored [1,3,5,6] displayed as Tue/Thu/Sat/Sun in the app but was
+    being normalized to Mon/Wed/Fri/Sat on the server, so workouts were
+    generated on the wrong days).
+
+    Legacy 1-indexed data is detected by the unmistakable 7 marker. Without a
+    7, we trust the value as already 0-indexed.
 
     Returns an empty list if no workout days are configured, so that
     auto-generation does NOT trigger on arbitrary default days.
@@ -251,17 +263,21 @@ def _get_user_workout_days(user: dict) -> List[int]:
         logger.warning(f"[WORKOUT DAYS] No workout_days found in user preferences, returning empty list")
         return []
 
-    # Normalize to 0-indexed (Python weekday: Mon=0..Sun=6).
-    # Flutter sends 1-indexed (Mon=1..Sun=7). Older rows may already be 0-indexed.
-    # Detect by the presence of 7 (only valid in 1-indexed) or a 0 (only valid
-    # in 0-indexed). If ambiguous (all values in 1..6), assume 1-indexed since
-    # that is what current clients write.
-    has_seven = any(d == 7 for d in selected_days)
-    has_zero = any(d == 0 for d in selected_days)
-    if has_seven or (not has_zero):
-        selected_days = [d - 1 for d in selected_days if isinstance(d, int) and d > 0]
+    # Filter to int-only values up front so heuristics don't trip over strings.
+    int_days = [d for d in selected_days if isinstance(d, int)]
+    if not int_days:
+        return []
 
-    return selected_days
+    # Only treat as 1-indexed if we see the 7 marker. Otherwise keep as-is,
+    # matching Flutter. Drop any out-of-range values so downstream weekday
+    # checks never match accidentally.
+    has_seven = any(d == 7 for d in int_days)
+    if has_seven:
+        normalized = [d - 1 for d in int_days if 1 <= d <= 7]
+    else:
+        normalized = [d for d in int_days if 0 <= d <= 6]
+
+    return sorted(set(normalized))
 
 
 def _calculate_next_workout_date(selected_days: List[int], user_today_str: str) -> str:

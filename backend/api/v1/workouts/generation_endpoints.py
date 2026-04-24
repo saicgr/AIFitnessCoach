@@ -64,6 +64,39 @@ async def generate_workout(request: Request, *, body: GenerateWorkoutRequest, ba
         # Resolve timezone for premium gate checks
         _gen_tz = resolve_timezone(request, db, body.user_id)
 
+        # Preferred-day gate: reject when scheduled_date falls outside the user's
+        # preferred workout days unless force_non_preferred_day was set (mirrors
+        # the same gate on /generate-stream). Keeps accidental / stale-client
+        # calls from planting rest-day workouts that the home carousel would
+        # then surface as TODAY.
+        if body.scheduled_date and not body.force_non_preferred_day:
+            from .today import _get_user_workout_days, _calculate_next_workout_date
+            _gate_user = db.get_user(body.user_id)
+            if _gate_user:
+                _selected_days = _get_user_workout_days(_gate_user)
+                if _selected_days:
+                    try:
+                        _weekday = datetime.strptime(body.scheduled_date, "%Y-%m-%d").weekday()
+                    except ValueError:
+                        _weekday = None
+                    if _weekday is not None and _weekday not in _selected_days:
+                        _today_str = get_user_today(_gen_tz)
+                        _suggested = _calculate_next_workout_date(_selected_days, user_today_str=_today_str)
+                        logger.info(
+                            f"[PreferredDayGate] Rejecting /generate for user={body.user_id} "
+                            f"scheduled_date={body.scheduled_date} (weekday={_weekday}, preferred={_selected_days}); "
+                            f"suggested_date={_suggested}"
+                        )
+                        raise HTTPException(
+                            status_code=409,
+                            detail={
+                                "error": "not_a_workout_day",
+                                "scheduled_date": body.scheduled_date,
+                                "suggested_date": _suggested,
+                                "selected_days": _selected_days,
+                            },
+                        )
+
         # Duplicate check: return existing workout if one already exists for this date+profile
         placeholder_id = None
         if body.scheduled_date:
@@ -207,6 +240,40 @@ async def generate_workout(request: Request, *, body: GenerateWorkoutRequest, ba
                 logger.info(f"🏋️ [Workout Generation] User has muscle focus points: {muscle_focus_points}")
             if primary_goal:
                 logger.info(f"🎯 [Workout Generation] User has primary goal: {primary_goal}")
+
+            # Body Analyzer context — pulls the latest snapshot (composition +
+            # posture findings) and renders a compact prompt block so the
+            # generator can tune rep ranges / accessory work to the user's
+            # current physique. Failure is non-blocking.
+            body_analyzer_context = None
+            try:
+                ba_row = db.client.table("body_analyzer_snapshots").select(
+                    "overall_rating, body_type, body_fat_percent, muscle_mass_percent, "
+                    "symmetry_score, posture_findings, improvement_tips, created_at"
+                ).eq("user_id", body.user_id).order(
+                    "created_at", desc=True
+                ).limit(1).execute()
+                if ba_row and ba_row.data:
+                    s = ba_row.data[0]
+                    posture_findings = s.get("posture_findings") or []
+                    posture_lines = "\n".join(
+                        f"  - {p.get('issue')}: severity {p.get('severity')}, corrective {p.get('corrective_exercise_tag')}"
+                        for p in posture_findings
+                    )
+                    body_analyzer_context = (
+                        "## USER BODY ANALYZER SNAPSHOT\n"
+                        f"- Overall rating: {s.get('overall_rating')}/100\n"
+                        f"- Body type: {s.get('body_type') or user.get('body_type')}\n"
+                        f"- Body fat: {s.get('body_fat_percent')}%\n"
+                        f"- Muscle mass: {s.get('muscle_mass_percent')}%\n"
+                        f"- Symmetry: {s.get('symmetry_score')}/100\n"
+                        + (f"- Posture findings:\n{posture_lines}\n" if posture_lines else "")
+                        + "Use this to bias accessory selection (e.g. unilateral work for low symmetry,"
+                        " corrective exercises matching the posture tags, rep ranges tuned to body-type response)."
+                    )
+                    logger.info("💪 [Workout Generation] Body Analyzer context attached")
+            except Exception as ba_err:
+                logger.debug(f"[Workout Generation] Body Analyzer context unavailable: {ba_err}")
 
             # Get fitness assessment data for smarter workout personalization
             pushup_capacity = user.get("pushup_capacity")
@@ -538,6 +605,7 @@ async def generate_workout(request: Request, *, body: GenerateWorkoutRequest, ba
                     set_type_context=set_type_context if set_type_context else None,
                     primary_goal=primary_goal,
                     muscle_focus_points=muscle_focus_points,
+                    body_analyzer_context=body_analyzer_context,
                     training_split=training_split,
                     workout_days=workout_days if workout_days else None,
                     # Fitness assessment for smarter workout personalization

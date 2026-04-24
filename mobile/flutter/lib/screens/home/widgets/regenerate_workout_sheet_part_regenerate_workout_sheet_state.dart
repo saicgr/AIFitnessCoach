@@ -115,6 +115,17 @@ class _RegenerateWorkoutSheetState
   int _dumbbellCount = 2;
   int _kettlebellCount = 1;
 
+  // "When?" section — lets the user move the regenerated workout to today
+  // instead of keeping the original date. Especially useful for missed
+  // workouts where the user wants to "do this today" on a non-preferred day.
+  // Default is data-driven in _initializeFromWorkout:
+  //   - Original is in the past (missed) → default to "Do this today"
+  //   - Original is today/future → default to "Keep original"
+  bool _moveToToday = false;
+  // User's preferred workout days (0=Mon..6=Sun). Loaded from profile so we
+  // can decide whether to send force_non_preferred_day when moving to today.
+  List<int> _userWorkoutDays = const [];
+
   final TextEditingController _focusAreaController = TextEditingController();
   final TextEditingController _injuryController = TextEditingController();
   final TextEditingController _equipmentController = TextEditingController();
@@ -148,6 +159,17 @@ class _RegenerateWorkoutSheetState
     _selectedDurationMax = (workoutDuration + 15).clamp(15, 90);
     _selectedWorkoutType = widget.workout.type;
 
+    // Default "Do this today" when the original workout is already in the past
+    // (missed session the user is trying to make up). Otherwise default to
+    // keeping the original date so future-scheduled workouts aren't moved
+    // unexpectedly.
+    final originalDate = widget.workout.scheduledLocalDate;
+    if (originalDate != null) {
+      final now = DateTime.now();
+      final today = DateTime(now.year, now.month, now.day);
+      _moveToToday = originalDate.isBefore(today);
+    }
+
     final type = widget.workout.type?.toLowerCase() ?? '';
     if (type.contains('upper')) {
       _selectedFocusAreas.addAll(['Chest', 'Back', 'Shoulders', 'Arms']);
@@ -173,6 +195,15 @@ class _RegenerateWorkoutSheetState
     final authState = ref.read(authStateProvider);
     final userId = authState.user?.id;
     if (userId == null) return;
+
+    // Pull preferred workout days off the signed-in user so the "When?" UI
+    // knows whether "today" is a rest day (→ send force_non_preferred_day).
+    final user = authState.user;
+    if (user != null && mounted) {
+      setState(() {
+        _userWorkoutDays = user.workoutDays;
+      });
+    }
 
     try {
       final repo = ref.read(workoutRepositoryProvider);
@@ -229,6 +260,119 @@ class _RegenerateWorkoutSheetState
       // Silently fall back to workout-based defaults already set
       debugPrint('Failed to load user preferences for regenerate sheet: $e');
     }
+  }
+
+  /// Two-chip row: "Keep [original date]" / "Do this today". Lets the user
+  /// decide whether to land the regenerated workout on its original date
+  /// (keep) or move it to today (common when making up a missed session).
+  Widget _buildWhenSection(SheetColors colors) {
+    final originalDate = widget.workout.scheduledLocalDate;
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    // Nothing to decide if the workout is already scheduled for today
+    // or has no scheduled_date attached.
+    if (originalDate == null || originalDate.isAtSameMomentAs(today)) {
+      return const SizedBox.shrink();
+    }
+
+    const weekdayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    const monthNames = [
+      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+    ];
+    final weekday = weekdayNames[originalDate.weekday - 1];
+    final month = monthNames[originalDate.month - 1];
+    final keepLabel = 'Keep $weekday, $month ${originalDate.day}';
+
+    final todayIsPreferred = _userWorkoutDays.isEmpty
+        ? true
+        : _userWorkoutDays.contains(today.weekday - 1);
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'WHEN?',
+            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                  color: colors.textMuted,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 1.2,
+                ),
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Expanded(
+                child: _buildWhenChip(
+                  colors: colors,
+                  label: keepLabel,
+                  selected: !_moveToToday,
+                  onTap: _isRegenerating
+                      ? null
+                      : () => setState(() => _moveToToday = false),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _buildWhenChip(
+                  colors: colors,
+                  label: 'Do this today',
+                  selected: _moveToToday,
+                  onTap: _isRegenerating
+                      ? null
+                      : () => setState(() => _moveToToday = true),
+                ),
+              ),
+            ],
+          ),
+          if (_moveToToday && !todayIsPreferred) ...[
+            const SizedBox(height: 6),
+            Text(
+              "Today isn't in your usual workout days — we'll add it anyway.",
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: colors.textMuted,
+                    fontStyle: FontStyle.italic,
+                  ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildWhenChip({
+    required SheetColors colors,
+    required String label,
+    required bool selected,
+    required VoidCallback? onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+        decoration: BoxDecoration(
+          color: selected ? colors.purple.withOpacity(0.18) : colors.glassSurface,
+          border: Border.all(
+            color: selected ? colors.purple : colors.cardBorder,
+            width: selected ? 1.5 : 1,
+          ),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        alignment: Alignment.center,
+        child: Text(
+          label,
+          textAlign: TextAlign.center,
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: selected ? colors.purple : colors.textPrimary,
+                fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+              ),
+        ),
+      ),
+    );
   }
 
   void _startElapsedTimer() {
@@ -489,6 +633,7 @@ class _RegenerateWorkoutSheetState
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          _buildWhenSection(colors),
           WorkoutTypeSelector(
             selectedType: _selectedWorkoutType,
             onSelectionChanged: (type) {

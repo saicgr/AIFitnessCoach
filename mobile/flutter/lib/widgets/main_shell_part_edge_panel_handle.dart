@@ -248,28 +248,38 @@ class _FloatingNavBarWithAI extends ConsumerWidget {
                     isDark: isDark,
                   ),
                   const SizedBox(width: 8),
-                  _ExpandableNavItem(
+                  // GlobalKeys attached via KeyedSubtree instead of directly on
+                  // the StatelessWidget — the nav bar is inside an
+                  // AnimatedSlide/AnimatedOpacity that can hold two element
+                  // trees mid-transition, and a GlobalKey mounted on the widget
+                  // itself fires "Duplicate GlobalKey" during those frames.
+                  // KeyedSubtree gives the key its own stable element boundary.
+                  KeyedSubtree(
                     key: AppTourKeys.workoutNavKey,
-                    icon: Icons.fitness_center_outlined,
-                    selectedIcon: Icons.fitness_center,
-                    label: 'Workout',
-                    isSelected: selectedIndex == 1,
-                    onTap: () => onItemTapped(1),
-                    accentColor: accentColor,
-                    mutedColor: iconMuted,
-                    isDark: isDark,
+                    child: _ExpandableNavItem(
+                      icon: Icons.fitness_center_outlined,
+                      selectedIcon: Icons.fitness_center,
+                      label: 'Workout',
+                      isSelected: selectedIndex == 1,
+                      onTap: () => onItemTapped(1),
+                      accentColor: accentColor,
+                      mutedColor: iconMuted,
+                      isDark: isDark,
+                    ),
                   ),
                   const SizedBox(width: 8),
-                  _ExpandableNavItem(
+                  KeyedSubtree(
                     key: AppTourKeys.nutritionNavKey,
-                    icon: Icons.restaurant_outlined,
-                    selectedIcon: Icons.restaurant,
-                    label: 'Nutrition',
-                    isSelected: selectedIndex == 2,
-                    onTap: () => onItemTapped(2),
-                    accentColor: accentColor,
-                    mutedColor: iconMuted,
-                    isDark: isDark,
+                    child: _ExpandableNavItem(
+                      icon: Icons.restaurant_outlined,
+                      selectedIcon: Icons.restaurant,
+                      label: 'Nutrition',
+                      isSelected: selectedIndex == 2,
+                      onTap: () => onItemTapped(2),
+                      accentColor: accentColor,
+                      mutedColor: iconMuted,
+                      isDark: isDark,
+                    ),
                   ),
                   const SizedBox(width: 8),
                   // Discover tab (W2) — globe icon (world/community leaderboard)
@@ -284,7 +294,7 @@ class _FloatingNavBarWithAI extends ConsumerWidget {
                     isDark: isDark,
                   ),
                   const SizedBox(width: 8),
-                  _ExpandableNavItem(
+                  KeyedSubtree(
                     key: AppTourKeys.profileNavKey,
                     // "You" hub — Strava/Nike pattern. Profile + all
                     // gamification surfaces (trophies, XP, achievements,
@@ -292,14 +302,16 @@ class _FloatingNavBarWithAI extends ConsumerWidget {
                     // this single tab's top-tabs. Research (Material 3)
                     // caps bottom nav at 5; we preserved that by renaming
                     // rather than adding a 6th tab.
-                    icon: Icons.stars_outlined,
-                    selectedIcon: Icons.stars_rounded,
-                    label: 'You',
-                    isSelected: selectedIndex == 4,
-                    onTap: () => onItemTapped(4),
-                    accentColor: accentColor,
-                    mutedColor: iconMuted,
-                    isDark: isDark,
+                    child: _ExpandableNavItem(
+                      icon: Icons.stars_outlined,
+                      selectedIcon: Icons.stars_rounded,
+                      label: 'You',
+                      isSelected: selectedIndex == 4,
+                      onTap: () => onItemTapped(4),
+                      accentColor: accentColor,
+                      mutedColor: iconMuted,
+                      isDark: isDark,
+                    ),
                   ),
                   const SizedBox(width: 4),
                 ],
@@ -361,7 +373,12 @@ class _ExpandableNavItem extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            BounceOnSelect(
+            // Icon plays a spin + scale pop when newly selected — feels like
+            // the icon "snaps into place." Previously we had a multi-layer
+            // stack (cross-fade + quarter-rotation on outlined↔filled + color
+            // tween + label slide-in) which read as busy. This is the single
+            // distinctive icon animation users actually notice.
+            _IconSpinPop(
               isSelected: isSelected,
               child: Icon(
                 isSelected ? selectedIcon : icon,
@@ -390,6 +407,88 @@ class _ExpandableNavItem extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+/// Plays a combined 360° rotation + bouncy scale pop when `isSelected`
+/// transitions false→true. Used to make the nav-bar icon feel alive on
+/// selection, mimicking the signature "snap-in" animation used in TikTok
+/// / Instagram tab bars.
+class _IconSpinPop extends StatefulWidget {
+  final Widget child;
+  final bool isSelected;
+
+  const _IconSpinPop({
+    required this.child,
+    required this.isSelected,
+  });
+
+  @override
+  State<_IconSpinPop> createState() => _IconSpinPopState();
+}
+
+class _IconSpinPopState extends State<_IconSpinPop>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+  late final Animation<double> _rotation;
+  late final Animation<double> _scale;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 450),
+    );
+    // Full 360° spin, eased out so it decelerates into rest.
+    _rotation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic),
+    );
+    // Bouncy scale: 1.0 → 1.3 → 1.0 with an overshoot at the peak so the
+    // icon feels "alive." Two-stage TweenSequence for the overshoot.
+    _scale = TweenSequence<double>([
+      TweenSequenceItem(
+        tween: Tween(begin: 1.0, end: 1.3)
+            .chain(CurveTween(curve: Curves.easeOutCubic)),
+        weight: 45,
+      ),
+      TweenSequenceItem(
+        tween: Tween(begin: 1.3, end: 1.0)
+            .chain(CurveTween(curve: Curves.elasticOut)),
+        weight: 55,
+      ),
+    ]).animate(_controller);
+  }
+
+  @override
+  void didUpdateWidget(covariant _IconSpinPop oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (!oldWidget.isSelected && widget.isSelected) {
+      _controller.forward(from: 0);
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (context, child) {
+        return Transform.rotate(
+          angle: _rotation.value * 2 * math.pi,
+          child: Transform.scale(
+            scale: _scale.value,
+            child: child,
+          ),
+        );
+      },
+      child: widget.child,
     );
   }
 }

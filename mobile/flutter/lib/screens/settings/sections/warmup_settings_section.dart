@@ -79,7 +79,7 @@ class _WarmupSettingsCard extends ConsumerWidget {
                     ],
                   ),
                 ),
-                Switch.adaptive(
+                Switch(
                   value: warmupState.warmupEnabled,
                   onChanged: warmupState.isLoading
                       ? null
@@ -87,6 +87,8 @@ class _WarmupSettingsCard extends ConsumerWidget {
                           HapticFeedback.lightImpact();
                           ref.read(warmupDurationProvider.notifier).setWarmupEnabled(value);
                         },
+                  activeThumbColor: AppColors.cyan,
+                  activeTrackColor: AppColors.cyan.withValues(alpha: 0.5),
                 ),
               ],
             ),
@@ -173,7 +175,7 @@ class _WarmupSettingsCard extends ConsumerWidget {
                     ],
                   ),
                 ),
-                Switch.adaptive(
+                Switch(
                   value: warmupState.stretchEnabled,
                   onChanged: warmupState.isLoading
                       ? null
@@ -181,7 +183,8 @@ class _WarmupSettingsCard extends ConsumerWidget {
                           HapticFeedback.lightImpact();
                           ref.read(warmupDurationProvider.notifier).setStretchEnabled(value);
                         },
-                  activeColor: cyan,
+                  activeThumbColor: AppColors.cyan,
+                  activeTrackColor: AppColors.cyan.withValues(alpha: 0.5),
                 ),
               ],
             ),
@@ -441,9 +444,11 @@ class _SkipWarningToggleState extends State<_SkipWarningToggle> {
               ],
             ),
           ),
-          Switch.adaptive(
+          Switch(
             value: !_isDismissed,
             onChanged: _toggle,
+            activeThumbColor: AppColors.cyan,
+            activeTrackColor: AppColors.cyan.withValues(alpha: 0.5),
           ),
         ],
       ),

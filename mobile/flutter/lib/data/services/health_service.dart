@@ -506,6 +506,32 @@ class HealthService {
     }
   }
 
+  /// Generic fetcher — pull raw HealthDataPoints for any set of types
+  /// within a window. Used by the workout-import enrichment pass to pull
+  /// HR, STEPS, DISTANCE_*, ENERGY_*, FLIGHTS, SpO2, BODY_TEMP, RESP_RATE,
+  /// HRV etc. in a single call.
+  ///
+  /// Types must be present in `_readTypes` (see health_service_ui.dart) for
+  /// permissions to apply; otherwise the underlying call will return empty.
+  Future<List<HealthDataPoint>> getDataInRange({
+    required DateTime start,
+    required DateTime end,
+    required List<HealthDataType> types,
+  }) async {
+    try {
+      await _ensureConfigured();
+      final data = await _health.getHealthDataFromTypes(
+        startTime: start,
+        endTime: end,
+        types: types,
+      );
+      return _health.removeDuplicates(data);
+    } catch (e) {
+      debugPrint('⚠️ Error fetching window data (${types.length} types): $e');
+      return [];
+    }
+  }
+
   // ============================================
   // Diabetic Health Metrics (Blood Glucose & Insulin)
   // ============================================

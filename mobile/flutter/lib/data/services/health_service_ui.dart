@@ -38,6 +38,13 @@ extension HealthServiceExt on HealthService {
     HealthDataType.SLEEP_OUT_OF_BED,
     HealthDataType.SLEEP_SESSION,
 
+    // Vitals (used during workout enrichment + daily summaries)
+    HealthDataType.BLOOD_OXYGEN,
+    HealthDataType.BODY_TEMPERATURE,
+    HealthDataType.RESPIRATORY_RATE,
+    HealthDataType.WATER,
+    HealthDataType.TOTAL_CALORIES_BURNED,
+
     // Diabetic metrics
     HealthDataType.BLOOD_GLUCOSE,
   ];

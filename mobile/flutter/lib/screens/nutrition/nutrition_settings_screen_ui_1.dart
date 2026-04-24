@@ -193,7 +193,7 @@ extension _NutritionSettingsScreenStateUI1 on _NutritionSettingsScreenState {
           ),
         ),
       ),
-      trailing: Switch.adaptive(
+      trailing: Switch(
         value: value,
         onChanged: _isLoading
             ? null
@@ -201,8 +201,12 @@ extension _NutritionSettingsScreenStateUI1 on _NutritionSettingsScreenState {
                 HapticService.light();
                 onChanged(newValue);
               },
-        activeTrackColor: textPrimary.withValues(alpha: 0.5),
-        activeThumbColor: textPrimary,
+        // Use the section's accent so each toggle visually ties to its row
+        // icon (green for Training Day Boost, purple for Rest Day Reduction,
+        // cyan for Weekly Check-in, etc.) instead of the flat white/gray
+        // default that read as "disabled".
+        activeThumbColor: iconColor,
+        activeTrackColor: iconColor.withValues(alpha: 0.5),
       ),
     );
   }

@@ -30,7 +30,12 @@ class SubscriptionManagementScreen extends ConsumerStatefulWidget {
 
 class _SubscriptionManagementScreenState
     extends ConsumerState<SubscriptionManagementScreen> {
-  bool _isLoading = true;
+  // Screen paints instantly from `subscriptionProvider` (tier, trial, lifetime
+  // flags) on first frame. The backend call below populates extra fields
+  // (plan name, next renewal date, amount) silently in the background — so
+  // we never show a blank spinner for that work. _isLoading is reserved for
+  // explicit user actions (pause / resume) that need to block interaction.
+  bool _isLoading = false;
   String? _error;
   CurrentSubscription? _subscription;
   UpcomingRenewal? _upcomingRenewal;
@@ -46,14 +51,25 @@ class _SubscriptionManagementScreenState
         eventName: 'subscription_management_viewed',
       );
     });
-    _loadSubscriptionDetails();
+    // Fire the backend fetch in the background. No loading gate — the UI
+    // already renders tier from the Riverpod provider. When this completes
+    // it updates `_subscription` / `_upcomingRenewal` which causes the
+    // renewal/billing section to paint.
+    _loadSubscriptionDetails(silent: true);
   }
 
-  Future<void> _loadSubscriptionDetails() async {
-    setState(() {
-      _isLoading = true;
-      _error = null;
-    });
+  /// Loads backend-only fields (plan name, next renewal, paused state).
+  ///
+  /// When [silent] is true (first open, app-resume, implicit refresh) the
+  /// existing UI keeps rendering during the fetch — no spinner, no blank
+  /// state. When false (pull-to-refresh, post-action reload) we still skip
+  /// the full-page loader because the provider already knows the tier.
+  Future<void> _loadSubscriptionDetails({bool silent = false}) async {
+    if (!silent) {
+      setState(() {
+        _error = null;
+      });
+    }
 
     try {
       final apiClient = ref.read(apiClientProvider);
@@ -76,21 +92,28 @@ class _SubscriptionManagementScreenState
             _upcomingRenewal = upcomingRenewal;
             _isPaused = isPaused;
             _isLoading = false;
+            _error = null;
           });
         }
       } else {
         if (mounted) {
           setState(() {
-            _error = 'User not authenticated';
             _isLoading = false;
+            _error = 'User not authenticated';
           });
         }
       }
     } catch (e) {
       if (mounted) {
         setState(() {
-          _error = e.toString();
           _isLoading = false;
+          // Only surface the error banner when the user explicitly asked for
+          // a fresh load. Silent background failures shouldn't blank the
+          // page the user is already looking at — provider state is still
+          // correct.
+          if (!silent) {
+            _error = e.toString();
+          }
         });
       }
     }
@@ -249,13 +272,16 @@ class _SubscriptionManagementScreenState
       appBar: const PillAppBar(
         title: 'Manage Subscription',
       ),
-      body: _isLoading
-          ? const Center(
-              child: CircularProgressIndicator(color: AppColors.cyan))
-          : _error != null
-              ? _buildErrorState(isDark, textPrimary)
-              : RefreshIndicator(
-                  onRefresh: _loadSubscriptionDetails,
+      // Always render the page from `subscriptionProvider` data (tier, trial
+      // status) — the backend-only fields populate in-place when they arrive.
+      // _isLoading is only true during explicit pause/resume actions and
+      // shows a lightweight overlay spinner, not a full-screen blocker.
+      body: _error != null
+          ? _buildErrorState(isDark, textPrimary)
+          : Stack(
+              children: [
+                RefreshIndicator(
+                  onRefresh: () => _loadSubscriptionDetails(),
                   color: AppColors.cyan,
                   child: SingleChildScrollView(
                     physics: const AlwaysScrollableScrollPhysics(),
@@ -321,6 +347,18 @@ class _SubscriptionManagementScreenState
                     ),
                   ),
                 ),
+                // Overlay spinner only during explicit pause / resume actions.
+                // Provider-backed content underneath remains visible so the
+                // user sees what's happening, not a blank page.
+                if (_isLoading)
+                  Container(
+                    color: Colors.black.withValues(alpha: 0.15),
+                    child: const Center(
+                      child: CircularProgressIndicator(color: AppColors.cyan),
+                    ),
+                  ),
+              ],
+            ),
     );
   }
 

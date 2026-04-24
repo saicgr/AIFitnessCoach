@@ -101,6 +101,22 @@ List<RouteBase> _settingsRoutes() => [
         builder: (context, state) => const WorkoutHistoryImportScreen(),
       ),
 
+      // Workout Export (reverse-direction: FitWiz → Hevy/Strong/Fitbod/PDF/GPX).
+      // Accepts an optional {'format': '<key>'} via GoRouter `extra` so the
+      // chat bot's `export_data` action_data can deep-link with a prefilled
+      // format choice. Anything unrecognized falls back to the default (hevy).
+      GoRoute(
+        path: '/settings/export-workouts',
+        builder: (context, state) {
+          String? formatHint;
+          final extra = state.extra;
+          if (extra is Map && extra['format'] is String) {
+            formatHint = extra['format'] as String;
+          }
+          return ExportDataScreen(initialFormatKey: formatHint);
+        },
+      ),
+
       // Legacy routes redirect to unified screen
       GoRoute(
         path: '/settings/staple-exercises',

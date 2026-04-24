@@ -30,13 +30,40 @@ router = APIRouter(prefix="/workout-history", tags=["Workout History Import"])
 # =============================================================================
 
 class WorkoutHistoryEntry(BaseModel):
-    """Single workout history entry for import."""
+    """Single workout history entry for import.
+
+    Slim shape = exercise_name + weight_kg + reps + sets. That path still
+    powers the manual-entry form. Optional *rich* fields (set_type, rpe, rir,
+    duration_seconds, etc.) are accepted too so a JS/mobile client can ship
+    the same canonical row shape the WorkoutHistoryImporter pipeline produces.
+    """
     exercise_name: str = Field(..., min_length=1, max_length=200)
-    weight_kg: float = Field(..., ge=0, le=1000)
-    reps: int = Field(..., ge=1, le=100)
+    # Relaxed: allow null weight (bodyweight) and >=0 reps (matches migration 1964).
+    weight_kg: Optional[float] = Field(default=None, ge=-500, le=1000)
+    reps: Optional[int] = Field(default=None, ge=0, le=999)
     sets: int = Field(default=1, ge=1, le=20)
     performed_at: Optional[datetime] = None
     notes: Optional[str] = Field(default=None, max_length=500)
+
+    # --- Rich canonical fields (optional; absent = manual-entry path) ---
+    workout_name: Optional[str] = Field(default=None, max_length=200)
+    set_number: Optional[int] = Field(default=None, ge=0, le=99)
+    set_type: Optional[str] = Field(
+        default=None,
+        pattern="^(working|warmup|failure|dropset|amrap|cluster|rest_pause|backoff|assistance)$",
+    )
+    rpe: Optional[float] = Field(default=None, ge=0.0, le=10.0)
+    rir: Optional[int] = Field(default=None, ge=0, le=10)
+    duration_seconds: Optional[int] = Field(default=None, ge=0)
+    distance_m: Optional[float] = Field(default=None, ge=0)
+    superset_id: Optional[str] = Field(default=None, max_length=64)
+    exercise_id: Optional[str] = None
+    exercise_name_canonical: Optional[str] = Field(default=None, max_length=200)
+    source_app: Optional[str] = Field(default=None, max_length=100)
+    original_weight_value: Optional[float] = Field(default=None, ge=-500, le=5000)
+    original_weight_unit: Optional[str] = Field(
+        default=None, pattern="^(kg|lb|stone)$"
+    )
 
     @validator('exercise_name')
     def clean_exercise_name(cls, v):
@@ -44,10 +71,18 @@ class WorkoutHistoryEntry(BaseModel):
 
 
 class BulkImportRequest(BaseModel):
-    """Request for bulk importing multiple workout entries."""
+    """Request for bulk importing multiple workout entries.
+
+    Backward-compatible with the slim shape used by the manual-entry form;
+    also accepts the rich canonical columns added in migration 1964.
+    """
     user_id: str
-    entries: List[WorkoutHistoryEntry] = Field(..., min_items=1, max_items=100)
-    source: str = Field(default="manual", pattern="^(manual|import|spreadsheet)$")
+    entries: List[WorkoutHistoryEntry] = Field(..., min_items=1, max_items=500)
+    # Expanded to match migration 1964's source CHECK constraint.
+    source: str = Field(
+        default="manual",
+        pattern="^(manual|import|spreadsheet|ai_parsed|synced|program_filled)$",
+    )
 
 
 class SingleImportRequest(BaseModel):
@@ -165,21 +200,53 @@ async def bulk_import_workout_history(request: BulkImportRequest,
         failed_count = 0
         exercises_affected = set()
 
-        # Prepare all entries
+        # Prepare all entries — persist slim OR rich shape depending on what
+        # the client sent. Absent rich fields stay absent (no sentinel nulls
+        # on columns the user didn't supply).
         entries_to_insert = []
         for entry in request.entries:
             try:
                 performed_at = entry.performed_at or datetime.utcnow()
-                entries_to_insert.append({
+                row: dict = {
                     "user_id": request.user_id,
                     "exercise_name": entry.exercise_name.strip(),
-                    "weight_kg": float(entry.weight_kg),
+                    "weight_kg": float(entry.weight_kg) if entry.weight_kg is not None else None,
                     "reps": entry.reps,
                     "sets": entry.sets,
                     "performed_at": performed_at.isoformat(),
                     "notes": entry.notes,
                     "source": request.source,
-                })
+                }
+                # Rich columns — only include when the caller populated them so
+                # the DB defaults (set_type='working', nullable columns) stand.
+                if entry.workout_name is not None:
+                    row["workout_name"] = entry.workout_name
+                if entry.set_number is not None:
+                    row["set_number"] = entry.set_number
+                if entry.set_type is not None:
+                    row["set_type"] = entry.set_type
+                if entry.rpe is not None:
+                    row["rpe"] = entry.rpe
+                if entry.rir is not None:
+                    row["rir"] = entry.rir
+                if entry.duration_seconds is not None:
+                    row["duration_seconds"] = entry.duration_seconds
+                if entry.distance_m is not None:
+                    row["distance_m"] = entry.distance_m
+                if entry.superset_id is not None:
+                    row["superset_id"] = entry.superset_id
+                if entry.exercise_id is not None:
+                    row["exercise_id"] = entry.exercise_id
+                if entry.exercise_name_canonical is not None:
+                    row["exercise_name_canonical"] = entry.exercise_name_canonical
+                if entry.source_app is not None:
+                    row["source_app"] = entry.source_app
+                if entry.original_weight_value is not None:
+                    row["original_weight_value"] = entry.original_weight_value
+                if entry.original_weight_unit is not None:
+                    row["original_weight_unit"] = entry.original_weight_unit
+
+                entries_to_insert.append(row)
                 exercises_affected.add(entry.exercise_name.strip())
             except Exception as e:
                 logger.warning(f"Failed to prepare entry: {e}", exc_info=True)
@@ -273,14 +340,26 @@ async def get_strength_summary(user_id: str,
     try:
         db = get_supabase_db()
 
-        # Get imported history aggregated by exercise
-        result = db.client.rpc(
-            "get_strength_summary_by_user",
-            {"p_user_id": user_id}
-        ).execute()
+        # Get imported history aggregated by exercise. The RPC is an
+        # optimization — if the function hasn't been migrated on this
+        # environment (PGRST202: "Could not find the function …"), fall
+        # through to the manual aggregation below instead of 500-ing.
+        result = None
+        try:
+            result = db.client.rpc(
+                "get_strength_summary_by_user",
+                {"p_user_id": user_id}
+            ).execute()
+        except Exception as rpc_err:
+            err_str = str(rpc_err)
+            if "PGRST202" in err_str or "Could not find the function" in err_str:
+                logger.info("get_strength_summary_by_user RPC missing; using manual aggregation")
+                result = None
+            else:
+                raise
 
-        # If RPC doesn't exist, fall back to manual query
-        if not result.data:
+        # If RPC doesn't exist or returned empty, fall back to manual query
+        if not result or not result.data:
             # Manual aggregation
             history_result = db.client.table("workout_history_imports") \
                 .select("exercise_name, weight_kg, performed_at") \

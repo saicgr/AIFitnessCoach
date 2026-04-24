@@ -37,16 +37,34 @@ class _ActiveWorkoutEntryState extends ConsumerState<ActiveWorkoutEntry> {
   void initState() {
     super.initState();
     // Reset the shared warmup flag for THIS fresh workout BEFORE the child
-    // tier mounts. Easy/Simple will flip it back to true in their own init;
-    // Advanced reads it synchronously and skips warmup only if still true
-    // (i.e. user tier-swapped mid-session). Runs synchronously here so
-    // there's no race with the child's initState.
+    // tier mounts. Easy/Simple flip it back to true in their own init;
+    // Advanced reads it in its own initState and skips warmup only if still
+    // true (i.e. user tier-swapped mid-session).
     //
-    // Previously we reset in dispose() via a post-frame callback, which
-    // fired after Riverpod had already torn down listeners — the resulting
-    // `state = false` walked a disposed ConsumerElement and crashed
-    // (`Element.markNeedsBuild` on a defunct element).
-    ref.read(activeWorkoutWarmupDoneProvider.notifier).state = false;
+    // Important: we can't unconditionally do `notifier.state = false` here.
+    // If an upstream widget is listening to this StateProvider at the
+    // moment /active-workout mounts, Riverpod throws "Tried to modify a
+    // provider while the widget tree was building" — the very error this
+    // code was getting. And previously, deferring the reset into dispose()
+    // crashed too (post-frame fired after ConsumerElement was torn down).
+    //
+    // Two-tier fix:
+    //   • Fast path: if state is already false (default, and the common case
+    //     on fresh app launch), no write → no listener notification → no
+    //     crash. This covers normal workout-to-workout flow.
+    //   • Slow path: if state is stale-true (prior workout didn't clean up),
+    //     defer the reset to a post-frame callback with a `mounted` guard
+    //     so it runs after the current build completes. Advanced's child
+    //     initState will observe `true` for this one frame and skip warmup;
+    //     the next fresh workout will see the reset value. That's the
+    //     trade-off for avoiding the crash — and the underlying stale-true
+    //     bug should be fixed at workout-end time, not here.
+    final notifier = ref.read(activeWorkoutWarmupDoneProvider.notifier);
+    if (!notifier.state) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      ref.read(activeWorkoutWarmupDoneProvider.notifier).state = false;
+    });
   }
 
   @override

@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'services/post_meal_checkin_reminder.dart';
+import 'core/providers/subscription_provider.dart';
 import 'core/providers/window_mode_provider.dart';
 import 'core/providers/workout_mini_player_provider.dart';
 import 'core/theme/accent_color_provider.dart';
@@ -14,6 +15,7 @@ import 'core/services/posthog_service.dart';
 import 'data/repositories/auth_repository.dart';
 import 'data/services/api_client.dart';
 import 'data/services/notification_service.dart';
+import 'data/services/workout_notification_service.dart';
 // Meal-suggestion widget — staged under Settings → Coming Soon. Re-enable
 // the import when the feature goes live (see main.dart for the checklist).
 // import 'services/meal_suggestion_widget_service.dart';
@@ -100,7 +102,10 @@ class _FitWizAppState extends ConsumerState<FitWizApp> {
       _syncCallbackSet = false; // Reset when logged out
     }
 
-    // PostHog user identification on auth state changes
+    // PostHog user identification + RevenueCat/subscription hydration on
+    // auth state changes. Both must fire together so that if a brand-new
+    // signed-in user skips identification, neither analytics nor billing
+    // state gets re-linked to a stale identity.
     if (!_posthogListenerSet) {
       _posthogListenerSet = true;
       ref.listen(authStateProvider, (previous, next) {
@@ -115,9 +120,25 @@ class _FitWizAppState extends ConsumerState<FitWizApp> {
               'created_at': next.user!.createdAt ?? '',
             },
           );
+          // Kick off RevenueCat + backend subscription hydration. Fire-and-
+          // forget — initialize() is idempotent so redundant auth-state
+          // transitions (e.g. token refresh triggering 'authenticated' again)
+          // cost nothing. Without this call Purchases.logIn(userId) never
+          // runs and all purchases are attributed to an anonymous RC user.
+          unawaited(
+            ref
+                .read(subscriptionProvider.notifier)
+                .initialize(next.user!.id),
+          );
         } else if (next.status == AuthStatus.unauthenticated &&
             previous?.status == AuthStatus.authenticated) {
           posthog.reset();
+          // Reset subscription state and log out of RevenueCat so the next
+          // user signing in on this device doesn't inherit the previous
+          // user's customer ID / cached tier.
+          unawaited(
+            ref.read(subscriptionProvider.notifier).resetOnSignOut(),
+          );
         }
       });
     }
@@ -293,6 +314,24 @@ class _FitWizAppState extends ConsumerState<FitWizApp> {
     // Set up callback for notification taps (navigation)
     notificationService.onNotificationTapped = (notificationType) {
       _navigateToScreenForNotificationType(notificationType);
+    };
+
+    // Wire the active-workout notification's body-tap → restore mini player
+    // AND navigate to /active-workout. Tapping the sticky foreground
+    // notification while the app is backgrounded/killed used to just flip
+    // isMinimized=false and land the user on home — the workout session was
+    // still live in state but invisible. We push the active-workout route
+    // here with the stored Workout object so the in-app UI matches the
+    // ongoing session.
+    WorkoutNotificationService.instance.onNotificationTapped = () {
+      final miniPlayerState = ref.read(workoutMiniPlayerProvider);
+      final workout = miniPlayerState.workout;
+      if (workout == null) return;
+      ref.read(workoutMiniPlayerProvider.notifier).restore();
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        final router = ref.read(routerProvider);
+        router.push('/active-workout', extra: workout);
+      });
     };
 
     // Set up callback for FCM token refresh - sync to backend

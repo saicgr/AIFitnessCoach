@@ -159,6 +159,13 @@ class UserPreferencesRequest(BaseModel):
     nutrition_goals: Optional[List[str]] = None
     dietary_restrictions: Optional[List[str]] = None
     meals_per_day: Optional[int] = None
+    # Menu-analysis personalization (added 2026-04-23)
+    allergens: Optional[List[str]] = None  # FDA Big 9 codes: milk, egg, fish, crustacean_shellfish, tree_nuts, wheat, peanuts, soybeans, sesame
+    custom_allergens: Optional[List[str]] = None  # Free-text allergens outside Big 9
+    disliked_foods: Optional[List[str]] = None  # Free-text "foods to avoid" tags
+    inflammation_sensitivity: Optional[int] = None  # 1-5; 1 indifferent, 5 strict
+    meal_budget_usd: Optional[float] = None  # Per-meal $ ceiling for menu filters
+    daily_food_budget_usd: Optional[float] = None  # Per-day $ ceiling
 
     # Fasting
     interested_in_fasting: Optional[bool] = None
@@ -426,6 +433,13 @@ def merge_extended_fields_into_preferences(
     workout_variety: Optional[str] = None,  # 'consistent' or 'varied'
     # Focus areas (muscle groups / body parts to prioritize)
     focus_areas: Optional[List[str]] = None,
+    # Menu-analysis personalization
+    allergens: Optional[List[str]] = None,
+    custom_allergens: Optional[List[str]] = None,
+    disliked_foods: Optional[List[str]] = None,
+    inflammation_sensitivity: Optional[int] = None,
+    meal_budget_usd: Optional[float] = None,
+    daily_food_budget_usd: Optional[float] = None,
 ) -> dict:
     """Merge extended onboarding fields into preferences dict."""
     try:
@@ -497,5 +511,19 @@ def merge_extended_fields_into_preferences(
     # Exercise consistency preference (workout_variety from frontend -> exercise_consistency in backend)
     if workout_variety is not None:
         prefs["exercise_consistency"] = workout_variety
+
+    # Menu-analysis personalization (added 2026-04-23)
+    if allergens is not None:
+        prefs["allergens"] = allergens
+    if custom_allergens is not None:
+        prefs["custom_allergens"] = custom_allergens
+    if disliked_foods is not None:
+        prefs["disliked_foods"] = disliked_foods
+    if inflammation_sensitivity is not None:
+        prefs["inflammation_sensitivity"] = inflammation_sensitivity
+    if meal_budget_usd is not None:
+        prefs["meal_budget_usd"] = meal_budget_usd
+    if daily_food_budget_usd is not None:
+        prefs["daily_food_budget_usd"] = daily_food_budget_usd
 
     return prefs
