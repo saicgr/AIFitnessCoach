@@ -29,6 +29,7 @@ import '../../widgets/main_shell.dart';
 import '../../widgets/pill_swipe_navigation.dart';
 import '../nutrition/log_meal_sheet.dart';
 import '../onboarding/notification_prime_screen.dart';
+import '../onboarding/permissions_primer_screen.dart';
 import 'widgets/components/components.dart';
 import 'widgets/cards/cards.dart';
 import 'widgets/daily_activity_card.dart';
@@ -40,6 +41,7 @@ import 'widgets/hero_workout_card.dart';
 import '../../core/providers/week_start_provider.dart';
 import 'widgets/hero_workout_carousel.dart';
 import 'widgets/sectioned_hero_area.dart';
+import 'widgets/swipeable_hero_section.dart' show HomeFocus, homeFocusProvider;
 import 'widgets/workout_category_pills.dart';
 import 'widgets/habits_section.dart';
 import 'widgets/body_metrics_section.dart';
@@ -190,6 +192,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     super.didChangeAppLifecycleState(state);
+    // The lifecycle observer can fire AFTER the State is disposed (the OS
+    // delivers a final `paused`/`resumed` event during teardown, while
+    // `removeObserver` is processed in dispose). Guard against using `ref`
+    // post-dispose — Riverpod throws `Bad state: No ProviderScope found`
+    // otherwise, which Crashlytics flagged on this exact path.
+    if (!mounted) return;
     if (state == AppLifecycleState.resumed) {
       // Auto-refresh when returning to app (with rate limiting)
       _autoRefreshIfNeeded();
@@ -197,9 +205,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       // reflects any out-of-app changes the user made (e.g. cancelling
       // from Google Play's Subscriptions page while the app was
       // backgrounded). Internally 30s-debounced — safe to fire often.
-      unawaited(
-        ref.read(subscriptionProvider.notifier).refreshFromRevenueCat(),
-      );
+      try {
+        unawaited(
+          ref.read(subscriptionProvider.notifier).refreshFromRevenueCat(),
+        );
+      } catch (e) {
+        debugPrint('⚠️ [Home] subscription refresh skipped post-dispose: $e');
+      }
     }
   }
 
@@ -225,26 +237,35 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       // M13: Set time at start to prevent concurrent/double-refreshes
       _lastRefreshTime = now;
       debugPrint('🔄 [Home] Auto-refreshing workouts...');
-      // Refresh user data (picks up workout days, preferences changes)
-      ref.read(authStateProvider.notifier).refreshUser();
-      final workoutsNotifier = ref.read(workoutsProvider.notifier);
-      await workoutsNotifier.refresh();
 
-      // Check mounted after async operation
-      if (!mounted) return;
+      // Wrap every `ref.read` so a teardown that races with this lifecycle
+      // path (Riverpod scope already gone) doesn't crash the app — the
+      // refresh just no-ops, the next foreground will pick it up. This
+      // mirrors the guard added to didChangeAppLifecycleState above.
+      try {
+        // Refresh user data (picks up workout days, preferences changes)
+        ref.read(authStateProvider.notifier).refreshUser();
+        final workoutsNotifier = ref.read(workoutsProvider.notifier);
+        await workoutsNotifier.refresh();
 
-      // L9: The refresh() call above already updates provider state internally,
-      // so we avoid a redundant ref.invalidate(workoutsProvider) which would
-      // trigger an unnecessary full re-fetch.
+        // Check mounted after async operation
+        if (!mounted) return;
 
-      // Refresh Health Connect status - user may have granted permissions externally
-      ref.read(healthSyncProvider.notifier).refreshConnectionStatus();
+        // L9: The refresh() call above already updates provider state internally,
+        // so we avoid a redundant ref.invalidate(workoutsProvider) which would
+        // trigger an unnecessary full re-fetch.
 
-      // Refresh nutrition & hydration data silently (no loading flash)
-      _refreshNutritionSilent();
+        // Refresh Health Connect status - user may have granted permissions externally
+        ref.read(healthSyncProvider.notifier).refreshConnectionStatus();
 
-      // Check for new workout imports from Health Connect on resume
-      _checkForWorkoutImports();
+        // Refresh nutrition & hydration data silently (no loading flash)
+        _refreshNutritionSilent();
+
+        // Check for new workout imports from Health Connect on resume
+        _checkForWorkoutImports();
+      } catch (e) {
+        debugPrint('⚠️ [Home] auto-refresh skipped (scope unavailable): $e');
+      }
     }
   }
 
@@ -525,6 +546,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
               Navigator.pop(ctx);
               // Apply preset to local layout (tiles only, header is always minimal)
               await ref.read(localLayoutProvider.notifier).applyPreset(preset);
+              // Match the hero carousel to the preset's focus so a user who
+              // picks "Nutrition Focus" lands on the Nutrition hero, not the
+              // workout one.
+              if (preset.isNutritionFocused) {
+                ref.read(homeFocusProvider.notifier).state = HomeFocus.nutrition;
+              } else {
+                ref.read(homeFocusProvider.notifier).state = HomeFocus.workout;
+              }
               HapticService.success();
               if (mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(

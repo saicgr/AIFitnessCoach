@@ -6,6 +6,27 @@ import '../../../core/constants/app_colors.dart';
 import '../../../widgets/glass_sheet.dart';
 import 'onboarding_theme.dart';
 
+/// One-tap equipment preset that replaces the user's current selection.
+///
+/// Surfaces common combos (Bodyweight + Pullup Bar, Home + Dumbbells,
+/// etc.) so users with simple setups don't have to hunt through 11
+/// individual chips. Each preset's [equipmentIds] becomes the entire
+/// selection on tap. The full chip grid stays editable below — presets
+/// are an accelerator, not a constraint.
+class _EquipmentPreset {
+  final String id;
+  final String label;
+  final IconData icon;
+  final List<String> equipmentIds;
+
+  const _EquipmentPreset({
+    required this.id,
+    required this.label,
+    required this.icon,
+    required this.equipmentIds,
+  });
+}
+
 /// Workout environment options for quick selection
 class _WorkoutEnvironmentOption {
   final String id;
@@ -50,6 +71,11 @@ class QuizEquipment extends StatefulWidget {
   final String? selectedEnvironment;
   final ValueChanged<String>? onEnvironmentChanged;
   final bool showHeader;
+  /// Optional callback fired when the user taps a quick-preset chip.
+  /// Should REPLACE the parent's current selection with [ids]. When null,
+  /// the preset row is hidden — keeps the API backwards-compatible for
+  /// callers that haven't opted in yet (e.g. legacy edit screens).
+  final ValueChanged<List<String>>? onPresetSelected;
 
   const QuizEquipment({
     super.key,
@@ -65,6 +91,7 @@ class QuizEquipment extends StatefulWidget {
     this.selectedEnvironment,
     this.onEnvironmentChanged,
     this.showHeader = true,
+    this.onPresetSelected,
   });
 
   static const _environments = [
@@ -95,6 +122,58 @@ class QuizEquipment extends StatefulWidget {
       emoji: '\u{1F9F3}',
       description: 'Travel-friendly - dumbbells, cardio machines',
       defaultEquipment: ['bodyweight', 'dumbbells', 'resistance_bands'],
+    ),
+  ];
+
+  /// Common-combo presets surfaced as a horizontal-scroll row above the
+  /// 11-chip grid. Each preset's [equipmentIds] REPLACES the user's
+  /// selection on tap. After a tap, individual chip toggles still work —
+  /// a tap that diverges from the preset just means "I'm now custom".
+  ///
+  /// Order matters: the first preset that exact-matches the current
+  /// selection gets the active highlight (see `_activePresetId`).
+  static const _presets = [
+    _EquipmentPreset(
+      id: 'preset_bodyweight_only',
+      label: 'Bodyweight only',
+      icon: Icons.accessibility_new,
+      equipmentIds: ['bodyweight'],
+    ),
+    _EquipmentPreset(
+      id: 'preset_bodyweight_pullup',
+      label: 'Bodyweight + Pull-up Bar',
+      icon: Icons.sports_gymnastics,
+      equipmentIds: ['bodyweight', 'pull_up_bar'],
+    ),
+    _EquipmentPreset(
+      id: 'preset_bodyweight_bands',
+      label: 'Bodyweight + Bands',
+      icon: Icons.cable,
+      equipmentIds: ['bodyweight', 'resistance_bands'],
+    ),
+    _EquipmentPreset(
+      id: 'preset_home_dumbbells_bench',
+      label: 'Home + Dumbbells & Bench',
+      icon: Icons.fitness_center,
+      equipmentIds: ['bodyweight', 'dumbbells', 'bench'],
+    ),
+    _EquipmentPreset(
+      id: 'preset_home_kettlebell',
+      label: 'Home + Kettlebell',
+      icon: Icons.sports_handball,
+      equipmentIds: ['bodyweight', 'kettlebell'],
+    ),
+    _EquipmentPreset(
+      id: 'preset_apartment_minimal',
+      label: 'Apartment-friendly',
+      icon: Icons.home_outlined,
+      equipmentIds: ['bodyweight', 'resistance_bands', 'kettlebell'],
+    ),
+    _EquipmentPreset(
+      id: 'preset_full_gym',
+      label: 'Full Gym',
+      icon: Icons.store,
+      equipmentIds: ['full_gym'],
     ),
   ];
 
@@ -300,6 +379,12 @@ class _QuizEquipmentState extends State<QuizEquipment> {
             _buildEnvironmentSection(context, t),
             const SizedBox(height: 12),
           ],
+          // Quick-preset chips: one tap to pick a common combo. Hidden
+          // when the parent didn't opt in via [onPresetSelected].
+          if (widget.onPresetSelected != null) ...[
+            _buildPresetSection(context, t),
+            const SizedBox(height: 12),
+          ],
           Expanded(
             child: SingleChildScrollView(
               padding: EdgeInsets.zero,
@@ -436,6 +521,80 @@ class _QuizEquipmentState extends State<QuizEquipment> {
             ),
           ).animate().fadeIn(),
         ],
+      ],
+    );
+  }
+
+  /// Returns the preset whose [equipmentIds] exactly equal the current
+  /// selection, ignoring 'full_gym' bookkeeping for the Full Gym tile.
+  /// Returns null when the user's selection diverges from every preset
+  /// — that's the "Custom" state and no preset chip highlights.
+  String? get _activePresetId {
+    final current = widget.selectedEquipment;
+    for (final preset in QuizEquipment._presets) {
+      final presetSet = preset.equipmentIds.toSet();
+      if (presetSet.length == current.length && presetSet.containsAll(current)) {
+        return preset.id;
+      }
+    }
+    return null;
+  }
+
+  Widget _buildPresetSection(BuildContext context, OnboardingTheme t) {
+    final activeId = _activePresetId;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(bottom: 6),
+          child: Text(
+            'Quick presets',
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: t.textSecondary,
+            ),
+          ),
+        ),
+        SizedBox(
+          height: 40,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            itemCount: QuizEquipment._presets.length,
+            separatorBuilder: (_, __) => const SizedBox(width: 8),
+            itemBuilder: (context, index) {
+              final preset = QuizEquipment._presets[index];
+              final isActive = preset.id == activeId;
+              return _PresetChip(
+                preset: preset,
+                isActive: isActive,
+                onTap: () {
+                  HapticFeedback.selectionClick();
+                  widget.onPresetSelected?.call(preset.equipmentIds);
+                  // After replacing the selection, fire any follow-up
+                  // prompts that would have applied if the user had
+                  // toggled these chips one-by-one (e.g. dumbbells →
+                  // "do you have a bench?"). Skip presets that ALREADY
+                  // include the follow-up's `suggest` to avoid asking
+                  // about something that's already selected.
+                  for (final id in preset.equipmentIds) {
+                    final followUp = QuizEquipment._equipmentFollowUps[id];
+                    if (followUp != null &&
+                        !preset.equipmentIds.contains(followUp.suggest) &&
+                        !_shownFollowUps.contains(id)) {
+                      _shownFollowUps.add(id);
+                      WidgetsBinding.instance.addPostFrameCallback((_) {
+                        if (mounted) _showFollowUpDialog(context, followUp);
+                      });
+                      break; // one prompt at a time
+                    }
+                  }
+                },
+                theme: t,
+              );
+            },
+          ),
+        ),
       ],
     );
   }
@@ -760,6 +919,67 @@ class _QuizEquipmentState extends State<QuizEquipment> {
               ],
             ),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Quick-preset chip rendered in the horizontal-scroll row above the
+/// equipment grid. Active state = the user's current selection exactly
+/// matches this preset. Tapping fires [onTap], which the parent uses to
+/// REPLACE the entire selection.
+class _PresetChip extends StatelessWidget {
+  final _EquipmentPreset preset;
+  final bool isActive;
+  final VoidCallback onTap;
+  final OnboardingTheme theme;
+
+  const _PresetChip({
+    required this.preset,
+    required this.isActive,
+    required this.onTap,
+    required this.theme,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final activeColor = AppColors.cyan;
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        decoration: BoxDecoration(
+          color: isActive
+              ? activeColor.withValues(alpha: 0.18)
+              : Colors.white.withValues(alpha: 0.04),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: isActive
+                ? activeColor
+                : Colors.white.withValues(alpha: 0.10),
+            width: isActive ? 1.5 : 1,
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              preset.icon,
+              size: 16,
+              color: isActive ? activeColor : theme.textSecondary,
+            ),
+            const SizedBox(width: 6),
+            Text(
+              preset.label,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: isActive ? FontWeight.w700 : FontWeight.w500,
+                color: isActive ? activeColor : theme.textSecondary,
+              ),
+            ),
+          ],
         ),
       ),
     );

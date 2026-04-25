@@ -336,7 +336,23 @@ extension SetLoggingMixinUI on SetLoggingMixin {
         ? actualWeightKg
         : kgToDisplayLbs(actualWeightKg, exercise.equipment,
                 exerciseName: exercise.name,);
-    if (actualWeight <= 0) return;
+    if (actualWeight <= 0) {
+      // Bodyweight exercise: there's no load to progress, but we still
+      // want the reps controller to advance to the next set's target
+      // (e.g. 10 → 12 → 13 from the pyramid pattern) instead of leaving
+      // the previous set's reps stuck in the input.
+      final setTargets = exercise.setTargets;
+      final nextSetIdx = completedCount;
+      if (setTargets != null && nextSetIdx < setTargets.length) {
+        final nextTarget = setTargets[nextSetIdx];
+        final reps = nextTarget.targetReps > 0
+            ? nextTarget.targetReps
+            : (exercise.reps ?? lastWorkingLog.reps);
+        repsController.text = reps.toString();
+        repsRightController.text = reps.toString();
+      }
+      return;
+    }
 
     final incrementRaw = incrementState.getIncrement(exercise.equipment);
     final incrementUnit = incrementState.unit;

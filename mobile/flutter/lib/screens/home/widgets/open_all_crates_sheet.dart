@@ -225,8 +225,12 @@ class _OpenAllCratesSheetState extends ConsumerState<OpenAllCratesSheet>
 
     final anySuccess = results.any((r) => r.success);
 
-    // Single batch reload after all claims complete
+    // Single batch reload after all claims complete + invalidate the
+    // unclaimed-crates list so the home banner doesn't keep showing the
+    // count from the pre-claim cache (the FutureProvider doesn't refetch
+    // on its own, only when invalidated or when nothing watches it).
     if (anySuccess) {
+      ref.invalidate(unclaimedCratesProvider);
       await ref.read(xpProvider.notifier).reloadAfterClaims();
     }
 

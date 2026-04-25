@@ -573,13 +573,14 @@ async def apple_health_push(
         logger.warning(f"[apple_health] last_sync update failed: {e}")
 
     # Trophies + masteries — run in background so the sync response
-    # returns immediately. Helper is self-guarded; trophy path can't 500
-    # the sync.
+    # returns immediately. Detached via asyncio.create_task rather than
+    # FastAPI BackgroundTasks because the starlette BaseHTTPMiddleware
+    # the app runs behind serializes BackgroundTasks into the response
+    # lifecycle (slow trophy work → multi-minute "response time" logs).
+    # Helper is self-guarded with a 60s timeout.
     if inserted_cardio or inserted_strength:
-        from services.mastery_writes import check_all_trophies_and_masteries
-        background_tasks.add_task(
-            check_all_trophies_and_masteries, str(user_id)
-        )
+        from services.mastery_writes import fire_trophy_check_detached
+        fire_trophy_check_detached(str(user_id))
 
     logger.info(
         f"🍎 [apple_health] push user={user_id} activities={len(body.activities)} "

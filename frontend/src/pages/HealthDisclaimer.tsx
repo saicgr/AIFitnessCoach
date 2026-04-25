@@ -124,8 +124,8 @@ export default function HealthDisclaimer() {
               </h2>
               <p>
                 If you have questions about this Health & Safety Disclaimer, please contact us at{' '}
-                <a href="mailto:legal@fitwiz.app" className="text-emerald-400 hover:underline">
-                  legal@fitwiz.app
+                <a href="mailto:legal@fitwiz.us" className="text-emerald-400 hover:underline">
+                  legal@fitwiz.us
                 </a>.
               </p>
             </div>

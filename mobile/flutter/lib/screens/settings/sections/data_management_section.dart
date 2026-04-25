@@ -7,7 +7,6 @@ import '../../../core/providers/subscription_provider.dart';
 import '../dialogs/export_dialog.dart';
 import '../dialogs/import_dialog.dart';
 import '../export_data_screen.dart';
-import '../subscription/subscription_history_screen.dart';
 import '../subscription/request_refund_screen.dart';
 import '../widgets/widgets.dart';
 
@@ -34,23 +33,18 @@ class DataManagementSection extends ConsumerWidget {
             isDark: isDark,
           ),
           const SizedBox(height: 12),
-          SettingsCard(
-            items: [
-              SettingItemData(
-                icon: Icons.history,
-                title: 'Subscription History',
-                subtitle: 'View past transactions',
-                onTap: () => _navigateToSubscriptionHistory(context),
-              ),
-              if (subscriptionState.tier != SubscriptionTier.lifetime)
+          if (subscriptionState.tier != SubscriptionTier.lifetime) ...[
+            SettingsCard(
+              items: [
                 SettingItemData(
                   icon: Icons.receipt_long_outlined,
                   title: 'Request Refund',
                   subtitle: 'Submit a refund request',
                   onTap: () => _navigateToRequestRefund(context),
                 ),
-            ],
-          ),
+              ],
+            ),
+          ],
           const SizedBox(height: 24),
         ],
 
@@ -93,15 +87,6 @@ class DataManagementSection extends ConsumerWidget {
       context,
       AppPageRoute(
         builder: (context) => const ExportDataScreen(),
-      ),
-    );
-  }
-
-  void _navigateToSubscriptionHistory(BuildContext context) {
-    Navigator.push(
-      context,
-      AppPageRoute(
-        builder: (context) => const SubscriptionHistoryScreen(),
       ),
     );
   }

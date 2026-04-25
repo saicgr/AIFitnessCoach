@@ -1,12 +1,17 @@
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../data/models/fasting.dart';
 import '../../../data/services/haptic_service.dart';
+import '../../../data/services/last_used_service.dart';
+import '../../../widgets/common/last_used_badge.dart';
+
+const String _kFastingProtocolKey = 'fasting_protocol';
 
 /// Bottom sheet for selecting a fasting protocol (only protocol selection, no time options)
-class ProtocolSelectorSheet extends StatefulWidget {
+class ProtocolSelectorSheet extends ConsumerStatefulWidget {
   final FastingProtocol currentProtocol;
   final int currentCustomHours;
   final void Function(FastingProtocol protocol, int? customHours) onSelect;
@@ -19,13 +24,15 @@ class ProtocolSelectorSheet extends StatefulWidget {
   });
 
   @override
-  State<ProtocolSelectorSheet> createState() => _ProtocolSelectorSheetState();
+  ConsumerState<ProtocolSelectorSheet> createState() =>
+      _ProtocolSelectorSheetState();
 }
 
-class _ProtocolSelectorSheetState extends State<ProtocolSelectorSheet> {
+class _ProtocolSelectorSheetState extends ConsumerState<ProtocolSelectorSheet> {
   late FastingProtocol _selectedProtocol;
   late int _customHours;
   bool _showExtended = false;
+  FastingProtocol? _lastUsedProtocol;
 
   // TRE (Time-Restricted Eating) protocols
   static const List<FastingProtocol> _treProtocols = [
@@ -53,6 +60,19 @@ class _ProtocolSelectorSheetState extends State<ProtocolSelectorSheet> {
     if (_extendedProtocols.contains(_selectedProtocol)) {
       _showExtended = true;
     }
+    // Load last-used protocol for the badge. If the user has a previously
+    // saved protocol that lives in the extended section, expand that section
+    // too so the sparkle is visible without an extra tap.
+    final raw = ref.read(lastUsedServiceProvider).get(_kFastingProtocolKey);
+    if (raw != null) {
+      for (final p in FastingProtocol.values) {
+        if (p.name == raw) {
+          _lastUsedProtocol = p;
+          if (_extendedProtocols.contains(p)) _showExtended = true;
+          break;
+        }
+      }
+    }
   }
 
   void _selectProtocol(FastingProtocol protocol) {
@@ -65,6 +85,15 @@ class _ProtocolSelectorSheetState extends State<ProtocolSelectorSheet> {
   void _confirm() {
     HapticService.medium();
     final customHours = _selectedProtocol == FastingProtocol.custom ? _customHours : null;
+    // Persist as last-used so the next open badges this protocol. Skip the
+    // custom protocol — its "remembered" value is the hours, not the enum,
+    // and tracking that needs a separate key (out of scope for v1).
+    if (_selectedProtocol != FastingProtocol.custom) {
+      // ignore: unawaited_futures
+      ref
+          .read(lastUsedServiceProvider)
+          .set(_kFastingProtocolKey, _selectedProtocol.name);
+    }
     widget.onSelect(_selectedProtocol, customHours);
     Navigator.pop(context);
   }
@@ -167,6 +196,7 @@ class _ProtocolSelectorSheetState extends State<ProtocolSelectorSheet> {
               children: _treProtocols.map((p) => _ProtocolChip(
                 protocol: p,
                 isSelected: _selectedProtocol == p,
+                isLastUsed: _lastUsedProtocol == p,
                 onTap: () => _selectProtocol(p),
                 isDark: isDark,
               )).toList(),
@@ -231,6 +261,7 @@ class _ProtocolSelectorSheetState extends State<ProtocolSelectorSheet> {
                 children: _extendedProtocols.map((p) => _ProtocolChip(
                   protocol: p,
                   isSelected: _selectedProtocol == p,
+                  isLastUsed: _lastUsedProtocol == p,
                   onTap: () => _selectProtocol(p),
                   isDark: isDark,
                   isExtended: true,
@@ -239,10 +270,12 @@ class _ProtocolSelectorSheetState extends State<ProtocolSelectorSheet> {
             ],
             const SizedBox(height: 16),
 
-            // Custom duration
+            // Custom duration — never badged (custom hours need their own
+            // key; out of scope for v1, see _confirm comment).
             _ProtocolChip(
               protocol: FastingProtocol.custom,
               isSelected: _selectedProtocol == FastingProtocol.custom,
+              isLastUsed: false,
               onTap: () => _selectProtocol(FastingProtocol.custom),
               isDark: isDark,
               customLabel: 'Custom: ${_customHours}h',
@@ -335,6 +368,7 @@ class _ProtocolSelectorSheetState extends State<ProtocolSelectorSheet> {
 class _ProtocolChip extends StatelessWidget {
   final FastingProtocol protocol;
   final bool isSelected;
+  final bool isLastUsed;
   final VoidCallback onTap;
   final bool isDark;
   final String? customLabel;
@@ -343,6 +377,7 @@ class _ProtocolChip extends StatelessWidget {
   const _ProtocolChip({
     required this.protocol,
     required this.isSelected,
+    required this.isLastUsed,
     required this.onTap,
     required this.isDark,
     this.customLabel,
@@ -358,30 +393,44 @@ class _ProtocolChip extends StatelessWidget {
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     // Extended protocols use muted color for differentiation
     final chipAccent = isExtended ? textMuted : accentColor;
+    // Show the badge when this chip matches last-used AND is NOT currently
+    // selected (the active border + tinted bg already mark the active pick).
+    final showBadge = isLastUsed && !isSelected;
 
     return GestureDetector(
       onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-        decoration: BoxDecoration(
-          color: isSelected
-              ? chipAccent.withValues(alpha: 0.15)
-              : cardBorder.withValues(alpha: 0.5),
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(
-            color: isSelected ? chipAccent : Colors.transparent,
-            width: 2,
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            decoration: BoxDecoration(
+              color: isSelected
+                  ? chipAccent.withValues(alpha: 0.15)
+                  : cardBorder.withValues(alpha: 0.5),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(
+                color: isSelected ? chipAccent : Colors.transparent,
+                width: 2,
+              ),
+            ),
+            child: Text(
+              customLabel ?? protocol.displayName,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                color: isSelected ? chipAccent : textPrimary,
+              ),
+            ),
           ),
-        ),
-        child: Text(
-          customLabel ?? protocol.displayName,
-          style: TextStyle(
-            fontSize: 13,
-            fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-            color: isSelected ? chipAccent : textPrimary,
-          ),
-        ),
+          if (showBadge)
+            Positioned(
+              top: -4,
+              right: -4,
+              child: LastUsedBadge.static(colorOverride: chipAccent, size: 12),
+            ),
+        ],
       ),
     );
   }

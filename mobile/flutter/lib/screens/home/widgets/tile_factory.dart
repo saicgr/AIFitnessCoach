@@ -70,11 +70,9 @@ class TileFactory {
         // Coming soon
         return const SizedBox.shrink();
       case TileType.caloriesSummary:
-        // Coming soon
-        return const SizedBox.shrink();
+        return CaloriesSummaryCard(size: tile.size, isDark: isDark);
       case TileType.macroRings:
-        // Coming soon
-        return const SizedBox.shrink();
+        return MacroRingsCard(size: tile.size, isDark: isDark);
       case TileType.bodyWeight:
         // Coming soon
         return const SizedBox.shrink();
@@ -88,8 +86,7 @@ class TileFactory {
         // Coming soon
         return const SizedBox.shrink();
       case TileType.fasting:
-        // TODO: Re-enable when fasting feature launches
-        return const SizedBox.shrink(); // was: FastingTimerCard
+        return FastingTimerCard(size: tile.size, isDark: isDark);
       case TileType.weeklyCalendar:
         // Coming soon
         return const SizedBox.shrink();

@@ -31,7 +31,8 @@ class SummarySetData {
   final double? previousWeightLbs;
   final int? previousReps;
   final String? progressionModel;
-  final String? notes;
+  // Multiple notes per set are preserved in order. Empty list = no notes.
+  final List<String> notes;
   final String? completedAt;
 
   const SummarySetData({
@@ -51,7 +52,7 @@ class SummarySetData {
     this.previousWeightLbs,
     this.previousReps,
     this.progressionModel,
-    this.notes,
+    this.notes = const [],
     this.completedAt,
   });
 
@@ -73,9 +74,28 @@ class SummarySetData {
       previousWeightLbs: (json['previous_weight_lbs'] as num?)?.toDouble(),
       previousReps: json['previous_reps'] as int?,
       progressionModel: json['progression_model'] as String?,
-      notes: json['notes'] as String?,
+      // Backwards-compatible coercion — accepts a list (current shape), a
+      // raw string (legacy rows pre-array migration), or null.
+      notes: coerceNotes(json['notes']),
       completedAt: json['completed_at'] as String?,
     );
+  }
+
+  /// Public so other parsers reading the same `sets_json` shape can reuse
+  /// the same coercion. Accepts list, string, or null.
+  static List<String> coerceNotes(dynamic raw) {
+    if (raw == null) return const [];
+    if (raw is List) {
+      return raw
+          .map((e) => e?.toString().trim() ?? '')
+          .where((s) => s.isNotEmpty)
+          .toList();
+    }
+    if (raw is String) {
+      final trimmed = raw.trim();
+      return trimmed.isEmpty ? const [] : [trimmed];
+    }
+    return const [];
   }
 }
 
@@ -448,6 +468,161 @@ class _SummaryTableHeader extends StatelessWidget {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
+// NOTES VIEWER SHEET
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/// Read-only notes viewer for a completed set. Opens when the user taps the
+/// sticky-note icon on a set row. Displays every note in capture order with
+/// the set number for context. Editing on the completed-summary screen is
+/// intentionally deferred — the viewer is a focused fix for "I added
+/// multiple notes but only see one" / "I tap the icon and nothing happens".
+void _showSetNotesSheet({
+  required BuildContext context,
+  required bool isDark,
+  required int setNumber,
+  required List<String> notes,
+  String? completedAt,
+}) {
+  final bg = isDark ? const Color(0xFF111111) : Colors.white;
+  final fg = isDark ? Colors.white : Colors.black87;
+  final muted = isDark ? Colors.white60 : Colors.black54;
+
+  showModalBottomSheet<void>(
+    context: context,
+    backgroundColor: bg,
+    shape: const RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+    ),
+    builder: (ctx) {
+      return SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 36,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: muted.withValues(alpha: 0.4),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Icon(Icons.sticky_note_2_rounded, color: fg, size: 22),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Set $setNumber notes',
+                    style: TextStyle(
+                      color: fg,
+                      fontSize: 18,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const Spacer(),
+                  Text(
+                    notes.length == 1 ? '1 note' : '${notes.length} notes',
+                    style: TextStyle(
+                      color: muted,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 14),
+              if (notes.isEmpty)
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  child: Text(
+                    'No notes saved on this set.',
+                    style: TextStyle(color: muted, fontSize: 14),
+                  ),
+                )
+              else
+                Flexible(
+                  child: ListView.separated(
+                    shrinkWrap: true,
+                    itemCount: notes.length,
+                    separatorBuilder: (_, __) => const SizedBox(height: 10),
+                    itemBuilder: (_, i) {
+                      return Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: (isDark ? Colors.white : Colors.black)
+                              .withValues(alpha: 0.04),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(
+                            color: (isDark ? Colors.white : Colors.black)
+                                .withValues(alpha: 0.06),
+                          ),
+                        ),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            CircleAvatar(
+                              radius: 10,
+                              backgroundColor: AppColors.electricBlue
+                                  .withValues(alpha: 0.18),
+                              child: Text(
+                                '${i + 1}',
+                                style: TextStyle(
+                                  color: AppColors.electricBlue,
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Text(
+                                notes[i],
+                                style: TextStyle(
+                                  color: fg,
+                                  fontSize: 14,
+                                  height: 1.4,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              if (completedAt != null && completedAt.isNotEmpty) ...[
+                const SizedBox(height: 14),
+                Text(
+                  'Logged ${_formatCompletedAt(completedAt)}',
+                  style: TextStyle(color: muted, fontSize: 11),
+                ),
+              ],
+            ],
+          ),
+        ),
+      );
+    },
+  );
+}
+
+String _formatCompletedAt(String iso) {
+  try {
+    final dt = DateTime.parse(iso).toLocal();
+    final h = dt.hour > 12 ? dt.hour - 12 : (dt.hour == 0 ? 12 : dt.hour);
+    final m = dt.minute.toString().padLeft(2, '0');
+    final ampm = dt.hour >= 12 ? 'PM' : 'AM';
+    return 'at $h:$m $ampm';
+  } catch (_) {
+    return '';
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
 // SET ROW
 // ═══════════════════════════════════════════════════════════════════════════════
 
@@ -501,7 +676,7 @@ class _SummarySetRow extends StatelessWidget {
     );
 
     final weightText = _formatWeight(set.actualWeightKg, set.actualWeightLbs);
-    final hasNotes = set.notes != null && set.notes!.isNotEmpty;
+    final hasNotes = set.notes.isNotEmpty;
 
     return Container(
       height: WorkoutDesign.setRowHeight,
@@ -573,12 +748,29 @@ class _SummarySetRow extends StatelessWidget {
                 ),
                 if (hasNotes) ...[
                   const SizedBox(width: 2),
-                  Icon(
-                    Icons.sticky_note_2_outlined,
-                    size: 12,
-                    color: isDark
-                        ? WorkoutDesign.textMuted
-                        : Colors.grey.shade400,
+                  // Tap target sized up so the icon is actually hittable —
+                  // 12px icons are below the 44pt iOS / 48dp Android touch
+                  // target, hence the user's "I tap the icon and nothing
+                  // happens" report.
+                  GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onTap: () => _showSetNotesSheet(
+                      context: context,
+                      isDark: isDark,
+                      setNumber: set.setNumber,
+                      notes: set.notes,
+                      completedAt: set.completedAt,
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(6),
+                      child: Icon(
+                        Icons.sticky_note_2_outlined,
+                        size: 14,
+                        color: isDark
+                            ? WorkoutDesign.textPrimary
+                            : Colors.grey.shade700,
+                      ),
+                    ),
                   ),
                 ],
               ],

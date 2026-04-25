@@ -21,6 +21,7 @@ import '../services/connectivity_service.dart';
 import '../services/data_cache_service.dart';
 import '../services/recipe_notification_router.dart';
 import '../providers/audio_preferences_provider.dart';
+import '../providers/today_workout_provider.dart';
 import '../providers/unified_state_provider.dart';
 import 'workout_repository.dart';
 import 'auth_repository.dart';
@@ -64,7 +65,13 @@ final chatMessagesProvider =
   // Sound + audio control callbacks for AI setting changes
   SoundPreferencesNotifier getSoundPrefs() => ref.read(soundPreferencesProvider.notifier);
   AudioPreferencesNotifier getAudioPrefs() => ref.read(audioPreferencesProvider.notifier);
-  return ChatMessagesNotifier(repository, apiClient, workoutsNotifier, workoutRepository, user, themeNotifier, router, hydrationNotifier, nutritionNotifier, getAISettings, setAIGenerating, getUnifiedContext, offlineCoach, isOnline, getSoundPrefs, getAudioPrefs);
+  // Same callback pattern as the others — captures `ref` so the AI completion
+  // handler can flip /today's cache without holding a notifier reference that
+  // would break the dispose lifecycle.
+  void refreshTodayWorkout() {
+    ref.read(todayWorkoutProvider.notifier).invalidateAndRefresh();
+  }
+  return ChatMessagesNotifier(repository, apiClient, workoutsNotifier, workoutRepository, user, themeNotifier, router, hydrationNotifier, nutritionNotifier, getAISettings, setAIGenerating, getUnifiedContext, offlineCoach, isOnline, getSoundPrefs, getAudioPrefs, refreshTodayWorkout);
 });
 
 /// Chat repository for API calls

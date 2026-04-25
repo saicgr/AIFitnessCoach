@@ -337,6 +337,7 @@ class _TierPlanCard extends StatelessWidget {
 /// Current plan status card
 class _CurrentPlanCard extends StatelessWidget {
   final SubscriptionTier tier;
+  final BillingPeriod billingPeriod;
   final bool isTrialActive;
   final DateTime? trialEndDate;
   final DateTime? subscriptionEndDate;
@@ -344,6 +345,7 @@ class _CurrentPlanCard extends StatelessWidget {
 
   const _CurrentPlanCard({
     required this.tier,
+    required this.billingPeriod,
     required this.isTrialActive,
     this.trialEndDate,
     this.subscriptionEndDate,
@@ -371,7 +373,10 @@ class _CurrentPlanCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
+                Wrap(
+                  spacing: 6,
+                  runSpacing: 4,
+                  crossAxisAlignment: WrapCrossAlignment.center,
                   children: [
                     Text(
                       _getTierName(),
@@ -381,24 +386,10 @@ class _CurrentPlanCard extends StatelessWidget {
                         color: colors.accentContrast,
                       ),
                     ),
-                    if (isTrialActive) ...[
-                      const SizedBox(width: 8),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: colors.accentContrast.withOpacity(0.2),
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                        child: Text(
-                          'TRIAL',
-                          style: TextStyle(
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold,
-                            color: colors.accentContrast,
-                          ),
-                        ),
-                      ),
-                    ],
+                    if (isTrialActive)
+                      _miniBadge('TRIAL', colors.accentContrast),
+                    if (_cadenceBadgeLabel() != null)
+                      _miniBadge(_cadenceBadgeLabel()!, colors.accentContrast),
                   ],
                 ),
                 const SizedBox(height: 2),
@@ -427,6 +418,39 @@ class _CurrentPlanCard extends StatelessWidget {
       default:
         return 'Free';
     }
+  }
+
+  /// Returns "MONTHLY" / "YEARLY" / null. Lifetime is already conveyed by the
+  /// tier name and gets no extra badge.
+  String? _cadenceBadgeLabel() {
+    switch (billingPeriod) {
+      case BillingPeriod.monthly:
+        return 'MONTHLY';
+      case BillingPeriod.yearly:
+        return 'YEARLY';
+      case BillingPeriod.lifetime:
+      case BillingPeriod.unknown:
+        return null;
+    }
+  }
+
+  Widget _miniBadge(String label, Color contrastColor) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(
+        // ignore: deprecated_member_use
+        color: contrastColor.withOpacity(0.2),
+        borderRadius: BorderRadius.circular(4),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          fontSize: 10,
+          fontWeight: FontWeight.bold,
+          color: contrastColor,
+        ),
+      ),
+    );
   }
 
   String _getStatusText() {

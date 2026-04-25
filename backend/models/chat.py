@@ -57,6 +57,8 @@ class CoachIntent(str, Enum):
     # Additional action intents
     SET_WATER_GOAL = "set_water_goal"
     LOG_WEIGHT = "log_weight"
+    # Public share artifact generation (single workout / week / month / PRs / 1RM / summary)
+    GENERATE_SHARE_ARTIFACT = "generate_share_artifact"
 
 
 class MediaRef(BaseModel):

@@ -18,6 +18,7 @@ import 'regenerate_workout_sheet.dart';
 import '../../social/widgets/create_post_sheet.dart';
 import '../../workout/widgets/exercise_add_sheet.dart';
 import '../../../core/services/posthog_service.dart';
+import 'package:share_plus/share_plus.dart';
 
 
 part 'hero_workout_card_part_completed_workout_hero_card.dart';
@@ -288,6 +289,37 @@ class _HeroWorkoutCardState extends ConsumerState<HeroWorkoutCard> {
     context.push('/workout-summary/${widget.workout.id}?tab=summary');
   }
 
+  Future<void> _shareCompletedWorkout() async {
+    HapticService.light();
+    final id = widget.workout.id;
+    if (id == null || id.isEmpty) return;
+    try {
+      final api = ref.read(apiClientProvider);
+      final res = await api.dio.post('/api/v1/workouts/$id/share-link');
+      final data = res.data;
+      String? url;
+      if (data is Map && data['url'] is String) url = data['url'] as String;
+      if (!mounted || url == null) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Could not create share link')),
+          );
+        }
+        return;
+      }
+      await Share.share(
+        '${widget.workout.name ?? 'My workout'} — FitWiz\n$url',
+        subject: 'FitWiz workout',
+      );
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Share failed: $e')),
+        );
+      }
+    }
+  }
+
   void _shareToSocial() {
     HapticService.light();
     final workout = widget.workout;
@@ -431,24 +463,29 @@ class _HeroWorkoutCardState extends ConsumerState<HeroWorkoutCard> {
                       Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
+                          // Chip opacity bumped (0.4→0.7 dark, 0.8→0.95 light)
+                          // and font size 12→13 / weight w700→w800 so the
+                          // labels stay legible over light-skeleton hero
+                          // illustrations (the skeleton flesh tones drop the
+                          // contrast on the previous translucent chip).
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                             decoration: BoxDecoration(
                               color: isDark
-                                  ? Colors.black.withValues(alpha: 0.4)
-                                  : Colors.white.withValues(alpha: 0.8),
+                                  ? Colors.black.withValues(alpha: 0.7)
+                                  : Colors.white.withValues(alpha: 0.95),
                               borderRadius: BorderRadius.circular(8),
                               border: Border.all(
                                 color: isDark
-                                    ? Colors.white.withValues(alpha: 0.1)
-                                    : Colors.black.withValues(alpha: 0.1),
+                                    ? Colors.white.withValues(alpha: 0.18)
+                                    : Colors.black.withValues(alpha: 0.15),
                               ),
                             ),
                             child: Text(
                               dateLabel,
                               style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w700,
+                                fontSize: 13,
+                                fontWeight: FontWeight.w800,
                                 letterSpacing: 0.5,
                                 color: isDark ? Colors.white : Colors.black87,
                               ),
@@ -457,23 +494,23 @@ class _HeroWorkoutCardState extends ConsumerState<HeroWorkoutCard> {
                           if (_getWorkoutTypeLabel(workout.type).isNotEmpty) ...[
                             const SizedBox(width: 6),
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                               decoration: BoxDecoration(
                                 color: isDark
-                                    ? Colors.black.withValues(alpha: 0.4)
-                                    : Colors.white.withValues(alpha: 0.8),
+                                    ? Colors.black.withValues(alpha: 0.7)
+                                    : Colors.white.withValues(alpha: 0.95),
                                 borderRadius: BorderRadius.circular(8),
                                 border: Border.all(
                                   color: isDark
-                                      ? Colors.white.withValues(alpha: 0.1)
-                                      : Colors.black.withValues(alpha: 0.1),
+                                      ? Colors.white.withValues(alpha: 0.18)
+                                      : Colors.black.withValues(alpha: 0.15),
                                 ),
                               ),
                               child: Text(
                                 _getWorkoutTypeLabel(workout.type),
                                 style: TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w700,
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w800,
                                   letterSpacing: 0.5,
                                   color: isDark ? Colors.white : Colors.black87,
                                 ),
@@ -505,20 +542,22 @@ class _HeroWorkoutCardState extends ConsumerState<HeroWorkoutCard> {
                           ],
                         ],
                       ),
+                      // Overflow menu — bumped 36→44pt to meet WCAG 2.5.8
+                      // touch-target minimum + matching opacity bump.
                       GestureDetector(
                         onTap: _showOptionsMenu,
                         child: Container(
-                          width: 36,
-                          height: 36,
+                          width: 44,
+                          height: 44,
                           decoration: BoxDecoration(
                             color: isDark
-                                ? Colors.black.withValues(alpha: 0.4)
-                                : Colors.white.withValues(alpha: 0.8),
-                            borderRadius: BorderRadius.circular(10),
+                                ? Colors.black.withValues(alpha: 0.7)
+                                : Colors.white.withValues(alpha: 0.95),
+                            borderRadius: BorderRadius.circular(12),
                             border: Border.all(
                               color: isDark
-                                  ? Colors.white.withValues(alpha: 0.1)
-                                  : Colors.black.withValues(alpha: 0.1),
+                                  ? Colors.white.withValues(alpha: 0.18)
+                                  : Colors.black.withValues(alpha: 0.15),
                             ),
                           ),
                           child: Icon(
@@ -531,7 +570,15 @@ class _HeroWorkoutCardState extends ConsumerState<HeroWorkoutCard> {
                     ],
                   ),
 
-                  const SizedBox(height: 60),
+                  // Flexible top gap — the card has a fixed 296pt height and
+                  // a description-bearing workout pushes the natural Column
+                  // height to 300pt (4px overflow seen in prod). Letting the
+                  // gap shrink keeps the visual cadence on simple workouts
+                  // while absorbing the extra desc line without overflow.
+                  const Flexible(
+                    fit: FlexFit.loose,
+                    child: SizedBox(height: 60),
+                  ),
 
                   // Workout title - large and prominent
                   Text(
@@ -588,28 +635,25 @@ class _HeroWorkoutCardState extends ConsumerState<HeroWorkoutCard> {
                     children: [
                       Icon(
                         Icons.timer_outlined,
-                        color: isDark
-                            ? Colors.white.withValues(alpha: 0.85)
-                            : Colors.black54,
+                        color: isDark ? Colors.white : Colors.black87,
                         size: 16,
                       ),
                       const SizedBox(width: 4),
+                      // Meta-line readability: bumped color opacity 0.85→1.0
+                      // and weight w500→w700 so duration / exercise count
+                      // pass WCAG AA against the hero gradient.
                       Text(
                         workout.formattedDurationShort,
                         style: TextStyle(
-                          color: isDark
-                              ? Colors.white.withValues(alpha: 0.85)
-                              : Colors.black54,
+                          color: isDark ? Colors.white : Colors.black87,
                           fontSize: 14,
-                          fontWeight: FontWeight.w500,
+                          fontWeight: FontWeight.w700,
                         ),
                       ),
                       const SizedBox(width: 16),
                       Icon(
                         Icons.fitness_center,
-                        color: isDark
-                            ? Colors.white.withValues(alpha: 0.85)
-                            : Colors.black54,
+                        color: isDark ? Colors.white : Colors.black87,
                         size: 16,
                       ),
                       const SizedBox(width: 4),
@@ -618,11 +662,9 @@ class _HeroWorkoutCardState extends ConsumerState<HeroWorkoutCard> {
                             ? '${workout.exerciseCount} exercises'
                             : 'Ready to start',
                         style: TextStyle(
-                          color: isDark
-                              ? Colors.white.withValues(alpha: 0.85)
-                              : Colors.black54,
+                          color: isDark ? Colors.white : Colors.black87,
                           fontSize: 14,
-                          fontWeight: FontWeight.w500,
+                          fontWeight: FontWeight.w700,
                         ),
                       ),
                     ],
@@ -705,7 +747,12 @@ class _HeroWorkoutCardState extends ConsumerState<HeroWorkoutCard> {
                   // View Details and Regenerate row
                   Row(
                     children: [
-                      // View Details button
+                      // View Details / Regenerate buttons — opacity bumped
+                      // (0.10→0.18 dark / 0.05→0.10 light), font 13→14 +
+                      // weight w500→w700, vertical padding 8→11 so the
+                      // button reaches a 44pt hit region. Icon stays 16pt
+                      // but the label now passes WCAG AA contrast against
+                      // the hero gradient.
                       Expanded(
                         child: GestureDetector(
                           onTap: () {
@@ -713,16 +760,16 @@ class _HeroWorkoutCardState extends ConsumerState<HeroWorkoutCard> {
                             context.push('/workout/${workout.id}', extra: workout);
                           },
                           child: Container(
-                            padding: const EdgeInsets.symmetric(vertical: 8),
+                            padding: const EdgeInsets.symmetric(vertical: 11),
                             decoration: BoxDecoration(
                               color: isDark
-                                  ? Colors.white.withValues(alpha: 0.1)
-                                  : Colors.black.withValues(alpha: 0.05),
+                                  ? Colors.white.withValues(alpha: 0.18)
+                                  : Colors.black.withValues(alpha: 0.10),
                               borderRadius: BorderRadius.circular(10),
                               border: Border.all(
                                 color: isDark
-                                    ? Colors.white.withValues(alpha: 0.15)
-                                    : Colors.black.withValues(alpha: 0.1),
+                                    ? Colors.white.withValues(alpha: 0.25)
+                                    : Colors.black.withValues(alpha: 0.18),
                               ),
                             ),
                             child: Row(
@@ -731,19 +778,15 @@ class _HeroWorkoutCardState extends ConsumerState<HeroWorkoutCard> {
                                 Icon(
                                   Icons.visibility_outlined,
                                   size: 16,
-                                  color: isDark
-                                      ? Colors.white.withValues(alpha: 0.9)
-                                      : Colors.black87,
+                                  color: isDark ? Colors.white : Colors.black87,
                                 ),
                                 const SizedBox(width: 6),
                                 Text(
                                   'View Details',
                                   style: TextStyle(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w500,
-                                    color: isDark
-                                        ? Colors.white.withValues(alpha: 0.9)
-                                        : Colors.black87,
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w700,
+                                    color: isDark ? Colors.white : Colors.black87,
                                   ),
                                 ),
                               ],
@@ -752,21 +795,20 @@ class _HeroWorkoutCardState extends ConsumerState<HeroWorkoutCard> {
                         ),
                       ),
                       const SizedBox(width: 10),
-                      // Regenerate button
                       Expanded(
                         child: GestureDetector(
                           onTap: _regenerateWorkout,
                           child: Container(
-                            padding: const EdgeInsets.symmetric(vertical: 8),
+                            padding: const EdgeInsets.symmetric(vertical: 11),
                             decoration: BoxDecoration(
                               color: isDark
-                                  ? Colors.white.withValues(alpha: 0.1)
-                                  : Colors.black.withValues(alpha: 0.05),
+                                  ? Colors.white.withValues(alpha: 0.18)
+                                  : Colors.black.withValues(alpha: 0.10),
                               borderRadius: BorderRadius.circular(10),
                               border: Border.all(
                                 color: isDark
-                                    ? Colors.white.withValues(alpha: 0.15)
-                                    : Colors.black.withValues(alpha: 0.1),
+                                    ? Colors.white.withValues(alpha: 0.25)
+                                    : Colors.black.withValues(alpha: 0.18),
                               ),
                             ),
                             child: Row(
@@ -775,19 +817,15 @@ class _HeroWorkoutCardState extends ConsumerState<HeroWorkoutCard> {
                                 Icon(
                                   Icons.refresh,
                                   size: 16,
-                                  color: isDark
-                                      ? Colors.white.withValues(alpha: 0.9)
-                                      : Colors.black87,
+                                  color: isDark ? Colors.white : Colors.black87,
                                 ),
                                 const SizedBox(width: 6),
                                 Text(
                                   'Regenerate',
                                   style: TextStyle(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w500,
-                                    color: isDark
-                                        ? Colors.white.withValues(alpha: 0.9)
-                                        : Colors.black87,
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w700,
+                                    color: isDark ? Colors.white : Colors.black87,
                                   ),
                                 ),
                               ],
@@ -877,6 +915,8 @@ class _HeroWorkoutCardState extends ConsumerState<HeroWorkoutCard> {
                               ],
                               const SizedBox(width: 12),
                               _buildOverlayButton(icon: Icons.bar_chart, label: 'Summary', onTap: _viewSummary, isDark: isDark),
+                              const SizedBox(width: 12),
+                              _buildOverlayButton(icon: Icons.ios_share_rounded, label: 'Share', onTap: _shareCompletedWorkout, isDark: isDark),
                             ],
                           ),
                         ],

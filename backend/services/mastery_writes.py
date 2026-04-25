@@ -27,6 +27,7 @@ thresholds change both files must move together.
 """
 from __future__ import annotations
 
+import asyncio
 import json
 from datetime import datetime, timezone
 from typing import Any, Dict, List
@@ -260,7 +261,9 @@ def recompute_masteries(user_id: str) -> Dict[str, int]:
 
 async def check_all_trophies_and_masteries(user_id: str) -> None:
     """Fire trophy check + mastery recompute. Swallows every error so a
-    broken trophy path can't 500 the caller."""
+    broken trophy path can't 500 the caller. Callers should prefer
+    `fire_trophy_check_detached` below to fully detach the work from the
+    request's response lifecycle."""
     try:
         from api.v1.trophy_triggers import check_all_trophies
         await check_all_trophies(user_id)
@@ -269,4 +272,52 @@ async def check_all_trophies_and_masteries(user_id: str) -> None:
             f"[mastery_writes] check_all_trophies failed for {user_id}: {e}",
             exc_info=True,
         )
-    recompute_masteries(user_id)
+    # recompute_masteries is synchronous and does multiple DB round-trips.
+    # Run it off the event loop so any long query doesn't stall other
+    # coroutines running in the same worker.
+    try:
+        await asyncio.to_thread(recompute_masteries, user_id)
+    except Exception as e:
+        logger.error(
+            f"[mastery_writes] recompute_masteries wrapper failed for {user_id}: {e}",
+            exc_info=True,
+        )
+
+
+# Track spawned tasks so the interpreter doesn't GC them mid-flight (asyncio
+# only holds weak references to tasks returned by create_task).
+_DETACHED_TASKS: "set[asyncio.Task[None]]" = set()
+
+
+def fire_trophy_check_detached(user_id: str, timeout_seconds: float = 60.0) -> None:
+    """Spawn trophy + mastery work fully detached from the HTTP response.
+
+    Why not FastAPI's ``BackgroundTasks``? The app runs behind Starlette's
+    ``BaseHTTPMiddleware`` (see ``RequestLoggingMiddleware`` in main.py) which
+    serializes background tasks into the response pipeline — the middleware
+    timer keeps running until every background task finishes. A single hung
+    trophy query inflated one workout-completion log to 1,823,464 ms (~30
+    min). This helper uses ``asyncio.create_task`` so the response returns
+    immediately and post-completion work runs on the event loop without
+    blocking the middleware.
+    """
+    async def _run() -> None:
+        try:
+            await asyncio.wait_for(
+                check_all_trophies_and_masteries(user_id),
+                timeout=timeout_seconds,
+            )
+        except asyncio.TimeoutError:
+            logger.error(
+                f"[mastery_writes] trophy+mastery timed out after "
+                f"{timeout_seconds:.0f}s for {user_id}"
+            )
+        except Exception as e:
+            logger.error(
+                f"[mastery_writes] detached trophy+mastery failed for {user_id}: {e}",
+                exc_info=True,
+            )
+
+    task = asyncio.create_task(_run(), name=f"trophy_mastery_{user_id[:8]}")
+    _DETACHED_TASKS.add(task)
+    task.add_done_callback(_DETACHED_TASKS.discard)

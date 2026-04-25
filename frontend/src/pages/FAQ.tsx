@@ -189,8 +189,8 @@ export default function FAQ() {
           </h1>
           <p className="text-[15px] text-[var(--color-text-secondary)] leading-relaxed mb-12">
             Everything you need to know about FitWiz. Can't find an answer? Reach out to us at{' '}
-            <a href="mailto:support@fitwiz.app" className="text-emerald-400 hover:underline">
-              support@fitwiz.app
+            <a href="mailto:support@fitwiz.us" className="text-emerald-400 hover:underline">
+              support@fitwiz.us
             </a>.
           </p>
 

@@ -72,7 +72,9 @@
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher"
         android:roundIcon="@mipmap/ic_launcher_round"
-        android:networkSecurityConfig="@xml/network_security_config">
+        android:networkSecurityConfig="@xml/network_security_config"
+        android:fullBackupContent="@xml/backup_rules"
+        android:dataExtractionRules="@xml/data_extraction_rules">
         <!-- FCM default notification icon (monochrome, white-on-transparent) -->
         <meta-data
             android:name="com.google.firebase.messaging.default_notification_icon"
@@ -119,13 +121,24 @@
                 <data android:scheme="fitwiz"/>
             </intent-filter>
 
-            <!-- App Links: https://fitwiz.us/invite/{code} routes through
-                 IncomingLinkService. autoVerify requires Digital Asset Links
-                 at https://fitwiz.us/.well-known/assetlinks.json (hosted via
-                 frontend/public/.well-known/ on Vercel). Bundle / package
-                 id `com.fitwiz.app` stays as-is — that's the app identity,
-                 not the web host. -->
-            <intent-filter android:autoVerify="true">
+            <!-- HTTPS invite deep links (https://fitwiz.us/invite/{code}).
+                 autoVerify is INTENTIONALLY OFF — enabling it requires a
+                 Digital Asset Links JSON hosted at
+                 https://fitwiz.us/.well-known/assetlinks.json containing
+                 the release keystore + Play App Signing SHA-256 fingerprints.
+                 Without that file Android silently fails verification on
+                 every install. With autoVerify off, Android still routes
+                 these links via the disambiguation chooser (user gets the
+                 "Open with FitWiz" option). To upgrade to autoVerify later:
+                   1. keytool -list -v -keystore android/keystores/release.keystore -alias fitwiz
+                   2. Grab the upload SHA-256 + the Play App Signing SHA-256
+                      from Play Console → Setup → App Signing.
+                   3. Host {package: com.aifitnesscoach.app, sha256s: [...]}
+                      at https://fitwiz.us/.well-known/assetlinks.json with
+                      content-type application/json (NO redirects).
+                   4. Re-add android:autoVerify="true" below.
+                 The custom fitwiz:// scheme above keeps working regardless. -->
+            <intent-filter>
                 <action android:name="android.intent.action.VIEW"/>
                 <category android:name="android.intent.category.DEFAULT"/>
                 <category android:name="android.intent.category.BROWSABLE"/>
@@ -135,6 +148,25 @@
                 <data android:scheme="http"
                       android:host="fitwiz.us"
                       android:pathPrefix="/invite"/>
+            </intent-filter>
+
+            <!-- Public single-workout share links (https://fitwiz.us/w/{token}).
+                 Mirrors the iOS associated-domains entitlement. autoVerify is
+                 OFF for the same reason as /invite — flip it on once
+                 assetlinks.json is published with the production SHA256 cert. -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <category android:name="android.intent.category.BROWSABLE"/>
+                <data android:scheme="https"
+                      android:host="fitwiz.us"
+                      android:pathPrefix="/w"/>
+                <data android:scheme="https"
+                      android:host="fitwiz.us"
+                      android:pathPrefix="/p"/>
+                <data android:scheme="https"
+                      android:host="fitwiz.us"
+                      android:pathPrefix="/u"/>
             </intent-filter>
 
             <!-- Long-press app-icon shortcuts (Android 7.1+) — staged
@@ -162,6 +194,19 @@
             android:exported="false"
             android:theme="@android:style/Theme.Black.NoTitleBar.Fullscreen"
             android:screenOrientation="portrait" />
+
+        <!-- FileProvider for sharing workout share images to Instagram Stories.
+             Instagram requires a content:// URI with FLAG_GRANT_READ_URI_PERMISSION;
+             a plain file:// path triggers FileUriExposedException on Android 7+. -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.instagramshare.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/instagram_share_paths" />
+        </provider>
 
         <!-- Barcode Scanner Activity -->
         <activity
@@ -409,6 +454,14 @@
             <action android:name="android.intent.action.VIEW" />
             <data android:scheme="instagram" />
         </intent>
+        <!-- Instagram Stories ADD_TO_STORY intent (used by native MethodChannel
+             handler). Without this, resolveActivity() returns null on Android
+             11+ and the share silently no-ops. -->
+        <intent>
+            <action android:name="com.instagram.share.ADD_TO_STORY" />
+            <data android:mimeType="image/*" />
+        </intent>
+        <package android:name="com.instagram.android" />
         <!-- Required for share_plus to work with all apps -->
         <intent>
             <action android:name="android.intent.action.SEND" />

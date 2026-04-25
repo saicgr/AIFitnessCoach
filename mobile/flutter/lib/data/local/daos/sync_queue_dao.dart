@@ -129,6 +129,30 @@ class SyncQueueDao extends DatabaseAccessor<AppDatabase>
     );
   }
 
+  /// Move a single dead-letter item back to pending so the next sync cycle
+  /// retries it. Used by the per-row "Retry" CTA on the Sync Details screen
+  /// — bulk recoverDeadLetterItems is too coarse when one item is stuck on
+  /// a permanent validation error and another is just transiently offline.
+  Future<int> retrySingle(int id) {
+    return (update(pendingSyncQueue)
+          ..where((q) => q.id.equals(id) & q.status.equals('dead_letter')))
+        .write(
+      const PendingSyncQueueCompanion(
+        status: Value('pending'),
+        retryCount: Value(0),
+        lastError: Value(null),
+      ),
+    );
+  }
+
+  /// Permanently delete a dead-letter row. Used when the user gives up on a
+  /// failed sync (e.g., a food_log with malformed macros that the backend
+  /// keeps rejecting). Caller should typically prompt for confirmation +
+  /// optionally export the payload first.
+  Future<int> hardDelete(int id) {
+    return (delete(pendingSyncQueue)..where((q) => q.id.equals(id))).go();
+  }
+
   /// Reset items stuck in in_progress for longer than [threshold] back to pending.
   Future<int> resetStuckInProgress(Duration threshold) {
     final cutoff = DateTime.now().subtract(threshold);

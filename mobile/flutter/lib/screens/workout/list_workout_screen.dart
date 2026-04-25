@@ -12,6 +12,7 @@ import '../../widgets/app_dialog.dart';
 import '../../data/models/workout.dart';
 import '../../data/repositories/workout_repository.dart';
 import '../../data/services/api_client.dart';
+import '../../data/providers/today_workout_provider.dart';
 import '../../data/providers/xp_provider.dart';
 import 'widgets/exercise_add_sheet.dart';
 import 'widgets/exercise_set_tracker.dart';
@@ -382,6 +383,14 @@ class _ListWorkoutScreenState extends ConsumerState<ListWorkoutScreen> {
 
         // Award XP for daily goal
         ref.read(xpProvider.notifier).markWorkoutCompleted(workoutId: widget.workout.id);
+
+        // Refresh the home/workouts surfaces so the carousel + week strip
+        // reflect the completion immediately. Previously this screen only
+        // awarded XP and left both providers showing the pre-completion state.
+        if (mounted) {
+          ref.invalidate(workoutsProvider);
+          ref.read(todayWorkoutProvider.notifier).invalidateAndRefresh();
+        }
       }
     } catch (e) {
       debugPrint('Error saving workout: $e');

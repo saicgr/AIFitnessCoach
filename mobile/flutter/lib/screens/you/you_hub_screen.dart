@@ -105,6 +105,11 @@ class _YouHubScreenState extends ConsumerState<YouHubScreen>
                   ),
                   const Spacer(),
                   IconButton(
+                    icon: Icon(Icons.bar_chart_rounded, color: fg),
+                    tooltip: 'Stats & Scores',
+                    onPressed: () => context.push('/stats'),
+                  ),
+                  IconButton(
                     icon: Icon(Icons.settings_outlined, color: fg),
                     tooltip: 'Settings',
                     onPressed: () => context.push('/settings'),

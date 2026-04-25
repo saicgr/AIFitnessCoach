@@ -57,7 +57,23 @@ class _ExerciseInstructionsScreenState
   String? _videoUrl;
   bool _isLoadingVideo = true;
   bool _isVideoInitialized = false;
+
+  // Three terminal states distinguish "the spinner is over":
+  //   _isVideoInitialized == true   → playing
+  //   _videoError == true           → had a real error (network/timeout/init)
+  //                                   → show retry button
+  //   neither, _videoUrl == null    → backend honestly has no video
+  //                                   → show "No video yet" caption only
   bool _videoError = false;
+
+  // Substitute-exercise metadata returned by the backend's similarity
+  // fallback. When non-null, render an honest banner above the video so we
+  // never silently swap one exercise for another.
+  String? _substituteOriginalName;
+  String? _substituteMatchedName;
+
+  // Guard against double-fire from rapid retries.
+  bool _isRetrying = false;
 
   // Bottom tabs state
   int _selectedTab = 0; // 0 = Setup, 1 = Tips
@@ -75,20 +91,36 @@ class _ExerciseInstructionsScreenState
     super.dispose();
   }
 
-  /// Load video URL from API
+  /// Load video URL from API.
+  ///
+  /// Both the lookup and the player init are bounded by hard timeouts so a
+  /// missing or slow video file (e.g. an AI-generated variant that isn't in
+  /// the cleaned exercise library) can never leave the user staring at a
+  /// black loading screen — we always fall through to the still-image
+  /// placeholder within ~20s worst case.
   Future<void> _loadVideoUrl() async {
     final exerciseName = widget.exercise.name;
 
     try {
       final apiClient = ref.read(apiClientProvider);
 
-      // Fetch presigned video URL from backend
-      final videoResponse = await apiClient.get(
-        '/videos/by-exercise/${Uri.encodeComponent(exerciseName)}',
-      );
+      final videoResponse = await apiClient
+          .get('/videos/by-exercise/${Uri.encodeComponent(exerciseName)}')
+          .timeout(const Duration(seconds: 10));
 
       if (videoResponse.statusCode == 200 && videoResponse.data != null) {
-        _videoUrl = videoResponse.data['url'] as String?;
+        final body = videoResponse.data as Map<String, dynamic>;
+        _videoUrl = body['url'] as String?;
+        // Backend may return a substitute when the original exercise has
+        // no canonical video — surface it honestly instead of silently
+        // playing a different exercise's video.
+        if (body['is_substitute'] == true) {
+          final sim = body['similar_to'];
+          if (sim is Map) {
+            _substituteOriginalName = sim['original'] as String?;
+            _substituteMatchedName = sim['matched'] as String?;
+          }
+        }
 
         if (_videoUrl != null && mounted) {
           await _initializeVideo();
@@ -102,12 +134,40 @@ class _ExerciseInstructionsScreenState
           _isLoadingVideo = false;
         });
       }
+      return;
     }
 
-    if (mounted && _videoUrl == null) {
+    if (mounted && !_isVideoInitialized) {
+      // No video URL returned (404 or null), or init failed — drop the
+      // spinner so the placeholder image renders. _videoError remains
+      // false here because there's nothing to retry.
       setState(() {
         _isLoadingVideo = false;
       });
+    }
+  }
+
+  /// User-triggered retry. Resets state and re-runs the loader. Disabled
+  /// while a previous retry is still in flight to avoid double-fires.
+  Future<void> _retryVideo() async {
+    if (_isRetrying) return;
+    HapticFeedback.lightImpact();
+    setState(() {
+      _isRetrying = true;
+      _videoError = false;
+      _videoUrl = null;
+      _isLoadingVideo = true;
+      _isVideoInitialized = false;
+      _substituteOriginalName = null;
+      _substituteMatchedName = null;
+    });
+    try {
+      await _videoController?.dispose();
+    } catch (_) {}
+    _videoController = null;
+    await _loadVideoUrl();
+    if (mounted) {
+      setState(() => _isRetrying = false);
     }
   }
 
@@ -118,7 +178,9 @@ class _ExerciseInstructionsScreenState
     try {
       _videoController =
           VideoPlayerController.networkUrl(Uri.parse(_videoUrl!));
-      await _videoController!.initialize();
+      await _videoController!.initialize().timeout(
+            const Duration(seconds: 10),
+          );
       _videoController!.setLooping(true);
       _videoController!.setVolume(0); // Muted
       _videoController!.play(); // Auto-play
@@ -131,6 +193,11 @@ class _ExerciseInstructionsScreenState
       }
     } catch (e) {
       debugPrint('❌ [Instructions] Error initializing video: $e');
+      // Tear down a half-initialized controller so we don't leak it.
+      try {
+        await _videoController?.dispose();
+      } catch (_) {}
+      _videoController = null;
       if (mounted) {
         setState(() {
           _videoError = true;
@@ -184,12 +251,66 @@ class _ExerciseInstructionsScreenState
             child: _buildTopBar(isDark, textPrimary, textMuted, accentColor),
           ),
 
+          // Substitute banner — shown only when the backend's similarity
+          // fallback returned a different exercise's video. We never want
+          // to silently swap one exercise for another.
+          if (_substituteMatchedName != null && _isVideoInitialized)
+            Positioned(
+              top: MediaQuery.of(context).padding.top + 60,
+              left: 12,
+              right: 12,
+              child: _buildSubstituteBanner(textPrimary, textMuted),
+            ),
+
           // Bottom section with tabs
           Positioned(
             bottom: 0,
             left: 0,
             right: 0,
             child: _buildBottomSection(isDark, textPrimary, textMuted, accentColor),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSubstituteBanner(Color textPrimary, Color textMuted) {
+    final original = _substituteOriginalName ?? widget.exercise.name;
+    final matched = _substituteMatchedName ?? '';
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFCD34D).withValues(alpha: 0.18),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: const Color(0xFFFCD34D).withValues(alpha: 0.6),
+          width: 1,
+        ),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.info_outline_rounded,
+              size: 16, color: Color(0xFFFCD34D)),
+          const SizedBox(width: 8),
+          Expanded(
+            child: RichText(
+              text: TextSpan(
+                style: TextStyle(fontSize: 12, color: textPrimary, height: 1.3),
+                children: [
+                  const TextSpan(text: 'Showing '),
+                  TextSpan(
+                    text: matched,
+                    style: const TextStyle(fontWeight: FontWeight.w800),
+                  ),
+                  const TextSpan(text: ' — closest match for '),
+                  TextSpan(
+                    text: original,
+                    style: const TextStyle(fontWeight: FontWeight.w800),
+                  ),
+                  const TextSpan(text: '.'),
+                ],
+              ),
+            ),
           ),
         ],
       ),
@@ -351,33 +472,132 @@ class _ExerciseInstructionsScreenState
     // the cropped video framing.
     final screenW = MediaQuery.of(context).size.width;
     final screenH = MediaQuery.of(context).size.height;
-    if (crop != null) {
-      return Center(
-        child: AspectRatio(
-          aspectRatio: crop.aspectRatio,
-          child: ExerciseImage(
+    final image = crop != null
+        ? AspectRatio(
+            aspectRatio: crop.aspectRatio,
+            child: ExerciseImage(
+              exerciseName: widget.exercise.name,
+              width: screenW,
+              height: screenW / crop.aspectRatio,
+              borderRadius: 0,
+              fit: BoxFit.cover,
+              backgroundColor:
+                  isDark ? AppColors.pureBlack : AppColorsLight.pureWhite,
+              iconColor: textMuted,
+            ),
+          )
+        : ExerciseImage(
             exerciseName: widget.exercise.name,
             width: screenW,
-            height: screenW / crop.aspectRatio,
+            height: screenH * 0.5,
             borderRadius: 0,
-            fit: BoxFit.cover,
+            fit: BoxFit.contain,
             backgroundColor:
                 isDark ? AppColors.pureBlack : AppColorsLight.pureWhite,
             iconColor: textMuted,
+          );
+
+    // Three terminal states share the still-image fallback:
+    //   1. _videoError == true   → real failure → caption + Retry button
+    //   2. _videoUrl == null     → backend honestly has no video → caption only
+    //   3. (init returned null)  → same as above
+    //
+    // The user explicitly tapped "Video", so silently showing the illustration
+    // without explanation looks broken (the prior bug behind Kabaddi Squat
+    // Jumps and other AI-generated variants).
+    final caption = _videoError
+        ? 'Couldn\'t load the video — check your connection and try again.'
+        : 'No video yet for this exercise — showing the illustration.';
+    return Stack(
+      alignment: Alignment.center,
+      children: [
+        Center(child: image),
+        Positioned(
+          bottom: 24,
+          left: 16,
+          right: 16,
+          child: Container(
+            padding:
+                const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            decoration: BoxDecoration(
+              color: (isDark ? Colors.black : Colors.white)
+                  .withValues(alpha: 0.55),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: textMuted.withValues(alpha: 0.25),
+                width: 0.5,
+              ),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  _videoError
+                      ? Icons.error_outline_rounded
+                      : Icons.videocam_off_rounded,
+                  size: 16,
+                  color: textMuted,
+                ),
+                const SizedBox(width: 8),
+                Flexible(
+                  child: Text(
+                    caption,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: textMuted,
+                      fontWeight: FontWeight.w500,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+                if (_videoError) ...[
+                  const SizedBox(width: 10),
+                  GestureDetector(
+                    onTap: _isRetrying ? null : _retryVideo,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 10, vertical: 5),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: accentColor.withValues(alpha: 0.7),
+                          width: 1,
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          if (_isRetrying)
+                            SizedBox(
+                              width: 12,
+                              height: 12,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 1.5,
+                                color: accentColor,
+                              ),
+                            )
+                          else
+                            Icon(Icons.refresh_rounded,
+                                size: 14, color: accentColor),
+                          const SizedBox(width: 4),
+                          Text(
+                            _isRetrying ? 'Retrying' : 'Retry',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: accentColor,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ],
+            ),
           ),
         ),
-      );
-    }
-    return Center(
-      child: ExerciseImage(
-        exerciseName: widget.exercise.name,
-        width: screenW,
-        height: screenH * 0.5,
-        borderRadius: 0,
-        fit: BoxFit.contain,
-        backgroundColor: isDark ? AppColors.pureBlack : AppColorsLight.pureWhite,
-        iconColor: textMuted,
-      ),
+      ],
     );
   }
 

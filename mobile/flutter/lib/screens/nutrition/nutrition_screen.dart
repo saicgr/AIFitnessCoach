@@ -23,6 +23,7 @@ import 'nutrition_settings_screen.dart';
 import 'recipe_builder_sheet.dart';
 import 'weekly_checkin_sheet.dart';
 import 'widgets/daily_tab.dart';
+import 'widgets/edit_targets_sheet.dart';
 import 'widgets/nutrition_error_state.dart';
 import 'widgets/my_foods_sheet.dart';
 import 'widgets/share_nutrition_sheet.dart';
@@ -126,6 +127,9 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
       _setupWeeklyCheckinListener();
       // Auto-refresh Vitamins & Minerals when a meal is logged/edited.
       _setupMicronutrientInvalidationListener();
+      // Surface a SnackBar when the one-time targets-recalc migration ran
+      // (rate→deficit table was wrong; existing users need a fresh re-derive).
+      _setupTargetsMigrationBannerListener();
       // Auto-open log meal sheet if deep-linked with a meal type, camera, or barcode flag
       if (widget.initialMeal != null || widget.autoOpenCamera || widget.autoOpenBarcode) {
         final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -150,6 +154,60 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
     }, fireImmediately: true);
   }
 
+  /// Show a one-time SnackBar when the v2 targets-recalc migration moved
+  /// the user's daily calorie target by ≥25 kcal. The provider sets
+  /// `pendingMigrationDelta` after the silent recalc; we clear it after
+  /// surfacing so it doesn't re-fire on tab switches / hot reloads.
+  void _setupTargetsMigrationBannerListener() {
+    ref.listenManual(nutritionPreferencesProvider, (previous, next) {
+      final delta = next.pendingMigrationDelta;
+      if (delta == null) return;
+      // Avoid firing twice when the listener pumps the same state object.
+      if (previous?.pendingMigrationDelta == delta) return;
+      if (!mounted) return;
+      final isDark = Theme.of(context).brightness == Brightness.dark;
+      final teal = isDark ? AppColors.teal : AppColorsLight.teal;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          duration: const Duration(seconds: 8),
+          backgroundColor: teal,
+          behavior: SnackBarBehavior.floating,
+          content: Text(
+            'Updated your daily target: ${delta.newCalories} cal/day '
+            '(was ${delta.oldCalories}). We fixed how we calculate the deficit '
+            'from your weekly rate.',
+          ),
+          action: SnackBarAction(
+            label: 'Review',
+            textColor: Colors.white,
+            onPressed: () {
+              if (!mounted) return;
+              showModalBottomSheet(
+                context: context,
+                isScrollControlled: true,
+                backgroundColor: Colors.transparent,
+                builder: (_) => Container(
+                  decoration: BoxDecoration(
+                    color: isDark ? AppColors.surface : AppColorsLight.surface,
+                    borderRadius:
+                        const BorderRadius.vertical(top: Radius.circular(20)),
+                  ),
+                  child: EditTargetsSheet(
+                    userId: _userId ?? '',
+                    onSaved: () {},
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+      );
+      ref
+          .read(nutritionPreferencesProvider.notifier)
+          .consumePendingMigrationDelta();
+    }, fireImmediately: true);
+  }
+
   /// Re-fetch pinned nutrients whenever the day's meal set changes so the
   /// Vitamins & Minerals card updates immediately after a log. Previously
   /// the 5-min TTL on the in-memory micronutrient cache kept showing the
@@ -170,6 +228,19 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
         _loadMicronutrients(_userId!, dateStr);
       }
     });
+  }
+
+  @override
+  void didUpdateWidget(NutritionScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Re-navigation from Home (Food Log / Water habit cards, deep links)
+    // produces a new NutritionScreen widget with the requested tab while
+    // the State is preserved by StatefulShellRoute's IndexedStack. Sync the
+    // TabController so the user actually lands on the requested tab.
+    final target = widget.initialTab;
+    if (target >= 0 && target < _tabController.length && _tabController.index != target) {
+      _tabController.animateTo(target);
+    }
   }
 
   @override

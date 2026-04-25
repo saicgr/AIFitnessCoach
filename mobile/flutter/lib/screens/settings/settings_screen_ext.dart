@@ -274,9 +274,52 @@ extension __SettingsScreenStateExt on _SettingsScreenState {
 
 
   Future<void> _deleteAccount(BuildContext context, WidgetRef ref) async {
+    // Concurrent double-tap guard. Capture-then-set so we never lose the
+    // setState even if the second tap arrives before the first dialog opens.
+    if (_isDeleting) return;
+    setState(() => _isDeleting = true);
+
     final navigator = Navigator.of(context);
     final scaffoldMessenger = ScaffoldMessenger.of(context);
     final router = GoRouter.of(context);
+
+    // Pre-flight: warn if there's an active paid subscription. Google
+    // doesn't auto-cancel Play subscriptions when an auth user is deleted —
+    // the user keeps getting charged. Surface this BEFORE we destroy data.
+    final subscription = ref.read(subscriptionProvider);
+    if (subscription.tier != SubscriptionTier.free &&
+        subscription.tier != SubscriptionTier.lifetime) {
+      final proceed = await showDialog<bool>(
+        context: context,
+        builder: (dialogContext) => AlertDialog(
+          title: const Text('Active subscription'),
+          content: const Text(
+            'Deleting your account does NOT cancel your Play Store subscription. '
+            'You will continue to be billed unless you cancel from the Play Store first.\n\n'
+            'Cancel your subscription, then come back here to delete your account.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(false),
+              child: const Text('Open Play Store'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(true),
+              child: const Text('Delete anyway'),
+            ),
+          ],
+        ),
+      );
+      if (proceed != true) {
+        // Send them to manage subscriptions in Play Store and bail.
+        await launchUrl(
+          Uri.parse('https://play.google.com/store/account/subscriptions'),
+          mode: LaunchMode.externalApplication,
+        );
+        if (mounted) setState(() => _isDeleting = false);
+        return;
+      }
+    }
 
     showDialog(
       context: context,
@@ -302,6 +345,25 @@ extension __SettingsScreenStateExt on _SettingsScreenState {
       navigator.pop();
 
       if (response.statusCode == 200) {
+        // Server confirmed the auth user is gone. Now scrub local state in
+        // dependency order: RC first (so we don't leak the customer ID into
+        // the next sign-in on this device), then analytics identities, then
+        // SharedPreferences, then auth.
+        try {
+          await Purchases.logOut();
+        } catch (e) {
+          // RC logOut throws if no user was identified; harmless here.
+          debugPrint('RevenueCat logOut after delete: $e');
+        }
+
+        try {
+          await Sentry.configureScope((scope) => scope.setUser(null));
+        } catch (_) {}
+
+        try {
+          ref.read(posthogServiceProvider).reset();
+        } catch (_) {}
+
         final prefs = await SharedPreferences.getInstance();
         // Preserve tour flags so tutorials don't replay after reset
         final tourFlags = <String, bool>{};
@@ -325,12 +387,50 @@ extension __SettingsScreenStateExt on _SettingsScreenState {
         navigator.pop();
       } catch (_) {}
 
-      scaffoldMessenger.showSnackBar(
-        SnackBar(
-          content: Text('Error: ${e.toString()}'),
-          backgroundColor: AppColors.error,
-        ),
-      );
+      // Recognize the "wrong password / re-auth required" branch and route
+      // the user toward password reset instead of dropping a generic error.
+      final msg = e.toString().toLowerCase();
+      if (msg.contains('401') ||
+          msg.contains('invalid password') ||
+          msg.contains('re-authentication')) {
+        if (mounted) {
+          showDialog<void>(
+            context: context,
+            builder: (dialogContext) => AlertDialog(
+              title: const Text('Re-authentication required'),
+              content: const Text(
+                'We could not verify your password. Reset your password first, then try deleting your account again.',
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(dialogContext).pop(),
+                  child: const Text('OK'),
+                ),
+                TextButton(
+                  onPressed: () async {
+                    Navigator.of(dialogContext).pop();
+                    // No standalone /forgot-password route — sign out and
+                    // route to /intro; the email sign-in screen has the
+                    // "Forgot Password?" entry point.
+                    await ref.read(authStateProvider.notifier).signOut();
+                    router.go('/intro');
+                  },
+                  child: const Text('Reset password'),
+                ),
+              ],
+            ),
+          );
+        }
+      } else {
+        scaffoldMessenger.showSnackBar(
+          SnackBar(
+            content: Text('Error: ${e.toString()}'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isDeleting = false);
     }
   }
 

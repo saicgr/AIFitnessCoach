@@ -4,8 +4,10 @@ enum QuickActionBehavior {
   route,
   waterQuickAdd,
   foodLog,
-  foodScan,   // Opens LogMealSheet and immediately launches multi-image food scan
-  menuScan,   // Opens LogMealSheet and immediately launches menu scan
+  foodScan,    // Opens LogMealSheet and immediately launches multi-image food scan
+  menuScan,    // Opens LogMealSheet and immediately launches menu scan
+  foodPhoto,   // Opens LogMealSheet and immediately fires the single-photo camera flow
+  foodBarcode, // Opens LogMealSheet and immediately fires the barcode scanner
   weightLog,
   moodLog,
   fastingNav,
@@ -55,6 +57,23 @@ const quickActionRegistry = <String, QuickAction>{
     icon: Icons.document_scanner_outlined,
     color: Color(0xFF16A34A),
     behavior: QuickActionBehavior.foodScan,
+  ),
+  // "Photo Log" replaces 'scan_food' as the default slot-5 entry — single
+  // camera shot of a meal. Uses a food (lunch_dining) icon to telegraph
+  // "snap your plate" rather than the document-scanner glyph.
+  'photo_food': QuickAction(
+    id: 'photo_food',
+    label: 'Photo Log',
+    icon: Icons.lunch_dining_outlined,
+    color: Color(0xFF22C55E),
+    behavior: QuickActionBehavior.foodPhoto,
+  ),
+  'barcode_food': QuickAction(
+    id: 'barcode_food',
+    label: 'Barcode',
+    icon: Icons.qr_code_scanner_outlined,
+    color: Color(0xFF14B8A6),
+    behavior: QuickActionBehavior.foodBarcode,
   ),
   'scan_menu': QuickAction(
     id: 'scan_menu',
@@ -222,6 +241,16 @@ const quickActionRegistry = <String, QuickAction>{
     behavior: QuickActionBehavior.route,
     route: '/stats',
   ),
+  // Lives only inside the "More" overflow sheet — never the primary 2×5
+  // grid. Tapping opens SharePlanPeriodSheet which mints a fitwiz.us link.
+  'share_plan': QuickAction(
+    id: 'share_plan',
+    label: 'Share',
+    icon: Icons.ios_share_rounded,
+    color: Color(0xFF0EA5E9),
+    behavior: QuickActionBehavior.route,
+    route: '/share-plan',
+  ),
 };
 
 // Home shortcut bar layout: 2 rows × 5 slots.
@@ -230,9 +259,14 @@ const quickActionRegistry = <String, QuickAction>{
 // Anything beyond index 8 lives in the full QuickActionsSheet (reached via More).
 const defaultQuickActionOrder = [
   // COMING SOON: 'fasting' removed from default order — re-add when fasting feature launches
-  'quick_workout', 'food', 'water', 'chat', 'scan_food',   // row 1 (slots 1-5)
+  // Slot 5 default flipped from 'scan_food' (document-scanner) to
+  // 'photo_food' (single-camera "snap your plate") per user feedback —
+  // the food-icon variant reads more like "log this meal" at a glance.
+  'quick_workout', 'food', 'water', 'chat', 'photo_food',  // row 1 (slots 1-5)
   'weight', 'photo', 'measure', 'scan_menu',                // row 2 (slots 6-9); slot 10 = More
-  'mood', 'history', 'steps', 'workout', 'programs',
+  'mood', 'scan_food', 'barcode_food', 'history', 'steps', 'workout', 'programs',
   'library', 'settings', 'schedule', 'habits',
   'progress', 'stats', 'achievements', 'hydration', 'summaries',
+  // ─── More-only overflow ── never appears in primary 2×5 grid:
+  'share_plan',
 ];

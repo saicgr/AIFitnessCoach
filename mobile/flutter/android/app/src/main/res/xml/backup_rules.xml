@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Legacy Auto Backup rules for Android 11 and below (`android:fullBackupContent`).
+  Android 12+ uses data_extraction_rules.xml instead.
+  Keep both in sync — same exclude list.
+-->
+<full-backup-content>
+    <exclude domain="sharedpref" path="secure_" />
+    <exclude domain="sharedpref" path="auth_" />
+    <exclude domain="sharedpref" path="session_" />
+    <exclude domain="sharedpref" path="fcm_" />
+    <exclude domain="sharedpref" path="rc_" />
+    <exclude domain="sharedpref" path="flutter_secure_storage" />
+    <exclude domain="database" path="fitwiz.sqlite" />
+    <exclude domain="database" path="fitwiz_offline.sqlite" />
+</full-backup-content>

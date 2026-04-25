@@ -1,17 +1,22 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:speech_to_text/speech_to_text.dart';
 import '../../core/constants/app_colors.dart';
 import '../../data/services/haptic_service.dart';
+import '../../data/services/last_used_service.dart';
 import '../../screens/nutrition/log_meal_sheet.dart';
+import '../common/last_used_badge.dart';
 import '../glass_sheet.dart';
 import 'batch_portioning_sheet.dart';
+
+const String _kFoodInputMethodKey = 'food_input_method';
 
 /// Quick-Add FAB for nutrition logging
 /// Expands to show: Camera, Barcode, Voice, Text options
 /// One-tap access to any logging method
-class QuickLogFAB extends StatefulWidget {
+class QuickLogFAB extends ConsumerStatefulWidget {
   final String userId;
   final VoidCallback? onLogComplete;
 
@@ -22,10 +27,10 @@ class QuickLogFAB extends StatefulWidget {
   });
 
   @override
-  State<QuickLogFAB> createState() => _QuickLogFABState();
+  ConsumerState<QuickLogFAB> createState() => _QuickLogFABState();
 }
 
-class _QuickLogFABState extends State<QuickLogFAB>
+class _QuickLogFABState extends ConsumerState<QuickLogFAB>
     with SingleTickerProviderStateMixin {
   bool _isExpanded = false;
   late AnimationController _animationController;
@@ -103,6 +108,7 @@ class _QuickLogFABState extends State<QuickLogFAB>
                 icon: _isListening ? Icons.mic : Icons.mic_none,
                 label: _isListening ? 'Listening...' : 'Voice',
                 color: Colors.purple,
+                method: 'voice',
                 onTap: _startVoiceLogging,
               ),
 
@@ -112,6 +118,7 @@ class _QuickLogFABState extends State<QuickLogFAB>
               icon: Icons.camera_alt,
               label: 'Photo',
               color: Colors.blue,
+              method: 'image',
               onTap: _openCameraLogging,
             ),
 
@@ -121,6 +128,7 @@ class _QuickLogFABState extends State<QuickLogFAB>
               icon: Icons.qr_code_scanner,
               label: 'Scan',
               color: Colors.orange,
+              method: 'barcode',
               onTap: _openBarcodeLogging,
             ),
 
@@ -130,6 +138,7 @@ class _QuickLogFABState extends State<QuickLogFAB>
               icon: Icons.edit,
               label: 'Type',
               color: Colors.teal,
+              method: 'text',
               onTap: _openTextLogging,
             ),
 
@@ -139,6 +148,7 @@ class _QuickLogFABState extends State<QuickLogFAB>
               icon: Icons.pie_chart,
               label: 'Batch',
               color: Colors.deepPurple,
+              method: 'batch',
               onTap: _openBatchPortioning,
             ),
 
@@ -165,8 +175,11 @@ class _QuickLogFABState extends State<QuickLogFAB>
     required IconData icon,
     required String label,
     required Color color,
+    required String method,
     required VoidCallback onTap,
   }) {
+    final lastUsed = ref.read(lastUsedServiceProvider).get(_kFoodInputMethodKey);
+    final isLastUsed = lastUsed == method;
     return AnimatedBuilder(
       animation: _expandAnimation,
       builder: (context, child) {
@@ -187,6 +200,10 @@ class _QuickLogFABState extends State<QuickLogFAB>
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
+                  if (isLastUsed) ...[
+                    LastUsedBadge.static(colorOverride: color, size: 14),
+                    const SizedBox(width: 6),
+                  ],
                   Container(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 12,
@@ -211,6 +228,12 @@ class _QuickLogFABState extends State<QuickLogFAB>
                     onPressed: () {
                       HapticService.medium();
                       _toggleExpanded();
+                      // Persist this as the last-used input method so the next
+                      // open badges this option. Fire-and-forget.
+                      // ignore: unawaited_futures
+                      ref
+                          .read(lastUsedServiceProvider)
+                          .set(_kFoodInputMethodKey, method);
                       onTap();
                     },
                     backgroundColor: color,

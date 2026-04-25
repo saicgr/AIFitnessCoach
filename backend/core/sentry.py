@@ -20,27 +20,44 @@ logger = get_logger(__name__)
 
 
 def _before_send(event: dict, hint: dict) -> Optional[dict]:
-    """Drop expected 4xx HTTPExceptions so they don't count against quota.
+    """Drop expected 4xx HTTPExceptions + benign stale-JWT AuthApiErrors so
+    they don't count against quota.
 
-    Uses `isinstance` so subclasses are correctly filtered — fastapi's
-    HTTPException extends Starlette's, and some middlewares surface the
-    Starlette flavor directly. `exc_type is HTTPException` missed those
-    (only the exact fastapi type matched), so 404s were still being
-    reported despite the intended filter.
+    Filters applied, in order:
+    1. 4xx HTTPException (fastapi OR starlette flavor — some middlewares
+       surface the Starlette subclass directly, which an `exc_type is`
+       check misses — hence `isinstance`).
+    2. Supabase `AuthApiError` whose message matches a known stale-JWT
+       marker. These fire on every request from a client whose token
+       rotated or expired — 401 response is correct, Sentry event is
+       noise. The marker list + helper live in `core.auth` so a later
+       rename stays in one place.
+
+    All imports are lazy + wrapped in try/except so a missing dependency
+    or a rename in supabase-py can never break Sentry init.
     """
     exc_info = (hint or {}).get("exc_info")
     if not exc_info:
         return event
+    _, exc_value, _ = exc_info
+
     try:
         from fastapi import HTTPException as _FastApiHTTPException
         from starlette.exceptions import HTTPException as _StarletteHTTPException
+        if isinstance(exc_value, (_FastApiHTTPException, _StarletteHTTPException)):
+            status = getattr(exc_value, "status_code", 500)
+            if 400 <= status < 500:
+                return None
     except Exception:
-        return event
-    _, exc_value, _ = exc_info
-    if isinstance(exc_value, (_FastApiHTTPException, _StarletteHTTPException)):
-        status = getattr(exc_value, "status_code", 500)
-        if 400 <= status < 500:
+        pass  # HTTPException filter unavailable — fall through.
+
+    try:
+        from core.auth import is_stale_session_error
+        if is_stale_session_error(exc_value):
             return None
+    except Exception:
+        pass  # core.auth not importable (shouldn't happen; defensive).
+
     return event
 
 
@@ -95,6 +112,18 @@ def init_sentry(settings: Settings) -> bool:
             traces_sample_rate=settings.sentry_traces_sample_rate,
             # Never auto-attach PII; user context is set explicitly per request.
             send_default_pii=False,
+            # Attach stack traces to ALL events (including logger.error calls
+            # without exc_info, capture_message, and warnings). Without this,
+            # log-only events arrive in Sentry as a one-line message with no
+            # frame context — making frontend triage of "where did this fire?"
+            # impossible. Cost: ~1KB per event, negligible at our volume.
+            attach_stacktrace=True,
+            # Capture local variables in stack frames so we can see what value
+            # blew up, not just where. Sentry redacts obvious secrets server-side.
+            include_local_variables=True,
+            # Bigger frame context window so the surrounding source lines are
+            # visible in the Sentry UI without round-tripping to GitHub.
+            max_request_body_size="medium",
             before_send=_before_send,
         )
     except Exception as err:

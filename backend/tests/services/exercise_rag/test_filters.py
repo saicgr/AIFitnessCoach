@@ -160,6 +160,169 @@ class TestFilterByEquipment:
         assert result is False
 
 
+class TestFilterByEquipmentBodyweightOnly:
+    """Tests for the bodyweight-only-must-not-leak-suspension-trainer bug.
+
+    Originated from a production issue where a user with Equipment="Bodyweight"
+    + Environment="Home" was served exercises that physically require a bar
+    or TRX (e.g. "Bodyweight Inverted Rows"), and AI Picks suggested four
+    "Suspension Trainer With Grip Variation" cards. Root cause was that
+    `filter_by_equipment` silently appended `["body weight", "bodyweight",
+    "none"]` to *every* user's equipment list and never enforced that a
+    bodyweight-only user gets bodyweight-only exercises.
+
+    Plan reference: §A decision tree.
+    """
+
+    def test_bodyweight_only_blocks_suspension_trainer(self):
+        """The headline bug: ['bodyweight'] must NOT pass suspension-trainer."""
+        from services.exercise_rag.filters import filter_by_equipment
+
+        # The exact scenario from the bug screenshot.
+        assert filter_by_equipment(
+            "Suspension Trainer", ["bodyweight"], "Bodyweight Inverted Rows"
+        ) is False
+        assert filter_by_equipment(
+            "TRX", ["bodyweight"], "TRX Row"
+        ) is False
+        assert filter_by_equipment(
+            "Pull-up Bar", ["bodyweight"], "Pull Up"
+        ) is False
+        assert filter_by_equipment(
+            "Dip Station", ["bodyweight"], "Dip"
+        ) is False
+
+    def test_bodyweight_only_passes_actual_bodyweight(self):
+        """Bodyweight-tagged exercises must still pass for bodyweight-only users."""
+        from services.exercise_rag.filters import filter_by_equipment
+
+        assert filter_by_equipment(
+            "Body Weight", ["bodyweight"], "Push Up"
+        ) is True
+        assert filter_by_equipment(
+            "bodyweight", ["bodyweight"], "Plank"
+        ) is True
+        assert filter_by_equipment(
+            "None", ["bodyweight"], "Burpee"
+        ) is True
+
+    def test_capitalised_bodyweight_normalises(self):
+        """Legacy stored values like 'Bodyweight' or 'BODYWEIGHT' must work."""
+        from services.exercise_rag.filters import filter_by_equipment
+
+        assert filter_by_equipment(
+            "Suspension Trainer", ["Bodyweight"], "TRX Row"
+        ) is False
+        assert filter_by_equipment(
+            "Suspension Trainer", ["BODYWEIGHT"], "TRX Row"
+        ) is False
+        assert filter_by_equipment(
+            "Suspension Trainer", ["Bodyweight Only"], "TRX Row"
+        ) is False
+
+    def test_empty_list_defaults_to_bodyweight_only(self):
+        """An empty/null user equipment list is treated as bodyweight-only.
+
+        Defensive: never silently widen on missing data.
+        """
+        from services.exercise_rag.filters import filter_by_equipment
+
+        assert filter_by_equipment("Barbell", [], "Bench Press") is False
+        assert filter_by_equipment("TRX", [], "TRX Row") is False
+        # But bodyweight exercises still pass.
+        assert filter_by_equipment("Body Weight", [], "Push Up") is True
+
+    def test_bodyweight_plus_pullup_bar_passes_pullups(self):
+        """Explicit ['bodyweight', 'pull_up_bar'] user must get pull-ups.
+
+        Non-regression for the 'opt-in equipment' case from edge-case A.
+        """
+        from services.exercise_rag.filters import filter_by_equipment
+
+        assert filter_by_equipment(
+            "Pull-up Bar", ["bodyweight", "pull_up_bar"], "Pull Up"
+        ) is True
+        assert filter_by_equipment(
+            "Pullup Bar", ["bodyweight", "pull_up_bar"], "Chin Up"
+        ) is True
+        # But TRX still blocked — they didn't opt into TRX.
+        assert filter_by_equipment(
+            "Suspension Trainer", ["bodyweight", "pull_up_bar"], "TRX Row"
+        ) is False
+
+    def test_bodyweight_plus_dumbbells_common_case(self):
+        """The most common home setup must keep working — non-regression."""
+        from services.exercise_rag.filters import filter_by_equipment
+
+        eq = ["bodyweight", "dumbbells"]
+        assert filter_by_equipment("Dumbbell", eq, "Dumbbell Curl") is True
+        assert filter_by_equipment("Body Weight", eq, "Push Up") is True
+        assert filter_by_equipment("Barbell", eq, "Bench Press") is False
+        assert filter_by_equipment("Suspension Trainer", eq, "TRX Row") is False
+
+
+class TestFilterByEquipmentEdgeCases:
+    """Coverage for the filter's normalisation + decision-tree edge cases."""
+
+    def test_full_gym_still_includes_everything(self):
+        """Non-regression: Full Gym must remain unrestricted."""
+        from services.exercise_rag.filters import filter_by_equipment
+
+        assert filter_by_equipment(
+            "Suspension Trainer", ["full_gym"], "TRX Row"
+        ) is True
+        assert filter_by_equipment(
+            "Smith Machine", ["Full Gym Access"], "Smith Squat"
+        ) is True
+
+    def test_unknown_exercise_equipment_falls_back_safely(self):
+        """Empty / NULL equipment string treats exercise as bodyweight-compatible."""
+        from services.exercise_rag.filters import filter_by_equipment
+
+        assert filter_by_equipment("", ["bodyweight"], "Mystery Exercise") is True
+        assert filter_by_equipment(None, ["bodyweight"], "Mystery") is True
+
+    def test_multi_equipment_requires_all(self):
+        """Multi-equipment tag like 'Dumbbell, Bench' requires both items."""
+        from services.exercise_rag.filters import filter_by_equipment
+
+        # Dumbbell-only user fails (missing bench)
+        assert filter_by_equipment(
+            "Dumbbell, Bench", ["bodyweight", "dumbbells"], "DB Bench Press"
+        ) is False
+        # Dumbbell + bench user passes
+        assert filter_by_equipment(
+            "Dumbbell, Bench",
+            ["bodyweight", "dumbbells", "bench"],
+            "DB Bench Press",
+        ) is True
+
+    def test_separator_normalisation(self):
+        """'pull-up bar', 'pull_up_bar', 'pullup bar' all match."""
+        from services.exercise_rag.filters import filter_by_equipment
+
+        for ex_eq in ["pull-up bar", "pull_up_bar", "pullup bar", "Pull Up Bar"]:
+            assert filter_by_equipment(
+                ex_eq, ["bodyweight", "pull_up_bar"], "Pull Up"
+            ) is True, f"failed for ex_equipment={ex_eq!r}"
+
+    def test_empty_string_user_entry_does_not_vacuously_match(self):
+        """Defensive: empty string entries in user list don't pass via issubset.
+
+        This was the silent-leak bug — `set().issubset(<anything>)` returns
+        True, so an empty/whitespace user entry would pass any exercise.
+        """
+        from services.exercise_rag.filters import filter_by_equipment
+
+        # User with literal empty string + bodyweight should still be
+        # treated as bodyweight-only and reject barbell.
+        assert filter_by_equipment(
+            "Barbell", ["", "bodyweight"], "Bench Press"
+        ) is False
+        # All-empty list reduces to bodyweight-only behaviour.
+        assert filter_by_equipment("Barbell", ["", "  "], "Bench Press") is False
+
+
 class TestPreFilterByInjuries:
     """Tests for pre_filter_by_injuries function."""
 

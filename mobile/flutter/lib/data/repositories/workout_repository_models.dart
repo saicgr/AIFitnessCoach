@@ -317,6 +317,13 @@ class WorkoutGenerationProgress {
   /// Number of chunks received (only available when status is completed)
   final int? chunkCount;
 
+  /// Structured error code from the backend (e.g. "EXERCISE_POOL_TOO_SMALL").
+  /// Only set when [status] == error and the backend sent a structured
+  /// HTTPException detail object. Callers can key UX off this (redirect to
+  /// gym-profile editor, show special retry, etc.) without parsing
+  /// [message] strings.
+  final String? errorCode;
+
   WorkoutGenerationProgress({
     required this.status,
     required this.message,
@@ -324,6 +331,7 @@ class WorkoutGenerationProgress {
     this.workout,
     this.totalTimeMs,
     this.chunkCount,
+    this.errorCode,
   });
 
   /// Whether the generation is still in progress

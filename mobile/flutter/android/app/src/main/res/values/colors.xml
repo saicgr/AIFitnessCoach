@@ -2,7 +2,10 @@
 <resources>
     <color name="ic_launcher_background">#FFFFFF</color>
     <color name="notification_color">#00D9FF</color>
-    <color name="splash_background">#121212</color>
+    <!-- Splash background: matches the dark first-frame app background so
+         the splash → Flutter UI handoff doesn't flash white. Used in
+         drawable/launch_background.xml for the layered splash. -->
+    <color name="splash_background">#0A0A0A</color>
 
     <!-- uCrop light mode overrides -->
     <color name="ucrop_color_widget_background">#F4F4F5</color>

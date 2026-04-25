@@ -38,8 +38,13 @@ FULL_GYM_EQUIPMENT = [
     "body weight", "bodyweight", "none",
 ]
 
-# Home gym equipment list
-HOME_GYM_EQUIPMENT = [
+# Equipment available to a user who selected "Home" environment AND has any
+# equipped item in their list (dumbbells, bench, etc.). Includes light
+# accessory gear that's reasonable to own at home but NOT bodyweight-only —
+# bodyweight users should never have suspension trainers / pull-up bars
+# silently injected. Only used as an upper bound when intersecting with
+# user's actual selections.
+HOME_EQUIPPED_EQUIPMENT = [
     "dumbbell", "dumbbells", "kettlebell", "resistance band",
     "pull-up bar", "pullup bar", "bench", "stability ball",
     "exercise ball", "medicine ball", "foam roller", "yoga mat",
@@ -47,6 +52,56 @@ HOME_GYM_EQUIPMENT = [
     "trx", "suspension trainer",
     "body weight", "bodyweight", "none",
 ]
+
+# What a user with "Home" environment + ONLY bodyweight selected actually
+# owns. No bars, no rings, no suspension trainers. Anything tagged with
+# physical equipment must NOT pass this filter.
+HOME_BODYWEIGHT_EQUIPMENT = ["body weight", "bodyweight", "none"]
+
+# Backwards-compat alias — the old constant name was referenced from
+# service.py and tests. Kept until those callers are updated to choose
+# between the two sets explicitly.
+HOME_GYM_EQUIPMENT = HOME_EQUIPPED_EQUIPMENT
+
+
+# Tokens that mean "no equipment required" — used in the bodyweight-only
+# detection in filter_by_equipment.
+BODYWEIGHT_TOKENS = {"bodyweight", "body weight", "none", ""}
+
+
+def _singularise(word: str) -> str:
+    """Naive plural → singular: strip trailing 's' on words longer than 4 chars.
+
+    Lets `filter_by_equipment` treat "dumbbell" and "dumbbells" as equivalent
+    without paying the cost of going through `equipment_resolver` for every
+    candidate. The 4-char floor protects short words like "abs" from being
+    mangled to "ab".
+    """
+    if len(word) > 4 and word.endswith("s"):
+        return word[:-1]
+    return word
+
+
+def _word_set(text: str) -> set:
+    """Tokenise + singularise an equipment string for comparison.
+
+    Splits on hyphens / underscores / spaces, drops empties, then maps
+    each token through `_singularise`. Used by `filter_by_equipment` to
+    do plural-tolerant word-subset matching.
+    """
+    tokens = (text or "").replace("-", " ").replace("_", " ").split()
+    return {_singularise(t) for t in tokens if t}
+
+
+def _is_bodyweight_only(equipment_lower: List[str]) -> bool:
+    """True if every entry in the user's equipment list is a bodyweight token.
+
+    Empty list also returns True — empty means "no equipment selected", which
+    we treat as bodyweight-only (the safer default; never silently widens).
+    """
+    if not equipment_lower:
+        return True
+    return all(eq.strip() in BODYWEIGHT_TOKENS for eq in equipment_lower)
 
 # Injury contraindications mapping
 INJURY_CONTRAINDICATIONS = {
@@ -330,66 +385,161 @@ def filter_by_equipment(
     Check if exercise equipment matches user's available equipment.
 
     Args:
-        ex_equipment: Exercise's required equipment
-        user_equipment: User's available equipment
-        exercise_name: Exercise name (for additional matching)
+        ex_equipment: Exercise's required equipment string (single field)
+        user_equipment: User's available equipment list
+        exercise_name: Exercise name (used as a tiebreaker word-match)
+        use_substitutions: When True, fall back to equipment_resolver
+            substitute mappings (e.g., "Smith machine" ≈ "barbell").
 
     Returns:
-        True if exercise is compatible with user's equipment
+        True if the exercise is compatible with the user's equipment.
+
+    Decision tree (must match plan §A):
+        1. Lowercase + trim every user-equipment entry. None → "".
+        2. If any entry is "full_gym" / "full gym": user_set = FULL_GYM_EQUIPMENT.
+           Justified: explicit opt-in to a commercial gym superset.
+        3. Elif user_set is bodyweight-only (every entry in BODYWEIGHT_TOKENS,
+           or empty): user_set = HOME_BODYWEIGHT_EQUIPMENT (the strict 3-token
+           set). NO silent expansion. NEVER auto-append TRX / pullup bar /
+           anything else.
+        4. Else: user_set = exactly what they selected, plus bodyweight tokens
+           ONLY IF they explicitly selected "bodyweight" (otherwise a "barbell
+           only" user wouldn't get jumping jacks).
     """
-    equipment_lower = [eq.lower() for eq in user_equipment]
+    # Step 1: normalize. Defensive against None entries; "" entries are dropped.
+    equipment_lower = [
+        (eq or "").strip().lower() for eq in (user_equipment or [])
+    ]
+    equipment_lower = [eq for eq in equipment_lower if eq]
 
-    # Expand general equipment options (use 'any' to match partial strings)
-    # Handle both 'full_gym' (app storage format) and 'full gym' (display format)
-    if any("full_gym" in eq or "full gym" in eq for eq in equipment_lower):
-        equipment_lower = FULL_GYM_EQUIPMENT
-    elif any("home_gym" in eq or "home gym" in eq for eq in equipment_lower):
-        equipment_lower = HOME_GYM_EQUIPMENT
-    elif any("bodyweight only" in eq or "bodyweight_only" in eq for eq in equipment_lower):
-        equipment_lower = ["body weight", "bodyweight", "none"]
+    # Step 2: full-gym superset.
+    has_full_gym = any(
+        "full_gym" in eq or "full gym" in eq for eq in equipment_lower
+    )
+    if has_full_gym:
+        equipment_lower = list(FULL_GYM_EQUIPMENT)
     else:
-        # Always include bodyweight as an option
-        equipment_lower = equipment_lower + ["body weight", "bodyweight", "none"]
+        # Step 3: bodyweight-only — strict, no expansion.
+        if _is_bodyweight_only(equipment_lower):
+            equipment_lower = list(HOME_BODYWEIGHT_EQUIPMENT)
+        else:
+            # Step 4: equipped user. Expand "bodyweight" → all three tokens
+            # ONLY if explicitly selected. Strip the legacy "home_gym" token
+            # which used to silently expand to HOME_GYM_EQUIPMENT.
+            expanded: List[str] = []
+            for eq in equipment_lower:
+                if "home_gym" in eq or "home gym" in eq:
+                    # Treat "home_gym" preset as opt-in to the equipped home set.
+                    expanded.extend(HOME_EQUIPPED_EQUIPMENT)
+                else:
+                    expanded.append(eq)
+            # Auto-add bodyweight tokens only when user explicitly has any.
+            user_has_bw = any(
+                eq in BODYWEIGHT_TOKENS for eq in expanded
+            )
+            if user_has_bw:
+                expanded.extend(["body weight", "bodyweight", "none"])
+            # Dedup while preserving order — important for stable logging.
+            seen: set = set()
+            equipment_lower = [
+                eq for eq in expanded if not (eq in seen or seen.add(eq))
+            ]
 
-    ex_equipment_lower = ex_equipment.lower() if ex_equipment else ""
+    ex_equipment_lower = (ex_equipment or "").strip().lower()
 
-    # Check if exercise equipment matches user's equipment
-    # Use word-based matching to avoid false positives like "bar" matching "barbell"
+    # An exercise tagged with no equipment requirement is always allowed
+    # — bodyweight users get it, equipped users get it. Matches the
+    # "equipment=NULL or '' → needs nothing" edge case in the plan.
+    if not ex_equipment_lower or ex_equipment_lower in BODYWEIGHT_TOKENS:
+        # Bodyweight-only users always have these tokens in their set, so
+        # this matches without any extra work. Equipped users without
+        # explicit bodyweight still get the no-equipment exercise — most
+        # workouts include planks etc.
+        return True
+
+    # Multi-equipment exercise tags — split on common separators. ALL listed
+    # equipment items must be in user's set (a "Dumbbell, Bench" exercise
+    # requires both, not either). Single-item tags hit the else branch.
+    ex_components = [
+        c.strip() for c in re.split(r"[,/]", ex_equipment_lower) if c.strip()
+    ]
+    if len(ex_components) > 1:
+        # Recursive check: every component must independently pass.
+        return all(
+            filter_by_equipment(
+                comp, user_equipment, exercise_name, use_substitutions
+            )
+            for comp in ex_components
+        )
+
+    # Single-equipment exercise tag — word-based match against user's list.
+    # `_word_set` lowercases, splits on - _ space, and singularises each
+    # token so "dumbbell" matches "dumbbells" without resolver overhead.
     equipment_match = False
+    ex_words = _word_set(ex_equipment_lower)
+    if not ex_words:
+        # Defensive: ex_equipment had only punctuation/whitespace.
+        return True
+
+    # Pre-compute ex_equipment with separators collapsed for "pull-up bar"
+    # vs "pullup bar" vs "pull_up_bar" tolerance. All three should compare
+    # equal once we strip whitespace + hyphens + underscores.
+    ex_collapsed = re.sub(r"[\s\-_]+", "", ex_equipment_lower)
     for eq in equipment_lower:
-        if not eq or not ex_equipment_lower:
+        if not eq:
             continue
-        # Exact match
+        # Exact match (post-lowercase).
         if eq == ex_equipment_lower:
             equipment_match = True
             break
-        # Word-based matching: check if equipment is a complete word in the exercise equipment
-        # This prevents "bar" from matching "barbell" but allows "dumbbell" to match "dumbbell"
-        ex_words = set(ex_equipment_lower.replace("-", " ").replace("_", " ").split())
-        eq_words = set(eq.replace("-", " ").replace("_", " ").split())
-        # Match if all words in user equipment are found in exercise equipment
-        if eq_words and eq_words.issubset(ex_words):
+        # Separator-collapsed match: catches "pullup bar" ≈ "pull_up_bar".
+        eq_collapsed = re.sub(r"[\s\-_]+", "", eq)
+        if eq_collapsed and eq_collapsed == ex_collapsed:
             equipment_match = True
             break
-        # Also match if exercise equipment is a single word that matches any user equipment word
+        eq_words = _word_set(eq)
+        if not eq_words:
+            # Empty user-equipment word set — skip. Without this guard,
+            # `set().issubset(anything)` would vacuously pass, letting any
+            # exercise through. That was the silent-leak bug at the old
+            # line 375.
+            continue
+        # All words in user equipment are found in exercise equipment
+        # (e.g. user="dumbbells" matches exercise="dumbbell" because
+        # both singularise to "dumbbell").
+        if eq_words.issubset(ex_words):
+            equipment_match = True
+            break
+        # Also match if exercise equipment is a single word that the user's
+        # entry contains (e.g. exercise="cable" matches user="cable machine").
         if len(ex_words) == 1 and ex_words.issubset(eq_words):
             equipment_match = True
             break
 
     if not equipment_match:
-        # Also check exercise name for equipment clues (word-based)
-        exercise_name_lower = exercise_name.lower() if exercise_name else ""
-        exercise_words = set(exercise_name_lower.replace("-", " ").replace("_", " ").split())
+        # Tiebreaker: check the exercise NAME for equipment clues. Helps
+        # rows where the equipment field is generic but the name carries
+        # the real signal (e.g. "Dumbbell Curl" tagged equipment="Free Weights").
+        #
+        # IMPORTANT: skip bodyweight tokens here. Many exercises like
+        # "Bodyweight Inverted Rows" carry "bodyweight" in the name even
+        # though the equipment field is "Suspension Trainer" — i.e. the
+        # name lies. If we let the bodyweight name-token pass the filter
+        # we re-introduce the exact bug a bodyweight-only user just
+        # complained about. Names don't outvote tags.
+        exercise_words = _word_set((exercise_name or "").lower())
         for eq in equipment_lower:
-            if not eq:
+            if not eq or eq in BODYWEIGHT_TOKENS:
                 continue
-            eq_words = set(eq.replace("-", " ").replace("_", " ").split())
-            # Check if equipment words appear in exercise name
-            if eq_words and eq_words.issubset(exercise_words):
+            eq_words = _word_set(eq)
+            if not eq_words:
+                continue
+            if eq_words.issubset(exercise_words):
                 equipment_match = True
                 break
 
-    # Check substitution matrix if no direct match found
+    # Substitution matrix fallback (e.g., "Smith machine" ≈ "barbell" with
+    # 0.7 compat). Only enabled at call sites that opt in.
     if not equipment_match and use_substitutions:
         try:
             from services.equipment_resolver import EquipmentResolver
@@ -411,7 +561,8 @@ def filter_by_equipment(
                                 equipment_match = True
                                 break
         except Exception:
-            pass  # Graceful fallback - substitution lookup is optional
+            # Graceful fallback — substitution lookup is best-effort.
+            pass
 
     return equipment_match
 

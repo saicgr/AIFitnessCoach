@@ -72,15 +72,52 @@ class MockSupabaseClient:
         return MockQueryBuilder(data)
 
 
+class MockStorageBucket:
+    """Mock Supabase Storage bucket — list() empty, remove() no-op."""
+    def list(self, path=None):
+        return []
+    def remove(self, paths):
+        return None
+
+
+class MockStorage:
+    def from_(self, bucket):
+        return MockStorageBucket()
+
+
+class MockAuthAdmin:
+    def __init__(self):
+        self.deleted_users = []
+    def delete_user(self, user_id):
+        self.deleted_users.append(user_id)
+
+
+class MockAuth:
+    def __init__(self):
+        self.admin = MockAuthAdmin()
+
+
+class MockAuthClient:
+    def __init__(self):
+        self.auth = MockAuth()
+
+
 class MockSupabaseManager:
     """Mock SupabaseManager for testing."""
 
     def __init__(self, client=None):
         self._client = client or MockSupabaseClient()
+        # Storage attached to client; auth_client exposes .auth.admin.
+        self._client.storage = MockStorage()
+        self._auth_client = MockAuthClient()
 
     @property
     def client(self):
         return self._client
+
+    @property
+    def auth_client(self):
+        return self._auth_client
 
 
 @pytest.fixture
@@ -255,6 +292,46 @@ class TestSupabaseDBFullUserReset:
         """Should delete all user data."""
         result = supabase_db.full_user_reset("user-123")
         assert result is True
+
+    def test_full_user_reset_deletes_supabase_auth_user(self, mock_supabase_manager):
+        """BLOCKER for Google Play: full_user_reset MUST call
+        auth.admin.delete_user — otherwise the user can sign back in with
+        the same credentials, violating account-deletion policy."""
+        from core.db.facade import SupabaseDB
+        db = SupabaseDB(mock_supabase_manager)
+
+        db.full_user_reset("user-abc")
+
+        deleted = mock_supabase_manager.auth_client.auth.admin.deleted_users
+        assert "user-abc" in deleted, (
+            "full_user_reset did NOT call auth.admin.delete_user — "
+            "Google Play account-deletion policy violated"
+        )
+
+    def test_full_user_reset_idempotent_when_auth_user_already_gone(
+        self, mock_supabase_manager
+    ):
+        """A retry after the auth user is already deleted should NOT raise.
+        Mirrors the partial-failure recovery path."""
+        from core.db.facade import SupabaseDB
+
+        # Patch delete_user to raise "not found" on second call.
+        original_delete = mock_supabase_manager.auth_client.auth.admin.delete_user
+        call_count = {"n": 0}
+
+        def flaky_delete(user_id):
+            call_count["n"] += 1
+            if call_count["n"] >= 2:
+                raise Exception("User not found (404)")
+            return original_delete(user_id)
+
+        mock_supabase_manager.auth_client.auth.admin.delete_user = flaky_delete
+
+        db = SupabaseDB(mock_supabase_manager)
+        # First reset succeeds.
+        assert db.full_user_reset("user-xyz") is True
+        # Second reset must also succeed — "not found" is treated as already-deleted.
+        assert db.full_user_reset("user-xyz") is True
 
 
 class TestGetSupabaseDB:

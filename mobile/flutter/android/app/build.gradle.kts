@@ -1,3 +1,6 @@
+import java.util.Properties
+import java.io.FileInputStream
+
 plugins {
     id("com.android.application")
     id("kotlin-android")
@@ -5,6 +8,29 @@ plugins {
     id("dev.flutter.flutter-gradle-plugin")
     id("com.google.gms.google-services")
 }
+
+// Load android/key.properties if it exists. Used as a fallback for local
+// builds when KEYSTORE_PASSWORD / KEY_PASSWORD env vars aren't exported.
+// CI should prefer env vars (set via GitHub Actions / Codemagic secrets).
+// The file is gitignored — see android/key.properties.example.
+val keystoreProperties = Properties().apply {
+    val keystorePropertiesFile = rootProject.file("key.properties")
+    if (keystorePropertiesFile.exists()) {
+        load(FileInputStream(keystorePropertiesFile))
+    }
+}
+
+fun keystoreProp(name: String): String? =
+    System.getenv(name)?.takeIf { it.isNotBlank() }
+        ?: keystoreProperties.getProperty(
+            when (name) {
+                "KEYSTORE_PATH" -> "storeFile"
+                "KEYSTORE_PASSWORD" -> "storePassword"
+                "KEY_ALIAS" -> "keyAlias"
+                "KEY_PASSWORD" -> "keyPassword"
+                else -> name
+            }
+        )?.takeIf { it.isNotBlank() }
 
 android {
     namespace = "com.aifitnesscoach.app"
@@ -30,10 +56,22 @@ android {
             keyPassword = "android"
         }
         create("release") {
-            storeFile = file(System.getenv("KEYSTORE_PATH") ?: "../keystores/release.keystore")
-            storePassword = System.getenv("KEYSTORE_PASSWORD") ?: ""
-            keyAlias = System.getenv("KEY_ALIAS") ?: "fitwiz"
-            keyPassword = System.getenv("KEY_PASSWORD") ?: ""
+            // Release builds REQUIRE every credential. Resolution order:
+            //   1. Environment variables (KEYSTORE_PATH / KEYSTORE_PASSWORD /
+            //      KEY_ALIAS / KEY_PASSWORD) — preferred for CI/CD.
+            //   2. android/key.properties — fallback for local laptop builds
+            //      (gitignored; see key.properties.example).
+            //   3. Hard fail with a clear message — never silently sign with
+            //      an empty password.
+            storeFile = file(
+                keystoreProp("KEYSTORE_PATH")
+                    ?: "../keystores/release.keystore"
+            )
+            storePassword = keystoreProp("KEYSTORE_PASSWORD")
+                ?: error("KEYSTORE_PASSWORD missing — set env var or android/key.properties (see key.properties.example).")
+            keyAlias = keystoreProp("KEY_ALIAS") ?: "fitwiz"
+            keyPassword = keystoreProp("KEY_PASSWORD")
+                ?: error("KEY_PASSWORD missing — set env var or android/key.properties (see key.properties.example).")
         }
     }
 

@@ -57,6 +57,179 @@ def check_exercise_variant_exists(db, exercise_name: str) -> bool:
     return bool(result.data)
 
 
+# Similarity threshold for the ChromaDB substitute fallback. Chroma cosine
+# distance is in [0, 2]; distance 0 == identical, distance ~0.6 == loosely
+# related. We only substitute when the closest canonical exercise is
+# meaningfully similar to avoid showing a stretch video for a missing squat.
+_SUBSTITUTE_DISTANCE_THRESHOLD = 0.55
+
+# Categories that should NOT be cross-substituted. We never want a "Running"
+# query to return a "Hamstring Stretch" video, even if the embeddings happen
+# to land close.
+_SUBSTITUTE_CATEGORY_GUARDS = {
+    "cardio": {"strength", "stretch", "mobility"},
+    "stretch": {"strength", "cardio", "plyometric"},
+    "mobility": {"strength", "cardio", "plyometric"},
+    "plyometric": {"stretch", "mobility"},
+}
+
+
+def _classify_exercise_for_substitute(name: str, body_part: str = "", muscle_group: str = "") -> str:
+    """Coarse category for the substitute guardrails. Conservative on purpose."""
+    n = (name or "").lower()
+    bp = (body_part or "").lower()
+    mg = (muscle_group or "").lower()
+    if any(w in n for w in ("stretch", "yoga", "pigeon", "downward dog", "child's pose")):
+        return "stretch"
+    if any(w in n for w in ("mobility", "foam roll", "lacrosse")):
+        return "mobility"
+    if any(w in n for w in ("running", "jog", "sprint", "cycling", "bike", "rowing machine",
+                            "rower", "jump rope", "elliptical", "stair", "treadmill", "swim",
+                            "battle rope", "sled", "cardio", "hiit")):
+        return "cardio"
+    if any(w in n for w in ("jump", "plyo", "bound", "hop", "skater", "explosive")):
+        return "plyometric"
+    if "cardio" in mg or "cardio" in bp:
+        return "cardio"
+    return "strength"
+
+
+async def _find_substitute_video(
+    db,
+    original_name: str,
+    user_id: str | None,
+) -> dict | None:
+    """
+    Fallback path when the canonical exercise_library has no video for
+    `original_name`. Searches:
+      (1) custom_exercise_library ChromaDB collection — the user's own custom
+          exercises and public custom exercises (returns own video_s3_path
+          if present in metadata),
+      (2) the canonical fitness_exercises ChromaDB collection — finds the
+          closest canonical exercise above the similarity threshold and
+          returns its video as an honest substitute.
+
+    Returns None if no good match is found, in which case the caller raises
+    404. Never silently returns a low-quality substitute.
+    """
+    try:
+        from services.exercise_rag.service import get_exercise_rag_service
+    except Exception as e:
+        logger.warning(
+            f"[Video Fallback] exercise_rag service unavailable: {e}"
+        )
+        return None
+
+    try:
+        rag = get_exercise_rag_service()
+        query_embedding = await rag.gemini_service.get_embedding_async(original_name)
+        if not query_embedding:
+            return None
+    except Exception as e:
+        logger.warning(f"[Video Fallback] embedding failed for '{original_name}': {e}")
+        return None
+
+    original_category = _classify_exercise_for_substitute(original_name)
+    blocked_categories = _SUBSTITUTE_CATEGORY_GUARDS.get(original_category, set())
+
+    # Step 1: search the user's custom exercise collection (their imports +
+    # any public custom exercise). These may have their own video uploads.
+    try:
+        custom_results = rag.query_custom_collection(
+            query_embedding=query_embedding,
+            user_id=user_id,
+            n_results=5,
+        )
+        if custom_results.get("ids") and custom_results["ids"][0]:
+            for idx, ex_id in enumerate(custom_results["ids"][0]):
+                metas = custom_results.get("metadatas", [[]])[0]
+                if idx >= len(metas):
+                    continue
+                meta = metas[idx] or {}
+                video_path = meta.get("video_s3_path")
+                if not video_path:
+                    continue
+                distance = (
+                    custom_results.get("distances", [[]])[0][idx]
+                    if idx < len(custom_results.get("distances", [[]])[0])
+                    else 1.0
+                )
+                if distance > _SUBSTITUTE_DISTANCE_THRESHOLD:
+                    continue
+                matched_name = meta.get("exercise_name") or ex_id
+                # Category guard
+                matched_cat = _classify_exercise_for_substitute(
+                    matched_name,
+                    meta.get("body_part", ""),
+                    meta.get("muscle_group", ""),
+                )
+                if matched_cat in blocked_categories:
+                    continue
+                return {
+                    "video_s3_path": video_path,
+                    "matched_name": matched_name,
+                    "distance": distance,
+                    "source": "custom",
+                }
+    except Exception as e:
+        logger.warning(f"[Video Fallback] custom collection query failed: {e}")
+
+    # Step 2: similarity search the canonical exercise_library via ChromaDB.
+    try:
+        canonical_results = rag.collection.query(
+            query_embeddings=[query_embedding],
+            n_results=10,
+            include=["metadatas", "distances"],
+        )
+        if not canonical_results.get("ids") or not canonical_results["ids"][0]:
+            return None
+
+        ids = canonical_results["ids"][0]
+        distances = canonical_results.get("distances", [[]])[0]
+        metas = canonical_results.get("metadatas", [[]])[0]
+
+        for idx in range(len(ids)):
+            if idx >= len(distances) or idx >= len(metas):
+                continue
+            distance = distances[idx]
+            if distance > _SUBSTITUTE_DISTANCE_THRESHOLD:
+                continue
+            meta = metas[idx] or {}
+            matched_name = meta.get("exercise_name") or ids[idx]
+            # Skip self-match (shouldn't happen, but guard) and empty rows.
+            if not matched_name:
+                continue
+            if matched_name.lower() == original_name.lower():
+                continue
+            # Category guard
+            matched_cat = _classify_exercise_for_substitute(
+                matched_name,
+                meta.get("body_part", ""),
+                meta.get("muscle_group", ""),
+            )
+            if matched_cat in blocked_categories:
+                continue
+            # Look up a canonical entry with a usable video_s3_path. The
+            # ChromaDB metadata may not carry video_s3_path, so resolve via
+            # exercise_library. Use the same name-variant expansion as the
+            # primary path so DB casing differences don't fail the lookup.
+            for variant in generate_name_variants(matched_name):
+                row = db.client.table("exercise_library").select(
+                    "video_s3_path, exercise_name"
+                ).ilike("exercise_name", variant).limit(1).execute()
+                if row.data and row.data[0].get("video_s3_path"):
+                    return {
+                        "video_s3_path": row.data[0]["video_s3_path"],
+                        "matched_name": row.data[0]["exercise_name"],
+                        "distance": distance,
+                        "source": "canonical",
+                    }
+    except Exception as e:
+        logger.warning(f"[Video Fallback] canonical similarity query failed: {e}")
+
+    return None
+
+
 @router.get("/videos/by-exercise/{exercise_name:path}")
 async def get_video_by_exercise_name(exercise_name: str, gender: str = None,
     current_user: dict = Depends(get_current_user),
@@ -69,12 +242,20 @@ async def get_video_by_exercise_name(exercise_name: str, gender: str = None,
 
     If gender is specified ('male' or 'female'), tries to find gendered variant first.
 
+    On miss, falls back to a similarity search across the user's custom
+    exercise collection and the canonical exercise library, returning the
+    closest match's video with `is_substitute: true` so the client can
+    surface an honest banner.
+
     Args:
         exercise_name: Name of the exercise to lookup
         gender: Optional gender preference ('male' or 'female')
 
     Returns:
-        Presigned URL and expiration time, plus gender variant info
+        Presigned URL and expiration time, plus gender variant info. When the
+        result is a similarity-matched substitute, also returns:
+          - is_substitute: True
+          - similar_to: {original, matched, similarity}
     """
     try:
         db = get_supabase_db()
@@ -116,8 +297,30 @@ async def get_video_by_exercise_name(exercise_name: str, gender: str = None,
                 found_result = result.data[0]
                 break
 
+        is_substitute = False
+        similar_to = None
         if not found_result:
-            raise HTTPException(status_code=404, detail="Video not found for exercise")
+            user_id = current_user.get("id") if isinstance(current_user, dict) else None
+            substitute = await _find_substitute_video(db, exercise_name, user_id)
+            if substitute is None:
+                raise HTTPException(status_code=404, detail="Video not found for exercise")
+            found_result = {
+                "video_s3_path": substitute["video_s3_path"],
+                "exercise_name": substitute["matched_name"],
+            }
+            is_substitute = True
+            # Convert cosine distance to a 0..1 similarity for the UI.
+            similarity = max(0.0, min(1.0, 1.0 - (substitute["distance"] / 2.0)))
+            similar_to = {
+                "original": exercise_name,
+                "matched": substitute["matched_name"],
+                "similarity": round(similarity, 3),
+                "source": substitute.get("source", "canonical"),
+            }
+            logger.info(
+                f"[Video Fallback] '{exercise_name}' → '{substitute['matched_name']}' "
+                f"(distance={substitute['distance']:.3f}, source={substitute.get('source')})"
+            )
 
         s3_path = found_result["video_s3_path"]
         found_exercise_name = found_result["exercise_name"]
@@ -143,14 +346,18 @@ async def get_video_by_exercise_name(exercise_name: str, gender: str = None,
         has_male = check_exercise_variant_exists(db, f"{base_name}_male")
         has_female = check_exercise_variant_exists(db, f"{base_name}_female")
 
-        return {
+        response: dict = {
             "url": url,
             "expires_in": PRESIGNED_URL_EXPIRATION,
             "exercise_name": found_exercise_name,
             "current_gender": current_gender,
             "has_male": has_male,
-            "has_female": has_female
+            "has_female": has_female,
         }
+        if is_substitute:
+            response["is_substitute"] = True
+            response["similar_to"] = similar_to
+        return response
 
     except HTTPException:
         raise

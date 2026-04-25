@@ -25,11 +25,13 @@ class _BrowseFilterTabs extends StatelessWidget {
   final FoodBrowserFilter selected;
   final ValueChanged<FoodBrowserFilter> onChanged;
   final bool isDark;
+  final String? lastUsedKey;
 
   const _BrowseFilterTabs({
     required this.selected,
     required this.onChanged,
     required this.isDark,
+    this.lastUsedKey,
   });
 
   @override
@@ -41,6 +43,9 @@ class _BrowseFilterTabs extends StatelessWidget {
 
     Widget tab(FoodBrowserFilter filter, String label, IconData icon) {
       final isActive = selected == filter;
+      // Show the sparkle on the tab matching last-used IF it's not the
+      // currently active tab (the orange fill already marks the active one).
+      final showLastUsed = !isActive && lastUsedKey == filter.name;
       return GestureDetector(
         onTap: () => onChanged(filter),
         child: AnimatedContainer(
@@ -64,6 +69,10 @@ class _BrowseFilterTabs extends StatelessWidget {
                   color: isActive ? Colors.white : textMuted,
                 ),
               ),
+              if (showLastUsed) ...[
+                const SizedBox(width: 4),
+                const LastUsedBadge.static(size: 12),
+              ],
             ],
           ),
         ),

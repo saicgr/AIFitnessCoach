@@ -660,6 +660,13 @@ class _DiscoverTab extends ConsumerWidget {
                   onTap: () {
                     HapticService.medium();
                     ref.read(localLayoutProvider.notifier).applyPreset(preset);
+                    // Align the home hero tab with the preset's theme so
+                    // a user who picks a nutrition preset lands on the
+                    // nutrition hero carousel instead of the workout one.
+                    ref.read(homeFocusProvider.notifier).state =
+                        preset.isNutritionFocused
+                            ? HomeFocus.nutrition
+                            : HomeFocus.workout;
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
                         content: Text('Applied ${preset.name}'),
@@ -750,6 +757,10 @@ class _DiscoverTab extends ConsumerWidget {
                           ref
                               .read(localLayoutProvider.notifier)
                               .applyPreset(preset);
+                          ref.read(homeFocusProvider.notifier).state =
+                              preset.isNutritionFocused
+                                  ? HomeFocus.nutrition
+                                  : HomeFocus.workout;
                           Navigator.pop(context);
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(

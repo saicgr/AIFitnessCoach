@@ -5,6 +5,12 @@ import '../../core/models/quick_action.dart';
 
 const _quickActionOrderKey = 'quick_action_order';
 const _quickActionExpandedKey = 'quick_action_expanded';
+// One-shot migration flag — bumped 2026-04-25 when slot-5 default was
+// flipped from 'scan_food' (document scanner) to 'photo_food' (single
+// camera shot of a meal). Users who customized their layout before that
+// release still had 'scan_food' pinned; this migration moves them to
+// the new default once.
+const _quickActionMigrationKey = 'quick_action_migration_v2';
 
 final quickActionOrderProvider =
     StateNotifierProvider<QuickActionOrderNotifier, List<String>>((ref) {
@@ -26,8 +32,30 @@ class QuickActionOrderNotifier extends StateNotifier<List<String>> {
     final json = prefs.getString(_quickActionOrderKey);
     if (json != null) {
       final saved = List<String>.from(jsonDecode(json));
-      final valid =
+      List<String> valid =
           saved.where((id) => quickActionRegistry.containsKey(id)).toList();
+
+      // Migration v2: swap legacy 'scan_food' in the first 5 slots
+      // (Pinned / home row 1) for the new 'photo_food' default. Keep
+      // 'scan_food' in the order so the user can still access it via the
+      // More sheet — just demote it past the pinned cutoff. Idempotent
+      // via the SharedPreferences flag so it never runs twice.
+      final migrated = prefs.getBool(_quickActionMigrationKey) ?? false;
+      if (!migrated) {
+        final pinnedCount = 5;
+        final scanIdx = valid.indexOf('scan_food');
+        if (scanIdx != -1 && scanIdx < pinnedCount &&
+            !valid.contains('photo_food')) {
+          valid[scanIdx] = 'photo_food';
+          // Append the original scan_food + barcode_food so they live in
+          // the More sheet and don't disappear.
+          if (!valid.contains('scan_food')) valid.add('scan_food');
+        }
+        if (!valid.contains('barcode_food')) valid.add('barcode_food');
+        await prefs.setBool(_quickActionMigrationKey, true);
+        await prefs.setString(_quickActionOrderKey, jsonEncode(valid));
+      }
+
       for (final id in defaultQuickActionOrder) {
         if (!valid.contains(id)) valid.add(id);
       }

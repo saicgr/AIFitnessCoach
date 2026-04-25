@@ -160,6 +160,7 @@ NutrientProgress _$NutrientProgressFromJson(Map<String, dynamic> json) =>
       topContributors: (json['top_contributors'] as List<dynamic>?)
           ?.map((e) => e as Map<String, dynamic>)
           .toList(),
+      pinReason: json['pin_reason'] as String?,
     );
 
 Map<String, dynamic> _$NutrientProgressToJson(NutrientProgress instance) =>
@@ -176,6 +177,7 @@ Map<String, dynamic> _$NutrientProgressToJson(NutrientProgress instance) =>
       'status': instance.status,
       'color_hex': instance.colorHex,
       'top_contributors': instance.topContributors,
+      'pin_reason': instance.pinReason,
     };
 
 DailyMicronutrientSummary _$DailyMicronutrientSummaryFromJson(
@@ -208,6 +210,7 @@ DailyMicronutrientSummary _$DailyMicronutrientSummaryFromJson(
           ?.map((e) => NutrientProgress.fromJson(e as Map<String, dynamic>))
           .toList() ??
       const [],
+  pinningMode: json['pinning_mode'] as String?,
 );
 
 Map<String, dynamic> _$DailyMicronutrientSummaryToJson(
@@ -220,6 +223,7 @@ Map<String, dynamic> _$DailyMicronutrientSummaryToJson(
   'fatty_acids': instance.fattyAcids,
   'other': instance.other,
   'pinned': instance.pinned,
+  'pinning_mode': instance.pinningMode,
 };
 
 NutrientContributorsResponse _$NutrientContributorsResponseFromJson(

@@ -225,41 +225,48 @@ class _CalculationInfoSheetState extends ConsumerState<_CalculationInfoSheet> {
           ),
           const SizedBox(height: 16),
 
-          // Edit + Recalculate buttons
-          Row(
-            children: [
-              Expanded(
-                child: FilledButton.icon(
-                  onPressed: widget.onEdit,
-                  icon: const Icon(Icons.edit_outlined, size: 18),
-                  label: const Text('Edit Targets'),
-                  style: FilledButton.styleFrom(
-                    backgroundColor: teal,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
+          // Edit + Recalculate buttons. Hidden entirely when neither
+          // callback is wired (e.g., when launched from inside the Edit
+          // Daily Targets sheet — the user is already in the editor, so
+          // dead buttons would be confusing).
+          if (widget.onEdit != null || widget.onRecalculate != null)
+            Row(
+              children: [
+                if (widget.onEdit != null)
+                  Expanded(
+                    child: FilledButton.icon(
+                      onPressed: widget.onEdit,
+                      icon: const Icon(Icons.edit_outlined, size: 18),
+                      label: const Text('Edit Targets'),
+                      style: FilledButton.styleFrom(
+                        backgroundColor: teal,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                      ),
                     ),
-                    padding: const EdgeInsets.symmetric(vertical: 12),
                   ),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: OutlinedButton.icon(
-                  onPressed: widget.onRecalculate,
-                  icon: Icon(Icons.refresh, size: 18, color: teal),
-                  label: Text('Recalculate', style: TextStyle(inherit: false, color: teal, fontSize: 14, fontWeight: FontWeight.w500)),
-                  style: OutlinedButton.styleFrom(
-                    side: BorderSide(color: teal.withValues(alpha: 0.5)),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
+                if (widget.onEdit != null && widget.onRecalculate != null)
+                  const SizedBox(width: 8),
+                if (widget.onRecalculate != null)
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: widget.onRecalculate,
+                      icon: Icon(Icons.refresh, size: 18, color: teal),
+                      label: Text('Recalculate', style: TextStyle(inherit: false, color: teal, fontSize: 14, fontWeight: FontWeight.w500)),
+                      style: OutlinedButton.styleFrom(
+                        side: BorderSide(color: teal.withValues(alpha: 0.5)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                      ),
                     ),
-                    padding: const EdgeInsets.symmetric(vertical: 12),
                   ),
-                ),
-              ),
-            ],
-          ),
+              ],
+            ),
         ],
       ),
     );

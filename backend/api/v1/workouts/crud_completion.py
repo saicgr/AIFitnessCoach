@@ -52,6 +52,9 @@ from .crud_background_tasks import (
     _send_streak_celebration_if_milestone,
 )
 from .today import invalidate_today_workout_cache
+# Trophy + milestone post-completion check. Wired as a background task so a
+# failure inside the trophy logic never blocks the completion API response.
+from ..trophy_triggers import check_workout_completion_trophies
 
 router = APIRouter()
 logger = get_logger(__name__)
@@ -270,6 +273,19 @@ async def complete_workout(
         background_tasks.add_task(recalculate_user_strength_scores, user_id=user_id, supabase=supabase, timezone_str=tz_str)
         background_tasks.add_task(recalculate_user_fitness_score, user_id=user_id, supabase=supabase, timezone_str=tz_str)
 
+        # Background: Trophy + milestone awards (volume / time / consistency
+        # / muscle-mastery / specific-exercise). The function inspects the
+        # just-logged workout and idempotently awards anything newly earned.
+        # Wired here so achievements unlock instantly on completion instead
+        # of waiting for the next stats-screen refresh. Failures must never
+        # block the response — `check_workout_completion_trophies` swallows
+        # its own errors via its inner try/except branches.
+        background_tasks.add_task(
+            check_workout_completion_trophies,
+            user_id=user_id,
+            workout_data={"exercises": exercises},
+        )
+
         await index_workout_to_rag(workout)
 
         # Performance Comparison
@@ -281,39 +297,109 @@ async def complete_workout(
             total_sets = 0
             total_reps = 0
 
-            exercises = existing.get("exercises") or existing.get("exercises_json") or []
-            if isinstance(exercises, str):
-                exercises = json.loads(exercises)
-
-            exercises_performance = []
-            for ex in exercises:
-                sets = ex.get("sets", [])
-                if isinstance(sets, int) or not isinstance(sets, list):
-                    sets = []
-                completed_sets = [s for s in sets if s.get("completed", True)]
-                ex_volume = sum(
-                    (s.get("reps", 0) or s.get("reps_completed", 0)) * s.get("weight_kg", 0)
-                    for s in completed_sets
-                )
-                ex_reps = sum(s.get("reps", 0) or s.get("reps_completed", 0) for s in completed_sets)
-                total_volume += ex_volume
-                total_sets += len(completed_sets)
-                total_reps += ex_reps
-                exercises_performance.append({
-                    "exercise_name": ex.get("name", ""),
-                    "exercise_id": ex.get("id") or ex.get("exercise_id"),
-                    "sets": sets,
-                })
-
+            # Pull the actual logged sets from workout_logs.sets_json — that's
+            # the source of truth for what the user did, not the workouts.exercises
+            # plan (which carries integer "sets" + target reps but no completion
+            # state, so summing it gives planned volume, not performed). For
+            # bodyweight workouts the plan often shapes `sets` as an int (e.g.
+            # `{"sets": 3, "reps": 10}`) which the legacy aggregator dropped to
+            # `[]`, producing the 0/0/0 stats grid the user reported.
             workout_log_response = supabase.table("workout_logs").select(
-                "id, total_time_seconds"
+                "id, total_time_seconds, sets_json"
             ).eq("workout_id", workout_id).order("completed_at", desc=True).limit(1).execute()
 
             workout_log_id = None
             duration_seconds = 0
+            logged_sets_json = None
             if workout_log_response.data:
                 workout_log_id = workout_log_response.data[0].get("id")
                 duration_seconds = workout_log_response.data[0].get("total_time_seconds", 0)
+                logged_sets_json = workout_log_response.data[0].get("sets_json")
+
+            # Decode legacy string-encoded JSON if needed.
+            if isinstance(logged_sets_json, str):
+                try:
+                    logged_sets_json = json.loads(logged_sets_json)
+                except (json.JSONDecodeError, TypeError):
+                    logged_sets_json = None
+
+            exercises = existing.get("exercises") or existing.get("exercises_json") or []
+            if isinstance(exercises, str):
+                exercises = json.loads(exercises)
+
+            exercises_performance: List[Dict] = []
+
+            if isinstance(logged_sets_json, list) and logged_sets_json:
+                # New shape: flat list of per-set records (set_logging_mixin.dart
+                # buildSetsJson). Group by exercise to feed the comparison
+                # service and aggregate true totals.
+                grouped: Dict[str, Dict[str, Any]] = {}
+                for s in logged_sets_json:
+                    if not isinstance(s, dict):
+                        continue
+                    ex_name = s.get("exercise_name") or s.get("name", "")
+                    if not ex_name:
+                        continue
+                    bucket = grouped.setdefault(ex_name, {
+                        "exercise_name": ex_name,
+                        "exercise_id": s.get("exercise_id"),
+                        "sets": [],
+                    })
+                    # Normalize the per-set shape so build_performance_summary
+                    # finds reps + weight_kg under the keys it already reads.
+                    bucket["sets"].append({
+                        "completed": True,
+                        "reps": s.get("reps") or s.get("reps_completed", 0),
+                        "reps_completed": s.get("reps") or s.get("reps_completed", 0),
+                        "weight_kg": s.get("weight_kg", 0) or 0,
+                        "rpe": s.get("rpe"),
+                        "rir": s.get("rir"),
+                        "duration_seconds": s.get("set_duration_seconds"),
+                    })
+                for entry in grouped.values():
+                    set_count = len(entry["sets"])
+                    ex_reps = sum(int(x["reps"] or 0) for x in entry["sets"])
+                    ex_volume = sum(
+                        (int(x["reps"] or 0)) * float(x["weight_kg"] or 0)
+                        for x in entry["sets"]
+                    )
+                    total_sets += set_count
+                    total_reps += ex_reps
+                    total_volume += ex_volume
+                    exercises_performance.append(entry)
+            else:
+                # Fallback for older clients that didn't post sets_json: derive
+                # from the planned exercises. Same code path as before, but we
+                # also expand integer `sets` so bodyweight plans (sets=3, reps=10)
+                # don't silently zero out.
+                for ex in exercises:
+                    sets = ex.get("sets", [])
+                    if isinstance(sets, int):
+                        # Expand into n placeholder sets using the exercise-level
+                        # reps + weight (zero for bodyweight). Mark them completed
+                        # since we have no actual log to disagree.
+                        n = max(0, int(sets))
+                        sets = [{
+                            "completed": True,
+                            "reps": ex.get("reps", 0) or 0,
+                            "weight_kg": ex.get("weight_kg", ex.get("weight", 0)) or 0,
+                        } for _ in range(n)]
+                    elif not isinstance(sets, list):
+                        sets = []
+                    completed_sets = [s for s in sets if s.get("completed", True)]
+                    ex_volume = sum(
+                        (s.get("reps", 0) or s.get("reps_completed", 0)) * s.get("weight_kg", 0)
+                        for s in completed_sets
+                    )
+                    ex_reps = sum(s.get("reps", 0) or s.get("reps_completed", 0) for s in completed_sets)
+                    total_volume += ex_volume
+                    total_sets += len(completed_sets)
+                    total_reps += ex_reps
+                    exercises_performance.append({
+                        "exercise_name": ex.get("name", ""),
+                        "exercise_id": ex.get("id") or ex.get("exercise_id"),
+                        "sets": sets,
+                    })
 
             calories_burned = _calculate_completion_calories(
                 exercises=exercises, duration_seconds=duration_seconds,
@@ -500,14 +586,16 @@ async def complete_workout(
         background_tasks.add_task(_send_post_workout_nutrition_nudge, user_id=user_id, workout_name=workout_name)
         background_tasks.add_task(_send_streak_celebration_if_milestone, user_id=user_id)
 
-        # Background: Trophies + masteries recompute. Previously neither
-        # fired after complete_workout — users could finish 10 sessions
-        # and still see Lv.0 / "No badges". Helper swallows its own
-        # errors so it can never break the Save response.
-        from services.mastery_writes import check_all_trophies_and_masteries
-        background_tasks.add_task(
-            check_all_trophies_and_masteries, user_id
-        )
+        # Trophies + masteries recompute. Previously neither fired after
+        # complete_workout — users could finish 10 sessions and still see
+        # Lv.0 / "No badges". Spawned via asyncio.create_task (not
+        # BackgroundTasks) because BaseHTTPMiddleware serializes
+        # BackgroundTasks into the response timer — a single slow trophy
+        # query had inflated one completion log to 30 minutes of
+        # "response time". Helper swallows its own errors + enforces a
+        # 60s timeout so it can never break the Save response.
+        from services.mastery_writes import fire_trophy_check_detached
+        fire_trophy_check_detached(user_id)
 
         if detected_prs:
             pr_count = len(detected_prs)
@@ -849,19 +937,67 @@ async def get_workout_completion_summary(workout_id: str,
             workout_log_id = workout_log_response.data[0].get("id")
             duration_seconds = workout_log_response.data[0].get("total_time_seconds", 0)
 
-        # Get per-set log data
+        # Get per-set log data — return everything the active-workout client
+        # writes so the summary screen can render notes (incl. audio/photo),
+        # target deltas, set timing, and the logging-mode tier.
         set_logs = []
         if workout_log_id:
             try:
                 perf_logs_response = supabase.table("performance_logs").select(
-                    "exercise_name, set_number, reps_completed, weight_kg, rpe, rir, set_type"
+                    "exercise_name, set_number, reps_completed, weight_kg, rpe, rir, set_type, "
+                    "notes, notes_audio_url, notes_photo_urls, "
+                    "target_reps, target_weight_kg, failed_at_rep, recorded_at, started_at, "
+                    "set_duration_seconds, rest_duration_seconds, logging_mode, "
+                    "ai_input_source, is_ai_recommended_set_type, tempo, is_completed"
                 ).eq("workout_log_id", workout_log_id).order("exercise_name").order("set_number").execute()
                 for pl in perf_logs_response.data or []:
+                    # `notes` may be TEXT[] (post-migration), a legacy single
+                    # string, or null. Coerce to a list of non-empty strings.
+                    raw_notes = pl.get("notes")
+                    if raw_notes is None:
+                        notes_list: List[str] = []
+                    elif isinstance(raw_notes, list):
+                        notes_list = [str(n).strip() for n in raw_notes if n and str(n).strip()]
+                    elif isinstance(raw_notes, str):
+                        notes_list = [raw_notes.strip()] if raw_notes.strip() else []
+                    else:
+                        notes_list = []
+
+                    raw_photos = pl.get("notes_photo_urls")
+                    if isinstance(raw_photos, list):
+                        photos_list = [str(u) for u in raw_photos if u]
+                    else:
+                        photos_list = []
+
+                    def _to_iso(val):
+                        if val is None:
+                            return None
+                        # Supabase returns timestamps as ISO strings already.
+                        return str(val) if not isinstance(val, str) else val
+
                     set_logs.append(SetLogInfo(
-                        exercise_name=pl.get("exercise_name", ""), set_number=pl.get("set_number", 0),
-                        reps_completed=pl.get("reps_completed", 0), weight_kg=float(pl.get("weight_kg", 0)),
+                        exercise_name=pl.get("exercise_name", ""),
+                        set_number=pl.get("set_number", 0),
+                        reps_completed=pl.get("reps_completed", 0),
+                        weight_kg=float(pl.get("weight_kg", 0) or 0),
                         rpe=float(pl.get("rpe")) if pl.get("rpe") is not None else None,
-                        rir=pl.get("rir"), set_type=pl.get("set_type", "working"),
+                        rir=pl.get("rir"),
+                        set_type=pl.get("set_type", "working"),
+                        notes=notes_list,
+                        notes_audio_url=pl.get("notes_audio_url"),
+                        notes_photo_urls=photos_list,
+                        target_reps=pl.get("target_reps"),
+                        target_weight_kg=float(pl["target_weight_kg"]) if pl.get("target_weight_kg") is not None else None,
+                        failed_at_rep=pl.get("failed_at_rep"),
+                        recorded_at=_to_iso(pl.get("recorded_at")),
+                        started_at=_to_iso(pl.get("started_at")),
+                        set_duration_seconds=pl.get("set_duration_seconds"),
+                        rest_duration_seconds=pl.get("rest_duration_seconds"),
+                        logging_mode=pl.get("logging_mode"),
+                        ai_input_source=pl.get("ai_input_source"),
+                        is_ai_recommended_set_type=pl.get("is_ai_recommended_set_type"),
+                        tempo=pl.get("tempo"),
+                        is_completed=pl.get("is_completed"),
                     ))
             except Exception as e:
                 logger.warning(f"Failed to fetch performance logs for summary: {e}", exc_info=True)
@@ -1094,12 +1230,26 @@ async def update_exercise_sets(
         exercise = exercises[request.exercise_index]
         exercise_name = exercise.get("name", "")
 
+        # Coerce notes to a list to match the TEXT[] storage shape. Accepts
+        # legacy single-string payloads from older clients, drops empties.
+        def _coerce_notes(raw):
+            if raw is None:
+                return []
+            if isinstance(raw, list):
+                return [str(n).strip() for n in raw if n and str(n).strip()]
+            if isinstance(raw, str) and raw.strip():
+                return [raw.strip()]
+            return []
+
         new_sets = []
         for s in request.sets:
             new_sets.append({
                 "set_number": s.get("set_number", 1), "reps": s.get("reps", 0),
                 "reps_completed": s.get("reps", 0), "weight_kg": s.get("weight_kg", 0),
                 "rpe": s.get("rpe"), "completed": True, "set_type": s.get("set_type", "working"),
+                "notes": _coerce_notes(s.get("notes")),
+                "notes_audio_url": s.get("notes_audio_url"),
+                "notes_photo_urls": s.get("notes_photo_urls") or [],
             })
 
         exercises[request.exercise_index]["sets"] = new_sets
@@ -1116,6 +1266,11 @@ async def update_exercise_sets(
 
             user_id = existing.get("user_id")
             for s in request.sets:
+                # Notes/audio/photos preserved alongside the edit so the
+                # post-completion summary keeps the user's annotations
+                # after a reps/weight correction. Notes coerced to TEXT[].
+                set_notes = _coerce_notes(s.get("notes"))
+                photos = s.get("notes_photo_urls")
                 perf_record = {
                     "workout_log_id": wl_id, "user_id": user_id,
                     "exercise_id": exercise.get("id") or exercise.get("exercise_id"),
@@ -1126,6 +1281,9 @@ async def update_exercise_sets(
                     "target_weight_kg": float(s["target_weight_kg"]) if s.get("target_weight_kg") is not None else None,
                     "target_reps": int(s["target_reps"]) if s.get("target_reps") is not None else None,
                     "progression_model": s.get("progression_model"),
+                    "notes": set_notes,
+                    "notes_audio_url": s.get("notes_audio_url"),
+                    "notes_photo_urls": photos if isinstance(photos, list) and photos else None,
                 }
                 supabase.table("performance_logs").insert(perf_record).execute()
 

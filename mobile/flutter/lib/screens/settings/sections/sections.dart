@@ -23,7 +23,6 @@ export 'social_privacy_section.dart';
 export 'training_preferences_section.dart';
 export 'voice_announcements_section.dart';
 export 'warmup_settings_section.dart';
-export 'subscription_section.dart';
 export 'superset_settings_section.dart';
 export 'kegel_settings_section.dart';
 export 'wear_os_section.dart';

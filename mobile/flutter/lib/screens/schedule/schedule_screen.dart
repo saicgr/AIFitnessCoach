@@ -531,6 +531,10 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
                       Navigator.of(context).push(MaterialPageRoute(
                         builder: (_) => SyncedWorkoutDetailScreen(workout: entry.value),
                       ));
+                    } else if (entry.value.isCompleted == true) {
+                      // Completed workouts open the summary (Detail/Summary/Advanced)
+                      // instead of the active "Start workout" detail.
+                      context.push('/workout-summary/${entry.value.id}', extra: entry.value);
                     } else {
                       context.push('/workout/${entry.value.id}', extra: entry.value);
                     }

@@ -11,6 +11,29 @@ extension __RegenerateWorkoutSheetStateExt on _RegenerateWorkoutSheetState {
       },
     );
 
+    // Persist the user's current picks as last-used so the next regen open
+    // pre-fills with the same values. Skip duration (continuous slider) and
+    // injuries (health facts, not a "preference" to remember). Fire-and-
+    // forget — don't block the regen call on prefs flush.
+    final lastUsed = ref.read(lastUsedServiceProvider);
+    // ignore: unawaited_futures
+    lastUsed.set(_kRegenDifficultyKey, _selectedDifficulty);
+    final typeToSave = _customWorkoutType.isNotEmpty
+        ? _customWorkoutType
+        : (_selectedWorkoutType ?? '');
+    if (typeToSave.isNotEmpty) {
+      // ignore: unawaited_futures
+      lastUsed.set(_kRegenWorkoutTypeKey, typeToSave);
+    }
+    if (_selectedFocusAreas.isNotEmpty) {
+      // ignore: unawaited_futures
+      lastUsed.set(_kRegenFocusAreasKey, _selectedFocusAreas.join(','));
+    }
+    if (_selectedEquipment.isNotEmpty) {
+      // ignore: unawaited_futures
+      lastUsed.set(_kRegenEquipmentKey, _selectedEquipment.join(','));
+    }
+
     _startElapsedTimer();
     setState(() {
       _isRegenerating = true;
@@ -141,22 +164,46 @@ extension __RegenerateWorkoutSheetStateExt on _RegenerateWorkoutSheetState {
             if (!mounted) return;
 
             if (shouldReplace == null) {
-              // User dismissed the replace/add dialog AFTER commit. The
-              // supersede is already persisted; just re-enable UI. The
-              // default post-commit state == replace.
+              // Dialog dismissed AFTER commit. The supersede is already
+              // persisted, so the effective state is Replace. Tell the user
+              // explicitly — silent default would look like a bug (and per
+              // feedback_no_silent_fallbacks.md).
               setState(() => _isRegenerating = false);
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text(
+                      'Defaulted to Replace — your previous workout was overwritten.'),
+                  duration: Duration(seconds: 4),
+                ),
+              );
+              TodayWorkoutNotifier.clearCache();
+              ref.read(todayWorkoutProvider.notifier).invalidateAndRefresh();
+              ref.read(workoutsProvider.notifier).silentRefresh();
+              Navigator.pop(context, approvedWorkout);
               return;
             }
 
             if (shouldReplace) {
               WorkoutsNotifier.replaceInCache(widget.workout.id!, approvedWorkout);
             } else {
-              // Un-supersede old workout so both appear in carousel.
+              // Un-supersede old workout so both appear in carousel. If this
+              // fails the user gets the silent Replace they didn't ask for —
+              // surface it so they can retry instead of losing the original.
               try {
                 final repo = ref.read(workoutRepositoryProvider);
                 await repo.unsupersedeWorkout(workoutId: widget.workout.id!);
               } catch (e) {
                 debugPrint('⚠️ Failed to un-supersede old workout: $e');
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: const Text(
+                          "Couldn't keep your original workout — only the new one is visible."),
+                      backgroundColor: AppColors.error,
+                      duration: const Duration(seconds: 5),
+                    ),
+                  );
+                }
               }
             }
 
@@ -312,19 +359,43 @@ extension __RegenerateWorkoutSheetStateExt on _RegenerateWorkoutSheetState {
             if (!mounted) return;
 
             if (shouldReplace == null) {
+              // Dialog dismissed AFTER commit — supersede is persisted, so
+              // effective state is Replace. Same handling as _regenerate().
               setState(() => _isRegenerating = false);
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text(
+                      'Defaulted to Replace — your previous workout was overwritten.'),
+                  duration: Duration(seconds: 4),
+                ),
+              );
+              TodayWorkoutNotifier.clearCache();
+              ref.read(todayWorkoutProvider.notifier).invalidateAndRefresh();
+              ref.read(workoutsProvider.notifier).silentRefresh();
+              Navigator.pop(context, approvedWorkout);
               return;
             }
 
             if (shouldReplace) {
               WorkoutsNotifier.replaceInCache(widget.workout.id!, approvedWorkout);
             } else {
-              // Un-supersede old workout so both appear in carousel
+              // Un-supersede old workout so both appear in carousel. Surface
+              // failures — silent fallback would look like Replace.
               try {
                 final repo = ref.read(workoutRepositoryProvider);
                 await repo.unsupersedeWorkout(workoutId: widget.workout.id!);
               } catch (e) {
                 debugPrint('⚠️ Failed to un-supersede old workout: $e');
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: const Text(
+                          "Couldn't keep your original workout — only the new one is visible."),
+                      backgroundColor: AppColors.error,
+                      duration: const Duration(seconds: 5),
+                    ),
+                  );
+                }
               }
             }
 

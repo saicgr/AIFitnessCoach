@@ -125,7 +125,14 @@ class WorkoutCompletionResponse(BaseModel):
 
 
 class SetLogInfo(BaseModel):
-    """Per-set log data for workout summary display."""
+    """Per-set log data for workout summary display.
+
+    Round-trips every field the active-workout client captures so the
+    completed-summary screen can render notes, target/actual deltas, set
+    timing, and the logging-mode tier with the same fidelity the user saw
+    while working out. Empty / None values are tolerated end-to-end so
+    legacy rows (pre-rich-fields migration) still load cleanly.
+    """
     exercise_name: str
     exercise_index: int = 0
     set_number: int
@@ -134,6 +141,25 @@ class SetLogInfo(BaseModel):
     rpe: Optional[float] = None
     rir: Optional[int] = None
     set_type: str = "working"
+
+    # Rich fields written on completion — round-trip them back so the
+    # workout-summary screen renders notes, audio/photo, target deltas,
+    # set timing, and the logging-mode tier.
+    notes: List[str] = []
+    notes_audio_url: Optional[str] = None
+    notes_photo_urls: List[str] = []
+    target_reps: Optional[int] = None
+    target_weight_kg: Optional[float] = None
+    failed_at_rep: Optional[int] = None
+    recorded_at: Optional[str] = None
+    started_at: Optional[str] = None
+    set_duration_seconds: Optional[int] = None
+    rest_duration_seconds: Optional[int] = None
+    logging_mode: Optional[str] = None
+    ai_input_source: Optional[str] = None
+    is_ai_recommended_set_type: Optional[bool] = None
+    tempo: Optional[str] = None
+    is_completed: Optional[bool] = None
 
 
 class WorkoutSummaryResponse(BaseModel):

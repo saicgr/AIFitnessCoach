@@ -128,8 +128,109 @@ class SyncFailureService {
     return _db.syncQueueDao.recoverDeadLetterItems();
   }
 
+  /// Move a single dead-letter item back to the pending queue and kick off
+  /// a sync. Returns true if the item was retryable (auth/network/server
+  /// transient errors); false for permanent validation errors that would
+  /// re-fail immediately — caller should encourage Edit & re-log instead.
+  Future<bool> retryItem(int id) async {
+    final items = await _db.syncQueueDao.getDeadLetterItems();
+    final item = items.firstWhere(
+      (it) => it.id == id,
+      orElse: () => throw StateError('Sync queue item $id not found'),
+    );
+    final kind = SyncErrorKind.classify(item.lastError);
+    if (!kind.isRetryable) return false;
+    await _db.syncQueueDao.retrySingle(id);
+    return true;
+  }
+
+  /// Permanently delete a dead-letter row. The user has explicitly given up
+  /// on this item. Caller should typically prompt for an export-first
+  /// confirmation when the payload contains user-generated text.
+  Future<void> discardItem(int id) async {
+    await _db.syncQueueDao.hardDelete(id);
+  }
+
   void dispose() {
     _notificationTimer?.cancel();
+  }
+}
+
+/// Coarse classification of why a sync item ended up in dead_letter.
+/// Drives the per-row CTA on the Sync Details screen — for instance, a
+/// validation_4xx item shouldn't show "Retry now" because it'll just
+/// fail again with the same error.
+enum SyncErrorKind {
+  /// 401/403 from the server. Resolution = re-login.
+  auth,
+  /// Network unreachable / DNS / SSL handshake / timeout. Resolution = retry
+  /// when connectivity returns.
+  network,
+  /// 4xx (other than 401/403). The payload itself is rejected. User must
+  /// edit the underlying data; pure retry will just re-fail.
+  validation4xx,
+  /// 5xx server error. Worth retrying — the server may have recovered.
+  server5xx,
+  /// Local-DB JSON parse failure or row-shape corruption. Item is unsalvageable;
+  /// only options are export + discard.
+  corrupt,
+  /// Anything else (last_error null, unrecognized).
+  unknown;
+
+  bool get isRetryable => switch (this) {
+        SyncErrorKind.auth => false,
+        SyncErrorKind.network => true,
+        SyncErrorKind.validation4xx => false,
+        SyncErrorKind.server5xx => true,
+        SyncErrorKind.corrupt => false,
+        SyncErrorKind.unknown => true,
+      };
+
+  String get displayLabel => switch (this) {
+        SyncErrorKind.auth => 'Auth',
+        SyncErrorKind.network => 'Offline',
+        SyncErrorKind.validation4xx => 'Validation',
+        SyncErrorKind.server5xx => 'Server',
+        SyncErrorKind.corrupt => 'Corrupt',
+        SyncErrorKind.unknown => 'Unknown',
+      };
+
+  /// Best-effort classification from a raw error message string. The retry
+  /// engine writes free-text errors via `markFailed`, so we string-match on
+  /// the substrings that show up in HTTP / Dio / connectivity errors.
+  static SyncErrorKind classify(String? lastError) {
+    if (lastError == null || lastError.trim().isEmpty) return SyncErrorKind.unknown;
+    final s = lastError.toLowerCase();
+    if (s.contains('401') || s.contains('403') ||
+        s.contains('unauthor') || s.contains('forbidden') ||
+        s.contains('jwt') || s.contains('expired token')) {
+      return SyncErrorKind.auth;
+    }
+    if (s.contains('socketexception') ||
+        s.contains('handshake') ||
+        s.contains('connection') ||
+        s.contains('timeout') ||
+        s.contains('unreachable') ||
+        s.contains('failed host lookup') ||
+        s.contains('network')) {
+      return SyncErrorKind.network;
+    }
+    if (s.contains('500') || s.contains('502') ||
+        s.contains('503') || s.contains('504') ||
+        s.contains('internal server error') ||
+        s.contains('bad gateway')) {
+      return SyncErrorKind.server5xx;
+    }
+    if (s.contains('400') || s.contains('422') || s.contains('409') ||
+        s.contains('validation') || s.contains('invalid')) {
+      return SyncErrorKind.validation4xx;
+    }
+    if (s.contains('formatexception') ||
+        s.contains('jsondecode') ||
+        s.contains('parse')) {
+      return SyncErrorKind.corrupt;
+    }
+    return SyncErrorKind.unknown;
   }
 }
 

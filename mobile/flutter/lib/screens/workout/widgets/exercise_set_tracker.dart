@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/utils/default_weights.dart';
 import '../../../data/models/exercise.dart';
@@ -93,6 +94,13 @@ class ExerciseSetTracker extends StatefulWidget {
   final VoidCallback? onShowNotes;
   final VoidCallback? onShowOptions;
 
+  /// Optional callback fired when the user edits the rest seconds for this
+  /// exercise. If provided, the rest-timer label becomes tappable and
+  /// opens a quick-edit sheet. The new value is also persisted (per
+  /// muscle-group default) in SharedPreferences via the static helper
+  /// [restDefaultPrefsKey].
+  final ValueChanged<int>? onRestSecondsChanged;
+
   const ExerciseSetTracker({
     super.key,
     required this.exercise,
@@ -107,7 +115,34 @@ class ExerciseSetTracker extends StatefulWidget {
     required this.onAddSet,
     this.onShowNotes,
     this.onShowOptions,
+    this.onRestSecondsChanged,
   });
+
+  /// SharedPreferences key for the user's preferred rest seconds, scoped
+  /// by muscle group. Reads back via [defaultRestForMuscle] so a user who
+  /// always rests 120s on legs but 60s on cardio gets remembered.
+  static String restDefaultPrefsKey(String? muscleGroup) =>
+      'rest_default_${(muscleGroup ?? 'general').toLowerCase().replaceAll(RegExp(r"[^a-z0-9]"), "_")}';
+
+  /// Read the user's persisted preferred rest seconds for a muscle group,
+  /// falling back to the exercise's own restSeconds, then to a sensible
+  /// per-muscle default. Never returns null — callers can rely on it.
+  static Future<int> defaultRestForMuscle(
+    String? muscleGroup, {
+    int? exerciseRestSeconds,
+  }) async {
+    final prefs = await SharedPreferences.getInstance();
+    final stored = prefs.getInt(restDefaultPrefsKey(muscleGroup));
+    if (stored != null && stored > 0) return stored;
+    if (exerciseRestSeconds != null && exerciseRestSeconds > 0) {
+      return exerciseRestSeconds;
+    }
+    final m = (muscleGroup ?? '').toLowerCase();
+    if (m.contains('cardio')) return 30;
+    if (m.contains('mobility') || m.contains('stretch')) return 15;
+    if (m.contains('legs') || m.contains('back') || m.contains('compound')) return 120;
+    return 90; // strength / chest / shoulders / arms default
+  }
 
   @override
   State<ExerciseSetTracker> createState() => _ExerciseSetTrackerState();
@@ -265,25 +300,183 @@ class _ExerciseSetTrackerState extends State<ExerciseSetTracker> {
     );
   }
 
+  /// Per-exercise rest-target chip. Live countdown is owned by the
+  /// workout-level RestTimerOverlay; this label is the *configured* target
+  /// so the user knows what to expect and can tweak it without leaving
+  /// the set tracker. Tap-to-edit when [onRestSecondsChanged] is wired.
   Widget _buildRestTimer() {
-    // TODO: Add actual rest timer logic
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
+    final seconds = widget.exercise.restSeconds ?? 90;
+    final tappable = widget.onRestSecondsChanged != null;
+    final label = Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       child: Row(
         children: [
           Icon(Icons.timer_outlined, size: 16, color: AppColors.cyan.withAlpha(180)),
-          const SizedBox(width: 4),
+          const SizedBox(width: 6),
           Text(
-            'Rest Timer: ${widget.exercise.restSeconds ?? 90}s',
+            'Rest target: ${_formatRestSeconds(seconds)}',
             style: TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w500,
               color: AppColors.cyan.withAlpha(180),
             ),
           ),
+          if (tappable) ...[
+            const SizedBox(width: 4),
+            Icon(Icons.edit_outlined, size: 13, color: AppColors.cyan.withAlpha(140)),
+          ],
         ],
       ),
     );
+    if (!tappable) return label;
+    return InkWell(
+      onTap: () => _openRestEditor(seconds),
+      borderRadius: BorderRadius.circular(8),
+      child: label,
+    );
+  }
+
+  String _formatRestSeconds(int s) {
+    if (s < 60) return '${s}s';
+    final m = s ~/ 60;
+    final r = s % 60;
+    return r == 0 ? '${m}min' : '${m}m ${r}s';
+  }
+
+  Future<void> _openRestEditor(int currentSeconds) async {
+    HapticFeedback.selectionClick();
+    final muscle = widget.exercise.muscleGroup;
+    int draft = currentSeconds;
+    final picked = await showModalBottomSheet<int>(
+      context: context,
+      backgroundColor: AppColors.elevated,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (sheetCtx) {
+        return StatefulBuilder(
+          builder: (ctx, setSheetState) {
+            void bump(int delta) {
+              setSheetState(() {
+                draft = (draft + delta).clamp(15, 600);
+              });
+              HapticFeedback.lightImpact();
+            }
+
+            return Padding(
+              padding: EdgeInsets.only(
+                left: 20,
+                right: 20,
+                top: 20,
+                bottom: MediaQuery.of(ctx).viewInsets.bottom + 20,
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Center(
+                    child: Container(
+                      width: 36,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: AppColors.textMuted.withAlpha(80),
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Rest target',
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                  if (muscle != null && muscle.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 4),
+                      child: Text(
+                        'Saved as your default for $muscle',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: AppColors.textMuted.withAlpha(200),
+                        ),
+                      ),
+                    ),
+                  const SizedBox(height: 24),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      _RestStepButton(label: '−15s', onTap: () => bump(-15)),
+                      Text(
+                        _formatRestSeconds(draft),
+                        style: const TextStyle(
+                          fontSize: 36,
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.cyan,
+                        ),
+                      ),
+                      _RestStepButton(label: '+15s', onTap: () => bump(15)),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  Wrap(
+                    spacing: 8,
+                    children: const [30, 60, 90, 120, 180]
+                        .map((preset) => _RestPresetChip(
+                              seconds: preset,
+                              isSelected: draft == preset,
+                              onTap: () => setSheetState(() => draft = preset),
+                            ))
+                        .toList(),
+                  ),
+                  const SizedBox(height: 24),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextButton(
+                          onPressed: () => Navigator.of(sheetCtx).pop(),
+                          child: const Text('Cancel'),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: () => Navigator.of(sheetCtx).pop(draft),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.cyan,
+                            foregroundColor: Colors.black,
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                          ),
+                          child: const Text('Save'),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+
+    if (picked == null || picked == currentSeconds) return;
+
+    // Persist as the user's default for this muscle group, then notify
+    // the parent so it can update the in-memory exercise too.
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setInt(
+        ExerciseSetTracker.restDefaultPrefsKey(muscle),
+        picked,
+      );
+    } catch (e) {
+      debugPrint('Failed to persist rest default: $e');
+    }
+    widget.onRestSecondsChanged?.call(picked);
   }
 
   /// Check if exercise uses a barbell (for weight note display)
@@ -684,6 +877,79 @@ class _EditableCellState extends State<_EditableCell> {
                   color: widget.isCompleted ? AppColors.cyan : AppColors.textPrimary,
                 ),
               ),
+      ),
+    );
+  }
+}
+
+/// Pill button for ±15s rest adjustments inside the rest-target editor.
+class _RestStepButton extends StatelessWidget {
+  const _RestStepButton({required this.label, required this.onTap});
+  final String label;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(24),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+        decoration: BoxDecoration(
+          color: AppColors.cyan.withAlpha(40),
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(color: AppColors.cyan.withAlpha(120)),
+        ),
+        child: Text(
+          label,
+          style: const TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w700,
+            color: AppColors.cyan,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Quick-pick chip for common rest values inside the editor.
+class _RestPresetChip extends StatelessWidget {
+  const _RestPresetChip({
+    required this.seconds,
+    required this.isSelected,
+    required this.onTap,
+  });
+  final int seconds;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(20),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? AppColors.cyan.withAlpha(60)
+              : Colors.transparent,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: isSelected
+                ? AppColors.cyan
+                : AppColors.cardBorder,
+          ),
+        ),
+        child: Text(
+          seconds < 60 ? '${seconds}s' : '${seconds ~/ 60}min',
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+            color: isSelected ? AppColors.cyan : AppColors.textSecondary,
+          ),
+        ),
       ),
     );
   }

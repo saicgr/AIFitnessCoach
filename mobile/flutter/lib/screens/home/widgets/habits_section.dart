@@ -159,8 +159,17 @@ class HabitsSection extends ConsumerWidget {
                       // Use context.go (not push) so we switch branches in
                       // StatefulShellRoute — otherwise the floating nav stays
                       // highlighted on Home while the user is now on /nutrition.
+                      //
+                      // Append a unique nav token so the URL differs from any
+                      // prior visit. NutritionScreen lives inside an
+                      // IndexedStack branch and keeps its tab state across
+                      // branch switches; without a URL change, didUpdateWidget
+                      // never fires and the requested tab/section is ignored.
                       if (habit.route != null) {
-                        context.go(habit.route!);
+                        final route = habit.route!;
+                        final separator = route.contains('?') ? '&' : '?';
+                        final nav = '_nav=${DateTime.now().millisecondsSinceEpoch}';
+                        context.go('$route$separator$nav');
                       } else {
                         context.go('/habits');
                       }

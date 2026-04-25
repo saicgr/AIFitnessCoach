@@ -100,17 +100,23 @@ class WorkoutSummaryGeneral extends StatelessWidget {
 
           const SizedBox(height: 16),
 
-          // 2. Hero Stats Grid
-          if (wc != null)
-            _HeroStatsGrid(workoutComparison: wc)
-                .animate()
-                .fadeIn(
-                  duration: 400.ms,
-                  delay: Duration(milliseconds: 100 * sectionIndex++),
-                )
-                .slideY(begin: 0.05, end: 0),
+          // 2. Hero Stats Grid — render even when wc is null so older
+          // workouts without a workout_performance_summary row still show
+          // duration/exercises/volume/sets/reps computed from set_logs.
+          _HeroStatsGrid(
+            workoutComparison: wc,
+            setLogs: summary.setLogs,
+            exercises: exercises,
+            metadata: metadata,
+          )
+              .animate()
+              .fadeIn(
+                duration: 400.ms,
+                delay: Duration(milliseconds: 100 * sectionIndex++),
+              )
+              .slideY(begin: 0.05, end: 0),
 
-          if (wc != null) const SizedBox(height: 16),
+          const SizedBox(height: 16),
 
           // 3. Heart Rate Section (always shown — placeholder when no data)
           _HeartRateSection(heartRateData: heartRateData, isDark: isDark)
@@ -366,7 +372,8 @@ class WorkoutSummaryGeneral extends StatelessWidget {
               previousWeightKg != null ? previousWeightKg * 2.20462 : null,
           previousReps: s['previous_reps'] as int?,
           progressionModel: s['progression_model'] as String?,
-          notes: s['notes'] as String?,
+          // Coerce list (new) or string (legacy) into the list shape.
+          notes: SummarySetData.coerceNotes(s['notes']),
           completedAt: s['completed_at'] as String?,
         );
       }).toList();
@@ -673,9 +680,71 @@ class _HeaderSection extends StatelessWidget {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 class _HeroStatsGrid extends StatelessWidget {
-  final WorkoutComparisonInfo workoutComparison;
+  final WorkoutComparisonInfo? workoutComparison;
+  final List<SetLogInfo> setLogs;
+  final List<Map<String, dynamic>> exercises;
+  final Map<String, dynamic>? metadata;
 
-  const _HeroStatsGrid({required this.workoutComparison});
+  const _HeroStatsGrid({
+    required this.workoutComparison,
+    this.setLogs = const [],
+    this.exercises = const [],
+    this.metadata,
+  });
+
+  /// Aggregate per-set logs into (volumeKg, sets, reps). Counts only sets
+  /// that were actually completed (or that recorded reps > 0 — older logs
+  /// don't carry the is_completed flag).
+  ({double volumeKg, int sets, int reps}) _aggregateSetLogs() {
+    double volume = 0;
+    int sets = 0;
+    int reps = 0;
+    for (final log in setLogs) {
+      final isCompleted = log.isCompleted ?? (log.repsCompleted > 0);
+      if (!isCompleted) continue;
+      sets += 1;
+      reps += log.repsCompleted;
+      volume += log.weightKg * log.repsCompleted;
+    }
+    return (volumeKg: volume, sets: sets, reps: reps);
+  }
+
+  /// Aggregate metadata['sets_json'] (richest source — written by the
+  /// active-workout client). Same shape as performance_logs but lives on
+  /// the workout_log row directly so it survives even if performance_logs
+  /// rows weren't written.
+  ({double volumeKg, int sets, int reps})? _aggregateSetsJson() {
+    final raw = metadata?['sets_json'];
+    if (raw == null) return null;
+    List<dynamic>? list;
+    if (raw is String) {
+      try {
+        final decoded = jsonDecode(raw);
+        if (decoded is List) list = decoded;
+      } catch (_) {}
+    } else if (raw is List) {
+      list = raw;
+    }
+    if (list == null || list.isEmpty) return null;
+    double volume = 0;
+    int sets = 0;
+    int reps = 0;
+    for (final item in list) {
+      if (item is! Map) continue;
+      final completedRaw = item['is_completed'];
+      final repsCompleted =
+          (item['reps_completed'] as num?)?.toInt() ?? 0;
+      final isCompleted = completedRaw is bool
+          ? completedRaw
+          : repsCompleted > 0;
+      if (!isCompleted) continue;
+      final weightKg = (item['weight_kg'] as num?)?.toDouble() ?? 0;
+      sets += 1;
+      reps += repsCompleted;
+      volume += weightKg * repsCompleted;
+    }
+    return (volumeKg: volume, sets: sets, reps: reps);
+  }
 
   String _formatDuration(int seconds) {
     if (seconds <= 0) return '0m';
@@ -699,8 +768,30 @@ class _HeroStatsGrid extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final wc = workoutComparison;
 
-    final durationDelta = wc.durationDiffPercent;
-    final volumeDelta = wc.volumeDiffPercent;
+    // Backend aggregates can be 0 (or wc itself null) for older workouts
+    // whose workout_performance_summary row was never written. Fall back
+    // to per-set data so the tiles always reflect what the user actually
+    // logged. Prefer metadata['sets_json'] (richest), then setLogs.
+    final fromSetsJson = _aggregateSetsJson();
+    final fromSetLogs = setLogs.isNotEmpty ? _aggregateSetLogs() : null;
+    final fallback = fromSetsJson ?? fromSetLogs;
+
+    final currentVolumeKg = (wc?.currentTotalVolumeKg ?? 0) > 0
+        ? wc!.currentTotalVolumeKg
+        : (fallback?.volumeKg ?? 0);
+    final currentSets = (wc?.currentTotalSets ?? 0) > 0
+        ? wc!.currentTotalSets
+        : (fallback?.sets ?? 0);
+    final currentReps = (wc?.currentTotalReps ?? 0) > 0
+        ? wc!.currentTotalReps
+        : (fallback?.reps ?? 0);
+    final currentDurationSeconds = wc?.currentDurationSeconds ?? 0;
+    final currentExercises =
+        (wc?.currentExercises ?? 0) > 0 ? wc!.currentExercises : exercises.length;
+    final currentCalories = wc?.currentCalories ?? 0;
+
+    final durationDelta = wc?.durationDiffPercent;
+    final volumeDelta = wc?.volumeDiffPercent;
 
     return Container(
       padding: const EdgeInsets.all(12),
@@ -719,7 +810,7 @@ class _HeroStatsGrid extends StatelessWidget {
               Expanded(
                 child: _StatTile(
                   icon: Icons.timer_outlined,
-                  value: _formatDuration(wc.currentDurationSeconds),
+                  value: _formatDuration(currentDurationSeconds),
                   label: 'Duration',
                   delta: durationDelta,
                   isDark: isDark,
@@ -729,7 +820,7 @@ class _HeroStatsGrid extends StatelessWidget {
               Expanded(
                 child: _StatTile(
                   icon: Icons.fitness_center,
-                  value: '${wc.currentExercises}',
+                  value: '$currentExercises',
                   label: 'Exercises',
                   isDark: isDark,
                 ),
@@ -738,9 +829,7 @@ class _HeroStatsGrid extends StatelessWidget {
               Expanded(
                 child: _StatTile(
                   icon: Icons.local_fire_department_outlined,
-                  value: wc.currentCalories > 0
-                      ? '${wc.currentCalories}'
-                      : '--',
+                  value: currentCalories > 0 ? '$currentCalories' : '--',
                   label: 'Calories',
                   isDark: isDark,
                 ),
@@ -754,7 +843,7 @@ class _HeroStatsGrid extends StatelessWidget {
               Expanded(
                 child: _StatTile(
                   icon: Icons.show_chart,
-                  value: _formatVolume(wc.currentTotalVolumeKg),
+                  value: _formatVolume(currentVolumeKg),
                   label: 'Volume (lb)',
                   delta: volumeDelta,
                   isDark: isDark,
@@ -764,7 +853,7 @@ class _HeroStatsGrid extends StatelessWidget {
               Expanded(
                 child: _StatTile(
                   icon: Icons.layers_outlined,
-                  value: '${wc.currentTotalSets}',
+                  value: '$currentSets',
                   label: 'Sets',
                   isDark: isDark,
                 ),
@@ -773,7 +862,7 @@ class _HeroStatsGrid extends StatelessWidget {
               Expanded(
                 child: _StatTile(
                   icon: Icons.repeat,
-                  value: '${wc.currentTotalReps}',
+                  value: '$currentReps',
                   label: 'Reps',
                   isDark: isDark,
                 ),

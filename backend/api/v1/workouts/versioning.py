@@ -1640,11 +1640,62 @@ async def unsupersede_workout(
 
     Used when user regenerates a workout but chooses "Add Workout" instead of
     "Replace" — both the old and new workout should appear for the same date.
+
+    Validation
+    ----------
+    Naively flipping is_current=True is unsafe in two cases:
+      1. The target is already current → no-op (idempotent replay).
+      2. The target's superseded_by chain has advanced past the immediate
+         successor (e.g. v1 → v2 → v3, all in chain). Un-superseding v1 here
+         would leave v1 AND v3 both is_current=True with v2 stranded —
+         corrupting SCD2 semantics. Refuse with 409 CHAIN_ADVANCED.
     """
     logger.info(f"Un-superseding workout {request.workout_id}")
 
     try:
         db = get_supabase_db()
+
+        target = db.get_workout(request.workout_id)
+        if not target:
+            raise HTTPException(status_code=404, detail="Workout not found")
+
+        # Ownership check: refuse to un-supersede another user's workout.
+        user_id = current_user.get("id")
+        if user_id and target.get("user_id") and target.get("user_id") != user_id:
+            raise HTTPException(status_code=403, detail="Not your workout")
+
+        if target.get("is_current"):
+            logger.info(
+                f"Workout {request.workout_id} is already current — no-op"
+            )
+            return {
+                "status": "noop",
+                "workout_id": request.workout_id,
+                "reason": "already_current",
+            }
+
+        # Chain-integrity check: only un-supersede when the immediate
+        # successor is still the chain head. If it's been further superseded,
+        # un-superseding here would create dual-current rows.
+        successor_id = target.get("superseded_by")
+        if successor_id:
+            successor = db.get_workout(successor_id)
+            if successor and not successor.get("is_current"):
+                logger.warning(
+                    f"Refusing un-supersede of {request.workout_id}: "
+                    f"successor {successor_id} is itself superseded — "
+                    f"chain advanced"
+                )
+                raise HTTPException(
+                    status_code=409,
+                    detail={
+                        "error": "CHAIN_ADVANCED",
+                        "message": (
+                            "This version was further superseded — "
+                            "un-superseding would corrupt the version chain."
+                        ),
+                    },
+                )
 
         db.client.table("workouts").update({
             "is_current": True,
@@ -1655,6 +1706,8 @@ async def unsupersede_workout(
         logger.info(f"Workout {request.workout_id} un-superseded successfully")
         return {"status": "ok", "workout_id": request.workout_id}
 
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Failed to un-supersede workout: {e}", exc_info=True)
         raise safe_internal_error(e, "versioning")

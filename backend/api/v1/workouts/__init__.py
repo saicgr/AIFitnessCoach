@@ -46,6 +46,7 @@ from .parse_input import router as parse_input_router
 from .exercise_tips import router as exercise_tips_router
 from .quick_adjust import router as quick_adjust_router
 from .set_note_media import router as set_note_media_router
+from .share_link import router as share_link_router
 
 # Create the combined router
 router = APIRouter()
@@ -120,6 +121,9 @@ router.include_router(quick_adjust_router)
 
 # Per-set note media (audio voice-notes) presign endpoint
 router.include_router(set_note_media_router)
+
+# Public shareable workout links (POST /{id}/share-link, GET /public/{token})
+router.include_router(share_link_router)
 
 # Re-export commonly used utilities
 from .utils import (

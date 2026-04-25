@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/providers/subscription_provider.dart';
 import '../../../data/providers/billing_reminder_provider.dart';
 import '../../../data/repositories/auth_repository.dart';
 import '../../../data/services/haptic_service.dart';
@@ -98,6 +99,14 @@ class _RenewalBannerContentState extends ConsumerState<_RenewalBannerContent>
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final renewal = widget.renewal;
+    final billingPeriod = ref.watch(
+      subscriptionProvider.select((s) => s.billingPeriod),
+    );
+    final cadenceWord = switch (billingPeriod) {
+      BillingPeriod.yearly => 'yearly',
+      BillingPeriod.monthly => 'monthly',
+      _ => null,
+    };
 
     // Calculate urgency color based on days remaining
     Color bannerColor;
@@ -126,14 +135,18 @@ class _RenewalBannerContentState extends ConsumerState<_RenewalBannerContent>
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
 
-    // Build message
+    // Build message — include the cadence word so the user knows whether
+    // they're paying for another month or another year.
+    final tierLabel = cadenceWord == null
+        ? renewal.tierDisplayName
+        : '${renewal.tierDisplayName} $cadenceWord';
     String message;
     if (renewal.daysUntilRenewal == 0) {
-      message = 'Your ${renewal.tierDisplayName} subscription renews today';
+      message = 'Your $tierLabel subscription renews today';
     } else if (renewal.daysUntilRenewal == 1) {
-      message = 'Your ${renewal.tierDisplayName} subscription renews tomorrow';
+      message = 'Your $tierLabel subscription renews tomorrow';
     } else {
-      message = 'Your ${renewal.tierDisplayName} subscription renews in ${renewal.daysUntilRenewal} days';
+      message = 'Your $tierLabel subscription renews in ${renewal.daysUntilRenewal} days';
     }
 
     if (renewal.formattedAmount.isNotEmpty) {

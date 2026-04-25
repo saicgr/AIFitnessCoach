@@ -51,12 +51,18 @@ class _MuscleAnalyticsScreenState extends ConsumerState<MuscleAnalyticsScreen>
   }
 
   void _logViewDuration() {
-    if (_screenOpenTime != null) {
-      final duration = DateTime.now().difference(_screenOpenTime!).inSeconds;
+    if (_screenOpenTime == null) return;
+    final duration = DateTime.now().difference(_screenOpenTime!).inSeconds;
+    // Called from `dispose()`, where `ref` may already be invalidated if
+    // the route was popped under teardown. The fire-and-forget log isn't
+    // worth crashing the app for — swallow scope errors and move on.
+    try {
       ref.read(muscleAnalyticsRepositoryProvider).logView(
         viewType: 'dashboard',
         sessionDurationSeconds: duration,
       );
+    } catch (e) {
+      debugPrint('⚠️ [MuscleAnalytics] view-duration log skipped: $e');
     }
   }
 

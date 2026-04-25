@@ -15,6 +15,7 @@ import '../screens/workout/widgets/quick_workout_sheet.dart';
 import 'mood_picker_sheet.dart';
 import 'main_shell.dart';
 import 'glass_sheet.dart';
+import 'quick_action_tile.dart';
 
 part 'quick_actions_sheet_part_hero_action_card.dart';
 
@@ -47,7 +48,12 @@ class _QuickActionsSheet extends ConsumerStatefulWidget {
 }
 
 const _categories = <String, List<String>>{
-  'Track': ['weight', 'food', 'scan_food', 'scan_menu', 'water', 'photo', 'mood', 'measure'],
+  // Every food-log entry-point is surfaced here so the user can pick the
+  // logging flow that matches what's in front of them: text+AI, single
+  // photo, multi-photo (whole meal across plates), menu OCR, or barcode.
+  // These are the same flows the LogMealSheet supports via `autoOpen*`.
+  'Food Log': ['food', 'photo_food', 'scan_food', 'scan_menu', 'barcode_food'],
+  'Track': ['weight', 'water', 'photo', 'mood', 'measure'],
   'Workout': ['quick_workout', 'workout', 'steps', 'library'],
   // COMING SOON: 'fasting' removed — re-add when fasting feature launches
   'Plan & Review': ['schedule', 'habits', 'history', 'progress', 'stats', 'summaries', 'achievements'],
@@ -150,16 +156,6 @@ class _QuickActionsSheetState extends ConsumerState<_QuickActionsSheet> {
   }
 
   Widget _buildActionChip(QuickAction action, bool isDark, BuildContext context, {bool isPinned = false}) {
-    final textColor = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final chipBg = isDark
-        ? Colors.white.withValues(alpha: isPinned ? 0.12 : 0.08)
-        : Colors.black.withValues(alpha: isPinned ? 0.07 : 0.04);
-    final borderColor = isPinned
-        ? action.color.withValues(alpha: 0.4)
-        : (isDark
-            ? Colors.white.withValues(alpha: 0.1)
-            : Colors.black.withValues(alpha: 0.06));
-
     Future<void> handleTap() async {
       HapticFeedback.lightImpact();
 
@@ -190,6 +186,14 @@ class _QuickActionsSheetState extends ConsumerState<_QuickActionsSheet> {
         case 'scan_menu':
           Navigator.pop(context);
           runAfterPop(() => showLogMealSheet(rootCtx, ref, autoOpenMenuScan: true));
+          return;
+        case 'photo_food':
+          Navigator.pop(context);
+          runAfterPop(() => showLogMealSheet(rootCtx, ref, autoOpenCamera: true));
+          return;
+        case 'barcode_food':
+          Navigator.pop(context);
+          runAfterPop(() => showLogMealSheet(rootCtx, ref, autoOpenBarcode: true));
           return;
         case 'quick_workout':
           final workout = await showQuickWorkoutSheet(context, widget.ref);
@@ -223,42 +227,13 @@ class _QuickActionsSheetState extends ConsumerState<_QuickActionsSheet> {
       }
     }
 
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: handleTap,
-        borderRadius: BorderRadius.circular(10),
-        child: Container(
-          padding: EdgeInsets.symmetric(
-            horizontal: isPinned ? 12 : 10,
-            vertical: isPinned ? 10 : 8,
-          ),
-          decoration: BoxDecoration(
-            color: chipBg,
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: borderColor, width: isPinned ? 1.5 : 1),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                action.icon,
-                size: isPinned ? 18 : 16,
-                color: action.color,
-              ),
-              const SizedBox(width: 6),
-              Text(
-                action.label,
-                style: TextStyle(
-                  fontSize: isPinned ? 13 : 12,
-                  fontWeight: isPinned ? FontWeight.w600 : FontWeight.w500,
-                  color: textColor,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
+    return QuickActionTile(
+      isDark: isDark,
+      onTap: handleTap,
+      icon: action.icon,
+      label: action.label,
+      iconColor: action.color,
+      isPinned: isPinned,
     );
   }
 
@@ -427,7 +402,25 @@ class _QuickActionsSheetState extends ConsumerState<_QuickActionsSheet> {
                             HapticFeedback.lightImpact();
                             ref.read(quickActionsExpandedProvider.notifier).toggle();
                           },
-                          activeColor: accentColor,
+                          // Material 3 on Android renders an unstyled
+                          // `activeColor` thumb on a gray track. Force the
+                          // accent across thumb + track so the toggle visibly
+                          // announces "ON" instead of looking disabled.
+                          activeThumbColor: Colors.white,
+                          activeTrackColor: accentColor,
+                          inactiveThumbColor: isDark
+                              ? Colors.white.withValues(alpha: 0.6)
+                              : Colors.black.withValues(alpha: 0.4),
+                          inactiveTrackColor: isDark
+                              ? Colors.white.withValues(alpha: 0.12)
+                              : Colors.black.withValues(alpha: 0.08),
+                          trackOutlineColor: WidgetStateProperty.resolveWith(
+                            (states) => states.contains(WidgetState.selected)
+                                ? accentColor
+                                : (isDark
+                                    ? Colors.white.withValues(alpha: 0.2)
+                                    : Colors.black.withValues(alpha: 0.15)),
+                          ),
                           materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                         ),
                       ],
@@ -452,13 +445,13 @@ class _QuickActionsSheetState extends ConsumerState<_QuickActionsSheet> {
                             ),
                           ),
                         )
-                      : Wrap(
-                          spacing: 8,
-                          runSpacing: 8,
-                          children: filteredActions.map((id) {
-                            final action = quickActionRegistry[id]!;
-                            return _buildActionChip(action, isDark, context);
-                          }).toList(),
+                      : _buildTileGrid(
+                          filteredActions
+                              .map((id) => quickActionRegistry[id])
+                              .whereType<QuickAction>()
+                              .toList(),
+                          isDark,
+                          context,
                         ),
                 ),
               ] else ...[
@@ -467,12 +460,11 @@ class _QuickActionsSheetState extends ConsumerState<_QuickActionsSheet> {
                 const SizedBox(height: 8),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 8),
-                  child: Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: pinnedActions.map((action) {
-                      return _buildActionChip(action, isDark, context, isPinned: true);
-                    }).toList(),
+                  child: _buildTileGrid(
+                    pinnedActions,
+                    isDark,
+                    context,
+                    pinned: true,
                   ),
                 ),
 
@@ -484,15 +476,13 @@ class _QuickActionsSheetState extends ConsumerState<_QuickActionsSheet> {
                   const SizedBox(height: 8),
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 8),
-                    child: Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: entry.value.map((id) {
-                        final action = quickActionRegistry[id];
-                        if (action == null) return const SizedBox.shrink();
-                        return _buildActionChip(action, isDark, context);
-                      }).toList(),
-                    ),
+                    child: Builder(builder: (context) {
+                      final actions = entry.value
+                          .map((id) => quickActionRegistry[id])
+                          .whereType<QuickAction>()
+                          .toList();
+                      return _buildTileGrid(actions, isDark, context);
+                    }),
                   ),
                   const SizedBox(height: 16),
                 ],
@@ -503,6 +493,36 @@ class _QuickActionsSheetState extends ConsumerState<_QuickActionsSheet> {
           ),
         ),
       ),
+    );
+  }
+
+  /// Lay out a list of actions in the same 5-column grid the home shortcut
+  /// bar uses. Tiles wrap onto a new row every 5 — short sections (4
+  /// items) leave a trailing gap, full sections (5+) wrap cleanly.
+  Widget _buildTileGrid(
+    List<QuickAction> actions,
+    bool isDark,
+    BuildContext context, {
+    bool pinned = false,
+  }) {
+    if (actions.isEmpty) return const SizedBox.shrink();
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        const columns = 5;
+        const spacing = 8.0;
+        final tileWidth =
+            (constraints.maxWidth - (spacing * (columns - 1))) / columns;
+        return Wrap(
+          spacing: spacing,
+          runSpacing: spacing,
+          children: actions.map((action) {
+            return SizedBox(
+              width: tileWidth,
+              child: _buildActionChip(action, isDark, context, isPinned: pinned),
+            );
+          }).toList(),
+        );
+      },
     );
   }
 

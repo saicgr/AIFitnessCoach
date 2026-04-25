@@ -1,13 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/theme/accent_color_provider.dart';
 import '../../../data/models/nutrition.dart';
+import '../../../data/providers/nutrition_preferences_provider.dart';
 import '../../../data/services/api_client.dart';
 import '../../../utils/time_formatters.dart';
 import '../../../widgets/fullscreen_image_viewer.dart';
 import '../../../widgets/glass_sheet.dart';
 import 'food_report_dialog.dart';
+import 'nutrition_goals_card.dart' show showNutritionCalculationSheet;
 import 'food_source_indicator.dart';
 import 'score_explain_sheet.dart';
 
@@ -160,16 +163,56 @@ class LoggedMealsSection extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                target > 0
-                    ? '${remaining.abs()}${isOver ? ' over' : ' left'}'
-                    : '$totalCaloriesEaten eaten',
-                style: TextStyle(
-                  fontSize: 26,
-                  fontWeight: FontWeight.w700,
-                  color: isOver ? AppColors.error : textPrimary,
-                  height: 1.1,
-                ),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Flexible(
+                    child: Text(
+                      target > 0
+                          ? '${remaining.abs()}${isOver ? ' over' : ' left'}'
+                          : '$totalCaloriesEaten eaten',
+                      style: TextStyle(
+                        fontSize: 26,
+                        fontWeight: FontWeight.w700,
+                        color: isOver ? AppColors.error : textPrimary,
+                        height: 1.1,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  // (i) chip — opens the existing detailed calculation sheet
+                  // (BMR formula, TDEE, goal adjustment, macro split). Local
+                  // Consumer so we can stay a StatelessWidget. Shows Edit /
+                  // Recalculate action buttons since the user is on the
+                  // Daily nutrition card, not inside the editor.
+                  Consumer(
+                    builder: (ctx, ref, _) {
+                      return InkWell(
+                        onTap: () {
+                          final prefs = ref
+                              .read(nutritionPreferencesProvider)
+                              .preferences;
+                          if (prefs == null) return;
+                          showNutritionCalculationSheet(
+                            ctx,
+                            prefs: prefs,
+                            isDark: Theme.of(ctx).brightness == Brightness.dark,
+                            onEdit: onEditTargets,
+                          );
+                        },
+                        borderRadius: BorderRadius.circular(20),
+                        child: Padding(
+                          padding: const EdgeInsets.all(4),
+                          child: Icon(
+                            Icons.info_outline_rounded,
+                            size: 20,
+                            color: accent,
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ],
               ),
               const SizedBox(height: 2),
               if (target > 0)

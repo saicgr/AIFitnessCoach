@@ -204,7 +204,7 @@ export default function RefundPolicy() {
               </p>
               <p className="mb-2">
                 <strong>Privacy or data questions:</strong>{' '}
-                <a href="mailto:privacy@fitwiz.app" className="text-emerald-400 hover:underline">privacy@fitwiz.app</a>
+                <a href="mailto:privacy@fitwiz.us" className="text-emerald-400 hover:underline">privacy@fitwiz.us</a>
               </p>
               <p>We aim to respond within 2 business days.</p>
             </div>

@@ -216,7 +216,13 @@ class _ShareWorkoutSheetState extends ConsumerState<ShareWorkoutSheet> {
         }
         if (mounted) {
           Navigator.pop(context);
-          _showSuccess('Opening Instagram...');
+          // Snackbar must reflect what actually happened — the native handler
+          // can fall back to the system share sheet when Instagram isn't
+          // installed, in which case "Opening Instagram..." would be a lie.
+          final message = result.destination == ShareDestination.instagramStories
+              ? 'Opening Instagram Stories...'
+              : 'Opening share sheet...';
+          _showSuccess(message);
         }
       } else if (result.error != null) {
         _showError('Could not open Instagram');
@@ -787,13 +793,24 @@ class _ShareWorkoutSheetState extends ConsumerState<ShareWorkoutSheet> {
 
     if (!mounted) return;
 
+    // Clamp the page cursor against the template list — `_currentPage` is
+    // updated by PageView callbacks that can briefly outrun the actual
+    // child count when templates are added/removed (e.g. cosmetic unlock
+    // changes _templateNames length mid-build), causing
+    // `RangeError (length): Invalid value: Not in inclusive range 0..N`.
+    final names = _templateNames;
+    final safeIndex = names.isEmpty
+        ? 0
+        : _currentPage.clamp(0, names.length - 1);
+    final templateName = names.isEmpty ? '' : names[safeIndex];
+
     // Show full-screen preview
     await showDialog(
       context: context,
       barrierColor: Colors.black.withValues(alpha: 0.95),
       builder: (context) => _ImagePreviewDialog(
         imageBytes: bytes,
-        templateName: _templateNames[_currentPage],
+        templateName: templateName,
       ),
     );
   }

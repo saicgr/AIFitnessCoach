@@ -8,6 +8,10 @@ class _ExerciseSwapSheetState extends ConsumerState<_ExerciseSwapSheet>
   // Similar tab (fast DB queries)
   bool _isLoadingSimilar = false;
   List<Map<String, dynamic>> _similarExercises = [];
+  // Backend-provided typed reason when _similarExercises is empty:
+  //   'exercise_not_found' | 'filtered_out' | 'no_match' | null (loaded ok)
+  // Drives honest empty-state copy on the Similar tab.
+  String? _similarEmptyReason;
 
   // AI Picks tab (slow AI suggestions)
   bool _isLoadingAI = false;
@@ -168,11 +172,19 @@ class _ExerciseSwapSheetState extends ConsumerState<_ExerciseSwapSheet>
       final userId = await ref.read(apiClientProvider).getUserId();
       final repo = ref.read(workoutRepositoryProvider);
 
-      final suggestions = await repo.getExerciseSuggestionsFast(
+      // Pass user's configured equipment so the backend can drop
+      // candidates that the user can't actually do. Without this, a
+      // bodyweight-only user swapping a barbell row would get back lots
+      // of non-bodyweight options (the bug we're fixing).
+      final userEquipment = ref.read(environmentEquipmentProvider).equipment;
+      final result = await repo.getExerciseSuggestionsFast(
         exerciseName: widget.exercise.name,
         userId: userId!,
         avoidedExercises: _avoidedExerciseNames,
+        userEquipment: userEquipment,
       );
+      final suggestions = result.suggestions;
+      final emptyReason = result.emptyReason;
 
       // Merge user's custom exercises that match the current exercise's body
       // part or target muscle. Custom exercises aren't in the library DB
@@ -185,6 +197,10 @@ class _ExerciseSwapSheetState extends ConsumerState<_ExerciseSwapSheet>
       if (mounted) {
         setState(() {
           _similarExercises = merged;
+          // Only carry the emptyReason when we'd actually show an empty
+          // state. If a custom-exercise merge populated the list, treat
+          // it as a successful load (no empty state).
+          _similarEmptyReason = merged.isEmpty ? emptyReason : null;
           _isLoadingSimilar = false;
         });
 
@@ -203,6 +219,8 @@ class _ExerciseSwapSheetState extends ConsumerState<_ExerciseSwapSheet>
       if (mounted) {
         setState(() {
           _similarExercises = [];
+          // Network/parse failure — fall back to the generic message.
+          _similarEmptyReason = 'no_match';
           _isLoadingSimilar = false;
         });
       }
@@ -320,6 +338,12 @@ class _ExerciseSwapSheetState extends ConsumerState<_ExerciseSwapSheet>
       // Freeform input goes through customMessage; the chip (if any) goes
       // through reason. The repository picks whichever is set.
       final userInput = _aiInputController.text.trim();
+      // Read the user's currently-configured equipment from the env+equip
+      // provider. This is the same source the workout-generation pipeline
+      // uses, so AI Picks stays consistent with what the user actually has.
+      // Backend will fall back to loading from the users row if we somehow
+      // pass null (defensive, e.g. provider not yet hydrated).
+      final userEquipment = ref.read(environmentEquipmentProvider).equipment;
       final suggestions = await repo.getExerciseSuggestions(
         workoutId: widget.workoutId,
         exercise: widget.exercise,
@@ -327,6 +351,7 @@ class _ExerciseSwapSheetState extends ConsumerState<_ExerciseSwapSheet>
         reason: _selectedReason,
         customMessage: userInput.isEmpty ? null : userInput,
         avoidedExercises: _avoidedExerciseNames,
+        userEquipment: userEquipment,
       );
 
       // Always append user custom exercises at the end so they're reachable
@@ -737,6 +762,29 @@ class _ExerciseSwapSheetState extends ConsumerState<_ExerciseSwapSheet>
 
     if (_similarExercises.isEmpty) {
       const accentColor = AppColors.cyan;
+      // Branch on the typed reason from /suggest-fast so the user sees
+      // what actually happened. The previous one-size-fits-all "No
+      // exercises match this muscle group" was the wrong reason in two
+      // of the three cases (it blamed the muscle when the real cause was
+      // either an unresolved exercise name or an equipment-filter wipe).
+      String title;
+      String body;
+      switch (_similarEmptyReason) {
+        case 'exercise_not_found':
+          title = "We couldn't find this exercise";
+          body =
+              "Try AI Picks for a creative substitute or browse the Library directly.";
+          break;
+        case 'filtered_out':
+          title = 'No equipment-compatible alternatives';
+          body =
+              "Library has options for this muscle, but none match the equipment you have. Try AI Picks for a creative substitute.";
+          break;
+        default:
+          title = 'No similar exercises yet';
+          body =
+              "We don't have a close match in our library. Try AI Picks for a creative alternative.";
+      }
       return Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -751,14 +799,18 @@ class _ExerciseSwapSheetState extends ConsumerState<_ExerciseSwapSheet>
             ),
             const SizedBox(height: 16),
             Text(
-              'No similar exercises found',
+              title,
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: textPrimary),
+              textAlign: TextAlign.center,
             ),
             const SizedBox(height: 6),
-            Text(
-              'No exercises match this muscle group',
-              style: TextStyle(fontSize: 13, color: textMuted),
-              textAlign: TextAlign.center,
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: Text(
+                body,
+                style: TextStyle(fontSize: 13, color: textMuted),
+                textAlign: TextAlign.center,
+              ),
             ),
             const SizedBox(height: 20),
             OutlinedButton.icon(
@@ -782,7 +834,14 @@ class _ExerciseSwapSheetState extends ConsumerState<_ExerciseSwapSheet>
     }
 
     return ListView.builder(
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.fromLTRB(
+        16,
+        16,
+        16,
+        // Bottom safe-area inset matches the AI Picks tab (see ext file)
+        // so the last result card never lands behind the home-indicator.
+        MediaQuery.viewPaddingOf(context).bottom + 16,
+      ),
       itemCount: _similarExercises.length,
       itemBuilder: (context, index) {
         final suggestion = _similarExercises[index];
@@ -879,7 +938,12 @@ class _ExerciseSwapSheetState extends ConsumerState<_ExerciseSwapSheet>
     }
 
     return ListView.builder(
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.fromLTRB(
+        16,
+        16,
+        16,
+        MediaQuery.viewPaddingOf(context).bottom + 16,
+      ),
       itemCount: _recentExercises.length,
       itemBuilder: (context, index) {
         final exercise = _recentExercises[index];
@@ -972,7 +1036,12 @@ class _ExerciseSwapSheetState extends ConsumerState<_ExerciseSwapSheet>
     }
 
     return ListView(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
+      padding: EdgeInsets.fromLTRB(
+        16,
+        0,
+        16,
+        MediaQuery.viewPaddingOf(context).bottom + 16,
+      ),
       children: children,
     );
   }

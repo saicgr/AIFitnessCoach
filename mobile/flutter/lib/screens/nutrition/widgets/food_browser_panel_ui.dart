@@ -14,6 +14,7 @@ extension _FoodBrowserPanelStateUI on _FoodBrowserPanelState {
           selected: widget.filter,
           onChanged: widget.onFilterChanged,
           isDark: widget.isDark,
+          lastUsedKey: ref.read(lastUsedServiceProvider).get('food_browser_filter'),
         ),
         const SizedBox(height: 8),
         // Content based on selected filter

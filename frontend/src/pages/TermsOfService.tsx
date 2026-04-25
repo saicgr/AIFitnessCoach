@@ -195,8 +195,8 @@ export default function TermsOfService() {
               </h2>
               <p>
                 If you have questions about these Terms, please contact us at{' '}
-                <a href="mailto:legal@fitwiz.app" className="text-emerald-400 hover:underline">
-                  legal@fitwiz.app
+                <a href="mailto:legal@fitwiz.us" className="text-emerald-400 hover:underline">
+                  legal@fitwiz.us
                 </a>.
               </p>
             </div>

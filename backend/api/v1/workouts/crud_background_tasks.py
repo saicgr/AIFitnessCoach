@@ -480,12 +480,29 @@ async def populate_performance_logs(
                 tempo = set_data.get("tempo")
                 is_completed = set_data.get("completed", True)
                 failed_at_rep = set_data.get("failed_at_rep")
-                notes = set_data.get("notes")
+                # Notes is now TEXT[] in the DB. Coerce list / single string /
+                # null into a clean list of non-empty strings so the column
+                # write succeeds regardless of client version.
+                raw_notes = set_data.get("notes")
+                if raw_notes is None:
+                    notes = []
+                elif isinstance(raw_notes, list):
+                    notes = [str(n).strip() for n in raw_notes if n is not None and str(n).strip()]
+                elif isinstance(raw_notes, str):
+                    notes = [raw_notes.strip()] if raw_notes.strip() else []
+                else:
+                    notes = []
                 notes_audio_url = set_data.get("notes_audio_url")
                 notes_photo_urls = set_data.get("notes_photo_urls")
                 target_weight_kg = set_data.get("target_weight_kg")
                 target_reps = set_data.get("target_reps")
                 progression_model = set_data.get("progression_model")
+                # New fields wired in 2030_performance_logs_rich_set_data.sql.
+                started_at = set_data.get("started_at")
+                logging_mode = set_data.get("logging_mode")
+                ai_input_source = set_data.get("ai_input_source")
+                set_duration_seconds = set_data.get("set_duration_seconds")
+                rest_duration_seconds = set_data.get("rest_duration_seconds")
 
                 # Skip sets with no meaningful data
                 if reps_completed <= 0 and weight_kg <= 0:
@@ -519,6 +536,8 @@ async def populate_performance_logs(
                     "tempo": tempo,
                     "is_completed": is_completed,
                     "failed_at_rep": failed_at_rep,
+                    # `notes` always emitted as a list (possibly empty) so the
+                    # TEXT[] column gets a stable shape across client versions.
                     "notes": notes,
                     "notes_audio_url": notes_audio_url,
                     "notes_photo_urls": notes_photo_urls if notes_photo_urls else None,
@@ -526,6 +545,14 @@ async def populate_performance_logs(
                     "target_weight_kg": float(target_weight_kg) if target_weight_kg is not None else None,
                     "target_reps": int(target_reps) if target_reps is not None else None,
                     "progression_model": progression_model,
+                    # Rich fields added in migration 2030 — only emit when
+                    # present so older clients (which don't send these) still
+                    # insert cleanly without overriding column defaults.
+                    **({"started_at": started_at} if started_at else {}),
+                    **({"logging_mode": logging_mode} if logging_mode else {}),
+                    **({"ai_input_source": ai_input_source} if ai_input_source else {}),
+                    **({"set_duration_seconds": int(set_duration_seconds)} if set_duration_seconds is not None else {}),
+                    **({"rest_duration_seconds": int(rest_duration_seconds)} if rest_duration_seconds is not None else {}),
                 }
 
                 records_to_insert.append(record)

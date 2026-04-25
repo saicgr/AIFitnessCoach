@@ -904,10 +904,20 @@ mixin SetLoggingMixin<T extends StatefulWidget> on State<T> {
 
       for (int j = 0; j < sets.length; j++) {
         final setTarget = exercise.getTargetForSet(j + 1);
+        // Zero-stamped placeholder rows from "Complete workout now"
+        // (weight 0 + reps 0) are tagged is_completed: false so summary
+        // aggregation ignores them in volume / streak / PR detection.
+        final isPlaceholder = sets[j].reps <= 0 && sets[j].weight <= 0;
         allSets.add({
           'exercise_index': i,
           'exercise_id': exercise.exerciseId ?? exercise.libraryId,
           'exercise_name': exercise.name,
+          'is_completed': !isPlaceholder,
+          // Carry the muscle metadata so backend muscle-analytics + strength
+          // calculation can attribute AI-generated bodyweight moves (e.g.
+          // "Kabaddi Squat Jumps") whose names aren't in the static map.
+          if (exercise.primaryMuscle != null && exercise.primaryMuscle!.isNotEmpty)
+            'primary_muscle': exercise.primaryMuscle,
           'set_number': j + 1,
           'reps': sets[j].reps,
           'weight_kg': sets[j].weight,
@@ -925,7 +935,7 @@ mixin SetLoggingMixin<T extends StatefulWidget> on State<T> {
           if (sets[j].previousWeightKg != null) 'previous_weight_kg': sets[j].previousWeightKg,
           if (sets[j].previousReps != null) 'previous_reps': sets[j].previousReps,
           if (sets[j].aiInputSource != null) 'ai_input_source': sets[j].aiInputSource,
-          if (sets[j].notes != null) 'notes': sets[j].notes,
+          if (sets[j].notes.isNotEmpty) 'notes': sets[j].notes,
         });
       }
     }

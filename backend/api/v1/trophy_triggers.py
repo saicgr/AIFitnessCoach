@@ -266,14 +266,20 @@ async def check_volume_achievements(user_id: str) -> List[Dict]:
         stats_result = db.client.rpc("get_user_volume_stats", {"p_user_id": user_id}).execute()
 
         if not stats_result.data:
-            # Fallback: calculate directly
-            sets_result = db.client.table("workout_sets").select(
-                "weight_lbs, reps"
+            # Fallback if the RPC ever fails or returns empty. Source of
+            # truth is performance_logs (one row per completed set).
+            _KG_TO_LB = 2.20462
+            sets_result = db.client.table("performance_logs").select(
+                "weight_kg, reps_completed"
             ).eq("user_id", user_id).execute()
 
-            total_weight = sum((s.get("weight_lbs", 0) or 0) * (s.get("reps", 0) or 0) for s in sets_result.data)
+            total_weight = sum(
+                ((s.get("weight_kg") or 0) * _KG_TO_LB)
+                * (s.get("reps_completed") or 0)
+                for s in sets_result.data
+            )
             total_sets = len(sets_result.data)
-            total_reps = sum(s.get("reps", 0) or 0 for s in sets_result.data)
+            total_reps = sum((s.get("reps_completed") or 0) for s in sets_result.data)
         else:
             stats = stats_result.data[0] if stats_result.data else {}
             total_weight = stats.get("total_weight_lbs", 0)
@@ -605,12 +611,22 @@ async def check_social_achievements(user_id: str) -> List[Dict]:
     awarded = []
 
     try:
-        # Get friend count
-        friends_result = db.client.table("friends").select(
-            "id", count="exact"
-        ).eq("user_id", user_id).eq("status", "accepted").execute()
-
-        friend_count = friends_result.count or 0
+        # Mutual-follow count. user_connections is asymmetric follow-based
+        # (follower_id / following_id / status in 'active'|'blocked'|'muted').
+        # Friendship = both directions active. RPC keeps it to one round-trip
+        # and encodes the mutual-follow semantics in one place.
+        mutual = db.client.rpc(
+            "count_mutual_follows", {"p_user_id": user_id}
+        ).execute()
+        friend_count = int(mutual.data) if isinstance(mutual.data, int) else 0
+        if not friend_count and mutual.data:
+            # Some supabase-py versions return [{"count_mutual_follows": N}]
+            # or [N] for scalar-returning RPCs.
+            first = mutual.data[0] if isinstance(mutual.data, list) and mutual.data else {}
+            if isinstance(first, dict):
+                friend_count = int(first.get("count_mutual_follows") or 0)
+            elif isinstance(first, int):
+                friend_count = first
 
         # Friend trophies
         friend_trophies = [
@@ -677,14 +693,16 @@ async def check_body_achievements(user_id: str) -> List[Dict]:
     awarded = []
 
     try:
-        # Get weight history
+        # Get weight history. Storage is kg; achievement thresholds below
+        # are lbs, so we convert on read.
+        _KG_TO_LB = 2.20462
         weights_result = db.client.table("weight_logs").select(
-            "weight_lbs, logged_at"
+            "weight_kg, logged_at"
         ).eq("user_id", user_id).order("logged_at").execute()
 
         if len(weights_result.data) >= 2:
-            first_weight = weights_result.data[0].get("weight_lbs", 0)
-            latest_weight = weights_result.data[-1].get("weight_lbs", 0)
+            first_weight = (weights_result.data[0].get("weight_kg") or 0) * _KG_TO_LB
+            latest_weight = (weights_result.data[-1].get("weight_kg") or 0) * _KG_TO_LB
 
             weight_change = latest_weight - first_weight
             weight_loss = -weight_change if weight_change < 0 else 0

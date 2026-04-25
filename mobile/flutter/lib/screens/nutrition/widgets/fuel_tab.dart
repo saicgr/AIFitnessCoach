@@ -47,6 +47,23 @@ class _FuelTabState extends State<FuelTab> with AutomaticKeepAliveClientMixin {
   bool get wantKeepAlive => true;
 
   @override
+  void didUpdateWidget(FuelTab oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Sync inner pill (Nutrients/Water) when the parent re-navigates with a
+    // new initialSection — e.g., Home's Water habit card requests
+    // ?fuelSection=water while the keep-alive State is still on Nutrients.
+    if (widget.initialSection != oldWidget.initialSection &&
+        widget.initialSection != null) {
+      final next = widget.initialSection == 'water'
+          ? _FuelSection.water
+          : _FuelSection.nutrients;
+      if (_section != next) {
+        setState(() => _section = next);
+      }
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     super.build(context);
     final textPrimary = widget.isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;

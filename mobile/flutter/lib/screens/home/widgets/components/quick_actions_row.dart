@@ -11,6 +11,7 @@ import '../../../../data/services/haptic_service.dart';
 import '../../../../widgets/glass_sheet.dart';
 import '../../../../widgets/main_shell.dart';
 import '../../../../widgets/mood_picker_sheet.dart';
+import '../../../../widgets/quick_action_tile.dart';
 import '../../../../widgets/quick_actions_sheet.dart';
 import '../../../fasting/widgets/log_weight_sheet.dart';
 import '../../../nutrition/log_meal_sheet.dart';
@@ -38,7 +39,10 @@ Widget buildQuickActionWidget(String actionId, bool isDark, BuildContext context
       return _GridActionItem(
         icon: Icons.restaurant_outlined,
         label: 'Food',
-        iconColor: quickActionRegistry['food']!.color,
+        // Registry has been re-keyed across releases ('food' vs 'log_food');
+        // a `!` here threw "Null check operator used on a null value" for
+        // users on a stale install. Default to a safe accent if missing.
+        iconColor: quickActionRegistry['food']?.color ?? AppColors.accent,
         onTap: () {
           HapticService.light();
           // Switch to Nutrition branch BEFORE showing the log sheet so the
@@ -56,7 +60,7 @@ Widget buildQuickActionWidget(String actionId, bool isDark, BuildContext context
       return _GridActionItem(
         icon: Icons.flash_on,
         label: 'Quick',
-        iconColor: quickActionRegistry['quick_workout']!.color,
+        iconColor: quickActionRegistry['quick_workout']?.color ?? AppColors.accent,
         onTap: () async {
           HapticService.light();
           final workout = await showQuickWorkoutSheet(context, ref);
@@ -70,18 +74,56 @@ Widget buildQuickActionWidget(String actionId, bool isDark, BuildContext context
       return _GridActionItem(
         icon: Icons.auto_awesome,
         label: 'Chat',
-        iconColor: quickActionRegistry['chat']!.color,
+        iconColor: quickActionRegistry['chat']?.color ?? AppColors.accent,
         onTap: () {
           HapticService.light();
           context.push('/chat');
         },
         isDark: isDark,
       );
-    case 'scan_food':
+    case 'photo_food':
+      final photoFood = quickActionRegistry['photo_food'];
       return _GridActionItem(
-        icon: quickActionRegistry['scan_food']!.icon,
-        label: quickActionRegistry['scan_food']!.label,
-        iconColor: quickActionRegistry['scan_food']!.color,
+        icon: photoFood?.icon ?? Icons.lunch_dining_outlined,
+        label: photoFood?.label ?? 'Photo Log',
+        iconColor: photoFood?.color ?? AppColors.accent,
+        onTap: () {
+          HapticService.light();
+          // Snap-your-plate flow — same hop-to-Nutrition pattern as Scan Food
+          // / Scan Menu so the user lands on the Nutrition tab after the
+          // camera flow finishes.
+          context.go('/nutrition');
+          Future.microtask(() {
+            if (context.mounted) {
+              showLogMealSheet(context, ref, autoOpenCamera: true);
+            }
+          });
+        },
+        isDark: isDark,
+      );
+    case 'barcode_food':
+      final barcodeFood = quickActionRegistry['barcode_food'];
+      return _GridActionItem(
+        icon: barcodeFood?.icon ?? Icons.qr_code_scanner_outlined,
+        label: barcodeFood?.label ?? 'Barcode',
+        iconColor: barcodeFood?.color ?? AppColors.accent,
+        onTap: () {
+          HapticService.light();
+          context.go('/nutrition');
+          Future.microtask(() {
+            if (context.mounted) {
+              showLogMealSheet(context, ref, autoOpenBarcode: true);
+            }
+          });
+        },
+        isDark: isDark,
+      );
+    case 'scan_food':
+      final scanFood = quickActionRegistry['scan_food'];
+      return _GridActionItem(
+        icon: scanFood?.icon ?? Icons.camera_alt_outlined,
+        label: scanFood?.label ?? 'Scan',
+        iconColor: scanFood?.color ?? AppColors.accent,
         onTap: () {
           HapticService.light();
           // Mirror the working flow from the More sheet: hop to Nutrition
@@ -97,10 +139,11 @@ Widget buildQuickActionWidget(String actionId, bool isDark, BuildContext context
         isDark: isDark,
       );
     case 'scan_menu':
+      final scanMenu = quickActionRegistry['scan_menu'];
       return _GridActionItem(
-        icon: quickActionRegistry['scan_menu']!.icon,
-        label: quickActionRegistry['scan_menu']!.label,
-        iconColor: quickActionRegistry['scan_menu']!.color,
+        icon: scanMenu?.icon ?? Icons.menu_book_outlined,
+        label: scanMenu?.label ?? 'Menu',
+        iconColor: scanMenu?.color ?? AppColors.accent,
         onTap: () {
           HapticService.light();
           context.go('/nutrition');
@@ -150,8 +193,11 @@ class QuickActionsGrid extends ConsumerWidget {
     final allActions = ref.watch(orderedQuickActionsProvider);
     final gridActions = allActions.take(8).toList();
     final cardBg = isDark
-        ? Colors.black.withValues(alpha: 0.05)
-        : Colors.black.withValues(alpha: 0.03);
+        ? Colors.white.withValues(alpha: 0.04)
+        : Colors.black.withValues(alpha: 0.04);
+    final cardBorder = isDark
+        ? Colors.white.withValues(alpha: 0.08)
+        : Colors.black.withValues(alpha: 0.08);
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 4),
@@ -160,6 +206,7 @@ class QuickActionsGrid extends ConsumerWidget {
         decoration: BoxDecoration(
           color: cardBg,
           borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: cardBorder, width: 1),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -215,17 +262,25 @@ class CompactQuickActionsRow extends ConsumerWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final pinnedActions = ref.watch(pinnedQuickActionsProvider);
     final secondRow = ref.watch(secondRowActionsProvider);
+    // Visible enclosing surface — the previous alpha 0.03–0.05 black
+    // disappeared on the dark home background, leaving the 10 tiles
+    // floating loose. A subtle white-tint card + 1pt border reads as
+    // "these belong together" without competing with the tiles.
     final cardBg = isDark
-        ? Colors.black.withValues(alpha: 0.05)
-        : Colors.black.withValues(alpha: 0.03);
+        ? Colors.white.withValues(alpha: 0.04)
+        : Colors.black.withValues(alpha: 0.04);
+    final cardBorder = isDark
+        ? Colors.white.withValues(alpha: 0.08)
+        : Colors.black.withValues(alpha: 0.08);
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 4),
       child: Container(
-        padding: const EdgeInsets.all(8),
+        padding: const EdgeInsets.all(6),
         decoration: BoxDecoration(
           color: cardBg,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: cardBorder, width: 1),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,

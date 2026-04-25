@@ -736,25 +736,84 @@ class ExerciseRAGService:
         logger.info(f"Consistency mode: {consistency_mode}, Variation: {variation_percentage}%")
         logger.info(f"Progression pace: {progression_pace}, Workout type preference: {workout_type_preference}")
 
-        # Adjust equipment based on workout environment
+        # Adjust equipment based on workout environment.
+        #
+        # Critical: NEVER silently widen a user's equipment list. The old
+        # behaviour was to fall back to HOME_GYM_EQUIPMENT (which includes
+        # TRX / pullup bar / dip station) whenever the filter returned
+        # empty — that's how a Bodyweight-only user ended up with
+        # suspension trainer exercises in their plan. Now we branch on
+        # the user's actual selection: bodyweight-only home users get the
+        # strict bodyweight set; equipped home users get their selections
+        # intersected with the home-equipped allow-list.
         if workout_environment:
             logger.info(f"Workout environment: {workout_environment}")
-            from .filters import FULL_GYM_EQUIPMENT, HOME_GYM_EQUIPMENT
+            from .filters import (
+                FULL_GYM_EQUIPMENT,
+                HOME_BODYWEIGHT_EQUIPMENT,
+                HOME_EQUIPPED_EQUIPMENT,
+                BODYWEIGHT_TOKENS,
+            )
             env_lower = workout_environment.lower()
             if "gym" in env_lower and "home" not in env_lower:
-                # Commercial gym - ensure full gym equipment available
-                if not any("full_gym" in eq.lower() or "full gym" in eq.lower() for eq in equipment):
+                # Commercial gym - ensure full gym equipment available.
+                if not any(
+                    "full_gym" in eq.lower() or "full gym" in eq.lower()
+                    for eq in equipment
+                ):
                     equipment = list(set(equipment + FULL_GYM_EQUIPMENT))
-                    logger.info(f"Expanded equipment for gym environment: {len(equipment)} items")
+                    logger.info(
+                        f"Expanded equipment for gym environment: {len(equipment)} items"
+                    )
             elif "home" in env_lower:
-                # Home gym - restrict to home equipment only
-                if not any("home_gym" in eq.lower() or "home gym" in eq.lower() for eq in equipment):
-                    equipment = [eq for eq in equipment if eq.lower() in HOME_GYM_EQUIPMENT or eq.lower() == "bodyweight"]
-                    if not equipment:
-                        equipment = HOME_GYM_EQUIPMENT
-                    logger.info(f"Filtered equipment for home environment: {equipment}")
+                # Home environment — branch on the user's actual selection.
+                user_eq_lower = [(e or "").strip().lower() for e in equipment]
+                user_eq_lower = [e for e in user_eq_lower if e]
+                is_bw_only = (not user_eq_lower) or all(
+                    e in BODYWEIGHT_TOKENS for e in user_eq_lower
+                )
+                if is_bw_only:
+                    # Bodyweight-only home user. NEVER inject TRX / pullup
+                    # bar — they didn't select either. Use the strict 3-token
+                    # set so the downstream filter evaluates exercises against
+                    # bodyweight only.
+                    equipment = list(HOME_BODYWEIGHT_EQUIPMENT)
+                    logger.info(
+                        f"Bodyweight-only home user — equipment locked to: {equipment}"
+                    )
+                elif any(
+                    "home_gym" in e or "home gym" in e for e in user_eq_lower
+                ):
+                    # Explicit "home_gym" preset — opt-in to the full home
+                    # equipped set.
+                    equipment = list(HOME_EQUIPPED_EQUIPMENT)
+                    logger.info(
+                        f"Home-gym preset — equipment expanded to: {len(equipment)} items"
+                    )
+                else:
+                    # Equipped home user — keep only items that are in the
+                    # home-equipped allow-list. Critically, if the filter
+                    # leaves the list empty (means user selected items that
+                    # aren't home-feasible like Smith Machine), do NOT
+                    # silently widen — log and fall back to bodyweight only.
+                    filtered = [
+                        eq for eq in equipment
+                        if eq.lower() in HOME_EQUIPPED_EQUIPMENT
+                    ]
+                    if filtered:
+                        equipment = filtered
+                        logger.info(
+                            f"Filtered equipment for home environment: {equipment}"
+                        )
+                    else:
+                        logger.warning(
+                            f"Home-env filter eliminated all of {user_eq_lower} — "
+                            f"falling back to bodyweight, NOT widening to full home gym"
+                        )
+                        equipment = list(HOME_BODYWEIGHT_EQUIPMENT)
             elif "outdoor" in env_lower or "park" in env_lower:
-                # Outdoor - bodyweight and minimal equipment
+                # Outdoor - bodyweight and minimal equipment.
+                # Keep historic behaviour but log explicitly so users see it.
                 equipment = ["bodyweight", "pull_up_bar", "resistance_bands"]
                 logger.info(f"Set equipment for outdoor environment: {equipment}")
 
@@ -1026,13 +1085,22 @@ class ExerciseRAGService:
 
             return filtered_candidates, seen
 
+        # Stage-by-stage candidate counters. Dumped as a single summary
+        # log at the end of the pipeline so prod diagnostics can pinpoint
+        # the drop stage without DEBUG re-deploys.
+        _stage_counts: list[tuple[str, int]] = [
+            ("chromadb_raw", len(results["ids"][0])),
+        ]
+
         # First pass: require media
         candidates, seen_exercises = _filter_exercises(require_media=True)
+        _stage_counts.append(("after_filter_with_media", len(candidates)))
 
         # If no candidates with media, try again without media requirement
         if not candidates:
             logger.warning(f"No exercises with media found for focus_area={focus_area}, trying without media requirement")
             candidates, seen_exercises = _filter_exercises(require_media=False)
+            _stage_counts.append(("after_filter_no_media", len(candidates)))
 
         if not candidates:
             logger.error("No compatible exercises found after filtering (even without media requirement)")
@@ -1042,6 +1110,7 @@ class ExerciseRAGService:
         apply_difficulty_scoring(candidates, validated_fitness_level, difficulty_adjustment)
         boost_equipment_matches(candidates, equipment)
         candidates = cap_bodyweight_exercises(candidates, equipment)
+        _stage_counts.append(("after_cap_bodyweight", len(candidates)))
 
         # Phase 3K — SQL-based injury filter replaces the legacy substring matcher.
         # ``fetch_safe_candidates`` is the authoritative injury gate; the legacy
@@ -1104,10 +1173,29 @@ class ExerciseRAGService:
                 )
                 raise
 
+        if injuries:
+            _stage_counts.append(("after_injury_filter", len(candidates)))
         candidates = apply_avoided_muscles_filter(candidates, avoided_muscles)
+        _stage_counts.append(("after_avoided_muscles", len(candidates)))
         apply_workout_type_filter(candidates, workout_type_preference)
         apply_favorites_boost(candidates, favorite_exercises)
         apply_consistency_mode(candidates, recently_used_exercises, consistency_mode, variation_percentage)
+
+        # Emit one-line pipeline summary so drop points are visible in prod
+        # (DEBUG-level per-exercise filter logs are suppressed in prod).
+        # Warn loudly when pool collapses below 2× the target count — that's
+        # the condition that produces 2-exercise workouts.
+        _summary = " → ".join(f"{k}={v}" for k, v in _stage_counts)
+        _final_pool = len(candidates)
+        _pipeline_log = (
+            f"[RAG Pipeline] focus={focus_area} env={workout_environment} "
+            f"equipment={equipment} count_target={count} | {_summary} → "
+            f"pre_variety={_final_pool}"
+        )
+        if _final_pool < count * 2:
+            logger.warning(f"⚠️  {_pipeline_log} (below 2× target — expect backfill warnings)")
+        else:
+            logger.info(_pipeline_log)
 
         # Save a snapshot before hard-removal so backfill (line 776) and
         # post-selection swap (line 829) can fall back to the full pool

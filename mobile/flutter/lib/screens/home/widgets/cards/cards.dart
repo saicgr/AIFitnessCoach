@@ -30,6 +30,8 @@ export 'habits_tile_card.dart';
 export 'up_next_card.dart';
 
 // New tile cards
+export 'calories_summary_card.dart';
+export 'macro_rings_card.dart';
 export 'fasting_tile.dart';
 export 'progress_photo_tile.dart';
 export 'weekly_calendar_tile.dart';

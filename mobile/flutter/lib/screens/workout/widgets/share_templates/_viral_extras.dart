@@ -92,7 +92,7 @@ class ShareDeepLinkFooter extends StatelessWidget {
         Icon(Icons.qr_code_2, size: 14, color: color),
         const SizedBox(width: 4),
         Text(
-          'fitwiz.app/w/$shortId',
+          'fitwiz.us/w/$shortId',
           style: TextStyle(
             fontSize: 9,
             color: color,

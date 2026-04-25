@@ -19,7 +19,7 @@ import json
 from datetime import datetime, date, timedelta
 from typing import List, Optional, Dict, Any
 
-from fastapi import APIRouter, Depends, HTTPException, Query, BackgroundTasks, Request
+from fastapi import APIRouter, Depends, HTTPException, Path, Query, BackgroundTasks, Request
 from core.auth import get_current_user, verify_user_ownership, verify_resource_ownership
 from core.exceptions import safe_internal_error
 from core.timezone_utils import user_today_date
@@ -148,8 +148,12 @@ async def list_workouts(
         raise safe_internal_error(e, "crud")
 
 
+_UUID_REGEX = r"^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+
+
 @router.get("/{workout_id}", response_model=Workout)
-async def get_workout(workout_id: str,
+async def get_workout(
+    workout_id: str = Path(..., pattern=_UUID_REGEX, description="Workout UUID"),
     current_user: dict = Depends(get_current_user),
 ):
     """Get a workout by ID."""
@@ -167,7 +171,9 @@ async def get_workout(workout_id: str,
 
 
 @router.put("/{workout_id}", response_model=Workout)
-async def update_workout(workout_id: str, workout: WorkoutUpdate,
+async def update_workout(
+    workout: WorkoutUpdate,
+    workout_id: str = Path(..., pattern=_UUID_REGEX, description="Workout UUID"),
     current_user: dict = Depends(get_current_user),
 ):
     """Update a workout."""
@@ -223,7 +229,8 @@ async def update_workout(workout_id: str, workout: WorkoutUpdate,
 
 
 @router.patch("/{workout_id}/favorite")
-async def toggle_workout_favorite(workout_id: str,
+async def toggle_workout_favorite(
+    workout_id: str = Path(..., pattern=_UUID_REGEX, description="Workout UUID"),
     current_user: dict = Depends(get_current_user),
 ):
     """Toggle the favorite status of a workout."""
@@ -252,7 +259,8 @@ async def toggle_workout_favorite(workout_id: str,
 
 
 @router.delete("/{workout_id}")
-async def delete_workout(workout_id: str,
+async def delete_workout(
+    workout_id: str = Path(..., pattern=_UUID_REGEX, description="Workout UUID"),
     current_user: dict = Depends(get_current_user),
 ):
     """Delete a workout and all related records."""

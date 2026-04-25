@@ -13,8 +13,8 @@ import '../../../core/providers/exercise_progression_provider.dart';
 import '../../../core/providers/user_provider.dart';
 import '../../../core/theme/accent_color_provider.dart';
 import '../../../data/models/exercise.dart';
-import '../../../utils/tz.dart';
 import '../../../data/models/hydration.dart';
+import '../../../utils/tz.dart';
 import '../../../data/models/smart_weight_suggestion.dart';
 import '../../../data/providers/gym_profile_provider.dart';
 import '../../../data/repositories/hydration_repository.dart';
@@ -131,6 +131,7 @@ mixin WorkoutSheetsMixin<T extends StatefulWidget> on State<T> {
           amountMl: result.amountMl,
           workoutId: (workoutWidget as dynamic).workout.id,
           notes: 'During $exerciseName (set $afterSet)',
+          source: HydrationSource.workout,
         );
 
         // Show confirmation
@@ -804,11 +805,13 @@ mixin WorkoutSheetsMixin<T extends StatefulWidget> on State<T> {
     if (exerciseIndex >= 0 && completedSets.containsKey(exerciseIndex)) {
       final sets = completedSets[exerciseIndex]!;
       for (final set in sets.reversed) {
-        final hasAny = (set.notes?.isNotEmpty ?? false) ||
+        final hasAny = set.notes.isNotEmpty ||
             (set.notesAudioPath?.isNotEmpty ?? false) ||
             set.notesPhotoPaths.isNotEmpty;
         if (hasAny) {
-          existingNotes = set.notes ?? '';
+          // Flatten the per-set notes list into a single text blob for the
+          // single-textarea sheet UX. Save handler re-splits on newlines.
+          existingNotes = set.notes.join('\n');
           existingAudio = set.notesAudioPath;
           existingPhotos = set.notesPhotoPaths;
           break;
@@ -839,9 +842,15 @@ mixin WorkoutSheetsMixin<T extends StatefulWidget> on State<T> {
 
         // Mutate the most-recent set in place. Trigger a rebuild via
         // setState so the Advanced UI re-renders any note-dot indicators.
+        // Sheet returns a single string; split into list, drop empty lines.
+        final lines = notes
+            .split('\n')
+            .map((s) => s.trim())
+            .where((s) => s.isNotEmpty)
+            .toList();
         final lastIndex = sets.length - 1;
         sets[lastIndex] = sets[lastIndex].copyWith(
-          notes: notes,
+          notes: lines,
           notesAudioPath: audioPath,
           notesPhotoPaths: photoPaths,
         );

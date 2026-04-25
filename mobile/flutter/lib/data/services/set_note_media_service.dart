@@ -25,31 +25,40 @@ class SetNoteMediaService {
 
   SetNoteMediaService(this._apiClient);
 
-  /// Upload every photo in [localPaths] to S3. Returns the resolved
-  /// (S3) URL list in the same order. Failed uploads are DROPPED from
-  /// the returned list — we never persist a local file path as a photo
-  /// URL (the server would serve a 404).
+  /// Upload every photo in [localPaths] to S3 in parallel. Returns the
+  /// resolved (S3) URL list — order is preserved relative to [localPaths]
+  /// so callers that match indexes still work. Failed uploads are DROPPED
+  /// (we never persist a local file path as a photo URL — server would
+  /// serve a 404).
+  ///
+  /// Previously this looped sequentially, so a 6-photo workout was 12 round
+  /// trips on the "Saving workout…" spinner (presign + S3 PUT each). Running
+  /// them in parallel collapses that to ~2 round trips of wall time.
   Future<List<String>> uploadPhotos({
     required List<String> localPaths,
     required String userId,
   }) async {
     if (localPaths.isEmpty) return const [];
-    final resolved = <String>[];
+
+    final futures = <Future<String?>>[];
     for (final path in localPaths) {
       if (path.startsWith('http://') || path.startsWith('https://')) {
         // Already an S3 URL (re-save after prior upload). Pass through.
-        resolved.add(path);
+        futures.add(Future.value(path));
         continue;
       }
       final file = File(path);
-      if (!await file.exists()) {
-        debugPrint('⚠️ [SetNoteMedia] Photo missing, skipping: $path');
-        continue;
-      }
-      final url = await _uploadPhotoOne(file: file, userId: userId);
-      if (url != null) resolved.add(url);
+      futures.add(file.exists().then((exists) async {
+        if (!exists) {
+          debugPrint('⚠️ [SetNoteMedia] Photo missing, skipping: $path');
+          return null;
+        }
+        return _uploadPhotoOne(file: file, userId: userId);
+      }));
     }
-    return resolved;
+
+    final results = await Future.wait(futures);
+    return results.whereType<String>().toList(growable: false);
   }
 
   /// Upload an audio voice-note to S3 via the workout set-note audio

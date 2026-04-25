@@ -166,10 +166,15 @@ class UserXP {
   }
   Map<String, dynamic> toJson() => _$UserXPToJson(this);
 
-  /// Get progress percentage to next level (0.0 to 1.0)
+  /// Get progress percentage to next level (0.0 to 1.0). Finite-guard the
+  /// division output because .clamp doesn't coerce NaN/Infinity — a stray
+  /// non-finite value would crash the downstream `.toInt()` used for the
+  /// percent label.
   double get progressFraction {
     if (xpToNextLevel == 0) return 1.0;
-    return (xpInCurrentLevel / xpToNextLevel).clamp(0.0, 1.0);
+    final raw = xpInCurrentLevel / xpToNextLevel;
+    if (!raw.isFinite) return 0.0;
+    return raw.clamp(0.0, 1.0);
   }
 
   /// Get progress percentage as integer (0 to 100)
@@ -325,8 +330,13 @@ class XPSummary {
       _$XPSummaryFromJson(json);
   Map<String, dynamic> toJson() => _$XPSummaryToJson(this);
 
-  /// Get progress as fraction (0.0 to 1.0)
-  double get progressFraction => progressPercent / 100;
+  /// Get progress as fraction (0.0 to 1.0). Finite-guard in case
+  /// progressPercent arrived as NaN/Infinity from the API.
+  double get progressFraction {
+    final raw = progressPercent / 100;
+    if (!raw.isFinite) return 0.0;
+    return raw.clamp(0.0, 1.0);
+  }
 
   /// Get formatted rank
   String get formattedRank => '#$rankPosition';

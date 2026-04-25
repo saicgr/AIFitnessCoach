@@ -31,7 +31,7 @@ def _generate_slug(length: int = 8) -> str:
 
 
 def _link_url(slug: str) -> str:
-    base = getattr(_settings, "share_link_base_url", None) or "https://fitwiz.app/r"
+    base = getattr(_settings, "share_link_base_url", None) or "https://fitwiz.us/r"
     return f"{base.rstrip('/')}/{slug}"
 
 

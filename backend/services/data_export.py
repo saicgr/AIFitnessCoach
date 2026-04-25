@@ -1102,7 +1102,7 @@ def _build_export_readme(
         n = counts.get(key, 0)
         lines.append(f"  - {fname:<28} {desc}  ({n} rows)")
     lines.append("")
-    lines.append("Questions? Email privacy@fitwiz.app.")
+    lines.append("Questions? Email privacy@fitwiz.us.")
     return "\n".join(lines)
 
 

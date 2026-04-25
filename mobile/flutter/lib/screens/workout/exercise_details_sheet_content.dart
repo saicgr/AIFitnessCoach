@@ -606,7 +606,11 @@ class _ExerciseDetailsSheetContentState
     );
   }
 
-  /// Build setup instructions list with numbered steps
+  /// Build setup instructions list with numbered steps.
+  ///
+  /// Resolution order:
+  ///   1. exercise.instructions when present and substantial (>40 chars)
+  ///   2. Pattern-matched defaults from `getSetupSteps`, equipment-aware
   Widget _buildSetupInstructionsList(
     WorkoutExercise exercise,
     bool isDark,
@@ -614,7 +618,10 @@ class _ExerciseDetailsSheetContentState
     Color accentColor,
     Color cardBackground,
   ) {
-    final instructions = _getSetupInstructions(exercise.name);
+    final serverText = (exercise.instructions ?? '').trim();
+    final instructions = serverInstructionsAreSubstantial(serverText)
+        ? splitInstructionsIntoSteps(serverText)
+        : getSetupSteps(exercise.name, equipment: exercise.equipment);
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -675,83 +682,4 @@ class _ExerciseDetailsSheetContentState
     );
   }
 
-  /// Get setup instructions based on exercise type
-  List<String> _getSetupInstructions(String exerciseName) {
-    final name = exerciseName.toLowerCase();
-
-    if (name.contains('bench') || name.contains('press')) {
-      return [
-        'Set up the bench at the appropriate angle (flat, incline, or decline)',
-        'Grip the bar slightly wider than shoulder-width',
-        'Plant your feet firmly on the ground',
-        'Retract your shoulder blades and maintain a slight arch',
-        'Unrack and position the weight above your chest',
-      ];
-    } else if (name.contains('squat')) {
-      return [
-        'Position the bar on your upper back (not your neck)',
-        'Stand with feet shoulder-width apart, toes slightly out',
-        'Brace your core before descending',
-        'Keep your knees tracking over your toes',
-        'Descend until thighs are parallel to the floor',
-      ];
-    } else if (name.contains('deadlift')) {
-      return [
-        'Stand with feet hip-width apart, bar over mid-foot',
-        'Grip the bar just outside your legs',
-        'Keep your back flat and chest up',
-        'Take the slack out of the bar before pulling',
-        'Drive through your heels and push hips forward',
-      ];
-    } else if (name.contains('row')) {
-      return [
-        'Hinge at the hips with a slight knee bend',
-        'Keep your back flat and core engaged',
-        'Grip the weight with arms extended',
-        'Pull the weight toward your lower chest',
-        'Squeeze your shoulder blades together at the top',
-      ];
-    } else if (name.contains('curl')) {
-      return [
-        'Stand with feet shoulder-width apart',
-        'Grip the weight with palms facing up',
-        'Keep your elbows close to your sides',
-        'Curl the weight toward your shoulders',
-        'Lower with control to full extension',
-      ];
-    } else if (name.contains('pull') && (name.contains('up') || name.contains('down'))) {
-      return [
-        'Grip the bar slightly wider than shoulder-width',
-        'Hang with arms fully extended',
-        'Engage your lats before pulling',
-        'Pull your elbows down and back',
-        'Lower with control to full extension',
-      ];
-    } else if (name.contains('fly') || name.contains('flye')) {
-      return [
-        'Lie on a flat or incline bench',
-        'Hold dumbbells above your chest, palms facing',
-        'Keep a slight bend in your elbows',
-        'Lower the weights in an arc to the sides',
-        'Squeeze your chest to bring weights back up',
-      ];
-    } else if (name.contains('lunge')) {
-      return [
-        'Stand with feet hip-width apart',
-        'Step forward or backward into position',
-        'Lower until your back knee nearly touches the ground',
-        'Keep your front knee over your ankle',
-        'Push through your front heel to return',
-      ];
-    }
-
-    // Default generic instructions
-    return [
-      'Set up your equipment and check form',
-      'Warm up with lighter weight first',
-      'Position yourself in the starting position',
-      'Focus on controlled movements throughout',
-      'Breathe consistently - exhale on exertion',
-    ];
-  }
 }

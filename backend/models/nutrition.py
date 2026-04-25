@@ -77,6 +77,9 @@ class UpdateNutritionTargetsRequest(BaseModel):
 
 # Hydration Models
 
+_HYDRATION_SOURCES = ("home", "workout", "nutrition", "chat", "manual", "unknown")
+
+
 class HydrationLogCreate(BaseModel):
     """Request to log hydration intake."""
     user_id: str = Field(..., max_length=100)  # UUID string
@@ -85,6 +88,10 @@ class HydrationLogCreate(BaseModel):
     workout_id: Optional[str] = Field(default=None, max_length=100)  # Optional workout association
     notes: Optional[str] = Field(default=None, max_length=500)
     local_date: Optional[str] = Field(default=None, max_length=10)  # Client's local date YYYY-MM-DD for correct day grouping
+    # Surface this log was created from. Constrained set; unknown values
+    # downgrade to 'unknown' rather than 422 so old/new clients keep
+    # round-tripping. Backed by `hydration_logs.source` (migration 1983).
+    source: Optional[str] = Field(default=None, max_length=20)
 
 
 class HydrationLog(BaseModel):
@@ -96,6 +103,22 @@ class HydrationLog(BaseModel):
     workout_id: Optional[str] = Field(default=None, max_length=100)
     notes: Optional[str] = Field(default=None, max_length=500)
     logged_at: Optional[datetime] = None
+    source: Optional[str] = Field(default=None, max_length=20)
+
+
+def _normalize_hydration_source(value: Optional[str]) -> str:
+    """Coerce an arbitrary client-supplied source into the allowed set.
+
+    Returns 'manual' when None/empty (preserves legacy semantics — pre-feature
+    rows are treated as manually entered) and 'unknown' for any out-of-set
+    value. The DB CHECK constraint enforces these same values; this function
+    keeps the API forgiving so a coach-app future client passing
+    `source='trainer_assignment'` doesn't 422 the request, it just buckets as
+    'unknown' until we extend the enum.
+    """
+    if not value:
+        return "manual"
+    return value if value in _HYDRATION_SOURCES else "unknown"
 
 
 class DailyHydrationSummary(BaseModel):

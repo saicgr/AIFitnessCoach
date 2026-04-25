@@ -21,7 +21,6 @@ import '../../core/services/posthog_service.dart';
 import '../../screens/onboarding/pre_auth_quiz_data.dart';
 import '../../widgets/glass_back_button.dart';
 import '../onboarding/widgets/foldable_quiz_scaffold.dart';
-import '../settings/subscription/subscription_history_screen.dart';
 
 
 part 'paywall_pricing_screen_part_accent_border_card.dart';
@@ -178,6 +177,7 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
                 if (isSubscribed) ...[
                   _CurrentPlanCard(
                     tier: currentTier,
+                    billingPeriod: subscriptionState.billingPeriod,
                     isTrialActive: subscriptionState.isTrialActive,
                     trialEndDate: subscriptionState.trialEndDate,
                     subscriptionEndDate: subscriptionState.subscriptionEndDate,
@@ -435,13 +435,6 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
                       onTap: () => _openPrivacyPolicy(),
                       child: Text('Privacy', style: TextStyle(fontSize: 13, color: colors.textMuted)),
                     ),
-                    if (isSubscribed) ...[
-                      Text(' • ', style: TextStyle(color: colors.textMuted)),
-                      GestureDetector(
-                        onTap: () => _navigateToSubscriptionHistory(context),
-                        child: Text('History', style: TextStyle(fontSize: 13, color: colors.cyan)),
-                      ),
-                    ],
                     if (isSubscribed && currentTier != SubscriptionTier.lifetime) ...[
                       Text(' • ', style: TextStyle(color: colors.textMuted)),
                       GestureDetector(
@@ -475,8 +468,14 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
       properties: {'has_shown_discount': _hasShownDiscount},
     );
 
-    // Show 25% discount popup the first time user tries to leave
-    if (!_hasShownDiscount) {
+    // 25% retention discount popup is gated on the `premium_yearly_25off`
+    // SKU existing in Play Console + RevenueCat. Until that's set up, the
+    // discount path crashes with "Product not found". Re-enable by flipping
+    // this flag back to true once the SKU is live.
+    // See plan: i-am-about-to-crystalline-bunny.md → B3.
+    const _retentionDiscountEnabled = false;
+    // ignore: dead_code
+    if (_retentionDiscountEnabled && !_hasShownDiscount) {
       _hasShownDiscount = true;
       ref.read(posthogServiceProvider).capture(
         eventName: 'paywall_discount_shown',
@@ -714,16 +713,6 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
         priceDiff: priceDiff,
         isUpgrade: isUpgrade,
         effectiveDate: effectiveDate,
-      ),
-    );
-  }
-
-  /// Navigate to subscription history
-  void _navigateToSubscriptionHistory(BuildContext context) {
-    Navigator.push(
-      context,
-      AppPageRoute(
-        builder: (context) => const SubscriptionHistoryScreen(),
       ),
     );
   }

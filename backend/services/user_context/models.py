@@ -129,6 +129,7 @@ class EventType(str, Enum):
     SCORE_VIEW = "score_view"
     NUTRITION_LOG = "nutrition_log"
     FEATURE_INTERACTION = "feature_interaction"
+    SOCIAL_INTERACTION = "social_interaction"
     SCREEN_VIEW = "screen_view"
     ERROR = "error"
     # Custom exercises

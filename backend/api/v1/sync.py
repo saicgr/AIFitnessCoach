@@ -212,6 +212,17 @@ async def _process_user_profile(supabase, user_id: str, item: SyncBulkItem):
     """Process a user_profile sync item."""
     payload = item.payload
 
+    # If this sync touches `equipment`, dual-write to `equipment_v2`
+    # (text[]) so the new typed column stays current during the
+    # multi-deploy schema migration. Skip when the field isn't present
+    # so other profile updates pass through untouched.
+    if "equipment" in payload:
+        from api.v1.workouts.utils import equipment_dual_write_payload
+        payload = {
+            **payload,
+            **equipment_dual_write_payload(payload["equipment"]),
+        }
+
     supabase.client.table("users").update(payload).eq(
         "id", user_id
     ).execute()

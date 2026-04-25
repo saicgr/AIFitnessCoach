@@ -96,9 +96,10 @@ class _NotificationPrimeScreenState
               children: [
                 const SizedBox(height: 24),
                 Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
+                  child: SingleChildScrollView(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
                         const SizedBox(height: 24),
                         _Illustration(accent: accent)
                             .animate()
@@ -170,7 +171,8 @@ class _NotificationPrimeScreenState
                               end: 0,
                               duration: 300.ms,
                             ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
                 SizedBox(

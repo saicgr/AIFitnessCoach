@@ -25,7 +25,7 @@
 	     https://fitwiz.us via frontend/public/.well-known/ (served by
 	     Vercel). Without that file this entitlement is inert — the app
 	     won't intercept the link and Safari will open the web page
-	     instead. Bundle ID `com.fitwiz.app` is intentional and unrelated
+	     instead. Bundle ID `com.aifitnesscoach.app` is intentional and unrelated
 	     to the web host. -->
 	<key>com.apple.developer.associated-domains</key>
 	<array>

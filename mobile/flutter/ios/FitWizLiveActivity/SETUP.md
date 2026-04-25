@@ -31,7 +31,7 @@ Note: always `.xcworkspace`, **never** `.xcodeproj`.
      Dart `App Group` name and this folder's files).
    - **Team:** same team as Runner.
    - **Organization Identifier:** inherit from project.
-   - **Bundle Identifier:** auto → `com.fitwiz.app.FitWizLiveActivity`
+   - **Bundle Identifier:** auto → `com.aifitnesscoach.app.FitWizLiveActivity`
      (or whatever Runner's bundle id dotted with `.FitWizLiveActivity`).
    - **Language:** Swift.
    - **Include Configuration Intent:** OFF.

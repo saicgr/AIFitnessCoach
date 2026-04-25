@@ -4,7 +4,7 @@ This Flutter codebase ships THREE App Store apps via build flavors:
 
 | Flavor | App Store name | Bundle ID | Purpose |
 |---|---|---|---|
-| `consumer` (existing) | FitWiz | `com.fitwiz.app` | B2C self-directed AI fitness |
+| `consumer` (existing) | FitWiz | `com.aifitnesscoach.app` | B2C self-directed AI fitness |
 | `client` (Reppora — new) | Reppora | `com.reppora.app` | Coach-led clients, white-labeled at runtime to coach's brand |
 | `coach` (Reppora — new) | Reppora for Coach | `com.reppora.coach` | Trainer dashboard companion (reply/monitor only; building stays on web) |
 

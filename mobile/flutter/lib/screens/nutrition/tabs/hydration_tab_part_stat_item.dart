@@ -445,6 +445,23 @@ class _LogEntry extends StatelessWidget {
     required this.isDark,
   });
 
+  /// Per-source visuals shown next to each log row. Matches the source
+  /// values defined in `HydrationSource` (manual is rendered as no badge —
+  /// no point in stating the obvious for the default case).
+  static const Map<HydrationSource, ({IconData icon, String label})> _sourceMeta = {
+    HydrationSource.home: (icon: Icons.home_outlined, label: 'Home'),
+    HydrationSource.workout: (
+      icon: Icons.fitness_center,
+      label: 'Workout',
+    ),
+    HydrationSource.nutrition: (
+      icon: Icons.restaurant_outlined,
+      label: 'Fuel',
+    ),
+    HydrationSource.chat: (icon: Icons.smart_toy_outlined, label: 'Chat'),
+    HydrationSource.unknown: (icon: Icons.help_outline, label: 'Other'),
+  };
+
   @override
   Widget build(BuildContext context) {
     final type = DrinkType.fromValue(log.drinkType);
@@ -461,6 +478,9 @@ class _LogEntry extends StatelessWidget {
         ? AppColors.waterBlue
         : AppColorsLight.waterBlue;
 
+    final source = log.sourceEnum;
+    final sourceMeta = _sourceMeta[source];
+
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.all(12),
@@ -476,13 +496,55 @@ class _LogEntry extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  type.label,
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                    color: textPrimary,
-                  ),
+                Row(
+                  children: [
+                    Flexible(
+                      child: Text(
+                        type.label,
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                          color: textPrimary,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    // Source badge — only render when not the default
+                    // 'manual' bucket so we don't visually clutter old rows
+                    // that had no source attribution at all.
+                    if (sourceMeta != null) ...[
+                      const SizedBox(width: 6),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 6,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          color: textMuted.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              sourceMeta.icon,
+                              size: 11,
+                              color: textMuted,
+                            ),
+                            const SizedBox(width: 3),
+                            Text(
+                              'via ${sourceMeta.label}',
+                              style: TextStyle(
+                                fontSize: 10,
+                                color: textMuted,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ],
                 ),
                 if (log.notes != null && log.notes!.isNotEmpty)
                   Text(

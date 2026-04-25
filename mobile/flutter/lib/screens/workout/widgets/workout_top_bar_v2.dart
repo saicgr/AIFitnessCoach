@@ -62,6 +62,14 @@ class WorkoutTopBarV2 extends ConsumerWidget {
   /// Whether current exercise is favorited
   final bool isFavorite;
 
+  /// Optional "Complete workout now" overflow action. When non-null, an
+  /// overflow menu (⋮) renders next to the timer with a single item that
+  /// invokes this callback. Distinct from `onCloseTap` (which quits and
+  /// discards the in-progress session) — `onCompleteWorkoutNow` finalizes
+  /// the workout with whatever sets the user has already logged so the
+  /// session counts toward streaks / PRs / history.
+  final VoidCallback? onCompleteWorkoutNow;
+
   const WorkoutTopBarV2({
     super.key,
     required this.workoutSeconds,
@@ -77,6 +85,7 @@ class WorkoutTopBarV2 extends ConsumerWidget {
     this.onMinimize,
     this.onFavoriteTap,
     this.isFavorite = false,
+    this.onCompleteWorkoutNow,
   });
 
   @override
@@ -192,6 +201,45 @@ class WorkoutTopBarV2 extends ConsumerWidget {
                       ],
                     ),
                   ),
+
+                  // Overflow menu — currently just "Complete workout now"
+                  // so the user can finalize a partially-logged session
+                  // without having to log every remaining set first.
+                  if (onCompleteWorkoutNow != null) ...[
+                    const SizedBox(width: 4),
+                    SizedBox(
+                      width: 36,
+                      height: 36,
+                      child: PopupMenuButton<String>(
+                        padding: EdgeInsets.zero,
+                        icon: Icon(
+                          Icons.more_vert_rounded,
+                          size: 20,
+                          color: isDark
+                              ? WorkoutDesign.textSecondary
+                              : Colors.grey.shade700,
+                        ),
+                        tooltip: 'More',
+                        onSelected: (v) {
+                          if (v == 'complete_now' &&
+                              onCompleteWorkoutNow != null) {
+                            HapticFeedback.selectionClick();
+                            onCompleteWorkoutNow!();
+                          }
+                        },
+                        itemBuilder: (ctx) => const [
+                          PopupMenuItem<String>(
+                            value: 'complete_now',
+                            child: Row(children: [
+                              Icon(Icons.check_circle_rounded, size: 18),
+                              SizedBox(width: 10),
+                              Text('Complete workout'),
+                            ]),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ],

@@ -168,22 +168,26 @@ class _WorkoutSummaryScreenV2State
         // Force Stack to fill the screen so the pill anchors to the real bottom
         const SizedBox.expand(),
 
-        // General or Advanced view
-        AnimatedSwitcher(
-          duration: const Duration(milliseconds: 300),
-          child: _selectedView == 1
-              ? WorkoutSummaryGeneral(
-                  key: const ValueKey('general'),
-                  data: _summaryData,
-                  metadata: _metadata,
-                  topPadding: topPadding,
-                )
-              : WorkoutSummaryAdvanced(
-                  key: const ValueKey('advanced'),
-                  data: _summaryData,
-                  metadata: _metadata,
-                  topPadding: topPadding,
-                ),
+        // General or Advanced view — Positioned.fill so the AnimatedSwitcher's
+        // child (a SingleChildScrollView in Advanced) gets the full Stack
+        // width instead of collapsing to wrap-content.
+        Positioned.fill(
+          child: AnimatedSwitcher(
+            duration: const Duration(milliseconds: 300),
+            child: _selectedView == 1
+                ? WorkoutSummaryGeneral(
+                    key: const ValueKey('general'),
+                    data: _summaryData,
+                    metadata: _metadata,
+                    topPadding: topPadding,
+                  )
+                : WorkoutSummaryAdvanced(
+                    key: const ValueKey('advanced'),
+                    data: _summaryData,
+                    metadata: _metadata,
+                    topPadding: topPadding,
+                  ),
+          ),
         ),
 
         // Floating back button (only for General/Advanced — Detail has its own)

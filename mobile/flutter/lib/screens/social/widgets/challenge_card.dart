@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/utils/safe_num.dart';
 
 /// Challenge Card - Displays a fitness challenge
 class ChallengeCard extends StatelessWidget {
@@ -147,7 +148,7 @@ class ChallengeCard extends StatelessWidget {
                             ),
                           ),
                           Text(
-                            '${progressPercentage.toInt()}%',
+                            '${safePercent(progressPercentage)}%',
                             style: const TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.w600,
@@ -161,7 +162,7 @@ class ChallengeCard extends StatelessWidget {
                       ClipRRect(
                         borderRadius: BorderRadius.circular(4),
                         child: LinearProgressIndicator(
-                          value: progressPercentage / 100,
+                          value: safeFraction(progressPercentage / 100),
                           backgroundColor: AppColors.orange.withValues(alpha: 0.2),
                           valueColor: const AlwaysStoppedAnimation<Color>(
                             AppColors.orange,

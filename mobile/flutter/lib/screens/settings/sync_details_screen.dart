@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -111,9 +113,133 @@ class _SyncDetailsScreenState extends ConsumerState<SyncDetailsScreen> {
         return Icons.monitor_heart_rounded;
       case 'user_profile':
         return Icons.person_rounded;
+      case 'food_log':
+      case 'meal':
+        return Icons.restaurant_outlined;
+      case 'hydration_log':
+      case 'water_log':
+        return Icons.water_drop_outlined;
       default:
         return Icons.sync_problem_rounded;
     }
+  }
+
+  /// Produce a human-readable title for a queue row.
+  /// Falls back to the entity type when the payload doesn't contain a name —
+  /// the entity-specific extraction handles the most common cases users see
+  /// in the dead-letter list (food logs by name, workouts by template name).
+  String _titleForItem(PendingSyncQueueData item) {
+    String? extracted;
+    try {
+      final raw = item.payload;
+      // ignore: avoid_dynamic_calls
+      final Map<String, dynamic> data = jsonDecode(raw) is Map
+          ? Map<String, dynamic>.from(jsonDecode(raw) as Map)
+          : <String, dynamic>{};
+      switch (item.entityType) {
+        case 'food_log':
+        case 'meal':
+          // Server payload uses `food_items: [{name, ...}]`. Take first 1-2.
+          final items = data['food_items'];
+          if (items is List && items.isNotEmpty) {
+            final names = items
+                .take(2)
+                .map((e) => (e is Map ? e['name'] : null)?.toString() ?? '')
+                .where((n) => n.isNotEmpty)
+                .toList();
+            if (names.isNotEmpty) {
+              extracted = names.join(', ');
+              if (items.length > 2) extracted = '$extracted +${items.length - 2}';
+            }
+          }
+          extracted ??= data['meal_type']?.toString();
+          break;
+        case 'hydration_log':
+        case 'water_log':
+          final amt = data['amount_ml'];
+          final type = data['drink_type'];
+          if (amt != null && type != null) extracted = '$amt ml $type';
+          break;
+        case 'workout':
+        case 'workout_completion':
+          extracted = (data['name'] ?? data['template_name'])?.toString();
+          break;
+      }
+    } catch (_) {/* payload not parseable — fall through */ }
+    final base = (extracted == null || extracted.isEmpty)
+        ? '${_formatEntityType(item.entityType)} • ${item.operationType}'
+        : extracted;
+    return base;
+  }
+
+  /// Color for the error-kind pill. Kept inline so all kinds share one style.
+  Color _pillColorFor(SyncErrorKind kind, {required bool isDark}) {
+    switch (kind) {
+      case SyncErrorKind.auth:
+        return AppColors.warning;
+      case SyncErrorKind.network:
+        return AppColors.info;
+      case SyncErrorKind.validation4xx:
+        return AppColors.error;
+      case SyncErrorKind.server5xx:
+        return AppColors.warning;
+      case SyncErrorKind.corrupt:
+        return AppColors.error;
+      case SyncErrorKind.unknown:
+        return isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    }
+  }
+
+  Future<void> _retryOne(PendingSyncQueueData item) async {
+    final service = ref.read(syncFailureServiceProvider);
+    final retried = await service.retryItem(item.id);
+    if (!mounted) return;
+    if (retried) {
+      ref.read(syncEngineProvider.notifier).syncNow();
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Retrying...')),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+              "This error won't fix itself on retry. Use Edit & re-log or Discard."),
+        ),
+      );
+    }
+    await _loadDeadLetterItems();
+  }
+
+  Future<void> _discardOne(PendingSyncQueueData item) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Discard this change?'),
+        content: const Text(
+            'This will permanently delete the unsent change from your device. '
+            'Existing data on the server is unaffected.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: TextButton.styleFrom(foregroundColor: AppColors.error),
+            child: const Text('Discard'),
+          ),
+        ],
+      ),
+    );
+    if (confirm != true) return;
+    if (!mounted) return;
+    final service = ref.read(syncFailureServiceProvider);
+    await service.discardItem(item.id);
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Discarded')),
+    );
+    await _loadDeadLetterItems();
   }
 
   @override
@@ -230,6 +356,9 @@ class _SyncDetailsScreenState extends ConsumerState<SyncDetailsScreen> {
                             const SizedBox(height: 8),
                         itemBuilder: (context, index) {
                           final item = _deadLetterItems[index];
+                          final kind = SyncErrorKind.classify(item.lastError);
+                          final pillColor =
+                              _pillColorFor(kind, isDark: isDark);
                           return Container(
                             padding: const EdgeInsets.all(12),
                             decoration: BoxDecoration(
@@ -237,69 +366,150 @@ class _SyncDetailsScreenState extends ConsumerState<SyncDetailsScreen> {
                               borderRadius: BorderRadius.circular(10),
                               border: Border.all(color: borderColor),
                             ),
-                            child: Row(
+                            child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Container(
-                                  padding: const EdgeInsets.all(8),
-                                  decoration: BoxDecoration(
-                                    color: AppColors.error
-                                        .withValues(alpha: 0.1),
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  child: Icon(
-                                    _iconForEntityType(item.entityType),
-                                    color: AppColors.error,
-                                    size: 20,
-                                  ),
-                                ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        '${_formatEntityType(item.entityType)} - ${item.operationType}',
-                                        style: TextStyle(
-                                          fontSize: 14,
-                                          fontWeight: FontWeight.w600,
-                                          color: textPrimary,
-                                        ),
+                                Row(
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.start,
+                                  children: [
+                                    Container(
+                                      padding: const EdgeInsets.all(8),
+                                      decoration: BoxDecoration(
+                                        color: AppColors.error
+                                            .withValues(alpha: 0.1),
+                                        borderRadius:
+                                            BorderRadius.circular(8),
                                       ),
-                                      const SizedBox(height: 4),
-                                      if (item.lastError != null)
-                                        Text(
-                                          item.lastError!,
-                                          style: TextStyle(
-                                            fontSize: 12,
-                                            color: AppColors.error,
-                                          ),
-                                          maxLines: 2,
-                                          overflow: TextOverflow.ellipsis,
-                                        ),
-                                      const SizedBox(height: 4),
-                                      Row(
+                                      child: Icon(
+                                        _iconForEntityType(item.entityType),
+                                        color: AppColors.error,
+                                        size: 20,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
                                         children: [
-                                          Text(
-                                            _formatDate(item.createdAt),
-                                            style: TextStyle(
-                                              fontSize: 11,
-                                              color: textMuted,
-                                            ),
+                                          Row(
+                                            children: [
+                                              Expanded(
+                                                child: Text(
+                                                  _titleForItem(item),
+                                                  style: TextStyle(
+                                                    fontSize: 14,
+                                                    fontWeight:
+                                                        FontWeight.w600,
+                                                    color: textPrimary,
+                                                  ),
+                                                  maxLines: 1,
+                                                  overflow:
+                                                      TextOverflow.ellipsis,
+                                                ),
+                                              ),
+                                              const SizedBox(width: 6),
+                                              Container(
+                                                padding: const EdgeInsets
+                                                    .symmetric(
+                                                  horizontal: 6,
+                                                  vertical: 2,
+                                                ),
+                                                decoration: BoxDecoration(
+                                                  color: pillColor
+                                                      .withValues(alpha: 0.15),
+                                                  borderRadius:
+                                                      BorderRadius.circular(6),
+                                                ),
+                                                child: Text(
+                                                  kind.displayLabel,
+                                                  style: TextStyle(
+                                                    fontSize: 10,
+                                                    fontWeight:
+                                                        FontWeight.w600,
+                                                    color: pillColor,
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
                                           ),
-                                          const SizedBox(width: 12),
-                                          Text(
-                                            '${item.retryCount} retries',
-                                            style: TextStyle(
-                                              fontSize: 11,
-                                              color: textMuted,
+                                          const SizedBox(height: 4),
+                                          if (item.lastError != null)
+                                            Text(
+                                              item.lastError!,
+                                              style: TextStyle(
+                                                fontSize: 12,
+                                                color: AppColors.error,
+                                              ),
+                                              maxLines: 2,
+                                              overflow:
+                                                  TextOverflow.ellipsis,
                                             ),
+                                          const SizedBox(height: 4),
+                                          Row(
+                                            children: [
+                                              Text(
+                                                _formatDate(item.createdAt),
+                                                style: TextStyle(
+                                                  fontSize: 11,
+                                                  color: textMuted,
+                                                ),
+                                              ),
+                                              const SizedBox(width: 12),
+                                              Text(
+                                                '${item.retryCount} retries',
+                                                style: TextStyle(
+                                                  fontSize: 11,
+                                                  color: textMuted,
+                                                ),
+                                              ),
+                                            ],
                                           ),
                                         ],
                                       ),
-                                    ],
-                                  ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 8),
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.end,
+                                  children: [
+                                    TextButton.icon(
+                                      onPressed: () => _discardOne(item),
+                                      icon: const Icon(
+                                          Icons.delete_outline_rounded,
+                                          size: 16),
+                                      label: const Text('Discard'),
+                                      style: TextButton.styleFrom(
+                                        foregroundColor: AppColors.error,
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 10, vertical: 4),
+                                        minimumSize: Size.zero,
+                                        tapTargetSize:
+                                            MaterialTapTargetSize.shrinkWrap,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 4),
+                                    TextButton.icon(
+                                      onPressed: kind.isRetryable
+                                          ? () => _retryOne(item)
+                                          : null,
+                                      icon: const Icon(Icons.refresh_rounded,
+                                          size: 16),
+                                      label: Text(kind.isRetryable
+                                          ? 'Retry'
+                                          : 'Edit & re-log'),
+                                      style: TextButton.styleFrom(
+                                        foregroundColor: AppColors.info,
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 10, vertical: 4),
+                                        minimumSize: Size.zero,
+                                        tapTargetSize:
+                                            MaterialTapTargetSize.shrinkWrap,
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ],
                             ),

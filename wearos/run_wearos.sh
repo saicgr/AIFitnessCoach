@@ -2,8 +2,17 @@
 
 # Wear OS Build & Run Script for FitWiz
 # Usage: ./run_wearos.sh [--list | --create | --device <name> | --clean]
+#
+# MODULE DISABLED 2026-04-25 — see wearos/settings.gradle.kts. The Gradle
+# build will not produce an APK while `:app` is commented out. This script
+# refuses to run until you re-enable the module.
 
 set -e
+
+if grep -q "^// include(\":app\")" "$(dirname "$0")/settings.gradle.kts" 2>/dev/null; then
+    echo "❌ Wear OS module is disabled. Re-enable include(\":app\") in wearos/settings.gradle.kts before running this script."
+    exit 1
+fi
 
 # Colors for output
 RED='\033[0;31m'

@@ -4,6 +4,7 @@ Unified database facade for FitWiz.
 Provides a single interface to all database operations while
 delegating to specialized modules for maintainability.
 """
+import logging
 from typing import Optional, List, Dict, Any
 
 from core.supabase_client import get_supabase, SupabaseManager
@@ -13,6 +14,17 @@ from core.db.exercise_db import ExerciseDB
 from core.db.analytics_db import AnalyticsDB
 from core.db.nutrition_db import NutritionDB
 from core.db.activity_db import ActivityDB
+
+logger = logging.getLogger(__name__)
+
+# Storage buckets that hold user-uploaded media keyed under "<user_id>/...".
+# Listed top-down so a partial failure leaves the loudest evidence first.
+_USER_STORAGE_BUCKETS = (
+    "user-uploads",
+    "form-videos",
+    "progress-photos",
+    "user-avatars",
+)
 
 
 class SupabaseDB:
@@ -758,9 +770,15 @@ class SupabaseDB:
 
     def full_user_reset(self, user_id: str) -> bool:
         """
-        Delete all data for a user (cascade delete).
+        Delete all data for a user — including the Supabase Auth identity.
 
-        Order matters due to foreign key constraints.
+        Required for Google Play / App Store account-deletion policies: the
+        user must NOT be able to sign back in with the same credentials.
+
+        Order matters due to foreign key constraints. Storage objects are
+        purged before the auth user (Supabase deletes auth → public.users
+        rows cascade via auth_id FK in some schemas, so we explicitly delete
+        public.users first to keep ordering stable).
 
         Args:
             user_id: User's UUID
@@ -799,10 +817,66 @@ class SupabaseDB:
         self.delete_user_metrics_by_user(user_id)
         self.delete_chat_history_by_user(user_id)
 
-        # 11. Delete user
+        # 11. Delete user row (public.users)
         self.delete_user(user_id)
 
+        # 12. Purge Storage objects keyed under "<user_id>/...". Failures
+        # here log + continue — orphaned blobs are recoverable (background
+        # janitor can sweep), but a failure to delete the auth user is
+        # NOT recoverable from the user's perspective so we proceed.
+        self._purge_user_storage(user_id)
+
+        # 13. Delete the Supabase Auth identity. THIS is the policy-critical
+        # step — without it the user can sign back in with the same email
+        # and Google Play / App Store will reject the app for non-compliant
+        # account deletion. Idempotent: a missing auth user is treated as
+        # success (next attempt has nothing left to delete).
+        self._delete_auth_user(user_id)
+
         return True
+
+    def _purge_user_storage(self, user_id: str) -> None:
+        """Best-effort delete of every object under "<user_id>/" in each
+        known user-content bucket. Logs and continues on per-bucket errors."""
+        for bucket in _USER_STORAGE_BUCKETS:
+            try:
+                storage = self._manager.client.storage.from_(bucket)
+                listing = storage.list(path=user_id)
+                if not listing:
+                    continue
+                paths = [f"{user_id}/{item['name']}" for item in listing if item.get("name")]
+                if paths:
+                    storage.remove(paths)
+                    logger.info(
+                        "Purged %d storage objects from %s for user %s",
+                        len(paths), bucket, user_id,
+                    )
+            except Exception as e:
+                # Bucket may not exist in this environment, or RLS blocks
+                # — log and move on, don't fail the whole reset.
+                logger.warning(
+                    "Storage purge failed (bucket=%s, user=%s): %s",
+                    bucket, user_id, e,
+                )
+
+    def _delete_auth_user(self, user_id: str) -> None:
+        """Delete the Supabase Auth user. Idempotent on 404."""
+        try:
+            self._manager.auth_client.auth.admin.delete_user(user_id)
+            logger.info("Deleted Supabase Auth user %s", user_id)
+        except Exception as e:
+            # supabase-py raises a generic exception with the HTTP detail
+            # in the message. Treat "user not found" as success so retries
+            # of partially-completed resets converge.
+            msg = str(e).lower()
+            if "not found" in msg or "user_not_found" in msg or "404" in msg:
+                logger.info(
+                    "Supabase Auth user %s already gone — treating as success",
+                    user_id,
+                )
+                return
+            logger.error("Failed to delete Supabase Auth user %s: %s", user_id, e)
+            raise
 
 
 # Singleton instance

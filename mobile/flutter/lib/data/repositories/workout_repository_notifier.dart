@@ -22,7 +22,52 @@ class WorkoutsNotifier extends StateNotifier<AsyncValue<List<Workout>>> {
       debugPrint('⚡ [Workouts] Using in-memory cache (instant)');
       _initSilent();
     } else {
-      _init();
+      // Cold start: try persistent disk cache first so the carousel paints
+      // the full week instantly instead of waiting on the slow /workouts/ API.
+      _initWithDiskCache();
+    }
+  }
+
+  /// Cold-start path: hydrate from SharedPreferences before hitting the API.
+  /// Mirrors todayWorkoutProvider's cache-first pattern so the hero carousel
+  /// has all of this week's workouts ready on first paint, not just today+next.
+  Future<void> _initWithDiskCache() async {
+    final cached = await _loadFromDiskCache();
+    if (cached != null && mounted) {
+      _workoutsInMemoryCache = cached;
+      state = AsyncValue.data(cached);
+      debugPrint('⚡ [Workouts] Hydrated from disk cache (${cached.length} workouts)');
+      // Refresh silently — keep showing cached data while fetching fresh
+      await _initSilent();
+    } else {
+      await _init();
+    }
+  }
+
+  /// Load workouts from SharedPreferences. Returns null if cache miss/expired.
+  Future<List<Workout>?> _loadFromDiskCache() async {
+    try {
+      final cached = await DataCacheService.instance.getCachedList(
+        DataCacheService.workoutListKey,
+      );
+      if (cached == null || cached.isEmpty) return null;
+      return cached.map((m) => Workout.fromJson(m)).toList();
+    } catch (e) {
+      debugPrint('⚠️ [Workouts] Disk cache read error: $e');
+      return null;
+    }
+  }
+
+  /// Persist workouts to SharedPreferences for instant cold-start hydration.
+  Future<void> _saveToDiskCache(List<Workout> workouts) async {
+    try {
+      final list = workouts.map((w) => w.toJson()).toList();
+      await DataCacheService.instance.cacheList(
+        DataCacheService.workoutListKey,
+        list,
+      );
+    } catch (e) {
+      debugPrint('⚠️ [Workouts] Disk cache write error: $e');
     }
   }
 
@@ -30,6 +75,10 @@ class WorkoutsNotifier extends StateNotifier<AsyncValue<List<Workout>>> {
   static void clearCache() {
     _workoutsInMemoryCache = null;
     debugPrint('🧹 [Workouts] In-memory cache cleared');
+    // Best-effort disk cache clear — fire-and-forget so logout isn't blocked
+    DataCacheService.instance
+        .invalidate(DataCacheService.workoutListKey)
+        .catchError((_) {});
   }
 
   /// Replace a superseded workout in the in-memory cache so that
@@ -65,6 +114,8 @@ class WorkoutsNotifier extends StateNotifier<AsyncValue<List<Workout>>> {
       // Update in-memory cache
       _workoutsInMemoryCache = workouts;
       state = AsyncValue.data(workouts);
+      // Persist to disk for next cold start
+      await _saveToDiskCache(workouts);
     } catch (e) {
       debugPrint('⚠️ [Workouts] Silent fetch error: $e');
       // Keep existing cached data on error
@@ -106,6 +157,8 @@ class WorkoutsNotifier extends StateNotifier<AsyncValue<List<Workout>>> {
       // Update in-memory cache for instant access on provider recreation
       _workoutsInMemoryCache = workouts;
       state = AsyncValue.data(workouts);
+      // Persist to disk for next cold start
+      await _saveToDiskCache(workouts);
     } catch (e, st) {
       if (!mounted) return; // Check mounted after async
       state = AsyncValue.error(e, st);

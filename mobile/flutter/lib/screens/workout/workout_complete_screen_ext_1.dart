@@ -733,51 +733,77 @@ extension __WorkoutCompleteScreenStateExt1 on _WorkoutCompleteScreenState {
   }
 
 
-  /// Show the share workout bottom sheet
+  /// Show the share workout bottom sheet — delegates to the unified
+  /// `ShareableSheet` via `WorkoutAdapter` so the captured card always
+  /// shows real volume / sets / reps (Bug #10), uses neutral charcoal
+  /// instead of arbitrary blue/orange tints (Bug #12), and the preview
+  /// renders cleanly on first tap (Bug #11 — eager-built gallery).
   Future<void> _showShareSheet() async {
     HapticFeedback.mediumImpact();
 
-    await showGlassSheet(
-      context: context,
-      builder: (context) => GlassSheet(
-        child: ShareWorkoutSheet(
-        workoutName: widget.workout.name ?? 'Workout',
-        workoutLogId: widget.workoutLogId ?? '',
-        durationSeconds: widget.duration,
-        calories: widget.calories,
-        totalVolumeKg: widget.totalVolumeKg,
-        totalSets: widget.totalSets,
-        totalReps: widget.totalReps,
-        exercisesCount: widget.workout.exercises.length,
-        newPRs: _newPRs.isNotEmpty
-            ? _newPRs.map((pr) => {
+    final shareable = WorkoutAdapter.fromCompletion(
+      ref: ref,
+      workoutName: widget.workout.name ?? 'Workout',
+      durationSeconds: widget.duration,
+      plannedExercises: widget.workout.exercises,
+      calories: widget.calories,
+      totalVolumeKgFromCaller: widget.totalVolumeKg,
+      totalSets: widget.totalSets,
+      totalReps: widget.totalReps,
+      newPRs: _newPRs.isNotEmpty
+          ? _newPRs.map((pr) => {
                 'exercise': pr['exercise_name'],
                 'weight_kg': pr['weight_kg'],
                 'pr_type': 'weight',
                 'improvement': pr['previous_pr'] != null
-                    ? (pr['weight_kg'] as double) - (pr['previous_pr'] as double)
+                    ? (pr['weight_kg'] as double) -
+                        (pr['previous_pr'] as double)
                     : null,
               }).toList()
-            : null,
-        achievements: _achievements != null
-            ? (_achievements!['new_achievements'] as List<dynamic>?)
-                ?.map((a) => Map<String, dynamic>.from(a as Map))
-                .toList()
-            : null,
-        currentStreak: _achievements?['streak_days'] as int?,
-        totalWorkouts: _achievements?['total_workouts'] as int?,
-        musclesWorked: extractMuscles(widget.workout.exercises),
-        exercises: widget.workout.exercises
-            .map((ex) => ShareExerciseSummary(
-                  name: ex.name,
-                  sets: ex.sets ?? 0,
-                  reps: ex.reps ?? 0,
-                ))
-            .toList(),
-        userDisplayName: ref.read(authStateProvider).user?.displayName,
-      ),
-      ),
+          : null,
+      currentStreak: _achievements?['streak_days'] as int?,
+      totalWorkouts: _achievements?['total_workouts'] as int?,
+      musclesWorked: extractMuscles(widget.workout.exercises),
+      userDisplayName: ref.read(authStateProvider).user?.displayName,
     );
+
+    if (!mounted) return;
+    if (shareable == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('No workout data to share yet'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+    final workoutLogId = widget.workoutLogId;
+    await ShareableSheet.show(
+      context,
+      data: shareable,
+      onGenerateShareLink: workoutLogId == null || workoutLogId.isEmpty
+          ? null
+          : () => _generateShareLink(workoutLogId),
+    );
+  }
+
+  /// Calls the backend `POST /workouts/{id}/share-link` endpoint and
+  /// returns the public URL so the share sheet can show it in the
+  /// `ShareLinkPill`. Returns null on any failure — the pill will reflect
+  /// that as "Get share link" still tappable.
+  Future<String?> _generateShareLink(String workoutId) async {
+    try {
+      final api = ref.read(apiClientProvider);
+      final res = await api.dio.post('/api/v1/workouts/$workoutId/share-link');
+      final data = res.data;
+      if (data is Map && data['url'] is String) {
+        return data['url'] as String;
+      }
+      return null;
+    } catch (e) {
+      debugPrint('share link generation failed: $e');
+      return null;
+    }
   }
 
 

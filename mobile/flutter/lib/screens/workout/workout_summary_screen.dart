@@ -14,7 +14,8 @@ import 'widgets/expandable_summary_exercise_card.dart';
 import 'widgets/exercise_mini_chart.dart';
 import 'widgets/edit_set_sheet.dart';
 import 'widgets/exercise_add_sheet.dart';
-import 'widgets/share_workout_sheet.dart';
+import '../../shareables/adapters/workout_adapter.dart';
+import '../../shareables/shareable_sheet.dart';
 
 part 'workout_summary_screen_ui.dart';
 
@@ -674,17 +675,25 @@ class _WorkoutSummaryScreenState extends ConsumerState<WorkoutSummaryScreen> {
       width: double.infinity,
       child: OutlinedButton.icon(
         onPressed: workout != null
-            ? () {
-                showGlassSheet(
-                  context: context,
-                  builder: (_) => ShareWorkoutSheet(
-                    workoutName: workout.name ?? 'Workout',
-                    workoutLogId: workout.id ?? '',
-                    durationSeconds: (workout.durationMinutes ?? 0) * 60,
-                    calories: workout.estimatedCalories,
-                    exercisesCount: workout.exerciseCount,
-                  ),
+            ? () async {
+                final shareable = WorkoutAdapter.fromCompletion(
+                  ref: ref,
+                  workoutName: workout.name ?? 'Workout',
+                  durationSeconds: (workout.durationMinutes ?? 0) * 60,
+                  plannedExercises: workout.exercises,
+                  calories: workout.estimatedCalories,
                 );
+                if (!context.mounted) return;
+                if (shareable == null) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('No workout data to share yet'),
+                      behavior: SnackBarBehavior.floating,
+                    ),
+                  );
+                  return;
+                }
+                await ShareableSheet.show(context, data: shareable);
               }
             : null,
         icon: const Icon(Icons.share, size: 18),

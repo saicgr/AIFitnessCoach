@@ -1041,10 +1041,41 @@ async def generate_workout(request: Request, *, body: GenerateWorkoutRequest, ba
                             )
 
                 # MINIMUM EXERCISE COUNT VALIDATION
-                if len(exercises) < MIN_EXERCISES_REQUIRED:
+                # Count distinct exercises, not set entries. Advanced
+                # techniques like "Added failure set to X" can duplicate
+                # the same exercise as multiple list entries; we only
+                # want to reject workouts that are truly 1-2 exercises.
+                distinct_exercise_names = {
+                    (ex.get("name") or "").strip().lower()
+                    for ex in exercises
+                    if (ex.get("name") or "").strip()
+                }
+                if len(distinct_exercise_names) < MIN_EXERCISES_REQUIRED:
+                    _eq_for_log = equipment if isinstance(equipment, list) else []
                     logger.error(
-                        f"❌ [Exercise Count] Workout '{workout_name}' has only {len(exercises)} exercises "
-                        f"(minimum required: {MIN_EXERCISES_REQUIRED}). This is an AI generation error."
+                        f"❌ [Exercise Count] Workout '{workout_name}' has only "
+                        f"{len(distinct_exercise_names)} distinct exercises "
+                        f"(minimum required: {MIN_EXERCISES_REQUIRED}). "
+                        f"Equipment={_eq_for_log}, focus={focus_areas}. "
+                        f"Likely candidate pool too small — aborting insert."
+                    )
+                    # Return a structured 422 so the Flutter client can surface
+                    # a "your gym profile needs more equipment for this focus"
+                    # message instead of silently showing a 2-exercise workout.
+                    raise HTTPException(
+                        status_code=422,
+                        detail={
+                            "code": "EXERCISE_POOL_TOO_SMALL",
+                            "message": (
+                                f"Only {len(distinct_exercise_names)} exercises could be selected "
+                                f"for this focus/equipment combination (minimum {MIN_EXERCISES_REQUIRED}). "
+                                f"Add more equipment to your gym profile or pick a different focus."
+                            ),
+                            "distinct_exercise_count": len(distinct_exercise_names),
+                            "minimum_required": MIN_EXERCISES_REQUIRED,
+                            "focus_areas": focus_areas,
+                            "equipment_count": len(_eq_for_log),
+                        },
                     )
 
         except Exception as ai_error:

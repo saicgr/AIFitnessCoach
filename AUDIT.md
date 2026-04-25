@@ -160,8 +160,8 @@ All service/core files converted to `logging` module. 0 bare `print()` remaining
 - Network security config blocks cleartext traffic
 - `android:debuggable` not hardcoded (defaults to false in release)
 - **Account deletion implemented** — Settings > Danger Zone with confirmation dialog and backend call (GDPR/Play Store)
-- **Privacy Policy and Terms of Service** — hosted on Vercel at `fitwiz.app/privacy` and `fitwiz.app/terms`, linked in app
-- **Refund Policy** — hosted at `fitwiz.app/refunds`
+- **Privacy Policy and Terms of Service** — hosted on Vercel at `fitwiz.us/privacy` and `fitwiz.us/terms`, linked in app
+- **Refund Policy** — hosted at `fitwiz.us/refunds`
 - **Age gate enforced** — minimum age 16 in onboarding date picker and personal info validation
 - App icons configured for all DPI densities + adaptive icons
 - Splash screen configured via `flutter_native_splash`
@@ -188,7 +188,7 @@ All service/core files converted to `logging` module. 0 bare `print()` remaining
 
 | # | Issue | Details | Action Required |
 |---|---|---|---|
-| A | **Vercel deployment returns 401** | `ai-fitness-coach-git-main-chetangrs-projects.vercel.app` has Deployment Protection enabled. Google's review bot will crawl `fitwiz.app/privacy` and `fitwiz.app/terms` — if they return 401, the app will be **rejected**. | Vercel Dashboard > Project Settings > Deployment Protection > set to "Only Preview Deployments" or disable entirely. Verify `/privacy`, `/terms`, `/refunds` all load publicly. |
+| A | **Vercel deployment returns 401** | `ai-fitness-coach-git-main-chetangrs-projects.vercel.app` has Deployment Protection enabled. Google's review bot will crawl `fitwiz.us/privacy` and `fitwiz.us/terms` — if they return 401, the app will be **rejected**. | Vercel Dashboard > Project Settings > Deployment Protection > set to "Only Preview Deployments" or disable entirely. Verify `/privacy`, `/terms`, `/refunds` all load publicly. |
 | B | **`google-services.json` deleted from repo** | Correctly removed from git (P1 #8), but the file must exist at `android/app/google-services.json` for Firebase (Crashlytics, FCM) to work. Without it, the release build will either fail or run without crash reporting/push notifications. | Ensure CI/CD injects `google-services.json` as a build secret. Keep a local copy for dev builds (already in `.gitignore`). |
 | C | ~~**Stale Vercel URL in About page**~~ | Removed entire "Visit FitWiz Store" tile from `about_support_page.dart` + unused `url_launcher` import. No store exists. | Done |
 

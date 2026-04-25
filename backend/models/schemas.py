@@ -402,7 +402,24 @@ class PerformanceLogCreate(BaseModel):
     tempo: Optional[str] = Field(default=None, max_length=20)
     is_completed: bool = True
     failed_at_rep: Optional[int] = Field(default=None, ge=0)
-    notes: Optional[str] = Field(default=None, max_length=500)
+    # `notes` is a `TEXT[]` column post-migration. Accept the canonical
+    # list form (what the active-workout client sends) and tolerate a
+    # single string for legacy callers — coerced to a one-element list.
+    notes: Optional[List[str]] = Field(default=None, description="Per-set free-form notes; multiple supported.")
+
+    @field_validator("notes", mode="before")
+    @classmethod
+    def _coerce_notes_to_list(cls, v):
+        if v is None:
+            return None
+        if isinstance(v, str):
+            stripped = v.strip()
+            return [stripped] if stripped else None
+        if isinstance(v, list):
+            cleaned = [str(item).strip() for item in v if item is not None and str(item).strip()]
+            return cleaned or None
+        # Anything else (dict/number) is invalid; let Pydantic raise.
+        return v
     ai_input_source: Optional[str] = Field(default=None, max_length=200, description="Original AI input text that created this set (e.g., '135*8', '+10')")
     target_weight_kg: Optional[float] = Field(default=None, ge=0, le=1000, description="Planned target weight for this set")
     target_reps: Optional[int] = Field(default=None, ge=0, le=1000, description="Planned target reps (0 = AMRAP)")

@@ -14,7 +14,9 @@ import 'core/accessibility/accessibility_provider.dart';
 import 'core/services/posthog_service.dart';
 import 'data/repositories/auth_repository.dart';
 import 'data/services/api_client.dart';
+import 'data/services/deep_link_service.dart';
 import 'data/services/notification_service.dart';
+import 'data/services/pre_auth_quiz_backup_service.dart';
 import 'data/services/workout_notification_service.dart';
 // Meal-suggestion widget — staged under Settings → Coming Soon. Re-enable
 // the import when the feature goes live (see main.dart for the checklist).
@@ -83,6 +85,12 @@ class _FitWizAppState extends ConsumerState<FitWizApp> {
 
   @override
   Widget build(BuildContext context) {
+    // Eagerly construct the pre-auth quiz auto-backup service so its internal
+    // ref.listen subscription is alive for the entire session. The service
+    // POSTs quiz mutations to /users/{id}/preferences with a 2s debounce,
+    // protecting users from data loss if they uninstall/reinstall mid-onboarding.
+    ref.read(preAuthQuizBackupServiceProvider);
+
     final router = ref.watch(routerProvider);
     final themeMode = ref.watch(themeModeProvider);
     final accent = ref.watch(accentColorProvider);
@@ -130,6 +138,13 @@ class _FitWizAppState extends ConsumerState<FitWizApp> {
                 .read(subscriptionProvider.notifier)
                 .initialize(next.user!.id),
           );
+          // Replay any deep link that arrived before sign-in (e.g. an
+          // invite link tapped from email while logged out). 24h TTL
+          // applied inside the drain. Only fire on the unauth → auth edge
+          // so we don't spam the queue replay on every token refresh.
+          if (previous?.status != AuthStatus.authenticated) {
+            unawaited(DeepLinkService.drainPendingDeepLink(ref));
+          }
         } else if (next.status == AuthStatus.unauthenticated &&
             previous?.status == AuthStatus.authenticated) {
           posthog.reset();

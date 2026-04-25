@@ -5,6 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_links.dart';
+import '../../../core/providers/subscription_provider.dart';
 import '../../../core/utils/banner_notification_mapper.dart';
 import '../../notifications/notifications_screen.dart';
 import '../../../data/providers/billing_reminder_provider.dart';
@@ -221,12 +222,23 @@ class _StackedBannerPanelState extends ConsumerState<StackedBannerPanel>
           : days <= 3
               ? AppColors.orange
               : AppColors.cyan;
+      // Append billing cadence so the subtitle reads "Premium yearly renews
+      // in 3 days for $49.99" instead of dropping the cadence on the floor.
+      final cadence = ref.watch(
+        subscriptionProvider.select((s) => s.billingPeriod),
+      );
+      final cadenceWord = switch (cadence) {
+        BillingPeriod.yearly => ' yearly',
+        BillingPeriod.monthly => ' monthly',
+        _ => '',
+      };
+      final tierLabel = '${renewal.tier ?? "Plan"}$cadenceWord';
       banners.add(BannerCardData(
         type: BannerType.renewal,
         id: 'renewal',
         icon: Icons.credit_card_rounded,
         title: 'Subscription Renewing',
-        subtitle: '${renewal.tier ?? "Plan"} renews in $days days for ${renewal.formattedAmount}',
+        subtitle: '$tierLabel renews in $days days for ${renewal.formattedAmount}',
         accentColor: urgencyColor,
         actionLabel: 'Manage',
         onAction: () {

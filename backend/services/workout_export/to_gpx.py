@@ -61,7 +61,7 @@ def export_gpx(cardio_rows: List[CanonicalCardioRow]) -> bytes:
             "xsi": XSI_NS,
         },
         version="1.1",
-        creator="FitWiz (https://fitwiz.app)",
+        creator="FitWiz (https://fitwiz.us)",
     )
     root.set(f"{{{XSI_NS}}}schemaLocation", SCHEMA_LOCATION)
 

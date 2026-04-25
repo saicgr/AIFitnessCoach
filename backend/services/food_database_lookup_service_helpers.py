@@ -14,6 +14,7 @@ import time
 from typing import Dict, List, Optional
 import logging
 from sqlalchemy import text
+from sqlalchemy.exc import SQLAlchemyError
 from core.supabase_client import get_supabase
 from services.food_database_lookup_service_helpers_part2 import FoodDatabaseLookupServicePart2
 logger = logging.getLogger(__name__)
@@ -40,6 +41,17 @@ class FoodDatabaseLookupService(FoodDatabaseLookupServicePart2):
         self._overrides_word_index: Dict[str, set] = {}
         self._overrides_loaded_at: float = 0
         self._overrides_ttl = 1800  # 30 minutes
+        # Prefix-miss cache for override DB search. When a user types
+        # progressively ("kittl" → "little" → "little italy" → "little
+        # italy pizza" → "little italy pizza slice") each keystroke fires
+        # a new override search — each wrote 0 results for 3+ seconds.
+        # If any prefix of the current query recently returned 0 results,
+        # the current query has no chance of matching more, so we short-
+        # circuit. {normalized_query: expiry_epoch_seconds}. 5-min TTL so
+        # new override inserts can still be discovered without waiting
+        # for the full 1h cache.
+        self._empty_override_prefixes: Dict[str, float] = {}
+        self._empty_prefix_ttl = 300  # 5 minutes
 
     # ── Cache helpers ──────────────────────────────────────────────
 
@@ -64,6 +76,39 @@ class FoodDatabaseLookupService(FoodDatabaseLookupServicePart2):
             )
             for old_key in sorted_keys[:100]:
                 del self._cache[old_key]
+
+    def _has_empty_prefix(self, query: str) -> Optional[str]:
+        """Return the matching prefix if any recent query that is a prefix
+        of `query` returned 0 override results, else None."""
+        q = (query or "").strip().lower()
+        if len(q) < 3 or not self._empty_override_prefixes:
+            return None
+        now = time.time()
+        expired: List[str] = []
+        hit: Optional[str] = None
+        for prefix, expiry in self._empty_override_prefixes.items():
+            if expiry < now:
+                expired.append(prefix)
+                continue
+            if q != prefix and q.startswith(prefix):
+                hit = prefix
+                break
+        for k in expired:
+            self._empty_override_prefixes.pop(k, None)
+        return hit
+
+    def _mark_empty_prefix(self, query: str) -> None:
+        """Record a query that returned 0 override results so later,
+        longer typed queries with the same prefix can short-circuit."""
+        q = (query or "").strip().lower()
+        if len(q) < 3:
+            return
+        self._empty_override_prefixes[q] = time.time() + self._empty_prefix_ttl
+        # Cap growth — evict oldest if we go over ~500 empty prefixes.
+        if len(self._empty_override_prefixes) > 500:
+            cutoff = time.time() + self._empty_prefix_ttl * 0.5
+            for k in [k for k, v in self._empty_override_prefixes.items() if v < cutoff][:100]:
+                self._empty_override_prefixes.pop(k, None)
 
     # ── Overrides ──────────────────────────────────────────────────
 
@@ -101,6 +146,19 @@ class FoodDatabaseLookupService(FoodDatabaseLookupServicePart2):
         Each phase short-circuits if enough results are found, avoiding the expensive
         later phases. Uses per-phase timeouts with a global 3.0s deadline.
         """
+        # Prefix-miss short-circuit. If the user typed "little italy pizza"
+        # seconds ago and got 0 results, "little italy pizza slice" has
+        # no chance of matching more — skip all 4 DB phases. Saves 4.5s
+        # per progressive keystroke.
+        if query:
+            hit = self._has_empty_prefix(query)
+            if hit is not None:
+                logger.info(
+                    f"[FoodDB] Override search skipped for '{query}' — "
+                    f"prefix '{hit}' recently returned 0 results"
+                )
+                return []
+
         try:
             sb = get_supabase()
 
@@ -139,7 +197,13 @@ class FoodDatabaseLookupService(FoodDatabaseLookupServicePart2):
 
             results: List[Dict] = []
             seen_ids: set = set()
-            deadline = time.monotonic() + 3.0
+            # Global deadline for all 4 phases. Bumped from 3.0 → 4.5s so
+            # multi-word queries ("little italy pizza slice") don't burn
+            # Phase 1 + 1.5 budgets and then have nothing left for Phase 2
+            # (trigram), which is where the useful fuzzy matches actually
+            # live. Frontend already shows a spinner; an extra 1.5s on
+            # miss is invisible on the happy path.
+            deadline = time.monotonic() + 4.5
 
             # Skip expensive fuzzy phases for very short queries (trigrams need ≥3 chars).
             # Also skip for single-token queries under 5 chars with no space — these
@@ -166,7 +230,10 @@ class FoodDatabaseLookupService(FoodDatabaseLookupServicePart2):
             try:
                 remaining = deadline - time.monotonic()
                 if not skip_exact and remaining > 0.1:
-                    p1_budget = min(0.5, remaining)
+                    # Phase 1 is cheap when the index hits. Tight budget
+                    # (down from 0.5s → 0.35s) so a missing exact match
+                    # doesn't eat into the trigram budget below.
+                    p1_budget = min(0.35, remaining)
 
                     async def _phase1():
                         async with sb.get_managed_session() as session:
@@ -200,14 +267,23 @@ class FoodDatabaseLookupService(FoodDatabaseLookupServicePart2):
                                 LIMIT :lim
                             """), params)
 
-                    phase1 = await asyncio.wait_for(_phase1(), timeout=p1_budget)
+                    # Rely on Postgres-side statement_timeout (set above)
+                    # rather than asyncio.wait_for. wait_for cancels the
+                    # asyncio task mid-flight, which spawned an asyncpg
+                    # `Connection._cancel` coroutine nobody awaited and
+                    # logged "coroutine was never awaited" on every
+                    # timeout. Letting PG cancel the statement raises a
+                    # clean SQLAlchemyError instead.
+                    phase1 = await _phase1()
                     for row in phase1.fetchall():
                         rd = dict(row._mapping)
                         if rd['id'] not in seen_ids:
                             seen_ids.add(rd['id'])
                             results.append(rd)
-            except asyncio.TimeoutError:
-                logger.warning(f"[FoodDB] Phase 1 (exact) timed out for '{query}'")
+            except SQLAlchemyError as e:
+                # Includes query-cancelled-by-timeout from SET LOCAL
+                # statement_timeout. No stack trace — expected phase miss.
+                logger.warning(f"[FoodDB] Phase 1 (exact) cancelled/failed for '{query}': {type(e).__name__}")
             except Exception as e:
                 logger.warning(f"[FoodDB] Phase 1 failed for '{query}': {e}")
 
@@ -259,7 +335,10 @@ class FoodDatabaseLookupService(FoodDatabaseLookupServicePart2):
                         # clause here. If Phase 1 timed out, the exact row would
                         # otherwise be locked out of every subsequent phase. We
                         # rely on the `seen_ids` set below to dedupe instead.
-                        p15_budget = min(0.5, remaining)
+                        # Budget widened 0.5 → 0.6s — token-AND ILIKE on the GIN
+                        # trigram index is usually ~25ms but can spike on cold
+                        # pool + multi-word queries.
+                        p15_budget = min(0.6, remaining)
 
                         async def _phase15():
                             async with sb.get_managed_session() as session:
@@ -279,14 +358,14 @@ class FoodDatabaseLookupService(FoodDatabaseLookupServicePart2):
                                     LIMIT :lim
                                 """), p15_params)
 
-                        phase15 = await asyncio.wait_for(_phase15(), timeout=p15_budget)
+                        phase15 = await _phase15()
                         for row in phase15.fetchall():
                             rd = dict(row._mapping)
                             if rd['id'] not in seen_ids:
                                 seen_ids.add(rd['id'])
                                 results.append(rd)
-                except asyncio.TimeoutError:
-                    logger.warning(f"[FoodDB] Phase 1.5 (token-AND) timed out for '{query}'")
+                except SQLAlchemyError as e:
+                    logger.warning(f"[FoodDB] Phase 1.5 (token-AND) cancelled/failed for '{query}': {type(e).__name__}")
                 except Exception as e:
                     logger.warning(f"[FoodDB] Phase 1.5 failed for '{query}': {e}")
 
@@ -299,7 +378,10 @@ class FoodDatabaseLookupService(FoodDatabaseLookupServicePart2):
                     remaining = deadline - time.monotonic()
                     if remaining > 0.1:
                         p2_params = {**params, "lim": limit - len(results)}
-                        p2_budget = min(1.8, remaining)
+                        # Phase 2 is where the useful fuzzy matches live;
+                        # widened 1.8 → 2.5s now that the global deadline
+                        # is 4.5s and earlier phases released budget.
+                        p2_budget = min(2.5, remaining)
 
                         async def _phase2():
                             async with sb.get_managed_session() as sess:
@@ -323,14 +405,14 @@ class FoodDatabaseLookupService(FoodDatabaseLookupServicePart2):
                                     LIMIT :lim
                                 """), p2_params)
 
-                        phase2 = await asyncio.wait_for(_phase2(), timeout=p2_budget)
+                        phase2 = await _phase2()
                         for row in phase2.fetchall():
                             rd = dict(row._mapping)
                             if rd['id'] not in seen_ids:
                                 seen_ids.add(rd['id'])
                                 results.append(rd)
-                except asyncio.TimeoutError:
-                    logger.warning(f"[FoodDB] Phase 2 (trigram) timed out for '{query}'")
+                except SQLAlchemyError as e:
+                    logger.warning(f"[FoodDB] Phase 2 (trigram) cancelled/failed for '{query}': {type(e).__name__}")
                 except Exception as e:
                     logger.warning(f"[FoodDB] Phase 2 failed for '{query}': {e}")
 
@@ -367,18 +449,24 @@ class FoodDatabaseLookupService(FoodDatabaseLookupServicePart2):
                                     LIMIT :lim
                                 """), p3_params)
 
-                        phase3 = await asyncio.wait_for(_phase3(), timeout=p3_budget)
+                        phase3 = await _phase3()
                         for row in phase3.fetchall():
                             rd = dict(row._mapping)
                             if rd['id'] not in seen_ids:
                                 seen_ids.add(rd['id'])
                                 results.append(rd)
-                except asyncio.TimeoutError:
-                    logger.warning(f"[FoodDB] Phase 3 (ILIKE) timed out for '{query}'")
+                except SQLAlchemyError as e:
+                    logger.warning(f"[FoodDB] Phase 3 (ILIKE) cancelled/failed for '{query}': {type(e).__name__}")
                 except Exception as e:
                     logger.warning(f"[FoodDB] Phase 3 failed for '{query}': {e}")
 
-            return await self._finalize_override_results(results, query, limit, region)
+            finalized = await self._finalize_override_results(results, query, limit, region)
+            # If the full 4-phase sweep produced nothing, remember the
+            # query string so longer queries with the same prefix can
+            # short-circuit above.
+            if query and not finalized:
+                self._mark_empty_prefix(query)
+            return finalized
 
         except Exception as e:
             logger.warning(f"[FoodDB] Override DB search failed: {e}", exc_info=True)

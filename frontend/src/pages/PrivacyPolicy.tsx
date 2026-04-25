@@ -191,7 +191,7 @@ export default function PrivacyPolicy() {
               </ul>
               <p className="mt-4 text-[13px] text-[var(--color-text-muted)]">
                 You can request a copy of the Standard Contractual Clauses in force with any of
-                these sub-processors by emailing <a className="text-emerald-400 hover:underline" href="mailto:privacy@fitwiz.app">privacy@fitwiz.app</a>.
+                these sub-processors by emailing <a className="text-emerald-400 hover:underline" href="mailto:privacy@fitwiz.us">privacy@fitwiz.us</a>.
               </p>
             </div>
 
@@ -265,7 +265,7 @@ export default function PrivacyPolicy() {
                 </li>
                 <li>
                   <strong className="text-[var(--color-text)]">By email:</strong>{' '}
-                  <a href="mailto:privacy@fitwiz.app" className="text-emerald-400 hover:underline">privacy@fitwiz.app</a>.
+                  <a href="mailto:privacy@fitwiz.us" className="text-emerald-400 hover:underline">privacy@fitwiz.us</a>.
                 </li>
               </ul>
               <p className="mt-4">We respond within 30 days as required by GDPR Art. 12(3) and CCPA &sect; 1798.130.</p>
@@ -281,11 +281,11 @@ export default function PrivacyPolicy() {
               <p className="mb-4">
                 If you are in the EEA, UK, or Switzerland, our designated Data Protection Officer
                 can be reached at{' '}
-                <a href="mailto:dpo@fitwiz.app" className="text-emerald-400 hover:underline">dpo@fitwiz.app</a>.
+                <a href="mailto:dpo@fitwiz.us" className="text-emerald-400 hover:underline">dpo@fitwiz.us</a>.
                 Our Art. 27 representatives are reachable at{' '}
-                <a href="mailto:eu-rep@fitwiz.app" className="text-emerald-400 hover:underline">eu-rep@fitwiz.app</a>{' '}
+                <a href="mailto:eu-rep@fitwiz.us" className="text-emerald-400 hover:underline">eu-rep@fitwiz.us</a>{' '}
                 (EU) and{' '}
-                <a href="mailto:uk-rep@fitwiz.app" className="text-emerald-400 hover:underline">uk-rep@fitwiz.app</a>{' '}
+                <a href="mailto:uk-rep@fitwiz.us" className="text-emerald-400 hover:underline">uk-rep@fitwiz.us</a>{' '}
                 (UK).
               </p>
               <p>
@@ -333,7 +333,7 @@ export default function PrivacyPolicy() {
               </p>
               <p>
                 If you believe a child under 16 has provided us with personal data, contact{' '}
-                <a href="mailto:privacy@fitwiz.app" className="text-emerald-400 hover:underline">privacy@fitwiz.app</a>{' '}
+                <a href="mailto:privacy@fitwiz.us" className="text-emerald-400 hover:underline">privacy@fitwiz.us</a>{' '}
                 and we will delete it and the associated account.
               </p>
             </div>
@@ -376,15 +376,15 @@ export default function PrivacyPolicy() {
               </h2>
               <p className="mb-2"><strong>Data controller:</strong> FitWiz, Inc. (Delaware, USA)</p>
               <p className="mb-2"><strong>Privacy inquiries:</strong>{' '}
-                <a href="mailto:privacy@fitwiz.app" className="text-emerald-400 hover:underline">privacy@fitwiz.app</a>
+                <a href="mailto:privacy@fitwiz.us" className="text-emerald-400 hover:underline">privacy@fitwiz.us</a>
               </p>
               <p className="mb-2"><strong>Data Protection Officer:</strong>{' '}
-                <a href="mailto:dpo@fitwiz.app" className="text-emerald-400 hover:underline">dpo@fitwiz.app</a>
+                <a href="mailto:dpo@fitwiz.us" className="text-emerald-400 hover:underline">dpo@fitwiz.us</a>
               </p>
               <p className="mb-2"><strong>EU / UK Art. 27 Representatives:</strong>{' '}
-                <a href="mailto:eu-rep@fitwiz.app" className="text-emerald-400 hover:underline">eu-rep@fitwiz.app</a>{' '}
+                <a href="mailto:eu-rep@fitwiz.us" className="text-emerald-400 hover:underline">eu-rep@fitwiz.us</a>{' '}
                 &middot;{' '}
-                <a href="mailto:uk-rep@fitwiz.app" className="text-emerald-400 hover:underline">uk-rep@fitwiz.app</a>
+                <a href="mailto:uk-rep@fitwiz.us" className="text-emerald-400 hover:underline">uk-rep@fitwiz.us</a>
               </p>
               <p><strong>General support:</strong>{' '}
                 <a href="mailto:support@fitwiz.us" className="text-emerald-400 hover:underline">support@fitwiz.us</a>

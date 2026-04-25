@@ -29,7 +29,10 @@ import '../../data/models/user_xp.dart';
 import 'beast_mode_unlock_dialog.dart';
 import 'coming_soon_screen.dart';
 import 'meal_reminders_settings_screen.dart';
+import '../../core/providers/subscription_provider.dart';
 import '../../core/services/posthog_service.dart';
+import 'package:purchases_flutter/purchases_flutter.dart';
+import 'package:sentry_flutter/sentry_flutter.dart';
 import 'pages/workout_ui_mode_sheet.dart';
 import 'sections/sections.dart';
 import 'widgets/widgets.dart';
@@ -325,6 +328,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   int _versionTapCount = 0;
   DateTime? _lastVersionTap;
 
+  // Guards against concurrent double-tap on Delete Account.
+  bool _isDeleting = false;
+
   @override
   void initState() {
     super.initState();
@@ -423,6 +429,82 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     showBeastModeUnlockDialog(context, () {});
   }
 
+  /// Build the right-hand label for the Subscription settings row. Priority:
+  ///   1. Lifetime → "Lifetime · Never expires"
+  ///   2. Free trial → "Trial · Yearly · N days left"
+  ///   3. Paid tier → "<Tier> Yearly · Renews in N days" (or just
+  ///      "<Tier> Yearly" while the renewal endpoint is still loading)
+  ///   4. Free → "Free"
+  String _composeSubscriptionRowValue(
+    SubscriptionState subState,
+    AsyncValue<UpcomingRenewal> renewalAsync,
+  ) {
+    if (subState.tier == SubscriptionTier.lifetime) {
+      return 'Lifetime · Never expires';
+    }
+
+    final cadenceWord = switch (subState.billingPeriod) {
+      BillingPeriod.monthly => 'Monthly',
+      BillingPeriod.yearly => 'Yearly',
+      BillingPeriod.lifetime => 'Lifetime',
+      BillingPeriod.unknown => null,
+    };
+
+    if (subState.isTrialActive && subState.trialEndDate != null) {
+      final remaining = subState.trialEndDate!.difference(DateTime.now());
+      final cadencePart = cadenceWord == null ? '' : '$cadenceWord trial · ';
+      if (remaining.isNegative) return 'Trial ended';
+      if (remaining.inDays >= 1) {
+        final d = remaining.inDays;
+        return cadenceWord == null
+            ? 'Trial · $d ${d == 1 ? 'day' : 'days'} left'
+            : '$cadencePart$d ${d == 1 ? 'day' : 'days'} left';
+      }
+      if (remaining.inHours >= 1) {
+        final h = remaining.inHours;
+        return cadenceWord == null
+            ? 'Trial · $h ${h == 1 ? 'hour' : 'hours'} left'
+            : '$cadencePart$h ${h == 1 ? 'hour' : 'hours'} left';
+      }
+      return cadenceWord == null
+          ? 'Trial · ends soon'
+          : '${cadencePart}ends soon';
+    }
+
+    if (subState.tier == SubscriptionTier.free) return 'Free';
+
+    final tierName = switch (subState.tier) {
+      SubscriptionTier.premium => 'Premium',
+      SubscriptionTier.premiumPlus => 'Premium Plus',
+      SubscriptionTier.lifetime => 'Lifetime',
+      SubscriptionTier.free => 'Free',
+    };
+    final tierWithCadence =
+        cadenceWord == null ? tierName : '$tierName $cadenceWord';
+
+    return renewalAsync.when(
+      data: (r) {
+        // Backend may not have a record yet for brand-new subscribers — fall
+        // back to the in-memory subscriptionEndDate from RevenueCat.
+        final daysFromBackend = r.daysUntilRenewal;
+        if (daysFromBackend != null && daysFromBackend > 0) {
+          return '$tierWithCadence · Renews in $daysFromBackend ${daysFromBackend == 1 ? 'day' : 'days'}';
+        }
+        final endDate = subState.subscriptionEndDate;
+        if (endDate != null) {
+          final days = endDate.difference(DateTime.now()).inDays;
+          if (days >= 1) {
+            return '$tierWithCadence · Renews in $days ${days == 1 ? 'day' : 'days'}';
+          }
+          if (days == 0) return '$tierWithCadence · Renews today';
+        }
+        return tierWithCadence;
+      },
+      loading: () => tierWithCadence,
+      error: (_, __) => tierWithCadence,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -441,12 +523,16 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     final gymProfile = ref.watch(activeGymProfileProvider);
     final gymProfileName = gymProfile?.name ?? 'Default';
 
-    // Subscription value
+    // Subscription value — composed from the in-memory subscription state
+    // (authoritative for tier + trial via RevenueCat) plus the billing
+    // endpoint (authoritative for next renewal date / amount). Shows trial
+    // countdown for trialing users, "renews in N days" for active subs, and
+    // "Lifetime" / "Free" for the terminal cases.
+    final subscriptionState = ref.watch(subscriptionProvider);
     final renewalAsync = ref.watch(upcomingRenewalProvider);
-    final subscriptionValue = renewalAsync.when(
-      data: (r) => r.hasUpcomingRenewal ? (r.tier ?? 'Active') : 'Free',
-      loading: () => 'Loading...',
-      error: (_, __) => 'Manage',
+    final subscriptionValue = _composeSubscriptionRowValue(
+      subscriptionState,
+      renewalAsync,
     );
 
     // Training split + days display

@@ -274,45 +274,6 @@ class FoldableWorkoutRightPane extends ConsumerWidget {
                 fontSize: 16,
                 showZoneLabel: false,
               ),
-              const SizedBox(width: 8),
-              // Info pill
-              if (onInfoTap != null)
-                GestureDetector(
-                  onTap: () {
-                    HapticFeedback.lightImpact();
-                    onInfoTap!();
-                  },
-                  child: Container(
-                    height: WorkoutDesign.chipHeight,
-                    padding: const EdgeInsets.symmetric(horizontal: 12),
-                    decoration: BoxDecoration(
-                      color: isDark ? WorkoutDesign.surface : Colors.white,
-                      borderRadius: BorderRadius.circular(WorkoutDesign.radiusRound),
-                      border: Border.all(
-                        color: isDark ? WorkoutDesign.border : WorkoutDesign.borderLight,
-                        width: 1,
-                      ),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          Icons.info_outline_rounded,
-                          size: 14,
-                          color: isDark ? WorkoutDesign.textPrimary : Colors.grey.shade800,
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          'Info',
-                          style: WorkoutDesign.chipStyle.copyWith(
-                            fontSize: 12,
-                            color: isDark ? WorkoutDesign.textPrimary : Colors.grey.shade800,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
             ],
           ),
         ),

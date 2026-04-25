@@ -6,6 +6,8 @@ import '../../../data/models/nutrition.dart';
 import '../../../data/repositories/nutrition_repository.dart';
 import '../../../data/services/api_client.dart';
 import '../../../data/services/food_search_service.dart' as search;
+import '../../../data/services/last_used_service.dart';
+import '../../../widgets/common/last_used_badge.dart';
 import '../../../data/providers/xp_provider.dart';
 import '../../../data/repositories/auth_repository.dart';
 import '../../../core/constants/country_codes.dart';

@@ -8,7 +8,7 @@ import 'package:flutter/services.dart';
 
 import '../../../core/constants/app_colors.dart';
 
-/// Quick action buttons for the active workout screen (video + hydration + note)
+/// Quick action buttons for the active workout screen (instructions + video + hydration + note)
 class HydrationQuickActions extends StatelessWidget {
   /// Callback when the hydration button is tapped
   final VoidCallback onTap;
@@ -19,11 +19,15 @@ class HydrationQuickActions extends StatelessWidget {
   /// Callback when the video button is tapped (optional)
   final VoidCallback? onVideoTap;
 
+  /// Callback when the instructions (info) button is tapped (optional)
+  final VoidCallback? onInstructionsTap;
+
   const HydrationQuickActions({
     super.key,
     required this.onTap,
     this.onNoteTap,
     this.onVideoTap,
+    this.onInstructionsTap,
   });
 
   @override
@@ -40,38 +44,53 @@ class HydrationQuickActions extends StatelessWidget {
           top: BorderSide(color: borderColor, width: 1),
         ),
       ),
-      child: Row(
-        children: [
-          // Video button (if callback provided) - vibrant purple/accent
-          if (onVideoTap != null) ...[
-            _buildActionButton(
-              icon: Icons.play_circle_outline,
-              label: 'Video',
-              color: const Color(0xFF8B5CF6), // Vibrant purple
-              onTap: onVideoTap!,
-            ),
-            const SizedBox(width: 10),
-          ],
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        physics: const BouncingScrollPhysics(),
+        child: Row(
+          children: [
+            // Instructions button (info) - vibrant green
+            if (onInstructionsTap != null) ...[
+              _buildActionButton(
+                icon: Icons.menu_book_rounded,
+                label: 'Instructions',
+                color: const Color(0xFF10B981), // Vibrant emerald
+                onTap: onInstructionsTap!,
+              ),
+              const SizedBox(width: 10),
+            ],
 
-          // Hydration button - vibrant blue
-          _buildActionButton(
-            icon: Icons.water_drop,
-            label: 'Log Drink',
-            color: AppColors.quickActionWater, // Vibrant blue
-            onTap: onTap,
-          ),
+            // Video button (if callback provided) - vibrant purple/accent
+            if (onVideoTap != null) ...[
+              _buildActionButton(
+                icon: Icons.play_circle_outline,
+                label: 'Video',
+                color: const Color(0xFF8B5CF6), // Vibrant purple
+                onTap: onVideoTap!,
+              ),
+              const SizedBox(width: 10),
+            ],
 
-          // Note button (if callback provided) - vibrant amber/yellow
-          if (onNoteTap != null) ...[
-            const SizedBox(width: 10),
+            // Hydration button - vibrant blue
             _buildActionButton(
-              icon: Icons.sticky_note_2_outlined,
-              label: 'Note',
-              color: const Color(0xFFF59E0B), // Vibrant amber
-              onTap: onNoteTap!,
+              icon: Icons.water_drop,
+              label: 'Log Drink',
+              color: AppColors.quickActionWater, // Vibrant blue
+              onTap: onTap,
             ),
+
+            // Note button (if callback provided) - vibrant amber/yellow
+            if (onNoteTap != null) ...[
+              const SizedBox(width: 10),
+              _buildActionButton(
+                icon: Icons.sticky_note_2_outlined,
+                label: 'Note',
+                color: const Color(0xFFF59E0B), // Vibrant amber
+                onTap: onNoteTap!,
+              ),
+            ],
           ],
-        ],
+        ),
       ),
     );
   }

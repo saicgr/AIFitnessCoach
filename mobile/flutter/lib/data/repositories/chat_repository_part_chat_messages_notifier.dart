@@ -19,6 +19,10 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
   final bool Function() _isOnline;
   final SoundPreferencesNotifier Function() _getSoundPrefs;
   final AudioPreferencesNotifier Function() _getAudioPrefs;
+  // Refresh /today after AI-driven workout completions so the home carousel +
+  // week-strip checkmark flip immediately, instead of staying on the
+  // pre-completion snapshot until the next manual refresh.
+  final void Function() _refreshTodayWorkout;
   bool _isLoading = false;
   Future<void>? _loadHistoryFuture;
 
@@ -69,7 +73,7 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
     'train like a fighter', 'want to fight',
   ];
 
-  ChatMessagesNotifier(this._repository, this._apiClient, this._workoutsNotifier, this._workoutRepository, this._user, this._themeNotifier, this._router, this._hydrationNotifier, this._nutritionNotifier, this._getAISettings, this._setAIGenerating, this._getUnifiedContext, this._offlineCoach, this._isOnline, this._getSoundPrefs, this._getAudioPrefs)
+  ChatMessagesNotifier(this._repository, this._apiClient, this._workoutsNotifier, this._workoutRepository, this._user, this._themeNotifier, this._router, this._hydrationNotifier, this._nutritionNotifier, this._getAISettings, this._setAIGenerating, this._getUnifiedContext, this._offlineCoach, this._isOnline, this._getSoundPrefs, this._getAudioPrefs, this._refreshTodayWorkout)
       : super(const AsyncValue.data([])) {
     _restoreFromCache();
   }
@@ -1107,8 +1111,10 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
     if (workoutId != null) {
       // Mark the workout as complete
       await _workoutRepository.completeWorkout(workoutId.toString());
-      // Refresh workouts list
+      // Refresh workouts list AND today provider so the hero carousel +
+      // week-strip checkmark flip immediately for the just-completed workout.
       await _workoutsNotifier.refresh();
+      _refreshTodayWorkout();
       debugPrint('✅ [Chat] Workout marked as complete');
     }
   }

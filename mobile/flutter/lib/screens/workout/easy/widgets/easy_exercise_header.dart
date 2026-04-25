@@ -75,17 +75,30 @@ class EasyExerciseHeader extends ConsumerWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             const SizedBox(height: 8),
-            Text(
-              exercise.name,
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.w600,
-                color: textColor,
-                height: 1.1,
+            // Single-line auto-shrinking title. Starts at 24pt and
+            // scales down to fit the row width — long names like "Cable
+            // Standing Up Straight Crossovers" stay on ONE line instead
+            // of wrapping and stealing ~26px from the focal column
+            // budget below. Tap-to-see-full-name is still available via
+            // the info button on the right of this header.
+            SizedBox(
+              height: 28,
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                alignment: Alignment.center,
+                child: Text(
+                  exercise.name,
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.w600,
+                    color: textColor,
+                    height: 1.1,
+                  ),
+                  textAlign: TextAlign.center,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
-              textAlign: TextAlign.center,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
             ),
             const SizedBox(height: 6),
             Row(

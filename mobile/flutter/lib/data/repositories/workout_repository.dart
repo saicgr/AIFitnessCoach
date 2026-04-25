@@ -13,6 +13,7 @@ import '../models/workout_generation_params.dart';
 import '../models/parsed_exercise.dart';
 import '../models/workout_screen_summary.dart';
 import '../services/api_client.dart';
+import '../services/data_cache_service.dart';
 import 'auth_repository.dart';
 import '../../utils/tz.dart';
 

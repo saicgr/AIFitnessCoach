@@ -9,14 +9,14 @@ under `frontend/public/.well-known/`** and are deployed automatically on
 every `git push` via Vite + Vercel. No separate server hosting step.
 
 Web host: **`fitwiz.us`** (Vercel). Bundle / package id remains
-`com.fitwiz.app` — do NOT conflate the two.
+`com.aifitnesscoach.app` — do NOT conflate the two.
 
 ## What you still need to do before production
 
 1. **Replace `REPLACE_WITH_TEAM_ID`** in
    `frontend/public/.well-known/apple-app-site-association`:
    - Get the 10-char Apple Team ID from App Store Connect → Membership.
-   - The resulting `appIDs` value looks like `ABC123DEFG.com.fitwiz.app`.
+   - The resulting `appIDs` value looks like `ABC123DEFG.com.aifitnesscoach.app`.
 
 2. **Replace the two `REPLACE_WITH_*_SHA256`** lines in
    `frontend/public/.well-known/assetlinks.json`:
@@ -38,7 +38,7 @@ Web host: **`fitwiz.us`** (Vercel). Bundle / package id remains
    - Apple: https://branch.io/resources/aasa-validator/ → enter `fitwiz.us`
    - Google: https://developers.google.com/digital-asset-links/tools/generator
      → enter host `fitwiz.us`, relation `delegate_permission/common.handle_all_urls`,
-     package `com.fitwiz.app`.
+     package `com.aifitnesscoach.app`.
 
 5. **TestFlight / Play internal test** — tap a share link in iMessage /
    WhatsApp → app should open directly to the home flow with the code

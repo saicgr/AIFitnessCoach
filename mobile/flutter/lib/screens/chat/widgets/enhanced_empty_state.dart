@@ -22,6 +22,13 @@ class EnhancedEmptyState extends StatelessWidget {
     ('High-protein meal prep', Icons.lunch_dining_outlined, Color(0xFFA855F7)),
     ('Should I work out tired?', Icons.bedtime_outlined, Color(0xFF3B82F6)),
     ('Lower back pain help', Icons.healing_outlined, Color(0xFFEF4444)),
+    // Reports & Share — these prompts trigger the GENERATE_SHARE_ARTIFACT
+    // intent in the coach agent, which mints a fitwiz.us link inline.
+    ("Share today's workout", Icons.ios_share_rounded, Color(0xFF0EA5E9)),
+    ("Share this week's plan", Icons.calendar_view_week_rounded, Color(0xFF8B5CF6)),
+    ('Share my PRs this month', Icons.emoji_events_outlined, Color(0xFFF59E0B)),
+    ('YTD workout summary', Icons.summarize_outlined, Color(0xFF10B981)),
+    ('Share my 1RM progress', Icons.trending_up_rounded, Color(0xFFEC4899)),
   ];
 
   @override

@@ -409,10 +409,7 @@ class _SubscriptionManagementScreenState
   }
 
   Widget _buildTrialBadge(DateTime? trialEndDate) {
-    final daysLeft = trialEndDate != null
-        ? trialEndDate.difference(DateTime.now()).inDays
-        : 0;
-
+    final label = _trialCountdownLabel(trialEndDate);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
@@ -425,11 +422,100 @@ class _SubscriptionManagementScreenState
           Icon(Icons.timer, size: 14, color: AppColors.orange),
           const SizedBox(width: 4),
           Text(
-            '$daysLeft days left in trial',
+            label,
             style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w600,
               color: AppColors.orange,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Post-trial charge copy. Combines the renewal payload (when present)
+  /// with the billing cadence so the user sees "Then $49.99 USD/year unless
+  /// canceled" instead of a bare amount.
+  String _composeTrialChargeCopy(
+    UpcomingRenewal? renewal,
+    bool hasChargeInfo,
+    BillingPeriod billingPeriod,
+  ) {
+    final perSuffix = switch (billingPeriod) {
+      BillingPeriod.yearly => '/year',
+      BillingPeriod.monthly => '/month',
+      _ => '',
+    };
+    if (hasChargeInfo && renewal != null) {
+      return 'Then \$${renewal.amount.toStringAsFixed(2)} ${renewal.currency}$perSuffix unless canceled';
+    }
+    final cadenceWord = switch (billingPeriod) {
+      BillingPeriod.yearly => 'yearly',
+      BillingPeriod.monthly => 'monthly',
+      _ => null,
+    };
+    if (cadenceWord != null) {
+      return 'Auto-renews on the $cadenceWord plan unless canceled';
+    }
+    return 'Auto-renews unless canceled in ${Platform.isIOS ? 'App Store' : 'Play Store'}';
+  }
+
+  /// Compact countdown copy for chips and list-row subtitles. Drops to hours
+  /// when less than a day remains so the user sees urgency on the last day
+  /// instead of a sticky "0 days left".
+  String _trialCountdownLabel(DateTime? trialEndDate) {
+    if (trialEndDate == null) return 'Trial active';
+    final remaining = trialEndDate.difference(DateTime.now());
+    if (remaining.isNegative) return 'Trial ended';
+    if (remaining.inDays >= 1) {
+      final d = remaining.inDays;
+      return '$d ${d == 1 ? 'day' : 'days'} left in trial';
+    }
+    if (remaining.inHours >= 1) {
+      final h = remaining.inHours;
+      return '$h ${h == 1 ? 'hour' : 'hours'} left in trial';
+    }
+    final m = remaining.inMinutes;
+    if (m >= 1) return '$m ${m == 1 ? 'minute' : 'minutes'} left in trial';
+    return 'Trial ends in seconds';
+  }
+
+  /// Small pill that names the billing cadence ("Monthly" / "Yearly" /
+  /// "Lifetime"). Rendered next to the tier so the user always knows whether
+  /// they're on a recurring sub and which one — independent of countdown copy.
+  Widget _buildBillingPeriodBadge(BillingPeriod period) {
+    final label = period.displayName;
+    if (label.isEmpty) return const SizedBox.shrink();
+
+    final color = period == BillingPeriod.lifetime
+        ? AppColors.purple
+        : AppColors.cyan;
+    final icon = period == BillingPeriod.lifetime
+        ? Icons.all_inclusive
+        : (period == BillingPeriod.yearly
+            ? Icons.event_repeat
+            : Icons.calendar_month);
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.15),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 11, color: color),
+          const SizedBox(width: 4),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+              color: color,
+              letterSpacing: 0.3,
             ),
           ),
         ],
@@ -568,16 +654,6 @@ class _SubscriptionManagementScreenState
       ),
       child: Column(
         children: [
-          _buildQuickLinkTile(
-            icon: Icons.history,
-            title: 'Subscription History',
-            subtitle: 'View all past transactions',
-            onTap: () => context.push('/subscription-history'),
-            textPrimary: textPrimary,
-            textSecondary: textSecondary,
-            showDivider: true,
-            cardBorder: cardBorder,
-          ),
           _buildQuickLinkTile(
             icon: Icons.money_off,
             title: 'Request Refund',

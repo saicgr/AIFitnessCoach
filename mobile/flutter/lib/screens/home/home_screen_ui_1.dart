@@ -321,7 +321,6 @@ extension _HomeScreenStateUI1 on _HomeScreenState {
       TileType.streakCounter,
       TileType.upcomingFeatures,
       TileType.weeklyProgress, // Deprecated
-      TileType.fasting, // COMING SOON: hidden pre-launch — remove from this set to re-enable
     };
 
     // Get visible tiles, sorted by order
@@ -346,13 +345,23 @@ extension _HomeScreenStateUI1 on _HomeScreenState {
       return _buildFallbackTilesAsSlivers(context, isDark, todayWorkoutState, isAIGenerating);
     }
 
-    // Define section groups and their tile types
-    // COMING SOON: TileType.fasting removed — re-add when fasting feature launches
-    const nutritionTileTypes = {TileType.caloriesSummary, TileType.macroRings, TileType.nutritionPatterns};
+    // Define section groups and their tile types. Fasting is a nutrition-
+    // adjacent behavior tile (eating windows) so it lives in the Nutrition
+    // section alongside the calorie/macro tiles.
+    const nutritionTileTypes = {
+      TileType.caloriesSummary,
+      TileType.macroRings,
+      TileType.fasting,
+      TileType.nutritionPatterns,
+    };
     const upcomingTiles = {TileType.upcomingWorkouts};
     const insightsTiles = {TileType.aiCoachTip, TileType.personalRecords, TileType.fitnessScore};
     const goalsTiles = {TileType.weeklyGoals, TileType.weekChanges};
-    const trackingTiles = {TileType.habits, TileType.bodyWeight, TileType.achievements, TileType.dailyStats, TileType.quickLogWeight, TileType.quickLogMeasurements, TileType.todayStats, TileType.stepsCounter};
+    // Tracking = passive history/habit cards (heatmaps, achievements, stats).
+    // Quick Log tiles are split into their own Logging section so inline
+    // entry inputs (weight, measurements) aren't buried inside Tracking.
+    const trackingTiles = {TileType.habits, TileType.bodyWeight, TileType.achievements, TileType.dailyStats, TileType.todayStats, TileType.stepsCounter};
+    const loggingTiles = {TileType.quickLogWeight, TileType.quickLogMeasurements};
     const wellnessTiles = {TileType.moodPicker};
 
     // Group tiles by section
@@ -362,6 +371,7 @@ extension _HomeScreenStateUI1 on _HomeScreenState {
     final insightTilesList = <HomeTile>[];
     final goalsTilesList = <HomeTile>[];
     final trackingTilesList = <HomeTile>[];
+    final loggingTilesList = <HomeTile>[];
     final wellnessTilesList = <HomeTile>[];
     final otherTiles = <HomeTile>[];
 
@@ -378,6 +388,8 @@ extension _HomeScreenStateUI1 on _HomeScreenState {
         goalsTilesList.add(tile);
       } else if (trackingTiles.contains(tile.type)) {
         trackingTilesList.add(tile);
+      } else if (loggingTiles.contains(tile.type)) {
+        loggingTilesList.add(tile);
       } else if (wellnessTiles.contains(tile.type)) {
         wellnessTilesList.add(tile);
       } else {
@@ -527,6 +539,16 @@ extension _HomeScreenStateUI1 on _HomeScreenState {
       renderTileGroup(trackingTilesList);
     }
 
+    // Render logging section — inline entry tiles (weight, measurements)
+    // live under their own header so quick-entry inputs don't read as
+    // orphaned cards after Habits.
+    if (loggingTilesList.isNotEmpty) {
+      slivers.add(SliverToBoxAdapter(
+        child: _buildHomeSectionHeader('Log', isDark, icon: Icons.edit_note_outlined),
+      ));
+      renderTileGroup(loggingTilesList);
+    }
+
     // Render wellness section
     if (wellnessTilesList.isNotEmpty) {
       slivers.add(SliverToBoxAdapter(
@@ -637,7 +659,6 @@ extension _HomeScreenStateUI1 on _HomeScreenState {
           TileType.weightTrend,
           TileType.sleepScore,
           TileType.streakCounter,
-          TileType.fasting, // COMING SOON: hidden pre-launch — remove from this set to re-enable
         };
 
         final visibleTiles = layout.tiles
@@ -848,7 +869,6 @@ extension _HomeScreenStateUI1 on _HomeScreenState {
           TileType.weightTrend,
           TileType.sleepScore,
           TileType.streakCounter,
-          TileType.fasting, // COMING SOON: hidden pre-launch — remove from this set to re-enable
         };
 
         // Get visible tiles sorted by order, filtering out deprecated types

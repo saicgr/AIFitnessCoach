@@ -355,12 +355,33 @@ async def update_user(user_id: str, user: UserUpdate,
         # Build update data
         update_data = {}
 
+        # Snapshot the user's existing equipment so we can compare it
+        # against the incoming value and trigger workout invalidation
+        # ONLY when the equipment actually changes. This prevents
+        # spurious regenerations when the same payload is re-sent
+        # (e.g. profile screen issues writes for unrelated fields).
+        equipment_changed = False
+
         if user.fitness_level is not None:
             update_data["fitness_level"] = user.fitness_level
         if user.goals is not None:
             update_data["goals"] = json.loads(user.goals) if isinstance(user.goals, str) else user.goals
         if user.equipment is not None:
-            update_data["equipment"] = json.loads(user.equipment) if isinstance(user.equipment, str) else user.equipment
+            # Dual-write to legacy `equipment` VARCHAR + new `equipment_v2`
+            # text[]. See migrations/2031_users_equipment_array_v2.sql.
+            from api.v1.workouts.utils import equipment_dual_write_payload
+            payload = equipment_dual_write_payload(user.equipment)
+            update_data.update(payload)
+
+            # Detect change: compare normalised new list to the existing
+            # one. We compare on the text[] form which is what the
+            # dual-write helper normalises to (lowercase, dedup).
+            new_eq = sorted(payload["equipment_v2"])
+            existing_eq_raw = existing.get("equipment_v2") or existing.get("equipment")
+            existing_eq = sorted(
+                equipment_dual_write_payload(existing_eq_raw)["equipment_v2"]
+            )
+            equipment_changed = new_eq != existing_eq
         if user.custom_equipment is not None:
             update_data["custom_equipment"] = json.loads(user.custom_equipment) if isinstance(user.custom_equipment, str) else user.custom_equipment
             logger.info(f"Updating custom_equipment for user {user_id}")
@@ -547,6 +568,39 @@ async def update_user(user_id: str, user: UserUpdate,
         if update_data:
             updated = db.update_user(user_id, update_data)
             logger.debug(f"Updated {len(update_data)} fields for user {user_id}")
+
+            # Equipment-change → workout-invalidation hook (plan §D).
+            # When the user's equipment selection actually changed, drop
+            # today's not-yet-started workout + every upcoming pre-cached
+            # workout so the next /today read regenerates them against
+            # the new equipment list. In-progress and completed workouts
+            # are preserved (history is immutable; mid-workout users are
+            # warned via separate UX, not yanked out).
+            if equipment_changed:
+                try:
+                    from api.v1.workouts.utils import (
+                        invalidate_workouts_after_equipment_change,
+                    )
+                    from core.timezone_utils import resolve_timezone
+
+                    tz = resolve_timezone(existing.get("timezone"))
+                    counts = invalidate_workouts_after_equipment_change(
+                        user_id=user_id,
+                        timezone_str=tz,
+                    )
+                    logger.info(
+                        f"[Equipment-Change] User {user_id}: invalidated "
+                        f"{counts['today_deleted']} today + "
+                        f"{counts['upcoming_deleted']} upcoming workouts"
+                    )
+                except Exception as inval_err:
+                    # Never let invalidation failures block the profile
+                    # write — the user-facing change still succeeds.
+                    logger.warning(
+                        f"[Equipment-Change] Invalidation failed for user "
+                        f"{user_id}: {inval_err}",
+                        exc_info=True,
+                    )
 
             # NEW: Create gym profile(s) when onboarding is completed
             if user.onboarding_completed and update_data.get("onboarding_completed"):

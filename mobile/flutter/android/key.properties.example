@@ -1,0 +1,16 @@
+# Template for android/key.properties — copy to key.properties and fill in.
+# The real key.properties is gitignored; never commit secrets.
+#
+# Used by android/app/build.gradle.kts as a fallback when the
+# KEYSTORE_PATH / KEYSTORE_PASSWORD / KEY_ALIAS / KEY_PASSWORD env vars
+# aren't set (e.g. local laptop builds without ~/.zshrc exports).
+#
+# CI/CD should prefer the env var route — set those in GitHub Actions /
+# Codemagic secrets and leave key.properties out of the build runner.
+
+storePassword=<your-keystore-password>
+keyPassword=<your-key-password>
+keyAlias=fitwiz
+# storeFile path is relative to android/app/ (where build.gradle.kts lives).
+# Default keystore location is ../keystores/release.keystore .
+storeFile=../keystores/release.keystore

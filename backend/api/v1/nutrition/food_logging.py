@@ -558,7 +558,12 @@ async def log_food_from_text(body: LogTextRequest, background_tasks: BackgroundT
 
 @router.post("/log-direct", response_model=LogFoodResponse)
 @limiter.limit("10/minute")
-async def log_food_direct(body: LogDirectRequest, request: Request, current_user: dict = Depends(get_current_user)):
+async def log_food_direct(
+    body: LogDirectRequest,
+    request: Request,
+    background_tasks: BackgroundTasks,
+    current_user: dict = Depends(get_current_user),
+):
     """
     Log pre-analyzed food directly without AI processing.
 
@@ -724,6 +729,28 @@ async def log_food_direct(body: LogDirectRequest, request: Request, current_user
         # Invalidate daily summary cache so the next fetch returns fresh data
         from api.v1.nutrition.summaries import invalidate_daily_summary_cache
         await invalidate_daily_summary_cache(body.user_id)
+
+        # Backfill rich scoring (inflammation, NOVA, FODMAP, micronutrients)
+        # for log modes that don't supply them. Runs after the response is
+        # sent so the user sees their meal logged instantly; the Daily card,
+        # Vitamins & Minerals, and Inflammation Score chips fill in within
+        # a few seconds via Gemini analysis seeded with the locked macros.
+        # Skipping when the headline scoring fields are already populated
+        # avoids redundant Gemini calls + cost on text/photo flows that
+        # already produced full scoring upstream. Covers: barcode, saved
+        # foods, quick log, manual entry, restaurant menu re-log, app
+        # screenshot OCR, nutrition label OCR — every mode that funnels
+        # through /log-direct without computing scores upstream.
+        if (
+            food_log_id != "unknown"
+            and body.inflammation_score is None
+            and body.fodmap_rating is None
+            and body.glycemic_load is None
+        ):
+            from services.food_score_enrichment import enrich_food_log_scores
+            background_tasks.add_task(
+                enrich_food_log_scores, food_log_id, body.user_id
+            )
 
         # Restaurant mode has lower confidence due to portion estimation
         confidence_score = 0.6 if body.source_type == "restaurant" else 0.9

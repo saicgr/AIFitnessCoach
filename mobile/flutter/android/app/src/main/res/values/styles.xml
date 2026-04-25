@@ -17,7 +17,9 @@
 
          This Theme is only used starting with V2 of Flutter's Android embedding. -->
     <style name="NormalTheme" parent="@android:style/Theme.Light.NoTitleBar">
-        <item name="android:windowBackground">?android:colorBackground</item>
+        <!-- Brand background (matches @drawable/launch_background's solid
+             layer) so the system→Flutter handoff never flashes white. -->
+        <item name="android:windowBackground">@color/splash_background</item>
     </style>
     <!-- uCrop aspect ratio tabs: bordered pill with ratio label -->
     <style name="ucrop_TextViewCropAspectRatio">

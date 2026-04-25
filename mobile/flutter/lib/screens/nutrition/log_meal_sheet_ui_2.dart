@@ -104,7 +104,15 @@ extension __LogMealSheetStateExt2 on _LogMealSheetState {
                 isDark: isDark,
                 searchQuery: _searchQuery,
                 filter: _browserFilter,
-                onFilterChanged: (filter) => setState(() => _browserFilter = filter),
+                onFilterChanged: (filter) {
+                  setState(() => _browserFilter = filter);
+                  // Persist as the user's last-used browser tab so the next
+                  // meal-log opens directly to it. Fire-and-forget.
+                  // ignore: unawaited_futures
+                  ref
+                      .read(lastUsedServiceProvider)
+                      .set(_kFoodBrowserLastUsedKey, filter.name);
+                },
                 onFoodLogged: () {
                   // Refresh nutrition data
                   ref.read(nutritionProvider.notifier).loadTodaySummary(widget.userId);

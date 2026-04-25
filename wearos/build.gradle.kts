@@ -1,4 +1,9 @@
 // Top-level build file for FitWiz Wear OS
+//
+// MODULE DISABLED 2026-04-25 — see settings.gradle.kts for context.
+// Plugins remain declared so the file stays valid; no project applies them
+// while `include(":app")` is commented out. Re-enable settings.gradle.kts to
+// resume Wear OS development.
 
 plugins {
     id("com.android.application") version "8.2.2" apply false

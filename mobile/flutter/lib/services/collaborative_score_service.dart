@@ -4,6 +4,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../core/constants/api_constants.dart';
 
@@ -31,12 +32,14 @@ class CollaborativeScoreService {
   static const _persistTimestampKey = 'collaborative_scores_timestamp';
   static bool _bundledLoaded = false;
 
-  /// Lightweight Dio instance for population-level popularity endpoint.
-  /// This avoids requiring FlutterSecureStorage / Riverpod context since
-  /// the endpoint returns anonymized aggregate data.
+  /// Dio instance for the /exercise-popularity endpoint. The endpoint is
+  /// authenticated (returns anonymized aggregate data but still behind auth),
+  /// so we attach the live Supabase JWT on every request via an interceptor
+  /// instead of duplicating ApiClient's secure-storage / refresh wiring.
   static Dio? _dio;
   static Dio get _httpClient {
-    _dio ??= Dio(
+    if (_dio != null) return _dio!;
+    final dio = Dio(
       BaseOptions(
         baseUrl: ApiConstants.apiBaseUrl,
         connectTimeout: const Duration(seconds: 10),
@@ -47,6 +50,19 @@ class CollaborativeScoreService {
         },
       ),
     );
+    dio.interceptors.add(
+      InterceptorsWrapper(
+        onRequest: (options, handler) {
+          final session = Supabase.instance.client.auth.currentSession;
+          final token = session?.accessToken;
+          if (token != null && token.isNotEmpty) {
+            options.headers['Authorization'] = 'Bearer $token';
+          }
+          handler.next(options);
+        },
+      ),
+    );
+    _dio = dio;
     return _dio!;
   }
 

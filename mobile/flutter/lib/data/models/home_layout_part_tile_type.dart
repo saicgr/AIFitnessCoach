@@ -758,6 +758,25 @@ class LayoutPreset {
     return tiles.where((t) => activeSet.contains(t)).toList();
   }
 
+  /// Whether this preset is primarily about nutrition. Callers use this to
+  /// auto-switch the home hero tab to Nutrition when the preset is applied,
+  /// so the hero carousel matches the theme the user just chose.
+  bool get isNutritionFocused {
+    // A preset is nutrition-focused when the first active tile (or all of the
+    // non-workout active tiles) is a nutrition tile. Checking the first tile
+    // is sufficient in practice — nutrition presets lead with a nutrition
+    // tile, workout presets lead with nextWorkout.
+    const nutritionTypes = {
+      TileType.caloriesSummary,
+      TileType.macroRings,
+      TileType.fasting,
+      TileType.nutritionPatterns,
+    };
+    final active = activeTiles;
+    if (active.isEmpty) return false;
+    return nutritionTypes.contains(active.first);
+  }
+
   /// Convert to HomeTile list (visible preset tiles + remaining as hidden)
   List<HomeTile> toHomeTiles() {
     final result = <HomeTile>[];

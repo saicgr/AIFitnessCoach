@@ -395,7 +395,8 @@ class _EndFastButtonState extends ConsumerState<_EndFastButton> {
 
 
 
-/// Grid action item with icon and label
+/// Grid action item with icon and label — delegates to the shared
+/// [QuickActionTile] chrome.
 class _GridActionItem extends StatelessWidget {
   final IconData icon;
   final String label;
@@ -413,53 +414,19 @@ class _GridActionItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final textColor = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final cardBg = isDark
-        ? Colors.white.withValues(alpha: 0.08)
-        : Colors.black.withValues(alpha: 0.05);
-    final borderColor = isDark
-        ? Colors.white.withValues(alpha: 0.12)
-        : Colors.black.withValues(alpha: 0.08);
-
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
-          decoration: BoxDecoration(
-            color: cardBg,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: borderColor, width: 1),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                icon,
-                size: 22,
-                color: iconColor,
-              ),
-              const SizedBox(height: 4),
-              Text(
-                label,
-                style: TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w600,
-                  color: textColor,
-                ),
-                textAlign: TextAlign.center,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ],
-          ),
-        ),
-      ),
+    return QuickActionTile(
+      isDark: isDark,
+      onTap: onTap,
+      icon: icon,
+      label: label,
+      iconColor: iconColor,
     );
   }
 }
+
+/// Type alias to the shared widget — keeps the bespoke grid widgets in
+/// this file unchanged while routing every tile through the same chrome.
+typedef _GridActionTile = QuickActionTile;
 
 
 /// Presets shown inside the Custom water picker. Covers sip-sized amounts
@@ -544,58 +511,9 @@ Future<int?> showCustomWaterAmountPicker(
                         padding: const EdgeInsets.symmetric(horizontal: 16),
                         child: Column(
                           children: [
-                            GridView.builder(
-                              shrinkWrap: true,
-                              physics: const NeverScrollableScrollPhysics(),
-                              itemCount: _customWaterPresets.length,
-                              gridDelegate:
-                                  const SliverGridDelegateWithFixedCrossAxisCount(
-                                crossAxisCount: 3,
-                                crossAxisSpacing: 8,
-                                mainAxisSpacing: 8,
-                                childAspectRatio: 1.05,
-                              ),
-                              itemBuilder: (_, i) {
-                                final p = _customWaterPresets[i];
-                                final isSelected = selectedPresetMl == p.ml &&
-                                    !typedValid;
-                                return _CustomWaterPresetTile(
-                                  ml: p.ml,
-                                  label: p.label,
-                                  hint: p.hint,
-                                  icon: p.icon,
-                                  isDark: isDark,
-                                  isSelected: isSelected,
-                                  onTap: () => pick(p.ml),
-                                );
-                              },
-                            ),
-                            const SizedBox(height: 16),
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: Divider(
-                                    color: textMuted.withValues(alpha: 0.2),
-                                  ),
-                                ),
-                                Padding(
-                                  padding: const EdgeInsets.symmetric(horizontal: 8),
-                                  child: Text(
-                                    'or type exact ml',
-                                    style: TextStyle(
-                                      fontSize: 11,
-                                      color: textMuted,
-                                    ),
-                                  ),
-                                ),
-                                Expanded(
-                                  child: Divider(
-                                    color: textMuted.withValues(alpha: 0.2),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 12),
+                            // Exact-ml input first — typing should be the
+                            // primary affordance for users who already know
+                            // the amount they want to log.
                             TextField(
                               controller: controller,
                               keyboardType: const TextInputType.numberWithOptions(),
@@ -645,6 +563,58 @@ Future<int?> showCustomWaterAmountPicker(
                                   ),
                                 ),
                               ),
+                            const SizedBox(height: 16),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: Divider(
+                                    color: textMuted.withValues(alpha: 0.2),
+                                  ),
+                                ),
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                                  child: Text(
+                                    'or pick a preset',
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      color: textMuted,
+                                    ),
+                                  ),
+                                ),
+                                Expanded(
+                                  child: Divider(
+                                    color: textMuted.withValues(alpha: 0.2),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 12),
+                            GridView.builder(
+                              shrinkWrap: true,
+                              physics: const NeverScrollableScrollPhysics(),
+                              itemCount: _customWaterPresets.length,
+                              gridDelegate:
+                                  const SliverGridDelegateWithFixedCrossAxisCount(
+                                crossAxisCount: 3,
+                                crossAxisSpacing: 8,
+                                mainAxisSpacing: 8,
+                                childAspectRatio: 1.05,
+                              ),
+                              itemBuilder: (_, i) {
+                                final p = _customWaterPresets[i];
+                                final isSelected = selectedPresetMl == p.ml &&
+                                    !typedValid;
+                                return _CustomWaterPresetTile(
+                                  ml: p.ml,
+                                  label: p.label,
+                                  hint: p.hint,
+                                  icon: p.icon,
+                                  isDark: isDark,
+                                  isSelected: isSelected,
+                                  onTap: () => pick(p.ml),
+                                );
+                              },
+                            ),
                           ],
                         ),
                       ),
@@ -1028,60 +998,23 @@ class _WaterGridActionItemState extends ConsumerState<_WaterGridActionItem> {
 
   @override
   Widget build(BuildContext context) {
-    final textColor = widget.isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final cardBg = widget.isDark
-        ? Colors.white.withValues(alpha: 0.08)
-        : Colors.black.withValues(alpha: 0.05);
-    final borderColor = widget.isDark
-        ? Colors.white.withValues(alpha: 0.12)
-        : Colors.black.withValues(alpha: 0.08);
-
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: _showWaterSizeOptions,
-        onLongPress: () => _quickAddWater(_defaultWaterMl),
-        borderRadius: BorderRadius.circular(12),
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
-          decoration: BoxDecoration(
-            color: cardBg,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: borderColor, width: 1),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              _isLoading
-                  ? SizedBox(
-                      width: 22,
-                      height: 22,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: quickActionRegistry['water']!.color,
-                      ),
-                    )
-                  : Icon(
-                      Icons.water_drop_outlined,
-                      size: 22,
-                      color: quickActionRegistry['water']!.color,
-                    ),
-              const SizedBox(height: 4),
-              Text(
-                'Water',
-                style: TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w600,
-                  color: textColor,
-                ),
-                textAlign: TextAlign.center,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
+    final waterColor = quickActionRegistry['water']!.color;
+    return _GridActionTile(
+      isDark: widget.isDark,
+      onTap: _showWaterSizeOptions,
+      onLongPress: () => _quickAddWater(_defaultWaterMl),
+      label: 'Water',
+      iconColor: waterColor,
+      iconChild: _isLoading
+          ? SizedBox(
+              width: 18,
+              height: 18,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: waterColor,
               ),
-            ],
-          ),
-        ),
-      ),
+            )
+          : Icon(Icons.water_drop_outlined, size: 18, color: waterColor),
     );
   }
 }
@@ -1095,51 +1028,12 @@ class _MoodGridActionItem extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final textColor = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-
-    final cardBg = isDark
-        ? Colors.white.withValues(alpha: 0.08)
-        : Colors.black.withValues(alpha: 0.05);
-    final borderColor = isDark
-        ? Colors.white.withValues(alpha: 0.12)
-        : Colors.black.withValues(alpha: 0.08);
-
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: () => showMoodPickerSheet(context, ref),
-        borderRadius: BorderRadius.circular(12),
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
-          decoration: BoxDecoration(
-            color: cardBg,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: borderColor, width: 1),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                Icons.mood_outlined,
-                size: 22,
-                color: quickActionRegistry['mood']!.color,
-              ),
-              const SizedBox(height: 4),
-              Text(
-                'Mood',
-                style: TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w600,
-                  color: textColor,
-                ),
-                textAlign: TextAlign.center,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ],
-          ),
-        ),
-      ),
+    return _GridActionTile(
+      isDark: isDark,
+      onTap: () => showMoodPickerSheet(context, ref),
+      label: 'Mood',
+      icon: Icons.mood_outlined,
+      iconColor: quickActionRegistry['mood']!.color,
     );
   }
 }
@@ -1153,58 +1047,19 @@ class _WeightGridActionItem extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final textColor = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-
-    final cardBg = isDark
-        ? Colors.white.withValues(alpha: 0.08)
-        : Colors.black.withValues(alpha: 0.05);
-    final borderColor = isDark
-        ? Colors.white.withValues(alpha: 0.12)
-        : Colors.black.withValues(alpha: 0.08);
-
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: () {
-          HapticService.light();
-          showLogWeightSheet(context, ref);
-        },
-        onLongPress: () {
-          HapticService.light();
-          context.push('/measurements');
-        },
-        borderRadius: BorderRadius.circular(12),
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
-          decoration: BoxDecoration(
-            color: cardBg,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: borderColor, width: 1),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                Icons.monitor_weight_outlined,
-                size: 22,
-                color: quickActionRegistry['weight']!.color,
-              ),
-              const SizedBox(height: 4),
-              Text(
-                'Weight',
-                style: TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w600,
-                  color: textColor,
-                ),
-                textAlign: TextAlign.center,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ],
-          ),
-        ),
-      ),
+    return _GridActionTile(
+      isDark: isDark,
+      onTap: () {
+        HapticService.light();
+        showLogWeightSheet(context, ref);
+      },
+      onLongPress: () {
+        HapticService.light();
+        context.push('/measurements');
+      },
+      label: 'Weight',
+      icon: Icons.monitor_weight_outlined,
+      iconColor: quickActionRegistry['weight']!.color,
     );
   }
 }
@@ -1218,9 +1073,9 @@ class _FastGridActionItem extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final textColor = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final fastingState = ref.watch(fastingProvider);
     final hasFast = fastingState.hasFast;
+    final fastColor = quickActionRegistry['fasting']!.color;
 
     String label = 'Fasting';
     if (hasFast && fastingState.activeFast != null) {
@@ -1230,73 +1085,41 @@ class _FastGridActionItem extends ConsumerWidget {
       label = '${hours}h ${mins}m';
     }
 
-    final cardBg = isDark
-        ? Colors.white.withValues(alpha: 0.08)
-        : Colors.black.withValues(alpha: 0.05);
-    final borderColor = isDark
-        ? Colors.white.withValues(alpha: 0.12)
-        : Colors.black.withValues(alpha: 0.08);
-
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: () {
-          HapticService.light();
-          context.go('/fasting');
-        },
-        borderRadius: BorderRadius.circular(12),
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
-          decoration: BoxDecoration(
-            color: cardBg,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: borderColor, width: 1),
+    return _GridActionTile(
+      isDark: isDark,
+      onTap: () {
+        HapticService.light();
+        context.go('/fasting');
+      },
+      label: label,
+      iconColor: fastColor,
+      iconChild: Stack(
+        alignment: Alignment.center,
+        clipBehavior: Clip.none,
+        children: [
+          Icon(
+            hasFast ? Icons.timer : Icons.timer_outlined,
+            size: 18,
+            color: fastColor,
           ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Stack(
-                alignment: Alignment.center,
-                children: [
-                  Icon(
-                    hasFast ? Icons.timer : Icons.timer_outlined,
-                    size: 22,
-                    color: quickActionRegistry['fasting']!.color,
+          if (hasFast)
+            Positioned(
+              right: -4,
+              top: -4,
+              child: Container(
+                width: 8,
+                height: 8,
+                decoration: BoxDecoration(
+                  color: AppColors.success,
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: isDark ? AppColors.elevated : AppColorsLight.elevated,
+                    width: 1,
                   ),
-                  if (hasFast)
-                    Positioned(
-                      right: -2,
-                      top: -2,
-                      child: Container(
-                        width: 8,
-                        height: 8,
-                        decoration: BoxDecoration(
-                          color: AppColors.success,
-                          shape: BoxShape.circle,
-                          border: Border.all(
-                            color: isDark ? AppColors.elevated : AppColorsLight.elevated,
-                            width: 1,
-                          ),
-                        ),
-                      ),
-                    ),
-                ],
-              ),
-              const SizedBox(height: 4),
-              Text(
-                label,
-                style: TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w600,
-                  color: textColor,
                 ),
-                textAlign: TextAlign.center,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
               ),
-            ],
-          ),
-        ),
+            ),
+        ],
       ),
     );
   }
@@ -1349,10 +1172,13 @@ class _WaterSizeOption extends StatelessWidget {
               Text(
                 label,
                 style: TextStyle(
-                  fontSize: 14,
+                  fontSize: 13,
                   fontWeight: FontWeight.w600,
                   color: textColor,
                 ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.center,
               ),
             ],
           ),

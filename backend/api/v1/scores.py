@@ -115,24 +115,39 @@ def _flatten_logs_for_strength(log_rows: List[Dict[str, Any]]) -> List[Dict[str,
     # First pass: accumulate per-exercise best set + set count across ALL logs
     best: Dict[str, Dict[str, Any]] = {}
 
-    def _consider(name: str, weight_kg: float, reps: int, set_count: int):
-        if not name or weight_kg <= 0 or reps <= 0 or set_count <= 0:
+    def _consider(
+        name: str,
+        weight_kg: float,
+        reps: int,
+        set_count: int,
+        primary_muscle: Optional[str] = None,
+    ):
+        # Drop only if we have nothing useful — keep weight=0 sets so
+        # bodyweight workouts attribute to muscle groups (downstream score
+        # stays 0 because 1RM=0, but the muscle still shows weekly_sets>0
+        # which is what the user expects to see in the heatmap).
+        if not name or reps <= 0 or set_count <= 0:
             return
         key = name.strip().lower()
         score = weight_kg * reps
         prev = best.get(key)
         if prev is None or score > prev["_score"]:
-            best[key] = {
+            entry = {
                 "exercise_name": name,
                 "weight_kg": weight_kg,
                 "reps": int(reps),
                 "sets": int(set_count),
                 "_score": score,
             }
+            if primary_muscle:
+                entry["primary_muscle"] = primary_muscle
+            best[key] = entry
         else:
             # Same exercise logged again — accumulate the set count so the
             # downstream weekly_sets aggregation reflects real volume.
             prev["sets"] = int(prev["sets"]) + int(set_count)
+            if primary_muscle and not prev.get("primary_muscle"):
+                prev["primary_muscle"] = primary_muscle
 
     for row in log_rows:
         payload = _coerce_sets_json(row.get("sets_json"))
@@ -150,6 +165,15 @@ def _flatten_logs_for_strength(log_rows: List[Dict[str, Any]]) -> List[Dict[str,
                 continue
             name = el.get("name") or el.get("exercise_name") or ""
             sets_field = el.get("sets")
+            # Frontend now ships primary_muscle on each per-set record so the
+            # backend can attribute AI-named bodyweight moves whose static
+            # mapping is missing. Falls back to muscle_group / muscle_groups
+            # field shapes from older payloads.
+            primary_muscle = el.get("primary_muscle") or el.get("muscle_group")
+            if not primary_muscle:
+                mg_list = el.get("muscle_groups")
+                if isinstance(mg_list, list) and mg_list:
+                    primary_muscle = str(mg_list[0])
 
             if isinstance(sets_field, list):
                 # Shape C: nested sets — find the best set, count len.
@@ -163,7 +187,7 @@ def _flatten_logs_for_strength(log_rows: List[Dict[str, Any]]) -> List[Dict[str,
                         continue
                     if sw * sr > best_w * best_r:
                         best_w, best_r = sw, int(sr)
-                _consider(name, best_w, best_r, len(sets_field))
+                _consider(name, best_w, best_r, len(sets_field), primary_muscle)
                 continue
 
             # Shape B: integer set count.
@@ -172,14 +196,15 @@ def _flatten_logs_for_strength(log_rows: List[Dict[str, Any]]) -> List[Dict[str,
                 w_kg = _weight_kg(el)
                 reps = el.get("reps")
                 if isinstance(reps, (int, float)) and reps > 0:
-                    _consider(name, w_kg, int(reps), set_count)
+                    _consider(name, w_kg, int(reps), set_count, primary_muscle)
                 continue
 
             # Shape A fallback: per-set row missing a sets field — 1 set.
+            # Allow weight=0 (bodyweight) — _consider gates on reps>0 only.
             w_kg = _weight_kg(el)
             reps = el.get("reps") or el.get("reps_completed")
-            if isinstance(reps, (int, float)) and reps > 0 and w_kg > 0:
-                _consider(name, w_kg, int(reps), 1)
+            if isinstance(reps, (int, float)) and reps > 0:
+                _consider(name, w_kg, int(reps), 1, primary_muscle)
 
     out = []
     for entry in best.values():

@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:home_widget/home_widget.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../navigation/app_router.dart';
 // Meal-suggestion widget — staged, see Coming Soon screen.
@@ -24,6 +25,12 @@ import '../repositories/hydration_repository.dart';
 /// - fitwiz://social/share?type={workout|achievement} - Share
 class DeepLinkService {
   static const String scheme = 'fitwiz';
+
+  /// SharedPreferences key for queued URI when a deep link arrives before
+  /// the user has signed in.
+  static const String _pendingUriKey = 'pending_deep_link_uri';
+  static const String _pendingTimestampKey = 'pending_deep_link_ts_ms';
+  static const Duration _pendingTtl = Duration(hours: 24);
 
   /// Validate UUID format for IDs
   static bool _isValidUuid(String value) {
@@ -69,10 +76,24 @@ class DeepLinkService {
     });
   }
 
-  /// Handle a deep link URI and navigate appropriately
+  /// Handle a deep link URI and navigate appropriately.
+  ///
+  /// If the user is not yet authenticated, the URI is queued (with a 24h
+  /// TTL) and replayed via [drainPendingDeepLink] once auth completes.
+  /// Without this gate, deep links fired pre-auth get silently dropped
+  /// when the router redirects to /intro.
   static void handleDeepLink(Uri uri, WidgetRef ref) {
     if (uri.scheme != scheme) {
       debugPrint('DeepLinkService: Invalid scheme ${uri.scheme}');
+      return;
+    }
+
+    // Auth gate — queue and bail if signed out. We deliberately allow the
+    // queued URI to overwrite any prior pending one (most-recent intent
+    // wins, matches how OS notifications behave).
+    if (Supabase.instance.client.auth.currentSession == null) {
+      debugPrint('DeepLinkService: not authenticated — queueing $uri');
+      _queuePendingUri(uri);
       return;
     }
 
@@ -277,6 +298,61 @@ class DeepLinkService {
   //   }
   //   router.go('/nutrition');
   // }
+
+  /// Queue a URI for replay after sign-in. Best-effort; failure is logged
+  /// but never throws (we'd rather drop the link than crash the app).
+  static Future<void> _queuePendingUri(Uri uri) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(_pendingUriKey, uri.toString());
+      await prefs.setInt(
+        _pendingTimestampKey,
+        DateTime.now().millisecondsSinceEpoch,
+      );
+    } catch (e) {
+      debugPrint('DeepLinkService: failed to queue pending URI: $e');
+    }
+  }
+
+  /// Replay any queued deep link. Called on auth state transition to
+  /// authenticated. Discards URIs older than the 24h TTL, since stale
+  /// links (e.g. an old invite) shouldn't surprise the user days later.
+  static Future<void> drainPendingDeepLink(WidgetRef ref) async {
+    final SharedPreferences prefs;
+    try {
+      prefs = await SharedPreferences.getInstance();
+    } catch (_) {
+      return;
+    }
+    final raw = prefs.getString(_pendingUriKey);
+    if (raw == null || raw.isEmpty) return;
+
+    // Always clear the queue first — even a stale or malformed URI should
+    // not stick around to fire later.
+    await prefs.remove(_pendingUriKey);
+    final tsMs = prefs.getInt(_pendingTimestampKey);
+    await prefs.remove(_pendingTimestampKey);
+
+    if (tsMs != null) {
+      final age = DateTime.now().millisecondsSinceEpoch - tsMs;
+      if (age > _pendingTtl.inMilliseconds) {
+        debugPrint(
+          'DeepLinkService: discarding stale pending URI (age=${age ~/ 1000}s)',
+        );
+        return;
+      }
+    }
+
+    final Uri parsed;
+    try {
+      parsed = Uri.parse(raw);
+    } catch (e) {
+      debugPrint('DeepLinkService: malformed queued URI "$raw": $e');
+      return;
+    }
+    debugPrint('DeepLinkService: replaying queued URI $parsed');
+    handleDeepLink(parsed, ref);
+  }
 
   /// Build a deep link URI for a specific action
   static Uri buildUri(String path, {Map<String, String>? queryParams}) {

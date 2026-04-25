@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/utils/weight_utils.dart';
 import '../../../../data/models/exercise.dart';
+import '../../../../shareables/widgets/fitwiz_watermark.dart';
 
 /// Shared primitives + helpers for the share-template gallery.
 ///
@@ -366,7 +367,9 @@ class ShareFooterStrip extends StatelessWidget {
   }
 }
 
-/// FitWiz attribution watermark placed at bottom-right of each template.
+/// Legacy attribution badge — delegates to the unified [FitWizWatermark]
+/// so every existing template now renders the real app icon + capitalized
+/// "FitWiz" wordmark with no per-site changes.
 class ShareWatermarkBadge extends StatelessWidget {
   final bool enabled;
   final Color color;
@@ -380,31 +383,10 @@ class ShareWatermarkBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (!enabled) return const SizedBox.shrink();
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Container(
-          width: 18,
-          height: 18,
-          decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              colors: [AppColors.orange, AppColors.purple],
-            ),
-            borderRadius: BorderRadius.circular(5),
-          ),
-          child: const Icon(Icons.bolt_rounded, color: Colors.white, size: 12),
-        ),
-        const SizedBox(width: 6),
-        Text(
-          'fitwiz',
-          style: TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w700,
-            color: color,
-            letterSpacing: 1.2,
-          ),
-        ),
-      ],
+    return FitWizWatermark(
+      textColor: color,
+      iconSize: 18,
+      fontSize: 12,
     );
   }
 }

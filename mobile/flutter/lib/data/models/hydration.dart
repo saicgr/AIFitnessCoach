@@ -2,6 +2,30 @@ import 'package:json_annotation/json_annotation.dart';
 
 part 'hydration.g.dart';
 
+/// Where a hydration log entry was created from. Drives the icon + badge
+/// shown in the Today's Log row on the Fuel/Water tab so the user can tell
+/// at a glance whether they logged via Home quick-add, during a workout,
+/// from the Fuel tab itself, or via the AI chat.
+enum HydrationSource {
+  home('home'),
+  workout('workout'),
+  nutrition('nutrition'),
+  chat('chat'),
+  manual('manual'),
+  unknown('unknown');
+
+  final String value;
+  const HydrationSource(this.value);
+
+  static HydrationSource fromString(String? value) {
+    if (value == null) return HydrationSource.manual;
+    return HydrationSource.values.firstWhere(
+      (e) => e.value == value,
+      orElse: () => HydrationSource.unknown,
+    );
+  }
+}
+
 /// Hydration log entry
 @JsonSerializable()
 class HydrationLog {
@@ -17,6 +41,10 @@ class HydrationLog {
   final String? notes;
   @JsonKey(name: 'logged_at')
   final DateTime? loggedAt;
+  /// Surface this log was created from. Backed by the `source` column on
+  /// `hydration_logs` (added in migration 1983). Defaults to `'manual'`
+  /// for legacy rows so the UI never shows an empty badge.
+  final String? source;
 
   const HydrationLog({
     required this.id,
@@ -26,11 +54,14 @@ class HydrationLog {
     this.workoutId,
     this.notes,
     this.loggedAt,
+    this.source,
   });
 
   factory HydrationLog.fromJson(Map<String, dynamic> json) =>
       _$HydrationLogFromJson(json);
   Map<String, dynamic> toJson() => _$HydrationLogToJson(this);
+
+  HydrationSource get sourceEnum => HydrationSource.fromString(source);
 }
 
 /// Daily hydration summary

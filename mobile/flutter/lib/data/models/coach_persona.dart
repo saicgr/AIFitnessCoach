@@ -123,15 +123,17 @@ class CoachPersona {
     );
   }
 
-  /// Find a predefined coach by ID
+  /// Find a predefined coach by ID, or null when the ID has been renamed /
+  /// removed. Uses orElse rather than a try/catch so a stale saved ID
+  /// silently resolves to null without allocating + swallowing a StateError
+  /// on every widget build that looks up the user's coach.
   static CoachPersona? findById(String? id) {
-    if (id == null) return null;
-    if (id == 'custom') return null; // Custom coaches need to be reconstructed from settings
-    try {
-      return predefinedCoaches.firstWhere((c) => c.id == id);
-    } catch (_) {
-      return null;
+    if (id == null || id.isEmpty) return null;
+    if (id == 'custom') return null; // Custom coaches are reconstructed from settings.
+    for (final c in predefinedCoaches) {
+      if (c.id == id) return c;
     }
+    return null;
   }
 
   /// Get the default coach (Coach Mike)

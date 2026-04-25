@@ -338,6 +338,40 @@ async def coach_action_node(state: CoachAgentState) -> Dict[str, Any]:
         }
         action_context = f"Logging weight: {weight}"
 
+    elif intent == CoachIntent.GENERATE_SHARE_ARTIFACT:
+        # Mint a public share token for whatever the user asked to share.
+        # `scope` and `period` are provided by the intent extractor in
+        # state — defaults handle generic "share my week" type prompts.
+        from services.langgraph_agents.tools.share_tools import (
+            generate_share_artifact,
+        )
+
+        share_scope = state.get("share_scope") or "plan"
+        share_period = state.get("share_period") or "week"
+        user_id = state.get("user_id")
+        if not user_id:
+            action_data = {
+                "action": "share_artifact_generated",
+                "success": False,
+                "error": "Sign in to create share links.",
+            }
+            action_context = "Cannot share — user not signed in"
+        else:
+            payload = await generate_share_artifact(
+                user_id=user_id,
+                scope=share_scope,
+                period=share_period,
+            )
+            action_data = {"action": "share_artifact_generated", **payload}
+            if payload.get("success"):
+                action_context = (
+                    f"Created public share link {payload.get('url')}"
+                )
+            else:
+                action_context = (
+                    f"Share failed: {payload.get('error', 'unknown error')}"
+                )
+
     # Generate a natural response for the action
     context_parts = []
 

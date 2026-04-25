@@ -81,7 +81,18 @@ async def get_daily_micronutrients(
         )
 
         rdas = {r["nutrient_key"]: r for r in (rda_result.data or [])}
-        pinned_keys = user.get("pinned_nutrients", ["vitamin_d", "calcium", "iron", "omega3"]) if user else []
+        # Default static list if the user never customized: matches the
+        # historical hard-coded fallback so the legacy UX is preserved for
+        # users who opt out of dynamic pinning.
+        DEFAULT_STATIC_PINS = ["vitamin_d", "calcium", "iron", "omega3"]
+        static_pinned_keys = (
+            (user.get("pinned_nutrients") if user else None) or DEFAULT_STATIC_PINS
+        )
+        # New `pinned_nutrients_mode` column (added in migration 1982).
+        # 'static' = legacy / explicitly opted out. 'dynamic' = compute the
+        # pinned set from today's logs. Default 'static' for safety; new
+        # accounts get 'dynamic' set by onboarding.
+        pinning_mode = (user.get("pinned_nutrients_mode") if user else None) or "static"
 
         # Aggregate micronutrients from all logs
         totals = {}
@@ -90,6 +101,13 @@ async def get_daily_micronutrients(
                 col_name = key  # e.g., 'vitamin_d_iu'
                 value = log.get(col_name) or 0
                 totals[key] = totals.get(key, 0) + float(value)
+
+        # Macro-like keys are surfaced separately on the Daily header — exclude
+        # from the pinned card so we don't double-show them.
+        MACRO_EXCLUDE = {
+            "calories", "protein_g", "carbs_g", "fat_g", "fiber_g",
+            "calorie", "kcal",
+        }
 
         # Build progress for each category
         def make_progress(key: str, rda: dict) -> NutrientProgress:
@@ -122,14 +140,25 @@ async def get_daily_micronutrients(
                 color_hex=rda.get("color_hex"),
             )
 
+        # Treat several key roots equivalently when matching against the
+        # user's saved pinned list (the legacy list stores logical names like
+        # 'vitamin_d', the columns are 'vitamin_d_iu' — so we strip the
+        # trailing unit suffix to compare).
+        def _strip_unit_suffix(k: str) -> str:
+            for suf in ("_ug", "_mg", "_iu", "_g"):
+                if k.endswith(suf):
+                    return k[: -len(suf)]
+            return k
+
         vitamins = []
         minerals = []
         fatty_acids = []
         other = []
-        pinned = []
+        all_progress: list[NutrientProgress] = []
 
         for key, rda in rdas.items():
             progress = make_progress(key, rda)
+            all_progress.append(progress)
 
             if rda["category"] == "vitamin":
                 vitamins.append(progress)
@@ -140,8 +169,78 @@ async def get_daily_micronutrients(
             else:
                 other.append(progress)
 
-            if key in pinned_keys or key.replace("_ug", "").replace("_mg", "").replace("_g", "").replace("_iu", "") in pinned_keys:
-                pinned.append(progress)
+        # ----- Pinned selection ---------------------------------------------
+        pinned: list[NutrientProgress] = []
+
+        def _static_pinned() -> list[NutrientProgress]:
+            picked: list[NutrientProgress] = []
+            for p in all_progress:
+                if (
+                    p.nutrient_key in static_pinned_keys
+                    or _strip_unit_suffix(p.nutrient_key) in static_pinned_keys
+                ):
+                    p2 = p.model_copy(update={"pin_reason": "static"})
+                    picked.append(p2)
+            return picked
+
+        if pinning_mode == "dynamic" and logs:
+            # Score each non-macro nutrient with a positive RDA target by
+            # `current / target`. Penalty nutrients (sodium, saturated fat,
+            # added sugar, cholesterol) — flagged via the new
+            # `nutrient_rdas.penalty` column added in migration 1982 — stay
+            # in the candidate set even when over_ceiling because that's the
+            # most actionable signal ("you're at 140% sodium today").
+            candidates = []
+            for p in all_progress:
+                if p.nutrient_key in MACRO_EXCLUDE:
+                    continue
+                if p.target_value <= 0:
+                    continue
+                # Skip nutrients with literally zero contribution from today's
+                # logs unless they're penalty items pushing past the ceiling
+                # (rare — would imply prior-day spillover, but harmless).
+                if p.current_value <= 0 and p.status != "over_ceiling":
+                    continue
+                rda = rdas.get(p.nutrient_key, {})
+                is_penalty = bool(rda.get("penalty"))
+                score = p.current_value / p.target_value
+                # Boost penalty nutrients that exceeded the ceiling so they
+                # win against mere "70% of vitamin C" entries.
+                if is_penalty and p.status == "over_ceiling":
+                    score = max(score, 1.5)
+                pin_reason = (
+                    "over_ceiling"
+                    if (is_penalty and p.status == "over_ceiling")
+                    else "top_contributor"
+                )
+                candidates.append((score, p.current_value, p, pin_reason))
+
+            # Sort by score desc, tiebreak on absolute amount desc, then
+            # category-cap to avoid showing 4 vitamins.
+            candidates.sort(key=lambda x: (x[0], x[1]), reverse=True)
+            CATEGORY_CAP = 2
+            cat_count: dict[str, int] = {}
+            for score, _amt, p, pin_reason in candidates:
+                cat = p.category or "other"
+                if cat_count.get(cat, 0) >= CATEGORY_CAP:
+                    continue
+                pinned.append(p.model_copy(update={"pin_reason": pin_reason}))
+                cat_count[cat] = cat_count.get(cat, 0) + 1
+                if len(pinned) >= 4:
+                    break
+
+            # Fallback: if we got fewer than 2 dynamic picks, union with
+            # static so the card never looks empty. Dedup by nutrient_key.
+            if len(pinned) < 2:
+                seen = {p.nutrient_key for p in pinned}
+                for p in _static_pinned():
+                    if p.nutrient_key not in seen:
+                        pinned.append(p)
+                        if len(pinned) >= 4:
+                            break
+        else:
+            # Static mode OR no logs yet → fall back to user's saved list.
+            pinned = _static_pinned()
 
         return DailyMicronutrientSummary(
             date=date,
@@ -150,7 +249,8 @@ async def get_daily_micronutrients(
             minerals=minerals,
             fatty_acids=fatty_acids,
             other=other,
-            pinned=pinned[:8],  # Max 8 pinned
+            pinned=pinned[:8],  # Hard cap; dynamic mode self-limits to 4.
+            pinning_mode=pinning_mode,
         )
 
     except Exception as e:

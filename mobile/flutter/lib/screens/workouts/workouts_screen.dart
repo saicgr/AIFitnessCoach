@@ -737,7 +737,7 @@ class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen>
             isDark: isDark,
             onTap: () {
               HapticService.light();
-              context.push('/workout/${workout.id}', extra: workout);
+              context.push('/workout-summary/${workout.id}');
             },
           );
         }).toList(),

@@ -76,6 +76,7 @@ extension WorkoutUIBuildersMixinUI2 on WorkoutUIBuildersMixin {
                         onMinimize: minimizeWorkout,
                         onFavoriteTap: currentExercise != null ? () => toggleFavoriteExercise() : null,
                         isFavorite: isFavorite,
+                        onCompleteWorkoutNow: completeWorkoutNow,
                       );
                     },
                   ),
@@ -525,11 +526,13 @@ extension WorkoutUIBuildersMixinUI2 on WorkoutUIBuildersMixin {
                   ),
                 ),
 
-                // Video, Hydration, and Note quick actions row
+                // Instructions, Video, Hydration, and Note quick actions row
                 HydrationQuickActions(
                   onTap: () => showHydrationDialogImpl(),
                   onNoteTap: () => showNotesSheet(exercises[viewingExerciseIndex]),
                   onVideoTap: () => handleChipTapped('video'),
+                  onInstructionsTap: () =>
+                      showExerciseDetailsSheet(exercises[viewingExerciseIndex]),
                 ),
 
                 // Exercise thumbnail strip (bottom navigation)

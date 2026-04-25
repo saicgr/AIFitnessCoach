@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:confetti/confetti.dart';
 import '../../core/constants/app_colors.dart';
+import '../../data/models/hydration.dart';
 import '../../core/providers/user_provider.dart';
 import '../../core/services/fitness_snapshot_service.dart';
 import '../../core/services/posthog_service.dart';
@@ -32,7 +33,8 @@ import 'widgets/hydration_dialog.dart';
 import 'widgets/sauna_dialog.dart';
 import 'widgets/ai_coach_report_card.dart';
 import 'widgets/share_templates/_share_common.dart';
-import 'widgets/share_workout_sheet.dart';
+import '../../shareables/adapters/workout_adapter.dart';
+import '../../shareables/shareable_sheet.dart';
 import 'widgets/trophies_earned_sheet.dart';
 import 'widgets/trophy_celebration_overlay.dart';
 import '../../widgets/heart_rate_chart.dart';
@@ -339,6 +341,7 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
         drinkType: result.drinkType.value,
         amountMl: result.amountMl,
         workoutId: widget.workout.id,
+        source: HydrationSource.workout,
       );
     }
   }

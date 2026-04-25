@@ -52,6 +52,17 @@ class SentryService {
           options.attachScreenshot = true;
           options.attachViewHierarchy = true;
 
+          // Attach a stack trace to EVERY event, including plain
+          // `captureMessage` calls and FlutterError reports that arrive
+          // without one. Without this, RenderFlex overflows show up in
+          // Sentry as a one-line message with no widget frames, which is
+          // useless for triage. Cost: a few hundred bytes per event.
+          options.attachStacktrace = true;
+          // Don't fold framework frames so the actual user widget that
+          // owns the overflowing Column/Row is visible, not just
+          // `RenderFlex.performLayout`.
+          options.considerInAppFramesByDefault = true;
+
           // Privacy: redact text inputs and images so screenshots/hierarchies
           // don't leak PII (food names the user is typing, coach chat, etc.).
           // Sentry 8.x still exposes this under `experimental` until 9.x.

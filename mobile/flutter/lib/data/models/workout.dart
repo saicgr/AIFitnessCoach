@@ -875,7 +875,10 @@ class WorkoutCompletionResponse {
   bool get hasDeclines => performanceComparison?.hasDeclines ?? false;
 }
 
-/// Per-set log data returned from workout summary API
+/// Per-set log data returned from workout summary API. Mirrors
+/// `backend.api.v1.workouts.crud_models.SetLogInfo` — every field the active
+/// workout writes round-trips here so the summary screen can render notes,
+/// audio/photo media, target deltas, set timing, and the logging-mode tier.
 class SetLogInfo {
   final String exerciseName;
   final int exerciseIndex;
@@ -886,6 +889,24 @@ class SetLogInfo {
   final int? rir;
   final String setType;
 
+  // Rich fields (post-A4 backend rollout). Each is tolerant of legacy rows
+  // that didn't carry the field — empty list / null on absence.
+  final List<String> notes;
+  final String? notesAudioUrl;
+  final List<String> notesPhotoUrls;
+  final int? targetReps;
+  final double? targetWeightKg;
+  final int? failedAtRep;
+  final String? recordedAt;
+  final String? startedAt;
+  final int? setDurationSeconds;
+  final int? restDurationSeconds;
+  final String? loggingMode;
+  final String? aiInputSource;
+  final bool? isAiRecommendedSetType;
+  final String? tempo;
+  final bool? isCompleted;
+
   const SetLogInfo({
     required this.exerciseName,
     this.exerciseIndex = 0,
@@ -895,6 +916,21 @@ class SetLogInfo {
     this.rpe,
     this.rir,
     this.setType = 'working',
+    this.notes = const [],
+    this.notesAudioUrl,
+    this.notesPhotoUrls = const [],
+    this.targetReps,
+    this.targetWeightKg,
+    this.failedAtRep,
+    this.recordedAt,
+    this.startedAt,
+    this.setDurationSeconds,
+    this.restDurationSeconds,
+    this.loggingMode,
+    this.aiInputSource,
+    this.isAiRecommendedSetType,
+    this.tempo,
+    this.isCompleted,
   });
 
   factory SetLogInfo.fromJson(Map<String, dynamic> json) {
@@ -907,7 +943,42 @@ class SetLogInfo {
       rpe: (json['rpe'] as num?)?.toDouble(),
       rir: json['rir'] as int?,
       setType: json['set_type'] as String? ?? 'working',
+      notes: _coerceNotes(json['notes']),
+      notesAudioUrl: json['notes_audio_url'] as String?,
+      notesPhotoUrls: (json['notes_photo_urls'] as List?)
+              ?.map((e) => e?.toString() ?? '')
+              .where((s) => s.isNotEmpty)
+              .toList() ??
+          const [],
+      targetReps: json['target_reps'] as int?,
+      targetWeightKg: (json['target_weight_kg'] as num?)?.toDouble(),
+      failedAtRep: json['failed_at_rep'] as int?,
+      recordedAt: json['recorded_at'] as String?,
+      startedAt: json['started_at'] as String?,
+      setDurationSeconds: json['set_duration_seconds'] as int?,
+      restDurationSeconds: json['rest_duration_seconds'] as int?,
+      loggingMode: json['logging_mode'] as String?,
+      aiInputSource: json['ai_input_source'] as String?,
+      isAiRecommendedSetType: json['is_ai_recommended_set_type'] as bool?,
+      tempo: json['tempo'] as String?,
+      isCompleted: json['is_completed'] as bool?,
     );
+  }
+
+  /// Backwards-compatible: list (new) | string (legacy) | null → List<String>.
+  static List<String> _coerceNotes(dynamic raw) {
+    if (raw == null) return const [];
+    if (raw is List) {
+      return raw
+          .map((e) => e?.toString().trim() ?? '')
+          .where((s) => s.isNotEmpty)
+          .toList();
+    }
+    if (raw is String) {
+      final trimmed = raw.trim();
+      return trimmed.isEmpty ? const [] : [trimmed];
+    }
+    return const [];
   }
 
   Map<String, dynamic> toJson() => {
@@ -919,6 +990,22 @@ class SetLogInfo {
     'rpe': rpe,
     'rir': rir,
     'set_type': setType,
+    'notes': notes,
+    if (notesAudioUrl != null) 'notes_audio_url': notesAudioUrl,
+    if (notesPhotoUrls.isNotEmpty) 'notes_photo_urls': notesPhotoUrls,
+    if (targetReps != null) 'target_reps': targetReps,
+    if (targetWeightKg != null) 'target_weight_kg': targetWeightKg,
+    if (failedAtRep != null) 'failed_at_rep': failedAtRep,
+    if (recordedAt != null) 'recorded_at': recordedAt,
+    if (startedAt != null) 'started_at': startedAt,
+    if (setDurationSeconds != null) 'set_duration_seconds': setDurationSeconds,
+    if (restDurationSeconds != null) 'rest_duration_seconds': restDurationSeconds,
+    if (loggingMode != null) 'logging_mode': loggingMode,
+    if (aiInputSource != null) 'ai_input_source': aiInputSource,
+    if (isAiRecommendedSetType != null)
+      'is_ai_recommended_set_type': isAiRecommendedSetType,
+    if (tempo != null) 'tempo': tempo,
+    if (isCompleted != null) 'is_completed': isCompleted,
   };
 }
 

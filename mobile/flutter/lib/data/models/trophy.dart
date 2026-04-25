@@ -438,8 +438,16 @@ class TrophyProgress {
       _$TrophyProgressFromJson(json);
   Map<String, dynamic> toJson() => _$TrophyProgressToJson(this);
 
-  /// Get progress as fraction (0.0 to 1.0)
-  double get progressFraction => (progressPercentage / 100).clamp(0.0, 1.0);
+  /// Get progress as fraction (0.0 to 1.0).
+  /// Guards against NaN/±Infinity from upstream division-by-zero — .clamp
+  /// does NOT coerce non-finite values, so a downstream .toInt() would
+  /// crash with "Unsupported operation: Infinity or NaN toInt" (seen on
+  /// PLG110 post-workout-completion).
+  double get progressFraction {
+    final raw = progressPercentage / 100;
+    if (!raw.isFinite) return 0.0;
+    return raw.clamp(0.0, 1.0);
+  }
 
   /// Get remaining value to earn
   double get remainingValue {

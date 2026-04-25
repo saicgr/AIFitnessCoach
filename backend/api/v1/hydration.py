@@ -22,6 +22,7 @@ from models.schemas import (
     HydrationLog, HydrationLogCreate,
     DailyHydrationSummary, HydrationGoalUpdate,
 )
+from models.nutrition import _normalize_hydration_source
 from core.auth import get_current_user
 from core.exceptions import safe_internal_error
 
@@ -42,6 +43,9 @@ def row_to_hydration_log(row: dict) -> HydrationLog:
         workout_id=row.get("workout_id"),
         notes=row.get("notes"),
         logged_at=row.get("logged_at"),
+        # Backfilled rows (pre-1983 migration) lack the column entirely; the
+        # client falls back to 'manual' display when source is null/missing.
+        source=row.get("source"),
     )
 
 
@@ -67,6 +71,12 @@ async def log_hydration(
         utc_now = datetime.utcnow()
         local_date = data.local_date or get_user_today(user_tz)
 
+        # Auto-fill source from workout_id when client didn't provide one —
+        # an active workout context is a strong signal even on older clients.
+        explicit_source = _normalize_hydration_source(getattr(data, "source", None))
+        if explicit_source == "manual" and data.workout_id:
+            explicit_source = "workout"
+
         log_data = {
             "id": str(uuid.uuid4()),
             "user_id": data.user_id,
@@ -75,16 +85,28 @@ async def log_hydration(
             "workout_id": data.workout_id,
             "notes": data.notes,
             "logged_at": utc_now.isoformat(),
+            "source": explicit_source,
         }
 
-        # Try inserting with local_date if column exists
+        # Try inserting with local_date if column exists; gracefully degrade
+        # for either missing column (`local_date` or `source`).
         try:
             log_data["local_date"] = local_date
             result = db.client.table("hydration_logs").insert(log_data).execute()
         except Exception as insert_err:
-            if "local_date" in str(insert_err):
-                # Column doesn't exist yet (migration not applied), insert without it
+            err_str = str(insert_err)
+            if "local_date" in err_str:
                 log_data.pop("local_date", None)
+                try:
+                    result = db.client.table("hydration_logs").insert(log_data).execute()
+                except Exception as e2:
+                    if "source" in str(e2):
+                        log_data.pop("source", None)
+                        result = db.client.table("hydration_logs").insert(log_data).execute()
+                    else:
+                        raise
+            elif "source" in err_str:
+                log_data.pop("source", None)
                 result = db.client.table("hydration_logs").insert(log_data).execute()
             else:
                 raise
@@ -330,6 +352,7 @@ async def quick_log_hydration(
     amount_ml: int = Query(default=250),  # Default glass of water ~8oz
     workout_id: Optional[str] = None,
     local_date: Optional[str] = Query(default=None),
+    source: Optional[str] = Query(default=None),
     current_user: dict = Depends(get_current_user),
 ):
     """
@@ -340,6 +363,9 @@ async def quick_log_hydration(
     - Water bottle: 500ml (16oz)
     - Large bottle: 750ml (24oz)
     - Protein shake: 350ml (12oz)
+
+    `source` is optional and identifies the surface this came from
+    ('home', 'workout', 'nutrition', 'chat'). Unspecified defaults to 'manual'.
     """
     return await log_hydration(HydrationLogCreate(
         user_id=user_id,
@@ -347,4 +373,5 @@ async def quick_log_hydration(
         amount_ml=amount_ml,
         workout_id=workout_id,
         local_date=local_date,
-    ), http_request)
+        source=source,
+    ), http_request, current_user=current_user)

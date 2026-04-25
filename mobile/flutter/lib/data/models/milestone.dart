@@ -241,8 +241,14 @@ class MilestoneProgress {
 
   Map<String, dynamic> toJson() => _$MilestoneProgressToJson(this);
 
-  /// Get progress as a value between 0 and 1 for progress indicators
-  double get progressFraction => (progressPercentage ?? 0) / 100;
+  /// Get progress as a value between 0 and 1 for progress indicators.
+  /// Finite-guard in case progressPercentage arrived as NaN/Infinity from
+  /// the API — otherwise a downstream .toInt() on this value crashes.
+  double get progressFraction {
+    final raw = (progressPercentage ?? 0) / 100;
+    if (!raw.isFinite) return 0.0;
+    return raw.clamp(0.0, 1.0);
+  }
 }
 
 /// Response containing all milestone data for a user

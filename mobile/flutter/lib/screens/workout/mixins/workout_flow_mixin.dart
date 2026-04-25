@@ -16,6 +16,11 @@ import '../../../core/services/posthog_service.dart';
 import '../../../core/services/workout_tour_steps.dart';
 import '../../../data/models/exercise.dart';
 import '../../../data/models/workout.dart';
+import '../../../data/providers/consistency_provider.dart';
+import '../../../data/providers/milestones_provider.dart';
+import '../../../data/providers/muscle_analytics_provider.dart';
+import '../../../data/providers/scores_provider.dart';
+import '../../../data/providers/today_workout_provider.dart';
 import '../../../data/providers/xp_provider.dart';
 import '../../../data/repositories/workout_repository.dart';
 import '../../../data/services/api_client.dart';
@@ -24,6 +29,7 @@ import '../../../core/providers/heart_rate_provider.dart';
 import '../../../core/providers/warmup_duration_provider.dart';
 import '../../../data/services/ble_heart_rate_service.dart';
 import '../../../data/services/live_activity_service.dart';
+import '../../../data/services/set_note_media_service.dart';
 import '../../../data/services/workout_notification_service.dart';
 import '../../../widgets/app_snackbar.dart';
 import '../../ai_settings/ai_settings_screen.dart';
@@ -213,34 +219,19 @@ mixin WorkoutFlowMixin<T extends StatefulWidget> on State<T> {
         final metadata = _buildWorkoutMetadata(workout);
         debugPrint('🔍 [Complete] setsJson length: ${setsJson.length}');
 
-        final workoutLog = await workoutRepo.createWorkoutLog(
-          workoutId: workout.id!,
-          userId: userId,
-          setsJson: setsJson,
-          totalTimeSeconds: timerController.workoutSeconds,
-          metadata: jsonEncode(metadata),
-        );
-
-        if (workoutLog != null) {
-          debugPrint('✅ Workout log created: ${workoutLog['id']}');
-          workoutLogId = workoutLog['id'] as String;
-          await logAllSetPerformances(workoutLogId, userId);
-        } else {
-          debugPrint('❌ [Complete] createWorkoutLog returned null - workoutLogId will be null');
-        }
-
+        // Compute totals up-front (pure-Dart, no I/O) so they're ready for
+        // any API that needs them, regardless of save-flow ordering.
         totalCompletedSets = completedSets.values.fold<int>(
           0, (sum, list) => sum + list.length,
         );
-        final exercisesWithSets = completedSets.values.where((l) => l.isNotEmpty).length;
-
+        final exercisesWithSets =
+            completedSets.values.where((l) => l.isNotEmpty).length;
         for (final sets in completedSets.values) {
           for (final setLog in sets) {
             totalReps += setLog.reps;
             totalVolumeKg += setLog.reps * setLog.weight;
           }
         }
-
         if (restIntervals.isNotEmpty) {
           for (final interval in restIntervals) {
             totalRestSeconds += (interval['rest_seconds'] as int?) ?? 0;
@@ -248,19 +239,42 @@ mixin WorkoutFlowMixin<T extends StatefulWidget> on State<T> {
           avgRestSeconds = totalRestSeconds / restIntervals.length;
         }
 
-        // Run independent API calls in parallel for faster navigation
-        final futures = <Future>[];
+        // Three independent waves to keep the "Saving workout..." spinner
+        // as short as possible:
+        //
+        //   Wave 1 (parallel):
+        //     - createWorkoutLog (returns workoutLogId)
+        //     - completeWorkout  (returns PRs + comparison; backend reads
+        //                         the workout's own exercises_json for PR
+        //                         detection — does NOT need set_performances
+        //                         rows to be inserted first)
+        //     - logDrinkIntake / logWorkoutExit / logSupersetUsage
+        //                         (all use only userId + workoutId)
+        //
+        //   Phase 1 inside logAllSetPerformances also kicks off in parallel
+        //   here — uploads don't need workoutLogId, only the final bulk
+        //   POST does. We resolve workoutLogId, then fire the bulk POST in
+        //   wave 2.
+        final completionFuture = workoutRepo.completeWorkout(workout.id!);
+        final createLogFuture = workoutRepo.createWorkoutLog(
+          workoutId: workout.id!,
+          userId: userId,
+          setsJson: setsJson,
+          totalTimeSeconds: timerController.workoutSeconds,
+          metadata: jsonEncode(metadata),
+        );
 
+        final ancillaryFutures = <Future>[];
         if (totalDrinkIntakeMl > 0) {
-          futures.add(workoutRepo.logDrinkIntake(
+          ancillaryFutures.add(workoutRepo.logDrinkIntake(
             workoutId: workout.id!,
             userId: userId,
             amountMl: totalDrinkIntakeMl,
             drinkType: 'water',
-          ).then((_) => debugPrint('💧 Logged drink intake: ${totalDrinkIntakeMl}ml')));
+          ).then((_) =>
+              debugPrint('💧 Logged drink intake: ${totalDrinkIntakeMl}ml')));
         }
-
-        futures.add(workoutRepo.logWorkoutExit(
+        ancillaryFutures.add(workoutRepo.logWorkoutExit(
           workoutId: workout.id!,
           userId: userId,
           exitReason: 'completed',
@@ -272,17 +286,53 @@ mixin WorkoutFlowMixin<T extends StatefulWidget> on State<T> {
               ? (exercisesWithSets / exercises.length * 100)
               : 100.0,
         ).then((_) => debugPrint('✅ Workout exit logged as completed')));
+        ancillaryFutures.add(logSupersetUsage(userId));
 
-        futures.add(logSupersetUsage(userId));
+        // Wave 2: once the workout-log row exists, fire the bulk
+        // set-performance POST. logAllSetPerformances internally awaits
+        // its own (parallelized) media uploads first, then bulk-POSTs.
+        final setPerfsFuture = createLogFuture.then((workoutLog) async {
+          if (workoutLog != null) {
+            debugPrint('✅ Workout log created: ${workoutLog['id']}');
+            workoutLogId = workoutLog['id'] as String;
+            await logAllSetPerformances(workoutLogId!, userId);
+          } else {
+            debugPrint(
+                '❌ [Complete] createWorkoutLog returned null - workoutLogId will be null');
+          }
+        });
 
-        // completeWorkout returns PRs/comparison data - run in parallel but capture result
-        final completionFuture = workoutRepo.completeWorkout(workout.id!);
-        futures.add(completionFuture);
-
-        await Future.wait(futures);
-        // Future already resolved by Future.wait, so this returns immediately
+        await Future.wait(<Future>[
+          completionFuture,
+          setPerfsFuture,
+          ...ancillaryFutures,
+        ]);
+        // Already resolved — returns immediately.
         completionResponse = await completionFuture;
         debugPrint('✅ Workout marked as complete');
+
+        // Refresh every screen that summarizes workout history so the user
+        // sees this session reflected immediately — no app restart, no
+        // pull-to-refresh required. All cache-first providers absorb the
+        // invalidation as a silent revalidation.
+        if (mounted) {
+          ref.invalidate(workoutsProvider);
+          // Refresh /today so completedWorkout/completedToday flip server-side.
+          // Without this, todayWorkoutProvider's in-memory cache keeps the
+          // pre-completion snapshot, so the carousel + week strip lose the
+          // completed state as soon as workoutsProvider's silent refresh
+          // returns and overwrites the optimistic update.
+          ref.read(todayWorkoutProvider.notifier).invalidateAndRefresh();
+          ref.invalidate(muscleHeatmapProvider);
+          ref.invalidate(muscleFrequencyProvider);
+          ref.invalidate(muscleBalanceProvider);
+          ref.invalidate(scoresProvider);
+          ref.invalidate(milestonesProvider);
+          ref.invalidate(consistencyProvider);
+          ref.invalidate(consistencyDataProvider);
+          ref.invalidate(activityHeatmapProvider);
+          ref.invalidate(calendarHeatmapProvider);
+        }
 
         // If the server already awarded the workout_complete XP inline
         // (new behavior — see backend/api/v1/workouts/crud_completion.py),
@@ -492,9 +542,50 @@ mixin WorkoutFlowMixin<T extends StatefulWidget> on State<T> {
   /// 20-set workout that's 20 round trips (~3–5s on the "Saving workout…"
   /// spinner). We now build the full payload locally and POST it to a bulk
   /// endpoint, so the whole call is one round trip.
+  ///
+  /// Per-set note media (audio + photos) is uploaded to S3 via
+  /// [SetNoteMediaService] BEFORE the bulk POST so the persisted record
+  /// holds canonical S3 URLs, never local file paths. All uploads across
+  /// all sets fire in parallel via `Future.wait` — wall time is bounded
+  /// by the slowest single upload, not the sum. Upload failures drop the
+  /// missing media but never block the workout — the rest of the set
+  /// still saves.
   Future<void> logAllSetPerformances(String workoutLogId, String userId) async {
     final workoutRepo = ref.read(workoutRepositoryProvider);
+    final mediaSvc = SetNoteMediaService(ref.read(apiClientProvider));
 
+    // Phase 1: kick off every media upload in parallel BEFORE we start
+    // building set rows. Each set with audio gets one Future, each set
+    // with photos gets one Future. Sets without media are skipped — no
+    // wasted Future allocation. The (i, j) -> (audioUrl, photoUrls) map
+    // is consumed in phase 2 below to fill in the bulk POST payload.
+    final audioFutures = <(int, int), Future<String?>>{};
+    final photoFutures = <(int, int), Future<List<String>>>{};
+    for (int i = 0; i < exercises.length; i++) {
+      final sets = completedSets[i] ?? [];
+      for (int j = 0; j < sets.length; j++) {
+        final setLog = sets[j];
+        final audio = setLog.notesAudioPath;
+        if (audio != null && audio.isNotEmpty) {
+          audioFutures[(i, j)] =
+              mediaSvc.uploadAudio(localPath: audio, userId: userId);
+        }
+        if (setLog.notesPhotoPaths.isNotEmpty) {
+          photoFutures[(i, j)] = mediaSvc.uploadPhotos(
+            localPaths: setLog.notesPhotoPaths,
+            userId: userId,
+          );
+        }
+      }
+    }
+    // Block once on the slowest upload across the entire workout.
+    await Future.wait<void>([
+      ...audioFutures.values.map((f) => f.then((_) {})),
+      ...photoFutures.values.map((f) => f.then((_) {})),
+    ]);
+
+    // Phase 2: build the bulk payload, reading resolved URLs out of the
+    // already-finished Futures. The `await` here returns immediately.
     final records = <Map<String, dynamic>>[];
     for (int i = 0; i < exercises.length; i++) {
       final exercise = exercises[i];
@@ -505,6 +596,17 @@ mixin WorkoutFlowMixin<T extends StatefulWidget> on State<T> {
       for (int j = 0; j < sets.length; j++) {
         final setLog = sets[j];
         final setTarget = exercise.getTargetForSet(j + 1);
+
+        final audioFut = audioFutures[(i, j)];
+        final photoFut = photoFutures[(i, j)];
+        final String? audioUrl = audioFut == null ? null : await audioFut;
+        final List<String> photoUrls =
+            photoFut == null ? const [] : await photoFut;
+
+        // Zero-stamped placeholder rows from "Complete workout now"
+        // (weight 0 + reps 0) must be marked is_completed: false so
+        // they don't pollute streaks / PR detection / volume averages.
+        final isPlaceholder = setLog.reps <= 0 && setLog.weight <= 0;
         records.add({
           'workout_log_id': workoutLogId,
           'user_id': userId,
@@ -514,12 +616,16 @@ mixin WorkoutFlowMixin<T extends StatefulWidget> on State<T> {
           'set_number': j + 1,
           'reps_completed': setLog.reps,
           'weight_kg': setLog.weight,
-          'is_completed': true,
-          'set_type': 'working',
+          'is_completed': !isPlaceholder,
+          'set_type': setLog.setType,
           if (setLog.rpe != null) 'rpe': setLog.rpe!.toDouble(),
           if (setLog.rir != null) 'rir': setLog.rir,
-          if (setLog.notes != null && setLog.notes!.isNotEmpty)
-            'notes': setLog.notes,
+          // Always emit `notes` as a list (possibly empty) so the TEXT[]
+          // column gets a stable shape across client versions.
+          if (setLog.notes.isNotEmpty) 'notes': setLog.notes,
+          if (audioUrl != null && audioUrl.isNotEmpty)
+            'notes_audio_url': audioUrl,
+          if (photoUrls.isNotEmpty) 'notes_photo_urls': photoUrls,
           if (setLog.aiInputSource != null && setLog.aiInputSource!.isNotEmpty)
             'ai_input_source': setLog.aiInputSource,
           'target_weight_kg':
@@ -531,6 +637,11 @@ mixin WorkoutFlowMixin<T extends StatefulWidget> on State<T> {
             'set_duration_seconds': setLog.durationSeconds,
           if (setLog.restDurationSeconds != null)
             'rest_duration_seconds': setLog.restDurationSeconds,
+          if (setLog.startedAt != null)
+            'started_at': setLog.startedAt!.toIso8601String(),
+          // 'advanced' is the default tier when this mixin's bulk path
+          // runs (Easy / Simple paths log via their own helpers).
+          'logging_mode': setLog.loggingMode ?? 'advanced',
         });
       }
     }
@@ -601,6 +712,66 @@ mixin WorkoutFlowMixin<T extends StatefulWidget> on State<T> {
     if (futures.isNotEmpty) {
       await Future.wait(futures);
     }
+  }
+
+  /// "Complete workout now" — overflow-menu action. Confirms with the
+  /// user, pads every unlogged set across every exercise with a zero
+  /// SetLog (weight 0, reps 0, marked is_completed:false in sets_json
+  /// + the bulk performance-log POST), then routes through the same
+  /// `finalizeWorkoutCompletion` pipeline a fully-logged session uses.
+  ///
+  /// Net effect: the workout reaches `/workout-complete`, the backend
+  /// builds workout_performance_summary + exercise_performance_summary,
+  /// PRs are detected from real sets only, and the session shows up in
+  /// history identically to a normal completion — placeholder rows are
+  /// excluded from streak / PR / volume math by their `is_completed`
+  /// flag.
+  Future<void> completeWorkoutNow() async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Complete workout now?'),
+        content: const Text(
+          'Any sets you haven’t logged will be saved as zero (0 weight, '
+          '0 reps). You’ll go straight to the workout summary.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('Keep going'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: const Text('Complete'),
+          ),
+        ],
+      ),
+    );
+    if (ok != true || !mounted) return;
+
+    // Pad every unlogged set with a zero placeholder. The host class's
+    // `completedSets` getter returns the live mutable map (same one
+    // setLogged writes to), so this in-place pad is visible to the
+    // finalize flow that reads it next.
+    for (int i = 0; i < exercises.length; i++) {
+      final target = totalSetsPerExercise[i] ?? exercises[i].sets ?? 0;
+      final existing = completedSets[i] ?? <SetLog>[];
+      while (existing.length < target) {
+        existing.add(SetLog(
+          reps: 0,
+          weight: 0,
+          setType: 'working',
+          loggingMode: 'advanced',
+        ));
+      }
+      // Some host implementations may have lazy-initialised buckets; re-set
+      // to make sure the bucket exists.
+      completedSets[i] = existing;
+    }
+
+    timerController.stopWorkoutTimer();
+    cancelWorkoutNotification();
+    await finalizeWorkoutCompletion();
   }
 
   /// Show quit workout dialog

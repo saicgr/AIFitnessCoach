@@ -4,7 +4,7 @@ part of 'app_router.dart';
 List<RouteBase> _utilityRoutes() => [
   // === Utility Routes ===
 
-      // Public shared recipe deep link: fitwiz.app/r/{slug} → PublicRecipeScreen.
+      // Public shared recipe deep link: fitwiz.us/r/{slug} → PublicRecipeScreen.
       // Auth not required; user is prompted to sign in on "Save to my recipes" tap.
       GoRoute(
         path: '/r/:slug',
@@ -18,6 +18,14 @@ List<RouteBase> _utilityRoutes() => [
       GoRoute(
         path: '/notifications',
         builder: (context, state) => const NotificationsScreen(),
+      ),
+
+      // Plan / period share — Generate Share More-tile + AI chat "Open in app".
+      // The route opens a thin shell that immediately shows the period picker
+      // and pops back to the previous screen on dismiss.
+      GoRoute(
+        path: '/share-plan',
+        builder: (context, state) => const SharePlanRouteShell(),
       ),
 
       // Body Measurements
@@ -104,12 +112,6 @@ List<RouteBase> _utilityRoutes() => [
       GoRoute(
         path: '/mood-history',
         builder: (context, state) => const MoodHistoryScreen(),
-      ),
-
-      // Subscription History
-      GoRoute(
-        path: '/subscription-history',
-        builder: (context, state) => const SubscriptionHistoryScreen(),
       ),
 
       // Request Refund

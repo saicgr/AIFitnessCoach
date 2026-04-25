@@ -14,6 +14,7 @@ class DataCacheService {
 
   // Cache keys
   static const String todayWorkoutKey = 'cache_today_workout';
+  static const String workoutListKey = 'cache_workout_list';
   static const String gymProfilesKey = 'cache_gym_profiles';
   static const String userProfileKey = 'cache_user_profile';
   static const String xpDataKey = 'cache_xp_data';
@@ -25,6 +26,7 @@ class DataCacheService {
   static const int _userProfileTtlMs = 30 * 60 * 1000; // 30 minutes
   static const int _defaultTtlMs = 60 * 60 * 1000; // 1 hour
   static const int _todayWorkoutTtlMs = 24 * 60 * 60 * 1000; // 24 hours — survives overnight
+  static const int _workoutListTtlMs = 24 * 60 * 60 * 1000; // 24 hours — carousel needs week-wide data instantly on cold start
   static const int _xpDataTtlMs = 12 * 60 * 60 * 1000; // 12 hours
   static const int _trophyTtlMs = 12 * 60 * 60 * 1000; // 12 hours
   static const int _gymProfilesTtlMs = 24 * 60 * 60 * 1000; // 24 hours — gyms rarely change; revalidate silently in background
@@ -33,6 +35,7 @@ class DataCacheService {
   static const Map<String, int> _ttlOverrides = {
     userProfileKey: _userProfileTtlMs,
     todayWorkoutKey: _todayWorkoutTtlMs,
+    workoutListKey: _workoutListTtlMs,
     xpDataKey: _xpDataTtlMs,
     xpStreakKey: _xpDataTtlMs,
     trophySummaryKey: _trophyTtlMs,
@@ -184,6 +187,7 @@ class DataCacheService {
     try {
       final p = await prefs;
       await p.remove(todayWorkoutKey);
+      await p.remove(workoutListKey);
       await p.remove(gymProfilesKey);
       await p.remove(userProfileKey);
       await p.remove(xpDataKey);

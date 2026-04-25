@@ -6,6 +6,7 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/constants/api_constants.dart';
+import '../models/ai_profile_payload.dart';
 import '../models/user.dart' as app_user;
 import '../providers/consistency_provider.dart';
 import '../providers/fasting_provider.dart';
@@ -528,14 +529,97 @@ class AuthNotifier extends StateNotifier<AuthState> {
     _init();
   }
 
-  /// Clear pre-auth quiz state. Called on sign-out and when a brand-new user
-  /// signs in, so stale device-local quiz answers don't bleed into a different
-  /// account / user's onboarding flow.
+  /// SharedPreferences key tracking the last user.id that signed in on this
+  /// device. Used to detect account switches: if a different user signs in,
+  /// the previous user's pre-auth quiz answers are stale and must be cleared
+  /// before being applied to the new account.
+  static const _lastAuthUserIdKey = 'lastAuthUserId';
+
+  /// Clear pre-auth quiz state. Only called on sign-out — quiz answers must
+  /// persist through the entire onboarding flow (personal-info, coach-selection,
+  /// paywall) because those screens read from preAuthQuizProvider and the
+  /// backend POST happens later in coach_selection_screen._submitUserPreferencesAndFlags.
+  /// Clearing on isNewUser sign-in caused users to be bounced back to /pre-auth-quiz
+  /// because the router checks quizData.isComplete before personal-info.
   Future<void> _clearPreAuthQuiz() async {
     try {
       await _ref.read(preAuthQuizProvider.notifier).clear();
     } catch (e) {
       debugPrint('⚠️ [Auth] Failed to clear pre-auth quiz state: $e');
+    }
+  }
+
+  /// Post-sign-in housekeeping for pre-auth quiz state. Runs synchronously
+  /// before [state] flips to authenticated so the router's onboarding-step
+  /// check sees the correct quiz state.
+  ///
+  /// Three jobs:
+  /// 1. Detect account switch (different user.id than last sign-in on this
+  ///    device) and clear the previous user's stale quiz answers before they
+  ///    bleed into the new account.
+  /// 2. For users still in onboarding with local quiz data: POST it to
+  ///    backend immediately so it survives uninstall/reinstall. (Previously
+  ///    only happened later in coach_selection — users who reinstalled mid-flow
+  ///    lost their answers.)
+  /// 3. For users still in onboarding with EMPTY local quiz: hydrate from
+  ///    backend's saved preferences (re-install / cross-device case).
+  ///
+  /// All errors are caught and logged — never fail sign-in over quiz sync.
+  Future<void> _syncQuizAfterSignIn(app_user.User user) async {
+    try {
+      final sp = await SharedPreferences.getInstance();
+      final previousUserId = sp.getString(_lastAuthUserIdKey);
+
+      if (previousUserId != null && previousUserId != user.id) {
+        debugPrint('🔄 [Auth] Account switch detected ($previousUserId → ${user.id}), clearing stale quiz');
+        await _clearPreAuthQuiz();
+      }
+      await sp.setString(_lastAuthUserIdKey, user.id);
+
+      // User has finished onboarding — quiz state no longer relevant.
+      if (user.isPaywallComplete) return;
+
+      final notifier = _ref.read(preAuthQuizProvider.notifier);
+      final quizData = await notifier.ensureLoaded();
+
+      if (quizData.isComplete) {
+        // Local has quiz answers — back them up to the server now so they
+        // survive an uninstall/reinstall mid-onboarding. coach_selection's
+        // POST will re-submit later (idempotent), so this is best-effort.
+        await _backupQuizToBackend(user.id, quizData);
+      } else {
+        // Local quiz is empty but user is mid-onboarding. Try to recover
+        // their previously-saved answers from the backend.
+        await notifier.hydrateFromUserPreferences(user.toJson());
+        debugPrint('💧 [Auth] Hydrated pre-auth quiz from backend preferences for ${user.id}');
+      }
+    } catch (e) {
+      debugPrint('⚠️ [Auth] _syncQuizAfterSignIn failed (non-fatal): $e');
+    }
+  }
+
+  /// Best-effort POST of local pre-auth quiz answers to the backend.
+  /// Non-blocking failure — coach_selection_screen retries the same POST after
+  /// the user picks a coach. This early POST exists purely for resilience to
+  /// uninstall/reinstall during onboarding.
+  Future<void> _backupQuizToBackend(String userId, PreAuthQuizData quizData) async {
+    try {
+      final payload = AIProfilePayloadBuilder.buildPayload(quizData);
+      // Personal info fields not in AI payload but accepted by /preferences endpoint
+      if (quizData.gender != null) payload['gender'] = quizData.gender;
+      if (quizData.age != null) payload['age'] = quizData.age;
+      if (quizData.heightCm != null) payload['height_cm'] = quizData.heightCm;
+      if (quizData.weightKg != null) payload['weight_kg'] = quizData.weightKg;
+      if (quizData.workoutDays != null) payload['workout_days'] = quizData.workoutDays;
+      if (quizData.activityLevel != null) payload['activity_level'] = quizData.activityLevel;
+
+      await _repository._apiClient.post(
+        '${ApiConstants.users}/$userId/preferences',
+        data: payload,
+      );
+      debugPrint('✅ [Auth] Pre-auth quiz backed up to backend for $userId');
+    } catch (e) {
+      debugPrint('⚠️ [Auth] Quiz backup POST failed (will retry at coach selection): $e');
     }
   }
 
@@ -614,9 +698,10 @@ class AuthNotifier extends StateNotifier<AuthState> {
     state = state.copyWith(status: AuthStatus.loading, errorMessage: null);
     try {
       final user = await _repository.signInWithGoogle();
-      if (user.isNewUser == true) {
-        await _clearPreAuthQuiz();
-      }
+      // Quiz sync (account-switch detection, backup, hydrate) runs BEFORE
+      // state flips to authenticated so the router sees correct quiz state
+      // on its next redirect. See _syncQuizAfterSignIn for the 3 jobs.
+      await _syncQuizAfterSignIn(user);
       state = AuthState(status: AuthStatus.authenticated, user: user);
       _updateDeviceInfo(user.id);
       // Fire-and-forget referral flush — never block auth UX on this.
@@ -634,11 +719,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
     state = state.copyWith(status: AuthStatus.loading, errorMessage: null);
     try {
       final user = await _repository.signInWithEmail(email, password);
-      // Brand-new user: device-local quiz state may belong to a different prior
-      // session — clear it so they're routed through the quiz themselves.
-      if (user.isNewUser == true) {
-        await _clearPreAuthQuiz();
-      }
+      await _syncQuizAfterSignIn(user);
       state = AuthState(status: AuthStatus.authenticated, user: user);
       _updateDeviceInfo(user.id);
       unawaited(_flushPendingReferral());
@@ -655,9 +736,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
     state = state.copyWith(status: AuthStatus.loading, errorMessage: null);
     try {
       final user = await _repository.signUpWithEmail(email, password, name: name);
-      if (user.isNewUser == true) {
-        await _clearPreAuthQuiz();
-      }
+      await _syncQuizAfterSignIn(user);
       state = AuthState(status: AuthStatus.authenticated, user: user);
       _updateDeviceInfo(user.id);
       unawaited(_flushPendingReferral());
@@ -685,6 +764,12 @@ class AuthNotifier extends StateNotifier<AuthState> {
     try {
       await _repository.signOut();
       await _clearPreAuthQuiz();
+      // Clear the last-auth-user fingerprint so the next sign-in is treated
+      // as a fresh session (no false-positive account-switch detection).
+      try {
+        final sp = await SharedPreferences.getInstance();
+        await sp.remove(_lastAuthUserIdKey);
+      } catch (_) {}
       await PendingReferralService.clear();
       // Reset live XP state — the provider persists (not autoDispose), so
       // stale userXp/lastLevelUp would survive logout and cause false

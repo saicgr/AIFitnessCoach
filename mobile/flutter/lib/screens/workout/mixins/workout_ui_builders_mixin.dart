@@ -152,6 +152,10 @@ mixin WorkoutUIBuildersMixin<T extends StatefulWidget> on State<T> {
 
   // Cross-mixin method access
   void showQuitDialog();
+  // "Complete workout now" overflow action — provided by WorkoutFlowMixin.
+  // Declared here so the UI-builder code (which lives in this mixin) can
+  // reference it directly without a `(this as WorkoutFlowMixin)` cast.
+  Future<void> completeWorkoutNow();
   void togglePause();
   void skipExercise();
   void handleWarmupComplete();

@@ -442,9 +442,16 @@ extension WorkoutRepositoryGeneration on WorkoutRepository {
                     chunkCount: (data['chunk_count'] as num?)?.toInt(),
                   );
                 } else if (eventType == 'error') {
+                  // Some backend error events carry a structured `code`
+                  // (e.g. EXERCISE_POOL_TOO_SMALL). Preserve it so the
+                  // caller can branch on the error semantics rather than
+                  // substring-matching the message.
                   yield WorkoutGenerationProgress(
                     status: WorkoutGenerationStatus.error,
-                    message: data['error'] as String? ?? 'Unknown error',
+                    message: data['error'] as String? ??
+                        data['message'] as String? ??
+                        'Unknown error',
+                    errorCode: data['code'] as String?,
                     elapsedMs: elapsedMs,
                   );
                 } else if (eventType == 'already_generating') {
@@ -476,10 +483,19 @@ extension WorkoutRepositoryGeneration on WorkoutRepository {
       debugPrint('❌ [Workout] Streaming generation error: $e');
 
       // Check for rate limit (429) error
-      String errorMessage = 'Failed to generate workout';
+      String errorMessage;
+      String? errorCode;
       if (e is DioException && e.response?.statusCode == 429) {
         errorMessage = 'Rate limit reached. Please wait a moment before trying again.';
         debugPrint('⚠️ [Workout] Rate limit (429) hit - user should wait before retrying');
+      } else if (e is DioException && e.response?.statusCode == 422) {
+        // Structured backend rejection — e.g. EXERCISE_POOL_TOO_SMALL when
+        // the user's gym profile doesn't have enough equipment for the
+        // chosen focus. Surface the server's explanation verbatim so the
+        // user knows to fix their profile instead of retrying blindly.
+        final parsed = _parseStructuredError(e.response?.data);
+        errorMessage = parsed.$1;
+        errorCode = parsed.$2;
       } else if (e.toString().contains('429')) {
         errorMessage = 'Rate limit reached. Please wait a moment before trying again.';
       } else {
@@ -489,9 +505,38 @@ extension WorkoutRepositoryGeneration on WorkoutRepository {
       yield WorkoutGenerationProgress(
         status: WorkoutGenerationStatus.error,
         message: errorMessage,
+        errorCode: errorCode,
         elapsedMs: DateTime.now().difference(startTime).inMilliseconds,
       );
     }
+  }
+
+  /// Decode a FastAPI HTTPException response body into a (userMessage,
+  /// errorCode) tuple. Handles three shapes:
+  ///   detail = "string"                 → (string, null)
+  ///   detail = { code, message, ... }    → (message, code)
+  ///   detail = [ {msg: ...}, ... ]       → (first msg, null)
+  (String, String?) _parseStructuredError(dynamic body) {
+    if (body is! Map<String, dynamic>) {
+      return ('Failed to generate workout. Please try again.', null);
+    }
+    final detail = body['detail'];
+    if (detail is String) return (detail, null);
+    if (detail is Map<String, dynamic>) {
+      final msg = detail['message'] as String? ??
+          detail['msg'] as String? ??
+          'Failed to generate workout.';
+      final code = detail['code'] as String?;
+      return (msg, code);
+    }
+    if (detail is List && detail.isNotEmpty) {
+      final first = detail.first;
+      if (first is Map<String, dynamic>) {
+        final msg = first['msg'] as String? ?? first['message'] as String?;
+        if (msg != null) return (msg, null);
+      }
+    }
+    return ('Failed to generate workout. Please try again.', null);
   }
 
   /// Generate a mood-based workout with streaming progress updates

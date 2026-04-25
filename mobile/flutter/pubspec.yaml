@@ -80,7 +80,7 @@ dependencies:
   share_plus: ^10.1.4
   path_provider: ^2.1.3
   url_launcher: ^6.2.5
-  # Universal Links / App Links ingress. Handles both https://fitwiz.app/...
+  # Universal Links / App Links ingress. Handles both https://fitwiz.us/...
   # and custom fitwiz:// schemes from OS-level opens (Safari tap, SMS,
   # share sheets). Pairs with PendingReferralService for /invite/{code}
   # capture across cold-start and background → foreground transitions.

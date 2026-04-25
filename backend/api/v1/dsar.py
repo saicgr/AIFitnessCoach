@@ -148,7 +148,7 @@ _PUBLIC_FORM_HTML = """<!DOCTYPE html>
       </select>
       <button type="submit">Send verification email</button>
     </form>
-    <p class="muted">We respond within 30 days as required by GDPR. Questions? <a style="color:#06b6d4" href="mailto:privacy@fitwiz.app">privacy@fitwiz.app</a>.</p>
+    <p class="muted">We respond within 30 days as required by GDPR. Questions? <a style="color:#06b6d4" href="mailto:privacy@fitwiz.us">privacy@fitwiz.us</a>.</p>
   </div>
 </body>
 </html>"""
@@ -500,7 +500,7 @@ def _send_verification_email(
         logger.warning("dsar: RESEND_API_KEY not set, skipping email")
         return
     resend.api_key = os.getenv("RESEND_API_KEY")
-    from_email = os.getenv("RESEND_FROM_EMAIL", "FitWiz <privacy@fitwiz.app>")
+    from_email = os.getenv("RESEND_FROM_EMAIL", "FitWiz <privacy@fitwiz.us>")
 
     label = {
         "export": "export your data",
@@ -544,7 +544,7 @@ def _send_export_ready_email(
     if not os.getenv("RESEND_API_KEY"):
         return
     resend.api_key = os.getenv("RESEND_API_KEY")
-    from_email = os.getenv("RESEND_FROM_EMAIL", "FitWiz <privacy@fitwiz.app>")
+    from_email = os.getenv("RESEND_FROM_EMAIL", "FitWiz <privacy@fitwiz.us>")
 
     verb = "export" if request_type == "export" else "access report"
     html = f"""<!DOCTYPE html><html><body style="font-family:-apple-system,sans-serif;
@@ -562,7 +562,7 @@ holds personal data about you: profile, workouts, food logs, chat history,
 progress photos, measurements, and more. See the included README.txt for a
 file-by-file breakdown.</p>
 <p style="font-size:13px;color:#6b7280">Questions? Reply to this email or
-write to <a style="color:#06b6d4" href="mailto:privacy@fitwiz.app">privacy@fitwiz.app</a>.</p>
+write to <a style="color:#06b6d4" href="mailto:privacy@fitwiz.us">privacy@fitwiz.us</a>.</p>
 </div></body></html>"""
     try:
         resend.Emails.send(
@@ -581,7 +581,7 @@ def _send_no_account_email(email: str, request_type: str) -> None:
     if not os.getenv("RESEND_API_KEY"):
         return
     resend.api_key = os.getenv("RESEND_API_KEY")
-    from_email = os.getenv("RESEND_FROM_EMAIL", "FitWiz <privacy@fitwiz.app>")
+    from_email = os.getenv("RESEND_FROM_EMAIL", "FitWiz <privacy@fitwiz.us>")
 
     html = f"""<!DOCTYPE html><html><body style="font-family:-apple-system,sans-serif;
 background:#0a0a0f;color:#e5e7eb;margin:0;padding:32px">
@@ -594,7 +594,7 @@ border-radius:16px;border:1px solid #1f2937">
 request from <a style="color:#06b6d4" href="{_base_url()}/api/v1/dsar/">this
 page</a> with that address.</p>
 <p style="font-size:13px;color:#6b7280">Questions? Write to
-<a style="color:#06b6d4" href="mailto:privacy@fitwiz.app">privacy@fitwiz.app</a>.</p>
+<a style="color:#06b6d4" href="mailto:privacy@fitwiz.us">privacy@fitwiz.us</a>.</p>
 </div></body></html>"""
     try:
         resend.Emails.send(
@@ -613,7 +613,7 @@ def _send_deletion_queued_email(email: str) -> None:
     if not os.getenv("RESEND_API_KEY"):
         return
     resend.api_key = os.getenv("RESEND_API_KEY")
-    from_email = os.getenv("RESEND_FROM_EMAIL", "FitWiz <privacy@fitwiz.app>")
+    from_email = os.getenv("RESEND_FROM_EMAIL", "FitWiz <privacy@fitwiz.us>")
 
     html = f"""<!DOCTYPE html><html><body style="font-family:-apple-system,sans-serif;
 background:#0a0a0f;color:#e5e7eb;margin:0;padding:32px">

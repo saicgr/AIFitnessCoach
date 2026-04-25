@@ -11,6 +11,8 @@ import '../../core/services/posthog_service.dart';
 import '../../widgets/pill_app_bar.dart';
 import '../../widgets/segmented_tab_bar.dart';
 import 'widgets/preview_tile_mock.dart';
+import '../home/widgets/swipeable_hero_section.dart'
+    show HomeFocus, homeFocusProvider;
 
 part 'layout_editor_screen_part_toggles_tab.dart';
 

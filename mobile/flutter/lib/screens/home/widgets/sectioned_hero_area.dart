@@ -4,6 +4,8 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/theme/accent_color_provider.dart';
 import '../../../core/providers/user_provider.dart';
 import '../../../core/providers/week_start_provider.dart';
+import '../../../data/models/workout.dart';
+import '../../../data/providers/today_workout_provider.dart';
 import '../../../data/repositories/workout_repository.dart';
 import '../../../data/services/haptic_service.dart';
 import 'hero_workout_carousel.dart';
@@ -157,7 +159,26 @@ class _SectionedHeroAreaState extends ConsumerState<SectionedHeroArea> {
     final today = DateTime(now.year, now.month, now.day);
     final weekStart = weekConfig.weekStart(today);
 
-    final allWorkouts = workoutsAsync.valueOrNull ?? [];
+    // Merge today's response into the workouts list before computing status.
+    // /today is the source of truth for "did the user finish today's workout?"
+    // because it sees the latest is_completed flips immediately after the
+    // backend cache invalidation. workoutsProvider lags behind (silent refresh,
+    // disk-cache hydration on cold paint), so without this merge the day strip
+    // drops back to "scheduled" the moment workoutsProvider rehydrates from
+    // its in-memory or disk cache after navigating back from the summary screen.
+    final todayResp = ref.watch(todayWorkoutProvider).valueOrNull;
+    final mergedWorkouts = <Workout>[...(workoutsAsync.valueOrNull ?? [])];
+    void mergeIfNew(Workout? w) {
+      if (w == null) return;
+      if (mergedWorkouts.any((existing) => existing.id == w.id)) return;
+      mergedWorkouts.add(w);
+    }
+    mergeIfNew(todayResp?.todayWorkout?.toWorkout());
+    mergeIfNew(todayResp?.completedWorkout?.toWorkout());
+    for (final extra in todayResp?.extraTodayWorkouts ?? const []) {
+      mergeIfNew(extra.toWorkout());
+    }
+
     final Map<int, bool?> statusMap = {};
 
     for (int displayIndex = 0; displayIndex < 7; displayIndex++) {
@@ -170,9 +191,12 @@ class _SectionedHeroAreaState extends ConsumerState<SectionedHeroArea> {
       final dateKey =
           '${dayDate.year}-${dayDate.month.toString().padLeft(2, '0')}-${dayDate.day.toString().padLeft(2, '0')}';
 
-      final workout = allWorkouts.where((w) {
+      final workout = mergedWorkouts.where((w) {
         if (w.scheduledDate == null) return false;
-        return w.scheduledDate!.split('T')[0] == dateKey;
+        // Match both "YYYY-MM-DDT…" and "YYYY-MM-DD …" Postgres formats.
+        final raw = w.scheduledDate!;
+        final dateOnly = raw.length >= 10 ? raw.substring(0, 10) : raw;
+        return dateOnly == dateKey;
       }).toList();
 
       if (workout.isNotEmpty && workout.any((w) => w.isCompleted == true)) {

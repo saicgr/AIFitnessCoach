@@ -107,6 +107,43 @@ extension WorkoutRepositoryPerformance on WorkoutRepository {
     }
   }
 
+  /// Patch an existing workout_log row. Used by the Easy-tier finalize
+  /// flow to backfill the row with the full sets_json + metadata + final
+  /// total_time_seconds once the user logs the last set (the row was
+  /// created at first-set persistence with sets_json='[]').
+  Future<Map<String, dynamic>?> updateWorkoutLog({
+    required String logId,
+    String? setsJson,
+    int? totalTimeSeconds,
+    Map<String, dynamic>? metadata,
+  }) async {
+    try {
+      final data = <String, dynamic>{};
+      if (setsJson != null) data['sets_json'] = setsJson;
+      if (totalTimeSeconds != null) data['total_time_seconds'] = totalTimeSeconds;
+      if (metadata != null) data['metadata'] = metadata;
+
+      if (data.isEmpty) {
+        debugPrint('⚠️ [Workout] updateWorkoutLog called with no fields to update');
+        return null;
+      }
+
+      final response = await apiClient.patch(
+        '/performance/workout-logs/$logId',
+        data: data,
+      );
+      if (response.statusCode == 200) {
+        debugPrint('✅ [Workout] Workout log $logId patched');
+        return response.data as Map<String, dynamic>;
+      }
+      debugPrint('⚠️ [Workout] updateWorkoutLog unexpected status: ${response.statusCode}');
+      return null;
+    } catch (e) {
+      debugPrint('❌ [Workout] Error patching workout log $logId: $e');
+      return null;
+    }
+  }
+
   /// Log a single set performance
   Future<Map<String, dynamic>?> logSetPerformance({
     required String workoutLogId,
@@ -119,7 +156,9 @@ extension WorkoutRepositoryPerformance on WorkoutRepository {
     String setType = 'working', // 'working', 'warmup', 'failure', 'amrap'
     double? rpe,
     int? rir,
-    String? notes,
+    // Multiple notes per set are preserved in order. Pass an empty list (or
+    // null) to clear notes; the backend stores them as a TEXT[] column.
+    List<String>? notes,
     String? aiInputSource,
     double? targetWeightKg,
     int? targetReps,
@@ -133,6 +172,11 @@ extension WorkoutRepositoryPerformance on WorkoutRepository {
     // SetNoteMediaService before being passed here.
     String? notesAudioUrl,
     List<String>? notesPhotoUrls,
+    // Whether the set was actually completed by the user. Defaults to
+    // true. The "Complete workout" overflow flow passes false for the
+    // zero-stamped placeholder rows it inserts for unlogged sets so
+    // analytics can distinguish padded rows from real working sets.
+    bool isCompleted = true,
   }) async {
     try {
       debugPrint('🔍 [Workout] Logging set $setNumber ($setType) for $exerciseName');
@@ -146,11 +190,14 @@ extension WorkoutRepositoryPerformance on WorkoutRepository {
           'set_number': setNumber,
           'reps_completed': repsCompleted,
           'weight_kg': weightKg,
-          'is_completed': true,
+          'is_completed': isCompleted,
           'set_type': setType,
           if (rpe != null) 'rpe': rpe,
           if (rir != null) 'rir': rir,
           if (notes != null && notes.isNotEmpty) 'notes': notes,
+          // Note: backend coerces String → [String] for legacy clients, but
+          // newer clients always send a list (empty list = "delete all notes"
+          // when the API supports patch-style updates).
           if (aiInputSource != null && aiInputSource.isNotEmpty) 'ai_input_source': aiInputSource,
           if (targetWeightKg != null) 'target_weight_kg': targetWeightKg,
           if (targetReps != null) 'target_reps': targetReps,

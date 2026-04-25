@@ -437,12 +437,13 @@ mixin TimerRestMixin<T extends StatefulWidget> on State<T> {
     HapticFeedback.mediumImpact();
   }
 
-  /// Handle inline rest note added
+  /// Handle inline rest note added. Multiple sends append into the set's
+  /// notes list — never replace, so users who tap send 3 times keep all 3.
   void handleInlineRestNote(String note) {
     final exerciseSets = completedSets[currentExerciseIndex];
     if (exerciseSets != null && exerciseSets.isNotEmpty) {
       final lastIndex = exerciseSets.length - 1;
-      exerciseSets[lastIndex] = exerciseSets[lastIndex].copyWith(notes: note);
+      exerciseSets[lastIndex] = exerciseSets[lastIndex].appendNote(note);
     }
     HapticFeedback.mediumImpact();
   }

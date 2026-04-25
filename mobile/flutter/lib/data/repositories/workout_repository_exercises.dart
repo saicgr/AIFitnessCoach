@@ -106,6 +106,7 @@ extension WorkoutRepositoryExercises on WorkoutRepository {
     String? reason,
     String? customMessage,
     List<String>? avoidedExercises,
+    List<String>? userEquipment,
   }) async {
     // Known reason chip → canned message mapping. Any reason value NOT in
     // this map is treated as freeform user text, so typing "I only have
@@ -150,6 +151,14 @@ extension WorkoutRepositoryExercises on WorkoutRepository {
         },
         if (avoidedExercises != null && avoidedExercises.isNotEmpty)
           'avoided_exercises': avoidedExercises,
+        // Pass the user's configured equipment list so the backend can
+        // filter AI Picks to compatible items only. Without this, a
+        // bodyweight-only user receives suspension-trainer / pullup-bar
+        // suggestions because the LangGraph search node can only fall
+        // back to free-text constraint extraction (which misses the
+        // common "I have no equipment" case for variety/difficulty
+        // swaps where equipment isn't mentioned).
+        if (userEquipment != null) 'user_equipment': userEquipment,
       },
     );
 
@@ -519,10 +528,22 @@ extension WorkoutRepositoryExercises on WorkoutRepository {
   /// Get fast exercise suggestions using database queries (no AI).
   /// Returns 8 similar exercises based on muscle group and equipment.
   /// ~20x faster than AI suggestions (~500ms vs ~10s).
-  Future<List<Map<String, dynamic>>> getExerciseSuggestionsFast({
+  ///
+  /// Returns a record so the caller can distinguish between three empty
+  /// states: `exercise_not_found` (lookup failed), `filtered_out`
+  /// (candidates existed but the user's equipment eliminated all of
+  /// them), and `no_match` (muscle query returned nothing). Lets the
+  /// Similar tab show honest copy instead of the previous misleading
+  /// "no exercises match this muscle group" for every empty result.
+  ///
+  /// Pass [userEquipment] from `environmentEquipmentProvider`. If null,
+  /// the backend loads it from the users row server-side.
+  Future<({List<Map<String, dynamic>> suggestions, String? emptyReason})>
+      getExerciseSuggestionsFast({
     required String exerciseName,
     required String userId,
     List<String>? avoidedExercises,
+    List<String>? userEquipment,
   }) async {
     try {
       debugPrint('🔍 [Workout] Getting fast suggestions for: $exerciseName');
@@ -532,18 +553,37 @@ extension WorkoutRepositoryExercises on WorkoutRepository {
           'exercise_name': exerciseName,
           'user_id': userId,
           'avoided_exercises': avoidedExercises ?? [],
+          if (userEquipment != null) 'user_equipment': userEquipment,
         },
       );
       if (response.statusCode == 200 && response.data != null) {
-        final suggestions =
-            List<Map<String, dynamic>>.from(response.data as List);
-        debugPrint('✅ [Workout] Got ${suggestions.length} fast suggestions');
-        return suggestions;
+        // Backend now returns a {suggestions: [...], empty_reason: ...}
+        // envelope. Defensive: tolerate the legacy bare-list shape too in
+        // case an older server is hit during a rolling deploy.
+        final data = response.data;
+        if (data is Map<String, dynamic>) {
+          final suggestions = List<Map<String, dynamic>>.from(
+            (data['suggestions'] as List?) ?? const [],
+          );
+          final emptyReason = data['empty_reason'] as String?;
+          debugPrint(
+            '✅ [Workout] Got ${suggestions.length} fast suggestions '
+            '(empty_reason=$emptyReason)',
+          );
+          return (suggestions: suggestions, emptyReason: emptyReason);
+        }
+        if (data is List) {
+          final suggestions = List<Map<String, dynamic>>.from(data);
+          debugPrint(
+            '✅ [Workout] Got ${suggestions.length} fast suggestions (legacy shape)',
+          );
+          return (suggestions: suggestions, emptyReason: null);
+        }
       }
-      return [];
+      return (suggestions: <Map<String, dynamic>>[], emptyReason: 'no_match');
     } catch (e) {
       debugPrint('❌ [Workout] Error getting fast suggestions: $e');
-      return [];
+      return (suggestions: <Map<String, dynamic>>[], emptyReason: 'no_match');
     }
   }
 

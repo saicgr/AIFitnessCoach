@@ -90,7 +90,7 @@ export default function AdminLogin() {
             <GlassInput
               type="email"
               label="Email Address"
-              placeholder="admin@fitwiz.com"
+              placeholder="admin@fitwiz.us"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
@@ -131,7 +131,7 @@ export default function AdminLogin() {
           <div className="mt-8 text-center">
             <p className="text-xs text-text-muted">
               Having trouble logging in?{' '}
-              <a href="mailto:support@fitwiz.com" className="text-primary hover:underline">
+              <a href="mailto:support@fitwiz.us" className="text-primary hover:underline">
                 Contact Support
               </a>
             </p>

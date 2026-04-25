@@ -5,9 +5,11 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/services/posthog_service.dart';
 import '../../../core/providers/user_provider.dart';
 import '../../../core/theme/accent_color_provider.dart';
+import '../../../core/utils/weight_utils.dart';
 import '../../../data/models/nutrition_preferences.dart';
 import '../../../data/providers/nutrition_preferences_provider.dart';
 import '../../onboarding/widgets/calorie_macro_estimator.dart';
+import 'nutrition_goals_card.dart' show showNutritionCalculationSheet;
 
 class EditTargetsSheet extends ConsumerStatefulWidget {
   final String userId;
@@ -96,11 +98,25 @@ class _EditTargetsSheetState extends ConsumerState<EditTargetsSheet> {
     final tdee = prefs.calculatedTdee;
     if (tdee == null || tdee <= 0) return;
 
-    // Use the goal's calorie adjustment to get recommended calories
+    // Respect the selected rate pill (lose_fat / build_muscle). Using
+    // NutritionCalculator.calculateSafeTarget routes through
+    // RateOfChange.calorieAdjustment (the textbook kg/wk × 7700 / 7 rule)
+    // and applies the gender-specific minimum-calorie floor. The previous
+    // implementation used `goal.calorieAdjustment` (a static -500) which
+    // ignored the rate selector and gave wrong recommendations.
     final goal = prefs.primaryGoalEnum;
-    final recCalories = tdee + goal.calorieAdjustment;
+    final rate = RateOfChange.fromString(_selectedRate ?? prefs.rateOfChange ?? 'moderate');
+    final user = ref.read(currentUserProvider).value;
+    final gender = user?.gender ?? 'male';
 
-    // Use NutritionCalculator.calculateMacros for recommended macros
+    final safe = NutritionCalculator.calculateSafeTarget(
+      tdee: tdee,
+      gender: gender,
+      goal: goal,
+      rate: rate,
+    );
+    final recCalories = safe.calories;
+
     final macros = NutritionCalculator.calculateMacros(
       calories: recCalories,
       dietType: prefs.dietTypeEnum,
@@ -384,36 +400,78 @@ class _EditTargetsSheetState extends ConsumerState<EditTargetsSheet> {
               ),
             ],
           ),
-          // Recalculate from profile — was formerly a ↻ icon on the Daily
-          // Goals card; moved here since the card was removed during the
-          // Daily-tab minimalist redesign. Recomputes targets from
-          // profile (weight/activity/goal) via the backend.
-          Align(
-            alignment: Alignment.centerLeft,
-            child: TextButton.icon(
-              onPressed: _isRecalculating ? null : _recalculateFromProfile,
-              icon: _isRecalculating
-                  ? SizedBox(
-                      width: 12,
-                      height: 12,
-                      child: CircularProgressIndicator(
-                          strokeWidth: 2, color: accent),
-                    )
-                  : Icon(Icons.refresh, size: 14, color: accent),
-              label: Text(
-                'Recalculate from profile',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: accent,
-                  fontWeight: FontWeight.w600,
+          // Recalculate from profile + current weight context. Showing the
+          // weight here (a) gives the user the anchor for the per-kg slider
+          // below, and (b) makes "Recalculate from profile" feel less
+          // magical — they can see exactly what "profile" means right now.
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              TextButton.icon(
+                onPressed: _isRecalculating ? null : _recalculateFromProfile,
+                icon: _isRecalculating
+                    ? SizedBox(
+                        width: 12,
+                        height: 12,
+                        child: CircularProgressIndicator(
+                            strokeWidth: 2, color: accent),
+                      )
+                    : Icon(Icons.refresh, size: 14, color: accent),
+                label: Text(
+                  'Recalculate from profile',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: accent,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                style: TextButton.styleFrom(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                  minimumSize: Size.zero,
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 ),
               ),
-              style: TextButton.styleFrom(
-                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-                minimumSize: Size.zero,
-                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-              ),
-            ),
+              const Spacer(),
+              Builder(builder: (ctx) {
+                final state = ref.watch(nutritionPreferencesProvider);
+                final user = ref.watch(currentUserProvider).value;
+                final weightKg = state.latestWeight ?? user?.weightKg;
+                if (weightKg == null || weightKg <= 0) {
+                  return const SizedBox.shrink();
+                }
+                final useKg = user?.usesMetricWeight ?? true;
+                final display = WeightUtils.formatWeightFromKg(
+                  weightKg,
+                  useKg: useKg,
+                );
+                return Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: elevated,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: textMuted.withValues(alpha: 0.2)),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.monitor_weight_outlined,
+                          size: 12, color: textMuted),
+                      const SizedBox(width: 4),
+                      Text(
+                        display,
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          color: textPrimary,
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }),
+            ],
           ),
           const SizedBox(height: 8),
 
@@ -470,6 +528,14 @@ class _EditTargetsSheetState extends ConsumerState<EditTargetsSheet> {
             elevated,
             proteinColor,
           ),
+          // Per-kg quick-set scale. Only shown in grams mode (% mode is a
+          // share-of-calories paradigm and per-kg doesn't apply). Hidden when
+          // we don't know the user's body weight yet so we don't render a
+          // broken slider with no anchor.
+          if (!_isPercentageMode) ...[
+            const SizedBox(height: 6),
+            _buildProteinPerKgScale(textPrimary, textMuted, elevated, proteinColor),
+          ],
           const SizedBox(height: 8),
           _buildFieldRow(
             'Carbs',
@@ -636,13 +702,49 @@ class _EditTargetsSheetState extends ConsumerState<EditTargetsSheet> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                label,
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w700,
-                  color: macroColor,
-                ),
+              Row(
+                children: [
+                  Flexible(
+                    child: Text(
+                      label,
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                        color: macroColor,
+                      ),
+                    ),
+                  ),
+                  // (i) chip on the Calories row — opens the existing
+                  // detailed calculation sheet (BMR formula breakdown,
+                  // TDEE, goal adjustment, macro split). Sized + styled
+                  // visibly so it's not mistaken for a stray dot. Both
+                  // action buttons are hidden by the launcher when invoked
+                  // from inside Edit Daily Targets (you're already in the
+                  // editor).
+                  if (isCalories) ...[
+                    const SizedBox(width: 6),
+                    InkWell(
+                      onTap: () {
+                        final prefs = ref.read(nutritionPreferencesProvider).preferences;
+                        if (prefs == null) return;
+                        showNutritionCalculationSheet(
+                          context,
+                          prefs: prefs,
+                          isDark: Theme.of(context).brightness == Brightness.dark,
+                        );
+                      },
+                      borderRadius: BorderRadius.circular(20),
+                      child: Padding(
+                        padding: const EdgeInsets.all(2),
+                        child: Icon(
+                          Icons.info_outline_rounded,
+                          size: 18,
+                          color: macroColor,
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
               ),
               if (recommended != null)
                 GestureDetector(
@@ -684,6 +786,125 @@ class _EditTargetsSheetState extends ConsumerState<EditTargetsSheet> {
           ),
         ),
       ],
+    );
+  }
+
+  /// Per-kg "scale" under the Protein input. Drag the slider — the protein
+  /// gram value updates live to `bodyWeightKg × ratio`. Anchor labels match
+  /// common sports-nutrition guidance:
+  ///   0.8 g/kg  RDA (sedentary baseline)
+  ///   1.2 g/kg  Active / endurance
+  ///   1.6 g/kg  Recreational lifter / maintain
+  ///   2.0 g/kg  Cutting / fat loss
+  ///   2.4 g/kg  Aggressive cut / contest prep
+  ///
+  /// We *only* allow drag-to-set (one direction). Manually editing the gram
+  /// field doesn't snap the slider back — the slider is a quick-set helper,
+  /// not a derived display, so users can fine-tune in grams without losing
+  /// their custom value.
+  Widget _buildProteinPerKgScale(
+    Color textPrimary,
+    Color textMuted,
+    Color elevated,
+    Color proteinColor,
+  ) {
+    final state = ref.watch(nutritionPreferencesProvider);
+    // Source priority: latest weight log → user profile weight. Profile
+    // weight is the onboarding value and is always present once a user
+    // finishes onboarding, so the slider works even when the user hasn't
+    // started logging weights yet. Slider only hides if BOTH are null,
+    // which should be impossible post-onboarding.
+    final user = ref.watch(currentUserProvider).value;
+    final weightKg = state.latestWeight ?? user?.weightKg;
+    if (weightKg == null || weightKg <= 0) {
+      return const SizedBox.shrink();
+    }
+
+    // Current g/kg derived from whatever's in the protein field.
+    final currentGrams = int.tryParse(_proteinController.text) ?? 0;
+    final currentRatio = (currentGrams / weightKg).clamp(0.5, 3.0).toDouble();
+
+    final stops = const [0.8, 1.2, 1.6, 2.0, 2.4];
+    final fmt = NumberFormat.decimalPattern();
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(110, 0, 0, 0), // align with input column
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Live read-out so the user sees exactly what dragging does.
+          Row(
+            children: [
+              Icon(Icons.straighten, size: 12, color: textMuted),
+              const SizedBox(width: 4),
+              Text(
+                '${currentRatio.toStringAsFixed(1)} g/kg · '
+                '${(currentRatio * weightKg).round()}g for '
+                '${fmt.format(weightKg.round())}kg',
+                style: TextStyle(fontSize: 11, color: textMuted),
+              ),
+            ],
+          ),
+          SliderTheme(
+            data: SliderThemeData(
+              trackHeight: 3,
+              activeTrackColor: proteinColor,
+              inactiveTrackColor: proteinColor.withValues(alpha: 0.18),
+              thumbColor: proteinColor,
+              overlayColor: proteinColor.withValues(alpha: 0.15),
+              thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 7),
+              overlayShape: const RoundSliderOverlayShape(overlayRadius: 14),
+              tickMarkShape: const RoundSliderTickMarkShape(tickMarkRadius: 2),
+              activeTickMarkColor: proteinColor,
+              inactiveTickMarkColor: proteinColor.withValues(alpha: 0.3),
+            ),
+            child: Slider(
+              value: currentRatio,
+              min: 0.8,
+              max: 2.4,
+              divisions: 16, // 0.1 g/kg granularity
+              onChanged: (v) {
+                final grams = (v * weightKg).round();
+                _proteinController.text = grams.toString();
+                _proteinController.selection = TextSelection.fromPosition(
+                  TextPosition(offset: _proteinController.text.length),
+                );
+                _recalculate();
+              },
+            ),
+          ),
+          // Stop labels — tap to snap.
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 4),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: stops.map((s) {
+                final isActive = (currentRatio - s).abs() < 0.05;
+                return GestureDetector(
+                  onTap: () {
+                    final grams = (s * weightKg).round();
+                    setState(() {
+                      _proteinController.text = grams.toString();
+                    });
+                    _recalculate();
+                  },
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 2, horizontal: 2),
+                    child: Text(
+                      s.toStringAsFixed(1),
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: isActive ? FontWeight.w700 : FontWeight.w400,
+                        color: isActive ? proteinColor : textMuted,
+                      ),
+                    ),
+                  ),
+                );
+              }).toList(),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -776,8 +997,11 @@ class _EditTargetsSheetState extends ConsumerState<EditTargetsSheet> {
     // Need weight data for timeline
     if (currentWeight == null || goalWeight == null) return null;
 
-    // Map rate of change
-    final rateStr = prefs.rateOfChange ?? 'moderate';
+    // Map rate of change. Prefer the user's *current selection* in this sheet
+    // (`_selectedRate`) over the persisted `prefs.rateOfChange` so the
+    // timeline (weeks-to-goal + deficit/surplus) reflects the rate the user
+    // is currently inspecting before they save.
+    final rateStr = _selectedRate ?? prefs.rateOfChange ?? 'moderate';
 
     final weeks = CalorieMacroEstimator.calculateWeeksToGoal(
       currentWeight: currentWeight,
@@ -848,7 +1072,12 @@ class _EditTargetsSheetState extends ConsumerState<EditTargetsSheet> {
               child: Padding(
                 padding: EdgeInsets.only(right: r.$1 != 'aggressive' ? 6 : 0),
                 child: GestureDetector(
-                  onTap: () => setState(() => _selectedRate = r.$1),
+                  onTap: () {
+                    setState(() => _selectedRate = r.$1);
+                    // Re-derive recommended kcal so the "Rec: X" label and the
+                    // goal-timeline deficit refresh as the user picks rates.
+                    _computeRecommended();
+                  },
                   child: Container(
                     padding: const EdgeInsets.symmetric(vertical: 8),
                     decoration: BoxDecoration(

@@ -371,6 +371,74 @@ async def create_workout_log(log: WorkoutLogCreate,
         raise safe_internal_error(e, "performance_db")
 
 
+class WorkoutLogPatch(BaseModel):
+    """Partial-update payload for an existing workout_log row.
+
+    All fields optional — only provided fields are written. Used by the
+    Easy-tier finalize flow to backfill the row with full sets_json +
+    metadata + final total_time once the user logs the last set (the row
+    itself was created at first-set persistence with sets_json='[]').
+    """
+    sets_json: Optional[str] = None
+    total_time_seconds: Optional[int] = None
+    metadata: Optional[dict] = None
+
+
+@router.patch("/workout-logs/{log_id}", response_model=WorkoutLog)
+async def update_workout_log(
+    log_id: str,
+    patch: WorkoutLogPatch,
+    current_user: dict = Depends(get_current_user),
+):
+    """Patch an existing workout_log row.
+
+    Only the fields included in the body are updated. Caller (e.g. the
+    Easy-tier finalize flow) uses this to backfill the row with the full
+    sets_json + metadata + final total_time once the last set is logged.
+    """
+    try:
+        db = get_supabase_db()
+
+        update_data: dict = {}
+        if patch.sets_json is not None:
+            try:
+                update_data["sets_json"] = json.loads(patch.sets_json)
+            except json.JSONDecodeError as je:
+                raise HTTPException(status_code=400, detail=f"Invalid JSON in sets_json: {je}")
+        if patch.total_time_seconds is not None:
+            if patch.total_time_seconds < 0 or patch.total_time_seconds > 86400:
+                raise HTTPException(status_code=400, detail="total_time_seconds out of range (0..86400)")
+            update_data["total_time_seconds"] = patch.total_time_seconds
+            # Mirror the derived duration_minutes write the create endpoint does
+            # so the Discover Volume/Endurance metrics stay consistent.
+            update_data["duration_minutes"] = max(1, round(patch.total_time_seconds / 60)) if patch.total_time_seconds > 0 else None
+        if patch.metadata is not None:
+            update_data["metadata"] = patch.metadata
+
+        if not update_data:
+            raise HTTPException(status_code=400, detail="No updatable fields provided")
+
+        # Authorize: ensure the row belongs to the requesting user.
+        owner = db.client.table("workout_logs").select("user_id").eq("id", log_id).maybe_single().execute()
+        if owner is None or owner.data is None:
+            raise HTTPException(status_code=404, detail="Workout log not found")
+        if owner.data.get("user_id") != current_user["id"]:
+            raise HTTPException(status_code=403, detail="Not authorized to update this workout log")
+
+        result = db.client.table("workout_logs").update(update_data).eq("id", log_id).execute()
+        if not result.data:
+            raise HTTPException(status_code=404, detail="Workout log not found")
+
+        logger.info(f"Patched workout log {log_id}: fields={list(update_data.keys())}")
+        return row_to_workout_log(result.data[0])
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error patching workout log {log_id}: {e}", exc_info=True)
+        raise safe_internal_error(e, "performance_db")
+
+
 @router.get("/workout-logs", response_model=List[WorkoutLog])
 async def list_workout_logs(
     user_id: str,

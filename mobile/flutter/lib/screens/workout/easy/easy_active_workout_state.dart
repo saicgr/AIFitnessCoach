@@ -24,8 +24,11 @@ library;
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
+import '../../../core/constants/app_colors.dart';
 import '../../../core/providers/active_workout_phase_provider.dart';
 import '../../../core/providers/user_provider.dart';
 import '../../../core/providers/workout_mini_player_provider.dart';
@@ -83,6 +86,9 @@ class EasyActiveWorkoutScreenState
 
   DateTime? _currentSetStartTime;
   String? _workoutLogId;
+  // Re-entry guard so the finalize-and-navigate flow can't fire twice
+  // (e.g. last-set persistence + rest-complete both call into it).
+  bool _isFinishing = false;
   // Stable per-workout timestamp — drives deterministic copy selection in
   // the pre-set insight engine so banner text doesn't flicker between
   // variants on every rebuild.
@@ -282,8 +288,11 @@ class EasyActiveWorkoutScreenState
         idx >= 0 &&
         idx < state.completed.length;
 
+    // The EnhancedNotesSheet edits a single text blob; flatten the per-set
+    // notes list with newlines so existing notes are presented as one block,
+    // then re-split on save (the save handler replaces the list wholesale).
     final initialNotes = editing
-        ? (state.completed[idx].notes ?? '')
+        ? state.completed[idx].notes.join('\n')
         : _pendingNoteText;
     final initialAudio = editing
         ? state.completed[idx].notesAudioPath
@@ -301,8 +310,15 @@ class EasyActiveWorkoutScreenState
         if (!mounted) return;
         setState(() {
           if (editing) {
+            // Sheet returns a single string (flattened above); split back into
+            // the list shape SetLog expects. Empty lines are dropped.
+            final lines = notes
+                .split('\n')
+                .map((s) => s.trim())
+                .where((s) => s.isNotEmpty)
+                .toList();
             state.completed[idx] = state.completed[idx].copyWith(
-              notes: notes,
+              notes: lines,
               notesAudioPath: audioPath,
               notesPhotoPaths: photoPaths,
             );
@@ -323,7 +339,7 @@ class EasyActiveWorkoutScreenState
     final idx = _editingSetIndex;
     if (idx != null && idx >= 0 && idx < state.completed.length) {
       final s = state.completed[idx];
-      return (s.notes?.isNotEmpty ?? false) ||
+      return s.notes.isNotEmpty ||
           (s.notesAudioPath?.isNotEmpty ?? false) ||
           s.notesPhotoPaths.isNotEmpty;
     }
@@ -379,7 +395,9 @@ class EasyActiveWorkoutScreenState
       startedAt: _currentSetStartTime,
       durationSeconds: setDuration,
       loggingMode: 'easy',
-      notes: _pendingNoteText.isNotEmpty ? _pendingNoteText : null,
+      notes: _pendingNoteText.trim().isNotEmpty
+          ? [_pendingNoteText.trim()]
+          : const [],
       notesAudioPath: _pendingNoteAudioPath,
       notesPhotoPaths: List.unmodifiable(_pendingNotePhotoPaths),
     );
@@ -410,7 +428,9 @@ class EasyActiveWorkoutScreenState
     final finished = state.completed.length >= state.totalSets;
     final isLast = _currentIndex >= _exercises.length - 1;
     if (finished && isLast) {
-      if (mounted) Navigator.of(context).maybePop();
+      // Last set of last exercise — run the finalize-and-celebrate flow
+      // (Advanced parity) instead of dropping the user back on Home.
+      unawaited(_finishWorkout());
       return;
     }
 
@@ -448,7 +468,9 @@ class EasyActiveWorkoutScreenState
     if (currentState.completed.length >= currentState.totalSets) {
       final next = _currentIndex + 1;
       if (next >= _exercises.length) {
-        if (mounted) Navigator.of(context).maybePop();
+        // Rest after the final set finished — finalize + navigate to
+        // /workout-complete.
+        unawaited(_finishWorkout());
         return;
       }
       setState(() => _currentIndex = next);
@@ -475,7 +497,10 @@ class EasyActiveWorkoutScreenState
     HapticService.instance.tap();
     final next = _currentIndex + 1;
     if (next >= _exercises.length) {
-      if (mounted) Navigator.of(context).maybePop();
+      // User skipped on the last exercise — treat as natural completion
+      // for whatever sets they've already logged so they still get the
+      // summary screen + any PRs / XP they earned.
+      unawaited(_finishWorkout());
       return;
     }
     setState(() => _currentIndex = next);
@@ -485,6 +510,135 @@ class EasyActiveWorkoutScreenState
   void _jumpTo(int idx) {
     setState(() => _currentIndex = idx.clamp(0, _exercises.length - 1));
     _currentSetStartTime = DateTime.now();
+  }
+
+  /// Natural completion path: every exercise's last set has been logged.
+  /// Mirrors what `WorkoutFlowMixin.finalizeWorkoutCompletion()` does for
+  /// Advanced — patches the workout_log row with the full sets_json +
+  /// metadata, calls /complete to detect PRs / build the performance
+  /// summary / award server-side XP, invalidates the history providers,
+  /// then routes to `/workout-complete` so the user gets the summary
+  /// screen + celebrations instead of being dropped on Home.
+  Future<void> _finishWorkout() async {
+    if (_isFinishing || !mounted) return;
+    _isFinishing = true;
+
+    _timer.stopWorkoutTimer();
+    _restBroadcaster?.dispose();
+    _restBroadcaster = null;
+
+    final result = await finalizeEasyWorkout(
+      ref: ref,
+      workout: widget.workout,
+      exercises: _exercises,
+      perExercise: _perExercise,
+      totalTimeSeconds: _timer.workoutSeconds,
+      workoutLogId: _workoutLogId,
+    );
+
+    if (!mounted) return;
+
+    // Tell any background "mini player" the workout is over and clear
+    // the active-workout phase flag so re-entry restarts cleanly.
+    ref.read(workoutMiniPlayerProvider.notifier).close();
+    ref.read(activeWorkoutWarmupDoneProvider.notifier).state = false;
+
+    context.go('/workout-complete', extra: <String, dynamic>{
+      'workout': widget.workout,
+      'duration': _timer.workoutSeconds,
+      'calories': result.calories,
+      'workoutLogId': _workoutLogId,
+      'exercisesPerformance': result.exercisesPerformance,
+      'totalSets': result.totalSets,
+      'totalReps': result.totalReps,
+      'totalVolumeKg': result.totalVolumeKg,
+      'personalRecords': result.personalRecords,
+      'performanceComparison': result.performanceComparison,
+      'isFirstWorkout': result.completionResponse?.isFirstWorkout ?? false,
+    });
+  }
+
+  /// User-initiated "Complete workout" overflow action. Confirms, then
+  /// pads every unlogged set across every exercise with a zero-stamped
+  /// SetLog (weight 0, reps 0, is_completed:false), persists each one
+  /// through the same `persistEasySet` path so the audit trail matches
+  /// what's in memory, and finally runs the same finalize pipeline that
+  /// the natural-completion path uses. This guarantees the workout
+  /// reaches the `/workout-complete` screen, hits the backend `/complete`
+  /// endpoint (PR detection + summary aggregation + XP), and shows up
+  /// in history identically to a fully-logged session — just with the
+  /// untouched sets clearly marked as not completed.
+  Future<void> _completeWorkoutNow() async {
+    if (_isFinishing) return;
+    HapticService.instance.tap();
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Complete workout now?'),
+        content: const Text(
+          'Any sets you haven’t logged will be saved as zero (0 weight, '
+          '0 reps). You’ll go straight to the workout summary.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('Keep going'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: const Text('Complete'),
+          ),
+        ],
+      ),
+    );
+    if (ok != true || !mounted) return;
+
+    // Pad every unlogged set with a zero entry. Each entry persists via
+    // the same per-set path so performance_logs has a row per planned
+    // set — the summary aggregator counts is_completed=false rows
+    // separately from real working sets.
+    for (int i = 0; i < _exercises.length; i++) {
+      final st = _perExercise[i];
+      if (st == null) continue;
+      while (st.completed.length < st.totalSets) {
+        final placeholder = SetLog(
+          reps: 0,
+          weight: 0,
+          setType: 'working',
+          targetReps: st.targetReps,
+          loggingMode: 'easy',
+        );
+        st.completed.add(placeholder);
+
+        if (widget.workout.id != null) {
+          // Fire-and-forget persist; we don't block the UI on each. The
+          // finalize step below awaits the workout-log PATCH which is
+          // the load-bearing call for summary aggregation.
+          unawaited(persistEasySet(
+            ref: ref,
+            exercise: _exercises[i],
+            log: placeholder.copyWith(),
+            // Spoof a state so persistEasySet uses the right set_number
+            // (it reads `state.completed.length` for setNumber).
+            state: EasyExerciseState(
+              displayWeight: 0,
+              reps: 0,
+              targetReps: st.targetReps,
+              targetWeightKg: st.targetWeightKg,
+              totalSets: st.totalSets,
+              completed: List<SetLog>.from(st.completed),
+            ),
+            workoutId: widget.workout.id!,
+            totalTimeSeconds: _timer.workoutSeconds,
+            cachedWorkoutLogId: _workoutLogId,
+          ).then((id) {
+            if (id != null) _workoutLogId = id;
+          }));
+        }
+      }
+    }
+
+    await _finishWorkout();
   }
 
   /// Confirm + bail out of the workout entirely. Completed sets remain
@@ -519,6 +673,16 @@ class EasyActiveWorkoutScreenState
   Widget build(BuildContext context) {
     if (_exercises.isEmpty) {
       return const Scaffold(body: SizedBox.shrink());
+    }
+
+    // Saving / completing pipeline is running — show the same trophy +
+    // spinner overlay Advanced shows during finalize. Without this the
+    // user sits on a frozen "Log set" screen for a few seconds while
+    // the PATCH workout_log + /complete + provider invalidations run.
+    if (_isFinishing) {
+      final isDark = Theme.of(context).brightness == Brightness.dark;
+      final accent = AccentColorScope.of(context).getColor(isDark);
+      return _EasySavingOverlay(isDark: isDark, accent: accent);
     }
 
     // Convert every in-memory displayWeight when the user flips kg↔lb on
@@ -629,9 +793,63 @@ class EasyActiveWorkoutScreenState
       onSkipToNext:
           _currentIndex < _exercises.length - 1 ? _skipToNextExercise : null,
       onQuitWorkout: _quitWorkout,
+      onCompleteWorkoutNow: _completeWorkoutNow,
       allCompletedSets: [
         for (final s in _perExercise.values) ...s.completed,
       ],
+    );
+  }
+}
+
+/// Brief saving / completing screen shown while the Easy-tier finalize
+/// pipeline (PATCH workout_log → /complete → invalidate providers) runs.
+/// Mirrors the Advanced `buildCompletionScreen` so both tiers feel
+/// identical at the end of a workout.
+class _EasySavingOverlay extends StatelessWidget {
+  final bool isDark;
+  final Color accent;
+
+  const _EasySavingOverlay({required this.isDark, required this.accent});
+
+  @override
+  Widget build(BuildContext context) {
+    final bg = isDark ? AppColors.background : Colors.white;
+    final textColor =
+        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    return Scaffold(
+      backgroundColor: bg,
+      body: SafeArea(
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.emoji_events, size: 80, color: accent)
+                  .animate()
+                  .scale(begin: const Offset(0, 0), duration: 500.ms)
+                  .then()
+                  .shake(duration: 300.ms),
+              const SizedBox(height: 24),
+              Text(
+                'Saving workout...',
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: textColor,
+                ),
+              ),
+              const SizedBox(height: 16),
+              SizedBox(
+                width: 40,
+                height: 40,
+                child: CircularProgressIndicator(
+                  strokeWidth: 3,
+                  color: accent,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

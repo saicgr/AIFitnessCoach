@@ -27,6 +27,111 @@ from core.rate_limiter import limiter
 router = APIRouter()
 logger = get_logger(__name__)
 
+# Process-lifetime alias cache so repeated misses on the same plural /
+# typo'd exercise name ("Bodyweight Inverted Rows" vs the canonical
+# "Bodyweight Inverted Row") only pay the fuzzy-lookup cost once.
+# {lowercased_input: canonical_library_name} — None cached values mean
+# "no match even after fuzzy lookup" so we don't re-hit the DB on retry.
+_EXERCISE_ALIAS_CACHE: Dict[str, Optional[str]] = {}
+
+
+def _normalize_exercise_lookup_key(name: str) -> str:
+    """Lowercase + strip common pluralization on the last word. Many
+    library exercises are stored singular ("Row", "Pull-Up") while users
+    say plural ("Rows", "Pull-Ups"); this dodges the first-order mismatch
+    before we fall back to expensive trigram lookup."""
+    if not name:
+        return ""
+    s = re.sub(r"\s+", " ", name.strip().lower())
+    words = s.split(" ")
+    if words:
+        last = words[-1]
+        # Heuristic: strip a trailing 's' only if ≥4 chars and doesn't
+        # end in "ss"/"us"/"is"/"es" (avoid "press" → "pres").
+        if (
+            len(last) >= 4
+            and last.endswith("s")
+            and not last.endswith(("ss", "us", "is", "es"))
+        ):
+            words[-1] = last[:-1]
+    return " ".join(words)
+
+
+async def _resolve_exercise_name(db, raw_name: str) -> Optional[Dict[str, Any]]:
+    """Resolve a (possibly plural / slightly typo'd) exercise name to a
+    row from exercise_library_cleaned. Tries: exact ilike → substring
+    ilike → normalized-singular ilike → pg_trgm similarity. Caches the
+    resolved canonical name for the lifetime of the process so the
+    second request for the same misspelling costs nothing.
+
+    Returns the library row dict or None if nothing matches.
+    """
+    if not raw_name:
+        return None
+    cache_key = raw_name.strip().lower()
+    if cache_key in _EXERCISE_ALIAS_CACHE:
+        canonical = _EXERCISE_ALIAS_CACHE[cache_key]
+        if canonical is None:
+            return None
+        hit = db.client.table("exercise_library_cleaned") \
+            .select("name, target_muscle, body_part, equipment") \
+            .eq("name", canonical).limit(1).execute()
+        if hit.data:
+            return hit.data[0]
+        # Canonical went stale — fall through and re-resolve.
+        _EXERCISE_ALIAS_CACHE.pop(cache_key, None)
+
+    # 1. Exact ilike on the raw input
+    res = db.client.table("exercise_library_cleaned") \
+        .select("name, target_muscle, body_part, equipment") \
+        .ilike("name", raw_name).limit(1).execute()
+    if res.data:
+        _EXERCISE_ALIAS_CACHE[cache_key] = res.data[0]["name"]
+        return res.data[0]
+
+    # 2. Substring ilike
+    res = db.client.table("exercise_library_cleaned") \
+        .select("name, target_muscle, body_part, equipment") \
+        .ilike("name", f"%{raw_name}%").limit(1).execute()
+    if res.data:
+        _EXERCISE_ALIAS_CACHE[cache_key] = res.data[0]["name"]
+        return res.data[0]
+
+    # 3. Normalized-singular exact ilike ("Bodyweight Inverted Rows" →
+    # "Bodyweight Inverted Row").
+    normalized = _normalize_exercise_lookup_key(raw_name)
+    if normalized and normalized != cache_key:
+        res = db.client.table("exercise_library_cleaned") \
+            .select("name, target_muscle, body_part, equipment") \
+            .ilike("name", normalized).limit(1).execute()
+        if res.data:
+            _EXERCISE_ALIAS_CACHE[cache_key] = res.data[0]["name"]
+            return res.data[0]
+
+    # 4. pg_trgm similarity — last-resort fuzzy match. Requires the
+    # `fuzzy_search_exercises(q TEXT, lim INT)` RPC; if it's absent or
+    # returns nothing we just accept the miss and cache a None.
+    try:
+        rpc = db.client.rpc(
+            "fuzzy_search_exercises",
+            {"q": raw_name, "lim": 1},
+        ).execute()
+        if rpc.data:
+            row = rpc.data[0] if isinstance(rpc.data, list) else rpc.data
+            if isinstance(row, dict) and row.get("name"):
+                # Fetch full row so we have target_muscle / body_part / equipment.
+                hit = db.client.table("exercise_library_cleaned") \
+                    .select("name, target_muscle, body_part, equipment") \
+                    .eq("name", row["name"]).limit(1).execute()
+                if hit.data:
+                    _EXERCISE_ALIAS_CACHE[cache_key] = hit.data[0]["name"]
+                    return hit.data[0]
+    except Exception as e:
+        logger.debug(f"fuzzy_search_exercises RPC unavailable or failed for '{raw_name}': {e}")
+
+    _EXERCISE_ALIAS_CACHE[cache_key] = None
+    return None
+
 # Build the graph once at module load
 exercise_suggestion_graph = None
 
@@ -105,6 +210,30 @@ async def get_exercise_suggestions(request: Request, body: SuggestionRequest, cu
         raise HTTPException(status_code=403, detail="Access denied")
     logger.info(f"Exercise suggestion request: {body.message[:50]}...")
 
+    # Server-side fallback: if the client didn't pass user_equipment, load
+    # it from the users row. This is the safety net for clients that
+    # haven't been updated yet — without it, the search node would fall
+    # through to the old free-text-constraint-only behaviour and serve
+    # equipment-mismatched suggestions (the bug we're fixing).
+    user_equipment_resolved = body.user_equipment
+    if user_equipment_resolved is None:
+        try:
+            from api.v1.workouts.utils import parse_json_field
+            db = get_supabase_db()
+            user_row = db.client.table("users").select("equipment").eq(
+                "id", body.user_id
+            ).limit(1).execute()
+            if user_row.data:
+                user_equipment_resolved = parse_json_field(
+                    user_row.data[0].get("equipment"), []
+                )
+                logger.info(
+                    f"[Suggest] Loaded user_equipment from DB: {user_equipment_resolved}"
+                )
+        except Exception as e:
+            logger.warning(f"[Suggest] Failed to load user_equipment: {e}")
+            # Leave as None so the search node falls back to old behaviour.
+
     try:
         graph = get_suggestion_graph()
 
@@ -113,7 +242,7 @@ async def get_exercise_suggestions(request: Request, body: SuggestionRequest, cu
             "user_id": body.user_id,
             "user_message": body.message,
             "current_exercise": body.current_exercise.model_dump(),
-            "user_equipment": body.user_equipment,
+            "user_equipment": user_equipment_resolved,
             "user_injuries": body.user_injuries,
             "user_fitness_level": body.user_fitness_level,
             "avoided_exercises": body.avoided_exercises,  # Pass avoided exercises to filter
@@ -173,6 +302,10 @@ class FastSuggestionRequest(BaseModel):
     exercise_name: str
     user_id: str
     avoided_exercises: Optional[List[str]] = None
+    # User's configured equipment list. When None, the endpoint loads it
+    # from the users row server-side. When provided as an empty list, it
+    # means "no equipment" → bodyweight-only filtering.
+    user_equipment: Optional[List[str]] = None
 
 
 class FastExerciseSuggestion(BaseModel):
@@ -187,7 +320,20 @@ class FastExerciseSuggestion(BaseModel):
     rank: int
 
 
-@router.post("/suggest-fast", response_model=List[FastExerciseSuggestion])
+class FastSuggestionsResponse(BaseModel):
+    """Wrapped response with typed empty_reason for honest client copy.
+
+    Replaces the legacy bare-list response. The frontend Similar tab
+    branches its empty-state copy on `empty_reason` so it can say what
+    actually happened ("we couldn't find this exercise" vs "no
+    equipment-compatible alternatives") rather than the previous
+    misleading blanket "no exercises match this muscle group".
+    """
+    suggestions: List[FastExerciseSuggestion]
+    empty_reason: Optional[str] = None  # 'exercise_not_found' | 'filtered_out' | 'no_match' | None when results found
+
+
+@router.post("/suggest-fast", response_model=FastSuggestionsResponse)
 async def get_fast_exercise_suggestions(body: FastSuggestionRequest, current_user: dict = Depends(get_current_user)):
     """
     Get exercise suggestions using fast database queries (no AI).
@@ -205,26 +351,42 @@ async def get_fast_exercise_suggestions(body: FastSuggestionRequest, current_use
     try:
         db = get_supabase_db()
 
-        # Get current exercise details from cleaned library
-        current_result = db.client.table("exercise_library_cleaned") \
-            .select("name, target_muscle, body_part, equipment") \
-            .ilike("name", body.exercise_name) \
-            .limit(1) \
-            .execute()
+        # Server-side fallback for user_equipment when client didn't pass it.
+        # Without this, the suspension-trainer leak resurfaces for any client
+        # that forgets to send the field.
+        user_equipment_resolved = body.user_equipment
+        if user_equipment_resolved is None:
+            try:
+                from api.v1.workouts.utils import parse_json_field
+                user_row = db.client.table("users").select("equipment").eq(
+                    "id", body.user_id
+                ).limit(1).execute()
+                if user_row.data:
+                    user_equipment_resolved = parse_json_field(
+                        user_row.data[0].get("equipment"), []
+                    )
+                    logger.info(
+                        f"[Suggest-Fast] Loaded user_equipment from DB: "
+                        f"{user_equipment_resolved}"
+                    )
+            except Exception as e:
+                logger.warning(
+                    f"[Suggest-Fast] Failed to load user_equipment: {e}"
+                )
 
-        if not current_result.data:
-            # Try partial match if exact match fails
-            current_result = db.client.table("exercise_library_cleaned") \
-                .select("name, target_muscle, body_part, equipment") \
-                .ilike("name", f"%{body.exercise_name}%") \
-                .limit(1) \
-                .execute()
+        # Resolve exercise name through exact → substring → singular
+        # normalization → pg_trgm fuzzy. Cached in-process.
+        current_ex = await _resolve_exercise_name(db, body.exercise_name)
 
-        if not current_result.data:
+        if not current_ex:
             logger.warning(f"Exercise not found: {body.exercise_name}")
-            return []
-
-        current_ex = current_result.data[0]
+            # Honest empty_reason so the frontend can say "we couldn't find
+            # this exercise in our library" instead of misleading "no
+            # exercises match this muscle group".
+            return FastSuggestionsResponse(
+                suggestions=[],
+                empty_reason="exercise_not_found",
+            )
         target_muscle_raw = current_ex.get("target_muscle") or current_ex.get("body_part")
         equipment = current_ex.get("equipment")
         body_part = current_ex.get("body_part")
@@ -296,7 +458,10 @@ async def get_fast_exercise_suggestions(body: FastSuggestionRequest, current_use
 
         if not result.data:
             logger.info("No similar exercises found")
-            return []
+            return FastSuggestionsResponse(
+                suggestions=[],
+                empty_reason="no_match",
+            )
 
         # Filter out avoided exercises
         avoided_lower = set((body.avoided_exercises or []))
@@ -306,6 +471,29 @@ async def get_fast_exercise_suggestions(body: FastSuggestionRequest, current_use
             ex for ex in result.data
             if ex["name"].lower() not in avoided_lower
         ]
+
+        # Equipment filter: drop candidates the user can't actually do.
+        # `user_equipment_resolved is None` means we didn't get a value from
+        # the client AND couldn't load one server-side — fall through to
+        # legacy behaviour (no filter) rather than wrongly hiding everything.
+        # Empty list = "no equipment" → bodyweight-only (the hardened filter
+        # handles that case).
+        had_candidates_before_equipment_filter = len(candidates) > 0
+        if user_equipment_resolved is not None and candidates:
+            from services.exercise_rag.filters import filter_by_equipment
+            candidates = [
+                ex for ex in candidates
+                if filter_by_equipment(
+                    ex.get("equipment") or "",
+                    user_equipment_resolved,
+                    ex.get("name") or "",
+                )
+            ]
+            logger.info(
+                f"[Suggest-Fast] Equipment filter: "
+                f"{len(result.data)} → {len(candidates)} for "
+                f"user_equipment={user_equipment_resolved}"
+            )
 
         # Generic muscle tokens that indicate a non-specific target
         GENERIC_MUSCLE_TOKENS = {"full body", "general", "multiple", "all", "whole body"}
@@ -404,8 +592,26 @@ async def get_fast_exercise_suggestions(body: FastSuggestionRequest, current_use
             for idx, s in enumerate(top_suggestions)
         ]
 
-        logger.info(f"Returning {len(suggestions)} fast suggestions")
-        return suggestions
+        # Honest empty_reason: 'filtered_out' when we had candidates from the
+        # DB but the user's equipment filter eliminated every one (e.g. a
+        # bodyweight user swapping a barbell row — there's nothing in the
+        # library tagged for what they can do). 'no_match' when the muscle
+        # query itself returned nothing.
+        if not suggestions and had_candidates_before_equipment_filter:
+            empty_reason = "filtered_out"
+        elif not suggestions:
+            empty_reason = "no_match"
+        else:
+            empty_reason = None
+
+        logger.info(
+            f"Returning {len(suggestions)} fast suggestions "
+            f"(empty_reason={empty_reason})"
+        )
+        return FastSuggestionsResponse(
+            suggestions=suggestions,
+            empty_reason=empty_reason,
+        )
 
     except Exception as e:
         logger.error(f"Fast suggestion failed: {e}", exc_info=True)

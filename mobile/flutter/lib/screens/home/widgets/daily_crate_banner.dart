@@ -320,6 +320,11 @@ class _DailyCrateSelectionSheetState
       if (result.success) {
         HapticService.success();
 
+        // Refresh the unclaimed-list FutureProvider so the home banner
+        // re-evaluates count immediately. Without this the banner can
+        // re-appear on the next watch with a stale count.
+        ref.invalidate(unclaimedCratesProvider);
+
         // Close bottom sheet immediately
         if (mounted) {
           Navigator.of(context).pop();

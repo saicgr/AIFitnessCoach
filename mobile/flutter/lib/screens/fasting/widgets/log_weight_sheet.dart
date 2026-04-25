@@ -17,9 +17,11 @@ import '../../../data/repositories/auth_repository.dart';
 import '../../../data/repositories/measurements_repository.dart';
 import '../../../data/services/haptic_service.dart';
 import '../../../data/services/health_service.dart';
+import '../../../shareables/shareable_catalog.dart';
+import '../../../shareables/shareable_data.dart';
+import '../../../shareables/shareable_sheet.dart';
 import '../../../widgets/glass_sheet.dart';
 import '../../home/widgets/components/sheet_theme_colors.dart';
-import '../../workout/widgets/share_workout_sheet.dart';
 
 /// Shows the log weight bottom sheet
 Future<WeightLogResult?> showLogWeightSheet(
@@ -564,29 +566,81 @@ class _LogWeightSheetState extends ConsumerState<_LogWeightSheet>
     return _weightKg < minPrior - 0.05; // small epsilon for float noise
   }
 
-  /// Opens the existing ShareWorkoutSheet pre-filled with the weight
-  /// delta so the user can brag about the 30-day low on IG / anywhere.
-  /// Reuses the share gallery infra — no dedicated weight template
-  /// yet.
+  /// Opens the unified ShareableSheet pre-loaded with a weight payload
+  /// and pre-selected on the Weight Trend graph (Graph category). The
+  /// sheet's title becomes "Share <data.title>", so we pass a
+  /// weight-flavored title — no more "Share Your Workout" copy when the
+  /// user is sharing a weight milestone.
   void _shareNewLow() {
     HapticService.medium();
+    final unit = _selectedUnit;
+    final convert = unit.fromKg;
+    final currentDisplay = convert(_weightKg);
     final deltaKg = _previousWeightKg != null
         ? (_previousWeightKg! - _weightKg).abs()
         : 0.0;
-    Navigator.of(context).pop();
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (_) => ShareWorkoutSheet(
-        workoutName: 'Weight Progress',
-        workoutLogId: 'weight-${DateTime.now().toIso8601String()}',
-        durationSeconds: 0,
-        totalVolumeKg: deltaKg > 0 ? deltaKg : null,
-        totalSets: 0,
-        totalReps: 0,
-        exercisesCount: 0,
+    final deltaDisplay = unit.fromKg(deltaKg);
+
+    // Build the per-day series the Weight Trend painter reads from
+    // `subMetrics`. Sorted oldest → newest so the chart reads left-to-right.
+    final history = [..._weightHistory]
+      ..sort((a, b) => a.recordedAt.compareTo(b.recordedAt));
+    final cutoff = DateTime.now().subtract(const Duration(days: 30));
+    final recent = history.where((e) => e.recordedAt.isAfter(cutoff)).toList();
+    final series = recent.isEmpty ? history : recent;
+    final subMetrics = series
+        .map((e) => ShareableMetric(
+              label: DateFormat('MMM d').format(e.recordedAt),
+              value: convert(e.value).toStringAsFixed(1),
+            ))
+        .toList();
+    // Make sure today's just-logged value is the rightmost point.
+    if (subMetrics.isEmpty ||
+        subMetrics.last.value !=
+            currentDisplay.toStringAsFixed(1)) {
+      subMetrics.add(ShareableMetric(
+        label: DateFormat('MMM d').format(DateTime.now()),
+        value: currentDisplay.toStringAsFixed(1),
+      ));
+    }
+
+    final highlights = <ShareableMetric>[
+      ShareableMetric(
+        label: 'CURRENT',
+        value: '${currentDisplay.toStringAsFixed(1)} ${unit.label}',
+        icon: Icons.monitor_weight_outlined,
       ),
+      if (deltaKg > 0.05)
+        ShareableMetric(
+          label: 'DOWN',
+          value: '-${deltaDisplay.toStringAsFixed(1)} ${unit.label}',
+          icon: Icons.trending_down_rounded,
+          accent: const Color(0xFF22C55E),
+        ),
+      ShareableMetric(
+        label: '30-DAY LOW',
+        value: '${currentDisplay.toStringAsFixed(1)} ${unit.label}',
+        icon: Icons.emoji_events_rounded,
+        accent: const Color(0xFFFFB020),
+      ),
+    ];
+
+    final shareable = Shareable(
+      kind: ShareableKind.bodyMeasurements,
+      title: 'Weight Update',
+      periodLabel: DateFormat('MMM d').format(DateTime.now()).toUpperCase(),
+      heroValue: currentDisplay,
+      heroUnitSingular: unit.label,
+      highlights: highlights,
+      subMetrics: subMetrics,
+      accentColor: const Color(0xFF22C55E),
+    );
+
+    Navigator.of(context).pop();
+    ShareableSheet.show(
+      context,
+      data: shareable,
+      initialTemplate: ShareableTemplate.weightGraph,
     );
   }
 
@@ -697,39 +751,61 @@ class _LogWeightSheetState extends ConsumerState<_LogWeightSheet>
             ],
             const SizedBox(height: 8),
 
-            // Weight value with change badge
-            Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  '${_selectedUnit.fromKg(_weightKg).toStringAsFixed(1)} ${_selectedUnit.label}',
-                  style: TextStyle(
-                    fontSize: 18,
-                    color: colors.textSecondary,
-                  ),
-                ),
-                if (changeKg != null && changeInUnit != null && changeInUnit >= 0.1) ...[
-                  const SizedBox(width: 8),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                    decoration: BoxDecoration(
-                      color: feedbackColor.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Text(
-                      '${changeKg > 0 ? '+' : '-'}${changeInUnit.toStringAsFixed(1)}',
+            // Weight value + change badge — wrapped in an InkWell so the
+            // whole row is tap-to-history. Adds a subtle chevron
+            // affordance on the celebration path so the gesture is
+            // discoverable.
+            InkWell(
+              borderRadius: BorderRadius.circular(12),
+              onTap: () {
+                HapticService.light();
+                Navigator.of(context).pop();
+                context.push('/measurements/weight');
+              },
+              child: Padding(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      '${_selectedUnit.fromKg(_weightKg).toStringAsFixed(1)} ${_selectedUnit.label}',
                       style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w700,
-                        color: feedbackColor,
+                        fontSize: 18,
+                        color: colors.textSecondary,
                       ),
                     ),
-                  ),
-                ],
-              ],
-            )
-                .animate()
-                .fadeIn(delay: 300.ms),
+                    if (changeKg != null &&
+                        changeInUnit != null &&
+                        changeInUnit >= 0.1) ...[
+                      const SizedBox(width: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: feedbackColor.withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Text(
+                          '${changeKg > 0 ? '+' : '-'}${changeInUnit.toStringAsFixed(1)}',
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w700,
+                            color: feedbackColor,
+                          ),
+                        ),
+                      ),
+                    ],
+                    const SizedBox(width: 6),
+                    Icon(
+                      Icons.show_chart_rounded,
+                      size: 14,
+                      color: colors.textMuted,
+                    ),
+                  ],
+                ),
+              ),
+            ).animate().fadeIn(delay: 300.ms),
             const SizedBox(height: 20),
 
             // Feedback message
@@ -804,7 +880,10 @@ class _LogWeightSheetState extends ConsumerState<_LogWeightSheet>
 
             const SizedBox(height: 24),
 
-            // Action buttons — Share CTA surfaces on new-low celebration
+            // Action buttons — Share CTA surfaces on new-low celebration.
+            // Tappable trend chip below the value also opens the chart so
+            // users can dig into history without dismissing the sheet
+            // first.
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
@@ -826,7 +905,24 @@ class _LogWeightSheetState extends ConsumerState<_LogWeightSheet>
                   ),
                 ),
                 const SizedBox(width: 12),
-                if (celebration)
+                if (celebration) ...[
+                  OutlinedButton.icon(
+                    onPressed: () {
+                      HapticService.light();
+                      Navigator.of(context).pop();
+                      context.push('/measurements/weight');
+                    },
+                    icon: const Icon(Icons.show_chart_rounded, size: 18),
+                    label: const Text('View Chart'),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: colors.cyan,
+                      side: BorderSide(color: colors.cyan),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
                   FilledButton.icon(
                     onPressed: _shareNewLow,
                     icon: const Icon(Icons.ios_share, size: 18),
@@ -838,8 +934,8 @@ class _LogWeightSheetState extends ConsumerState<_LogWeightSheet>
                         borderRadius: BorderRadius.circular(12),
                       ),
                     ),
-                  )
-                else
+                  ),
+                ] else
                 FilledButton.icon(
                   onPressed: () {
                     Navigator.of(context).pop();

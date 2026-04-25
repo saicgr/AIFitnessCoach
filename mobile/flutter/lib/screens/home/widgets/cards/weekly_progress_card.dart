@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/providers/week_start_provider.dart';
 import '../../../../core/theme/theme_colors.dart';
+import '../../../../core/utils/safe_num.dart';
 
 /// A card showing weekly workout progress with a progress bar and day indicators
 class WeeklyProgressCard extends ConsumerWidget {
@@ -88,7 +89,7 @@ class WeeklyProgressCard extends ConsumerWidget {
                 curve: Curves.easeOutCubic,
                 builder: (context, animatedValue, _) {
                   return Text(
-                    '${animatedValue.toInt()}%',
+                    '${safePercent(animatedValue)}%',
                     style: TextStyle(
                       fontSize: 28,
                       fontWeight: FontWeight.bold,

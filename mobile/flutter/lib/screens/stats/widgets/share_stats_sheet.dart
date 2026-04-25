@@ -14,6 +14,8 @@ import '../../../data/repositories/workout_repository.dart';
 import '../../../data/services/api_client.dart';
 import '../../../data/services/share_service.dart';
 import '../../../data/services/stats_gallery_service.dart';
+import '../../../shareables/adapters/stats_adapter.dart';
+import '../../../shareables/shareable_sheet.dart';
 import '../../../utils/image_capture_utils.dart';
 import 'share_templates/stats_overview_template.dart';
 import 'share_templates/stats_achievements_template.dart';
@@ -35,8 +37,20 @@ import '../../../data/providers/xp_provider.dart';
 class ShareStatsSheet extends ConsumerStatefulWidget {
   const ShareStatsSheet({super.key});
 
-  /// Show the share stats bottom sheet
+  /// Show the share stats bottom sheet.
+  ///
+  /// Delegates to the unified `ShareableSheet` via `StatsAdapter` so the
+  /// streak / weekly progress / total time fields all reflect a fresh
+  /// fetch from the consistency API (kills the "0 day streak with completed
+  /// workout" bug). Falls back to the legacy carousel only if the adapter
+  /// returns null (no data at all).
   static Future<void> show(BuildContext context, WidgetRef ref) async {
+    final shareable = await StatsAdapter.fromProviders(ref);
+    if (!context.mounted) return;
+    if (shareable != null) {
+      await ShareableSheet.show(context, data: shareable);
+      return;
+    }
     await showGlassSheet(
       context: context,
       useRootNavigator: true,
@@ -605,16 +619,31 @@ class _ShareStatsSheetState extends ConsumerState<ShareStatsSheet> {
     final consistencyState = ref.watch(consistencyProvider);
     final insights = consistencyState.insights;
     final workoutsNotifier = ref.read(workoutsProvider.notifier);
-    final weeklyProgress = workoutsNotifier.weeklyProgress;
+    // `weeklyProgress` and the milestone/PR projections each touch list
+    // operations (`reduce`, `first`, `last`) under the hood — when the
+    // user opens the share sheet before any workouts have synced these
+    // throw "Bad state: No element". Wrap in try/catch + fallbacks so the
+    // sheet still renders zero-state templates instead of crashing.
+    (int, int) weeklyProgress;
+    try {
+      weeklyProgress = workoutsNotifier.weeklyProgress;
+    } catch (_) {
+      weeklyProgress = (0, 0);
+    }
 
     // Real achievements from milestones provider
     final milestonesState = ref.watch(milestonesProvider);
-    final realAchievements = milestonesState.achieved.take(4).map((mp) {
-      return AchievementData(
-        emoji: _categoryToEmoji(mp.milestone.category),
-        name: mp.milestone.name,
-      );
-    }).toList();
+    List<AchievementData> realAchievements;
+    try {
+      realAchievements = milestonesState.achieved.take(4).map((mp) {
+        return AchievementData(
+          emoji: _categoryToEmoji(mp.milestone.category),
+          name: mp.milestone.name,
+        );
+      }).toList();
+    } catch (_) {
+      realAchievements = const <AchievementData>[];
+    }
     // Fallback if no achievements yet
     final achievements = realAchievements.isNotEmpty
         ? realAchievements
@@ -622,16 +651,21 @@ class _ShareStatsSheetState extends ConsumerState<ShareStatsSheet> {
 
     // Real PRs from scores provider
     final prStats = ref.watch(prStatsProvider);
-    final realPRs = (prStats?.recentPrs ?? []).take(3).map((pr) {
-      final date = DateTime.tryParse(pr.achievedAt);
-      return PRData(
-        exerciseName: pr.exerciseDisplayName,
-        value: pr.weightKg.toStringAsFixed(0),
-        unit: 'kg',
-        date: date != null ? DateFormat('MMM d, yyyy').format(date) : '',
-        type: PRType.weight,
-      );
-    }).toList();
+    List<PRData> realPRs;
+    try {
+      realPRs = (prStats?.recentPrs ?? []).take(3).map((pr) {
+        final date = DateTime.tryParse(pr.achievedAt);
+        return PRData(
+          exerciseName: pr.exerciseDisplayName,
+          value: pr.weightKg.toStringAsFixed(0),
+          unit: 'kg',
+          date: date != null ? DateFormat('MMM d, yyyy').format(date) : '',
+          type: PRType.weight,
+        );
+      }).toList();
+    } catch (_) {
+      realPRs = const <PRData>[];
+    }
 
     return PageView(
       controller: _pageController,

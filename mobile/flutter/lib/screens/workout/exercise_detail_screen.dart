@@ -149,9 +149,9 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen>
 
       // Load authoritative S3 illustration from API first
       try {
-        final imageResponse = await apiClient.get(
-          '/exercise-images/${Uri.encodeComponent(exerciseName)}',
-        );
+        final imageResponse = await apiClient
+            .get('/exercise-images/${Uri.encodeComponent(exerciseName)}')
+            .timeout(const Duration(seconds: 10));
         if (imageResponse.statusCode == 200 && imageResponse.data != null) {
           _imageUrl = imageResponse.data['url'] as String?;
         }
@@ -165,23 +165,34 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen>
         }
       }
 
-      // Load and autoplay video
+      // Load and autoplay video. Both calls are bounded so a missing video
+      // (e.g. AI-generated variants not in the cleaned library) can't pin
+      // the spinner indefinitely.
       try {
-        final videoResponse = await apiClient.get(
-          '/videos/by-exercise/${Uri.encodeComponent(exerciseName)}',
-        );
+        final videoResponse = await apiClient
+            .get('/videos/by-exercise/${Uri.encodeComponent(exerciseName)}')
+            .timeout(const Duration(seconds: 10));
         if (videoResponse.statusCode == 200 && videoResponse.data != null) {
           _videoUrl = videoResponse.data['url'] as String?;
           if (_videoUrl != null) {
             _videoController = VideoPlayerController.networkUrl(Uri.parse(_videoUrl!));
-            await _videoController!.initialize();
+            await _videoController!.initialize().timeout(
+                  const Duration(seconds: 10),
+                );
             _videoController!.setLooping(true);
             _videoController!.setVolume(0);
             _videoController!.play();
             _videoInitialized = true;
           }
         }
-      } catch (_) {}
+      } catch (e) {
+        debugPrint('Video unavailable for $exerciseName: $e');
+        try {
+          await _videoController?.dispose();
+        } catch (_) {}
+        _videoController = null;
+        _videoInitialized = false;
+      }
     } catch (e) {
       debugPrint('Error loading media: $e');
     }

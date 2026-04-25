@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/theme/accent_color_provider.dart';
+import '../../../core/utils/safe_num.dart';
 import '../../../data/models/trophy.dart';
 import '../../../data/services/haptic_service.dart';
 
@@ -96,7 +97,7 @@ class _InProgressCard extends StatelessWidget {
                   ),
                   const Spacer(),
                   Text(
-                    '${(progress.progressFraction * 100).toInt()}%',
+                    '${safePercent(progress.progressFraction * 100)}%',
                     style: TextStyle(
                       color: isDark
                           ? AppColors.textSecondary

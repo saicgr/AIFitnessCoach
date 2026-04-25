@@ -12,7 +12,7 @@ from contextlib import asynccontextmanager
 from datetime import datetime
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse, HTMLResponse
+from fastapi.responses import JSONResponse, HTMLResponse, PlainTextResponse
 from fastapi.staticfiles import StaticFiles
 from starlette.middleware.gzip import GZipMiddleware
 from starlette.types import ASGIApp, Receive, Scope, Send
@@ -146,7 +146,14 @@ class LoggingMiddleware:
     # Paths hit by infra (Render health checks, uptime monitors, browsers
     # requesting icons). Successful GETs on these are suppressed from INFO
     # logs to keep the stream readable; failures still log at WARN/ERROR.
-    _SILENT_GET_PATHS = frozenset({"/", "/health", "/favicon.ico", "/robots.txt"})
+    _SILENT_GET_PATHS = frozenset({
+        "/",
+        "/health",
+        "/favicon.ico",
+        "/robots.txt",
+        "/apple-touch-icon.png",
+        "/apple-touch-icon-precomposed.png",
+    })
 
     def __init__(self, app: ASGIApp):
         self.app = app
@@ -216,12 +223,16 @@ class LoggingMiddleware:
         try:
             await self.app(scope, receive, send_with_logging)
             duration = (time.time() - start_time) * 1000
-            if status_code < 400 or status_code == 404:
+            if status_code < 400:
                 if not is_silent:
                     logger.info(f"Response: {status_code} ({duration:.0f}ms)")
             elif status_code >= 500:
                 logger.error(f"Response: {status_code} ({duration:.0f}ms)")
             else:
+                # 4xx (including 404) — surface as WARNING unconditionally.
+                # Silent paths (_SILENT_GET_PATHS) only suppress 2xx health-
+                # check noise; a 404 anywhere, even on "/", must be visible
+                # so misrouted clients and broken deep links don't hide.
                 logger.warning(f"Response: {status_code} ({duration:.0f}ms)")
             # Push to dev log dashboard (no-op if not imported)
             if _dev_log_push is not None and not path.startswith("/dev/"):
@@ -650,7 +661,7 @@ app.add_middleware(SlowAPIMiddleware)
 # Include API routes
 app.include_router(v1_router, prefix="/api")
 
-# Public (no-auth) shareable resources — short links like fitwiz.app/r/{slug}
+# Public (no-auth) shareable resources — short links like fitwiz.us/r/{slug}
 from api.public import router as public_router  # noqa: E402
 app.include_router(public_router)
 
@@ -694,6 +705,11 @@ async def root():
     if settings.debug:
         result["docs"] = "/docs"
     return result
+
+
+@app.get("/robots.txt", include_in_schema=False)
+async def robots_txt():
+    return PlainTextResponse("User-agent: *\nDisallow: /\n")
 
 
 @app.get("/health", tags=["health"])
@@ -744,7 +760,7 @@ async def open_app():
 <p>If the app doesn't open automatically, tap below.</p>
 <a href="fitwiz://" class="btn">Open App</a><br>
 <a href="https://apps.apple.com/app/fitwiz/id0000000000" class="btn btn-outline">App Store</a>
-<a href="https://play.google.com/store/apps/details?id=com.fitwiz.app" class="btn btn-outline">Google Play</a>
+<a href="https://play.google.com/store/apps/details?id=com.aifitnesscoach.app" class="btn btn-outline">Google Play</a>
 </body>
 </html>"""
     return HTMLResponse(content=html)

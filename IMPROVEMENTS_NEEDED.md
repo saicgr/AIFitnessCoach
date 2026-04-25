@@ -34,9 +34,9 @@
 ### Privacy Policy Foundational Gaps
 - [x] **No legal entity name** in privacy policy contact section (section 15) — just email addresses _(2026-04-21: added "FitWiz, Inc. (Delaware corporation)" — verify against actual registration.)_
 - [x] **No registered business address** _(2026-04-21: added Wilmington DE address placeholder — verify.)_
-- [x] **No DPO name/contact** — GDPR Art. 37 requires this for processors handling health data _(2026-04-21: §10 + §15 now list `dpo@fitwiz.app`.)_
-- [x] **No UK/EU representative** — GDPR Art. 27 requires this for non-EU controllers processing EU user data _(2026-04-21: §10 adds EU (`eu-rep@fitwiz.app`) + UK (`uk-rep@fitwiz.app`) representatives.)_
-- [x] **Two different support domains** in policy: `privacy@fitwiz.app` vs `support@fitwiz.us` — suspicious, inconsistent, needs reconciliation _(2026-04-21: consolidated to `support@fitwiz.app`.)_
+- [x] **No DPO name/contact** — GDPR Art. 37 requires this for processors handling health data _(2026-04-21: §10 + §15 now list `dpo@fitwiz.us`.)_
+- [x] **No UK/EU representative** — GDPR Art. 27 requires this for non-EU controllers processing EU user data _(2026-04-21: §10 adds EU (`eu-rep@fitwiz.us`) + UK (`uk-rep@fitwiz.us`) representatives.)_
+- [x] **Two different support domains** in policy: `privacy@fitwiz.us` vs `support@fitwiz.us` — suspicious, inconsistent, needs reconciliation _(2026-04-21: consolidated to `support@fitwiz.us`. Note 2026-04-25: fitwiz.app belongs to a different company — never use it.)_
 - [x] **"12-month chat retention" promise in section 7 is not implemented** — zero grep matches in backend for retention/archive/cleanup/cron touching `chat_history`. Either build the retention cron or rewrite the promise. _(2026-04-21: new `api/v1/retention_cron.py` with `POST /api/v1/retention/cron`; prunes chat_history >365d, push_nudge_log >90d, media_jobs >30d. Same external-scheduler pattern as `push_nudge_cron`.)_
 
 ### Health Data Special Category (GDPR Art. 9 / HIPAA)

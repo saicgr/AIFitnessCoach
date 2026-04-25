@@ -16,7 +16,9 @@ import '../../data/providers/guest_usage_limits_provider.dart';
 import '../../data/repositories/nutrition_repository.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../data/services/api_client.dart';
+import '../../data/services/last_used_service.dart';
 import '../../data/providers/xp_provider.dart';
+import '../../widgets/common/last_used_badge.dart';
 import '../../widgets/glass_sheet.dart';
 import '../../widgets/guest_upgrade_sheet.dart';
 import '../../widgets/main_shell.dart';
@@ -51,6 +53,9 @@ part 'log_meal_sheet_ui.dart';
 
 part 'log_meal_sheet_ui_1.dart';
 part 'log_meal_sheet_ui_2.dart';
+
+const String _kMealTypeLastUsedKey = 'meal_type';
+const String _kFoodBrowserLastUsedKey = 'food_browser_filter';
 
 
 /// Shows the log meal bottom sheet from anywhere in the app
@@ -207,7 +212,8 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet> {
   // "More details" toggle for optional inputs (mood, energy, food items, micronutrients)
   bool _showMealDetails = false;
 
-  // Food browser state
+  // Food browser state. Initial value comes from LastUsedService in
+  // initState — defaults to .recent when no prior choice persisted.
   FoodBrowserFilter _browserFilter = FoodBrowserFilter.recent;
   String _searchQuery = '';
 
@@ -218,7 +224,21 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet> {
   @override
   void initState() {
     super.initState();
-    _selectedMealType = widget.initialMealType ?? _getDefaultMealType();
+    // Pre-select priority for meal type:
+    //   1. explicit widget.initialMealType (deep link from quick actions, etc.)
+    //   2. last-used meal type the user picked in this sheet
+    //   3. time-of-day heuristic (_getDefaultMealType)
+    final lastUsed = ref.read(lastUsedServiceProvider);
+    _selectedMealType = widget.initialMealType ??
+        _resolveMealTypeFromKey(lastUsed.get(_kMealTypeLastUsedKey)) ??
+        _getDefaultMealType();
+    final lastBrowserKey = lastUsed.get(_kFoodBrowserLastUsedKey);
+    if (lastBrowserKey != null) {
+      _browserFilter = FoodBrowserFilter.values.firstWhere(
+        (f) => f.name == lastBrowserKey,
+        orElse: () => FoodBrowserFilter.recent,
+      );
+    }
     _selectedTime = TimeOfDay.now();
     _textFieldFocusNode.addListener(_onFocusChange);
     _descriptionController.addListener(_onDescriptionChanged);

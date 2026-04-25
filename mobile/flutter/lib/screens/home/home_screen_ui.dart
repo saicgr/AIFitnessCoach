@@ -68,19 +68,23 @@ extension __HomeScreenStateExt on _HomeScreenState {
     });
   }
 
-  /// Routes the user to the notification pre-permission screen once per
-  /// install. The flag is flipped the moment that screen is shown (by the
-  /// screen itself once the user picks Enable or Not now), so returning
-  /// users skip this. Runs off the post-frame callback so navigation
-  /// doesn't collide with this frame's build.
+  /// Routes the user to the post-onboarding permission primers, in order:
+  ///   1. Permissions primer (camera/photos/microphone)
+  ///   2. Notification pre-permission
+  /// Each flag flips the moment its screen renders (the screen itself sets
+  /// the pref on Enable/Not now), so returning users skip whichever stages
+  /// they've already seen. Runs off post-frame so we don't collide with
+  /// the current frame's build.
   Future<void> _maybeShowNotificationPrime() async {
     // Skip if we're coming back from a minimized workout — user is in-flow.
     if (ref.read(isWorkoutMinimizedProvider)) return;
 
     final prefs = await SharedPreferences.getInstance();
-    final alreadyShown =
+    final permissionsPrimerShown =
+        prefs.getBool(PermissionsPrimerScreen.prefsKey) ?? false;
+    final notificationPrimeShown =
         prefs.getBool(NotificationPrimeScreen.prefsKey) ?? false;
-    if (alreadyShown) return;
+    if (permissionsPrimerShown && notificationPrimeShown) return;
     if (!mounted) return;
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -90,7 +94,13 @@ extension __HomeScreenStateExt on _HomeScreenState {
       final current =
           router.routerDelegate.currentConfiguration.uri.toString();
       if (current != '/home' && current != '/senior-home') return;
-      context.go('/notifications-prime');
+      // Permissions primer chains into notifications-prime on completion,
+      // so we only need to launch the first missing one.
+      if (!permissionsPrimerShown) {
+        context.go(PermissionsPrimerScreen.routePath);
+      } else {
+        context.go('/notifications-prime');
+      }
     });
   }
 

@@ -273,7 +273,17 @@ extension __ExerciseSwapSheetStateExt on _ExerciseSwapSheetState {
         else
           Expanded(
             child: ListView.builder(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
+              // Bottom safe-area inset prevents the last result card from
+              // being clipped behind the home-indicator / gesture bar.
+              // Without this, ~4 results landed flush with the system
+              // gesture area on iPhone (≈34pt) and gestural Android
+              // (≈24pt) — user couldn't scroll the 4th card into view.
+              padding: EdgeInsets.fromLTRB(
+                16,
+                0,
+                16,
+                MediaQuery.viewPaddingOf(context).bottom + 16,
+              ),
               itemCount: _aiSuggestions.length,
               itemBuilder: (context, index) {
                 final suggestion = _aiSuggestions[index];

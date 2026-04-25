@@ -246,12 +246,12 @@ class _EasyInstructionsContent extends StatelessWidget {
     // and substantial (not just a one-liner). Otherwise fall back to the
     // pattern-matched numbered steps so the sheet always has real content.
     final serverText = (exercise.instructions ?? '').trim();
-    final useServerText = serverText.length > 40;
+    final useServerText = serverInstructionsAreSubstantial(serverText);
     final setupSteps = useServerText
-        ? _splitInstructionsIntoSteps(serverText)
-        : getSetupSteps(exercise.name);
-    final formTips = getFormTips(exercise.name);
-    final breathingCues = getBreathingCues(exercise.name);
+        ? splitInstructionsIntoSteps(serverText)
+        : getSetupSteps(exercise.name, equipment: exercise.equipment);
+    final formTips = getFormTips(exercise.name, equipment: exercise.equipment);
+    final breathingCues = getBreathingCues(exercise.name, equipment: exercise.equipment);
 
     final aboutRows = <_InfoRow>[];
     final primary = exercise.primaryMuscle?.isNotEmpty == true
@@ -428,17 +428,6 @@ class _EasyInstructionsContent extends StatelessWidget {
         ],
       ),
     );
-  }
-
-  List<String> _splitInstructionsIntoSteps(String text) {
-    // Instructions are often a single paragraph. Split on sentence-ending
-    // punctuation so the rendered list feels like real step-by-step copy.
-    final parts = text
-        .split(RegExp(r'(?<=[.!?])\s+'))
-        .map((s) => s.trim())
-        .where((s) => s.isNotEmpty)
-        .toList();
-    return parts.length >= 2 ? parts : [text];
   }
 
   Widget _buildRow(_InfoRow row, {required Color fg, required Color muted}) {

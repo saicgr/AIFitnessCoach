@@ -7,7 +7,7 @@ Handles:
 - Per-muscle-group strength scoring (0-100)
 - Trend analysis and progress tracking
 """
-from typing import Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 from datetime import datetime, date, timedelta
 from decimal import Decimal
 from dataclasses import dataclass
@@ -567,17 +567,13 @@ class StrengthCalculatorService:
 
         for exercise in workout_data:
             exercise_name = exercise.get("exercise_name", "")
-            normalized = self._normalize_exercise_name(exercise_name)
-
-            # Find muscle groups for this exercise
-            muscle_groups = EXERCISE_MUSCLE_GROUPS.get(normalized, [])
-
-            # If not found, try partial matching
-            if not muscle_groups:
-                for key, groups in EXERCISE_MUSCLE_GROUPS.items():
-                    if key in normalized or normalized in key:
-                        muscle_groups = groups
-                        break
+            # Use the unified resolver so AI-generated bodyweight exercises
+            # whose names aren't in the static map still attribute via the
+            # `primary_muscle` / `muscle_groups` fields the frontend now
+            # includes in each per-set record.
+            muscle_groups = self.get_exercise_muscle_groups(
+                exercise_name, exercise_data=exercise
+            )
 
             # Assign to each muscle group (primary contribution)
             for i, mg in enumerate(muscle_groups):
@@ -710,11 +706,26 @@ class StrengthCalculatorService:
         return normalized
 
     @staticmethod
-    def get_exercise_muscle_groups(exercise_name: str) -> List[str]:
-        """Get muscle groups targeted by an exercise."""
+    def get_exercise_muscle_groups(
+        exercise_name: str,
+        exercise_data: Optional[Dict[str, Any]] = None,
+    ) -> List[str]:
+        """Get muscle groups targeted by an exercise.
+
+        Lookup order:
+          1. Static map keyed on the normalized name (substring fallback).
+          2. Optional `exercise_data` dict (e.g. the source workout's
+             `exercises_json` entry) — read `muscle_groups`, `primary_muscle`,
+             or `muscle_group` so AI-generated bodyweight moves like "Kabaddi
+             Squat Jumps" / "Above Head Chest Stretch" still attribute to
+             the muscle the AI declared, instead of dropping out of muscle
+             analytics + strength score entirely.
+          3. Empty list (caller decides whether to bucket under generic
+             "full_body" or skip).
+        """
         normalized = StrengthCalculatorService._normalize_exercise_name(exercise_name)
 
-        # Direct lookup
+        # 1. Direct lookup
         if normalized in EXERCISE_MUSCLE_GROUPS:
             return EXERCISE_MUSCLE_GROUPS[normalized]
 
@@ -723,7 +734,17 @@ class StrengthCalculatorService:
             if key in normalized or normalized in key:
                 return groups
 
-        # Default to empty list
+        # 2. Fallback to caller-provided exercise metadata (AI plan).
+        if isinstance(exercise_data, dict):
+            mg_raw = exercise_data.get("muscle_groups")
+            if isinstance(mg_raw, list) and mg_raw:
+                cleaned = [str(m).strip().lower() for m in mg_raw if m]
+                if cleaned:
+                    return cleaned
+            primary = exercise_data.get("primary_muscle") or exercise_data.get("muscle_group")
+            if isinstance(primary, str) and primary.strip():
+                return [primary.strip().lower()]
+
         return []
 
 

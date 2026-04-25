@@ -80,6 +80,11 @@ class EasyActiveWorkoutView extends StatelessWidget {
   /// Quit the whole workout — confirms + pops back to the list.
   final VoidCallback? onQuitWorkout;
 
+  /// Finalize the workout NOW. Any remaining unlogged sets get auto-stamped
+  /// as zero (weight 0, reps 0, is_completed: false) and the user lands on
+  /// the completion screen with whatever they've actually logged.
+  final VoidCallback? onCompleteWorkoutNow;
+
   /// Every completed set across every exercise in this session. Flattened
   /// view of `_perExercise.values.expand((e) => e.completed)`. Drives the
   /// live Calories + Volume numbers in the stats strip.
@@ -118,6 +123,7 @@ class EasyActiveWorkoutView extends StatelessWidget {
     this.hasNote = false,
     this.onSkipToNext,
     this.onQuitWorkout,
+    this.onCompleteWorkoutNow,
     this.allCompletedSets = const [],
   });
 
@@ -132,6 +138,7 @@ class EasyActiveWorkoutView extends StatelessWidget {
             workoutSeconds: workoutSeconds,
             onBack: onBack,
             onMinimize: onMinimize,
+            onCompleteNow: onCompleteWorkoutNow,
             onQuit: onQuitWorkout,
             onSkipToNext: onSkipToNext,
             exercise: exercise,

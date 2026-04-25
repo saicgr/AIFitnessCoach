@@ -395,20 +395,31 @@ async def recalculate_nutrition_targets(user_id: str, current_user: dict = Depen
             "recomposition": -200,
         }
 
-        rate_adjustments = {
-            "slow": 250,
-            "moderate": 500,
-            "aggressive": 750,
-        }
+        # Deficit/surplus from selected weekly rate.
+        # Static Wishnofsky rule: 1 kg fat ≈ 7700 kcal, so kg/wk × 7700 / 7 = cal/d.
+        # → 275 / 550 / 825 / 1100 cal/d for 0.25 / 0.5 / 0.75 / 1.0 kg/wk.
+        # Matches MyFitnessPal/Lose It baseline. Modern dynamic models (Hall/NIH BWP)
+        # over-predict by ~25% due to metabolic adaptation; real loss is ~75-85% of
+        # this static prediction after week 4. v2 will integrate the BWP closed-form
+        # weekly recompute. Keep this function in sync with Flutter
+        # `RateOfChange.calorieAdjustment` enum constants.
+        RATE_KG_PER_WEEK = {"slow": 0.25, "moderate": 0.5, "fast": 0.75, "aggressive": 1.0}
+        KCAL_PER_KG = 7700
+
+        def _deficit_for_rate(key: str) -> int:
+            return round(RATE_KG_PER_WEEK.get(key, 0.5) * KCAL_PER_KG / 7)
 
         nutrition_goal = prefs.get("nutrition_goal", "maintain")
         rate_of_change = prefs.get("rate_of_change")
 
         adjustment = goal_adjustments.get(nutrition_goal, 0)
         if nutrition_goal == "lose_fat" and rate_of_change:
-            adjustment = -rate_adjustments.get(rate_of_change, 500)
+            adjustment = -_deficit_for_rate(rate_of_change)
         elif nutrition_goal == "build_muscle" and rate_of_change:
-            adjustment = rate_adjustments.get(rate_of_change, 500) // 2
+            # Muscle gain is slower than fat loss at the same caloric magnitude;
+            # halve the surplus so an "aggressive" muscle goal doesn't push absurd
+            # calorie loads that mostly become fat.
+            adjustment = _deficit_for_rate(rate_of_change) // 2
 
         target_calories = max(
             1200 if gender == "female" else 1500,

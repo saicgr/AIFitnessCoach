@@ -17,6 +17,7 @@ import 'form_check_result_card.dart';
 import 'form_comparison_result_card.dart';
 import 'fullscreen_image_viewer.dart';
 import 'proposed_change_card.dart';
+import 'share_artifact_card.dart';
 import 'report_message_sheet.dart';
 import 'voice_message_widget.dart';
 import 'chat_media_widgets.dart';
@@ -288,6 +289,9 @@ class ChatMessageBubble extends ConsumerWidget {
             ),
           if (!isUser && message.hasFormComparison)
             FormComparisonResultCard(data: message.actionData!),
+          if (!isUser &&
+              message.actionData?['action'] == 'share_artifact_generated')
+            ShareArtifactCard(data: message.actionData!),
           if (!isUser && message.hasProposedChange)
             ProposedChangeCard(
               proposalId: message.proposalId!,

@@ -599,6 +599,9 @@ class _HydrationTabState extends ConsumerState<HydrationTab> {
             drinkType: type.value,
             amountMl: result['amount'],
             notes: result['notes'],
+            // Logs initiated from the Fuel/Water tab — distinguishes from
+            // home-screen quick-add and workout rest-timer prompts.
+            source: HydrationSource.nutrition,
           );
       if (success && mounted) {
         ref.read(posthogServiceProvider).capture(

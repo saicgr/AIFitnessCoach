@@ -13,6 +13,64 @@ import 'calories_burned_sheet.dart';
 
 part 'nutrition_goals_card_part_calculation_info_sheet.dart';
 
+/// Public launcher for the calculation breakdown sheet. Wraps the existing
+/// `_CalculationInfoSheet` (BMR formula, TDEE, goal adjustment, macro split)
+/// in `GlassSheet` so it inherits the app-wide glassmorphism + drag handle
+/// + root-navigator placement (so the bottom nav bar isn't drawn over it).
+///
+/// Pass [onEdit] / [onRecalculate] only from surfaces where those actions
+/// make sense. From the Edit Daily Targets sheet (which is itself the editor)
+/// they should be null — the launcher hides the action row when both are
+/// null so we don't render dead buttons.
+void showNutritionCalculationSheet(
+  BuildContext context, {
+  required NutritionPreferences prefs,
+  required bool isDark,
+  VoidCallback? onEdit,
+  VoidCallback? onRecalculate,
+}) {
+  String fmt(int n) {
+    final abs = n.abs();
+    if (abs >= 1000) {
+      final prefix = n < 0 ? '-' : '';
+      return '$prefix${abs ~/ 1000},${(abs % 1000).toString().padLeft(3, '0')}';
+    }
+    return n.toString();
+  }
+
+  String activityLabel(double m) {
+    if (m <= 1.25) return 'Sedentary';
+    if (m <= 1.45) return 'Lightly Active';
+    if (m <= 1.65) return 'Moderately Active';
+    if (m <= 1.8) return 'Very Active';
+    return 'Extra Active';
+  }
+
+  showGlassSheet(
+    context: context,
+    builder: (ctx) => GlassSheet(
+      child: _CalculationInfoSheet(
+        prefs: prefs,
+        isDark: isDark,
+        onEdit: onEdit == null
+            ? null
+            : () {
+                Navigator.pop(ctx);
+                onEdit();
+              },
+        onRecalculate: onRecalculate == null
+            ? null
+            : () {
+                Navigator.pop(ctx);
+                onRecalculate();
+              },
+        formatNumber: fmt,
+        getActivityLabel: activityLabel,
+      ),
+    ),
+  );
+}
+
 
 /// Dedicated card showing nutrition goals with edit/recalculate options
 class NutritionGoalsCard extends ConsumerWidget {

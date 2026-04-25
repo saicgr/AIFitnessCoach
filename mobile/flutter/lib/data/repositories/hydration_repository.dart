@@ -127,13 +127,17 @@ class HydrationNotifier extends StateNotifier<HydrationState> {
     }
   }
 
-  /// Log hydration
+  /// Log hydration. `source` is the surface this came from
+  /// (HydrationSource enum) — drives the per-row icon + badge in the
+  /// Fuel/Water tab Today's Log. Defaults to manual when unspecified so the
+  /// UI never renders an empty origin.
   Future<bool> logHydration({
     required String userId,
     required String drinkType,
     required int amountMl,
     String? workoutId,
     String? notes,
+    HydrationSource source = HydrationSource.manual,
   }) async {
     try {
       // Invalidate any in-flight background load so it doesn't overwrite
@@ -167,6 +171,7 @@ class HydrationNotifier extends StateNotifier<HydrationState> {
         workoutId: workoutId,
         notes: notes,
         localDate: Tz.localDate(),
+        source: source,
       );
 
       // Fire-and-forget: sync hydration to Health Connect / HealthKit
@@ -182,11 +187,14 @@ class HydrationNotifier extends StateNotifier<HydrationState> {
     }
   }
 
-  /// Quick log hydration
+  /// Quick log hydration. `source` defaults to home — every quickLog caller
+  /// today is the home-screen quick-add hero. Workout/chat/nutrition surfaces
+  /// must pass an explicit source so the badge is correct.
   Future<bool> quickLog({
     required String userId,
     String drinkType = 'water',
     int amountMl = 250,
+    HydrationSource source = HydrationSource.home,
   }) async {
     try {
       // Invalidate any in-flight background load so it doesn't overwrite
@@ -218,6 +226,7 @@ class HydrationNotifier extends StateNotifier<HydrationState> {
         drinkType: drinkType,
         amountMl: amountMl,
         localDate: Tz.localDate(),
+        source: source,
       );
 
       // Fire-and-forget: sync hydration to Health Connect / HealthKit
@@ -289,6 +298,7 @@ class HydrationRepository {
     String? workoutId,
     String? notes,
     String? localDate,
+    HydrationSource source = HydrationSource.manual,
   }) async {
     try {
       final response = await _client.post(
@@ -300,6 +310,7 @@ class HydrationRepository {
           if (workoutId != null) 'workout_id': workoutId,
           if (notes != null) 'notes': notes,
           if (localDate != null) 'local_date': localDate,
+          'source': source.value,
         },
       );
       return HydrationLog.fromJson(response.data);
@@ -316,11 +327,13 @@ class HydrationRepository {
     int amountMl = 250,
     String? workoutId,
     String? localDate,
+    HydrationSource source = HydrationSource.home,
   }) async {
     try {
       final queryParams = <String, dynamic>{
         'drink_type': drinkType,
         'amount_ml': amountMl,
+        'source': source.value,
       };
       if (workoutId != null) {
         queryParams['workout_id'] = workoutId;

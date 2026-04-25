@@ -46,9 +46,14 @@ class MyJourneyCard extends ConsumerWidget {
       orElse: () => milestones.last,
     );
 
-    final progressToNext = totalCompleted > 0
-        ? (totalCompleted - (currentMilestone['threshold'] as num).toInt()) /
-            ((nextMilestone['threshold'] as num).toInt() - (currentMilestone['threshold'] as num).toInt())
+    // Guard divide-by-zero when current and next milestones share a
+    // threshold (shouldn't happen but has in prod when milestone data
+    // regresses to a flat list). safeFraction coerces NaN/Infinity → 0.
+    final currentThreshold = (currentMilestone['threshold'] as num).toInt();
+    final nextThreshold = (nextMilestone['threshold'] as num).toInt();
+    final milestoneSpan = nextThreshold - currentThreshold;
+    final progressToNext = (totalCompleted > 0 && milestoneSpan > 0)
+        ? safeFraction((totalCompleted - currentThreshold) / milestoneSpan)
         : 0.0;
 
     if (size == TileSize.half) {

@@ -14,7 +14,11 @@ class SetLog {
   final int? rpe; // Rate of Perceived Exertion (1-10)
   final int? rir; // Reps in Reserve (0-5)
   final int targetReps; // Original target reps for this set
-  final String? notes; // Optional user notes for this set
+  // Per-set notes. Each entry is a discrete note the user added during the
+  // workout (multiple notes per set are preserved in order). Use [appendNote]
+  // / [removeNoteAt] for mutations rather than copyWith(notes:) so order is
+  // never accidentally clobbered.
+  final List<String> notes;
   final String? aiInputSource; // Original AI input that created this set (e.g., "135*8", "+10")
   final DateTime? startedAt; // When the set started (after rest ended)
   final int? durationSeconds; // How long the set took (start → checkmark)
@@ -39,7 +43,7 @@ class SetLog {
     this.rpe,
     this.rir,
     this.targetReps = 0,
-    this.notes,
+    this.notes = const [],
     this.aiInputSource,
     this.startedAt,
     this.durationSeconds,
@@ -59,7 +63,7 @@ class SetLog {
     int? rpe,
     int? rir,
     int? targetReps,
-    String? notes,
+    List<String>? notes,
     String? aiInputSource,
     DateTime? startedAt,
     int? durationSeconds,
@@ -91,7 +95,35 @@ class SetLog {
     );
   }
 
-  /// Convert to JSON for database persistence
+  /// Append a new note. Empty / whitespace-only inputs are dropped so the
+  /// inline-rest send button doesn't accidentally create blank entries.
+  SetLog appendNote(String text) {
+    final trimmed = text.trim();
+    if (trimmed.isEmpty) return this;
+    return copyWith(notes: [...notes, trimmed]);
+  }
+
+  /// Remove the note at [idx]. No-op if out of bounds.
+  SetLog removeNoteAt(int idx) {
+    if (idx < 0 || idx >= notes.length) return this;
+    final next = List<String>.from(notes)..removeAt(idx);
+    return copyWith(notes: next);
+  }
+
+  /// Replace the note at [idx] with [text]. Trimmed; empty strings remove
+  /// the entry to mirror the dialog's UX (clearing the text deletes it).
+  SetLog replaceNoteAt(int idx, String text) {
+    if (idx < 0 || idx >= notes.length) return this;
+    final trimmed = text.trim();
+    if (trimmed.isEmpty) return removeNoteAt(idx);
+    final next = List<String>.from(notes);
+    next[idx] = trimmed;
+    return copyWith(notes: next);
+  }
+
+  /// Convert to JSON for database persistence. `notes` is always emitted as
+  /// a list (empty list when there are none) so the backend can rely on a
+  /// stable shape regardless of client version.
   Map<String, dynamic> toJson() => {
         'reps': reps,
         'weight': weight,
@@ -113,7 +145,9 @@ class SetLog {
         if (notesPhotoPaths.isNotEmpty) 'notes_photo_urls': notesPhotoPaths,
       };
 
-  /// Create from JSON (database retrieval)
+  /// Create from JSON (database retrieval). Backwards-compatible across the
+  /// notes-list rollout: a raw `String`, a `List`, or null/missing all map
+  /// to a `List<String>`.
   factory SetLog.fromJson(Map<String, dynamic> json) {
     return SetLog(
       reps: json['reps'] as int? ?? 0,
@@ -125,7 +159,7 @@ class SetLog {
       rpe: json['rpe'] as int?,
       rir: json['rir'] as int?,
       targetReps: json['target_reps'] as int? ?? 0,
-      notes: json['notes'] as String?,
+      notes: _coerceNotes(json['notes']),
       aiInputSource: json['ai_input_source'] as String?,
       startedAt: json['started_at'] != null
           ? DateTime.parse(json['started_at'] as String)
@@ -141,6 +175,23 @@ class SetLog {
               .toList() ??
           const [],
     );
+  }
+
+  /// Accept old (`String`), new (`List`), or absent shapes. Empty/whitespace
+  /// entries are dropped so legacy rows with `notes = ""` migrate cleanly.
+  static List<String> _coerceNotes(dynamic raw) {
+    if (raw == null) return const [];
+    if (raw is List) {
+      return raw
+          .map((e) => e?.toString().trim() ?? '')
+          .where((s) => s.isNotEmpty)
+          .toList();
+    }
+    if (raw is String) {
+      final trimmed = raw.trim();
+      return trimmed.isEmpty ? const [] : [trimmed];
+    }
+    return const [];
   }
 }
 

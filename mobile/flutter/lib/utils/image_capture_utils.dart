@@ -143,6 +143,20 @@ class ImageCaptureUtils {
 
   /// Standard share image size (16:9 landscape)
   static const Size standardShareSize = Size(1920, 1080);
+
+  /// Returns the canonical capture size for the given aspect tag.
+  /// Tag values match `ShareableAspect` enum: 'story' / 'portrait' / 'square'.
+  static Size captureSizeForAspectTag(String tag) {
+    switch (tag) {
+      case 'square':
+        return instagramPostSize;
+      case 'portrait':
+        return instagramPortraitSize;
+      case 'story':
+      default:
+        return instagramStoriesSize;
+    }
+  }
 }
 
 /// A wrapper widget that makes its child capturable

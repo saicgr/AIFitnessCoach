@@ -131,8 +131,13 @@ class _CompactNutrientChip extends StatelessWidget {
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
 
-    final color = Color(
-        int.parse(nutrient.progressColor.replaceFirst('#', '0xFF')));
+    // Dynamic-pinned nutrients flagged `over_ceiling` (sodium / saturated fat
+    // / added sugar that today's logs pushed past safe ceiling) render orange
+    // regardless of the nutrient's normal color so the warning is unmistakable.
+    final isOverCeilingPin = nutrient.pinReason == 'over_ceiling';
+    final color = isOverCeilingPin
+        ? (isDark ? AppColors.warning : AppColorsLight.warning)
+        : Color(int.parse(nutrient.progressColor.replaceFirst('#', '0xFF')));
     final percentage = nutrient.percentage.clamp(0.0, 100.0);
 
     return Container(

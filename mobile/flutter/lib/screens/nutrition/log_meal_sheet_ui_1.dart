@@ -11,6 +11,17 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
     return MealType.dinner;
   }
 
+  /// Resolve a stored meal-type key string back to its enum value. Returns
+  /// null when the key is missing OR no longer maps (silent migration —
+  /// caller falls back to time-of-day default).
+  MealType? _resolveMealTypeFromKey(String? key) {
+    if (key == null || key.isEmpty) return null;
+    for (final t in MealType.values) {
+      if (t.name == key || t.value == key) return t;
+    }
+    return null;
+  }
+
 
   // ─── Voice Input ──────────────────────────────────────────────
 
@@ -665,6 +676,8 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
 
   void _showMealTypePicker() {
     final isDark = widget.isDark;
+    final lastUsed = ref.read(lastUsedServiceProvider);
+    final lastUsedKey = lastUsed.get(_kMealTypeLastUsedKey);
     showGlassSheet(
       context: context,
       builder: (context) => GlassSheet(
@@ -675,6 +688,10 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
             mainAxisSize: MainAxisSize.min,
             children: MealType.values.map((type) {
               final isSelected = _selectedMealType == type;
+              // Badge a row when it matches last-used AND is not the currently
+              // selected row (the check icon already marks the current pick).
+              final showLastUsedBadge = !isSelected &&
+                  (type.name == lastUsedKey || type.value == lastUsedKey);
               return ListTile(
                 leading: Text(type.emoji, style: const TextStyle(fontSize: 24)),
                 title: Text(
@@ -684,9 +701,14 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
                     fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                   ),
                 ),
-                trailing: isSelected ? Icon(Icons.check, color: isDark ? AppColors.teal : AppColorsLight.teal) : null,
+                trailing: isSelected
+                    ? Icon(Icons.check, color: isDark ? AppColors.teal : AppColorsLight.teal)
+                    : (showLastUsedBadge ? const LastUsedBadge.static() : null),
                 onTap: () {
                   setState(() => _selectedMealType = type);
+                  // Fire-and-forget — don't block UI on prefs flush.
+                  // ignore: unawaited_futures
+                  lastUsed.set(_kMealTypeLastUsedKey, type.name);
                   Navigator.pop(context);
                 },
               );

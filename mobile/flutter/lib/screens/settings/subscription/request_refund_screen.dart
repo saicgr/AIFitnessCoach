@@ -50,16 +50,21 @@ class _RequestRefundScreenState extends ConsumerState<RequestRefundScreen> {
   Future<void> _loadSubscriptionDetails() async {
     final subscriptionState = ref.read(subscriptionProvider);
     final tier = subscriptionState.tier;
+    final cadence = subscriptionState.billingPeriod;
 
-    // Map tier to plan details
+    // Map tier to plan details. Price uses the actual cadence on
+    // SubscriptionState rather than assuming monthly — yearly subscribers
+    // were previously shown the monthly price as the refund target.
     switch (tier) {
       case SubscriptionTier.premium:
         _planName = 'Premium';
-        _price = 5.99;
+        _price = cadence == BillingPeriod.yearly ? 49.99 : 5.99;
+        _billingPeriod = cadence == BillingPeriod.yearly ? 'yearly' : 'monthly';
         break;
       case SubscriptionTier.premiumPlus:
         _planName = 'Premium Plus';
-        _price = 9.99;
+        _price = cadence == BillingPeriod.yearly ? 79.99 : 9.99;
+        _billingPeriod = cadence == BillingPeriod.yearly ? 'yearly' : 'monthly';
         break;
       case SubscriptionTier.lifetime:
         _planName = 'Lifetime';
@@ -71,7 +76,8 @@ class _RequestRefundScreenState extends ConsumerState<RequestRefundScreen> {
     }
 
     if (subscriptionState.subscriptionEndDate != null) {
-      // Estimate start date (subscription end date - billing period)
+      // Estimate start date by subtracting one billing cycle from the
+      // upcoming renewal/expiry. Lifetime has no period and is skipped.
       if (_billingPeriod == 'yearly') {
         _subscriptionStartDate = subscriptionState.subscriptionEndDate!.subtract(const Duration(days: 365));
       } else if (_billingPeriod == 'monthly') {

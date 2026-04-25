@@ -103,6 +103,7 @@ async def google_auth(request: Request, body: GoogleAuthRequest,
             "fitness_level": "beginner",
             "goals": "[]",  # VARCHAR column - needs JSON string
             "equipment": "[]",  # VARCHAR column - needs JSON string
+            "equipment_v2": [],  # text[] column - dual-write during migration
             "preferences": {"name": full_name, "email": email},  # JSONB - can be dict
             "active_injuries": [],  # JSONB - can be list
             "apps": ["fitwiz"],  # Track which apps this user uses
@@ -240,6 +241,7 @@ async def email_auth(request: Request, body: EmailAuthRequest,
             "fitness_level": "beginner",
             "goals": "[]",
             "equipment": "[]",
+            "equipment_v2": [],  # text[] column - dual-write during migration
             "preferences": {"name": full_name, "email": email},
             "active_injuries": [],
         }
@@ -334,6 +336,7 @@ async def email_signup(request: Request, body: EmailSignupRequest,
             "fitness_level": "beginner",
             "goals": "[]",
             "equipment": "[]",
+            "equipment_v2": [],  # text[] column - dual-write during migration
             "preferences": {"name": full_name, "email": email},
             "active_injuries": [],
         }

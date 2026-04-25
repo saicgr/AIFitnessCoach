@@ -358,6 +358,14 @@ class NutrientProgress {
   @JsonKey(name: 'top_contributors')
   final List<Map<String, dynamic>>? topContributors;
 
+  /// Why this nutrient appears in `DailyMicronutrientSummary.pinned`. One of
+  /// 'static' (user's saved list), 'top_contributor' (dynamic mode picked it
+  /// for being a high % of RDA today), or 'over_ceiling' (penalty nutrient
+  /// that today's logs pushed past the safe ceiling — render orange). Null
+  /// on entries inside the per-category lists.
+  @JsonKey(name: 'pin_reason')
+  final String? pinReason;
+
   const NutrientProgress({
     required this.nutrientKey,
     required this.displayName,
@@ -371,6 +379,7 @@ class NutrientProgress {
     required this.status,
     this.colorHex,
     this.topContributors,
+    this.pinReason,
   });
 
   factory NutrientProgress.fromJson(Map<String, dynamic> json) =>
@@ -434,6 +443,10 @@ class DailyMicronutrientSummary {
   final List<NutrientProgress> fattyAcids;
   final List<NutrientProgress> other;
   final List<NutrientProgress> pinned;
+  /// 'static' = legacy user-saved list. 'dynamic' = computed from today's
+  /// foods. Drives the Settings toggle copy without an extra round-trip.
+  @JsonKey(name: 'pinning_mode')
+  final String? pinningMode;
 
   const DailyMicronutrientSummary({
     required this.date,
@@ -443,6 +456,7 @@ class DailyMicronutrientSummary {
     this.fattyAcids = const [],
     this.other = const [],
     this.pinned = const [],
+    this.pinningMode,
   });
 
   factory DailyMicronutrientSummary.fromJson(Map<String, dynamic> json) =>

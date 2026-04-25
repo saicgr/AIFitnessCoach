@@ -6,6 +6,7 @@ import '../../../widgets/glass_sheet.dart';
 import '../../../data/models/workout.dart';
 import '../../../data/repositories/workout_repository.dart';
 import '../../../data/services/api_client.dart';
+import 'package:share_plus/share_plus.dart';
 
 /// Shows a bottom sheet with workout actions
 Future<void> showWorkoutActionsSheet(
@@ -163,6 +164,13 @@ class _WorkoutActionsSheetState extends ConsumerState<_WorkoutActionsSheet> {
                     onTap: () => _handleGenerateStretches(context),
                   ),
                   _ActionTile(
+                    icon: Icons.ios_share_rounded,
+                    title: 'Share Workout',
+                    subtitle: 'Get a fitwiz.us link for friends',
+                    isLoading: _loadingAction == 'share',
+                    onTap: () => _handleShare(context),
+                  ),
+                  _ActionTile(
                     icon: Icons.delete_outline,
                     title: 'Delete Workout',
                     subtitle: 'Remove this workout',
@@ -235,6 +243,44 @@ class _WorkoutActionsSheetState extends ConsumerState<_WorkoutActionsSheet> {
           );
         }
       }
+    }
+  }
+
+  Future<void> _handleShare(BuildContext context) async {
+    if (_loadingAction != null) return;
+    final id = widget.workout.id;
+    if (id == null || id.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('This workout cannot be shared yet')),
+      );
+      return;
+    }
+    setState(() => _loadingAction = 'share');
+    try {
+      final api = ref.read(apiClientProvider);
+      final res = await api.dio.post('/api/v1/workouts/$id/share-link');
+      final data = res.data;
+      String? url;
+      if (data is Map && data['url'] is String) url = data['url'] as String;
+      if (!mounted) return;
+      if (url == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Could not create share link')),
+        );
+        return;
+      }
+      Navigator.of(context).pop();
+      await Share.share(
+        '${widget.workout.name ?? 'My workout'} — FitWiz\n$url',
+        subject: 'FitWiz workout',
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Share failed: $e')),
+      );
+    } finally {
+      if (mounted) setState(() => _loadingAction = null);
     }
   }
 

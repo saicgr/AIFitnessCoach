@@ -10,12 +10,9 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/api_constants.dart';
 import '../../core/constants/app_links.dart';
-import '../../core/providers/window_mode_provider.dart';
-import '../../data/models/ai_profile_payload.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../data/services/api_client.dart';
 import '../onboarding/pre_auth_quiz_screen.dart';
-import '../onboarding/widgets/foldable_quiz_scaffold.dart';
 import '../onboarding/widgets/onboarding_theme.dart';
 import 'widgets/pre_auth_referral_chip.dart';
 
@@ -97,29 +94,18 @@ class _SignInScreenState extends ConsumerState<SignInScreen>
   }
 
   void _triggerEarlyGeneration() {
+    // Quiz preferences are now POSTed by AuthNotifier._syncQuizAfterSignIn
+    // synchronously inside signInWithGoogle, so by the time we reach here the
+    // backend already has the user's preferences. Just kick the generation
+    // endpoint to warm up workout-of-the-day so the home screen loads instantly.
     Future<void>(() async {
       try {
         final apiClient = ref.read(apiClientProvider);
         final userId = await apiClient.getUserId();
         if (userId == null) return;
 
-        final quizData = ref.read(preAuthQuizProvider);
-        final payload = AIProfilePayloadBuilder.buildPayload(quizData);
-
-        if (quizData.gender != null) payload['gender'] = quizData.gender;
-        if (quizData.age != null) payload['age'] = quizData.age;
-        if (quizData.heightCm != null) payload['height_cm'] = quizData.heightCm;
-        if (quizData.weightKg != null) payload['weight_kg'] = quizData.weightKg;
-        if (quizData.workoutDays != null) payload['workout_days'] = quizData.workoutDays;
-
-        await apiClient.post(
-          '${ApiConstants.users}/$userId/preferences',
-          data: payload,
-        );
-        debugPrint('✅ [EarlyGen] Preferences submitted');
-
         await apiClient.get('${ApiConstants.workouts}/today?user_id=$userId');
-        debugPrint('✅ [EarlyGen] Generation triggered');
+        debugPrint('✅ [EarlyGen] Workout generation warmed up');
       } catch (e) {
         debugPrint('⚠️ [EarlyGen] Early generation failed (non-critical): $e');
       }

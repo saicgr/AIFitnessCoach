@@ -73,6 +73,7 @@ import 'mixins/workout_sheets_mixin.dart';
 import 'mixins/workout_ui_builders_mixin.dart';
 import 'widgets/exercise_info_sheet.dart';
 import 'widgets/breathing_guide_sheet.dart';
+import 'shared/exercise_instruction_copy.dart';
 import '../../core/services/exercise_info_service.dart';
 
 part 'exercise_details_sheet_content.dart';
@@ -229,8 +230,7 @@ class _ActiveWorkoutScreenState
           'set_type': 'working',
           if (setLog.rpe != null) 'rpe': setLog.rpe!.toDouble(),
           if (setLog.rir != null) 'rir': setLog.rir,
-          if (setLog.notes != null && setLog.notes!.isNotEmpty)
-            'notes': setLog.notes,
+          if (setLog.notes.isNotEmpty) 'notes': setLog.notes,
           if (setLog.aiInputSource != null && setLog.aiInputSource!.isNotEmpty)
             'ai_input_source': setLog.aiInputSource,
           'target_weight_kg':
@@ -920,7 +920,19 @@ class _ActiveWorkoutScreenState
     // When the user minimized (instead of ending), the mini-player provider
     // now owns the notification / Live Activity lifecycle — don't cancel it
     // here or the ongoing surface will disappear the instant the screen pops.
-    final minimized = ref.read(workoutMiniPlayerProvider).isMinimized;
+    //
+    // Reading `ref` inside dispose is normally legal up until super.dispose(),
+    // but Crashlytics flagged "Cannot use ref after the widget was disposed"
+    // here in production — likely because a parent's teardown ordering
+    // disposes the provider scope before this State's dispose runs (e.g.
+    // route rebuild with key change). Default to "not minimized" on failure
+    // so we always clean up the ongoing notification rather than orphan it.
+    bool minimized = false;
+    try {
+      minimized = ref.read(workoutMiniPlayerProvider).isMinimized;
+    } catch (e) {
+      debugPrint('⚠️ [ActiveWorkout] dispose ref unavailable, assuming not minimized: $e');
+    }
     if (!minimized) {
       cancelWorkoutNotification();
       unawaited(LiveActivityService.instance.end());
@@ -1197,7 +1209,11 @@ class _ActiveWorkoutScreenState
         weight: weight,
         setType: aiSet.isWarmup ? 'warmup' : 'working',
         targetReps: exercise.reps ?? aiSet.reps,
-        notes: aiSet.notes,
+        // SetToLog.notes is a single String? (AI annotation); SetLog.notes is
+        // a list. Wrap if present.
+        notes: (aiSet.notes != null && aiSet.notes!.trim().isNotEmpty)
+            ? [aiSet.notes!.trim()]
+            : const [],
         aiInputSource: aiSet.originalInput.isNotEmpty ? aiSet.originalInput : null,
         loggingMode: 'advanced',
       );

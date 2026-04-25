@@ -96,6 +96,7 @@ class _HeroWorkoutCarouselState extends ConsumerState<HeroWorkoutCarousel> {
   int _currentPage = 0;
   bool _hasScrolledToInitial = false;
   int _lastCompletedCount = -1; // Track completed count to auto-scroll on new completions
+  String? _lastItemsSignature; // Hash of carousel item ids — used to re-target after Add/Replace
 
   /// Whether we own (and should dispose) the page controller
   bool get _ownsController => widget.externalPageController == null;
@@ -272,6 +273,15 @@ class _HeroWorkoutCarouselState extends ConsumerState<HeroWorkoutCarousel> {
             mergedWorkouts.add(extraWorkout);
           }
         }
+        // Merge today's completed workout. /today returns it as `completedWorkout`
+        // (with todayWorkout=null) once the user finishes today's session. Without
+        // this merge, the carousel falls back to the placeholder "No workout yet"
+        // card whenever workoutsProvider is stale (e.g. after navigating back from
+        // the summary screen, before the silent refresh propagates).
+        final completedToday = todayWorkoutResponse?.completedWorkout?.toWorkout();
+        if (completedToday != null && !mergedWorkouts.any((w) => w.id == completedToday.id)) {
+          mergedWorkouts.add(completedToday);
+        }
         // Merge locally generated workouts for immediate display
         for (final workout in _locallyGeneratedWorkouts) {
           if (!mergedWorkouts.any((w) => w.id == workout.id)) {
@@ -284,40 +294,11 @@ class _HeroWorkoutCarouselState extends ConsumerState<HeroWorkoutCarousel> {
         );
         mergedWorkouts.removeWhere((w) => w.generationMethod == 'health_connect_import');
 
-        // Safety net: deduplicate by scheduled_date — keep only the newest
-        // non-quick workout per date. Quick workouts intentionally coexist.
-        {
-          final dateGroups = <String, List<Workout>>{};
-          for (final w in mergedWorkouts) {
-            if (w.scheduledDate == null) continue;
-            final dateKey = w.scheduledDate!.length >= 10
-                ? w.scheduledDate!.substring(0, 10)
-                : w.scheduledDate!;
-            dateGroups.putIfAbsent(dateKey, () => []).add(w);
-          }
-          final idsToRemove = <String>{};
-          for (final entry in dateGroups.entries) {
-            final workouts = entry.value;
-            if (workouts.length <= 1) continue;
-            // Separate quick workouts from scheduled ones
-            final scheduled = workouts.where((w) => w.generationMethod != 'quick_workout').toList();
-            if (scheduled.length <= 1) continue;
-            // Keep the newest scheduled workout, remove the rest
-            scheduled.sort((a, b) {
-              final aDate = a.createdAt ?? '';
-              final bDate = b.createdAt ?? '';
-              return bDate.compareTo(aDate); // newest first
-            });
-            for (int i = 1; i < scheduled.length; i++) {
-              if (scheduled[i].id != null) {
-                idsToRemove.add(scheduled[i].id!);
-              }
-            }
-          }
-          if (idsToRemove.isNotEmpty) {
-            mergedWorkouts.removeWhere((w) => w.id != null && idsToRemove.contains(w.id));
-          }
-        }
+        // NOTE: No date-based dedup here. Two non-quick workouts can legitimately
+        // share a scheduled_date — the user picks "Add Workout" in the regenerate /
+        // mood-picker flows, which un-supersedes the original so both are
+        // is_current=True. The merge step above already dedupes by id; the backend
+        // already filters is_current=True, so accidental dupes can't reach here.
 
         // Build carousel items: one per workout day (workout card or pending card)
         // Multiple workouts on the same day each get their own carousel card.
@@ -422,6 +403,36 @@ class _HeroWorkoutCarouselState extends ConsumerState<HeroWorkoutCarousel> {
             });
           }
         }
+
+        // Re-target the carousel when the item list changes after the
+        // initial scroll (e.g. user picked "Add Workout" and a new card
+        // joined today). Without this, _hasScrolledToInitial=true blocks
+        // any further auto-scroll and the user lands on the stale page.
+        // Signature = ordered list of item identities; only fires when the
+        // visible content actually changed, not on every Riverpod rebuild.
+        final itemsSignature = carouselItems
+            .map((i) => i.isWorkout
+                ? 'w:${i.workout?.id ?? ''}:${i.workout?.isCompleted == true ? 1 : 0}'
+                : 'p:${i.placeholderDate != null ? _dateKey(i.placeholderDate!) : ''}')
+            .join('|');
+        if (_hasScrolledToInitial &&
+            _lastItemsSignature != null &&
+            _lastItemsSignature != itemsSignature &&
+            carouselItems.length > 1) {
+          final retargetIndex = _pickInitialIndex(carouselItems, today);
+          if (retargetIndex != _currentPage) {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (mounted && _pageController.hasClients) {
+                _pageController.animateToPage(
+                  retargetIndex,
+                  duration: const Duration(milliseconds: 400),
+                  curve: Curves.easeInOut,
+                );
+              }
+            });
+          }
+        }
+        _lastItemsSignature = itemsSignature;
 
         // Auto-scroll to next actionable (today/future) workout when a workout is newly completed
         final completedCount = carouselItems.where((item) => item.isWorkout && item.workout!.isCompleted == true).length;

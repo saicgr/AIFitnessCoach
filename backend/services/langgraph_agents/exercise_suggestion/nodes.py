@@ -277,7 +277,7 @@ async def search_exercises_node(state: ExerciseSuggestionState) -> Dict[str, Any
                     if body_part.lower() != target_normalized.lower():
                         continue
 
-            # Filter by equipment constraints
+            # Filter by equipment constraints (extracted from free-text)
             exercise_equipment = (meta.get("equipment") or "").lower()
             if equipment_constraint:
                 skip = False
@@ -289,6 +289,27 @@ async def search_exercises_node(state: ExerciseSuggestionState) -> Dict[str, Any
                             skip = True
                             break
                 if skip:
+                    continue
+
+            # Filter by USER'S CONFIGURED equipment (from profile / settings).
+            # This is the gate that fixes the bug where a Bodyweight-only
+            # user got Suspension Trainer suggestions: the LangGraph search
+            # used to consult only the free-text constraint, never the
+            # user's actual equipment list. None means "no profile data
+            # provided" — fall through; empty list means "no equipment" =
+            # bodyweight only (the hardened filter handles that).
+            if user_equipment is not None:
+                from services.exercise_rag.filters import filter_by_equipment
+                if not filter_by_equipment(
+                    meta.get("equipment") or "",
+                    user_equipment,
+                    exercise_name,
+                ):
+                    logger.debug(
+                        f"[Search Node] Skipping {exercise_name}: equipment "
+                        f"{meta.get('equipment')!r} doesn't match user list "
+                        f"{user_equipment!r}"
+                    )
                     continue
 
             raw_candidates.append({

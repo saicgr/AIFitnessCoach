@@ -62,22 +62,17 @@ class ShareService {
     }
   }
 
-  /// iOS-specific Instagram Stories sharing
+  /// iOS-specific Instagram Stories sharing.
+  ///
+  /// Routes through the `com.fitwiz/instagram_share` MethodChannel implemented
+  /// in `AppDelegate.swift` (InstagramSharePlugin) which stages the image on
+  /// UIPasteboard and opens `instagram-stories://share?source_application=...`.
+  /// On failure (Instagram not installed, channel missing, user cancels) we
+  /// fall through to the system share sheet so the user still has a path to
+  /// share — but we report `instagramStories: false` so the caller knows the
+  /// "Opening Instagram..." snackbar would be a lie.
   static Future<ShareResult> _shareToInstagramStoriesIOS(File imageFile) async {
     try {
-      // Check if Instagram is installed
-      final instagramUrl = Uri.parse('instagram-stories://share');
-      if (!await canLaunchUrl(instagramUrl)) {
-        debugPrint('⚠️ [Share] Instagram not installed, falling back to system share');
-        final bytes = await imageFile.readAsBytes();
-        return await shareGeneric(bytes, caption: 'Check out my workout!');
-      }
-
-      // iOS uses UIPasteboard to share to Instagram Stories
-      // This requires platform channel for proper implementation
-      // For now, we'll use the system share as fallback
-
-      // Method channel for Instagram Stories (iOS)
       const platform = MethodChannel('com.fitwiz/instagram_share');
 
       try {
@@ -92,23 +87,16 @@ class ShareService {
             destination: ShareDestination.instagramStories,
           );
         }
+        debugPrint('⚠️ [Share] iOS native handler returned false (Instagram missing or open denied)');
       } on MissingPluginException {
-        // Platform channel not implemented, fall back to URL scheme
-        debugPrint('⚠️ [Share] Platform channel not available, trying URL scheme');
+        // Native plugin not registered for this build — should never happen
+        // post-AppDelegate change, but fall through to system share if it does.
+        debugPrint('⚠️ [Share] iOS Instagram MethodChannel not registered');
       }
 
-      // Fallback: Try opening Instagram app directly
-      // User will need to manually share from camera roll
-      if (await canLaunchUrl(Uri.parse('instagram://'))) {
-        await launchUrl(Uri.parse('instagram://'));
-        debugPrint('✅ [Share] Opened Instagram app');
-        return const ShareResult(
-          success: true,
-          destination: ShareDestination.instagramStories,
-        );
-      }
-
-      // Last resort: system share
+      // Native path failed — surface system share sheet so the user can still
+      // share via Instagram Direct / DMs / etc. Report systemShare destination
+      // so the UI doesn't claim Stories opened.
       final bytes = await imageFile.readAsBytes();
       return await shareGeneric(bytes, caption: 'Check out my workout!');
     } catch (e) {
@@ -121,18 +109,14 @@ class ShareService {
     }
   }
 
-  /// Android-specific Instagram Stories sharing
+  /// Android-specific Instagram Stories sharing.
+  ///
+  /// Routes through the `com.fitwiz/instagram_share` MethodChannel implemented
+  /// in `MainActivity.kt`, which fires the `com.instagram.share.ADD_TO_STORY`
+  /// intent with a FileProvider content:// URI so Instagram drops the user
+  /// straight into the Stories composer with the workout image pre-loaded.
   static Future<ShareResult> _shareToInstagramStoriesAndroid(File imageFile) async {
     try {
-      // Check if Instagram is installed
-      final instagramUrl = Uri.parse('instagram://');
-      if (!await canLaunchUrl(instagramUrl)) {
-        debugPrint('⚠️ [Share] Instagram not installed, falling back to system share');
-        final bytes = await imageFile.readAsBytes();
-        return await shareGeneric(bytes, caption: 'Check out my workout!');
-      }
-
-      // Android uses Intent to share to Instagram Stories
       const platform = MethodChannel('com.fitwiz/instagram_share');
 
       try {
@@ -147,12 +131,14 @@ class ShareService {
             destination: ShareDestination.instagramStories,
           );
         }
+        debugPrint('⚠️ [Share] Android native handler returned false (Instagram missing or intent unresolved)');
       } on MissingPluginException {
-        // Platform channel not implemented, fall back to share_plus with Instagram package
-        debugPrint('⚠️ [Share] Platform channel not available, trying share_plus');
+        debugPrint('⚠️ [Share] Android Instagram MethodChannel not registered');
       }
 
-      // Fallback: Use share_plus to target Instagram
+      // Native path failed — surface system share sheet so user can still pick
+      // Instagram (post/feed/DM) manually. Report systemShare so the UI label
+      // matches reality.
       await Share.shareXFiles(
         [XFile(imageFile.path)],
         text: 'Check out my workout!',

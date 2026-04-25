@@ -242,10 +242,13 @@ class UserNeatAchievement {
   /// Whether the achievement has been earned
   bool get isAchieved => achievedAt != null;
 
-  /// Progress as a fraction (0.0 to 1.0)
+  /// Progress as a fraction (0.0 to 1.0). Finite-guarded so a NaN
+  /// currentProgress can't escape into downstream .toInt() calls.
   double get progressFraction {
     if (achievement.requirementValue <= 0) return 0.0;
-    return (currentProgress / achievement.requirementValue).clamp(0.0, 1.0);
+    final raw = currentProgress / achievement.requirementValue;
+    if (!raw.isFinite) return 0.0;
+    return raw.clamp(0.0, 1.0);
   }
 
   /// Progress as a percentage (0 to 100)

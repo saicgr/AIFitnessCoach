@@ -102,6 +102,74 @@ def invalidate_upcoming_workouts(
         return 0
 
 
+def invalidate_workouts_after_equipment_change(
+    user_id: str,
+    timezone_str: str = None,
+) -> dict:
+    """Delete the user's not-yet-started today + upcoming workouts so the
+    next read of `/today` (and the upcoming pre-cache) regenerates them
+    against the new equipment list. Workouts that are already in progress
+    or completed are LEFT ALONE — see plan §D for the policy:
+
+      - Today not started      → delete (regenerate on next /today read)
+      - Today in progress      → leave alone (warn user via separate UX)
+      - Today completed        → never touch history
+      - Tomorrow / upcoming    → delete via invalidate_upcoming_workouts
+      - Past                   → never touch history
+
+    Returns a dict {today_deleted, upcoming_deleted} for caller telemetry.
+    Safe under partial failure: if the today-delete step throws, the
+    upcoming-delete step still runs.
+    """
+    today_deleted = 0
+    upcoming_deleted = 0
+
+    try:
+        db = get_supabase_db()
+        if timezone_str:
+            today_str = get_user_today(timezone_str)
+        else:
+            today_str = get_user_today("UTC")
+
+        # Today: delete only if not started and not completed.
+        # `is_completed=False` matches the same column the upcoming helper
+        # uses. `status != 'in_progress'` ensures we don't yank a workout
+        # mid-set. `status != 'generating'` mirrors upcoming-helper logic.
+        today_rows = db.client.table("workouts").select(
+            "id, status, is_completed"
+        ).eq("user_id", user_id).eq("scheduled_date", today_str).execute()
+
+        ids_to_delete = [
+            r["id"] for r in (today_rows.data or [])
+            if not r.get("is_completed")
+            and r.get("status") not in ("generating", "in_progress")
+        ]
+        if ids_to_delete:
+            res = db.client.table("workouts").delete().in_(
+                "id", ids_to_delete
+            ).execute()
+            today_deleted = len(res.data) if res.data else 0
+            logger.info(
+                f"[INVALIDATE-EQUIP] Deleted {today_deleted} today workouts "
+                f"for user {user_id}"
+            )
+    except Exception as e:
+        logger.warning(
+            f"[INVALIDATE-EQUIP] Failed to delete today's workout for "
+            f"user {user_id}: {e}",
+            exc_info=True,
+        )
+
+    upcoming_deleted = invalidate_upcoming_workouts(
+        user_id, reason="equipment_change", timezone_str=timezone_str
+    )
+
+    return {
+        "today_deleted": today_deleted,
+        "upcoming_deleted": upcoming_deleted,
+    }
+
+
 def parse_json_field(value, default):
     """Parse a field that could be a JSON string or already parsed."""
     if value is None:
@@ -112,6 +180,60 @@ def parse_json_field(value, default):
         except json.JSONDecodeError:
             return default
     return value if isinstance(value, (list, dict)) else default
+
+
+def equipment_dual_write_payload(value) -> dict:
+    """Build a partial payload that writes BOTH the legacy `equipment`
+    VARCHAR-of-JSON column AND the new `equipment_v2` text[] column.
+
+    During Deploy 1 → Deploy 3 of the users.equipment migration the two
+    columns coexist; reads still use the old column but writes must
+    populate both so the backfill stays current. Once Deploy 2 cuts
+    reads over, this helper continues to maintain both for one more
+    cycle, then Deploy 3 drops the old column and this helper becomes a
+    no-op (returns just `equipment_v2`).
+
+    Accepts the same shapes the migration's backfill handles:
+        - list[str]                       → ['bodyweight', 'dumbbells']
+        - JSON-array string '["..."]'     → parsed
+        - CSV string 'bw, dumbbells'      → split
+        - single value 'Bodyweight'       → ['bodyweight']
+        - None / ''                       → ['bodyweight'] (defensive)
+
+    All entries are lowercased + trimmed + deduped on the way in.
+    """
+    parsed: list[str]
+    if value is None or (isinstance(value, str) and not value.strip()):
+        parsed = ["bodyweight"]
+    elif isinstance(value, list):
+        parsed = [str(v).strip().lower() for v in value if str(v).strip()]
+    elif isinstance(value, str):
+        s = value.strip()
+        if s.startswith("[") and s.endswith("]"):
+            try:
+                items = json.loads(s)
+                parsed = [str(v).strip().lower() for v in items if str(v).strip()]
+            except json.JSONDecodeError:
+                parsed = ["bodyweight"]
+        elif "," in s:
+            parsed = [piece.strip().lower() for piece in s.split(",") if piece.strip()]
+        else:
+            parsed = [s.lower()]
+    else:
+        parsed = ["bodyweight"]
+
+    if not parsed:
+        parsed = ["bodyweight"]
+    # Dedup while preserving order.
+    seen: set = set()
+    deduped = [p for p in parsed if not (p in seen or seen.add(p))]
+
+    # Re-encode the legacy column as a JSON-array string for compatibility
+    # with read sites that still call `parse_json_field`.
+    return {
+        "equipment": json.dumps(deduped),
+        "equipment_v2": deduped,
+    }
 
 
 def normalize_goals_list(goals) -> List[str]:

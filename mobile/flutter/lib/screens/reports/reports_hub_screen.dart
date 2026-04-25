@@ -12,6 +12,8 @@ import '../../core/providers/user_provider.dart';
 import '../../core/services/posthog_service.dart';
 import '../../core/theme/accent_color_provider.dart';
 import '../../data/services/haptic_service.dart';
+import '../../shareables/adapters/reports_adapter.dart';
+import '../../shareables/shareable_sheet.dart';
 import '../../widgets/pill_app_bar.dart';
 import 'report_thumbnail_provider.dart';
 import 'widgets/report_share_sheet.dart';
@@ -385,23 +387,27 @@ class _CarouselViewState extends ConsumerState<_CarouselView> {
       eventName: 'reports_hub_share_tapped',
       properties: {'route': report.route, 'month_offset': _monthOffset},
     );
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final accent =
-        AccentColorScope.of(context).getColor(isDark);
-    final thumbAsync = ref.read(reportThumbnailProvider(
-      ReportThumbnailKey(route: report.route, month: month),
-    ));
-    final displayName =
-        ref.read(currentUserProvider).asData?.value?.displayName;
-    final data = _buildHubShareData(
-      report: report,
+    // Use the same canonical adapter the source screen uses — this is what
+    // fixes the "white placeholder bars" bug on PRs/etc when sharing from
+    // the hub: the hub no longer ships a thin {primary, secondary} payload.
+    final shareable = await ReportsAdapter.forRoute(
+      ref: ref,
+      context: context,
+      route: report.route,
       month: month,
-      accentColor: accent,
-      userDisplayName: displayName,
-      thumb: thumbAsync.asData?.value,
     );
     if (!mounted) return;
-    await ReportShareSheet.show(context, data: data);
+    if (shareable == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+              'Not enough data yet — try again after your next workout'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+    await ShareableSheet.show(context, data: shareable);
   }
 
   @override
@@ -1197,28 +1203,32 @@ class _ListView extends ConsumerWidget {
     List<_ReportDef> inSection(_Section s) =>
         reports.where((r) => r.section == s).toList();
 
-    // Shared share handler — every list row funnels through this so the
-    // payload construction stays identical to the carousel path.
+    // Shared share handler — funnels through the canonical adapter so the
+    // list-view path matches the carousel path exactly.
     Future<void> shareRow(_ReportDef r) async {
       final month = DateTime(DateTime.now().year, DateTime.now().month, 1);
-      final accent = AccentColorScope.of(context).getColor(isDark);
-      final thumbAsync = ref.read(reportThumbnailProvider(
-        ReportThumbnailKey(route: r.route, month: month),
-      ));
-      final displayName =
-          ref.read(currentUserProvider).asData?.value?.displayName;
-      final data = _buildHubShareData(
-        report: r,
-        month: month,
-        accentColor: accent,
-        userDisplayName: displayName,
-        thumb: thumbAsync.asData?.value,
-      );
       ref.read(posthogServiceProvider).capture(
         eventName: 'reports_hub_list_share_tapped',
         properties: {'route': r.route},
       );
-      await ReportShareSheet.show(context, data: data);
+      final shareable = await ReportsAdapter.forRoute(
+        ref: ref,
+        context: context,
+        route: r.route,
+        month: month,
+      );
+      if (!context.mounted) return;
+      if (shareable == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+                'Not enough data yet — try again after your next workout'),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+        return;
+      }
+      await ShareableSheet.show(context, data: shareable);
     }
 
     return ListView(

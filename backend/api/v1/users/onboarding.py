@@ -83,6 +83,7 @@ async def save_user_preferences(user_id: str, request: UserPreferencesRequest,
                 "fitness_level": "beginner",
                 "goals": "[]",
                 "equipment": "[]",
+                "equipment_v2": [],  # text[] dual-write during migration
                 "preferences": {"name": full_name, "email": email},
                 "active_injuries": [],
             }
@@ -116,9 +117,20 @@ async def save_user_preferences(user_id: str, request: UserPreferencesRequest,
         if request.goals is not None:
             # goals column is VARCHAR, needs JSON string
             update_data["goals"] = json.dumps(request.goals) if isinstance(request.goals, list) else request.goals
+        equipment_changed = False
         if request.equipment is not None:
-            # equipment column is VARCHAR, needs JSON string
-            update_data["equipment"] = json.dumps(request.equipment) if isinstance(request.equipment, list) else request.equipment
+            # Dual-write: legacy `equipment` VARCHAR-of-JSON + new
+            # `equipment_v2` text[] until the schema migration completes.
+            # See migrations/2031_users_equipment_array_v2.sql.
+            from api.v1.workouts.utils import equipment_dual_write_payload
+            payload = equipment_dual_write_payload(request.equipment)
+            update_data.update(payload)
+            new_eq = sorted(payload["equipment_v2"])
+            existing_eq_raw = existing.get("equipment_v2") or existing.get("equipment")
+            existing_eq = sorted(
+                equipment_dual_write_payload(existing_eq_raw)["equipment_v2"]
+            )
+            equipment_changed = new_eq != existing_eq
         if request.custom_equipment is not None:
             # custom_equipment column is VARCHAR, needs JSON string
             update_data["custom_equipment"] = json.dumps(request.custom_equipment) if isinstance(request.custom_equipment, list) else request.custom_equipment
@@ -181,6 +193,33 @@ async def save_user_preferences(user_id: str, request: UserPreferencesRequest,
             result = db.update_user(actual_user_id, update_data)
             logger.info(f"Saved {len(update_data)} preference fields for user {actual_user_id}")
             logger.info(f"🔍 [DEBUG] save_user_preferences - update result: {result}")
+
+            # Equipment-change → workout-invalidation hook (plan §D).
+            # Skip when this is the initial onboarding write (no prior
+            # equipment value) — there's no stale workout to invalidate
+            # because none have been generated yet.
+            if equipment_changed and existing.get("onboarding_completed"):
+                try:
+                    from api.v1.workouts.utils import (
+                        invalidate_workouts_after_equipment_change,
+                    )
+                    from core.timezone_utils import resolve_timezone
+
+                    tz = resolve_timezone(existing.get("timezone"))
+                    counts = invalidate_workouts_after_equipment_change(
+                        user_id=actual_user_id, timezone_str=tz,
+                    )
+                    logger.info(
+                        f"[Equipment-Change] User {actual_user_id}: "
+                        f"invalidated {counts['today_deleted']} today + "
+                        f"{counts['upcoming_deleted']} upcoming workouts"
+                    )
+                except Exception as inval_err:
+                    logger.warning(
+                        f"[Equipment-Change] Invalidation failed for user "
+                        f"{actual_user_id}: {inval_err}",
+                        exc_info=True,
+                    )
 
         # Log activity
         await log_user_activity(

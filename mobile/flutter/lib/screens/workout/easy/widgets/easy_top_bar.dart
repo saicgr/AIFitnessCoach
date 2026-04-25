@@ -26,6 +26,11 @@ class EasyTopBar extends ConsumerWidget {
   /// "Quit workout" menu action — opens a confirmation and pops.
   final VoidCallback? onQuit;
 
+  /// "Complete workout now" menu action — finalize with whatever sets the
+  /// user has already logged (remaining sets are auto-stamped as zero) and
+  /// route to the completion / summary screen.
+  final VoidCallback? onCompleteNow;
+
   /// "Skip to next exercise" menu action.
   final VoidCallback? onSkipToNext;
 
@@ -39,15 +44,10 @@ class EasyTopBar extends ConsumerWidget {
     required this.onBack,
     this.onMinimize,
     this.onQuit,
+    this.onCompleteNow,
     this.onSkipToNext,
     this.exercise,
   });
-
-  String _fmtStopwatch(int s) {
-    final mins = (s ~/ 60).toString().padLeft(2, '0');
-    final secs = (s % 60).toString().padLeft(2, '0');
-    return '$mins:$secs';
-  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -95,9 +95,11 @@ class EasyTopBar extends ConsumerWidget {
                   tooltip: 'Minimize workout',
                 ),
               ),
-            // Overflow menu — holds the quiet but essential Skip / Quit
-            // actions so the top bar stays uncluttered.
-            if (onSkipToNext != null || onQuit != null)
+            // Overflow menu — holds the quiet but essential Skip /
+            // Complete-now / Quit actions so the top bar stays uncluttered.
+            if (onSkipToNext != null ||
+                onCompleteNow != null ||
+                onQuit != null)
               SizedBox(
                 width: 36,
                 height: 36,
@@ -110,6 +112,8 @@ class EasyTopBar extends ConsumerWidget {
                     await HapticService.instance.tap();
                     if (v == 'skip' && onSkipToNext != null) {
                       onSkipToNext!();
+                    } else if (v == 'complete' && onCompleteNow != null) {
+                      onCompleteNow!();
                     } else if (v == 'quit' && onQuit != null) {
                       onQuit!();
                     }
@@ -122,6 +126,16 @@ class EasyTopBar extends ConsumerWidget {
                           Icon(Icons.skip_next_rounded, size: 18),
                           SizedBox(width: 10),
                           Text('Skip to next exercise'),
+                        ]),
+                      ),
+                    if (onCompleteNow != null)
+                      PopupMenuItem(
+                        value: 'complete',
+                        child: Row(children: [
+                          Icon(Icons.check_circle_rounded,
+                              size: 18, color: accent),
+                          const SizedBox(width: 10),
+                          const Text('Complete workout'),
                         ]),
                       ),
                     if (onQuit != null)
@@ -138,24 +152,10 @@ class EasyTopBar extends ConsumerWidget {
                   ],
                 ),
               ),
-            // Stopwatch
-            Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(Icons.timer_outlined, size: 18, color: textColor),
-                const SizedBox(width: 4),
-                Text(
-                  _fmtStopwatch(workoutSeconds),
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    fontFeatures: const [FontFeature.tabularFigures()],
-                    color: textColor,
-                  ),
-                ),
-                const SizedBox(width: 4),
-              ],
-            ),
+            // Stopwatch removed — duplicated by the Duration stat card
+            // immediately below the top bar. Kept the field on the widget
+            // so callers don't need updates; if a future tier wants it
+            // back, just reinstate the Row here.
           ],
         ),
       ),

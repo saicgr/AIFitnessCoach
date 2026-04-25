@@ -291,17 +291,27 @@ class WorkoutTourService {
   /// Returns the tier whose tour was aborted, or null if no tier tour was
   /// active. Unrelated tours (nav/nutrition/etc.) are left alone.
   static WorkoutUiMode? abortIfTierTourRunning(WidgetRef ref) {
-    final current = ref.read(appTourControllerProvider);
-    if (!current.isVisible) return null;
-    final tier = _tierForTourId(current.tourId);
-    if (tier == null) return null;
-    // Use the controller's non-persisting abort hatch so no seen flag is
-    // written — the user hasn't finished, they just changed tiers.
-    ref.read(appTourControllerProvider.notifier).abort();
-    debugPrint(
-      '⚠️ [WorkoutTour] Aborted in-flight ${tier.asString} tour (user changed tier)',
-    );
-    return tier;
+    // Callers fire this from teardown paths (tier-switch, screen pop) where
+    // the WidgetRef can already be invalidated. Catch the resulting "Cannot
+    // use ref after the widget was disposed" so it never escalates to a
+    // fatal Crashlytics event — the tour will simply not be aborted, which
+    // is harmless (worst case the next tier-switch handles it).
+    try {
+      final current = ref.read(appTourControllerProvider);
+      if (!current.isVisible) return null;
+      final tier = _tierForTourId(current.tourId);
+      if (tier == null) return null;
+      // Use the controller's non-persisting abort hatch so no seen flag is
+      // written — the user hasn't finished, they just changed tiers.
+      ref.read(appTourControllerProvider.notifier).abort();
+      debugPrint(
+        '⚠️ [WorkoutTour] Aborted in-flight ${tier.asString} tour (user changed tier)',
+      );
+      return tier;
+    } catch (e) {
+      debugPrint('⚠️ [WorkoutTour] abortIfTierTourRunning skipped (ref disposed): $e');
+      return null;
+    }
   }
 }
 

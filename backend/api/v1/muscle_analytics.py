@@ -354,9 +354,20 @@ async def get_muscle_heatmap_data(
                 name = ex.get("name") or ex.get("exercise_name") or ""
                 if not name:
                     continue
-                muscle_groups = strength_service.get_exercise_muscle_groups(name)
+                # Pass the per-row exercise dict as fallback metadata so
+                # AI-generated bodyweight moves whose names aren't in the
+                # static map still attribute to whichever muscle the AI
+                # tagged. Without this they silently dropped, leaving the
+                # heatmap empty after a bodyweight session.
+                muscle_groups = strength_service.get_exercise_muscle_groups(
+                    name, exercise_data=ex
+                )
                 if not muscle_groups:
-                    continue
+                    # Generic full_body bucket so a session with unmapped
+                    # exercises still shows up — better than vanishing
+                    # entirely. Surfaces a discoverable signal in the
+                    # heatmap that the user can drill into.
+                    muscle_groups = ["full_body"]
                 primary = muscle_groups[0]
 
                 # Figure out volume + set count for this exercise.

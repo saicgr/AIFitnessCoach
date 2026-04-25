@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<paths xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Allow FileProvider to expose images written to the app's internal
+         cache (getCacheDir()) so Instagram can read the workout share image
+         via content:// URI when launching Stories. ShareService writes the
+         file to getTemporaryDirectory(), which maps to cache on Android. -->
+    <cache-path name="instagram_share_cache" path="." />
+    <files-path name="instagram_share_files" path="." />
+    <external-cache-path name="instagram_share_external_cache" path="." />
+    <external-files-path name="instagram_share_external_files" path="." />
+</paths>

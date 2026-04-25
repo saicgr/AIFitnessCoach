@@ -191,12 +191,55 @@ html.dark-mode .glass-card {
 }
 
 /* === NAV UTILITY === */
+.nav-glass {
+  background: rgba(255, 255, 255, 0.55);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.4);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6);
+}
+
+.nav-glass.is-scrolled {
+  background: rgba(255, 255, 255, 0.72);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.6),
+    0 1px 2px rgba(0, 0, 0, 0.04),
+    0 4px 16px rgba(0, 0, 0, 0.04);
+}
+
+html.dark-mode .nav-glass {
+  background: rgba(10, 10, 10, 0.45);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+html.dark-mode .nav-glass.is-scrolled {
+  background: rgba(10, 10, 10, 0.65);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    0 1px 2px rgba(0, 0, 0, 0.4),
+    0 4px 20px rgba(0, 0, 0, 0.25);
+}
+
+/* Legacy alias — keep so other callers don't break */
 .nav-spur {
-  background: var(--color-surface-glass);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border-bottom: 1px solid var(--color-border);
-  box-shadow: var(--shadow-nav);
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.6),
+    0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+html.dark-mode .nav-spur {
+  background: rgba(10, 10, 10, 0.65);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    0 1px 2px rgba(0, 0, 0, 0.4);
 }
 
 /* === GLOW EFFECTS === */

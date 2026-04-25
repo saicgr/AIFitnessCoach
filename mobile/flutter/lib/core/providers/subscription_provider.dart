@@ -20,6 +20,44 @@ enum SubscriptionTier {
   lifetime,
 }
 
+/// Billing cadence for a paid subscription. Lifetime/free use [unknown].
+/// Derived from the RevenueCat product identifier (or backend payload as a
+/// fallback) so the UI can show "Premium · Yearly" / "Premium · Monthly".
+enum BillingPeriod {
+  monthly,
+  yearly,
+  lifetime,
+  unknown,
+}
+
+extension BillingPeriodExtension on BillingPeriod {
+  String get displayName {
+    switch (this) {
+      case BillingPeriod.monthly:
+        return 'Monthly';
+      case BillingPeriod.yearly:
+        return 'Yearly';
+      case BillingPeriod.lifetime:
+        return 'Lifetime';
+      case BillingPeriod.unknown:
+        return '';
+    }
+  }
+
+  String get shortLabel {
+    switch (this) {
+      case BillingPeriod.monthly:
+        return 'mo';
+      case BillingPeriod.yearly:
+        return 'yr';
+      case BillingPeriod.lifetime:
+        return 'lifetime';
+      case BillingPeriod.unknown:
+        return '';
+    }
+  }
+}
+
 /// Lifetime member tier for recognition badges
 enum LifetimeMemberTier {
   veteran,    // 365+ days
@@ -72,6 +110,8 @@ extension LifetimeMemberTierExtension on LifetimeMemberTier {
 /// Subscription state
 class SubscriptionState {
   final SubscriptionTier tier;
+  final BillingPeriod billingPeriod;
+  final String? productIdentifier;
   final bool isTrialActive;
   final DateTime? trialEndDate;
   final DateTime? subscriptionEndDate;
@@ -96,6 +136,8 @@ class SubscriptionState {
 
   const SubscriptionState({
     this.tier = SubscriptionTier.free,
+    this.billingPeriod = BillingPeriod.unknown,
+    this.productIdentifier,
     this.isTrialActive = false,
     this.trialEndDate,
     this.subscriptionEndDate,
@@ -135,6 +177,8 @@ class SubscriptionState {
 
   SubscriptionState copyWith({
     SubscriptionTier? tier,
+    BillingPeriod? billingPeriod,
+    String? productIdentifier,
     bool? isTrialActive,
     DateTime? trialEndDate,
     DateTime? subscriptionEndDate,
@@ -153,6 +197,8 @@ class SubscriptionState {
   }) {
     return SubscriptionState(
       tier: tier ?? this.tier,
+      billingPeriod: billingPeriod ?? this.billingPeriod,
+      productIdentifier: productIdentifier ?? this.productIdentifier,
       isTrialActive: isTrialActive ?? this.isTrialActive,
       trialEndDate: trialEndDate ?? this.trialEndDate,
       subscriptionEndDate: subscriptionEndDate ?? this.subscriptionEndDate,
@@ -475,6 +521,7 @@ class SubscriptionNotifier extends StateNotifier<SubscriptionState> {
     bool isTrialActive = false;
     DateTime? trialEndDate;
     DateTime? subscriptionEndDate;
+    String? productIdentifier;
 
     // Check entitlements
     final entitlements = customerInfo.entitlements.active;
@@ -482,6 +529,7 @@ class SubscriptionNotifier extends StateNotifier<SubscriptionState> {
     if (entitlements.containsKey(premiumPlusEntitlement)) {
       tier = SubscriptionTier.premiumPlus;
       final entitlement = entitlements[premiumPlusEntitlement]!;
+      productIdentifier = entitlement.productIdentifier;
 
       // Check if it's a trial
       if (entitlement.periodType == PeriodType.trial) {
@@ -502,6 +550,7 @@ class SubscriptionNotifier extends StateNotifier<SubscriptionState> {
     } else if (entitlements.containsKey(premiumEntitlement)) {
       tier = SubscriptionTier.premium;
       final entitlement = entitlements[premiumEntitlement]!;
+      productIdentifier = entitlement.productIdentifier;
 
       if (entitlement.periodType == PeriodType.trial) {
         isTrialActive = true;
@@ -517,9 +566,12 @@ class SubscriptionNotifier extends StateNotifier<SubscriptionState> {
 
     // Handle lifetime membership specially
     final isLifetime = tier == SubscriptionTier.lifetime;
+    final billingPeriod = _billingPeriodFromProductId(productIdentifier, isLifetime);
 
     state = state.copyWith(
       tier: tier,
+      billingPeriod: billingPeriod,
+      productIdentifier: productIdentifier,
       isTrialActive: isTrialActive,
       trialEndDate: trialEndDate,
       subscriptionEndDate: isLifetime ? null : subscriptionEndDate, // Lifetime never expires
@@ -548,6 +600,20 @@ class SubscriptionNotifier extends StateNotifier<SubscriptionState> {
     // Keep the session tier tag current so billing-error Sentry events are
     // filterable by user tier.
     unawaited(SentryService.setTag('subscription_tier', tier.name));
+  }
+
+  /// Map a RevenueCat / store product identifier to a billing cadence.
+  /// Pattern-matches on `_monthly` / `_yearly` / `_annual` substrings so this
+  /// keeps working if we add new tiers like `pro_monthly` later. Lifetime is
+  /// resolved by tier rather than product id since it has no cadence.
+  BillingPeriod _billingPeriodFromProductId(String? productId, bool isLifetime) {
+    if (isLifetime) return BillingPeriod.lifetime;
+    if (productId == null) return BillingPeriod.unknown;
+    final id = productId.toLowerCase();
+    if (id.contains('lifetime')) return BillingPeriod.lifetime;
+    if (id.contains('yearly') || id.contains('annual')) return BillingPeriod.yearly;
+    if (id.contains('monthly')) return BillingPeriod.monthly;
+    return BillingPeriod.unknown;
   }
 
   Future<void> _saveToLocalStorage(SubscriptionTier tier) async {
@@ -642,8 +708,36 @@ class SubscriptionNotifier extends StateNotifier<SubscriptionState> {
 
       // Only update if RevenueCat didn't provide data
       if (!state.isRevenueCatConfigured) {
+        // Backend payload exposes `product_id` and/or `billing_period` —
+        // either is sufficient to derive the cadence shown in the UI. Prefer
+        // the explicit `billing_period` string when present.
+        final productId = data['product_id'] as String?;
+        final isLifetime = tier == SubscriptionTier.lifetime;
+        BillingPeriod billingPeriod = _billingPeriodFromProductId(productId, isLifetime);
+        if (billingPeriod == BillingPeriod.unknown) {
+          final raw = (data['billing_period'] as String?)?.toLowerCase();
+          switch (raw) {
+            case 'monthly':
+            case 'month':
+              billingPeriod = BillingPeriod.monthly;
+              break;
+            case 'yearly':
+            case 'annual':
+            case 'year':
+              billingPeriod = BillingPeriod.yearly;
+              break;
+            case 'lifetime':
+              billingPeriod = BillingPeriod.lifetime;
+              break;
+            default:
+              break;
+          }
+        }
+
         state = state.copyWith(
           tier: tier,
+          billingPeriod: billingPeriod,
+          productIdentifier: productId,
           isTrialActive: data['is_trial'] ?? false,
           trialEndDate: data['trial_end_date'] != null
               ? DateTime.tryParse(data['trial_end_date'])
@@ -821,14 +915,33 @@ class SubscriptionNotifier extends StateNotifier<SubscriptionState> {
         throw Exception('No offerings available');
       }
 
-      // Find the package matching our product ID
+      // Find the package. Match priority:
+      //   1. RevenueCat lookup_key ($rc_annual / $rc_monthly / ...) — stable
+      //      across store-side product renames; this is RC's recommended
+      //      match strategy.
+      //   2. Exact package.identifier equality — legacy fallback for any
+      //      code path still passing a non-canonical id.
+      //   3. storeProduct.identifier equality — last resort for old
+      //      Google/Apple SKU strings.
+      // Historically this matched only (3), so a mismatch between the
+      // Flutter constant (`premium_yearly`) and the Play Store SKU produced
+      // the "Product not found" fatal seen on Android 1.2.56+1121.
+      final canonicalKey = _canonicalLookupKey(productId);
       Package? package;
       for (final pkg in offerings.current!.availablePackages) {
-        if (pkg.storeProduct.identifier == productId) {
+        if (pkg.identifier == canonicalKey) {
           package = pkg;
           break;
         }
       }
+      package ??= _firstMatchingPackage(
+        offerings.current!.availablePackages,
+        (p) => p.identifier == productId,
+      );
+      package ??= _firstMatchingPackage(
+        offerings.current!.availablePackages,
+        (p) => p.storeProduct.identifier == productId,
+      );
 
       if (package == null) {
         // Product ID drift between Play Console / RevenueCat / app constants.
@@ -838,10 +951,15 @@ class SubscriptionNotifier extends StateNotifier<SubscriptionState> {
           level: SentryLevel.error,
           tags: {'subsystem': 'billing', 'stage': 'purchase', 'product_id': productId, 'reason': 'product_not_found'},
           extra: {
-            'available_products': offerings.current!.availablePackages
-                .map((p) => p.storeProduct.identifier)
+            'available_packages': offerings.current!.availablePackages
+                .map((p) => {
+                      'identifier': p.identifier,
+                      'store_identifier': p.storeProduct.identifier,
+                    })
                 .toList(),
             'current_offering': offerings.current!.identifier,
+            'requested_product_id': productId,
+            'canonical_lookup_key': canonicalKey,
           },
         ));
         throw Exception('Product not found: $productId');
@@ -986,6 +1104,39 @@ class SubscriptionNotifier extends StateNotifier<SubscriptionState> {
       debugPrint('Failed to get offerings: $e');
       return null;
     }
+  }
+
+  /// Map an app-side product id to the RevenueCat canonical package
+  /// `lookup_key`. RC recommends `$rc_monthly` / `$rc_annual` /
+  /// `$rc_lifetime` as the stable identifier callers match on — store-
+  /// side product IDs (`premium_yearly` etc) can be renamed or re-created
+  /// and the canonical lookup_key is immune to that drift.
+  String _canonicalLookupKey(String productId) {
+    switch (productId) {
+      case premiumYearlyId:
+      case premiumPlusYearlyId:
+        return r'$rc_annual';
+      case premiumMonthlyId:
+      case premiumPlusMonthlyId:
+        return r'$rc_monthly';
+      case lifetimeId:
+        return r'$rc_lifetime';
+      default:
+        // Unknown id — return a sentinel so the downstream lookup falls
+        // through to the legacy identifier match instead of matching
+        // accidentally.
+        return '__no_rc_lookup_key__';
+    }
+  }
+
+  Package? _firstMatchingPackage(
+    List<Package> packages,
+    bool Function(Package) predicate,
+  ) {
+    for (final pkg in packages) {
+      if (predicate(pkg)) return pkg;
+    }
+    return null;
   }
 }
 

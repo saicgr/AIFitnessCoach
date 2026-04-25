@@ -146,8 +146,28 @@ def boost_equipment_matches(candidates: List[Dict], equipment: List[str]):
         candidates.sort(key=lambda x: x.get("similarity", 0), reverse=True)
 
 
-def cap_bodyweight_exercises(candidates: List[Dict], equipment: List[str]) -> List[Dict]:
-    """Cap bodyweight exercises at 2 for users with real equipment."""
+def cap_bodyweight_exercises(
+    candidates: List[Dict],
+    equipment: List[str],
+    min_pool_target: int = 20,
+) -> List[Dict]:
+    """Cap bodyweight exercises at 2 for users with real equipment — but
+    ONLY when the equipment-based candidate pool is already large enough
+    to fill the workout without needing bodyweight fillers.
+
+    Root-cause note (2026-04-24): production logs showed users with a
+    single niche equipment item (e.g. pull-up bar) + focus=chest_back
+    getting 2-exercise workouts. The ChromaDB vector query returned
+    ~15-20 bodyweight chest/back candidates but only 0-1 candidates
+    matching "pull-up bar". The old cap dropped bodyweight to 2 anyway,
+    leaving `equip_candidates (~0) + bodyweight[:2] = 2` total, which
+    cascaded through variety/injury/AI selection as the infamous
+    "Chest Pull Back + Bodyweight Standing Fly" 2-exercise pool.
+
+    The new rule: cap only when `equip_candidates >= min_pool_target`.
+    If the user's real equipment can't cover the focus area, keep ALL
+    bodyweight candidates so the workout has enough material.
+    """
     _BW_ONLY_EQUIPMENT = {"bodyweight", "bodyweight_only", "bodyweight only", "body weight", "none", ""}
     has_non_bodyweight_equipment = any(
         eq.lower() not in _BW_ONLY_EQUIPMENT for eq in (equipment or [])
@@ -157,13 +177,21 @@ def cap_bodyweight_exercises(candidates: List[Dict], equipment: List[str]) -> Li
         bw_keywords = {"bodyweight", "body weight", "none", ""}
         bw_candidates = [c for c in candidates if (c.get("equipment", "") or "").lower() in bw_keywords]
         equip_candidates = [c for c in candidates if (c.get("equipment", "") or "").lower() not in bw_keywords]
-        if len(bw_candidates) > 2:
+        if len(bw_candidates) > 2 and len(equip_candidates) >= min_pool_target:
             logger.info(
                 f"[Equipment Cap] Capping bodyweight candidates from {len(bw_candidates)} to 2 "
-                f"(gym user has {len(equip_candidates)} equipment-based candidates)"
+                f"(gym user has {len(equip_candidates)} equipment-based candidates "
+                f">= target {min_pool_target})"
             )
             candidates = equip_candidates + bw_candidates[:2]
             candidates.sort(key=lambda x: x.get("similarity", 0), reverse=True)
+        elif len(bw_candidates) > 2 and len(equip_candidates) < min_pool_target:
+            logger.info(
+                f"[Equipment Cap] SKIPPED — equipment pool too small "
+                f"({len(equip_candidates)} < {min_pool_target}); keeping all "
+                f"{len(bw_candidates)} bodyweight candidates as fallback "
+                f"(equipment={equipment})"
+            )
 
     return candidates
 

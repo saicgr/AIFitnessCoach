@@ -89,13 +89,7 @@ class AiCoachPage extends ConsumerWidget {
     required Color cardBorder,
   }) {
     final aiSettings = ref.watch(aiSettingsProvider);
-    final coachId = aiSettings.coachPersonaId;
-    CoachPersona? coach;
-    if (coachId != null && coachId.isNotEmpty) {
-      try {
-        coach = CoachPersona.predefinedCoaches.firstWhere((c) => c.id == coachId);
-      } catch (_) {}
-    }
+    final coach = CoachPersona.findById(aiSettings.coachPersonaId);
 
     return InkWell(
       onTap: () {

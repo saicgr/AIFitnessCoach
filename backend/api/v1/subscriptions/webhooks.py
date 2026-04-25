@@ -4,6 +4,7 @@ RevenueCat webhook handler and event processing.
 from datetime import datetime
 from fastapi import APIRouter, BackgroundTasks, HTTPException, Request, Header
 from typing import Optional
+from uuid import UUID
 import hmac
 import logging
 
@@ -63,7 +64,14 @@ async def revenuecat_webhook(
         if not webhook_secret:
             raise HTTPException(status_code=503, detail="Webhook not configured")
         if not authorization or not hmac.compare_digest(authorization, f"Bearer {webhook_secret}"):
-            logger.warning("Invalid webhook authorization")
+            # Internet scanners and probe traffic constantly hit any
+            # /webhook/* path with bogus credentials. Logging these at WARNING
+            # (or surfacing to Sentry) drowns real signal in noise. Keep at
+            # INFO so they show in Render logs for forensics but stay out of
+            # the alerting pipeline.
+            logger.info(
+                "Webhook auth rejected (no/invalid bearer; likely scanner traffic)"
+            )
             raise HTTPException(status_code=401, detail="Invalid authorization")
 
         body = await request.json()
@@ -75,6 +83,20 @@ async def revenuecat_webhook(
         if not app_user_id:
             logger.warning("No app_user_id in webhook")
             return {"status": "ignored", "reason": "no_user_id"}
+
+        # Defensive: app_user_id MUST be a UUID. Real RC payloads always
+        # carry the Supabase user_id (set client-side via Purchases.logIn),
+        # but any malformed value would crash deeper handlers with Postgres
+        # 22P02 → opaque 500. Reject cleanly here with a 200+ignored so the
+        # call doesn't trip Sentry alerts and the test script can verify
+        # the dispatcher path without needing a real user row.
+        try:
+            UUID(str(app_user_id))
+        except (ValueError, TypeError):
+            logger.info(
+                f"Ignoring webhook with non-UUID app_user_id={app_user_id!r}"
+            )
+            return {"status": "ignored", "reason": "invalid_user_id"}
 
         supabase = get_supabase()
 

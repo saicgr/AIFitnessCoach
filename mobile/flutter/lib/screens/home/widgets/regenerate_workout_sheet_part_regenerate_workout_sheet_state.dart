@@ -6,6 +6,10 @@ class _RegenerateWorkoutSheetState
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
   bool _isRegenerating = false;
+  // Set to true when initState successfully overrode any chip value with
+  // SharedPreferences-backed last-used data. Drives the "Restored from your
+  // last regeneration" banner.
+  bool _lastUsedRestored = false;
   String _selectedDifficulty = 'medium';
   double _selectedDurationMin = 45;
   double _selectedDurationMax = 60;
@@ -260,6 +264,79 @@ class _RegenerateWorkoutSheetState
       // Silently fall back to workout-based defaults already set
       debugPrint('Failed to load user preferences for regenerate sheet: $e');
     }
+
+    // Last-used wins over programPreferences — it captures the in-the-moment
+    // customization from the user's most recent regen call (which may differ
+    // from plan-level prefs and would otherwise be lost on next open).
+    _applyLastUsedOverrides();
+  }
+
+  void _applyLastUsedOverrides() {
+    final lastUsed = ref.read(lastUsedServiceProvider);
+    bool restored = false;
+
+    final lastDiff = lastUsed.get(_kRegenDifficultyKey);
+    if (lastDiff != null && defaultDifficulties.contains(lastDiff)) {
+      _selectedDifficulty = lastDiff;
+      restored = true;
+    }
+
+    final lastType = lastUsed.get(_kRegenWorkoutTypeKey);
+    if (lastType != null && lastType.isNotEmpty) {
+      _selectedWorkoutType = lastType;
+      restored = true;
+    }
+
+    final lastFocus = lastUsed.get(_kRegenFocusAreasKey);
+    if (lastFocus != null && lastFocus.isNotEmpty) {
+      final parts = lastFocus
+          .split(',')
+          .map((s) => s.trim())
+          .where((s) => s.isNotEmpty && defaultFocusAreas.contains(s))
+          .toList();
+      if (parts.isNotEmpty) {
+        _selectedFocusAreas
+          ..clear()
+          ..addAll(parts);
+        restored = true;
+      }
+    }
+
+    final lastEquip = lastUsed.get(_kRegenEquipmentKey);
+    if (lastEquip != null && lastEquip.isNotEmpty) {
+      final parts = lastEquip
+          .split(',')
+          .map((s) => s.trim())
+          .where((s) => s.isNotEmpty && defaultEquipmentOptions.contains(s))
+          .toList();
+      if (parts.isNotEmpty) {
+        _selectedEquipment
+          ..clear()
+          ..addAll(parts);
+        restored = true;
+      }
+    }
+
+    if (restored && mounted) {
+      setState(() => _lastUsedRestored = true);
+    }
+  }
+
+  /// Wipes the LastUsedService keys for this sheet and falls back to the
+  /// programPreferences pre-fill (re-runs `_loadUserPreferences` from
+  /// scratch). Triggered by the "Reset" affordance on the restored banner.
+  Future<void> _resetLastUsedRegenPrefs() async {
+    final lastUsed = ref.read(lastUsedServiceProvider);
+    await Future.wait([
+      lastUsed.clear(_kRegenDifficultyKey),
+      lastUsed.clear(_kRegenWorkoutTypeKey),
+      lastUsed.clear(_kRegenFocusAreasKey),
+      lastUsed.clear(_kRegenEquipmentKey),
+    ]);
+    if (!mounted) return;
+    setState(() => _lastUsedRestored = false);
+    // Re-seed everything from workout + programPreferences
+    _initializeFromWorkout();
   }
 
   /// Two-chip row: "Keep [original date]" / "Do this today". Lets the user
@@ -633,6 +710,11 @@ class _RegenerateWorkoutSheetState
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          if (_lastUsedRestored)
+            _LastUsedRegenBanner(
+              colors: colors,
+              onReset: _resetLastUsedRegenPrefs,
+            ),
           _buildWhenSection(colors),
           WorkoutTypeSelector(
             selectedType: _selectedWorkoutType,
@@ -1033,6 +1115,71 @@ class _RegenerateWorkoutSheetState
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Subtle banner shown at the top of the regen form when one or more chip
+/// values were restored from a previous regeneration. Includes a Reset
+/// affordance so the user can return to plan-level defaults in one tap.
+class _LastUsedRegenBanner extends StatelessWidget {
+  final SheetColors colors;
+  final Future<void> Function() onReset;
+
+  const _LastUsedRegenBanner({
+    required this.colors,
+    required this.onReset,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final accent = colors.orange;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 14),
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(12, 10, 8, 10),
+        decoration: BoxDecoration(
+          color: accent.withValues(alpha: 0.10),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: accent.withValues(alpha: 0.35), width: 1),
+        ),
+        // Wrap so the Reset button drops onto its own line on narrow screens
+        // instead of overflowing the row.
+        child: Wrap(
+          spacing: 8,
+          runSpacing: 6,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          children: [
+            LastUsedBadge.static(colorOverride: accent, size: 16),
+            ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 240),
+              child: Text(
+                'Restored from your last regeneration',
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: colors.textPrimary,
+                ),
+                overflow: TextOverflow.ellipsis,
+                maxLines: 2,
+              ),
+            ),
+            TextButton(
+              onPressed: onReset,
+              style: TextButton.styleFrom(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                minimumSize: const Size(0, 32),
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                foregroundColor: accent,
+              ),
+              child: const Text(
+                'Reset',
+                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

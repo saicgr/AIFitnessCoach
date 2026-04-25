@@ -16,6 +16,7 @@ HydrationLog _$HydrationLogFromJson(Map<String, dynamic> json) => HydrationLog(
   loggedAt: json['logged_at'] == null
       ? null
       : DateTime.parse(json['logged_at'] as String),
+  source: json['source'] as String?,
 );
 
 Map<String, dynamic> _$HydrationLogToJson(HydrationLog instance) =>
@@ -27,6 +28,7 @@ Map<String, dynamic> _$HydrationLogToJson(HydrationLog instance) =>
       'workout_id': instance.workoutId,
       'notes': instance.notes,
       'logged_at': instance.loggedAt?.toIso8601String(),
+      'source': instance.source,
     };
 
 DailyHydrationSummary _$DailyHydrationSummaryFromJson(

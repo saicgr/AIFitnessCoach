@@ -8,6 +8,7 @@ import 'widgets/plan_header.dart';
 import 'widgets/generate_plan_sheet.dart';
 import 'daily_plan_detail_sheet.dart';
 import '../../core/services/posthog_service.dart';
+import '../../shareables/widgets/share_plan_period_sheet.dart';
 import '../../widgets/pill_app_bar.dart';
 
 /// Weekly plan screen showing the holistic plan calendar view
@@ -59,6 +60,10 @@ class _WeeklyPlanScreenState extends ConsumerState<WeeklyPlanScreen> {
       appBar: PillAppBar(
         title: 'Weekly Plan',
         actions: [
+          PillAppBarAction(
+            icon: Icons.ios_share_rounded,
+            onTap: () => SharePlanPeriodSheet.show(context),
+          ),
           if (planState.currentPlan != null)
             PillAppBarAction(icon: Icons.refresh, onTap: _showGeneratePlanSheet),
         ],

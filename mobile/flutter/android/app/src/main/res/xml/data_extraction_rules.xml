@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Auto Backup + Device Transfer rules (Android 12+, targetSdk 31+).
+
+  Goal: let users keep useful prefs across reinstalls / device transfers
+  WITHOUT transferring credentials, push tokens, or RevenueCat customer IDs
+  that should be re-issued on a fresh install.
+
+  Excluded SharedPreferences key prefixes:
+    secure_*       — anything explicitly marked sensitive
+    auth_*         — Supabase session, refresh token, Google/Apple OAuth state
+    session_*      — JWT cache and rotation state
+    fcm_*          — Firebase Cloud Messaging token (must re-issue per install)
+    rc_*           — RevenueCat customer/anon ID (RC SDK re-mints on fresh install)
+
+  Files explicitly excluded:
+    flutter_secure_storage_*  — flutter_secure_storage's backing pref shard
+
+  Domains are listed twice intentionally — Android 12+ uses cloud-backup
+  and device-transfer separately and both must declare excludes for parity.
+-->
+<data-extraction-rules>
+    <cloud-backup>
+        <exclude domain="sharedpref" path="secure_" />
+        <exclude domain="sharedpref" path="auth_" />
+        <exclude domain="sharedpref" path="session_" />
+        <exclude domain="sharedpref" path="fcm_" />
+        <exclude domain="sharedpref" path="rc_" />
+        <exclude domain="sharedpref" path="flutter_secure_storage" />
+        <!-- Drift SQLite DB (offline cache) — large, not portable across devices. -->
+        <exclude domain="database" path="fitwiz.sqlite" />
+        <exclude domain="database" path="fitwiz_offline.sqlite" />
+    </cloud-backup>
+    <device-transfer>
+        <exclude domain="sharedpref" path="secure_" />
+        <exclude domain="sharedpref" path="auth_" />
+        <exclude domain="sharedpref" path="session_" />
+        <exclude domain="sharedpref" path="fcm_" />
+        <exclude domain="sharedpref" path="rc_" />
+        <exclude domain="sharedpref" path="flutter_secure_storage" />
+        <exclude domain="database" path="fitwiz.sqlite" />
+        <exclude domain="database" path="fitwiz_offline.sqlite" />
+    </device-transfer>
+</data-extraction-rules>

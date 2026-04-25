@@ -14,12 +14,38 @@ from typing import Optional
 import asyncio
 import logging
 
-from supabase_auth.errors import AuthRetryableError
+from supabase_auth.errors import AuthApiError, AuthRetryableError
 from postgrest.exceptions import APIError as PostgrestAPIError
 
 from core.supabase_client import get_supabase
 
 logger = logging.getLogger(__name__)
+
+# Substrings we consider "benign stale-JWT" — the user's client has a token
+# that Supabase no longer recognizes (logged out on another device, session
+# rotated, expired). These should return 401 to make the client refresh,
+# but must not be captured as Sentry events (high-volume, not actionable).
+# Keep this list in one place so core/sentry.py can import it too.
+STALE_SESSION_MARKERS: tuple[str, ...] = (
+    "session_id claim",       # "Session from session_id claim in JWT does not exist"
+    "jwt expired",
+    "jwt is expired",
+    "invalid jwt",
+    "invalid claim",
+    "bad_jwt",
+)
+
+
+def is_stale_session_error(err: BaseException) -> bool:
+    """True when the exception is a Supabase auth failure that just means
+    'client's token is stale, make them re-auth'. Matches on lowercased
+    message substrings so minor wording changes in supabase-py don't break
+    the filter. Accepts any exception type so callers can pass the raw
+    caught exception without a separate isinstance check."""
+    if not isinstance(err, AuthApiError):
+        return False
+    msg = (getattr(err, "message", None) or str(err) or "").lower()
+    return any(m in msg for m in STALE_SESSION_MARKERS)
 
 
 def _is_transient_postgrest_error(err: PostgrestAPIError) -> bool:
@@ -109,6 +135,20 @@ async def get_verified_auth_token(
 
     except HTTPException:
         raise
+    except AuthApiError as e:
+        if is_stale_session_error(e):
+            logger.info(f"Stale Supabase session (verified_auth_token): {e}")
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Session expired — please log in again.",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+        logger.error(f"Unexpected AuthApiError: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Failed to validate token",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
     except Exception as e:
         logger.error(f"Token verification error: {e}", exc_info=True)
         raise HTTPException(
@@ -212,6 +252,26 @@ async def get_current_user(
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail="Authentication service temporarily unavailable. Please try again.",
+        )
+    except AuthApiError as e:
+        # Known stale-session patterns: rotate / expired / revoked JWT.
+        # Log at INFO (breadcrumb only) so Sentry's LoggingIntegration
+        # doesn't report each one as an error event. Response is still
+        # 401 so the client knows to re-auth.
+        if is_stale_session_error(e):
+            logger.info(f"Stale Supabase session — prompting re-auth: {e}")
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Session expired — please log in again.",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+        # Anything else is an unexpected auth backend state — keep the
+        # full stack trace in Sentry so we can diagnose.
+        logger.error(f"Unexpected AuthApiError during token validation: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Failed to validate token",
+            headers={"WWW-Authenticate": "Bearer"},
         )
     except PostgrestAPIError as e:
         # Upstream 5xx from PostgREST (e.g., Cloudflare 502) after retry.

@@ -1,8 +1,17 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../models/nutrition_preferences.dart';
 import '../repositories/nutrition_preferences_repository.dart';
+
+/// SharedPreferences key prefix for the one-time targets-recalc migration.
+/// We bumped the rate→deficit table on this date (the textbook
+/// `kg/wk × 7700 / 7` rule); existing users with stale `target_calories`
+/// (e.g. 2884 for a 100kg → 75kg @ 1.0 kg/wk profile) need a one-shot
+/// re-derive on next app open. Stored per-user so an account switch
+/// triggers a fresh check.
+const String _targetsRecalcV2DonePrefPrefix = 'nutrition_targets_recalc_v2_done_';
 
 /// In-memory cache for instant display on provider recreation
 /// Survives provider invalidation and prevents loading flash
@@ -24,6 +33,14 @@ class NutritionPreferencesState {
   final String? error;
   final bool onboardingCompleted;
 
+  /// Set when the one-time targets-recalc migration ran AND actually changed
+  /// the stored daily calorie target (delta != 0). NutritionScreen reads this
+  /// on mount, shows a SnackBar like "Updated your daily target: 1580 cal/day
+  /// (was 2884) — Review", then clears it via `consumePendingMigrationDelta`.
+  /// Null when no migration was needed or the recalc happened to land on the
+  /// same number.
+  final ({int oldCalories, int newCalories})? pendingMigrationDelta;
+
   const NutritionPreferencesState({
     this.preferences,
     this.streak,
@@ -34,6 +51,7 @@ class NutritionPreferencesState {
     this.isLoading = false,
     this.error,
     this.onboardingCompleted = false,
+    this.pendingMigrationDelta,
   });
 
   NutritionPreferencesState copyWith({
@@ -47,6 +65,8 @@ class NutritionPreferencesState {
     String? error,
     bool? onboardingCompleted,
     bool clearError = false,
+    ({int oldCalories, int newCalories})? pendingMigrationDelta,
+    bool clearPendingMigrationDelta = false,
   }) {
     return NutritionPreferencesState(
       preferences: preferences ?? this.preferences,
@@ -58,6 +78,9 @@ class NutritionPreferencesState {
       isLoading: isLoading ?? this.isLoading,
       error: clearError ? null : (error ?? this.error),
       onboardingCompleted: onboardingCompleted ?? this.onboardingCompleted,
+      pendingMigrationDelta: clearPendingMigrationDelta
+          ? null
+          : (pendingMigrationDelta ?? this.pendingMigrationDelta),
     );
   }
 
@@ -182,10 +205,76 @@ class NutritionPreferencesNotifier extends StateNotifier<NutritionPreferencesSta
 
       debugPrint(
           '✅ [NutritionPrefsProvider] Initialized: onboarded=${state.onboardingCompleted} (backend=$backendOnboardingCompleted, was=$wasOnboardingCompleted), weights=${weightHistory.length}');
+
+      // One-time targets-recalc migration. The rate→deficit table changed
+      // (slow/moderate/fast/aggressive now map to 275/550/825/1100 cal/d
+      // instead of 250/500/750 with no "fast" entry). Existing users who
+      // completed onboarding before this fix have stale `target_calories`.
+      // Re-derive once, silently. Surfaces a SnackBar via
+      // `pendingMigrationDelta` when the new target differs.
+      await _maybeRunTargetsRecalcV2(userId);
     } catch (e) {
       debugPrint('❌ [NutritionPrefsProvider] Init error: $e');
       state = state.copyWith(isLoading: false, error: e.toString());
     }
+  }
+
+  /// One-shot recalc for users whose `target_calories` was computed under the
+  /// old rate→deficit table. Eligible: lose_fat or build_muscle goals with a
+  /// non-null rate_of_change. Idempotent — gated by a per-user
+  /// SharedPreferences flag.
+  Future<void> _maybeRunTargetsRecalcV2(String userId) async {
+    try {
+      final prefs = state.preferences;
+      if (prefs == null) return;
+      final goal = prefs.primaryGoalEnum;
+      final rate = prefs.rateOfChange;
+      // Only weight-changing goals depend on the rate-derived deficit.
+      if (goal != NutritionGoal.loseFat && goal != NutritionGoal.buildMuscle) {
+        return;
+      }
+      if (rate == null || rate.isEmpty) return;
+      // Skip when TDEE isn't available — recalc would no-op or fail anyway.
+      if ((prefs.calculatedTdee ?? 0) <= 0) return;
+
+      final spref = await SharedPreferences.getInstance();
+      final flagKey = '$_targetsRecalcV2DonePrefPrefix$userId';
+      if (spref.getBool(flagKey) == true) return;
+
+      final oldCal = prefs.targetCalories ?? 0;
+      debugPrint('🔁 [NutritionPrefsProvider] Running v2 targets recalc (old=$oldCal cal)');
+
+      final updated = await _repository.recalculateTargets(userId);
+      final newCal = updated.targetCalories ?? oldCal;
+
+      // Always set the flag — even if the new number happens to match the
+      // old, we don't want to keep re-running the recalc on every cold start.
+      await spref.setBool(flagKey, true);
+
+      _nutritionPrefsInMemoryCache = state.copyWith(
+        preferences: updated,
+        // Only show the banner when the number actually moved enough to
+        // matter. < 25 cal isn't worth interrupting the user over.
+        pendingMigrationDelta: (oldCal > 0 && (newCal - oldCal).abs() >= 25)
+            ? (oldCalories: oldCal, newCalories: newCal)
+            : null,
+      );
+      state = _nutritionPrefsInMemoryCache!;
+
+      debugPrint('✅ [NutritionPrefsProvider] v2 recalc done: $oldCal → $newCal cal');
+    } catch (e) {
+      // Don't block app start on this — surface in logs only. The user can
+      // still tap "Recalculate from profile" in EditTargetsSheet manually.
+      debugPrint('⚠️ [NutritionPrefsProvider] v2 recalc failed (will retry next launch): $e');
+    }
+  }
+
+  /// Called by NutritionScreen after it has shown the one-time migration
+  /// SnackBar. Clears the pending delta so it doesn't re-fire on rebuild.
+  void consumePendingMigrationDelta() {
+    if (state.pendingMigrationDelta == null) return;
+    state = state.copyWith(clearPendingMigrationDelta: true);
+    _nutritionPrefsInMemoryCache = state;
   }
 
   /// Complete nutrition onboarding (supports multi-select goals)

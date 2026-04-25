@@ -57,7 +57,7 @@ class WorkoutSummaryAdvanced extends StatelessWidget {
     );
     delay += 80;
 
-    // 2. KPI tiles row (Volume · PRs · Avg RIR · Rest Efficiency).
+    // 2. KPI tiles (Volume · TOP 1RM · PRs · Avg RIR) — 2×2 grid.
     heroSections.add(
       _KpiTileRow(
         tiles: _buildKpiTiles(
@@ -2854,14 +2854,43 @@ class _KpiTileRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        for (int i = 0; i < tiles.length; i++) ...[
-          Expanded(child: _KpiTileCard(data: tiles[i], isDark: isDark)),
-          if (i < tiles.length - 1) const SizedBox(width: 10),
+    // 4+ tiles wrap into 2-per-row so each tile keeps enough width for
+    // the value + unit + delta-chip without clipping. 3 or fewer stay
+    // on one row to preserve the existing visual cadence.
+    if (tiles.length <= 3) {
+      return Row(
+        children: [
+          for (int i = 0; i < tiles.length; i++) ...[
+            Expanded(child: _KpiTileCard(data: tiles[i], isDark: isDark)),
+            if (i < tiles.length - 1) const SizedBox(width: 10),
+          ],
         ],
-      ],
-    );
+      );
+    }
+
+    final rows = <Widget>[];
+    for (int i = 0; i < tiles.length; i += 2) {
+      final rowTiles = tiles.sublist(i, math.min(i + 2, tiles.length));
+      rows.add(
+        Row(
+          children: [
+            Expanded(
+              child: _KpiTileCard(data: rowTiles[0], isDark: isDark),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: rowTiles.length > 1
+                  ? _KpiTileCard(data: rowTiles[1], isDark: isDark)
+                  : const SizedBox.shrink(),
+            ),
+          ],
+        ),
+      );
+      if (i + 2 < tiles.length) {
+        rows.add(const SizedBox(height: 10));
+      }
+    }
+    return Column(children: rows);
   }
 }
 
@@ -2955,7 +2984,7 @@ class _KpiTileCard extends StatelessWidget {
           // copy when no comparison is available.
           if (data.deltaLabel != null)
             _DeltaChip(
-              icon: deltaArrow!,
+              icon: deltaArrow ?? Icons.remove_rounded,
               label: data.deltaLabel!,
               color: deltaColor,
             )
@@ -3056,11 +3085,19 @@ class _KpiSparklinePainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    if (series.length < 2) return;
-    final minV = series.reduce((a, b) => a < b ? a : b);
-    final maxV = series.reduce((a, b) => a > b ? a : b);
+    // Filter out NaN / Infinity before reduce — a single non-finite value
+    // turns `reduce(max)` into infinity which then poisons xAt/yAt and
+    // explodes downstream `Offset` math with "Infinity or NaN toInt".
+    final clean = series.where((v) => v.isFinite).toList(growable: false);
+    if (clean.length < 2) return;
+    if (!size.width.isFinite || !size.height.isFinite ||
+        size.width <= 0 || size.height <= 0) {
+      return;
+    }
+    final minV = clean.reduce((a, b) => a < b ? a : b);
+    final maxV = clean.reduce((a, b) => a > b ? a : b);
     final range = (maxV - minV).abs() < 1e-6 ? 1.0 : maxV - minV;
-    double xAt(int i) => (i / (series.length - 1)) * size.width;
+    double xAt(int i) => (i / (clean.length - 1)) * size.width;
     double yAt(double v) =>
         size.height - ((v - minV) / range) * size.height;
 
@@ -3075,9 +3112,9 @@ class _KpiSparklinePainter extends CustomPainter {
     );
 
     // Polyline
-    final path = Path()..moveTo(xAt(0), yAt(series[0]));
-    for (var i = 1; i < series.length; i++) {
-      path.lineTo(xAt(i), yAt(series[i]));
+    final path = Path()..moveTo(xAt(0), yAt(clean[0]));
+    for (var i = 1; i < clean.length; i++) {
+      path.lineTo(xAt(i), yAt(clean[i]));
     }
     canvas.drawPath(
       path,
@@ -3091,7 +3128,7 @@ class _KpiSparklinePainter extends CustomPainter {
 
     // Current-value dot on the right
     canvas.drawCircle(
-      Offset(xAt(series.length - 1), yAt(series.last)),
+      Offset(xAt(clean.length - 1), yAt(clean.last)),
       2.2,
       Paint()..color = color,
     );
@@ -3104,9 +3141,15 @@ class _KpiSparklinePainter extends CustomPainter {
       old.trackColor != trackColor;
 }
 
-/// Build the four KPI tiles from the session summary. All four are always
+/// Build the KPI tiles from the session summary. All tiles are always
 /// rendered (never hidden) so the row's visual weight stays consistent —
 /// missing data becomes an em-dash rather than an absent tile.
+///
+/// Volume + TOP 1RM are computed client-side from set logs as a fallback
+/// when the backend `workout_performance_summary` aggregate is missing or
+/// zero (older workouts whose summary row was never written). Per-set
+/// rows from `performance_logs` are the source of truth for "what the
+/// user actually lifted" — the aggregates are derived from them.
 List<_KpiTileData> _buildKpiTiles({
   required WorkoutSummaryResponse? data,
   required Map<String, dynamic>? metadata,
@@ -3117,18 +3160,77 @@ List<_KpiTileData> _buildKpiTiles({
   final orange = isDark ? AppColors.orange : AppColorsLight.orange;
   final success = isDark ? AppColors.success : AppColorsLight.success;
 
-  // Volume (current + delta)
-  final wc = data?.performanceComparison?.workoutComparison;
-  final volKg = wc?.currentTotalVolumeKg;
-  final volLb = volKg != null ? volKg * 2.20462 : null;
-  final volDeltaKg = wc?.volumeDiffKg;
-  final volDeltaLb = volDeltaKg != null ? volDeltaKg * 2.20462 : null;
   String formatPounds(double v) {
     if (v.abs() >= 10000) return '${(v / 1000).toStringAsFixed(1)}k';
     if (v.abs() >= 1000) return '${(v / 1000).toStringAsFixed(2)}k';
     return v.toStringAsFixed(0);
   }
 
+  // ── Aggregate per-set data (volume + best Epley 1RM) ──────────────
+  // Walk performance_logs first; fall back to metadata['sets_json'] if
+  // logs are empty. Skip incomplete sets and bodyweight-only sets (no
+  // weight) so we don't pollute the lift metrics.
+  double computedVolKg = 0;
+  double computedBest1RmKg = 0;
+  int countedSets = 0;
+  String? best1RmExerciseName;
+  int best1RmReps = 0;
+  double best1RmWeightKg = 0;
+
+  for (final sl in (data?.setLogs ?? const [])) {
+    final isCompleted = sl.isCompleted ?? (sl.repsCompleted > 0);
+    if (!isCompleted) continue;
+    if (sl.repsCompleted <= 0 || sl.weightKg <= 0) continue;
+    countedSets++;
+    computedVolKg += sl.weightKg * sl.repsCompleted;
+    // Epley: 1RM = w × (1 + reps / 30). Industry-standard for ≤10 reps;
+    // accuracy degrades on high-rep sets but we still surface the highest
+    // implied 1RM so the user sees their heaviest lift in 1RM units.
+    final oneRm = sl.weightKg * (1 + sl.repsCompleted / 30.0);
+    if (oneRm > computedBest1RmKg) {
+      computedBest1RmKg = oneRm;
+      best1RmExerciseName = sl.exerciseName;
+      best1RmReps = sl.repsCompleted;
+      best1RmWeightKg = sl.weightKg;
+    }
+  }
+
+  if (countedSets == 0 && metadata != null) {
+    final setsJson = (metadata['sets_json'] is List)
+        ? metadata['sets_json'] as List
+        : const [];
+    for (final s in setsJson) {
+      if (s is! Map) continue;
+      final reps = (s['reps_completed'] as num?)?.toInt() ?? 0;
+      final weight = (s['weight_kg'] as num?)?.toDouble() ?? 0;
+      final completedRaw = s['is_completed'];
+      final isCompleted =
+          completedRaw is bool ? completedRaw : reps > 0;
+      if (!isCompleted || reps <= 0 || weight <= 0) continue;
+      countedSets++;
+      computedVolKg += weight * reps;
+      final oneRm = weight * (1 + reps / 30.0);
+      if (oneRm > computedBest1RmKg) {
+        computedBest1RmKg = oneRm;
+        best1RmExerciseName = (s['exercise_name'] as String?)?.trim();
+        best1RmReps = reps;
+        best1RmWeightKg = weight;
+      }
+    }
+  }
+
+  // ── Volume tile ───────────────────────────────────────────────────
+  final wc = data?.performanceComparison?.workoutComparison;
+  final backendVolKg = wc?.currentTotalVolumeKg;
+  // Prefer backend aggregate when present and non-zero; otherwise use
+  // the client-computed fallback so older workouts (no summary row)
+  // still surface real numbers.
+  final effectiveVolKg = (backendVolKg != null && backendVolKg > 0)
+      ? backendVolKg
+      : (computedVolKg > 0 ? computedVolKg : null);
+  final volLb = effectiveVolKg != null ? effectiveVolKg * 2.20462 : null;
+  final volDeltaKg = wc?.volumeDiffKg;
+  final volDeltaLb = volDeltaKg != null ? volDeltaKg * 2.20462 : null;
   final prevVolKg = wc?.previousTotalVolumeKg;
   final prevVolLb = prevVolKg != null ? prevVolKg * 2.20462 : null;
   final volTile = _KpiTileData(
@@ -3141,21 +3243,51 @@ List<_KpiTileData> _buildKpiTiles({
     deltaLabel: volDeltaLb != null
         ? '${volDeltaLb >= 0 ? '+' : '−'}${formatPounds(volDeltaLb.abs())} lb vs last'
         : null,
-    zeroStateCopy: volLb != null && prevVolLb == null
-        ? 'First session — log another to see growth'
-        : null,
+    zeroStateCopy: volLb == null
+        ? 'No weighted sets logged'
+        : (prevVolLb == null
+            ? 'First session — log another to see growth'
+            : null),
     trendSeries: (prevVolLb != null && volLb != null)
         ? [prevVolLb, volLb]
         : null,
   );
 
-  // PRs hit
+  // ── TOP 1RM tile (Epley estimate from heaviest working set) ───────
+  // Surfaces the heaviest implied 1RM in the session so the user sees
+  // their peak lift in 1RM terms even if no all-time PR was set.
+  final top1RmLb = computedBest1RmKg > 0
+      ? computedBest1RmKg * 2.20462
+      : null;
+  final lift1RmTile = _KpiTileData(
+    label: 'TOP 1RM',
+    value: top1RmLb != null ? formatPounds(top1RmLb) : '—',
+    unit: top1RmLb != null ? 'lb' : null,
+    icon: Icons.fitness_center_rounded,
+    accent: success,
+    deltaSigned: null,
+    deltaLabel: top1RmLb != null && best1RmExerciseName != null
+        ? '${best1RmExerciseName!} · ${formatPounds(best1RmWeightKg * 2.20462)}×$best1RmReps'
+        : null,
+    zeroStateCopy: top1RmLb == null
+        ? 'Log weight + reps to estimate 1RM'
+        : null,
+  );
+
+  // ── PRs hit tile ──────────────────────────────────────────────────
+  // Sourced from the `personal_records` table indexed by workout_id.
+  // Backend writes these at completion time when a working set beats
+  // the user's prior best 1RM for the same exercise. A genuine 0 here
+  // means no all-time PR was beaten this session — that's correct for
+  // accessory/maintenance sessions.
   final prs = data?.personalRecords ?? const [];
   final prTile = _KpiTileData(
     label: 'PRs HIT',
     value: '${prs.length}',
     icon: Icons.emoji_events_rounded,
-    accent: prs.isEmpty ? (isDark ? AppColors.textMuted : AppColorsLight.textMuted) : orange,
+    accent: prs.isEmpty
+        ? (isDark ? AppColors.textMuted : AppColorsLight.textMuted)
+        : orange,
     deltaSigned: prs.isEmpty ? null : prs.length.toDouble(),
     deltaLabel: prs.isEmpty ? null : '${prs.length} new this session',
     zeroStateCopy: prs.isEmpty
@@ -3214,7 +3346,7 @@ List<_KpiTileData> _buildKpiTiles({
   // second representation of the same concept. The computation logic
   // still lives further down in _buildSessionScoreData().
 
-  return [volTile, prTile, rirTile];
+  return [volTile, lift1RmTile, prTile, rirTile];
 }
 
 // Small helper used by the Session Score to compute rest-efficiency

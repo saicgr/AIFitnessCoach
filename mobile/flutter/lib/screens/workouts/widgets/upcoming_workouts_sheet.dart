@@ -458,12 +458,40 @@ class _UpcomingWorkoutsSheetState extends ConsumerState<_UpcomingWorkoutsSheet> 
         if (progress.status == WorkoutGenerationStatus.error) {
           debugPrint('❌ [Upcoming] Generation failed: ${progress.message}');
           if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text('Failed to generate workout: ${progress.message}'),
-                backgroundColor: AppColors.error,
-              ),
-            );
+            // EXERCISE_POOL_TOO_SMALL is a user-fixable condition (not
+            // enough equipment for the chosen focus), so show an
+            // actionable dialog + deep-link into the gym profile editor.
+            // Auto-retry is NEVER correct for this — the pool is a
+            // deterministic function of the user's saved equipment.
+            if (progress.errorCode == 'EXERCISE_POOL_TOO_SMALL') {
+              await showDialog<void>(
+                context: context,
+                builder: (ctx) => AlertDialog(
+                  title: const Text('Not enough equipment'),
+                  content: Text(progress.message),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.of(ctx).pop(),
+                      child: const Text('Later'),
+                    ),
+                    FilledButton(
+                      onPressed: () {
+                        Navigator.of(ctx).pop();
+                        context.push('/gym-profiles');
+                      },
+                      child: const Text('Edit Gym Profile'),
+                    ),
+                  ],
+                ),
+              );
+            } else {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('Failed to generate workout: ${progress.message}'),
+                  backgroundColor: AppColors.error,
+                ),
+              );
+            }
           }
           break;
         }

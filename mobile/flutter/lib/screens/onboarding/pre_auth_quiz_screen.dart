@@ -660,6 +660,22 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
       selectedEnvironment: _selectedEnvironment,
       onEnvironmentChanged: _handleEnvironmentChange,
       showHeader: showHeader,
+      // Quick-preset taps replace the entire selection in one shot.
+      // Mirrors `_handleEquipmentToggle('full_gym')`'s "clear and add"
+      // pattern but for arbitrary preset combos like Bodyweight + Bands.
+      // 'full_gym' preset goes through the existing toggle handler so
+      // the legacy expansion logic (lines 822-838) still runs.
+      onPresetSelected: (ids) {
+        if (ids.length == 1 && ids.first == 'full_gym') {
+          _handleEquipmentToggle('full_gym');
+          return;
+        }
+        setState(() {
+          _selectedEquipment
+            ..clear()
+            ..addAll(ids);
+        });
+      },
     );
   }
 

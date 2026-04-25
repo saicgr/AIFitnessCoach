@@ -44,7 +44,7 @@ final habitsProvider = Provider<List<HabitData>>((ref) {
       icon: Icons.restaurant_menu,
       last30Days: foodLogDays,
       currentStreak: foodStreak,
-      route: '/nutrition',
+      route: '/nutrition?tab=0',
       todayCompleted: foodLogDays.isNotEmpty && foodLogDays.last,
     ),
     HabitData(
@@ -53,7 +53,7 @@ final habitsProvider = Provider<List<HabitData>>((ref) {
       icon: Icons.water_drop,
       last30Days: waterDays,
       currentStreak: waterStreak,
-      route: '/nutrition?tab=2',
+      route: '/nutrition?tab=3&fuelSection=water',
       todayCompleted: waterDays.isNotEmpty && waterDays.last,
     ),
   ];

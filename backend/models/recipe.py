@@ -137,9 +137,18 @@ class NutrientProgress(BaseModel):
     floor_value: Optional[float] = None
     ceiling_value: Optional[float] = None
     percentage: float  # current/target * 100
-    status: str  # 'low', 'optimal', 'high', 'over_ceiling'
+    status: str  # 'low', 'adequate', 'optimal', 'over_ceiling'
     color_hex: Optional[str] = None
     top_contributors: Optional[List[Dict]] = None  # [{food_name, amount, contribution}]
+    # Why this nutrient appears in `pinned`. One of:
+    #   'static' — user's saved pinned_nutrients list (legacy / opted-out users).
+    #   'top_contributor' — dynamic mode picked it for being a high % of RDA today.
+    #   'over_ceiling' — penalty nutrient (sodium, saturated fat, added sugar) that
+    #                    today's logs pushed past the safe ceiling. Frontend paints
+    #                    this orange so users can spot the warning at a glance.
+    # Set only on entries inside DailyMicronutrientSummary.pinned; the per-category
+    # lists (vitamins/minerals/fatty_acids/other) leave it null.
+    pin_reason: Optional[str] = None
 
 
 class DailyMicronutrientSummary(BaseModel):
@@ -150,8 +159,14 @@ class DailyMicronutrientSummary(BaseModel):
     minerals: List[NutrientProgress]
     fatty_acids: List[NutrientProgress]
     other: List[NutrientProgress]
-    # Pinned nutrients (user's favorites)
+    # Pinned nutrients shown on the Daily tab. May be a static user-saved list
+    # (legacy mode) or a dynamic top-N selection from today's logged foods
+    # (new default for new users). Each entry's `pin_reason` records why.
     pinned: List[NutrientProgress]
+    # Source of the pinned selection: 'static' (user's saved list) or 'dynamic'
+    # (computed from today's logs). Frontend uses this to render a settings
+    # toggle without an extra API call.
+    pinning_mode: Optional[str] = None
 
 
 class NutrientContributor(BaseModel):

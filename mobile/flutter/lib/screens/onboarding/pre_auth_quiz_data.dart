@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -374,8 +376,56 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
   bool _isLoaded = false;
   bool get isLoaded => _isLoaded;
 
+  /// True while [_loadFromPrefs] is executing. Used by [state] override to
+  /// suppress timestamp updates triggered by hydration (only real user input
+  /// should refresh the staleness clock).
+  bool _suppressTouch = false;
+
+  /// Quiz answers older than this are treated as abandoned and cleared on the
+  /// next cold-start `_loadFromPrefs`. Handles the anonymous-user case where
+  /// User A fills quiz, never signs in, days later User B opens the app and
+  /// would otherwise see prefilled answers.
+  static const Duration _staleQuizThreshold = Duration(days: 14);
+
+  static const _lastTouchedAtKey = 'preAuth_lastTouchedAt';
+
+  @override
+  set state(PreAuthQuizData value) {
+    super.state = value;
+    if (!_suppressTouch) {
+      // Fire-and-forget — never block UI on the timestamp write.
+      // ignore: discarded_futures
+      _touchTimestamp();
+    }
+  }
+
+  Future<void> _touchTimestamp() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setInt(_lastTouchedAtKey, DateTime.now().millisecondsSinceEpoch);
+    } catch (_) {
+      // Non-fatal — staleness check just falls back to "no timestamp" branch.
+    }
+  }
+
   Future<void> _loadFromPrefs() async {
     final prefs = await SharedPreferences.getInstance();
+
+    // Stale-data guard: if the quiz was last touched longer than
+    // [_staleQuizThreshold] ago, treat it as abandoned and wipe before loading.
+    // Without this, User B picking up a device User A briefly used could see
+    // User A's prefilled answers in the quiz UI.
+    final lastTouchedMs = prefs.getInt(_lastTouchedAtKey);
+    if (lastTouchedMs != null) {
+      final age = DateTime.now().millisecondsSinceEpoch - lastTouchedMs;
+      if (age > _staleQuizThreshold.inMilliseconds) {
+        await _wipeQuizKeys(prefs);
+        await prefs.remove(_lastTouchedAtKey);
+        state = PreAuthQuizData();
+        _isLoaded = true;
+        return;
+      }
+    }
     final goals = prefs.getStringList('preAuth_goals');
     final level = prefs.getString('preAuth_fitnessLevel');
     final trainingExp = prefs.getString('preAuth_trainingExperience');
@@ -440,56 +490,61 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
     final cardioCapacity = prefs.getString('preAuth_cardioCapacity');
     final isTrainer = prefs.getBool('preAuth_isTrainer');
 
-    state = PreAuthQuizData(
-      goals: goals,
-      fitnessLevel: level,
-      trainingExperience: trainingExp,
-      activityLevel: activityLevel,
-      name: name,
-      dateOfBirth: dateOfBirth,
-      gender: gender,
-      heightCm: heightCm,
-      weightKg: weightKg,
-      goalWeightKg: goalWeightKg,
-      useMetricUnits: useMetricUnits,
-      weightDirection: weightDirection,
-      weightChangeAmount: weightChangeAmount,
-      weightChangeRate: weightChangeRate,
-      daysPerWeek: days,
-      workoutDays: workoutDays,
-      workoutDuration: workoutDuration,
-      workoutDurationMin: workoutDurationMin,
-      workoutDurationMax: workoutDurationMax,
-      equipment: equipmentStr,
-      customEquipment: customEquipmentStr,
-      workoutEnvironment: workoutEnv,
-      trainingSplit: trainingSplit,
-      motivations: motivations,
-      dumbbellCount: dumbbellCount,
-      kettlebellCount: kettlebellCount,
-      workoutTypePreference: workoutTypePref,
-      workoutVariety: workoutVariety,
-      progressionPace: progressionPace,
-      sleepQuality: sleepQuality,
-      obstacles: obstacles,
-      nutritionGoals: nutritionGoals,
-      dietaryRestrictions: dietaryRestrictions,
-      mealsPerDay: mealsPerDay,
-      interestedInFasting: interestedInFasting,
-      fastingProtocol: fastingProtocol,
-      wakeTime: wakeTime,
-      sleepTime: sleepTime,
-      primaryGoal: primaryGoal,
-      muscleFocusPoints: muscleFocusPoints,
-      nutritionEnabled: nutritionEnabled,
-      limitations: limitations,
-      pushupCapacity: pushupCapacity,
-      pullupCapacity: pullupCapacity,
-      plankCapacity: plankCapacity,
-      squatCapacity: squatCapacity,
-      cardioCapacity: cardioCapacity,
-      isTrainer: isTrainer,
-    );
+    _suppressTouch = true;
+    try {
+      state = PreAuthQuizData(
+        goals: goals,
+        fitnessLevel: level,
+        trainingExperience: trainingExp,
+        activityLevel: activityLevel,
+        name: name,
+        dateOfBirth: dateOfBirth,
+        gender: gender,
+        heightCm: heightCm,
+        weightKg: weightKg,
+        goalWeightKg: goalWeightKg,
+        useMetricUnits: useMetricUnits,
+        weightDirection: weightDirection,
+        weightChangeAmount: weightChangeAmount,
+        weightChangeRate: weightChangeRate,
+        daysPerWeek: days,
+        workoutDays: workoutDays,
+        workoutDuration: workoutDuration,
+        workoutDurationMin: workoutDurationMin,
+        workoutDurationMax: workoutDurationMax,
+        equipment: equipmentStr,
+        customEquipment: customEquipmentStr,
+        workoutEnvironment: workoutEnv,
+        trainingSplit: trainingSplit,
+        motivations: motivations,
+        dumbbellCount: dumbbellCount,
+        kettlebellCount: kettlebellCount,
+        workoutTypePreference: workoutTypePref,
+        workoutVariety: workoutVariety,
+        progressionPace: progressionPace,
+        sleepQuality: sleepQuality,
+        obstacles: obstacles,
+        nutritionGoals: nutritionGoals,
+        dietaryRestrictions: dietaryRestrictions,
+        mealsPerDay: mealsPerDay,
+        interestedInFasting: interestedInFasting,
+        fastingProtocol: fastingProtocol,
+        wakeTime: wakeTime,
+        sleepTime: sleepTime,
+        primaryGoal: primaryGoal,
+        muscleFocusPoints: muscleFocusPoints,
+        nutritionEnabled: nutritionEnabled,
+        limitations: limitations,
+        pushupCapacity: pushupCapacity,
+        pullupCapacity: pullupCapacity,
+        plankCapacity: plankCapacity,
+        squatCapacity: squatCapacity,
+        cardioCapacity: cardioCapacity,
+        isTrainer: isTrainer,
+      );
+    } finally {
+      _suppressTouch = false;
+    }
     _isLoaded = true;
   }
 
@@ -499,6 +554,159 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
     }
     return state;
   }
+
+  /// Hydrate quiz state from a backend user object's preferences.
+  /// Used after sign-in when local quiz is empty but the user has previously
+  /// saved preferences server-side (e.g. uninstall/reinstall mid-onboarding).
+  ///
+  /// Reads from both top-level user columns (fitness_level, equipment, etc.)
+  /// and the nested preferences JSONB. Only writes fields that are present
+  /// in the source — does not nullify existing local data.
+  Future<void> hydrateFromUserPreferences(Map<String, dynamic> userJson) async {
+    final prefs = await SharedPreferences.getInstance();
+
+    Map<String, dynamic> nested = {};
+    final prefsRaw = userJson['preferences'];
+    if (prefsRaw is String && prefsRaw.isNotEmpty) {
+      try {
+        final decoded = _safeJsonDecode(prefsRaw);
+        if (decoded is Map<String, dynamic>) nested = decoded;
+      } catch (_) {}
+    } else if (prefsRaw is Map<String, dynamic>) {
+      nested = prefsRaw;
+    }
+
+    // Merge: nested preferences first, top-level columns override (more authoritative)
+    T? pick<T>(String nestedKey, [String? topKey]) {
+      final topVal = topKey != null ? userJson[topKey] : null;
+      if (topVal != null) return topVal as T?;
+      final nestedVal = nested[nestedKey];
+      return nestedVal as T?;
+    }
+
+    // Goals (stored as JSON list in user.goals OR plain list in preferences.goals)
+    List<String>? goalsList;
+    final goalsRaw = userJson['goals'] ?? nested['goals'];
+    if (goalsRaw is List) {
+      goalsList = goalsRaw.map((e) => e.toString()).toList();
+    } else if (goalsRaw is String && goalsRaw.isNotEmpty) {
+      try {
+        final decoded = _safeJsonDecode(goalsRaw);
+        if (decoded is List) {
+          goalsList = decoded.map((e) => e.toString()).toList();
+        } else if (decoded is String) {
+          goalsList = [decoded];
+        }
+      } catch (_) {
+        goalsList = [goalsRaw];
+      }
+    }
+    if (goalsList != null && goalsList.isNotEmpty) {
+      await prefs.setStringList('preAuth_goals', goalsList);
+    }
+
+    // Equipment (same dual-format handling)
+    List<String>? equipmentList;
+    final equipmentRaw = userJson['equipment'] ?? nested['equipment'];
+    if (equipmentRaw is List) {
+      equipmentList = equipmentRaw.map((e) => e.toString()).toList();
+    } else if (equipmentRaw is String && equipmentRaw.isNotEmpty) {
+      try {
+        final decoded = _safeJsonDecode(equipmentRaw);
+        if (decoded is List) {
+          equipmentList = decoded.map((e) => e.toString()).toList();
+        }
+      } catch (_) {}
+    }
+    if (equipmentList != null && equipmentList.isNotEmpty) {
+      await prefs.setStringList('preAuth_equipment', equipmentList);
+    }
+
+    // String fields
+    final fitnessLevel = pick<String>('fitness_level', 'fitness_level');
+    if (fitnessLevel != null) await prefs.setString('preAuth_fitnessLevel', fitnessLevel);
+
+    final trainingExperience = pick<String>('training_experience');
+    if (trainingExperience != null) await prefs.setString('preAuth_trainingExperience', trainingExperience);
+
+    final activityLevel = pick<String>('activity_level', 'activity_level');
+    if (activityLevel != null) await prefs.setString('preAuth_activityLevel', activityLevel);
+
+    final gender = pick<String>('gender', 'gender');
+    if (gender != null) await prefs.setString('preAuth_gender', gender);
+
+    final name = pick<String>('name', 'name');
+    if (name != null) await prefs.setString('preAuth_name', name);
+
+    final dob = pick<String>('date_of_birth', 'date_of_birth');
+    if (dob != null) await prefs.setString('preAuth_dateOfBirth', dob);
+
+    final primaryGoal = pick<String>('primary_goal', 'primary_goal');
+    if (primaryGoal != null) await prefs.setString('preAuth_primaryGoal', primaryGoal);
+
+    final trainingSplit = pick<String>('training_split');
+    if (trainingSplit != null) await prefs.setString('preAuth_trainingSplit', trainingSplit);
+
+    final progressionPace = pick<String>('progression_pace');
+    if (progressionPace != null) await prefs.setString('preAuth_progressionPace', progressionPace);
+
+    final workoutEnvironment = pick<String>('workout_environment');
+    if (workoutEnvironment != null) await prefs.setString('preAuth_workoutEnvironment', workoutEnvironment);
+
+    final weightDirection = pick<String>('weight_direction');
+    if (weightDirection != null) await prefs.setString('preAuth_weightDirection', weightDirection);
+
+    final weightChangeRate = pick<String>('weight_change_rate');
+    if (weightChangeRate != null) await prefs.setString('preAuth_weightChangeRate', weightChangeRate);
+
+    // Numeric fields
+    final heightCm = pick<num>('height_cm', 'height_cm');
+    if (heightCm != null) await prefs.setDouble('preAuth_heightCm', heightCm.toDouble());
+
+    final weightKg = pick<num>('weight_kg', 'weight_kg');
+    if (weightKg != null) await prefs.setDouble('preAuth_weightKg', weightKg.toDouble());
+
+    final goalWeightKg = pick<num>('goal_weight_kg', 'target_weight_kg');
+    if (goalWeightKg != null) await prefs.setDouble('preAuth_goalWeightKg', goalWeightKg.toDouble());
+
+    final weightChangeAmount = pick<num>('weight_change_amount');
+    if (weightChangeAmount != null) await prefs.setDouble('preAuth_weightChangeAmount', weightChangeAmount.toDouble());
+
+    final daysPerWeek = pick<num>('days_per_week') ?? pick<num>('workouts_per_week');
+    if (daysPerWeek != null) await prefs.setInt('preAuth_daysPerWeek', daysPerWeek.toInt());
+
+    final workoutDuration = pick<num>('workout_duration');
+    if (workoutDuration != null) await prefs.setInt('preAuth_workoutDuration', workoutDuration.toInt());
+
+    final workoutDurationMin = pick<num>('workout_duration_min');
+    if (workoutDurationMin != null) await prefs.setInt('preAuth_workoutDurationMin', workoutDurationMin.toInt());
+
+    final workoutDurationMax = pick<num>('workout_duration_max');
+    if (workoutDurationMax != null) await prefs.setInt('preAuth_workoutDurationMax', workoutDurationMax.toInt());
+
+    // workout_days (List<int>) — stored as List<String> in prefs
+    final workoutDaysRaw = nested['workout_days'] ?? nested['selected_days'];
+    if (workoutDaysRaw is List && workoutDaysRaw.isNotEmpty) {
+      final asStrings = workoutDaysRaw.map((e) => e.toString()).toList();
+      await prefs.setStringList('preAuth_workoutDays', asStrings);
+    }
+
+    // List fields stored as List<String>
+    void writeStringList(String nestedKey, String prefKey) {
+      final raw = nested[nestedKey];
+      if (raw is List && raw.isNotEmpty) {
+        prefs.setStringList(prefKey, raw.map((e) => e.toString()).toList());
+      }
+    }
+    writeStringList('motivations', 'preAuth_motivations');
+    writeStringList('obstacles', 'preAuth_obstacles');
+    writeStringList('limitations', 'preAuth_limitations');
+
+    // Reload state from the freshly-populated prefs so consumers see the new values.
+    await _loadFromPrefs();
+  }
+
+  dynamic _safeJsonDecode(String s) => jsonDecode(s);
 
   // --- Setters using copyWith to reduce boilerplate ---
 
@@ -741,9 +949,11 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
     state = state.copyWith(cardioCapacity: capacity);
   }
 
-  Future<void> clear() async {
-    final prefs = await SharedPreferences.getInstance();
-    final keysToRemove = [
+  /// Remove every pre-auth quiz key from SharedPreferences. Used by both
+  /// [clear] (state-resetting) and the stale-clear path inside [_loadFromPrefs]
+  /// (avoids recursion through state setter).
+  Future<void> _wipeQuizKeys(SharedPreferences prefs) async {
+    const keysToRemove = [
       'preAuth_goals', 'preAuth_fitnessLevel', 'preAuth_trainingExperience',
       'preAuth_activityLevel', 'preAuth_name', 'preAuth_dateOfBirth',
       'preAuth_gender', 'preAuth_heightCm', 'preAuth_weightKg',
@@ -766,7 +976,18 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
     for (final key in keysToRemove) {
       await prefs.remove(key);
     }
-    state = PreAuthQuizData();
+  }
+
+  Future<void> clear() async {
+    final prefs = await SharedPreferences.getInstance();
+    await _wipeQuizKeys(prefs);
+    await prefs.remove(_lastTouchedAtKey);
+    _suppressTouch = true;
+    try {
+      state = PreAuthQuizData();
+    } finally {
+      _suppressTouch = false;
+    }
   }
 
   Future<void> setPrimaryGoal(String goal) async {

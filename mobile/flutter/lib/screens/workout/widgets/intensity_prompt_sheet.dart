@@ -1,8 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../data/services/haptic_service.dart';
+import '../../../data/services/last_used_service.dart';
+import '../../../widgets/common/last_used_badge.dart';
 import '../../../widgets/glass_sheet.dart';
+
+String _rpeKeyFor(String exerciseName) {
+  // Slug the exercise name for a stable, file-system-safe SharedPreferences
+  // key. Two exercises with the same name (rare) collapse to one bucket —
+  // acceptable trade-off vs threading exerciseId through the call site.
+  final slug = exerciseName
+      .trim()
+      .toLowerCase()
+      .replaceAll(RegExp(r'[^a-z0-9]+'), '_')
+      .replaceAll(RegExp(r'^_+|_+$'), '');
+  return 'workout_rpe::$slug';
+}
 
 /// Result of the intensity prompt — both scales are returned so downstream
 /// storage (rir column, analytics) can use whichever is expected.
@@ -42,10 +57,10 @@ Future<IntensityResult?> showIntensityPromptSheet(
     context: context,
     isDismissible: false, // Mandatory — can't tap outside to dismiss.
     enableDrag: false,
-    opaque: true, // Opaque surface so workout table doesn't bleed through.
+    opaque: false,
     builder: (ctx) => GlassSheet(
-      opaque: true,
-      showHandle: false, // Mandatory prompt — no drag affordance.
+      opaque: false,
+      showHandle: true,
       child: _IntensityPromptSheet(
         previousRpe: previousRpe,
         exerciseName: exerciseName,
@@ -55,7 +70,7 @@ Future<IntensityResult?> showIntensityPromptSheet(
   );
 }
 
-class _IntensityPromptSheet extends StatefulWidget {
+class _IntensityPromptSheet extends ConsumerStatefulWidget {
   final int? previousRpe;
   final String exerciseName;
   final int setNumber;
@@ -67,12 +82,26 @@ class _IntensityPromptSheet extends StatefulWidget {
   });
 
   @override
-  State<_IntensityPromptSheet> createState() => _IntensityPromptSheetState();
+  ConsumerState<_IntensityPromptSheet> createState() =>
+      _IntensityPromptSheetState();
 }
 
-class _IntensityPromptSheetState extends State<_IntensityPromptSheet> {
+class _IntensityPromptSheetState extends ConsumerState<_IntensityPromptSheet> {
   int? _selectedRpe;
   bool _sliderExpanded = false;
+  int? _lastUsedRpe;
+
+  @override
+  void initState() {
+    super.initState();
+    final raw = ref
+        .read(lastUsedServiceProvider)
+        .get(_rpeKeyFor(widget.exerciseName));
+    final parsed = raw == null ? null : int.tryParse(raw);
+    if (parsed != null && parsed >= 1 && parsed <= 10) {
+      _lastUsedRpe = parsed;
+    }
+  }
 
   void _pickRpe(int rpe) {
     HapticService.selection();
@@ -84,6 +113,13 @@ class _IntensityPromptSheetState extends State<_IntensityPromptSheet> {
     HapticService.success();
     final rpe = _selectedRpe!.clamp(1, 10);
     final rir = (10 - rpe).clamp(0, 10);
+    // Persist this RPE per-exercise so the next set of the same exercise
+    // (in any future session) shows the sparkle on the matching chip.
+    // Fire-and-forget — don't block the modal pop on prefs flush.
+    // ignore: unawaited_futures
+    ref
+        .read(lastUsedServiceProvider)
+        .set(_rpeKeyFor(widget.exerciseName), rpe.toString());
     Navigator.of(context).pop(IntensityResult(rpe: rpe, rir: rir));
   }
 
@@ -134,7 +170,8 @@ class _IntensityPromptSheetState extends State<_IntensityPromptSheet> {
               ],
             ),
             const SizedBox(height: 18),
-            // Four primary buttons
+            // Four primary buttons. The "easy" tile aliases RPE 1–7 (per the
+            // existing UI), so we badge it whenever lastUsed is in that range.
             Row(
               children: [
                 Expanded(
@@ -144,6 +181,7 @@ class _IntensityPromptSheetState extends State<_IntensityPromptSheet> {
                     emoji: '😌',
                     selected: _selectedRpe != null &&
                         _selectedRpe! <= 7,
+                    isLastUsed: _lastUsedRpe != null && _lastUsedRpe! <= 7,
                     color: AppColors.success,
                     onTap: () => _pickRpe(7),
                   ),
@@ -155,6 +193,7 @@ class _IntensityPromptSheetState extends State<_IntensityPromptSheet> {
                     subLabel: '2 left',
                     emoji: '👍',
                     selected: _selectedRpe == 8,
+                    isLastUsed: _lastUsedRpe == 8,
                     color: AppColors.orange,
                     onTap: () => _pickRpe(8),
                   ),
@@ -166,6 +205,7 @@ class _IntensityPromptSheetState extends State<_IntensityPromptSheet> {
                     subLabel: '1 left',
                     emoji: '🔥',
                     selected: _selectedRpe == 9,
+                    isLastUsed: _lastUsedRpe == 9,
                     color: const Color(0xFFEF4444),
                     onTap: () => _pickRpe(9),
                   ),
@@ -177,6 +217,7 @@ class _IntensityPromptSheetState extends State<_IntensityPromptSheet> {
                     subLabel: 'failure',
                     emoji: '🥵',
                     selected: _selectedRpe == 10,
+                    isLastUsed: _lastUsedRpe == 10,
                     color: const Color(0xFF7C3AED),
                     onTap: () => _pickRpe(10),
                   ),
@@ -297,6 +338,7 @@ class _EffortTile extends StatelessWidget {
   final String subLabel;
   final String emoji;
   final bool selected;
+  final bool isLastUsed;
   final Color color;
   final VoidCallback onTap;
 
@@ -305,6 +347,7 @@ class _EffortTile extends StatelessWidget {
     required this.subLabel,
     required this.emoji,
     required this.selected,
+    required this.isLastUsed,
     required this.color,
     required this.onTap,
   });
@@ -315,60 +358,74 @@ class _EffortTile extends StatelessWidget {
     final textPrimary =
         isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    // Show the badge when this tile matches last-used AND is NOT currently
+    // selected (the orange ring + glow already mark the active pick).
+    final showBadge = isLastUsed && !selected;
 
     return GestureDetector(
       onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 140),
-        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 6),
-        decoration: BoxDecoration(
-          color: selected
-              ? color.withValues(alpha: 0.28)
-              : (isDark
-                  ? Colors.white.withValues(alpha: 0.08)
-                  : Colors.black.withValues(alpha: 0.05)),
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(
-            color: selected
-                ? color
-                : (isDark
-                    ? color.withValues(alpha: 0.25)
-                    : color.withValues(alpha: 0.30)),
-            width: selected ? 1.8 : 1,
-          ),
-          boxShadow: selected
-              ? [
-                  BoxShadow(
-                    color: color.withValues(alpha: 0.35),
-                    blurRadius: 14,
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 140),
+            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 6),
+            decoration: BoxDecoration(
+              color: selected
+                  ? color.withValues(alpha: 0.28)
+                  : (isDark
+                      ? Colors.white.withValues(alpha: 0.08)
+                      : Colors.black.withValues(alpha: 0.05)),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(
+                color: selected
+                    ? color
+                    : (isDark
+                        ? color.withValues(alpha: 0.25)
+                        : color.withValues(alpha: 0.30)),
+                width: selected ? 1.8 : 1,
+              ),
+              boxShadow: selected
+                  ? [
+                      BoxShadow(
+                        color: color.withValues(alpha: 0.35),
+                        blurRadius: 14,
+                      ),
+                    ]
+                  : null,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(emoji, style: const TextStyle(fontSize: 22)),
+                const SizedBox(height: 6),
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w800,
+                    color: selected ? color : textPrimary,
                   ),
-                ]
-              : null,
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(emoji, style: const TextStyle(fontSize: 22)),
-            const SizedBox(height: 6),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w800,
-                color: selected ? color : textPrimary,
-              ),
+                ),
+                const SizedBox(height: 1),
+                Text(
+                  subLabel,
+                  style: TextStyle(
+                    fontSize: 10,
+                    color: textMuted,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(height: 1),
-            Text(
-              subLabel,
-              style: TextStyle(
-                fontSize: 10,
-                color: textMuted,
-                fontWeight: FontWeight.w500,
-              ),
+          ),
+          if (showBadge)
+            Positioned(
+              top: -4,
+              right: -4,
+              child: LastUsedBadge.static(colorOverride: color, size: 14),
             ),
-          ],
-        ),
+        ],
       ),
     );
   }

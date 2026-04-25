@@ -126,9 +126,12 @@ class NextLevelPreview {
     );
   }
 
-  /// Progress fraction 0.0–1.0 for the bar.
+  /// Progress fraction 0.0–1.0 for the bar. Finite-guarded so a NaN
+  /// xpInLevel can't escape into a downstream .toInt() and crash.
   double get progressFraction {
     if (xpToNext <= 0) return 1.0;
-    return (xpInLevel / xpToNext).clamp(0.0, 1.0);
+    final raw = xpInLevel / xpToNext;
+    if (!raw.isFinite) return 0.0;
+    return raw.clamp(0.0, 1.0);
   }
 }

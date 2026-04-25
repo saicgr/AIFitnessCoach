@@ -175,7 +175,14 @@ class _DashedDivider extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         final width = constraints.maxWidth;
-        final dashes = (width / 6).floor();
+        // Guard against unbounded parents (e.g. a Row inside an unconstrained
+        // SingleChildScrollView): `width.floor()` on infinity throws
+        // `Unsupported operation: Infinity or NaN toInt`. Bail out with a
+        // single zero-height filler instead so the receipt still renders.
+        if (!width.isFinite || width <= 0) {
+          return const SizedBox(height: 1);
+        }
+        final dashes = (width / 6).floor().clamp(1, 200);
         return Row(
           children: List.generate(dashes, (_) {
             return Expanded(

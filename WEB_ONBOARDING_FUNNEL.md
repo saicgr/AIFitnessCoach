@@ -191,7 +191,7 @@ User sees their personalized workout immediately — no "generating..." spinner
 - App sign-in screen: "Continue with Google" button + "Continue with Email" option
 - Users naturally pick the same method in both places → same Supabase auth ID → match
 
-**Fallback:** If accounts don't match (different auth method), after sign-in check if the email exists in another auth record with `acquisition_source='web_quiz'`. If found, prompt: "We found your plan from fitwiz.app. Link accounts?" → Supabase admin API merges.
+**Fallback:** If accounts don't match (different auth method), after sign-in check if the email exists in another auth record with `acquisition_source='web_quiz'`. If found, prompt: "We found your plan from fitwiz.us. Link accounts?" → Supabase admin API merges.
 
 ---
 
@@ -304,8 +304,8 @@ What moves from in-app onboarding to web, what stays, what gets defaults:
 
 | Platform | Setup |
 |---|---|
-| **iOS** | Add `applinks:fitwiz.app` to `ios/Runner/Runner.entitlements`. Host `apple-app-site-association` JSON on marketing domain. |
-| **Android** | Add intent-filter with `android:autoVerify="true"` in `AndroidManifest.xml`. Host `assetlinks.json` at `fitwiz.app/.well-known/assetlinks.json`. |
+| **iOS** | Add `applinks:fitwiz.us` to `ios/Runner/Runner.entitlements`. Host `apple-app-site-association` JSON on marketing domain. |
+| **Android** | Add intent-filter with `android:autoVerify="true"` in `AndroidManifest.xml`. Host `assetlinks.json` at `fitwiz.us/.well-known/assetlinks.json`. |
 | **Flutter** | `app_links` package captures inbound universal link → extracts magic-link token → `SupabaseClient.auth.getSessionFromUrl()` |
 
 ---

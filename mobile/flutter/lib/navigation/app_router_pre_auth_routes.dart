@@ -584,6 +584,14 @@ List<RouteBase> _preAuthRoutes() => [
         builder: (context, state) => const WorkoutLoadingScreen(),
       ),
 
+      // Permissions primer (camera/photos/microphone). Shown once before
+      // notifications-prime so the user understands *why* the OS is about
+      // to ask for access. Skipping is allowed; features re-prompt at use site.
+      GoRoute(
+        path: PermissionsPrimerScreen.routePath,
+        builder: (context, state) => const PermissionsPrimerScreen(),
+      ),
+
       // Notification pre-permission screen — shown once after onboarding/paywall
       // before the user lands on /home. The OS notification prompt only fires
       // if the user opts in here (soft prompt → hard prompt pattern).

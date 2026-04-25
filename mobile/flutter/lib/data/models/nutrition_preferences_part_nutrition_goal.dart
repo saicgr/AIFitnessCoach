@@ -31,12 +31,18 @@ enum NutritionGoal {
 }
 
 
-/// Rate of change options
+/// Rate of change options.
+///
+/// `calorieAdjustment` is the daily kcal deficit (lose_fat) or half-surplus
+/// (build_muscle) implied by the selected weekly rate, using the textbook
+/// Wishnofsky static rule: `kg/wk × 7700 / 7`. Keep in sync with backend
+/// `_deficit_for_rate` in `backend/api/v1/nutrition/onboarding.py`.
+/// Values: 275 / 550 / 825 / 1100 cal/d for 0.25 / 0.5 / 0.75 / 1.0 kg/wk.
 enum RateOfChange {
-  slow('slow', 'Slow & Steady', 0.25, 250),
-  moderate('moderate', 'Moderate', 0.5, 500),
-  fast('fast', 'Fast', 0.75, 750),
-  aggressive('aggressive', 'Aggressive', 1.0, 1000);
+  slow('slow', 'Slow & Steady', 0.25, 275),
+  moderate('moderate', 'Moderate', 0.5, 550),
+  fast('fast', 'Fast', 0.75, 825),
+  aggressive('aggressive', 'Aggressive', 1.0, 1100);
 
   final String value;
   final String displayName;

@@ -34,6 +34,7 @@ import 'data/local/database_provider.dart';
 import 'core/services/analytics_service.dart';
 import 'core/services/posthog_service.dart';
 import 'core/services/sentry_service.dart';
+import 'package:sentry_flutter/sentry_flutter.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -62,8 +63,8 @@ void main() async {
     ),
   ]);
 
-  // Wire up Crashlytics error handlers
-  // Only report truly fatal errors as fatal; rendering/layout errors are non-fatal
+  // Wire up Crashlytics + Sentry error handlers.
+  // Only report truly fatal errors as fatal; rendering/layout errors are non-fatal.
   FlutterError.onError = (FlutterErrorDetails details) {
     final message = details.exceptionAsString();
     final isRenderingError = message.contains('RenderFlex overflowed') ||
@@ -92,6 +93,31 @@ void main() async {
         screenName: details.library,
       );
     }
+    // Always forward to Sentry with a real stack trace. We do this here
+    // (not via Sentry's auto-handler chaining) because we override
+    // FlutterError.onError BEFORE Sentry.init runs, and chaining behavior
+    // varies across sentry_flutter versions. Calling Sentry directly
+    // guarantees the exception object + stack reach Sentry every time.
+    if (SentryService.isEnabled) {
+      Sentry.captureException(
+        details.exception,
+        stackTrace: details.stack ?? StackTrace.current,
+        withScope: (scope) {
+          scope.level = isRenderingError
+              ? SentryLevel.warning
+              : SentryLevel.error;
+          scope.setTag(
+              'error.kind', isRenderingError ? 'rendering' : 'flutter_fatal');
+          if (details.library != null) {
+            scope.setTag('flutter.library', details.library!);
+          }
+          if (details.context != null) {
+            scope.setContexts(
+                'flutter_error_context', {'description': details.context.toString()});
+          }
+        },
+      );
+    }
   };
   PlatformDispatcher.instance.onError = (error, stack) {
     if (firebaseReady) {
@@ -101,6 +127,16 @@ void main() async {
       errorType: 'platform_error',
       message: error.toString(),
     );
+    if (SentryService.isEnabled) {
+      Sentry.captureException(
+        error,
+        stackTrace: stack,
+        withScope: (scope) {
+          scope.level = SentryLevel.fatal;
+          scope.setTag('error.kind', 'platform_dispatcher');
+        },
+      );
+    }
     return true;
   };
 
