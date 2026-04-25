@@ -15,6 +15,12 @@ import os
 # Add parent directory to path for imports
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
+# Disable Sentry BEFORE importing main. The SDK's background HTTP worker can
+# segfault on pytest teardown when an in-flight SSL envelope POST is
+# interrupted. We do not want error tracking from test runs anyway.
+os.environ.pop("SENTRY_DSN", None)
+os.environ["PYTEST_DISABLE_SENTRY"] = "1"
+
 from main import app
 from services.gemini_service import GeminiService
 from services.rag_service import RAGService

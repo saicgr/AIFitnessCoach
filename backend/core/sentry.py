@@ -68,6 +68,16 @@ def init_sentry(settings: Settings) -> bool:
     Returns True when Sentry is active, False otherwise. Never raises —
     a broken Sentry should not take the API down.
     """
+    # Skip Sentry under pytest. The SDK's background HTTP worker thread can
+    # segfault during pytest teardown when an in-flight envelope POST is
+    # interrupted (urllib3/ssl recv_into → SIGSEGV). pytest never needs
+    # error tracking; suppress here so test runs on Render with SENTRY_DSN
+    # set in env don't crash.
+    import sys
+    if "pytest" in sys.modules or os.environ.get("PYTEST_DISABLE_SENTRY") == "1":
+        logger.info("ℹ️ pytest detected — Sentry init skipped.")
+        return False
+
     dsn = settings.sentry_dsn
     if not dsn:
         logger.info("ℹ️ Sentry DSN not set — error tracking disabled.")

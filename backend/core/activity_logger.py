@@ -60,6 +60,11 @@ ERROR_WEBHOOK_URL = os.getenv("ERROR_WEBHOOK_URL")
 _recent_errors: list = []
 _MAX_RECENT_ERRORS = 100
 
+# Strong refs to in-flight fire-and-forget alert tasks. asyncio only weakly
+# references tasks, so without this the GC can collect a still-pending task
+# and emit "Task was destroyed but it is pending!".
+_alert_tasks: set[asyncio.Task] = set()
+
 
 async def _send_error_alert(
     user_id: str,
@@ -210,7 +215,7 @@ async def log_user_error(
 
     # Send webhook alert (in background, don't block)
     if send_alert:
-        asyncio.create_task(
+        alert_task = asyncio.create_task(
             _send_error_alert(
                 user_id=user_id,
                 action=action,
@@ -220,6 +225,8 @@ async def log_user_error(
                 request_id=request_id
             )
         )
+        _alert_tasks.add(alert_task)
+        alert_task.add_done_callback(_alert_tasks.discard)
 
 
 async def get_user_activity(

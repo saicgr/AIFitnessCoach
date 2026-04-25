@@ -411,6 +411,12 @@ async def get_langgraph_service() -> LangGraphCoachService:
     return _langgraph_service
 
 
+# Strong refs to in-flight background tasks. asyncio only weakly references
+# tasks via the event loop, so without this set the GC can collect a still-
+# pending task and emit "Task was destroyed but it is pending!".
+_background_tasks: set[asyncio.Task] = set()
+
+
 def _create_safe_task(coro, name: str = None, user_id: str = None):
     """Create an asyncio task with exception logging and log context propagation.
 
@@ -434,8 +440,10 @@ def _create_safe_task(coro, name: str = None, user_id: str = None):
         await coro
 
     task = asyncio.create_task(_wrapped(), name=name)
+    _background_tasks.add(task)
 
     def _on_done(t):
+        _background_tasks.discard(t)
         if t.cancelled():
             return
         exc = t.exception()
@@ -603,14 +611,17 @@ _ALERT_STATUS_CODES = {401, 429, 500, 502, 503, 504}
 async def http_exception_handler(request: Request, exc: HTTPException):
     if exc.status_code in _ALERT_STATUS_CODES:
         try:
-            import asyncio
             user_id = getattr(request.state, "user_id", None)
-            asyncio.create_task(_discord_notify_error(
-                error=exc,
-                context=f"HTTP {exc.status_code}: {exc.detail}",
-                endpoint=f"{request.method} {request.url.path}",
+            _create_safe_task(
+                _discord_notify_error(
+                    error=exc,
+                    context=f"HTTP {exc.status_code}: {exc.detail}",
+                    endpoint=f"{request.method} {request.url.path}",
+                    user_id=user_id,
+                ),
+                name="discord_notify_http_error",
                 user_id=user_id,
-            ))
+            )
         except Exception:
             pass
     return JSONResponse(status_code=exc.status_code, content={"detail": exc.detail})
@@ -619,13 +630,16 @@ async def http_exception_handler(request: Request, exc: HTTPException):
 async def unhandled_exception_handler(request: Request, exc: Exception):
     logger.error(f"Unhandled exception on {request.method} {request.url.path}: {exc}", exc_info=True)
     try:
-        import asyncio
         user_id = getattr(request.state, "user_id", None)
-        asyncio.create_task(_discord_notify_error(
-            error=exc,
-            endpoint=f"{request.method} {request.url.path}",
+        _create_safe_task(
+            _discord_notify_error(
+                error=exc,
+                endpoint=f"{request.method} {request.url.path}",
+                user_id=user_id,
+            ),
+            name="discord_notify_unhandled_error",
             user_id=user_id,
-        ))
+        )
     except Exception:
         pass
     return JSONResponse(status_code=500, content={"detail": "Internal server error"})
